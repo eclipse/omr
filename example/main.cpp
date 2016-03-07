@@ -72,10 +72,10 @@ testMain(int argc, char ** argv, char **envp)
 	Assert_MM_true(OMR_ERROR_NONE == rc);
 
 	/* Attach current thread to the VM */
-	rc = OMR_Thread_Init(exampleVM._omrVM, NULL, &omrVMThread, "GCTestMailThread");
+	rc = OMR_Thread_Init(exampleVM._omrVM, NULL, &omrVMThread, "GCTestMainThread");
 	Assert_MM_true(OMR_ERROR_NONE == rc);
 
-	/* Kick off the dispatcher therads */
+	/* Kick off the dispatcher threads */
 	rc = OMR_GC_InitializeDispatcherThreads(omrVMThread);
 	Assert_MM_true(OMR_ERROR_NONE == rc);
 	
