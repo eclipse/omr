@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ (c) Copyright IBM Corp. 2014, 2016
+
+  This program and the accompanying materials are made available
+  under the terms of the Eclipse Public License v1.0 and
+  Apache License v2.0 which accompanies this distribution.
+
+      The Eclipse Public License is available at
+      http://www.eclipse.org/legal/epl-v10.html
+
+      The Apache License v2.0 is available at
+      http://www.opensource.org/licenses/apache2.0.php
+
+ Contributors:
+    Multiple authors (IBM Corp.) - initial implementation and documentation
+-->
+<interface>
+	<publicHeader>../../include_core/mmomrhook.h</publicHeader>
+	<privateHeader>../base/mmomrhook_internal.h</privateHeader>
+	<struct>MM_OMRHookInterface</struct>
+	<description>Memory manager OMR hookable events</description>
+
+	<declarations>
+	
+#include "omr.h"
+#include "objectdescription.h"
+
+typedef uintptr_t (*condYieldFromGCFunctionPtr) (OMR_VMThread *omrVMThread, uintptr_t componentType);
+
+	</declarations>
+
+	<event>
+		<name>J9HOOK_MM_OMR_GLOBAL_GC_START</name>
+		<description>
+			DEPRECATED:  use J9HOOK_MM_OMR_GC_CYCLE_START or J9HOOK_MM_GLOBAL_GC_INCREMENT_START, instead.
+		</description>
+		<struct>MM_GlobalGCStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="globalGCCount" description="the count of global gc's" />
+		<data type="uintptr_t" name="localGCCount" description="the count of local gc's" />
+		<data type="uintptr_t" name="systemGC" description="flag to indicate if an explicit GC request" />
+		<data type="uintptr_t" name="aggressive" description="flag to indicate if this is a aggressive collect" /> 
+		<data type="uintptr_t" name="bytesRequested" description="number of bytes requested" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_OMR_GLOBAL_GC_END</name>
+		<description>
+			DEPRECATED:  use J9HOOK_MM_OMR_GC_CYCLE_END or J9HOOK_MM_GLOBAL_GC_INCREMENT_END, instead.
+		</description>
+		<struct>MM_GlobalGCEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="workStackOverflowOccured" description="flag to indicate if workstack ovewrflow has occured" />
+		<data type="uintptr_t" name="workStackOverflowCount" description="the number of times concurrent work stacks have overflowed" />
+		<data type="uintptr_t" name="workpacketCount" description="the number of workpackets being used when overflow occurred" />
+		<data type="uintptr_t" name="nurseryFreeBytes" description="number of bytes free in the nursery" />
+		<data type="uintptr_t" name="nurseryTotalBytes" description="total number of bytes in the nursery" />
+		<data type="uintptr_t" name="tenureFreeBytes" description="number of bytes free in the tenure area" />
+		<data type="uintptr_t" name="tenureTotalBytes" description="total number of bytes in the tenure area" />
+		<data type="uintptr_t" name="loaEnabled" description="flag to indicate whether or not the LOA is enabled" />
+		<data type="uintptr_t" name="tenureLOAFreeBytes" description="number of bytes free in the LOA" />
+		<data type="uintptr_t" name="tenureLOATotalBytes" description="total number of bytes in the LOA" />
+		<data type="uintptr_t" name="immortalFreeBytes" description="number of bytes free in the immortal memory area" />
+		<data type="uintptr_t" name="immortalTotalBytes" description="total number of bytes in the immortal memory area" />
+		<data type="uintptr_t" name="fixHeapForWalkReason" description="reason for fixHeapForWalk" />
+		<data type="uint64_t" name="fixHeapForWalkTime" description="time spent in fixHeapForWalk in ms" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_OMR_LOCAL_GC_START</name>
+		<description>
+			Triggered when a local GC (e.g. scavenge) is about to start.
+		</description>
+		<struct>MM_LocalGCStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="globalGCCount" description="the number of global gc's" />
+		<data type="uintptr_t" name="localGCCount" description="the number oflocal gc's" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_OMR_LOCAL_GC_END</name>
+		<description>
+			Triggered when a local GC (e.g. scavenge) is completed.
+		</description>
+		<struct>MM_LocalGCEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="void*" name="subSpace" description="the subspace which was collected" />
+		<data type="uintptr_t" name="globalGCCount" description="the number of global gc's" />
+		<data type="uintptr_t" name="localGCCount" description="the number oflocal gc's" />
+		<data type="uintptr_t" name="rememberedSetOverflowed" description="flag to indicate whether the remembered set overflowed" />
+		<data type="uintptr_t" name="causedRememberedSetOverflow" description="flag to indicate whether the remembered set overflow was caused by this collection" />
+		<data type="uintptr_t" name="scanCacheOverflow" description="flag to indicate whether the scan cache overflowed" />
+		<data type="uintptr_t" name="failedFlipCount" description="the number of objects that could not be flipped" />
+		<data type="uintptr_t" name="failedFlipBytes" description="the number of bytes that could not be flipped" />
+		<data type="uintptr_t" name="failedTenureCount" description="the number of objects that could not be tenured" />
+		<data type="uintptr_t" name="failedTenureBytes" description="the number of bytes that could not be tenured" />
+		<data type="uintptr_t" name="backout" description="flag to indicate whether the local collection was aborted" />
+		<data type="uintptr_t" name="flipCount" description="the number of objects that were flipped" />
+		<data type="uintptr_t" name="flipBytes" description="the number of bytes that were flipped" />
+		<data type="uintptr_t" name="tenureCount" description="the number of objects that were tenured" />
+		<data type="uintptr_t" name="tenureBytes" description="the number of bytes that were tenured" />
+		<data type="uintptr_t" name="tilted" description="flag to indicate whether we have a tilted scavenger" />
+		<data type="uintptr_t" name="nurseryFreeBytes" description="number of bytes free in the nursery" />
+		<data type="uintptr_t" name="nurseryTotalBytes" description="total number of bytes in the nursery" />
+		<data type="uintptr_t" name="tenureFreeBytes" description="number of bytes free in the tenure area" />
+		<data type="uintptr_t" name="tenureTotalBytes" description="total number of bytes in the tenure area" />
+		<data type="uintptr_t" name="loaEnabled" description="flag to indicate whether or not the LOA is enabled" />
+		<data type="uintptr_t" name="tenureLOAFreeBytes" description="number of bytes free in the LOA" />
+		<data type="uintptr_t" name="tenureLOATotalBytes" description="total number of bytes in the LOA" />
+		<data type="uintptr_t" name="tenureAge" description="the age at which objects currently get tenured" />
+		<data type="uintptr_t" name="totalMemorySize" description="the total size of all memory spaces" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX</name>
+		<description>
+			Triggered when an OOM is about to occur due to the current softmx 
+		</description>
+		<struct>MM_SoftmxOOMEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="maxHeapSize" description="The maximum heap size" />
+		<data type="uintptr_t" name="currentHeapSize" description="The current heap size" />
+		<data type="uintptr_t" name="currentSoftMX" description="The current value for softMX" />
+		<data type="uintptr_t" name="bytesRequired" description="The amount needed to expand by to avoid OOM" />
+	</event>
+	
+		<event>
+		<name>J9HOOK_MM_OMR_COMPACT_END</name>
+		<description>
+			Triggered when a compact phase is completed.
+		</description>
+		<struct>MM_CompactEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="omrVMThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_OMR_GC_CYCLE_START</name>
+		<description>
+			Triggered when the first increment of a global GC is about to start.  Note that this hook is triggered before the first corresponding phase start or increment start events.  This hook is still used on collectors which are not incremental.
+		</description>
+		<struct>MM_GCCycleStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="omrVMThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="struct MM_CommonGCData*" name="commonData" description="common heap data" />
+		<data type="uintptr_t" name="cycleType" description="the type of cycle" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_OMR_GC_CYCLE_CONTINUE</name>
+		<description>
+			Triggered when cycle type changes.
+		</description>
+		<struct>MM_GCCycleContinueEvent</struct>
+		<data type="struct OMR_VMThread*" name="omrVMThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="struct MM_CommonGCData*" name="commonData" description="common heap data" />
+		<data type="uintptr_t" name="oldCycleType" description="the type of old cycle" />
+		<data type="uintptr_t" name="newCycleType" description="the type of new cycle" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_OMR_GC_CYCLE_END</name>
+		<description>
+			Triggered when the last increment of a global GC has completed.  Note that this hook is triggered after the last corresponding phase end or increment end events.  This hook is still used on collectors which are not incremental.
+		</description>
+		<struct>MM_GCCycleEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="omrVMThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="struct MM_CommonGCData*" name="commonData" description="common heap data" />
+		<data type="uintptr_t" name="cycleType" description="the type of cycle" />
+		<data type="condYieldFromGCFunctionPtr" name="condYieldFromGCFunction" description="Pointer to GC conditional yield function" />
+	</event>
+	
+		<event>
+		<name>J9HOOK_MM_OMR_INITIALIZED</name>
+		<description>
+			Triggered as soon as the GC is fully initialized
+		</description>
+		<struct>MM_InitializedEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />		
+		<data type="const char*" name="gcPolicy" description="-Xgcpolicy value" />
+		<data type="uintptr_t" name="maxHeapSize" description="-Xmx value" />
+		<data type="uintptr_t" name="initialHeapSize" description="-Xms value" />
+		<data type="uint64_t" name="physicalMemory" description="the total amount of physical memory" />
+		<data type="uintptr_t" name="numCPUs" description="number of CPUs on the system" />
+		<data type="uintptr_t" name="gcThreads" description="number of GC threads" />
+		<data type="const char*" name="architecture" description="machine architecture" />
+		<data type="const char*" name="os" description="operating system" />
+		<data type="const char*" name="osVersion" description="operating system version" />
+		<data type="uintptr_t" name="compressedPointersShift" description="compressed pointers shift amount" />
+		<data type="uintptr_t" name="beat" description="Metronome beat" />
+		<data type="uintptr_t" name="timeWindow" description="Metronome time window" />
+		<data type="uintptr_t" name="targetUtilization" description="Metronome target utilization" />
+		<data type="uintptr_t" name="gcTrigger" description="Metronome GC trigger" />
+		<data type="uintptr_t" name="headRoom" description="Metronome GC trigger headroom" />
+		<data type="uintptr_t" name="heapPageSize" description="allocated page size of the heap" />
+		<data type="const char*" name="heapPageType" description="describes pages used to allocate the heap" />
+		<data type="uintptr_t" name="heapRequestedPageSize" description="default operating system page size, or user defined page size from -Xlp" />
+		<data type="const char*" name="heapRequestedPageType" description="default operating system page type, or user defined page type from -Xlp" />
+		<data type="uintptr_t" name="numaNodes" description="number of NUMA nodes to be used by the GC (currently only supported in VLHGC)" />
+		<data type="uintptr_t" name="regionSize" description="heap region size" />
+		<data type="uintptr_t" name="regionCount" description="total heap region count" />
+		<data type="uintptr_t" name="arrayletLeafSize" description="arraylet leaf size" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_OMR_VERBOSE_GC_OUTPUT</name>
+		<description>
+			Triggered when verbose GC outputs a string
+		</description>
+		<struct>MM_VerboseGCOutputEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="const char*" name="string" description="the string output by verbose GC" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_OMR_EXCESSIVEGC_RAISED</name>
+		<description>
+			Triggered when we are spending too much time in GC and we fail to reclaim sufficient free space on a global GC.
+			The current thread is guaranteed to have VMAccess and ExclusiveVMAccess.  Neither of those states can be modified
+			by users of this HOOK.
+		</description>
+		<struct>MM_ExcessiveGCRaisedEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="gcCount" description="Collection id" />
+		<data type="float" name="reclaimedPercent" description="Percentage of heap space reclaimed this GC" />
+		<data type="float" name="triggerPercent" description="Minimum percentage which needs to be reclaimed; otherwise OOM raised" />
+		<data type="uintptr_t" name="excessiveLevel" description="The level of excessive gc, only fail to allocate on fatal level" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_OMR_OBJECT_DELETE</name>
+		<description>Report the deletion of an object. Hooking this event can significantly impact GC times.</description>
+		<struct>MM_ObjectDeleteEvent</struct>
+		<data type="struct OMR_VMThread *" name="currentThread" description="the current thread" />
+		<data type="omrobjectptr_t" name="object" description="the object which has been deleted." />
+		<data type="void*" name="heap" description="an opaque pointer to the heap the object belongs to" />
+	</event>	
+	
+	<event>
+		<name>J9HOOK_MM_OMR_OBJECT_RENAME</name>
+		<description>Report the relocation of an object. Hooking this event can significantly impact GC times.</description>
+		<struct>MM_ObjectRenameEvent</struct>
+		<data type="struct OMR_VMThread *" name="currentThread" description="the current thread" />
+		<data type="omrobjectptr_t" name="oldObject" description="the old pointer to the object." />
+		<data type="omrobjectptr_t" name="newObject" description="the new pointer to the object." />
+	</event>	
+
+</interface>

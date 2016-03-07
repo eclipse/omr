@@ -1,0 +1,1160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ (c) Copyright IBM Corp. 2010, 2016
+
+  This program and the accompanying materials are made available
+  under the terms of the Eclipse Public License v1.0 and
+  Apache License v2.0 which accompanies this distribution.
+
+      The Eclipse Public License is available at
+      http://www.eclipse.org/legal/epl-v10.html
+
+      The Apache License v2.0 is available at
+      http://www.opensource.org/licenses/apache2.0.php
+
+ Contributors:
+    Multiple authors (IBM Corp.) - initial implementation and documentation
+-->
+
+<interface>
+	<publicHeader>../base/mmprivatehook.h</publicHeader>
+	<privateHeader>../base/mmprivatehook_internal.h</privateHeader>
+	<struct>MM_PrivateHookInterface</struct>
+	<description>Memory manager hookable events to be used internally by GC component</description>
+
+	<declarations>
+
+#include "../include/mmhook_common.h"
+
+	</declarations>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_GLOBAL_GC_INCREMENT_START</name>
+		<description>
+			Triggered when an increment of a global GC is about to start.  Note that this hook is always triggered between the start and end events of the corresponding cycle.  This hook is only used on collectors which are incremental.
+		</description>
+		<struct>MM_GlobalGCIncrementStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="globalGCCount" description="the count of global gc's" />
+		<data type="uintptr_t" name="localGCCount" description="the count of local gc's" />
+		<data type="uintptr_t" name="bytesRequested" description="number of bytes requested" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_GC_INCREMENT_START</name>
+		<description>
+			Triggered when an increment of a GC is about to start.  Note that this hook is always triggered between the start and end events of the corresponding cycle.
+		</description>
+		<struct>MM_GCIncrementStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="void *" name="stats" description="Collector specific stats for this event" />
+	</event>
+		
+	<event>
+		<name>J9HOOK_MM_PRIVATE_GLOBAL_GC_COLLECT_COMPLETE</name>
+		<description>
+			Triggered on completion of Mark ,Sweep and Compact phases of collect.
+		</description>
+		<struct>MM_GlobalGCCollectCompleteEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>
+	
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_GLOBAL_GC_INCREMENT_END</name>
+		<description>
+			Triggered when an increment of a global GC has completed.  Note that this hook is always triggered between the start and end events of the corresponding cycle.  This hook is only used on collectors which are incremental.
+		</description>
+		<struct>MM_GlobalGCIncrementEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="omrVMThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="struct MM_CommonGCData*" name="commonData" description="common heap data" />
+	</event>
+	
+		<event>
+		<name>J9HOOK_MM_PRIVATE_GC_INCREMENT_END</name>
+		<description>
+			Triggered when an increment of a GC has completed.  Note that this hook is always triggered between the start and end events of the corresponding cycle.
+		</description>
+		<struct>MM_GCIncrementEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="void *" name="stats" description="Collector specific stats for this increment" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_TAROK_INCREMENT_START</name>
+		<description>
+			Triggered when a Tarok increment starts.
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_TarokIncrementStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="incrementid" description="The numbered ID of which increment this is" />		
+		<data type="struct MM_CommonGCStartData*" name="gcStartData" description="common data for GC start events" />
+		<data type="uintptr_t" name="taxationThreshold" description="allocation taxation threshold in bytes, set at the end of previous GC, that just has been reached" />
+	</event>
+	
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_TAROK_INCREMENT_END</name>
+		<description>
+			Triggered when a Tarok increment ends.
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_TarokIncrementEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t"  name="exclusiveAccessTime" description="time taken to get exclusive access" />
+		<data type="struct MM_CommonGCEndData*" name="gcEndData" description="common data for GC end events" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_MARK_START</name>
+		<description>
+			Triggered when a mark phase is about to start.
+		</description>
+		<struct>MM_MarkStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_SCAVENGE_START</name>
+		<description>
+			Triggered when a scavenge is about to start.
+		</description>
+		<struct>MM_ScavengeStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>
+		
+	<event>
+		<name>J9HOOK_MM_PRIVATE_SCAVENGE_END</name>
+		<description>
+			Triggered when a scavenge is completed.
+		</description>
+		<struct>MM_ScavengeEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="void*" name="subSpace" description="the subspace which was collected" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_WALK_HEAP_START</name>
+		<description>
+			Report the beginning of a heap walk event.
+			Report the fact that a heap walk is about to occur, so that any necessary
+			actions can be performed to put the heap in a walkable state.
+			The act of putting the heap into a walkable state is performed by
+			code which has hooked the J9HOOK_MM_WALK_HEAP_START hook, such as
+			GC_VMInterface::initializeExtensions.
+		</description>
+		<struct>MM_WalkHeapStartEvent</struct>
+		<data type="struct OMR_VM*" name="omrVM" description="OMR vm instance" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_WALK_HEAP_END</name>
+		<description>
+			Report the end of a heap walk event.
+			Report the fact that a heap walk has completed, so that any necessary
+			actions can be performed to restore the heap to a "normal" state.
+			These actions are actually performed by code which has hooked the
+			J9HOOK_MM_WALK_HEAP_END hook, such as GC_VMInterface::initializeExtensions.
+		</description>
+		<struct>MM_WalkHeapEndEvent</struct>
+		<data type="struct OMR_VM*" name="omrVM" description="OMR vm instance" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_SWEEP_START</name>
+		<description>
+			Triggered when a sweep phase is about to start.
+		</description>
+		<struct>MM_SweepStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_SWEEP_END</name>
+		<description>
+			Triggered when a sweep phase is completed.
+		</description>
+		<struct>MM_SweepEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_COMPACT_START</name>
+		<description>
+			Triggered when a compact phase is about to start.
+		</description>
+		<struct>MM_CompactStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="gcCount" description="the number of global collections" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CLASS_UNLOADING_START</name>
+		<description>
+			Triggered when a class unloading phase is about to start.
+		</description>
+		<struct>MM_ClassUnloadingStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_KICKOFF</name>
+		<description>
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ConcurrentKickoffEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="struct MM_CommonGCData*" name="commonData" description="common heap data" />
+		<data type="uintptr_t" name="traceTarget" description="the targetted number of bytes to be concurrently traced" />
+		<data type="uintptr_t" name="kickOffThreshold" decription="the number of bytes free at which concurrent gc will begin" />
+		<data type="uintptr_t" name="remainingFree" description="the number of bytes free at the point of kickoff"/>
+		<data type="uintptr_t" name="reason" description="reason for kickoff" />
+		<data type="uintptr_t" name="languageReason" description="language specific reason (if available)" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_ABORTED</name>
+		<description>
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ConcurrentAbortedEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="reason" description="The reason why the concurrent mark cycle was aborted" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_HALTED</name>
+		<description>
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ConcurrentHaltedEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="executionMode" description="the concurrent execution mode at the time of the halt event" />
+		<data type="uintptr_t" name="traceTarget" description="the targetted number of bytes to be concurrently traced" />
+		<data type="uintptr_t" name="tracedTotal" description="the number of bytes concurrently traced" />
+		<data type="uintptr_t" name="tracedByMutators" description="the number of bytes traced by mutators" />
+		<data type="uintptr_t" name="tracedByHelpers" description="the number of bytes traced by helper threads" />
+		<data type="uintptr_t" name="cardsCleaned" description="the number of cards cleaned" />
+		<data type="uintptr_t" name="cardCleaningThreshold" description="the number of free bytes at which we wish to start card cleaning phase" />
+		<data type="uintptr_t" name="workStackOverflowOccured" description="flag to indicate if workstack ovewrflow has occured" />
+		<data type="uintptr_t" name="workStackOverflowCount" description="the number of times concurrent work stacks have overflowed" />
+		<data type="uintptr_t" name="isCardCleaningComplete" description="condition of card cleaning" />
+		<data type="uintptr_t" name="scanClassesMode" description="ScanClassesMode state" />
+		<data type="uintptr_t" name="isTracingExhausted" description="work packet queue state" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_COLLECTION_CARD_CLEANING_START</name>
+		<description>
+		</description>
+		<struct>MM_ConcurrentCollectionCardCleaningStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="workStackOverflowCount" description="the number of times concurrent work stacks have overflowed" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_COLLECTION_CARD_CLEANING_END</name>
+		<description>
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ConcurrentCollectionCardCleaningEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t"  name="duration" description="the duration of the operation" />
+		<data type="uintptr_t" name="finalcleanedCardsPhase1" description="The number of cards cleaned in Phase 1 of final card cleaning" />
+		<data type="uintptr_t" name="finalcleanedCardsPhase2" description="The number of cards cleaned in Phase 2 of final card cleaning" />
+		<data type="uintptr_t" name="finalcleanedCards" description="The number of cards cleaned in final card cleaning" />
+		<data type="uintptr_t" name="bytesTraced" description="The number of bytes traced during card cleaning" />	
+		<data type="uintptr_t" name="concleanedCardsPhase1" description="The number of cards cleaned in Phase 1 of concurrent card cleaning" />
+		<data type="uintptr_t" name="concleanedCardsPhase2" description="The number of cards cleaned in Phase 2 of concurrent card cleaning" />
+		<data type="uintptr_t" name="concleanedCardsPhase3" description="The number of cards cleaned in Phase 3 of concurrent card cleaning" />
+		<data type="uintptr_t" name="concleanedCards" description="The number of cards cleaned in concurrent card cleaning" />		
+		<data type="uintptr_t" name="cardCleaningThreshold" description="the number of free bytes at which we targetted to start card cleaning phase" />
+		<data type="uintptr_t" name="cardCleaningPhase1KickOff" description="the number of free bytes at which we started the first phase of card cleaning" />
+		<data type="uintptr_t" name="cardCleaningPhase2KickOff" description="the number of free bytes at which we started the second phase ofcard cleaning" />
+		<data type="uintptr_t" name="cardCleaningPhase3KickOff" description="the number of free bytes at which we started the third phase of card cleaning" />
+		<data type="uintptr_t" name="workStackOverflowCount" description="the number of times concurrent work stacks have overflowed" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_COLLECTION_START</name>
+		<description>
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ConcurrentCollectionStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t"  name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="struct MM_CommonGCStartData*" name="gcStartData" description="common data for GC start events" />
+		<data type="uintptr_t" name="traceTarget" description="the targetted number of bytes to be concurrently traced" />
+		<data type="uintptr_t" name="tracedTotal" description="the number of bytes concurrently traced" />
+		<data type="uintptr_t" name="tracedByMutators" description="the number of bytes traced by mutators" />
+		<data type="uintptr_t" name="tracedByHelpers" description="the number of bytes traced by helper threads" />
+		<data type="uintptr_t" name="cardsCleaned" description="the number of cards cleaned" />
+		<data type="uintptr_t" name="cardCleaningPhase1Threshold" description="the number of free bytes at which we wish to start the first card cleaning phase" />
+		<data type="uintptr_t" name="workStackOverflowOccured" description="flag to indicate if workstack ovewrflow has occured" />
+		<data type="uintptr_t" name="workStackOverflowCount" description="the number of times concurrent work stacks have overflowed" />
+		<data type="uintptr_t" name="threadsToScanCount" description="the number of threads which were live at kickoff whose stacks needed to be scanned" />
+		<data type="uintptr_t" name="threadsScannedCount" description="the actual number of threads whose stacks were scanned" />
+		<data type="uintptr_t" name="cardCleaningReason" description="the reason card cleaning was started" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_COLLECTION_END</name>
+		<description>
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ConcurrentCollectionEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t"  name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t"  name="duration" description="the duration of the operation" />
+		<data type="uint64_t"  name="exclusiveAccessTime" description="time taken to get exclusive access" />				
+		<data type="struct MM_CommonGCEndData*" name="gcEndData" description="common data for GC end events" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_BACKGROUND_THREAD_ACTIVATED</name>
+		<description>
+		</description>
+		<struct>MM_ConcurrentBackgroundThreadActivatedEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_BACKGROUND_THREAD_FINISHED</name>
+		<description>
+		</description>
+		<struct>MM_ConcurrentBackgroundThreadFinishedEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uintptr_t" name="traceTotal" description="" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_COMPLETE_TRACING_START</name>
+		<description>
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ConcurrentCompleteTracingStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="workStackOverflowCount" description="the number of times concurrent work stacks have overflowed" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_COMPLETE_TRACING_END</name>
+		<description>
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ConcurrentCompleteTracingEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t" name="duration" description="the duration of the operation" />
+		<data type="uintptr_t" name="bytesTraced" description="The number of bytes traced" />
+		<data type="uintptr_t" name="workStackOverflowCount" description="the number of times concurrent work stacks have overflowed" />
+	</event>	
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_REMEMBERED_SET_SCAN_START</name>
+		<description>
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ConcurrentRememberedSetScanStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="workStackOverflowCount" description="the number of times concurrent work stacks have overflowed" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_REMEMBERED_SET_SCAN_END</name>
+		<description>
+		</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ConcurrentRememberedSetScanEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t" name="duration" description="the duration of the operation" />
+		<data type="uintptr_t" name="objectsFound" description="The number of objects found" />
+		<data type="uintptr_t" name="bytesTraced" description="The number of bytes traced" />
+		<data type="uintptr_t" name="workStackOverflowCount" description="the number of times concurrent work stacks have overflowed" />
+	</event>	
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_OBJECT_ENQUEUED_FOR_FINALIZATION</name>
+		<description>Reports that a job has been enqueued for finalization.</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ObjectEnqueuedForFinalizingEvent</struct>
+		<data type="struct OMR_VM*" name="OMR_VM" description="the OMR_VM instance" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="finalizerJob" description="flag to indicate whether to process job" />
+		<data type="class GC_FinalizerJob*" name="job" description="an instance of GC_FinalizerJob" />
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+	</event>	
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_HEAP_NEW</name>
+		<description>Report the creation of a new heap</description>
+		<struct>MM_HeapNewEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="void*" name="heap" description="an opaque pointer to the heap" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_HEAP_DELETE</name>
+		<description>Report the deletion of a heap</description>
+		<struct>MM_HeapDeleteEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="void*" name="heap" description="an opaque pointer to the heap" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_HEAP_RESIZE</name>
+		<description>Report the start of a heap expansion event through hooks.</description>
+		<struct>MM_HeapResizeEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="resizeType" description="the type of resize" />
+		<data type="uintptr_t" name="subSpaceType" description="the type of subspace, old or new" />
+		<data type="uint32_t" name="ratio" description="The percentage of time being spent in gc" />
+		<data type="uintptr_t" name="amount" description="how many bytes have been requested" />
+		<data type="uintptr_t" name="newHeapSize" description="the heap size following the resize" />
+		<data type="uint64_t" name="timeTaken" description="the time to resize the heap in ms(?)" />
+		<data type="uintptr_t" name="reason" description="the reason code for the resize" />		
+	</event>	
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_PERCOLATE_COLLECT</name>
+		<struct>MM_PercolateCollectEvent</struct>
+		<description></description>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="reason" description="reason for percolation" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_ALLOCATION_FAILURE_CYCLE_START</name>
+		<description></description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_AllocationFailureCycleStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="uint64_t"  name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="requestedBytes" description="the minimum number of bytes requested" />
+		<data type="struct MM_CommonGCStartData*" name="gcStartData" description="common data for GC start events" />
+		<data type="uintptr_t" name="subSpaceType" description="the type of subspace, old or new" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_ALLOCATION_FAILURE_CYCLE_END</name>
+		
+		<description></description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_AllocationFailureCycleEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="uint64_t"  name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t"  name="exclusiveAccessTime" description="time taken to get exclusive access" />
+		<data type="uintptr_t" name="subSpaceType" description="the type of subspace, old or new" />		
+		<data type="struct MM_CommonGCEndData*" name="gcEndData" description="common data for GC end events" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_ALLOCATION_FAILURE_START</name>
+		<description></description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_AllocationFailureStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="uint64_t"  name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="requestedBytes" description="the minimum number of bytes requested" />
+		<data type="struct MM_CommonGCStartData*" name="gcStartData" description="common data for GC start events" />
+		<data type="uintptr_t" name="subSpaceType" description="the type of subspace, old or new" />
+		<data type="bool" name="tenure" description="True if this allocation was directly from tenure" />
+		
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_ALLOCATION_FAILURE_END</name>
+		<description></description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_AllocationFailureEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="uint64_t"  name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t"  name="exclusiveAccessTime" description="time taken to get exclusive access" />
+		<data type="struct MM_CommonGCEndData*" name="gcEndData" description="common data for GC end events" />
+		<data type="class MM_AllocateDescription *" name="allocDescription" description="details about the allocation" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_SYSTEM_GC_START</name>
+		<description>
+			Triggered when a system GC is about to start.
+		</description>
+		<struct>MM_SystemGCStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint32_t" name="gcCode" description="reason for a system GC" />
+		<data type="struct MM_CommonGCStartData*" name="gcStartData" description="common data for GC start events" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_SYSTEM_GC_END</name>
+		<description>
+			Triggered when a system GC is completed.
+		</description>
+		<struct>MM_SystemGCEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t" name="exclusiveAccessTime" description="time taken to get exclusive access" />				
+		<data type="struct MM_CommonGCEndData*" name="gcEndData" description="common data for GC end events" />		
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_REMEMBEREDSET_OVERFLOW</name>
+		<description>
+			Inform consumers of RememberedSet overflow.
+		</description>
+		<struct>MM_RememberedSetOverflowEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_SCAVENGER_BACK_OUT</name>
+		<description>
+			Triggered when the scavenger backout flag value changes.
+		</description>
+		<struct>MM_ScavengerBackOutEvent</struct>
+		<data type="struct OMR_VM*" name="omrVM" description="the OMR_VM instance" />
+		<data type="BOOLEAN" name="value" description="the new value of the backout flag" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_EXCLUSIVE_ACCESS</name>
+		<description>
+			DEPRECATED: use J9HOOK_MM_EXCLUSIVE_ACCESS_ACQUIRE
+			Triggered when a garbage collector thread acquires exclusive VM access.
+		</description>
+		<struct>MM_ExclusiveAccessEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_EXCLUSIVE_ACCESS_ACQUIRE</name>
+		<description>
+			Triggered when a garbage collector thread acquires exclusive VM access.
+		</description>
+		<struct>MM_ExclusiveAccessAcquireEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t" name="exclusiveAccessTime" description="time (in ticks) of the last exclusive access request" />
+		<data type="uint64_t" name="meanIdleTime" description="mean idle time (in ticks) of the last exclusive access request" />
+		<data type="OMR_VMThread*" name="lastResponder" description="last thread to respond to last exclusive access request" />
+		<data type="uintptr_t" name="haltedThreads" description="number of threads halted by last exclusive access request" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_EXCLUSIVE_ACCESS_RELEASE</name>
+		<description>
+			Triggered when a garbage collector thread releases exclusive VM access.
+		</description>
+		<struct>MM_ExclusiveAccessReleaseEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_INVOKE_GC_CHECK</name>
+		<description>
+			Manually initiate a GCCheck run (as opposed to having one triggered by a GC).
+		</description>
+		<struct>MM_InvokeGCCheckEvent</struct>
+		<data type="struct OMR_VM*" name="omrVM" description="the OMR_VM" />
+		<data type="struct OMRPortLibrary*" name="portLibrary" description="where to output results" />
+		<data type="char*" name="options" description="options to GC check (e.g. all:all:verbose)" />
+		<data type="uintptr_t" name="invocationNumber" description="uniquely identifies which manual invocation has triggered the GCCheck" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENTLY_COMPLETED_SWEEP_PHASE</name>
+		<description>
+			Triggered when the sweep phase has been complete concurrently (not counting connection).
+		</description>
+		<struct>MM_ConcurrentlyCompletedSweepPhase</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t" name="timeElapsed" description="time elapsed during phase" />
+		<data type="uintptr_t" name="bytesSwept" description="Total heap bytes processed during phase" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_COMPLETED_CONCURRENT_SWEEP</name>
+		<description>
+			Triggered when the concurrent sweep and connect is completed for an STW garbage collection.
+		</description>
+		<struct>MM_CompletedConcurrentSweep</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t" name="timeElapsedSweep" description="time elapsed during sweep phase" />
+		<data type="uintptr_t" name="bytesSwept" description="Total heap bytes processed during sweep phase" />
+		<data type="uint64_t" name="timeElapsedConnect" description="time elapsed during connect phase" />
+		<data type="uintptr_t" name="bytesConnected" description="Total heap bytes processed during connect phase" />
+		<data type="uintptr_t" name="reason" description="The reason why the sweep requires completing" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_EXCESSIVEGC_CHECK_GC_ACTIVITY</name>
+		<description>
+			Triggered when we check to see how much time we are spending in GC.
+		</description>
+		<struct>MM_ExcessiveGCCheckGCActivityEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="gcCount" description="Collection id" />
+		<data type="uint64_t"  name="gcInTime" description="Total amount of time in GC this collection cycle" />
+		<data type="uint64_t"  name="gcOutTime" description="Total amount of time outside GC this collection cycle" />
+		<data type="float" name="newGCPercent" description="Percentage of time in GC for last collection cycle * 100" /> 
+		<data type="float" name="averageGCPercent" description="Average percentage of time spent in GC * 100" />
+		<data type="float" name="excessiveGCPercent" description="Excessive GC trigger level" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_EXCESSIVEGC_CHECK_FREE_SPACE</name>
+		<description>
+			Triggered when we check how much free space is being reclaimed when GC activity has reached excessive level. 
+		</description>
+		<struct>MM_ExcessiveGCCheckFreeSpaceEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="gcCount" description="Collection id" />
+		<data type="float" name="newGCPercent" description="Percentage of time in GC for last collection cycle * 100" /> 
+		<data type="float" name="averageGCPercent" description="Average percentage of time spent in GC * 100" />
+		<data type="float" name="excessiveGCPercent" description="Excessive GC trigger level" />
+		<data type="uintptr_t" name="freeMemoryDelta" description="Bytes of free memory reclaimed by current collection" />
+		<data type="float" name="reclaimedPercent" description="Percentage of heap space reclaimed this GC" />
+		<data type="uintptr_t" name="activeHeapSize" description="Current size of all active memory subspaces" />
+		<data type="uintptr_t" name="currentHeapSize" description="Current size of all memory subspaces" />
+		<data type="uintptr_t" name="maximumHeapSize" description="Maximum size of all memory subspaces" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CACHE_CLEARED</name>
+		<description>Triggered when an allocation cache is full.</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_CacheClearedEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="void *" name="subSpace" description="the subspace in which the cache allocated" />
+		<data type="void *" name="cacheBase" description="Address of first byte of cache" />
+		<data type="void *" name="cacheAlloc" description="Address of first unallocated byte in cache" />
+		<data type="void *" name="cacheTop" description="(Non-Inclusive) address of last byte of cache" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CACHE_REFRESHED</name>
+		<description>Triggered when a new allocation cache is allocated</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_CacheRefreshedEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="void *" name="subSpace" description="the subspace in which the cache allocated" />
+		<data type="void *" name="cacheBase" description="Address of first byte of cache" />
+		<data type="void *" name="cacheTop" description="(Non-Inclusive) address of last byte of cache" />
+	</event>	
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_NON_TLH_ALLOCATION</name>
+		<description>Triggered when an allocation is made which is too big for an allocation cache.</description>
+		<struct>MM_NonTLHAllocationEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="void *" name="objectPtr" description="pointer to the object which has been allocated" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_OBJECT_REMOVED_FROM_REMEMBERED_SET</name>
+		<description>Triggered when an object reference is removed from the remembered set</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_ObjectRemovedFromRememberedSetEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="void *" name="objectPtr" description="pointer to the object removed from the remembered set" />
+	</event>	
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_REBUILD_FREE_LIST</name>
+		<description>Triggered when a range of memory subspace is emptied out and added to free list</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_RebuildFreeListEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="void * " name="rangeBase" description="Address of base of range being added to free list" />
+		<data type="void * " name="rangeTop" description="Address of top of range being added to free list" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_MOVE_OBJECTS</name>
+		<description>Triggered when a range of objects is moved fromone heap location to another</description>
+		<condition>defined (__cplusplus)</condition>
+		<struct>MM_MoveObjectsEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
+		<data type="void * " name="sourceBase" description="Address of first object moved" />
+		<data type="void * " name="destinationBase" description="Address of target location for moved objects" />
+		<data type="uintptr_t" name="size" description="Size of memory range to be relocated" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CARD_CLEANING_PASS_2_START</name>
+		<description>
+			Triggered at the start of any second card cleaning pass.
+		</description>
+		<struct>MM_CardCleanPass2StartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>		
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_METRONOME_INCREMENT_START</name>
+		<description>
+			Triggered when a metronome GC increment begins.
+		</description>
+		<struct>MM_MetronomeIncrementStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uint64_t" name="exclusiveAccessTime" description="time GC master thread was blocked waiting to acquire Xaccess" />		
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_METRONOME_INCREMENT_END</name>
+		<description>
+			Triggered when a metronome GC increment ends.
+		</description>
+		<struct>MM_MetronomeIncrementEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="heapFree" description="heap bytes free" />
+		<data type="uintptr_t" name="immortalFree" description="immortal memory bytes free" />
+		<data type="uintptr_t" name="classLoadersUnloaded" description="classLoader unloaded in the last GC cycle" />		
+		<data type="uintptr_t" name="classesUnloaded" description="classes unloaded in the last GC cycle" />
+		<data type="uintptr_t" name="anonymousClassesUnloaded" description="anonymous classes unloaded in the last GC cycle" />
+		<data type="uintptr_t" name="nonDeterministicSweepCount" description="non deterministic sweeps between two quantas" />
+		<data type="uintptr_t" name="nonDeterministicSweepConsecutive" description="longest streak of non deterministic sweeps in one alloc" />
+		<data type="uint64_t" name="nonDeterministicSweepDelay" description="longest delay of non deterministic sweeps in one alloc" />
+		<data type="uintptr_t" name="weakReferenceClearCount" description="number of weak references" />
+		<data type="uintptr_t" name="softReferenceClearCount" description="number of soft references" />
+		<data type="uintptr_t" name="softReferenceThreshold" description="soft reference threshold (-Xsoftrefthreshold)" />
+		<data type="uintptr_t" name="dynamicSoftReferenceThreshold" description="dynamic soft reference threshold (-Xsoftrefthreshold * percentage of tenured space free after previous GC)" />
+		<data type="uintptr_t" name="phantomReferenceClearCount" description="number of phantom references" />
+		<data type="uintptr_t" name="finalizableCount" description="number of object pushed for finalization" />
+		<data type="uintptr_t" name="workPacketOverflowCount" description="number of work packets overflowed between two quanta" />
+		<data type="uintptr_t" name="objectOverflowCount" description="number of individual objects overflowed between two quanta" />
+	</event>
+		
+	<event>
+		<name>J9HOOK_MM_PRIVATE_METRONOME_SYNCHRONOUS_GC_START</name>
+		<description>
+			Triggered when metronome decides to complete a GC synchronously.
+		</description>
+		<struct>MM_MetronomeSynchronousGCStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="reason" description="reason the GC is being completed synchronously" />
+		<data type="uintptr_t" name="reasonParameter" description="additional info specific to the reason" />
+		<data type="uintptr_t" name="heapFree" description="heap bytes free" />
+		<data type="uintptr_t" name="immortalFree" description="immortal memory bytes free" />
+		<data type="uintptr_t" name="classLoadersUnloaded" description="classLoaders unloaded" />
+		<data type="uintptr_t" name="classesUnloaded" description="classes unloaded" />
+		<data type="uintptr_t" name="anonymousClassesUnloaded" description="anonymous classes unloaded" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_METRONOME_SYNCHRONOUS_GC_END</name>
+		<description>
+			Triggered when synchronous GC is completed.
+		</description>
+		<struct>MM_MetronomeSynchronousGCEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="heapFree" description="heap bytes free" />
+		<data type="uintptr_t" name="immortalFree" description="immortal memory bytes free" />
+		<data type="uintptr_t" name="classLoadersUnloaded" description="classLoaders unloaded" />
+		<data type="uintptr_t" name="classesUnloaded" description="classes unloaded" />
+		<data type="uintptr_t" name="anonymousClassesUnloaded" description="anonymous classes unloaded" />
+		<data type="uintptr_t" name="weakReferenceClearCount" description="number of weak references" />
+		<data type="uintptr_t" name="softReferenceClearCount" description="number of soft references" />
+		<data type="uintptr_t" name="softReferenceThreshold" description="soft reference threshold (-Xsoftrefthreshold)" />
+		<data type="uintptr_t" name="dynamicSoftReferenceThreshold" description="dynamic soft reference threshold (-Xsoftrefthreshold * percentage of tenured space free after previous GC)" />
+		<data type="uintptr_t" name="phantomReferenceClearCount" description="number of phantom references" />
+		<data type="uintptr_t" name="finalizableCount" description="number of object pushed for finalization" />
+		<data type="uintptr_t" name="workPacketOverflowCount" description="number of work packets overflowed during the Synchronous Collect" />		
+		<data type="uintptr_t" name="objectOverflowCount" description="number of individual objects overflowed during the Synchronous Collect" />
+	</event>	
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_METRONOME_TRIGGER_START</name>
+		<description>
+			Triggered when metronome decides to start a continuous GC due to low free memory (below trigger point).
+		</description>
+		<struct>MM_MetronomeTriggerStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>	
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_METRONOME_TRIGGER_END</name>
+		<description>
+			Triggered when metronome freed enough memory (above trigger point) after a just finished GC cycle.
+		</description>
+		<struct>MM_MetronomeTriggerEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>	
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_OUT_OF_MEMORY</name>
+		<description>
+			Triggered when we are about to return NULL from J9AllocateObject() or J9AllocateIndexableObject().
+		</description>
+		<struct>MM_OutOfMemoryEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="void*" name="memorySpace" description="the MM_MemorySpace associated with the OOM. void* since it gets passed through C code" />
+		<data type="const char*" name="memorySpaceString" description="string representing the memoryspace associated with the OOM" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_UTILIZATION_TRACKER_OVERFLOW</name>
+		<description>
+			Triggered when the utilization tracker has overflowed its _timeSliceDuration array
+		</description>
+		<struct>MM_UtilizationTrackerOverflowEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="void*" name="utilizationTrackerAddress" description="address of the utilization tracker" />
+		<data type="void*" name="timeSliceDurationArrayAddress" description="address of the utilization tracker's timeSliceDuration array" />
+		<data type="uintptr_t" name="timeSliceCursor" description="value of the cursor detected to have overflowed" />
+	</event>
+	
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_NON_MONOTONIC_TIME</name>
+		<description>
+			Triggered when the GC detects time going backwards 
+		</description>
+		<struct>MM_NonMonotonicTimeEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="const char*" name="timerDesc" description="description of the relative timer that acknowledged the non-monotonic time" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE</name>
+		<description>
+			Triggered just before the end of a global GC
+		</description>
+		<struct>MM_ReportMemoryUsageEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="struct MM_MemoryStatistics*" name="statistics" description="" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_VLHGC_GARBAGE_COLLECT_COMPLETED</name>
+		<description>
+			Triggered at the end of a GC but before the final cleanup and increment end reporting
+		</description>
+		<struct>MM_VlhgcGarbageCollectCompletedEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_COPY_FORWARD_ABORT</name>
+		<description>
+			Triggered when the copy forward scheme raises the abort flag.
+		</description>
+		<struct>MM_CopyForwardAbortEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_COPY_FORWARD_START</name>
+		<description>
+			Triggered when the copy forward operation is about to start.
+			NOTE: For internal GC use only.
+		</description>
+		<struct>MM_CopyForwardStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="void *" name="copyForwardStats" description="internal statistics for copy forward" /> 
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_COPY_FORWARD_END</name>
+		<description>
+			Triggered when the copy forward cycle operations end.
+			NOTE: For internal GC use only.
+		</description>
+		<struct>MM_CopyForwardEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="void *" name="copyForwardStats" description="internal statistics for copy forward" /> 
+		<data type="void *" name="workPacketStats" description="Stat class used for work packets" />
+		<data type="void *" name="irrsStats" description="Inter region remembered set stats" />
+	</event>
+		
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_GMP_START</name>
+		<description>
+			Triggered when concurrent GMP work begins.
+			NOTE:  Only expected to be used by verbose GC output.
+		</description>
+		<struct>MM_ConcurrentGMPStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="void *" name="concurrentGMPStats" description="internal statistics for concurrent GMP" /> 
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_GMP_END</name>
+		<description>
+			Triggered when concurrent GMP work ends.
+			NOTE:  Only expected to be used by verbose GC output.
+		</description>
+		<struct>MM_ConcurrentGMPEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="void *" name="concurrentGMPStats" description="internal statistics for concurrent GMP" /> 
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_MARK_END</name>
+		<description>
+			Triggered when a mark phase is completed.
+		</description>
+		<struct>MM_MarkEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_GMP_MARK_START</name>
+		<description>
+			Triggered when a GMP mark phase increment is started.
+		</description>
+		<struct>MM_GMPMarkStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="void *" name="markStats" description="Stat class used for marking" />
+		<data type="void *" name="workPacketStats" description="Stat class used for work packets" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_GMP_MARK_END</name>
+		<description>
+			Triggered when a GMP mark phase increment ends.
+		</description>
+		<struct>MM_GMPMarkEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="void *" name="markStats" description="Stat class used for marking" />
+		<data type="void *" name="workPacketStats" description="Stat class used for work packets" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_VLHGC_GLOBAL_GC_MARK_START</name>
+		<description>
+			Triggered when a vlhgc global gc mark phase is started.
+		</description>
+		<struct>MM_VLHGCGlobalGCMarkStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="void *" name="markStats" description="Stat class used for marking" />
+		<data type="void *" name="workPacketStats" description="Stat class used for work packets" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_VLHGC_GLOBAL_GC_MARK_END</name>
+		<description>
+			Triggered when a vlhgc global gc mark phase ends.
+		</description>
+		<struct>MM_VLHGCGlobalGCMarkEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="void *" name="markStats" description="Stat class used for marking" />
+		<data type="void *" name="workPacketStats" description="Stat class used for work packets" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_PGC_MARK_START</name>
+		<description>
+			Triggered when a PGC mark phase increment is started.
+		</description>
+		<struct>MM_PGCMarkStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="void *" name="markStats" description="Stat class used for marking" />
+		<data type="void *" name="workPacketStats" description="Stat class used for work packets" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_PGC_MARK_END</name>
+		<description>
+			Triggered when a PGC mark phase increment ends.
+		</description>
+		<struct>MM_PGCMarkEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="void *" name="markStats" description="Stat class used for marking" />
+		<data type="void *" name="workPacketStats" description="Stat class used for work packets" />
+		<data type="void *" name="irrsStats" description="Inter region remembered set stats" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_RECLAIM_SWEEP_START</name>
+		<description>
+			Triggered when a reclaim sweep event starts.
+		</description>
+		<struct>MM_ReclaimSweepStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="void *" name="sweepStats" description="Stat class used for sweep" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_RECLAIM_SWEEP_END</name>
+		<description>
+			Triggered when a reclaim sweep event ends.
+		</description>
+		<struct>MM_ReclaimSweepEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="void *" name="sweepStats" description="Stat class used for sweep" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_RECLAIM_COMPACT_START</name>
+		<description>
+			Triggered when a reclaim compact event starts.
+		</description>
+		<struct>MM_ReclaimCompactStartEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="void *" name="compactStats" description="Stat class used for compact" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_RECLAIM_COMPACT_END</name>
+		<description>
+			Triggered when a reclaim compact event ends.
+		</description>
+		<struct>MM_ReclaimCompactEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="void *" name="compactStats" description="Stat class used for compact" />
+		<data type="void *" name="irrsStats" description="Inter region remembered set stats" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END</name>
+		<description>
+			Private hook triggered after the public CYCLE_END event. Used by verbose GC to track time spent in other components that hooks the public CYCLE_END event.
+		</description>
+		<struct>MM_GCPostCycleEndEvent</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="struct MM_CommonGCData*" name="commonData" description="common heap data" />
+		<data type="uintptr_t" name="cycleType" description="the type of cycle" />
+		<data type="uintptr_t" name="workStackOverflowOccured" description="flag to indicate if workstack ovewrflow has occured" />
+		<data type="uintptr_t" name="workStackOverflowCount" description="the number of times concurrent work stacks have overflowed" />
+		<data type="uintptr_t" name="workpacketCount" description="the number of workpackets being used when overflow occurred" />
+		<data type="uintptr_t" name="fixHeapForWalkReason" description="reason for fixHeapForWalk" />
+		<data type="uint64_t" name="fixHeapForWalkTime" description="time spent in fixHeapForWalk in ms" />
+	</event>	
+
+	<event>
+		<name>J9HOOK_MM_PRIVATE_ACQUIRED_EXCLUSIVE_TO_SATISFY_ALLOCATION</name>
+		<description>
+			Private hook triggered if exclusive access was acquired for an allocation, but the allocation was then satisfied without having to GC.
+			This typically represents a thrashing / spinning avoidance decision - had to acquire exclusive in order to ensure the thread made forward
+			progress.
+		</description>
+		<struct>MM_AcquiredExclusiveToSatisfyAllocation</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="bytesRequested" description="bytes requested for the allocation" />
+		<data type="uintptr_t" name="subSpaceTypeFlags" description="flags used to identify the type of subspace where the allocation was satisfied" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_MM_PRIVATE_FAILED_ALLOCATION_COMPLETED</name>
+		<description>
+			Private hook triggered when an allocation which caused an AF is completed
+		</description>
+		<struct>MM_FailedAllocationCompleted</struct>
+		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
+		<data type="uint64_t" name="timestamp" description="time of event" />
+		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
+		<data type="uintptr_t" name="succeeded" description="was the allocation successful TRUE/FALSE" />
+		<data type="uintptr_t" name="bytesRequested" description="bytes requested for the allocation" />
+	</event>	
+	
+</interface>
