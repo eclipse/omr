@@ -1303,37 +1303,16 @@ retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
 		}
 	}
 
-	/* Get total used swap memory. */
+	/* Get total used and free swap memory. */
 	if (0 == ret) {
 		struct xsw_usage vmusage = {0};
 		size_t size = sizeof(vmusage);
 		if (0 == sysctlbyname("vm.swapusage", &vmusage, &size, NULL, 0))
 		{
 			memInfo->totalSwap = vmusage.xsu_total;
+			memInfo->availSwap = vmusage.xsu_avail;
 		} else {
 			ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
-		}
-	}
-
-	/* Get total free swap memory available. */
-	if (0 == ret) {
-		if (0 == memInfo->totalSwap) {
-			memInfo->availSwap = 0;
-		} else {
-			struct statfs stats;
-			if (0 == statfs("/", &stats))
-			{
-				/*
-				 * Unlike most Unix-based operating systems, Mac OS X does not use a preallocated swap
-				 * partition for virtual memory. Instead, it uses all of the available space on the
-				 * machine’s boot partition.
-				 *
-				 * Return the size of the free space of the root partition.
-				 */
-				memInfo->availSwap = (uint64_t)stats.f_bsize * stats.f_bfree;
-			} else {
-				ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
-			}
 		}
 	}
 
