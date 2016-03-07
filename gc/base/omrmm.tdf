@@ -1,0 +1,51 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+// (c) Copyright IBM Corp. 1998, 2014
+//
+//  This program and the accompanying materials are made available
+//  under the terms of the Eclipse Public License v1.0 and
+//  Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+// Contributors:
+//    Multiple authors (IBM Corp.) - initial implementation and documentation
+////////////////////////////////////////////////////////////////////////////////
+
+Executable=omrmm
+DATFileName=OMRTraceFormat.dat
+
+// IMPORTANT: 1) ONLY ADD ENTRIES TO THE END OF THIS FILE
+//            2) DO NOT MODIFY AN EXISTING ENTRY - MARK THE EXISTING ONE OBSOLETE AND ADD A NEW ONE
+//            3) ENTRIES ADDED TO .tdf FILES IN SERVICE STREAMS MUST BE PROPAGATED FORWARD TO DEVLINE
+
+TraceEvent=Trc_OMRMM_SystemGCStart Overhead=1 Level=1 Group=gclogger Template="SystemGC start: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+TraceEvent=Trc_OMRMM_SystemGCEnd Overhead=1 Level=1 Group=gclogger Template="SystemGC end: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+
+TraceExit=Trc_OMRMM_MemorySubSpace_percolateGarbageCollect_Exit1 Overhead=1 Level=1 Group=percolate Template="MM_MemorySubSpace_percolateGarbageCollect Exit1 Garbage collect percolated to parent, result = %s"
+TraceExit=Trc_OMRMM_MemorySubSpace_percolateGarbageCollect_Exit2 Overhead=1 Level=1 Group=percolate Template="MM_MemorySubSpace_percolateGarbageCollect Exit2 Unable to percolate Garbage Collection"
+
+TraceEvent=Trc_OMRMM_MarkStart Overhead=1 Level=1 Group=gclogger Template="Mark start"
+TraceEvent=Trc_OMRMM_MarkEnd Overhead=1 Level=1 Group=gclogger Template="Mark end"
+TraceEvent=Trc_OMRMM_SweepStart Overhead=1 Level=1 Group=gclogger Template="Sweep start"
+TraceEvent=Trc_OMRMM_SweepEnd Overhead=1 Level=1 Group=gclogger Template="Sweep end"
+
+TraceEvent=Trc_OMRMM_LocalGCStart Overhead=1 Level=1 Group=gclogger Template="LocalGC start: globalcount=%zu scavengecount=%zu weakrefs=%zu soft=%zu phantom=%zu finalizers=%zu"
+TraceEvent=Trc_OMRMM_LocalGCEnd Overhead=1 Level=1 Group=gclogger Template="LocalGC end: rememberedsetoverflow=%zu causedrememberedsetoverflow=%zu scancacheoverflow=%zu failedflipcount=%zu failedflipbytes=%zu failedtenurecount=%zu failedtenurebytes=%zu flipcount=%zu flipbytes=%zu newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu tenureage=%zu"
+
+TraceEvent=Trc_OMRMM_AllocationFailureStart Overhead=1 Level=1 Group=gclogger Template="Allocation failure start: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu requestedbytes=%zu"
+TraceEvent=Trc_OMRMM_AllocationFailureEnd Overhead=1 Level=1 Group=gclogger Template="Allocation failure end: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+TraceEvent=Trc_OMRMM_AllocationFailureCycleStart Overhead=1 Level=1 Group=gclogger Template="Allocation failure cycle start: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu requestedbytes=%zu"
+TraceEvent=Trc_OMRMM_AllocationFailureCycleEnd Overhead=1 Level=1 Group=gclogger Template="Allocation failure cycle end: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+
+TraceEvent=Trc_OMRMM_GlobalGCStart Overhead=1 Level=1 Group=gclogger Template="GlobalGC start: globalcount=%zu"
+TraceEvent=Trc_OMRMM_GlobalGCEnd Overhead=1 Level=1 Group=gclogger Template="GlobalGC end: workstackoverflow=%zu overflowcount=%zu memory=%zu/%zu"
+TraceEvent=Trc_OMRMM_GlobalGCCollectComplete Overhead=1 Level=1 Group=gclogger Template="GlobalGC collect complete"
+
+TraceEvent=Trc_OMRMM_CompactStart Overhead=1 Level=1 Group=gclogger Template="Compact start: reason=%s"
+TraceEvent=Trc_OMRMM_CompactEnd Overhead=1 Level=1 Group=gclogger Template="Compact end: bytesmoved=%zu"
+TraceEvent=Trc_OMRMM_CompactScheme_evacuateSubArea_subAreaCompactedBFreeSpaceRemaining Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) compacted (B), moved %zu bytes, %zu free"

@@ -1,0 +1,71 @@
+// (c) Copyright IBM Corp. 2010, 2016
+//
+//  This program and the accompanying materials are made available
+//  under the terms of the Eclipse Public License v1.0 and
+//  Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+// Contributors:
+//    Multiple authors (IBM Corp.) - initial implementation and documentation
+
+Executable=j9thr
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_THR_VMInitStages_Event1 Overhead=1 Level=1 Test Template="Trace engine initialized for module j9thr"
+
+TraceEvent=Trc_THR_Adapt_DisableSpinning Overhead=1 Level=3 NoEnv Test Template="Adapt: disabling spinning for %s monitor 0x%p based on avg holdtime (%llu / %zu) = %llu, slow percent (%zu / %zu) = %zu"
+TraceEvent=Trc_THR_Adapt_EnableSpinning Overhead=1 Level=3 NoEnv Test Template="Adapt: enabling spinning for %s monitor 0x%p based on avg holdtime (%llu / %zu) = %llu, slow percent (%zu / %zu) = %zu"
+TraceEvent=Trc_THR_Adapt_StopSampling Overhead=1 Level=3 NoEnv Test Template="Adapt: sampling stopped for %s monitor 0x%p based on avg holdtime (%llu / %zu) = %llu, slow percent (%zu / %zu) = %zu"
+TraceEvent=Trc_THR_Adapt_StartSampling Overhead=1 Level=3 NoEnv Test Template="Adapt: sampling started for %s monitor 0x%p"
+TraceAssert=Assert_THR_true NoEnv Test Overhead=1 Level=1 Assert="(P1)"
+
+TraceEntry=Trc_THR_ThreadSuspendEnter Overhead=1 Level=3 NoEnv Test Template="Thread suspended, thread=0x%p"
+TraceExit=Trc_THR_ThreadSuspendExit Overhead=1 Level=3 NoEnv Test Template="Thread resumed from suspend, thread=0x%p"
+TraceEvent=Trc_THR_ThreadResumed Overhead=1 Level=3 NoEnv Test Template="Thread resumed by another thread, target thread=0x%p, calling thread=0x%p"
+
+TraceEntry=Trc_THR_ThreadMonitorNotifyEnter Overhead=1 Level=3 NoEnv Test Template="Thread notifying monitor, thread=0x%p, monitor=0x%p, notifyAll=%d"
+TraceEvent=Trc_THR_ThreadMonitorNotifyThreadNotified Overhead=1 Level=3 NoEnv Test Template="Thread notifying monitor, notifying thread=0x%p, target thread=0x%p, monitor=0x%p" // (once for each thread notified)
+TraceExit=Trc_THR_ThreadMonitorNotifyExit Overhead=1 Level=3 NoEnv Test Template="Thread notifying monitor complete, thread=0x%p, monitor=0x%p, returnCode=%zd"
+
+TraceEntry=Trc_THR_ThreadInterruptEnter Overhead=1 Level=3 NoEnv Test Template="Thread interrupting another thread, interrupting thread=0x%p, interrupted thread=0x%p"
+TraceExit=Trc_THR_ThreadInterruptExit Overhead=1 Level=3 NoEnv Test Template="Thread interrupt done, interrupted thread=0x%p"
+
+TraceEvent=Trc_THR_ThreadSetName Overhead=1 Level=3 NoEnv Test Template="Thread name set, thread=0x%p, name=%s"
+TraceEvent=Trc_THR_ThreadSetPriority Overhead=1 Level=3 NoEnv Test Template="Thread priority set, thread=0x%p, priority=%zu"
+TraceEvent=Trc_THR_ThreadNUMAAffinitySet Overhead=1 Level=3 NoEnv Test Template="Thread affinity set, thread=0x%p, nodeNumber=%zu"
+
+TraceEvent=Trc_THR_ThreadSpinLockThreadUnblocked Overhead=1 Level=3 NoEnv Test Template="Spinlock thread unblocked, unblocked thread=0x%p, target thread=0x%p, monitor=0x%p"  //(once for each thread unblocked)
+
+TraceException=Trc_THR_ThreadGetCpuTime_Bpxgth Overhead=1 Level=1 NoEnv Test Template="BPXGTH call failed for thread=0x%p, ret_val=%d, ret_code=%d, reason_code=%d"
+TraceException=Trc_THR_ThreadGetCpuTime_BpxgthData Overhead=1 Level=1 NoEnv Test Template="BPXGTH did not populate data for thread=0x%p, ret_val=%d, limitc=%d"
+TraceException=Trc_THR_ThreadGetCpuTime_BpxgthBuffer Overhead=1 Level=1 NoEnv Test Template="BPXGTH Buffer Overrun for thread=0x%p, ret_val=%d, data_offset=%d, lenused=%d, output_size=%d"
+TraceException=Trc_THR_ThreadGetCpuTime_BpxgthEye Overhead=1 Level=1 NoEnv Test Template="BPXGTH pgthj eyecatcher missing for thread=0x%p, ret_val=%d"
+
+TraceException=Trc_THR_ThreadGetProcessTimes_GetProcessTimesFailed Overhead=1 Level=1 NoEnv Test Template="GetProcessTimes failed obtaining process times: error=%d"
+TraceException=Trc_THR_ThreadGetProcessTimes_getrusageFailed Overhead=1 Level=1 NoEnv Test Template="getrusage failed obtaining process times: error=%d"
+TraceException=Trc_THR_ThreadGetProcessTimes_bpxNgthFailed Overhead=1 Level=1 NoEnv Test Template="BPXNGTH failed obtaining process times: return_code=%d, reason_code=%d"
+
+TraceException=Trc_THR_omrthread_get_jvm_cpu_usage_info_get_cpu_time_failed Obsolete Overhead=1 Level=1 NoEnv Test Template="omrthread_get_cpu_time failed for thread=0x%p, threadCpuTime=%lld"
+TraceException=Trc_THR_omrthread_get_jvm_cpu_usage_thread_walk_failed Overhead=1 Level=1 NoEnv Test Template="thread walk failed with ret=%d"
+TraceException=Trc_THR_omrthread_get_jvm_cpu_usage_timestamp_failed Overhead=1 Level=1 NoEnv Test Template="timestamp incorrect, preTimestamp=%llu, postTimestamp=%llu"
+
+TraceException=Trc_THR_omrthread_set_category_invalid_category Overhead=1 Level=1 NoEnv Test Template="Invalid thread category=%d for thread=0x%p"
+
+TraceException=Trc_THR_fixupThreadAccounting_omrthread_get_cpu_time_ex_failed Obsolete Overhead=1 Level=1 NoEnv Test Template="omrthread_get_cpu_time_ex returned error=%lld for thread=0x%p"
+
+TraceException=Trc_THR_omrthread_get_cpu_time_ex_nullOSHandle Overhead=1 Level=1 NoEnv Test Template="omrthread_get_handle returned null for thread=0x%p"
+TraceException=Trc_THR_omrthread_get_cpu_time_ex_GetThreadTimes_failed Overhead=1 Level=1 NoEnv Test Template="GetThreadTimes returned error=%d for thread=0x%p"
+TraceException=Trc_THR_omrthread_get_cpu_time_ex_pthread_getrusage_np_failed Overhead=1 Level=1 NoEnv Test Template="pthread_getrusage_np returned error=%d for thread=0x%p"
+TraceException=Trc_THR_omrthread_get_cpu_time_ex_pthread_getcpuclockid_failed Overhead=1 Level=1 NoEnv Test Template="pthread_getcpuclockid returned error=%d for thread=0x%p"
+
+TraceException=Trc_THR_omrthread_get_jvm_cpu_usage_info_get_cpu_time_ex_failed Overhead=1 Level=1 NoEnv Test Template="omrthread_get_cpu_time_ex failed for thread=0x%p, result=%zd"
+TraceException=Trc_THR_omrthread_get_cpu_time_ex_clock_gettime_failed Overhead=1 Level=1 NoEnv Test Template="clock_gettime failed for clock_id=%d with error=%zd for thread=0x%p"
+TraceException=Trc_THR_fixupThreadAccounting_omrthread_get_cpu_time_ex_error Overhead=1 Level=1 NoEnv Test Template="omrthread_get_cpu_time_ex returned error=%zd for thread=0x%p"
+
+
+TraceEvent=Trc_THR_EnableRawMonitorSpin_CustomSpinOption Overhead=1 Level=3 NoEnv Test Template="(ENABLE_RAW_MONITOR_SPIN) Using custom spin counts: %s, monitor: %p, threeTierSpinCount1: %zu, threeTierSpinCount2: %zu, threeTierSpinCount3: %zu, adaptSpin: %zu"

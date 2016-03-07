@@ -1,0 +1,177 @@
+<?xml version="1.0" ?>
+<!--
+	(c) Copyright IBM Corp. 2015, 2016
+
+	 This program and the accompanying materials are made available
+	 under the terms of the Eclipse Public License v1.0 and
+	 Apache License v2.0 which accompanies this distribution.
+
+	     The Eclipse Public License is available at
+	     http://www.eclipse.org/legal/epl-v10.html
+	     The Apache License v2.0 is available at
+	     http://www.opensource.org/licenses/apache2.0.php
+
+	Contributors:
+	   Multiple authors (IBM Corp.) - initial implementation and documentation
+-->
+<gc-config>
+	<!-- <option> specifies test options:
+	
+		Attributes:
+		- verbose log options:
+			-- verboseLog (DEFAULT "VerboseGCOutput"): prefix for verbose log name (i.e., <verboseLog>_<pid>_<currentTime>).
+			-- numOfFiles: number of verbose log files. It has to be used with numOfCycle.
+			-- numOfCycles: number of gc cycles in one verbose file. If numOfFiles and numOfCycles are provided, the rolling log option is enabled.
+		- gc options:
+			-- sizeUnit (DEFAULT "B"): size unit (i.e., B, KB, MB, GB) for the gc size options.
+			-- internal gc options: memoryMax, initialMemorySize, minNewSpaceSize, newSpaceSize, maxNewSpaceSize, minOldSpaceSize, oldSpaceSize, maxOldSpaceSize, allocationIncrement,
+			   fixedAllocationIncrement, lowMinimum, allowMergedSpaces, maxSizeDefaultMemorySpace.
+	 -->
+	<option verboseLog="VerboseGC" numOfFiles="5" numOfCycles="4" sizeUnit="KB" initialMemorySize="512" memoryMax="524288" maxSizeDefaultMemorySpace="524288" minOldSpaceSize="512"
+			oldSpaceSize="512" maxOldSpaceSize="524288" />
+	<allocation>
+		<!-- <garbagePolicy> node specifies the garbage inserting policy for current allocation section.
+		
+			Attributes:
+			- namePrefix (DEFAULT "GARBAGE"): prefix for internal garbage object name.
+			- frequency=["perRootStruct"|"perObject"] (DEFAULT "perRootStruct"): garbage inserting frequency. "perRootStruct" means to insert garbage structure after every root 
+			  structure is allocated. The root structure can be a single object (e.g., "objA"), a tree (e.g., "objB") or a set of trees (e.g., "objI"). "perObject" is to insert garbage 
+			  structure after every object (except garbage).
+			- percentage (DEFAULT "100"): percentage = garbage structure size / previous structure size * 100. If frequency="perObject", the previous structure is an object.
+			  If frequency="perRootStrut", the previous structure is a root structure. The size of the garbage object (i.e., type="garbage") in previous structure will be ignored.
+			- structure=["node"|"tree"] (DEFAULT "object"): structure of the garbage.
+		-->
+		<garbagePolicy namePrefix="GAR" percentage="20" frequency="perRootStruct" structure="tree" />
+	
+		<!-- <object> node defines an object structure. The structure can be a single object or tree structure. There are two ways to represent tree structure, nested and repeated. The nested 
+			representation defines a tree structure with a set of nested <object> nodes (e.g., "objB"). The repeated representation defines a tree structure by using a <object> node with depth 
+			and breath attribute (e.g., "objI"). This representation is a simple way to create large symmetrical tree structures without explicitly specify each object node.
+
+			Attributes:
+			- namePrefix: prefix for object name. In order to differentiate the objects defined in repeated tree, each object is named as <namePrefix>_<row>_<positionInRow>. <row> is the row 
+			  number (starts with 0) of the object node in its repeated tree. <positionInRow> is it position (starts with 0) in current row of the repeated tree.
+			- type=["root"|"normal"|"garbage"]: the type of the object.
+			- numOfFields: size of the object represented in fields. In repeated representation, the value of numOfFileds can be an array of integers separated by comma. We iterate through the 
+			  array and assign numOfFields to each object in breadth-first traversal order. A example is shown in "objK" below. The size of the parent needs to be big enough to hold all its children references. This means the numOfFields of the parent object should be no less than the number of children
+			it contains.
+			- depth (DEFAULT "1"): the number of depth the repeated tree contains.
+			- breadth (DEFAULT "1"): the number of child objects referenced by parent object in repeated tree. Breadth can be an integer or an array of integers separated by comma. We iterate 
+			  through the breadth array and apply breath value at each depth layer. A example is shown in "objK" below.
+		-->
+		
+		<!-- The following example creates a root objA_0_0 with the size of 10 fields. 
+		-->
+		<object namePrefix="objA" type="root" numOfFields="10"/>
+
+		<!-- The following example creates tree:
+			                 objB(numOfFields: 2) (root)
+			                     /              \
+			objC_0_0(numOfFields: 10)          objD_0_0(numOfFields: 1)
+			                                          |
+			                                   objE_0_0(numOfFields: 10)
+		-->
+		<object namePrefix="objB" type="root" numOfFields="2" >
+			<object namePrefix="objC" type="normal" numOfFields="10" />
+			<object namePrefix="objD" type="normal" numOfFields="1" >
+				<object namePrefix="objE" type="normal" numOfFields="10" />
+			</object>
+		</object>
+
+		<!-- The following example creates a tree of garbage objects, the top object is not referenced by any other object.
+		                     objF_0_0(numOfFields: 100)
+		                                  |
+		                     objG_0_0(numOfFields: 50)
+		                                  |
+		                     objH_0_0(numOfFields: 10)
+		-->
+		<object namePrefix="objF" type="garbage" numOfFields="100" >
+			<object namePrefix="objG" type="garbage" numOfFields="50" >
+				<object namePrefix="objH" type="garbage" numOfFields="10" />
+			</object>
+		</object>
+		
+		<!-- The following example creates structure:
+			             _	
+			            |                     objI_0_0(numOfFields: 10)      objI_0_1(numOfFields: 10)
+			   depth 2  |                    /          |                        |         \
+			            |_	objI_1_0(numOfFields: 10)  objI_1_1(numOfFields: 10)   objI_1_2(numOfFields: 10)  objI_1_3(numOfFields: 10)
+		-->
+		<object namePrefix="objI" type="root" numOfFields="10" breadth="2" depth="2" />
+
+		<object namePrefix="objJ" type="root" numOfFields="20" >
+
+			<!-- The following example creates a tree of garbage objects:
+			             _
+			            |                                             objK_0_0(numOfFields: 15)
+			            |                                                /                \
+			            |                             objK_1_0(numOfFields: 30)     objK_1_1(numOfFields: 60)
+			   depth 4  |                                             |                       |
+			            |                             objK_2_0(numOfFields: 15)      objK_2_1(numOfFields: 30)
+			            |                            /                |                       |              \
+			            |_	objK_3_0(numOfFields: 60)  objK_3_1(numOfFields: 15)   objK_3_2(numOfFields: 30)  objK_3_3(numOfFields: 60)
+			-->
+			<object namePrefix="objK" type="garbage" numOfFields="15,30,60" breadth="1,2" depth="4" />
+			
+			<!-- The following example creates structure:
+			             _                                 |
+			            |                       objL_0_0(numOfFields: 7)
+			            |                                  |
+			            |                       objL_1_0(numOfFields: 14)
+			   depth 4  |                                  |
+			            |                       objL_2_0(numOfFields: 18)
+			            |                                  |
+			            |_                      objL_3_0(numOfFields: 7)
+			-->
+			<object namePrefix="objL" type="normal" numOfFields="7,14,18" breadth="1" depth="4" />
+			
+			<!-- The following example creates two binary trees of garbage objects with depth of 15 -->
+			<object namePrefix="objM" type="garbage" numOfFields="15,40,70" breadth="2" depth="15" />
+		</object>
+	</allocation>
+	<operation>
+		<!-- <systemCollect> node invokes OMR_GC_SystemCollect
+
+			Attribute:
+			- gcCode (DEFAULT "0"): gcCode to pass into OMR_GC_SystemCollect, available gcCode: 
+				#define J9MMCONSTANT_IMPLICIT_GC_DEFAULT  0
+				#define J9MMCONSTANT_EXPLICIT_GC_NOT_AGGRESSIVE  1
+				#define J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT  2
+				#define J9MMCONSTANT_EXPLICIT_GC_EXCLUSIVE_VMACCESS_ALREADY_ACQUIRED  2
+				#define J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC  3
+				#define J9MMCONSTANT_EXPLICIT_GC_NATIVE_OUT_OF_MEMORY  4
+				#define J9MMCONSTANT_IMPLICIT_GC_AGGRESSIVE  5
+				#define J9MMCONSTANT_IMPLICIT_GC_PERCOLATE  6
+				#define J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_AGGRESSIVE  7
+				#define J9MMCONSTANT_IMPLICIT_GC_EXCESSIVE  8
+				#define J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_UNLOADING_CLASSES  9
+				#define J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_CRITICAL_REGIONS  10
+		-->
+		<systemCollect gcCode="3" />
+	</operation>
+	<verification>
+		<!-- <verboseGC> node specifies the test passing criteria to be checked from verboseGC output.
+
+			Attributes:
+			- xpathNodes: to select the verbose node to be verified.
+			- xquery: the verification statement on the selected node 
+		-->
+
+		<!-- Verifying if "heap-resize" node with attribute "@type = 'expand'" exists -->
+		<verboseGC xpathNodes="//heap-resize[@type = 'expand']" xquery="true()"/>
+
+		<!-- Verifying if all gc-end nodes have type global -->
+		<verboseGC xpathNodes="/verbosegc/gc-end" xquery="@type = 'global'"/>
+
+		<!-- Verifying if all gc-op mark have timems equal to or greater than 0 -->
+		<verboseGC xpathNodes="//gc-op[@type = 'mark']" xquery="@timems >= 0"/>
+	</verification>
+	<!-- Sections (e.g., allocation, verification or operation), except option, can be specified more than once in a configuration file. -->
+	<allocation>
+		<object namePrefix="objN" type="garbage" numOfFields="120">
+			<object namePrefix="objO" type="garbage" numOfFields="9,15,130,180" breadth="1,2" depth="25" />
+		</object>
+	</allocation>
+	<verification>
+		<verboseGC xpathNodes="//gc-op[@type = 'sweep']" xquery="true()"/>
+	</verification>
+</gc-config>

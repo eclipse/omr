@@ -1,0 +1,164 @@
+###############################################################################
+#
+# (c) Copyright IBM Corp. 2015, 2016
+#
+#  This program and the accompanying materials are made available
+#  under the terms of the Eclipse Public License v1.0 and
+#  Apache License v2.0 which accompanies this distribution.
+#
+#      The Eclipse Public License is available at
+#      http://www.eclipse.org/legal/epl-v10.html
+#
+#      The Apache License v2.0 is available at
+#      http://www.opensource.org/licenses/apache2.0.php
+#
+# Contributors:
+#    Multiple authors (IBM Corp.) - initial implementation and documentation
+###############################################################################
+
+###
+### @configure_input@
+###
+
+###
+### Ensure the default target is "all"
+###
+
+all:
+.PHONY: all
+
+###
+### OMR Build Flags
+###
+
+include $(top_srcdir)/omrmakefiles/omrcfg.mk
+
+###
+### Global Autoconfigure Flags
+###
+
+# If OMRGLUE contains relative paths, assume they are relative to the
+# top of the build tree.
+# We can't convert OMRGLUE to absolute paths because, for z/OS, Windows, and AIX,
+# the J9 build runs configure and compiles in different directory structures.
+OMRGLUE ?= $(filter /%,@OMRGLUE@)$(addprefix $(top_srcdir)/,$(filter-out /%,@OMRGLUE@))
+
+OMR_CROSS_COMPILE := @OMR_CROSS_COMPILE@
+
+OMR_HOST_OS := @OMR_HOST_OS@
+OMR_HOST_ARCH := @OMR_HOST_ARCH@
+OMR_TARGET_DATASIZE := @OMR_TARGET_DATASIZE@
+OMR_TOOLCHAIN := @OMR_TOOLCHAIN@
+
+lib_output_dir := @lib_output_dir@
+exe_output_dir := @exe_output_dir@
+
+CPPFLAGS := @CPPFLAGS@
+CFLAGS := @CFLAGS@
+CXXFLAGS := @CXXFLAGS@
+LDFLAGS := @LDFLAGS@
+
+OMRGLUE_CPPFLAGS := @OMRGLUE_CPPFLAGS@
+OMRGLUE_CFLAGS := @OMRGLUE_CFLAGS@
+OMRGLUE_CXXFLAGS := @OMRGLUE_CXXFLAGS@
+OMRGLUE_INCLUDES := $(OMRGLUE) $(filter /%,@OMRGLUE_INCLUDES@) $(addprefix $(top_srcdir)/,$(filter-out /%,@OMRGLUE_INCLUDES@))
+
+# GNU make provides a default value for ARFLAGS. We want to override it with our own value.
+ARFLAGS = @ARFLAGS@
+
+CC := @CC@
+CXX := @CXX@
+CCLINK := @CCLINK@
+CCLINKSHARED := @CCLINKSHARED@
+CCLINKEXE := @CCLINKEXE@
+CXXLINK := @CXXLINK@
+CXXLINKSHARED := @CXXLINKSHARED@
+CXXLINKEXE := @CXXLINKEXE@
+
+AS := @AS@
+AR := @AR@
+OBJCOPY := @OBJCOPY@
+
+LIBPREFIX := @libprefix@
+EXEEXT := @exeext@
+SOLIBEXT := @solibext@
+ARLIBEXT := @arlibext@
+OBJEXT := @objext@
+
+
+###
+### Platform Flags
+###
+
+# Need to allow deferred expansion of automatic variables like $*
+GLOBAL_CPPFLAGS = @GLOBAL_CPPFLAGS@
+GLOBAL_CFLAGS = @GLOBAL_CFLAGS@
+GLOBAL_CXXFLAGS = @GLOBAL_CXXFLAGS@
+GLOBAL_INCLUDES = @GLOBAL_INCLUDES@
+GLOBAL_LDFLAGS = @GLOBAL_LDFLAGS@
+GLOBAL_STATIC_LIBS = @GLOBAL_STATIC_LIBS@
+GLOBAL_SHARED_LIBS = @GLOBAL_SHARED_LIBS@
+GLOBAL_LIBPATH = @GLOBAL_LIBPATH@
+GLOBAL_ARFLAGS = @GLOBAL_ARFLAGS@
+
+OMR_OPTIMIZE := @OMR_OPTIMIZE@
+OMR_WARNINGS_AS_ERRORS := @OMR_WARNINGS_AS_ERRORS@
+OMR_ENHANCED_WARNINGS := @OMR_ENHANCED_WARNINGS@
+OMR_DEBUG := @OMR_DEBUG@
+
+ENABLE_FVTEST := @enable_fvtest@
+ENABLE_FVTEST_AGENT := @enable_fvtest_agent@
+ENABLE_TRACEGEN := @enable_tracegen@
+
+###
+### Global Options
+###
+
+## Add Global Flags
+# Header files in the current directory should have first precedence.
+MODULE_INCLUDES += .
+GLOBAL_INCLUDES += $(top_srcdir)/include_core $(top_srcdir)/nls
+
+GLOBAL_CPPFLAGS += -DUT_DIRECT_TRACE_REGISTRATION
+
+# By default, shared libs are built into exe_output_dir, and
+# static libs are built into lib_output_dir.
+GLOBAL_LIBPATH += . $(exe_output_dir) $(lib_output_dir)
+
+## Special settings for fvtests
+# Location of fvtest framework
+OMR_GTEST_DIR := $(top_srcdir)/omr_test/fvtest/gtest-1.7.0
+OMR_GTEST_INCLUDES := $(OMR_GTEST_DIR) $(OMR_GTEST_DIR)/include $(top_srcdir)/fvtest/omrGtestGlue
+OMR_PUGIXML_DIR := $(top_srcdir)/third_party/pugixml-1.5
+
+# googletest code requires exception handling
+ifeq (linux,$(OMR_HOST_OS))
+  ifeq (xlc,$(OMR_TOOLCHAIN))
+    OMR_GTEST_CXXFLAGS += -qeh
+  else
+    OMR_GTEST_CXXFLAGS += -fexceptions
+  endif
+endif
+ifeq (msvc,$(OMR_TOOLCHAIN))
+  OMR_GTEST_CXXFLAGS += /EHsc
+endif
+
+# Public Core OMR header files
+OMR_IPATH = \
+  $(top_srcdir)/include_core \
+  $(top_srcdir)/omr/startup \
+  $(top_srcdir)/gc/include \
+  $(top_srcdir)/gc/startup \
+
+# Internal OMR header files needed by OMR glue code
+OMRGC_IPATH = \
+  $(top_srcdir)/gc/base \
+  $(top_srcdir)/gc/base/standard \
+  $(top_srcdir)/gc/verbose \
+  $(top_srcdir)/gc/verbose/handler_standard \
+  $(top_srcdir)/gc/stats \
+  $(top_srcdir)/gc/structs
+
+ifeq (1,$(OMR_GC_SEGREGATED_HEAP))
+OMRGC_IPATH += $(top_srcdir)/gc/base/segregated
+endif

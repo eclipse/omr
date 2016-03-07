@@ -1,0 +1,24 @@
+// (c) Copyright IBM Corp. 2015, 2016
+//
+//  This program and the accompanying materials are made available
+//  under the terms of the Eclipse Public License v1.0 and
+//  Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+// Contributors:
+//    Multiple authors (IBM Corp.) - initial implementation and documentation
+
+Executable=omr_test
+DATFileName=OMRTestTraceFormat.dat
+
+TraceEvent=Trc_OMR_Test_Init Overhead=1 Level=1 Group=testset1 NoEnv Template="Trace engine initialized for module omr_test"
+TraceEvent=Trc_OMR_Test_String Overhead=1 Level=1 Group=testset1  Template="String: %s"
+TraceEvent=Trc_OMR_Test_Ptr Overhead=1 Level=1 Group=testset1  Template="Ptr: %p"
+TraceEvent=Trc_OMR_Test_Int Overhead=1 Level=1 Group=testset1  Template="Number: %d"
+TraceEvent=Trc_OMR_Test_ManyParms Overhead=1 Group=testset1  Level=1 Template="String: %s Ptr: %p Number: %u"
+TraceEvent=Trc_OMR_Test_UnloggedTracepoint Overhead=1 Level=1 Template="This tracepoint should not be logged. Reason: %s"

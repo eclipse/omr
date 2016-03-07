@@ -1,0 +1,931 @@
+// (c) Copyright IBM Corp. 1998, 2016
+//
+//  This program and the accompanying materials are made available
+//  under the terms of the Eclipse Public License v1.0 and
+//  Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+// Contributors:
+//    Multiple authors (IBM Corp.) - initial implementation and documentation
+
+
+Executable=omrport
+Submodules=j9utilcore
+DATFileName=OMRTraceFormat.dat
+
+TraceAssert=Assert_PRT_true noEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Trc_PRT_Assert_ShouldNeverHappen NoEnv Overhead=1 Level=1 Assert="(0 /* Fatal port library error */)"
+
+// cuda trace points
+
+TraceEntry=Trc_PRT_cuda_initializeTable_entry Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda initializeTable"
+TraceEvent=Trc_PRT_cuda_symbol_found Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda initializeTable: symbol '%s(%s)' = %p"
+TraceException=Trc_PRT_cuda_symbol_not_found Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda initializeTable: symbol '%s(%s)' not found"
+TraceExit=Trc_PRT_cuda_initializeTable_exit Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda initializeTable: %d"
+
+TraceEntry=Trc_PRT_cuda_getDeviceData_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda getDeviceData(device=%u)"
+TraceExit=Trc_PRT_cuda_getDeviceData_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda getDeviceData: %d"
+
+TraceEntry=Trc_PRT_cuda_getSummaryData_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda getSummaryData"
+TraceExit=Trc_PRT_cuda_getSummaryData_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda getSummaryData"
+
+TraceEntry=Trc_PRT_cuda_initDeviceData_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda initDeviceData(device=%u)"
+TraceException=Trc_PRT_cuda_initDeviceData_fail Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda initDeviceData: failed to get %s, error=%d"
+TraceExit=Trc_PRT_cuda_initDeviceData_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda initDeviceData: %d"
+
+TraceEntry=Trc_PRT_cuda_initConfigData_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda initConfigData(%u devices)"
+TraceException=Trc_PRT_cuda_initConfigData_fail Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda initConfigData: failed to %s"
+TraceExit=Trc_PRT_cuda_initConfigData_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda initConfigData: %d"
+
+TraceEntry=Trc_PRT_cuda_getFunctions_entry Group=cuda Level=5 NoEnv Overhead=1 Template="omrcuda getFunctions"
+TraceException=Trc_PRT_cuda_library_not_found Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda library '%s' not found"
+TraceException=Trc_PRT_cuda_getFunctions_failed Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda getFunctions: CUDA support not available"
+TraceEvent=Trc_PRT_cuda_getFunctions_initialized Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda getFunctions: CUDA support available"
+TraceExit=Trc_PRT_cuda_getFunctions_exit Group=cuda Level=5 NoEnv Overhead=1 Template="omrcuda getFunctions: %p"
+
+TraceEntry=Trc_PRT_cuda_ThreadState_finalizer_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState finalizer(%p)"
+TraceExit=Trc_PRT_cuda_ThreadState_finalizer_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState finalizer"
+
+TraceEntry=Trc_PRT_cuda_ThreadState_getCurrent_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState getCurrent"
+TraceExit=Trc_PRT_cuda_ThreadState_getCurrent_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState getCurrent: %p"
+
+TraceEntry=Trc_PRT_cuda_ThreadState_clear_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState clear(%p, %u)"
+TraceExit=Trc_PRT_cuda_ThreadState_clear_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState clear"
+
+TraceEntry=Trc_PRT_cuda_ThreadState_set_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState set(%p, %u)"
+TraceExit=Trc_PRT_cuda_ThreadState_set_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState set"
+
+TraceEntry=Trc_PRT_cuda_ThreadState_test_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState test(%p, %u)"
+TraceExit=Trc_PRT_cuda_ThreadState_test_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState test: %u"
+
+TraceEntry=Trc_PRT_cuda_ThreadState_startup_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState startup(%p)"
+TraceExit=Trc_PRT_cuda_ThreadState_startup_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState startup: %d"
+
+TraceEntry=Trc_PRT_cuda_ThreadState_shutdown_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState shutdown(%p)"
+TraceExit=Trc_PRT_cuda_ThreadState_shutdown_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState shutdown"
+
+TraceEntry=Trc_PRT_cuda_ThreadState_initCurrent_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState initCurrent(%u)"
+TraceExit=Trc_PRT_cuda_ThreadState_initCurrent_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState initCurrent: %d"
+
+TraceEntry=Trc_PRT_cuda_ThreadState_markCurrent_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState markCurrent(%u)"
+TraceExit=Trc_PRT_cuda_ThreadState_markCurrent_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState markCurrent: %d"
+
+TraceEntry=Trc_PRT_cuda_ThreadState_unmarkCurrent_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState unmarkCurrent(%u)"
+TraceExit=Trc_PRT_cuda_ThreadState_unmarkCurrent_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda threadState unmarkCurrent: %d"
+
+TraceEntry=Trc_PRT_cuda_withDevice_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda withDevice(%d)"
+TraceException=Trc_PRT_cuda_withDevice_get_fail Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda withDevice: failed to get current device, error=%d"
+TraceException=Trc_PRT_cuda_withDevice_set_fail Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda withDevice: failed to set current device, error=%d"
+TraceException=Trc_PRT_cuda_withDevice_prepare_fail Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda withDevice: prepare failed, error=%d"
+TraceException=Trc_PRT_cuda_withDevice_execute_fail Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda withDevice: operation failed, error=%d"
+TraceException=Trc_PRT_cuda_withDevice_onSuccess_fail Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda withDevice: onSuccess failed, error=%d"
+TraceException=Trc_PRT_cuda_withDevice_restore_fail Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda withDevice: failed to restore current device, error=%d"
+TraceExit=Trc_PRT_cuda_withDevice_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda withDevice: %d"
+
+TraceEntry=Trc_PRT_cuda_shutdown_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_shutdown"
+TraceExit=Trc_PRT_cuda_shutdown_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_shutdown"
+
+TraceEntry=Trc_PRT_cuda_deviceAlloc_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceAlloc(device=%u, size=%zu)"
+TraceEvent=Trc_PRT_cuda_deviceAlloc_result Group=cuda Level=4 NoEnv Overhead=1 Template="omrcuda_deviceAlloc: address=%p"
+TraceExit=Trc_PRT_cuda_deviceAlloc_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceAlloc: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceCanAccessPeer_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceCanAccessPeer(device=%u, peerDeviceId=%u)"
+TraceEvent=Trc_PRT_cuda_deviceCanAccessPeer_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceCanAccessPeer: %d"
+TraceExit=Trc_PRT_cuda_deviceCanAccessPeer_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceCanAccessPeer: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceDisablePeerAccess_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceDisablePeerAccess(device=%u, peerDeviceId=%u)"
+TraceExit=Trc_PRT_cuda_deviceDisablePeerAccess_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceDisablePeerAccess: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceEnablePeerAccess_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceEnablePeerAccess(device=%u, peerDeviceId=%u)"
+TraceExit=Trc_PRT_cuda_deviceEnablePeerAccess_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceEnablePeerAccess: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceFree_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceFree(device=%u, address=%p)"
+TraceExit=Trc_PRT_cuda_deviceFree_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceFree: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceGetAttribute_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetAttribute(device=%u, attribute=%d)"
+TraceEvent=Trc_PRT_cuda_deviceGetAttribute_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetAttribute(%d): value=%d"
+TraceExit=Trc_PRT_cuda_deviceGetAttribute_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetAttribute: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceGetCacheConfig_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetCacheConfig(device=%u)"
+TraceEvent=Trc_PRT_cuda_deviceGetCacheConfig_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetCacheConfig: config=%d"
+TraceExit=Trc_PRT_cuda_deviceGetCacheConfig_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetCacheConfig: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceGetCount_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetCount"
+TraceEvent=Trc_PRT_cuda_deviceGetCount_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetCount: count=%u"
+TraceExit=Trc_PRT_cuda_deviceGetCount_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetCount: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceGetLimit_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetLimit(device=%u, limit=%d)"
+TraceEvent=Trc_PRT_cuda_deviceGetLimit_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetLimit: value=%zu"
+TraceExit=Trc_PRT_cuda_deviceGetLimit_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetLimit: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceGetMemInfo_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetMemInfo(device=%u)"
+TraceEvent=Trc_PRT_cuda_deviceGetMemInfo_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetMemInfo: free=%zu, total=%zu"
+TraceExit=Trc_PRT_cuda_deviceGetMemInfo_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetMemInfo: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceGetName_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetName(device=%u)"
+TraceEvent=Trc_PRT_cuda_deviceGetName_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetName: name=%s"
+TraceExit=Trc_PRT_cuda_deviceGetName_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetName: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceGetSharedMemConfig_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetSharedMemConfig(device=%u)"
+TraceEvent=Trc_PRT_cuda_deviceGetSharedMemConfig_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetSharedMemConfig: config=%d"
+TraceExit=Trc_PRT_cuda_deviceGetSharedMemConfig_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetSharedMemConfig: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceGetStreamPriorityRange_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetStreamPriorityRange(device=%u)"
+TraceEvent=Trc_PRT_cuda_deviceGetStreamPriorityRange_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetStreamPriorityRange: least=%d, greatest=%d"
+TraceExit=Trc_PRT_cuda_deviceGetStreamPriorityRange_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceGetStreamPriorityRange: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceReset_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceReset(device=%u)"
+TraceExit=Trc_PRT_cuda_deviceReset_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceReset: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceSetCacheConfig_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceSetCacheConfig(device=%u, config=%d)"
+TraceExit=Trc_PRT_cuda_deviceSetCacheConfig_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceSetCacheConfig: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceSetLimit_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceSetLimit(device=%u, limit=%d, value=%zu)"
+TraceExit=Trc_PRT_cuda_deviceSetLimit_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceSetLimit: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceSetSharedMemConfig_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceSetSharedMemConfig(device=%u, config=%d)"
+TraceExit=Trc_PRT_cuda_deviceSetSharedMemConfig_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceSetSharedMemConfig: %d"
+
+TraceEntry=Trc_PRT_cuda_deviceSynchronize_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceSynchronize(device=%u)"
+TraceExit=Trc_PRT_cuda_deviceSynchronize_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_deviceSynchronize: %d"
+
+TraceEntry=Trc_PRT_cuda_driverGetVersion_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_driverGetVersion"
+TraceEvent=Trc_PRT_cuda_driverGetVersion_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_driverGetVersion: version=%u"
+TraceExit=Trc_PRT_cuda_driverGetVersion_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_driverGetVersion: %d"
+
+TraceEntry=Trc_PRT_cuda_eventCreate_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventCreate(device=%u, flags=%u)"
+TraceEvent=Trc_PRT_cuda_eventCreate_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventCreate: event=%p"
+TraceExit=Trc_PRT_cuda_eventCreate_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventCreate: %d"
+
+TraceEntry=Trc_PRT_cuda_eventDestroy_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventDestroy(device=%u, event=%p)"
+TraceExit=Trc_PRT_cuda_eventDestroy_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventDestroy: %d"
+
+TraceEntry=Trc_PRT_cuda_eventElapsedTime_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventElapsedTime(startEvent=%p, endEvent=%p)"
+TraceEvent=Trc_PRT_cuda_eventElapsedTime_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventElapsedTime: elapsed=%f ms"
+TraceExit=Trc_PRT_cuda_eventElapsedTime_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventElapsedTime: %d"
+
+TraceEntry=Trc_PRT_cuda_eventQuery_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventQuery(event=%p)"
+TraceExit=Trc_PRT_cuda_eventQuery_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventQuery: %d"
+
+TraceEntry=Trc_PRT_cuda_eventRecord_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventRecord(device=%u, event=%p, stream=%p)"
+TraceExit=Trc_PRT_cuda_eventRecord_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventRecord: %d"
+
+TraceEntry=Trc_PRT_cuda_eventSynchronize_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventSynchronize(event=%p)"
+TraceExit=Trc_PRT_cuda_eventSynchronize_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_eventSynchronize: %d"
+
+TraceEntry=Trc_PRT_cuda_funcGetAttribute_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcGetAttribute(device=%u, function=%p, attribute=%d)"
+TraceEvent=Trc_PRT_cuda_funcGetAttribute_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcGetAttribute: value=%d"
+TraceExit=Trc_PRT_cuda_funcGetAttribute_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcGetAttribute: %d"
+
+TraceEntry=Trc_PRT_cuda_funcSetCacheConfig_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcSetCacheConfig(device=%u, function=%p, config=%d)"
+TraceExit=Trc_PRT_cuda_funcSetCacheConfig_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcSetCacheConfig: %d"
+
+TraceEntry=Trc_PRT_cuda_funcSetSharedMemConfig_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcSetSharedMemConfig(device=%u, function=%p, config=%d)"
+TraceExit=Trc_PRT_cuda_funcSetSharedMemConfig_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcSetSharedMemConfig: %d"
+
+TraceEntry=Trc_PRT_cuda_getErrorString_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_getErrorString(error=%zd)"
+TraceExit=Trc_PRT_cuda_getErrorString_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_getErrorString: %s"
+
+TraceEntry=Trc_PRT_cuda_hostAlloc_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_hostAlloc(size=%zu, flags=%u)"
+TraceEvent=Trc_PRT_cuda_hostAlloc_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_hostAlloc: address=%p"
+TraceExit=Trc_PRT_cuda_hostAlloc_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_hostAlloc: %d"
+
+TraceEntry=Trc_PRT_cuda_hostFree_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_hostFree(address=%p)"
+TraceExit=Trc_PRT_cuda_hostFree_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_hostFree: %d"
+
+TraceEntry=Trc_PRT_cuda_launchKernel_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_launchKernel(device=%u, function=%p, grid=(%u,%u,%u), block=(%u,%u,%u), shared=%u, stream=%p, values=%p)"
+TraceExit=Trc_PRT_cuda_launchKernel_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_launchKernel: %d"
+
+TraceEntry=Trc_PRT_cuda_JitOptions_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda JitOptions(options=%p)"
+TraceExit=Trc_PRT_cuda_JitOptions_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda JitOptions: option count=%u"
+TraceExit=Trc_PRT_cuda_JitOptions_exit_invalid Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda JitOptions: invalid"
+
+TraceEntry=Trc_PRT_cuda_linkerAddData_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_linkerAddData(device=%u, linker=%p, type=%d, data=%p, size=%zu, name=%s, options=%p)"
+TraceExit=Trc_PRT_cuda_linkerAddData_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_linkerAddData: %d"
+
+TraceEntry=Trc_PRT_cuda_linkerComplete_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_linkerComplete(device=%u, linker=%p)"
+TraceEvent=Trc_PRT_cuda_linkerComplete_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_linkerComplete: cubin=%p, size=%zu"
+TraceExit=Trc_PRT_cuda_linkerComplete_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_linkerComplete: %d"
+
+TraceEntry=Trc_PRT_cuda_linkerCreate_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_linkerCreate(device=%u, options=%p)"
+TraceException=Trc_PRT_cuda_linkerCreate_nomem Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda_linkerCreate: malloc failed"
+TraceEvent=Trc_PRT_cuda_linkerCreate_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_linkerCreate: linker=%p"
+TraceExit=Trc_PRT_cuda_linkerCreate_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_linkerCreate: %d"
+
+TraceEntry=Trc_PRT_cuda_linkerDestroy_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_linkerDestroy(device=%u, linker=%p)"
+TraceExit=Trc_PRT_cuda_linkerDestroy_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_linkerDestroy: %d"
+
+TraceEntry=Trc_PRT_cuda_memcpy_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpy(device=%u, targetAddress=%p, sourceAddress=%p, byteCount=%zu, direction=%d)"
+TraceExit=Trc_PRT_cuda_memcpy_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpy: %d"
+
+TraceEntry=Trc_PRT_cuda_memcpyPeer_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpyPeer(targetDeviceId=%u, targetAddress=%p, sourceDeviceId=%u sourceAddress=%p, byteCount=%zu)"
+TraceExit=Trc_PRT_cuda_memcpyPeer_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpyPeer: %d"
+
+TraceExit=Trc_PRT_cuda_memset8_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memset8: %d"
+
+TraceExit=Trc_PRT_cuda_memset16_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memset16: %d"
+
+TraceExit=Trc_PRT_cuda_memset32_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memset32: %d"
+
+TraceEntry=Trc_PRT_cuda_moduleGetFunction_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetFunction(device=%u, module=%p, name=%s)"
+TraceEvent=Trc_PRT_cuda_moduleGetFunction_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetFunction: address=%p"
+TraceExit=Trc_PRT_cuda_moduleGetFunction_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetFunction: %d"
+
+TraceEntry=Trc_PRT_cuda_moduleGetGlobal_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetGlobal(device=%u, module=%p, name=%s)"
+TraceEvent=Trc_PRT_cuda_moduleGetGlobal_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetGlobal: address=%p, size=%zu"
+TraceExit=Trc_PRT_cuda_moduleGetGlobal_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetGlobal: %d"
+
+TraceEntry=Trc_PRT_cuda_moduleGetSurfRef_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetSurfRef(device=%u, module=%p, name=%s)"
+TraceEvent=Trc_PRT_cuda_moduleGetSurfRef_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetSurfRef: address=%p"
+TraceExit=Trc_PRT_cuda_moduleGetSurfRef_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetSurfRef: %d"
+
+TraceEntry=Trc_PRT_cuda_moduleGetTexRef_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetTexRef(device=%u, module=%p, name=%s)"
+TraceEvent=Trc_PRT_cuda_moduleGetTexRef_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetTexRef: address=%p"
+TraceExit=Trc_PRT_cuda_moduleGetTexRef_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleGetTexRef: %d"
+
+TraceEntry=Trc_PRT_cuda_moduleLoad_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleLoad(device=%u, image=%p, options=%p)"
+TraceEvent=Trc_PRT_cuda_moduleLoad_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleLoad: address=%p"
+TraceExit=Trc_PRT_cuda_moduleLoad_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleLoad: %d"
+
+TraceEntry=Trc_PRT_cuda_moduleUnload_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleUnload(device=%u, module=%p)"
+TraceExit=Trc_PRT_cuda_moduleUnload_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_moduleUnload: %d"
+
+TraceEntry=Trc_PRT_cuda_runtimeGetVersion_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_runtimeGetVersion"
+TraceEvent=Trc_PRT_cuda_runtimeGetVersion_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_runtimeGetVersion: version=%u"
+TraceExit=Trc_PRT_cuda_runtimeGetVersion_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_runtimeGetVersion: %d"
+
+TraceEntry=Trc_PRT_cuda_StreamCallback_handler_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_StreamCallback handler(stream=%p, error=%d, data=%p)"
+TraceExit=Trc_PRT_cuda_StreamCallback_handler_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_StreamCallback handler"
+
+TraceEntry=Trc_PRT_cuda_streamAddCallback_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamAddCallback(device=%u, stream=%p, callback=%p, data=%zu)"
+TraceException=Trc_PRT_cuda_streamAddCallback_nomem Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda_streamAddCallback: malloc failed"
+TraceEvent=Trc_PRT_cuda_streamAddCallback_instance Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamAddCallback: callback=%p"
+TraceExit=Trc_PRT_cuda_streamAddCallback_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamAddCallback: %d"
+
+TraceEntry=Trc_PRT_cuda_streamCreate_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamCreate(device=%u)"
+TraceEvent=Trc_PRT_cuda_streamCreate_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamCreate: stream=%p"
+TraceExit=Trc_PRT_cuda_streamCreate_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamCreate: %d"
+
+TraceEntry=Trc_PRT_cuda_streamCreateWithPriority_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamCreateWithPriority(device=%u, priority=%d, flags=%u)"
+TraceEvent=Trc_PRT_cuda_streamCreateWithPriority_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamCreateWithPriority: stream=%p"
+TraceExit=Trc_PRT_cuda_streamCreateWithPriority_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamCreateWithPriority: %d"
+
+TraceEntry=Trc_PRT_cuda_streamDestroy_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamDestroy(device=%u, stream=%p)"
+TraceExit=Trc_PRT_cuda_streamDestroy_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamDestroy: %d"
+
+TraceEntry=Trc_PRT_cuda_streamGetFlags_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamGetFlags(device=%u, stream=%p)"
+TraceEvent=Trc_PRT_cuda_streamGetFlags_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamGetFlags: flags=%u"
+TraceExit=Trc_PRT_cuda_streamGetFlags_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamGetFlags: %d"
+
+TraceEntry=Trc_PRT_cuda_streamGetPriority_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamGetPriority(device=%u, stream=%p)"
+TraceEvent=Trc_PRT_cuda_streamGetPriority_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamGetPriority: priority=%d"
+TraceExit=Trc_PRT_cuda_streamGetPriority_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamGetPriority: %d"
+
+TraceEntry=Trc_PRT_cuda_streamQuery_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamQuery(device=%u, stream=%p)"
+TraceExit=Trc_PRT_cuda_streamQuery_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamQuery: %d"
+
+TraceEntry=Trc_PRT_cuda_streamSynchronize_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamSynchronize(device=%u, stream=%p)"
+TraceExit=Trc_PRT_cuda_streamSynchronize_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamSynchronize: %d"
+
+TraceEntry=Trc_PRT_cuda_streamWaitEvent_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamWaitEvent(device=%u, stream=%p, event=%p)"
+TraceExit=Trc_PRT_cuda_streamWaitEvent_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_streamWaitEvent: %d"
+
+TraceEntry=Trc_PRT_cuda_funcMaxActiveBlocksPerMultiprocessor_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcMaxActiveBlocksPerMultiprocessor(deviceId=%u, function=%p, blockSize=%u, dynamicSharedMemorySize=%u, flags=%u)"
+TraceEvent=Trc_PRT_cuda_funcMaxActiveBlocksPerMultiprocessor_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcMaxActiveBlocksPerMultiprocessor: max=%u"
+TraceExit=Trc_PRT_cuda_funcMaxActiveBlocksPerMultiprocessor_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcMaxActiveBlocksPerMultiprocessor: %d"
+
+TraceEntry=Trc_PRT_cuda_funcMaxPotentialBlockSize_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcMaxPotentialBlockSize(deviceId=%u, function=%p, dynamicSharedMemoryFunction=%p, userData=%p, blockSizeLimit=%u, flags=%u)"
+TraceEvent=Trc_PRT_cuda_funcMaxPotentialBlockSize_result Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcMaxPotentialBlockSize: minGridSize=%u, maxBlockSize=%u"
+TraceExit=Trc_PRT_cuda_funcMaxPotentialBlockSize_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_funcMaxPotentialBlockSize: %d"
+
+TraceEntry=Trc_PRT_cuda_memcpyAsync_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpyAsync(device=%u, targetAddress=%p, sourceAddress=%p, byteCount=%zu, direction=%d, stream=%p)"
+TraceExit=Trc_PRT_cuda_memcpyAsync_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpyAsync: %d"
+
+TraceEntry=Trc_PRT_cuda_memcpyPeerAsync_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpyPeerAsync(targetDeviceId=%u, targetAddress=%p, sourceDeviceId=%u sourceAddress=%p, byteCount=%zu, stream=%p)"
+TraceExit=Trc_PRT_cuda_memcpyPeerAsync_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpyPeerAsync: %d"
+
+TraceEntry=Trc_PRT_cuda_memcpy2D_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpy2D(device=%u, targetAddress=%p, targetPitch=%zu, sourceAddress=%p, sourcePitch=%zu, width=%zu, height=%zu, direction=%d)"
+TraceExit=Trc_PRT_cuda_memcpy2D_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpy2D: %d"
+
+TraceEntry=Trc_PRT_cuda_memcpy2DAsync_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpy2DAsync(device=%u, targetAddress=%p, targetPitch=%zu, sourceAddress=%p, sourcePitch=%zu, width=%zu, height=%zu, direction=%d, stream=%p)"
+TraceExit=Trc_PRT_cuda_memcpy2DAsync_exit Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memcpy2DAsync: %d"
+
+TraceEntry=Trc_PRT_cuda_memset8_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memset8(device=%u, deviceAddress=%p, value=%u count=%zu, stream=%p)"
+TraceEntry=Trc_PRT_cuda_memset16_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memset16(device=%u, deviceAddress=%p, value=%u count=%zu, stream=%p)"
+TraceEntry=Trc_PRT_cuda_memset32_entry Group=cuda Level=3 NoEnv Overhead=1 Template="omrcuda_memset32(device=%u, deviceAddress=%p, value=%u count=%zu, stream=%p)"
+
+// file trace points
+
+TraceEntry=Trc_PRT_file_open_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_open filename = %s, flags = %d, mode = %d"
+TraceExit=Trc_PRT_file_open_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_open returns fd=%d"
+
+TraceEntry=Trc_PRT_file_read_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_read fd = %zd, buf = %p, bytes = %zd"
+TraceExit=Trc_PRT_file_read_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_read returns bytesRead=%d"
+TraceEntry=Trc_PRT_file_write_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_write fd = %zd, buf = %p, bytes = %zd"
+TraceExit=Trc_PRT_file_write_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_write returns bytesWritten=%d"
+TraceEntry=Trc_PRT_file_attr_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_attr path = %s"
+TraceExit=Trc_PRT_file_attr_ExitFail Group=file Overhead=1 Level=1 NoEnv Template="omrfile_attr failed. errorCode=%d"
+TraceExit=Trc_PRT_file_attr_ExitDir Group=file Overhead=1 Level=5 NoEnv Template="omrfile_attr returns EsIsDir (%d)"
+TraceExit=Trc_PRT_file_attr_ExitFile Group=file Overhead=1 Level=5 NoEnv Template="omrfile_attr returns EsIsFile (%d)"
+TraceEntry=Trc_PRT_file_close_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_close fd = %zd"
+TraceExit=Trc_PRT_file_close_ExitFail Group=file Overhead=1 Level=1 NoEnv Template="omrfile_close failed. errorCode=%d"
+TraceExit=Trc_PRT_file_close_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_close returns rc=%d"
+TraceExit=Trc_PRT_file_findfirst_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_findfirst returns fd=%d"
+TraceExit=Trc_PRT_file_findnext_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_findnext returns rc=%d"
+TraceEntry=Trc_PRT_file_findclose_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_findclose findhandle = %zd"
+TraceExit=Trc_PRT_file_findclose_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_findclose returns. error=%d"
+TraceEntry=Trc_PRT_file_lastmod_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_lastmod path = %s"
+TraceExit=Trc_PRT_file_lastmod_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_lastmod returns. Result=%lld"
+TraceEntry=Trc_PRT_file_length_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_length path = %s"
+TraceExit=Trc_PRT_file_length_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_length returns. Result=%lld"
+TraceEntry=Trc_PRT_file_seek_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_seek fd = %zd, offset = %lld, whence = %d"
+TraceExit=Trc_PRT_file_seek_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_seek returns result=%lld"
+TraceEntry=Trc_PRT_file_sync_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_sync fd = %zd"
+TraceExit=Trc_PRT_file_sync_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_sync returns result=%d"
+TraceEntry=Trc_PRT_file_printf_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_printf fd = %zd, format = %s"
+TraceExit=Trc_PRT_file_printf_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_printf returns void"
+TraceEntry=Trc_PRT_file_setlength_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_setlength fd = %zd, newLength = %lld"
+TraceExit=Trc_PRT_file_setlength_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_setlength returns result=%d"
+
+TraceEntry=Trc_PRT_file_lock_bytes_win32_entered Group=file Overhead=1 Level=5 NoEnv Template="omrfile_lock_bytes: Entered, fd=%zd, lockFlags=0x%x, offset=%llu, length=%llu"
+TraceEvent=Trc_PRT_file_lock_bytes_win32_callingLockFileEx Group=file Overhead=1 Level=5 NoEnv Template="omrfile_lock_bytes: Calling LockFileEx dwFlags=0x%x, offset=%u, offsetHigh=%u, length=%u, lengthHigh=%u"
+TraceExit=Trc_PRT_file_lock_bytes_win32_exiting Group=file Overhead=1 Level=5 NoEnv Template="omrfile_lock_bytes: Successful, exiting"
+
+TraceEntry=Trc_PRT_file_lock_bytes_unix_entered Group=file Overhead=1 Level=5 NoEnv Template="omrfile_lock_bytes: Entered, fd=%zd, lockFlags=0x%x, offset=%llu, length=%llu"
+TraceEvent=Trc_PRT_file_lock_bytes_unix_callingFcntl Group=file Overhead=1 Level=5 NoEnv Template="omrfile_lock_bytes: Calling fcntl command=%d, type=%d, whence=%d, start=%llu, length=%llu"
+TraceExit=Trc_PRT_file_lock_bytes_unix_exiting Group=file Overhead=1 Level=5 NoEnv Template="omrfile_lock_bytes: Successful, exiting"
+
+TraceEntry=Trc_PRT_file_unlock_bytes_win32_entered Group=file Overhead=1 Level=5 NoEnv Template="omrfile_unlock_bytes: Entered, fd=%zd, offset=%llu, length=%llu"
+TraceEvent=Trc_PRT_file_unlock_bytes_win32_callingUnlockFileEx Group=file Overhead=1 Level=5 NoEnv Template="omrfile_unlock_bytes: Calling UnlockFileEx offset=%u, offsetHigh=%u, length=%u, lengthHigh=%u"
+TraceExit=Trc_PRT_file_unlock_bytes_win32_exiting Group=file Overhead=1 Level=5 NoEnv Template="omrfile_unlock_bytes: Successful, exiting"
+
+TraceEntry=Trc_PRT_file_unlock_bytes_unix_entered Group=file Overhead=1 Level=5 NoEnv Template="omrfile_unlock_bytes: Entered, fd=%zd, offset=%llu, length=%llu"
+TraceEvent=Trc_PRT_file_unlock_bytes_unix_callingFcntl Group=file Overhead=1 Level=5 NoEnv Template="omrfile_unlock_bytes: Calling fcntl command=%d, type=%d, whence=%d, start=%llu, length=%llu"
+TraceExit=Trc_PRT_file_unlock_bytes_unix_exiting Group=file Overhead=1 Level=5 NoEnv Template="omrfile_unlock_bytes: Successful, exiting"
+
+TraceException=Trc_PRT_file_open_Exception1 Group=file Overhead=1 Level=1 NoEnv Template="omrfile_open returns failure, filename = %s, flags (%d) are incorrect"
+TraceException=Trc_PRT_file_open_Exception2 Group=file Overhead=1 Level=1 NoEnv Template="omrfile_open returns failure, filename = %s, os errno = %d, portable errno = %d"
+TraceException=Trc_PRT_file_open_Exception3 Group=file Overhead=1 Level=1 NoEnv Template="omrfile_open returns failure, filename = %s, os errno = %d, portable errno = %d"
+TraceException=Trc_PRT_file_open_Exception4 Group=file Overhead=1 Level=1 NoEnv Template="omrfile_open returns failure, filename = %s, stat error"
+
+TraceEntry=Trc_PRT_file_chmod_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_chmod entry path = %s mode = %d"
+TraceExit=Trc_PRT_file_chmod_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_chmod exit actual mode = %zd"
+TraceException=Trc_PRT_file_chmod_getAttributesFailed Group=file Overhead=1 Level=5 NoEnv Template="omrfile_chmod error getting attributes, error = %d"
+TraceException=Trc_PRT_file_chmod_setAttributesFailed Group=file Overhead=1 Level=5 NoEnv Template="omrfile_chmod error setting attributes, error = %d"
+
+TraceEvent=Trc_PRT_file_chown_entry Group=file Overhead=1 Level=3 NoEnv Template="omrfile_chown path=%s owner=%zd group=%zd"
+TraceEvent=Trc_PRT_file_chown_exit Group=file Overhead=1 Level=3 NoEnv Template="omrfile_chown path=%s owner=%zd group=%zd status=%d"
+
+TraceEvent=Trc_PRT_file_mkdir_entry2 Group=file Overhead=1 Level=3 NoEnv Template="omrfile_mkdir path=%s"
+TraceEvent=Trc_PRT_file_mkdir_exit2 Group=file Overhead=1 Level=3 NoEnv Template="omrfile_mkdir status=%d"
+
+TraceException=Trc_PRT_file_lock_bytes_win32_failed_noReadWrite Group=file Overhead=1 Level=1 NoEnv Template="omrfile_lock_bytes: No read or write flag specified"
+TraceException=Trc_PRT_file_lock_bytes_win32_failed_noWaitNoWait Group=file Overhead=1 Level=1 NoEnv Template="omrfile_lock_bytes: No wait or nowait flag specified"
+TraceException=Trc_PRT_file_lock_bytes_unix_failed_noReadWrite Group=file Overhead=1 Level=1 NoEnv Template="omrfile_lock_bytes: No read or write flag specified"
+TraceException=Trc_PRT_file_lock_bytes_unix_failed_noWaitNoWait Group=file Overhead=1 Level=1 NoEnv Template="omrfile_lock_bytes: No wait or nowait flag specified"
+TraceException=Trc_PRT_file_lock_bytes_unix_failed_badFcntl Group=file Overhead=1 Level=1 NoEnv Template="omrfile_lock_bytes: fcntl failed, errno=%d"
+TraceException=Trc_PRT_file_unlock_bytes_unix_failed_badFcntl Group=file Overhead=1 Level=1 NoEnv Template="omrfile_unlock_bytes: fcntl failed, errno=%d"
+
+TraceEntry=Trc_PRT_file_fstat_Entry Group=file Overhead=1 Level=3 NoEnv Template="omrfile_fstat: Entry with fd=%zd"
+TraceException=Trc_PRT_file_fstat_fstatFailed Group=file Overhead=1 Level=1 NoEnv Template="omrfile_fstat: fstat() failed with errno=%zd"
+TraceException=Trc_PRT_file_fstat_fstatfsFailed Group=file Overhead=1 Level=1 NoEnv Template="omrfile_fstat: fstatfs() failed with errno=%zd"
+TraceException=Trc_PRT_file_fstat_fstatvfsFailed Group=file Overhead=1 Level=1 NoEnv Template="omrfile_fstat: fstatvfs() failed with errno=%zd"
+TraceExit=Trc_PRT_file_fstat_Exit Group=file Overhead=1 Level=3 NoEnv Template="omrfile_fstat: Exiting with rc=%d"
+
+TraceEntry=Trc_PRT_file_blockingasync_read_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_blockingasync_read fd = %zd, buf = %p, bytes = %zd"
+TraceExit=Trc_PRT_file_blockingasync_read_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_blockingasync_read returns bytesRead=%zd"
+TraceEntry=Trc_PRT_file_blockingasync_write_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_blockingasync_write fd = %zd, buf = %p, bytes = %zd"
+TraceExit=Trc_PRT_file_blockingasync_write_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_blockingasync_write returns bytesWritten=%zd"
+
+TraceExit=Trc_PRT_file_findfirst_ExitFail Group=file Overhead=1 Level=5 NoEnv Template="omrfile_findfirst failed. errorCode=%d"
+TraceExit=Trc_PRT_file_findnext_ExitFail Group=file Overhead=1 Level=5 NoEnv Template="omrfile_findnext failed. errorCode=%d"
+TraceEntry=Trc_PRT_file_flength_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_flength fd = %zd"
+TraceExit=Trc_PRT_file_flength_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_flength returns. Length=%lld"
+TraceExit=Trc_PRT_file_flength_ExitFail Group=file Overhead=1 Level=5 NoEnv Template="omrfile_flength failed. errorCode=%d"
+TraceEntry=Trc_PRT_file_findfirst_Entry2 Group=file Overhead=1 Level=5 NoEnv Template="omrfile_findfirst path = %s, resultbuf = %s"
+TraceEntry=Trc_PRT_file_findnext_Entry2 Group=file Overhead=1 Level=5 NoEnv Template="omrfile_findnext findhandle = %zd, resultbuf = %s"
+
+TraceEntry=Trc_PRT_file_blockingasync_startup_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_blockingasync_startup enters."
+TraceExit=Trc_PRT_file_blockingasync_startup_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_blockingasync_startup exits successfully."
+TraceExit=Trc_PRT_file_blockingasync_startup_alloc_tls_failure Group=file Overhead=1 Level=5 NoEnv Template="omrfile_blockingasync_startup failed to alloc TLS. LastError = %d"
+TraceEntry=Trc_PRT_file_blockingasync_shutdown_Entry Group=file Overhead=1 Level=5 NoEnv Template="omrfile_blockingasync_shutdown enters."
+TraceExit=Trc_PRT_file_blockingasync_shutdown_Exit Group=file Overhead=1 Level=5 NoEnv Template="omrfile_blockingasync_shutdown exits."
+TraceExit=Trc_PRT_file_unlock_bytes_win32_exiting_with_error Group=file Overhead=1 Level=5 NoEnv Template="omrfile_unlock_bytes: Failed, exiting. ErrorCode = %d"
+TraceExit=Trc_PRT_file_lock_bytes_win32_exiting_with_error Group=file Overhead=1 Level=5 NoEnv Template="omrfile_lock_bytes: Failed, exiting. ErrorCode = %d"
+
+TraceException=Trc_PRT_file_close_invalidFileHandle Group=file Overhead=1 Level=1 NoEnv Template="omrfile_close invalid file handle"
+
+// heap trace points
+
+TraceEntry=Trc_PRT_heap_port_omrheap_create_entry Group=heap Overhead=1 Level=1 NoEnv Template="omrheap_create entry heapBase=%p, heapSize=%zu, flag=%zu"
+TraceExit-Exception=Trc_PRT_heap_port_omrheap_create_null_heapBase_exit Group=heap Overhead=1 Level=1 NoEnv Template="omrheap_create exit heapBase is NULL"
+TraceExit-Exception=Trc_PRT_heap_port_omrheap_create_insufficient_heapSize_exit Group=heap Overhead=1 Level=1 NoEnv Template="omrheap_create exit insufficient heapSize specified"
+TraceExit=Trc_PRT_heap_port_omrheap_create_exit Group=heap Overhead=1 Level=1 NoEnv Template="omrheap_create exit - heap created: %p"
+
+TraceEntry=Trc_PRT_heap_port_omrheap_free_entry Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_free entry heapBase=%p, memPtr=%p"
+TraceExit-Exception=Trc_PRT_heap_port_omrheap_free_null_memptr_exit Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_free exit memPtr is NULL"
+TraceExit=Trc_PRT_heap_port_omrheap_free_exit Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_free exit"
+
+TraceEntry=Trc_PRT_heap_port_omrheap_allocate_entry Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_allocate entry heapBase=%p, requestSize=%zu"
+TraceExit-Exception=Trc_PRT_heap_port_omrheap_allocate_heap_full_exit Group=heap Overhead=10 Level=1 NoEnv Template="omrheap_allocate exit the entire heap is full"
+TraceExit-Exception=Trc_PRT_heap_port_omrheap_allocate_cannot_satisfy_reuqest_exit Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_allocate exit the requested size is too large"
+TraceExit=Trc_PRT_heap_port_omrheap_allocate_exit Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_allocate exit returned memory = %p"
+
+TraceEntry=Trc_PRT_heap_port_omrheap_query_size_Entry Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_query_size entry portLibrary=%p, heap=%p, address=%p"
+TraceExit=Trc_PRT_heap_port_omrheap_query_size_Exit Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_query_size entry result=%zu"
+
+TraceEntry=Trc_PRT_heap_port_omrheap_reallocate_entry Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_reallocate entry heap=%p, address=%zu, byteAmount=%zu"
+TraceEvent=Trc_PRT_heap_port_omrheap_reallocate_null_address Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_reallocate got null address"
+TraceEvent=Trc_PRT_heap_port_omrheap_reallocate_no_realloc_necessary Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_reallocate no realloc necessary"
+TraceEvent=Trc_PRT_heap_port_omrheap_reallocate_relocating Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_reallocate relocating"
+TraceEvent=Trc_PRT_heap_port_omrheap_reallocate_grow Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_reallocate grow growAmount=%zu, residualSize=%zu"
+TraceEvent=Trc_PRT_heap_port_omrheap_reallocate_shrink Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_reallocate shrink by %zu slots"
+TraceExit=Trc_PRT_heap_port_omrheap_reallocate_exit Group=heap Overhead=1 Level=10 NoEnv Template="omrheap_reallocate exit - address: %p"
+TraceException=Trc_PRT_heap_port_omrheap_reallocate_arithmetic_overflow Group=heap Overhead=1 Level=1 NoEnv Template="omrheap_reallocate: arithmetic overflow, byteAmount=%u"
+TraceException=Trc_PRT_heap_port_omrheap_allocate_arithmetic_overflow Group=heap Overhead=1 Level=1 NoEnv Template="omrheap_allocate: arithmetic overflow, byteAmount=%u"
+
+TraceEntry=Trc_PRT_heap_port_omrheap_grow_entry Group=heap Overhead=1 Level=1 NoEnv Template="omrheap_grow entry heap=%p, growAmount=%zu"
+TraceExit-Exception=Trc_PRT_heap_port_omrheap_grow_insufficient_heapSize_exit Group=heap Overhead=1 Level=1 NoEnv Template="omrheap_create exit insufficient heapSize specified"
+TraceExit=Trc_PRT_heap_port_omrheap_grow_exit Group=heap Overhead=1 Level=1 NoEnv Template="omrheap_grow exit - heap grown: %p"
+
+// mem trace points
+
+TraceExit=Trc_PRT_mem_omrmem_allocate_memory_Exit Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_allocate_memory returns %p"
+
+TraceEntry=Trc_PRT_mem_omrmem_free_memory_Entry Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_free_memory pointer=%p"
+TraceExit=Trc_PRT_mem_omrmem_free_memory_Exit Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_free_memory"
+
+TraceExit=Trc_PRT_mem_omrmem_reallocate_memory_Exit Group=mem Overhead=1 Level=5 NoEnv Template="omrmem_reallocate_memory returns %p"
+
+TraceEntry=Trc_PRT_mem_omrmem_allocate_memory32_Entry Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_allocate_memory32 byteAmount=%u"
+TraceExit=Trc_PRT_mem_omrmem_allocate_memory32_Exit Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_allocate_memory32 returns %p"
+
+TraceEntry=Trc_PRT_mem_omrmem_free_memory32_Entry Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_free_memory32 pointer=%p"
+TraceExit=Trc_PRT_mem_omrmem_free_memory32_Exit Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_free_memory32"
+
+TraceException=Trc_PRT_mem_allocate_memory32_failed_vmemID Group=mem Overhead=1 Level=1 NoEnv Template="allocate_memory32 failed to allocate vmem ID callSite=%s"
+TraceException=Trc_PRT_mem_allocate_memory32_failed_page Group=mem Overhead=1 Level=1 NoEnv Template="allocate_memory32 failed to locate vmem page size callSite=%s"
+TraceException=Trc_PRT_mem_allocate_memory32_failed_alloc Group=mem Overhead=1 Level=1 NoEnv Template="allocate_memory32 failed to allocate byteAmount=%u callSite=%s"
+
+TraceEntry=Trc_PRT_mem_omrmem_allocate_memory_Entry Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_allocate_memory byteAmount=%zu callSite=%s"
+
+TraceEntry=Trc_PRT_mem_allocate_memory32_Entry Group=mem Overhead=1 Level=10 NoEnv Template="allocate_memory32 entry byteAmount=%zu"
+TraceExit=Trc_PRT_mem_allocate_memory32_Exit Group=mem Overhead=1 Level=10 NoEnv Template="allocate_memory32 exit returns 0x%p"
+TraceEvent=Trc_PRT_mem_allocate_memory32_alloc_large_region Group=mem Overhead=1 Level=10 NoEnv Template="vmem allocate large region @ 0x%p, size: %zu"
+TraceEvent=Trc_PRT_mem_allocate_memory32_suballoc_block Group=mem Overhead=1 Level=10 NoEnv Template="Suballocate memory @ 0x%p from omrheap @ 0x%p, size: %zu"
+TraceEvent=Trc_PRT_mem_allocate_memory32_alloc_normal_region_suballoc Group=mem Overhead=1 Level=10 NoEnv Template="vmem allocate normal region @ 0x%p, omrheap @ 0x%p, subAlloc memory @ 0x%p, size %zu"
+TraceEvent=Trc_PRT_mem_allocate_memory32_alloc_normal_region_consumed Group=mem Overhead=1 Level=10 NoEnv Template="vmem allocate normal region @ 0x%p, used entire region for size: %zu"
+
+TraceException=Trc_PRT_mem_allocate_memory32_failed_heapWrapper Group=mem Overhead=1 Level=1 NoEnv Template="allocate_memory32 failed to allocate J9HeapWrapper callSite=%s"
+
+TraceEntry=Trc_PRT_mem_free_memory32_Entry Group=mem Overhead=1 Level=10 NoEnv Template="free_memory32 entry memoryPointer=0x%p"
+TraceExit=Trc_PRT_mem_free_memory32_Exit Group=mem Overhead=1 Level=10 NoEnv Template="free_memory32 exit"
+TraceException=Trc_PRT_mem_free_memory32_no_matching_heap_found Group=mem Overhead=1 Level=1 NoEnv Template="did not find matching heap for 0x%p"
+TraceEvent=Trc_PRT_mem_free_memory32_found_omrheap Group=mem Overhead=1 Level=10 NoEnv Template="Found a suballocating J9heap @ 0x%p"
+TraceEvent=Trc_PRT_mem_free_memory32_found_vmem_heap Group=mem Overhead=1 Level=10 NoEnv Template="Found a vmem allocated memory as a heap @ 0x%p"
+
+TraceEntry=Trc_PRT_mem_omrmem_ensure_capacity32_Entry Group=mem Overhead=1 Level=1 NoEnv Template="omrmem_ensure_capacity32 entry byteAmount=%zu"
+TraceExit=Trc_PRT_mem_omrmem_ensure_capacity32_Exit Group=mem Overhead=1 Level=1 NoEnv Template="omrmem_ensure_capacity32 exit returnValue=%zu"
+TraceEntry=Trc_PRT_mem_ensure_capacity32_Entry Group=mem Overhead=1 Level=1 NoEnv Template="ensure_capacity32 entry byteAmount=%zu"
+TraceExit=Trc_PRT_mem_ensure_capacity32_Exit Group=mem Overhead=1 Level=1 NoEnv Template="ensure_capacity32 exit returnValue=%zu"
+TraceEvent=Trc_PRT_mem_ensure_capacity32_already_initialized Group=mem Overhead=1 Level=5 NoEnv Template="ensure_capacity32 found omrheap, heap=0x%p, heapSize=%zu"
+TraceEvent=Trc_PRT_mem_ensure_capacity32_uninitialized Group=mem Overhead=1 Level=5 NoEnv Template="ensure_capacity32 omrheap not yet initialized"
+
+TraceAssert=Trc_Assert_PRT_mem_categories_already_set noEnv Overhead=1 Level=1 Assert="(P1)"
+
+TraceEntry=Trc_PRT_mem_omrmem_reallocate_memory_Entry Group=mem Overhead=1 Level=5 NoEnv Template="omrmem_reallocate_memory memoryPointer=%p byteAmount=%u callSite=%p category=%u"
+
+TraceAssert=Trc_Assert_PTR_mem_categories_increment_counters_NULL_category noEnv Overhead=1 Level=3 Assert="(P1)"
+TraceAssert=Trc_Assert_PTR_mem_categories_decrement_counters_NULL_category noEnv Overhead=1 Level=3 Assert="(P1)"
+TraceAssert=Trc_Assert_PTR_mem_categories_increment_bytes_NULL_category noEnv Overhead=1 Level=3 Assert="(P1)"
+TraceAssert=Trc_Assert_PTR_mem_categories_decrement_bytes_NULL_category noEnv Overhead=1 Level=3 Assert="(P1)"
+
+TraceException=Trc_PRT_mem_advise_and_free_memory_basic_madvise_failed Overhead=1 Level=1 NoEnv Template="omrmem_advise_and_free_memory_basic : madvise(%p,%zu, MADV_DONTNEED) failed, with errno %d"
+
+TraceAssert=Trc_Assert_PRT_memory_corruption_detected noEnv Overhead=1 Level=1 Assert="(P1)"
+
+TraceException=Trc_PRT_mem_reserveAndCommitRegion_reserveMemoryFailure Group=mem Overhead=1 Level=1 NoEnv Template="reserveAndCommitRegion exit. Failed to reserve memory. reserveSize=%zu"
+TraceException=Trc_PRT_mem_reserveAndCommitRegion_commitMemoryFailure Group=mem Overhead=1 Level=1 NoEnv Template="reserveAndCommitRegion exit. Failed to commit memory. reservePtr=0x%p, commitSize=%zu, heapWrapper->vmemID=0x%p"
+
+TraceException=Trc_PRT_mem_iterateHeapsAndSubAllocate_commitMemoryFailure Group=mem Overhead=1 Level=1 NoEnv Template="Failed to commit memory. reservePtr=0x%p, commitSize=%zu, heapWrapper->vmemID=0x%p"
+TraceEvent=Trc_PRT_mem_iterateHeapsAndSubAllocate_heap_grow_successful Group=mem Overhead=1 Level=5 NoEnv Template="Heap succeed to grow. heap=0x%p, commitSize=%zu"
+TraceException=Trc_PRT_mem_iterateHeapsAndSubAllocate_heap_grow_failed Group=mem Overhead=1 Level=1 NoEnv Template="Heap succeed to grow. heap=0x%p, commitSize=%zu"
+TraceEvent=Trc_PRT_mem_iterateHeapsAndSubAllocate_failed_to_suballoc Group=mem Overhead=1 Level=1 NoEnv Template="Failed to suballoc (byteAmount=%zu) from existing heaps."
+
+TraceExit=Trc_PRT_mem_ensure_capacity32_NotRequired_Exit Group=mem Overhead=1 Level=1 NoEnv Template="ensure_capacity32 exit returnValue=OMRPORT_ENSURE_CAPACITY_NOT_REQUIRED"
+TraceAssert=Assert_AddressAbove4GBBar noEnv Overhead=1 Level=6 Assert="(P1)"
+
+TraceException=Trc_PRT_memory_alloc_returned_null_2 Group=mem Overhead=1 Level=1 NoEnv Template="memory allocate returned null pointer.  Callsite = %s, byteAmount = %zu"
+
+TraceException=Trc_PRT_mem_omrmem_allocate_memory32_returned_null Group=mem Overhead=1 Level=1 NoEnv Template="memory32 allocate returned null pointer. Callsite = %s, byteAmount = %zu"
+
+TraceException=Trc_PRT_mem_allocate_memory32_alloc_large_region_failed_2 Group=mem Overhead=1 Level=1 NoEnv Template="vmem allocate large region failed. Callsite = %s, byteAmount = %zu"
+TraceException=Trc_PRT_mem_allocate_memory32_suballoc_block_failed Group=mem Overhead=1 Level=5 NoEnv Template="Suballocate memory from omrheap failed. Heap = %p, size = %zu"
+TraceException=Trc_PRT_mem_allocate_memory32_alloc_normal_region_failed_2 Group=mem Overhead=1 Level=1 NoEnv Template="vmem allocate normal region failed. Callsite = %s, regionSize = %zu"
+TraceException=Trc_PRT_mem_omrmem_reallocate_memory_failed_2 Group=mem Overhead=1 Level=1 NoEnv Template="omrmem_reallocate_memory failed. Callsite = %s, memoryPointer = %p, byteAmount = %zu"
+
+TraceEntry=Trc_PRT_mem_omrmem_advise_and_free_memory_Entry Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_advise_and_free_memory pointer=%p"
+TraceExit=Trc_PRT_mem_omrmem_advise_and_free_memory_Exit Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_advise_and_free_memory"
+
+TraceException=Trc_PRT_mem_advise_and_free_memory_basic_disclaim64_failed Group=mem Overhead=1 Level=1 NoEnv Template="omrmem_advise_and_free_memory_basic : disclaim64(%p,%zu, DISCLAIM_ZEROMEM) failed, with errno %d"
+TraceException=Trc_PRT_mem_advise_and_free_memory_basic_vmgetinfo_failed Group=mem Overhead=1 Level=1 NoEnv Template="omrmem_advise_and_free_memory_basic : vmgetinfo failed, errno=%d" 
+
+TraceException=Trc_PRT_mem_advise_and_free_memory_basic_j9discard_data_failed Group=mem Overhead=1 Level=1 NoEnv Template="omrmem_advise_and_free_memory_basic : j9discard_data(%p,%zu) failed"
+TraceException=Trc_PRT_mem_advise_and_free_memory_basic_Pgser_Release_failed Group=mem Overhead=1 Level=1 NoEnv Template="omrmem_advise_and_free_memory_basic : Pgser_Release(%p,%zu) failed" 
+TraceEvent=Trc_PRT_mem_advise_and_free_memory_basic_params Group=mem Overhead=1 Level=5 NoEnv Template="omrmem_advise_and_free_memory_basic : pagesize=%zu memoryPointer=%p memorySize=%zu"
+TraceEvent=Trc_PRT_mem_advise_and_free_memory_basic_oscall Group=mem Overhead=1 Level=10 NoEnv Template="omrmem_advise_and_free_memory_basic : memPtrPageRounded=%p memPtrSizePageRounded=%zu"
+
+// mmap trace points
+
+TraceEntry=Trc_PRT_mmap_map_file_default_entered Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Entered, file=%zd, size=%zu"
+TraceExit=Trc_PRT_mmap_map_file_default_badfile Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Bad file supplied"
+TraceEvent=Trc_PRT_mmap_map_file_default_allocPointer Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: allocPointer allocated, addr=%p, size=%zu"
+TraceExit=Trc_PRT_mmap_map_file_default_badallocPointer Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Bad allocPointer"
+TraceEvent=Trc_PRT_mmap_map_file_default_mappedMemory Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: mappedMemory calculated as %p"
+TraceExit=Trc_PRT_mmap_map_file_default_badread Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Bad file read"
+TraceEvent=Trc_PRT_mmap_map_file_default_readingFile Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Reading file, bytes read so far = %zu"
+TraceExit=Trc_PRT_mmap_map_file_default_exit Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Successful, exiting"
+
+TraceEntry=Trc_PRT_mmap_map_file_win32_entered Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Entered, file=%zd, offset = %lld, size=%zu, mappingName=%s, flags=0x%x"
+TraceExit=Trc_PRT_mmap_map_file_win32_invalidFile Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Invalid file handle supplied, exiting"
+TraceExit=Trc_PRT_mmap_map_file_win32_writeUnsupported Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Write not supported, exiting"
+TraceExit=Trc_PRT_mmap_map_file_win32_invalidFlags Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Invalid flags (could be none or multiple set), exiting"
+TraceEvent=Trc_PRT_mmap_map_file_win32_flagsSet Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Flags set, flProtect=0x%x, dwDesiredAccess=0x%x"
+TraceEvent=Trc_PRT_mmap_map_file_win32_mappingName Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Object mapping name, supplied=%s, amended=%s"
+TraceExit=Trc_PRT_mmap_map_file_win32_badCreateFileMapping Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: CreateFileMapping failed, error=%d"
+TraceEvent=Trc_PRT_mmap_map_file_win32_callingMapViewOfFile Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Calling MapViewOfFile, mapping handle=%d, dwOffsetHigh=%d, dwoffsetLow=%d"
+TraceExit=Trc_PRT_mmap_map_file_win32_badMapViewOfFile Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: MapViewOfFile failed, error=%d"
+TraceExit=Trc_PRT_mmap_map_file_win32_exiting Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Successful, returning pointer=%p, handle=%p"
+
+TraceEntry=Trc_PRT_mmap_map_file_unix_entered Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Entered, file=%zd, offset = %lld, size=%zu, mappingName=%s, flags=0x%x"
+TraceExit=Trc_PRT_mmap_map_file_unix_invalidFlags Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Invalid flags (could be none or multiple set), exiting"
+TraceEvent=Trc_PRT_mmap_map_file_unix_flagsSet Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Flags set, prot=0x%x, flags=0x%x"
+TraceExit=Trc_PRT_mmap_map_file_unix_badMmap Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Mmap failed, errno=%d"
+TraceExit=Trc_PRT_mmap_map_file_unix_exiting Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Successful, returning pointer=%p, handle=%p"
+
+TraceEvent=Trc_PRT_mmap_msync_default_entered Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_msync: Entered, but not supported on this platform, start=%p, length=%zu, flags=0x%x"
+
+TraceEntry=Trc_PRT_mmap_msync_win32_entered Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_msync: Entered start=%p, length=%zu, flags=0x%x"
+TraceExit=Trc_PRT_mmap_msync_win32_badFlushViewOfFile Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_msync: FlushViewOfFile failed, error=%d"
+TraceExit=Trc_PRT_mmap_msync_win32_exiting Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_msync: Successful, exiting"
+
+TraceEntry=Trc_PRT_mmap_msync_unix_entered Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_msync: Entered, start=%p, length=%zu, flags=0x%x"
+TraceExit=Trc_PRT_mmap_msync_unix_invalidFlags Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_msync: Invalid flags, WAIT and ASYNC mutually exclusive"
+TraceEvent=Trc_PRT_mmap_msync_unix_flagsSet Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_msync: Flags set, msync flags=0x%x"
+TraceExit=Trc_PRT_mmap_msync_unix_badMsync Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_msync: Msync failed, errno=%d"
+TraceExit=Trc_PRT_mmap_msync_unix_exiting Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_msync: Successful, exiting"
+
+TraceException=Trc_PRT_mmap_map_file_cannotallocatehandle Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Could not allocate memory for handle"
+
+TraceEntry=Trc_PRT_mmap_unmap_file_unix_entering Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_unmap_file: Entering with handle=%p"
+TraceEvent=Trc_PRT_mmap_unmap_file_unix_values Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_unmap_file: Handle values are pointer=%p, size=%d"
+TraceExit=Trc_PRT_mmap_unmap_file_unix_exiting Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_unmap_file: Exiting with rc=%d"
+
+TraceException=Trc_PRT_mmap_map_file_unix_filestatfailed Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_map_file: Could not get stats about the file"
+
+TraceEvent=Trc_PRT_mmap_dont_need Group=mmap Overhead=1 Level=5 NoEnv Template="omrmmap_dont_need : pagesize=%zu memoryPointer=%p memorySize=%zu"
+TraceEvent=Trc_PRT_mmap_dont_need_oscall Group=mmap Overhead=1 Level=10 NoEnv Template="omrmmap_dont_need : memPtrPageRounded=%p memPtrSizePageRounded=%zu"
+TraceException=Trc_PRT_mmap_dont_need_madvise_failed Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_dont_need : madvise(%p,%zu, MADV_DONTNEED) failed, with errno %d"
+TraceException=Trc_PRT_mmap_dont_need_disclaim64_failed Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_dont_need : disclaim64(%p,%zu, DISCLAIM_ZEROMEM) failed, with errno %d"
+TraceException=Trc_PRT_mmap_dont_need_j9discard_data_failed Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_dont_need : j9discard_data(%p,%zu) failed"
+TraceException=Trc_PRT_mmap_dont_need_Pgser_Release_failed Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_dont_need : Pgser_Release(%p,%zu) failed" 
+TraceException=Trc_PRT_mmap_dont_need_virtual_unlock_failed Group=mmap Overhead=1 Level=1 NoEnv Template="omrmmap_dont_need : VirtualUnlock(%p,%zu) failed, with errno %d"
+
+// signal trace points
+
+TraceEntry=Trc_PRT_signal_omrsig_protect_entered Group=signal Overhead=1 Level=2 NoEnv Template="omrsig_protect: Entered, fn=%p, fn_arg=%p, handler=%p, handler_arg=%p, flags=0x%X"
+TraceEvent=Trc_PRT_signal_omrsig_protect_cannot_protect_dueto_Xrs Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_protect cannot protect, calling fn with fun_arg: fn=%p, fn_arg=%p, flags=0x%X"
+TraceExit=Trc_PRT_signal_omrsig_protect_exiting_did_not_protect_due_to_Xrs Group=signal Overhead=1 Level=2 NoEnv Template="omrsig_protect: Exiting and did not protect due to Xrs, fn=%p, fn_arg=%p, handler=%p, handler_arg=%p, flags=0x%X"
+TraceExit=Trc_PRT_signal_omrsignal_sig_protect_Exit_long_jumped_back_to_omrsig_protect Group=signal Overhead=2 Level=1 NoEnv Template="omrsig_protect: Exiting after long jump back: fn=%p, fn_arg=%p, handler=%p, handler_arg=%p, flags=0x%X"
+TraceExit=Trc_PRT_signal_omrsignal_sig_protect_Exit_ERROR_accessing_tls Group=signal Overhead=2 Level=1 NoEnv Template="omrsig_protect: Exiting: ERROR accessing tls: fn=%p, fn_arg=%p, handler=%p, handler_arg=%p, flags=0x%X"
+TraceExit=Trc_PRT_signal_omrsignal_sig_protect_Exit_after_returning_from_fn Group=signal Overhead=1 Level=2 NoEnv Template="omrsig_protect: Exiting after returning from fn, fn=%p, fn_arg=%p, handler=%p, handler_arg=%p, flags=0x%X, result=0x%X"
+
+TraceEvent=Trc_PRT_signal_registerSignalHandlerWithOS_registeredHandler Group=signal Overhead=1 Level=1 NoEnv Template="registerSignalHandlerWithOS, registered signal handler with OS, portLibrarySignalNo=0x%X, unixSignalNo=0x%X, handler=%p"
+TraceEvent=Trc_PRT_signal_registerSignalHandlerWithOS_failed_to_registerHandler Group=signal Overhead=1 Level=1 NoEnv Template="registerSignalHandlerWithOS, FAILED to register signal handler with OS, portLibrarySignalNo=0x%X, unixSignalNo=0x%X, handler=%p"
+
+TraceEntry=Trc_PRT_signal_omrsig_set_async_signal_handler_entered Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_set_async_signal_handler: Entered, handler=%p, handler_arg=%p, flags=0x%X"
+TraceEvent=Trc_PRT_signal_omrsig_set_async_signal_handler_will_not_set_handler_due_to_Xrs Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_set_async_signal_handler: will not set handler due to Xrs, handler=%p, handler_arg=%p, flags=0x%X"
+TraceExit=Trc_PRT_signal_omrsig_set_async_signal_handler_exiting_did_nothing_possible_error Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_set_async_signal_handler: Exiting, possible error, handler=%p, handler_arg=%p, flags=0x%X"
+TraceEvent=Trc_PRT_signal_omrsig_set_async_signal_handler_user_handler_removed Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_set_async_signal_handler: user handler removed, handler=%p, handler_arg=%p, flags=0x%X"
+TraceEvent=Trc_PRT_signal_omrsig_set_async_signal_handler_user_handler_added_1 Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_set_async_signal_handler: user handler added_1, handler=%p, handler_arg=%p, flags=0x%X"
+TraceEvent=Trc_PRT_signal_omrsig_set_async_signal_handler_user_handler_added_2 Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_set_async_signal_handler: user handler added_2, handler=%p, handler_arg=%p, flags=0x%X"
+TraceExit=Trc_PRT_signal_omrsig_set_async_signal_handler_exiting Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_set_async_signal_handler: Exiting, handler=%p, handler_arg=%p, flags=0x%X"
+
+TraceEvent=Trc_PRT_signal_omrsig_shutdown_empty_routine Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_shutdown: ERROR, empty shutdown routine indicates omrsig_startup failed, portLibrary=%p"
+TraceEvent=Trc_PRT_signal_omrsig_set_options Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_set_options: options=0x%X"
+TraceEvent=Trc_PRT_signal_omrsig_set_options_too_late_handlers_installed Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_set_options too late, handlers already installed: options=0x%X"
+TraceEvent=Trc_PRT_signal_mapPortLibSignalToUnix_ERROR_unknown_signal Group=signal Overhead=1 Level=1 NoEnv Template="omrsignal: mapPortLibSignalToUnix: ERROR, unknown signal, portLibSignal=0x%X"
+
+TraceEvent=Trc_PRT_signal_omrsig_asynchSignalReporterThread_going_to_sleep Group=signal Overhead=1 Level=1 NoEnv Template="asynchSignalReporter: going to sleep"
+TraceEvent=Trc_PRT_signal_omrsig_asynchSignalReporter_woken_up Group=signal Overhead=1 Level=1 NoEnv Template="asynchSignalReporter: woken up"
+TraceEvent=Trc_PRT_signal_omrsig_asynchSignalReporter_woken_up_for_SIGQUIT Group=signal Overhead=1 Level=1 NoEnv Template="asynchSignalReporter: woken up for SIGQUIT"
+TraceEvent=Trc_PRT_signal_omrsig_asynchSignalReporter_woken_up_for_SIGABRT Group=signal Overhead=1 Level=1 NoEnv Template="asynchSignalReporter: woken up for SIGABRT"
+TraceEvent=Trc_PRT_signal_omrsig_asynchSignalReporter_woken_up_for_SIGTERM Group=signal Overhead=1 Level=1 NoEnv Template="asynchSignalReporter: woken up for SIGQUIT"
+TraceEvent=Trc_PRT_signal_omrsig_asynchSignalReporter_woken_up_for_SIGRECONFIG Group=signal Overhead=1 Level=1 NoEnv Template="asynchSignalReporter: woken up for SIGRECONFIG"
+TraceEvent=Trc_PRT_signal_omrsig_asynchSignalReporter_woken_up_for_shutdown Group=signal Overhead=1 Level=1 NoEnv Template="asynchSignalReporter: woken up for shutdown"
+TraceEvent=Trc_PRT_signal_omrsig_asynchSignalReporter_calling_handler Group=signal Overhead=1 Level=1 NoEnv Template="asynchSignalReporter: calling handler, portLib=%p, asyncSignalFlag=0x%X, handler_arg=%p"
+TraceEvent=Trc_PRT_signal_setReporterPriority Group=signal Overhead=1 Level=1 NoEnv Template="setReporterPriority: setting asynch thread priority, portLib=%p, priority=0x%X"
+
+TraceEntry=Trc_PRT_signal_omrsig_startup_entered Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_startup: Entered, portLibrary=%p"
+TraceExit=Trc_PRT_signal_omrsig_startup_exiting Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_startup: Exiting, portLibrary=%p, result=%u"
+
+TraceEntry=Trc_PRT_signal_omrsig_can_protect_entered Group=signal Overhead=1 Level=2 NoEnv Template="omrsig_can_protect: Entered, flags=0x%x"
+TraceExit=Trc_PRT_signal_omrsig_can_protect_exiting_is_able_to_protect Group=signal Overhead=1 Level=2 NoEnv Template="omrsig_can_protect: Exiting and is able to protect, supportedFlags=0x%X"
+TraceExit=Trc_PRT_signal_omrsig_can_protect_exiting_is_not_able_to_protect Group=signal Overhead=1 Level=2 NoEnv Template="omrsig_can_protect: Exiting and is not able to protect, supportedFlags=0x%X"
+
+TraceEntry=Trc_PRT_signal_sig_full_shutdown_enter Group=signal Overhead=1 Level=1 NoEnv Template="sig_full_shutdown: Entered, portLibrary=%p"
+TraceEvent=Trc_PRT_signal_sig_full_shutdown_deregistered_handler_with_OS Group=signal Overhead=1 Level=1 NoEnv Template="sig_full_shutdown: deregistered handler with OS, portLibrary=%p, unixSignalNo=0x%X"
+TraceEntry=Trc_PRT_signal_sig_full_shutdown_exiting Group=signal Overhead=1 Level=1 NoEnv Template="sig_full_shutdown: Exiting, portLibrary=%p"
+
+TraceEntry=Trc_PRT_signal_omrsig_chain_at_shutdown_and_exit_enter Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_chain_at_shutdown_and_exit: Entered, portLibrary=%p"
+TraceEvent=Trc_PRT_signal_omrsig_chain_at_shutdown_and_exit_forwarding_to_omrsigHandler Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_chain_at_shutdown_and_exit: forwarding signal to omrsig handler, portLibrary=%p, unixSignalNo=0x%X"
+TraceEntry=Trc_PRT_signal_omrsig_chain_at_shutdown_and_exit_exiting Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_chain_at_shutdown_and_exit: Exiting, portLibrary=%p"
+
+TraceEvent=Trc_PRT_sig_can_protect_OMRPORT_SIG_FLAG_MAY_CONTINUE_EXECUTION_NOT_supported Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_can_protect OMRPORT_SIG_FLAG_MAY_CONTINUE_EXECUTION NOT supported"
+TraceEvent=Trc_PRT_sig_can_protect_OMRPORT_SIG_FLAG_MAY_CONTINUE_EXECUTION_supported Group=signal Overhead=1 Level=1 NoEnv Template="omrsig_can_protect OMRPORT_SIG_FLAG_MAY_CONTINUE_EXECUTION is supported"
+
+TraceException=Trc_PRT_zos_omrsig_protect_using_ceehdlr_CEEHDLR_failed Group=signal Overhead=1 Level=1 NoEnv Template="CEEHDLR failed with msgno: %u"
+
+TraceEvent=Trc_PRT_signal_omrsig_asynchSignalReporter_woken_up_for_SIGXFSZ Group=signal Overhead=1 Level=1 NoEnv Template="asynchSignalReporter: woken up for SIGXFSZ"
+
+// sl trace points
+
+TraceEntry=Trc_PRT_sl_close_shared_library_Entry Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_close_shared_library descriptor=%d"
+TraceExit=Trc_PRT_sl_close_shared_library_Exit Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_close_shared_library result=%d"
+TraceEntry=Trc_PRT_sl_lookup_name_Entry Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name descriptor=%d, name=%s, argSignature=%s"
+TraceExit=Trc_PRT_sl_lookup_name_Exit1 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name descriptor=%d"
+TraceExit=Trc_PRT_sl_lookup_name_Exit2 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name %s(%s) not found in %d, result=%d"
+TraceExit=Trc_PRT_sl_lookup_name_Exit3 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name could not allocate buffer of length=%d, result=%d"
+TraceEntry=Trc_PRT_sl_open_shared_library_Entry Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_open_shared_library name=%s, flags=%d"
+TraceEvent=Trc_PRT_sl_open_shared_library_Event1 Group=sl Overhead=1 Level=1 NoEnv Template="omrsl_open_shared_library using mangledName %s"
+TraceExit=Trc_PRT_sl_open_shared_library_Exit1 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_open_shared_library handle=%p"
+TraceExit=Trc_PRT_sl_open_shared_library_Exit2 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_open_shared_library result=%d"
+TraceExit=Trc_PRT_sl_open_shared_library_Exit3 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_open_shared_library could not allocate buffer of length=%d, result=%d"
+
+TraceEvent=Trc_PRT_sl_open_shared_library_Event2 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_open_shared_library OS error message: %s"
+
+// vmem trace points
+
+TraceEntry=Trc_PRT_vmem_omrvmem_reserve_memory_Entry Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_reserve_memory address=%p byteAmount=%u"
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_Exit1 Group=mem Overhead=1 Level=3 NoEnv Template="omrvmem_reserve_memory (invalid input)"
+TraceEvent=Trc_PRT_vmem_omrvmem_reserve_memory_Exit2 Group=mem Overhead=1 Level=3 NoEnv Template="omrvmem_reserve_memory (using default page allocator) returns %p"
+TraceExit=Trc_PRT_vmem_omrvmem_reserve_memory_Exit Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_reserve_memory returns %p"
+
+TraceEntry=Trc_PRT_vmem_omrvmem_free_memory_Entry Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory userAddress=%p byteAmount=%u"
+TraceExit=Trc_PRT_vmem_omrvmem_free_memory_Exit Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory returnCode=%d"
+
+TraceEntry=Trc_PRT_vmem_omrvmem_commit_memory_Entry Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_commit_memory address=%p byteAmount=%u"
+TraceExit=Trc_PRT_vmem_omrvmem_commit_memory_Exit Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_commit_memory returns %p"
+
+TraceEntry=Trc_PRT_vmem_omrvmem_decommit_memory_Entry Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_decommit_memory address=%p byteAmount=%u"
+TraceExit=Trc_PRT_vmem_omrvmem_decommit_memory_Exit Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_decommit_memory return code=%d"
+
+TraceException=Trc_PRT_vmem_user_does_not_have_Lock_Pages_in_Memory_permission_in_local_security_policy_settings Group=mem Overhead=1 Level=10 NoEnv Template="omrvmem_startup User does not have Lock_pages_in_memory permission in Local security policy settings"
+
+TraceEntry=Trc_PRT_vmem_port_numa_interleave_memory_enter Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem port_numa_interleave_memory entry"
+TraceExit=Trc_PRT_vmem_port_numa_interleave_memory_exit Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem port_numa_interleave_memory Exit"
+
+TraceException=Trc_PRT_vmem_port_numa_interleave_memory_mbind_failed Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem port_numa_interleave_memory mbind failed with errno: %d, strerror(errno): %s"
+TraceException=Trc_PRT_vmem_numa_set_affinity_mbind_failed Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem vmem_numa_set_affinity mbind failed with errno: %d, strerror(errno): %s"
+TraceException=Trc_PRT_vmem_port_numa_set_affinity_node_out_of_range Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_numa_set_affinity : node %zu out of range"
+TraceException=Trc_PRT_vmem_port_numa_set_affinity_node_not_present Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_numa_set_affinity : node %zu not present"
+
+TraceEvent=Trc_PRT_vmem_port_numa_numa_support_could_not_be_configured_at_startup Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem port_numa_interleave_memory: NUMA not available on this platform"
+
+TraceEntry=Trc_PRT_vmem_default_reserve_entry Group=mem Overhead=1 Level=5 NoEnv Template="default_pageSize_reserve_memory requestedAddress=%p byteAmount=%u"
+TraceEvent=Trc_PRT_vmem_default_reserve_using_mem_allocate_memory Group=mem Overhead=1 Level=5 NoEnv Template="default_pageSize_reserve_memory using omrmem_allocate_memory byteAmount=%u"
+TraceEvent=Trc_PRT_vmem_default_reserve_using_mem_allocate_memory32 Group=mem Overhead=1 Level=5 NoEnv Template="default_pageSize_reserve_memory using omrmem_allocate_memory32 byteAmount=%u"
+TraceException=Trc_PRT_vmem_default_reserve_failed Group=mem Overhead=1 Level=1 NoEnv Template="default_pageSize_reserve_memory FAILED requestedAddress=%p byteAmount=%u"
+TraceExit=Trc_PRT_vmem_default_reserve_exit Group=mem Overhead=1 Level=5 NoEnv Template="default_pageSize_reserve_memory returns %p requestedAddress=%p byteAmount=%u"
+
+TraceEntry=Trc_PRT_vmem_omrvmem_reserve_memory_Entry_replacement Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_reserve_memory requestedAddress=%p byteAmount=%u pageSize=%u"
+
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_invalid_input Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory (invalid input)"
+
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_unsupported_page_size Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory (unsupported page size: %u)"
+
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_failure Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory (failure)"
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_shmget_failed Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory (shmget_failed) byteAmount=%u shmgetFlags=%i"
+
+TraceExit=Trc_PRT_vmem_omrvmem_reserve_memory_Exit_replacement Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_reserve_memory returns %p requestedAddress=%p"
+
+TraceEvent=Trc_PRT_vmem_omrvmem_free_memory_using_mem_free_memory Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory using omrmem_free_memory userAddress=%p byteAmount=%u"
+TraceEvent=Trc_PRT_vmem_omrvmem_free_memory_using_mem_free_memory32 Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory using omrmem_free_memory32 userAddress=%p byteAmount=%u"
+
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_ex_UnableToAllocateWithinSpecifiedRange Group=mem Overhead=1 Level=3 NoEnv Template="omrvmem_reserve_memory_ex (unable to allocate %u bytes within range [%p,%p])"
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_shmdt_failed Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory (shmdt failed) address=%p"
+
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_ex_large_page_request_failed_reverting_to_default_page_size Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory_ex_large_page_request_failed_reverting_to_default_page_size, byteAmout: %u, numPages: %u"
+
+TraceException=Trc_PRT_vmem_omrvmem_startup_failed_to_close_dll Group=mem Overhead=1 Level=1 NoEnv Template="Failed to close DLL Kernel32"
+
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_ex_aix_vmgetinfo_failed Group=mem Overhead=1 Level=1 NoEnv Template="Trc_PRT_vmem_omrvmem_reserve_memory_ex_aix_vmgetinfo_failed address=%p"
+TraceException=Trc_PRT_vmem_omrvmem_startup_pagessize_exceeds_physical_memory Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_startup pagessize: 0x%zx exceeds physical memory: 0x%zx"
+
+TraceException=Trc_PRT_vmem_omrvmem_commit_memory_invalidRange Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_commit_memory requested an invalid range identifier->address=0x%zx, identifier->size=0x%zx, address=0x%zx, byteAmount=0x%zx"
+TraceException=Trc_PRT_vmem_omrvmem_decommit_memory_invalidRange Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_decommit_memory requested an invalid range identifier->address=0x%zx, identifier->size=0x%zx, address=0x%zx, byteAmount=0x%zx"
+TraceException=Trc_PRT_vmem_omrvmem_commit_memory_mprotect_failure Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_commit_memory mprotect failed, errno=%d"
+
+TraceException=Trc_PRT_vmem_touchOnNumaNode_failedToBindToComputeResource Group=mem Overhead=1 Level=1 NoEnv Template="touchOnNumaNode failed trying to bind to computational resource %zu on j9NumaNode %zu with system error code:  %zu"
+TraceException=Trc_PRT_vmem_touchOnNumaNode_failedToReturnToComputeResource Group=mem Overhead=1 Level=1 NoEnv Template="touchOnNumaNode failed trying to return its computational resource binding to the original (original: %zu, was temporarily: %zu) with system error code:  %zu"
+TraceException=Trc_PRT_vmem_touchOnNumaNode_failedToBindToNodeForTouch Overhead=1 Level=1 NoEnv Template="touchOnNumaNode failed to touch any memory on j9NumaNode %zu as the thread couldn't migrate there"
+
+TraceEntry=Trc_PRT_vmem_port_numa_set_affinity_enter Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem port_numa_set_affinity entry node=%zx address=%p byteAmount=%zx"
+TraceEvent=Trc_PRT_vmem_port_numa_set_affinity_no_NUMA Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_numa_set_affinity : NUMA not supported"
+TraceExit=Trc_PRT_vmem_port_numa_set_affinity_exit Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem port_numa_set_affinity Exit rc=%zi"
+
+TraceEvent=Trc_PRT_vmem_decommit_memory_calling_disclaim Group=mem NoEnv Overhead=1 Level=1 Template="omrvmem_decommit_memory calling disclaim, flags=%zu"
+TraceEvent=Trc_PRT_vmem_decommit_memory_calling_msync Group=mem NoEnv Overhead=1 Level=1 Template="omrvmem_decommit_memory calling msync, flags=%d"
+
+TraceEntry=Trc_PRT_vmem_omrvmem_reserve_memory_Entry_replacement_v1 Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_reserve_memory requestedAddress=%p byteAmount=%zu pageSize=%zu pageType=%zu"
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_parameter_mismatch Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory Cannot request large page size for executable pages (mode=%zu) in 2-32GB range (options=%zu)"
+TraceEvent=Trc_PRT_vmem_omrvmem_reserve_memory_unsupported_page_size_executable_largepages Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory cannot allocate executable pages with page size=%zu, page flag=%zu"
+
+TraceEntry=Trc_PRT_vmem_reserve1MPageableBelowBar_Entry Group=mem Overhead=1 Level=5 NoEnv Template="reserve1MPageableBelowBar Entring with byteAmount=%zu"
+TraceExit=Trc_PRT_vmem_reserve1MPageableBelowBar_Exit Group=mem Overhead=1 Level=5 NoEnv Template="reserve1MPageableBelowBar returns %p"
+
+TraceEntry=Trc_PRT_vmem_reservePagesAboveBar_Entry Group=mem Overhead=1 Level=5 NoEnv Template="reservePagesAboveBar Entring with byteAmount=%zu pageSize=%zu pageType=%zu options=%zu use2To32GArea=%zu"
+TraceEvent=Trc_PRT_vmem_reservePagesAboveBar_allocate_4K_pages_in_2to32G_area Group=mem Overhead=1 Level=1 NoEnv Template="reservePagesAboveBar Calling j9allocate_4K_pages_in_2to32G_area(%zu)"
+TraceEvent=Trc_PRT_vmem_reservePagesAboveBar_allocate_large_2G_pages Group=mem Overhead=1 Level=1 NoEnv Template="reservePagesAboveBar Calling j9allocate_large_2G_pages(%zu, %zu)"
+TraceEvent=Trc_PRT_vmem_reservePagesAboveBar_allocate_large_pages Group=mem Overhead=1 Level=1 NoEnv Template="reservePagesAboveBar Calling j9allocate_large_pages(%zu, %zu)"
+TraceEvent=Trc_PRT_vmem_reservePagesAboveBar_allocate_large_pageable_pages_above_bar Group=mem Overhead=1 Level=1 NoEnv Template="reservePagesAboveBar Calling j9allocate_large_pageable_pages_above_bar(%zu, %zu)"
+TraceExit=Trc_PRT_vmem_reservePagesAboveBar_Exit Group=mem Overhead=1 Level=5 NoEnv Template="reservePagesAboveBar returns %p"
+
+TraceEvent=Trc_PRT_vmem_omrvmem_free_memory_using_free_memory_below_bar Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory using j9free_memory_below_bar userAddress=%p byteAmount=%zu"
+TraceEvent=Trc_PRT_vmem_omrvmem_free_memory_using_free_memory_above_bar Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory using j9free_memory_above_bar userAddress=%p byteAmount=%zu allocator=%zu"
+
+TraceException=Trc_PRT_vmem_reservePages_UnableToAllocateWithinSpecifiedRange Group=mem Overhead=1 Level=3 NoEnv Template="reservePages unable to allocate %zu bytes within range [%p,%p] with use2To32GArea flag set using large pages"
+
+TraceException=Trc_PRT_vmem_omrvmem_initializeNumaGlobals_get_mempolicy_failure Group=mem Overhead=1 Level=1 NoEnv Template="initializeNumaGlobals get_mempolicy failed, errno=%d"
+TraceException=Trc_PRT_vmem_omrvmem_initializeNumaGlobals_get_allowed_mems_failure Group=mem Overhead=1 Level=1 NoEnv Template="initializeNumaGlobals get_mempolicy with MPOL_F_MEMS_ALLOWED failed, errno=%d"
+
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_ex_UnableToReallocateWithLargePages Group=mem Overhead=1 Level=3 NoEnv Template="omrvmem_reserve_memory_ex: unable to reallocate %u bytes at %p using large pages"
+
+TraceEvent=Trc_PRT_vmem_decommit_memory_zero_pages Group=mem NoEnv Overhead=1 Level=5 Template="omrvmem_decommit_memory after rounding off address and size, number of pages to decommit is zero"
+TraceEvent=Trc_PRT_vmem_decommit_memory_not_allowed Group=mem NoEnv Overhead=1 Level=5 Template="omrvmem_decommit_memory decommitting is not allowed as vmemAdviseOSonFree(=%zu) is not set"
+
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_shmat_failed2 Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory (shmat failed) byteAmount=%u addressRange=%p-%p"
+
+TraceEvent=Trc_PRT_vmem_default_reserve_low_using_4K_pages_below_bar Group=mem Overhead=1 Level=5 NoEnv Template="default_pageSize_reserve_low_memory using STORAGE OBTAIN below bar, byteAmount=%u bytes"
+
+TraceEvent=Trc_PRT_vmem_default_reserve_using_4K_pages_below_bar Group=mem Overhead=1 Level=5 NoEnv Template="default_pageSize_reserve_memory using STORAGE OBTAIN below bar, byteAmount=%u bytes"
+TraceEvent=Trc_PRT_vmem_default_reserve_using_4K_pages_above_bar Group=mem Overhead=1 Level=5 NoEnv Template="default_pageSize_reserve_memory using __moservices() above bar, byteAmount=%u MB"
+
+TraceException=Trc_PRT_vmem_default_reserve_using_4K_pages_above_bar_invalid_argument  Group=mem Overhead=1 Level=1 NoEnv Template="default_pageSize_reserve_memory passed invalid arguments to __moservices, return code = %d, errno2 = %d"
+TraceException=Trc_PRT_vmem_default_reserve_using_4K_pages_above_bar_iarv64_failed  Group=mem Overhead=1 Level=1 NoEnv Template="default_pageSize_reserve_memory iarv64 failed with return code=%d, reason code=%d" 
+
+TraceException=Trc_PRT_vmem_omrvmem_decommit_memory_failure Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_decommit_memory failed with platform specific error code=%d at address=%p byteAmount=%u"
+
+TraceException=Trc_PRT_vmem_get_available_physical_memory_failed Group=mem Level=1 NoEnv Overhead=1 Template="get_available_physical_memory %s failed errno=%zd"
+TraceEvent=Trc_PRT_vmem_get_available_physical_memory_result Group=mem Level=10 NoEnv Overhead=1 Template="available_physical_memory = %llu"
+
+TraceEntry=Trc_PRT_vmem_get_process_memory_enter Group=mem Level=10 NoEnv Overhead=1 Template="omrvmem_get_process_memory_size query = %d"
+TraceException=Trc_PRT_vmem_get_process_memory_failed Group=mem Level=1 NoEnv Overhead=1 Template="omrvmem_get_process_memory_size %s failed errno=%zd"
+TraceExit=Trc_PRT_vmem_get_process_memory_exit Group=mem Level=10 NoEnv Overhead=1 Template="omrvmem_get_process_memory_size status = %d result = %llu"
+
+// sysinfo trace points
+
+TraceEntry=Trc_PRT_sysinfo_getLimitSharedMemory_Entry Group=sysinfo Overhead=1 Level=1 NoEnv Template="getLimitSharedMemory entered"
+TraceExit=Trc_PRT_sysinfo_getLimitSharedMemory_Exit Group=sysinfo Overhead=1 Level=1 NoEnv Template="getLimitSharedMemory returning OMRPORT_LIMIT_LIMITED(%d), value = %lld"
+TraceExit=Trc_PRT_sysinfo_getLimitSharedMemory_ErrorExit Group=sysinfo Overhead=1 Level=1 NoEnv Template="getLimitSharedMemory error exit returning OMRPORT_LIMIT_UNKNOWN(%d), value = %lld"
+TraceException=Trc_PRT_sysinfo_getLimitSharedMemory_invalidFileHandle Group=sysinfo Overhead=1 Level=1 NoEnv Template="getLimitSharedMemory invalid return from file open, errno = %d"
+TraceException=Trc_PRT_sysinfo_getLimitSharedMemory_invalidRead Group=sysinfo Overhead=1 Level=1 NoEnv Template="getLimitSharedMemory invalid read or zero bytes read"
+TraceEvent=Trc_PRT_sysinfo_getLimitSharedMemory_bytesRead Group=sysinfo Overhead=1 Level=1 NoEnv Template="getLimitSharedMemory %d bytes read from file, errno = %d"
+TraceEvent=Trc_PRT_sysinfo_getLimitSharedMemory_maxSize Group=sysinfo Overhead=1 Level=1 NoEnv Template="getLimitSharedMemory shared memory maximum size = %lld (from buffer %s)"
+TraceException=Trc_PRT_sysinfo_getLimitSharedMemory_notImplemented Group=sysinfo Overhead=1 Level=1 NoEnv Template="getLimitSharedMemory not implemented on this platform, returning OMRPORT_LIMIT_UNKNOWN(%d)"
+TraceException=Trc_PRT_sysinfo_getLimit_unrecognised_resourceID Group=sysinfo Overhead=1 Level=1 NoEnv Template="get_limit given unrecognised resourceID %x"
+
+TraceEvent=Trc_PRT_sysinfo_get_egid Group=sysinfo Overhead=1 Level=3 NoEnv Template="omrsysinfo_get_egid group=%d"
+
+TraceException=Trc_PRT_sysinfo_get_CPU_utilization_invalidFileHandle Group=sysinfo Overhead=1 Level=1 NoEnv Template="get_CPU_utilization invalid return from file open, errno = %d"
+TraceException=Trc_PRT_sysinfo_get_CPU_utilization_invalidRead Group=sysinfo Overhead=1 Level=1 NoEnv Template="get_CPU_utilization invalid read or zero bytes read"
+TraceEvent=Trc_PRT_sysinfo_get_CPU_utilization_proc_stat_summary Group=sysinfo Overhead=1 Level=3 NoEnv Template="get_CPU_utilization summary line from proc/stat=%s"
+TraceEvent=Trc_PRT_sysinfo_get_CPU_utilization_perfstat Group=sysinfo Overhead=1 Level=3 NoEnv Template="perfstat_cpu_total user = %llu sys = %llu ncpus = %d"
+TraceException=Trc_PRT_sysinfo_get_CPU_utilization_timeFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="get_CPU_utilization omrtime call failed"
+TraceException=Trc_PRT_sysinfo_get_CPU_utilization_perfstat_failed Group=sysinfo Overhead=1 Level=1 NoEnv Template="perfstat_cpu_total failed with errno=%d"
+
+TraceException=Trc_PRT_sysinfo_unrecognized_Windows_version Group=sysinfo NoEnv Overhead=1 Level=1 Template="omrsysinfo_get_OS_type unrecognized Windows version: type=%d version=%d.%d"
+
+TraceEntry=Trc_PRT_retrieveLinuxMemoryStats_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveLinuxMemoryStats: Function entered."
+TraceException=Trc_PRT_retrieveLinuxMemoryStats_failedOpeningMemFs Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxMemoryStats: Failed opening /proc/meminfo. Error code = %i."
+TraceEvent=Trc_PRT_retrieveLinuxMemoryStats_openedMemFs Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveLinuxMemoryStats: Successfully opened /proc/meminfo for reading memory usage statistics."
+TraceException=Trc_PRT_retrieveLinuxMemoryStats_invalidRangeFound Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxMemoryStats: Value found for %s is out of range."
+TraceExit=Trc_PRT_retrieveLinuxMemoryStats_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveLinuxMemoryStats: Return code = %i."
+
+TraceEntry=Trc_PRT_retrieveAIXMemoryStats_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveAIXMemoryStats: Function entered."
+TraceException=Trc_PRT_retrieveAIXMemoryStats_perfstatFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveAIXMemoryStats: perfstat failed with return code = %i."
+TraceExit=Trc_PRT_retrieveAIXMemoryStats_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveAIXMemoryStats: Return code = %i."
+
+TraceEntry=Trc_PRT_sysinfo_get_memory_info_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_get_memory_info: Function entered."
+TraceException=Trc_PRT_sysinfo_get_memory_info_memStatFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_memory_info: Error: GlobalMemoryStatusEx() failed with error code = %i."
+TraceException=Trc_PRT_sysinfo_get_memory_info_pdhOpenQueryFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_memory_info: Error: pdh handle creation failure = %d."
+TraceException=Trc_PRT_sysinfo_get_memory_info_failedAddingCounter Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_memory_info: Error: Failed adding %s memory counter. Error code = %d"
+TraceException=Trc_PRT_sysinfo_get_memory_info_dataQueryFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_memory_info: Error: Failed collecting data."
+TraceExit=Trc_PRT_sysinfo_get_memory_info_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_get_memory_info: Return code = %d."
+
+TraceEntry=Trc_PRT_retrieveLinuxProcessorStats_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveLinuxProcessorStats: Function entered."
+TraceException=Trc_PRT_retrieveLinuxProcessorStats_failedOpeningProcFs Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxProcessorStats: Failed opening /proc/cpustat. Error code = %i."
+TraceEvent=Trc_PRT_retrieveLinuxProcessorStats_openedProcFs Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveLinuxProcessorStats: Successfully opened /proc/cpustat for reading processor usage statistics."
+TraceException=Trc_PRT_retrieveLinuxProcessorStats_memAllocFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxProcessorStats: Memory allocation failed."
+TraceException=Trc_PRT_retrieveLinuxProcessorStats_unexpectedReadError Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxProcessorStats: unexpected I/O error = %i."
+TraceException=Trc_PRT_retrieveLinuxProcessorStats_unexpectedCpuCount Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxProcessorStats: expected CPU count = %i, found = %i."
+TraceExit=Trc_PRT_retrieveLinuxProcessorStats_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveLinuxProcessorStats: Return code = %i."
+
+TraceEntry=Trc_PRT_retrieveAIXProcessorStats_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveAIXProcessorStats: Function entered."
+TraceException=Trc_PRT_retrieveAIXProcessorStats_memAllocFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveAIXProcessorStats: Memory allocation failed."
+TraceException=Trc_PRT_retrieveAIXProcessorStats_perfstatFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveAIXProcessorStats: perfstat interface failed with code = %i."
+TraceException=Trc_PRT_retrieveAIXProcessorStats_unexpectedCpuCount Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveAIXProcessorStats: expected CPU count = %i, found = %i."
+TraceExit=Trc_PRT_retrieveAIXProcessorStats_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveAIXProcessorStats: Return code = %i."
+
+TraceEntry=Trc_PRT_sysinfo_get_processor_info_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_get_processor_info: Function entered."
+TraceException=Trc_PRT_sysinfo_get_processor_info_categoryAllocFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_processor_info: Error: failed allocating memory for %i categories of %s counters."
+TraceException=Trc_PRT_sysinfo_get_processor_info_memAllocFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_processor_info: Error: memory allocation for processor array failed."
+TraceException=Trc_PRT_sysinfo_get_processor_info_pdhOpenQueryFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_processor_info: PdhOpenQuery() failed = %i."
+TraceException=Trc_PRT_sysinfo_get_processor_info_failedAddingCounter Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_processor_info: Failed adding %s counter."
+TraceException=Trc_PRT_sysinfo_get_processor_info_failedCollectingPdhData Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_processor_info: PdhCollectQueryData() failed."
+TraceExit=Trc_PRT_sysinfo_get_processor_info_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_get_processor_info: Return code = %i."
+
+TraceEntry=Trc_PRT_sysinfo_destroy_processor_info_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_destroy_processor_info: Function entered."
+TraceExit=Trc_PRT_sysinfo_destroy_processor_info_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_destroy_processor_info: Exiting function."
+
+TraceException=Trc_PRT_sysinfo_get_number_CPUs_by_type_failedPhysical Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_number_CPUs_by_type: Error: Could not get physical CPUs - %s%d"
+TraceException=Trc_PRT_sysinfo_get_number_CPUs_by_type_failedBound Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_number_CPUs_by_type: Error: Could not get bound CPUs - %s%d"
+TraceException=Trc_PRT_sysinfo_get_number_CPUs_by_type_invalidType Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_number_CPUs_by_type: Error: Invalid type argument."
+TraceEvent=Trc_PRT_sysinfo_get_number_CPUs_by_type_platformNotSupported Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_get_number_CPUs_by_type: Platform not supported."
+TraceEntry=Trc_PRT_sysinfo_get_number_CPUs_by_type_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_get_number_CPUs_by_type: Function entered."
+TraceExit=Trc_PRT_sysinfo_get_number_CPUs_by_type_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_get_number_CPUs_by_type: Exiting function - Type %d returned %d."
+TraceEntry=Trc_PRT_sysinfo_set_number_entitled_CPUs_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_set_number_entitled_CPUs: Function entered."
+TraceExit=Trc_PRT_sysinfo_set_number_entitled_CPUs_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_set_number_entitled_CPUs: Exiting function. Entitled CPUs set to %d."
+TraceException=Trc_PRT_sysinfo_get_number_CPUs_by_type_failedOnline Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_number_CPUs_by_type: Error: Could not get online CPUs - %s%d"
+
+TraceEntry=Trc_PRT_sysinfo_get_limit_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_get_limit: resourceID = %d"
+TraceException=Trc_PRT_sysinfo_getrlimit_error Group=sysinfo Overhead=1 Level=1 NoEnv Template="getrlimit failed, resource=%d errno=%d"
+TraceExit=Trc_PRT_sysinfo_get_limit_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_get_limit: Return code = %d"
+
+TraceEntry=Trc_PRT_sysinfo_set_limit_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_set_limit: resourceID = %d, limit = %llu"
+TraceException=Trc_PRT_sysinfo_setrlimit_error Group=sysinfo Overhead=1 Level=1 NoEnv Template="setrlimit failed, resource=%d limit=%llu, errno=%d"
+TraceException=Trc_PRT_sysinfo_setLimit_unrecognised_resourceID Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_set_limit given unrecognised resourceID %x"
+TraceException=Trc_PRT_sysinfo_sysparm_error Group=sysinfo Overhead=1 Level=1 NoEnv Template="sys_parm failed, errno=%d"
+TraceExit=Trc_PRT_sysinfo_set_limit_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="omrsysinfo_set_limit: Return code = %d"
+
+TraceEntry=Trc_PRT_retrieveZOSMemoryStats_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveZOSMemoryStats: Function entered."
+TraceExit=Trc_PRT_retrieveZOSMemoryStats_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveZOSMemoryStats: Returning with error code = %d."
+
+TraceEntry=Trc_PRT_retrieveZOSProcessorStats_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveZOSProcessorStats: Function entered."
+TraceExit=Trc_PRT_retrieveZOSProcessorStats_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveZOSProcessorStats: Returning with error code = %d."
+
+TraceException=Trc_PRT_getZFSClientCacheSize_StatsFailure Group=sysinfo Overhead=1 Level=1 NoEnv Template="getZFSClientCacheSize: Failed querying client cache size (BPXRV = %d BPXRC = 0x%0x BPXRS = 0x%0x)."
+TraceException=Trc_PRT_getZFSClientCacheSize_MallocFailure Group=sysinfo Overhead=1 Level=1 NoEnv Template="getZFSClientCache: Failed to allocate memory for string conversion."
+TraceException=Trc_PRT_getZFSUserCacheUsed_StatsFailure Group=sysinfo Overhead=1 Level=1 NoEnv Template="getZFSUserCacheUsed: Failed querying user cache stats (BPXRV = %d BPXRC = 0x%0x BPXRS = 0x%0x)."
+TraceException=Trc_PRT_getZFSUserCacheUsed_MallocFailure Group=sysinfo Overhead=1 Level=1 NoEnv Template="getZFSUserCacheUsed: Failed to allocate memory for string conversion."
+TraceException=Trc_PRT_getZFSMetaCacheSize_StatsFailure Group=sysinfo Overhead=1 Level=1 NoEnv Template="getZFSMetaCacheSize: Failed querying meta cache stats (BPXRV = %d BPXRC = 0x%0x BPXRS = 0x%0x)."
+TraceException=Trc_PRT_getZFSMetaCacheSize_MallocFailure Group=sysinfo Overhead=1 Level=1 NoEnv Template="getZFSMetaCacheSize: Failed to allocate memory for string conversion."
+
+TraceEvent=Trc_PRT_retrieveZOSMemoryStats_memUsageStats_v1 Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveZOSMemoryStats: total=%zu, avail=%zu, total-swap=%zu, avail-swap=%zu, cached=%zu buffered=%zu."
+TraceEvent=Trc_PRT_retrieveZOSProcessorStats_cpuUsageStats_v1 Group=sysinfo Overhead=1 Level=5 NoEnv Template="retrieveZOSProcessorStats: idle-time=%zu busy-time=%zu."
+
+TraceEvent=Trc_PRT_sysinfo_get_CPU_utilization_GST_result Group=sysinfo Overhead=1 Level=3 NoEnv Template="GetSystemTimes processor %s time = %lld"
+TraceException=Trc_PRT_sysinfo_get_CPU_utilization_GetSystemTimesFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="GetSystemTimes failed, GetLastError = %u"
+
+TraceException=Trc_PRT_sysinfo_get_cwd_failed_getcurrentdirectory Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_cwd: Get current directory failed. Error code = %d."
+TraceException=Trc_PRT_sysinfo_get_cwd_oome Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_cwd: failed to allocate memory."
+TraceException=Trc_PRT_sysinfo_get_cwd_failed_unicode_to_utf8 Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_cwd: failed to convert unicode to utf8."
+
+TraceException=Trc_PRT_sysinfo_get_tmp_failed_gettemppathw Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_tmp: Get temporary directory failed. Error code = %d."
+TraceException=Trc_PRT_sysinfo_get_tmp_oome Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_tmp: failed to allocate memory."
+
+TraceEntry=Trc_PRT_sysinfo_get_groups_Entry Group=sysinfo Overhead=1 Level=3 NoEnv Template="omrsysinfo_get_groups entered"
+TraceException=Trc_PRT_sysinfo_get_groups_Error_GetGroupsSize Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_groups failed to get size of the group id list with errno=%zi"
+TraceException=Trc_PRT_sysinfo_get_groups_Error_ListAllocateFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_groups failed to allocate memory for group id list of size=%zi"
+TraceException=Trc_PRT_sysinfo_get_groups_Error_GetGroups Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_groups getgroups() failed with errno=%zi"
+TraceExit=Trc_PRT_sysinfo_get_groups_Exit Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_groups returns %zi, supplementary group id list=%p"
+
+TraceException=Trc_PRT_find_executable_name_failedOpeningProcFS Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_executable_name: failed to open /proc file system; error=%d"
+TraceException=Trc_PRT_find_executable_name_invalidRead Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_executable_name: failed to read /proc file system; error=%d"
+
+TraceException=Trc_PRT_sysinfo_get_tmp_failed_str_covert Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_tmp: omrstr_convert() failed to convert unicode to modified utf8 with error code=%d"
+
+// syslog trace points
+
+TraceException=Trc_PRT_omrsyslog_failed_str_convert Group=syslog Overhead=1 Level=1 NoEnv Template="omrsyslog_write: Failed to convert encoding of syslog message (error returned = %d)"
+
+TraceEvent=Trc_PRT_j9nls_vprintf Group=nlsmessage Overhead=1 Level=5 NoEnv Test Template="J9 VM NLS message: %s"
+
+TraceEvent=Trc_PRT_PortInitStages_Event1 Overhead=1 Level=1 NoEnv Template="Trace engine initialized for module j9port"
+
+TraceEvent=Trc_PRT_sysinfo_get_processor_info_allocatedCPUs Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_processor_info: allocated space for %i CPUs (including a global record)."
+TraceEvent=Trc_PRT_sysinfo_get_processor_info_retryCount Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_processor_info: attempted obtaining CPU stats; retry count=%i."
+TraceException=Trc_PRT_sysinfo_get_processor_info_cpuCountUnstable Group=j9sysinfo Overhead=1 Level=1 NoEnv Template="j9sysinfo_get_processor_info: the CPU count is unstable."
+
+TraceException=Trc_PRT_sysinfo_failed_to_get_os_type Group=sysinfo NoEnv Overhead=1 Level=1 Template="omrsysinfo_get_OS_type failed to get OS type"
+TraceEvent=Trc_PRT_introspect_suspendWithSignal NoEnv Overhead=1 Level=4 Template="sending signal %d to all threads"
+
+TraceException=Trc_PRT_cuda_initDeviceData_fail2 Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda initDeviceData: failed to %s current device, error=%d"
+
+TraceException=Trc_PRT_cuda_reset_fail1 Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda resetDevices: failed to %s current device, error=%d"
+TraceException=Trc_PRT_cuda_reset_fail2 Group=cuda Level=1 NoEnv Overhead=1 Template="omrcuda resetDevices: failed to reset device=%u, error=%d"

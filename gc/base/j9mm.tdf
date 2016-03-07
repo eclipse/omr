@@ -1,0 +1,854 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+// (c) Copyright IBM Corp. 1998, 2015
+//
+//  This program and the accompanying materials are made available
+//  under the terms of the Eclipse Public License v1.0 and
+//  Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+// Contributors:
+//    Multiple authors (IBM Corp.) - initial implementation and documentation
+////////////////////////////////////////////////////////////////////////////////
+
+Executable=j9mm
+DATFileName=J9TraceFormat.dat
+Submodules=j9utilcore
+
+// IMPORTANT: 1) ONLY ADD ENTRIES TO THE END OF THIS FILE
+//            2) DO NOT MODIFY AN EXISTING ENTRY - MARK THE EXISTING ONE OBSOLETE AND ADD A NEW ONE
+//            3) ENTRIES ADDED TO .tdf FILES IN SERVICE STREAMS MUST BE PROPAGATED FORWARD TO DEVLINE
+
+TraceEntry=Trc_MM_MemorySubSpace_percolateGarbageCollect_Entry Overhead=1 Level=1 Group=percolate Template="MM_MemorySubSpace_percolateGarbageCollect Entry"
+TraceExit=Trc_MM_MemorySubSpace_percolateGarbageCollect_Exit1 Overhead=1 Level=1 Group=percolate Template="MM_MemorySubSpace_percolateGarbageCollect Exit1 Garbage collect percolated to parent, result = %s"
+TraceExit=Trc_MM_MemorySubSpace_percolateGarbageCollect_Exit2 Overhead=1 Level=1 Group=percolate Template="MM_MemorySubSpace_percolateGarbageCollect Exit2 Unable to percolate Garbage Collection"
+TraceEntry=Trc_MM_MemorySubSpace_garbageCollect_Entry Overhead=1 Level=1 Template="MM_MemorySubSpace_garbageCollect Entry"
+TraceExit=Trc_MM_MemorySubSpace_garbageCollect_Exit1 Overhead=1 Level=1 Template="MM_MemorySubSpace_garbageCollect Exit1 _collector garbage collect"
+TraceExit=Trc_MM_MemorySubSpace_garbageCollect_Exit2 Overhead=1 Level=1 Group=percolate Template="MM_MemorySubSpace_garbageCollect Exit2 Garbage collect percolated to parent, result = %s"
+TraceExit=Trc_MM_MemorySubSpace_garbageCollect_Exit3 Overhead=1 Level=1 Template="MM_MemorySubSpace_garbageCollect Exit3 No garbage collection done"
+TraceEntry=Trc_MM_MemorySubSpace_resizeHeapCheck_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_resizeHeapCheck Entry"
+TraceExit=Trc_MM_MemorySubSpace_resizeHeapCheck_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_resizeHeapCheck Exit1 Heap contracted by %zu bytes"
+TraceExit=Trc_MM_MemorySubSpace_resizeHeapCheck_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_resizeHeapCheck Exit2 Heap cannot expand"
+TraceExit=Trc_MM_MemorySubSpace_resizeHeapCheck_Exit3 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_resizeHeapCheck Exit3 Heap expanded by %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceUniSpace_calculateExpandSize_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_calculateExpandSize Entry Bytes required = %zu"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_calculateExpandSize_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_calculateExpandSize Exit1 Desired free bytes = %zu, current free bytes = %zu, returning expand size of %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceUniSpace_checkForRatioExpand_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_checkForRatioExpand Entry Bytes required = %zu"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_checkForRatioExpand_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_checkForRatioExpand Exit1 Free space already at -Xmaxf limit"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_checkForRatioExpand_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_checkForRatioExpand Exit2 Percentage of time spent in garbage collection = %u, expansion not required"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_checkForRatioExpand_Exit3 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_checkForRatioExpand Exit3 Percentage of time spent in garbage collection = %u, returning expansion size of %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceUniSpace_checkForRatioContract_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_checkForRatioContract Entry"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_checkForRatioContract_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_checkForRatioContract Exit1 Percentage of time spent in garbage collection = %u, contraction desirable"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_checkForRatioContract_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_checkForRatioContract Exit2 Percentage of time spent in garbage collection = %u, contraction not required"
+TraceEntry=Trc_MM_MemorySubSpaceUniSpace_performExpand_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_performExpand Entry Required expansion size = %zu bytes"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_performExpand_Exit Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_performExpand Exit Expanded by %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpace_expand_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_expand Entry Required expansion size = %zu bytes"
+TraceExit=Trc_MM_MemorySubSpace_expand_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_expand Exit1 Heap cannot expand"
+TraceExit=Trc_MM_MemorySubSpace_expand_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_expand Exit2 Heap Expanded by %zu bytes."
+TraceEntry=Trc_MM_MemorySubSpaceUniSpace_timeForHeapContract_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_timeForHeapContract Entry System garbage collection = %s"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_timeForHeapContract_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_timeForHeapContract Exit1 Heap cannot contract"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_timeForHeapContract_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_timeForHeapContract Exit2 Heap cannot contract due to maxf value specified"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_timeForHeapContract_Exit3 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_timeForHeapContract Exit3 Heap contraction not necessary"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_timeForHeapContract_Exit4 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_timeForHeapContract Exit4 Do not contract as allocation request not satisfied, size of allocation request = %zu bytes, size of largest free chunk = %zu bytes"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_timeForHeapContract_Exit5 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_timeForHeapContract Exit5 Do not contract a expansion ocurred on one of previous three garbage collection cycles"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_timeForHeapContract_Exit6 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_timeForHeapContract Exit6 Do not contract as free bytes at start of system garbage collect, %zu, less than minimum free bytes, %zu"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_timeForHeapContract_Exit7 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_timeForHeapContract Exit7 Contraction required, size = %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceUniSpace_calculateTargetContractSize_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_calculateTargetContractSize Entry Allocation size = %zu, ratio contract %s"
+TraceEvent=Trc_MM_MemorySubSpaceUniSpace_calculateTargetContractSize_Event1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_calculateTargetContractSize Event1 Contraction size = %zu bytes"
+TraceEvent=Trc_MM_MemorySubSpaceUniSpace_calculateTargetContractSize_Event2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_calculateTargetContractSize Event2 Contraction size = %zu bytes, maximum contraction size = %zu bytes"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_calculateTargetContractSize_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_calculateTargetContractSize Exit contraction size = %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceUniSpace_performContract_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_performContract Entry Allocation size = %zu"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_performContract_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_performContract Exit1 Do not contract due to target contract size being 0"
+TraceEvent=Trc_MM_MemorySubSpaceUniSpace_performContract_Event1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_performContract Event1 Target contract size = %zu bytes, maximum contract size = %zu, contract size = %zu bytes"
+TraceEvent=Trc_MM_MemorySubSpaceUniSpace_performContract_Event2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_performContract Event2 Target contract size = %zu bytes, maximum contract size = %zu, contract size = %zu bytes"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_performContract_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_performContract Exit2 Do not contract, contract size is 0"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_performContract_Exit3 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_performContract Exit3 Heap contracted by %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpace_contract_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_contract Entry Target contraction size = %zu bytes"
+TraceExit=Trc_MM_MemorySubSpace_contract_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_contract Exit1 Heap cannot contract"
+TraceExit=Trc_MM_MemorySubSpace_contract_Exit Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_contract Exit2 Heap contracted by %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceFlat_collectorExpand_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_collectorExpand Entry Requesting collector at %p, requested bytes = %zu"
+TraceExit=Trc_MM_MemorySubSpaceFlat_collectorExpand_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_collectorExpand Exit1 Unable to expand"
+TraceExit=Trc_MM_MemorySubSpaceFlat_collectorExpand_Exit3 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_collectorExpand Exit2 Expanded by %zu bytes"
+TraceEvent=Trc_MM_VMInitStages_Event1 Overhead=1 Level=1 Template="Trace engine initialized for module j9mm"
+
+// Here come the GC flight-recorder tracepoints - they all go to the "gclogger" group
+TraceEvent=Trc_MM_SystemGCStartOld Obsolete Overhead=1 Level=1 Group=gclogger Template="SystemGC start: exclusiveaccessms=%llu.%03.3llu newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+TraceEvent=Trc_MM_SystemGCEnd Overhead=1 Level=1 Group=gclogger Template="SystemGC end: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+TraceEvent=Trc_MM_GlobalGCStartOld Obsolete Overhead=1 Level=1 Group=gclogger Template="GlobalGC start: weakrefs=%zu soft=%zu phantom=%zu finalizers=%zu globalcount=%zu scavengecount=%zu"
+TraceEvent=Trc_MM_GlobalGCEndOld Obsolete Overhead=1 Level=1 Group=gclogger Template="GlobalGC end: workstackoverflow=%zu overflowcount=%zu weakrefs=%zu soft=%zu phantom=%zu finalizers=%zu newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+TraceEvent=Trc_MM_MarkStart Overhead=1 Level=1 Group=gclogger Template="Mark start"
+TraceEvent=Trc_MM_MarkEnd Overhead=1 Level=1 Group=gclogger Template="Mark end"
+TraceEvent=Trc_MM_SweepStart Overhead=1 Level=1 Group=gclogger Template="Sweep start"
+TraceEvent=Trc_MM_SweepEnd Overhead=1 Level=1 Group=gclogger Template="Sweep end"
+TraceEvent=Trc_MM_CompactStartOld Obsolete Overhead=1 Level=1 Group=gclogger Template="Compact start"
+TraceEvent=Trc_MM_CompactEndOld Obsolete Overhead=1 Level=1 Group=gclogger Template="Compact end"
+TraceEvent=Trc_MM_ClassUnloadingStart Overhead=1 Level=1 Group=gclogger Template="Class unloading start"
+TraceEvent=Trc_MM_ClassUnloadingEndOld Obsolete Overhead=1 Level=1 Group=gclogger Template="Class unloading end"
+TraceEvent=Trc_MM_RememberedSetOverflow Overhead=1 Level=1 Group=gclogger Template="Remembered set overflow triggered"
+TraceEvent=Trc_MM_ScavengerBackout Overhead=1 Level=1 Group=gclogger Template="Set scavenger backout flag=%s"
+TraceEvent=Trc_MM_LocalGCStart Overhead=1 Level=1 Group=gclogger Template="LocalGC start: globalcount=%zu scavengecount=%zu weakrefs=%zu soft=%zu phantom=%zu finalizers=%zu"
+TraceEvent=Trc_MM_LocalGCEndOld Obsolete Overhead=1 Level=1 Group=gclogger Template="LocalGC end: rememberedsetoverflow=%d causedrememberedsetoverflow=%d scancacheoverflow=%d failedflipcount=%d failedflipbytes=%d failedtenurecount=%d failedtenurebytes=%d flipcount=%d flipbytes=%d newspace=%d/%d oldspace=%d/%d loa=%d/%d tenureage=%d"
+// Trc_MM_ClassLoaderUnload removed from gclogger group as it fires too frequently and provides no useful data
+TraceEvent=Trc_MM_ClassLoaderUnload Overhead=1 Level=3 Template="Classloader unload"
+TraceEvent=Trc_MM_ConcurrentlyCompletedSweepPhase Overhead=1 Level=1 Group=gclogger Template="Concurrently completed sweep phase, bytesswept=%zu"
+TraceEvent=Trc_MM_CompletedConcurrentSweep Overhead=1 Level=1 Group=gclogger Template="Concurrent sweep completed, bytesconnected=%zu"
+TraceEvent=Trc_MM_ConcurrentKickoff Overhead=1 Level=1 Group=gclogger Template="Concurrent kickoff, tracesizetarget=%zu kickoffthreshold=%zu remainingfree=%zu"
+TraceEvent=Trc_MM_ConcurrentAborted Overhead=1 Level=1 Group=gclogger Template="Concurrent aborted"
+TraceEvent=Trc_MM_ConcurrentHalted Overhead=1 Level=1 Group=gclogger Template="Concurrent halted, execmodeatgc=%zu tracesizetarget=%zu totaltraced=%zu mutatorstraced=%zu conhelpertraced=%zu cleanedcards=%zu cardcleaningthreshold=%zu workstackoverflow=%s workstackoverflowcount=%zu"
+TraceEvent=Trc_MM_ConcurrentCollectionCardCleaningStart Overhead=1 Level=1 Group=gclogger Template="Concurrent collection card cleaning start, workstackoverflowcount=%zu"
+TraceEvent=Trc_MM_ConcurrentCollectionCardCleaningEnd Overhead=1 Level=1 Group=gclogger Template="Concurrent collection card cleaning end"
+TraceEvent=Trc_MM_ConcurrentCollectionStartOld Obsolete Overhead=1 Level=1 Group=gclogger Template="Concurrent collection start exclusiveaccessms=%llu.%03.3llu newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu tracesizetarget=%zu totaltraced=%zu mutatorstraced=%zu conhelpertraced=%zu concurrentcleanedcards=%zu cardcleaningthreshold=%zu overflowoccurred=%s overflowcount=%zu"
+TraceEvent=Trc_MM_ConcurrentCollectionEnd Overhead=1 Level=1 Group=gclogger Template="Concurrent collection end: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+TraceEvent=Trc_MM_ConcurrentBackgroundThreadActivated Overhead=1 Level=1 Group=gclogger Template="Concurrent background thread activated"
+TraceEvent=Trc_MM_ConcurrentBackgroundThreadFinished Overhead=1 Level=1 Group=gclogger Template="Concurrent background thread finished"
+TraceEvent=Trc_MM_ConcurrentRememberedSetScanStart Overhead=1 Level=1 Group=gclogger Template="Concurrent remembered set scan start, overflowcount=%zu"
+TraceEvent=Trc_MM_ConcurrentRememberedSetScanEnd Overhead=1 Level=1 Group=gclogger Template="Concurrent remembered set scan end, rememberedsetobjectsfound=%zu scantracecount=%zu overflowcount=%zu"
+TraceEvent=Trc_MM_ObjectAllocationFailedOld Obsolete Overhead=1 Level=1 Group=gclogger Template="J9AllocateObject() returning NULL! %zu bytes requested for object of class %p from memory space '%s'"
+TraceEvent=Trc_MM_ArrayObjectAllocationFailedOld Obsolete Overhead=1 Level=1 Group=gclogger Template="J9AllocateIndexableObject() returning NULL! %zu bytes requested for object of class %p from memory space '%s'"
+TraceEvent=Trc_MM_ExcessiveGCRaised Overhead=1 Level=1 Group=gclogger Template="Excessive GC raised!"
+TraceEvent=Trc_MM_ObjectAllocationFailedDueToExcessiveGC Overhead=1 Level=1 Group=gclogger Template="Forcing J9AllocateObject() to fail due to excessive GC"
+TraceEvent=Trc_MM_ArrayObjectAllocationFailedDueToExcessiveGC Overhead=1 Level=1 Group=gclogger Template="Forcing J9AllocateIndexableObject() to fail due to excessive GC"
+TraceEvent=Trc_MM_ConcurrentCompleteTracingStart Overhead=1 Level=1 Group=gclogger Template="Concurrent complete tracing start, overflowcount=%zu"
+TraceEvent=Trc_MM_ConcurrentCompleteTracingEnd Overhead=1 Level=1 Group=gclogger Template="Concurrent complete tracing end, scantracecount=%zu overflowcount=%zu"
+TraceEvent=Trc_MM_RecomputeManagedTimePortionError Overhead=0 Level=0 Template="Could not calculate managed time portion. Utilization target may be compromised."
+TraceEvent=Trc_MM_RecomputeManagedTimePortionMinor Overhead=1 Level=4 Template="recomputeManagedTimePortion: New managedTimePortion=%f, adjustedTargetUtilization=%f"
+TraceEvent=Trc_MM_RecomputeManagedTimePortionMajor Overhead=1 Level=6 Template="recomputeManagedTimePortion: New managedTimePortion=%f, adjustedTargetUtilization=%f"
+TraceEvent=Trc_MM_GlobalGCCollectComplete Overhead=1 Level=1 Group=gclogger Template="GlobalGC collect complete"
+TraceEvent=Trc_MM_GlobalGCEndOld2 Obsolete Overhead=1 Level=1 Group=gclogger Template="GlobalGC end: workstackoverflow=%zu overflowcount=%zu weakrefs=%zu soft=%zu threshold=%zu phantom=%zu finalizers=%zu newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+
+TraceEntry=Trc_MM_MemorySubSpaceUniSpace_calculateCollectorExpandSize_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_calculateCollectorExpandSize Entry Bytes required = %zu"
+TraceExit=Trc_MM_MemorySubSpaceUniSpace_calculateCollectorExpandSize_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_calculateCollectorExpandSize Exit1 returning expand size of %zu bytes"
+//Redefine Trc_MM_ClassUnloadingEnd to add class loader and classes unload counts 
+TraceEvent=Trc_MM_ClassUnloadingEnd Overhead=1 Level=1 Group=gclogger Template="Class unloading end: classloadersunloaded=%zu classesunloaded=%zu"
+
+TraceEvent=Trc_MM_ObjectArrayAllocationFailedDueToOverflow Group=gclogger Overhead=1 Level=1 Template="J9AllocateIndexableObject() failed because object array is too large to ever allocate (length=%u)"
+TraceEvent=Trc_MM_ByteArrayAllocationFailedDueToOverflow Group=gclogger Overhead=1 Level=1 Template="J9AllocateIndexableObject() failed because byte or boolean array is too large to ever allocate (length=%u)"
+TraceEvent=Trc_MM_ShortArrayAllocationFailedDueToOverflow Group=gclogger Overhead=1 Level=1 Template="J9AllocateIndexableObject() failed because char or short array is too large to ever allocate (length=%u)"
+TraceEvent=Trc_MM_IntArrayAllocationFailedDueToOverflow Group=gclogger Overhead=1 Level=1 Template="J9AllocateIndexableObject() failed because int or float array is too large to ever allocate (length=%u)"
+TraceEvent=Trc_MM_DoubleArrayAllocationFailedDueToOverflow Group=gclogger Overhead=1 Level=1 Template="J9AllocateIndexableObject() failed because long or double array is too large to ever allocate (length=%u)"
+
+TraceEvent=Trc_MM_ObjectAllocationFailed Overhead=1 Level=1 Group=gclogger Template="J9AllocateObject() returning NULL! %zu bytes requested for object of class %p from memory space '%s' id=%p"
+TraceEvent=Trc_MM_ArrayObjectAllocationFailed Overhead=1 Level=1 Group=gclogger Template="J9AllocateIndexableObject() returning NULL! %zu bytes requested for object of class %p from memory space '%s' id=%p"
+
+TraceEvent=Trc_MM_GcThreadPriorityChanged Overhead=1 Level=1 Group=gclogger Template="setGCThreadPriority() called with newGCThreadPriority = %zu"
+
+TraceEntry=Trc_MM_FixHeapForWalk_Entry Overhead=1 Level=1 Template="Trc_MM_FixHeapForWalk Entry with walkflags: %zx"
+TraceExit=Trc_MM_FixHeapForWalk_Exit Overhead=1 Level=1 Template="Trc_MM_FixHeapForWalk Exit after fixing up %zu objects"
+TraceEntry=Trc_MM_FlushUndeadSegments_Entry Overhead=1 Level=1 Template="Trc_MM_FlushUndeadSegments Entry with reason: %s"
+TraceExit=Trc_MM_FlushUndeadSegments_Exit Overhead=1 Level=1 Template="Trc_MM_FlushUndeadSegments Exit"
+
+TraceAssert=Assert_MM_true_internal noEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_MM_false_internal noEnv Overhead=1 Level=1 Assert="!(P1)"
+
+TraceEntry=Trc_MM_DoFixHeapForUnload_Entry Overhead=1 Level=1 Template="Trc_MM_DoFixHeapForUnload Entry with walkflags: %zx"
+TraceExit=Trc_MM_DoFixHeapForUnload_Exit Overhead=1 Level=1 Template="Trc_MM_DoFixHeapForUnload Exit after fixing up %zu objects"
+TraceExit=Trc_MM_DoFixHeapForUnload_ExitNotNeeded Overhead=1 Level=1 Template="Trc_MM_DoFixHeapForUnload Exit without fixup since fixup already performed this cycle"
+
+TraceEntry=Trc_MM_suspendConHelperThreads_Entry Overhead=1 Level=1 Template="Trc_MM_suspendConHelperThreads Entry"
+TraceEvent=Trc_MM_suspendConHelperThreads_PriorityBoost Overhead=1 Level=1 Template="Trc_MM_suspendConHelperThreads boosting priority of %u helpers"
+TraceExit=Trc_MM_suspendConHelperThreads_Shutdown Overhead=1 Level=1 Template="Trc_MM_suspendConHelperThreads already shutting down"
+TraceExit=Trc_MM_suspendConHelperThreads_Exit Overhead=1 Level=1 Template="Trc_MM_suspendConHelperThreads Exit"
+
+TraceEntry=Trc_MM_incrementConcurrentHelperCount_Entry noEnv Overhead=1 Level=1 Template="Trc_MM_incrementConcurrentHelperCount Entry (value=%u)"
+TraceExit=Trc_MM_incrementConcurrentHelperCount_Exit noEnv Overhead=1 Level=1 Template="Trc_MM_incrementConcurrentHelperCount Exit (updated=%u)"
+
+TraceEntry=Trc_MM_notifyWaitingConcurrentHelpers_Entry noEnv Overhead=1 Level=1 Template="Trc_MM_notifyWaitingConcurrentHelpers Entry"
+TraceExit=Trc_MM_notifyWaitingConcurrentHelpers_Exit noEnv Overhead=1 Level=1 Template="Trc_MM_notifyWaitingConcurrentHelpers Exit"
+
+TraceEntry=Trc_MM_shutdownConHelperThreads_Entry noEnv Overhead=1 Level=1 Template="Trc_MM_shutdownConHelperThreads Entry"
+TraceExit=Trc_MM_shutdownConHelperThreads_Exit noEnv Overhead=1 Level=1 Template="Trc_MM_shutdownConHelperThreads Exit"
+
+TraceEntry=Trc_MM_SynchronizeGCThreads_Entry Overhead=1 Level=2 Template="Trc_MM_SynchronizeGCThreads Entry from: %s"
+TraceExit=Trc_MM_SynchronizeGCThreads_Exit Overhead=1 Level=2 Template="Trc_MM_SynchronizeGCThreads Exit"
+
+TraceEntry=Trc_MM_SynchronizeGCThreadsAndReleaseMaster_Entry Overhead=1 Level=1 Template="Trc_MM_SynchronizeGCThreadsAndReleaseMaster Entry from: %s"
+TraceExit=Trc_MM_SynchronizeGCThreadsAndReleaseMaster_Exit Overhead=1 Level=1 Template="Trc_MM_SynchronizeGCThreadsAndReleaseMaster Exit"
+
+TraceEvent=Trc_MM_MethodSampleContinue Overhead=1 Level=1 Test Template="at %p %.*s.%.*s%.*s, jit %p, pc %p"
+
+TraceException=Trc_MM_UtilizationTrackerOverFlow Overhead=1 Level=1 Group=gclogger Template="Trc_MM_UtilizationTrackerOverFlow utilizationTracker address: %p, timeSliceDuration address: %p"
+TraceException=Trc_MM_NonMonotonicTimeDetected noEnv Overhead=1 Level=1 Group=gclogger Template="Trc_MM_NonMonotonicTimeDetected in timer: %s"
+TraceException=Trc_MM_NonMonotonicTimeAcknowledged noEnv Overhead=1 Level=1 Group=gclogger Template="Trc_MM_NonMonotonicTimeAcknowledged in timer: %s"
+
+TraceEvent=Trc_MM_CompressedAccessBarrierInitialized Overhead=1 Level=1 Template="Trc_MM_CompressedAccessBarrierInitialized with compressed displacement: 0x%zx, compressed shift: %zu"
+
+TraceEvent=Trc_MM_SystemGCStart Overhead=1 Level=1 Group=gclogger Template="SystemGC start: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+TraceEvent=Trc_MM_ConcurrentCollectionStart Overhead=1 Level=1 Group=gclogger Template="Concurrent collection start: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu tracesizetarget=%zu totaltraced=%zu mutatorstraced=%zu conhelpertraced=%zu concurrentcleanedcards=%zu cardcleaningthreshold=%zu overflowoccurred=%s overflowcount=%zu"
+TraceEvent=Trc_MM_AllocationFailureStart Overhead=1 Level=1 Group=gclogger Template="Allocation failure start: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu requestedbytes=%zu"
+TraceEvent=Trc_MM_AllocationFailureEnd Overhead=1 Level=1 Group=gclogger Template="Allocation failure end: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+TraceEvent=Trc_MM_ExclusiveAccess Overhead=1 Level=1 Group=gclogger Template="Exclusive access: exclusiveaccessms=%u.%03.3u meanexclusiveaccessms=%u.%03.3u threads=%zu lastthreadtid=0x%p beatenbyotherthread=%u"
+
+TraceEvent=Trc_MM_CompactStart Overhead=1 Level=1 Group=gclogger Template="Compact start: reason=%s"
+TraceEvent=Trc_MM_CompactEnd Overhead=1 Level=1 Group=gclogger Template="Compact end: bytesmoved=%zu"
+TraceEvent=Trc_MM_RefCountStart Obsolete Overhead=1 Level=1 Group=gclogger Template="Reference count start: weak=%zu soft=%zu phantom=%zu threshold=%zu maxThreshold=%zu"
+TraceEvent=Trc_MM_RefCountEnd Obsolete Overhead=1 Level=1 Group=gclogger Template="Reference count end: weak=%zu soft=%zu phantom=%zu threshold=%zu maxThreshold=%zu"
+TraceEvent=Trc_MM_Tiltratio Overhead=1 Level=1 Group=gclogger Template="Tilt ratio: %zu"
+
+TraceAssert=Assert_MM_unreachable_internal noEnv Overhead=1 Level=1 Assert="(false)"
+TraceAssert=Assert_MM_unimplemented_internal noEnv Overhead=1 Level=1 Assert="(false)"
+
+TraceEvent=Trc_MM_concurrentClassMarkStart Overhead=1 Level=1 Template="Concurrent class mark start"
+TraceEvent=Trc_MM_concurrentClassMarkEnd Overhead=1 Level=1 Template="Concurrent class mark end, traced %zu"
+TraceEntry=Trc_MM_ParallelHeapWalker_allObjectsDoParallel_Entry Overhead=1 Level=1 Template="Trc_MM_ParallelHeapWalker_allObjectsDoParallel_Entry"
+TraceExit=Trc_MM_ParallelHeapWalker_allObjectsDoParallel_Exit Overhead=1 Level=1 Template="Trc_MM_ParallelHeapWalker_allObjectsDoParallel_Exit: heapChunkFactor=%zu, parallelChunkSize=0x%zx, objects walked by this thread=%zu"
+TraceExit=Trc_MM_MemorySubSpace_garbageCollect_Exit4 Overhead=9 Level=9 Template="MM_MemorySubSpace_garbageCollect Exit4 Concurrent kickoff forced"
+
+TraceEntry=Trc_MM_Scavenger_masterThreadGarbageCollect_Entry Overhead=1 Level=1 Template="Scavenger start"
+TraceEvent=Trc_MM_Scavenger_masterThreadGarbageCollect_setFailedTenureFlag Overhead=1 Level=1 Group=percolate Template="Setting failed tenure flag. _failedTenureLargest = %zu"
+TraceExit=Trc_MM_Scavenger_masterThreadGarbageCollect_Exit Overhead=1 Level=1 Template="Scavenger end"
+
+TraceEvent=Trc_MM_Scavenger_semispaceAllocateFailed Overhead=1 Level=9 Group=percolate Template="Failed to allocate %zu bytes in semispace. Try tenure? %s"
+TraceEvent=Trc_MM_Scavenger_tenureAllocateFailed Overhead=1 Level=9 Group=percolate Template="Failed to allocate %zu bytes in tenure space. Largest failure=%zu. Try semispace? %s"
+TraceEvent=Trc_MM_Scavenger_percolate_failedTenureThresholdReached Overhead=1 Level=1 Group=percolate Template="Percolating due to failed tenure threshold reached. largest=%zu, scavenges=%zu"
+TraceEvent=Trc_MM_Scavenger_percolate_insufficientTenureSpace Overhead=1 Level=1 Group=percolate Template="Percolating due to insufficient tenure space. maxExpansion(%zu) + freeMemory(%zu) < avgTenureBytes(%zu)"
+TraceEvent=Trc_MM_Scavenger_percolate_maxScavengeBeforeGlobal Overhead=1 Level=1 Group=percolate Template="Percolating due to max scavenged reached. maxScavengeBeforeGlobal=%zu"
+TraceEvent=Trc_MM_Scavenger_percolate_rememberedSetOverflow Overhead=1 Level=1 Group=percolate Template="Percolating due to remembered set overflow"
+TraceEvent=Trc_MM_Scavenger_percolate_expandFailed Overhead=1 Level=1 Group=percolate Template="Percolating due to expand failure"
+
+TraceEntry=Trc_MM_HeapRegionManager_destroyAuxiliaryRegionDescriptor_Entry Overhead=1 Level=1 Template="Trc_MM_HeapRegionManager_destroyAuxiliaryRegionDescriptor %p"
+TraceExit=Trc_MM_HeapRegionManager_destroyAuxiliaryRegionDescriptor_Exit Overhead=1 Level=1 Template="Trc_MM_HeapRegionManager_destroyAuxiliaryRegionDescriptor"
+
+TraceAssert=Assert_MM_objectAligned Obsolete noEnv Overhead=1 Level=1 Assert="0 == 1"
+
+// Assert that saving object in the thread slot has failed
+TraceAssert=Assert_MM_objectSaveFailed noEnv Overhead=1 Level=1 Assert="(false)"
+
+TraceEntry=Trc_MM_HeapRegionManager_acquireTableRegions_Entry Obsolete Overhead=1 Level=1 Template="Trc_MM_HeapRegionManager_acquireTableRegions: Memory requested from %zx to %zx"
+TraceExit=Trc_MM_HeapRegionManager_acquireTableRegions_Exit Obsolete Overhead=1 Level=1 Template="Trc_MM_HeapRegionManager_acquireTableRegions: %s, Table pointer: %zx"
+
+TraceEvent=Trc_MM_HeapRegionManager_internalAcquireTableRegions Obsolete Overhead=1 Level=1 Template="Trc_MM_HeapRegionManager_internalAcquireTableRegions: Region from %zx to %zx"
+TraceEvent=Trc_MM_HeapRegionManager_internalAcquireTableRegionsEntire Obsolete Overhead=1 Level=1 Template="Trc_MM_HeapRegionManager_internalAcquireTableRegionsEntire: Region found, allocate from %zx to %zx"
+TraceEvent=Trc_MM_HeapRegionManager_internalAcquireTableRegionsBottom Obsolete Overhead=1 Level=1 Template="Trc_MM_HeapRegionManager_internalAcquireTableRegionsBottom: Region found, allocate from %zx to %zx"
+TraceEvent=Trc_MM_HeapRegionManager_internalAcquireTableRegionsTop Obsolete Overhead=1 Level=1 Template="Trc_MM_HeapRegionManager_internalAcquireTableRegionsTop: Region found, allocate from %zx to %zx"
+TraceEvent=Trc_MM_HeapRegionManager_internalAcquireTableRegionsMiddle Obsolete Overhead=1 Level=1 Template="Trc_MM_HeapRegionManager_internalAcquireTableRegionsMiddle: Region found, allocate from %zx to %zx"
+
+TraceEntry=Trc_FinalizeSupport_finalizeObjectCreated_Entry Overhead=1 Level=9 Template="finalizeObjectCreated: object: %p"
+TraceEvent=Trc_FinalizeSupport_finalizeObjectCreated_NHRThreadEarlyExit Overhead=1 Level=9 Template="finalizeObjectCreated: NHR thread encountered, exiting early."
+TraceException=Trc_FinalizeSupport_finalizeObjectCreated_failedAddingToUnfinalizedList Obsolete Overhead=1 Level=1 Template="finalizeObjectCreated Failed Adding object %p to unfinalized list %p"
+TraceExit=Trc_FinalizeSupport_finalizeObjectCreated_Exit Overhead=1 Level=9 Template="finalizeObjectCreated: return code: %zu"
+
+TraceEntry=Trc_FinalizeSupport_runFinalization_Entry Overhead=1 Level=9 Template="runFinalization: "
+TraceExit=Trc_FinalizeSupport_runFinalization_Exit Overhead=1 Level=9 Template="runFinalization: "
+
+TraceEntry=Trc_FinalizeSupport_referenceObjectCreated_Entry Obsolete Overhead=1 Level=9 Template="referenceObjectCreated: referenceObject: %p referent: %p"
+TraceException=Trc_FinalizeSupport_referenceObjectCreated_accessBarrierException Obsolete Overhead=1 Level=1 Template="referenceObjectCreated: Access barrier exception occurred when setting the referent. referenceObject: %p, referent: %p"
+TraceException=Trc_FinalizeSupport_referenceObjectCreated_nullReferenceList Obsolete Overhead=1 Level=1 Template="referenceObjectCreated: No reference list found for referenceObject: %p"
+TraceException=Trc_FinalizeSupport_referenceObjectCreated_allocationFailed Obsolete Overhead=1 Level=1 Template="referenceObjectCreated: Failed to allocate sublist from referenceList: %p for object %p"
+TraceExit=Trc_FinalizeSupport_referenceObjectCreated_Exit Obsolete Overhead=1 Level=9 Template="referenceObjectCreated. return code: %zu"
+
+TraceEntry=Trc_FinalizeSupport_forceClassLoaderUnload_Entry Overhead=1 Level=9 Template="forceClassLoaderUnload. classLoader:%p"
+TraceEvent=Trc_FinalizeSupport_forceClassLoaderUnload_classLoaderNotBeingUnloaded Overhead=1 Level=9 Template="forceClassLoaderUnload: ClassLoader %p is not being unloaded but is eligible. Setting setForceFlag to true."
+TraceException=Trc_FinalizeSupport_forceClassLoaderUnload_failedToInitializeClassUnloadingMutex Overhead=1 Level=1 Template="forceClassLoaderUnload: No signalling mutex found, attempt to initialize one failed."
+TraceException=Trc_FinalizeSupport_forceClassLoaderUnload_timedOut Overhead=1 Level=1 Template="forceClassLoaderUnload: Timed out while waiting for the classLoader (%p) to finish unloading."
+TraceEvent=Trc_FinalizeSupport_forceClassLoaderUnload_classLoaderNotDead Overhead=1 Level=9 Template="forceClassLoaderUnload: classLoader (%p) is not dead, running Finalization and invoking aggressive GC."
+TraceExit=Trc_FinalizeSupport_forceClassLoaderUnload_Exit Overhead=1 Level=9 Template="forceClassLoaderUnload. return code: %zu"
+
+TraceEntry=Trc_MM_HeapRegionManager_acquireSingleTableRegions_Entry Overhead=1 Level=1 Group=tarok Template="MM_HeapRegionManager_acquireSingleTableRegions subspace=%p NUMA_request=%zu"
+TraceExit=Trc_MM_HeapRegionManager_acquireSingleTableRegions_Exit Overhead=1 Level=1 Group=tarok Template="MM_HeapRegionManager_acquireSingleTableRegions region=%p, NUMA_index=%zu"
+TraceEvent=Trc_MM_ConcurrentHaltedState Overhead=1 Level=1 Group=gclogger Template="Concurrent Halted States: Card cleaning %s, Scan classes %s, Tracing %s"
+
+// Assert that the thread has exclusive VM access
+TraceAssert=Assert_MM_mustHaveExclusiveVMAccess noEnv Overhead=1 Level=1 Assert="(P1)->exclusiveCount != 0"
+
+TraceEntry=Trc_MM_GlobalCollector_isTimeForClassUnloading_Entry noEnv Overhead=1 Level=9 Template="MM_GlobalCollector_isTimeForClassUnloading. dynamicClassUnloading:%zu classLoaderBlocks:%zu dynamicClassUnloadingThreshold:%zu lastUnloadNumOfClassLoaders:%zu"
+TraceExit=Trc_MM_GlobalCollector_isTimeForClassUnloading_Exit noEnv Overhead=1 Level=9 Template="MM_GlobalCollector_isTimeForClassUnloading result = %s"
+
+TraceEntry=Trc_MM_GlobalCollector_isTimeForGlobalGCKickoff_Entry noEnv Overhead=1 Level=9 Template="MM_GlobalCollector_isTimeForGlobalGCKickoff. dynamicClassUnloading:%zu classLoaderBlocks:%zu dynamicClassUnloadingKickoffThreshold:%zu lastUnloadNumOfClassLoaders:%zu"
+TraceExit=Trc_MM_GlobalCollector_isTimeForGlobalGCKickoff_Exit noEnv Overhead=1 Level=9 Template="MM_GlobalCollector_isTimeForGlobalGCKickoff result = %s"
+TraceEvent=Trc_MM_Oracle_setupForCollect Obsolete Overhead=1 Level=1 Group=oracle Template="Oracle received setup call"
+TraceEvent=Trc_MM_Oracle_cleanupAfterCollect Obsolete Overhead=1 Level=1 Group=oracle Template="Oracle received cleanup call"
+
+TraceEvent=Trc_MM_RegionPoolTarok_count Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_count. free=%zu allocate=%zu arraylet=%zu unassigned=%zu"
+TraceEntry=Trc_MM_RegionPoolTarok_expand_Entry Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_expand. region=%p"
+TraceExit=Trc_MM_RegionPoolTarok_expand_Exit Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_expand."
+TraceEntry=Trc_MM_RegionPoolTarok_contractRegion_Entry Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_contract. region=%p"
+TraceExit=Trc_MM_RegionPoolTarok_contractRegion_Exit Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_contract."
+TraceEntry=Trc_MM_RegionPoolTarok_contract_Entry Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_contract."
+TraceExit=Trc_MM_RegionPoolTarok_contract_Exit Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_contract. result=%p"
+TraceEntry=Trc_MM_RegionPoolTarok_acquireNextActiveRegion_Entry Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_acquireNextActiveRegion."
+TraceExit=Trc_MM_RegionPoolTarok_acquireNextActiveRegion_Exit Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_acquireNextActiveRegion. result=%p"
+TraceEntry=Trc_MM_RegionPoolTarok_acquireActiveRegion_Entry Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_acquireActiveRegion. requiredFreeEntrySize=%zu"
+TraceExit=Trc_MM_RegionPoolTarok_acquireActiveRegion_Exit Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_acquireActiveRegion. result=%p"
+TraceEntry=Trc_MM_RegionPoolTarok_acquireFreeRegion_Entry Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_acquireFreeRegion. preferredNumaNode=%zu"
+TraceExit=Trc_MM_RegionPoolTarok_acquireFreeRegion_Exit Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_acquireFreeRegion. result=%p numaNode=%zu"
+TraceEntry=Trc_MM_RegionPoolTarok_recycleFreeRegion_Entry Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_recycleFreeRegion. region=%p"
+TraceExit=Trc_MM_RegionPoolTarok_recycleFreeRegion_Exit Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_recycleFreeRegion."
+TraceEntry=Trc_MM_RegionPoolTarok_repossessFreeRegion_Entry Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_repossessFreeRegion. region=%p"
+TraceExit=Trc_MM_RegionPoolTarok_repossessFreeRegion_Exit Obsolete Overhead=1 Level=1 Group=tarok Template="MM_RegionPoolTarok_repossessFreeRegion."
+
+TraceEntry=Trc_MM_allocateAndConnectNonContiguousArraylet_Entry Overhead=1 Level=3 Group=arraylet Template="MM_ArrayletAllocationModel::allocateAndConnectNonContiguousArraylet. numberIndexedFields=%zu spineBytes=%zu leafCount=%zu"
+TraceException=Trc_MM_allocateAndConnectNonContiguousArraylet_spineFailure Overhead=1 Level=1 Group=arraylet Template="Failed to allocate spine"
+TraceException=Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure Overhead=1 Level=1 Group=arraylet Template="Failed to allocate leaf"
+TraceExit=Trc_MM_allocateAndConnectNonContiguousArraylet_Exit Overhead=1 Level=3 Group=arraylet Template="MM_ArrayletAllocationModel::allocateAndConnectNonContiguousArraylet. result=%p"
+
+TraceEntry=Trc_MM_MemorySubSpaceTarok_lockedReplenishAndAllocate_Entry Overhead=1 Level=1 Group=tarok template="MM_MemorySubSpaceTarok::lockedReplenishAndAllocate"
+TraceExit=Trc_MM_MemorySubSpaceTarok_lockedReplenishAndAllocate_Success Overhead=1 Level=1 Group=tarok template="MM_MemorySubSpaceTarok::lockedReplenishAndAllocate. Result=%p, _bytesRemainingBeforeTaxation=%zu"
+TraceExit=Trc_MM_MemorySubSpaceTarok_lockedReplenishAndAllocate_Failure Overhead=1 Level=1 Group=tarok template="MM_MemorySubSpaceTarok::lockedReplenishAndAllocate. Result=NULL, _bytesRemainingBeforeTaxation=%zu"
+
+TraceEntry=Trc_MM_AllocationContextTarok_Deprecated_lockedReplenishAndAllocate_Entry Overhead=1 Level=1 Group=tarok template="MM_AllocationContextTarok::lockedReplenishAndAllocate. regionSize=%zu requestedBytes=%zu"
+TraceEvent=Trc_MM_lockedReplenishAndAllocate_sufficientSpaceInActiveRegion Obsolete Overhead=1 Level=1 Group=tarok template="MM_MemorySubSpaceTarok::internalLockedReplenish. Sufficient space in active region"
+TraceEvent=Trc_MM_lockedReplenishAndAllocate_repopulatedContextList Obsolete Overhead=1 Level=1 Group=tarok template="MM_MemorySubSpaceTarok::internalReplenish. Repopulated active list in context. Acquired %zu bytes"
+TraceEvent=Trc_MM_AllocationContextTarok_Deprecated_internalReplenishActiveRegion_convertedFreeRegion Overhead=1 Level=1 Group=tarok template="MM_AllocationContextTarok::internalReplenishActiveRegion. Converted free region=%zx. Acquired %zu bytes"
+TraceEvent=Trc_MM_AllocationContextTarok_Deprecated_lockedReplenishAndAllocate_acquiredFreeRegion Overhead=1 Level=1 Group=tarok template="MM_AllocationContextTarok::lockedReplenishAndAllocate. Acquired free region. Acquired %zu bytes"
+TraceExit=Trc_MM_AllocationContextTarok_Deprecated_lockedReplenishAndAllocate_Success Overhead=1 Level=1 Group=tarok template="MM_AllocationContextTarok::lockedReplenishAndAllocate. Succeeded."
+TraceExit=Trc_MM_AllocationContextTarok_Deprecated_lockedReplenishAndAllocate_Failure Overhead=1 Level=1 Group=tarok template="MM_AllocationContextTarok::lockedReplenishAndAllocate. Failed."
+
+TraceEvent=Trc_MM_setBytesRemainingBeforeTaxation NoEnv Overhead=1 Level=1 Group=tarok template="MM_MemorySubSpaceTarok::setBytesRemainingBeforeTaxation(%zu)"
+TraceEvent=Trc_MM_Oracle_markRegionSelectionCriteria Obsolete Overhead=1 Level=1 Group=oracle Template="Oracle selected %zu mark regions from outer loop and %zu from internal cycles (cost of next cheapest outer region was %zu and inner region %zu)"
+TraceEvent=Trc_MM_Oracle_timeTakenInDecision Obsolete Overhead=1 Level=1 Group=oracle Template="Oracle decided collection plan in %llu ms"
+TraceEvent=Trc_MM_ReclaimDelegate_rememberedObjectCount Overhead=1 Level=1 Group=oracle Template="ReclaimDelegate Fixup Regions=%zu, Non-overflow Regions=%zu, Non-overflow Average=%zu, Overflow Regions=%zu, Overflow Average=%zu, Not Remembered Regions=%zu"
+
+TraceEntry=Trc_MM_AllocationThreshold_setAllocationThreshold_Entry Overhead=1 Level=1 Group=allocthreshold Template="j9gc_set_allocation_threshold: low=%zu high=%zu ext->lowThreshold=%zu ext->highThreshold=%zu"
+TraceExit=Trc_MM_AllocationThreshold_setAllocationThreshold_Exit Overhead=1 Level=1 Group=allocthreshold Template="j9gc_set_allocation_threshold"
+TraceEvent=Trc_MM_AllocationThreshold_triggerAllocationThresholdEvent Overhead=1 Level=1 Group=allocthreshold Template="Allocation Threshold Event triggered. objectsize=%zu lowThreshold=%zu highThreshold=%zu"
+TraceEvent=Trc_MM_AllocationThreshold_triggerAllocationThresholdEventIndexable Overhead=1 Level=1 Group=allocthreshold Template="Allocation Threshold Event Indexable triggered. objectsize=%zu lowThreshold=%zu highThreshold=%zu"
+TraceEvent=Trc_MM_memoryManagerTLHAsyncCallbackHandler_eventNotHooked Overhead=1 Level=1 Group=allocthreshold Template="Allocation Threshold Event isn't hooked."
+TraceEvent=Trc_MM_memoryManagerTLHAsyncCallbackHandler_eventIsHooked Overhead=1 Level=1 Group=allocthreshold Template="Allocation Threshold Event is hooked."
+
+TraceEvent=Trc_MM_memoryManagerTLHAsyncCallbackHandler_disableAllocationCache Overhead=1 Level=1 Group=allocthreshold Template="Disabling Allocation Cache. low=%zu, high=%zu"
+TraceEvent=Trc_MM_memoryManagerTLHAsyncCallbackHandler_disableInlineTLHAllocates Overhead=1 Level=1 Group=allocthreshold Template="Disabling Inline TLH Allocates. low=%zu, high=%zu, tlhMin=%zu, tlhMax=%zu"
+TraceEvent=Trc_MM_memoryManagerTLHAsyncCallbackHandler_enableAllocationCache Overhead=1 Level=1 Group=allocthreshold Template="Enabling Allocation Cache. low=%zu, high=%zu"
+TraceEvent=Trc_MM_memoryManagerTLHAsyncCallbackHandler_enableInlineTLHAllocates Overhead=1 Level=1 Group=allocthreshold Template="Enabling Inline TLH Allocates. low=%zu, high=%zu, tlhMin=%zu, tlhMax=%zu"
+
+TraceEvent=Trc_MM_ParallelScavenger_rescanThreadSlot_rememberedObject Overhead=1 Level=9 Group=stackremember Template="Remembering thread-referenced object %p during second pass."
+TraceEvent=Trc_MM_ParallelScavenger_copyAndForwardThreadSlot_renewingRememberedObject Overhead=1 Level=9 Group=stackremember Template="Renewing remembered object %p since it was still found on stack. Age=%x"
+TraceEvent=Trc_MM_ParallelScavenger_copyAndForwardThreadSlot_deferRememberObject Overhead=1 Level=9 Group=stackremember Template="Defer remembering thread-referenced object %p during first pass."
+TraceEvent=Trc_MM_ParallelScavenger_scavengeRememberedSet_keepingRememberedObject Overhead=1 Level=9 Group=stackremember Template="Not clearing remembered object %p. Age=%x"
+TraceEvent=Trc_MM_ParallelScavenger_scanOverflowCache_keepingRememberedObject Overhead=1 Level=9 Group=stackremember Template="Remembering thread-referenced object %p during overflow handling. Age=%x."
+TraceEvent=Trc_MM_StandardAccessBarrier_treatObjectAsRecentlyAllocated Overhead=1 Level=9 Group=stackremember Template="Remembering recently allocated object %p."
+
+TraceEntry=Trc_MM_ConcurrentGC_determineInitWork_Entry Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_determineInitWork"
+TraceExit=Trc_MM_ConcurrentGC_determineInitWork_Exit Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_determineInitWork"
+
+TraceEntry=Trc_MM_ConcurrentGC_getInitRange_Entry Overhead=1 Level=2 Group=concurrent Template="MM_ConcurrentGC_getInitRange"
+TraceExit=Trc_MM_ConcurrentGC_getInitRange_Succeed Overhead=1 Level=2 Group=concurrent Template="MM_ConcurrentGC_getInitRange from %p to %p type=%zx concurrentCollectible=%s"
+TraceExit=Trc_MM_ConcurrentGC_getInitRange_Fail Overhead=1 Level=2 Group=concurrent Template="MM_ConcurrentGC_getInitRange return false"
+
+TraceEntry=Trc_MM_ConcurrentGC_tuneToHeap_Entry Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_tuneToHeap"
+TraceExit=Trc_MM_ConcurrentGC_tuneToHeap_Exit1 Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_tuneToHeap no heap"
+TraceExit=Trc_MM_ConcurrentGC_tuneToHeap_Exit2 Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_tuneToHeap target=%zu initWorkRequired=%zu kickoffthreshold=%zu"
+
+TraceEntry=Trc_MM_ConcurrentGC_internalPreCollect_Entry Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_internalPreCollect subspace=%p"
+TraceExit=Trc_MM_ConcurrentGC_internalPreCollect_Exit Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_internalPreCollect subspace=%p"
+
+TraceEntry=Trc_MM_ConcurrentGC_internalPostCollect_Entry Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_internalPostCollect subspace=%p"
+TraceExit=Trc_MM_ConcurrentGC_internalPostCollect_Exit Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_internalPostCollect subspace=%p"
+
+TraceEntry=Trc_MM_ConcurrentGC_heapAddRange_Entry Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_heapAddRange subspace=%p size=%zu (%p-%p)"
+TraceExit=Trc_MM_ConcurrentGC_heapAddRange_Exit Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_heapAddRange"
+
+TraceEntry=Trc_MM_ConcurrentGC_heapRemoveRange_Entry Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_heapRemoveRange subspace=%p size=%zu (%p-%p) (%p-%p)"
+TraceExit=Trc_MM_ConcurrentGC_heapRemoveRange_Exit Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_heapRemoveRange"
+
+TraceEvent=Trc_MM_ReclaimDelegate_adjustCompactCostEstimates Obsolete Overhead=1 Level=1 Group=oracle Template="Reclaim delegate, after compact of %zu and fixup of %zu regions, adjusted compact estimate from %llu to %llu us and fixup estimate from %llu to %llu us"
+TraceEvent=Trc_MM_ReclaimDelegate_adjustSweepCostEstimates Obsolete Overhead=1 Level=1 Group=oracle Template="Reclaim delegate, after sweep of %zu regions, adjusted sweep estimate from %llu to %llu us"
+
+TraceEntry=Trc_MM_HeapRegionManager_enableRegionsInTable_Entry Overhead=1 Level=1 Template="MM_HeapRegionManager_enableRegionsInTable %p-%p NUMA=%zu"
+TraceExit=Trc_MM_HeapRegionManager_enableRegionsInTable_Exit Overhead=1 Level=1 Template="MM_HeapRegionManager_enableRegionsInTable added %zu regions (starting at %p) to free list %zu\n"
+
+TraceEvent=Trc_MM_replenishContext_taxationWorkPreempted Overhead=1 Level=1 Group=oracle Template="Taxation work was pre-empted by another thread, leaving %zu bytes remaining"
+
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_evacuated Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) evacuated %zu bytes into sub area %p"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_bytesRemainingIgnored Overhead=1 Level=1 Group=compact Template="%zu bytes remained free in sub area %p (ignored)"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_bytesRemaining Overhead=1 Level=1 Group=compact Template="%zu bytes remained free in sub area %p"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_subAreaFullIgnored Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) is now full, %zu bytes (ignored)"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_subAreaFull Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) is now full, %zu bytes"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_subAreaAlreadyCompacted Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) is already compacted, no free space"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_subAreaAlreadyCompactedFreeSpaceIgnored Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) is already compacted, free space ignored"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_subAreaAlreadyCompactedFreeSpaceRemaining Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) is already compacted, %zu bytes free"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_subAreaCompactedAFreeSpaceIgnored Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) compacted (A), moved %zu bytes, %zu free (ignored)"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_subAreaCompactedAFreeSpaceRemaining Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) compacted (A), moved %zu bytes, %zu free"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_subAreaCompactedBFreeSpaceIgnored Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) compacted (B), moved %zu bytes, %zu free (ignored)"
+TraceEvent=Trc_MM_CompactScheme_evacuateSubArea_subAreaCompactedBFreeSpaceRemaining Overhead=1 Level=1 Group=compact Template="Sub area (%p,%p) compacted (B), moved %zu bytes, %zu free"
+
+TraceEvent=Trc_MM_ReclaimDelegate_compactRegionSelectionTime Overhead=1 Level=1 Group=oracle Template="Reclaim delegate, compact region selection time %llu us"
+
+TraceEntry=Trc_MM_ParallelGlobalGC_unloadDeadClassLoaders_entry Overhead=1 Level=1 Group=unload Template="MM_ParallelGlobalGC_unloadDeadClassLoaders"
+TraceExit=Trc_MM_ParallelGlobalGC_unloadDeadClassLoaders_exit Overhead=1 Level=1 Group=unload Template="MM_ParallelGlobalGC_unloadDeadClassLoaders"
+
+TraceEntry=Trc_MM_GlobalMarkDelegate_unloadDeadClassLoaders_entry Obsolete Overhead=1 Level=1 Group=unload Template="MM_GlobalMarkDelegate_unloadDeadClassLoaders"
+TraceExit=Trc_MM_GlobalMarkDelegate_unloadDeadClassLoaders_exit Obsolete Overhead=1 Level=1 Group=unload Template="MM_GlobalMarkDelegate_unloadDeadClassLoaders"
+
+TraceEvent=Trc_MM_SynchGCStart Overhead=1 Level=1 Template="MM_SynchGCStart: reason ID %zu, reason: %s, byte requested %zu, approximateFreeFreeMemorySize %zu, immortalFreeMemorySize %zu"
+TraceEvent=Trc_MM_SynchGCEnd Overhead=1 Level=1 Template="MM_SynchGCEnd: approximateFreeMemorySize %zu, immortalFreeMemorySize %zu, classLoaderUnloadCount %zu, classUnloadCount %zu, weakReferenceCount %zu, softReferenceCount %zu, maxSoftReferenceAge %zu, softReferenceAge %zu, phantomReferenceCount %zu, finalizeCount %zu, packetOverflowCount %zu, objectOverflowCount %zu"
+
+TraceEvent=Trc_MM_CycleStartOld Obsolete Overhead=1 Level=1 Template="MM_CycleStart: approximateFreeMemorySize %zu"
+TraceEvent=Trc_MM_CycleEndOld Obsolete Overhead=1 Level=1 Template="MM_CycleEnd: approximateFreeMemorySize %zu"
+
+TraceEntry=Trc_MM_cleanUpClassLoadersStart_Entry Group=unload Overhead=1 Level=4 Template="cleanUpClassLoadersStart"
+TraceExit=Trc_MM_cleanUpClassLoadersStart_Exit Group=unload Overhead=1 Level=4 Template="cleanUpClassLoadersStart"
+TraceEvent=Trc_MM_cleanUpClassLoadersStart_triggerClassUnload Group=unload Overhead=1 Level=4 Template="cleanUpClassLoadersStart about to trigger VM_CLASS_UNLOAD hook for class %p(%.*s)"
+TraceEvent=Trc_MM_cleanUpClassLoadersStart_triggerClassesUnload Group=unload Overhead=1 Level=4 Template="cleanUpClassLoadersStart about to trigger VM_CLASSES_UNLOAD hook for %zu classes"
+TraceExit=Trc_VM_cleanUpClassLoaders_Exit Group=unload Overhead=1 Level=4 Template="cleanUpClassLoaders"
+
+TraceEntry=Trc_MM_SchedulingDelegate_getNextTaxationThreshold_Entry Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_getNextTaxationThreshold"
+TraceExit=Trc_MM_SchedulingDelegate_getNextTaxationThreshold_Exit Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_getNextTaxationThreshold index=%zu, Eden=%zu, threshold=%zu, doGlobal=%u, doPGC=%u"
+
+TraceEntry=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal_Entry Obsolete Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal goal=%zu bytes (%zu regions)"
+TraceEvent=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal_trimming Obsolete Overhead=1 Level=1 Group=reclaim Template="Trimming original goal %zu (too costly), not satisified %zu (%d%%); bytesToBeMoved %zu avgBytesToBeMoved %zu"
+TraceEvent=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal_moveMore Obsolete Overhead=1 Level=1 Group=reclaim Template="Moving only %zu%% of historical average, we can move more; bytesToBeMoved %zu avgBytesToBeMoved %zu"
+TraceEvent=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal_bytesMovedAfterWorkAdded Obsolete Overhead=1 Level=1 Group=reclaim Template="Expected bytes to be moved after move work added %zu"
+TraceEvent=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal_avgBytesMoved Obsolete Overhead=1 Level=1 Group=reclaim Template="New avgBytesToBeMoved %zu"
+TraceEvent=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal_generationSummary Obsolete Overhead=1 Level=1 Group=reclaim Template="Generation %zu: %zu regions, %zu recoverable bytes"
+TraceEvent=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal_firstUnselected Obsolete Overhead=1 Level=1 Group=reclaim Template="First unselected region is ranked %zu of %zu"
+TraceEvent=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal_bytesMovedAfterTruncate Obsolete Overhead=1 Level=1 Group=reclaim Template="Expected bytes to be moved after compact group truncate %zu"
+TraceEvent=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal_expectedRegionsReclaimed Obsolete Overhead=1 Level=1 Group=reclaim Template="Adjusted goal %zu"
+TraceExit=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal_Exit Obsolete Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_tagRegionsBeforeCompactWithGoal compactRegions=%zu freeRegions=%zu lowestScore=%zu%%"
+
+TraceEntry=Trc_MM_ReclaimDelegate_runReclaimComplete_Entry Overhead=1 Level=1 Group=reclaim             Template="MM_ReclaimDelegate_runReclaimComplete goal=%zu bytes (surplus of %zi bytes)"
+TraceEvent=Trc_MM_ReclaimDelegate_runReclaimComplete_freeBeforeReclaim Overhead=1 Level=1 Group=reclaim Template="Free regions before reclaim: %5zu"
+TraceEvent=Trc_MM_ReclaimDelegate_runReclaimComplete_freeAfterSweep    Overhead=1 Level=1 Group=reclaim Template="Free regions after sweep:    %5zu"
+TraceEvent=Trc_MM_ReclaimDelegate_runReclaimComplete_freeAfterCompact  Overhead=1 Level=1 Group=reclaim Template="Free regions after compact:  %5zu"
+TraceExit=Trc_MM_ReclaimDelegate_runReclaimComplete_Exit Overhead=1 Level=1 Group=reclaim               Template="MM_ReclaimDelegate_runReclaimComplete surplus=%zi regions"
+
+TraceEvent=Trc_MM_ParallelSweepScheme_sweepChunk_darkMatterComparison Overhead=1 Level=9 Group=darkMatterComparison Template="Chunk %p-%p. Estimated (%4zu/%4zu samples) dark matter: %8zu. Actual: %8zu."
+
+TraceEntry=Trc_MM_ReclaimDelegate_runCompact_Entry Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_runCompact goal=%zu bytes"
+TraceEvent=Trc_MM_ReclaimDelegate_runCompact_ROR Obsolete Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_runCompact Recovered %zu of %zu regions. Desired goal was %zu, ROR adjusted goal was %zu, final goal was %zu. ROR=%0.2f. histROR=%0.2f"
+TraceExit=Trc_MM_ReclaimDelegate_runCompact_Exit Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_runCompact regionsCompacted=%zu"
+
+TraceAssert=Assert_MM_mustNotHaveVMAccess noEnv overhead=1 Level=1 Assert="0 == ((P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)"
+TraceAssert=Assert_MM_mustBeClass noEnv Overhead=1 Level=1 Assert="(uintptr_t)0x99669966 == (P1)->eyecatcher"
+
+TraceEntry=Trc_MM_ReclaimDelegate_estimateReclaimableRegions_Entry Overhead=1 Level=1 Group=kickoff Template="MM_ReclaimDelegate_estimateReclaimableRegions"
+TraceExit=Trc_MM_ReclaimDelegate_estimateReclaimableRegions_Exit Overhead=1 Level=1 Group=kickoff Template="MM_ReclaimDelegate_estimateReclaimableRegions free=%zu total_reclaimable=%zu defragment_reclaimable=%zu"
+
+TraceEvent=Trc_MM_SchedulingDelegate_measureConsumptionForPartialGC_noPreviousData Overhead=1 Level=1 Group=kickoff Template="Unable to measure PGC consumption. No data for reclaimable regions after previous collection."
+TraceEvent=Trc_MM_SchedulingDelegate_measureConsumptionForPartialGC_consumptionRate Overhead=1 Level=1 Group=kickoff Template="PGC consumed %zi regions (%zu-%zu). Rate=%0.2f regions/collection."
+
+TraceEntry=Trc_MM_SchedulingDelegate_estimatePartialGCsRemaining_Entry Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_estimatePartialGCsRemaining consumption_rate=%0.2f reclaimable_regions=%zu"
+TraceExit=Trc_MM_SchedulingDelegate_estimatePartialGCsRemaining_Exit Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_estimatePartialGCsRemaining PGCs_remaining=%zu"
+
+TraceEntry=Trc_MM_SchedulingDelegate_measureScanRate_Entry Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_measureScanRate collectionType=%u"
+TraceEvent=Trc_MM_SchedulingDelegate_measureScanRate_summary Obsolete Overhead=1 Level=1 Group=kickoff Template="%zu threads scanned %9zu bytes in %7lluus. Thread scan rate: %f us/byte"
+TraceExit=Trc_MM_SchedulingDelegate_measureScanRate_Exit Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_measureScanRate Rate=%f us/byte"
+
+TraceEntry=Trc_MM_SchedulingDelegate_estimateGlobalMarkIncrements_Entry Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_estimateGlobalMarkIncrements"
+TraceEvent=Trc_MM_SchedulingDelegate_estimateGlobalMarkIncrements_summary Overhead=1 Level=1 Group=kickoff Template="Estimated scan time=%0.2fms; Estimated GMP increments=%0.2f"
+TraceExit=Trc_MM_SchedulingDelegate_estimateGlobalMarkIncrements_Exit Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_estimateGlobalMarkIncrements %zu GMP increments required"
+
+TraceEvent=Trc_MM_InterRegionRememberedSet_setRegionsAsRebuildingComplete_rebuildingSummary Overhead=1 Level=1 Group=rememberedset Template="MM_InterRegionRememberedSet_setRegionsAsRebuildingComplete  region lists rebuilt: %zu still overflowed: %zu"
+TraceEvent=Trc_MM_InterRegionRememberedSet_clearFromRegionReferencesForMark_cardCounts Obsolete Overhead=1 Level=1 Group=rememberedset Template="MM_InterRegionRememberedSet_clearFromRegionReferencesForMark  card list counts: before %zu removed %zu after %zu"
+TraceEvent=Trc_MM_InterRegionRememberedSet_clearFromRegionReferencesForCompact_cardCounts Obsolete Overhead=1 Level=1 Group=rememberedset Template="MM_InterRegionRememberedSet_clearFromRegionReferencesForCompact  card list counts: before %zu removed %zu after %zu"
+
+TraceEntry=Trc_MM_SchedulingDelegate_calculateAutomaticGMPIntermission_Entry Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_calculateAutomaticGMPIntermission auto=%s remaining=%zu"
+TraceExit=Trc_MM_SchedulingDelegate_calculateAutomaticGMPIntermission_Exit Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_calculateAutomaticGMPIntermission remaining=%zu"
+
+TraceEvent=Trc_MM_ReclaimDelegate_estimateReclaimableRegions_generationSummary Obsolete Overhead=1 Level=1 Group=kickoff Template="Generation %zu: %zu regions, %zu free bytes, %zu recoverable bytes, %zu recoverable regions"
+
+TraceEntry=Trc_MM_SchedulingDelegate_calculateEdenSize_Entry Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_calculateEdenSize previousSize=%zu bytes"
+TraceEvent=Trc_MM_SchedulingDelegate_calculateEdenSize_reduceToFreeBytes Overhead=1 Level=1 Group=kickoff Template="Reducing Eden size from target (%zu regions) to free space (%zu regions)"
+TraceEvent=Trc_MM_SchedulingDelegate_calculateEdenSize_reduceToMinimum Overhead=1 Level=1 Group=kickoff Template="Reducing Eden size from target (%zu regions) to minimum (%zu regions)"
+TraceExit=Trc_MM_SchedulingDelegate_calculateEdenSize_Exit Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_calculateEdenSize size=%zu bytes"
+
+TraceEvent=Trc_MM_CollectionSetDelegate_createRegionCollectionSetForPartialGC_dynamicRegionSelectionBudget Overhead=1 Level=1 Group=dynamiccollectionset Template="Nursery region count (%zu) dynamic budget (%zu)"
+TraceEvent=Trc_MM_CollectionSetDelegate_createRegionCollectionSetForPartialGC_dynamicRegionSelection Overhead=1 Level=1 Group=dynamiccollectionset Template="Region compactGroup(%zu) count(%zu) rateOfReturn(%4.2f) budget(%zu) used(%zu)"
+TraceEvent=Trc_MM_CollectionSetDelegate_createRegionCollectionSetForPartialGC_dynamicRegionSelectionBudgetRemaining Overhead=1 Level=1 Group=dynamiccollectionset Template="Remaining region budget (%zu)"
+
+TraceEvent=Trc_MM_CollectionSetDelegate_createRegionCollectionSetForPartialGC_coreSamplingBudget Overhead=1 Level=1 Group=dynamiccollectionset Template="Total region count (%zu) dynamic budget (%zu)"
+TraceEvent=Trc_MM_CollectionSetDelegate_createRegionCollectionSetForPartialGC_coreSamplingSelection Overhead=1 Level=1 Group=dynamiccollectionset Template="Region compactGroup(%zu) count(%zu) budget(%zu) used(%zu)"
+TraceEvent=Trc_MM_CollectionSetDelegate_createRegionCollectionSetForPartialGC_coreSamplingBudgetRemaining Overhead=1 Level=1 Group=dynamiccollectionset Template="Remaining region budget (%zu)"
+
+TraceEvent=Trc_MM_PGCStart Overhead=1 Level=1 Group=gclogger Template="PGC start: globalcount=%zu nextGMPIncrement=%zu"
+TraceEvent=Trc_MM_PGCEnd Overhead=1 Level=1 Group=gclogger Template="PGC end: workstackoverflow=%zu overflowcount=%zu heapFree=%zu/%zu"
+TraceEvent=Trc_MM_GMPIncrementStart Overhead=1 Level=1 Group=gclogger Template="GMP increment start: globalcount=%zu incrementNumber=%zu"
+TraceEvent=Trc_MM_GMPIncrementEnd Overhead=1 Level=1 Group=gclogger Template="GMP increment end: workstackoverflow=%zu overflowcount=%zu heapFree=%zu/%zu nextIncrementNumber=%zu"
+
+TraceEntry=Trc_MM_PartialMarkingScheme_deleteDeadObjectsFromExternalCycle_Entry Overhead=1 Level=1 Template="MM_PartialMarkingScheme_deleteDeadObjectsFromExternalCycle"
+TraceExit=Trc_MM_PartialMarkingScheme_deleteDeadObjectsFromExternalCycle_Exit Overhead=1 Level=1 Template="MM_PartialMarkingScheme_deleteDeadObjectsFromExternalCycle deleted %zu of %zu objects from GMP work packets"
+
+TraceEvent=Trc_MM_CollectionSetDelegate_createNurseryCollectionSet_recommendationsAccepted Obsolete Overhead=1 Level=1 Group=dynamiccollectionset Template="Added %zu regions to the mark set out of %zu total recommendations from the previous PGC"
+TraceEvent=Trc_MM_ReclaimDelegate_performAtomicCompactAndCleanup_regionsDeferredForNextMark Overhead=1 Level=1 Group=dynamiccollectionset Template="Regions count in dynamic compact selection (%zu compact, %zu mark, %zu defer)"
+
+TraceEntry=Trc_MM_createJavaLangString_Entry  Overhead=1 Level=4 Group=stringtable Template="createJavaLangString entry data %.*s stringFlags 0x%0x"
+TraceExit=Trc_MM_createJavaLangString_Exit  Overhead=1 Level=4 Group=stringtable Template="createJavaLangString exit result 0x%0x"
+TraceEvent=Trc_MM_stringTableCacheHit  Overhead=1 Level=3 Group=stringtable Template="String table cache hit %p"
+TraceEvent=Trc_MM_stringTableCacheMiss  Overhead=1 Level=3 Group=stringtable Template="String table cache miss %p"
+
+TraceEvent=Trc_MM_CopyForwardScheme_deleteDeadObjectsFromExternalCycle Overhead=1 Level=1 Group=copyforwardscheme Template="Deleting External Cycle References (total:%zu deleted:%zu preserved:%zu)"
+TraceEvent=Trc_MM_CopyForwardScheme_abortFlagRaised Overhead=1 Level=1 Group=gclogger Template="Copy forward abort flag raised"
+
+TraceEvent=Trc_MM_SchedulingDelegate_estimatePartialGCsRemaining_survivorNeeds Overhead=1 Level=1 Group=kickoff Template="Survivor regions: historicAvg=%zu headroom=%zu total=%zu"
+
+TraceEvent=Trc_MM_InterRegionRememberedSet_clearFromRegionReferencesForMark_timesus Obsolete Overhead=1 Level=1 Group=rememberedset Template="MM_InterRegionRememberedSet_clearFromRegionReferencesForMark duration=%zuus"
+TraceEvent=Trc_MM_InterRegionRememberedSet_clearFromRegionReferencesForCompact_timesus Obsolete Overhead=1 Level=1 Group=rememberedset Template="MM_InterRegionRememberedSet_clearFromRegionReferencesForCompact duration=%zuus"
+
+TraceEvent=Trc_MM_SchedulingDelegate_copyForwardCompleted_efficiency Obsolete Overhead=1 Level=1 Group=reclaim Template="bytesCopied=%zu, bytesDiscarded=%zu, lost=%0.2f; avgBytesCopied=%0.2f, avgBytesDiscarded=%0.2f, avgLost=%0.2f survivorRegions=%zu (incl. %zu failed evacuate regions and %zu compact regions) avgSurvivorRegions=%0.2f"
+TraceEvent=Trc_MM_SchedulingDelegate_calculatePGCCompactionRate_liveToFreeRatio Obsolete Overhead=1 Level=1 Group=reclaim Template="bytesCompacted/freeBytes ratio %f (totalLiveData %zu, totalFreeMemory %zu, fullyCompactedData %zu, reservedFreeMemory %zu, avgEmptiness=%0.2f)"
+
+TraceEntry=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal_Entry Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal Desired bytes to compact=%zu"
+TraceEvent=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal_addingToCompactSet Overhead=1 Level=1 Group=reclaim Template="Compact selecting region id=%zu from group=%zu age=%zu with score=%2.4f with free space=%zu%% survivalRate=%0.2f"
+TraceExit=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal_Exit Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal Final bytes to compact=%zu expected regions to reclaim=%zu"
+
+TraceEvent=Trc_MM_CopyForwardScheme_mergeGCStats_efficiency Overhead=1 Level=1 Group=copyforwardscheme Template="Compact group=%4zu. bytesCopied=%8zu bytesDiscarded=%8zu lost=%0.2f"
+
+TraceEvent=Trc_MM_SchedulingDelegate_copyForwardCompleted_survivorSetRegionDeltaCount Obsolete Overhead=1 Level=1 Group=kickoff Template="historicMin=%zu current=%zu newMax=%zu"
+
+TraceEntry=Trc_MM_CopyForwardScheme_clearReservedRegionLists_Entry Overhead=1 Level=1 Group=copyforwardscheme Template="MM_CopyForwardScheme_clearReservedRegionLists (%zu compactGroups)"
+TraceEvent=Trc_MM_CopyForwardScheme_clearReservedRegionLists_compactGroup Overhead=1 Level=1 Group=copyforwardscheme Template="compactGroup=%4zu; evacuateRegions=%4zu; sublists=%zu (max=%zu); unconsumedTailRegions=%4zu"
+TraceEvent=Trc_MM_CopyForwardScheme_clearReservedRegionLists_sublist Overhead=1 Level=1 Group=copyforwardscheme Template="compactGroup=%4zu[%zu]; acquires=%8zu; bytes=%8zu; avgBytes=%8zu"
+TraceExit=Trc_MM_CopyForwardScheme_clearReservedRegionLists_Exit Overhead=1 Level=1 Group=copyforwardscheme Template="MM_CopyForwardScheme_clearReservedRegionLists"
+
+TraceEvent=Trc_MM_SchedulingDelegate_estimateMacroDefragmentationWork Overhead=1 Level=1 Group=reclaim Template="macroDefragmentationWork=%zu average macroDefragmentationWork=%0.2f"
+
+TraceEvent=Trc_MM_SchedulingDelegate_calculateHeapOccupancyTrend_liveSetBytes Overhead=1 Level=1 Group=kickoff Template="previousLiveSetBytesAfterGlobalSweep=%zu liveSetBytesBeforeGlobalSweep=%zu liveSetBytesAfterGlobalSweep=%zu"
+TraceEvent=Trc_MM_SchedulingDelegate_calculateHeapOccupancyTrend_heapOccupancy Overhead=1 Level=1 Group=kickoff Template="heapOccupancyTrend=%0.4f"
+
+TraceEvent=Trc_MM_SchedulingDelegate_estimateGlobalMarkIncrements_liveSetBytes Overhead=1 Level=1 Group=kickoff Template="Live set bytes initial=%zu adjusted for estimated garbage=%zu adjusted for scannable ratio=%zu"
+
+TraceEvent=Trc_MM_SchedulingDelegate_globalGarbageCollectCompleted Overhead=1 Level=1 Group=reclaim Template="bytesCompacted/freeBytes ratio %f (full compact on global GC)"
+
+TraceEntry=Trc_MM_cleanUpClassLoadersEnd_Entry Group=unload Overhead=1 Level=4 Template="cleanUpClassLoadersEnd"
+TraceExit=Trc_MM_cleanUpClassLoadersEnd_Exit Group=unload Overhead=1 Level=4 Template="cleanUpClassLoadersEnd"
+TraceEvent=Trc_MM_cleanUpClassLoadersEnd_deleteDeadClassLoaderClassSegmentsStart Group=unload Overhead=1 Level=4 Template="about to delete all class segments associated with dead class loaders"
+TraceEvent=Trc_MM_cleanUpClassLoadersEnd_unloadClassLoadersNotRequiringFinalizerStart Group=unload Overhead=1 Level=4 Template="about to unload class loaders that did not require the finalizer"
+
+TraceEvent=Trc_MM_SchedulingDelegate_calculateEdenSize_dynamic Overhead=1 Level=1 Group=kickoff Template="Calculated dynamic eden size at %zu regions (Eden surivor rate is %0.3f and historical non-Eden survivor average is %zu; %zu free regions before min/max (%zu/%zu) constraints applied)"
+
+TraceEvent=Trc_MM_GlobalGCStartOld2 Obsolete Overhead=1 Level=1 Group=gclogger Template="GlobalGC start: globalcount=%zu scavengecount=%zu"
+TraceEvent=Trc_MM_GlobalGCEndOld3 Obsolete Overhead=1 Level=1 Group=gclogger Template="GlobalGC end: workstackoverflow=%zu overflowcount=%zu newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+
+TraceEntry=Trc_MM_GlobalMarkDelegate_performMarkIncremental_Entry Overhead=1 Level=1 Group=markdelegate Template="GlobalMarkDelegate_performMarkIncremental end=%llu"
+TraceEvent=Trc_MM_GlobalMarkDelegate_performMarkIncremental_State Overhead=1 Level=1 Group=markdelegate Template="%s (%zu)"
+TraceExit=Trc_MM_GlobalMarkDelegate_performMarkIncremental_Exit Overhead=1 Level=1 Group=markdelegate Template="GlobalMarkDelegate_performMarkIncremental finished=%s"
+
+TraceEvent=Trc_MM_SchedulingDelegate_measureConsumptionForPartialGC_tenureConsumptionRate Obsolete Overhead=1 Level=1 Group=kickoff Template="PGC consumed %zi defragment regions (%zu-%zu). Rate=%0.2f regions/collection."
+
+TraceEntry=Trc_MM_ParallelScrubCardTableTask_scrubCardTable_Entry Overhead=1 Level=1 Group=cardscrubbing Template="scrubCardTable"
+TraceExit=Trc_MM_ParallelScrubCardTableTask_scrubCardTable_Exit Overhead=1 Level=1 Group=cardscrubbing Template="scrubCardTable thread %zu scrubbed %zu objects; %zu of %zu DIRTY and %zu GMP_MUST_SCAN cards; %lluus; timed out? %s"
+
+TraceEvent=Trc_MM_CollectionSetDelegate_selectRegionsForBudgetOld Obsolete Overhead=1 Level=1 Group=dynamiccollectionset Template="DCS selecting region id=%zu from group=%zu with free space=%zu%%"
+TraceEvent=Trc_MM_Scavenger_percolate_activeJNICritical Overhead=1 Level=1 Group=percolate Template="Percolating due to active JNI critical regions"
+TraceEvent=Trc_MM_CompactPrevented Overhead=1 Level=1 Group=gclogger Template="Compact prevented: reason=%s"
+
+TraceEvent=Trc_MM_J9AllocateIndexableObject_outOfLineObjectAllocation Overhead=1 Level=1 Template="indexable object allocated out-of-line sampled: class=%p (%.*s%.*s); object size=%zu; number of elements=%zu"
+TraceEvent=Trc_MM_J9AllocateObject_outOfLineObjectAllocation Overhead=1 Level=1 Template="object allocated out-of-line sampled: class=%p (%.*s); object size=%zu"
+
+TraceEntry=Trc_MM_MemorySubSpaceTarok_calculateExpandSize_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateExpandSize Entry Bytes required = %zu"
+TraceExit=Trc_MM_MemorySubSpaceTarok_calculateExpandSize_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateExpandSize Exit1 Desired free bytes = %zu, current free bytes = %zu, returning expand size of %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceTarok_checkForRatioExpand_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_checkForRatioExpand Entry Bytes required = %zu"
+TraceExit=Trc_MM_MemorySubSpaceTarok_checkForRatioExpand_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_checkForRatioExpand Exit1 Free space already at -Xmaxf limit"
+TraceExit=Trc_MM_MemorySubSpaceTarok_checkForRatioExpand_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_checkForRatioExpand Exit2 Percentage of time spent in garbage collection = %u, expansion not required"
+TraceExit=Trc_MM_MemorySubSpaceTarok_checkForRatioExpand_Exit3 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_checkForRatioExpand Exit3 Percentage of time spent in garbage collection = %u, returning expansion size of %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceTarok_checkForRatioContract_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_checkForRatioContract Entry"
+TraceExit=Trc_MM_MemorySubSpaceTarok_checkForRatioContract_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_checkForRatioContract Exit1 Percentage of time spent in garbage collection = %u, contraction desirable"
+TraceExit=Trc_MM_MemorySubSpaceTarok_checkForRatioContract_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_checkForRatioContract Exit2 Percentage of time spent in garbage collection = %u, contraction not required"
+TraceEntry=Trc_MM_MemorySubSpaceTarok_performExpand_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_performExpand Entry Required expansion size = %zu bytes"
+TraceExit=Trc_MM_MemorySubSpaceTarok_performExpand_Exit Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_performExpand Exit Expanded by %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceTarok_timeForHeapContract_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_timeForHeapContract Entry System garbage collection = %s"
+TraceExit=Trc_MM_MemorySubSpaceTarok_timeForHeapContract_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_timeForHeapContract Exit1 Heap cannot contract"
+TraceExit=Trc_MM_MemorySubSpaceTarok_timeForHeapContract_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_timeForHeapContract Exit2 Heap cannot contract due to maxf value specified"
+TraceExit=Trc_MM_MemorySubSpaceTarok_timeForHeapContract_Exit3 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_timeForHeapContract Exit3 Heap contraction not necessary"
+TraceExit=Trc_MM_MemorySubSpaceTarok_timeForHeapContract_Exit4 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_timeForHeapContract Exit4 Do not contract as allocation request not satisfied, size of allocation request = %zu regions, free = %zu regions"
+TraceExit=Trc_MM_MemorySubSpaceTarok_timeForHeapContract_Exit5 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_timeForHeapContract Exit5 Do not contract a expansion ocurred on one of previous three garbage collection cycles"
+TraceExit=Trc_MM_MemorySubSpaceTarok_timeForHeapContract_Exit6 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_timeForHeapContract Exit6 Do not contract as free bytes at start of system garbage collect, %zu, less than minimum free bytes, %zu"
+TraceExit=Trc_MM_MemorySubSpaceTarok_timeForHeapContract_Exit7 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_timeForHeapContract Exit7 Contraction required, size = %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceTarok_calculateTargetContractSize_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateTargetContractSize Entry Allocation size = %zu, ratio contract %s"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_calculateTargetContractSize_Event1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateTargetContractSize Event1 Contraction size = %zu bytes"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_calculateTargetContractSize_Event2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateTargetContractSize Event2 Contraction size = %zu bytes, maximum contraction size = %zu bytes"
+TraceExit=Trc_MM_MemorySubSpaceTarok_calculateTargetContractSize_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateTargetContractSize Exit contraction size = %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceTarok_performContract_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_performContract Entry Allocation size = %zu"
+TraceExit=Trc_MM_MemorySubSpaceTarok_performContract_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_performContract Exit1 Do not contract due to target contract size being 0"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_performContract_Event1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_performContract Event1 Target contract size = %zu bytes, maximum contract size = %zu, contract size = %zu bytes"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_performContract_Event2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_performContract Event2 Target contract size = %zu bytes, maximum contract size = %zu, contract size = %zu bytes"
+TraceExit=Trc_MM_MemorySubSpaceTarok_performContract_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_performContract Exit2 Do not contract, contract size is 0"
+TraceExit=Trc_MM_MemorySubSpaceTarok_performContract_Exit3 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_performContract Exit3 Heap contracted by %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceTarok_calculateCollectorExpandSize_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateCollectorExpandSize Entry"
+TraceExit=Trc_MM_MemorySubSpaceTarok_calculateCollectorExpandSize_Exit1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateCollectorExpandSize Exit1 returning expand size of %zu bytes"
+TraceEntry=Trc_MM_MemorySubSpaceTarok_collectorExpand_Entry Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_collectorExpand"
+TraceExit=Trc_MM_MemorySubSpaceTarok_collectorExpand_Exit Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_collectorExpand Expanded by %zu bytes"
+TraceEvent=Trc_MM_IncrementalGenerationalGC_globalGCHookSysStart Overhead=1 Level=1 Group=resize Template="MM_IncrementalGenerationalGC_globalGCHookSysStart gcCount=%zu"
+TraceEvent=Trc_MM_IncrementalGenerationalGC_globalGCHookSysEnd Overhead=1 Level=1 Group=resize Template="MM_IncrementalGenerationalGC_globalGCHookSysEnd gcCount=%zu"
+TraceEvent=Trc_MM_IncrementalGenerationalGC_globalGCHookAFStart Overhead=1 Level=1 Group=resize Template="MM_IncrementalGenerationalGC_globalGCHookAFStart gcCount=%zu"
+TraceEvent=Trc_MM_IncrementalGenerationalGC_globalGCHookAFEnd Overhead=1 Level=1 Group=resize Template="MM_IncrementalGenerationalGC_globalGCHookAFEnd gcCount=%zu"
+TraceEvent=Trc_MM_IncrementalGenerationalGC_globalGCHookIncrementStart Overhead=1 Level=1 Group=resize Template="MM_IncrementalGenerationalGC_globalGCHookIncrementStart gcCount=%zu"
+TraceEvent=Trc_MM_IncrementalGenerationalGC_globalGCHookIncrementEnd Overhead=1 Level=1 Group=resize Template="MM_IncrementalGenerationalGC_globalGCHookIncrementEnd gcCount=%zu"
+
+TraceEntry=Trc_MM_PhysicalSubArenaRegionBased_validateNumaSymmetry_Entry Overhead=1 Level=1 Group=resize Template="MM_PhysicalSubArenaRegionBased_validateNumaSymmetry Entry"
+TraceEvent=Trc_MM_PhysicalSubArenaRegionBased_validateNumaSymmetry_NodeSummary Overhead=1 Level=1 Group=resize Template="Found %zu regions in node %zu"
+TraceEvent=Trc_MM_PhysicalSubArenaRegionBased_validateNumaSymmetry_TotalSummary Overhead=1 Level=1 Group=resize Template="Highest count=%zu, lowest count=%zu, nodes=%zu, expected nodes=%zu"
+TraceExit=Trc_MM_PhysicalSubArenaRegionBased_validateNumaSymmetry_Exit Overhead=1 Level=1 Group=resize Template="MM_PhysicalSubArenaRegionBased_validateNumaSymmetry Exit"
+
+TraceEntry=Trc_MM_SchedulingDelegate_heapReconfigured_Entry  Overhead=1 Level=1 Group=resize Template="MM_SchedulingDelegate_heapReconfigured tarokEdenMaximumSize=%zu tarokEdenMinimumSize=%zu"
+TraceExit=Trc_MM_SchedulingDelegate_heapReconfigured_Exit Overhead=1 Level=1 Group=resize Template="MM_SchedulingDelegate_heapReconfigured managedRegions=%zu maxEdenRegion=%zu minEdenRegions=%zu"
+
+TraceEvent=Trc_MM_CopyForwardScheme_scanPointerArrayObjectSlotsSplit_failedToAllocateCache Overhead=1 Level=1 Group=copyforwardscheme Template="Failed to allocate split array cache - scanning all %zu elements"
+
+TraceEntry=Trc_MM_identifyClassLoadersToUnload_Entry Group=unload Overhead=1 Level=4 Template="identifyClassLoadersToUnload"
+TraceExit=Trc_MM_identifyClassLoadersToUnload_Exit Group=unload Overhead=1 Level=4 Template="identifyClassLoadersToUnload"
+
+TraceEntry=Trc_MM_IncrementalGenerationalGC_unloadDeadClassLoaders_entry Overhead=1 Level=1 Group=unload Template="MM_IncrementalGenerationalGC_unloadDeadClassLoaders"
+TraceExit=Trc_MM_IncrementalGenerationalGC_unloadDeadClassLoaders_exit Overhead=1 Level=1 Group=unload Template="MM_IncrementalGenerationalGC_unloadDeadClassLoaders"
+
+TraceEvent=Trc_MM_FrequentObjectStats_AllocationCacheIndexableObjectAllocation Overhead=1 Level=1 Template="Frequently allocated object in allocation cache: class=%p (%.*s%.*s); allocations counted=%zu, estimated total allocations:%zu"
+TraceEvent=Trc_MM_FrequentObjectStats_AllocationCacheObjectAllocation Overhead=1 Level=1 Template="Frequently allocated object in allocation cache: class=%p (%.*s); object size=%zu; allocations counted=%zu, estimated total allocations:%zu"
+
+TraceEntry=Trc_MM_SchedulingDelegate_partialGarbageCollectCompleted_Entry Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_partialGarbageCollectCompleted reclaimableRegions=%zu defragmentReclaimableRegions=%zu"
+TraceEvent=Trc_MM_SchedulingDelegate_partialGarbageCollectCompleted_stats Overhead=1 Level=1 Group=kickoff Template="Evacuated %zu Eden + %zu non-Eden regions into %zu + %zu regions. Eden was %zu regions."
+TraceExit=Trc_MM_SchedulingDelegate_partialGarbageCollectCompleted_Exit Overhead=1 Level=1 Group=kickoff Template="MM_SchedulingDelegate_partialGarbageCollectCompleted"
+
+TraceEntry=Trc_MM_CollectionSetDelegate_createNurseryCollectionSet_Entry Overhead=1 Level=1 Group=dynamiccollectionset Template="MM_CollectionSetDelegate_createNurseryCollectionSet dynamic=%s"
+TraceExit=Trc_MM_CollectionSetDelegate_createNurseryCollectionSet_Exit Overhead=1 Level=1 Group=dynamiccollectionset Template="MM_CollectionSetDelegate_createNurseryCollectionSet nursery includes %zu regions"
+TraceEntry=Trc_MM_CollectionSetDelegate_selectRegionsForBudget_Entry Overhead=1 Level=1 Group=dynamiccollectionset Template="MM_CollectionSetDelegate_selectRegionsForBudget budget=%zu"
+TraceExit=Trc_MM_CollectionSetDelegate_selectRegionsForBudget_Exit Overhead=1 Level=1 Group=dynamiccollectionset Template="MM_CollectionSetDelegate_selectRegionsForBudget selected %zu regions"
+
+TraceEntry=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompact_Entry Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_tagRegionsBeforeCompact"
+TraceExit=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompact_Exit Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_tagRegionsBeforeCompact tagged %zu regions; skipped %zu overflowed regions"
+
+TraceEntry=Trc_MM_ReclaimDelegate_deriveCompactScore_Entry Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_deriveCompactScore"
+TraceExit=Trc_MM_ReclaimDelegate_deriveCompactScore_Exit Obsolete Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_deriveCompactScore overflowed=%zu; not swept=%zu; already selected=%zu; full=%zu; pinned=%zu; noncontributing=%zu; contributing=%zu"
+
+TraceEvent=Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal_searching Overhead=1 Level=1 Group=reclaim Template="Walking sorted list of %zu regions to select compact candidates"
+
+TraceEntry=Trc_MM_CompactGroupPersistentStats_deriveWeightedSurvivalRates_Entry Overhead=1 Level=1 Group=reclaim Template="MM_CompactGroupPersistentStats_deriveWeightedSurvivalRates historicalWeight=%f"
+TraceEvent=Trc_MM_CompactGroupPersistentStats_deriveWeightedSurvivalRates_group Overhead=1 Level=1 Group=reclaim Template="context %2zu; age %2zu; historicalSurvivalRate=%0.6f; weightedSurvivalRate=%0.6f"
+TraceExit=Trc_MM_CompactGroupPersistentStats_deriveWeightedSurvivalRates_Exit Overhead=1 Level=1 Group=reclaim Template="MM_CompactGroupPersistentStats_deriveWeightedSurvivalRates"
+
+TraceEvent=Trc_MM_GMPCycleStart Overhead=1 Level=1 Group=gclogger Template="Global Mark Phase cycle start"
+TraceEvent=Trc_MM_GMPCycleEnd Overhead=1 Level=1 Group=gclogger Template="Global Mark Phase cycle end"
+
+TraceEvent=Trc_MM_CopyForwardStart Overhead=1 Level=1 Group=gclogger Template="CopyForward start"
+TraceEvent=Trc_MM_CopyForwardEnd Overhead=1 Level=1 Group=gclogger Template="CopyForward end"
+
+TraceEvent=Trc_MM_CycleStart Overhead=1 Level=1 Group=gclogger Template="Cycle Start: type %zu approximateFreeMemorySize %zu"
+TraceEvent=Trc_MM_CycleEnd Overhead=1 Level=1 Group=gclogger Template="Cycle End: type %zu approximateFreeMemorySize %zu"
+
+TraceEvent=Trc_MM_AllocationFailureCycleStart Overhead=1 Level=1 Group=gclogger Template="Allocation failure cycle start: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu requestedbytes=%zu"
+TraceEvent=Trc_MM_AllocationFailureCycleEnd Overhead=1 Level=1 Group=gclogger Template="Allocation failure cycle end: newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu"
+
+TraceEvent=Trc_MM_AcquiredExclusiveToSatisfyAllocation Overhead=1 Level=1 Group=gclogger Template="Acquired exclusive to satisfy allocation bytes=%zu subspace=%zu"
+
+TraceEntry=Trc_MM_ReclaimDelegate_runReclaimForAbortedCopyForward_Entry Overhead=1 Level=1 Group=reclaim             Template="MM_ReclaimDelegate_runReclaimForAbortedCopyForward Free regions before reclaim: %5zu"
+TraceExit=Trc_MM_ReclaimDelegate_runReclaimForAbortedCopyForward_Exit Overhead=1 Level=1 Group=reclaim               Template="MM_ReclaimDelegate_runReclaimForAbortedCopyForward Free regions after compact:  %5zu (compacted %zu regions)"
+
+TraceEvent=Trc_MM_GlobalGCStart Overhead=1 Level=1 Group=gclogger Template="GlobalGC start: globalcount=%zu"
+TraceEvent=Trc_MM_GlobalGCEnd Overhead=1 Level=1 Group=gclogger Template="GlobalGC end: workstackoverflow=%zu overflowcount=%zu memory=%zu/%zu"
+
+TraceEntry=Trc_MM_IncrementalGenerationalGC_partialGarbageCollectUsingCopyForward_Entry Overhead=1 Level=1 Template="MM_IncrementalGenerationalGC_partialGarbageCollectUsingCopyForward"
+TraceEvent=Trc_MM_IncrementalGenerationalGC_partialGarbageCollectUsingCopyForward_ChooseCompactor Overhead=1 Level=1 Template="Choose compactor: estimatedSurvivorRequired(%zu) + desiredCompactWork(%zu) > freeMemoryForSurvivor(%zu) ? choice=%s"
+TraceExit=Trc_MM_IncrementalGenerationalGC_partialGarbageCollectUsingCopyForward_Exit Overhead=1 Level=1 Template="MM_IncrementalGenerationalGC_partialGarbageCollectUsingCopyForward"
+
+TraceAssert=Assert_MM_validStackSlot noEnv Overhead=1 Level=1 group=stackslotvalidator Assert="(P1)"
+TraceEntry-Exception=Trc_MM_StackSlotValidator_reportStackSlot_Entry Overhead=1 Level=1 group=stackslotvalidator Template="StackSlotValidator::reportStackSlot in thread %p"
+TraceException=Trc_MM_StackSlotValidator_thread Overhead=1 Level=1 group=stackslotvalidator Template="%s in thread %s"
+TraceException=Trc_MM_StackSlotValidator_OSlot Overhead=1 Level=1 group=stackslotvalidator Template="O-Slot=%p"
+TraceException=Trc_MM_StackSlotValidator_OSlotValue Overhead=1 Level=1 group=stackslotvalidator Template="O-Slot value=%p"
+TraceException=Trc_MM_StackSlotValidator_PC Overhead=1 Level=1 group=stackslotvalidator Template="PC=%p"
+TraceException=Trc_MM_StackSlotValidator_framesWalked Overhead=1 Level=1 group=stackslotvalidator Template="framesWalked=%zu"
+TraceException=Trc_MM_StackSlotValidator_arg0EA Overhead=1 Level=1 group=stackslotvalidator Template="arg0EA=%p"
+TraceException=Trc_MM_StackSlotValidator_walkSP Overhead=1 Level=1 group=stackslotvalidator Template="walkSP=%p"
+TraceException=Trc_MM_StackSlotValidator_literals Overhead=1 Level=1 group=stackslotvalidator Template="literals=%p"
+TraceException=Trc_MM_StackSlotValidator_jitInfo Overhead=1 Level=1 group=stackslotvalidator Template="jitInfo=%p"
+TraceException=Trc_MM_StackSlotValidator_method Overhead=1 Level=1 group=stackslotvalidator Template="method=%p (%.*s.%.*s%.*s) (%s)"
+TraceExit-Exception=Trc_MM_StackSlotValidator_reportStackSlot_Exit Overhead=1 Level=1 group=stackslotvalidator Template="StackSlotValidator::reportStackSlot"
+
+TraceEvent=Trc_MM_CycleContinue Overhead=1 Level=1 Group=gclogger Template="Cycle Continue: from type %zu to type %zu approximateFreeMemorySize %zu"
+
+TraceException=Trc_MM_StackSlotValidator_stack Overhead=1 Level=1 group=stackslotvalidator Template="stack=%p-%p"
+
+TraceException=Trc_MM_CopyForwardScheme_scanObject_invalid Overhead=1 Level=1 Template="Invalid object in MM_CopyForwardScheme::scanObject. object=%p; scanReason=%zu"
+TraceException=Trc_MM_GlobalMarkCardScrubber_scrubObject_invalid Overhead=1 Level=1 Template="Invalid object in MM_GlobalMarkCardScrubber::scrubObject. object=%p"
+TraceException=Trc_MM_GlobalMarkingScheme_scanObject_invalid Overhead=1 Level=1 Template="Invalid object in MM_GlobalMarkingScheme::scanObject. object=%p; scanReason=%zu"
+TraceException=Trc_MM_PartialMarkingScheme_scanObject_invalid Overhead=1 Level=1 Template="Invalid object in MM_PartialMarkingScheme::scanObject. object=%p; scanReason=%zu"
+TraceException=Trc_MM_WriteOnceCompactor_fixupObject_invalid Overhead=1 Level=1 Template="Invalid object in MM_WriteOnceCompactor::fixupObject. object=%p; fixupCache=%p"
+
+TraceEntry-Exception=Trc_MM_RegionValidator_reportRegion_Entry Overhead=1 Level=1 group=regionvalidator Template="RegionValidator::reportRegion for region %p"
+TraceException=Trc_MM_RegionValidator_leafRegion Overhead=1 Level=1 group=regionvalidator Template="%s in region %p; type=%zu; range=%p-%p; spine=%p"
+TraceException=Trc_MM_RegionValidator_objectRegion Overhead=1 Level=1 group=regionvalidator Template="%s in region %p; type=%zu; range=%p-%p"
+TraceExit-Exception=Trc_MM_RegionValidator_reportRegion_Exit Overhead=1 Level=1 group=regionvalidator Template="RegionValidator::reportRegion"
+TraceException=Trc_MM_RegionValidator_previousLeafRegion Overhead=1 Level=1 group=regionvalidator Template="(Previous region %p; type=%zu; range=%p-%p; spine=%p)"
+TraceException=Trc_MM_RegionValidator_previousObjectRegion Overhead=1 Level=1 group=regionvalidator Template="(Previous region %p; type=%zu; range=%p-%p)"
+
+TraceEvent=Trc_MM_VirtualMemory_commitMemory_success noEnv Overhead=1 Level=1 Template="Successfully committed memory: address=%p, size=%zu"
+TraceException=Trc_MM_VirtualMemory_commitMemory_failure noEnv Overhead=1 Level=1 Group=gclogger Template="Failed to commit memory: address=%p, size=%zu"
+
+TraceEntry=Trc_MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion_Entry Overhead=1 Level=1 Group=copyforwardscheme Template="MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion region=%p survivorBase=%p"
+TraceExit=Trc_MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion_Exit Overhead=1 Level=1 Group=copyforwardscheme Template="MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion"
+
+TraceEvent=Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists_rememberWeak Overhead=1 Level=1 Group=copyforwardscheme Template="Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists region=%p weak=%p "
+TraceEvent=Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists_rememberSoft Overhead=1 Level=1 Group=copyforwardscheme Template="Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists region=%p soft=%p"
+TraceEvent=Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists_rememberPhantom Overhead=1 Level=1 Group=copyforwardscheme Template="Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists region=%p phantom=%p"
+
+TraceEntry=Trc_MM_MemorySubSpaceTarok_replenishAllocationContextFailed_Entry Overhead=1 Level=1 Group=tarok Template="MM_MemorySubSpaceTarok::replenishAllocationContextFailed context=%p type=%zu contiguousBytes=%zu"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_replenishAllocationContextFailed_didPerformTaxationAndReplenish Overhead=1 Level=1 Group=tarok Template="MM_MemorySubSpaceTarok::replenishAllocationContextFailed did perform taxation and replenish context=%p type=%zu contiguousBytes=%zu result=%p"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_replenishAllocationContextFailed_didPerformResizeAndReplenish Overhead=1 Level=1 Group=tarok Template="MM_MemorySubSpaceTarok::replenishAllocationContextFailed did perform resize and replenish context=%p type=%zu contiguousBytes=%zu result=%p"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_replenishAllocationContextFailed_didPerformCollect Overhead=1 Level=1 Group=tarok Template="MM_MemorySubSpaceTarok::replenishAllocationContextFailed did perform AF collect context=%p type=%zu contiguousBytes=%zu result=%p"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_replenishAllocationContextFailed_didPerformAggressiveCollect Overhead=1 Level=1 Group=tarok Template="MM_MemorySubSpaceTarok::replenishAllocationContextFailed did perform aggressive AF collect context=%p type=%zu contiguousBytes=%zu result=%p"
+TraceExit=Trc_MM_MemorySubSpaceTarok_replenishAllocationContextFailed_Exit Overhead=1 Level=1 Group=tarok Template="MM_MemorySubSpaceTarok::replenishAllocationContextFailed result=%p"
+TraceEntry=Trc_MM_AllocationContextTarok_Deprecated_acquireMPAOLRegionFromNode_Entry Overhead=1 Level=1 Group=tarok Template="MM_AllocationContextTarok::acquireMPAOLRegionFromNode thisContext=%p requestingContext=%p"
+TraceExit=Trc_MM_AllocationContextTarok_Deprecated_acquireMPAOLRegionFromNode_Exit Overhead=1 Level=1 Group=tarok Template="MM_AllocationContextTarok::acquireMPAOLRegionFromNode result=%p"
+
+TraceEvent=Trc_MM_RuntimeExecManager_jniNativeBindHook_foundMethod Overhead=1 Level=1 Group=runtimeexec Template="MM_RuntimeExecManager::jniNativeBindHook found method %.*s.%.*s%.*s"
+TraceEvent=Trc_MM_RuntimeExecManager_jniNativeBindHook_replacedMethod Overhead=1 Level=1 Group=runtimeexec Template="MM_RuntimeExecManager::jniNativeBindHook savedFunction=%p, installedFunction=%p"
+TraceEntry=Trc_MM_RuntimeExecManager_forkAndExecNativeV6_Entry Overhead=1 Level=1 Group=runtimeexec Template="MM_RuntimeExecManager::forkAndExecNativeV6"
+TraceExit=Trc_MM_RuntimeExecManager_forkAndExecNativeV6_Exit Overhead=1 Level=1 Group=runtimeexec Template="MM_RuntimeExecManager::forkAndExecNativeV6"
+TraceEntry=Trc_MM_RuntimeExecManager_forkAndExecNativeV7_Entry Overhead=1 Level=1 Group=runtimeexec Template="MM_RuntimeExecManager::forkAndExecNativeV7"
+TraceExit=Trc_MM_RuntimeExecManager_forkAndExecNativeV7_Exit Overhead=1 Level=1 Group=runtimeexec Template="MM_RuntimeExecManager::forkAndExecNativeV7"
+
+TraceEvent=Trc_MM_InterRegionRememberedSet_clearFromRegionReferencesForMark_timesus Overhead=1 Level=1 Group=rememberedset Template="MM_InterRegionRememberedSet_clearFromRegionReferencesForMark duration=%zuus (compressCT=%zuus)"
+TraceEvent=Trc_MM_InterRegionRememberedSet_clearFromRegionReferencesForCompact_timesus Overhead=1 Level=1 Group=rememberedset Template="MM_InterRegionRememberedSet_clearFromRegionReferencesForCompact duration=%zuus (compressCT=%zuus)"
+TraceEvent=Trc_MM_InterRegionRememberedSet_clearFromRegionReferencesForMark_cardCounts Overhead=1 Level=1 Group=rememberedset Template="MM_InterRegionRememberedSet_clearFromRegionReferencesForMark  GC-count %zu region %zu card list counts: before %zu removed %zu after %zu"
+TraceEvent=Trc_MM_InterRegionRememberedSet_clearFromRegionReferencesForCompact_cardCounts Overhead=1 Level=1 Group=rememberedset Template="MM_InterRegionRememberedSet_clearFromRegionReferencesForCompact  GC-count %zu region %zu card list counts: before %zu removed %zu after %zu"
+
+TraceEvent=Trc_MM_AllocationContextTarok_Deprecated_flushInternal_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextTarok::flushInternal context=%p _allocationRegion=NULL"
+TraceEvent=Trc_MM_AllocationContextTarok_Deprecated_lockedAllocateTLH_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextTarok::lockedAllocateTLH context=%p _allocationRegion=NULL"
+TraceEvent=Trc_MM_AllocationContextTarok_Deprecated_lockedAllocateTLH_setAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextTarok::lockedAllocateTLH context=%p _allocationRegion=%p"
+TraceEvent=Trc_MM_AllocationContextTarok_Deprecated_lockedAllocateObject_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextTarok::lockedAllocateObject context=%p _allocationRegion=NULL"
+TraceEvent=Trc_MM_AllocationContextTarok_Deprecated_internalCollectorAcquireRegion_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextTarok::internalCollectorAcquireRegion context=%p _allocationRegion=NULL"
+TraceEvent=Trc_MM_AllocationContextTarok_Deprecated_acquireMPAOLRegionFromNode_setAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextTarok::acquireMPAOLRegionFromNode context=%p _allocationRegion=%p"
+
+TraceEvent=Trc_MM_ParallelDispatcher_adjustThreadCount_smallHeap noEnv Overhead=1 Level=1 Template="MM_ParallelDispatcher::adjustThreadCount limiting threads to %zu due to heap size"
+TraceEvent=Trc_MM_ParallelDispatcher_adjustThreadCount_DLPAR Obsolete Overhead=1 Level=1 Template="MM_ParallelDispatcher::adjustThreadCount limiting threads to %zu due to DLPAR"
+
+TraceEntry=Trc_MM_ParallelScavenger_scavengeRememberedSetList_Entry Overhead=1 Level=2 Group=scavenger Template="MM_ParallelScavenger::scavengeRememberedSetList"
+TraceEvent=Trc_MM_ParallelScavenger_scavengeRememberedSetList_startPuddle Overhead=1 Level=1 Group=scavenger Template="Start processing puddle %p"
+TraceEvent=Trc_MM_ParallelScavenger_scavengeRememberedSetList_donePuddle Overhead=1 Level=1 Group=scavenger Template="Done processing puddle %p (size=%zu)"
+TraceExit=Trc_MM_ParallelScavenger_scavengeRememberedSetList_Exit Overhead=1 Level=2 Group=scavenger Template="MM_ParallelScavenger::scavengeRememberedSetList"
+
+TraceEntry=Trc_MM_SynchronizeGCThreadsAndReleaseSingleThread_Entry Overhead=1 Level=2 Template="Trc_MM_SynchronizeGCThreadsAndReleaseSingleThread Entry from: %s"
+TraceExit=Trc_MM_SynchronizeGCThreadsAndReleaseSingleThread_Exit Overhead=1 Level=2 Template="Trc_MM_SynchronizeGCThreadsAndReleaseSingleThread Exit"
+
+TraceEvent=Trc_MM_CollectionSetDelegate_selectRegionsForBudget Overhead=1 Level=1 Group=dynamiccollectionset Template="DCS selecting region id=%zu from group=%zu with free space=%zu%% projected free after GC=%zu%% projected reclaimed=%zu%%"
+
+TraceEvent=Trc_MM_ParallelScavenger_parallelStats Overhead=1 Level=1 Group=parallel Template="Scav %4u: stall_work=%4ums stall_complete=%4ums stall_sync=%4ums stall_count=%u/%u/%u free_lists=%zu/%zu scan_lists=%zu/%zu"
+TraceEvent=Trc_MM_ParallelMarkTask_parallelStats Overhead=1 Level=1 Group=parallel Template="Mark %4u: stall_work=%4ums stall_complete=%4ums stall_sync=%4ums stall_count=%u/%u/%u acquire=%zu release=%zu exchange=%zu split_array=%zu"
+TraceEvent=Trc_MM_RealtimeMarkTask_parallelStats Overhead=1 Level=1 Group=parallel Template="Mark %4u: stall_work=%4ums stall_complete=%4ums stall_sync=%4ums stall_count=%u/%u/%u acquire=%zu release=%zu exchange=%zu split_array=%zu"
+TraceEvent=Trc_MM_ParallelSweepTask_parallelStats Overhead=1 Level=1 Group=parallel Template="Sweep %3u: idle=%4ums chunks=%4zu merge=%4ums"
+TraceEvent=Trc_MM_RealtimeSweepTask_parallelStats Overhead=1 Level=1 Group=parallel Template="Sweep %3u: idle=%4ums chunks=%4zu merge=%4ums"
+TraceEvent=Trc_MM_ParallelSweepVLHGCTask_parallelStats Overhead=1 Level=1 Group=parallel Template="PGC-Sweep %3u: idle=%4ums chunks=%4zu merge=%4ums"
+TraceEvent=Trc_MM_ParallelGlobalMarkTask_parallelStats Overhead=1 Level=1 Group=parallel Template="GMP-Mark %4u: stall_work=%4ums stall_complete=%4ums stall_sync=%4ums stall_count=%u/%u/%u acquire=%zu release=%zu exchange=%zu split_array=%zu"
+TraceEvent=Trc_MM_ParallelPartialMarkTask_parallelStats Overhead=1 Level=1 Group=parallel Template="PGC-Mark %4u: stall_work=%4ums stall_complete=%4ums stall_sync=%4ums stall_count=%u/%u/%u acquire=%zu release=%zu exchange=%zu split_array=%zu"
+TraceEvent=Trc_MM_CopyForwardScheme_parallelStats Overhead=1 Level=1 Group=parallel Template="PGC-CpFw %4u: stall_work=%4ums stall_complete=%4ums stall_sync=%4ums stall_irrs=%4ums stall_count=%u/%u/%u/%u free_lists=%zu/%zu scan_lists=%zu/%zu split_array=%zu"
+TraceEvent=Trc_MM_CopyForwardScheme_parallelStatsForAbort Overhead=1 Level=1 Group=parallel Template="PGC-Abrt %4u: stall_work=%4ums stall_complete=%4ums stall_sync=%4ums stall_abort=%4ums stall_count=%u/%u/%u/%u acquire=%zu release=%zu exchange=%zu split_array=%zu"
+TraceEvent=Trc_MM_CopyForwardSchemeDepthFirst_parallelStats Overhead=1 Level=1 Group=parallel Template="PGC-CpFw %4u: stall_work=%4ums stall_complete=%4ums stall_sync=%4ums stall_irrs=%4ums stall_count=%u/%u/%u/%u free_lists=%zu/%zu scan_lists=%zu/%zu split_array=%zu"
+TraceEvent=Trc_MM_CopyForwardSchemeDepthFirst_parallelStatsForAbort Overhead=1 Level=1 Group=parallel Template="PGC-Abrt %4u: stall_work=%4ums stall_complete=%4ums stall_sync=%4ums stall_abort=%4ums stall_count=%u/%u/%u/%u acquire=%zu release=%zu exchange=%zu split_array=%zu"
+
+TraceExit=Trc_MM_ReclaimDelegate_deriveCompactScore_Exit Overhead=1 Level=1 Group=reclaim Template="MM_ReclaimDelegate_deriveCompactScore overflowed=%zu; not swept=%zu; already selected=%zu; full=%zu; pinned=%zu; noncontributing=%zu; contributing=%zu; not defragmentation target=%zu"
+TraceEvent=Trc_MM_ReclaimDelegate_estimateReclaimableRegions_generationSummary Overhead=1 Level=1 Group=kickoff Template="Generation %zu: %zu regions, %zu free bytes, %zu recoverable bytes, %zu recoverable regions, %zu defragment recoverable regions"
+TraceEvent=Trc_MM_SchedulingDelegate_measureConsumptionForPartialGC_defragmentConsumptionRate Overhead=1 Level=1 Group=kickoff Template="PGC consumed %zi defragment regions (%zu-%zu). Rate=%0.2f regions/collection."
+TraceEvent=Trc_MM_LocalGCEnd Overhead=1 Level=1 Group=gclogger Template="LocalGC end: rememberedsetoverflow=%zu causedrememberedsetoverflow=%zu scancacheoverflow=%zu failedflipcount=%zu failedflipbytes=%zu failedtenurecount=%zu failedtenurebytes=%zu flipcount=%zu flipbytes=%zu newspace=%zu/%zu oldspace=%zu/%zu loa=%zu/%zu tenureage=%zu"
+
+TraceEvent=Trc_MM_SchedulingDelegate_measureScanRate_summary Overhead=1 Level=1 Group=kickoff Template="%zu threads scanned %9zu bytes in %7lluus. Historical bytes scanned: %zu. Historical scan time: %7lluus.  Thread scan rate: %f us/byte"
+TraceEvent=Trc_MM_SchedulingDelegate_currentGlobalMarkIncrementTimeMillis_summary Overhead=1 Level=1 Group=kickoff Template="Increment time: %zums"
+
+TraceEvent=Trc_MM_CopyForwardScheme_setRegionAsSurvivor Overhead=1 Level=1 Group=ageblending Template="setRegionAsSurvivor region %zu compactGroup %zu (allocAge %.4fM * usedBytes %.4fM) -> newAllocAgeSize %.4fM^2"
+TraceEvent=Trc_MM_CopyForwardScheme_reinitCache Overhead=1 Level=3 Group=ageblending Template="reinitCache region %zu cache %llx allocAgeSize %.4fM^2 usedBytes %.4fM"
+TraceEvent=Trc_MM_CopyForwardScheme_stopCopyingIntoCache Overhead=1 Level=3 Group=ageblending Template="stopCopyingIntoCache region %zu cache %llx  region allocAgeSize %.4fM^2 usedBytes %.4fM cache allocAgeSize %.2fM^2 objectSize %.4fM newAllocAgeSize %.4fM^2"
+TraceEvent=Trc_MM_CopyForwardScheme_setAllocationAgeForMergedRegion Overhead=1 Level=1 Group=ageblending Template="setMergedAllocationAge region %zu compactGroup %zu (allocAgeSize %.4fM^2 / usedBytes %.4fM) -> newAllocAge %.4fM (low %.4fM hi %.4fM)"
+
+TraceEvent=Trc_MM_SchedulingDelegate_updateGMPStats Overhead=1 Level=1 Group=reclaim Template="historicTotalIncrementalScanTimePerGMP: %lluus, incrementalScanTime:%lluus, historicBytesScannedConcurrentlyPerGMP:%zu, concurrentBytesScanned:%zu"
+
+TraceEvent=Trc_MM_SchedulingDelegate_copyForwardCompleted_efficiency Overhead=1 Level=1 Group=reclaim Template="bytesCopied=%zu, bytesDiscarded=%zu, lost=%0.2f; avgBytesCopied=%0.2f, avgBytesDiscarded=%0.2f, avgLost=%0.2f survivorRegions=%zu (incl. %zu failed evacuate regions and %zu compact regions) avgSurvivorRegions=%0.2f copyForwardRate:%0.5f avgCopyForwardRate:%0.5f"
+TraceEvent=Trc_MM_SchedulingDelegate_calculatePGCCompactionRate_liveToFreeRatio Overhead=1 Level=1 Group=reclaim Template="bytesCompacted/freeBytes ratio %f (totalLiveData %zu, totalFreeMemory %zu, fullyCompactedData %zu, reservedFreeMemory %zu, emptinessThreshold=%0.2f) surivivorSize=%zu, defragmentedMemory=%zu, freeRegionMemory=%zu, edenSizeInBytes=%zu"
+
+TraceEvent=Trc_MM_CompactGroupPersistentStats_decayProjectedLiveBytesForRegions Overhead=1 Level=1 Group=aging Template="decay region %zu projectedLiveBytes %.4fM->%.4fM regionCompactGroup %zu bytesRemaining %.2fM currentAge %.2fM multiply with PrISR %f (baseSurvivalRate  %f, ageUnitsInThisGroup %f)  group %zu"
+TraceEntry=Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_Entry Overhead=1 Level=1 Group=aging Template="compactGroup %zu projectedLiveBytesForNonEdenNew  %.4fM projectedLiveBytesSelectedPreviousPGC  %.4fM measuredLiveBytesAfter %.4fM (%.4fM - %.4fM) projectedLiveBytesForNonEden %.4fM"
+TraceEvent=Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_eden Overhead=1 Level=1 Group=aging Template="eden thisSurvivalRate %f currentAge %.4fM bytesRemaining %.4fM ageInCurrentGroup %.4fM divide by PrISR thisPGC %f (baseSurvivalRate %f, ageUnitsInCurrentGroup %f)  group %zu "
+TraceEvent=Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_nonEden Overhead=1 Level=1 Group=aging Template="nonEden thisSurvivalRate %f currentAge %.4fM bytesRemaining %.4fM ageInCurrentGroup %.4fM divide by PrISR thisPGC %f (baseSurvivalRate %f, ageUnitsInCurrentGroup %f) group %zu"
+TraceExit=Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_Exit Overhead=1 Level=1 Group=aging Template="compactGroup %zu newSurvivalRate eden %f nonEden %f combined %f per age unit (^ 1/%f =) %f weighted PrISR perAgeGroup/Unit %f/%f"
+TraceEvent=Trc_MM_CompactGroupPersistentStats_calculateAgeGroupFractions Overhead=1 Level=1 Group=aging Template="maxAge/maxAge range/age range in this age group %zu/%zu/%zu compact group eden fraction %zu nonEden fraction %zu"
+
+TraceEvent=Trc_MM_IncrementalGenerationalGC_incrementRegionAge Overhead=1 Level=1 Group=aging Template="incrementRegionAge region %zu isPGC %zu increment %.4fM allocationAgeBefore %.4fM allocationAge %.4fM (low %.4fM hi %.4fM) logicalAgeBefore %zu logicalAge %zu"
+
+TraceEvent=Trc_MM_ReclaimDelegate_calculateOptimalEmptinessRegionThreshold Overhead=1 Level=1 Group=reclaim Template="freeRegions %zu, regionConsumptionRate %0.2f regions/PGC, avgSurvivorRegions %0.2f regions, avgCopyForwardRate %0.5f bytes/microsecond, scanTimeCostPerGMP %lluus, minimumTotalCostPerPGC %0.2fus, optimalGMPPeriod %zu PGCs, optimalDefragmentEmptinessRegionThreshold %0.5f"
+TraceEvent=Trc_MM_SchedulingDelegate_getBytesToScanInNextGMPIncrement Overhead=1 Level=1 Group=kickoff Template="targetPauseTimeMillis %zu, scanRate %0.5f us/bytes, gcThreadCount %zu, workTarget %zu"
+
+TraceEvent=Trc_MM_LargeObjectAllocateStats_upSample Overhead=1 Level=1 Group=alloclarge Template="allocSize %zu bytesAllocated %zu thisSizeTlhBytesAllocated %zu totalTlhBytesAllocated %zu upSampleFactor %f bytesAllocatedUpSampled %zu"
+
+TraceEvent=Trc_MM_AllocationContextBalanced_internalReplenishActiveRegion_convertedFreeRegion Overhead=1 Level=1 Group=tarok template="MM_AllocationContextBalanced::internalReplenishActiveRegion. Converted free region=%zx. Acquired %zu bytes"
+TraceEvent=Trc_MM_AllocationContextBalanced_internalReplenishActiveRegion_setAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextBalanced::internalReplenishActiveRegion context=%p _allocationRegion=%p"
+TraceEntry=Trc_MM_AllocationContextBalanced_acquireMPBPRegionFromNode_Entry Overhead=1 Level=1 Group=tarok Template="MM_AllocationContextBalanced::acquireMPBPRegionFromNode thisContext=%p requestingContext=%p"
+TraceExit=Trc_MM_AllocationContextBalanced_acquireMPBPRegionFromNode_Exit Overhead=1 Level=1 Group=tarok Template="MM_AllocationContextBalanced::acquireMPBPRegionFromNode result=%p"
+TraceEntry=Trc_MM_AllocationContextBalanced_lockedReplenishAndAllocate_Entry Overhead=1 Level=1 Group=tarok template="MM_AllocationContextBalanced::lockedReplenishAndAllocate. regionSize=%zu requestedBytes=%zu"
+TraceEvent=Trc_MM_AllocationContextBalanced_lockedReplenishAndAllocate_acquiredFreeRegion Overhead=1 Level=1 Group=tarok template="MM_AllocationContextBalanced::lockedReplenishAndAllocate. Acquired free region. Acquired %zu bytes"
+TraceExit=Trc_MM_AllocationContextBalanced_lockedReplenishAndAllocate_Success Overhead=1 Level=1 Group=tarok template="MM_AllocationContextBalanced::lockedReplenishAndAllocate. Succeeded."
+TraceExit=Trc_MM_AllocationContextBalanced_lockedReplenishAndAllocate_Failure Overhead=1 Level=1 Group=tarok template="MM_AllocationContextBalanced::lockedReplenishAndAllocate. Failed."
+TraceEvent=Trc_MM_AllocationContextBalanced_flushInternal_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextBalanced::flushInternal context=%p _allocationRegion=NULL"
+TraceEvent=Trc_MM_AllocationContextBalanced_lockedAllocateTLH_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextBalanced::lockedAllocateTLH context=%p _allocationRegion=NULL"
+TraceEvent=Trc_MM_AllocationContextBalanced_lockedAllocateTLH_setAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextBalanced::lockedAllocateTLH context=%p _allocationRegion=%p"
+TraceEvent=Trc_MM_AllocationContextBalanced_lockedAllocateObject_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextBalanced::lockedAllocateObject context=%p _allocationRegion=NULL"
+TraceEvent=Trc_MM_AllocationContextBalanced_internalCollectorAcquireRegion_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextBalanced::internalCollectorAcquireRegion context=%p _allocationRegion=NULL"
+
+TraceEvent=Trc_MM_AllocationContextMultiTenant_internalReplenishActiveRegion_convertedFreeRegion Overhead=1 Level=1 Group=tarok template="MM_AllocationContextMultiTenant::internalReplenishActiveRegion. Converted free region=%zx. Acquired %zu bytes"
+TraceEvent=Trc_MM_AllocationContextMultiTenant_internalReplenishActiveRegion_setAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextMultiTenant::internalReplenishActiveRegion context=%p _allocationRegion=%p"
+TraceEntry=Trc_MM_AllocationContextMultiTenant_lockedReplenishAndAllocate_Entry Overhead=1 Level=1 Group=tarok template="MM_AllocationContextMultiTenant::lockedReplenishAndAllocate. regionSize=%zu requestedBytes=%zu"
+TraceEvent=Trc_MM_AllocationContextMultiTenant_lockedReplenishAndAllocate_acquiredFreeRegion Overhead=1 Level=1 Group=tarok template="MM_AllocationContextMultiTenant::lockedReplenishAndAllocate. Acquired free region. Acquired %zu bytes"
+TraceExit=Trc_MM_AllocationContextMultiTenant_lockedReplenishAndAllocate_Success Overhead=1 Level=1 Group=tarok template="MM_AllocationContextMultiTenant::lockedReplenishAndAllocate. Succeeded."
+TraceExit=Trc_MM_AllocationContextMultiTenant_lockedReplenishAndAllocate_Failure Overhead=1 Level=1 Group=tarok template="MM_AllocationContextMultiTenant::lockedReplenishAndAllocate. Failed."
+TraceEvent=Trc_MM_AllocationContextMultiTenant_flushInternal_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextMultiTenant::flushInternal context=%p _allocationRegion=NULL"
+TraceEvent=Trc_MM_AllocationContextMultiTenant_lockedAllocateTLH_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextMultiTenant::lockedAllocateTLH context=%p _allocationRegion=NULL"
+TraceEvent=Trc_MM_AllocationContextMultiTenant_lockedAllocateTLH_setAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextMultiTenant::lockedAllocateTLH context=%p _allocationRegion=%p"
+TraceEvent=Trc_MM_AllocationContextMultiTenant_lockedAllocateObject_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextMultiTenant::lockedAllocateObject context=%p _allocationRegion=NULL"
+TraceEvent=Trc_MM_AllocationContextMultiTenant_internalCollectorAcquireRegion_clearAllocationRegion Overhead=1 Level=1 Template="MM_AllocationContextMultiTenant::internalCollectorAcquireRegion context=%p _allocationRegion=NULL"
+
+TraceEntry=Trc_MM_LargeObjectAllocateStats_estimateFragmentation_entry  Overhead=1 Level=3 Group=alloclarge template="estimateFragmentation initialFreeMemory %zu (%zuMB) tlhPercent %f"
+TraceEvent=Trc_MM_LargeObjectAllocateStats_estimateFragmentation_stride  Overhead=1 Level=3 Group=alloclarge template="estimateFragmentation stride %zu freeMemory %zu (%zuMB) objectSize %zu objectAlloc %zu (%zuMB) tlhAlloc %zu (%zuMB)"
+TraceExit=Trc_MM_LargeObjectAllocateStats_estimateFragmentation_exit  Overhead=1 Level=3 Group=alloclarge template="estimateFragmentation remainingFreeMemory %zu (%zuMB) unsatisfiedAlloc %zu (%zuMB)"
+
+TraceEntry=Trc_MM_LargeObjectAllocateStats_simulateAllocateObjects_entry Overhead=1 Level=3 Group=alloclarge template="allocateObjects object size %zu requested %zu (%zuMB) freeMemory %zu (%zuMB)"
+TraceEvent=Trc_MM_LargeObjectAllocateStats_simulateAllocateObjects_availableBytes Overhead=1 Level=3 Group=alloclarge template="availableBytes in %s free entries %zu (= count %zu * usedPortion %zu (= freeEntry/allocSize %zu * objectSize %zu))"
+TraceExit=Trc_MM_LargeObjectAllocateStats_simulateAllocateObjects_exit Overhead=1 Level=3 Group=alloclarge template="allocateObjects object size %zu unsatisfied %zu (%zuMB) freeMemory %zu (%zuMB)"
+
+TraceEntry=Trc_MM_LargeObjectAllocateStats_simulateAllocateTLHs_entry Overhead=1 Level=3 Group=alloclarge template="allocateTLHs requested %zu (%zuMB) freeMemory %zu (%zuMB)"
+TraceEvent=Trc_MM_LargeObjectAllocateStats_simulateAllocateTLHs_availableBytes Overhead=1 Level=3 Group=alloclarge template="availableBytes in %s free entries %zu (= count %zu * free entry size %zu)"
+TraceExit=Trc_MM_LargeObjectAllocateStats_simulateAllocateTLHs_exit Overhead=1 Level=3 Group=alloclarge template="allocateTLHs unsatisfied %zu (%zuMB) freeMemory %zu (%zuMB)"
+
+TraceEntry=Trc_MM_LargeObjectAllocateStats_simulateAllocateCommon_freeEntry_entry Overhead=1 Level=3 Group=alloclarge template="allocate%ss from %s free entries sizeClassIndex %zu (size %zu) count %zu"
+TraceEvent=Trc_MM_LargeObjectAllocateStats_simulateAllocateCommon_satisfy Overhead=1 Level=3 Group=alloclarge template="%s satisfy from %s free entry size %zu (index %zu)"
+TraceEvent=Trc_MM_LargeObjectAllocateStats_simulateAllocateCommon_partial Overhead=1 Level=3 Group=alloclarge template="allocBytes %zu <- allocBytes %zu - availableBytes %zu, count <- 0"
+TraceEvent=Trc_MM_LargeObjectAllocateStats_simulateAllocateCommon_full Overhead=1 Level=3 Group=alloclarge template="allocBytes <- 0, count %zu <- count %zu - floor(%f)"
+TraceEvent=Trc_MM_LargeObjectAllocateStats_simulateAllocateCommon_adjustement Overhead=1 Level=3 Group=alloclarge template="one free entry moves to a smaller size class, count %zu <- count %zu - 1"
+TraceEvent=Trc_MM_LargeObjectAllocateStats_simulateAllocateCommon_remainder Overhead=1 Level=3 Group=alloclarge template="remainder %zu * size %zu (free entry size %zu)"
+TraceExit=Trc_MM_LargeObjectAllocateStats_simulateAllocateCommon_freeEntry_exit Overhead=1 Level=3 Group=alloclarge template="allocate%s from %s free entries sizeClassIndex %zu count %zu"
+
+TraceAssert=Assert_MM_mustHaveVMAccess noEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
+TraceEvent=Trc_MM_AssertionWithMessage_outputMessage Overhead=1 Level=1 Group=gclogger Template="GC Assertion message: %s"
+
+TraceEvent=Trc_MM_cleanUpClassLoadersStart_triggerClassLoadersUnload Group=unload Overhead=1 Level=4 Template="cleanUpClassLoadersStart about to trigger VM_CLASSLOADERS_UNLOAD hook for %zu classloaders"
+TraceEvent=Trc_MM_StringTable_stringAddToInternTableFailed  Overhead=1 Level=1 Group=stringtable Template="String %p failed to be added to intern table %p table index %zu"
+
+TraceEntry=Trc_MM_allocateAndConnectNonContiguousArraylet_Summary Overhead=1 Level=2 Group=arraylet Template="MM_ArrayletAllocationModel::allocateAndConnectNonContiguousArraylet. numberIndexedFields=%zu spineBytes=%zu leafCount=%zu"
+
+TraceEntry=Trc_MM_RuntimeExecManager_forkAndExecNativeV8_Entry Overhead=1 Level=1 Group=runtimeexec Template="MM_RuntimeExecManager::forkAndExecNativeV8"
+TraceExit=Trc_MM_RuntimeExecManager_forkAndExecNativeV8_Exit Overhead=1 Level=1 Group=runtimeexec Template="MM_RuntimeExecManager::forkAndExecNativeV8"
+
+TraceEvent=Trc_MM_ParallelScavenger_completeScan_forceBackout  Overhead=1 Level=1 Group=scavenger Template="MM_ParallelScavenger::completeScan Forcing backout at workUnitIndex: %zu lastSyncPointReached: %s"
+TraceEvent=Trc_MM_ParallelTask_handleNextWorkUnit_holdingThread  Overhead=1 Level=1 Group=gclogger Template="MM_ParallelTask::handleNextWorkUnit Sleeping for 10ms at workUnitIndex: %zu lastSyncPointReached: %s"
+TraceEvent=Trc_MM_cleanUpClassLoadersStart_triggerAnonymousClassesUnload Group=unload Overhead=1 Level=4 Template="cleanUpClassLoadersStart about to trigger VM_ANON_CLASSES_UNLOAD hook for %zu anonymous classes"
+
+TraceEvent=Trc_MM_GlobalCollector_isTimeForClassUnloading_anonClasses noEnv Overhead=1 Level=9 Template="MM_GlobalCollector_isTimeForClassUnloading. numAnonymousClasses:%zu lastUnloadNumOfAnonymousClasses:%zu classUnloadingAnonymousClassWeight:%f"
+TraceEvent=Trc_MM_GlobalCollector_isTimeForGlobalGCKickoff_anonClasses noEnv Overhead=1 Level=9 Template="MM_GlobalCollector_isTimeForGlobalGCKickoff. numAnonymousClasses:%zu lastUnloadNumOfAnonymousClasses:%zu classUnloadingAnonymousClassWeight:%f"
+
+TraceAssert=Assert_MM_invalidJNICall_internal noEnv Overhead=1 Level=1 Assert="(false)"
+TraceException=Trc_MM_JNIReleasePrimitiveArrayCritical_invalid Overhead=1 Level=1 group=runtimeexec Template="Invalid JNI call of function void ReleasePrimitiveArrayCritical(JNIEnv *env, jarray array, void *carray, jint mode): For array %p parameter carray passed %p, expected to be %p"
+TraceException=Trc_MM_ObjectAccessBarrier_printNativeMethod Overhead=1 Level=1 group=runtimeexec Template="Native Method %p (%.*s.%.*s%.*s)"
+TraceException=Trc_MM_ObjectAccessBarrier_printNativeMethodUnknown Overhead=1 Level=1 group=runtimeexec Template="Native Method Unknown"
+
+TraceException=Trc_MM_ConcurrentCardTable_activeTLHMarkMapCommitFailed Overhead=1 Level=1 group=runtimeexec Template="ConcurrentCardTable Active TLH Mark Map commit failed: from %p bytes %zu"
+TraceException=Trc_MM_ConcurrentCardTable_activeTLHMarkMapCommitFailureForced Overhead=1 Level=1 group=runtimeexec Template="ConcurrentCardTable Active TLH Mark Map commit failure forced"
+TraceException=Trc_MM_ConcurrentCardTable_activeTLHMarkMapDecommitFailed Overhead=1 Level=1 group=runtimeexec Template="ConcurrentCardTable Active TLH Mark Map decommit failed: from %p bytes %zu, validLow %p, validHigh %p"
+TraceException=Trc_MM_ConcurrentCardTable_activeTLHMarkMapDecommitFailureForced Overhead=1 Level=1 group=runtimeexec Template="ConcurrentCardTable Active TLH Mark Map decommit failure forced"
+
+TraceException=Trc_MM_CardTable_cardTableCommitFailed Overhead=1 Level=1 group=runtimeexec Template="CardTable commit failed: from %p bytes %zu"
+TraceException=Trc_MM_CardTable_cardTableCommitFailureForced Overhead=1 Level=1 group=runtimeexec Template="CardTable commit failure forced"
+TraceException=Trc_MM_CardTable_cardTableDecommitFailed Overhead=1 Level=1 group=runtimeexec Template="CardTable decommit failed: from %p bytes %zu, validLow %p, validHigh %p"
+TraceException=Trc_MM_CardTable_cardTableDecommitFailureForced Overhead=1 Level=1 group=runtimeexec Template="CardTable decommit failure forced"
+
+TraceException=Trc_MM_HeapMap_markMapCommitFailed Overhead=1 Level=1 group=runtimeexec Template="Mark map commit failed: from %p bytes %zu"
+TraceException=Trc_MM_HeapMap_markMapCommitFailureForced Overhead=1 Level=1 group=runtimeexec Template="Mark map commit failureForced"
+TraceException=Trc_MM_HeapMap_markMapDecommitFailed Overhead=1 Level=1 group=runtimeexec Template="Mark map decommit failed: from %p bytes %zu, validLow %p, validHigh %p"
+TraceException=Trc_MM_HeapMap_markMapDecommitFailureForced Overhead=1 Level=1 group=runtimeexec Template="Mark map decommit failureForced"
+
+TraceException=Trc_MM_SweepHeapSectioning_parallelSweepChunkArrayCommitFailed Overhead=1 Level=1 group=runtimeexec Template="Parallel Sweep Chunk Array commit failed: from %p bytes %zu"
+TraceException=Trc_MM_SweepHeapSectioning_parallelSweepChunkArrayCommitFailureForced Overhead=1 Level=1 group=runtimeexec Template="Parallel Sweep Chunk Array commit failure forced"
+TraceException=Trc_MM_ReferenceChainWalkerMarkMap_markMapCommitFailed Overhead=1 Level=1 group=runtimeexec Template="Reference Chain Walker Mark Map commit failed: from %p bytes %zu"
+TraceException=Trc_MM_ReferenceChainWalkerMarkMap_markMapCommitFailureForced Overhead=1 Level=1 group=runtimeexec Template="Reference Chain Walker Mark Map commit failure forced"
+
+TraceAssert=Assert_MM_mustHaveJNICriticalRegion noEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION"
+TraceAssert=Assert_MM_inflateInvalidRange noEnv Overhead=1 Level=1 Assert="(0 /* MM_PhysicalSubArenaVirtualMemorySemiSpace::inflate - bad address range */)"
+
+TraceEvent=Trc_MM_ParallelDispatcher_adjustThreadCount_ReducedCPU noEnv Overhead=1 Level=2 Template="MM_ParallelDispatcher::adjustThreadCount limiting threads to %zu due to reduced CPU availability"

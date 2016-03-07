@@ -1,0 +1,26 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+// (c) Copyright IBM Corp. 1998, 2013
+//
+//  This program and the accompanying materials are made available
+//  under the terms of the Eclipse Public License v1.0 and
+//  Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+// Contributors:
+//    Multiple authors (IBM Corp.) - initial implementation and documentation
+////////////////////////////////////////////////////////////////////////////////
+
+Executable=j9utilcore
+DATFileName=J9TraceFormat.dat
+
+TraceException=Trc_Utilcore_decodeUTF8CharN_EmbdeddedNul Noenv Overhead=1 Level=1 Template="decodeUTF8CharN - embedded NUL character found"
+TraceException=Trc_Utilcore_decodeUTF8CharN_Truncated Noenv Overhead=1 Level=1 Template="decodeUTF8CharN - not enough data left"
+TraceException=Trc_Utilcore_decodeUTF8CharN_Invalid2ByteEncoding Noenv Overhead=1 Level=1 Template="decodeUTF8CharN - invalid 2 byte encoding (0x%x)"
+TraceException=Trc_Utilcore_decodeUTF8CharN_Invalid3ByteEncoding Noenv Overhead=1 Level=1 Template="decodeUTF8CharN - invalid 3 byte encoding (0x%x)"
+TraceException=Trc_Utilcore_decodeUTF8CharN_EncodingTooLarge Noenv Overhead=1 Level=1 Template="decodeUTF8CharN - invalid encoding (0x%x)"

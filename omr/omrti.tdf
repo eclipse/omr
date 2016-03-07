@@ -1,0 +1,37 @@
+// (c) Copyright IBM Corp. 2014
+//
+//  This program and the accompanying materials are made available
+//  under the terms of the Eclipse Public License v1.0 and
+//  Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+// Contributors:
+//    Multiple authors (IBM Corp.) - initial implementation and documentation
+
+Executable=omrti
+DATFileName=OMRTraceFormat.dat
+
+TraceEntry=Trc_OMRTI_omrtiGetMemoryCategories_Entry Overhead=1 Level=1 Template="GetMemoryCategories max_categories=%d categories_buffer=%p written_count_ptr=%p total_categories_ptr=%p"
+TraceExit-Exception=Trc_OMRTI_omrtiGetMemoryCategories_WrongVersion_Exit Overhead=1 Level=1 Template="GetMemoryCategories failing with OMRTI_ERROR_UNSUPPORTED_VERSION: unmatched version %d"
+TraceExit-Exception=Trc_OMRTI_omrtiGetMemoryCategories_AllOutputsNull_Exit Overhead=1 Level=1 Template="GetMemoryCategories failing with OMRTI_ERROR_ILLEGAL_ARGUMENT: categories_buffer, written_count_ptr and total_categories_ptr are all NULL."
+TraceExit-Exception=Trc_OMRTI_omrtiGetMemoryCategories_NullOutput_Exit Overhead=1 Level=1 Template="GetMemoryCategories failing with OMRTI_ERROR_ILLEGAL_ARGUMENT: no categories_buffer pointer specified. max_categories=%d"
+TraceExit-Exception=Trc_OMRTI_omrtiGetMemoryCategories_NullWrittenPtr_Exit Overhead=1 Level=1 Template="GetMemoryCategories failing with OMRTI_ERROR_ILLEGAL_ARGUMENT, categories_buffer & max_categories are set, but written_count_ptr is NULL. max_categories=%d, categories_buffer=%p"
+TraceExit-Exception=Trc_OMRTI_omrtiGetMemoryCategories_J9MemAllocFail_Exit Overhead=1 Level=1 Template="GetMemoryCategories failing with OMR_ERROR_INTERNAL, unable to allocate %d bytes for internal categories buffer"
+TraceException=Trc_OMRTI_omrtiGetMemoryCategories_BufferOverflow Overhead=1 Level=1 Template="GetMemoryCategories categories_buffer overflowed (output will be truncated, return code will be OMRTI_ERROR_OUT_OF_MEMORY)"
+TraceExit=Trc_OMRTI_omrtiGetMemoryCategories_Exit Overhead=1 Level=1 Template="GetMemoryCategories returning %d"
+
+// Parameter is (void *) which corresponds to the method dictionary entry's key
+TraceEvent=Trc_OMRPROF_MethodSampleStart      Group=perfmon Overhead=1 Level=5 Test Template="MTH_S: %p"
+TraceEvent=Trc_OMRPROF_MethodSampleContinue   Group=perfmon Overhead=1 Level=5 Test Template="MTH_C: %p"
+
+// Parameters are (key, free-form text field)
+TraceEvent=Trc_OMRPROF_insertMethodDictionary_success NoEnv Test Overhead=1 Level=3 Template="insertMethodDictionary: %p %s"
+TraceEvent=Trc_OMRPROF_insertMethodDictionary_replaceExistingEntry NoEnv Test Overhead=1 Level=3 Template="insertMethodDictionary: replace existing entry %p %s"
+TraceException=Trc_OMRPROF_insertMethodDictionary_failed NoEnv Test Overhead=1 Level=3 Template="insertMethodDictionary: failed(rc=%d) %p %s"
+
+TraceEvent=Trc_OMRPROF_methodDictionaryHighWaterMark NoEnv Test Overhead=1 Level=3 Template="methodDictionary highWaterMark=%u bytes (%u entries of %u bytes each, plus %u name bytes)"

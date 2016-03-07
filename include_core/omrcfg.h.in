@@ -1,0 +1,200 @@
+/*******************************************************************************
+ *
+ * (c) Copyright IBM Corp. 2015, 2016
+ *
+ *  This program and the accompanying materials are made available
+ *  under the terms of the Eclipse Public License v1.0 and
+ *  Apache License v2.0 which accompanies this distribution.
+ *
+ *      The Eclipse Public License is available at
+ *      http://www.eclipse.org/legal/epl-v10.html
+ *
+ *      The Apache License v2.0 is available at
+ *      http://www.opensource.org/licenses/apache2.0.php
+ *
+ * Contributors:
+ *    Multiple authors (IBM Corp.) - initial implementation and documentation
+ *******************************************************************************/
+
+/*
+ * @configure_input@
+ */
+
+#ifndef OMRCFG_H
+#define OMRCFG_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+@OMR_GC@
+@OMR_PORT@
+@OMR_THREAD@
+@OMR_OMRSIG@
+@OMR_EXAMPLE@
+
+@OMR_GC_ALLOCATION_TAX@
+@OMR_GC_OBJECT_ALLOCATION_NOTIFY@
+@OMR_GC_BATCH_CLEAR_TLH@
+@OMR_GC_COMBINATION_SPEC@
+@OMR_GC_CONCURRENT_SWEEP@
+@OMR_GC_DEBUG_ASSERTS@
+@OMR_GC_DYNAMIC_CLASS_UNLOADING@
+@OMR_GC_HEAP_CARD_TABLE@
+@OMR_GC_LARGE_OBJECT_AREA@
+@OMR_GC_MINIMUM_OBJECT_SIZE@
+@OMR_GC_MODRON_COMPACTION@
+@OMR_GC_MODRON_CONCURRENT_MARK@
+@OMR_GC_MODRON_SCAVENGER@
+@OMR_GC_MODRON_STANDARD@
+@OMR_GC_NON_ZERO_TLH@
+@OMR_GC_SEGREGATED_HEAP@
+@OMR_GC_THREAD_LOCAL_HEAP@
+
+/**
+ * Tells if a platform has support for Semaphores.
+ * ifRemoved: platform cannot use semaphore operations.
+ */
+@OMR_INTERP_HAS_SEMAPHORES@
+
+/**
+ * Use TDF based trace engine
+ * ifRemoved: No tracepoints
+ */
+@OMR_RAS_TDF_TRACE@
+
+/**
+ * Support options to adapt spinning as controlled by options provided to the vm.
+ * Requires flag: OMR_THR_JLM_HOLD_TIMES
+ * ifRemoved: No adaptive spinning supported
+ */
+@OMR_THR_ADAPTIVE_SPIN@
+
+/**
+ * Enable support for lock monitor to profile locking behaviour - counts only
+ * ifRemoved: Lock monitor cannot be enabled
+ */
+@OMR_THR_JLM@
+
+/**
+ * Enable support for lock monitor to profile locking behaviour - counts + timings only
+ * ifRemoved: Lock monitor cannot be enabled
+ */
+@OMR_THR_JLM_HOLD_TIMES@
+
+/**
+ * object header does not contain the monitor word
+ * ifRemoved: object header will contain the monitor word
+ */
+@OMR_THR_LOCK_NURSERY@
+
+/**
+ * Output lots of thread statistics (Pentium only)
+ * ifRemoved: Turn off in production VMs
+ */
+@OMR_THR_TRACING@
+
+@OMRTHREAD_LIB_AIX@
+@OMRTHREAD_LIB_UNIX@
+@OMRTHREAD_LIB_WIN32@
+@OMRTHREAD_LIB_ZOS@
+
+/**
+ * This spec targets ARM processors.
+ */
+@OMR_ARCH_ARM@
+
+/**
+ * This spec targets PPC processors.
+ */
+@OMR_ARCH_POWER@
+
+@OMR_ENV_DATA64@
+@OMR_ENV_GCC@
+@OMR_ENV_LITTLE_ENDIAN@
+@OMR_GC_ARRAYLETS@
+@OMR_GC_COMPRESSED_POINTERS@
+@OMR_GC_HYBRID_ARRAYLETS@
+@OMR_GC_OBJECT_MAP@
+@OMR_GC_REALTIME@
+@OMR_GC_STACCATO@
+@OMR_GC_TLH_PREFETCH_FTA@
+@OMR_GC_VLHGC@
+
+/**
+ * Flag to indicate that on 64-bit platforms, the monitor slot and class slot in object headers are U32 rather than UDATA.
+ */
+@OMR_INTERP_COMPRESSED_OBJECT_HEADER@
+
+/**
+ * Flag to indicate that on 64-bit platforms, the monitor slot in object headers is a U32 rather than a UDATA.
+ * ifRemoved: The monitor slot is a UDATA.
+ */
+@OMR_INTERP_SMALL_MONITOR_SLOT@
+
+/**
+ * Add support for CUDA
+ */
+@OMR_OPT_CUDA@
+
+/**
+ * Enabling this flag implies the platform's vmem implementation is able to allocate memory top down.
+ * ifRemoved: Implies the platform's vmem implementation is not able to allocate memory top down
+ */
+@OMR_PORT_ALLOCATE_TOP_DOWN@
+
+/**
+ * Enables async signal handler thread in the port library.
+ * ifRemoved: Async signal handler thread is disabled.
+ */
+@OMR_PORT_ASYNC_HANDLER@
+
+/**
+ * The platform is able to attempt to reserve virtual memory via a call to omrvmem_reserve_memory at the address specified by the user.
+ * ifRemoved: The platform is not able to reserve virtual memory at a specific address
+ */
+@OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS@
+
+/**
+ * This platform is able to associate memory with a specific node, as is relevant when the system has a Non Uniform Memory Access configuration.
+ * ifRemoved: This platform is not able to associate memory with a specific node.
+ */
+@OMR_PORT_NUMA_SUPPORT@
+
+/**
+ * If set, omrsig_protect will include support for registering a handler using CEEHDLR.
+ * Pass OMRPORT_SIG_OPTIONS_ZOS_USE_CEEHDLR into omrsig_set_options() before the first call
+ * to omrsig_protect() to turn on the use of CEEHDLR at runtime.
+ * ifRemoved: omrsig_protect will not include support for CEEHDLR.
+ */
+@OMR_PORT_ZOS_CEEHDLRSUPPORT@
+
+/**
+ * Enable the j9thread library to be used after a fork().
+ * ifRemoved: The j9thread library may be corrupt and unusable after a fork().
+ */
+@OMR_THR_FORK_SUPPORT@
+
+/**
+ * Attempt to enter raw monitors using user-space spinlocks before reverting to an OS synchronization object
+ * ifRemoved: All raw monitor enters will proceed directly to an OS synchronization object
+ */
+@OMR_THR_THREE_TIER_LOCKING@
+
+/**
+ * Enable support for custom spin options.
+ * Requires flag: OMR_THR_THREE_TIER_LOCKING.
+ * ifRemoved: Custom spin options cannot be used.
+ */
+@OMR_THR_CUSTOM_SPIN_OPTIONS@
+
+/**
+ * This enables the option to select different algorithms for yielding.
+ */
+@OMR_THR_YIELD_ALG@
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* OMRCFG_H */
