@@ -1,0 +1,13 @@
+language: c
+sudo: false
+
+addons:
+  apt:
+    sources:
+       - ubuntu-toolchain-r-test
+    packages:
+       - libnuma-dev
+
+script: make -f run_configure.mk SPEC=linux_x86-64 OMRGLUE=./example/glue && make && make test
+
+
