@@ -1,6 +1,6 @@
-# Welcome to the OMR Project!
+# Welcome to the Eclipse OMR Project!
 
-The OMR project consists of a highly integrated set of open source C and C++ 
+The Eclipse OMR project consists of a highly integrated set of open source C and C++ 
 components that can be used to build robust language runtimes that will support 
 many different hardware and operating system platforms. These components include
 but are not limited to: memory management, threading, platform port (abstraction)
@@ -16,12 +16,12 @@ language implementers can much more quickly and easily create more fully
 featured languages to enrich the options available to programmers.
 
 
-All OMR project materials are made available under the Eclipse Public License V1.0
+All Eclipse OMR project materials are made available under the Eclipse Public License V1.0
 and the Apache 2.0 license. You can choose which license you wish to follow.
 Please see our LICENSE file for more details.
 
 
-The initial set of components in the OMR project include:
+The initial set of components in the Eclipse OMR project include:
 * port: platform porting library
 * thread: a cross platform pthread-like threading library
 * util: general utilities useful for building cross platform runtimes
