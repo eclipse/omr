@@ -46,6 +46,10 @@ omr_gctest:
 	
 omr_porttest:
 	./omrporttest
+ifneq (,$(findstring cuda,$(SPEC)))
+	./omrporttest --gtest_filter="Cuda*" -earlyExit
+endif
+	@echo ALL $@ PASSED
 
 omr_rastest:
 	./omrrastest
