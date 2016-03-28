@@ -49,7 +49,7 @@ Exceptions have been and will continue to be made in extreme circumstances, such
 
 ### ISO/ANSI rules
 
-* All code is written to ISO/ANSI rules for C99 ISO C compilers.
+* All C code is written to rules for C99 compilers.
 * There is no need to cater for pre-ANSI (K&R) compilers. Nor can we rely on the presence of C++11 features.
 * It is not necessary to cater for the ANSI unique first 6-characters naming rule.
 * Functions that take no arguments are declared and defined using ```void``` in the parameter list.
@@ -653,7 +653,7 @@ Correct
 
 ### const pointers
 
-* In function arguments, temporary variables, and class data members, mark pointers as ```const``` if the data will only be read.
+* In function arguments, temporary variables, and class data members, pointers to data that will only be read should be defined as pointers to ```const``` values.
 * Mark scalar temporary variables ```const``` if they will only be read.
 
 Correct
@@ -670,7 +670,7 @@ doSomething(const SomeOptions *options)
 #### Rationale
 * ```const``` establishes an official contract between the caller and the callee. The compiler can validate that this contract is followed.
 * Marking temporary variables ```const``` helps improve readability by explicitly distinguishing true variables from fixed values.
-* Marking pointers as ```const``` may allow greater optimization.
+* Use of ```const``` may allow greater optimization.
 
 ### Variable declarations
 
