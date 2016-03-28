@@ -128,7 +128,7 @@ get_conv_txt_num_bytes(struct OMRPortLibrary *portLibrary, const char *message)
 
 	const int32_t convRes =
 		portLibrary->str_convert(portLibrary, J9STR_CODE_MUTF8,
-								 J9STR_CODE_PLATFORM, message, strlen(message),
+								 J9STR_CODE_PLATFORM_RAW, message, strlen(message),
 								 NULL, 0U);
 
 	if (0 < convRes) {
@@ -171,7 +171,7 @@ syslog_write(struct OMRPortLibrary *portLibrary, const char *buf, int priority)
 			 */
 			const int32_t convRes =
 				portLibrary->str_convert(portLibrary,
-										 J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM,
+										 J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM_RAW,
 										 buf, strlen(buf), lclMsg, lclMsgLen);
 
 			lclConvSuccess = (BOOLEAN)(convRes >= 0);
