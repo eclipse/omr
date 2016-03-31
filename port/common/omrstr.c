@@ -209,7 +209,10 @@ omrstr_printf(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufLen, c
  * @param[in] fromCode      Input string encoding.  Only the following encodings are allowed:
  *                              J9STR_CODE_MUTF8 (Modified UTF-8)
  *                              J9STR_CODE_WIDE (UTF-16)
- *                              J9STR_CODE_PLATFORM (encoding used by the operating system)
+ *                              J9STR_CODE_LATIN1
+ *                              J9STR_CODE_PLATFORM_RAW (encoding used by the operating system)
+ *                              J9STR_CODE_PLATFORM_OMR_INTERNAL (encoding used by certain operating system calls)
+ *                              J9STR_CODE_WINTHREADACP, J9STR_CODE_WINDEFAULTACP (thread and default ANSI code page, Windows only)
  * @param[in] toCode        Output string encoding.  Only the encodings listed above are allowed.
  * @param[in] inBuffer      Input text to be converted.  May contain embedded null characters.
  * @param[in] inBufferSize  input string size in bytes, not including the terminating null.
@@ -227,11 +230,15 @@ omrstr_printf(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufLen, c
  *  	- OMRPORT_ERROR_STRING_UNSUPPORTED_ENCODING if the input or output encoding is not supported
  *  	- OMRPORT_ERROR_STRING_MEM_ALLOCATE_FAILED if the port library could not allocate a working buffer
  *  	The following translations are supported:
- *  	platform to [wide, modified UTF-8]
- *  	modified UTF-8 to [platform, wide]
- *  	wide to [modified UTF-8, platform]
+ *  	ANSI code page to modified UTF-8 (Windows only)
+ *  	platform raw to [wide, modified UTF-8]
+ *  	modified UTF-8 to [platform raw, wide]
+ *  	[Latin-1, UTF-8] to modified UTF-8
+ *  	wide to [modified UTF-8, platform raw]
  *  	[ISO Latin-1 (8859-1), UTF-8, Windows ANSI default and current code pages] to modified UTF-8
- *
+ * @note J9STR_CODE_PLATFORM_OMR_INTERNAL is an alias for other encodings depending on the platform.
+ * @note J9STR_CODE_PLATFORM is deprecated. Use J9STR_CODE_PLATFORM_OMR_INTERNAL for results of system calls such as getenv (see stdlib.h) and
+ * @note J9STR_CODE_PLATFORM_RAW where the port library does not do implicit translation.
  */
 #ifndef OS_ENCODING_CODE_PAGE
 /* placeholder on non-Windows systems */
@@ -244,7 +251,7 @@ omrstr_convert(struct OMRPortLibrary *portLibrary, int32_t fromCode, int32_t toC
 	int32_t result = OMRPORT_ERROR_STRING_UNSUPPORTED_ENCODING;
 
 	switch (fromCode) {
-	case J9STR_CODE_PLATFORM: {
+	case J9STR_CODE_PLATFORM_RAW: {
 		switch (toCode) {
 		case J9STR_CODE_MUTF8:
 			result = convertPlatformToMutf8(portLibrary, OS_ENCODING_CODE_PAGE, inBuffer, inBufferSize, outBuffer, outBufferSize);
@@ -274,7 +281,7 @@ omrstr_convert(struct OMRPortLibrary *portLibrary, int32_t fromCode, int32_t toC
 #endif
 	case J9STR_CODE_MUTF8: {
 		switch (toCode) {
-		case J9STR_CODE_PLATFORM:
+		case J9STR_CODE_PLATFORM_RAW:
 			result = convertMutf8ToPlatform(portLibrary, inBuffer, inBufferSize, outBuffer, outBufferSize);
 			break;
 		case J9STR_CODE_WIDE: {
@@ -319,7 +326,7 @@ omrstr_convert(struct OMRPortLibrary *portLibrary, int32_t fromCode, int32_t toC
 	break;
 	case J9STR_CODE_WIDE: {
 		switch (toCode) {
-		case J9STR_CODE_PLATFORM:
+		case J9STR_CODE_PLATFORM_RAW:
 			result = OMRPORT_ERROR_STRING_UNSUPPORTED_ENCODING;
 			break;
 		case J9STR_CODE_MUTF8: {

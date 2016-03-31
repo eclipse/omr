@@ -777,7 +777,7 @@ typedef struct J9ProcessorInfos {
 
 /* omrstr_convert encodings. */
 /* character set currently in effect */
-#define J9STR_CODE_PLATFORM 1
+#define J9STR_CODE_PLATFORM_RAW 1
 /* modified UTF-8 */
 #define J9STR_CODE_MUTF8 2
 /* UTF-16 */
@@ -792,6 +792,22 @@ typedef struct J9ProcessorInfos {
 #define J9STR_CODE_WINDEFAULTACP 7
 /* Windows current thread ANSI code page */
 #define J9STR_CODE_WINTHREADACP 8
+
+#if defined(J9ZOS390)
+/*
+ * OMR on z/OS translates the output of certain system calls such as getenv to ASCII using functions in atoe.c; see stdlib.h for a list.
+ * Use J9STR_CODE_PLATFORM_OMR_INTERNAL to when processing the output of these calls.  Otherwise, use J9STR_CODE_PLATFORM_RAW.
+ */
+#define J9STR_CODE_PLATFORM_OMR_INTERNAL J9STR_CODE_LATIN1
+#elif defined(WIN32)
+/*
+ * Most system calls on Windows use the "wide" versions which return UTF-16, which OMR then converts to UTF-8.
+ */
+#define J9STR_CODE_PLATFORM_OMR_INTERNAL J9STR_CODE_UTF8
+#else /* defined(WIN32) */
+/* on other platforms the internal encoding is the actual operating system encoding */
+#define J9STR_CODE_PLATFORM_OMR_INTERNAL J9STR_CODE_PLATFORM_RAW
+#endif /* defined(J9ZOS390) */
 
 #define UNICODE_REPLACEMENT_CHARACTER 0xFFFD
 #define MAX_STRING_TERMINATOR_LENGTH 4

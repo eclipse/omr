@@ -361,7 +361,7 @@ translateModifiedUtf8ToPlatform(OMRPortLibrary *portLibrary, const char *inBuffe
 	int32_t resultLength = 0;
 
 	*outBuffer = NULL;
-	bufferLength = 	omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM,
+	bufferLength = 	omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM_RAW,
 								   inBuffer, inBufferSize, NULL, 0);
 	/* get the size of the platform string */
 
@@ -376,7 +376,7 @@ translateModifiedUtf8ToPlatform(OMRPortLibrary *portLibrary, const char *inBuffe
 		return OMRPORT_ERROR_STRING_MEM_ALLOCATE_FAILED;
 	}
 
-	resultLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM,
+	resultLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM_RAW,
 								  inBuffer, inBufferSize, result, bufferLength);
 	/* do the conversion */
 

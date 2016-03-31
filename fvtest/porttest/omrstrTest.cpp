@@ -878,7 +878,7 @@ TEST(PortStrTest, str_convPlatTo8)
 
 	reportTestEntry(OMRPORTLIB, testName);
 	memset(outBuff, 0, sizeof(outBuff));
-	convertedStringLength = omrstr_convert(J9STR_CODE_PLATFORM, J9STR_CODE_MUTF8,
+	convertedStringLength = omrstr_convert(J9STR_CODE_PLATFORM_RAW, J9STR_CODE_MUTF8,
 										   platformString, originalStringLength,  outBuff, sizeof(outBuff));
 	if (convertedStringLength != expectedStringLength) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "buffer length wrong.  Expected %d actual %d\n", expectedStringLength, convertedStringLength);
@@ -887,7 +887,7 @@ TEST(PortStrTest, str_convPlatTo8)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Converted string wrong.");
 	}
 	/* test string length */
-	convertedStringLength = omrstr_convert(J9STR_CODE_PLATFORM, J9STR_CODE_MUTF8,
+	convertedStringLength = omrstr_convert(J9STR_CODE_PLATFORM_RAW, J9STR_CODE_MUTF8,
 										   platformString, originalStringLength, NULL, 0);
 	if (convertedStringLength != expectedStringLength) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "buffer length wrong.  Expected %d actual %d\n", expectedStringLength, convertedStringLength);
@@ -915,27 +915,27 @@ TEST(PortStrTest, str_convLongString)
 		longPlatformString[i] = (i % 127) + 1; /* stick to ASCII */
 	}
 	/* test string length */
-	mutf8StringLength = omrstr_convert(J9STR_CODE_PLATFORM, J9STR_CODE_MUTF8,
+	mutf8StringLength = omrstr_convert(J9STR_CODE_PLATFORM_RAW, J9STR_CODE_MUTF8,
 									   longPlatformString, originalStringLength,  NULL, 0);
 	if (mutf8StringLength < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Length calculation for modified UTF8 failed, error code %d\n", mutf8StringLength);
 	}
 	/* do the actual conversion */
-	mutf8StringLength = omrstr_convert(J9STR_CODE_PLATFORM, J9STR_CODE_MUTF8,
+	mutf8StringLength = omrstr_convert(J9STR_CODE_PLATFORM_RAW, J9STR_CODE_MUTF8,
 									   longPlatformString, originalStringLength,  mutf8Buff, sizeof(mutf8Buff));
 	if (mutf8StringLength < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Conversion to modified UTF8 failed, error code %d\n", mutf8StringLength);
 	}
 
 	/* test string length in the other direction */
-	returnStringLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM,
+	returnStringLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM_RAW,
 										mutf8Buff, mutf8StringLength, NULL, 0);
 	if (returnStringLength < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Length calculation for platform failed, error code %d\n", mutf8StringLength);
 	}
 
 	/* convert back and verify that it matches the original */
-	returnStringLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM,
+	returnStringLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM_RAW,
 										mutf8Buff, mutf8StringLength, returnBuff, sizeof(returnBuff));
 	if (returnStringLength < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Conversion to platform failed, error code %d\n", mutf8StringLength);
@@ -963,7 +963,7 @@ TEST(PortStrTest, str_convU8ToPlat)
 
 	reportTestEntry(OMRPORTLIB, testName);
 	memset(outBuff, 0, sizeof(outBuff));
-	convertedStringLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM,
+	convertedStringLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM_RAW,
 										   utf8String, originalStringLength,  outBuff, sizeof(outBuff));
 	if (convertedStringLength != expectedStringLength) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "buffer length wrong.  Expected %d actual %d\n", originalStringLength, convertedStringLength);
@@ -972,7 +972,7 @@ TEST(PortStrTest, str_convU8ToPlat)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Converted string wrong.");
 	}
 	/* test string length */
-	convertedStringLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM,
+	convertedStringLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM_RAW,
 										   utf8String, originalStringLength, NULL, 0);
 	if (convertedStringLength != expectedStringLength) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "buffer length wrong.  Expected %d actual %d\n", originalStringLength, convertedStringLength);
@@ -1115,7 +1115,7 @@ TEST(PortStrTest, str_convU8ToPlat_Null)
 
 	(void)memset(outBuff, '^', sizeof(outBuff)); /* initialize to non-zero */
 	convertedStringLength =
-		omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM,
+		omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM_RAW,
 					   inputString, inputStringLength,  outBuff, sizeof(outBuff));
 
 	convertedStringTerminator = (uint32_t *)(outBuff + convertedStringLength);
