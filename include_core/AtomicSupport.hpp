@@ -181,7 +181,9 @@ public:
 		asm volatile("lock orl $0x0,(%%esp)" ::: "memory");
 #elif defined(J9HAMMER)
 		asm volatile("lock orq $0x0,(%%rsp)" ::: "memory");
-#elif defined(S390) /* defined(J9HAMMER) */
+#elif defined(ARM) /* defined(J9HAMMER) */
+		__sync_synchronize();
+#elif defined(S390) /* defined(ARM) */
 		asm volatile("bcr 15,0":::"memory");
 #else /* defined(S390) */
 		asm volatile("":::"memory");
@@ -215,7 +217,9 @@ public:
 		/* TODO investigate whether or not we should call this
 		asm volatile("sfence" ::: "memory");
 		*/
-#else /* defined(J9X86) || defined(J9HAMMER) */
+#elif defined(ARM) /* defined(J9X86) || defined(J9HAMMER) */
+		__sync_synchronize();
+#else /* defined(ARM) */
 		asm volatile("":::"memory");
 #endif /* defined(J9X86) || defined(J9HAMMER) */
 #elif defined(J9ZOS390)
@@ -250,7 +254,9 @@ public:
 		/* TODO investigate whether or not we should call this instead
 		asm volatile("lfence":::"memory");
 		*/
-#else /* defined(J9X86) || defined(J9HAMMER) */
+#elif defined(ARM) /* defined(J9HAMMER) */
+		__sync_synchronize();
+#else /* defined(ARM) */
 		asm volatile("":::"memory");
 #endif /* defined(J9X86) || defined(J9HAMMER) */
 #elif defined(J9ZOS390)

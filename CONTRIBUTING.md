@@ -28,12 +28,48 @@ Your contribution cannot be accepted unless you have an [Eclipse Foundation Cont
 
 Here is the checklist for contributions to be _acceptable_:
 
-1. [create an account at Eclipse](https://dev.eclipse.org/site_login/createaccount.php), and
-2. add your GitHub user name in your account settings, and
-3. [log into the projects portal](https://projects.eclipse.org/) and sign the ["Eclipse CLA"](https://projects.eclipse.org/user/sign/cla), and
-4. ensure that you [_sign-off_](https://wiki.eclipse.org/Development_Resources/Contributing_via_Git#Signing_off_on_a_commit) your Git commits, and
-5. ensure that you use the _same_ email address as your Eclipse account in commits.
+1. [Create an account at Eclipse](https://dev.eclipse.org/site_login/createaccount.php).
+2. Add your GitHub user name in your account settings.
+3. [Log into the project's portal](https://projects.eclipse.org/) and sign the ["Eclipse CLA"](https://projects.eclipse.org/user/sign/cla).
+4. Ensure that you [_sign-off_](https://wiki.eclipse.org/Development_Resources/Contributing_via_Git#Signing_off_on_a_commit) your Git commits.
+5. Ensure that you use the _same_ email address as your Eclipse account in commits.
+6. Include the appropriate copyright notice and license at the top of each file.
 
+### Copyright Notice and Licensing Requirements
+
+**It is the responsibility of each contributor to obtain legal advice, and
+to ensure that their contributions fulfill the legal requirements of their
+organization. This document is not legal advice.**
+
+OMR is dual-licensed under the Eclipse Public License v1.0 and the Apache
+License v2.0. Any previously unlicensed contribution should be released under
+the same license.
+
+* If you wish to contribute code under a different license, you must consult
+with a committer before contributing.
+* For any scenario not covered by this document, please discuss the copyright
+notice and licensing requirements with a committer before contributing.
+
+The template for the copyright notice and dual-license is as follows:
+```c
+/*******************************************************************************
+ *
+ * <Insert appropriate copyright notice here>
+ *
+ *  This program and the accompanying materials are made available
+ *  under the terms of the Eclipse Public License v1.0 and
+ *  Apache License v2.0 which accompanies this distribution.
+ *
+ *      The Eclipse Public License is available at
+ *      http://www.eclipse.org/legal/epl-v10.html
+ *
+ *      The Apache License v2.0 is available at
+ *      http://www.opensource.org/licenses/apache2.0.php
+ *
+ * Contributors:
+ *    <First author> - initial implementation and documentation
+ *******************************************************************************/
+```
 
 ## Technical considerations
 

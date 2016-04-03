@@ -46,7 +46,7 @@
 #include "omrstdarg.h"
 
 #define J9STR_BUFFER_SIZE 128 /**< @internal A buffer size to play with */
-#define J9STR_PRIVATE_RETURN_VALUE ((uint32_t) 0xBADC0DE) /**< @internal A known return for @ref fake_omrstr_printf */
+#define J9STR_PRIVATE_RETURN_VALUE ((uint32_t)0xBADC0DE) /**< @internal A known return for @ref fake_omrstr_printf */
 
 #if 0
 /* some useful numbers */
@@ -173,6 +173,8 @@ test_omrstr_vprintf(struct OMRPortLibrary *portLibrary, const char *testName, co
 	char truncatedExpectedResult[512];
 	char actualResult[512];
 	va_list args;
+
+	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 
 	/* Buffer larger than required */
 	va_start(args, expectedResult);
@@ -580,10 +582,10 @@ TEST(PortStrTest, str_test4)
 
 	omrtty_printf("\t This test will fail if you abut the international dateline\n");
 	tokens = omrstr_create_tokens(timeMillis);
-	omrstr_set_token(OMRPORTLIB, tokens, "longtkn", "Long Token Value");
-	omrstr_set_token(OMRPORTLIB, tokens, "yyy", "nope nope nope");
-	omrstr_set_token(OMRPORTLIB, tokens, "yyy", "yup yup yup");
-	omrstr_set_token(OMRPORTLIB, tokens, "empty", "");
+	omrstr_set_token(tokens, "longtkn", "Long Token Value");
+	omrstr_set_token(tokens, "yyy", "nope nope nope");
+	omrstr_set_token(tokens, "yyy", "yup yup yup");
+	omrstr_set_token(tokens, "empty", "");
 	if (NULL == tokens) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Failed to create tokens\n");
 	} else {
@@ -653,7 +655,7 @@ TEST(PortStrTest, str_test4)
 		{
 
 			char expected[J9STR_BUFFER_SIZE];
-			char *default_tokens[] = { " %pid", " %home", " %last", " %seq"
+			const char *default_tokens[] = { " %pid", " %home", " %last", " %seq"
 									   , " %uid"
 #if defined(J9ZOS390)
 									   , "%job"
@@ -662,7 +664,7 @@ TEST(PortStrTest, str_test4)
 
 			uintptr_t i = 0;
 			uintptr_t rc;
-			char *timePortionOfFormatString = "%y,(%Y) %m,(%b) %d XX:%M:%S %";
+			const char *timePortionOfFormatString = "%y,(%Y) %m,(%b) %d XX:%M:%S %";
 			char *fullFormatString = NULL;
 			uintptr_t sizeOfFullFormatString = 0;
 
@@ -678,7 +680,7 @@ TEST(PortStrTest, str_test4)
 			sizeOfFullFormatString = sizeOfFullFormatString + 1 /* null terminator */;
 
 			/* ok, now build the format string */
-			fullFormatString = omrmem_allocate_memory(sizeOfFullFormatString, OMRMEM_CATEGORY_PORT_LIBRARY);
+			fullFormatString = (char *)omrmem_allocate_memory(sizeOfFullFormatString, OMRMEM_CATEGORY_PORT_LIBRARY);
 			strncpy(fullFormatString, timePortionOfFormatString, sizeOfFullFormatString);
 			for (i = 0 ; i < (sizeof(default_tokens) / sizeof(char *)) ; i++) {
 				strncat(fullFormatString, default_tokens[i], sizeOfFullFormatString - strlen(fullFormatString));
@@ -816,7 +818,7 @@ static const U_16 utf16Data[] = {
 	0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78,
 	0x79, 0x7a
 };
-static const char *utf16String = (const char *) utf16Data;
+static const char *utf16String = (const char *)utf16Data;
 static const uint32_t utf16StringLength = sizeof(utf16Data);
 #if defined(J9ZOS390)
 #pragma convlit(suspend)
@@ -853,7 +855,7 @@ compareBytes(const char *expected, const char *actual, uint32_t length)
 	for (index = 0; index < length; ++index) {
 		if (actual[index] != expected[index]) {
 			fprintf(stderr, "Error at position %d \nexpected %0x actual %0x\n", index,
-					(unsigned char) expected[index], (unsigned char) actual[index]);
+					(unsigned char)expected[index], (unsigned char)actual[index]);
 			dumpStringBytes("Expected", expected, length);
 			dumpStringBytes("Actual", actual, length);
 			return FALSE;
@@ -1017,7 +1019,6 @@ TEST(PortStrTest, str_convWideToU8)
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 	const char *testName = "omrstr_convWideToU8";
 	char outBuff[TEST_BUF_LEN];
-	int32_t originalStringLength = utf16StringLength;
 	int32_t expectedStringLength = utf8StringLength;
 	int32_t convertedStringLength = 0;
 
@@ -1052,7 +1053,7 @@ TEST(PortStrTest, str_convWideToU8_Null)
 
 	reportTestEntry(OMRPORTLIB, testName);
 
-	(void) memset(outBuff, '^', sizeof(outBuff)); /* initialize to non-zero */
+	(void)memset(outBuff, '^', sizeof(outBuff)); /* initialize to non-zero */
 	convertedStringLength =
 		omrstr_convert(J9STR_CODE_WIDE, J9STR_CODE_MUTF8,
 					   utf16String, utf16StringLength,  outBuff, sizeof(outBuff));
@@ -1081,7 +1082,7 @@ TEST(PortStrTest, str_convU8ToWide_Null)
 
 	reportTestEntry(OMRPORTLIB, testName);
 
-	(void) memset(outBuff, '^', sizeof(outBuff)); /* initialize to non-zero */
+	(void)memset(outBuff, '^', sizeof(outBuff)); /* initialize to non-zero */
 
 	convertedStringLength =
 		omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_WIDE,
@@ -1098,7 +1099,7 @@ TEST(PortStrTest, str_convU8ToWide_Null)
 }
 
 /**
- * Verify string MUTF8->wide conversion null-terminates the sequence if there is sufficient space.
+ * Verify string MUTF8->Plat conversion null-terminates the sequence if there is sufficient space.
  */
 TEST(PortStrTest, str_convU8ToPlat_Null)
 {
@@ -1112,7 +1113,7 @@ TEST(PortStrTest, str_convU8ToPlat_Null)
 
 	reportTestEntry(OMRPORTLIB, testName);
 
-	(void) memset(outBuff, '^', sizeof(outBuff)); /* initialize to non-zero */
+	(void)memset(outBuff, '^', sizeof(outBuff)); /* initialize to non-zero */
 	convertedStringLength =
 		omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM,
 					   inputString, inputStringLength,  outBuff, sizeof(outBuff));
@@ -1130,13 +1131,10 @@ TEST(PortStrTest, str_convU8ToPlat_Null)
 /**
  * Verify string wide->MUTF8 conversion, source string has no byte order mark.
  */
-TEST(PortStrTest, str_convWideToU8Bom)
+TEST(PortStrTest, DISABLED_str_convWideToU8NoBom)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 	const char *testName = "omrstr_convWideToU8NoBom";
-	int32_t originalStringLength = utf16StringLength;
-	int32_t expectedStringLength = utf8StringLength;
-	int32_t convertedStringLength = 0;
 
 	reportTestEntry(OMRPORTLIB, testName);
 	outputErrorMessage(PORTTEST_ERROR_ARGS, "test not implemented");
@@ -1146,13 +1144,10 @@ TEST(PortStrTest, str_convWideToU8Bom)
 /**
  * Verify string wide->MUTF8 conversion, source string is in little-endian order.
  */
-TEST(PortStrTest, str_convWideToU8NoLittleEndian)
+TEST(PortStrTest, DISABLED_str_convWideToU8NoLittleEndian)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 	const char *testName = "omrstr_convWideToU8NoLittleEndian";
-	int32_t originalStringLength = utf16StringLength;
-	int32_t expectedStringLength = utf8StringLength;
-	int32_t convertedStringLength = 0;
 
 	reportTestEntry(OMRPORTLIB, testName);
 	outputErrorMessage(PORTTEST_ERROR_ARGS, "test not implemented");
@@ -1167,29 +1162,30 @@ TEST(PortStrTest, str_convUtf8ToMUtf8)
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 	char outBuff[TEST_BUF_LEN];
 	const char *testName = "omrstr_convUtf8ToMUtf8";
-	uint8_t utf8Data[] = {
-		0, /* embedded null */
-		0x41, 0x42, 0x43, 0x44, /* ASCII */
-		0,
-		0xD0, 0xB0, 0xD0, 0xB1, 0xD0, 0xB2,  /* 2-byte UTF-8 */
-		0xE4, 0xBA, 0x8C, 0xE4, 0xBA, 0x8D, 0xE4, 0xBA, 0x8E,  /* 3-byte UTF-8 */
-		0xf4, 0x8f, 0xbf, 0xbf, /* Maximum code point */
-		0xF0, 0x90, 0x8C, 0x82, 0xF0, 0x90, 0x8C, 0x83, 0xF0, 0x90, 0x8C, 0x84,  /* 4 byte UTF-8 */
-		0x44, 0x45, 0x46, /* ASCII */
-		0xbb, /* invalid character */
-		0 /* null at end */
+	const char utf8Data[] = {
+		'\x0', /* embedded null */
+		'\x41', '\x42', '\x43', '\x44', /* ASCII */
+		'\x0',
+		'\xD0', '\xB0', '\xD0', '\xB1', '\xD0', '\xB2',  /* 2-byte UTF-8 */
+		'\xE4', '\xBA', '\x8C', '\xE4', '\xBA', '\x8D', '\xE4', '\xBA', '\x8E',  /* 3-byte UTF-8 */
+		'\xf4', '\x8f', '\xbf', '\xbf', /* Maximum code point */
+		'\xF0', '\x90', '\x8C', '\x82', '\xF0', '\x90', '\x8C', '\x83', '\xF0', '\x90', '\x8C', '\x84',  /* 4 byte UTF-8 */
+		'\x44', '\x45', '\x46', /* ASCII */
+		'\xbb', /* invalid character */
+		'\x0' /* null at end */
 	};
-	uint8_t mutf8Data[] = {
-		0xc0, 0x80, /* embedded null */
-		0x41, 0x42, 0x43, 0x44, /* ASCII */
-		0xc0, 0x80, /* embedded null */
-		0xD0, 0xB0, 0xD0, 0xB1, 0xD0, 0xB2,  /* 2-byte UTF-8 */
-		0xE4, 0xBA, 0x8C, 0xE4, 0xBA, 0x8D, 0xE4, 0xBA, 0x8E,  /* 3-byte UTF-8 */
-		0xed, 0xaf, 0xbf, 0xed, 0xbf, 0xbf, /* Maximum code point */
-		0xed, 0xa0, 0x80, 0xed, 0xbc, 0x82, 0xed, 0xa0, 0x80, 0xed, 0xbc, 0x83, 0xed, 0xa0, 0x80, 0xed, 0xbc, 0x84,
-		0x44, 0x45, 0x46,
-		0xef, 0xbf, 0xbd,
-		0xc0, 0x80
+
+	const char mutf8Data[] = {
+		'\xc0', '\x80', /* embedded null */
+		'\x41', '\x42', '\x43', '\x44', /* ASCII */
+		'\xc0', '\x80', /* embedded null */
+		'\xD0', '\xB0', '\xD0', '\xB1', '\xD0', '\xB2',  /* 2-byte UTF-8 */
+		'\xE4', '\xBA', '\x8C', '\xE4', '\xBA', '\x8D', '\xE4', '\xBA', '\x8E',  /* 3-byte UTF-8 */
+		'\xed', '\xaf', '\xbf', '\xed', '\xbf', '\xbf', /* Maximum code point */
+		'\xed', '\xa0', '\x80', '\xed', '\xbc', '\x82', '\xed', '\xa0', '\x80', '\xed', '\xbc', '\x83', '\xed', '\xa0', '\x80', '\xed', '\xbc', '\x84',
+		'\x44', '\x45', '\x46',
+		'\xef', '\xbf', '\xbd',
+		'\xc0', '\x80'
 	};
 	int32_t utf8DataLength = sizeof(utf8Data); /* skip the terminating null */
 	int32_t expectedStringLength = sizeof(mutf8Data);
@@ -1197,6 +1193,7 @@ TEST(PortStrTest, str_convUtf8ToMUtf8)
 
 	reportTestEntry(OMRPORTLIB, testName);
 	memset(outBuff, 0, sizeof(outBuff));
+
 	convertedStringLength = omrstr_convert(J9STR_CODE_UTF8, J9STR_CODE_MUTF8,
 										   utf8Data, utf8DataLength,  outBuff, sizeof(outBuff));
 	if (convertedStringLength != expectedStringLength) {
@@ -1222,29 +1219,29 @@ TEST(PortStrTest, str_convRandomUtf8ToMUtf8)
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 	char outBuff[TEST_BUF_LEN];
 	const char *testName = "omrstr_convRandomUtf8ToMUtf8";
-	uint8_t utf8Data[] = {
-		0x41, 0xf2, 0x86, 0x84, 0xaf, 0xf0, 0xbc, 0x8f, 0x9b, 0xee, 0xb5, 0xa0, 0xf4, 0x86, 0xbf, 0xae,
-		0xf0, 0xbe, 0xa7, 0xac, 0xf4, 0x86, 0x81, 0x84, 0xf0, 0xb3, 0x93, 0x99, 0xf2, 0xb6, 0x91, 0xae,
-		0xf2, 0x96, 0xba, 0xa9, 0xf0, 0xbc, 0xb6, 0x92, 0xf1, 0x8c, 0x9c, 0xa4, 0xe4, 0x99, 0xad, 0xf2,
-		0xb3, 0xa4, 0x95, 0xf0, 0xa6, 0x85, 0xab, 0xf1, 0xaa, 0xbb, 0xa4, 0xf3, 0x8c, 0x9e, 0xb8, 0xf2,
-		0x98, 0x9e, 0xb8, 0xf3, 0xb8, 0x8c, 0xa5, 0xf3, 0x84, 0x8b, 0x8a, 0xf3, 0x94, 0x95, 0xb3, 0xf0,
-		0x9b, 0xa3, 0xa6, 0xf1, 0xbb, 0x9b, 0xa7, 0xf1, 0x88, 0x9a, 0x81, 0xf4, 0x83, 0xa8, 0x83, 0xf2,
-		0xb4, 0x88, 0xb7, 0xf1, 0xa0, 0xa2, 0xb6, 0xf3, 0x97, 0x88, 0xb7, 0xf2, 0x88, 0x83, 0xb8, 0xf0,
-		0xa9, 0x9b, 0x9e, 0xf0, 0xa7, 0x92, 0xab, 0x5a
+	const char utf8Data[] = {
+		'\x41', '\xf2', '\x86', '\x84', '\xaf', '\xf0', '\xbc', '\x8f', '\x9b', '\xee', '\xb5', '\xa0', '\xf4', '\x86', '\xbf', '\xae',
+		'\xf0', '\xbe', '\xa7', '\xac', '\xf4', '\x86', '\x81', '\x84', '\xf0', '\xb3', '\x93', '\x99', '\xf2', '\xb6', '\x91', '\xae',
+		'\xf2', '\x96', '\xba', '\xa9', '\xf0', '\xbc', '\xb6', '\x92', '\xf1', '\x8c', '\x9c', '\xa4', '\xe4', '\x99', '\xad', '\xf2',
+		'\xb3', '\xa4', '\x95', '\xf0', '\xa6', '\x85', '\xab', '\xf1', '\xaa', '\xbb', '\xa4', '\xf3', '\x8c', '\x9e', '\xb8', '\xf2',
+		'\x98', '\x9e', '\xb8', '\xf3', '\xb8', '\x8c', '\xa5', '\xf3', '\x84', '\x8b', '\x8a', '\xf3', '\x94', '\x95', '\xb3', '\xf0',
+		'\x9b', '\xa3', '\xa6', '\xf1', '\xbb', '\x9b', '\xa7', '\xf1', '\x88', '\x9a', '\x81', '\xf4', '\x83', '\xa8', '\x83', '\xf2',
+		'\xb4', '\x88', '\xb7', '\xf1', '\xa0', '\xa2', '\xb6', '\xf3', '\x97', '\x88', '\xb7', '\xf2', '\x88', '\x83', '\xb8', '\xf0',
+		'\xa9', '\x9b', '\x9e', '\xf0', '\xa7', '\x92', '\xab', '\x5a'
 	};
-	uint8_t mutf8Data[] = {
-		0x41, 0xed, 0xa7, 0x98, 0xed, 0xb4, 0xaf, 0xed, 0xa2, 0xb0, 0xed, 0xbf, 0x9b, 0xee,
-		0xb5, 0xa0, 0xed, 0xaf, 0x9b, 0xed, 0xbf, 0xae, 0xed, 0xa2, 0xba, 0xed, 0xb7, 0xac, 0xed, 0xaf,
-		0x98, 0xed, 0xb1, 0x84, 0xed, 0xa2, 0x8d, 0xed, 0xb3, 0x99, 0xed, 0xaa, 0x99, 0xed, 0xb1, 0xae,
-		0xed, 0xa8, 0x9b, 0xed, 0xba, 0xa9, 0xed, 0xa2, 0xb3, 0xed, 0xb6, 0x92, 0xed, 0xa3, 0xb1, 0xed,
-		0xbc, 0xa4, 0xe4, 0x99, 0xad, 0xed, 0xaa, 0x8e, 0xed, 0xb4, 0x95, 0xed, 0xa1, 0x98, 0xed, 0xb5,
-		0xab, 0xed, 0xa5, 0xab, 0xed, 0xbb, 0xa4, 0xed, 0xab, 0xb1, 0xed, 0xbe, 0xb8, 0xed, 0xa8, 0xa1,
-		0xed, 0xbe, 0xb8, 0xed, 0xae, 0xa0, 0xed, 0xbc, 0xa5, 0xed, 0xab, 0x90, 0xed, 0xbb, 0x8a, 0xed,
-		0xac, 0x91, 0xed, 0xb5, 0xb3, 0xed, 0xa0, 0xae, 0xed, 0xb3, 0xa6, 0xed, 0xa6, 0xad, 0xed, 0xbb,
-		0xa7, 0xed, 0xa3, 0xa1, 0xed, 0xba, 0x81, 0xed, 0xaf, 0x8e, 0xed, 0xb8, 0x83, 0xed, 0xaa, 0x90,
-		0xed, 0xb8, 0xb7, 0xed, 0xa5, 0x82, 0xed, 0xb2, 0xb6, 0xed, 0xac, 0x9c, 0xed, 0xb8, 0xb7, 0xed,
-		0xa7, 0xa0, 0xed, 0xb3, 0xb8, 0xed, 0xa1, 0xa5, 0xed, 0xbb, 0x9e, 0xed, 0xa1, 0x9d, 0xed, 0xb2,
-		0xab, 0x5a
+	const char mutf8Data[] = {
+		'\x41', '\xed', '\xa7', '\x98', '\xed', '\xb4', '\xaf', '\xed', '\xa2', '\xb0', '\xed', '\xbf', '\x9b', '\xee',
+		'\xb5', '\xa0', '\xed', '\xaf', '\x9b', '\xed', '\xbf', '\xae', '\xed', '\xa2', '\xba', '\xed', '\xb7', '\xac', '\xed', '\xaf',
+		'\x98', '\xed', '\xb1', '\x84', '\xed', '\xa2', '\x8d', '\xed', '\xb3', '\x99', '\xed', '\xaa', '\x99', '\xed', '\xb1', '\xae',
+		'\xed', '\xa8', '\x9b', '\xed', '\xba', '\xa9', '\xed', '\xa2', '\xb3', '\xed', '\xb6', '\x92', '\xed', '\xa3', '\xb1', '\xed',
+		'\xbc', '\xa4', '\xe4', '\x99', '\xad', '\xed', '\xaa', '\x8e', '\xed', '\xb4', '\x95', '\xed', '\xa1', '\x98', '\xed', '\xb5',
+		'\xab', '\xed', '\xa5', '\xab', '\xed', '\xbb', '\xa4', '\xed', '\xab', '\xb1', '\xed', '\xbe', '\xb8', '\xed', '\xa8', '\xa1',
+		'\xed', '\xbe', '\xb8', '\xed', '\xae', '\xa0', '\xed', '\xbc', '\xa5', '\xed', '\xab', '\x90', '\xed', '\xbb', '\x8a', '\xed',
+		'\xac', '\x91', '\xed', '\xb5', '\xb3', '\xed', '\xa0', '\xae', '\xed', '\xb3', '\xa6', '\xed', '\xa6', '\xad', '\xed', '\xbb',
+		'\xa7', '\xed', '\xa3', '\xa1', '\xed', '\xba', '\x81', '\xed', '\xaf', '\x8e', '\xed', '\xb8', '\x83', '\xed', '\xaa', '\x90',
+		'\xed', '\xb8', '\xb7', '\xed', '\xa5', '\x82', '\xed', '\xb2', '\xb6', '\xed', '\xac', '\x9c', '\xed', '\xb8', '\xb7', '\xed',
+		'\xa7', '\xa0', '\xed', '\xb3', '\xb8', '\xed', '\xa1', '\xa5', '\xed', '\xbb', '\x9e', '\xed', '\xa1', '\x9d', '\xed', '\xb2',
+		'\xab', '\x5a'
 	};
 	int32_t utf8DataLength = sizeof(utf8Data); /* skip the terminating null */
 	int32_t expectedStringLength = sizeof(mutf8Data);
@@ -1279,11 +1276,11 @@ TEST(PortStrTest, str_convRoundTrip)
 	uint32_t unicodeEnd = 0x10000; /* overestimate */
 	uint32_t numCodePoints = 0;
 	size_t bufferSize = (6 * unicodeEnd) + 2; /* loose upper bound */
-	U_16 *unicodeData = omrmem_allocate_memory(unicodeEnd * 2, OMRMEM_CATEGORY_PORT_LIBRARY);
-	uint8_t *mutf8Buffer = omrmem_allocate_memory(bufferSize, OMRMEM_CATEGORY_PORT_LIBRARY);
-	uint8_t *unicodeResult = omrmem_allocate_memory(bufferSize, OMRMEM_CATEGORY_PORT_LIBRARY);
+	uint16_t *unicodeData = (uint16_t *)omrmem_allocate_memory(unicodeEnd * 2, OMRMEM_CATEGORY_PORT_LIBRARY);
+	uint8_t *mutf8Buffer = (uint8_t *)omrmem_allocate_memory(bufferSize, OMRMEM_CATEGORY_PORT_LIBRARY);
+	uint8_t *unicodeResult = (uint8_t *)omrmem_allocate_memory(bufferSize, OMRMEM_CATEGORY_PORT_LIBRARY);
 	uint32_t i;
-	U_16 codePoint = 1;
+	uint16_t codePoint = 1;
 	int32_t convertedStringLength = 0;
 
 	if ((NULL == unicodeData) || (NULL == mutf8Buffer) || (NULL == unicodeResult)) {
@@ -1299,19 +1296,19 @@ TEST(PortStrTest, str_convRoundTrip)
 	omrtty_printf("Testing %d code points\n", numCodePoints);
 
 	convertedStringLength = omrstr_convert(J9STR_CODE_WIDE, J9STR_CODE_MUTF8,
-										   (uint8_t *)unicodeData, 2 * numCodePoints, mutf8Buffer, bufferSize);
+										   (char *)unicodeData, 2 * numCodePoints, (char *)mutf8Buffer, bufferSize);
 	if (convertedStringLength < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "unicode to MUTF8 test failed: %d", convertedStringLength);
 	}
 	omrtty_printf("mutf string length = %d\n", convertedStringLength);
 
 	convertedStringLength = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_WIDE,
-										   mutf8Buffer, convertedStringLength, unicodeResult, bufferSize);
+										   (char *)mutf8Buffer, convertedStringLength, (char *)unicodeResult, bufferSize);
 	if (convertedStringLength < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "MUTF8 to  unicode test failed: %d", convertedStringLength);
 	}
 	omrtty_printf("mutf string length = %d\n", convertedStringLength);
-	if (!compareBytes((const char *) unicodeData, unicodeResult, 2 * numCodePoints)) {
+	if (!compareBytes((char *)unicodeData, (char *)unicodeResult, 2 * numCodePoints)) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Converted string wrong.");
 	}
 	reportTestExit(OMRPORTLIB, testName);
@@ -1324,31 +1321,31 @@ TEST(PortStrTest, str_Latin1ToMutf8)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 	char expectedMutf8[] = {
-		0xc0, 0x80, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc,
-		0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c,
-		0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c,
-		0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c,
-		0x3d, 0x3e, 0x3f, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c,
-		0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c,
-		0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c,
-		0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c,
-		0x7d, 0x7e, 0x7f, 0xc2, 0x80, 0xc2, 0x81, 0xc2, 0x82, 0xc2, 0x83, 0xc2, 0x84, 0xc2, 0x85, 0xc2,
-		0x86, 0xc2, 0x87, 0xc2, 0x88, 0xc2, 0x89, 0xc2, 0x8a, 0xc2, 0x8b, 0xc2, 0x8c, 0xc2, 0x8d, 0xc2,
-		0x8e, 0xc2, 0x8f, 0xc2, 0x90, 0xc2, 0x91, 0xc2, 0x92, 0xc2, 0x93, 0xc2, 0x94, 0xc2, 0x95, 0xc2,
-		0x96, 0xc2, 0x97, 0xc2, 0x98, 0xc2, 0x99, 0xc2, 0x9a, 0xc2, 0x9b, 0xc2, 0x9c, 0xc2, 0x9d, 0xc2,
-		0x9e, 0xc2, 0x9f, 0xc2, 0xa0, 0xc2, 0xa1, 0xc2, 0xa2, 0xc2, 0xa3, 0xc2, 0xa4, 0xc2, 0xa5, 0xc2,
-		0xa6, 0xc2, 0xa7, 0xc2, 0xa8, 0xc2, 0xa9, 0xc2, 0xaa, 0xc2, 0xab, 0xc2, 0xac, 0xc2, 0xad, 0xc2,
-		0xae, 0xc2, 0xaf, 0xc2, 0xb0, 0xc2, 0xb1, 0xc2, 0xb2, 0xc2, 0xb3, 0xc2, 0xb4, 0xc2, 0xb5, 0xc2,
-		0xb6, 0xc2, 0xb7, 0xc2, 0xb8, 0xc2, 0xb9, 0xc2, 0xba, 0xc2, 0xbb, 0xc2, 0xbc, 0xc2, 0xbd, 0xc2,
-		0xbe, 0xc2, 0xbf, 0xc3, 0x80, 0xc3, 0x81, 0xc3, 0x82, 0xc3, 0x83, 0xc3, 0x84, 0xc3, 0x85, 0xc3,
-		0x86, 0xc3, 0x87, 0xc3, 0x88, 0xc3, 0x89, 0xc3, 0x8a, 0xc3, 0x8b, 0xc3, 0x8c, 0xc3, 0x8d, 0xc3,
-		0x8e, 0xc3, 0x8f, 0xc3, 0x90, 0xc3, 0x91, 0xc3, 0x92, 0xc3, 0x93, 0xc3, 0x94, 0xc3, 0x95, 0xc3,
-		0x96, 0xc3, 0x97, 0xc3, 0x98, 0xc3, 0x99, 0xc3, 0x9a, 0xc3, 0x9b, 0xc3, 0x9c, 0xc3, 0x9d, 0xc3,
-		0x9e, 0xc3, 0x9f, 0xc3, 0xa0, 0xc3, 0xa1, 0xc3, 0xa2, 0xc3, 0xa3, 0xc3, 0xa4, 0xc3, 0xa5, 0xc3,
-		0xa6, 0xc3, 0xa7, 0xc3, 0xa8, 0xc3, 0xa9, 0xc3, 0xaa, 0xc3, 0xab, 0xc3, 0xac, 0xc3, 0xad, 0xc3,
-		0xae, 0xc3, 0xaf, 0xc3, 0xb0, 0xc3, 0xb1, 0xc3, 0xb2, 0xc3, 0xb3, 0xc3, 0xb4, 0xc3, 0xb5, 0xc3,
-		0xb6, 0xc3, 0xb7, 0xc3, 0xb8, 0xc3, 0xb9, 0xc3, 0xba, 0xc3, 0xbb, 0xc3, 0xbc, 0xc3, 0xbd, 0xc3,
-		0xbe, 0xc3, 0xbf, 0xc0, 0x80, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7
+		'\xc0', '\x80', '\x1', '\x2', '\x3', '\x4', '\x5', '\x6', '\x7', '\x8', '\x9', '\xa', '\xb', '\xc',
+		'\xd', '\xe', '\xf', '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17', '\x18', '\x19', '\x1a', '\x1b', '\x1c',
+		'\x1d', '\x1e', '\x1f', '\x20', '\x21', '\x22', '\x23', '\x24', '\x25', '\x26', '\x27', '\x28', '\x29', '\x2a', '\x2b', '\x2c',
+		'\x2d', '\x2e', '\x2f', '\x30', '\x31', '\x32', '\x33', '\x34', '\x35', '\x36', '\x37', '\x38', '\x39', '\x3a', '\x3b', '\x3c',
+		'\x3d', '\x3e', '\x3f', '\x40', '\x41', '\x42', '\x43', '\x44', '\x45', '\x46', '\x47', '\x48', '\x49', '\x4a', '\x4b', '\x4c',
+		'\x4d', '\x4e', '\x4f', '\x50', '\x51', '\x52', '\x53', '\x54', '\x55', '\x56', '\x57', '\x58', '\x59', '\x5a', '\x5b', '\x5c',
+		'\x5d', '\x5e', '\x5f', '\x60', '\x61', '\x62', '\x63', '\x64', '\x65', '\x66', '\x67', '\x68', '\x69', '\x6a', '\x6b', '\x6c',
+		'\x6d', '\x6e', '\x6f', '\x70', '\x71', '\x72', '\x73', '\x74', '\x75', '\x76', '\x77', '\x78', '\x79', '\x7a', '\x7b', '\x7c',
+		'\x7d', '\x7e', '\x7f', '\xc2', '\x80', '\xc2', '\x81', '\xc2', '\x82', '\xc2', '\x83', '\xc2', '\x84', '\xc2', '\x85', '\xc2',
+		'\x86', '\xc2', '\x87', '\xc2', '\x88', '\xc2', '\x89', '\xc2', '\x8a', '\xc2', '\x8b', '\xc2', '\x8c', '\xc2', '\x8d', '\xc2',
+		'\x8e', '\xc2', '\x8f', '\xc2', '\x90', '\xc2', '\x91', '\xc2', '\x92', '\xc2', '\x93', '\xc2', '\x94', '\xc2', '\x95', '\xc2',
+		'\x96', '\xc2', '\x97', '\xc2', '\x98', '\xc2', '\x99', '\xc2', '\x9a', '\xc2', '\x9b', '\xc2', '\x9c', '\xc2', '\x9d', '\xc2',
+		'\x9e', '\xc2', '\x9f', '\xc2', '\xa0', '\xc2', '\xa1', '\xc2', '\xa2', '\xc2', '\xa3', '\xc2', '\xa4', '\xc2', '\xa5', '\xc2',
+		'\xa6', '\xc2', '\xa7', '\xc2', '\xa8', '\xc2', '\xa9', '\xc2', '\xaa', '\xc2', '\xab', '\xc2', '\xac', '\xc2', '\xad', '\xc2',
+		'\xae', '\xc2', '\xaf', '\xc2', '\xb0', '\xc2', '\xb1', '\xc2', '\xb2', '\xc2', '\xb3', '\xc2', '\xb4', '\xc2', '\xb5', '\xc2',
+		'\xb6', '\xc2', '\xb7', '\xc2', '\xb8', '\xc2', '\xb9', '\xc2', '\xba', '\xc2', '\xbb', '\xc2', '\xbc', '\xc2', '\xbd', '\xc2',
+		'\xbe', '\xc2', '\xbf', '\xc3', '\x80', '\xc3', '\x81', '\xc3', '\x82', '\xc3', '\x83', '\xc3', '\x84', '\xc3', '\x85', '\xc3',
+		'\x86', '\xc3', '\x87', '\xc3', '\x88', '\xc3', '\x89', '\xc3', '\x8a', '\xc3', '\x8b', '\xc3', '\x8c', '\xc3', '\x8d', '\xc3',
+		'\x8e', '\xc3', '\x8f', '\xc3', '\x90', '\xc3', '\x91', '\xc3', '\x92', '\xc3', '\x93', '\xc3', '\x94', '\xc3', '\x95', '\xc3',
+		'\x96', '\xc3', '\x97', '\xc3', '\x98', '\xc3', '\x99', '\xc3', '\x9a', '\xc3', '\x9b', '\xc3', '\x9c', '\xc3', '\x9d', '\xc3',
+		'\x9e', '\xc3', '\x9f', '\xc3', '\xa0', '\xc3', '\xa1', '\xc3', '\xa2', '\xc3', '\xa3', '\xc3', '\xa4', '\xc3', '\xa5', '\xc3',
+		'\xa6', '\xc3', '\xa7', '\xc3', '\xa8', '\xc3', '\xa9', '\xc3', '\xaa', '\xc3', '\xab', '\xc3', '\xac', '\xc3', '\xad', '\xc3',
+		'\xae', '\xc3', '\xaf', '\xc3', '\xb0', '\xc3', '\xb1', '\xc3', '\xb2', '\xc3', '\xb3', '\xc3', '\xb4', '\xc3', '\xb5', '\xc3',
+		'\xb6', '\xc3', '\xb7', '\xc3', '\xb8', '\xc3', '\xb9', '\xc3', '\xba', '\xc3', '\xbb', '\xc3', '\xbc', '\xc3', '\xbd', '\xc3',
+		'\xbe', '\xc3', '\xbf', '\xc0', '\x80', '\x1', '\x2', '\x3', '\x4', '\x5', '\x6', '\x7'
 	};
 	const char *testName = "omrstr_Latin1ToMutf8";
 	char outBuff[TEST_BUF_LEN];
@@ -1361,7 +1358,7 @@ TEST(PortStrTest, str_Latin1ToMutf8)
 	reportTestEntry(OMRPORTLIB, testName);
 	memset(outBuff, 0, sizeof(outBuff));
 	for (i = 0; i < sizeof(inBuff); ++i) {
-		inBuff[i] = (char) i; /* create all Latin-1 code points */
+		inBuff[i] = (char)i; /* create all Latin-1 code points */
 	}
 	convertedStringLength = omrstr_convert(J9STR_CODE_LATIN1, J9STR_CODE_MUTF8,
 										   inBuff, originalStringLength,  outBuff, sizeof(outBuff));
@@ -1387,19 +1384,22 @@ TEST(PortStrTest, str_WinacpToMutf8)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 	char winacpData[] = {
-		0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
-		0x81, 0x91, 0xa1, 0xb1, 0xc1, 0xd1, 0xe1, 0xf1
+		'\x1', '\x2', '\x3', '\x4', '\x5', '\x6', '\x7', '\x8',
+		'\x81', '\x91', '\xa1', '\xb1', '\xc1', '\xd1', '\xe1', '\xf1'
 	};
+#if defined(WIN32)
 	char expectedMutf8[] = {
-		0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
-		0xc2, 0x81, 0xe2, 0x80, 0x98, 0xc2, 0xa1, 0xc2, 0xb1, 0xc3, 0x81, 0xc3, 0x91, 0xc3, 0xa1, 0xc3, 0xb1
+		'\x1', '\x2', '\x3', '\x4', '\x5', '\x6', '\x7', '\x8',
+		'\xc2', '\x81', '\xe2', '\x80', '\x98', '\xc2', '\xa1', '\xc2', '\xb1', '\xc3', '\x81', '\xc3', '\x91', '\xc3', '\xa1', '\xc3', '\xb1'
 	};
+#endif /* defined(WIN32) */
 	const char *testName = "omrstr_WinacpToMutf8";
 	char outBuff[TEST_BUF_LEN];
-	uint32_t i = 0;
 	int32_t originalStringLength = sizeof(winacpData);
-	int32_t expectedStringLength = sizeof(expectedMutf8);
 	int32_t convertedStringLength = 0;
+#if defined(WIN32)
+	int32_t expectedStringLength = sizeof(expectedMutf8);
+#endif /* defined(WIN32) */
 
 	reportTestEntry(OMRPORTLIB, testName);
 #if defined(WIN32)

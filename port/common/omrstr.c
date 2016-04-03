@@ -2594,8 +2594,16 @@ convertMutf8ToPlatform(struct OMRPortLibrary *portLibrary, const uint8_t *inBuff
 		uint8_t wideBuffer[CONVERSION_BUFFER_SIZE];
 		const uint8_t *wideBufferCursor = wideBuffer;
 		uintptr_t wideBufferSize = sizeof(wideBuffer);
-		uintptr_t wideBufferCount =   convertMutf8ToWide(&mutf8Cursor, &mutf8Remaining, wideBuffer, wideBufferSize);
-		int32_t platformPartCount = convertWideToPlatform(portLibrary,  encodingState, &wideBufferCursor, &wideBufferCount, outCursor, outLimit);
+		uintptr_t wideBufferCount = 0;
+		int32_t platformPartCount = 0;
+		
+		int32_t result = convertMutf8ToWide(&mutf8Cursor, &mutf8Remaining, wideBuffer, wideBufferSize);
+		if (result < 0) { /* conversion error */
+			return result;
+		}
+		wideBufferCount = (uintptr_t)result;
+
+		platformPartCount = convertWideToPlatform(portLibrary, encodingState, &wideBufferCursor, &wideBufferCount, outCursor, outLimit);
 		/*
 		 * convertWideToPlatform may return OMRPORT_ERROR_STRING_BUFFER_TOO_SMALL.
 		 * convertWideToPlatform sets up to MAX_STRING_TERMINATOR_LENGTH bytes bytes after the converted characters to 0,

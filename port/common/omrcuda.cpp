@@ -160,9 +160,7 @@ getDeviceData(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaDeviceDescri
 
 		memcpy(deviceData, &details[deviceId], sizeof(*deviceData));
 
-		uintptr_t ignored = 0;
-
-		if (J9CUDA_NO_ERROR != omrcuda_deviceGetMemInfo(portLibrary, deviceId, &deviceData->availableMemory, &ignored)) {
+		if (J9CUDA_NO_ERROR != omrcuda_deviceGetMemInfo(portLibrary, deviceId, &deviceData->availableMemory, &deviceData->totalMemory)) {
 			/* on failure, we mark 'availableMemory' unknown */
 			deviceData->availableMemory = ~(uintptr_t)0;
 		}
@@ -431,21 +429,6 @@ initDeviceData(J9CudaFunctionTable *functions, uint32_t deviceId, J9CudaDeviceDe
 			Trc_PRT_cuda_initDeviceData_fail2("set", result);
 			goto done;
 		}
-	}
-
-	{
-		size_t freeBytes = 0;
-		size_t totalBytes = 0;
-
-		result = functions->MemGetInfo(&freeBytes, &totalBytes);
-
-		if (cudaSuccess != result) {
-			Trc_PRT_cuda_initDeviceData_fail("memory info", result);
-			goto done;
-		}
-
-		deviceData->totalMemory = totalBytes;
-		deviceData->availableMemory = freeBytes;
 	}
 
 	{
@@ -1090,11 +1073,11 @@ attemptInitialization(OMRPortLibrary *portLibrary)
 		/* initialization *has* not been attempted */
 		uint32_t newState = J9CUDA_STATE_INITIALIZED;
 
-		if (openDriver(portLibrary) < J9CUDA_DRIVER_VERSION_MINIMUM) {
+		if (openRuntime(portLibrary) < J9CUDA_RUNTIME_VERSION_MINIMUM) {
 			goto fail;
 		}
 
-		if (openRuntime(portLibrary) < J9CUDA_RUNTIME_VERSION_MINIMUM) {
+		if (openDriver(portLibrary) < J9CUDA_DRIVER_VERSION_MINIMUM) {
 fail:
 			globals->deviceCount = 0;
 			newState = J9CUDA_STATE_FAILED;
@@ -1722,13 +1705,20 @@ omrcuda_shutdown(OMRPortLibrary *portLibrary)
 
 	J9CudaGlobalData *globals = &portLibrary->portGlobals->cudaGlobals;
 
-	resetDevices(globals);
+	switch (globals->state) {
+	case J9CUDA_STATE_INITIALIZED:
+		resetDevices(globals);
+		/* FALL-THROUGH */
 
-	closeLibraries(portLibrary);
+	case J9CUDA_STATE_STARTED:
+		closeLibraries(portLibrary);
+		ThreadState::shutdown(globals);
+		MUTEX_DESTROY(globals->stateMutex);
+		break;
 
-	ThreadState::shutdown(globals);
-
-	MUTEX_DESTROY(globals->stateMutex);
+	default:
+		break;
+	}
 
 	/* clear everything */
 	memset(globals, 0, sizeof(J9CudaGlobalData));
@@ -1825,7 +1815,6 @@ omrcuda_deviceCanAccessPeer(OMRPortLibrary *portLibrary, uint32_t deviceId, uint
 			Trc_PRT_cuda_deviceCanAccessPeer_result(access);
 
 			*canAccessPeerOut = 0 != access;
-			result = ThreadState::markDeviceForCurrentThread(portLibrary, deviceId);
 		}
 	}
 
@@ -1843,7 +1832,7 @@ namespace
  *
  * @param[in] peerDeviceId the peer device identifier
  */
-struct DisablePeerAccess : public InitializedAfter {
+struct DisablePeerAccess : public InitializerNotNeeded {
 	uint32_t const peerDeviceId;
 
 	explicit VMINLINE
@@ -1892,7 +1881,7 @@ namespace
  *
  * @param[in] peerDeviceId the peer device identifier
  */
-struct EnablePeerAccess : public InitializedAfter {
+struct EnablePeerAccess : public InitializerNotNeeded {
 	uint32_t const peerDeviceId;
 
 	explicit VMINLINE
@@ -2259,8 +2248,6 @@ omrcuda_deviceGetAttribute(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cud
 
 		Trc_PRT_cuda_deviceGetAttribute_result(attribute, value);
 		*valueOut = (int32_t)value;
-
-		result = ThreadState::markDeviceForCurrentThread(portLibrary, deviceId);
 	}
 
 done:

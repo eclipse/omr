@@ -25,23 +25,23 @@ extern int omrfile_runTests(struct OMRPortLibrary *portLibrary, char *argv0, cha
 extern int omrsig_runTests(struct OMRPortLibrary *portLibrary, char *exeName, char *argument); /** @see omrsignalTest.c::omrsig_runTests */
 extern int omrmmap_runTests(struct OMRPortLibrary *portLibrary, char *argv0, char *omrmmap_child);
 
-extern "C" {
-int testMain(int argc, char **argv, char **envp);
-}
-
 PortTestEnvironment *portTestEnv;
 
-int
+extern "C" int
 testMain(int argc, char **argv, char **envp)
 {
-	BOOLEAN isChild = 0;
-	int i;
+	bool isChild = false;
+	bool earlyExit = false;
+	int i = 0;
 	char testName[99] = "";
+	int result = 0;
 
 	for (i = 1; i < argc; i += 1) {
-		if (0 != strstr(argv[i], "-child_")) {
-			isChild = 1;
+		if (NULL != strstr(argv[i], "-child_")) {
+			isChild = true;
 			strcpy(testName, &argv[i][7]);
+		} else if (0 == strcmp(argv[i], "-earlyExit")) {
+			earlyExit = true;
 		}
 	}
 
@@ -50,7 +50,9 @@ testMain(int argc, char **argv, char **envp)
 	}
 
 	ATTACH_J9THREAD();
-	portTestEnv = (PortTestEnvironment *)testing::AddGlobalTestEnvironment(new PortTestEnvironment(argc, argv));
+
+	portTestEnv = new PortTestEnvironment(argc, argv);
+	testing::AddGlobalTestEnvironment(portTestEnv);
 
 	if (isChild) {
 		portTestEnv->initPort();
@@ -66,11 +68,16 @@ testMain(int argc, char **argv, char **envp)
 			return omrsig_runTests(portTestEnv->getPortLibrary(), argv[0], testName);
 		}
 		portTestEnv->shutdownPort();
-		DETACH_J9THREAD();
-		return 0;
 	} else {
-		int result = RUN_ALL_TESTS();
-		DETACH_J9THREAD();
-		return result;
+		result = RUN_ALL_TESTS();
 	}
+
+	DETACH_J9THREAD();
+
+	if (earlyExit) {
+		printf("exiting from testMain\n");
+		exit(result);
+	}
+
+	return result;
 }

@@ -22,10 +22,11 @@
  * @brief process introspection support
  */
 
-/* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
 #if defined(LINUX)
+/* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
 #define _GNU_SOURCE
-#endif /* defined(__GNUC__) */
+#define __USE_GNU 1
+#endif /* defined(LINUX) */
 
 #include <pthread.h>
 #include <ucontext.h>
@@ -42,7 +43,6 @@
 
 #if defined(LINUX)
 #include <dirent.h>
-#define __USE_GNU 1
 #include <dlfcn.h>
 #elif defined(AIXPPC)
 #include <sys/ldr.h>
