@@ -23,7 +23,10 @@
 extern "C" {
 #endif
 
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
 #include <stddef.h>
+#endif /* !defined(__MINGW32__) && !defined(__MINGW64__) */
+
 #include "omrcomp.h"
 
 typedef uintptr_t omrthread_tls_key_t;
