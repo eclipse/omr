@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 1991, 2015
+ * (c) Copyright IBM Corp. 1991, 2016
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -73,12 +73,13 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 	uintptr_t notFound;
 	const char *errorMessage = NULL;
 	char errBuf[512];
-	char mangledName[EsMaxPath];
+	char mangledName[EsMaxPath + 1];
 	char *openName = name;
 	wchar_t portLibDir[EsMaxPath];
 	wchar_t unicodeBuffer[UNICODE_BUFFER_SIZE], *unicodeName;
 	BOOLEAN decorate = J9_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_DECORATE);
 	BOOLEAN openExec = J9_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_OPEN_EXECUTABLE);
+	uintptr_t pathLength = 0;
 
 	Trc_PRT_sl_open_shared_library_Entry(name, flags);
 
@@ -88,7 +89,11 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 	/* No need to name mangle if a handle to the executable is requested for. */
 	if (!openExec) {
 		if (decorate) {
-			portLibrary->str_printf(portLibrary, mangledName, EsMaxPath, "%s.dll", name);
+			pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "%s.dll", name);
+			if (pathLength >= EsMaxPath) {
+				Trc_PRT_sl_open_shared_library_Exit2(OMRPORT_SL_UNSUPPORTED);
+				return OMRPORT_SL_UNSUPPORTED;
+			}
 			openName = mangledName;
 		} /* TODO make windows not try to append .dll if we do not want it to */
 	} else {

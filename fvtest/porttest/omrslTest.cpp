@@ -94,6 +94,87 @@ exit:
 	reportTestExit(OMRPORTLIB, testName);
 }
 
+/**
+ * For omrsl_open_shared_library, check if:
+ * i)  OMRPORT_SL_UNSUPPORTED is received for a path larger than EsMaxPath chars
+ * ii) OMRPORT_SL_INVALID or OMRPORT_SL_NOT_FOUND is received for an incorrect path less than or equal to EsMaxPath chars
+ */
+TEST(PortSlTest, sl_testOpenPathLengths)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+	const char *testName = "omrsl_testOpenPathLengths";
+	uintptr_t handle = 0;
+	uintptr_t rc = 0;
+#if defined(WIN32)
+	const char *fakeName = "\\temp";
+#else /* defined(WIN32) */
+	const char *fakeName = "/temp";
+#endif /* defined(WIN32) */
+	size_t fakeNameLength = strlen(fakeName);
+	char sharedLibName[2*EsMaxPath] = "temp";
+	size_t pathLength = strlen(sharedLibName);
+
+	/* Within omrsl_open_shared_library,
+	 * zOS - "lib.so" is added to the input path
+	 * Win - ".dll" is added to the input path
+	 * Unix - "lib.so" is added to the input path
+	 * AIX - "lib.so", "lib.a" and ".srvpgm" are added to the input path consecutively
+	 */
+
+#if defined(WIN32)
+	const char *extension = ".dll";
+#elif defined(AIXPPC) /* defined(WIN32) */
+#if defined(J9OS_I5)
+	const char *extension = ".srvpgm";
+#else /* defined(J9OS_I5) */
+	const char *extension = "lib.so";
+#endif /* defined(J9OS_I5) */
+#else /* defined(AIXPPC) */
+#if defined(OSX)
+	const char *extension = "lib.dylib";
+#else /* defined(OSX) */
+	const char *extension = "lib.so";
+#endif /* defined(OSX) */
+#endif /* defined(WIN32) */
+
+	size_t extensionLength = strlen(extension);
+
+	reportTestEntry(OMRPORTLIB, testName);
+
+	/* Loop to create a random file path that contains more than EsMaxPath + 1 chars */
+	while (pathLength <= EsMaxPath) {
+		strcat(sharedLibName, fakeName);
+		pathLength += fakeNameLength;
+	}
+
+	/* Reducing path length to EsMaxPath - strlen(extension) chars that includes the NUL terminator */
+	sharedLibName[EsMaxPath - extensionLength] = '\0';
+	/* Avoid a path ending with a separator */
+	sharedLibName[EsMaxPath - extensionLength - 1] = 'a';
+
+	/* Check if OMRPORT_SL_UNSUPPORTED is received for a path of EsMaxPath - strlen(extension) chars that includes the NUL terminator */
+	rc = omrsl_open_shared_library(sharedLibName, &handle, OMRPORT_SLOPEN_DECORATE);
+	if (OMRPORT_SL_UNSUPPORTED != rc) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "Received error code %zu instead of error code %zu for shared library, \n%s,\n", rc, (uintptr_t)OMRPORT_SL_UNSUPPORTED, sharedLibName, omrerror_last_error_message());
+		goto exit;
+	}
+
+	/* Reducing path length to EsMaxPath - strlen(extension) - 1 chars that includes the NUL terminator */
+	sharedLibName[EsMaxPath - extensionLength - 1] = '\0';
+	/* Avoid a path ending with a separator */
+	sharedLibName[EsMaxPath - extensionLength - 2] = 'a';
+
+	/* Check if OMRPORT_SL_INVALID or OMRPORT_SL_NOT_FOUND is received for an incorrect path of EsMaxPath - strlen(extension) - 1 chars that includes the NUL terminator */
+	rc = omrsl_open_shared_library(sharedLibName, &handle, OMRPORT_SLOPEN_DECORATE);
+	if ((OMRPORT_SL_INVALID != rc) && (OMRPORT_SL_NOT_FOUND != rc)) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "Received error code %zu instead of error code %zu or %zu for shared library, \n%s,\n", rc, (uintptr_t)OMRPORT_SL_INVALID, (uintptr_t)OMRPORT_SL_NOT_FOUND, sharedLibName, omrerror_last_error_message());
+		goto exit;
+	}
+
+exit:
+	reportTestExit(OMRPORTLIB, testName);
+}
+
 #if defined(AIXPPC)
 
 /**

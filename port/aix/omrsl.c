@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 1991, 2015
+ * (c) Copyright IBM Corp. 1991, 2016
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -211,16 +211,17 @@ uintptr_t omrsl_close_shared_library(struct OMRPortLibrary *portLibrary, uintptr
 uintptr_t
 omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintptr_t *descriptor, uintptr_t flags)
 {
-	void *handle;
+	void *handle = NULL;
 	char *openName = name;
 	char *fileName = strrchr(name, '/');
-	char mangledName[1024];
+	char mangledName[EsMaxPath + 1];
 	char errBuf[512];
 	uintptr_t result;
 	int lazyOrNow = J9_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_LAZY) ? RTLD_LAZY : RTLD_NOW;
 	BOOLEAN decorate = J9_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_DECORATE);
 	uintptr_t lastErrno = 0;
 	BOOLEAN openExec = J9_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_OPEN_EXECUTABLE);
+	uintptr_t pathLength = 0;
 
 	Trc_PRT_sl_open_shared_library_Entry(name, flags);
 
@@ -230,9 +231,13 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 	if (!openExec && decorate) {
 		if (NULL != fileName) {
 			/* the names specifies a path */
-			portLibrary->str_printf(portLibrary, mangledName, sizeof(mangledName), "%.*slib%s" PLATFORM_DLL_EXTENSION, (uintptr_t)fileName + 1 - (uintptr_t)name, name, fileName + 1);
+			pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "%.*slib%s" PLATFORM_DLL_EXTENSION, (uintptr_t)fileName + 1 - (uintptr_t)name, name, fileName + 1);
 		} else {
-			portLibrary->str_printf(portLibrary, mangledName, sizeof(mangledName), "lib%s" PLATFORM_DLL_EXTENSION, name);
+			pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "lib%s" PLATFORM_DLL_EXTENSION, name);
+		}
+		if (pathLength >= EsMaxPath) {
+			result = OMRPORT_SL_UNSUPPORTED;
+			goto exit;
 		}
 		openName = mangledName;
 	}
@@ -300,9 +305,13 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 				if (decorate) {
 					if (NULL != fileName) {
 						/* the names specifies a path */
-						portLibrary->str_printf(portLibrary, mangledName, sizeof(mangledName), "%.*slib%s.a", (uintptr_t)fileName + 1 - (uintptr_t)name, name, fileName + 1);
+						pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "%.*slib%s.a", (uintptr_t)fileName + 1 - (uintptr_t)name, name, fileName + 1);
 					} else {
-						portLibrary->str_printf(portLibrary, mangledName, sizeof(mangledName), "lib%s.a", name);
+						pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "lib%s.a", name);
+					}
+					if (pathLength >= EsMaxPath) {
+						result = OMRPORT_SL_UNSUPPORTED;
+						goto exit;
 					}
 
 					Trc_PRT_sl_open_shared_library_Event1(mangledName);
@@ -327,9 +336,13 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 							}
 							if (NULL != fileName) {
 								/* the names specifies a path */
-								portLibrary->str_printf(portLibrary, mangledName, sizeof(mangledName), "%.*s%s.srvpgm", (uintptr_t)fileName + 1 - (uintptr_t)name, name, fileName + 1);
+								pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "%.*s%s.srvpgm", (uintptr_t)fileName + 1 - (uintptr_t)name, name, fileName + 1);
 							} else {
-								portLibrary->str_printf(portLibrary, mangledName, sizeof(mangledName), "%s.srvpgm", name);
+								pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "%s.srvpgm", name);
+							}
+							if (pathLength >= EsMaxPath) {
+								result = OMRPORT_SL_UNSUPPORTED;
+								goto exit;
 							}
 
 							Trc_PRT_sl_open_shared_library_Event1(mangledName);
@@ -367,11 +380,16 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 									if (NULL == handle) {
 										lastErrno = errno;
 
-										portLibrary->str_printf(portLibrary, mangledName, sizeof(mangledName), "%.*s%.*s",
-																(uintptr_t)fileName + 1 - (uintptr_t)name,
-																name,
-																(uintptr_t)actualFileName - 1 - (uintptr_t)fileName,
-																fileName + 1);
+										pathLength = portLibrary->str_printf(
+																		portLibrary, mangledName, (EsMaxPath + 1), "%.*s%.*s",
+																		(uintptr_t)fileName + 1 - (uintptr_t)name,
+																		name,
+																		(uintptr_t)actualFileName - 1 - (uintptr_t)fileName,
+																		fileName + 1);
+										if (pathLength >= EsMaxPath) {
+											result = OMRPORT_SL_UNSUPPORTED;
+											goto exit;
+										}
 										if ((ENOENT != lastErrno) && (IS_FILE_VISIBLE(portLibrary, mangledName))) {
 											getDLError(portLibrary, errBuf, sizeof(errBuf));
 											result = portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_SL_INVALID, errBuf);
@@ -390,6 +408,7 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 		}
 	}
 
+exit:
 	if (NULL == handle) {
 		Trc_PRT_sl_open_shared_library_Event2(errBuf);
 		Trc_PRT_sl_open_shared_library_Exit2(result);
@@ -532,6 +551,7 @@ getDirectoryOfLibrary(struct OMRPortLibrary *portLib, char *buf, uintptr_t bufLe
 	struct ld_info *linfo, *linfop;
 	int             linfoSize, rc;
 	char           *myAddress;
+	uintptr_t pathLength = 0;
 
 	/* get loader information */
 	linfoSize = 1024;
@@ -566,6 +586,13 @@ getDirectoryOfLibrary(struct OMRPortLibrary *portLib, char *buf, uintptr_t bufLe
 			return 0;
 		}
 		linfop = (struct ld_info *)((char *)linfop + linfop->ldinfo_next);
+	}
+
+	/* +1 includes the NUL terminator */
+	pathLength = strlen(linfop->ldinfo_filename) + 1;
+	if (pathLength > bufLen) {
+		/* a truncated copy of linfop->ldinfo_filename will be stored in buf */
+		return 0;
 	}
 
 	strncpy(buf, linfop->ldinfo_filename, bufLen);

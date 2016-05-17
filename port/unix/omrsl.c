@@ -126,11 +126,12 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 {
 	void *handle;
 	char *openName = name;
-	char mangledName[MAX_STRING_LENGTH];
+	char mangledName[MAX_STRING_LENGTH + 1];
 	char errBuf[MAX_ERR_BUF_LENGTH];
 	int lazyOrNow = J9_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_LAZY) ? RTLD_LAZY : RTLD_NOW;
 	BOOLEAN decorate = J9_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_DECORATE);
 	BOOLEAN openExec = J9_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_OPEN_EXECUTABLE);
+	uintptr_t pathLength = 0;
 
 	Trc_PRT_sl_open_shared_library_Entry(name, flags);
 
@@ -139,9 +140,13 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 		char *p = strrchr(name, '/');
 		if (NULL != p) {
 			/* the names specifies a path */
-			portLibrary->str_printf(portLibrary, mangledName, MAX_STRING_LENGTH, "%.*slib%s" PLATFORM_DLL_EXTENSION, (uintptr_t)p + 1 - (uintptr_t)name, name, p + 1);
+			pathLength = portLibrary->str_printf(portLibrary, mangledName, (MAX_STRING_LENGTH + 1), "%.*slib%s" PLATFORM_DLL_EXTENSION, (uintptr_t)p + 1 - (uintptr_t)name, name, p + 1);
 		} else {
-			portLibrary->str_printf(portLibrary, mangledName, MAX_STRING_LENGTH, "lib%s" PLATFORM_DLL_EXTENSION, name);
+			pathLength = portLibrary->str_printf(portLibrary, mangledName, (MAX_STRING_LENGTH + 1), "lib%s" PLATFORM_DLL_EXTENSION, name);
+		}
+		if (pathLength >= MAX_STRING_LENGTH) {
+			Trc_PRT_sl_open_shared_library_Exit2(OMRPORT_SL_UNSUPPORTED);
+			return OMRPORT_SL_UNSUPPORTED;
 		}
 		openName = mangledName;
 	}
@@ -164,7 +169,7 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 			/* retry only if the path will be different than the attempt above */
 			if (NULL != dirSep) {
 				/* +1 so length includes the '/' */
-				size_t pathLength = dirSep - libraryInfo.dli_fname + 1;
+				pathLength = dirSep - libraryInfo.dli_fname + 1;
 				/* proceed only if buffer size can fit the new concatenated path (+1 for NUL) */
 				if (MAX_STRING_LENGTH < (pathLength + strlen(openName) + 1)) {
 					const char *error = portLibrary->nls_lookup_message(portLibrary,

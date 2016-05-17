@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 1991, 2015
+ * (c) Copyright IBM Corp. 1991, 2016
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -43,10 +43,11 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 {
 	void *handle;
 	char *openName = name;
-	char mangledName[1024];
+	char mangledName[EsMaxPath + 1];
 	char errBuf[512];
 	BOOLEAN decorate = J9_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_DECORATE);
 	BOOLEAN openExec = J9_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_OPEN_EXECUTABLE);
+	uintptr_t pathLength = 0;
 
 	Trc_PRT_sl_open_shared_library_Entry(name, flags);
 
@@ -55,9 +56,13 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 		char *p = strrchr(name, '/');
 		if (p) {
 			/* the names specifies a path */
-			portLibrary->str_printf(portLibrary, mangledName, 1024, "%.*slib%s.so", (uintptr_t)p + 1 - (uintptr_t)name, name, p + 1);
+			pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "%.*slib%s.so", (uintptr_t)p + 1 - (uintptr_t)name, name, p + 1);
 		} else {
-			portLibrary->str_printf(portLibrary, mangledName, 1024, "lib%s.so", name);
+			pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "lib%s.so", name);
+		}
+		if (pathLength >= EsMaxPath) {
+			Trc_PRT_sl_open_shared_library_Exit2(OMRPORT_SL_UNSUPPORTED);
+			return OMRPORT_SL_UNSUPPORTED;
 		}
 		openName = mangledName;
 	}
