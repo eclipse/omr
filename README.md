@@ -1,7 +1,7 @@
 # Welcome to the Eclipse OMR Project!
 [![Build Status](https://api.travis-ci.org/eclipse/omr.svg?branch=master)](https://travis-ci.org/eclipse/omr)
 
-The Eclipse OMR project consists of a highly integrated set of open source C and C++ 
+The Eclipse [OMR](https://en.wikipedia.org/wiki/Optical_mark_recognition) project consists of a highly integrated set of open source C and C++ 
 components that can be used to build robust language runtimes that will support 
 many different hardware and operating system platforms. These components include
 but are not limited to: memory management, threading, platform port (abstraction)
