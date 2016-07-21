@@ -85,6 +85,7 @@ GCTestEnvironment::GCTestSetUp()
 {
 	exampleVM._omrVM = NULL;
 	exampleVM.self = NULL;
+	exampleVM._vmAccessMutex = NULL;
 
 	/* Attach main test thread */
 	intptr_t irc = omrthread_attach_ex(&exampleVM.self, J9THREAD_ATTR_DEFAULT);
@@ -93,6 +94,9 @@ GCTestEnvironment::GCTestSetUp()
 	/* Initialize the VM */
 	omr_error_t rc = OMR_Initialize(&exampleVM, &exampleVM._omrVM);
 	ASSERT_EQ(OMR_ERROR_NONE, rc) << "Setup(): OMR_Initialize failed, rc=" << rc;
+
+	/* Set up the vm access mutex */
+	omrthread_rwmutex_init(&exampleVM._vmAccessMutex, 0, "VM exclusive access");
 
 	portLib = ((exampleVM._omrVM)->_runtime)->_portLibrary;
 
@@ -103,6 +107,11 @@ void
 GCTestEnvironment::GCTestTearDown()
 {
 	ASSERT_NO_FATAL_FAILURE(clearParams());
+
+	if (NULL != exampleVM._vmAccessMutex) {
+		omrthread_rwmutex_destroy(exampleVM._vmAccessMutex);
+		exampleVM._vmAccessMutex = NULL;
+	}
 
 	/* Shut down VM */
 	omr_error_t rc = OMR_Shutdown(exampleVM._omrVM);

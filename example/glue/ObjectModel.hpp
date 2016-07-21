@@ -202,8 +202,7 @@ public:
 	MMINLINE uintptr_t
 	getConsumedSizeInSlotsWithHeader(omrobjectptr_t objectPtr)
 	{
-		Assert_MM_unimplemented();
-		return 0;
+		return getConsumedSizeInBytesWithHeader(objectPtr) / sizeof(fomrobject_t);
 	}
 
 	MMINLINE uintptr_t

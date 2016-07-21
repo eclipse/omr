@@ -849,6 +849,7 @@ MM_ConcurrentCardTable::cleanCards(MM_EnvironmentStandard *env, bool isMutator, 
 	nextDirtyCard = NULL;
 
 	/* Clean cards until we have done enough or card clean phase changes */
+	MM_ConcurrentGCStats *stats = _extensions->collectorLanguageInterface->concurrentGC_getConcurrentStats();
 	while ( cleanedSoFar < sizeToDo && currentCleaningPhase == _cardCleanPhase ) {
 
 		/* Get next dirty card; if any */
@@ -876,7 +877,7 @@ MM_ConcurrentCardTable::cleanCards(MM_EnvironmentStandard *env, bool isMutator, 
 		 * relieve work stack overflow we empty packets by dirtying cards for their referenced
 		 * objects. Therefore we cannot be sure tracing into all active TLH's will be deferred.
 		 */
-		if (isCardInActiveTLH(env,nextDirtyCard) && !(_extensions->collectorLanguageInterface->concurrentGC_getConcurrentStats()->getConcurrentWorkStackOverflowOcurred())) {
+		if (isCardInActiveTLH(env,nextDirtyCard) && !stats->getConcurrentWorkStackOverflowOcurred()) {
 			continue;
 		}
 
@@ -955,6 +956,7 @@ MM_ConcurrentCardTable::cleanSingleCard(MM_EnvironmentStandard *env, Card *card,
 	env->_threadCleaningCards = true;
 
 	/* Re-trace all objects which START in this card */
+	MM_ConcurrentGCStats *stats = _extensions->collectorLanguageInterface->concurrentGC_getConcurrentStats();
 	while (NULL != (objectPtr = markedObjectIterator.nextObject())) {
 		/* Check to see if another thread  is waiting for exclusive VM access. If so get out quick.
 	 	 */
@@ -982,7 +984,7 @@ MM_ConcurrentCardTable::cleanSingleCard(MM_EnvironmentStandard *env, Card *card,
 		 * objects. Therefore we cannot be sure all tracing into this particular TLH will be
 		 * deferred.
 		*/
-		if (isObjectInActiveTLH(env,objectPtr) && !(_extensions->collectorLanguageInterface->concurrentGC_getConcurrentStats()->getConcurrentWorkStackOverflowOcurred())) {
+		if (isObjectInActiveTLH(env,objectPtr) && !(stats->getConcurrentWorkStackOverflowOcurred())) {
 			return true;
 		}
 
@@ -1610,11 +1612,10 @@ MM_ConcurrentCardTable::resetCleaningRanges(MM_EnvironmentStandard *env)
 Card*
 MM_ConcurrentCardTable::getNextDirtyCard(MM_EnvironmentStandard *env, Card cardMask, bool concurrentCardClean)
 {
-	CleaningRange *currentRange;
-	Card *firstCard;
+	MM_ConcurrentGCStats *stats = _extensions->collectorLanguageInterface->concurrentGC_getConcurrentStats();
 
 	/* Get a local copy of next current range being cleaned */
-	currentRange = (CleaningRange *)_currentCleaningRange;
+	CleaningRange *currentRange = (CleaningRange *)_currentCleaningRange;
 
 	/* Have we finished already ? */
 	if (currentRange >= _lastCleaningRange ) {
@@ -1623,7 +1624,7 @@ MM_ConcurrentCardTable::getNextDirtyCard(MM_EnvironmentStandard *env, Card cardM
 	}
 
 	/* Get a local copy of next card to check */
-	firstCard = (Card *)currentRange->nextCard;
+	Card *firstCard = (Card *)currentRange->nextCard;
 
 	while (NULL != firstCard) {
 
@@ -1676,7 +1677,7 @@ MM_ConcurrentCardTable::getNextDirtyCard(MM_EnvironmentStandard *env, Card cardM
 				/* No .. so attempt to grab this card*/
 				nextDirtyCard = currentCard;
 				currentCard += 1;
-				if (concurrentCardClean && env->isExclusiveAccessRequestWaiting()) {
+				if (concurrentCardClean && stats) {
 					return (Card *)EXCLUSIVE_VMACCESS_REQUESTED;
 				}
 
@@ -1702,7 +1703,7 @@ MM_ConcurrentCardTable::getNextDirtyCard(MM_EnvironmentStandard *env, Card cardM
 			/* No..so someone must have beat us to next dirty card. In which case we need
 			 * to restart scan. First though make sure no thread is waiting for exclusive access.
 			 */
-			if (concurrentCardClean && env->isExclusiveAccessRequestWaiting()) {
+			if (concurrentCardClean && stats) {
 				return (Card *)EXCLUSIVE_VMACCESS_REQUESTED;
 			}
 
