@@ -2993,7 +2993,7 @@ MM_Scavenger::backOutFixSlotWithoutCompression(volatile omrobjectptr_t *slotPtr)
 			*slotPtr = forwardHeader.getReverseForwardedPointer();
 #if defined(OMR_SCAVENGER_TRACE_BACKOUT)
 			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
-			omrtty_printf("{SCAV: Back out uncompressed slot %p[%p]->%p}\n", objectPtr, *objectPtr, *slotPtr);
+			omrtty_printf("{SCAV: Back out uncompressed slot %p[%p->%p]}\n", slotPtr, objectPtr, *slotPtr);
 			Assert_MM_true(isObjectInEvacuateMemory(*slotPtr));
 #endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 			return true;
@@ -3011,11 +3011,12 @@ MM_Scavenger::backOutFixSlot(GC_SlotObject *slotObject)
 		MM_ForwardedHeader forwardHeader(objectPtr, OMR_OBJECT_METADATA_SLOT_OFFSET);
 		Assert_MM_false(forwardHeader.isForwardedPointer());
 		if (forwardHeader.isReverseForwardedPointer()) {
-			omrobjectptr_t fwdObjectPtr = forwardHeader.getReverseForwardedPointer();
+			slotObject->writeReferenceToSlot(forwardHeader.getReverseForwardedPointer());
 #if defined(OMR_SCAVENGER_TRACE_BACKOUT)
+			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
+			omrtty_printf("{SCAV: Back out object slot %p[%p->%p]}\n", slotPtr, objectPtr, *slotPtr);
 			Assert_MM_true(isObjectInEvacuateMemory(fwdObjectPtr));
 #endif /* OMR_SCAVENGER_TRACE_BACKOUT */
-			slotObject->writeReferenceToSlot(fwdObjectPtr);
 			return true;
 		}
 	}
@@ -3029,15 +3030,12 @@ MM_Scavenger::backOutObjectScan(MM_EnvironmentStandard *env, omrobjectptr_t obje
 	GC_ObjectScannerState objectScannerState;
 	GC_ObjectScanner *objectScanner = _cli->scavenger_getObjectScanner(env, objectPtr, (void *) &objectScannerState, GC_ObjectScanner::scanRoots);
 	if (NULL != objectScanner) {
+#if defined(OMR_SCAVENGER_TRACE_BACKOUT)
+		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+		omrtty_printf("{SCAV: Back out slots in object %p[%p]\n", objectPtr, *objectPtr);
+#endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 		while (NULL != (slotObject = objectScanner->getNextSlot())) {
-#if defined(OMR_SCAVENGER_TRACE_BACKOUT)
-			OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
-			omrtty_printf("{SCAV: Back out object in %p; slot[%p] %p->", objectPtr, slotObject->readAddressFromSlot(), slotObject->readReferenceFromSlot());
-#endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 			backOutFixSlot(slotObject);
-#if defined(OMR_SCAVENGER_TRACE_BACKOUT)
-			omrtty_printf("%p}\n", slotObject->readReferenceFromSlot());
-#endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 		}
 	}
 
@@ -3069,19 +3067,19 @@ MM_Scavenger::backoutFixupAndReverseForwardPointersInSurvivor(MM_EnvironmentStan
 			while((objectPtr = evacuateHeapIterator.nextObjectNoAdvance()) != NULL) {
 				MM_ForwardedHeader header(objectPtr, OMR_OBJECT_METADATA_SLOT_OFFSET);
 				if (header.isForwardedPointer()) {
-					omrobjectptr_t fwdObjectPtr = header.getForwardedObject();
-					omrobjectptr_t objectPtr = header.getObject();
+					omrobjectptr_t forwardedObject = header.getForwardedObject();
+					omrobjectptr_t originalObject = header.getObject();
 					_cli->scavenger_reverseForwardedObject(env, &header);
 					/* A reverse forwarded object is a hole whose 'next' pointer actually points at the original object.
 					 * This keeps tenure space walkable once the reverse forwarded objects are abandoned.
 					 */
-					UDATA evacuateObjectSizeInBytes = _extensions->objectModel.getConsumedSizeInBytesWithHeader(fwdObjectPtr);
-					MM_HeapLinkedFreeHeader* freeHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(fwdObjectPtr);
-					freeHeader->setNext((MM_HeapLinkedFreeHeader*)objectPtr);
+					UDATA evacuateObjectSizeInBytes = _extensions->objectModel.getConsumedSizeInBytesWithHeader(forwardedObject);
+					MM_HeapLinkedFreeHeader* freeHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(forwardedObject);
+					freeHeader->setNext((MM_HeapLinkedFreeHeader*)originalObject);
 					freeHeader->setSize(evacuateObjectSizeInBytes);
 #if defined(OMR_SCAVENGER_TRACE_BACKOUT)
-					MM_HeapLinkedFreeHeader* freeHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(fwdObjectPtr);
-					omrtty_printf("{SCAV: Back out forward pointer %p@%p -> %p[%p]}\n", objectPtr, fwdObjectPtr, freeHeader->getNext(), freeHeader->getSize());
+					omrtty_printf("{SCAV: Back out forward pointer %p[%p]@%p -> %p[%p]}\n", objectPtr, *objectPtr, forwardedObject, freeHeader->getNext(), freeHeader->getSize());
+					Assert_MM_true(objectPtr == originalObject);
 #endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 				}
 			}
@@ -3113,7 +3111,6 @@ MM_Scavenger::backoutFixupAndReverseForwardPointersInSurvivor(MM_EnvironmentStan
 				_cli->scavenger_fixupDestroyedSlot(env, &header, _activeSubSpace);
 #if defined(OMR_SCAVENGER_TRACE_BACKOUT)
 				omrobjectptr_t fwdObjectPtr = header.getForwardedObject();
-				MM_HeapLinkedFreeHeader* freeHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(fwdObjectPtr);
 				omrtty_printf("{SCAV: Fixup destroyed slot %p@%p -> %u->%u}\n", objectPtr, fwdObjectPtr, originalOverlap, header.getPreservedOverlap());
 #endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 			}

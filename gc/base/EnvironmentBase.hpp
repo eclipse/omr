@@ -28,9 +28,6 @@
 #include "CardCleaningStats.hpp"
 #include "CycleState.hpp"
 #include "CompactStats.hpp"
-#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-#include "ConcurrentGCStats.hpp"
-#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
 #include "GCCode.hpp"
 #include "GCExtensionsBase.hpp"
 #include "LargeObjectAllocateStats.hpp"
@@ -47,6 +44,9 @@
 class MM_AllocationContext;
 class MM_AllocateDescription;
 class MM_Collector;
+#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+class MM_ConcurrentGCStats;
+#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
 class MM_EnvironmentLanguageInterface;
 class MM_HeapRegionQueue;
 class MM_MemorySpace;
@@ -96,7 +96,6 @@ private:
 	MM_AllocationContext *_commonAllocationContext;	/**< Common Allocation Context shared by all threads */
 
 
-	uintptr_t _exclusiveCount; /**< count of recursive exclusive VM access requests */
 	uint64_t _exclusiveAccessTime; /**< time (in ticks) of the last exclusive access request */
 	uint64_t _meanExclusiveAccessIdleTime; /**< mean idle time (in ticks) of the last exclusive access request */
 	OMR_VMThread* _lastExclusiveAccessResponder; /**< last thread to respond to last exclusive access request */
@@ -370,7 +369,7 @@ public:
 	bool
 	inquireExclusiveVMAccessForGC()
 	{
-		return (_exclusiveCount > 0);
+		return (_omrVMThread->exclusiveCount > 0);
 	}
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
@@ -559,7 +558,6 @@ public:
 		,_threadScanned(false)
 		,_allocationContext(NULL)
 		,_commonAllocationContext(NULL)
-		,_exclusiveCount(0)
 		,_exclusiveAccessTime(0)
 		,_meanExclusiveAccessIdleTime(0)
 		,_lastExclusiveAccessResponder(NULL)

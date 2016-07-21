@@ -74,12 +74,17 @@ MM_EnvironmentLanguageInterfaceImpl::tearDown(MM_EnvironmentBase *env)
 bool
 MM_EnvironmentLanguageInterfaceImpl::saveObjects(omrobjectptr_t objectPtr)
 {
+	Assert_MM_true(NULL == _omrThread->savedObject);
+	_omrThread->savedObject = (void *)objectPtr;
 	return true;
 }
 
 void
 MM_EnvironmentLanguageInterfaceImpl::restoreObjects(omrobjectptr_t *objectPtrIndirect)
 {
+	Assert_MM_true(NULL != _omrThread->savedObject);
+	*objectPtrIndirect = (omrobjectptr_t)_omrThread->savedObject;
+	_omrThread->savedObject = NULL;
 }
 
 #if defined (OMR_GC_THREAD_LOCAL_HEAP)

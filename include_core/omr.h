@@ -177,6 +177,8 @@ typedef struct OMR_VMThread {
 	struct movedObjectHashCode movedObjectHashCodeCache;
 
 	int32_t _attachCount;
+
+	void *savedObject; /**< holds new object allocation until object can be attached to reference graph (see MM_AllocationDescription::save/restoreObjects()) */
 } OMR_VMThread;
 
 /**

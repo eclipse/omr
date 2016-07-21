@@ -70,6 +70,13 @@ public:
 			}
 			objectEntry = (ObjectEntry *)hashTableNextDo(&state);
 		}
+		OMR_VMThread *walkThread;
+		GC_OMRVMThreadListIterator threadListIterator(env->getOmrVM());
+		while((walkThread = threadListIterator.nextOMRVMThread()) != NULL) {
+			if (NULL != walkThread->savedObject) {
+				_scavenger->backOutFixSlotWithoutCompression((volatile omrobjectptr_t *) &walkThread->savedObject);
+			}
+		}
 	}
 };
 

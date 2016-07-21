@@ -24,6 +24,7 @@
 #include "BaseVirtual.hpp"
 #include "EnvironmentBase.hpp"
 
+#include "ModronAssertions.h"
 #include "objectdescription.h"
 #include "omr.h"
 #include "omrvm.h"
@@ -59,30 +60,44 @@ protected:
 public:
 	virtual void kill(MM_EnvironmentBase *env) = 0;
 
-	/**
-	 * Acquire shared VM access.
+	/***
+	 * NOTE: The OMR VM access model grants exclusive VM access to one thread
+	 * only if no other thread has VM access. Conversely one of more threads may
+	 * be granted shared VM access only if no other thread holds exclusive
+	 * VM access. This can be modeled as a write-bias reader/writer lock where
+	 * threads holding shared VM access periodically check for pending
+	 * requests for exclusive VM access and relinquish VM access in that event.
+	 *
+	 * OMR threads must acquire shared VM access and hold it as long as they are
+	 * accessing VM internal structures. In the event that another thread requests
+	 * exclusive VM access, threads holding shared VM access must release shared
+	 * VM access and suspend activities involving direct access to VM structures.
 	 */
-	virtual void
-	acquireVMAccess()
-	{
-	}
 
 	/**
-	 * Releases shared VM access.
+	 * Acquire shared VM access. Implementation must block calling thread as long
+	 * as any other thread has exclusive VM access.
 	 */
-	virtual void
-	releaseVMAccess()
-	{
-	}
+	virtual void acquireVMAccess() = 0;
 
 	/**
-	 * Acquire exclusive VM access.
+	 * Release shared VM access. This method should be called
+	 */
+	virtual void releaseVMAccess() = 0;
+
+	/**
+	 * Acquire exclusive VM access. This must lock the VM thread list mutex (OMR_VM::_vmThreadListMutex).
+	 *
+	 * This method may be called by a thread that already holds exclusive VM access. In that case, the
+	 * OMR_VMThread::exclusiveCount counter is incremented.
 	 */
 	virtual void
 	acquireExclusiveVMAccess()
 	{
-		_omrThread->exclusiveCount = 1;
-		omrthread_monitor_enter(_env->getOmrVM()->_vmThreadListMutex);
+		if (0 == _omrThread->exclusiveCount) {
+			omrthread_monitor_enter(_env->getOmrVM()->_vmThreadListMutex);
+		}
+		_omrThread->exclusiveCount += 1;
 	}
 
 	/**
@@ -107,35 +122,65 @@ public:
 	virtual void
 	releaseExclusiveVMAccess()
 	{
-		_omrThread->exclusiveCount = 0;
-		omrthread_monitor_exit(_env->getOmrVM()->_vmThreadListMutex);
+		Assert_MM_true(0 < _omrThread->exclusiveCount);
+		_omrThread->exclusiveCount -= 1;
+		if (0 == _omrThread->exclusiveCount) {
+			omrthread_monitor_exit(_env->getOmrVM()->_vmThreadListMutex);
+		}
 	}
 
 	/**
-	 * TODO fill in description
+	 * This method may be required if a concurrent GC strategy is employed. It will
+	 * be called by the concurrent GC if it is unable to immediately obtain exclusive
+	 * VM access (because a stop-the-world GC is in progress). If the concurrent GC
+	 * holds resources that must be temporarily relinquished while waiting for
+	 * exclusive VM access, this is the place to release them. They can be recovered
+	 * in exclusiveAccessForGCObtainedAfterBeatenByOtherThread(), which will be called
+	 * when the stop-the-world GC completes and releases exclusive VM access.
 	 */
 	virtual void exclusiveAccessForGCBeatenByOtherThread() {}
+
+	/**
+	 * This method may be required if a concurrent GC strategy is employed. It will be
+	 * called when the stop-the-world GC completes and releases exclusive VM access if
+	 * the thread previously ran exclusiveAccessForGCObtainedAfterBeatenByOtherThread().
+	 * Any resources temporarily released in that method can be recovered here before
+	 * proceeding with exclusive VM access.
+	 */
 	virtual void exclusiveAccessForGCObtainedAfterBeatenByOtherThread() {}
+
 	virtual void releaseCriticalHeapAccess(uintptr_t *data) {}
 	virtual void reacquireCriticalHeapAccess(uintptr_t data) {}
 
 	/**
-	 * Give up exclusive access in preparation for transferring it to a collaborating thread (i.e. main-to-master or master-to-main)
+	 * Give up exclusive access in preparation for transferring it to a collaborating thread
+	 * (i.e. main-to-master or master-to-main). Implement if this kind of collaboration is
+	 * required.
+	 *
 	 * @return the exclusive count of the current thread before relinquishing 
 	 */
-	virtual uintptr_t relinquishExclusiveVMAccess() { return 0; }
+	virtual uintptr_t relinquishExclusiveVMAccess()
+	{
+		Assert_MM_unreachable();
+		return 0;
+	}
 	
 	/**
-	 * Assume exclusive access from a collaborating thread i.e. main-to-master or master-to-main)
+	 * Assume exclusive access from a collaborating thread (i.e. main-to-master or master-to-main).
+	 * Implement if this kind of collaboration is required.
+	 *
 	 * @param exclusiveCount the exclusive count to be restored 
 	 */
-	virtual void assumeExclusiveVMAccess(uintptr_t exclusiveCount) {}
+	virtual void assumeExclusiveVMAccess(uintptr_t exclusiveCount)
+	{
+		Assert_MM_unreachable();
+	}
 
 	/**
 	 * Checks to see if any thread has requested exclusive access
 	 * @return true if a thread is waiting on exclusive access, false if not.
 	 */
-	virtual bool isExclusiveAccessRequestWaiting() { return false; }
+	virtual bool isExclusiveAccessRequestWaiting() = 0;
 
 
 	/**

@@ -71,7 +71,6 @@ public:
 	void
 	scanRoots(MM_EnvironmentBase *env)
 	{
-		/* TODO: Consider serializing thread access so that each gc thread gets a portion of the roots. */
 		OMR_VM_Example *omrVM = (OMR_VM_Example *)env->getOmrVM()->_language_vm;
 		if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
 			J9HashTableState state;
@@ -83,6 +82,13 @@ public:
 						_scavenger->copyObjectSlot(envStd, (volatile omrobjectptr_t *) &rootEntry->rootPtr);
 					}
 					rootEntry = (RootEntry *)hashTableNextDo(&state);
+				}
+			}
+			OMR_VMThread *walkThread;
+			GC_OMRVMThreadListIterator threadListIterator(env->getOmrVM());
+			while((walkThread = threadListIterator.nextOMRVMThread()) != NULL) {
+				if (NULL != walkThread->savedObject) {
+					_scavenger->copyObjectSlot(envStd, (volatile omrobjectptr_t *) &walkThread->savedObject);
 				}
 			}
 			env->_currentTask->releaseSynchronizedGCThreads(env);
@@ -104,8 +110,7 @@ public:
 					if (_scavenger->isObjectInEvacuateMemory(objectEntry->objPtr)) {
 						MM_ForwardedHeader fwdHeader(objectEntry->objPtr, OMR_OBJECT_METADATA_SLOT_OFFSET);
 						if (fwdHeader.isForwardedPointer()) {
-							omrobjectptr_t fwdPtr = fwdHeader.getForwardedObject();
-							objectEntry->objPtr = fwdPtr;
+							objectEntry->objPtr = fwdHeader.getForwardedObject();
 						} else {
 							hashTableDoRemove(&state);
 						}

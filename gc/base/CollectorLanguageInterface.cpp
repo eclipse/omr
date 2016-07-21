@@ -36,14 +36,26 @@ MM_CollectorLanguageInterface::writeBarrierStore(OMR_VMThread *omrThread, omrobj
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK) || defined(OMR_GC_MODRON_SCAVENGER)
 	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(omrThread);
-	MM_GCExtensionsBase *extensions = env->getExtensions();
+	generationalWriteBarrierStore(env, parentObject, childObject);
+	concurrentWriteBarrierStore(env, parentObject);
 #endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) | defined(OMR_GC_MODRON_SCAVENGER) */
-#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-	if (extensions->concurrentMark) {
-		extensions->cardTable->dirtyCard(env, parentObject);
-	}
-#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
+}
+
+void
+MM_CollectorLanguageInterface::writeBarrierUpdate(OMR_VMThread *omrThread, omrobjectptr_t parentObject, omrobjectptr_t childObject)
+{
+#if defined(OMR_GC_MODRON_CONCURRENT_MARK) || defined(OMR_GC_MODRON_SCAVENGER)
+	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(omrThread);
+	generationalWriteBarrierStore(env, parentObject, childObject);
+	concurrentWriteBarrierStore(env, parentObject);
+#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) | defined(OMR_GC_MODRON_SCAVENGER) */
+}
+
+void
+MM_CollectorLanguageInterface::generationalWriteBarrierStore(MM_EnvironmentStandard* env, omrobjectptr_t parentObject, omrobjectptr_t childObject)
+{
 #if defined(OMR_GC_MODRON_SCAVENGER)
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 	if (extensions->scavengerEnabled) {
 		if (extensions->isOld(parentObject) && !extensions->isOld(childObject)) {
 			if (extensions->objectModel.atomicSetRemembered(parentObject)) {
@@ -55,6 +67,15 @@ MM_CollectorLanguageInterface::writeBarrierStore(OMR_VMThread *omrThread, omrobj
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 }
 
-
+void
+MM_CollectorLanguageInterface::concurrentWriteBarrierStore(MM_EnvironmentBase* env, omrobjectptr_t parentObject)
+{
+#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+	if (extensions->concurrentMark) {
+		extensions->cardTable->dirtyCard(env, parentObject);
+	}
+#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
+}
 
 
