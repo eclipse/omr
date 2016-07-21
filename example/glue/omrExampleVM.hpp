@@ -30,6 +30,7 @@ typedef struct OMR_VM_Example {
 	J9HashTable *rootTable;
 	J9HashTable *objectTable;
 	omrthread_t self;
+	omrthread_rwmutex_t _vmAccessMutex;
 } OMR_VM_Example;
 
 typedef struct RootEntry {

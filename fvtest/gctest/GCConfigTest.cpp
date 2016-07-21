@@ -269,22 +269,18 @@ ObjectEntry *
 GCConfigTest::allocateHelper(const char *objName, uintptr_t size)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(gcTestEnv->portLib);
-	MM_ObjectAllocationInterface *allocationInterface = env->_objectAllocationInterface;
-	MM_GCExtensionsBase *extensions = env->getExtensions();
-	uintptr_t allocatedFlags = 0;
-	uintptr_t sizeAdjusted = extensions->objectModel.adjustSizeInBytes(size);
-	MM_AllocateDescription mm_allocdescription(sizeAdjusted, allocatedFlags, true, true);
+	GC_ObjectModel *objectModel = &(env->getExtensions()->objectModel);
+	uintptr_t sizeAdjusted = objectModel->adjustSizeInBytes(size);
 
 	ObjectEntry objEntry;
 	objEntry.name = objName;
-	objEntry.objPtr = (omrobjectptr_t)allocationInterface->allocateObject(env, &mm_allocdescription, env->getMemorySpace(), false);
+	objEntry.objPtr = OMR_GC_AllocateNoGC(exampleVM->_omrVMThread, sizeAdjusted, OMR_GC_ALLOCATE_ZERO_MEMORY | OMR_GC_THREAD_AT_SAFEPOINT);
 	objEntry.numOfRef = 0;
 
 	ObjectEntry *hashedEntry = NULL;
 	if (NULL == objEntry.objPtr) {
 		omrtty_printf("No free memory to allocate %s of size 0x%llx, GC start.\n", objName, size);
-		objEntry.objPtr = (omrobjectptr_t)allocationInterface->allocateObject(env, &mm_allocdescription, env->getMemorySpace(), true);
-		env->unwindExclusiveVMAccessForGC();
+		objEntry.objPtr = OMR_GC_Allocate(exampleVM->_omrVMThread, sizeAdjusted, OMR_GC_ALLOCATE_ZERO_MEMORY | OMR_GC_THREAD_AT_SAFEPOINT);
 		if (NULL == objEntry.objPtr) {
 			omrtty_printf("%s:%d No free memory after a GC. Failed to allocate object %s of size 0x%llx.\n", __FILE__, __LINE__, objName, size);
 			goto done;
@@ -293,11 +289,9 @@ GCConfigTest::allocateHelper(const char *objName, uintptr_t size)
 	}
 	if (NULL != objEntry.objPtr) {
 		/* set size in header */
-		uintptr_t actualSize = mm_allocdescription.getBytesRequested();
-		memset(objEntry.objPtr, 0, actualSize);
-		extensions->objectModel.setObjectSize(objEntry.objPtr, actualSize);
+		objectModel->setObjectSize(objEntry.objPtr, sizeAdjusted);
 #if defined(OMRGCTEST_DEBUG)
-		omrtty_printf("Allocate object name: %s(%p[0x%llx])\n", objEntry.name, objEntry.objPtr, actualSize);
+		omrtty_printf("Allocate object name: %s(%p[0x%llx])\n", objEntry.name, objEntry.objPtr, sizeAdjusted);
 #endif
 		hashedEntry = add(&objEntry);
 	}
