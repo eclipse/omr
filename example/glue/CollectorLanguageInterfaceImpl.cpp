@@ -324,17 +324,20 @@ MM_CollectorLanguageInterfaceImpl::scavenger_backOutIndirectObjects(MM_Environme
 void
 MM_CollectorLanguageInterfaceImpl::scavenger_reverseForwardedObject(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader)
 {
-	omrobjectptr_t objectPtr = forwardedHeader->getObject();
-	omrobjectptr_t fwdObjectPtr = forwardedHeader->getForwardedObject();
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
-	if (extensions->objectModel.restoreForwardedObject(forwardedHeader)) {
-		/* A reverse forwarded object is a hole whose 'next' pointer actually points at the original object.
-		 * This keeps tenure space walkable once the reverse forwarded objects are abandoned.
+	if (forwardedHeader->isForwardedPointer()) {
+		omrobjectptr_t originalObject = forwardedHeader->getObject();
+		omrobjectptr_t forwardedObject = forwardedHeader->getForwardedObject();
+
+		/* Restore the original object header from the forwarded object */
+		_extensions->objectModel.setObjectSize(originalObject, _extensions->objectModel.getSizeInBytesWithHeader(forwardedObject));
+		_extensions->objectModel.setFlags(originalObject, OMR_OBJECT_METADATA_FLAGS_MASK, OMR_OBJECT_FLAGS(forwardedObject));
+
+#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+		/* Restore destroyed overlapped slot in the original object. This slot might need to be reversed
+		 * as well or it may be already reversed - such fixup will be completed at in a later pass.
 		 */
-		UDATA evacuateObjectSizeInBytes = extensions->objectModel.getConsumedSizeInBytesWithHeader(fwdObjectPtr);
-		MM_HeapLinkedFreeHeader* freeHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(fwdObjectPtr);
-		freeHeader->setNext((MM_HeapLinkedFreeHeader*)objectPtr);
-		freeHeader->setSize(evacuateObjectSizeInBytes);
+		forwardedHeader->restoreDestroyedOverlap();
+#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
 	}
 }
 

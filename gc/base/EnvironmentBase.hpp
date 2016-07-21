@@ -28,9 +28,6 @@
 #include "CardCleaningStats.hpp"
 #include "CycleState.hpp"
 #include "CompactStats.hpp"
-#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-#include "ConcurrentGCStats.hpp"
-#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
 #include "GCCode.hpp"
 #include "GCExtensionsBase.hpp"
 #include "LargeObjectAllocateStats.hpp"
@@ -47,6 +44,9 @@
 class MM_AllocationContext;
 class MM_AllocateDescription;
 class MM_Collector;
+#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+class MM_ConcurrentGCStats;
+#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
 class MM_EnvironmentLanguageInterface;
 class MM_HeapRegionQueue;
 class MM_MemorySpace;

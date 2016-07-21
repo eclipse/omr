@@ -28,6 +28,7 @@
 
 #include "AllocateDescription.hpp"
 #include "Collector.hpp"
+#include "ConcurrentGCStats.hpp"
 #include "EnvironmentLanguageInterface.hpp"
 #include "GCExtensionsBase.hpp"
 #include "GlobalAllocationManager.hpp"
@@ -342,18 +343,14 @@ MM_EnvironmentBase::releaseVMAccess()
 bool
 MM_EnvironmentBase::tryAcquireExclusiveVMAccess()
 {
-	if(0 == _exclusiveCount) {
-		bool result = _envLanguageInterface->tryAcquireExclusiveVMAccess();
-
-		/* Check if we won the exclusive access race..return if we lost */
-		if(!result) {
+	if (0 == _exclusiveCount) {
+		if (_envLanguageInterface->tryAcquireExclusiveVMAccess()) {
+			/* Report exclusive access time if we won race */
+			reportExclusiveAccessAcquire();
+		} else {
 			return false;
 		}
-
-		/* Report exclusive access time if we won race */
-		reportExclusiveAccessAcquire();
 	}
-
 	_exclusiveCount += 1;
 	return true;
 }
@@ -365,13 +362,13 @@ MM_EnvironmentBase::acquireExclusiveVMAccess()
 		_envLanguageInterface->acquireExclusiveVMAccess();
 		reportExclusiveAccessAcquire();
 	}
-	_exclusiveCount++;
+	_exclusiveCount += 1;
 }
 
 void
 MM_EnvironmentBase::releaseExclusiveVMAccess()
 {
-	_exclusiveCount--;
+	_exclusiveCount -= 1;
 	if (0 == _exclusiveCount) {
 		reportExclusiveAccessRelease();
 		_envLanguageInterface->releaseExclusiveVMAccess();

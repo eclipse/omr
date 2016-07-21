@@ -3080,8 +3080,7 @@ MM_Scavenger::backoutFixupAndReverseForwardPointersInSurvivor(MM_EnvironmentStan
 					freeHeader->setNext((MM_HeapLinkedFreeHeader*)objectPtr);
 					freeHeader->setSize(evacuateObjectSizeInBytes);
 #if defined(OMR_SCAVENGER_TRACE_BACKOUT)
-					MM_HeapLinkedFreeHeader* freeHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(fwdObjectPtr);
-					omrtty_printf("{SCAV: Back out forward pointer %p@%p -> %p[%p]}\n", objectPtr, fwdObjectPtr, freeHeader->getNext(), freeHeader->getSize());
+					omrtty_printf("{SCAV: Back out forward pointer %p[%p]@%p -> %p[%p]}\n", objectPtr, *objectPtr, fwdObjectPtr, freeHeader->getNext(), freeHeader->getSize());
 #endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 				}
 			}
@@ -3113,7 +3112,6 @@ MM_Scavenger::backoutFixupAndReverseForwardPointersInSurvivor(MM_EnvironmentStan
 				_cli->scavenger_fixupDestroyedSlot(env, &header, _activeSubSpace);
 #if defined(OMR_SCAVENGER_TRACE_BACKOUT)
 				omrobjectptr_t fwdObjectPtr = header.getForwardedObject();
-				MM_HeapLinkedFreeHeader* freeHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(fwdObjectPtr);
 				omrtty_printf("{SCAV: Fixup destroyed slot %p@%p -> %u->%u}\n", objectPtr, fwdObjectPtr, originalOverlap, header.getPreservedOverlap());
 #endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 			}
