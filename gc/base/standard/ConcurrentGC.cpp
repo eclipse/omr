@@ -1103,17 +1103,13 @@ MM_ConcurrentGC::conHelperEntryPoint(OMR_VMThread *omrThread, uintptr_t slaveID)
 		if (CONCURRENT_HELPER_SHUTDOWN == request) {
 			continue;
 		}
+		
 		env->acquireVMAccess();
-
 		request = getConHelperRequest();
 		if (CONCURRENT_HELPER_MARK != request) {
 			env->releaseVMAccess();
 			continue;
 		}
-
-		/* TODO 90354: Find a way to reestablish this assertion
-		Assert_MM_true(0 != (vmThread->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE));
-		*/
 		Assert_GC_true_with_message(env, CONCURRENT_OFF != _stats->getExecutionMode(), "MM_ConcurrentStats::_executionMode = %zu\n", _stats->getExecutionMode());
 
 		sizeTraced = 0;
@@ -1134,12 +1130,7 @@ MM_ConcurrentGC::conHelperEntryPoint(OMR_VMThread *omrThread, uintptr_t slaveID)
 				totalScanned += sizeTraced;
 				spinLimiter.reset();
 			}
-			if (env->isExclusiveAccessRequestWaiting()) {
-				request = switchConHelperRequest(CONCURRENT_HELPER_MARK, CONCURRENT_HELPER_WAIT);
-				Assert_MM_true(CONCURRENT_HELPER_MARK != request);
-			} else {
-				request = getConHelperRequest();
-			}
+			request = getConHelperRequest();
 		}
 
 		spinLimiter.reset();
@@ -1157,12 +1148,7 @@ MM_ConcurrentGC::conHelperEntryPoint(OMR_VMThread *omrThread, uintptr_t slaveID)
 					spinLimiter.reset();
 				}
 			}
-			if (env->isExclusiveAccessRequestWaiting()) {
-				request = switchConHelperRequest(CONCURRENT_HELPER_MARK, CONCURRENT_HELPER_WAIT);
-				Assert_MM_true(CONCURRENT_HELPER_MARK != request);
-			} else {
-				request = getConHelperRequest();
-			}
+			request = getConHelperRequest();
 		}
 
 		if (CONCURRENT_HELPER_MARK == request) {
@@ -2763,18 +2749,15 @@ uintptr_t
 MM_ConcurrentGC::localMark(MM_EnvironmentStandard *env, uintptr_t sizeToTrace)
 {
 	omrobjectptr_t objectPtr;
-	uintptr_t sizeTraced = 0;
 	uintptr_t gcCount = _extensions->globalGCStats.gcCount;
 
 	env->_workStack.reset(env, _markingScheme->getWorkPackets());
 	Assert_MM_true(env->_cycleState == NULL);
 	Assert_MM_true(CONCURRENT_OFF < _stats->getExecutionMode());
-#if 0	/* TODO 90354: Find a way to reestablish this assertion */
-	Assert_MM_true(((J9VMThread *)env->getLanguageVMThread())->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE);
-#endif
 	Assert_MM_true(_concurrentCycleState._referenceObjectOptions == MM_CycleState::references_default);
 	env->_cycleState = &_concurrentCycleState;
 
+	uintptr_t sizeTraced = 0;
 	while(NULL != (objectPtr = (omrobjectptr_t)env->_workStack.popNoWait(env))) {
 		/* Check for array scanPtr..if we find one ignore it*/
 		if ((uintptr_t)objectPtr & PACKET_ARRAY_SPLIT_TAG){
@@ -2809,6 +2792,9 @@ MM_ConcurrentGC::localMark(MM_EnvironmentStandard *env, uintptr_t sizeToTrace)
 
 		/* Before we do any more tracing check to see if GC is waiting */
 		if (env->isExclusiveAccessRequestWaiting()) {
+			/* suspend con helper thread for pending GC */
+			uintptr_t conHelperRequest = switchConHelperRequest(CONCURRENT_HELPER_MARK, CONCURRENT_HELPER_WAIT);
+			Assert_MM_true(CONCURRENT_HELPER_MARK != conHelperRequest);
 			break;
 		}
 	}
@@ -2853,6 +2839,11 @@ MM_ConcurrentGC::cleanCards(MM_EnvironmentStandard *env, bool isMutator, uintptr
 	flushLocalBuffers(env);
 	env->_cycleState = NULL;
 
+	if (gcOccurred) {
+		/* suspend con helper thread for pending GC */
+		uintptr_t conHelperRequest = switchConHelperRequest(CONCURRENT_HELPER_MARK, CONCURRENT_HELPER_WAIT);
+		Assert_MM_true(CONCURRENT_HELPER_MARK != conHelperRequest);
+	}
 	return gcOccurred;
 }
 

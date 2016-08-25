@@ -60,7 +60,6 @@ allocHelper(OMR_VMThread * omrVMThread, size_t sizeInBytes, uintptr_t flags, boo
 
 	omrobjectptr_t heapBytes = (omrobjectptr_t)env->_objectAllocationInterface->allocateObject(env, &allocdescription, env->getMemorySpace(), collectOnFailure);
 
-	/* OMRTODO: Should we use zero TLH instead of memset? */
 	if (NULL != heapBytes) {
 		if (J9_ARE_ALL_BITS_SET(flags, OMR_GC_ALLOCATE_ZERO_MEMORY)) {
 			uintptr_t size = allocdescription.getBytesRequested();
@@ -71,6 +70,8 @@ allocHelper(OMR_VMThread * omrVMThread, size_t sizeInBytes, uintptr_t flags, boo
 	allocdescription.setAllocationSucceeded(NULL != heapBytes);
 	/* Issue Allocation Failure Report if required */
 	env->allocationFailureEndReportIfRequired(&allocdescription);
+
+	/* TODO Initialize object header */
 
 	if (collectOnFailure) {
 		/* Done allocation - successful or not */

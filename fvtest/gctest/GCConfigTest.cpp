@@ -22,6 +22,7 @@
 #include "SlotObject.hpp"
 #include "VerboseWriterChain.hpp"
 #include "CollectorLanguageInterface.hpp"
+#include "EnvironmentLanguageInterface.hpp"
 
 //#define OMRGCTEST_PRINTFILE
 
@@ -268,35 +269,47 @@ GCConfigTest::allocateHelper(const char *objName, uintptr_t size)
 	MM_GCExtensionsBase *extensions = env->getExtensions();
 	uintptr_t allocatedFlags = 0;
 	uintptr_t sizeAdjusted = extensions->objectModel.adjustSizeInBytes(size);
-	MM_AllocateDescription mm_allocdescription(sizeAdjusted, allocatedFlags, true, true);
+	MM_AllocateDescription allocDescription(sizeAdjusted, allocatedFlags, true, true);
 
 	ObjectEntry objEntry;
 	objEntry.name = objName;
-	objEntry.objPtr = (omrobjectptr_t)allocationInterface->allocateObject(env, &mm_allocdescription, env->getMemorySpace(), false);
+	objEntry.objPtr = (omrobjectptr_t)allocationInterface->allocateObject(env, &allocDescription, env->getMemorySpace(), false);
 	objEntry.numOfRef = 0;
 
-	ObjectEntry *hashedEntry = NULL;
-	if (NULL == objEntry.objPtr) {
+	bool gcStart = NULL == objEntry.objPtr;
+	if (gcStart) {
 		gcTestEnv->log("No free memory to allocate %s of size 0x%llx, GC start.\n", objName, size);
-		objEntry.objPtr = (omrobjectptr_t)allocationInterface->allocateObject(env, &mm_allocdescription, env->getMemorySpace(), true);
-		env->unwindExclusiveVMAccessForGC();
-		if (NULL == objEntry.objPtr) {
-			gcTestEnv->log(LEVEL_ERROR, "%s:%d No free memory after a GC. Failed to allocate object %s of size 0x%llx.\n", __FILE__, __LINE__, objName, size);
-			goto done;
-		}
-		verboseManager->getWriterChain()->endOfCycle(env);
-	}
-	if (NULL != objEntry.objPtr) {
-		/* set size in header */
-		uintptr_t actualSize = mm_allocdescription.getBytesRequested();
-		memset(objEntry.objPtr, 0, actualSize);
-		extensions->objectModel.setObjectSize(objEntry.objPtr, actualSize);
-		gcTestEnv->log(LEVEL_VERBOSE, "Allocate object name: %s(%p[0x%llx])\n", objEntry.name, objEntry.objPtr, actualSize);
-		hashedEntry = add(&objEntry);
+		objEntry.objPtr = (omrobjectptr_t)allocationInterface->allocateObject(env, &allocDescription, env->getMemorySpace(), true);
 	}
 
-done:
-	return hashedEntry;
+	if (NULL != objEntry.objPtr) {
+		/* set size in header */
+		uintptr_t actualSize = allocDescription.getBytesRequested();
+		memset(objEntry.objPtr, 0, actualSize);
+		extensions->objectModel.setObjectSize(objEntry.objPtr, actualSize);
+		actualSize = extensions->objectModel.getConsumedSizeInBytesWithHeader(objEntry.objPtr);
+		gcTestEnv->log(LEVEL_VERBOSE, "Allocate object name: %s(%p[0x%llx])\n", objEntry.name, objEntry.objPtr, actualSize);
+		add(&objEntry);
+#if defined(OMR_GC_ALLOCATION_TAX)
+		/* pay allocation tax */
+		if (extensions->payAllocationTax && (0 != allocDescription.getAllocationTaxSize())) {
+			if (env->_envLanguageInterface->saveObjects(objEntry.objPtr)) {
+				allocDescription.payAllocationTax(env);
+				env->_envLanguageInterface->restoreObjects(&objEntry.objPtr);
+			}
+		}
+#endif /* OMR_GC_ALLOCATION_TAX */
+	} else {
+		gcTestEnv->log(LEVEL_ERROR, "%s:%d No free memory after a GC. Failed to allocate object %s of size 0x%llx.\n", __FILE__, __LINE__, objName, size);
+	}
+
+	if (gcStart) {
+		verboseManager->getWriterChain()->endOfCycle(env);
+		env->unwindExclusiveVMAccessForGC();
+	}
+
+	ObjectEntry *newObject = find(objName);
+	return newObject;
 }
 
 ObjectEntry *

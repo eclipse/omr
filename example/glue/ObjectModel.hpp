@@ -28,6 +28,7 @@
 #include "objectdescription.h"
 #include "omrgcconsts.h"
 
+#include "Bits.hpp"
 #include "ForwardedHeader.hpp"
 #include "HeapLinkedFreeHeader.hpp"
 
@@ -202,8 +203,7 @@ public:
 	MMINLINE uintptr_t
 	getConsumedSizeInSlotsWithHeader(omrobjectptr_t objectPtr)
 	{
-		Assert_MM_unimplemented();
-		return 0;
+		return MM_Bits::convertBytesToSlots(getConsumedSizeInBytesWithHeader(objectPtr));
 	}
 
 	MMINLINE uintptr_t
@@ -559,30 +559,6 @@ public:
 		uintptr_t age = objectAge << OMR_OBJECT_METADATA_AGE_SHIFT;
 		setFlags(destinationObjectPtr, OMR_OBJECT_METADATA_AGE_MASK, age);
 	}
-
-	MMINLINE bool
-	restoreForwardedObject(MM_ForwardedHeader *forwardedHeader)
-	{
-		if (forwardedHeader->isForwardedPointer()) {
-			omrobjectptr_t originalObject = forwardedHeader->getObject();
-			omrobjectptr_t forwardedObject = forwardedHeader->getForwardedObject();
-
-			/* Restore the original object header from the forwarded object */
-			setObjectSize(originalObject, getSizeInBytesWithHeader(forwardedObject));
-			setFlags(originalObject, OMR_OBJECT_METADATA_FLAGS_MASK, OMR_OBJECT_FLAGS(forwardedObject));
-
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
-			/* Restore destroyed overlapped slot in the original object. This slot might need to be reversed
-			 * as well or it may be already reversed - such fixup will be completed at in a later pass.
-			 */
-			forwardedHeader->restoreDestroyedOverlap();
-#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
-
-			return true;
-		}
-		return false;
-	}
-
 
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 

@@ -19,13 +19,6 @@
 #if !defined(CONCURRENTGCSTATS_HPP_)
 #define CONCURRENTGCSTATS_HPP_
 
-#undef CONCURRENT_EXECUTION_MODE_DEBUG
-	
-#if defined(CONCURRENT_EXECUTION_MODE_DEBUG)
-#include <stdio.h>
-#include <stdlib.h>
-#endif /* CONCURRENT_EXECUTION_MODE_DEBUG */
-
 #include "omrcomp.h"
 #include "omrport.h"
 #include "modronbase.h"
@@ -36,7 +29,7 @@
 
 class MM_EnvironmentBase;
 
-/**
+/*
  * @todo Provide class documentation
  * @ingroup GC_Stats
  */
@@ -88,17 +81,7 @@ public:
 	
 	MMINLINE bool switchExecutionMode(uintptr_t oldMode, uintptr_t newMode)
 	{
-		if (oldMode == MM_AtomicOperations::lockCompareExchange(&_executionMode, oldMode, newMode)) {
-#if defined(CONCURRENT_EXECUTION_MODE_DEBUG)
-			fprintf(stderr, "+++ MM_ConcurrentGCStats::switchExecutionMode: %d -> %d\n", (int) oldMode, (int) newMode);
-#endif /* CONCURRENT_EXECUTION_MODE_DEBUG */
-			return true;
-		} else {
-#if defined(CONCURRENT_EXECUTION_MODE_DEBUG)
-			fprintf(stderr, "--- MM_ConcurrentGCStats::switchExecutionMode: %d -> %d [%d]\n", (int) oldMode, (int) newMode, (int) _executionMode);
-#endif /* CONCURRENT_EXECUTION_MODE_DEBUG */
-			return false;
-		}
+		return oldMode == MM_AtomicOperations::lockCompareExchange(&_executionMode, oldMode, newMode);
 	}
 	
 	MMINLINE uintptr_t  getExecutionModeAtGC() { return _executionModeAtGC; };
