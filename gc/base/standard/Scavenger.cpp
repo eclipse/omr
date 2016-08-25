@@ -2993,7 +2993,7 @@ MM_Scavenger::backOutFixSlotWithoutCompression(volatile omrobjectptr_t *slotPtr)
 			*slotPtr = forwardHeader.getReverseForwardedPointer();
 #if defined(OMR_SCAVENGER_TRACE_BACKOUT)
 			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
-			omrtty_printf("{SCAV: Back out uncompressed slot %p[%p]->%p}\n", objectPtr, *objectPtr, *slotPtr);
+			omrtty_printf("{SCAV: Back out uncompressed slot %p[%p]->%p[%p]}\n", objectPtr, *objectPtr, slotPtr, *slotPtr);
 			Assert_MM_true(isObjectInEvacuateMemory(*slotPtr));
 #endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 			return true;
@@ -3013,7 +3013,9 @@ MM_Scavenger::backOutFixSlot(GC_SlotObject *slotObject)
 		if (forwardHeader.isReverseForwardedPointer()) {
 			omrobjectptr_t fwdObjectPtr = forwardHeader.getReverseForwardedPointer();
 #if defined(OMR_SCAVENGER_TRACE_BACKOUT)
-			Assert_MM_true(isObjectInEvacuateMemory(fwdObjectPtr));
+			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
+			fomrobject_t *slotPtr = slotObject->readAddressFromSlot();
+			omrtty_printf("{SCAV: Back out fix slot %p[%p]->%p}\n", slotPtr, *slotPtr, fwdObjectPtr);
 #endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 			slotObject->writeReferenceToSlot(fwdObjectPtr);
 			return true;
@@ -3069,18 +3071,19 @@ MM_Scavenger::backoutFixupAndReverseForwardPointersInSurvivor(MM_EnvironmentStan
 			while((objectPtr = evacuateHeapIterator.nextObjectNoAdvance()) != NULL) {
 				MM_ForwardedHeader header(objectPtr, OMR_OBJECT_METADATA_SLOT_OFFSET);
 				if (header.isForwardedPointer()) {
-					omrobjectptr_t fwdObjectPtr = header.getForwardedObject();
-					omrobjectptr_t objectPtr = header.getObject();
+					omrobjectptr_t forwardedObject = header.getForwardedObject();
+					omrobjectptr_t originalObject = header.getObject();
 					_cli->scavenger_reverseForwardedObject(env, &header);
 					/* A reverse forwarded object is a hole whose 'next' pointer actually points at the original object.
 					 * This keeps tenure space walkable once the reverse forwarded objects are abandoned.
 					 */
-					UDATA evacuateObjectSizeInBytes = _extensions->objectModel.getConsumedSizeInBytesWithHeader(fwdObjectPtr);
-					MM_HeapLinkedFreeHeader* freeHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(fwdObjectPtr);
-					freeHeader->setNext((MM_HeapLinkedFreeHeader*)objectPtr);
+					UDATA evacuateObjectSizeInBytes = _extensions->objectModel.getConsumedSizeInBytesWithHeader(forwardedObject);
+					MM_HeapLinkedFreeHeader* freeHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(forwardedObject);
+					freeHeader->setNext((MM_HeapLinkedFreeHeader*)originalObject);
 					freeHeader->setSize(evacuateObjectSizeInBytes);
 #if defined(OMR_SCAVENGER_TRACE_BACKOUT)
-					omrtty_printf("{SCAV: Back out forward pointer %p[%p]@%p -> %p[%p]}\n", objectPtr, *objectPtr, fwdObjectPtr, freeHeader->getNext(), freeHeader->getSize());
+					omrtty_printf("{SCAV: Back out forward pointer %p[%p]@%p -> %p[%p]}\n", objectPtr, *objectPtr, forwardedObject, freeHeader->getNext(), freeHeader->getSize());
+					Assert_MM_true(objectPtr == originalObject);
 #endif /* OMR_SCAVENGER_TRACE_BACKOUT */
 				}
 			}

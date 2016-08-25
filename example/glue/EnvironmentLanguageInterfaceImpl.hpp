@@ -77,12 +77,12 @@ public:
 	{
 		OMR_VM *omrVM = _env->getOmrVM();
 		OMR_VM_Example *exampleVM = (OMR_VM_Example *)omrVM->_language_vm;
+
+		/* unconditionally acquire exclusive VM access by locking the VM thread list mutex */
 		MM_AtomicOperations::add(&exampleVM->_vmExclusiveAccessCount, 1);
 		MM_AtomicOperations::readBarrier();
 		omrthread_rwmutex_enter_write(exampleVM->_vmAccessMutex);
 		omrthread_monitor_enter(omrVM->_vmThreadListMutex);
-		Assert_MM_true(0 == _omrThread->exclusiveCount);
-		_omrThread->exclusiveCount = 1;
 	}
 
 	/**
@@ -99,17 +99,20 @@ public:
 	{
 		OMR_VM *omrVM = _env->getOmrVM();
 		OMR_VM_Example *exampleVM = (OMR_VM_Example *)omrVM->_language_vm;
-		MM_AtomicOperations::add(&exampleVM->_vmExclusiveAccessCount, 1);
+
+		/* try to acquire exclusive VM access by locking the VM thread list mutex */
+		uintptr_t vmExclusiveAccessCount = MM_AtomicOperations::add(&exampleVM->_vmExclusiveAccessCount, 1);
 		MM_AtomicOperations::readBarrier();
-		if ((1 == exampleVM->_vmExclusiveAccessCount) && (0 == omrthread_rwmutex_try_enter_write(exampleVM->_vmAccessMutex))) {
+		if ((1 == vmExclusiveAccessCount) && (0 == omrthread_rwmutex_try_enter_write(exampleVM->_vmAccessMutex))) {
 			omrthread_monitor_enter(omrVM->_vmThreadListMutex);
-			Assert_MM_true(0 == _omrThread->exclusiveCount);
-			_omrThread->exclusiveCount = 1;
-		} else {
-			MM_AtomicOperations::subtract(&exampleVM->_vmExclusiveAccessCount, 1);
-			MM_AtomicOperations::readBarrier();
+			return true;
 		}
-		return 0 != _omrThread->exclusiveCount;
+
+		/* failed to acquire exclusive VM access */
+		Assert_MM_true(0 < exampleVM->_vmExclusiveAccessCount);
+		MM_AtomicOperations::subtract(&exampleVM->_vmExclusiveAccessCount, 1);
+		MM_AtomicOperations::readBarrier();
+		return false;
 	}
 
 	/**
@@ -121,17 +124,22 @@ public:
 		OMR_VM_Example *exampleVM = (OMR_VM_Example *)_env->getOmrVM()->_language_vm;
 		omrthread_monitor_exit(_env->getOmrVM()->_vmThreadListMutex);
 		omrthread_rwmutex_exit_write(exampleVM->_vmAccessMutex);
+		Assert_MM_true(0 < exampleVM->_vmExclusiveAccessCount);
 		MM_AtomicOperations::subtract(&exampleVM->_vmExclusiveAccessCount, 1);
 		MM_AtomicOperations::readBarrier();
-		Assert_MM_true(1 == _omrThread->exclusiveCount);
-		_omrThread->exclusiveCount = 0;
 	}
 
 	virtual bool
 	isExclusiveAccessRequestWaiting()
 	{
 		OMR_VM_Example *exampleVM = (OMR_VM_Example *)_env->getOmrVM()->_language_vm;
-		return (0 < exampleVM->_vmExclusiveAccessCount) || omrthread_rwmutex_is_writelocked(exampleVM->_vmAccessMutex);
+		if ((0 < exampleVM->_vmExclusiveAccessCount) || omrthread_rwmutex_is_writelocked(exampleVM->_vmAccessMutex)) {
+			return true;
+		}
+		if (NULL != _env->getExtensions()->gcExclusiveAccessThreadId) {
+			return true;
+		}
+		return false;
 	}
 
 #if defined (OMR_GC_THREAD_LOCAL_HEAP)

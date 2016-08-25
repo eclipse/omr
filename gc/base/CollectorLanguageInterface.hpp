@@ -59,6 +59,8 @@ protected:
 public:
 
 private:
+	MMINLINE void generationalWriteBarrierStore(MM_EnvironmentStandard* env, omrobjectptr_t parentObject, omrobjectptr_t childObject);
+	MMINLINE void concurrentWriteBarrierStore(MM_EnvironmentBase* env, omrobjectptr_t parentObject);
 protected:
 public:
 
@@ -544,9 +546,19 @@ public:
 	 * to effect the assignment of a child reference to a parent slot.
 	 *
 	 * To support OMR concurrent marking and/or generational collectors, this method also
-	 * implements the necessary concurrent and generational write barriers.
+	 * calls the necessary concurrent and generational write barriers.
 	 */
 	void writeBarrierStore(OMR_VMThread *omrThread, omrobjectptr_t parentObject, fomrobject_t *parentSlot, omrobjectptr_t childObject);
+
+	/**
+	 * This method calls the concurrent and generational write barriers without effecting the assignment
+	 * of child to parent slot. Use this method in cases where the assignment has been effected by another
+	 * agent.
+	 *
+	 * To support OMR concurrent marking and/or generational collectors, this method calls the necessary
+	 * concurrent and generational write barriers.
+	 */
+	void writeBarrierUpdate(OMR_VMThread *omrThread, omrobjectptr_t parentObject, omrobjectptr_t childObject);
 
 	MM_CollectorLanguageInterface()
 		: MM_BaseVirtual()
