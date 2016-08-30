@@ -25,5 +25,6 @@ CONFIGURE_ARGS += \
   --enable-fvtest \
   --enable-OMR_GC_SEGREGATED_HEAP \
   --enable-OMR_GC_MODRON_SCAVENGER \
+  --enable-OMR_GC_MODRON_CONCURRENT_MARK \
   --enable-OMR_THR_CUSTOM_SPIN_OPTIONS \
   --enable-OMR_NOTIFY_POLICY_CONTROL

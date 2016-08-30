@@ -38,9 +38,9 @@ extern "C" {
 
 /* Runtime API */
 
-omrobjectptr_t OMR_GC_Allocate(OMR_VMThread * omrVMThread, size_t sizeInBytes, uintptr_t flags);
+omrobjectptr_t OMR_GC_Allocate(OMR_VMThread * omrVMThread, uintptr_t sizeInBytes, uintptr_t flags);
 
-omrobjectptr_t OMR_GC_AllocateNoGC(OMR_VMThread * omrVMThread, size_t sizeInBytes, uintptr_t flags);
+omrobjectptr_t OMR_GC_AllocateNoGC(OMR_VMThread * omrVMThread, uintptr_t sizeInBytes, uintptr_t flags);
 
 omr_error_t OMR_GC_SystemCollect(OMR_VMThread* omrVMThread, uint32_t gcCode);
 

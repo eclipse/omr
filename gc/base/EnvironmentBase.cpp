@@ -28,6 +28,7 @@
 
 #include "AllocateDescription.hpp"
 #include "Collector.hpp"
+#include "ConcurrentGCStats.hpp"
 #include "EnvironmentLanguageInterface.hpp"
 #include "GCExtensionsBase.hpp"
 #include "GlobalAllocationManager.hpp"
@@ -342,37 +343,34 @@ MM_EnvironmentBase::releaseVMAccess()
 bool
 MM_EnvironmentBase::tryAcquireExclusiveVMAccess()
 {
-	if(0 == _exclusiveCount) {
-		bool result = _envLanguageInterface->tryAcquireExclusiveVMAccess();
-
-		/* Check if we won the exclusive access race..return if we lost */
-		if(!result) {
+	if (0 == _omrVMThread->exclusiveCount) {
+		if (_envLanguageInterface->tryAcquireExclusiveVMAccess()) {
+			/* Report exclusive access time if we won race */
+			reportExclusiveAccessAcquire();
+		} else {
 			return false;
 		}
-
-		/* Report exclusive access time if we won race */
-		reportExclusiveAccessAcquire();
 	}
-
-	_exclusiveCount += 1;
+	_omrVMThread->exclusiveCount += 1;
 	return true;
 }
 
 void
 MM_EnvironmentBase::acquireExclusiveVMAccess()
 {
-	if (0 == _exclusiveCount) {
+	if (0 == _omrVMThread->exclusiveCount) {
 		_envLanguageInterface->acquireExclusiveVMAccess();
 		reportExclusiveAccessAcquire();
 	}
-	_exclusiveCount++;
+	_omrVMThread->exclusiveCount += 1;
 }
 
 void
 MM_EnvironmentBase::releaseExclusiveVMAccess()
 {
-	_exclusiveCount--;
-	if (0 == _exclusiveCount) {
+	Assert_MM_true(0 < _omrVMThread->exclusiveCount);
+	_omrVMThread->exclusiveCount -= 1;
+	if (0 == _omrVMThread->exclusiveCount) {
 		reportExclusiveAccessRelease();
 		_envLanguageInterface->releaseExclusiveVMAccess();
 	}
@@ -511,10 +509,10 @@ MM_EnvironmentBase::releaseExclusiveVMAccessForGC()
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 
 	Assert_MM_true(extensions->gcExclusiveAccessThreadId == _omrVMThread);
-	Assert_MM_true(0 != _exclusiveCount);
+	Assert_MM_true(0 != _omrVMThread->exclusiveCount);
 
-	_exclusiveCount -= 1;
-	if(0 == _exclusiveCount) {
+	_omrVMThread->exclusiveCount -= 1;
+	if(0 == _omrVMThread->exclusiveCount) {
 		omrthread_monitor_enter(extensions->gcExclusiveAccessMutex);
 		extensions->gcExclusiveAccessThreadId = NULL;
 		omrthread_monitor_notify_all(extensions->gcExclusiveAccessMutex);
@@ -531,10 +529,10 @@ MM_EnvironmentBase::unwindExclusiveVMAccessForGC()
 {
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 
-	if(_exclusiveCount > 0) {
+	if(_omrVMThread->exclusiveCount > 0) {
 		Assert_MM_true(extensions->gcExclusiveAccessThreadId == _omrVMThread);
 
-		_exclusiveCount = 0;
+		_omrVMThread->exclusiveCount = 0;
 
 		omrthread_monitor_enter(extensions->gcExclusiveAccessMutex);
 		extensions->gcExclusiveAccessThreadId = NULL;
@@ -608,10 +606,10 @@ MM_EnvironmentBase::releaseExclusiveForConcurrentKickoff()
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 
 	Assert_MM_true(extensions->gcExclusiveAccessThreadId ==_omrVMThread );
-	Assert_MM_true(0 != _exclusiveCount);
+	Assert_MM_true(0 != _omrVMThread->exclusiveCount);
 
-	_exclusiveCount -= 1;
-	if (0 == _exclusiveCount) {
+	_omrVMThread->exclusiveCount -= 1;
+	if (0 == _omrVMThread->exclusiveCount) {
 		omrthread_monitor_enter(extensions->gcExclusiveAccessMutex);
 		extensions->gcExclusiveAccessThreadId = NULL;
 		omrthread_monitor_notify_all(extensions->gcExclusiveAccessMutex);

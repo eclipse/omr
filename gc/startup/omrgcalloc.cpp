@@ -33,7 +33,7 @@
 #include "omrgcstartup.hpp"
 
 omrobjectptr_t static inline
-allocHelper(OMR_VMThread * omrVMThread, size_t sizeInBytes, uintptr_t flags, bool collectOnFailure)
+allocHelper(OMR_VMThread * omrVMThread, uintptr_t sizeInBytes, uintptr_t flags, bool collectOnFailure)
 {
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVMThread->_vm);
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(omrVMThread);
@@ -60,17 +60,30 @@ allocHelper(OMR_VMThread * omrVMThread, size_t sizeInBytes, uintptr_t flags, boo
 
 	omrobjectptr_t heapBytes = (omrobjectptr_t)env->_objectAllocationInterface->allocateObject(env, &allocdescription, env->getMemorySpace(), collectOnFailure);
 
-	/* OMRTODO: Should we use zero TLH instead of memset? */
 	if (NULL != heapBytes) {
 		if (J9_ARE_ALL_BITS_SET(flags, OMR_GC_ALLOCATE_ZERO_MEMORY)) {
-			uintptr_t size = allocdescription.getBytesRequested();
-			memset(heapBytes, 0, size);
+			memset(heapBytes, 0, allocdescription.getBytesRequested());
 		}
+		/* TODO: Provide a generic object initialization model interface to be implemented for each language context. */
+#if defined(OMR_EXAMPLE)
+		extensions->objectModel.initializeObject(heapBytes, allocdescription.getBytesRequested());
+#endif /* defined(OMR_EXAMPLE) */
+#if defined(OMR_GC_ALLOCATION_TAX)
+		if (extensions->payAllocationTax && (0 != allocdescription.getAllocationTaxSize())) {
+			/* pay allocation tax */
+			if (env->_envLanguageInterface->saveObjects(heapBytes)) {
+				allocdescription.payAllocationTax(env);
+				env->_envLanguageInterface->restoreObjects(&heapBytes);
+			}
+		}
+#endif /* OMR_GC_ALLOCATION_TAX */
 	}
 
 	allocdescription.setAllocationSucceeded(NULL != heapBytes);
 	/* Issue Allocation Failure Report if required */
 	env->allocationFailureEndReportIfRequired(&allocdescription);
+
+	/* TODO Initialize object header */
 
 	if (collectOnFailure) {
 		/* Done allocation - successful or not */
@@ -92,7 +105,7 @@ allocHelper(OMR_VMThread * omrVMThread, size_t sizeInBytes, uintptr_t flags, boo
 }
 
 omrobjectptr_t
-OMR_GC_Allocate(OMR_VMThread * omrVMThread, size_t sizeInBytes, uintptr_t flags)
+OMR_GC_Allocate(OMR_VMThread * omrVMThread, uintptr_t sizeInBytes, uintptr_t flags)
 {
 	omrobjectptr_t heapBytes = allocHelper(omrVMThread, sizeInBytes, flags, true);
 	if (NULL == heapBytes) {
@@ -108,7 +121,7 @@ OMR_GC_Allocate(OMR_VMThread * omrVMThread, size_t sizeInBytes, uintptr_t flags)
 }
 
 omrobjectptr_t
-OMR_GC_AllocateNoGC(OMR_VMThread * omrVMThread, size_t sizeInBytes, uintptr_t flags)
+OMR_GC_AllocateNoGC(OMR_VMThread * omrVMThread, uintptr_t sizeInBytes, uintptr_t flags)
 {
 	return allocHelper(omrVMThread, sizeInBytes, flags, false);
 }
