@@ -26,9 +26,9 @@ namespace OMR
       #define OPTIMIZATION(name) name,
       #define OPTIMIZATION_ENUM_ONLY(entry) entry,
       #include "optimizer/Optimizations.enum"
-      numOpts,
+      OPTIMIZATION_ENUM_ONLY(numOpts)  // after all project-specific optimization enums
       #include "optimizer/OptimizationGroups.enum"
-      numGroups
+      OPTIMIZATION_ENUM_ONLY(numGroups)  // after all project-specific optimization group enums
       #undef OPTIMIZATION
       #undef OPTIMIZATION_ENUM_ONLY
       };
