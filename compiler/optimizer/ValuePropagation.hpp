@@ -1064,6 +1064,19 @@ class TR_GlobalValuePropagation : public TR_ValuePropagation
 
    };
 
+/*
+ * Class TR_LocalValuePropagation
+ * ==============================
+ *
+ * Constant, type and relational propagation within a block. Propagates constants 
+ * and types based on assignments and performs removal of subsumed checks and 
+ * compares. Also performs devirtualization of calls, checkcast and array store 
+ * check elimination.  Does not do value numbering, instead works on the 
+ * assumption that every expression has a unique value number (improved 
+ * effectiveness if expressions having same value are commoned by a prior 
+ * local CSE pass).  
+ */
+
 class TR_LocalValuePropagation : public TR_ValuePropagation
    {
    public:
