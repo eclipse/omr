@@ -907,7 +907,9 @@ static const char * optimizer_name[] =
    #define OPTIMIZATION(name) #name,
    #define OPTIMIZATION_ENUM_ONLY(entry) "****",
       #include "optimizer/Optimizations.enum"
+      OPTIMIZATION_ENUM_ONLY(numOpts)
       #include "optimizer/OptimizationGroups.enum"
+      OPTIMIZATION_ENUM_ONLY(numGroups)
    #undef OPTIMIZATION
    #undef OPTIMIZATION_ENUM_ONLY
     };
