@@ -31,6 +31,8 @@ namespace OMR { typedef OMR::TreeEvaluator TreeEvaluatorConnector; }
 #include <stddef.h>     // for NULL
 #include <stdint.h>     // for int32_t, etc
 #include "il/Node.hpp"  // for vcount_t
+#include "il/SymbolReference.hpp"
+#include "env/CompilerEnv.hpp"   // for TR::Compiler
 
 class TR_OpaqueClassBlock;
 namespace TR { class SymbolReference; }
@@ -67,6 +69,30 @@ class TreeEvaluator
    static bool nodeIsLSubOverflowCheck(TR::Node *node, TR_ArithmeticOverflowCheckNodes *u);
    static void evaluateNodesWithFutureUses(TR::Node *node, TR::CodeGenerator *cg);
    static void initializeStrictlyFutureUseCounts(TR::Node *node, vcount_t visitCount, TR::CodeGenerator *cg);
+
+   /**
+   * Checks whether memory barriers must be created for a given memory read operation.
+   *
+   * On SMP, memory barriers are need to avoid potential race conditions when reading
+   * from a volatile variable.
+   */
+   static bool isReadMemoryBarrierNeeded(TR::Node* node) {
+      return TR::Compiler->target.isSMP() && node->getSymbolReference()->getSymbol()->isSyncVolatile();
+   }
+
+   /**
+    * Checks whether memory barriers must be created for a given memory write operation.
+    *
+    * On SMP, memory barriers are need to avoid potential race conditions when writing
+    * to a volatile variable. They are also needed when a write operation is sensitive
+    * to re-ordering with other non-volatile memory operations. This is the case when
+    * atomically reading from a so called "shadow" symbols, which is an indirect memory
+    * references (e.g. de-referencing an array element by index).
+    */
+   static bool isWriteMemoryBarrierNeeded(TR::Node* node) {
+      auto symbol = node->getSymbolReference()->getSymbol();
+      return TR::Compiler->target.isSMP() && (symbol->isSyncVolatile() || (symbol->isShadow() && symbol->isOrdered()));
+   }
 
    protected:
    static bool isStaticClassSymRef(TR::SymbolReference * symRef);
