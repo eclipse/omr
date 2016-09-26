@@ -109,6 +109,21 @@ class TR_StoreTreeInfo
    bool                       _isAddition;
    };
 
+
+/*
+ * Class TR_LoopStrider
+ * ====================
+ *
+ * Loop strider optimization creates derived induction variables 
+ * (e.g. the address calculation for array accesses &a[i]) and 
+ * increment/decrement the derived induction variables by the appropriate 
+ * stride through every iteration of the loop. This can replace complex 
+ * array address calculations inside the loop with a load (from register 
+ * or memory). Note that we also create derived induction variables for 
+ * non-internal pointers (like 4*i or 4*i+16) in cases when it is not 
+ * possible to create internal pointers (e.g. a+4*i+16).
+ */
+
 class TR_LoopStrider : public TR_LoopTransformer
    {
    public:

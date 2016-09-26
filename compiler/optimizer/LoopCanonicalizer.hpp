@@ -203,6 +203,15 @@ class TR_LoopTransformer : public TR::Optimization
    };
 
 
+/*
+ * Class TR_LoopCanonicalizer
+ * ==========================
+ *
+ * Loop canonicalizer optimization transforms a while loop into 
+ * an if-guarded do-while loop with a loop invariant (pre-header) 
+ * block. The loop test is placed at the end of the trees for the 
+ * loop, so that the loop back-edge is almost always a backwards branch.
+ */
 
 class TR_LoopCanonicalizer : public TR_LoopTransformer
    {
@@ -252,6 +261,20 @@ class TR_LoopCanonicalizer : public TR_LoopTransformer
    int64_t _derivedIncr;
    };
 
+
+/*
+ * Class TR_LoopInverter
+ * =====================
+ *
+ * Loop inverter optimization converts a loop in which the induction 
+ * variable counts up from zero into one in which the induction variable 
+ * counts down to zero. Note that this is legal only if the inversion of 
+ * the loop does not affect program semantics inside the loop (order of 
+ * exceptions thrown, etc.). The benefit of inversion is that there are, 
+ * in general, instructions that can perform compare/branch against zero 
+ * in an efficient manner, and in some cases (e.g. PowerPC) special count 
+ * registers can be used for counting.
+ */
 
 class TR_LoopInverter : public TR_LoopTransformer
    {

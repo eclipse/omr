@@ -316,6 +316,26 @@ private:
    TR::Node * _termCharNode;
    };
 
+
+/*
+ * Class TR_LoopReducer
+ * ====================
+ *
+ * Loop reduction optimization can reduce loops that match a particular 
+ * pattern to a tree consisting of a helper-method call-out, taking a series 
+ * of parameters. To date, loop reduction pattern matching catches 
+ * array-compare, array-init, array-translate, and array-copy loops. 
+ * array-init and array-translate are very close to loops one would code 
+ * for the ANSI C functions memcmp() and memset(). codegen support is required 
+ * for each platform wanting to exploit array-compare, array-init, and 
+ * array-translate nodes and is similar to array-copy. Only S/390 supports 
+ * code generation for array-init, array-compare, array-translate nodes. 
+ * array-copy reductions are done for all platforms that support primitive 
+ * array-copy (which is currently all platforms). At present, there should 
+ * not be issues for enabling S390 only nodes on other platfforms, other 
+ * than writing the codegen support for the new nodes.
+ */
+
 class TR_LoopReducer : public TR_LoopTransformer
    {
 public:
