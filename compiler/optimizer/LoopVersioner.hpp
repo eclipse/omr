@@ -131,6 +131,26 @@ struct LoopTemps : public TR_Link<LoopTemps>
    };
 
 
+/*
+ * Class TR_LoopVersioner
+ * ======================
+ *
+ * Loop versioner optimization eliminates loop invariant null checks, 
+ * bound checks, div checks, checkcasts and inline guards (where 
+ * the "this" pointer does not change in the loop) from loops by 
+ * placing equivalent tests outside the loop. Also eliminates bound 
+ * checks where the range of values of the index inside the loop is 
+ * discovered (must be compile-time constant) and checks are inserted 
+ * outside the loop that ensure that no bound checks fail inside the loop. 
+ * This analysis uses induction variable information found by value 
+ * propagation. 
+ * 
+ * Another versioning test that is emitted ensures the loop will not 
+ * run for a very long period of time (in which case the async check 
+ * inside the loop can be removed). This special versioning test depends 
+ * on the number of trees (code) inside the loop.
+ */
+
 class TR_LoopVersioner : public TR_LoopTransformer
    {
    public:
@@ -262,6 +282,18 @@ class TR_LoopVersioner : public TR_LoopTransformer
    TR_PostDominators *_postDominators;
    bool _loopTransferDone;
    };
+
+
+/*
+ * Class TR_LoopSpecializer
+ * ========================
+ *
+ * Loop specializer optimization replaces loop-invariant expressions 
+ * that are profiled and found to be constants, by the constant value 
+ * after inserting a test outside the loop that compares the value to 
+ * the constant. Note that this cannot be done in the the absence of 
+ * value profiling infrastructure.
+ */
 
 class TR_LoopSpecializer : public TR_LoopVersioner
    {

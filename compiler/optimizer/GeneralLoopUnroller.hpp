@@ -275,8 +275,29 @@ class TR_LoopUnroller
    friend class TR_SPMDKernelParallelizer;
    };
 
-class LoopWeightProbe;
 
+/*
+ * Class TR_GeneralLoopUnroller
+ * ============================
+ *
+ * General loop unroller optimization can unroll or peel a majority of 
+ * loops with or without the loop driving tests done after each iteration 
+ * (loop) body. Usually a peel is inserted before the unrolled loop, and 
+ * the residual iterations to be done (at most u - 1 residual iterations 
+ * where u is the unroll factor) are also done using the peeled code. 
+ * Peeling aids PRE as code does not have to be moved; instead dominated 
+ * expressions can be commoned (which is far easier than code motion 
+ * due to problems introduced by exception checks in Java).
+ *
+ * Async checks (yield points) are eliminated from u - 1 unrolled bodies 
+ * and only one remains.
+ * 
+ * Unroll factors and code growth thresholds are arrived at based on 
+ * profiling information when available. This analysis uses induction 
+ * variable information found by value propagation.
+ */
+
+class LoopWeightProbe;
 class TR_GeneralLoopUnroller : public TR_LoopTransformer
    {
    public:
