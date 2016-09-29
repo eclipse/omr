@@ -28,13 +28,13 @@
 
 #include "omrcfg.h"
 #include "omrcomp.h"
-#include "omrmodroncore.h"
-#include "mmomrhook.h"
-#include "mmomrhook_internal.h"
+#include "omr/gc/modronCore.h"
+#include "omr/gc/mmomrhook.h"
+#include "omr/gc/mmomrhook_internal.h"
 #include "modronapicore.hpp"
 #include "modronbase.h"
 #include "modronopt.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "omr.h"
 #include "thread_api.h"
 

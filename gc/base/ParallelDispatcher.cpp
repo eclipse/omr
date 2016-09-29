@@ -24,7 +24,7 @@
 
 #include "omrcfg.h"
 #include "omr.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "ut_j9mm.h"
 
 #include "CollectorLanguageInterfaceImpl.hpp"

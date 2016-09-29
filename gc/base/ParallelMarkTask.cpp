@@ -18,7 +18,7 @@
 
 
 #include "omrcfg.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 #include "omrport.h"
 #include "modronopt.h"
 #include "ut_j9mm.h"

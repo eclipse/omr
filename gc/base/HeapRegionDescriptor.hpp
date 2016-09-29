@@ -21,7 +21,7 @@
 
 #include "omrcfg.h"
 #include "omrcomp.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "j9nongenerated.h"
 
 #include "BaseVirtual.hpp"

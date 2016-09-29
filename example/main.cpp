@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "omrport.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 /* OMR Imports */
 #include "AllocateDescription.hpp"
 #include "CollectorLanguageInterfaceImpl.hpp"

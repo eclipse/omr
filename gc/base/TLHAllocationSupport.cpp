@@ -27,7 +27,7 @@
 
 #include "TLHAllocationSupport.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "objectdescription.h"
 #include "omrutil.h"
 

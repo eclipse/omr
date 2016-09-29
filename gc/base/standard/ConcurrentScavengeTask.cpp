@@ -13,7 +13,7 @@
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "EnvironmentStandard.hpp"
 #include "Scavenger.hpp"

@@ -17,7 +17,7 @@
  ******************************************************************************/
 
 #include "omrcfg.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "MemoryPoolBumpPointer.hpp"
 

@@ -16,8 +16,8 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  *******************************************************************************/
 
-#if !defined(MODRONASSERTIONS_H__)
-#define MODRONASSERTIONS_H__
+#if !defined(OMR_GC_MODRONASSERTIONS_H__)
+#define OMR_GC_MODRONASSERTIONS_H__
 
 /*
  * @ddr_namespace: default
@@ -144,4 +144,4 @@ do {																																	\
 } /* extern "C" { */
 #endif /* __cplusplus */
 
-#endif /* MODRONASSERTIONS_H__ */
+#endif /* OMR_GC_MODRONASSERTIONS_H__ */

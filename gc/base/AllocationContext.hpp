@@ -30,7 +30,7 @@
 #include "BaseVirtual.hpp"
 #include "MemorySubSpace.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 class MM_EnvironmentBase;
 class MM_AllocateDescription;

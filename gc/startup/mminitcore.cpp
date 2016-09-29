@@ -21,7 +21,7 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "ObjectAllocationInterface.hpp"
 
 /* OMRTODO temporary workaround to allow both ut_j9mm.h and ut_omrmm.h to be included.

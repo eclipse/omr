@@ -33,7 +33,7 @@
 #include "MarkMap.hpp"
 #include "MemoryPoolAddressOrderedListBase.hpp"
 #include "SweepPoolManagerAddressOrderedListBase.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 /**
  * Initialize any internal structures.

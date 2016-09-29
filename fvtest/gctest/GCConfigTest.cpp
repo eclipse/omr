@@ -21,7 +21,7 @@
 #include "GCConfigTest.hpp"
 #include "ObjectModel.hpp"
 #include "omrExampleVM.hpp"
-#include "omrgc.h"
+#include "omr/gc/core.h"
 #include "SlotObject.hpp"
 #include "VerboseWriterChain.hpp"
 

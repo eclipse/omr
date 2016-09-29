@@ -33,7 +33,7 @@
 #include "Dispatcher.hpp"
 #include "Task.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 bool
 MM_CardTable::initialize(MM_EnvironmentBase *env, MM_Heap *heap)

@@ -25,7 +25,7 @@
 #include "BaseVirtual.hpp"
 #include "HeapRegionDescriptor.hpp"
 #include "LightweightNonReentrantReaderWriterLock.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 class MM_EnvironmentBase;
 class MM_HeapRegionManager;

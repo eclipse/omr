@@ -28,7 +28,7 @@
 #include "omrcomp.h"
 
 #include "Base.hpp"
-#include "RootScannerTypes.h"
+#include "omr/gc/rootScannerTypes.h"
 
 class MM_RootScannerStats : public MM_Base
 {

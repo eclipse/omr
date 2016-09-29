@@ -18,7 +18,7 @@
 
 #include "omrcomp.h"
 #include "sizeclasses.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "EnvironmentBase.hpp"
 #include "FreeHeapRegionList.hpp"

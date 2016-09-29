@@ -25,7 +25,7 @@
 #define HEAPMAPWORDITERATOR_HPP_
 
 #include "omrcfg.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "Bits.hpp"
 #include "HeapMap.hpp"

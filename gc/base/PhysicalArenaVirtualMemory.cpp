@@ -26,7 +26,7 @@
 #include "HeapVirtualMemory.hpp"
 #include "MemoryManager.hpp"
 #include "MemorySpace.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "PhysicalSubArenaVirtualMemory.hpp"
 
 /**

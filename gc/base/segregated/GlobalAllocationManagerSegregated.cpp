@@ -17,7 +17,7 @@
  *******************************************************************************/
 
 #include "omrport.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "AllocationContextSegregated.hpp"
 #include "EnvironmentBase.hpp"

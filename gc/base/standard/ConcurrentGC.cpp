@@ -30,7 +30,7 @@
 #include "mmprivatehook.h"
 #include "modronbase.h"
 #include "modronopt.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "omr.h"
 
 #include <string.h>

@@ -19,7 +19,7 @@
 
 #include "MemoryManager.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "GCExtensionsBase.hpp"
 #include "NonVirtualMemory.hpp"
 

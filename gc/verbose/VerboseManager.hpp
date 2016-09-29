@@ -20,7 +20,7 @@
 #define VERBOSEMANAGER_HPP_
 
 #include "omrcfg.h"
-#include "mmhook_common.h"
+#include "omr/gc/mmhook_common.h"
 
 #include "VerboseManagerBase.hpp"
 #include "VerboseWriter.hpp"

@@ -25,7 +25,7 @@
 #define CONCURRENTFINALCLEANCARDSTASK_HPP_
 
 #include "omrcfg.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 
 #include "CycleState.hpp"
 #include "ParallelTask.hpp"

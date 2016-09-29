@@ -25,7 +25,7 @@
 #define TASK_HPP_
 
 #include "omrcomp.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 #include "omrthread.h"
 
 #include "AtomicOperations.hpp"

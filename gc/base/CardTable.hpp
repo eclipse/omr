@@ -26,7 +26,7 @@
 #define CARDTABLE_HPP_
 
 #include "omrcfg.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 #include "modronbase.h"
 #if defined (OMR_GC_HEAP_CARD_TABLE)
 

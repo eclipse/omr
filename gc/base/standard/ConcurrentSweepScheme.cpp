@@ -17,9 +17,9 @@
  *******************************************************************************/
 
 #include "omrcfg.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 #include "omrthread.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #if defined(OMR_GC_CONCURRENT_SWEEP)
 

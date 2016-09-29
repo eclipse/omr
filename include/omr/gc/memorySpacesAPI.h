@@ -21,8 +21,8 @@
  * @ingroup GC_Include
  */
 
-#if !defined(MEMORYSPACESAPI_H_)
-#define MEMORYSPACESAPI_H_
+#if !defined(OMR_GC_MEMORYSPACESAPI_H_)
+#define OMR_GC_MEMORYSPACESAPI_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -77,4 +77,4 @@ extern "C" {
 } /* extern "C" { */
 #endif /* __cplusplus */
 
-#endif /* MEMORYSPACESAPI_H_ */
+#endif /* OMR_GC_MEMORYSPACESAPI_H_ */

@@ -21,7 +21,7 @@
 #include "GCExtensionsBase.hpp"
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 /**
  * Create and return a new instance of MM_SegregatedAllocationInterface.

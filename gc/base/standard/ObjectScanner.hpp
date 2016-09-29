@@ -19,7 +19,7 @@
 #if !defined(OBJECTSCANNER_HPP_)
 #define OBJECTSCANNER_HPP_
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "objectdescription.h"
 
 #include "BaseVirtual.hpp"

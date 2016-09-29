@@ -16,8 +16,8 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  *******************************************************************************/
 
-#ifndef OMRMODRONCORE_H_
-#define OMRMODRONCORE_H_
+#if !defined(OMR_GC_MODRON_CORE_H_)
+#define OMR_GC_MODRON_CORE_H_
 
 /*
  * @ddr_namespace: map_to_type=J9ModroncoreConstants
@@ -105,4 +105,4 @@ enum {
  * @}
  */
 
-#endif /* OMRMODRONCORE_H_ */
+#endif /* OMR_GC_MODRONCORE_H_ */

@@ -19,7 +19,7 @@
 #if !defined(VERBOSEMANAGEREXAMPLE_HPP_)
 #define VERBOSEMANAGEREXAMPLE_HPP_
 
-#include "mmhook_common.h"
+#include "omr/gc/mmhook_common.h"
 
 #include "VerboseManager.hpp"
 #include "VerboseWriter.hpp"

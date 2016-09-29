@@ -24,7 +24,7 @@
 #if !defined(COMPACTFIXHEAPFORWALKTASK_HPP_)
 #define COMPACTFIXHEAPFORWALKTASK_HPP_
 
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 
 #include "ParallelTask.hpp"
 

@@ -28,9 +28,9 @@
 #include "HeapRegionManager.hpp"
 #include "HeapStats.hpp"
 #include "MemorySpace.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
-#include "mmhook_common.h"
+#include "omr/gc/mmhook_common.h"
 
 /****************************************
  * Initialization

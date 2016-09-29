@@ -22,7 +22,7 @@
  */
 
 #include "omrcfg.h"
-#include "MemorySpacesAPI.h"
+#include "omr/gc/memorySpacesAPI.h"
 
 #if defined(OMR_GC_MODRON_STANDARD)
 

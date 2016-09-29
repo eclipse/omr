@@ -28,7 +28,7 @@
 
 #include "EnvironmentBase.hpp"
 #include "Forge.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "NUMAManager.hpp"
 
 void

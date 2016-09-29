@@ -24,7 +24,7 @@
 #include "BaseVirtual.hpp"
 #include "EnvironmentBase.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "objectdescription.h"
 #include "omr.h"
 #include "omrvm.h"

@@ -26,7 +26,7 @@
 #include "GlobalCollector.hpp"
 #include "HeapRegionManager.hpp"
 #include "HeapVirtualMemory.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "PhysicalArena.hpp"
 #include "PhysicalArenaVirtualMemory.hpp"
 

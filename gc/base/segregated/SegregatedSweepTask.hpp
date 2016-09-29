@@ -19,7 +19,7 @@
 #if !defined(SEGREGATEDSWEEPTASK_HPP_)
 #define SEGREGATEDSWEEPTASK_HPP_
 
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 
 #include "ParallelTask.hpp"
 

@@ -42,7 +42,7 @@
 #include "SweepPoolManagerAddressOrderedList.hpp"
 #include "SweepPoolState.hpp"
 #include "MarkMap.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "HeapMapWordIterator.hpp"
 #include "ObjectModel.hpp"
 #include "Math.hpp"

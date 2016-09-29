@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"

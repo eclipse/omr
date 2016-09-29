@@ -26,7 +26,7 @@
 #include "Forge.hpp"
 #include "GCExtensionsBase.hpp"
 #include "Math.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "NUMAManager.hpp"
 #include "VirtualMemory.hpp"
 

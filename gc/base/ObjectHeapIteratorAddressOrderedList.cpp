@@ -23,7 +23,7 @@
  */
 
 #include "omrcfg.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
 

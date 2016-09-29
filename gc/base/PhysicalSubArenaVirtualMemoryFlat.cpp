@@ -31,7 +31,7 @@
 #include "PhysicalArena.hpp"
 #include "PhysicalArenaVirtualMemory.hpp"
 #include "VirtualMemory.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 /**
  * Zos390 Platform dependent trickery for the ar command.  Without this definition

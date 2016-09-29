@@ -31,7 +31,7 @@
 #include "BaseVirtual.hpp"
 #include "EnvironmentStandard.hpp" 
 #include "LightweightNonReentrantLock.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 class MM_Collector;
 class MM_CopyScanCacheStandard;

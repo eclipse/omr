@@ -21,7 +21,7 @@
 #include "HeapRegionDescriptor.hpp"
 #include "HeapRegionManager.hpp"
 #include "MemorySubSpace.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 
 GC_HeapRegionIterator::GC_HeapRegionIterator(MM_HeapRegionManager *manager)

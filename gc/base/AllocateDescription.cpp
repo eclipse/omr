@@ -20,7 +20,7 @@
 #include "Debug.hpp"
 #include "EnvironmentLanguageInterface.hpp"
 #include "MemorySubSpace.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 void
 MM_AllocateDescription::saveObjects(MM_EnvironmentBase* env)

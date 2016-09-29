@@ -17,7 +17,7 @@
  *******************************************************************************/
 
 #include "omrcfg.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 #include "modronopt.h"
 
 #if defined(OMR_GC_MODRON_COMPACTION)

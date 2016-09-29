@@ -22,7 +22,7 @@
 #if defined(OMR_GC_OBJECT_MAP)
 
 #include "omr.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include <string.h>
 

@@ -22,7 +22,7 @@
 
 #include "CompactScheme.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "AllocateDescription.hpp"
 #include "AtomicOperations.hpp"

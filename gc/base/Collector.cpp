@@ -19,7 +19,7 @@
 #include "Collector.hpp"
 #include "CollectorLanguageInterface.hpp"
 #include "GCExtensionsBase.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "Heap.hpp"
 #include "AllocateDescription.hpp"
 #include "OMRVMThreadListIterator.hpp"

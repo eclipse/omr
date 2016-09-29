@@ -38,7 +38,7 @@
 #include "HeapRegionDescriptor.hpp"
 #include "MemoryPool.hpp"
 #include "MemorySpace.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectModel.hpp"
 #include "ParallelDispatcher.hpp"

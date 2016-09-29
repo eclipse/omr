@@ -28,7 +28,7 @@
 #include "TLHAllocationInterface.hpp"
 
 #include "omrport.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "AllocateDescription.hpp"
 #include "AllocationContext.hpp"

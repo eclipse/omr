@@ -23,7 +23,7 @@
 #include "CopyScanCacheStandard.hpp"
 #include "EnvironmentStandard.hpp"
 #include "GCExtensionsBase.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 
 MM_CopyScanCacheChunk *

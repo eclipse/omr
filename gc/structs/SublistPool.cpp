@@ -30,7 +30,7 @@
 #include "SublistPool.hpp"
 
 #include "EnvironmentBase.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "SublistFragment.hpp"
 #include "SublistPuddle.hpp"
 

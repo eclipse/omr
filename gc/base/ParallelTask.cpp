@@ -27,7 +27,7 @@
 #include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 bool
 MM_ParallelTask::handleNextWorkUnit(MM_EnvironmentBase *env)
