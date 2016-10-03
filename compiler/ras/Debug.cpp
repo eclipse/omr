@@ -1632,8 +1632,10 @@ TR_Debug::getName(TR::SymbolReference * symRef)
             return "<arraytranslate>";
          case TR::SymbolReferenceTable::arrayTranslateAndTestSymbol:
             return "<arraytranslateandtest>";
+#ifdef J9_PROJECT_SPECIFIC
          case TR::SymbolReferenceTable::long2StringSymbol:
             return "<long2String>";
+#endif
          case TR::SymbolReferenceTable::bitOpMemSymbol:
             return "<bitOpMem>";
          case TR::SymbolReferenceTable::reverseLoadSymbol:
@@ -2064,7 +2066,9 @@ static const char *commonNonhelperSymbolNames[] =
    "<resolveCheck>",
    "<arrayTranslate>",
    "<arrayTranslateAndTest>",
+#ifdef J9_PROJECT_SPECIFIC
    "<long2String>",
+#endif
    "<bitOpMem>",
    "<reverseLoad>",
    "<reverseStore>",
@@ -4274,7 +4278,9 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_S390arraySetGeneralHelper:                        return "__arraySetGeneralHelper";
          case TR_S390arrayCmpHelper:                               return "__arrayCmpHelper";
          case TR_S390arrayTranslateAndTestHelper:                  return "__arrayTranslateAndTestHelper";
+#ifdef J9_PROJECT_SPECIFIC
          case TR_S390long2StringHelper:                            return "__long2StringHelper";
+#endif
          case TR_S390arrayXORHelper:                               return "__arrayXORHelper";
          case TR_S390arrayORHelper:                                return "__arrayORHelper";
          case TR_S390arrayANDHelper:                               return "__arrayANDHelper";

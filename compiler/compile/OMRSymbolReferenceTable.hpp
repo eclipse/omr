@@ -124,7 +124,9 @@ class SymbolReferenceTable
       resolveCheckSymbol,
       arrayTranslateSymbol,
       arrayTranslateAndTestSymbol,
+#ifdef J9_PROJECT_SPECIFIC
       long2StringSymbol,
+#endif
       bitOpMemSymbol,
       reverseLoadSymbol,
       reverseStoreSymbol,
@@ -311,7 +313,6 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateSinglePrecisionSQRTSymbol();
    TR::SymbolReference * findOrCreateCurrentTimeMaxPrecisionSymbol();
    TR::SymbolReference * findOrCreateArrayTranslateAndTestSymbol();
-   TR::SymbolReference * findOrCreatelong2StringSymbol();
    TR::SymbolReference * findOrCreatebitOpMemSymbol();
 
    // compilation, optimizer

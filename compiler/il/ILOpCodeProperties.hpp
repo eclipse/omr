@@ -9094,21 +9094,6 @@
    },
 
    {
-   /* .opcode               = */ TR::long2String,
-   /* .name                 = */ "long2String",
-   /* .properties1          = */ ILProp1::Call | ILProp1::HasSymbolRef,
-   /* .properties2          = */ 0,
-   /* .properties3          = */ ILProp3::LikeUse | ILProp3::LikeDef,
-   /* .properties4          = */ 0,
-   /* .dataType             = */ TR::NoType,
-   /* .typeProperties       = */ 0,
-   /* .swapChildrenOpCode   = */ TR::BadILOp,
-   /* .reverseBranchOpCode  = */ TR::BadILOp,
-   /* .booleanCompareOpCode = */ TR::BadILOp,
-   /* .ifCompareOpCode      = */ TR::BadILOp,
-   },
-
-   {
    /* .opcode               = */ TR::bitOpMem,
    /* .name                 = */ "bitOpMem",
    /* .properties1          = */ ILProp1::Call | ILProp1::HasSymbolRef,

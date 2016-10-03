@@ -465,7 +465,6 @@ class TreeEvaluator: public OMR::TreeEvaluator
                                            int32_t memRefIndex, TR::MemoryReference * memRef,
                                            TR::Register* inputReg, TR::Register* countReg,
                                            TR::LabelSymbol *doneLabel, bool isLong);
-   static TR::Register *long2StringEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bitOpMemEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *rsloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *riloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);

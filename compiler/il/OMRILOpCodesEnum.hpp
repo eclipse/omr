@@ -670,7 +670,6 @@
    arraytranslate,// Inline code for translation of part of an array to another form via lookup
    arraytranslateAndTest,// Inline code for scanning of part of an array for a particular 8-bit character
    countDigits, // Inline code for counting digits of an integer/long value
-   long2String, // Convert integer/long value to String
    bitOpMem, // bit operations (AND, OR, XOR) for memory to memory
    bitOpMemND, // 3 operand(source1,source2,target) version of bitOpMem
    arraycmp,// Inline code for memory comparison of part of an array

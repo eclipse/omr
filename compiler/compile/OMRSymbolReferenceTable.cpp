@@ -562,20 +562,6 @@ OMR::SymbolReferenceTable::findOrCreateArrayTranslateAndTestSymbol()
    }
 
 TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreatelong2StringSymbol()
-   {
-   if (!element(long2StringSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(long2StringSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), long2StringSymbol, sym);
-      }
-   return element(long2StringSymbol);
-   }
-
-
-TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreatebitOpMemSymbol()
    {
    if (!element(bitOpMemSymbol))

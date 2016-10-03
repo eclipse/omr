@@ -791,7 +791,6 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,        // TR::arraytranslate
    constrainTRT,             // TR::arraytranslateAndTest
    constrainChildren,        // TR::countDigits
-   constrainChildren,        // TR::long2String
    constrainChildren,        // TR::bitOpMem
    constrainChildren,        // TR::bitOpMemND
    constrainChildren,        // TR::arraycmp
@@ -1401,6 +1400,7 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainStore,              // TR::irsstore
    constrainStore,              // TR::iristore
    constrainStore,              // TR::irlstore
+   constrainChildren,           // TR::long2String
 #endif
 
    };

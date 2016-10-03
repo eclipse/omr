@@ -1664,7 +1664,9 @@ nodeHasSideEffect(TR::Node *node)
       case TR::arraycmp:
       case TR::arraytranslate:
       case TR::arraytranslateAndTest:
+#ifdef J9_PROJECT_SPECIFIC
       case TR::long2String:
+#endif
       case TR::bitOpMem:
         return true;
       default:
