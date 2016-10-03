@@ -2267,15 +2267,6 @@ OMR::Compilation::getSymRefCount()
    return self()->getSymRefTab()->getNumSymRefs();
    }
 
-/**
-  * @deprecated Use TransformUtil::removeTree
-  */
-void
-OMR::Compilation::removeTree(TR::TreeTop * tt)
-   {
-   _methodSymbol->removeTree(tt);
-   }
-
 void
 OMR::Compilation::setStartTree(TR::TreeTop * tt)
    {
