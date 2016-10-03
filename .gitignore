@@ -132,7 +132,6 @@ x64/
 
 # Test Output
 core
-core.*
 mmapTest*.tst
 omrfile_test*
 omrmmap_test*
