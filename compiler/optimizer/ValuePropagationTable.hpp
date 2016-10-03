@@ -542,8 +542,6 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildrenFirstToLast,        // TR::fternary
    constrainChildrenFirstToLast,        // TR::dternary
    constrainChildren,        // TR::treetop
-   constrainChildren,        // TR::MethodEnterHook
-   constrainChildren,        // TR::MethodExitHook
    constrainChildren,        // TR::PassThrough
    constrainChildren,        // TR::compressedRefs
 
@@ -998,6 +996,9 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,           // TR::dfModifyPrecision
    constrainChildren,           // TR::ddModifyPrecision
    constrainChildren,           // TR::deModifyPrecision
+
+   constrainChildren,           // TR::MethodEnterHook
+   constrainChildren,           // TR::MethodExitHook
 
    constrainChildren,           // TR::i2df
    constrainChildren,           // TR::iu2df

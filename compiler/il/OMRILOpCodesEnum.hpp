@@ -423,8 +423,6 @@
    fternary,   //
    dternary,   //
    treetop,  // tree top to anchor subtrees with side-effects
-   MethodEnterHook, // called after a frame is built, temps initialized, and monitor acquired (if necessary)
-   MethodExitHook,  // called immediately before returning, frame not yet collapsed, monitor released (if necessary)
    PassThrough, // Dummy node that represents its single child.
    compressedRefs,   // no-op anchor providing optimizable subexpressions used for compression/decompression.  First child is address load/store, second child is heap base displacement
    BBStart,  // Start of Basic Block

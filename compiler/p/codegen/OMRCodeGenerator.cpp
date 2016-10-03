@@ -2484,8 +2484,10 @@ inline static bool callInTree(TR::TreeTop *treeTop)
        l1OpCode == TR::checkcast       ||
        l1OpCode == TR::instanceof      ||
        l1OpCode == TR::ArrayStoreCHK   ||
+#ifdef J9_PROJECT_SPECIFIC
        l1OpCode == TR::MethodEnterHook ||
        l1OpCode == TR::MethodExitHook  ||
+#endif
        l1OpCode == TR::New             ||
        l1OpCode == TR::newarray        ||
        l1OpCode == TR::anewarray       ||

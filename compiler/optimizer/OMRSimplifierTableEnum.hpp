@@ -402,8 +402,6 @@
    ternarySimplifier,       // TR::fternary
    ternarySimplifier,       // TR::dternary
    treetopSimplifier,       // TR::treetop
-   lowerTreeSimplifier,     // TR::MethodEnterHook
-   lowerTreeSimplifier,     // TR::MethodExitHook
    passThroughSimplifier,   // TR::PassThrough
    anchorSimplifier,        // TR::compressedRefs
 

@@ -17733,16 +17733,15 @@ TR::Node *NewSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 // Used by MethodEnter/ExitHook
 TR::Node *lowerTreeSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
+#ifdef J9_PROJECT_SPECIFIC
    if(node->getOpCodeValue() == TR::MethodExitHook)
       {
       s->_performLowerTreeSimplifier = s->_curTree;
       s->_performLowerTreeNode = node;
       return node;
       }
-   else
-      {
-      return postWalkLowerTreeSimplifier(s->_curTree,node, block,s);
-      }
+#endif
+   return postWalkLowerTreeSimplifier(s->_curTree,node, block,s);
    }
 
 // Simplification of arrayLength operator

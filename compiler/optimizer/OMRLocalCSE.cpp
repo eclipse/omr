@@ -1631,6 +1631,8 @@ void OMR::LocalCSE::killAvailableExpressionsAtGCSafePoints(TR::Node *node, TR::N
    if (parent != NULL)
       return;
 
+#ifdef J9_PROJECT_SPECIFIC
+
    if ((node->getOpCodeValue() == TR::MethodEnterHook) ||
        (node->getOpCodeValue() == TR::MethodExitHook))
       {
@@ -1667,6 +1669,8 @@ void OMR::LocalCSE::killAvailableExpressionsAtGCSafePoints(TR::Node *node, TR::N
          _hashTableWithCalls._buckets[i] = NULL;
       return;
       }
+
+#endif
 
    if (node->canGCandReturn())
       {
