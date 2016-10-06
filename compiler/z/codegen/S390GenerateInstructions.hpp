@@ -1077,6 +1077,13 @@ TR::Instruction *generateS390PseudoInstruction(
                    int32_t regNum,
                    TR::Node *fenceNode = NULL,
                    TR::Instruction *preced = 0);
+TR::Instruction *generateS390DebugCounterBumpInstruction(
+                   TR::CodeGenerator *cg,
+                   TR::InstOpCode::Mnemonic op,
+                   TR::Node * n,
+                   TR::Snippet* cas,
+                   int32_t d = 1,
+                   TR::Instruction *preced = 0);
 TR::Instruction *generateAndImmediate(
                    TR::CodeGenerator *cg,
                    TR::Node *node,

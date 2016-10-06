@@ -2660,20 +2660,44 @@ OMR::Z::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
 #endif
          }
       else if(instructionCursor->getOpCodeValue() == TR::InstOpCode::FENCE && treeNode->getOpCodeValue() == TR::BBStart)
-        {
-        }
-     else if(instructionCursor->getOpCodeValue() == TR::InstOpCode::TBEGIN || instructionCursor->getOpCodeValue() == TR::InstOpCode::TBEGINC)
-        {
-        uint16_t immValue = ((TR::S390SILInstruction*)instructionCursor)->getSourceImmediate();
-        uint8_t regMask = 0;
-        for(int8_t i = TR::RealRegister::GPR0; i != TR::RealRegister::GPR15 + 1; i++)
-           {
-           if (self()->machine()->getRegisterFile(i)->getState() == TR::RealRegister::Assigned)
-              regMask |= (1 << (7 - ((i - 1) >> 1))); // bit 0 = GPR0/1, GPR0=1, GPR15=16. 'Or' with bit [(i-1)>>1]
-           }
-        immValue = immValue | (regMask<<8);
-        ((TR::S390SILInstruction*)instructionCursor)->setSourceImmediate(immValue);
-        }
+         {
+         }
+      else if(instructionCursor->getOpCodeValue() == TR::InstOpCode::TBEGIN || instructionCursor->getOpCodeValue() == TR::InstOpCode::TBEGINC)
+         {
+         uint16_t immValue = ((TR::S390SILInstruction*)instructionCursor)->getSourceImmediate();
+         uint8_t regMask = 0;
+         for(int8_t i = TR::RealRegister::GPR0; i != TR::RealRegister::GPR15 + 1; i++)
+            {
+            if (self()->machine()->getRegisterFile(i)->getState() == TR::RealRegister::Assigned)
+               regMask |= (1 << (7 - ((i - 1) >> 1))); // bit 0 = GPR0/1, GPR0=1, GPR15=16. 'Or' with bit [(i-1)>>1]
+            }
+         immValue = immValue | (regMask<<8);
+         ((TR::S390SILInstruction*)instructionCursor)->setSourceImmediate(immValue);
+         }
+      else if(instructionCursor->getOpCodeValue() == TR::InstOpCode::DCB)
+         {
+         TR::S390DebugCounterBumpInstruction *dcbInstr = (TR::S390DebugCounterBumpInstruction *) instructionCursor;
+            
+         int32_t first = TR::RealRegister::FirstGPR + 1;  // skip GPR0
+         int32_t last  = TR::RealRegister::LastAssignableGPR;
+
+         TR::RealRegister * realReg;
+
+         // Find a free register for DCB to use when generating binary encoding
+         for (int32_t i=first; i<=last; i++)
+            {
+            realReg = self()->machine()->getRegisterFile(i);
+
+            if ( realReg->getState() == TR::RealRegister::Free &&
+                (TR::Compiler->target.is64Bit() | realReg->getHighWordRegister()->getState() == TR::RealRegister::Free) )
+               {
+               dcbInstr->setAssignableReg(realReg);
+               break;
+               }
+            }
+            
+            self()->traceRegisterAssignment("BEST FREE REG for DCB is %R", dcbInstr->getAssignableReg());
+         }
 
       self()->tracePreRAInstruction(instructionCursor);
 
@@ -10569,25 +10593,14 @@ void handleLoadWithRegRanges(TR::Instruction *inst, TR::CodeGenerator *cg)
       }
    }
 
+/**
+ * Create a snippet of the debug counter address and generate a DCB pseudo-instruction that will be ignored during register assignment
+ * The 'TR::RegisterDependencyConditions* cond' argument is not used and should be phased out when P architecture eliminates register dependencies 
+ */
 TR::Instruction* OMR::Z::CodeGenerator::generateDebugCounterBump(TR::Instruction* cursor, TR::DebugCounterBase* counter, int32_t delta, TR::RegisterDependencyConditions* cond)
    {
-   // Allocate register to hold the static memory location of the counter
-   TR::Register* addressReg = self()->allocate64bitRegister();
-
-   TR::Snippet* constant = self()->Create8ByteConstant(cursor->getNode(), reinterpret_cast<intptrj_t> (counter->getBumpCountSymRef(self()->comp())->getSymbol()->getStaticSymbol()->getStaticAddress()), false);
-
-   // Load the static counter address in a register and increment the memory location by delta
-   TR::Instruction* loadInst = generateRILInstruction(self(), TR::InstOpCode::LGRL, cursor->getNode(), addressReg, constant, cursor);
-   TR::Instruction* adddInst = generateSIYInstruction(self(), TR::InstOpCode::AGSI, cursor->getNode(), generateS390MemoryReference(addressReg, 0, self()), delta, loadInst);
-
-   if (cond)
-      {
-      cond->addPostConditionIfNotAlreadyInserted(addressReg, TR::RealRegister::AssignAny);
-      }
-
-   self()->stopUsingRegister(addressReg);
-
-   return adddInst;
+   TR::Snippet *constant = self()->Create8ByteConstant(cursor->getNode(), reinterpret_cast<intptrj_t> (counter->getBumpCountSymRef(self()->comp())->getSymbol()->getStaticSymbol()->getStaticAddress()), false);
+   return generateS390DebugCounterBumpInstruction(self(), TR::InstOpCode::DCB, cursor->getNode(), constant, delta, cursor);
    }
 
 TR::Instruction* OMR::Z::CodeGenerator::generateDebugCounterBump(TR::Instruction* cursor, TR::DebugCounterBase* counter, TR::Register* deltaReg, TR::RegisterDependencyConditions* cond)

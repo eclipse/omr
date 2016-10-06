@@ -734,6 +734,54 @@ class S390PseudoInstruction : public TR::Instruction
    	}
    };
 
+/**
+ * Extends from S390PseudoInstruction to exploit the property of register assignment ignoring
+ * these types or treating them specially
+ */
+class S390DebugCounterBumpInstruction : public S390PseudoInstruction
+   {
+private:
+   /** Contains address information necessary for LGRL during binary encoding */
+   TR::Snippet * _counterSnippet;
+
+   /** Register assignment phase will set a free register for DCB to use if available */
+   TR::RealRegister * _assignableReg;
+
+   /** Specifies amount to increment/decrement the counter */
+   int32_t _delta;
+
+public:
+   S390DebugCounterBumpInstruction(TR::InstOpCode::Mnemonic op,
+                                      TR::Node *n,
+                                      TR::Snippet* counterSnip,
+                                      TR::CodeGenerator *cg,
+                                      int32_t delta)
+      : S390PseudoInstruction(op, n, NULL, cg),
+        _counterSnippet(counterSnip),
+        _assignableReg(NULL),
+        _delta(delta){}
+        
+   S390DebugCounterBumpInstruction(TR::InstOpCode::Mnemonic op,
+                                      TR::Node *n,
+                                      TR::Snippet* counterSnip,
+                                      TR::CodeGenerator *cg,
+                                      int32_t delta,
+                                      TR::Instruction *precedingInstruction)
+      : S390PseudoInstruction(op, n, NULL, precedingInstruction, cg),
+        _counterSnippet(counterSnip),
+        _assignableReg(NULL),
+        _delta(delta){}
+
+   void setAssignableReg(TR::RealRegister * ar){ _assignableReg = ar; }
+   TR::RealRegister * getAssignableReg(){ return _assignableReg; }
+
+   TR::Snippet * getCounterSnippet(){ return _counterSnippet; }
+
+   int32_t getDelta(){ return _delta; }
+
+   virtual uint8_t *generateBinaryEncoding();
+   };
+
 ////////////////////////////////////////////////////////////////////////////////
 // S390AnnotationInstruction Class Definition
 ////////////////////////////////////////////////////////////////////////////////

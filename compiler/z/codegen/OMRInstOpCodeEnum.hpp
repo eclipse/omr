@@ -1111,5 +1111,6 @@
    UNLOCK,              // unlock registers
    LABEL,               // Destination of a jump
    TAILCALL,            // Tail Call
-   S390LastOp = TAILCALL,
+   DCB,                 // Debug Counter Bump
+   S390LastOp = DCB,
 
