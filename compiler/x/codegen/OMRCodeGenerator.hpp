@@ -356,6 +356,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    void processClobberingInstructions(TR_ClobberingInstruction * clobInstructionCursor, TR::Instruction *instructionCursor);
 
    // different from evaluateNode in that it returns a clobberable register
+   TR::Register *byteClobberEvaluate(TR::Node *node);
    TR::Register *shortClobberEvaluate(TR::Node *node);
    TR::Register *intClobberEvaluate(TR::Node *node);
    virtual TR::Register *longClobberEvaluate(TR::Node *node)=0;

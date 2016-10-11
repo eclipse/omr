@@ -2084,6 +2084,12 @@ TR::Register *OMR::X86::CodeGenerator::shortClobberEvaluate(TR::Node * node)
    return self()->gprClobberEvaluate(node, MOV2RegReg);
    }
 
+TR::Register *OMR::X86::CodeGenerator::byteClobberEvaluate(TR::Node * node)
+   {
+   TR_ASSERT(node->getOpCode().is1Byte(), "only use byteClobberEvaluate for byte");
+   return self()->gprClobberEvaluate(node, MOV1RegReg);
+   }
+
 TR::Register *OMR::X86::CodeGenerator::floatClobberEvaluate(TR::Node * node)
    {
 
