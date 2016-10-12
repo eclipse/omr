@@ -26,7 +26,7 @@
 #include "Packet.hpp"
 #include "Task.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 /**
  * Reset stack 

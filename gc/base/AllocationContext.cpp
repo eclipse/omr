@@ -23,7 +23,7 @@
 #include "AllocationContext.hpp"
 
 #include "EnvironmentBase.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 /**
  * Initialization.

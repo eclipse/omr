@@ -17,7 +17,7 @@
  *******************************************************************************/
 
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "GCExtensionsBase.hpp"
 #include "HeapRegionDescriptor.hpp"

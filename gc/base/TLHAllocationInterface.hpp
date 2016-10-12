@@ -26,7 +26,7 @@
 
 #include "omrcfg.h"
 #include "omrcomp.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 
 #include "ObjectAllocationInterface.hpp"
 #include "TLHAllocationSupport.hpp"

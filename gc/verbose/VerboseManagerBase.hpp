@@ -21,7 +21,7 @@
 
 #include "omrcfg.h"
 #include "omrhookable.h"
-#include "mmhook_common.h"
+#include "omr/gc/mmhook_common.h"
 
 #include "AtomicOperations.hpp"
 #include "BaseVirtual.hpp"

@@ -19,7 +19,7 @@
 #include "ConcurrentSafepointCallback.hpp"
 
 #include "EnvironmentStandard.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #if defined (OMR_GC_MODRON_CONCURRENT_MARK)
 

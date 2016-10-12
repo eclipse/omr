@@ -20,7 +20,7 @@
 #define LOCKINGFREEHEAPREGIONLIST_HPP_
 
 #include "omrcfg.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "modronopt.h"
 
 #include "FreeHeapRegionList.hpp"

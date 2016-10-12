@@ -16,9 +16,9 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  *******************************************************************************/
 
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 #include "omr.h"
-#include "omrgc.h"
+#include "omr/gc/core.h"
 #include "objectdescription.h"
 
 #include "AllocateDescription.hpp"
@@ -27,7 +27,7 @@
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
 #include "MemorySpace.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectModel.hpp"
 #include "omrgcstartup.hpp"

@@ -16,8 +16,8 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  *******************************************************************************/
 
-#ifndef MM_OMRGCAPI_HPP_
-#define MM_OMRGCAPI_HPP_
+#ifndef OMR_GC_CORE_H_
+#define OMR_GC_CORE_H_
 
 /*
  * @ddr_namespace: default
@@ -48,4 +48,4 @@ omr_error_t OMR_GC_SystemCollect(OMR_VMThread* omrVMThread, uint32_t gcCode);
 } /* extern "C" { */
 #endif
 
-#endif /* MM_OMRGCAPI_HPP_ */
+#endif /* OMR_GC_CORE_H_ */

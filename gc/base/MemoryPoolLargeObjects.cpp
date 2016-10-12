@@ -34,7 +34,7 @@
 #include "HeapRegionDescriptor.hpp"
 #include "LargeObjectAllocateStats.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #define JVM_INITIALIZATION_COLLECTIONS 4
 

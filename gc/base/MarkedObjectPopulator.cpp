@@ -16,7 +16,7 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  ******************************************************************************/
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "GCExtensionsBase.hpp"
 #include "HeapMapIterator.hpp"

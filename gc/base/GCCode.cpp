@@ -18,7 +18,7 @@
 
 #include "GCCode.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 /**
  * Determine if the GC is implicit or explicit (i.e. triggered externally).

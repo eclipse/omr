@@ -30,11 +30,11 @@ CONFIGURE_SENTINEL_FILE
 *.sentinel
 
 # misc generated files
-gc/base/mmomrhook_internal.h
 gc/base/mmprivatehook.h
 gc/base/mmprivatehook_internal.h
 gc/doc/html
-include_core/mmomrhook.h
+include/omr/gc/mmomrhook.h
+include/omr/gc/mmomrhook_internal.h
 include_core/omrcfg.h
 include_core/omrversionstrings.h
 fvtest/algotest/hooksample.h
@@ -132,7 +132,6 @@ x64/
 
 # Test Output
 core
-core.*
 mmapTest*.tst
 omrfile_test*
 omrmmap_test*

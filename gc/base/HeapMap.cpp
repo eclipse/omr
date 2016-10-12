@@ -27,7 +27,7 @@
 #include "HeapRegionDescriptor.hpp"
 #include "Math.hpp"
 #include "MemoryManager.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 /**
  * Object creation and destruction 

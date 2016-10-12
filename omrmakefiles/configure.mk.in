@@ -119,7 +119,7 @@ ENABLE_DDR := @enable_DDR@
 ## Add Global Flags
 # Header files in the current directory should have first precedence.
 MODULE_INCLUDES += .
-GLOBAL_INCLUDES += $(top_srcdir)/include_core $(top_srcdir)/nls
+GLOBAL_INCLUDES += $(top_srcdir)/include $(top_srcdir)/include_core $(top_srcdir)/nls
 
 GLOBAL_CPPFLAGS += -DUT_DIRECT_TRACE_REGISTRATION
 
@@ -154,6 +154,7 @@ OMR_IPATH = \
 
 # Internal OMR header files needed by OMR glue code
 OMRGC_IPATH = \
+  $(top_srcdir)/include \
   $(top_srcdir)/gc/base \
   $(top_srcdir)/gc/base/standard \
   $(top_srcdir)/gc/verbose \

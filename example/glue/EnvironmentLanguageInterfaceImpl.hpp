@@ -19,7 +19,7 @@
 #ifndef ENVIRONMENTLANGUAGEINTERFACEIMPL_HPP_
 #define ENVIRONMENTLANGUAGEINTERFACEIMPL_HPP_
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "omr.h"
 
 #include "EnvironmentLanguageInterface.hpp"

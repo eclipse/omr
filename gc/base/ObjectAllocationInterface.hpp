@@ -27,7 +27,7 @@
 
 #include "omrcfg.h"
 #include "modronbase.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "BaseVirtual.hpp"
 #include "AllocationStats.hpp"

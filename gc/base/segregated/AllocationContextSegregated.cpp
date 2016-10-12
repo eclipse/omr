@@ -27,7 +27,7 @@
 #include "GCExtensionsBase.hpp"
 #include "HeapRegionDescriptorSegregated.hpp"
 #include "MemoryPoolAggregatedCellList.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "RegionPoolSegregated.hpp"
 #include "SegregatedAllocationInterface.hpp"
 #include "SegregatedMarkingScheme.hpp"

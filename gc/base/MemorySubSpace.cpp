@@ -37,7 +37,7 @@
 #include "Math.hpp"
 #include "MemoryPool.hpp"
 #include "MemorySpace.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "PercolateStats.hpp"
 #include "PhysicalSubArena.hpp"
 

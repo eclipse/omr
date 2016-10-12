@@ -20,7 +20,7 @@
 #define RSOVERFLOW_HPP_
 
 #include "omrcfg.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 

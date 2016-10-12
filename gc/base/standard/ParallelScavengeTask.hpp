@@ -22,7 +22,7 @@
 #if defined(OMR_GC_MODRON_SCAVENGER)
 
 #include "modronopt.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 
 #include "CycleState.hpp"
 #include "ParallelTask.hpp"

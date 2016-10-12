@@ -22,7 +22,7 @@
 #include "Heap.hpp"
 #include "HeapRegionDescriptorStandard.hpp"
 #include "HeapRegionIteratorStandard.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 

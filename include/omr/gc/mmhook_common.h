@@ -20,8 +20,8 @@
  * Shared structs between internal and external mmhook interfaces
  */
 
-#ifndef MMHOOK_H_
-#define MMHOOK_H_
+#ifndef OMR_GC_MMHOOK_H_
+#define OMR_GC_MMHOOK_H_
 
 #include "omr.h"
 
@@ -77,4 +77,4 @@ typedef struct MM_CommonGCEndData {
 
 
 
-#endif /* MMHOOK_H_ */
+#endif /* OMR_GC_MMHOOK_H_ */

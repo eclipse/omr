@@ -27,8 +27,8 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "LightweightNonReentrantLock.hpp"
-#include "MemorySpacesAPI.h"
-#include "ModronAssertions.h"
+#include "omr/gc/memorySpacesAPI.h"
+#include "omr/gc/modronAssertions.h"
 
 class MM_AllocateDescription;
 class MM_AllocationContext;

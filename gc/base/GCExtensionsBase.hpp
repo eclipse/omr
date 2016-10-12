@@ -21,7 +21,7 @@
 
 #include "omrcfg.h"
 #include "omrcomp.h"
-#include "mmomrhook_internal.h"
+#include "omr/gc/mmomrhook_internal.h"
 #include "mmprivatehook_internal.h"
 #include "modronbase.h"
 #include "omr.h"

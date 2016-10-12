@@ -28,7 +28,7 @@
  * @ddr_namespace: default
  */
 
-#include "../include/mmhook_common.h"
+#include "omr/gc/mmhook_common.h"
 
 	</declarations>
 	

@@ -22,7 +22,7 @@
  */
 
 #include "omrcfg.h"
-#include "MemorySpacesAPI.h"
+#include "omr/gc/memorySpacesAPI.h"
 
 #include "ConfigurationLanguageInterface.hpp"
 #include "ConfigurationSegregated.hpp"

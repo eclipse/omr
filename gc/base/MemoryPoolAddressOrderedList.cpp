@@ -19,7 +19,7 @@
 #include "omrcfg.h"
 #include "omrcomp.h"
 #include "modronopt.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include <string.h>
 

@@ -21,7 +21,7 @@
 
 #include "omr.h"
 #include "omrcfg.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "modronbase.h"
 
 #include "Base.hpp"

@@ -25,7 +25,7 @@
 #include "PhysicalSubArena.hpp"
 #include "MemorySpace.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 //todo: dagar - should we be using J9VMSTATE here? find a better home for this
 #define J9VMSTATE_GC 0x20000

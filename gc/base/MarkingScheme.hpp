@@ -28,7 +28,7 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "MarkMap.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "ObjectModel.hpp"
 #include "WorkStack.hpp"
 

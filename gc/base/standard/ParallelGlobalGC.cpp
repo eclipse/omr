@@ -17,9 +17,9 @@
  *******************************************************************************/
 
 #include "omrcfg.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 #include "gcutils.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "modronbase.h"
 #include "modronopt.h"
 #include "modronapicore.hpp"

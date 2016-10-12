@@ -17,7 +17,7 @@
  ******************************************************************************/
 
 #include "modronopt.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "omrport.h"
 
 #include "MasterGCThread.hpp"

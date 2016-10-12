@@ -41,7 +41,7 @@
 
 #include "mmprivatehook.h"
 #include "mmprivatehook_internal.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "thread_api.h"
 
 /**

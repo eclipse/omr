@@ -23,7 +23,7 @@
  * @ddr_namespace: default
  */
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "modronbase.h"
 #include "objectdescription.h"
 #include "omrgcconsts.h"

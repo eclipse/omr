@@ -25,7 +25,7 @@
 #define CONCURRENTSCANREMEMBERSETTASK_HPP_
 
 #include "omrcfg.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 

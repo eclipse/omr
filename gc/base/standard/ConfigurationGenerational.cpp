@@ -21,8 +21,8 @@
  * @ingroup GC_Modron_Standard
  */
 
-#include "MemorySpacesAPI.h"
-#include "ModronAssertions.h"
+#include "omr/gc/memorySpacesAPI.h"
+#include "omr/gc/modronAssertions.h"
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 

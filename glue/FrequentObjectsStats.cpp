@@ -18,7 +18,7 @@
 #include "FrequentObjectsStats.hpp"
 #include "GCExtensionsBase.hpp"
 #include "EnvironmentBase.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 /**
  * Create and return a new instance of MM_FrequentObjectsStats.

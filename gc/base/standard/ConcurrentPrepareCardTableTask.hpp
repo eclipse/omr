@@ -25,7 +25,7 @@
 #define CONCURRENTPREPARECARDTABLETASK_HPP_
 
 #include "omrcfg.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 
 #include "ParallelTask.hpp"
 #include "ConcurrentCardTableForWC.hpp"

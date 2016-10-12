@@ -22,7 +22,7 @@
 
 #include "omrcfg.h"
 #include "omr.h"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 #include "AtomicOperations.hpp"
 #include "BaseNonVirtual.hpp"

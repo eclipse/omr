@@ -22,7 +22,7 @@
 #include "Debug.hpp"
 #include "GCExtensionsBase.hpp"
 
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 bool
 MM_MemoryPool::initialize(MM_EnvironmentBase *env)

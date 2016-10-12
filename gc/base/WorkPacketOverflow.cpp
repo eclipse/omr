@@ -21,7 +21,7 @@
 
 #include "WorkPacketOverflow.hpp"
 #include "EnvironmentBase.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 
 
 MM_WorkPacketOverflow *

@@ -17,7 +17,7 @@
  *******************************************************************************/
 
 #include "omrcfg.h"
-#include "mmhook_common.h"
+#include "omr/gc/mmhook_common.h"
 
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"

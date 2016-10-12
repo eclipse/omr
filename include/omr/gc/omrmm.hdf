@@ -16,8 +16,8 @@
     Multiple authors (IBM Corp.) - initial implementation and documentation
 -->
 <interface>
-	<publicHeader>../../include_core/mmomrhook.h</publicHeader>
-	<privateHeader>../base/mmomrhook_internal.h</privateHeader>
+	<publicHeader>./mmomrhook.h</publicHeader>
+	<privateHeader>./mmomrhook_internal.h</privateHeader>
 	<struct>MM_OMRHookInterface</struct>
 	<description>Memory manager OMR hookable events</description>
 

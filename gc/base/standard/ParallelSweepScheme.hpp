@@ -25,7 +25,7 @@
 #define PARALLELSWEEPSCHEME_HPP_
 
 #include "omrcfg.h"
-#include "omrmodroncore.h"
+#include "omr/gc/modronCore.h"
 #include "modronopt.h"
 #include "modronbase.h"
 

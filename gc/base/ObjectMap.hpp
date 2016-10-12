@@ -31,7 +31,7 @@
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
 #include "MarkMap.hpp"
-#include "ModronAssertions.h"
+#include "omr/gc/modronAssertions.h"
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
 #include "ObjectModel.hpp"
 #include "WorkStack.hpp"

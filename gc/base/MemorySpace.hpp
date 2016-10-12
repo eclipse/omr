@@ -26,7 +26,7 @@
 
 #include "BaseVirtual.hpp"
 #include "InitializationParameters.hpp"
-#include "MemorySpacesAPI.h"
+#include "omr/gc/memorySpacesAPI.h"
 
 class MM_AllocateDescription;
 class MM_EnvironmentBase;
