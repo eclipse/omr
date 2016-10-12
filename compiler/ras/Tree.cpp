@@ -2954,7 +2954,6 @@ int32_t childTypes[] =
    TR::NoType,                     // TR::arraytranslate
    TR::NoType,                     // TR::arraytranslateAndTest
    TR::NoType,                     // TR::countDigits
-   TR::NoType,                     // TR::long2String
    TR::NoType,                     // TR::bitOpMem
    TR::NoType,                     // TR::bitOpMemND
    TR::NoType,                     // TR::arraycmp
@@ -3561,6 +3560,7 @@ int32_t childTypes[] =
    TR::Int16 | (TR::Address<<8),                             // TR::irsstore
    TR::Int32 | (TR::Address<<8),                             // TR::iristore
    TR::Int64 | (TR::Address<<8),                             // TR::irlstore
+   TR::NoType,                                               // TR::long2String
 #endif
 
    };

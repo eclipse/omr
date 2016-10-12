@@ -741,7 +741,6 @@
    TR::TreeEvaluator::arraytranslateEvaluator,    // TR::arraytranslate
    TR::TreeEvaluator::arraytranslateAndTestEvaluator,    // TR::arraytranslateAndTest
    TR::TreeEvaluator::badILOpEvaluator,     // TR::countDigits
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::long2String
    TR::TreeEvaluator::badILOpEvaluator,     // TR::bitOpMem
    TR::TreeEvaluator::badILOpEvaluator,     // TR::bitOpMemND
    TR::TreeEvaluator::arraycmpEvaluator,    // TR::arraycmp
