@@ -40,6 +40,8 @@
 #include "ras/Debug.hpp"                     // for TR_Debug
 #include "infra/SimpleRegex.hpp"
 #include "infra/Assert.hpp"
+#include "infra/Monitor.hpp"                 // for createCounter race conditions
+#include "infra/CriticalSection.hpp"         // for createCounter race conditions
 
 #if defined(_MSC_VER)
 #include <malloc.h> // alloca on Win32
@@ -353,6 +355,10 @@ TR::DebugCounter *TR::DebugCounterGroup::findCounter(const char *nameChars, int3
    strncpy(name, nameChars, nameLength);
    name[nameLength] = 0;
 
+   // There's a race here if we do parallel compilation
+
+   OMR::CriticalSection findCounterLock(_countersMutex);
+
    CS2::HashIndex hi;
    if (!_countersHashTable.Locate(name, hi))
       return NULL;
@@ -368,8 +374,6 @@ TR::DebugCounterAggregation *TR::DebugCounterGroup::createAggregation(TR::Compil
 
 TR::DebugCounter *TR::DebugCounterGroup::createCounter(const char *name, int8_t fidelity, TR_PersistentMemory *persistentMemory)
    {
-   // TODO: There's a race here if we ever do parallel compilation
-
    // Get the denominator counter, if any, by looking for the rightmost separator character.
    //
    TR::DebugCounter *denominator = NULL;
@@ -414,7 +418,13 @@ TR::DebugCounter *TR::DebugCounterGroup::createCounter(const char *name, int8_t 
       }
    TR::DebugCounter *result = new (persistentMemory) TR::DebugCounter(name, fidelity, denominator, flags);
    _counters.add(result);
+   
+   // There's a race here if we do parallel compilation
+
+   OMR::CriticalSection createCounterLock(_countersMutex);
+
    _countersHashTable.Add(result->getName(), result);
+
    return result;
    }
 

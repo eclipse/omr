@@ -955,6 +955,10 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390PseudoInstruction * instr)
        (instr->getOpCodeValue() == TR::InstOpCode::UNLOCK))
     trfprintf(pOutFile, "Reg %d",  instr->getLockedRegisterNumber());
 
+   if (instr->getOpCodeValue() == TR::InstOpCode::DCB)
+      {
+      trfprintf(pOutFile, "Debug Counter Bump");
+      }
 
    if (instr->getOpCodeValue() == TR::InstOpCode::FENCE)
       {

@@ -29,6 +29,7 @@
 #include "env/jittypes.h"    // for intptrj_t
 #include "infra/Flags.hpp"   // for flags8_t
 #include "infra/List.hpp"    // for TR_PersistentList
+#include "infra/Monitor.hpp" // for createCounter race conditions
 
 namespace TR { class Compilation; }
 namespace TR { class Node; }
@@ -231,6 +232,7 @@ class DebugCounterGroup
    TR_PersistentList<DebugCounterAggregation> _aggregations;
    DebugCounter *createCounter (const char *name, int8_t fidelity, TR_PersistentMemory *mem);
    DebugCounter *findCounter   (const char *name, int32_t nameLength);
+   TR::Monitor *_countersMutex;
 
    friend class ::TR_Debug;
 
@@ -238,7 +240,10 @@ class DebugCounterGroup
    TR_ALLOC(TR_MemoryBase::DebugCounter)
 
    DebugCounterGroup(TR_PersistentMemory *mem)
-         : _countersHashTable(TRPersistentMemoryAllocator(mem)){}
+         : _countersHashTable(TRPersistentMemoryAllocator(mem))
+         {
+         _countersMutex = TR::Monitor::create("countersMutex");
+         }
 
    const char *counterName(TR::Compilation *comp, const char *format, va_list args);
 

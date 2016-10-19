@@ -6326,7 +6326,7 @@ bool directMemoryStoreHelper(TR::CodeGenerator* cg, TR::Node* storeNode)
                //
                // And reduce it to a memory-memory copy.
 
-               TR::DebugCounter::incStaticDebugCounter(cg->comp(), "z/optimization/directMemoryStore/indirect");
+               // TR::DebugCounter::incStaticDebugCounter(cg->comp(), "z/optimization/directMemoryStore/indirect");
 
                // Force the memory references to not use an index register because MVC is an SS instruction
                TR::MemoryReference* targetMemRef = generateS390MemoryReference(storeNode, cg, false);
