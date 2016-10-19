@@ -6471,3 +6471,7 @@
 
       // TAILCALL
    S390OpProp_IsCall,
+
+	   // DCB
+	0,
+

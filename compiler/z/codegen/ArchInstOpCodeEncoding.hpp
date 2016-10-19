@@ -1112,4 +1112,5 @@
    {0x00, 0x00, PSEUDO},   // UNLOCK
    {0x00, 0x00, PSEUDO},   // LABEL
    {0x00, 0x00, PSEUDO},   // TAILCALL
+   {0x00, 0x00, PSEUDO},   // DCB
 

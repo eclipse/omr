@@ -1112,4 +1112,5 @@
    "UNLOCK",   // unlock registers
    "LABEL",    // Destination of a jump
    "TAILCALL",   // Tail Call
+   "DCB",   // Debug Counter Bump
 
