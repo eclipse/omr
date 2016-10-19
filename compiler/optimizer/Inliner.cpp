@@ -1479,10 +1479,10 @@ TR_InlinerBase::createVirtualGuard(
          break;
       }
    TR::DebugCounter::prependDebugCounter(comp(),
-      TR::DebugCounter::debugCounterName(comp(), "virtualGuards.byKind/%s/(%s)/bcinfo=%d.%d", tracer()->getGuardKindString(guard), comp()->signature(), bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex()),
+      TR::DebugCounter::debugCounterName(comp(), "virtualGuards.byKind/%s/(%s)/bcinfo=%d.%d/fidelity=%d", tracer()->getGuardKindString(guard), comp()->signature(), bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex(), fidelity),
       debugCounterInsertionPoint, 1, fidelity);
    TR::DebugCounter::prependDebugCounter(comp(),
-      TR::DebugCounter::debugCounterName(comp(), "virtualGuards.byJittedBody/%s/(%s)/(%s)/%s/bcinfo=%d.%d", comp()->getHotnessName(comp()->getMethodHotness()), comp()->signature(), calleeSymbol->signature(trMemory()), tracer()->getGuardKindString(guard), bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex()),
+      TR::DebugCounter::debugCounterName(comp(), "virtualGuards.byJittedBody/%s/(%s)/(%s)/%s/bcinfo=%d.%d/fidelity=%d", comp()->getHotnessName(comp()->getMethodHotness()), comp()->signature(), calleeSymbol->signature(trMemory()), tracer()->getGuardKindString(guard), bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex(), fidelity),
       debugCounterInsertionPoint, 1, fidelity);
 
    if (guard->_kind == TR_DummyGuard)
@@ -5519,9 +5519,11 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
    int32_t bytecodeSize = getPolicy()->getInitialBytecodeSize(calleeSymbol->getResolvedMethod(), calleeSymbol, comp());
    TR_ResolvedMethod * reportCalleeMethod = calleeSymbol->getResolvedMethod();
    int32_t numberOfLocalsInCallee = reportCalleeMethod->numberOfParameterSlots() + reportCalleeMethod->numberOfTemps();
-   TR::DebugCounter::prependDebugCounter(comp(), "inliner.callSites/succeeded", callNodeTreeTop);
-   TR::DebugCounter::prependDebugCounter(comp(), "inliner.callSites/succeeded:#bytecodeSize", callNodeTreeTop, bytecodeSize);
-   TR::DebugCounter::prependDebugCounter(comp(), "inliner.callSites/succeeded:#localsInCallee", callNodeTreeTop, numberOfLocalsInCallee);
+
+   // The debug counters below causes decrement reference count exception during optimization phase
+   // TR::DebugCounter::prependDebugCounter(comp(), "inliner.callSites/succeeded", callNodeTreeTop);
+   // TR::DebugCounter::prependDebugCounter(comp(), "inliner.callSites/succeeded:#bytecodeSize", callNodeTreeTop, bytecodeSize);
+   // TR::DebugCounter::prependDebugCounter(comp(), "inliner.callSites/succeeded:#localsInCallee", callNodeTreeTop, numberOfLocalsInCallee);
 
    if (debug("inliningTrees"))
       {

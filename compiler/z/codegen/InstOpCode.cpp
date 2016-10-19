@@ -63,7 +63,8 @@ OMR::Z::InstOpCode::isAdmin()
            _mnemonic == LOCK ||
            _mnemonic == UNLOCK ||
            _mnemonic == ASM ||
-           _mnemonic == DS);
+           _mnemonic == DS ||
+           _mnemonic == DCB);
    }
 
 uint32_t

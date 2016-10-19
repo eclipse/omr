@@ -1269,6 +1269,87 @@ TR::S390PseudoInstruction::estimateBinaryLength(int32_t currentEstimate)
    return currentEstimate + estimate;
    }
 
+////////////////////////////////////////////////////////////////////////////////
+// TR::S390DebugCounterBumpInstruction:: member functions
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This instruction is bumps the value at the snippet corresponding to the address of the debug counter count.
+ * The valid opcode is TR::InstOpCode::DCB
+ *
+ * Either 2 or 4 instructions are encoded matching the following conditions:
+ * 
+ * If a free register was saved:                      Otherwise if a spill is required:
+ *                                                    STG     Rscrtch,   offToLongDispSlot(,GPR5)
+ * LGRL    Rscrtch,   counterRelocation               LGRL    Rscrtch,   counterRelocation       
+ * AGSI 0(Rscrtch),   delta                           AGSI 0(Rscrtch),   delta                   
+ *                                                    LG      Rscrtch,   offToLongDispSlot(,GPR5)
+ */
+uint8_t *
+TR::S390DebugCounterBumpInstruction::generateBinaryEncoding()
+   {
+   // *this    swipeable for debugging purposes
+   uint8_t * instructionStart = cg()->getBinaryBufferCursor();
+   uint8_t * cursor = instructionStart;
+   TR::Compilation *comp = cg()->comp();
+
+   int32_t offsetToLongDispSlot = (cg()->getLinkage())->getOffsetToLongDispSlot();
+
+   TR::RealRegister * scratchReg  = getAssignableReg();
+   bool spillNeeded = true;
+
+   // If we found a free register during RA, we don't need to spill
+   if (scratchReg)
+      {
+      spillNeeded = false;
+      }
+   else
+      {
+      TR_ASSERT(!comp->getOption(TR_DisableLongDispStackSlot), "TR_S390DebugCounterBumpInstruction::generateBinaryEncoding -- Spill slot should be enabled.");
+	   scratchReg = assignBestSpillRegister();
+      }
+
+   TR_ASSERT(scratchReg!=NULL, "TR_S390DebugCounterBumpInstruction::generateBinaryEncoding -- A scratch reg should always be found.");
+
+   traceMsg(comp, "[%p] DCB using %s as scratch reg with spill=%s\n", this, cg()->getDebug()->getName(scratchReg), spillNeeded ? "true" : "false");
+   
+   if (spillNeeded)
+      {
+      *(int32_t *) cursor  = boi(0xE3005000 | (offsetToLongDispSlot&0xFFF));  // STG Rscrtch,offToLongDispSlot(,GPR5)
+      scratchReg->setRegisterField((uint32_t *)cursor);
+      cursor += 4;
+      *(int16_t *) cursor = bos(0x0024);
+      cursor += 2;
+      }
+
+   *(int16_t *) cursor  = bos(0xC408);                                        // LGRL Rscrtch, counterRelocation
+   scratchReg->setRegisterField((uint32_t *)cursor);
+   cg()->addRelocation(new (cg()->trHeapMemory()) TR_32BitLabelRelativeRelocation(cursor, getCounterSnippet()->getSnippetLabel()));
+   cursor += 6;
+
+   *(int32_t *) cursor  = boi(0xEB000000 | (((int8_t) getDelta()) << 16));    // AGSI 0(Rscrtch), delta 
+   scratchReg->setBaseRegisterField((uint32_t *)cursor);
+   cursor += 4;
+   *(int16_t *) cursor  = bos(0x007A);
+   cursor += 2;
+
+   if (spillNeeded)
+      {
+      *(int32_t *) cursor  = boi(0xE3005000 | (offsetToLongDispSlot&0xFFF));  // LG Rscrtch,offToLongDispSlot(,GPR5)
+      scratchReg->setRegisterField((uint32_t *)cursor);
+      cursor += 4;
+      *(int16_t *) cursor = bos(0x0004);
+      cursor += 2;
+      }
+
+   setEstimatedBinaryLength(spillNeeded ? 24 : 12);
+
+   setBinaryLength(cursor - instructionStart);
+   setBinaryEncoding(instructionStart);
+
+   return cursor;
+   }
+
 // TR::S390ImmInstruction:: member functions
 /**
  * This instruction is used to generate a constant value in JIT code

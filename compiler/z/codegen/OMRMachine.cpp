@@ -528,7 +528,7 @@ OMR::Z::Machine::registerExchange(TR::Instruction      *precedingInstruction,
          }
 #endif
 
-      cg->generateDebugCounter("RegisterAllocator/Exchange/GPR", 1, TR::DebugCounter::Free);
+      cg->generateDebugCounter(precedingInstruction, "RegisterAllocator/Exchange/GPR", 1, TR::DebugCounter::Free);
       }
 
    if (middleReg)
