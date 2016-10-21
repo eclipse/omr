@@ -460,9 +460,9 @@ MethodBuilder::DefineReturnType(TR::IlType *dt)
    }
 
 void
-MethodBuilder::DefineFunction(char           * name,
-                              char           * fileName,
-                              char           * lineNumber,
+MethodBuilder::DefineFunction(const char* const name,
+                              const char* const fileName,
+                              const char* const lineNumber,
                               void           * entryPoint,
                               TR::IlType     * returnType,
                               int32_t          numParms,
@@ -481,17 +481,17 @@ MethodBuilder::DefineFunction(char           * name,
    }
 
 void
-MethodBuilder::DefineFunction(char           * name,
-                              char           * fileName,
-                              char           * lineNumber,
+MethodBuilder::DefineFunction(const char* const name,
+                              const char* const fileName,
+                              const char* const lineNumber,
                               void           * entryPoint,
                               TR::IlType     * returnType,
                               int32_t          numParms,
                               TR::IlType     ** parmTypes)
    {   
-   MB_REPLAY("DefineFunction((char*)\"%s\",", name);
-   MB_REPLAY("               (char*)\"%s\",", fileName);
-   MB_REPLAY("               (char*)\"%s\",", lineNumber);
+   MB_REPLAY("DefineFunction((const char* const)\"%s\",", name);
+   MB_REPLAY("               (const char* const)\"%s\",", fileName);
+   MB_REPLAY("               (const char* const)\"%s\",", lineNumber);
    MB_REPLAY("               " REPLAY_POINTER_FMT ",", REPLAY_POINTER(entryPoint, name));
    MB_REPLAY("               %s,", REPLAY_TYPE(returnType));
    MB_REPLAY_NONL("               %d", numParms);
@@ -502,9 +502,9 @@ MethodBuilder::DefineFunction(char           * name,
       }   
    MB_REPLAY(");");
 
-   TR::ResolvedMethod *method = new (PERSISTENT_NEW) TR::ResolvedMethod(fileName,
-                                                                        lineNumber,
-                                                                        name,
+   TR::ResolvedMethod *method = new (PERSISTENT_NEW) TR::ResolvedMethod((char*)fileName,
+                                                                        (char*)lineNumber,
+                                                                        (char*)name,
                                                                         numParms,
                                                                         parmTypes,
                                                                         returnType,

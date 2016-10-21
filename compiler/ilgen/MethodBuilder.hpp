@@ -93,16 +93,16 @@ class MethodBuilder : public TR::IlBuilder
    void DefineReturnType(TR::IlType *dt);
    void DefineLocal(const char *name, TR::IlType *dt);
    void DefineMemory(const char *name, TR::IlType *dt, void *location);
-   void DefineFunction(char           * name,
-                       char           * fileName,
-                       char           * lineNumber,
+   void DefineFunction(const char* const name,
+                       const char* const fileName,
+                       const char* const lineNumber,
                        void           * entryPoint,
                        TR::IlType     * returnType,
                        int32_t          numParms,
                        ...);
-   void DefineFunction(char           * name,
-                       char           * fileName,
-                       char           * lineNumber,
+   void DefineFunction(const char* const name,
+                       const char* const fileName,
+                       const char* const lineNumber,
                        void           * entryPoint,
                        TR::IlType     * returnType,
                        int32_t          numParms,
