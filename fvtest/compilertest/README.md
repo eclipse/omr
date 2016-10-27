@@ -7,11 +7,13 @@ language independent compiler tests for the Testarossa compiler technology.
 Building
 --------
 
-To build the Test compiler, typing `make` in this directory
-(`omr/fvtest/compilertest`) should suffice. A binary called 
-`testjit` will be produced in `../../objs/compilertest_$(BUILD_CONFIG)/`
 
-BUILD_CONFIG defaults to prod. 
+After running `./configure --enable-fvtest --enable-OMR_JIT,`To build the Test
+compiler, typing `make` in this directory (`omr/fvtest/compilertest`) should
+suffice. A binary called `testjit` will be produced in
+`../../objs/compilertest_$(BUILD_CONFIG)/`
+
+`BUILD_CONFIG` defaults to `prod`. 
 
 In the case where `guess-platform.sh` is incorrect, you can set the `PLATFORM`
 environment variables to one of the supported ones, listed in
