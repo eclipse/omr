@@ -31,7 +31,7 @@ OMR::X86::RealRegister::regMaskToRealRegister(TR_RegisterMask mask, TR_RegisterK
       rr = TR::RealRegister::FirstGPR;
    else if (rk == TR_X87)
       rr = TR::RealRegister::FirstFPR;
-   else if (rk == TR_FPR)
+   else if (rk == TR_FPR || rk == TR_VRF)
       rr = TR::RealRegister::FirstXMMR;
    else
       TR_ASSERT(false, "Invalid TR_RegisterKinds value passed to OMR::X86::RealRegister::regMaskToRealRegister()");
@@ -46,7 +46,7 @@ OMR::X86::RealRegister::getAvailableRegistersMask(TR_RegisterKinds rk)
       return TR::RealRegister::AvailableGPRMask;
    else if (rk == TR_X87)
       return TR::RealRegister::AvailableFPRMask;
-   else if (rk == TR_FPR)
+   else if (rk == TR_FPR || rk == TR_VRF)
       return TR::RealRegister::AvailableXMMRMask;
    else // MMX: not used
       return 0;
@@ -59,7 +59,7 @@ OMR::X86::RealRegister::getRealRegisterMask(TR_RegisterKinds rk, TR::RealRegiste
       return TR::RealRegister::gprMask(idx);
    else if (rk == TR_X87)
       return TR::RealRegister::fprMask(idx);
-   else if (rk == TR_FPR)
+   else if (rk == TR_FPR || rk == TR_VRF)
       return TR::RealRegister::xmmrMask(idx);
    else // MMX: not used
       return TR::RealRegister::mmrMask(idx);
