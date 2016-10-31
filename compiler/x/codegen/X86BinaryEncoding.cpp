@@ -1497,6 +1497,8 @@ int32_t TR::X86RegInstruction::estimateBinaryLength(int32_t currentEstimate)
    // *this    swipeable for debugging purposes
    TR_X86OpCode  &opCode = getOpCode();
    uint8_t prefixLength = (opCode.needsSSE42OpcodePrefix()) ? 2 : opCode.needs16BitOperandPrefix() ? 1 : opCode.needsScalarPrefix() ? 1 : 0;
+   if (getOpCode().needsRepPrefix())
+       prefixLength++;
    uint8_t opCodeLength = (opCode.isAMD64DeprecatedInc() || opCode.isAMD64DeprecatedDec())? 2 : opCode.getOpCodeLength();
    setEstimatedBinaryLength(opCodeLength + prefixLength + rexPrefixLength());
    return currentEstimate + getEstimatedBinaryLength();
@@ -1541,6 +1543,10 @@ uint8_t *TR::X86RegRegInstruction::generateBinaryEncoding()
    if (getOpCode().needs16BitOperandPrefix())
       {
       *cursor++ = IA32OperandSizeOverridePrefix;
+      }
+   if (self()->getOpCode().needsRepPrefix())
+      {
+      *cursor++ = IA32RepPrefix;
       }
    if (getOpCode().needsScalarPrefix())
       {
