@@ -59,6 +59,9 @@ testMain(int argc, char ** argv, char **envp)
 	int j9rc = (int) omrthread_attach_ex(&self, J9THREAD_ATTR_DEFAULT);
 	Assert_MM_true(0 == j9rc);
 
+	/* Set up the vm access mutex */
+	omrthread_rwmutex_init(&exampleVM._vmAccessMutex, 0, "VM exclusive access");
+
 	/* Initialize root table */
 	exampleVM.rootTable = hashTableNew(
 			exampleVM._omrVM->_runtime->_portLibrary, OMR_GET_CALLSITE(), 0, sizeof(RootEntry), 0, 0, OMRMEM_CATEGORY_MM,
