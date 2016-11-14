@@ -39,15 +39,10 @@ include_core/omrcfg.h
 include_core/omrversionstrings.h
 fvtest/algotest/hooksample.h
 fvtest/algotest/hooksample_internal.h
+omrmakefiles/omrcfg.mk
 omrmakefiles/configure.mk
-tools/toolconfigure.mk
+omrmakefiles/toolconfigure.mk
 omrsigcompat/omrsig.exportlist
-
-# Tool Artifacts
-tools/Makefile
-tools/toolconfig.h
-tools/toolconfigure.mk
-tools/compile-log
 
 TRBuildName.cpp
 

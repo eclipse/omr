@@ -16,158 +16,166 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  *******************************************************************************/
 
-/**
- * The OMR build configuration. A public header. Controls the APIs of all other headers.
- * Include at the top of every OMR source and header.
+/*
+ * @configure_input@
  */
 
-#if !defined(OMRCFG_H_)
-#define OMRCFG_H_
+#ifndef OMRCFG_H
+#define OMRCFG_H
 
-#undef OMR_GC
-#undef OMR_JIT
-#undef OMR_PORT
-#undef OMR_THREAD
-#undef OMR_OMRSIG
-#undef OMR_EXAMPLE
+/*
+ * @ddr_namespace: map_to_type=OmrBuildFlags
+ * @ddr_options: buildflagsonly
+ */
 
-#undef OMR_GC_ALLOCATION_TAX
-#undef OMR_GC_OBJECT_ALLOCATION_NOTIFY
-#undef OMR_GC_BATCH_CLEAR_TLH
-#undef OMR_GC_COMBINATION_SPEC
-#undef OMR_GC_CONCURRENT_SWEEP
-#undef OMR_GC_DEBUG_ASSERTS
-#undef OMR_GC_HEAP_CARD_TABLE
-#undef OMR_GC_LARGE_OBJECT_AREA
-#undef OMR_GC_MINIMUM_OBJECT_SIZE
-#undef OMR_GC_MODRON_COMPACTION
-#undef OMR_GC_MODRON_CONCURRENT_MARK
-#undef OMR_GC_MODRON_SCAVENGER
-#undef OMR_GC_CONCURRENT_SCAVENGER
-#undef OMR_GC_MODRON_STANDARD
-#undef OMR_GC_NON_ZERO_TLH
-#undef OMR_GC_SEGREGATED_HEAP
-#undef OMR_GC_THREAD_LOCAL_HEAP
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+@OMR_GC@
+@OMR_JIT@
+@OMR_PORT@
+@OMR_THREAD@
+@OMR_OMRSIG@
+@OMR_EXAMPLE@
+
+@OMR_GC_ALLOCATION_TAX@
+@OMR_GC_OBJECT_ALLOCATION_NOTIFY@
+@OMR_GC_BATCH_CLEAR_TLH@
+@OMR_GC_COMBINATION_SPEC@
+@OMR_GC_CONCURRENT_SWEEP@
+@OMR_GC_DEBUG_ASSERTS@
+@OMR_GC_HEAP_CARD_TABLE@
+@OMR_GC_LARGE_OBJECT_AREA@
+@OMR_GC_MINIMUM_OBJECT_SIZE@
+@OMR_GC_MODRON_COMPACTION@
+@OMR_GC_MODRON_CONCURRENT_MARK@
+@OMR_GC_MODRON_SCAVENGER@
+@OMR_GC_CONCURRENT_SCAVENGER@
+@OMR_GC_MODRON_STANDARD@
+@OMR_GC_NON_ZERO_TLH@
+@OMR_GC_SEGREGATED_HEAP@
+@OMR_GC_THREAD_LOCAL_HEAP@
 
 /**
  * Tells if a platform has support for Semaphores.
  * ifRemoved: platform cannot use semaphore operations.
  */
-#undef OMR_INTERP_HAS_SEMAPHORES
+@OMR_INTERP_HAS_SEMAPHORES@
 
 /**
  * Use TDF based trace engine
  * ifRemoved: No tracepoints
  */
-#undef OMR_RAS_TDF_TRACE
+@OMR_RAS_TDF_TRACE@
 
 /**
  * Support options to adapt spinning as controlled by options provided to the vm.
  * Requires flag: OMR_THR_JLM_HOLD_TIMES
  * ifRemoved: No adaptive spinning supported
  */
-#undef OMR_THR_ADAPTIVE_SPIN
+@OMR_THR_ADAPTIVE_SPIN@
 
 /**
  * Enable support for lock monitor to profile locking behaviour - counts only
  * ifRemoved: Lock monitor cannot be enabled
  */
-#undef OMR_THR_JLM
+@OMR_THR_JLM@
 
 /**
  * Enable support for lock monitor to profile locking behaviour - counts + timings only
  * ifRemoved: Lock monitor cannot be enabled
  */
-#undef OMR_THR_JLM_HOLD_TIMES
+@OMR_THR_JLM_HOLD_TIMES@
 
 /**
  * object header does not contain the monitor word
  * ifRemoved: object header will contain the monitor word
  */
-#undef OMR_THR_LOCK_NURSERY
+@OMR_THR_LOCK_NURSERY@
 
 /**
  * Output lots of thread statistics (Pentium only)
  * ifRemoved: Turn off in production VMs
  */
-#undef OMR_THR_TRACING
+@OMR_THR_TRACING@
 
-#undef OMRTHREAD_LIB_AIX
-#undef OMRTHREAD_LIB_UNIX
-#undef OMRTHREAD_LIB_WIN32
-#undef OMRTHREAD_LIB_ZOS
+@OMRTHREAD_LIB_AIX@
+@OMRTHREAD_LIB_UNIX@
+@OMRTHREAD_LIB_WIN32@
+@OMRTHREAD_LIB_ZOS@
 
 /**
  * This spec targets PPC processors.
  */
-#undef OMR_ARCH_POWER
+@OMR_ARCH_POWER@
 
 /**
  * This spec targets ARM processors.
  */
-#undef OMR_ARCH_ARM
+@OMR_ARCH_ARM@
 
 /**
  * This spec targets x86 processors.
  */
-#undef OMR_ARCH_X86
+@OMR_ARCH_X86@
 
 /**
  * This spec targets S390 processors.
  */
-#undef OMR_ARCH_S390
+@OMR_ARCH_S390@
 
-#undef OMR_ENV_DATA64
-#undef OMR_ENV_GCC
-#undef OMR_ENV_LITTLE_ENDIAN
-#undef OMR_GC_ARRAYLETS
-#undef OMR_GC_COMPRESSED_POINTERS
-#undef OMR_GC_HYBRID_ARRAYLETS
-#undef OMR_GC_OBJECT_MAP
-#undef OMR_GC_REALTIME
-#undef OMR_GC_STACCATO
-#undef OMR_GC_TLH_PREFETCH_FTA
-#undef OMR_GC_VLHGC
+@OMR_ENV_DATA64@
+@OMR_ENV_GCC@
+@OMR_ENV_LITTLE_ENDIAN@
+@OMR_GC_ARRAYLETS@
+@OMR_GC_COMPRESSED_POINTERS@
+@OMR_GC_HYBRID_ARRAYLETS@
+@OMR_GC_OBJECT_MAP@
+@OMR_GC_REALTIME@
+@OMR_GC_STACCATO@
+@OMR_GC_TLH_PREFETCH_FTA@
+@OMR_GC_VLHGC@
 
 /**
  * Flag to indicate that on 64-bit platforms, the monitor slot and class slot in object headers are U32 rather than UDATA.
  */
-#undef OMR_INTERP_COMPRESSED_OBJECT_HEADER
+@OMR_INTERP_COMPRESSED_OBJECT_HEADER@
 
 /**
  * Flag to indicate that on 64-bit platforms, the monitor slot in object headers is a U32 rather than a UDATA.
  * ifRemoved: The monitor slot is a UDATA.
  */
-#undef OMR_INTERP_SMALL_MONITOR_SLOT
+@OMR_INTERP_SMALL_MONITOR_SLOT@
 
 /**
  * Add support for CUDA
  */
-#undef OMR_OPT_CUDA
+@OMR_OPT_CUDA@
 
 /**
  * Enabling this flag implies the platform's vmem implementation is able to allocate memory top down.
  * ifRemoved: Implies the platform's vmem implementation is not able to allocate memory top down
  */
-#undef OMR_PORT_ALLOCATE_TOP_DOWN
+@OMR_PORT_ALLOCATE_TOP_DOWN@
 
 /**
  * Enables async signal handler thread in the port library.
  * ifRemoved: Async signal handler thread is disabled.
  */
-#undef OMR_PORT_ASYNC_HANDLER
+@OMR_PORT_ASYNC_HANDLER@
 
 /**
  * The platform is able to attempt to reserve virtual memory via a call to omrvmem_reserve_memory at the address specified by the user.
  * ifRemoved: The platform is not able to reserve virtual memory at a specific address
  */
-#undef OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+@OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS@
 
 /**
  * This platform is able to associate memory with a specific node, as is relevant when the system has a Non Uniform Memory Access configuration.
  * ifRemoved: This platform is not able to associate memory with a specific node.
  */
-#undef OMR_PORT_NUMA_SUPPORT
+@OMR_PORT_NUMA_SUPPORT@
 
 /**
  * If set, omrsig_protect will include support for registering a handler using CEEHDLR.
@@ -175,36 +183,40 @@
  * to omrsig_protect() to turn on the use of CEEHDLR at runtime.
  * ifRemoved: omrsig_protect will not include support for CEEHDLR.
  */
-#undef OMR_PORT_ZOS_CEEHDLRSUPPORT
+@OMR_PORT_ZOS_CEEHDLRSUPPORT@
 
 /**
  * Enable the j9thread library to be used after a fork().
  * ifRemoved: The j9thread library may be corrupt and unusable after a fork().
  */
-#undef OMR_THR_FORK_SUPPORT
+@OMR_THR_FORK_SUPPORT@
 
 /**
  * Attempt to enter raw monitors using user-space spinlocks before reverting to an OS synchronization object
  * ifRemoved: All raw monitor enters will proceed directly to an OS synchronization object
  */
-#undef OMR_THR_THREE_TIER_LOCKING
+@OMR_THR_THREE_TIER_LOCKING@
 
 /**
  * Enable support for custom spin options.
  * Requires flag: OMR_THR_THREE_TIER_LOCKING.
  * ifRemoved: Custom spin options cannot be used.
  */
-#undef OMR_THR_CUSTOM_SPIN_OPTIONS
+@OMR_THR_CUSTOM_SPIN_OPTIONS@
 
 /**
  * Allows a user to select the thread notify policy: signal or broadcast.
  * ifRemoved: User will not be able to select the thread notify policy, and broadcast policy will always be used.
  */
-#undef OMR_NOTIFY_POLICY_CONTROL
+@OMR_NOTIFY_POLICY_CONTROL@
 
 /**
  * This enables the option to select different algorithms for yielding.
  */
-#undef OMR_THR_YIELD_ALG
+@OMR_THR_YIELD_ALG@
 
-#endif /* !defined(OMRCFG_H_) */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* OMRCFG_H */

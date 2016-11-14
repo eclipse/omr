@@ -23,22 +23,28 @@
 ###
 
 # Build tools that run on the build system should include this makefile instead of configure.mk.
-# Use the main OMR configuration, but override the compilation toolchain to target the build platform.
 
 include $(top_srcdir)/omrmakefiles/configure.mk
+
+ifeq (1,$(OMR_CROSS_COMPILE))
+
+# Apply environment configuration for the build system.
+# We don't yet support build-system-specific include paths and flags.
 
 OMR_HOST_OS := @OMR_BUILD_OS@
 OMR_HOST_ARCH := @OMR_BUILD_ARCH@
 OMR_TOOLCHAIN := @OMR_BUILD_TOOLCHAIN@
 OMR_TARGET_DATASIZE := @OMR_BUILD_DATASIZE@
 
-CC := @CC@
-CCLINK := @CCLINK@
-CCLINKSHARED := @CCLINKSHARED@
-CCLINKEXE := @CCLINKEXE@
-CXX := @CXX@
-CXXLINK := @CXXLINK@
-CXXLINKSHARED := @CXXLINKSHARED@
-CXXLINKEXE := @CXXLINKEXE@
+CC := @OMR_BUILD_CC@
+CCLINK := @OMR_BUILD_CC@
+CCLINKSHARED := @OMR_BUILD_CC@
+CCLINKEXE := @OMR_BUILD_CC@
+CXX := @OMR_BUILD_CXX@
+CXXLINK := @OMR_BUILD_CXX@
+CXXLINKSHARED := @OMR_BUILD_CXX@
+CXXLINKEXE := @OMR_BUILD_CXX@
 
 GLOBAL_INCLUDES :=
+
+endif

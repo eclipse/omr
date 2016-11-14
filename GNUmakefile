@@ -285,15 +285,3 @@ $(targets_ddrgen):
 	$(MAKE) -C $(patsubst %_ddrgen,%,$@) ddrgen
 
 .PHONY: ddrgen $(targets_ddrgen)
-
-
-# Rerunning configure
-
-configure.mk: config.status configure.mk.in
-	config.status
-
-config.status: $(top_srcdir)/configure
-	$(top_srcdir)/configure -C
-
-$(top_srcdir)/configure: $(top_srcdir)/configure.ac
-	cd $(top_srcdir) && autoconf

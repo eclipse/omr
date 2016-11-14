@@ -123,10 +123,10 @@ sh configure --disable-auto-build-flag 'OMRGLUE=$(OMRGLUE)' 'SPEC=$(SPEC)' $(CON
 touch $(CONFIGURE_OUTPUT_FILES)
 endef
 
-CONFIGURE_DEPENDENCIES := SPEC config.guess config.sub configure tools/configure
-CONFIGURE_OUTPUT_FILES := include_core/omrcfg.h include_core/omrversionstrings.h omrmakefiles/configure.mk tools/toolconfigure.mk CONFIGURE_SENTINEL_FILE
-CONFIGURE_INPUT_FILES := include_core/omrcfg.h.in include_core/omrversionstrings.h.in omrmakefiles/configure.mk.in tools/toolconfigure.mk.in
-CONFIGURE_BYPRODUCTS := config.cache config.status config.log autom4te.cache tools/config.cache tools/config.status toolconfig/config.log tools/autom4te.cache
+CONFIGURE_DEPENDENCIES := SPEC config.guess config.sub configure toolconfig/configure
+CONFIGURE_OUTPUT_FILES := include_core/omrcfg.h include_core/omrversionstrings.h omrmakefiles/omrcfg.mk omrmakefiles/configure.mk omrmakefiles/toolconfigure.mk CONFIGURE_SENTINEL_FILE
+CONFIGURE_INPUT_FILES := include_core/omrcfg.h.in include_core/omrversionstrings.h.in omrmakefiles/configure.mk.in omrmakefiles/toolconfigure.mk.in
+CONFIGURE_BYPRODUCTS := config.cache config.status config.log autom4te.cache toolconfig/config.cache toolconfig/config.status toolconfig/config.log toolconfig/autom4te.cache
 
 all: check-environment-variables CONFIGURE_SENTINEL_FILE
 
@@ -137,11 +137,11 @@ else
 	@echo "WARNING: autoconf needs to be re-run in $$PWD.  You should do this by hand, or set HAS_AUTOCONF=1 to have this makefile do it for you."
 endif
 
-tools/configure: tools/configure.ac
+toolconfig/configure: toolconfig/configure.ac
 ifeq ($(HAS_AUTOCONF),1)
-	cd tools && autoreconf
+	cd toolconfig && autoconf
 else
-	@echo "WARNING: autoconf needs to be re-run in $$PWD/tools.  You should do this by hand, or set HAS_AUTOCONF=1 to have this makefile do it for you."
+	@echo "WARNING: autoconf needs to be re-run in $$PWD/toolconfig.  You should do this by hand, or set HAS_AUTOCONF=1 to have this makefile do it for you."
 endif
 
 config.guess:

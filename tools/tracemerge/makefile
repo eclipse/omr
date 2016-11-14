@@ -17,7 +17,7 @@
 ###############################################################################
 
 top_srcdir := ../..
-include $(top_srcdir)/tools/toolconfigure.mk
+include $(top_srcdir)/omrmakefiles/toolconfigure.mk
 
 MODULE_NAME := tracemerge
 ARTIFACT_TYPE := cxx_executable
