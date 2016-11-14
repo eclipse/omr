@@ -16,9 +16,8 @@
 #    Multiple authors (IBM Corp.) - initial implementation and documentation
 ###############################################################################
 
-
 top_srcdir := ../..
-include $(top_srcdir)/tools/toolconfigure.mk
+include $(top_srcdir)/omrmakefiles/toolconfigure.mk
 
 MODULE_NAME := hookgen
 ARTIFACT_TYPE := cxx_executable
