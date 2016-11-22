@@ -6029,7 +6029,7 @@ TR_InlinerTracer::dumpInline(TR_LinkHead<TR_CallTarget> *targets, const char *fm
 
          traceMsg(comp(),"\t%s\n","[");
 
-         if(currentTarget && !currentTarget->_myCallees.isEmpty())
+         if(!currentTarget->_myCallees.isEmpty())
             {
 
             TR_CallSite *callsite = NULL;
@@ -6047,7 +6047,7 @@ TR_InlinerTracer::dumpInline(TR_LinkHead<TR_CallTarget> *targets, const char *fm
                }
             }
 
-         if(currentTarget && !currentTarget->_deletedCallees.isEmpty())
+         if(!currentTarget->_deletedCallees.isEmpty())
             {
             TR_CallSite *callsite = NULL;
 

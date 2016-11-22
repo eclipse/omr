@@ -2304,8 +2304,7 @@ TR::VPConstraint *TR::ValuePropagation::mergeDefConstraints(TR::Node *node, int3
 
             // See if the unseen def was seen on a path to this back edge.
             //
-            if (!loopInfo ||
-                !loopInfo->_backEdgeConstraints ||
+            if (!loopInfo->_backEdgeConstraints ||
                 !hasBeenStored(defValueNumber, sym, loopInfo->_backEdgeConstraints->valueConstraints))
                {
                if (trace())

@@ -1233,16 +1233,15 @@ bool OMR::LocalCSE::canBeAvailable(TR::Node *parent, TR::Node *node, SharedSpars
          (parent->getOpCodeValue() == TR::treetop ||
            parent->getOpCode().isResolveOrNullCheck()))
          return false;
-      }
 
-   if (node->getOpCodeValue() == TR::PassThrough && parent->getOpCodeValue() != TR::GlRegDeps)
-      return false;
-
-
-   if (comp()->cg()->supportsLengthMinusOneForMemoryOpts() && parent && parent->getOpCode().isMemToMemOp())
-      {
-      if (parent->getLastChild() == node)
+      if (node->getOpCodeValue() == TR::PassThrough && parent->getOpCodeValue() != TR::GlRegDeps)
          return false;
+
+      if (comp()->cg()->supportsLengthMinusOneForMemoryOpts() && parent->getOpCode().isMemToMemOp())
+         {
+         if (parent->getLastChild() == node)
+            return false;
+         }
       }
 
    int32_t i = 0;

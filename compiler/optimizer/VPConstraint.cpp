@@ -4804,6 +4804,7 @@ bool TR::VPClass::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
    TR::VPClass *otherClass = NULL;
    if (other)
       otherClass = other->asClass();
+
    if (!_preexistence &&
        !_arrayInfo && _type &&
        _type->isFixedClass() && isNonNullObject() &&
@@ -4986,7 +4987,8 @@ bool TR::VPClass::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *
    TR::VPClass *otherClass = NULL;
    if (other)
       otherClass = other->asClass();
-  if (!_preexistence &&
+
+   if (!_preexistence &&
        !_arrayInfo && _type &&
        _type->isFixedClass() && isNonNullObject() &&
        other && otherClass &&

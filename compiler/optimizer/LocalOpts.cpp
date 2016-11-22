@@ -1166,6 +1166,7 @@ int32_t TR_BlockManipulator::performChecksAndTreesMovement(TR::Block *newBlock, 
          ;
 
       TR::Block *nextBlock = prevBlock->getNextBlock();
+      // If this condition is satisfied, nextBlock != NULL
       if (cursorNext && cursor->hasSuccessor(cursorNext))
          {
          // may need to add a goto block (unless cursor is ends with a branch
@@ -4928,8 +4929,7 @@ bool TR_Rematerialization::examineNode(TR::TreeTop *treeTop, TR::Node *parent, T
        (node->getNumChildren() == 2) &&
        isRematerializableLoad(node->getFirstChild(), node) &&
 
-       (!node ||
-        (node->getOpCodeValue() != TR::Prefetch) ||
+       ((node->getOpCodeValue() != TR::Prefetch) ||
         (node->getFirstChild()->getOpCodeValue() != TR::aloadi)) &&
 
        ((node->getFirstChild()->getOpCodeValue() != TR::lloadi) ||

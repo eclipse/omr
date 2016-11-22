@@ -2079,7 +2079,7 @@ TR_LoopReducer::generateArraycmp(TR_RegionStructure * whileLoop, TR_InductionVar
       for (edge = sit.getFirst(); edge; edge = sit.getNext())
          {
          TR::Block * succ = edge->getTo()->asBlock();
-         if (block)
+         if (succ)
             {
             queue.enqueue(succ);
             }
@@ -2761,9 +2761,17 @@ TR_LoopReducer::generateArraytranslate(TR_RegionStructure * whileLoop, TR_Induct
             storeTree = storeTree->getNextTreeTop();
             }
          storeNode = (storeTree->getNode()->getNumChildren() == 2) ? storeTree->getNode() : NULL;
-         loadTree  = (storeNode != NULL && storeNode->getNumChildren() == 2) ? storeTree : NULL;
+
+         if (storeNode == NULL)
+            {
+            dumpOptDetails(comp(), "Store node is %p\n", storeNode);
+            return false;
+            }
+
+         loadTree  = (storeNode->getNumChildren() == 2) ? storeTree : NULL;
          loadNode  = (loadTree) ? storeNode->getSecondChild() : NULL;
-         if (storeNode == NULL || loadNode == NULL)
+
+         if (loadNode == NULL)
             {
             dumpOptDetails(comp(), "Load node is %p and store node is %p\n", loadNode, storeNode);
             return false;
