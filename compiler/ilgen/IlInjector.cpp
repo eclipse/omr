@@ -309,11 +309,11 @@ OMR::IlInjector::shiftLeftBy(TR::Node *value, int32_t shift)
    {
    TR::Node *result;
    if (value->getDataType() == TR::Int32)
-      TR::Node::create(TR::ishl, 2, value, TR::Node::iconst(shift));
+      result = TR::Node::create(TR::ishl, 2, value, TR::Node::iconst(shift));
    else
       {
       TR_ASSERT(value->getDataType() == TR::Int64, "expecting Int32 or Int64 for shiftLeftBy value expression");
-      TR::Node::create(TR::lshl, 2, value, TR::Node::lconst(shift));
+      result = TR::Node::create(TR::lshl, 2, value, TR::Node::lconst(shift));
       }
    return result;
    }
