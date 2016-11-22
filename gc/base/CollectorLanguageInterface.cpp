@@ -31,28 +31,33 @@ struct OMR_VMThread;
 void
 MM_CollectorLanguageInterface::writeBarrierStore(OMR_VMThread *omrThread, omrobjectptr_t parentObject, fomrobject_t *parentSlot, omrobjectptr_t childObject)
 {
-	GC_SlotObject slotObject(omrThread->_vm, parentSlot);
-	slotObject.writeReferenceToSlot(childObject);
 
-	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(omrThread);
-#if defined(OMR_GC_MODRON_SCAVENGER)
-	generationalWriteBarrierStore(env, parentObject, childObject);
-#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) | defined(OMR_GC_MODRON_SCAVENGER) */
-#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-	concurrentWriteBarrierStore(env, parentObject);
-#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) | defined(OMR_GC_MODRON_SCAVENGER) */
+/* defined(OMR_GC_MODRON_CONCURRENT_MARK) | defined(OMR_GC_MODRON_SCAVENGER) */
+#if defined(OMR_GC_MODRON_SCAVENGER)||defined(OMR_GC_MODRON_SCAVENGER)
+		GC_SlotObject slotObject(omrThread->_vm, parentSlot);
+    	slotObject.writeReferenceToSlot(childObject);
+    	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(omrThread);
+    #if defined(OMR_GC_MODRON_SCAVENGER)
+	    generationalWriteBarrierStore(env, parentObject, childObject);
+    #elif defined(OMR_GC_MODRON_CONCURRENT_MARK)
+	    concurrentWriteBarrierStore(env, parentObject);
+    #endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) | defined(OMR_GC_MODRON_SCAVENGER) */
+#endif
 }
 
 void
 MM_CollectorLanguageInterface::writeBarrierUpdate(OMR_VMThread *omrThread, omrobjectptr_t parentObject, omrobjectptr_t childObject)
 {
+/* defined(OMR_GC_MODRON_CONCURRENT_MARK) | defined(OMR_GC_MODRON_SCAVENGER) */
+#if defined(OMR_GC_MODRON_SCAVENGER)||defined(OMR_GC_MODRON_SCAVENGER)
 	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(omrThread);
-#if defined(OMR_GC_MODRON_SCAVENGER)
-	generationalWriteBarrierStore(env, parentObject, childObject);
-#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) | defined(OMR_GC_MODRON_SCAVENGER) */
-#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-	concurrentWriteBarrierStore(env, parentObject);
-#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) | defined(OMR_GC_MODRON_SCAVENGER) */
+    #if defined(OMR_GC_MODRON_SCAVENGER)
+        generationalWriteBarrierStore(env, parentObject, childObject);
+    #endif
+    #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+        concurrentWriteBarrierStore(env, parentObject);
+    #endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) | defined(OMR_GC_MODRON_SCAVENGER) */
+#endif
 }
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
