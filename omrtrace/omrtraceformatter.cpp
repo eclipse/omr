@@ -864,12 +864,12 @@ omr_trc_formatNextTracePoint(UtTracePointIterator *iter, char *buffer, uint32_t 
 	uint32_t tpLength = 0;
 	uint32_t offset = 0;
 
-	OMRPORT_ACCESS_FROM_OMRPORT(iter->portLib);
-
 	if (iter == NULL) {
 		UT_DBGOUT_CHECKED(1, ("<UT> omr_trc_formatNextTracePoint called with NULL iterator\n"));
 		return NULL;
 	}
+
+	OMRPORT_ACCESS_FROM_OMRPORT(iter->portLib);
 
 	if (iter->buffer == NULL) {
 		UT_DBGOUT_CHECKED(1, ("<UT> omr_trc_formatNextTracePoint called with unpopulated iterator buffer\n"));

@@ -124,6 +124,8 @@ void TR_BitVector::setChunkSize(int32_t chunkSize)
    {
    if (chunkSize == _numChunks)
       return;
+
+   // This path assumes that _chunks has been initialized
    if (chunkSize == 0)
       {
       if (_chunks && _allocationKind == persistentAlloc)
@@ -138,6 +140,7 @@ void TR_BitVector::setChunkSize(int32_t chunkSize)
       return;
       }
 
+   // This path assumes that _chunks has been initialized
    if (_numChunks > chunkSize)
       {
       // Shrinking the bit vector ... may have lost some bits

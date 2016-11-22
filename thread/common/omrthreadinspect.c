@@ -295,14 +295,14 @@ omrthread_get_stack_range(omrthread_t thread, void **stackStart, void **stackEnd
 {
 
 #if defined(LINUX)
+	if (!thread) {
+		return J9THREAD_ERR_INVALID_THREAD;
+	}
+
 	pthread_attr_t attr;
 	OSTHREAD osTid = thread->handle;
 	uintptr_t rc = 0;
 	size_t stackSize;
-
-	if (!thread) {
-		return J9THREAD_ERR_INVALID_THREAD;
-	}
 
 	/* Retrieve the pthread_attr_t from the thread */
 	if ((rc = pthread_getattr_np(osTid, &attr)) != 0) {

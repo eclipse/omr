@@ -2181,8 +2181,6 @@ copyEnvToBuffer(struct OMRPortLibrary *portLibrary, void *args)
 	iconv_t converter;
 #endif
 
-	memset(buffer, 0, bufferSize);
-
 	/* How much space do we need to store the environment?
 	 *  - we are converting to UTF-8, where 3 bytes is the maximum it can take to encode anything
 	 *  - therefore, to keep things simple, just multiple the results of strlen by 3
@@ -2200,6 +2198,8 @@ copyEnvToBuffer(struct OMRPortLibrary *portLibrary, void *args)
 	if (NULL == buffer) {
 		return storageRequiredForEnvironment;
 	}
+
+	memset(buffer, 0, bufferSize);
 
 #if defined(J9VM_USE_ICONV)
 	/* iconv_get is not an a2e function, so we need to pass it honest-to-goodness EBCDIC strings */

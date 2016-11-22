@@ -463,6 +463,7 @@ OMR_Shutdown_VM(OMR_VM *omrVM, OMR_VMThread *omrVMThread)
 {
 	omr_error_t rc = OMR_ERROR_NONE;
 
+   // This path assumes that omrVM has been initialized
 	if (NULL != omrVMThread) {
 		OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
 #if defined(OMR_GC)

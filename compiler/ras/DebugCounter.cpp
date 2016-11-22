@@ -304,10 +304,18 @@ void TR::DebugCounterAggregation::aggregateStandardCounters(TR::Compilation *com
 void TR::DebugCounterAggregation::aggregateDebugCounterInsertions(TR::Compilation *comp, TR::Node *node, TR::DebugCounter *counter, int32_t delta, int8_t fidelity, int32_t staticDelta)
    {
    const char *counterNames[3];
-   counter->getInsertionCounterNames(comp, node, counterNames);
 
-   if (counter && counter->getDenominator() && counter->contributesToDenominator())
-      aggregateDebugCounterInsertions(comp, node, counter->getDenominator(), delta, fidelity, staticDelta);
+   if (counter)
+      {
+      counter->getInsertionCounterNames(comp, node, counterNames);
+      if (counter->getDenominator() && counter->contributesToDenominator())
+         aggregateDebugCounterInsertions(comp, node, counter->getDenominator(), delta, fidelity, staticDelta);
+      }
+   else
+      {
+      TR_ASSERT(0, "DebugCounter *counter must not be null.");
+      return;
+      }
 
    for (int i = 0; i < sizeof(counterNames) / sizeof(counterNames[0]); i++)
       {

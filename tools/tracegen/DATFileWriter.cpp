@@ -63,55 +63,53 @@ DATFileWriter::writeOutputFiles(J9TDFOptions *options, J9TDFFile *tdf)
 	fprintf(datFile, "executable=%s\n", tdf->header.executable);
 
 	/* Partial DAT trace data */
-	if (NULL != datFile) {
-		while (NULL != tp) {
-			/* Write to dat file. */
-			switch (tp->type) {
-			case UT_EXCEPTION_TYPE:
-			case UT_ENTRY_EXCPT_TYPE:
-			case UT_EXIT_EXCPT_TYPE:
-			case UT_MEM_EXCPT_TYPE:
-			case UT_DEBUG_EXCPT_TYPE:
-			case UT_PERF_EXCPT_TYPE:
-			case UT_ASSERT_TYPE:
-				exceptChar = '*';
-				break;
-			default:
-				exceptChar = ' ';
-				break;
-			}
-
-			switch (tp->type) {
-			case UT_ENTRY_TYPE:
-			case UT_ENTRY_EXCPT_TYPE:
-				entryExitChar = '>';
-				break;
-			case UT_EXIT_TYPE:
-			case UT_EXIT_EXCPT_TYPE:
-				entryExitChar = '<';
-				break;
-			default:
-				entryExitChar = ' ';
-				break;
-			}
-
-			if (UT_ASSERT_TYPE == tp->type) {
-				format = (char *) "** ASSERTION FAILED ** at %s:%d: %s";
-			} else {
-				format = tp->format;
-			}
-
-			if (tp->isExplicit) {
-				explicitChar = 'Y';
-			}
-
-			fprintf(datFile, datLineTemplate, tdf->header.executable, id, tp->type, tp->overhead, tp->level, explicitChar, tp->name, exceptChar, entryExitChar, format);
-			tp = tp->nexttp;
-			id += 1;
+	while (NULL != tp) {
+		/* Write to dat file. */
+		switch (tp->type) {
+		case UT_EXCEPTION_TYPE:
+		case UT_ENTRY_EXCPT_TYPE:
+		case UT_EXIT_EXCPT_TYPE:
+		case UT_MEM_EXCPT_TYPE:
+		case UT_DEBUG_EXCPT_TYPE:
+		case UT_PERF_EXCPT_TYPE:
+		case UT_ASSERT_TYPE:
+			exceptChar = '*';
+			break;
+		default:
+			exceptChar = ' ';
+			break;
 		}
-		fclose(datFile);
-		rc = RC_OK;
+
+		switch (tp->type) {
+		case UT_ENTRY_TYPE:
+		case UT_ENTRY_EXCPT_TYPE:
+			entryExitChar = '>';
+			break;
+		case UT_EXIT_TYPE:
+		case UT_EXIT_EXCPT_TYPE:
+			entryExitChar = '<';
+			break;
+		default:
+			entryExitChar = ' ';
+			break;
+		}
+
+		if (UT_ASSERT_TYPE == tp->type) {
+			format = (char *) "** ASSERTION FAILED ** at %s:%d: %s";
+		} else {
+			format = tp->format;
+		}
+
+		if (tp->isExplicit) {
+			explicitChar = 'Y';
+		}
+
+		fprintf(datFile, datLineTemplate, tdf->header.executable, id, tp->type, tp->overhead, tp->level, explicitChar, tp->name, exceptChar, entryExitChar, format);
+		tp = tp->nexttp;
+		id += 1;
 	}
+	fclose(datFile);
+	rc = RC_OK;
 
 	Port::omrmem_free((void **)&fileName);
 
