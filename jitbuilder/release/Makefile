@@ -22,7 +22,7 @@ CXXFLAGS=-g -std=c++0x -O2 -c -fno-rtti -fPIC -I./include/compiler -I./include
 
 .SUFFIXES: .cpp .o
 
-goal: call conststring dotproduct iterfib linkedlist localarray structarray mandelbrot nestedloop pointer recfib simple switch pow2 controlflowtests
+goal: call conststring dotproduct iterfib linkedlist localarray structarray mandelbrot nestedloop pointer recfib simple switch pow2 controlflowtests atom
 
 all: goal
 
@@ -41,6 +41,7 @@ test: goal
 	./switch
 	./pow2
 	./controlflowtests
+	./atom
 
 call : libjitbuilder.a Call.o
 	g++ -g -fno-rtti -o $@ Call.o -L. -ljitbuilder -ldl
@@ -135,6 +136,11 @@ simple : libjitbuilder.a Simple.o
 Simple.o: src/Simple.cpp src/Simple.hpp
 	g++ -o $@ $(CXXFLAGS) $<
 
+atom : libjitbuilder.a Atomic.o
+	g++ -g -fno-rtti -o $@ Atomic.o -L. -ljitbuilder -ldl
+
+Atomic.o: src/Atomic.cpp src/Atomic.hpp
+	g++ -o $@ $(CXXFLAGS) $<
 
 switch : libjitbuilder.a Switch.o
 	g++ -g -fno-rtti -o $@ Switch.o -L. -ljitbuilder -ldl
@@ -166,4 +172,4 @@ ControlFlowTests.o: src/ControlFlowTests.cpp src/ControlFlowTests.hpp
 
 
 clean:
-	@rm -f call conststring dotproduct iterfib linkedlist localarray structarray mandelbrot matmult nestedloop pointer recfib simple switch pow2 *.o
+	@rm -f call conststring dotproduct iterfib linkedlist localarray structarray mandelbrot matmult nestedloop pointer recfib simple atom switch pow2 *.o
