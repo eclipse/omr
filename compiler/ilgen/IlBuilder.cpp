@@ -1419,6 +1419,49 @@ IlBuilder::Call(const char *functionName, int32_t numArgs, TR::IlValue ** argVal
    return NULL;
    }
 
+TR::IlValue *
+IlBuilder::AtomicIntegerAdd(TR::IlValue * object, TR::IlValue * offset, TR::IlValue * value)
+   {
+   TraceIL("IlBuilder[ %p ]::AtomicIntegerAdd (%d, %d, %d)\n", this, object->getCPIndex(), offset->getCPIndex(), value->getCPIndex());
+   appendBlock();
+
+   TR::DataType returnType = TR::Int32;
+   
+   TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateCodeGenInlinedHelper(TR::SymbolReferenceTable::atomicAdd32BitSymbol); //lock add
+   TR::Node *callNode = TR::Node::createWithSymRef(TR::ILOpCode::getDirectCall(returnType), 3, methodSymRef);
+
+   callNode->setAndIncChild(0, loadValue(object));
+   callNode->setAndIncChild(1, loadValue(offset));
+   callNode->setAndIncChild(2, loadValue(value));
+
+   genTreeTop(callNode); 
+   TR::IlValue *returnValue = newValue(callNode->getDataType());
+   genTreeTop(TR::Node::createStore(returnValue, callNode)); 
+   
+   return returnValue; 
+   }
+
+TR::IlValue *
+IlBuilder::AtomicIntegerAdd(TR::IlValue * object, TR::IlValue * value)
+   {
+   TraceIL("IlBuilder[ %p ]::AtomicIntegerAdd (%d, %d)\n", this, object->getCPIndex(), value->getCPIndex());
+   appendBlock();
+
+   TR::DataType returnType = TR::Int32;
+   
+   TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateCodeGenInlinedHelper(TR::SymbolReferenceTable::atomicAdd32BitSymbol); //lock add
+   TR::Node *callNode = TR::Node::createWithSymRef(TR::ILOpCode::getDirectCall(returnType), 2, methodSymRef);
+
+   callNode->setAndIncChild(0, loadValue(object));
+   callNode->setAndIncChild(1, loadValue(value));
+
+   genTreeTop(callNode); 
+   TR::IlValue *returnValue = newValue(callNode->getDataType());
+   genTreeTop(TR::Node::createStore(returnValue, callNode)); 
+   
+   return returnValue;    
+   }
+
 void
 IlBuilder::IfCmpNotEqualZero(TR::IlBuilder **target, TR::IlValue *condition)
    {
