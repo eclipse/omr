@@ -545,6 +545,24 @@ class TreeEvaluator: public OMR::TreeEvaluator
          TR::RegisterDependencyConditions* conditions,
          TR::CodeGenerator* cg);
 
+   /**
+   * Checks whether a memory symbol has lazy volatile semantics
+   *
+   * A semantic property of a lazy volatile memory location is that a write requires
+   * a memory barrier before, but not after the operation. This is generally the case
+   * when a memory write cannot be reordered with any previous memory operations, but
+   * can be reordered with subsequent, non-volatile operations. This is precisely the
+   * behaviour of atomic memory writes to shadow references.
+   *
+   * Note: Although the `TR::Compilation` object is not used in this general implementation,
+   * it may be useful to have in a language specific specialization of this function.
+   * Some languages may explicitly define structures as having lazy volatile semantics.
+   * In these cases, extending the definition of this function is likely desirable.
+   */
+   static bool isLazyVolatile(TR::Node* node, TR::Compilation* comp) {
+      return node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && TR::Compiler->target.isSMP();
+   }
+
    private:
 
    static TR::Register *int2dbl(
