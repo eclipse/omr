@@ -27,7 +27,7 @@
 #include <sys/syscall.h>
 #endif /* __GLIBC_PREREQ(2,4) */
 #elif defined(OSX)
-#include <sys/syscall.h>
+#include <pthread.h>
 #endif /* defined(LINUX) */
 
 #if defined(LINUX)
@@ -67,7 +67,9 @@ omrthread_get_ras_tid(void)
 	threadID = (uintptr_t) gettid();
 #endif /* __GLIBC_PREREQ(2,4) */
 #elif defined(OSX)
-	threadID = syscall(SYS_thread_selfid);
+	uint64_t tid64;
+    pthread_threadid_np(NULL, &tid64);
+    threadID = (pid_t)tid64;
 #else /* defined(OSX) */
 	pthread_t myThread = pthread_self();
 
