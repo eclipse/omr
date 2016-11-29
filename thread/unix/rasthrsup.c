@@ -27,7 +27,7 @@
 #include <sys/syscall.h>
 #endif /* __GLIBC_PREREQ(2,4) */
 #elif defined(OSX)
-#include <sys/syscall.h>
+#include <pthread.h>
 #endif /* defined(LINUX) */
 
 #if defined(LINUX)
@@ -45,6 +45,7 @@
 #include <sys/types.h>
 #include <linux/unistd.h>
 
+
 /* this line is needed to build the syscall macro which is called (as gettid) within the function */
 _syscall0(pid_t, gettid);
 #endif
@@ -56,18 +57,20 @@ omrthread_get_ras_tid(void)
 	uintptr_t threadID = 0;
 
 #if defined(LINUX)
-#if __GLIBC_PREREQ(2,4)
-	/* Want thread id that shows up in /proc etc.  gettid() does not cut it */
-	threadID = syscall(SYS_gettid);
-#else /* __GLIBC_PREREQ(2,4) */
-	/*
-	 * On Linux (and probably other Unices but testing to follow), pthread_self is not the kernel's thread ID!
-	 * We will use the gettid call to get the actual ID of the thread
-	 */
-	threadID = (uintptr_t) gettid();
-#endif /* __GLIBC_PREREQ(2,4) */
+    #if __GLIBC_PREREQ(2,4)
+        /* Want thread id that shows up in /proc etc.  gettid() does not cut it */
+        threadID = syscall(SYS_gettid);
+    #else /* __GLIBC_PREREQ(2,4) */
+        /*
+         * On Linux (and probably other Unices but testing to follow), pthread_self is not the kernel's thread ID!
+         * We will use the gettid call to get the actual ID of the thread
+         */
+        threadID = (uintptr_t) gettid();
+    #endif /* __GLIBC_PREREQ(2,4) */
 #elif defined(OSX)
-	threadID = syscall(SYS_thread_selfid);
+    uint64_t tid64;
+    pthread_threadid_np(NULL, &tid64);
+    threadID = (pid_t)tid64;
 #else /* defined(OSX) */
 	pthread_t myThread = pthread_self();
 
