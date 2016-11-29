@@ -1357,6 +1357,7 @@ TR::Node* OMR::LocalCSE::getAvailableExpression(TR::Node *parent, TR::Node *node
       }
 
    if ((node->getOpCode().isArrayRef()) &&
+       node->canBeInternalPtrOfObject() &&
        cg()->supportsInternalPointers() &&
        (node->getFirstChild()->getOpCodeValue() == TR::aload) &&
        (node->getFirstChild()->getSymbolReference()->getSymbol()->isAuto()) &&

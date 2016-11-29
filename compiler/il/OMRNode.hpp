@@ -452,6 +452,7 @@ public:
    bool                   dontEliminateStores(bool isForLocalDeadStore = false);
 
    bool                   isNotCollected();
+   bool                   canBeInternalPtrOfObject();
 
    bool                   addressPointsAtObject();
 

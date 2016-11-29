@@ -2336,6 +2336,7 @@ OMR::Node::dontEliminateStores(bool isForLocalDeadStore)
 
 
 
+// false is not equivalent to isCollected
 bool
 OMR::Node::isNotCollected()
    {
@@ -2349,6 +2350,78 @@ OMR::Node::isNotCollected()
    return false;
    }
 
+
+
+/*
+ * This query currently only works on opcodes that can have pinning array pointer,
+ * i.e. aiadd, aiuadd, aladd, aluadd (support for other opcodes can be added if necessary).
+ * This query traverses down the children of the node and try to find if it is originated
+ * from a collectable reference, i.e. anything that is an address to a collected object
+*/
+bool
+OMR::Node::canBeInternalPtrOfObject()
+   {
+   TR::Compilation * comp = TR::comp();
+
+   if (!self()->hasPinningArrayPointer())
+      return false;
+   if (self()->isInternalPointer())
+      return true;
+
+   TR::NodeChecklist visited(comp);
+   TR::Node *curNode = self();
+   TR::ILOpCode op = curNode->getOpCode();
+   // Look for a node with symRef so that we can tell whether self() originates from a collected reference
+   while (curNode)
+      {
+      if (op.getDataType() != TR::Address)
+         return false;
+      // Come across a node that has already been checked
+      if (visited.contains(curNode))
+         return false;
+      if (curNode->isInternalPointer())
+         return true;
+
+      if (curNode->getOpCode().hasSymbolReference())
+         {
+         TR::Symbol *symbol = curNode->getSymbolReference()->getSymbol();
+         return op.isNew() ||
+                (op.getDataType() == TR::Address && op.isCall()) ||
+                symbol->isInternalPointer() ||
+                symbol->isCollectedReference();
+         }
+
+      visited.add(curNode);
+      if (curNode->getNumChildren() >= 1)
+         {
+         curNode = curNode->getFirstChild();
+         op = curNode->getOpCode();
+         TR::ILOpCodes ops = op.getOpCodeValue();
+         TR_ASSERT(!op.isConversion(), "canBeInternalPtrOfObject does not work for nodes originated from non-address node, node is "POINTER_PRINTF_FORMAT, self());
+         TR_ASSERT(ops == TR::aload ||
+                   ops == TR::aloadi ||
+                   ops == TR::loadaddr ||
+                   ops == TR::aRegLoad ||
+                   ops == TR::areturn ||
+                   ops == TR::acall ||
+                   ops == TR::acalli ||
+                   ops == TR::compressedRefs ||
+                   ops == TR::New ||
+                   ops == TR::newarray ||
+                   ops == TR::anewarray ||
+                   ops == TR::variableNew ||
+                   ops == TR::variableNewArray ||
+                   ops == TR::multianewarray ||
+                   ops == TR::aiadd ||
+                   ops == TR::aladd,
+                   "canBeInternalPtrOfObject does not work for nodes with unsupported data types, node is " POINTER_PRINTF_FORMAT, self());
+         }
+      else
+         curNode = NULL;
+      }
+
+   return false;
+   }
 
 
 bool
@@ -3652,7 +3725,7 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
    TR::TreeTop *newStoreTree = NULL;
 
    bool isInternalPointer = false;
-   if (self()->getOpCode().isArrayRef() ||
+   if ((self()->getOpCode().isArrayRef() && self()->canBeInternalPtrOfObject()) ||
        (self()->getOpCode().isLoadVarDirect() &&
         self()->getSymbolReference()->getSymbol()->isAuto() &&
         self()->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer()))
@@ -3730,7 +3803,7 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
       nodeRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Address, isInternalPointer);
       TR::Node* storeNode = TR::Node::createStore(nodeRef, self());
 
-      if (self()->getOpCode().isArrayRef())
+      if (self()->getOpCode().isArrayRef() && self()->canBeInternalPtrOfObject())
          self()->setIsInternalPointer(true);
 
       TR::Node *child = NULL;

@@ -3167,12 +3167,13 @@ TR::TreeTop * OMR_InlinerUtil::storeValueInATemp(
 
       // disable internal pointer symbols for C/C++
       if (
-         (value->getOpCode().isArrayRef() ||
+         ((value->getOpCode().isArrayRef() && value->canBeInternalPtrOfObject()) ||
             (value->getOpCode().isLoadVarDirect() &&
              value->getSymbolReference()->getSymbol()->isAuto() &&
              value->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer())))
          isInternalPointer = true;
 
+      // value->isNotCollected() == false does not mean value is collected
       if ((value->isNotCollected() && dataType != TR::Aggregate) || isIndirect)
          {
          TR::SymbolReference *valueRef;
