@@ -653,7 +653,6 @@ static bool containsUnsafeSymbolReference(TR::ValuePropagation *vp, TR::Node *no
          return true;
          }
 
-
       if (node->getSymbolReference() == vp->getSymRefTab()->findInstanceShapeSymbolRef() ||
           node->getSymbolReference() == vp->getSymRefTab()->findInstanceDescriptionSymbolRef() ||
           node->getSymbolReference() == vp->getSymRefTab()->findDescriptionWordFromPtrSymbolRef() ||
@@ -5238,6 +5237,99 @@ TR::Node *constrainCall(TR::ValuePropagation *vp, TR::Node *node)
       bool isLongAbs =    (symbol->getRecognizedMethod() == TR::java_lang_Math_abs_L);
       bool isFloatAbs =   (symbol->getRecognizedMethod() == TR::java_lang_Math_abs_F);
       bool isDoubleAbs =  (symbol->getRecognizedMethod() == TR::java_lang_Math_abs_D);
+
+      switch (symbol->getRecognizedMethod())
+         {
+         case TR::java_lang_Class_getModifiersImpl:
+            {
+            TR::Node *classChild = node->getFirstChild();
+            bool classChildGlobal;
+            TR::VPConstraint *classChildConstraint = vp->getConstraint(classChild, classChildGlobal);
+            if (classChildConstraint && classChildConstraint->isJavaLangClassObject() == TR_yes
+                && classChildConstraint->isNonNullObject()
+                && classChildConstraint->getClassType()
+                && classChildConstraint->getClassType()->asFixedClass())
+               {
+               int32_t modifiersForClass = vp->comp()->fej9vm()->getRawModifiers(classChildConstraint->getClass());
+               TR::VPConstraint *modifiersConstraint = TR::VPIntConst::create(vp, modifiersForClass);
+               vp->replaceByConstant(node, modifiersConstraint, classChildGlobal);
+               TR::DebugCounter::incStaticDebugCounter(vp->comp(), TR::DebugCounter::debugCounterName(vp->comp(), "constrainCall/%s", "getModifiersImpl"));
+               return node;
+               }
+            break;
+            }
+        case TR::java_lang_Class_isInterface:
+            {
+            TR::Node *classChild = node->getLastChild();
+            bool classChildGlobal;
+            TR::VPConstraint *classChildConstraint = vp->getConstraint(classChild, classChildGlobal);
+            if (classChildConstraint && classChildConstraint->isJavaLangClassObject() == TR_yes
+                && classChildConstraint->isNonNullObject()
+                && classChildConstraint->getClassType()
+                && classChildConstraint->getClassType()->asFixedClass())
+               {
+               int32_t isInterface = TR::Compiler->cls.isInterfaceClass(vp->comp(), classChildConstraint->getClass());
+               TR::VPConstraint *isInterfaceConstraint = TR::VPIntConst::create(vp, isInterface);
+               vp->replaceByConstant(node, isInterfaceConstraint, classChildGlobal);
+               TR::DebugCounter::incStaticDebugCounter(vp->comp(), TR::DebugCounter::debugCounterName(vp->comp(), "constrainCall/%s", "isInterface"));
+               return node;
+               }
+            break;
+            }
+         case TR::java_lang_Class_isAssignableFrom:
+            {
+            TR::Node *firstClassChild = node->getFirstChild();
+            bool firstClassChildGlobal;
+            TR::VPConstraint *firstClassChildConstraint = vp->getConstraint(firstClassChild, firstClassChildGlobal);
+            TR::Node *secondClassChild = node->getSecondChild();
+            bool secondClassChildGlobal;
+            TR::VPConstraint *secondClassChildConstraint = vp->getConstraint(secondClassChild, secondClassChildGlobal);
+
+            if (firstClassChildConstraint && firstClassChildConstraint->isJavaLangClassObject() == TR_yes
+                && firstClassChildConstraint->isNonNullObject()
+                && firstClassChildConstraint->getClassType()
+                && firstClassChildConstraint->getClassType()->asFixedClass())
+               {
+               if (secondClassChildConstraint && secondClassChildConstraint->isJavaLangClassObject() == TR_yes
+                   && secondClassChildConstraint->isNonNullObject()
+                   && secondClassChildConstraint->getClassType())
+                  {
+                  int32_t assignable = 0;
+                  if (vp->comp()->fej9()->isInstanceOf(secondClassChildConstraint->getClass(), firstClassChildConstraint->getClass(), true, true) == TR_yes)
+                     assignable = 1;
+
+                  TR::VPConstraint *assignableConstraint = TR::VPIntConst::create(vp, assignable);
+                  vp->replaceByConstant(node, assignableConstraint, firstClassChildGlobal && secondClassChildGlobal);
+                  TR::DebugCounter::incStaticDebugCounter(vp->comp(), TR::DebugCounter::debugCounterName(vp->comp(), "constrainCall/%s", "isAssignableFrom"));
+                  return node;
+                  }
+               }
+            break;
+            }
+         case TR::java_lang_J9VMInternals_identityHashCode:
+            {
+            // Get the last child because sometimes the first child is a field in J9Class for a static native call
+            TR::Node *classChild = node->getLastChild();
+            bool classChildGlobal;
+            TR::VPConstraint *classChildConstraint = vp->getConstraint(classChild, classChildGlobal);
+            if (classChildConstraint && classChildConstraint->isJavaLangClassObject() == TR_yes
+                && classChildConstraint->isNonNullObject()
+                && classChildConstraint->getClassType()
+                && classChildConstraint->getClassType()->asFixedClass())
+               {
+               bool hashCodeWasComputed = false;
+               int32_t hashCodeForClass = vp->comp()->fej9vm()->getJavaLangClassHashCode(vp->comp(), classChildConstraint->getClass(), hashCodeWasComputed);
+               if (hashCodeWasComputed)
+                  {
+                  TR::VPConstraint *hashCodeConstraint = TR::VPIntConst::create(vp, hashCodeForClass);
+                  vp->replaceByConstant(node, hashCodeConstraint, classChildGlobal);
+                  TR::DebugCounter::incStaticDebugCounter(vp->comp(), TR::DebugCounter::debugCounterName(vp->comp(), "constrainCall/%s", "identityHashCode"));
+                  return node;
+                  }
+               }
+            break;
+            }
+         }
 
       if (isIntegerAbs || isLongAbs)
          {
