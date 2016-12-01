@@ -1099,6 +1099,12 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 		break;
 
 	case OMRPORT_CPU_TARGET: {
+#if defined(J9OS_I5)
+		toReturn = _system_configuration.ncpus;
+		if (0 == toReturn) {
+			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedOnline("(no errno) ", 0);
+		}
+#else /* defined(J9OS_I5) */
 		uintptr_t entitled = portLibrary->portGlobals->entitledCPUs;
 		uintptr_t bound = omrsysinfo_get_number_CPUs_by_type(portLibrary, OMRPORT_CPU_BOUND);
 		if (entitled != 0 && entitled < bound) {
@@ -1106,6 +1112,7 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 		} else {
 			toReturn = bound;
 		}
+#endif /* defined(J9OS_I5) */
 		break;
 	}
 	default:
