@@ -41,6 +41,16 @@ GLOBAL_CFLAGS += -q mbcs -qlanglvl=extended -qarch=ppc -qinfo=pro -qalias=noansi
 GLOBAL_CXXFLAGS+=-q mbcs -qlanglvl=extended -qarch=ppc -qinfo=pro -qalias=noansi -qxflag=LTOL:LTOL0 -qsuppress=1506-1108
 GLOBAL_CPPFLAGS+=-D_XOPEN_SOURCE_EXTENDED=1 -D_ALL_SOURCE -DRS6000 -DAIXPPC -D_LARGE_FILES
 
+ifdef I5_VERSION
+  I5_FLAGS+=-g -qtbtable=full -qlist -qsource 
+  I5_DEFINES+=-DJ9OS_I5 -DJ9OS_$(I5_VERSION) -I$(top_srcdir)/../iseries -I$(top_srcdir)/../oti
+
+  #GLOBAL_UMA_ASPP_DEBUG+=-g
+  GLOBAL_CFLAGS+=$(I5_FLAGS) $(I5_DEFINES)
+  GLOBAL_CXXFLAGS+=$(I5_FLAGS) $(I5_DEFINES)
+  GLOBAL_CPPFLAGS+=$(I5_DEFINES)
+endif
+
 ###
 ### Optimization
 ###
