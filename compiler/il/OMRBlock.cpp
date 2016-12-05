@@ -1268,6 +1268,14 @@ OMR::Block::splitEdge(TR::Block *from, TR::Block *to, TR::Compilation *c, TR::Tr
          }
       }
 
+   //For OSRCatchBlock, the newBlock to be created below needs to match the bcInfo of the induction point.
+   //Since the original OSRCatchBlock has the same bcInfo as the induction point, we just use entry node from the
+   //original OSRCatchBlock.
+   if (to->isOSRCatchBlock())
+      {
+      exitNode = to->getEntry()->getNode();
+      }
+
    TR::CFG * cfg = c->getFlowGraph();
    TR::Compilation *comp = cfg->comp();
    TR::TreeTop *entryTree = to->getEntry();
@@ -1334,33 +1342,49 @@ OMR::Block::splitEdge(TR::Block *from, TR::Block *to, TR::Compilation *c, TR::Tr
       insertionExit->join(newBlock->getEntry());
       newBlock->getExit()->join(insertionEntry);
 
-      if (isExceptionEdge)
+      //OSRCatchBlock is handled differently from normal catch block
+      //the control flow is from -> exceptionEdge -> newBlock -> normalEdge -> to
+      if (isExceptionEdge && to->isOSRCatchBlock())
          {
-         if (to->isOSRCatchBlock())
-            newBlock->setHandlerInfoWithOutBCInfo(
-                  TR::Block::CanCatchOSR, 
-                  to->getInlineDepth(), 
-                  -1, 
-                  to->getOwningMethod(), 
-                  c);
-         else
-            newBlock->setHandlerInfo(
-               to->getCatchType(),
-               to->getInlineDepth(),
-               to->getHandlerIndex(),
-               to->getOwningMethod(),
+         newBlock->setIsCold();
+         newBlock->setDoNotProfile();
+         newBlock->setIsOSRCatchBlock();
+         newBlock->setHandlerInfoWithOutBCInfo(
+               TR::Block::CanCatchOSR, 
+               to->getInlineDepth(), 
+               -1, 
+               to->getOwningMethod(), 
                c);
-            TR::ResolvedMethodSymbol *method = c->getMethodSymbol();
+
+         cfg->removeEdge(from, to);
+         cfg->addExceptionEdge(from, newBlock);
+         cfg->addEdge(newBlock, to);
+         }
+
+      if (isExceptionEdge && !to->isOSRCatchBlock())
+         {
+         newBlock->setHandlerInfo(
+            to->getCatchType(),
+            to->getInlineDepth(),
+            to->getHandlerIndex(),
+            to->getOwningMethod(),
+            c);
+         TR::ResolvedMethodSymbol *method = c->getMethodSymbol();
          TR::SymbolReferenceTable *srtab = c->getSymRefTab();
          TR::SymbolReference *excSR = srtab->findOrCreateExcpSymbolRef();
          TR::SymbolReference *throwSR = srtab->findOrCreateAThrowSymbolRef(method);
          TR::Node *exc = TR::Node::createLoad(excSR);
          TR::Node *rethrow = TR::Node::createWithSymRef(TR::athrow, 1, 1, exc, throwSR);
          newBlock->append(TR::TreeTop::create(c, rethrow));
+
+         cfg->removeEdge(from, to);
+         cfg->addExceptionEdge(newBlock, to);
+         cfg->addExceptionEdge(from, newBlock);
+         cfg->addEdge(newBlock, cfg->getEnd());
          }
-      else if (entryTree != insertionEntry)
+      else if (entryTree != insertionEntry) // the else if logic here will handle isOSRCatchBlock case as well
          {
-         TR::TreeTop *gotoTreeTop = TR::TreeTop::create(c, TR::Node::create(from->getExit()->getNode(), TR::Goto, 0, to->getEntry()));
+         TR::TreeTop *gotoTreeTop = TR::TreeTop::create(c, TR::Node::create(newBlock->getEntry()->getNode(), TR::Goto, 0, to->getEntry()));
          newBlock->append(gotoTreeTop);
          if (lastTreeTop)
             *lastTreeTop = newBlock->getExit();
@@ -1371,14 +1395,7 @@ OMR::Block::splitEdge(TR::Block *from, TR::Block *to, TR::Compilation *c, TR::Tr
             newBlock->setIsExtensionOfPreviousBlock();
          }
 
-      if (isExceptionEdge)
-         {
-         cfg->addExceptionEdge(newBlock, to);
-         cfg->removeEdge(from, to);
-         cfg->addExceptionEdge(from, newBlock);
-         cfg->addEdge(newBlock, cfg->getEnd());
-         }
-      else
+      if (!isExceptionEdge)
          {
          cfg->addEdge(from, newBlock);
          cfg->addEdge(newBlock, to);
