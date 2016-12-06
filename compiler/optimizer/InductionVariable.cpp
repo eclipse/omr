@@ -6800,7 +6800,8 @@ TR_InductionVariableAnalysis::getEntryValue(TR::Block *block,
          }
       else
          {
-         TR_ASSERT(symRef->getSymbol()->isParm(), "uninitialized local discovered.");
+         int32_t blockNum = block->getNumber();
+         TR_ASSERT(symRef->getSymbol()->isParm(), "uninitialized local discovered. symRef is " POINTER_PRINTF_FORMAT, symRef);
          }
       return 0;
       }
