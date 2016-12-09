@@ -2362,43 +2362,64 @@ bool
 OMR::Node::canBeInternalPtrOfObject()
    {
    TR::Compilation * comp = TR::comp();
-
-   if (!self()->hasPinningArrayPointer())
+   if (!self()->getOpCode().isArrayRef())
       return false;
+
+   bool oldResult = true;
+   bool newResult = false;
+   bool printOp = false;
+
    if (self()->isInternalPointer())
       return true;
 
    TR::NodeChecklist visited(comp);
    TR::Node *curNode = self();
-   TR::ILOpCode op = curNode->getOpCode();
    // Look for a node with symRef so that we can tell whether self() originates from a collected reference
    while (curNode)
       {
-      if (op.getDataType() != TR::Address)
-         return false;
+      //if (op.getDataType() != TR::Address)
+      //   return result;
       // Come across a node that has already been checked
+      TR::ILOpCode op = curNode->getOpCode();
+      if (printOp)
+         fprintf(stderr,"->%s", op.getName());
+
       if (visited.contains(curNode))
-         return false;
+         break;
       if (curNode->isInternalPointer())
-         return true;
+         {
+         if (printOp) 
+            {
+            fprintf(stderr, " is an internal pointer\n");
+            }
+         newResult = true;
+         break;
+         }
 
       if (curNode->getOpCode().hasSymbolReference())
          {
          TR::Symbol *symbol = curNode->getSymbolReference()->getSymbol();
-         return op.isNew() ||
+         newResult = op.isNew() ||
                 (op.getDataType() == TR::Address && op.isCall()) ||
                 symbol->isInternalPointer() ||
                 symbol->isCollectedReference();
+
+         if (printOp)
+            {
+            fprintf(stderr, " isCollectedRef %d", newResult);
+            }
+         break;
          }
 
       visited.add(curNode);
       if (curNode->getNumChildren() >= 1)
          {
          curNode = curNode->getFirstChild();
-         op = curNode->getOpCode();
-         TR::ILOpCodes ops = op.getOpCodeValue();
-         TR_ASSERT(!op.isConversion(), "canBeInternalPtrOfObject does not work for nodes originated from non-address node, node is "POINTER_PRINTF_FORMAT, self());
-         TR_ASSERT(ops == TR::aload ||
+         TR::ILOpCode childOp = curNode->getOpCode();
+         TR::ILOpCodes ops = childOp.getOpCodeValue();
+         // Find if the node is from an address node, if not, print the node
+         //TR_ASSERT(!op.isConversion(), "canBeInternalPtrOfObject does not work for nodes originated from non-address node, node is "POINTER_PRINTF_FORMAT, self());
+         if (!(ops == TR::aload ||
                    ops == TR::aloadi ||
                    ops == TR::loadaddr ||
                    ops == TR::aRegLoad ||
@@ -2412,15 +2433,25 @@ OMR::Node::canBeInternalPtrOfObject()
                    ops == TR::variableNew ||
                    ops == TR::variableNewArray ||
                    ops == TR::multianewarray ||
+                   ops == TR::aconst ||
+                   ops == TR::i2a ||
+                   ops == TR::l2a ||
                    ops == TR::aiadd ||
-                   ops == TR::aladd,
-                   "canBeInternalPtrOfObject does not work for nodes with unsupported data types, node is " POINTER_PRINTF_FORMAT, self());
+                   ops == TR::aladd))
+            {
+            fprintf(stderr, "Found unsupported opcode: %s",childOp.getName());
+            printOp = true;
+            }
          }
       else
          curNode = NULL;
       }
 
-   return false;
+   newResult = newResult && !printOp;
+   if (printOp)
+      fprintf(stderr, "Node %p %s internal pointer and we return true\n", self(), newResult ? "is" : "is not");
+   TR_ASSERT(newResult, "Return true when we should really return false, node is "POINTER_PRINTF_FORMAT, self());
+   return true;
    }
 
 
