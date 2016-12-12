@@ -2382,7 +2382,9 @@ OMR::Node::canBeInternalPtrOfObject()
       // Come across a node that has already been checked
       TR::ILOpCode op = curNode->getOpCode();
       if (printOp)
+         {
          fprintf(stderr,"->%s", op.getName());
+         }
 
       if (visited.contains(curNode))
          break;
@@ -2434,12 +2436,12 @@ OMR::Node::canBeInternalPtrOfObject()
                    ops == TR::variableNewArray ||
                    ops == TR::multianewarray ||
                    ops == TR::aconst ||
-                   ops == TR::i2a ||
-                   ops == TR::l2a ||
+                   //ops == TR::i2a ||
+                   //ops == TR::l2a ||
                    ops == TR::aiadd ||
                    ops == TR::aladd))
             {
-            fprintf(stderr, "Found unsupported opcode: %s",childOp.getName());
+            fprintf(stderr, "Found unsupported opcode: ");
             printOp = true;
             }
          }
@@ -2449,8 +2451,13 @@ OMR::Node::canBeInternalPtrOfObject()
 
    newResult = newResult && !printOp;
    if (printOp)
+      {
       fprintf(stderr, "Node %p %s internal pointer and we return true\n", self(), newResult ? "is" : "is not");
-   TR_ASSERT(newResult, "Return true when we should really return false, node is "POINTER_PRINTF_FORMAT, self());
+      fflush(stderr);
+      //comp->setOutFile(TR::FilePointer::Stdout());
+      //comp->dumpMethodTrees("About to assert, tree is");
+      }
+   TR_ASSERT(!printOp, "Return true when we should really return false, node is %p", self());
    return true;
    }
 
