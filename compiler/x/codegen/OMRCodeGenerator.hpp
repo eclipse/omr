@@ -351,6 +351,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    bool hasComplexAddressingMode() { return true; }
    bool getSupportsBitOpCodes() { return true; }
 
+   bool getSupportsOpCodeForAutoSIMD(TR::ILOpCode, TR::DataType);
    bool getSupportsEncodeUtf16LittleWithSurrogateTest();
    bool getSupportsEncodeUtf16BigWithSurrogateTest();
 
@@ -616,6 +617,8 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    virtual TR_BitVector *getGlobalRegisters(TR_SpillKinds kind, TR_LinkageConventions lc){ return &_globalRegisterBitVectors[kind]; }
 
    virtual void simulateNodeEvaluation (TR::Node *node, TR_RegisterPressureState *state, TR_RegisterPressureSummary *summary);
+
+   bool isFPRUsedAsVFR() { return _targetProcessorInfo.supportsSSE2(); }
 
    protected:
 

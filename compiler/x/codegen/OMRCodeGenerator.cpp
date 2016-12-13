@@ -251,6 +251,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
       {
       self()->setUseSSEForSinglePrecision();
       self()->setUseSSEForDoublePrecision();
+      self()->setSupportsAutoSIMD();
       }
 
    // Choose the best XMM double precision load instruction for the target architecture.
@@ -966,6 +967,39 @@ bool OMR::X86::CodeGenerator::enableAESInHardwareTransformations()
 #undef ALLOWED_TO_REMATERIALIZE
 #undef CAN_REMATERIALIZE
 
+bool
+OMR::X86::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode, TR::DataType dt)
+   {
+   /*
+    * This is a place holder function. It currently always returns false because none of the SIMD evaluators for OpCodes used
+    * in AutoSIMD have been implemented.
+    * This should be filled in (and this comment updated) as support for SIMD evaluators is implemented.
+    */
+   // implemented vector opcodes
+   switch (opcode.getOpCodeValue())
+      {
+      case TR::vadd:
+      case TR::vsub:
+      case TR::vmul:
+      case TR::vdiv:
+      case TR::vrem:
+      case TR::vneg:
+      case TR::vload:
+      case TR::vloadi:
+      case TR::vstore:
+      case TR::vstorei:
+      case TR::vxor:
+      case TR::vor:
+      case TR::vand:
+      case TR::vsplats:
+      case TR::getvelem:
+      default:
+         return false;
+      }
+
+   return false;
+   }
+
 
 bool
 OMR::X86::CodeGenerator::getSupportsEncodeUtf16LittleWithSurrogateTest()
@@ -1545,7 +1579,7 @@ void OMR::X86::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssig
    LexicalTimer pt2("GP register assignment", self()->comp()->phaseTimer());
    // Assign GPRs and XMMRs in a backward pass
    //
-   kindsToAssign = TR_RegisterKinds(kindsToAssign & (TR_GPR_Mask | TR_FPR_Mask));
+   kindsToAssign = TR_RegisterKinds(kindsToAssign & (TR_GPR_Mask | TR_FPR_Mask | TR_VRF_Mask));
    if (kindsToAssign)
       {
       self()->getVMThreadRegister()->setFutureUseCount(self()->getVMThreadRegister()->getTotalUseCount());

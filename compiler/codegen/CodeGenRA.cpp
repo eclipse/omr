@@ -407,6 +407,15 @@ OMR::CodeGenerator::prepareRegistersForAssignment()
       if (registerCursor->getKind() != TR_SSR)
          registerCursor->setFutureUseCount(registerCursor->getTotalUseCount());
       km = registerCursor->getKindAsMask();
+
+      /*
+       * Sometimes real registers marked as being a TR_FPR register can be used as a TR_VRF register
+       * isFPRUsedAsVFR is used to check for this
+       * if true, RA is told is may need to assign TR_VRF as well as TR_FPR registers if a TR_FPR real register is seen
+       */
+      if (registerCursor->getKind() == TR_FPR && isFPRUsedAsVFR())
+         km |= TO_KIND_MASK(TR_VRF);
+
       if (!(foundKindsMask & km))
          foundKindsMask |= km;
       }

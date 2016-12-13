@@ -239,7 +239,7 @@ OMR::X86::Machine::findBestFreeGPRegister(TR::Instruction   *currentInstruction,
       } candidates[16]; // TODO:AMD64: Should be max number of regs of any one kind
    int32_t      numCandidates = 0;
 
-   TR_ASSERT( (virtReg && (virtReg->getKind() == TR_GPR || virtReg->getKind() == TR_FPR)),
+   TR_ASSERT( (virtReg && (virtReg->getKind() == TR_GPR || virtReg->getKind() == TR_FPR || virtReg->getKind() == TR_VRF)),
            "OMR::X86::Machine::findBestFreeGPRegister() ==> Unexpected register kind!" );
 
    bool useRegisterAssociations = self()->cg()->enableRegisterAssociations() ? true : false;
@@ -456,7 +456,7 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
    bool useRegisterInterferences = self()->cg()->enableRegisterInterferences() ? true : false;
    bool enableRematerialisation = self()->cg()->enableRematerialisation() ? true : false;
 
-   TR_ASSERT(virtReg && (virtReg->getKind() == TR_GPR || virtReg->getKind() == TR_FPR),
+   TR_ASSERT(virtReg && (virtReg->getKind() == TR_GPR || virtReg->getKind() == TR_FPR || virtReg->getKind() == TR_VRF),
           "OMR::X86::Machine::freeBestGPRegister() ==> expecting to free GPRs or XMMRs only!");
 
    switch (requestedRegSize)
@@ -919,6 +919,20 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
             location = self()->cg()->allocateSpill(bestRegister->isSinglePrecision()? 4 : 8, false, &offset);
             }
          }
+      else if ((bestRegister->getKind() == TR_VRF))
+         {
+         if (bestRegister->getBackingStorage())
+            {
+            // If there is backing storage associated with a register, it means the
+            // backing store wasn't returned to the free list and it can be used.
+            //
+            location = bestRegister->getBackingStorage();
+            }
+         else
+            {
+            location = self()->cg()->allocateSpill(16, false, &offset);
+            }
+         }
       else
          {
          if (containsInternalPointer)
@@ -982,6 +996,10 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
       if (bestRegister->getKind() == TR_FPR)
          {
          op = (bestRegister->isSinglePrecision()) ? MOVSSRegMem : (self()->cg()->getXMMDoubleLoadOpCode());
+         }
+      else if (bestRegister->getKind() == TR_VRF)
+         {
+         op = MOVDQURegMem;
          }
       else
          {
@@ -1092,6 +1110,25 @@ TR::RealRegister *OMR::X86::Machine::reverseGPRSpillState(TR::Instruction     *c
          // while assigning non-linear control flow regions.
          //
          self()->cg()->freeSpill(location, spilledRegister->isSinglePrecision()? 4:8, spilledRegister->isSpilledToSecondHalf()? 4:0);
+         if (!self()->cg()->isFreeSpillListLocked())
+            {
+            spilledRegister->setBackingStorage(NULL);
+            }
+         }
+      else if (spilledRegister->getKind() == TR_VRF)
+         {
+         instr = new (self()->cg()->trHeapMemory())
+            TR::X86MemRegInstruction(
+               currentInstruction,
+               MOVDQUMemReg,
+               tempMR,
+               targetRegister, self()->cg());
+
+         // Do not add a freed spill slot back onto the free list if the list is locked.
+         // This is to enforce re-use of the same spill slot for a virtual register
+         // while assigning non-linear control flow regions.
+         //
+         self()->cg()->freeSpill(location, 16, 0);
          if (!self()->cg()->isFreeSpillListLocked())
             {
             spilledRegister->setBackingStorage(NULL);

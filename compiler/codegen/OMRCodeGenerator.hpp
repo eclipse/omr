@@ -1175,6 +1175,7 @@ class OMR_EXTENSIBLE CodeGenerator
    TR_RegisterKinds prepareRegistersForAssignment(); // no virt
    void addToUnlatchedRegisterList(TR::RealRegister *reg);
    void freeUnlatchedRegisters();
+   bool isFPRUsedAsVFR() { return false; }
 
    // --------------------------------------------------------------------------
    // Listing
