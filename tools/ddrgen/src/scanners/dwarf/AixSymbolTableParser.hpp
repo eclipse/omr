@@ -64,6 +64,10 @@ const string DECLARATION_TYPES[10] = {"invalid_declaration", "def_declaration", 
 const string SIZE_TYPES[5] = {"no_type", "num_bits", "num_bytes", "bound", "num_elements"};
 const string ACCESS_TYPES[3] = {"private", "protected", "public"};
 
+const string AIX_TYPES[20] = {"unknown", "array", "boolean", "character", "integer", "decimal",
+							  "string", "complex", "set", "file", "floating_point", "decimal_floating_point",
+							  "constant", "ptr_to_member_type", "wide_character", "multiple_instance",
+							  "pointer", "reference", "volatile", "ellipses"};
 #define AIX_TYPE_array 0x01
 #define AIX_TYPE_boolean 0x02
 #define AIX_TYPE_character 0x03

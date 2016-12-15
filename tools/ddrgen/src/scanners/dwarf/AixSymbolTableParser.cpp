@@ -2025,69 +2025,7 @@ string AixSymbolTableParser::toString(const double value)
  */
 string getStringDescription(const unsigned short value)
 {
-	string ret = "";
-
-	switch (value) {
-	case AIX_TYPE_array:
-		ret = "array";
-		break;
-	case AIX_TYPE_boolean:
-		ret = "boolean";
-		break;
-	case AIX_TYPE_character:
-		ret = "character";
-		break;
-	case AIX_TYPE_integer:
-		ret = "integer";
-		break;
-	case AIX_TYPE_decimal:
-		ret = "decimal";
-		break;
-	case AIX_TYPE_string:
-		ret = "string";
-		break;
-	case AIX_TYPE_complex:
-		ret = "complex";
-		break;
-	case AIX_TYPE_set:
-		ret = "set";
-		break;
-	case AIX_TYPE_file:
-		ret = "file";
-		break;
-	case AIX_TYPE_floating_point:
-		ret = "floating_point";
-		break;
-	case AIX_TYPE_decimal_floating_point:
-		ret = "decimal_floating_point";
-		break;
-	case AIX_TYPE_constant:
-		ret = "constant";
-		break;
-	case AIX_TYPE_ptr_to_member_type:
-		ret = "ptr_to_member_type";
-		break;
-	case AIX_TYPE_wide_character:
-		ret = "wide_character";
-		break;
-	case AIX_TYPE_multiple_instance:
-		ret = "multiple_instance";
-		break;
-	case AIX_TYPE_pointer:
-		ret = "pointer";
-		break;
-	case AIX_TYPE_reference:
-		ret = "reference";
-		break;
-	case AIX_TYPE_volatile:
-		ret = "volatile";
-		break;
-	case AIX_TYPE_ellipses:
-		ret = "ellipses";
-		break;
-	} 
-
-	return ret;
+	return AIX_TYPES[value];
 }
 
 /**
