@@ -1038,7 +1038,7 @@ DDR_RC AixSymbolTableParser::parseArray(const string data, Info *arrayEntry)
 	smatch m;
 
 	if (TRUE == regex_search(data, m, expression)){
-		arrayEntry->typeDef.type = "array";
+		arrayEntry->typeDef.type = AIX_TYPE_array;
 		arrayEntry->typeDef.typeID = extractTypeDefID(data, data.find_last_of(';') + 1); /* type of array will always be at the end, after the last ":" */
 		if ( TRUE == isBuiltIn(arrayEntry->typeDef.typeID)) {
 			arrayEntry->typeDef.isBuiltIn = TRUE;
@@ -1240,39 +1240,39 @@ DDR_RC AixSymbolTableParser::parseConstants(const string data, Info *constantEnt
 
 	switch (data[0]) {
 	case 'b':
-		constantEntry->typeDef.type = "boolean";
+		constantEntry->typeDef.type = AIX_TYPE_boolean;
 		constantEntry->options.push_back(*(makeOptionInfoPair("ord_value", NUMERIC, "", toDouble(data.substr(1)))));
 		ret = DDR_RC_OK;
 		break;
 	case 'c':
-		constantEntry->typeDef.type = "character";
+		constantEntry->typeDef.type = AIX_TYPE_character;
 		constantEntry->options.push_back(*(makeOptionInfoPair( "ord_value", NUMERIC, "", toDouble(data.substr(1)))));
 		ret = DDR_RC_OK;
 		break;
 	case 'i':
-		constantEntry->typeDef.type = "integer";
+		constantEntry->typeDef.type = AIX_TYPE_integer;
 		constantEntry->options.push_back(*(makeOptionInfoPair( "integer", NUMERIC, "", toDouble(data.substr(1)))));
 		ret = DDR_RC_OK;
 		break;
 	case 'r':
-		constantEntry->typeDef.type = "decimal";
+		constantEntry->typeDef.type = AIX_TYPE_decimal;
 		constantEntry->options.push_back(*(makeOptionInfoPair("real", ATTR_VALUE, data.substr(1),0)));
 		ret = DDR_RC_OK;
 		break;
 	case 's':
-		constantEntry->typeDef.type = "string";
+		constantEntry->typeDef.type = AIX_TYPE_string;
 		constantEntry->options.push_back(*(makeOptionInfoPair("string", ATTR_VALUE, data.substr(1),0)));
 		ret = DDR_RC_OK;
 		break;
 	case 'C':
-		constantEntry->typeDef.type = "complex";
+		constantEntry->typeDef.type = AIX_TYPE_complex;
 		constant_entry_info = split(data, ',');
 		constantEntry->options.push_back(*(makeOptionInfoPair("real", ATTR_VALUE, (constant_entry_info[0]).substr(1),0)));
 		constantEntry->options.push_back(*(makeOptionInfoPair("real", ATTR_VALUE, constant_entry_info[1],0)));
 		ret = DDR_RC_OK;
 		break;
 	case 'S':
-		constantEntry->typeDef.type = "set";
+		constantEntry->typeDef.type = AIX_TYPE_set;
 		constant_entry_info = split(data, ',');
 		constantEntry->typeDef.typeID = extractTypeDefID(constant_entry_info[0]);
 		constantEntry->typeDef.options.push_back(*(makeOptionInfoPair("num_elements", NUMERIC, "", toInt(constant_entry_info[1]))));
@@ -1671,12 +1671,12 @@ DDR_RC AixSymbolTableParser::parseTypeDef(const string data, Info *typeDefEntry)
 			tmp = split(data, ';');
 			typeDefEntry->size.sizeValue = toSize(tmp[1]);
 			typeDefEntry->size.sizeType = SIZE_TYPES[1];
-			typeDefEntry->typeDef.type = "complex";
+			typeDefEntry->typeDef.type = AIX_TYPE_complex;
 			ret = DDR_RC_OK;
 			break;
 		case 'd':
 			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-			typeDefEntry->typeDef.type = "file";
+			typeDefEntry->typeDef.type = AIX_TYPE_file;
 			ret = DDR_RC_OK;
 			break;
 		case 'g':
@@ -1684,7 +1684,7 @@ DDR_RC AixSymbolTableParser::parseTypeDef(const string data, Info *typeDefEntry)
 			tmp = split(data, ';');
 			typeDefEntry->size.sizeValue = toSize(tmp[1]);
 			typeDefEntry->size.sizeType = SIZE_TYPES[1];
-			typeDefEntry->typeDef.type = "floating-point";
+			typeDefEntry->typeDef.type = AIX_TYPE_floating_point;
 			ret = DDR_RC_OK;
 			break;
 		case 'D':
@@ -1692,12 +1692,12 @@ DDR_RC AixSymbolTableParser::parseTypeDef(const string data, Info *typeDefEntry)
 			tmp = split(data, ';');
 			typeDefEntry->size.sizeValue = toSize(tmp[1]);
 			typeDefEntry->size.sizeType = SIZE_TYPES[1];
-			typeDefEntry->typeDef.type = "decimal_floating-point";
+			typeDefEntry->typeDef.type = AIX_TYPE_decimal_floating_point;
 			ret = DDR_RC_OK;
 			break;
 		case 'k':
 			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-			typeDefEntry->typeDef.type = "constant";
+			typeDefEntry->typeDef.type = AIX_TYPE_constant;
 			ret = DDR_RC_OK;
 			break;
 		case 'm':
@@ -1719,7 +1719,7 @@ DDR_RC AixSymbolTableParser::parseTypeDef(const string data, Info *typeDefEntry)
 			}
 			typeDefEntry->options.push_back(*(makeOptionInfoPair( "member_type", NUMERIC, "", extractTypeID(tmp[0], typeID_index))));
 			typeDefEntry->options.push_back(*(makeOptionInfoPair("class_type", NUMERIC, "", toDouble(tmp[1]))));
-			typeDefEntry->typeDef.type = "ptr_to_member_type";
+			typeDefEntry->typeDef.type = AIX_TYPE_ptr_to_member_type;
 			ret = DDR_RC_OK;
 			break;
 		case 'n':
@@ -1727,12 +1727,12 @@ DDR_RC AixSymbolTableParser::parseTypeDef(const string data, Info *typeDefEntry)
 			tmp = split(data, ';');
 			typeDefEntry->size.sizeValue = toSize(tmp[1]);
 			typeDefEntry->size.sizeType = SIZE_TYPES[2];
-			typeDefEntry->typeDef.type = "string_type";
+			typeDefEntry->typeDef.type = AIX_TYPE_string;
 			ret = DDR_RC_OK;
 			break;
 		case 'w':
 			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-			typeDefEntry->typeDef.type = "wide_character";
+			typeDefEntry->typeDef.type = AIX_TYPE_wide_character;
 			ret = DDR_RC_OK;
 			break;
 		case 'M':
@@ -1740,26 +1740,26 @@ DDR_RC AixSymbolTableParser::parseTypeDef(const string data, Info *typeDefEntry)
 			tmp = split(data, ';');
 			typeDefEntry->size.sizeValue = toSize(tmp[1]);
 			typeDefEntry->size.sizeType = SIZE_TYPES[3];
-			typeDefEntry->typeDef.type = "multiple_instance";
+			typeDefEntry->typeDef.type = AIX_TYPE_multiple_instance;
 			ret = DDR_RC_OK;
 			break;
 		case '*':
 			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-			typeDefEntry->typeDef.type = "pointer";
+			typeDefEntry->typeDef.type = AIX_TYPE_pointer;
 			ret = DDR_RC_OK;
 			break;
 		case '&':
 			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-			typeDefEntry->typeDef.type = "reference";
+			typeDefEntry->typeDef.type = AIX_TYPE_reference;
 			ret = DDR_RC_OK;
 			break;
 		case 'V':
 			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-			typeDefEntry->typeDef.type = "volatile";
+			typeDefEntry->typeDef.type = AIX_TYPE_volatile;
 			ret = DDR_RC_OK;
 			break;
 		case 'Z':
-			typeDefEntry->typeDef.type = "ellipses";
+			typeDefEntry->typeDef.type = AIX_TYPE_ellipses;
 			ret = DDR_RC_OK;
 			break;
 		case 'a':
@@ -1803,8 +1803,6 @@ int AixSymbolTableParser::parseDumpOutput(const string data)
 			fileName = strip(fileName, '\n');
 			insertFileEntry(fileName, _fileID);
 
-			_fileList.push_back(_fileID);
-
 			_fileEntry = findEntry(_fileID);
 			_startNewFile = 2;
 			DEBUGPRINTF("\n\nFile Name: %s",fileName.c_str());
@@ -1833,8 +1831,12 @@ int AixSymbolTableParser::parseDumpOutput(const string data)
 
 			_startNewFile = 0;
 
-			string output  = beautifyInfo(_fileEntry->second,_fileEntry->first);
-			DEBUGPRINTF("\n%s",output.c_str());
+			if (0 < _fileEntry->second.size.sizeValue) {
+				_fileList.push_back(_fileID);
+				string output  = beautifyInfo(_fileEntry->second,_fileEntry->first);
+				DEBUGPRINTF("\n%s",output.c_str());
+			}
+
 		}
 
 	}
@@ -2015,6 +2017,80 @@ string AixSymbolTableParser::toString(const double value)
 }
 
 /**
+ * Maps the value from the argument to it's corresponding string description
+ *
+ * @param[in] value: value that needs to be mapped to string
+ *
+ * @return argument value as string
+ */
+string getStringDescription(const unsigned short value)
+{
+	string ret = "";
+
+	switch (value) {
+	case AIX_TYPE_array:
+		ret = "array";
+		break;
+	case AIX_TYPE_boolean:
+		ret = "boolean";
+		break;
+	case AIX_TYPE_character:
+		ret = "character";
+		break;
+	case AIX_TYPE_integer:
+		ret = "integer";
+		break;
+	case AIX_TYPE_decimal:
+		ret = "decimal";
+		break;
+	case AIX_TYPE_string:
+		ret = "string";
+		break;
+	case AIX_TYPE_complex:
+		ret = "complex";
+		break;
+	case AIX_TYPE_set:
+		ret = "set";
+		break;
+	case AIX_TYPE_file:
+		ret = "file";
+		break;
+	case AIX_TYPE_floating_point:
+		ret = "floating_point";
+		break;
+	case AIX_TYPE_decimal_floating_point:
+		ret = "decimal_floating_point";
+		break;
+	case AIX_TYPE_constant:
+		ret = "constant";
+		break;
+	case AIX_TYPE_ptr_to_member_type:
+		ret = "ptr_to_member_type";
+		break;
+	case AIX_TYPE_wide_character:
+		ret = "wide_character";
+		break;
+	case AIX_TYPE_multiple_instance:
+		ret = "multiple_instance";
+		break;
+	case AIX_TYPE_pointer:
+		ret = "pointer";
+		break;
+	case AIX_TYPE_reference:
+		ret = "reference";
+		break;
+	case AIX_TYPE_volatile:
+		ret = "volatile";
+		break;
+	case AIX_TYPE_ellipses:
+		ret = "ellipses";
+		break;
+	} 
+
+	return ret;
+}
+
+/**
  * Updates the entry already in the map with the new updated values.
  * Only updates - size
  * 				- members
@@ -2185,7 +2261,7 @@ string AixSymbolTableParser::beautifyInfo(const Info data, const double key, con
 		}
 
 		output += subLevelPadding + "typeDef  : \n";
-		output += subSubLevelPadding + "type	  : " + data.typeDef.type + "\n";
+		output += subSubLevelPadding + "type	  : " + getStringDescription(data.typeDef.type) + "\n";
 		output += subSubLevelPadding + "isBuiltIn : " + toString(data.typeDef.isBuiltIn) + "\n";
 		output += subSubLevelPadding + "isSigned  : " + toString(data.typeDef.isSigned) + "\n";
 		output += subSubLevelPadding + "typeID	: " + toString(data.typeDef.typeID) + "\n";

@@ -63,6 +63,27 @@ const string DECLARATION_TYPES[10] = {"invalid_declaration", "def_declaration", 
 
 const string SIZE_TYPES[5] = {"no_type", "num_bits", "num_bytes", "bound", "num_elements"};
 const string ACCESS_TYPES[3] = {"private", "protected", "public"};
+
+#define AIX_TYPE_array 0x01
+#define AIX_TYPE_boolean 0x02
+#define AIX_TYPE_character 0x03
+#define AIX_TYPE_integer 0x04
+#define AIX_TYPE_decimal 0x05
+#define AIX_TYPE_string 0x06
+#define AIX_TYPE_complex 0x07
+#define AIX_TYPE_set 0x08
+#define AIX_TYPE_file 0x09
+#define AIX_TYPE_floating_point 0x0a
+#define AIX_TYPE_decimal_floating_point 0x0b
+#define AIX_TYPE_constant 0x0c
+#define AIX_TYPE_ptr_to_member_type 0x0d
+#define AIX_TYPE_wide_character 0x0e
+#define AIX_TYPE_multiple_instance 0x0f
+#define AIX_TYPE_pointer 0x10
+#define AIX_TYPE_reference 0x11
+#define AIX_TYPE_volatile 0x12
+#define AIX_TYPE_ellipses 0x13
+
 typedef vector<string> str_vect;
 typedef vector<double> double_vect;
 typedef enum option_info_type {NUMERIC, ATTR_VALUE, NOTHING} option_info_type;
@@ -130,7 +151,7 @@ struct type {
 	}
 };
 struct obj_type{
-	string type;
+	unsigned short type;
 	bool isBuiltIn;
 	double typeID;
 	int isSigned;		/* Needs to be int because we can have 0 (Not signed), 1 (Signed) and 2 (Don't know) */
@@ -245,6 +266,7 @@ private:
 	int toInt(const string value);
 	size_t toSize(const string size);
 	string toString(const double value);
-	
+	string getStringDescription(const unsigned short value);
+
 	DDR_RC updateEntry(data_map::iterator entry, Info update, bool overRideChecks = FALSE);
 }
