@@ -35,7 +35,7 @@
 /**
  * Parses any inheritance (base classes) that have been used.
  *
- * @param[in]  data        : EX: u0:11,u8:13
+ * @param[in]  data		   : EX: u0:11,u8:13
  * @param[out] classOptions: options vector to write out the class options
  *
  * @return: Options vector will always have, the ID of the inherited class
@@ -149,8 +149,8 @@ string AixSymbolTableParser::extractAccessSpec(const string data, const int inde
  * Checks if the class declration of type union, struct or class
  *
  * @param[in] data: EX: Y32s < Would return structure
- *				    EX: Y32u < Would return union
- *				    EX: Y32c < Would return class
+ *					EX: Y32u < Would return union
+ *					EX: Y32c < Would return class
  *
  * @return string indicating if the data passed in defines a strucutre, union or a class
  */
@@ -354,7 +354,7 @@ string AixSymbolTableParser::getEntryName(const double insertionKey)
 string AixSymbolTableParser::getInfoType(const string data, info_type_results *matchResults)
 {
 	string ret = DECLARATION_TYPES[0];
-	if (FALSE == data.empty()) {	    	
+	if (FALSE == data.empty()) {
 
 		/*								TYPE_DEF
 		 * - INTEGER
@@ -504,7 +504,7 @@ string AixSymbolTableParser::getInfoType(const string data, info_type_results *m
 			matchResults->name = tmp[0];
 			matchResults->type = tmp[1];
 		}
-    }
+	}
 
 	return ret;
 }
@@ -520,7 +520,7 @@ string AixSymbolTableParser::getInfoType(const string data, info_type_results *m
  */
 string AixSymbolTableParser::getMemberAttrsType(const string data)
 {
-    string ret = MEMBER_ATTRS[0];
+	string ret = MEMBER_ATTRS[0];
 
 	if (FALSE == data.empty()) {
 		switch (data[0]){
@@ -539,7 +539,7 @@ string AixSymbolTableParser::getMemberAttrsType(const string data)
 		}
 	}
 
-    return ret;
+	return ret;
 }
 
 /**
@@ -622,7 +622,7 @@ bool AixSymbolTableParser::isPassedByValue(const string data)
  * Inserts the object passed in the second argument to the global _parsedData map.
  *
  * @param[in] insetionKey: insertion key for the object
- * @param[in] object     : object to be inserted
+ * @param[in] object	 : object to be inserted
  *
  * @return: DDR_RC_OK on success and DDR_RC_ERROR otherwise
  */
@@ -676,7 +676,7 @@ DDR_RC AixSymbolTableParser::insertFileEntry(const string fileName, const double
  * was already in the map and "_REJECTED" otherwise.
  *
  * @param[in] insertionKey: insertion ID of the object that needs to be marked rejected
- * @param[in] object      : rejected object that needs to inserted in the map
+ * @param[in] object	  : rejected object that needs to inserted in the map
  *
  * @return DDR_RC_OK on success and DDR_RC_ERROR on error
  */
@@ -688,7 +688,7 @@ DDR_RC AixSymbolTableParser::insertRejectedEntry(const double insertionKey, Info
 
 	if (_parsedData.end() != existing_entry) { /* Key already exists in the map */
 		object->name += "_!!REJECTED!!";
-        updateEntry(existing_entry, *object, TRUE);
+		updateEntry(existing_entry, *object, TRUE);
 	} else {
 		object->name += "_REJECTED";
 		insertEntry(insertionKey, *object);
@@ -748,14 +748,14 @@ int AixSymbolTableParser::isSigned(const int ID)
  * Checks if the declaration string passed in is that of a valid data member.
  * If it is valid, it writes out the parsed info to dataMember.
  *
- * @param[in]  data       : string should of format, "GenSpec AccessSpec AnonSpec DataMember"
+ * @param[in]  data	   : string should of format, "GenSpec AccessSpec AnonSpec DataMember"
  * @param[out] data_member: Object to store the parsed info in
  *
  * @return TRUE if it is a valid data member and FALSE otherwise
  */
 bool AixSymbolTableParser::isValidDataMember(const string data, Info *dataMember)
 {
-    bool ret = FALSE;
+	bool ret = FALSE;
 
 	/* GenSpec AccessSpec AnonSpec DataMember
 	 *	c?		(i|u|o){1}	a?		( (s?) | (p INTEGER{1} NAME)? | (b|r)? ) : Field;
@@ -769,7 +769,7 @@ bool AixSymbolTableParser::isValidDataMember(const string data, Info *dataMember
 	 *																: [\d]+ , [\d]+ , [\d];
 	 */
 	regex expression ("^"+ACCESS_SPEC+"{1}a?((s?)|(p"+INTEGER+NAME+")?|(b|r)?):"+NAME+":"+INTEGER+","+BIT_OFFSET+","+NUM_BITS+"$");
-    smatch m;
+	smatch m;
 
 	/* Steps:
 	 *	1. Get GenSpec, AccessSpec and AnonSpec
@@ -777,12 +777,12 @@ bool AixSymbolTableParser::isValidDataMember(const string data, Info *dataMember
 	 *	2. If the data member is not compiler generated use isValidField to
 	 *	   parse the data member name, typeID, bit offset and size
 	 */
-    if (TRUE == regex_search(data, m, expression)) {
-    	int indexOfFirstColon = data.find_first_of(':');
-        string attributes = data.substr(0, indexOfFirstColon);
-        int index = 0; /* used to the next character index to check in the string */
+	if (TRUE == regex_search(data, m, expression)) {
+		int indexOfFirstColon = data.find_first_of(':');
+		string attributes = data.substr(0, indexOfFirstColon);
+		int index = 0; /* used to the next character index to check in the string */
 
-        if ('c' != attributes[index]) { /* Proceed if the data member is not generated by compiler */
+		if ('c' != attributes[index]) { /* Proceed if the data member is not generated by compiler */
 
 			options_vect memberOptions;
 			memberOptions.push_back(*(makeOptionInfoPair("accessibility", ATTR_VALUE, extractAccessSpec(attributes),0)));
@@ -804,17 +804,17 @@ bool AixSymbolTableParser::isValidDataMember(const string data, Info *dataMember
 			}
 			dataMember->options = memberOptions;
 			ret = isValidField(data.substr(indexOfFirstColon + 1), dataMember);
-        }
-    }
+		}
+	}
 
-    return ret;
+	return ret;
 }
 
 /**
  * Checks if the data string passed in is of valid field format. If it is
  * parses out all the needed info and populates appropriate fields with it in field
  *
- * @param[in]  data    : should be of format "NAME : TYPE_ID, BIT_OFFSET, NUM_BITS"
+ * @param[in]  data	: should be of format "NAME : TYPE_ID, BIT_OFFSET, NUM_BITS"
  * @param[in]  parentID: type id of the parent
  * @param[in]  fieldID : id of the field (in most cases counter representing the number of fields before it plus 1)
  * @param[out] field   : object to write in the parsed info regarding the field
@@ -883,7 +883,7 @@ bool AixSymbolTableParser::isValidField(const string data, Info *field)
  * Checks if the data string passed in is of valid friend class format. If it is
  * parses out all the needed info and populates appropriate fields with it in friendClass
  *
- * @param[in]  data       : should be of format "AnonSpec FriendClass"
+ * @param[in]  data	   : should be of format "AnonSpec FriendClass"
  * @param[out] friendClass: object to write in the parsed info regarding the friend class
  *
  * @return TRUE if it is a valid friend class and FALSE otherwise
@@ -893,7 +893,7 @@ bool AixSymbolTableParser::isValidFriendClass(const string data, Info *friendCla
 	bool ret = FALSE;
 
 	/* AnonSpec FriendClass#
-	 * a?       \\( TYPE_ID;
+	 * a?	   \\( TYPE_ID;
 	 *
 	 *	a?
 	 * 		\\(
@@ -930,7 +930,7 @@ bool AixSymbolTableParser::isValidFriendClass(const string data, Info *friendCla
  * Checks if the data string passed in is of valid nested class format.
  * If it is, writes out the parsed info to nestedClass.
  *
- * @param[in]  data       : should be of format, "AccessSpec AnonSpec NestedClass"
+ * @param[in]  data	   : should be of format, "AccessSpec AnonSpec NestedClass"
  * @param[out] nestedClass: object to write in the parsed info regarding the nested class
  *
  * @return TRUE if it is a valid nested class and FALSE otherwise
@@ -940,7 +940,7 @@ bool AixSymbolTableParser::isValidNestedClass(const string data, Info *nestedCla
 	bool ret = FALSE;
 
 	/* AccessSpec AnonSpec NestedClass#
-	 * (i|u|o){1}   a?       NTYPE_ID  ;
+	 * (i|u|o){1}   a?	   NTYPE_ID  ;
 	 *
 	 * (i|u|o){1}
 	 * 				a?
@@ -980,15 +980,15 @@ bool AixSymbolTableParser::isValidNestedClass(const string data, Info *nestedCla
  * Creates an object of type option_info using the arguments and
  * returns it.
  *
- * @param[in] nameValue     : name of the option you want to add
- * @param[in] typeValue     : type of the value the option will have, ID or attribute
+ * @param[in] nameValue	 : name of the option you want to add
+ * @param[in] typeValue	 : type of the value the option will have, ID or attribute
  * @param[in] attributeValue: option value of type string
- * @param[in] idValue       : option value of type int
+ * @param[in] idValue	   : option value of type int
  *
  * @return makeOptionInfoPair populated with data from the arguments
  */
 option_info* AixSymbolTableParser::makeOptionInfoPair (const string nameValue, const option_info_type typeValue,
-							     const string attributeValue, const int idValue)
+								 const string attributeValue, const int idValue)
 {
 	option_info *option = new option_info();
 
@@ -1016,21 +1016,21 @@ option_info* AixSymbolTableParser::makeOptionInfoPair (const string nameValue, c
  * array declaration then writes the parsed information to arrayEntry. Only
  * picking up "a" at the moment.
  *
- * @param[in]  data      : string containting array declaration
+ * @param[in]  data	  : string containting array declaration
  * @param[out] arrayEntry: object to store the parsed info in
  *
  * @return DDR_RC_OK if data was a valid array declaration and DDR_RC_ERROR otherwise
  */
 DDR_RC AixSymbolTableParser::parseArray(const string data, Info *arrayEntry)
 {
-	/*                           Array Descriptions
+	/*						   Array Descriptions
 	 * - a TYPE_ID; # TYPE_ID ........ < Array; First TypeID is index type or of type ar INTEGER; INTEGER; INTEGER; INTEGER
 	 * - A TYPE_ID ................... < Open Array
 	 * - D INTEGER, TYPE_ID .......... < N-dimensional dynamic array of TypeID
 	 * - E INTEGER, TYPE_ID .......... < N-dimensional dynamic subarray of TypeID
 	 * - O INTEGER, TYPE_ID .......... < New open array
 	 * - P INTEGER; # TYPE_ID ........ < Packed array
-	 * -     (a | A | D | E | O | P)
+	 * -	 (a | A | D | E | O | P)
 	 */
 	DDR_RC ret = DDR_RC_OK;
 
@@ -1064,9 +1064,9 @@ DDR_RC AixSymbolTableParser::parseArray(const string data, Info *arrayEntry)
 			string boundType;
 			boundType = parseBound(arrayInfo[1]); /* Get bound type for lower bound */
 			if ("indeterminable" == boundType) {
-			    arrayEntry->typeDef.options.push_back(*(makeOptionInfoPair("lower_bound", ATTR_VALUE, boundType, 0)));
+				arrayEntry->typeDef.options.push_back(*(makeOptionInfoPair("lower_bound", ATTR_VALUE, boundType, 0)));
 			} else if ("integer" == boundType) {
-			    arrayEntry->typeDef.options.push_back(*(makeOptionInfoPair("lower_bound", NUMERIC, "", toInt(arrayInfo[1]))));
+				arrayEntry->typeDef.options.push_back(*(makeOptionInfoPair("lower_bound", NUMERIC, "", toInt(arrayInfo[1]))));
 			} else {
 				ret = DDR_RC_ERROR;
 			}
@@ -1115,9 +1115,9 @@ string AixSymbolTableParser::parseBound(const string data)
 /**
  * Takes in string will information about the members and parses them into individual enteries
  *
- * @param[in] data         : string to be parsed for class members
- * @param[in] classID      : insertion key of the class
- * @param[in] fileID       : ID (would be the insertion key) of the file the declaation is from
+ * @param[in] data		 : string to be parsed for class members
+ * @param[in] classID	  : insertion key of the class
+ * @param[in] fileID	   : ID (would be the insertion key) of the file the declaation is from
  * @param[out] classMembers: vector of type double, used to return insertion keys of the members
  *
  * @return vector of type double with insertion keys of the class members
@@ -1131,9 +1131,9 @@ DDR_RC AixSymbolTableParser::parseClassMembers(const string data, const double c
 		/* Steps
 		 * 1. Split vector on ";". This will seperate each member
 		 * 2. Check each seperated member agains valid data member
-		 *    , nested class and friend class syntax
+		 *	, nested class and friend class syntax
 		 * 3. If it matches each of them, then get the typeID. Store
-		 *    the raw data and the declaration file
+		 *	the raw data and the declaration file
 		 */
 		str_vect preParsedMembers = split(data, ';');
 
@@ -1201,13 +1201,13 @@ DDR_RC AixSymbolTableParser::parseClassMembers(const string data, const double c
 		}
 	}
 
-    return ret;
+	return ret;
 }
 
 /*
  * Takes in string will information about the constant declarations and parses it
  *
- * @param[in]  data          : string containing the declaration EX: b32
+ * @param[in]  data		  : string containing the declaration EX: b32
  * @param[out] constantEntry: the info object to which to write info to
  *
  * @return DDR_RC_OK if the data string was of correct format and DDR_RC_ERROR otherwise
@@ -1215,7 +1215,7 @@ DDR_RC AixSymbolTableParser::parseClassMembers(const string data, const double c
 DDR_RC AixSymbolTableParser::parseConstants(const string data, Info *constantEntry)
 {
 	/* c = Constants ; < Generic declaration format
-	 *                          Constants
+	 *						  Constants
 	 * - b ORD_VALUE ..................................................... < Boolean constant
 	 * - c ORD_VALUE ..................................................... < Character constant
 	 * - i INTEGER ....................................................... < Integer constant
@@ -1289,7 +1289,7 @@ DDR_RC AixSymbolTableParser::parseConstants(const string data, Info *constantEnt
  * Parses out members from the string, inserts them into the data map and
  * returns their insertion key
  *
- * @param[in]  data     : the members to be parsed EX: test:-1,0,32;
+ * @param[in]  data	 : the members to be parsed EX: test:-1,0,32;
  * @param[in]  parentID : typeID of the parent
  * @param[in]  fileID   : insertion key of the declaration file
  * @param[out] memberIDs: to retrun insertion keys of valid fields, if any
@@ -1337,13 +1337,13 @@ DDR_RC AixSymbolTableParser::parseFields(const string data, const double parentI
 			}
 		}
 	}
-    return ret;
+	return ret;
 }
 
 /**
  * parseVtblPointerInfo
  *
- * @param[in]  data       : EX: p32sample
+ * @param[in]  data	   : EX: p32sample
  * @param[out] pointerInfo: options vector to return the parsed information
  *
  * @return DDR_RC_OK if the data string was of correct format and DDR_RC_ERROR otherwise
@@ -1379,8 +1379,8 @@ DDR_RC AixSymbolTableParser::parseVtblPointerInfo(const string data, options_vec
  * Parses the enumerator Data and returns insertion ID for each valid enumerator
  *
  * @param[in]  enumeratorData: enumerator data to be parsed (EX: E1:2,E2:3,E3:4)
- * @param[in]  enumID        : typeID of the enum (NOT THE INSETION KEY)
- * @param[in]  fileID        : typeID of the file the enum was declared in (also the insertion key)
+ * @param[in]  enumID		: typeID of the enum (NOT THE INSETION KEY)
+ * @param[in]  fileID		: typeID of the file the enum was declared in (also the insertion key)
  * @param[out] enumeratorIDs : used to return insertion keys of valid enumerators
  *
  * @return DDR_RC_OK if the data string was of correct format and DDR_RC_ERROR otherwise
@@ -1407,7 +1407,7 @@ DDR_RC AixSymbolTableParser::parseEnumData(const string enumeratorData, const do
 		 * 2. Iteratoring over each vector index, split the string on ":".
 		 *	  This will seperate the enumerator name and value.
 		 * 3. - Get the name from first(0th) index of the second split vector, tmp.
-		 *    - Use the indexCounter and enumID to generate child type ID.
+		 *	- Use the indexCounter and enumID to generate child type ID.
 		 *	  - Set the typeID isChild tag to true and typeID tag to ENUMERATOR
 		 *	  - Push the enumerator value in the options vector
 		 *	  - Get the declaration file using the fileID
@@ -1470,7 +1470,7 @@ DDR_RC AixSymbolTableParser::parseInfo(const string rawData,const double fileID,
 
 		/* Steps
 		 * 1. Get the type of Info. This will also parse the
-		 *    rawData into 3 main sections, name, type and members.
+		 *	rawData into 3 main sections, name, type and members.
 		 * 2. Split matchResults->name on ":". This will get us
 		 *	  the name and typeID of the Info.
 		 *		- Since this a not a member of any other declaratio,
@@ -1532,7 +1532,7 @@ DDR_RC AixSymbolTableParser::parseInfo(const string rawData,const double fileID,
 			 * MOTIV: after the class key if there is OptPBV then we don't need to pick it up
 			 */
 			while (index != (matchResults->type).length()
-		    		&& !isalpha((matchResults->type)[index])) {
+					&& !isalpha((matchResults->type)[index])) {
 				++index;
 			}
 
@@ -1604,9 +1604,9 @@ DDR_RC AixSymbolTableParser::parseInfo(const string rawData,const double fileID,
 				(*memberID) = 0;
 			}
 		}
-    }
-    
-    return ret;
+	}
+	
+	return ret;
 
 }
 
@@ -1619,7 +1619,7 @@ DDR_RC AixSymbolTableParser::parseInfo(const string rawData,const double fileID,
  */
 DDR_RC AixSymbolTableParser::parseTypeDef(const string data, Info *typeDefEntry)
 {
-    /* Built in types
+	/* Built in types
 	 * -1  int, .............. 32 bit signed integeral type
 	 * -5  char, ............. 8 bit < AIX specific
 	 * -3  short. ............ 16 bit signed integral type
@@ -1640,10 +1640,10 @@ DDR_RC AixSymbolTableParser::parseTypeDef(const string data, Info *typeDefEntry)
 	 * -18 real, ............. IEEE double precision
 	 * -19 stringptr
 	 * -20 character, ........ 8 bit unsigned character type
-	 *     -21 logical*1, ........ 8 bit type < FORTRAN
-	 *     -22 logical*2, ........ 16 bit type < FORTRAN
-	 *     -23 logical*4, ........ 32 bit type for boolean variables < FORTRAN
-	 *     -24 logical, .......... 32 bit type < FORTRAN
+	 *	 -21 logical*1, ........ 8 bit type < FORTRAN
+	 *	 -22 logical*2, ........ 16 bit type < FORTRAN
+	 *	 -23 logical*4, ........ 32 bit type for boolean variables < FORTRAN
+	 *	 -24 logical, .......... 32 bit type < FORTRAN
 	 * -25 complex, .......... consisting of two IEEE single-precision floating point values
 	 * -26 complex, .......... consisting of two IEEE double-precision floating point values
 	 * -27 integer*1, ........ 8 bit signed integral type
@@ -1654,129 +1654,129 @@ DDR_RC AixSymbolTableParser::parseTypeDef(const string data, Info *typeDefEntry)
 	 * -32 unsigned long long, 64 bit unsigned integral type
 	 * -33 logical*8, ........ 64 bit unsigned integral type
 	 * -34 integer*8, ........ 64 bit singned integral type
-     */
+	 */
 
-    str_vect tmp;
-    DDR_RC ret = DDR_RC_ERROR;
-    int typeID_index = 1;
-    switch (data[0]) {
-        case '-':
-            if (FALSE == isBuiltIn(data, &(typeDefEntry->typeDef.typeID))) {
-                ret = DDR_RC_ERROR;
-            }
-            ret = DDR_RC_OK;
-            break;
-        case 'c':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            tmp = split(data, ';');
-            typeDefEntry->size.sizeValue = toSize(tmp[1]);
-            typeDefEntry->size.sizeType = SIZE_TYPES[1];
-            typeDefEntry->typeDef.type = "complex";
-            ret = DDR_RC_OK;
-            break;
-        case 'd':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            typeDefEntry->typeDef.type = "file";
-            ret = DDR_RC_OK;
-            break;
-        case 'g':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            tmp = split(data, ';');
-            typeDefEntry->size.sizeValue = toSize(tmp[1]);
-            typeDefEntry->size.sizeType = SIZE_TYPES[1];
-            typeDefEntry->typeDef.type = "floating-point";
-            ret = DDR_RC_OK;
-            break;
-        case 'D':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            tmp = split(data, ';');
-            typeDefEntry->size.sizeValue = toSize(tmp[1]);
-            typeDefEntry->size.sizeType = SIZE_TYPES[1];
-            typeDefEntry->typeDef.type = "decimal_floating-point";
-            ret = DDR_RC_OK;
-            break;
-        case 'k':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            typeDefEntry->typeDef.type = "constant";
-            ret = DDR_RC_OK;
-            break;
-        case 'm':
+	str_vect tmp;
+	DDR_RC ret = DDR_RC_ERROR;
+	int typeID_index = 1;
+	switch (data[0]) {
+		case '-':
+			if (FALSE == isBuiltIn(data, &(typeDefEntry->typeDef.typeID))) {
+				ret = DDR_RC_ERROR;
+			}
+			ret = DDR_RC_OK;
+			break;
+		case 'c':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			tmp = split(data, ';');
+			typeDefEntry->size.sizeValue = toSize(tmp[1]);
+			typeDefEntry->size.sizeType = SIZE_TYPES[1];
+			typeDefEntry->typeDef.type = "complex";
+			ret = DDR_RC_OK;
+			break;
+		case 'd':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			typeDefEntry->typeDef.type = "file";
+			ret = DDR_RC_OK;
+			break;
+		case 'g':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			tmp = split(data, ';');
+			typeDefEntry->size.sizeValue = toSize(tmp[1]);
+			typeDefEntry->size.sizeType = SIZE_TYPES[1];
+			typeDefEntry->typeDef.type = "floating-point";
+			ret = DDR_RC_OK;
+			break;
+		case 'D':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			tmp = split(data, ';');
+			typeDefEntry->size.sizeValue = toSize(tmp[1]);
+			typeDefEntry->size.sizeType = SIZE_TYPES[1];
+			typeDefEntry->typeDef.type = "decimal_floating-point";
+			ret = DDR_RC_OK;
+			break;
+		case 'k':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			typeDefEntry->typeDef.type = "constant";
+			ret = DDR_RC_OK;
+			break;
+		case 'm':
 			/* OPT_VBASE_SPEC
  			 * OPT_MULTI_BASE_SPEC
  			 * TYPE_ID < Member type
  			 * TYPE_ID < Class type < if there is no m, will there be no class type ID
  			 * TYPE_ID
-             */
-            tmp = split(data, ':');
-            typeDefEntry->typeDef.typeID = extractTypeDefID(tmp[2]);
-            if ('v' == (tmp[0])[typeID_index]) {
-                typeDefEntry->options.push_back(*(makeOptionInfoPair("has_virtual_base", ATTR_VALUE, "v",0)));
-                typeID_index++;
-            }
-            if ('m' == (tmp[0])[typeID_index]) {
-                typeDefEntry->options.push_back(*(makeOptionInfoPair("is_multi_based", ATTR_VALUE, "m",0)));
-                typeID_index++;
-            }
-            typeDefEntry->options.push_back(*(makeOptionInfoPair( "member_type", NUMERIC, "", extractTypeID(tmp[0], typeID_index))));
-            typeDefEntry->options.push_back(*(makeOptionInfoPair("class_type", NUMERIC, "", toDouble(tmp[1]))));
-            typeDefEntry->typeDef.type = "ptr_to_member_type";
-            ret = DDR_RC_OK;
-            break;
-        case 'n':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            tmp = split(data, ';');
-            typeDefEntry->size.sizeValue = toSize(tmp[1]);
-            typeDefEntry->size.sizeType = SIZE_TYPES[2];
-            typeDefEntry->typeDef.type = "string_type";
-            ret = DDR_RC_OK;
-            break;
-        case 'w':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            typeDefEntry->typeDef.type = "wide_character";
-            ret = DDR_RC_OK;
-            break;
-        case 'M':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            tmp = split(data, ';');
-            typeDefEntry->size.sizeValue = toSize(tmp[1]);
-            typeDefEntry->size.sizeType = SIZE_TYPES[3];
-            typeDefEntry->typeDef.type = "multiple_instance";
-            ret = DDR_RC_OK;
-            break;
-        case '*':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            typeDefEntry->typeDef.type = "pointer";
-            ret = DDR_RC_OK;
-            break;
-        case '&':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            typeDefEntry->typeDef.type = "reference";
-            ret = DDR_RC_OK;
-            break;
-        case 'V':
-            typeDefEntry->typeDef.typeID = extractTypeDefID(data);
-            typeDefEntry->typeDef.type = "volatile";
-            ret = DDR_RC_OK;
-            break;
-        case 'Z':
-            typeDefEntry->typeDef.type = "ellipses";
-            ret = DDR_RC_OK;
-            break;
-        case 'a':
-            parseArray(data, typeDefEntry);
-            ret = DDR_RC_OK;
-            break;
-    }
+			 */
+			tmp = split(data, ':');
+			typeDefEntry->typeDef.typeID = extractTypeDefID(tmp[2]);
+			if ('v' == (tmp[0])[typeID_index]) {
+				typeDefEntry->options.push_back(*(makeOptionInfoPair("has_virtual_base", ATTR_VALUE, "v",0)));
+				typeID_index++;
+			}
+			if ('m' == (tmp[0])[typeID_index]) {
+				typeDefEntry->options.push_back(*(makeOptionInfoPair("is_multi_based", ATTR_VALUE, "m",0)));
+				typeID_index++;
+			}
+			typeDefEntry->options.push_back(*(makeOptionInfoPair( "member_type", NUMERIC, "", extractTypeID(tmp[0], typeID_index))));
+			typeDefEntry->options.push_back(*(makeOptionInfoPair("class_type", NUMERIC, "", toDouble(tmp[1]))));
+			typeDefEntry->typeDef.type = "ptr_to_member_type";
+			ret = DDR_RC_OK;
+			break;
+		case 'n':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			tmp = split(data, ';');
+			typeDefEntry->size.sizeValue = toSize(tmp[1]);
+			typeDefEntry->size.sizeType = SIZE_TYPES[2];
+			typeDefEntry->typeDef.type = "string_type";
+			ret = DDR_RC_OK;
+			break;
+		case 'w':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			typeDefEntry->typeDef.type = "wide_character";
+			ret = DDR_RC_OK;
+			break;
+		case 'M':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			tmp = split(data, ';');
+			typeDefEntry->size.sizeValue = toSize(tmp[1]);
+			typeDefEntry->size.sizeType = SIZE_TYPES[3];
+			typeDefEntry->typeDef.type = "multiple_instance";
+			ret = DDR_RC_OK;
+			break;
+		case '*':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			typeDefEntry->typeDef.type = "pointer";
+			ret = DDR_RC_OK;
+			break;
+		case '&':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			typeDefEntry->typeDef.type = "reference";
+			ret = DDR_RC_OK;
+			break;
+		case 'V':
+			typeDefEntry->typeDef.typeID = extractTypeDefID(data);
+			typeDefEntry->typeDef.type = "volatile";
+			ret = DDR_RC_OK;
+			break;
+		case 'Z':
+			typeDefEntry->typeDef.type = "ellipses";
+			ret = DDR_RC_OK;
+			break;
+		case 'a':
+			parseArray(data, typeDefEntry);
+			ret = DDR_RC_OK;
+			break;
+	}
 
-    if ((0 != typeDefEntry->typeDef.typeID)
-        && (isBuiltIn(typeDefEntry->typeDef.typeID))) {
+	if ((0 != typeDefEntry->typeDef.typeID)
+		&& (isBuiltIn(typeDefEntry->typeDef.typeID))) {
 
-        typeDefEntry->typeDef.isBuiltIn = 1;
-        typeDefEntry->typeDef.isSigned = isSigned(typeDefEntry->typeDef.typeID);
-        ret = DDR_RC_OK;
-    }
+		typeDefEntry->typeDef.isBuiltIn = 1;
+		typeDefEntry->typeDef.isSigned = isSigned(typeDefEntry->typeDef.typeID);
+		ret = DDR_RC_OK;
+	}
 
-    return ret;
+	return ret;
 
 }
 
@@ -1846,37 +1846,37 @@ int AixSymbolTableParser::parseDumpOutput(const string data)
  * Splits the string s on delimeters in argument delim and writes the output to
  * elements.
  *
- * @param[in]  data      : string that needs to be split
+ * @param[in]  data	  : string that needs to be split
  * @param[in]  delimeters: what the string needs to be seperated on
  * @param[out] elements  : string vector to write out the strings after doing the split to
  */
 void AixSymbolTableParser::split(const string data, char delimeters, str_vect *elements)
 {
-    stringstream ss;
-    ss.str(data);
-    string item;
+	stringstream ss;
+	ss.str(data);
+	string item;
 
-    while (getline(ss, item, delimeters)) {
-        elements->push_back(item);
-    }
+	while (getline(ss, item, delimeters)) {
+		elements->push_back(item);
+	}
 }
 
 /**
  * Splits the string data on delimeters in argument delimeters and writes the output to
  * elements.
  *
- * @param[in]  data      : string that needs to be split
+ * @param[in]  data	  : string that needs to be split
  * @param[in]  delimeters: what the string needs to be seperated on
  * 
  * @return string vector containing the strings after resulting from the split operation
  */
 str_vect AixSymbolTableParser::split(const string data, char delimeters)
 {
-    str_vect elements;
-    
-    split(data, delimeters, &elements);
+	str_vect elements;
+	
+	split(data, delimeters, &elements);
 
-    return elements;
+	return elements;
 }
 
 /**
@@ -1889,13 +1889,13 @@ str_vect AixSymbolTableParser::split(const string data, char delimeters)
  */
 string AixSymbolTableParser::strip(const string str, const char chr)
 {
-    string ret = str;
-	if (FALSE == ret.empty()){
+	string ret = str;
+	if (FALSE == ret.empty()) {
 		ret = stripLeading(ret, chr);
 		ret = striptrailing(ret, chr);
 	}
 
-    return ret;
+	return ret;
 }
 
 /**
@@ -1953,7 +1953,7 @@ double AixSymbolTableParser::shiftDecimal(const double value)
 	if (ret >= 1) {
 		ret = shiftDecimal (value/100);
 	}
-    return ret;
+	return ret;
 }
 
 /**
@@ -2064,7 +2064,7 @@ DDR_RC AixSymbolTableParser::updateEntry(data_map::iterator entry, Info update, 
 /**
  * Parses the information in the vector to a format easily readable by the human eye
  *
- * @param[in] data    : the vector of type double that needs to be beautified
+ * @param[in] data	: the vector of type double that needs to be beautified
  * @param[in] location: an identifier to seperate each call to this function from the others
  * @param[in] level   : indicator of the indentation need, default value is 1
  *
@@ -2114,7 +2114,7 @@ string AixSymbolTableParser::beautifyVector(const str_vect data, const string lo
  */
 string AixSymbolTableParser::getPadding(const int level)
 {
-	string levelUp = "    ";
+	string levelUp = "	";
 	string retPadding = "";
 	for(int index = 2; index <= level; index++) {
 		retPadding += levelUp;
@@ -2126,10 +2126,10 @@ string AixSymbolTableParser::getPadding(const int level)
 /**
  * Parses the information in the info struct to a format easily readable by the human eye
  *
- * @param[in] data             : info struct that needs to be beautified
- * @param[in] key              : insertion key of the info struct
+ * @param[in] data			 : info struct that needs to be beautified
+ * @param[in] key			  : insertion key of the info struct
  * @param[in] overrideChildTag : boolean value indicating if the info struct is a child or not
- * @param[in] level            : indentation level, default value is 1
+ * @param[in] level			: indentation level, default value is 1
  *
  * @return the info struct passed as argument in a human friendly format as a string
  */
@@ -2151,9 +2151,9 @@ string AixSymbolTableParser::beautifyInfo(const Info data, const double key, con
 		output += padding + outputDelimeter;
 		output += padding + "Key  : " + toString(key) + "\n";
 		output += padding + "Info : \n";
-		output += subLevelPadding + "name      : " + data.name + "\n";
-		output += subLevelPadding + "typeID    : " + toString(data.typeID.ID) + "--" + data.typeID.tag + "\n";
-		output += subLevelPadding + "size      : " + toString(data.size.sizeValue) + "--" + data.size.sizeType + "\n";
+		output += subLevelPadding + "name	  : " + data.name + "\n";
+		output += subLevelPadding + "typeID	: " + toString(data.typeID.ID) + "--" + data.typeID.tag + "\n";
+		output += subLevelPadding + "size	  : " + toString(data.size.sizeValue) + "--" + data.size.sizeType + "\n";
 		
 		output += subLevelPadding + "members   : \n";
 		/* List the members */
@@ -2185,10 +2185,10 @@ string AixSymbolTableParser::beautifyInfo(const Info data, const double key, con
 		}
 
 		output += subLevelPadding + "typeDef  : \n";
-		output += subSubLevelPadding + "type      : " + data.typeDef.type + "\n";
+		output += subSubLevelPadding + "type	  : " + data.typeDef.type + "\n";
 		output += subSubLevelPadding + "isBuiltIn : " + toString(data.typeDef.isBuiltIn) + "\n";
 		output += subSubLevelPadding + "isSigned  : " + toString(data.typeDef.isSigned) + "\n";
-		output += subSubLevelPadding + "typeID    : " + toString(data.typeDef.typeID) + "\n";
+		output += subSubLevelPadding + "typeID	: " + toString(data.typeDef.typeID) + "\n";
 		
 		output += subSubLevelPadding + "options   : \n";
 		if (FALSE == data.typeDef.options.empty()) {
@@ -2223,7 +2223,7 @@ void AixSymbolTableParser::printMapContents()
 /**
  * Parses the information in the regex_search to a format easily readable by the human eye
  *
- * @param[in] m       : smatch variable that needs to be beautified
+ * @param[in] m	   : smatch variable that needs to be beautified
  * @param[in] location: an identifier to seperate each call to this function from the others
  *
  * @return the smatch passed as argument in a human friendly format as a string
@@ -2240,7 +2240,7 @@ string AixSymbolTableParser::beautifyMatchResults(const smatch m, const string l
 	string middle = m[0];
 	string suffix = m.suffix();
 	output += "Prefix  : " + prefix + "\n";
-	output += "[0]     : " + middle + "\n";
+	output += "[0]	 : " + middle + "\n";
 	output += "Suffix  : " + suffix + "\n" ;
 	output += outputDelimeter;
 
@@ -2250,7 +2250,7 @@ string AixSymbolTableParser::beautifyMatchResults(const smatch m, const string l
 /**
  * Parses the information in the options vector to a format easily readable by the human eye
  *
- * @param[in] data    : option vector that needs to be beautified
+ * @param[in] data	: option vector that needs to be beautified
  * @param[in] location: an identifier to seperate each call to this function from the others
  * @param[in] level   : indentation level, default level is 1
  *
@@ -2295,31 +2295,10 @@ string AixSymbolTableParser::beautifyInfoTypeResults(const info_type_results res
 	output += outputDelimeter;
 	output += "Location: " + location + "\n";
 	output += "match_results:\n";
-	output += "    name   : " + results.name + "\n";
-	output += "    type   : " + results.type + "\n";
-	output += "    members: " + results.members + "\n";
+	output += "	name   : " + results.name + "\n";
+	output += "	type   : " + results.type + "\n";
+	output += "	members: " + results.members + "\n";
 	output += outputDelimeter;
 
 	return output;
 }
-
-// int main ()
-// {
-// 	_startNewFile = 0;
-// 	_fileID = 0;
-
-// 	FILE *fp = NULL;
-// 	fp = fopen ("/team/vshubham/dump_tv_001.txt","r");
-// 	char *buffer = NULL;
-// 	size_t len = 0;
-// 	string tmp = "";
-
-// 	while ( -1 != getline (&buffer, &len, fp)) {
-// 		tmp = buffer;
-// 		parseDumpOutput(tmp);
-// 	}
-
-// 	fclose (fp);
-
-// 	return 1;
-// }

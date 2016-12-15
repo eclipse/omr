@@ -29,20 +29,20 @@ using std::tr1::tuple;
 using std::tr1::unordered_map;
 using std::vector;
 
-const string NAME                ("[^;:'\"]*");
-const string INTEGER             ("(-)?[0-9]+");
-const string NON_NEG_INTEGER     ("[0-9]+");
-const string NUM_BYTES           (NON_NEG_INTEGER);
-const string NUM_BITS            (NON_NEG_INTEGER);
-const string BIT_OFFSET          (INTEGER);
-const string CLASS_TYPEID        (NON_NEG_INTEGER);
-const string ORD_VALUE           (INTEGER);
-const string CLASS_KEY           ("(s|u|c)");
-const string ACCESS_SPEC         ("(i|o|u)"); /* MUST ALWAYS BE THERE */
-const string ANON_SPEC           ("a");
-const string BASE_CLASS_OFFSET   (NON_NEG_INTEGER);
+const string NAME ("[^;:'\"]*");
+const string INTEGER ("(-)?[0-9]+");
+const string NON_NEG_INTEGER ("[0-9]+");
+const string NUM_BYTES (NON_NEG_INTEGER);
+const string NUM_BITS (NON_NEG_INTEGER);
+const string BIT_OFFSET (INTEGER);
+const string CLASS_TYPEID (NON_NEG_INTEGER);
+const string ORD_VALUE (INTEGER);
+const string CLASS_KEY ("(s|u|c)");
+const string ACCESS_SPEC ("(i|o|u)"); /* MUST ALWAYS BE THERE */
+const string ANON_SPEC ("a");
+const string BASE_CLASS_OFFSET (NON_NEG_INTEGER);
 const string VIRTUAL_ACCESS_SPEC ("(v?"+ACCESS_SPEC+"?)");
-const string OPT_BASE_SPEC       (VIRTUAL_ACCESS_SPEC+BASE_CLASS_OFFSET+"\\:"+CLASS_TYPEID+",?"); /* comma if we have multiple of this */
+const string OPT_BASE_SPEC (VIRTUAL_ACCESS_SPEC+BASE_CLASS_OFFSET+"\\:"+CLASS_TYPEID+",?"); /* comma if we have multiple of this */
 
 const string built_type_descriptors[29] = {"integer", "char", "short", "long", "char", "short",
 											"integer", "unsigned", "long", "void", "float_single_precision",
@@ -106,7 +106,6 @@ struct option_info {
 };
 typedef vector<option_info> options_vect;
 
-// typedef enum size_types { TYPE_NUM_BITS, TYPE_NUM_BYTES, TYPE_BOUND, TYPE_NUM_ELEMENTS, TYPE_NONE} size_types;
 struct obj_size {
 	size_t sizeValue;
 	string sizeType;
@@ -134,8 +133,8 @@ struct obj_type{
 	string type;
 	bool isBuiltIn;
 	double typeID;
-	int isSigned;       /* Needs to be int because we can have 0 (Not signed), 1 (Signed) and 2 (Don't know) */
-	options_vect options;
+	int isSigned;		/* Needs to be int because we can have 0 (Not signed), 1 (Signed) and 2 (Don't know) */
+	options_vect options;	
 };
 
 struct Info {
