@@ -15,6 +15,21 @@
  * Contributors:
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  *******************************************************************************/
+
+#define __IBMCPP_TR1__ 1 /* Need this for AIX */
+
+#include <stdexcept>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string>
+#include <regex>
+#include <iostream>
+#include <ctype.h>
+#include <vector>
+#include <unordered_map>
+#include <tuple>
+#include <sstream>
+
 #include "config.hpp"
 
 using std::getline;
@@ -158,7 +173,7 @@ struct obj_type{
 	unsigned short type;
 	bool isBuiltIn;
 	double typeID;
-	int isSigned;		/* Needs to be int because we can have 0 (Not signed), 1 (Signed) and 2 (Don't know) */
+	int isSigned; /* Needs to be int because we can have 0 (Not signed), 1 (Signed) and 2 (Don't know) */
 	options_vect options;	
 };
 
@@ -188,8 +203,7 @@ typedef data_map::iterator data_map_itt;
 class AixSymbolTableParser
 {
 public:
-	AixSymbolTableParser() : _fileCounter(0), _startNewFile(0), _fileID(0);
-	~AixSymbolTableParser();
+	AixSymbolTableParser();
 
 	int parseDumpOutput(const string data);
 	data_map_itt findEntry(const double insertionKey);
@@ -273,4 +287,4 @@ private:
 	string getStringDescription(const unsigned short value);
 
 	DDR_RC updateEntry(data_map::iterator entry, Info update, bool overRideChecks = FALSE);
-}
+};

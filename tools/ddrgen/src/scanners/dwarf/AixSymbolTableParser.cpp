@@ -15,22 +15,13 @@
  * Contributors:
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  *******************************************************************************/
-#define __IBMCPP_TR1__ 1 /* Need this for AIX */
-
-#include <stdexcept>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string>
-#include <regex>
-#include <iostream>
-#include <ctype.h>
-#include <vector>
-#include <unordered_map>
-#include <tuple>
-#include <sstream>
-
 #include "AixSymbolTableParser.hpp"
 
+
+AixSymbolTableParser::AixSymbolTableParser()
+	: _fileCounter(0), _startNewFile(0), _fileID(0)
+{
+}
 
 /**
  * Parses any inheritance (base classes) that have been used.
@@ -2166,7 +2157,7 @@ string AixSymbolTableParser::beautifyInfo(const Info data, const double key, con
 		output += padding + "Key  : " + toString(key) + "\n";
 		output += padding + "Info : \n";
 		output += subLevelPadding + "name	  : " + data.name + "\n";
-		output += subLevelPadding + "typeID	: " + toString(data.typeID.ID) + "--" + data.typeID.tag + "\n";
+		output += subLevelPadding + "typeID	  : " + toString(data.typeID.ID) + "--" + data.typeID.tag + "\n";
 		output += subLevelPadding + "size	  : " + toString(data.size.sizeValue) + "--" + data.size.sizeType + "\n";
 		
 		output += subLevelPadding + "members   : \n";
@@ -2202,7 +2193,7 @@ string AixSymbolTableParser::beautifyInfo(const Info data, const double key, con
 		output += subSubLevelPadding + "type	  : " + getStringDescription(data.typeDef.type) + "\n";
 		output += subSubLevelPadding + "isBuiltIn : " + toString(data.typeDef.isBuiltIn) + "\n";
 		output += subSubLevelPadding + "isSigned  : " + toString(data.typeDef.isSigned) + "\n";
-		output += subSubLevelPadding + "typeID	: " + toString(data.typeDef.typeID) + "\n";
+		output += subSubLevelPadding + "typeID	  : " + toString(data.typeDef.typeID) + "\n";
 		
 		output += subSubLevelPadding + "options   : \n";
 		if (FALSE == data.typeDef.options.empty()) {
