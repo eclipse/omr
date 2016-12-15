@@ -203,6 +203,9 @@ typedef data_map::iterator data_map_itt;
 class AixSymbolTableParser
 {
 public:
+	/* Unorderd map for global access to the data */
+	data_map parsedData;
+
 	AixSymbolTableParser();
 
 	int parseDumpOutput(const string data);
@@ -222,9 +225,6 @@ public:
 	string beautifyInfoTypeResults(const info_type_results results, const string location);
 
 private:
-	/* Unorderd map for global access to the data */
-	data_map _parsedData;
-
 	double_vect _fileList;
 	int _fileCounter;
 
