@@ -169,7 +169,7 @@ string AixSymbolTableParser::extractClassType(const string data)
  * Parses the string to file ID. Extracts the integer betwen the square brackets.
  *
  * @param[in] data: string from which to extract ID from. The expected format is "[####]"
- * 
+ *
  * @return file ID as double
  */
 double AixSymbolTableParser::extractFileID(const string data)
@@ -214,16 +214,16 @@ double AixSymbolTableParser::extractTypeID(const string data, const int index)
  *
  * @param[in] insertionKey: insertion key of the item to be looked up
  *
- * @return iterator pointing to the entry or _parsedData.end() if entry is not found
+ * @return iterator pointing to the entry or parsedData.end() if entry is not found
  */
 data_map::iterator AixSymbolTableParser::findEntry(const double insertionKey)
 {
-	return _parsedData.find(insertionKey);
+	return parsedData.find(insertionKey);
 }
 
 /**
  * Generates typeID for a child based on it's parent ID and child offset
- * 
+ *
  * @param[in] parentID   : ID of the parent
  * @param[in] childOffset: index number of the child, EX: if this is the first child it will be 1
  *
@@ -306,7 +306,7 @@ DDR_RC AixSymbolTableParser::getNextFile(double *fileID)
 		*fileID = _fileList[_fileCounter];
 		_fileCounter += 1;
 	}
-	
+
 	return ret;
 }
 
@@ -375,7 +375,7 @@ string AixSymbolTableParser::getInfoType(const string data, info_type_results *m
 		 * - f ............................................................... < function return type
 		 */
 		regex typeDefExpression ("(^):t"+INTEGER+"="+"(c|d|e|g|D|k|m|w|M|\\*|\\&|V|Z|f|a)?(.*)");
-		
+
 		/* Constant
 		 *	NAME : CLASS
 		 *			c = CONSTANTS
@@ -388,7 +388,7 @@ string AixSymbolTableParser::getInfoType(const string data, info_type_results *m
 		 *				- S TYPE_ID, NUM_ELEMENTS, NUM_BITS, BIT_PATTERN
 		 */
 		regex constantExpression ("(^)"+NAME+":c="+"(b|c|i|r|s|C|S)?;(.*)");
-		
+
 		regex structureExpression ("=s"+NUM_BYTES);
 
 		regex unionExpression ("=u"+NUM_BYTES);
@@ -439,7 +439,7 @@ string AixSymbolTableParser::getInfoType(const string data, info_type_results *m
 			matchResults->type = tmp[1];
 
 		} else if (TRUE == regex_search(data, m, constantExpression)) {
-			
+
 			ret = DECLARATION_TYPES[2]; /* constant */
 
 			str_vect tmp = split(data,'=');
@@ -447,7 +447,7 @@ string AixSymbolTableParser::getInfoType(const string data, info_type_results *m
 			matchResults->type = tmp[1];
 
 		} else if (TRUE == regex_search(data, m, structureExpression)) {
-			
+
 			ret = DECLARATION_TYPES[3]; /* structure */
 
 			matchResults->name = m.prefix();
@@ -458,7 +458,7 @@ string AixSymbolTableParser::getInfoType(const string data, info_type_results *m
 			matchResults->members = striptrailing(matchResults->members, ';');
 
 		} else if (TRUE == regex_search(data, m, unionExpression)) {
-			
+
 			ret = DECLARATION_TYPES[4]; /* union */
 
 			matchResults->name = m.prefix();
@@ -469,7 +469,7 @@ string AixSymbolTableParser::getInfoType(const string data, info_type_results *m
 			matchResults->members = striptrailing(matchResults->members, ';');
 
 		} else if (TRUE == regex_search(data, m, classExpression)) {
-			
+
 			ret = DECLARATION_TYPES[5]; /* class */
 
 			matchResults->name = m.prefix();
@@ -481,7 +481,7 @@ string AixSymbolTableParser::getInfoType(const string data, info_type_results *m
 			matchResults->members = striptrailing(matchResults->members, ';');
 
 		} else if (TRUE == regex_search(data, m, enumExpression)) {
-			
+
 			ret = DECLARATION_TYPES[6]; /* enum */
 
 			matchResults->name = m.prefix();
@@ -493,11 +493,11 @@ string AixSymbolTableParser::getInfoType(const string data, info_type_results *m
 			matchResults->members = striptrailing(matchResults->members, ';');
 
 		} else if (TRUE == regex_search(data, m, labelExpression)) {
-			
+
 			ret = DECLARATION_TYPES[7]; /* label */
 
 			str_vect tmp = split(data,'=');
-			
+
 			matchResults->name = tmp[0];
 			matchResults->type = tmp[1];
 		}
@@ -616,7 +616,7 @@ bool AixSymbolTableParser::isPassedByValue(const string data)
 }
 
 /**
- * Inserts the object passed in the second argument to the global _parsedData map.
+ * Inserts the object passed in the second argument to the global parsedData map.
  *
  * @param[in] insetionKey: insertion key for the object
  * @param[in] object	 : object to be inserted
@@ -630,7 +630,7 @@ DDR_RC AixSymbolTableParser::insertEntry(const double insetionKey, const Info ob
 	/* Insert function returns an iterator to the entry that was inserted and
 	 * a boolean value indicating if the insertion was successful or not
 	 */
-	result = _parsedData.insert(make_pair<double,Info>((double)insetionKey, (Info)object));
+	result = parsedData.insert(make_pair<double,Info>((double)insetionKey, (Info)object));
 
 	if (TRUE == result.second) {
 		ret = DDR_RC_OK;
@@ -683,7 +683,7 @@ DDR_RC AixSymbolTableParser::insertRejectedEntry(const double insertionKey, Info
 
 	data_map::iterator existing_entry = findEntry(insertionKey);
 
-	if (_parsedData.end() != existing_entry) { /* Key already exists in the map */
+	if (parsedData.end() != existing_entry) { /* Key already exists in the map */
 		object->name += "_!!REJECTED!!";
 		updateEntry(existing_entry, *object, TRUE);
 	} else {
@@ -1056,7 +1056,7 @@ DDR_RC AixSymbolTableParser::parseArray(const string data, Info *arrayEntry)
 			 */
 			arrayEntry->typeDef.options.push_back(*(makeOptionInfoPair("subrange_type", NUMERIC, "", extractTypeDefID(arrayInfo[0],2))));
 
-			/* There are two types of bounds that we are concerned with, INTEGER and INDETERMINABLE */ 
+			/* There are two types of bounds that we are concerned with, INTEGER and INDETERMINABLE */
 			ret = DDR_RC_OK; /* Set return to ok, it will be changed to ERROR if subrange format is not valid */
 			string boundType;
 			boundType = parseBound(arrayInfo[1]); /* Get bound type for lower bound */
@@ -1067,7 +1067,7 @@ DDR_RC AixSymbolTableParser::parseArray(const string data, Info *arrayEntry)
 			} else {
 				ret = DDR_RC_ERROR;
 			}
-			
+
 			boundType = parseBound(arrayInfo[2]); /* Get bound type for upper bound */
 			if ("indeterminable" == boundType) {
 				arrayEntry->typeDef.options.push_back(*(makeOptionInfoPair("upper_bound", ATTR_VALUE, boundType, 0)));
@@ -1447,12 +1447,12 @@ DDR_RC AixSymbolTableParser::parseEnumData(const string enumeratorData, const do
  *
  * @return DDR_RC_OK
  *		   - along with non zero member ID if the data string was of correct format
- *		   - along with zero for member ID if it has already been aded to the _parsedData map
+ *		   - along with zero for member ID if it has already been aded to the parsedData map
  *		   DDR_RC_ERROR
  *		   - along with non zero member ID if the data was of invalid format
- *			 and an entry for it already exists in the _parsedData map
+ *			 and an entry for it already exists in the parsedData map
  *		   - along with zero for member ID if the data was of invalid format
- *			 and it hasn't been added to the_parsedData map
+ *			 and it hasn't been added to the parsedData map
  */
 DDR_RC AixSymbolTableParser::parseInfo(const string rawData,const double fileID, double *memberID)
 {
@@ -1460,7 +1460,7 @@ DDR_RC AixSymbolTableParser::parseInfo(const string rawData,const double fileID,
 	if (FALSE == rawData.empty() && 0 < fileID) {
 		Info *declData = new Info();
 
-		info_type_results *matchResults = new info_type_results();		
+		info_type_results *matchResults = new info_type_results();
 		string info_type_result = getInfoType(rawData, matchResults);
 
 		str_vect tmp = split(matchResults->name, ':'); /* has the name and the typeID */
@@ -1572,7 +1572,7 @@ DDR_RC AixSymbolTableParser::parseInfo(const string rawData,const double fileID,
 
 			data_map::iterator existing_entry = findEntry(insertionKey);
 
-			if (_parsedData.end() != existing_entry) {
+			if (parsedData.end() != existing_entry) {
 				if (existing_entry->second.declFile == declData->declFile) {
 					DEBUGPRINTF("ERROR>>>>There was a overlap in insertion keys ('%f')", insertionKey);
 				}
@@ -1602,7 +1602,7 @@ DDR_RC AixSymbolTableParser::parseInfo(const string rawData,const double fileID,
 			}
 		}
 	}
-	
+
 	return ret;
 
 }
@@ -1788,7 +1788,7 @@ int AixSymbolTableParser::parseDumpOutput(const string data)
 	string validData = "";
 	string fileName = "";
 	double member_id = 0;
-	
+
 	if (0 == _startNewFile && regex_search(data, m_s, fileSection)) {
 		_startNewFile = 1;
 	} else if (1 == _startNewFile) {
@@ -1837,7 +1837,7 @@ int AixSymbolTableParser::parseDumpOutput(const string data)
 		}
 
 	}
-	
+
 	return 1;
 }
 
@@ -1866,13 +1866,13 @@ void AixSymbolTableParser::split(const string data, char delimeters, str_vect *e
  *
  * @param[in]  data	  : string that needs to be split
  * @param[in]  delimeters: what the string needs to be seperated on
- * 
+ *
  * @return string vector containing the strings after resulting from the split operation
  */
 str_vect AixSymbolTableParser::split(const string data, char delimeters)
 {
 	str_vect elements;
-	
+
 	split(data, delimeters, &elements);
 
 	return elements;
@@ -1991,7 +1991,7 @@ int AixSymbolTableParser::toInt(const string value)
  * @return size_t
  */
 size_t AixSymbolTableParser::toSize(const string size)
-{	
+{
 	stringstream ss;
 	size_t ret = 0;
 	ss << size;
@@ -2165,22 +2165,22 @@ string AixSymbolTableParser::beautifyInfo(const Info data, const double key, con
 		output += subLevelPadding + "name	  : " + data.name + "\n";
 		output += subLevelPadding + "typeID	  : " + toString(data.typeID.ID) + "--" + data.typeID.tag + "\n";
 		output += subLevelPadding + "size	  : " + toString(data.size.sizeValue) + "--" + data.size.sizeType + "\n";
-		
+
 		output += subLevelPadding + "members   : \n";
 		/* List the members */
 		if ((FALSE == data.typeID.isChild)
-			&& (FALSE == data.members.empty()) 
-			) { 
+			&& (FALSE == data.members.empty())
+			) {
 			/* && (data.typeID.tag != "file") ) {
 			 * Add this if you want to call printMapContents this will prevent
 			 * it from printing all the members of every info. Which will be pointless
 			 * because we'll be printing all the contents of the map anyways
 			 */
-			
+
 			output += beautifyVector(data.members, "",subLevel);
 			for (vector<double>::const_iterator it = data.members.begin(); it != data.members.end(); ++it) {
 				data_map::iterator result;
-				result = _parsedData.find (*it);
+				result = parsedData.find (*it);
 				output += beautifyInfo(result->second, result->first, TRUE, subLevel);
 			}
 
@@ -2200,7 +2200,7 @@ string AixSymbolTableParser::beautifyInfo(const Info data, const double key, con
 		output += subSubLevelPadding + "isBuiltIn : " + toString(data.typeDef.isBuiltIn) + "\n";
 		output += subSubLevelPadding + "isSigned  : " + toString(data.typeDef.isSigned) + "\n";
 		output += subSubLevelPadding + "typeID	  : " + toString(data.typeDef.typeID) + "\n";
-		
+
 		output += subSubLevelPadding + "options   : \n";
 		if (FALSE == data.typeDef.options.empty()) {
 			output += beautifyOptionsVector(data.typeDef.options, "Options:", subSubLevel);
@@ -2225,7 +2225,7 @@ void AixSymbolTableParser::printMapContents()
 	data_map::iterator it;
 	string output = "";
 
-	for (it = _parsedData.begin(); it != _parsedData.end(); ++it) {
+	for (it = parsedData.begin(); it != parsedData.end(); ++it) {
 		output = beautifyInfo (it->second, it->first);
 		DEBUGPRINTF("%s",output.c_str());
 	}
