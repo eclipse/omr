@@ -233,7 +233,7 @@ OMR::Power::RegisterDependencyConditions::RegisterDependencyConditions(
 
       if (reg!=NULL /* && reg->getKind()==TR_GPR */)
 	 {
-	 if (TR::Compiler->target.is32Bit() && child->getType().isInt64())
+	 if (child->getHighGlobalRegisterNumber() > -1)
 	    numLongs++;
 	 }
       }
@@ -257,7 +257,7 @@ OMR::Power::RegisterDependencyConditions::RegisterDependencyConditions(
 
       TR::RealRegister::RegNum highRegNum;
 
-      if (TR::Compiler->target.is32Bit() && child->getType().isInt64())
+      if (child->getHighGlobalRegisterNumber() > -1)
          {
          highRegNum = (TR::RealRegister::RegNum)cg->getGlobalRegister(child->getHighGlobalRegisterNumber());
 
@@ -302,7 +302,7 @@ OMR::Power::RegisterDependencyConditions::RegisterDependencyConditions(
 
       TR::RealRegister::RegNum highRegNum;
 
-      if (TR::Compiler->target.is32Bit() && child->getType().isInt64())
+      if (child->getHighGlobalRegisterNumber() > -1)
          {
          highRegNum = (TR::RealRegister::RegNum)cg->getGlobalRegister(child->getHighGlobalRegisterNumber());
          TR::RegisterPair *regPair = reg->getRegisterPair();
