@@ -185,7 +185,7 @@ struct Info {
 	options_vect options;
 	obj_type typeDef;
 	string rawData;
-	string declFile;
+	double declFile;
 
 	bool empty()
 	{
@@ -243,7 +243,7 @@ private:
 
 	double generateChildTypeID(const double parentID, const double childOffset);
 	double generateInsertionKey(const double parentID, const double typeID);
-	string getDeclFile(const double insertionKey);
+	double getDeclFile(const double insertionKey);
 	string getEntryName(const double insertionKey);
 	string getInfoType(const string data, info_type_results *matchResults);
 	string getMemberAttrsType(const string data);

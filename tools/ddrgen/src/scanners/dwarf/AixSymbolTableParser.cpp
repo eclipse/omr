@@ -311,15 +311,21 @@ DDR_RC AixSymbolTableParser::getNextFile(double *fileID)
 }
 
 /**
- * Concatenates the declaration file ID and name
+ * Concatenates the declaration file ID and name. The reason this function was
+ * created is in case someone wanted to change the format of declaration file
+ * it will be easier to just modify this function instead of modifying every
+ * assignment to declFile
  *
  * @param[in] insertionKey: insertion key of the file
  *
- * @return string with the declaration file name and insertionKey
+ * @return returns insertion key of the file
  */
-string AixSymbolTableParser::getDeclFile(const double insertionKey)
+double AixSymbolTableParser::getDeclFile(const double insertionKey)
 {
-	return toString(insertionKey) + "--" + getEntryName(insertionKey);
+	/* OLD FORMAT
+	 * toString(insertionKey) + "--" + getEntryName(insertionKey)
+	 */
+	return insertionKey;
 }
 
 /**
@@ -1567,7 +1573,7 @@ DDR_RC AixSymbolTableParser::parseInfo(const string rawData,const double fileID,
 			data_map::iterator existing_entry = findEntry(insertionKey);
 
 			if (_parsedData.end() != existing_entry) {
-				if (0 != existing_entry->second.declFile.compare(declData->declFile)) {
+				if (existing_entry->second.declFile == declData->declFile) {
 					DEBUGPRINTF("ERROR>>>>There was a overlap in insertion keys ('%f')", insertionKey);
 				}
 				ret = updateEntry(existing_entry, *declData); /* Will either be value of DDR_RC_OK or DDR_RC_ERROR */
