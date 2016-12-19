@@ -32,6 +32,9 @@
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
+#ifdef J9_PROJECT_SPECIFIC
+#include "exceptions/AOTFailure.hpp"
+#endif
 #include "control/Options_inlines.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
@@ -1264,7 +1267,21 @@ OMR::ResolvedMethodSymbol::genIL(TR_FrontEnd * fe, TR::Compilation * comp, TR::S
 
          if (optimizer)
             {
+#ifdef J9_PROJECT_SPECIFIC
+            try
+               {
+               optimizer->optimize();
+               }
+            catch (const J9::AOTHasInvokeVarHandle &e)
+               {
+               if (comp->isOutermostMethod())
+                  throw e;
+               else
+                 _methodFlags.set(IlGenSuccess, false);
+               }
+#else
             optimizer->optimize();
+#endif
             comp->setOptimizer(previousOptimizer);
             }
          else
