@@ -1619,6 +1619,7 @@ public:
    void      enableTracing(OMR::Optimizations o)    {_traceOptimizations[o] = true; }
    bool      tracingOptimization()             {return _tracingOptimization; }
    int32_t   getMaxUnloadedAddressRanges()     {return _maxUnloadedAddressRanges;}
+   int32_t   getInstanceOfOrCheckcastMaxProfiledClasses()           {return _numCheckcastProfiledClasses;}
    int32_t   getMaxStaticPICSlots(TR_Hotness h){return (h >= hot)? _hotMaxStaticPICSlots : _maxStaticPICSlots; }
    int32_t   getMaxNumPrexAssumptions()        {return _maxNumPrexAssumptions;}
    int32_t   getMaxNumVisitedSubclasses()      {return _maxNumVisitedSubclasses;}
@@ -2329,6 +2330,7 @@ private:
    int32_t                     _numRestrictedGPRs;
    int32_t                     _numInterfaceCallCacheSlots;
    int32_t                     _numInterfaceCallStaticSlots;
+   int32_t                     _numCheckcastProfiledClasses;
    int32_t                     _storeSinkingLastOpt;
    int32_t                     _test390StackBuffer;   // Buffer to force a large stack on 390
    int32_t                     _test390LitPoolBuffer; // Buffer to force a large lit pool on 390
