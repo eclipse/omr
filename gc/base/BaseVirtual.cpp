@@ -25,4 +25,4 @@
  * issues because we never use -lstdc++ (outside tests) and the
  * delete implementation will be missing (e.g. needed by stack allocation)
  */
-void MM_BaseVirtual::emptyMethod() { /* No implementation */ }
+//void MM_BaseVirtual::emptyMethod() { /* No implementation */ }

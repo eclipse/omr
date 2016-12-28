@@ -28,7 +28,7 @@ GLOBAL_CXXFLAGS+=-fno-exceptions -fno-rtti -fno-threadsafe-statics
 ## Position Independent compile flag
 GLOBAL_CFLAGS+=-fPIC
 GLOBAL_CXXFLAGS+=-fPIC
-GLOBAL_LDFLAGS+=-fpic
+GLOBAL_LDFLAGS+=-fpic  -undefined dynamic_lookup
 
 GLOBAL_CFLAGS+= -m64
 GLOBAL_CXXFLAGS+=-m64

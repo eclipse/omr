@@ -20,32 +20,32 @@
 #include <string.h>
 
 #include "StartupManager.hpp"
-#if defined(OMR_GC)
-#include "GCExtensionsBase.hpp"
-#include "ConfigurationFlat.hpp"
-#endif /* OMR_GC */
-
-#define OMR_GC_BUFFER_SIZE 256
-#define OMR_XMS "-Xms"
-#define OMR_XMS_LENGTH 4
-#define OMR_XMX "-Xmx"
-#define OMR_XMX_LENGTH 4
-#if defined(OMR_GC_MODRON_COMPACTION)
-#define OMR_XCOMPACTGC "-Xcompactgc"
-#define OMR_XCOMPACTGC_LENGTH 11
-#endif /* OMR_GC_MODRON_COMPACTION */
-#if defined(OMR_GC_MODRON_SCAVENGER)
-#define OMR_XGCPOLICY "-Xgcpolicy:"
-#define OMR_XGCPOLICY_LENGTH 11
-#define OMR_GCPOLICY_GENCON "gencon"
-#define OMR_GCPOLICY_GENCON_LENGTH 6
-#endif /* defined(OMR_GC_MODRON_SCAVENGER) */
-#define OMR_XVERBOSEGCLOG "-Xverbosegclog:"
-#define OMR_XVERBOSEGCLOG_LENGTH 15
-#define OMR_XGCBUFFERED_LOGGING "-Xgc:bufferedLogging"
-#define OMR_XGCBUFFERED_LOGGING_LENGTH 20
-#define OMR_XGCTHREADS "-Xgcthreads"
-#define OMR_XGCTHREADS_LENGTH 11
+//#if defined(OMR_GC)
+//#include "GCExtensionsBase.hpp"
+//#include "ConfigurationFlat.hpp"
+//#endif /* OMR_GC */
+//
+//#define OMR_GC_BUFFER_SIZE 256
+//#define OMR_XMS "-Xms"
+//#define OMR_XMS_LENGTH 4
+//#define OMR_XMX "-Xmx"
+//#define OMR_XMX_LENGTH 4
+//#if defined(OMR_GC_MODRON_COMPACTION)
+//#define OMR_XCOMPACTGC "-Xcompactgc"
+//#define OMR_XCOMPACTGC_LENGTH 11
+//#endif /* OMR_GC_MODRON_COMPACTION */
+//#if defined(OMR_GC_MODRON_SCAVENGER)
+//#define OMR_XGCPOLICY "-Xgcpolicy:"
+//#define OMR_XGCPOLICY_LENGTH 11
+//#define OMR_GCPOLICY_GENCON "gencon"
+//#define OMR_GCPOLICY_GENCON_LENGTH 6
+//#endif /* defined(OMR_GC_MODRON_SCAVENGER) */
+//#define OMR_XVERBOSEGCLOG "-Xverbosegclog:"
+//#define OMR_XVERBOSEGCLOG_LENGTH 15
+//#define OMR_XGCBUFFERED_LOGGING "-Xgc:bufferedLogging"
+//#define OMR_XGCBUFFERED_LOGGING_LENGTH 20
+//#define OMR_XGCTHREADS "-Xgcthreads"
+//#define OMR_XGCTHREADS_LENGTH 11
 
 uintptr_t
 MM_StartupManager::getUDATAValue(char *option, uintptr_t *outputValue)
@@ -229,75 +229,75 @@ MM_StartupManager::loadGcOptions(MM_GCExtensionsBase *extensions)
 	return result;
 }
 
-bool
-MM_StartupManager::handleOption(MM_GCExtensionsBase *extensions, char *option)
-{
-	OMRPORT_ACCESS_FROM_OMRVM(extensions->getOmrVM());
-	bool result = true;
-	if (0 == strncmp(option, OMR_XMS, OMR_XMS_LENGTH)) {
-		uintptr_t value = 0;
-		if (!getUDATAMemoryValue(option + OMR_XMS_LENGTH, &value)) {
-			result = false;
-		} else {
-			extensions->initialMemorySize = value;
-			extensions->minOldSpaceSize = value;
-			extensions->oldSpaceSize = value;
-		}
-	} else if (0 == strncmp(option, OMR_XMX, OMR_XMX_LENGTH)) {
-		uintptr_t value = 0;
-		if (!getUDATAMemoryValue(option + OMR_XMX_LENGTH, &value)) {
-			result = false;
-		} else {
-			extensions->maxOldSpaceSize = value;
-			extensions->memoryMax = value;
-			extensions->maxSizeDefaultMemorySpace = value;
-		}
-	}
-#if defined(OMR_GC_MODRON_COMPACTION)
-	else if (0 == strncmp(option, OMR_XCOMPACTGC, OMR_XCOMPACTGC_LENGTH)) {
-		extensions->noCompactOnGlobalGC = 0;
-		extensions->compactOnGlobalGC = 0;
-		extensions->nocompactOnSystemGC = 0;
-		extensions->compactOnSystemGC = 0;
-	}
-#endif /* OMR_GC_MODRON_COMPACTION */
-	else if (0 == strncmp(option, OMR_XVERBOSEGCLOG, OMR_XVERBOSEGCLOG_LENGTH)) {
-		verboseFileName = (char *) omrmem_allocate_memory(strlen(option+OMR_XVERBOSEGCLOG_LENGTH)+1, OMRMEM_CATEGORY_MM);
-		if (NULL == verboseFileName) {
-			result = false;
-		} else {
-			strcpy(verboseFileName, option + OMR_XVERBOSEGCLOG_LENGTH);
-		}
-	}
-	else if (0 == strncmp(option, OMR_XGCBUFFERED_LOGGING, OMR_XGCBUFFERED_LOGGING_LENGTH)) {
-		extensions->bufferedLogging = true;
-	}
-#if defined(OMR_GC_MORDON_SCAVENGER)
-	else if (0 == strncmp(option, OMR_XGCPOLICY, OMR_XGCPOLICY_LENGTH)) {
-		char *gcpolicy = option + OMR_XGCPOLICY_LENGTH;
-		if (0 == strncmp(gcpolicy, OMR_GCPOLICY_GENCON, OMR_GCPOLICY_GENCON_LENGTH)) {
-			/* this is disabled by default -- enable scavenger here */
-			extensions->scavengerEnabled = true;
-		} else {
-			result = false;
-		}
-	}
-#endif /* defined(OMR_GC_MORDON_SCAVENGER) */
-	else if (0 == strncmp(option, OMR_XGCTHREADS, OMR_XGCTHREADS_LENGTH)) {
-		uintptr_t forcedThreadCount = 0;
-		if (0 >= getUDATAValue(option + OMR_XGCTHREADS_LENGTH, &forcedThreadCount)) {
-			result = false;
-		} else {
-			extensions->gcThreadCount = forcedThreadCount;
-			extensions->gcThreadCountForced = true;
-		}
-	} else {
-		/* unknown option */
-		result = false;
-	}
-
-	return result;
-}
+//bool
+//MM_StartupManager::handleOption(MM_GCExtensionsBase *extensions, char *option)
+//{
+//	OMRPORT_ACCESS_FROM_OMRVM(extensions->getOmrVM());
+//	bool result = true;
+//	if (0 == strncmp(option, OMR_XMS, OMR_XMS_LENGTH)) {
+//		uintptr_t value = 0;
+//		if (!getUDATAMemoryValue(option + OMR_XMS_LENGTH, &value)) {
+//			result = false;
+//		} else {
+//			extensions->initialMemorySize = value;
+//			extensions->minOldSpaceSize = value;
+//			extensions->oldSpaceSize = value;
+//		}
+//	} else if (0 == strncmp(option, OMR_XMX, OMR_XMX_LENGTH)) {
+//		uintptr_t value = 0;
+//		if (!getUDATAMemoryValue(option + OMR_XMX_LENGTH, &value)) {
+//			result = false;
+//		} else {
+//			extensions->maxOldSpaceSize = value;
+//			extensions->memoryMax = value;
+//			extensions->maxSizeDefaultMemorySpace = value;
+//		}
+//	}
+//#if defined(OMR_GC_MODRON_COMPACTION)
+//	else if (0 == strncmp(option, OMR_XCOMPACTGC, OMR_XCOMPACTGC_LENGTH)) {
+//		extensions->noCompactOnGlobalGC = 0;
+//		extensions->compactOnGlobalGC = 0;
+//		extensions->nocompactOnSystemGC = 0;
+//		extensions->compactOnSystemGC = 0;
+//	}
+//#endif /* OMR_GC_MODRON_COMPACTION */
+//	else if (0 == strncmp(option, OMR_XVERBOSEGCLOG, OMR_XVERBOSEGCLOG_LENGTH)) {
+//		verboseFileName = (char *) omrmem_allocate_memory(strlen(option+OMR_XVERBOSEGCLOG_LENGTH)+1, OMRMEM_CATEGORY_MM);
+//		if (NULL == verboseFileName) {
+//			result = false;
+//		} else {
+//			strcpy(verboseFileName, option + OMR_XVERBOSEGCLOG_LENGTH);
+//		}
+//	}
+//	else if (0 == strncmp(option, OMR_XGCBUFFERED_LOGGING, OMR_XGCBUFFERED_LOGGING_LENGTH)) {
+//		extensions->bufferedLogging = true;
+//	}
+//#if defined(OMR_GC_MORDON_SCAVENGER)
+//	else if (0 == strncmp(option, OMR_XGCPOLICY, OMR_XGCPOLICY_LENGTH)) {
+//		char *gcpolicy = option + OMR_XGCPOLICY_LENGTH;
+//		if (0 == strncmp(gcpolicy, OMR_GCPOLICY_GENCON, OMR_GCPOLICY_GENCON_LENGTH)) {
+//			/* this is disabled by default -- enable scavenger here */
+//			extensions->scavengerEnabled = true;
+//		} else {
+//			result = false;
+//		}
+//	}
+//#endif /* defined(OMR_GC_MORDON_SCAVENGER) */
+//	else if (0 == strncmp(option, OMR_XGCTHREADS, OMR_XGCTHREADS_LENGTH)) {
+//		uintptr_t forcedThreadCount = 0;
+//		if (0 >= getUDATAValue(option + OMR_XGCTHREADS_LENGTH, &forcedThreadCount)) {
+//			result = false;
+//		} else {
+//			extensions->gcThreadCount = forcedThreadCount;
+//			extensions->gcThreadCountForced = true;
+//		}
+//	} else {
+//		/* unknown option */
+//		result = false;
+//	}
+//
+//	return result;
+//}
 
 void
 MM_StartupManager::tearDown(void)
@@ -320,12 +320,12 @@ MM_StartupManager::getVerboseFileName(void)
 {
 	return verboseFileName;
 }
-
-MM_Configuration *
-MM_StartupManager::createConfiguration(MM_EnvironmentBase *env, MM_ConfigurationLanguageInterface *cli)
-{
-	/* When multiple configurations are supported, this call can return different
-	 * concrete implementations based on arguments previously parsed by handleOption().
-	 */
-	return MM_ConfigurationFlat::newInstance(env, cli);
-}
+//
+//MM_Configuration *
+//MM_StartupManager::createConfiguration(MM_EnvironmentBase *env, MM_ConfigurationLanguageInterface *cli)
+//{
+//	/* When multiple configurations are supported, this call can return different
+//	 * concrete implementations based on arguments previously parsed by handleOption().
+//	 */
+//	return MM_ConfigurationFlat::newInstance(env, cli);
+//}
