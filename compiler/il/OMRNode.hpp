@@ -978,6 +978,11 @@ public:
    bool chkHeapificationStore();
    const char * printIsHeapificationStore();
 
+   bool isHeapificationAlloc();
+   void setHeapificationAlloc(bool v);
+   bool chkHeapificationAlloc();
+   const char * printIsHeapificationAlloc();
+
    bool isLiveMonitorInitStore();
    void setLiveMonitorInitStore(bool v);
    bool chkLiveMonitorInitStore();
@@ -1924,6 +1929,10 @@ protected:
       localObjectMonitor                    = 0x00008000,
       primitiveLockedRegion                 = 0x00000400,
       monitorClassInNode                    = 0x00010000,
+
+      // Flags only used for isNew() opcodes
+      //
+      HeapificationAlloc                    = 0x00001000,
 
       // Flag used by TR::newarray and TR::anewarray
       //
