@@ -5699,6 +5699,36 @@ OMR::Node::printIsHeapificationStore()
 
 
 bool
+OMR::Node::isHeapificationAlloc()
+   {
+   TR_ASSERT(self()->getOpCode().isNew(), "Opcode must be isNew");
+   return _flags.testAny(HeapificationAlloc);
+   }
+
+void
+OMR::Node::setHeapificationAlloc(bool v)
+   {
+   TR::Compilation * c = TR::comp();
+   TR_ASSERT(self()->getOpCode().isNew(), "Opcode must be isNew");
+   if (performNodeTransformation2(c,"O^O NODE FLAGS: Setting HeapificationAlloc flag on node %p to %d\n", self(), v))
+      _flags.set(HeapificationAlloc, v);
+   }
+
+bool
+OMR::Node::chkHeapificationAlloc()
+   {
+   return self()->getOpCode().isNew() && _flags.testAny(HeapificationAlloc);
+   }
+
+const char *
+OMR::Node::printIsHeapificationAlloc()
+   {
+   return self()->chkHeapificationAlloc() ? "HeapificationAlloc " : "";
+   }
+
+
+
+bool
 OMR::Node::isLiveMonitorInitStore()
    {
    TR_ASSERT((self()->getOpCode().isStore()), "Opcode must be astore");
@@ -6076,7 +6106,7 @@ OMR::Node::chkArrayTRT()
 const char *
 OMR::Node::printArrayTRT()
    {
-   return self()->chkArrayTRT() ? "arrayTRT" : "";
+   return self()->chkArrayTRT() ? "arrayTRT " : "";
    }
 
 
@@ -6106,7 +6136,7 @@ OMR::Node::chkCharArrayTRT()
 const char *
 OMR::Node::printCharArrayTRT()
    {
-   return self()->chkCharArrayTRT() ? "charArrayTRT" : "";
+   return self()->chkCharArrayTRT() ? "charArrayTRT " : "";
    }
 
 
@@ -6312,7 +6342,7 @@ OMR::Node::chkSourceCellIsTermChar()
 const char *
 OMR::Node::printSourceCellIsTermChar()
    {
-   return self()->chkSourceCellIsTermChar() ? "sourceCellIsTermChar" : "";
+   return self()->chkSourceCellIsTermChar() ? "sourceCellIsTermChar " : "";
    }
 
 
@@ -6372,7 +6402,7 @@ OMR::Node::chkArrayCmpLen()
 const char *
 OMR::Node::printArrayCmpLen()
    {
-   return self()->chkArrayCmpLen() ? "arrayCmpLen" : "";
+   return self()->chkArrayCmpLen() ? "arrayCmpLen " : "";
    }
 
 
@@ -6402,7 +6432,7 @@ OMR::Node::chkArrayCmpSign()
 const char *
 OMR::Node::printArrayCmpSign()
    {
-   return self()->chkArrayCmpSign() ? "arrayCmpSign" : "";
+   return self()->chkArrayCmpSign() ? "arrayCmpSign " : "";
    }
 
 
@@ -6673,7 +6703,7 @@ OMR::Node::chkXorBitOpMem()
 const char *
 OMR::Node::printXorBitOpMem()
    {
-   return self()->chkXorBitOpMem() ? "SubOp=XOR" : "";
+   return self()->chkXorBitOpMem() ? "SubOp=XOR " : "";
    }
 
 
@@ -6704,7 +6734,7 @@ OMR::Node::chkOrBitOpMem()
 const char *
 OMR::Node::printOrBitOpMem()
    {
-   return self()->chkOrBitOpMem() ? "SubOp=OR" : "";
+   return self()->chkOrBitOpMem() ? "SubOp=OR " : "";
    }
 
 
@@ -6735,7 +6765,7 @@ OMR::Node::chkAndBitOpMem()
 const char *
 OMR::Node::printAndBitOpMem()
    {
-   return self()->chkAndBitOpMem() ? "SubOp=AND" : "";
+   return self()->chkAndBitOpMem() ? "SubOp=AND " : "";
    }
 
 
@@ -8000,7 +8030,7 @@ OMR::Node::chkAllocationCanBeRemoved()
 const char *
 OMR::Node::printAllocationCanBeRemoved()
    {
-   return self()->chkAllocationCanBeRemoved() ? "allocationCanBeRemoved" : "";
+   return self()->chkAllocationCanBeRemoved() ? "allocationCanBeRemoved " : "";
    }
 
 
