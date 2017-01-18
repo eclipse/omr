@@ -505,7 +505,8 @@ typedef struct TR_AOTMethodHeader {
 #define TR_AOTMethodHeader_NeedsRecursiveMethodTrampolineReservation 0x00000001
 #define TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing          0x00000002
 #define TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing           0x00000004
-
+#define TR_AOTMethodHeader_UsesEnableStringCompressionFolding        0x00000008
+#define TR_AOTMethodHeader_StringCompressionEnabled                  0x00000010
 
 // J9
 typedef struct TR_AOTInliningStats
