@@ -114,7 +114,8 @@ enum
    IfEnabledAndMoreThanOneBlock,
    IfEnabledAndMoreThanOneBlockMarkLastRun,
    IfAOTAndEnabled,
-   IfMethodHandleInvokes, // JSR292: Extra analysis required to optimize MethodHandle.invoke
+   IfMethodHandleInvokes, //JSR292: Extra analysis required to optimize MethodHandle.invoke
+   IfMethodHandleInvokesNoDebug, // JSR292 optimizations that should only apply in non-debug mode
    IfNotQuickStart,
    IfFullInliningUnderOSRDebug,
    IfNotFullInliningUnderOSRDebug,
