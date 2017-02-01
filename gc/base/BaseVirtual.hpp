@@ -49,7 +49,7 @@ public:
 	 * issues because we never use -lstdc++ (outside tests) and the
 	 * delete implementation will be missing (e.g. needed by stack allocation)
 	 */
-	virtual void emptyMethod();
+	virtual void emptyMethod(){};
 
 	/**
 	 * Get Base Virtual Type Id
