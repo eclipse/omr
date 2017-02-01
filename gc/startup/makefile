@@ -25,7 +25,7 @@ ARTIFACT_TYPE := archive
 OBJECTS := $(patsubst %.cpp,%$(OBJEXT),$(wildcard *.cpp))
 OBJECTS += $(patsubst %.c,%$(OBJEXT),$(wildcard *.c))
 
-MODULE_INCLUDES += ../base ../base/standard ../include ../stats ../structs ../verbose $(top_srcdir)/omr/startup $(OMRGLUE_INCLUDES)
+MODULE_INCLUDES += ../base ../base/standard ../include ../stats ../structs ../verbose ../verbose/handler_standard $(top_srcdir)/omr/startup $(OMRGLUE_INCLUDES)
 
 ifeq (linux,$(OMR_HOST_OS))
   ifeq (x86,$(OMR_HOST_ARCH))
