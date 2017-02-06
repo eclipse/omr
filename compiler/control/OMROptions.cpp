@@ -302,6 +302,9 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableEmptyPreHeaderCheck",         "O\tdisable Empty pre-header check in loop canonicalization", SET_OPTION_BIT(TR_DisableEmptyPreHeaderCheck), "F"},
    {"disableEnhancedClobberEval",         "O\tdisable passthrough clobber eval",               SET_OPTION_BIT(TR_DisableEnhancedClobberEval), "F"},
    {"disableEscapeAnalysis",              "O\tdisable escape analysis",                        TR::Options::disableOptimization, escapeAnalysis, 0, "P"},
+#ifdef J9_PROJECT_SPECIFIC
+   {"disableExceptionAsyncCheckInsertion","O\tdisable insertion of asyncchecks in exception handlers", TR::Options::disableOptimization, exceptionAsyncCheckInsertion, 0, "P"},
+#endif
    {"disableExplicitNewInitialization",   "O\tdisable explicit new initialization",            TR::Options::disableOptimization, explicitNewInitialization, 0, "P"},
    {"disableFastAssumptionReclamation",   "O\tdisable fast assumption reclamation",            SET_OPTION_BIT(TR_DisableFastAssumptionReclamation), "F", NOT_IN_SUBSET},
    {"disableFastDLTOnLongRunningInterpreter",   "O\tdisable logic to trigger DLT when a compiled body exists, but we're receiving interpreter ticks",
@@ -1103,7 +1106,9 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"traceEarlyStackMap",               "L\ttrace early stack map",                        SET_TRACECG_BIT(TR_TraceEarlyStackMap), "P"},
    {"traceEscapeAnalysis",              "L\ttrace escape analysis",                        TR::Options::traceOptimization, escapeAnalysis, 0, "P"},
    {"traceEvaluation",                  "L\tdump output of tree evaluation passes",        SET_TRACECG_BIT(TR_TraceCGEvaluation), "P" },
+#ifdef J9_PROJECT_SPECIFIC
    {"traceExceptionAsyncCheckInsertion","L\ttrace async check insertion into exceptions",  TR::Options::traceOptimization, exceptionAsyncCheckInsertion, 0, "P"},  // Java specific option
+#endif
    {"traceExplicitNewInitialization",   "L\ttrace explicit new initialization",            TR::Options::traceOptimization, explicitNewInitialization, 0, "P"},
    {"traceFieldPrivatization",          "L\ttrace field privatization",                    TR::Options::traceOptimization, fieldPrivatization, 0, "P"},
    {"traceForCodeMining=",              "L{regex}\tadd instruction annotations for code mining",
