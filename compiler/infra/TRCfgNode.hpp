@@ -22,12 +22,14 @@
 #include <limits.h>             // for SHRT_MAX
 #include <stddef.h>             // for NULL
 #include <stdint.h>             // for int32_t, int16_t
+#include <algorithm>
 #include "env/TRMemory.hpp"     // for TR_Memory, etc
 #include "il/Node.hpp"          // for vcount_t
 #include "infra/Link.hpp"       // for TR_Link1
 #include "infra/List.hpp"       // for List
 #include "infra/TRCfgEdge.hpp"  // for CFGEdge
 #include "infra/TRlist.hpp"
+
 class TR_StructureSubGraphNode;
 namespace TR { class Block; }
 namespace TR { class Compilation; }
@@ -75,10 +77,29 @@ class CFGNode : public ::TR_Link1<CFGNode>
    void addExceptionPredecessor(CFGEdge *p)                              {_exceptionPredecessors.push_front(p);}
    void addExceptionPredecessor(CFGEdge *p, TR_AllocationKind allocKind) {_exceptionPredecessors.push_front(p);}
 
-   void removeSuccessor(CFGEdge *p)  { _successors.remove(p);}
-   void removePredecessor(CFGEdge *p){ _predecessors.remove(p);}
-   void removeExceptionSuccessor(CFGEdge *p)  { _exceptionSuccessors.remove(p);}
-   void removeExceptionPredecessor(CFGEdge *p){ _exceptionPredecessors.remove(p);}
+   void removeSuccessor(CFGEdge *p)
+      {
+      auto iterator = std::find(_successors.begin(), _successors.end(), p);
+      if (iterator != _successors.end()) _successors.erase(iterator);
+      }
+
+   void removePredecessor(CFGEdge *p)
+      {
+      auto iterator = std::find(_predecessors.begin(), _predecessors.end(), p);
+      if (iterator != _predecessors.end()) _predecessors.erase(iterator);
+      }
+
+   void removeExceptionSuccessor(CFGEdge *p)
+      {
+      auto iterator = std::find(_exceptionSuccessors.begin(), _exceptionSuccessors.end(), p);
+      if (iterator != _exceptionSuccessors.end()) _exceptionSuccessors.erase(iterator);
+      }
+
+   void removeExceptionPredecessor(CFGEdge *p)
+      {
+      auto iterator = std::find(_exceptionPredecessors.begin(), _exceptionPredecessors.end(), p);
+      if (iterator != _exceptionPredecessors.end()) _exceptionPredecessors.erase(iterator);
+      }
 
    bool hasSuccessor(CFGNode * n);
    bool hasExceptionSuccessor(CFGNode * n);

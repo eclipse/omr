@@ -340,6 +340,10 @@ protected:
    TR_BitVector            *_frequencySet;
    double                  *_edgeProbabilities; // temp array
 
+private:
+   bool removeEdge(TR::CFGEdge *edge, TR::CFGNode &from, TR::CFGNode &to);
+   void removeEdge(TR::CFGEdge *edge, TR::CFGEdgeList &successorList, TR::CFGEdgeList &predecessorList);
+
 public: //FIXME: These public members should eventually be wrtapped in an interface.
    int32_t                  _max_edge_freq;
    int32_t                  _calledFrequency;
@@ -401,10 +405,7 @@ public:
 private:
    TR::CFGEdgeList combinedList;
 
-   std::list<TR::CFGEdge*,
-             TR::typed_allocator<TR::CFGEdge*,
-             TR::Allocator>
-            >::iterator currentIterator;
+   TR::CFGEdgeList::iterator currentIterator;
    };
 
 class TR_SuccessorIterator : public TR_CFGIterator

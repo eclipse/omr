@@ -3517,7 +3517,7 @@ static bool isLegalToMerge(TR::Node * node, TR::Block * block, TR::Block * nextB
 // Changes branch destinations for merge blocks.
 //
 static void changeBranchDestinationsForMergeBlocks(TR::Block * block, TR::Block * nextBlock,
-                    TR::Node    * bbStartNode, TR::CFGEdgeList &inEdge, std::list<TR::CFGEdge*, TR::typed_allocator<TR::CFGEdge*, TR::Allocator> >::iterator &inEdgeIter, TR::Simplifier * s)
+                    TR::Node    * bbStartNode, TR::CFGEdgeList &inEdge, TR::CFGEdgeList::iterator &inEdgeIter, TR::Simplifier * s)
    {
    TR::CFGEdgeList &successors     = block->getSuccessors();
    TR::CFGEdge* outEdge = successors.front();
@@ -14888,15 +14888,14 @@ TR::Node *endBlockSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
    TR::Node * bbStartNode = bbStartTree->getNode();
    TR_ASSERT(bbStartNode->getOpCodeValue() == TR::BBStart, "Simplification, BBEnd not followed by BBStart");
 
-   TR::Block * nextBlock                     = bbStartNode->getBlock();
+   TR::Block * const nextBlock = bbStartNode->getBlock();
    TR::CFGEdgeList   &inEdge        = nextBlock->getPredecessors();
-   std::list<TR::CFGEdge*, TR::typed_allocator<TR::CFGEdge*, TR::Allocator> >::iterator inEdgeIter = inEdge.begin();
-   TR::CFGEdgeList        &nextExcpOut     = nextBlock->getExceptionSuccessors();
+   TR::CFGEdgeList::iterator inEdgeIter = inEdge.begin();
    bool                     moreThanOnePred = (!(nextBlock->getPredecessors().empty()) && (nextBlock->getPredecessors().size() > 1));
 
    // Exclude all the illegal cases first since we don't want to return in the middle of merging
    bool blockIsEmpty;
-   if (!isLegalToMerge(node, block, nextBlock, nextExcpOut, bbStartNode, inEdge,  s, blockIsEmpty))
+   if (!isLegalToMerge(node, block, nextBlock, nextBlock->getExceptionSuccessors(), bbStartNode, inEdge,  s, blockIsEmpty))
       return node;
 
    if (moreThanOnePred)
@@ -14949,21 +14948,33 @@ TR::Node *endBlockSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
          TR::TransformUtil::removeTree(s->comp(), lastTree);
          }
 
-      TR::CFGEdge *e = (*inEdgeIter);
-      e->getFrom()->getSuccessors().remove(e);
-      e->getTo()->getPredecessors().remove(e);
+      {
+      TR::CFGEdge *edge = (*inEdgeIter);
+      TR::CFGNode *from = edge->getFrom();
+      TR::CFGNode *to = edge->getTo();
+      TR::CFGEdgeList &successorList = from->getSuccessors();
+      TR::CFGEdgeList &predecessorList = to->getPredecessors();
+      auto successorIterator = std::find(successorList.begin(), successorList.end(), edge);
+      auto predecessorIterator = std::find(predecessorList.begin(), predecessorList.end(), edge);
+      successorList.erase(successorIterator);
+      predecessorList.erase(predecessorIterator);
+      }
 
       for (auto outEdge = nextBlock->getSuccessors().begin(); outEdge != nextBlock->getSuccessors().end(); ++outEdge)
          {
          (*outEdge)->setFrom(block);
          }
-      for (auto outEdge = nextExcpOut.begin(); outEdge != nextExcpOut.end(); ++outEdge)
+      for (auto outEdge = nextBlock->getExceptionSuccessors().begin(); outEdge != nextBlock->getExceptionSuccessors().end(); ++outEdge)
          {
          if (rootStructure != NULL)
             (*outEdge)->setExceptionFrom(block);
          else
             {
-            (*outEdge)->getTo()->getExceptionPredecessors().remove((*outEdge));
+            auto position = std::find((*outEdge)->getTo()->getExceptionPredecessors().begin(), (*outEdge)->getTo()->getExceptionPredecessors().end(), *outEdge);
+            if (position != (*outEdge)->getTo()->getExceptionPredecessors().end())
+               {
+               (*outEdge)->getTo()->getExceptionPredecessors().erase(position);
+               }
             }
          }
       cfg->getNodes().remove(nextBlock);

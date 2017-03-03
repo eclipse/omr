@@ -736,6 +736,35 @@ static OrphanType unreachableOrphan(TR::CFG *cfg, TR::CFGNode *from, TR::CFGNode
    return IsParented;
    }
 
+bool
+OMR::CFG::removeEdge(TR::CFGEdge *edge, TR::CFGNode &from, TR::CFGNode &to)
+   {
+   if (std::find(from.getSuccessors().begin(), from.getSuccessors().end(), edge) != from.getSuccessors().end())
+      {
+      removeEdge(edge, from.getSuccessors(), to.getPredecessors());
+      return true;
+      }
+
+   if (std::find(from.getExceptionSuccessors().begin(), from.getExceptionSuccessors().end(), edge) != from.getExceptionSuccessors().end())
+      {
+      removeEdge(edge, from.getExceptionSuccessors(), to.getExceptionPredecessors());
+      return true;
+      }
+
+   return false;
+   }
+
+void
+OMR::CFG::removeEdge(TR::CFGEdge *edge, TR::CFGEdgeList &successorList, TR::CFGEdgeList &predecessorList)
+   {
+   auto successorIterator = std::find(successorList.begin(), successorList.end(), edge);
+   auto predecessorIterator = std::find(predecessorList.begin(), predecessorList.end(), edge);
+   TR_ASSERT(successorIterator != predecessorList.end(), "Edge missing from originator's successor list");
+   TR_ASSERT(predecessorIterator != predecessorList.end(), "Edge missing from destination's predecessor list");
+   successorList.erase(successorIterator);
+   predecessorList.erase(predecessorIterator);
+   }
+
 /*
 This Function looks for an edge in the successor/predecessor OR
 exceptionSuccessor/exceptionPredecessor Lists from the 'from' and 'to' Nodes of
@@ -753,26 +782,7 @@ bool OMR::CFG::removeEdge(TR::CFGEdge *edge)
 
    _mightHaveUnreachableBlocks = true;
 
-   bool found = false;
-
-   if (std::find(from->getSuccessors().begin(), from->getSuccessors().end(), edge) != from->getSuccessors().end()) {
-      found = true;
-      from->getSuccessors().remove(edge);
-   }
-   else if (std::find(from->getExceptionSuccessors().begin(), from->getExceptionSuccessors().end(), edge) != from->getExceptionSuccessors().end()) {
-      found = true;
-      from->getExceptionSuccessors().remove(edge);
-   }
-
-   if (std::find(to->getPredecessors().begin(), to->getPredecessors().end(), edge) != to->getPredecessors().end()) {
-      found = true;
-      to->getPredecessors().remove(edge);
-   }
-   else if (std::find(to->getExceptionPredecessors().begin(), to->getExceptionPredecessors().end(), edge) != to->getExceptionPredecessors().end()) {
-      found = true;
-      to->getExceptionPredecessors().remove(edge);
-   }
-
+   bool found = removeEdge(edge, *from, *to);
    if (!found)
       return false;
 
@@ -853,14 +863,7 @@ bool OMR::CFG::removeEdge(TR::CFGEdge *edge)
 
             if (comp()->getOption(TR_TraceAddAndRemoveEdge))
                traceMsg(comp(), "\n2Removing edge %d-->%d (depth %d):\n", from->getNumber(), to->getNumber(), _removeEdgeNestingDepth);
-            if (std::find(from->getSuccessors().begin(), from->getSuccessors().end(), e) != from->getSuccessors().end())
-               from->getSuccessors().remove(e);
-            else
-               from->getExceptionSuccessors().remove(e);
-            if (std::find(to->getPredecessors().begin(), to->getPredecessors().end(), e) != to->getPredecessors().end())
-               to->getPredecessors().remove(e);
-            else
-               to->getExceptionPredecessors().remove(e);
+            removeEdge(e, *from, *to);
 
             // break cycles by not adding 'to' that is
             // already in the removed list
@@ -965,14 +968,7 @@ bool OMR::CFG::removeEdge(TR::CFGEdge *edge, bool recursiveImpl)
 
    _numEdges--;
    _mightHaveUnreachableBlocks = true;
-   if (std::find(from->getSuccessors().begin(), from->getSuccessors().end(), edge) != from->getSuccessors().end())
-	  from->getSuccessors().remove(edge);
-   else
-	  from->getExceptionSuccessors().remove(edge);
-   if (std::find(to->getPredecessors().begin(), to->getPredecessors().end(), edge) != to->getPredecessors().end())
-	  to->getPredecessors().remove(edge);
-   else
-      to->getExceptionPredecessors().remove(edge);
+   removeEdge(edge, *from, *to);
 
    bool blocksWereRemoved = false;
 
