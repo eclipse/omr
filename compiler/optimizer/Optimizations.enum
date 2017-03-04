@@ -116,4 +116,3 @@
    OPTIMIZATION(loadExtensions)  // added temporarily for omr optimizer work
    OPTIMIZATION(regDepCopyRemoval)
    OPTIMIZATION(asyncCheckInsertion)
-   OPTIMIZATION(exceptionAsyncCheckInsertion)
