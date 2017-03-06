@@ -8252,7 +8252,8 @@ static TR::RegisterPair * readKMCPair(TR::Node * node, TR::Node * baseArr, TR::R
 enum NumCryptArrays {
    ONE_ARRAY_SHA = 0,
    TWO_ARRAYS_CRYPT = 2,
-   THREE_ARRAYS_CRYPT_CTR = 4
+   THREE_ARRAYS_CRYPT_CTR = 4,
+   THREE_ARRAYS_CRYPT_GCM = 5
 };
 
 TR::Register *
@@ -8264,8 +8265,9 @@ inlineZosKMC(TR::InstOpCode::Mnemonic opcode, TR::Node * node, TR::CodeGenerator
    TR::LabelSymbol * redoLabel, * doneLabel;
    TR::Instruction * iCursor = NULL;
 
+   //ctr values are used to provide aad information for AES-GCM
    TR::Register * in, *out, *ctr, *parm, *len, * mode, * dummy1, * dummy2;
-   TR::MemoryReference * inOffset, * outOffset, *ctrOffset, * parmOffset;
+   TR::MemoryReference * inOffset, * outOffset, * parmOffset;
    TR::Register * inOffsetReg, * outOffsetReg, * ctrOffsetReg;
    TR::RegisterPair * inRegisterPair, * outRegisterPair, * ctrRegisterPair;
 
@@ -8292,10 +8294,17 @@ inlineZosKMC(TR::InstOpCode::Mnemonic opcode, TR::Node * node, TR::CodeGenerator
    parmOffset = generateS390MemoryReference(parm, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
    generateRXInstruction(cg, TR::InstOpCode::LA, node, parm, parmOffset);
 
+   // ctrOffset/aadOffset is the 7th argument for AESGCM and the 6th argument for AESCTR
+   int ctrOffsetIndex = 6;
+   TR::Register * ctrLen = dummy2;
    switch (numArrays) { // notice how break statements are _intentionally_ left out
+   case THREE_ARRAYS_CRYPT_GCM:
+      ctrOffsetIndex++;
+      ctrLen = readKMCOffset(node->getChild(6), node, cg);
+      conditions->addPostCondition(ctrLen, TR::RealRegister::LegalOddOfPair);
    case THREE_ARRAYS_CRYPT_CTR:
-      ctrOffsetReg = readKMCOffset(node->getChild(6), node, cg);
-      ctrRegisterPair = readKMCPair(node, node->getChild(5), ctrOffsetReg, dummy2, cg, conditions);
+      ctrOffsetReg = readKMCOffset(node->getChild(ctrOffsetIndex), node, cg);
+      ctrRegisterPair = readKMCPair(node, node->getChild(5), ctrOffsetReg, ctrLen, cg, conditions);
    case TWO_ARRAYS_CRYPT:
       outOffsetReg = readKMCOffset(node->getChild(4), node, cg);
       outRegisterPair = readKMCPair(node, node->getChild(3), outOffsetReg, dummy1, cg, conditions);
@@ -8306,7 +8315,9 @@ inlineZosKMC(TR::InstOpCode::Mnemonic opcode, TR::Node * node, TR::CodeGenerator
 
    iCursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, redoLabel, conditions);
 
-   if (numArrays == THREE_ARRAYS_CRYPT_CTR)
+   if (numArrays == THREE_ARRAYS_CRYPT_GCM)
+      iCursor = generateRRFInstruction(cg, opcode, node, outRegisterPair, inRegisterPair, ctrRegisterPair, iCursor);
+   else if (numArrays == THREE_ARRAYS_CRYPT_CTR)
       iCursor = generateRRFInstruction(cg, opcode, node, outRegisterPair, inRegisterPair, ctrRegisterPair, iCursor);
    else if (numArrays == TWO_ARRAYS_CRYPT)
       iCursor = generateRREInstruction(cg, opcode, node, outRegisterPair, inRegisterPair, conditions, iCursor);
@@ -8322,6 +8333,9 @@ inlineZosKMC(TR::InstOpCode::Mnemonic opcode, TR::Node * node, TR::CodeGenerator
    cg->stopUsingRegister(inOffsetReg);
 
    switch (numArrays) { // notice how break statements are _intentionally_ left out
+   case THREE_ARRAYS_CRYPT_GCM:
+      cg->stopUsingRegister(ctrLen);
+      cg->decReferenceCount(node->getChild(9));
    case THREE_ARRAYS_CRYPT_CTR:
       cg->stopUsingRegister(ctrRegisterPair);
       cg->stopUsingRegister(ctrOffsetReg);
