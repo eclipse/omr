@@ -55,6 +55,12 @@ typedef enum MM_GCPolicy {
 #define OMR_GC_WRITE_BARRIER_TYPE_REALTIME 0x7
 #define OMR_GC_WRITE_BARRIER_TYPE_COUNT 0x8
 
+#define OMR_GC_READ_BARRIER_TYPE_ILLEGAL 0x0
+#define OMR_GC_READ_BARRIER_TYPE_NONE 0x1
+#define OMR_GC_READ_BARRIER_TYPE_ALWAYS 0x2
+#define OMR_GC_READ_BARRIER_TYPE_EVACUATE 0x3
+#define OMR_GC_READ_BARRIER_TYPE_COUNT 0x4
+
 typedef enum MM_GCWriteBarrierType {
 	gc_modron_wrtbar_illegal = OMR_GC_WRITE_BARRIER_TYPE_ILLEGAL,
 	gc_modron_wrtbar_none = OMR_GC_WRITE_BARRIER_TYPE_NONE,
@@ -66,6 +72,14 @@ typedef enum MM_GCWriteBarrierType {
 	gc_modron_wrtbar_realtime = OMR_GC_WRITE_BARRIER_TYPE_REALTIME,
 	gc_modron_wrtbar_count = OMR_GC_WRITE_BARRIER_TYPE_COUNT
 } MM_GCWriteBarrierType;
+
+typedef enum MM_GCReadBarrierType {
+	gc_modron_readbar_illegal = OMR_GC_READ_BARRIER_TYPE_ILLEGAL,
+	gc_modron_readbar_none = OMR_GC_READ_BARRIER_TYPE_NONE,
+	gc_modron_readbar_evacuate = OMR_GC_READ_BARRIER_TYPE_EVACUATE,
+	gc_modron_readbar_always = OMR_GC_READ_BARRIER_TYPE_ALWAYS,
+	gc_modron_readbar_count = OMR_GC_READ_BARRIER_TYPE_COUNT
+} MM_GCReadBarrierType;
 
 typedef enum MM_AlignmentType {
 	mm_heapAlignment = 1,

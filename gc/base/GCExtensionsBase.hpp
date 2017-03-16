@@ -687,7 +687,8 @@ public:
 	uint64_t _masterThreadCpuTimeNanos; /**< Total CPU time used by all master threads */
 
 	bool alwaysCallWriteBarrier; /**< was -Xgc:alwayscallwritebarrier specified? */
-
+	bool alwaysCallReadBarrier; /**< was -Xgc:alwaysCallReadBarrier specified? */
+	
 	bool _holdRandomThreadBeforeHandlingWorkUnit; /**< Whether we should randomly hold up a thread entering MM_ParallelTask::handleNextWorkUnit() */
 	uintptr_t _holdRandomThreadBeforeHandlingWorkUnitPeriod; /** < How often (in terms of number of times MM_ParallelTask::handleNextWorkUnit() is called) to randomly hold up a thread entering MM_ParallelTask::handleNextWorkUnit() */
 	bool _forceRandomBackoutsAfterScan; /** < Whether we should force MM_Scavenger::completeScan() to randomly fail due to backout */
@@ -1306,6 +1307,7 @@ public:
 		, sweepPoolManagerBumpPointer(NULL)
 		, _masterThreadCpuTimeNanos(0)
 		, alwaysCallWriteBarrier(false)
+		, alwaysCallReadBarrier(false)
 		, _holdRandomThreadBeforeHandlingWorkUnit(false)
 		, _holdRandomThreadBeforeHandlingWorkUnitPeriod(100)
 		, _forceRandomBackoutsAfterScan(false)
