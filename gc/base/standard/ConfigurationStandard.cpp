@@ -42,6 +42,7 @@
 #include "MemoryPoolSplitAddressOrderedList.hpp"
 #include "MemoryPoolHybrid.hpp"
 #include "MemoryPoolLargeObjects.hpp"
+#include "ParallelGlobalGC.hpp"
 #include "SweepPoolManagerAddressOrderedList.hpp"
 #include "SweepPoolManagerSplitAddressOrderedList.hpp"
 #include "SweepPoolManagerHybrid.hpp"

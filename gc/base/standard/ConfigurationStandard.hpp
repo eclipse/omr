@@ -73,17 +73,28 @@ protected:
 private:
 	static MM_GCWriteBarrierType getWriteBarrierType(MM_EnvironmentBase* env)
 	{
+#if defined(OMR_GC_SCAVENGER) || defined(OMR_GC_CONCURRENT_MARK)
 		MM_GCExtensionsBase* extensions = env->getExtensions();
+#endif /* OMR_GC_SCAVENGER || OMR_GC_CONCURRENT_MARK */
 		MM_GCWriteBarrierType writeBarrierType = gc_modron_wrtbar_illegal;
+#if defined(OMR_GC_SCAVENGER)
 		if (extensions->scavengerEnabled) {
+#if defined(OMR_GC_CONCURRENT_MARK)
 			if (extensions->concurrentMark) {
 				writeBarrierType = gc_modron_wrtbar_cardmark_and_oldcheck;
-			} else {
+			} else
+#endif /* OMR_GC_CONCURRENT_MARK */
+			{
 				writeBarrierType = gc_modron_wrtbar_oldcheck;
 			}
-		} else if (extensions->concurrentMark) {
+		} else
+#endif /* OMR_GC_SCAVENGER */
+#if defined(OMR_GC_CONCURRENT_MARK)
+		if (extensions->concurrentMark) {
 			writeBarrierType = gc_modron_wrtbar_cardmark;
-		} else {
+		} else
+#endif /* OMR_GC_CONCURRENT_MARK */
+		{
 			writeBarrierType = gc_modron_wrtbar_none;
 		}
 		return writeBarrierType;
