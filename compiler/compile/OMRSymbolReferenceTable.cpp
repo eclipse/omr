@@ -1469,7 +1469,7 @@ OMR::SymbolReferenceTable::findOrCreateMethodSymbol(
 
    TR_ResolvedMethod * owningMethod = comp()->getOwningMethodSymbol(owningMethodIndex)->getResolvedMethod();
 
-   TR::MethodSymbol * sym;
+   TR::MethodSymbol * sym = NULL;
    int32_t unresolvedIndex = 0;
    bool canGCandReturn = true;
    bool canGCandExcept = true;
@@ -1489,7 +1489,7 @@ OMR::SymbolReferenceTable::findOrCreateMethodSymbol(
       unresolvedIndex = _numUnresolvedSymbols++;
       sym = TR::MethodSymbol::create(trHeapMemory(),TR_Private,fej9->createMethod(trMemory(),owningMethod->containingClass(),cpIndex));
 #else
-      TR_ASSERT(0, "expecting a resolved method");
+      TR_ASSERT_FATAL(0, "expecting a resolved method");
 #endif
       }
    sym->setMethodKind(callKind);

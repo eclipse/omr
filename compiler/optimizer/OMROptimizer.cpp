@@ -1564,7 +1564,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
             bool blocksArePending = false;
             while (subGroup->_num != endGroup && subGroup->_num != endOpts)
                {
-               OMR::Optimizations optNum = subGroup->_num;
                if (!manager->getRequestedBlocks()->isEmpty())
                   {
                   blocksArePending = true;

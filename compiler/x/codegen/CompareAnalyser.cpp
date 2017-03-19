@@ -729,8 +729,7 @@ void TR_X86CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node       *
    cg()->decReferenceCount(firstChild);
    cg()->decReferenceCount(secondChild);
 
-   if (deps)
-      deps->setMayNeedToPopFPRegisters(true);
+   deps->setMayNeedToPopFPRegisters(true);
 
    if (!popRegisters.isEmpty())
       {

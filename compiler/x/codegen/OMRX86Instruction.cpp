@@ -1687,8 +1687,7 @@ void insertUnresolvedReferenceInstructionMemoryBarrier(TR::CodeGenerator *cg, in
 
       deps->stopAddingConditions();
 
-      if (deps)
-         generateLabelInstruction(fenceInst, LABEL, doneLabel, deps, cg);
+      generateLabelInstruction(fenceInst, LABEL, doneLabel, deps, cg);
 
    }
 ////////////////////////////////////////////////////////////////////////////////

@@ -146,13 +146,14 @@ DATMerge::merge(J9TDFOptions *options, const char *fromFileName)
 			perror("fclose error");
 		}
 		char *newToFileName = (char *)Port::omrmem_calloc(1, strlen(toFileName) + strlen(".new") + 1);
-		sprintf(newToFileName, "%s.new", toFileName);
 
 		char *buffer = (char *)Port::omrmem_calloc(1, 1024);
 
 		if (NULL == newToFileName || NULL == buffer) {
 			goto failed;
 		}
+
+		sprintf(newToFileName, "%s.new", toFileName);
 
 		FILE *tmpFile = Port::fopen(newToFileName, "wb");
 

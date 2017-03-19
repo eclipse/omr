@@ -3423,7 +3423,14 @@ bool TR_TrivialSinkStores::sinkStorePlacement(TR_MovableStore *store,
          _symbolsKilledInBlock[currentBlockNumber]->print(comp());
          traceMsg(comp(),"\n");
          traceMsg(comp(),"         blockNumber %d symbols used:  ",currentBlockNumber);
-         _symbolsUsedInBlock[currentBlockNumber]->print(comp());
+         if (_symbolsUsedInBlock[currentBlockNumber])
+            {
+            _symbolsUsedInBlock[currentBlockNumber]->print(comp());
+            }
+         else
+            {
+            traceMsg(comp(),"         none - _symbolsUsedInBlock had a null data entry for this block\n");
+            }
          traceMsg(comp(),"\n");
          traceMsg(comp(),"         blockKilledSet->intersects(*usedSymbols) = %d\n",_symbolsKilledInBlock[currentBlockNumber]->intersects(*usedSymbols));
          if (commonedSymbols)

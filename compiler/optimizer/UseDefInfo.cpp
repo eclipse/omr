@@ -1906,7 +1906,6 @@ void TR_UseDefInfo::buildUseDefs(void *vblockInfo, AuxiliaryData &aux)
          }
 
       int32_t i, ii;
-      TR_Method *method = comp()->getMethodSymbol()->getMethod();
       TR_BitVectorIterator bvi(*analysisInfo);
       while (bvi.hasMoreElements())
          {
@@ -2456,8 +2455,6 @@ void TR_UseDefInfo::buildUseDefs(TR::Node *node, void *vanalysisInfo, TR::BitVec
             traceMsg(comp(), "\n");
             }
 #endif
-
-         TR_Method *method = comp()->getMethodSymbol()->getMethod();
 
          BitVector::Cursor cursor(defs);
          for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())

@@ -690,7 +690,7 @@ int32_t TR_LoopStrider::detectCanonicalizedPredictableLoops(TR_Structure *loopSt
                   }
 
                ListIterator<TR::Block> bi(&exitBlocks);
-               vcount_t visitCount = comp()->incVisitCount();
+               visitCount = comp()->incVisitCount();
                for (TR::Block *exitBlock = bi.getCurrent(); exitBlock != NULL; exitBlock = bi.getNext())
                   {
                   bool seenStore = false;

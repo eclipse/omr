@@ -122,6 +122,7 @@ void TR_HashTab::growAndRehash(uint32_t newSize)
    TR_HashId  newId=0;
    for (TR_HashId i=0;i < oldSize;++i)
       {
+      TR_ASSERT_FATAL(oldTable, "oldTable has size>0 but is not initialized");
       TR_HashTableEntry *oldEntry =oldTable[i];
       if (oldEntry)
          {

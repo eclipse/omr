@@ -288,7 +288,6 @@ static int cacheStringAppend(TR::ValuePropagation *vp,TR::Node *node)
             // In the following we can vp->compare only (C) because we know that
             // StringBuffer.append returns a StringBuffer.
             //s
-            char *sigBuffer = m->signatureChars();
             TR_ASSERT(m->signatureLength() >= 3, "The minimum signature length should be 3 for ()V");
             }
          stringCount++;

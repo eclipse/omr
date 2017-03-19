@@ -222,15 +222,16 @@ addComponentToList(UtComponentData *componentData, UtComponentList *componentLis
 	UtComponentData *compDataCursor;
 	UtComponentData *endOfList;
 
-	UT_DBGOUT(1, ("<UT> addComponentToList: component: %s list: %p\n", componentData->componentName, componentList));
-	if (componentList == NULL) {
-		UT_DBGOUT(1, ("<UT> Not adding %s to NULL component list\n", componentData->componentName));
-		return OMR_ERROR_ILLEGAL_ARGUMENT;
-	}
 	if (componentData == NULL) {
 		UT_DBGOUT(1, ("<UT> Not adding NULL component to component list\n"));
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
+	if (componentList == NULL) {
+		UT_DBGOUT(1, ("<UT> Not adding %s to NULL component list\n", componentData->componentName));
+		return OMR_ERROR_ILLEGAL_ARGUMENT;
+	}
+
+	UT_DBGOUT(1, ("<UT> addComponentToList: component: %s list: %p\n", componentData->componentName, componentList));
 
 	compDataCursor = componentList->head;
 	endOfList = componentList->head;

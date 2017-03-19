@@ -800,29 +800,35 @@ TR_GlobalRegisterAllocator::restoreOriginalSymbol(TR::Node *node, vcount_t visit
             {
             TR_RegisterCandidate *origRc = _registerCandidates[origSymRef->getReferenceNumber()];
 
-            if (setValueModified)
-               _valueModifiedSymRefs->set(origRc->getSymbolReference()->getReferenceNumber());
+            if (origRc)
+               {
+               if (setValueModified)
+                  _valueModifiedSymRefs->set(origRc->getSymbolReference()->getReferenceNumber());
 
-            if (!origRc ||
-                 origRc->getValueModified() ||
-                 origRc->extendedLiveRange())
+               if (origRc->getValueModified() || origRc->extendedLiveRange())
+                  {
+                  if (!foundChangeSymRef)
+                     {
+                       if (!origRc->getValueModified() && origRc->getRestoreSymbolReference())
+                       {
+                       _valueModifiedSymRefs->set(origRc->getSymbolReference()->getReferenceNumber());
+                       setValueModified = true;
+                       }
+
+                     foundChangeSymRef = true;
+                     changeSymRef = origSymRef;
+                     }
+                  }
+               origSymRef = origRc->getRestoreSymbolReference();
+               }
+            else // origRC == NULL
                {
                if (!foundChangeSymRef)
                   {
-                    if (origRc &&
-                      !origRc->getValueModified() &&
-                      origRc->getRestoreSymbolReference())
-                    {
-                    _valueModifiedSymRefs->set(origRc->getSymbolReference()->getReferenceNumber());
-                    setValueModified = true;
-                    }
-
                   foundChangeSymRef = true;
                   changeSymRef = origSymRef;
                   }
                }
-
-            origSymRef = origRc->getRestoreSymbolReference();
             }
 
          TR_RegisterCandidate *oldRc = origSymRef ? _registerCandidates[origSymRef->getReferenceNumber()] : 0;

@@ -729,7 +729,7 @@ TR::Register *OMR::X86::TreeEvaluator::commonFPRemEvaluator(TR::Node          *n
    node->setRegister( dividendReg);
    cg->decReferenceCount( dividend);
 
-   if (divisorReg && divisorReg->getKind() == TR_X87 && divisor->getReferenceCount() == 1)
+   if (divisorReg->getKind() == TR_X87 && divisor->getReferenceCount() == 1)
       generateFPSTiST0RegRegInstruction(FSTRegReg, node, divisorReg, divisorReg, cg);
 
    cg->decReferenceCount( divisor);
