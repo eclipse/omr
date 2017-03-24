@@ -71,7 +71,8 @@ void RematSafetyInformation::dumpInfo(TR::Compilation *comp)
  */
 TR_YesNoMaybe RematTools::gatherNodesToCheck(TR::Compilation *comp,
       TR::Node *privArg, TR::Node *currentNode, TR::SparseBitVector &scanTargets,
-      TR::SparseBitVector &symRefsToCheck, bool trace, TR::SparseBitVector &visitedNodes)
+      TR::SparseBitVector &symRefsToCheck, bool trace, TR::SparseBitVector &visitedNodes,
+      bool safeIndirectLoads)
    {
    visitedNodes[currentNode->getGlobalIndex()] = true;
 
@@ -100,6 +101,12 @@ TR_YesNoMaybe RematTools::gatherNodesToCheck(TR::Compilation *comp,
       }
    else if (opCode.isLoadIndirect())
       {
+      if (safeIndirectLoads)
+         {
+         scanTargets[currentNode->getGlobalIndex()] = true;
+         symRefsToCheck[currentNode->getSymbolReference()->getReferenceNumber()] = true;
+         return TR_yes;
+         }
       // cannot rematerialize an array access without also creating a spine check
       // avoiding this case for now but this case can be handled in the future by creating a spine check
       //
@@ -113,7 +120,7 @@ TR_YesNoMaybe RematTools::gatherNodesToCheck(TR::Compilation *comp,
 
       // only add this node to the checking set if the root of the dereference
       // chain does not prempt remat checks
-      if (gatherNodesToCheck(comp, privArg, currentNode->getFirstChild(), scanTargets, symRefsToCheck, trace, visitedNodes) != TR_no)
+      if (gatherNodesToCheck(comp, privArg, currentNode->getFirstChild(), scanTargets, symRefsToCheck, trace, visitedNodes, safeIndirectLoads) != TR_no)
          {
          scanTargets[currentNode->getGlobalIndex()] = true;
          symRefsToCheck[currentNode->getSymbolReference()->getReferenceNumber()] = true;
@@ -144,7 +151,7 @@ TR_YesNoMaybe RematTools::gatherNodesToCheck(TR::Compilation *comp,
             continue;
 
          TR_YesNoMaybe childResult = gatherNodesToCheck(comp, privArg, currentNode->getChild(i), childScanTargets,
-                                                   childSymRefsToCheck, trace, visitedNodes);
+                                                   childSymRefsToCheck, trace, visitedNodes, safeIndirectLoads);
          if (childResult == TR_no)
             {
             if (trace)
@@ -176,11 +183,11 @@ TR_YesNoMaybe RematTools::gatherNodesToCheck(TR::Compilation *comp,
    
 TR_YesNoMaybe RematTools::gatherNodesToCheck(TR::Compilation *comp,
       TR::Node *privArg, TR::Node *currentNode, TR::SparseBitVector &scanTargets,
-      TR::SparseBitVector &symRefsToCheck, bool trace)
+      TR::SparseBitVector &symRefsToCheck, bool trace, bool safeIndirectLoads)
    {
    TR::SparseBitVector visitedNodes(comp->allocator());
    return gatherNodesToCheck(comp, privArg, currentNode, scanTargets,
-                             symRefsToCheck, trace, visitedNodes);
+                             symRefsToCheck, trace, visitedNodes, safeIndirectLoads);
    }
    
 void RematTools::walkNodesCalculatingRematSafety(TR::Compilation *comp,
@@ -290,7 +297,7 @@ void RematTools::walkTreeTopsCalculatingRematFailureAlternatives(TR::Compilation
          traceMsg(comp, "  priv arg remat: visiting [%p]: isStore %d privArg %d failedTargetMatch %d", start->getNode(),
             start->getNode()->getOpCode().isStoreDirect(),
             start->getNode()->getSymbol() && start->getNode()->getSymbol()->isAuto(),
-            failedTargets.ValueAt(start->getNode()->getFirstChild()->getGlobalIndex()));
+            start->getNode()->getNumChildren() ? failedTargets.ValueAt(start->getNode()->getFirstChild()->getGlobalIndex()) : -1);
       if (start->getNode() && start->getNode()->getOpCode().isStoreDirect() &&
           start->getNode()->getSymbol()->isAuto() &&
           failedTargets.ValueAt(start->getNode()->getFirstChild()->getGlobalIndex()))
@@ -315,4 +322,26 @@ void RematTools::walkTreeTopsCalculatingRematFailureAlternatives(TR::Compilation
          }
       start = start->getNextTreeTop();
       }
+   }
+
+/*
+ * This method is used to determine if indirect loads are safe for the nodes between
+ * the start inclusive and the end exclusive. It scans for indirect stores and
+ * determines the loads to be safe if none are found. The result can be passed to
+ * gatherNodesToCheck to allow remat of stores dependent on indirect loads.
+ */
+bool RematTools::checkForSafeIndirectLoads(TR::Compilation *comp, TR::TreeTop *start,
+   TR::TreeTop *end, bool trace)
+   {
+   bool safeIndirectLoads = true;
+   while (start != end)
+      {
+      if (start->getNode()->getOpCode().isStoreIndirect())
+         {
+         safeIndirectLoads = false;
+         break;
+         }
+      start = start->getNextTreeTop();
+      }
+   return safeIndirectLoads;
    }
