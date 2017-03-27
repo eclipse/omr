@@ -464,8 +464,8 @@ public:
 
 	bool payAllocationTax;
 
-	bool concurrentMark;
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+	bool concurrentMark;
 	bool concurrentKickoffEnabled;
 	double concurrentSlackFragmentationAdjustmentWeight; /**< weight(from 0.0 to 5.0) used for calculating free tenure space (how much percentage of the fragmentation need to remove from freeBytes) */
 	bool debugConcurrentMark;
@@ -1149,8 +1149,8 @@ public:
 		, nocompactOnSystemGC(0)
 		, compactToSatisfyAllocate(false)
 #endif /* OMR_GC_MODRON_COMPACTION */
-		, concurrentMark(false)
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+		, concurrentMark(false)
 		, concurrentKickoffEnabled(true)
 		, concurrentSlackFragmentationAdjustmentWeight(0.0)
 		, debugConcurrentMark(false)

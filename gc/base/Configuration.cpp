@@ -169,9 +169,11 @@ MM_Configuration::initializeEnvironment(MM_EnvironmentBase* env)
 	case gc_modron_allocation_type_tlh:
 		env->_objectAllocationInterface = MM_TLHAllocationInterface::newInstance(env);
 		break;
+#if defined(OMR_GC_SEGREGATED_HEAP)
 	case gc_modron_allocation_type_segregated:
 		env->_objectAllocationInterface = MM_SegregatedAllocationInterface::newInstance(env);
 		break;
+#endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 	default:
 		Assert_MM_unreachable();
 		break;
