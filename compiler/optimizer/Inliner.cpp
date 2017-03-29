@@ -3625,16 +3625,40 @@ bool TR_TransformInlinedFunction::onlyMultiRefNodeIsCallNode(TR::Node * callNode
 
 TR::TreeTop * TR_TransformInlinedFunction::findSimpleCallReference(TR::TreeTop * callNodeTreeTop, TR::Node * callNode)
    {
+   // If we are in postExecution OSR and the call is an OSR point, it will always be followed
+   // by a series of PP treetops, one of which will reference the call result.
+   //
+   bool osrPP = callNode->getReferenceCount() == 3 && comp()->getOSRTransitionTarget() == TR::postExecutionOSR && comp()->getOption(TR_EnableOSR);
+
    // If the call node's only other reference is in the next tree top
    // and the tree top is a return or a store then return the next treetop
    // so that it can be moved into the inlined function to avoid the store
    // and load of a temp.
    //
-   if (callNode->getReferenceCount() == 2)
+   if (callNode->getReferenceCount() == 2 || osrPP)
       {
       TR::TreeTop * nextTreeTop = callNodeTreeTop->getNextTreeTop();
       while (nextTreeTop->getNode()->getOpCodeValue() == TR::dbgFence)
          nextTreeTop = nextTreeTop->getNextTreeTop();
+
+      // Search the corresponding OSR nodes for a reference to the call
+      //
+      TR::TreeTop * pps = NULL;
+      if (osrPP)
+         {
+         TR_ByteCodeInfo &bci = callNode->getByteCodeInfo();
+         while (comp()->getMethodSymbol()->isOSRRelatedNode(nextTreeTop->getNode(), bci))
+            {
+            if (nextTreeTop->getNode()->getOpCode().isStore() && nextTreeTop->getNode()->getFirstChild() == callNode)
+               pps = nextTreeTop;
+            nextTreeTop = nextTreeTop->getNextTreeTop();
+            }
+
+         // If no pending push store was found, then the 3rd reference is elsewhere
+         if (!pps)
+            return NULL;
+         }
+
       TR::Node * nextTreeTopNode = nextTreeTop->getNode();
       TR::ILOpCode opcode = nextTreeTopNode->getOpCode();
       findCallNodeRecursionDepth = MAX_FIND_SIMPLE_CALL_REFERENCE_DEPTH;
@@ -3642,7 +3666,11 @@ TR::TreeTop * TR_TransformInlinedFunction::findSimpleCallReference(TR::TreeTop *
       if ((opcode.isReturn() || opcode.isStore()) &&
             findCallNodeInTree(callNode, nextTreeTopNode) &&
             onlyMultiRefNodeIsCallNode(callNode, nextTreeTopNode))
+         {
+         if (osrPP)
+            _treeTopsToRemove.add(pps);
          return nextTreeTop;
+         }
       }
    return 0;
    }
