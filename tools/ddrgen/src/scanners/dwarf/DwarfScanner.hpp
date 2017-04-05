@@ -94,8 +94,8 @@ private:
 
 	DDR_RC scanFile(OMRPortLibrary *portLibrary, Symbol_IR *ir, const char *filepath);
 	DDR_RC traverse_cu_in_debug_section(Symbol_IR *const ir);
-	DDR_RC addType(Dwarf_Die die, Dwarf_Half tag, bool ignoreFilter, bool isSubUDT, Type **type);
-	DDR_RC getType(Dwarf_Die die, Dwarf_Half tag, Type **const newUDT, bool isSubUDT, int *typeNum);
+	DDR_RC addType(Dwarf_Die die, Dwarf_Half tag, bool ignoreFilter, NamespaceUDT *outerUDT, Type **type);
+	DDR_RC getType(Dwarf_Die die, Dwarf_Half tag, Type **const newUDT, NamespaceUDT *outerUDT, int *typeNum);
 	DDR_RC createType(Dwarf_Die die, Dwarf_Half tag, string dieName, unsigned int lineNumber, Type **const newUDT);
 	DDR_RC addEnumMember(Dwarf_Die die, EnumUDT *const udt);
 	DDR_RC addClassField(Dwarf_Die die, ClassType *const newClass, string fieldName);

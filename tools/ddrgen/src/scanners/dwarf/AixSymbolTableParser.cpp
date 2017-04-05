@@ -15,7 +15,7 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  *******************************************************************************/
 
-#include "AixSymbolTableParser.cpp"
+#include "AixSymbolTableParser.hpp"
 
 /* Statics to create: */
 static die_map createdDies;
@@ -55,6 +55,7 @@ static int parseTypeDef(const string data, const string dieName, Dwarf_Die curre
 static void populateAttributeReferences();
 static int populateBuiltInTypeDies(Dwarf_Error *error);
 static void populateNestedClasses();
+static void removeUselessStubs();
 static int setDieAttributes(const string dieName, const unsigned int dieSize, Dwarf_Die currentDie, Dwarf_Error *error);
 
 int
@@ -137,6 +138,11 @@ dwarf_init(int fd,
 	if (NULL != fp) {
 		pclose(fp);
 	}
+
+	/* Populate the references and nested classes of the last file to get parsed */
+	populateAttributeReferences();
+	populateNestedClasses();
+	removeUselessStubs();
 
 	/* Must set _currentCU to null for dwarf_next_cu_header to work */
 	Dwarf_CU_Context::_currentCU = NULL;
@@ -604,23 +610,19 @@ parseDeclarationLine(const string data,
 					members = stripLeading(members.substr(indexOfFirstParenthesis), '(');
 					*format = NEW_FORMAT;
 					/* Check if the declaration is for a class, structure or union */
-					if (0 == isCompilerGenerated(members)) {
-						switch(sizeAndType[indexOfFirstNonInteger]) {
-						case 'c':
-							ret = DW_TAG_class_type;
-							break;
-						case 's':
-							ret = DW_TAG_structure_type;
-							break;
-						case 'u':
-							ret = DW_TAG_union_type;
-							break;
-						default:
-							ret = DW_TAG_unknown;
-							break;
-						}
-					} else {
+					switch(sizeAndType[indexOfFirstNonInteger]) {
+					case 'c':
+						ret = DW_TAG_class_type;
+						break;
+					case 's':
+						ret = DW_TAG_structure_type;
+						break;
+					case 'u':
+						ret = DW_TAG_union_type;
+						break;
+					default:
 						ret = DW_TAG_unknown;
+						break;
 					}
 				} else if ('e' == members[0]) {
 					ret = DW_TAG_enumeration_type;
@@ -655,7 +657,6 @@ parseStabstringDeclarationIntoDwarfDie(const string line, Dwarf_Error *error)
 	int typeID = 0;
 	declFormat format = NO_FORMAT;
 	string declarationData;
-	string type;
 	string name;
 	string members;
 
@@ -687,7 +688,7 @@ parseStabstringDeclarationIntoDwarfDie(const string line, Dwarf_Error *error)
 				newDie->_context = Dwarf_CU_Context::_currentCU;
 				newDie->_attribute = NULL;
 
-				/* Insert the DIE into an unordered_map corresponding to current file being parsed, and insert that unordered_map into createdDies */
+				/* Insert the DIE into createdDies */
 				createdDies[typeID] = make_pair<Dwarf_Off, Dwarf_Die>((Dwarf_Off)refNumber, (Dwarf_Die)newDie);
 
 				refNumber = refNumber + 1;
@@ -711,19 +712,15 @@ parseStabstringDeclarationIntoDwarfDie(const string line, Dwarf_Error *error)
 		} else if (DW_TAG_unknown != tag) {
 			/* Do some preliminary parsing of the declarationData */
 			str_vect tmp = split(declarationData, '=');
-			type = tmp[1];
-			size_t indexOfFirstEqualsSign = declarationData.find('=');
-			if (string::npos != indexOfFirstEqualsSign) {
-				members = stripLeading(declarationData.substr(indexOfFirstEqualsSign), '=');
-			}
+			members = tmp[1];
 
 			/* Populate the dies */
 			switch (tag) {
 			case DW_TAG_array_type:
-				ret = parseArray(type, newDie, error);
+				ret = parseArray(members, newDie, error);
 				break;
 			case DW_TAG_base_type:
-				ret = parseBaseType(type, newDie, error);
+				ret = parseBaseType(members, newDie, error);
 				break;
 			case DW_TAG_class_type:
 				ret = parseNewFormat(members, name, newDie, error);
@@ -732,14 +729,14 @@ parseStabstringDeclarationIntoDwarfDie(const string line, Dwarf_Error *error)
 			case DW_TAG_pointer_type:
 			case DW_TAG_volatile_type:
 			case DW_TAG_subroutine_type:
-				ret = parseNamelessReference(type, newDie, error);
+				ret = parseNamelessReference(members, newDie, error);
 				break;
 			case DW_TAG_enumeration_type:
 				ret = parseEnum(members, name, newDie, error);
 				break;
 			case DW_TAG_typedef:
 				/* Note: AIX label is the same as DWARF typedef */
-				ret = parseTypeDef(type, name, newDie, error);
+				ret = parseTypeDef(members, name, newDie, error);
 				break;
 			case DW_TAG_structure_type:
 			case DW_TAG_union_type:
@@ -789,7 +786,10 @@ parseSymbolTable(const char *line, Dwarf_Error *error)
 						/* Populate the attribute references and nested classes from the previous file that we parsed */
 						populateAttributeReferences();
 						populateNestedClasses();
-						
+
+						/* Remove DIEs which have no children, no size, and are not referred to by any other DIE */
+						removeUselessStubs();
+
 						/* Clear the unordered_maps we maintained from the last file */
 						createdDies.clear();
 						nestedClassesToPopulate.clear();
@@ -940,7 +940,7 @@ parseSymbolTable(const char *line, Dwarf_Error *error)
 
 /**
  * Parses data passed in as an enumerator and populates a DIE
- * param[in] data: the data to be parsed, should be in the format T(TYPE_ID)=e(INTEGER):(NAME):(INTEGER),(NAME):(INTEGER),(...),;
+ * param[in] data: the data to be parsed, should be in the format e(INTEGER):(NAME):(INTEGER),(NAME):(INTEGER),(...),;
  * param[in] dieName: the name of the enumerator
  * param[out] currentDie: the DIE to populate with the parsed data.
  */
@@ -1066,9 +1066,8 @@ parseFields(const string data, Dwarf_Die currentDie, Dwarf_Error *error)
 	Dwarf_Attribute name = new Dwarf_Attribute_s();
 	Dwarf_Attribute type = new Dwarf_Attribute_s();
 	Dwarf_Attribute declFile = new Dwarf_Attribute_s();
-	Dwarf_Attribute declLine = new Dwarf_Attribute_s();
 
-	if ((NULL == name) || (NULL == type) || (NULL == declFile) || (NULL == declLine)) {
+	if ((NULL == name) || (NULL == type) || (NULL == declFile)) {
 		ret = DW_DLV_ERROR;
 		setError(error, DW_DLE_MAF);
 	} else {
@@ -1087,6 +1086,7 @@ parseFields(const string data, Dwarf_Die currentDie, Dwarf_Error *error)
 
 		int ID = extractTypeID(fieldAttributes[0],0);
 		type->_udata = 0;
+		type->_sdata = 0;
 		type->_refdata = 0;
 		type->_ref = NULL;
 
@@ -1094,22 +1094,13 @@ parseFields(const string data, Dwarf_Die currentDie, Dwarf_Error *error)
 		refsToPopulate.push_back(make_pair<int, Dwarf_Attribute>((int)ID, (Dwarf_Attribute)type));
 		declFile->_type = DW_AT_decl_file;
 		declFile->_form = DW_FORM_udata;
-		declFile->_nextAttr = declLine;
+		declFile->_nextAttr = NULL;
 		declFile->_sdata = 0;
 		/* The declaration file number cannot be zero, as DwarfScanner subtracts by one to get the index to the filename string */
 		declFile->_udata = Dwarf_CU_Context::_fileList.size();
 		declFile->_refdata = 0;
 		declFile->_ref = NULL;
 
-		declLine->_type = DW_AT_decl_line;
-		declLine->_form = DW_FORM_udata;
-		declLine->_nextAttr = NULL;
-		declLine->_sdata = 0;
-		/* DwarfScanner uses declLine+declFile to determine Type uniqueness */
-		declLine->_udata = declarationLine;
-		declLine->_refdata = 0;
-		declLine->_ref = NULL;
-		
 		/* Do a preliminary check if the field requires a bitSize or not */
 		bool bitSizeNeeded = true;
 		if (0 > ID) {
@@ -1120,7 +1111,7 @@ parseFields(const string data, Dwarf_Die currentDie, Dwarf_Error *error)
 		}
 		if (bitSizeNeeded) {
 			Dwarf_Attribute bitSize = new Dwarf_Attribute_s();
-			declLine->_nextAttr = bitSize;
+			declFile->_nextAttr = bitSize;
 
 			/* Set the bit size */
 			bitSize->_type = DW_AT_bit_size;
@@ -1134,14 +1125,13 @@ parseFields(const string data, Dwarf_Die currentDie, Dwarf_Error *error)
 			bitFieldsToCheck.push_back(currentDie);
 		}
 		currentDie->_attribute = name;
-		declarationLine = declarationLine + 1;
 	}
 	return ret;
 }
 
 /**
  * Parses the data passed in as a C-style structure/union
- * param[in] data: data to be parsed, in the format T(TYPE_ID)=(s|u)(INTEGER)(NAME):(TYPE),(BIT_OFFSET),(NUM_BITS);(NAME):(TYPE),(BIT_OFFSET),(NUM_BITS);(...);;
+ * param[in] data: data to be parsed, in the format (s|u)(INTEGER)(NAME):(TYPE),(BIT_OFFSET),(NUM_BITS);(NAME):(TYPE),(BIT_OFFSET),(NUM_BITS);(...);;
  * param[in] dieName: the name of the structure/union
  * param[out] currentDie: the DIE to populate with the parsed data.
  */
@@ -1217,7 +1207,7 @@ parseOldFormat(const string data,
 
 /**
  * Parses data passed in as a C++ style class/union/struct
- * param[in] data: the data to be parsed, in the format T(TYPE_ID)=Y(TYPE)(c|u|s)((MEMBERS);;
+ * param[in] data: the data to be parsed, in the format Y(TYPE)(c|u|s){1}(V)?:(TYPE)((MEMBERS);;
  * param[in] dieName: the name of the class/structure/union
  * param[out] currentDie: the DIE to populate with the parsed data.
  */
@@ -1230,14 +1220,61 @@ parseNewFormat(const string data,
 	int ret = DW_DLV_OK;
 	size_t indexOfFirstParenthesis = data.find('(');
 	if (string::npos != indexOfFirstParenthesis) {
-		string sizeAndType = stripLeading(data.substr(0, indexOfFirstParenthesis), 'Y');
-		size_t indexOfFirstNonInteger = sizeAndType.find_first_not_of("1234567890");
+		string sizeTypeAndInheritance = stripLeading(data.substr(0, indexOfFirstParenthesis), 'Y');
+		size_t indexOfFirstNonInteger = sizeTypeAndInheritance.find_first_not_of("1234567890");
 		if (string::npos != indexOfFirstNonInteger) {
 			string unparsedMembers = stripLeading(data.substr(indexOfFirstParenthesis), '(');
-			unsigned int size = toInt(sizeAndType.substr(0, indexOfFirstNonInteger));
 
+			unsigned int size = toInt(sizeTypeAndInheritance.substr(0, indexOfFirstNonInteger));
+
+			/* If there is a parent class, create a DW_TAG_inheritance DIE. The numbers after the colon denote the ID of the parent class this class inherits from */
+			size_t indexOfColon = sizeTypeAndInheritance.find(':');
+			if (string::npos != indexOfColon) {
+				/* A parent class exists */
+				int parentClassID = toInt(stripLeading(sizeTypeAndInheritance.substr(indexOfColon), ':'));
+
+				/* Create a Dwarf Die to record the inheritance */
+				Dwarf_Die inheritanceDie = new Dwarf_Die_s();
+				Dwarf_Attribute type = new Dwarf_Attribute_s();
+
+				if ((NULL == type) || (NULL == inheritanceDie)) {
+					ret = DW_DLV_ERROR;
+					setError(error, DW_DLE_MAF);
+				} else {
+					inheritanceDie->_tag = DW_TAG_inheritance;
+					inheritanceDie->_parent = currentDie;
+					inheritanceDie->_sibling = NULL;
+					inheritanceDie->_previous = NULL;
+					inheritanceDie->_child = NULL;
+					inheritanceDie->_context = Dwarf_CU_Context::_currentCU;
+					inheritanceDie->_attribute = type;
+					
+					type->_type = DW_AT_type;
+					type->_nextAttr = NULL;
+					type->_form = DW_FORM_ref1;
+					type->_udata = 0;
+					type->_sdata = 0;
+					type->_refdata = 0;
+					type->_ref = NULL;
+
+					/* push the type into a vector to populate in a second pass */
+					refsToPopulate.push_back(make_pair<int, Dwarf_Attribute>((int)parentClassID, (Dwarf_Attribute)type));
+
+					if (NULL == currentDie->_child) {
+					currentDie->_child = inheritanceDie;
+					} else {
+						Dwarf_Die lastChild = currentDie->_child;
+						while (NULL != lastChild) {
+							lastChild = lastChild->_sibling;
+						}
+					}
+				}
+			}
+
+			if (DW_DLV_OK == ret) {
 			/* Set DIE attributes */
 			ret = setDieAttributes(dieName, size, currentDie, error);
+			}
 
 			if (DW_DLV_OK == ret) {
 				/* Parse the members */
@@ -1580,7 +1617,7 @@ populateBuiltInTypeDies(Dwarf_Error *error)
 					refNumber = refNumber + 1;
 				} else {
 					/* Delete to prevent a memory leak */
-					delete (newDie);
+					delete(newDie);
 				}
 			}
 		}
@@ -1637,6 +1674,51 @@ populateNestedClasses()
 				}
 			}
 		}
+	}
+}
+
+static void
+removeUselessStubs()
+{
+	die_map::iterator it = createdDies.begin();
+	while (it != createdDies.end()) {
+		Dwarf_Die dieToCheck = it->second.second;
+		Dwarf_Off refNumberToCheck = it->second.first;
+		if (Dwarf_Die_s::refMap.end() == Dwarf_Die_s::refMap.find(refNumberToCheck)) {
+			/* For now, only get rid of empty struct/union/class DIEs */
+			if ((DW_TAG_class_type == dieToCheck->_tag) || (DW_TAG_union_type == dieToCheck->_tag) || (DW_TAG_structure_type == dieToCheck->_tag)) {
+				if ((Dwarf_CU_Context::_currentCU->_die == dieToCheck->_parent) && (NULL == dieToCheck->_child)) {
+					/* If the DIE has a size of zero, has no children, and is not being referred to by any other DIE, it's useless */
+					bool zeroSize = true;
+					Dwarf_Attribute attributeToCheck = dieToCheck->_attribute;
+					while (NULL != attributeToCheck) {
+						if (DW_AT_byte_size == attributeToCheck->_type) {
+							if (0 != attributeToCheck->_udata) {
+								zeroSize = false;
+								break;
+							}
+						}
+						attributeToCheck = attributeToCheck->_nextAttr;
+					}
+					if (zeroSize) {
+						/* Remove the DIE and delete it */
+						if (dieToCheck->_parent->_child == dieToCheck) {
+							dieToCheck->_parent->_child = dieToCheck->_sibling;
+						}
+						if (NULL != dieToCheck->_previous) {
+							dieToCheck->_previous->_sibling = dieToCheck->_sibling;
+						}
+						if (NULL != dieToCheck->_sibling) {
+							dieToCheck->_sibling->_previous = dieToCheck->_previous;
+						}
+						delete(dieToCheck);
+					}
+				}
+			}
+		}
+
+		/* Have to increment iterator this way or it won't compile on AIX */
+		it++;
 	}
 }
 
