@@ -30,6 +30,9 @@ class UDT : public Type
 public:
 	UDT *_outerUDT;
 	unsigned int _lineNumber;
+#if defined(AIXPPC)
+	bool _isDuplicate;
+#endif
 
 	UDT(SymbolType symbolType, size_t size, unsigned int lineNumber = 0);
 	virtual ~UDT();

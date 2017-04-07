@@ -73,11 +73,12 @@ main(int argc, char *argv[])
 	if (DDR_RC_OK == rc) {
 		rc = ir.computeOffsets();
 	}
+#if !defined(AIXPPC)
 	/* Remove duplicate types. */
 	if (DDR_RC_OK == rc) {
 		rc = ir.removeDuplicates();
 	}
-
+#endif /* !defined(AIXPPC) */
 	MacroTool macroTool;
 	/* Read macros. */
 	if ((DDR_RC_OK == rc) && (NULL != macroFile)) {

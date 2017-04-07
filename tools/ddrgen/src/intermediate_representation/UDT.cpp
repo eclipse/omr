@@ -20,8 +20,13 @@
 
 #include "config.hpp"
 
+#if defined(AIXPPC)
+UDT::UDT(SymbolType symbolType, size_t size, unsigned int lineNumber)
+	: Type(symbolType, size), _outerUDT(NULL), _lineNumber(lineNumber), _isDuplicate(false)
+#else /* defined(AIXPPC) */
 UDT::UDT(SymbolType symbolType, size_t size, unsigned int lineNumber)
 	: Type(symbolType, size), _outerUDT(NULL), _lineNumber(lineNumber)
+#endif /* !defined(AIXPPC) */
 {
 }
 
