@@ -40,6 +40,11 @@ struct RecoverableILGenException : public virtual CompilationException
    virtual const char* what() const throw() { return "Recoverable IL Gen Exception"; }
    };
 
+struct TransformationUnsupportedUnderInvolentaryOSR: public virtual RecoverableILGenException
+   {
+   virtual const char* what() const throw() { return "cannot do OSR under InvoluntaryOSR mode"; }
+   };
+
 struct ExcessiveComplexity : public virtual CompilationException
    {
    virtual const char* what() const throw() { return "Excessive Complexity"; }

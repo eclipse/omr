@@ -1254,6 +1254,14 @@ OMR::ResolvedMethodSymbol::genIL(TR_FrontEnd * fe, TR::Compilation * comp, TR::S
                comp->getOption(TR_EnableOSR) && comp->supportsInduceOSR() &&
                !comp->isPeekingMethod()  && (comp->getOption(TR_EnableNextGenHCR) || !comp->getOption(TR_EnableHCR)) ;
 
+            if (!comp->isPeekingMethod())
+               {
+               if (comp->getOSRMode() == TR::involuntaryOSR && !doOSR)
+                  {
+                  comp->failCompilation<TR::TransformationUnsupportedUnderInvolentaryOSR>("doOSR must be true for involuntaryOSR mode");
+                  }
+               }
+
             optimizer = TR::Optimizer::createOptimizer(comp, self(), true);
             previousOptimizer = comp->getOptimizer();
             comp->setOptimizer(optimizer);
