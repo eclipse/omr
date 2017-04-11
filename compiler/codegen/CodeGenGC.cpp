@@ -23,6 +23,7 @@
 #include "env/StackMemoryRegion.hpp"
 #include "codegen/BackingStore.hpp"            // for TR_BackingStore
 #include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
+#include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/GCStackAtlas.hpp"            // for GCStackAtlas
 #include "codegen/GCStackMap.hpp"              // for TR_GCStackMap, etc
 #include "codegen/Instruction.hpp"             // for Instruction

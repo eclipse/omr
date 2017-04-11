@@ -1338,6 +1338,7 @@ DwarfScanner::scanFile(OMRPortLibrary *portLibrary, Symbol_IR *const ir, const c
 	if (DDR_RC_OK == rc) {
 		DEBUGPRINTF("Initialized libDwarf: Continuing...");
 
+		DEBUGPRINTF("%s", filepath);
 		/* Get info from dbg - Dwarf Info structure.*/
 		rc = traverse_cu_in_debug_section(ir);
 	}

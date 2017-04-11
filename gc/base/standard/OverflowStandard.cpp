@@ -21,7 +21,6 @@
 #include "OverflowStandard.hpp"
 
 #include "CollectorLanguageInterface.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "MarkMap.hpp"
 #include "MarkingScheme.hpp"
 #include "ParallelGlobalGC.hpp"

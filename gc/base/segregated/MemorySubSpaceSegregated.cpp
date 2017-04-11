@@ -23,7 +23,6 @@
 
 #include "AllocateDescription.hpp"
 #include "Collector.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "GCCode.hpp"
 #include "Heap.hpp"
 #include "MemoryPoolSegregated.hpp"

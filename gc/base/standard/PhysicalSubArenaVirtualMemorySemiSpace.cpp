@@ -923,7 +923,7 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::canContract(MM_EnvironmentBase *env)
  * @todo This is just an exploratory implementation until the details are actually hammered out.
  */
 void
-MM_PhysicalSubArenaVirtualMemorySemiSpace::tilt(MM_EnvironmentBase *env, uintptr_t allocateSpaceSize, uintptr_t survivorSpaceSize)
+MM_PhysicalSubArenaVirtualMemorySemiSpace::tilt(MM_EnvironmentBase *env, uintptr_t allocateSpaceSize, uintptr_t survivorSpaceSize, bool updateMemoryPools)
 {
 	void *expandBase, *expandTop;
 	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
@@ -1001,9 +1001,21 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::tilt(MM_EnvironmentBase *env, uintptr
 		omrtty_printf("\tNew range added (%p %p)}\n", expandBase, expandTop);
 	}
 
-	/* Add the new range to the allocate subspace free list */
-	subSpaceSurvivor->removeExistingMemory(env, this, ((uintptr_t)expandTop) - ((uintptr_t)expandBase), expandBase, expandTop);
-	subSpaceAllocate->addExistingMemory(env, this, ((uintptr_t)expandTop) - ((uintptr_t)expandBase), expandBase, expandTop, true);
+	/* Add/remove the new range to/from the allocate/survivor subspace free list.
+	 * Caller may choose not to do it. For example, if the more up-to-date list is to be rebuilt by following sweep, before the pool is used.
+	 */
+	if (updateMemoryPools) {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		if (expandBase > expandTop) {
+			subSpaceAllocate->removeExistingMemory(env, this, ((uintptr_t)expandBase) - ((uintptr_t)expandTop), expandTop, expandBase);
+			subSpaceSurvivor->addExistingMemory(env, this, ((uintptr_t)expandBase) - ((uintptr_t)expandTop), expandTop, expandBase, true);
+		} else
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */	
+		{
+			subSpaceSurvivor->removeExistingMemory(env, this, ((uintptr_t)expandTop) - ((uintptr_t)expandBase), expandBase, expandTop);
+			subSpaceAllocate->addExistingMemory(env, this, ((uintptr_t)expandTop) - ((uintptr_t)expandBase), expandBase, expandTop, true);
+		}
+	}
 
 	/* Set the new tilt ratio of the receiver */
 	((MM_MemorySubSpaceSemiSpace *)_subSpace)->setSurvivorSpaceSizeRatio(survivorSpaceSize / ((_highSemiSpaceRegion->getSize() + _lowSemiSpaceRegion->getSize()) / 100));

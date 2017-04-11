@@ -395,7 +395,6 @@ void *       TR_ResolvedMethod::methodTypeTableEntryAddress(int32_t cpIndex)    
 
 TR_OpaqueClassBlock *TR_ResolvedMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex)  { notImplemented("getDeclaringClassFromFieldOrStatic"); return 0; }
 int32_t      TR_ResolvedMethod::classCPIndexOfFieldOrStatic(int32_t)       { notImplemented("classCPIndexOfFieldOrStatic"); return 0; }
-int32_t      TR_ResolvedMethod::packedArrayFieldLength(int32_t, TR::Compilation* comp) { notImplemented("packedArrayFieldLength"); return 0; }
 const char * TR_ResolvedMethod::signature(TR_Memory *, TR_AllocationKind)  { notImplemented("signature"); return 0; }
 char *       TR_ResolvedMethod::fieldName (int32_t, TR_Memory *, TR_AllocationKind kind)           { notImplemented("fieldName"); return 0; }
 char *       TR_ResolvedMethod::staticName(int32_t, TR_Memory *, TR_AllocationKind kind)           { notImplemented("staticName"); return 0; }

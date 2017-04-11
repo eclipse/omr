@@ -30,6 +30,7 @@
 #include "codegen/BackingStore.hpp"                 // for TR_BackingStore
 #include "codegen/CodeGenPhase.hpp"                 // for CodeGenPhase, etc
 #include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
+#include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/FrontEnd.hpp"                     // for TR_FrontEnd, etc
 #include "codegen/GCStackAtlas.hpp"                 // for GCStackAtlas
@@ -531,12 +532,11 @@ OMR::Z::CodeGenerator::CodeGenerator()
      _previouslyAssignedTo(self()->comp()->allocator("LocalRA")),
      _bucketPlusIndexRegisters(self()->comp()->allocator()),
      _currentDEPEND(NULL),
-     _outgoingArgLevelDuringTreeEvaluation(0)
+     _outgoingArgLevelDuringTreeEvaluation(0),
+     _evaluatingCompressionSequenceCounter(0)
    {
    TR::Compilation *comp = self()->comp();
    _cgFlags = 0;
-
-   _evalCompressionSequence = false;
 
    // Initialize Linkage for Code Generator
    self()->initializeLinkage();
@@ -647,7 +647,7 @@ OMR::Z::CodeGenerator::CodeGenerator()
          self()->setSupportsHighWordFacility(true);
       }
 
-   self()->setOnDemandLiteralPoolRun(false);
+   self()->setOnDemandLiteralPoolRun(true);
    self()->setGlobalStaticBaseRegisterOn(false);
 
    self()->setGlobalPrivateStaticBaseRegisterOn(false);
@@ -660,9 +660,6 @@ OMR::Z::CodeGenerator::CodeGenerator()
    static char * noGraFIX= feGetEnv("TR_NOGRAFIX");
    if (!noGraFIX)
       {
-      // VETO flag for register usage
-      self()->setLitPoolRegisterIsFree(true);
-
       if ( !comp->getOption(TR_DisableLongDispStackSlot) )
          {
          self()->setExtCodeBaseRegisterIsFree(true);
@@ -857,6 +854,14 @@ OMR::Z::CodeGenerator::CodeGenerator()
 
    self()->getS390Linkage()->initS390RealRegisterLinkage();
    self()->setAccessStaticsIndirectly(true);
+
+   if (self()->isConcurrentScavengeEnabled())
+      {
+      // TODO (GuardedStorage): Is there a way to relax this condition? Currently we have to disable array copy opts to
+      // avoid missing guarded loads on memory to memory copies of reference objects. However this restriction seems too
+      // strict as we are disabling primitive array copies as well.
+      comp->setOption(TR_DisableArrayCopyOpts);
+      }
    }
 
 TR_GlobalRegisterNumber
@@ -919,9 +924,6 @@ bool OMR::Z::CodeGenerator::prepareForGRA()
       static char * noGraFIX= feGetEnv("TR_NOGRAFIX");
       if (noGraFIX)
          {
-         // VETO flag for register usage
-         self()->setLitPoolRegisterIsFree(true);
-
          if ( !self()->comp()->getOption(TR_DisableLongDispStackSlot) )
             {
             self()->setExtCodeBaseRegisterIsFree(true);
@@ -1955,10 +1957,7 @@ OMR::Z::CodeGenerator::isLitPoolFreeForAssignment()
    // If lit on demand is working, we always free up
    // If no lit-on-demand, try to avoid locking up litpool reg anyways
    //
-   if ((self()->isLiteralPoolOnDemandOn() ||
-       (!self()->comp()->hasNativeCall() && (self()->getFirstSnippet() == NULL)))
-       &&
-       self()->getLitPoolRegisterIsFree())
+   if (self()->isLiteralPoolOnDemandOn() || (!self()->comp()->hasNativeCall() && self()->getFirstSnippet() == NULL))
       {
       litPoolRegIsFree = true;
       }
@@ -2539,6 +2538,25 @@ static TR::Instruction *skipInternalControlFlow(TR::Instruction *insertInstr)
     } // for
   return insertInstr;
   }
+
+/**
+ * \brief
+ * Determines if a value should be in a commoned constant node or not.
+ *
+ * \details
+ *
+ * A node with a large constant can be materialized and left as commoned nodes.
+ * Smaller constants can be uncommoned so that they re-materialize every time when needed as a call
+ * parameter. This query is platform specific as constant loading can be expensive on some platforms
+ * but cheap on others, depending on their magnitude.
+ */
+bool OMR::Z::CodeGenerator::shouldValueBeInACommonedNode(int64_t value)
+   {
+   int64_t smallestPos = self()->getSmallestPosConstThatMustBeMaterialized();
+   int64_t largestNeg = self()->getLargestNegConstThatMustBeMaterialized();
+
+   return ((value >= smallestPos) || (value <= largestNeg));
+   }
 
 bool OMR::Z::CodeGenerator::supportsNamedVirtualRegisters() { return false; } // TODO : Identitiy needs folding
 
@@ -6078,6 +6096,16 @@ OMR::Z::CodeGenerator::supportsMergingOfHCRGuards()
           !self()->comp()->compileRelocatableCode();
    }
 
+bool
+OMR::Z::CodeGenerator::isConcurrentScavengeEnabled()
+   {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+   return TR::Compiler->target.cpu.getS390SupportsGuardedStorageFacility();
+#else
+   return false;
+#endif
+   }
+
 // Helpers for profiled interface slots
 void
 OMR::Z::CodeGenerator::addPICsListForInterfaceSnippet(TR::S390ConstantDataSnippet * ifcSnippet, TR::list<TR_OpaqueClassBlock*> * PICSlist)
@@ -6218,14 +6246,25 @@ OMR::Z::CodeGenerator::generateScratchRegisterManager(int32_t capacity)
 
 // TODO (GuardedStorage)
 void
-OMR::Z::CodeGenerator::setEvalCompressionSequence(bool val)
+OMR::Z::CodeGenerator::incEvaluatingCompressionSequence()
    {
-   _evalCompressionSequence= val;
+   TR_ASSERT(_evaluatingCompressionSequenceCounter != 0x7FFFFFFF, "_evaluatingCompressionSequenceCounter overflow");
+
+   ++_evaluatingCompressionSequenceCounter;
    }
-bool
-OMR::Z::CodeGenerator::isEvalCompressionSequence()
+
+void
+OMR::Z::CodeGenerator::decEvaluatingCompressionSequence()
    {
-   return _evalCompressionSequence;
+   TR_ASSERT(_evaluatingCompressionSequenceCounter != 0x00000000, "_evaluatingCompressionSequenceCounter overflow");
+
+   --_evaluatingCompressionSequenceCounter;
+   }
+
+bool
+OMR::Z::CodeGenerator::isEvaluatingCompressionSequence()
+   {
+   return _evaluatingCompressionSequenceCounter != 0;
    }
 
 void
@@ -6454,7 +6493,8 @@ OMR::Z::CodeGenerator::doBinaryEncoding()
          if (data.cursorInstruction == data.preProcInstruction)
             {
             self()->setPrePrologueSize(self()->getBinaryBufferCursor() - self()->getBinaryBufferStart());
-            if (!self()->comp()->getOptions()->getOption(TR_DisableGuardedCountingRecompilations) &&
+            if ((!self()->comp()->getOptions()->getOption(TR_DisableGuardedCountingRecompilations) ||
+                 self()->comp()->isJProfilingCompilation()) &&
                 TR::Options::getCmdLineOptions()->allowRecompilation())
              self()->comp()->getSymRefTab()->findOrCreateStartPCSymbolRef()->getSymbol()->getStaticSymbol()->setStaticAddress(self()->getBinaryBufferCursor());
             }
@@ -11270,7 +11310,14 @@ bool OMR::Z::CodeGenerator::isDispInRange(int64_t disp)
 bool OMR::Z::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode, TR::DataType dt)
    {
 
-   if (dt == TR::Float) return false;
+   /*
+    * Prior to zNext, vector operations that operated on floating point numbers only supported
+    * Doubles. On zNext and onward, Float type floating point numbers are supported as well.
+    */
+   if (dt == TR::Float && !getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zNext))
+      {
+      return false;
+      }
 
    // implemented vector opcodes
    switch (opcode.getOpCodeValue())
@@ -11280,7 +11327,7 @@ bool OMR::Z::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode, TR
       case TR::vmul:
       case TR::vdiv:
       case TR::vneg:
-         if (dt == TR::Int32 || dt == TR::Int64 || dt == TR::Double)
+         if (dt == TR::Int32 || dt == TR::Int64 || dt == TR::Float || dt == TR::Double)
             return true;
          else
             return false;
@@ -11293,7 +11340,7 @@ bool OMR::Z::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode, TR
       case TR::vloadi:
       case TR::vstore:
       case TR::vstorei:
-         if (dt == TR::Int32 || dt == TR::Int64 || dt == TR::Double)
+         if (dt == TR::Int32 || dt == TR::Int64 || dt == TR::Float || dt == TR::Double)
             return true;
          else
             return false;
@@ -11307,7 +11354,7 @@ bool OMR::Z::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode, TR
       case TR::vsplats:
       case TR::getvelem:
       case TR::vsetelem:
-         if (dt == TR::Int32 || dt == TR::Int64 || dt == TR::Double)
+         if (dt == TR::Int32 || dt == TR::Int64 || dt == TR::Float || dt == TR::Double)
             return true;
          else
             return false;

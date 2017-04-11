@@ -83,7 +83,7 @@ public:
 
 	MMINLINE void setParent(MM_PhysicalArena *parent) { _parent = parent; }
 
-	virtual void tilt(MM_EnvironmentBase *env, uintptr_t allocateSpaceSize, uintptr_t survivorSpaceSize);
+	virtual void tilt(MM_EnvironmentBase *env, uintptr_t allocateSpaceSize, uintptr_t survivorSpaceSize, bool updateMemoryPools = true);
 	virtual void tilt(MM_EnvironmentBase *env, uintptr_t survivorSpaceSizeRequest);
 
 	virtual uintptr_t getAvailableContractionSize(MM_EnvironmentBase *env, MM_MemorySubSpace *memorySubSpace, MM_AllocateDescription *allocDescription);

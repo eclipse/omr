@@ -19,6 +19,7 @@
 #include <stddef.h>                                 // for NULL
 #include <stdint.h>                                 // for int32_t, etc
 #include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
+#include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/FrontEnd.hpp"                     // for TR_FrontEnd, etc
 #include "codegen/Instruction.hpp"                  // for Instruction
@@ -651,6 +652,13 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
    // The opcode size of the compare node doesn't tell us whether we need a
    // 64-bit compare.  We need to check a child.
    bool is64Bit = TR::TreeEvaluator::getNodeIs64Bit(secondChild, cg);
+   if (cg->profiledPointersRequireRelocation() &&
+      secondChild->getOpCodeValue() == TR::aconst &&
+      (secondChild->isMethodPointerConstant() || secondChild->isClassPointerConstant()))
+      {
+      TR_ASSERT(!(node->isNopableInlineGuard()),"Should not evaluate class or method pointer constants underneath NOPable guards as they are runtime assumptions handled by virtualGuardHelper");
+      cg->evaluate(secondChild);
+      }
 
    intptrj_t constValue;
    if (secondChild->getOpCode().isLoadConst() &&

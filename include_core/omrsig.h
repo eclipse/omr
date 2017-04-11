@@ -28,12 +28,6 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#if defined(__GLIBC__) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 21)
-#undef OMR_OMRSIG_HAS_SIGVEC
-#else /* defined(__GLIBC__) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 21) */
-#define OMR_OMRSIG_HAS_SIGVEC
-#endif /* defined(__GLIBC__) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 21) */
-
 #if defined(OSX)
 #define __THROW
 #endif /* defined(OSX) */
@@ -109,17 +103,6 @@ int sigignore(int sig) __THROW;
 sighandler_t bsd_signal(int signum, sighandler_t handler) __THROW;
 #if !defined(J9ZOS390)
 sighandler_t sysv_signal(int signum, sighandler_t handler) __THROW;
-#if !defined(AIXPPC)
-#if defined(OSX)
-#if defined(OMR_OMRSIG_HAS_SIGVEC)
-int sigvec(int sig, struct sigvec *, struct sigvec *);
-#endif /* OMR_OMRSIG_HAS_SIGVEC */
-#else /* defined(OSX) */
-#if defined(OMR_OMRSIG_HAS_SIGVEC)
-int sigvec(int sig, const struct sigvec *vec, struct sigvec *ovec) __THROW;
-#endif /* OMR_OMRSIG_HAS_SIGVEC */
-#endif /* defined(OSX) */
-#endif /* !defined(AIXPPC) */
 #endif /* !defined(J9ZOS390) */
 #if defined(LINUX)
 __sighandler_t __sysv_signal(int sig, __sighandler_t handler) __THROW;
@@ -136,9 +119,3 @@ int __sigactionset(size_t newct, const __sigactionset_t newsets[], size_t *oldct
 #ifdef __cplusplus
 } /* extern "C" { */
 #endif  /* __cplusplus */
-
-#if defined(AIXPPC)
-#if defined(OMR_OMRSIG_HAS_SIGVEC)
-int sigvec(int sig, const struct sigvec *vec, struct sigvec *ovec) __THROW;
-#endif /* OMR_OMRSIG_HAS_SIGVEC */
-#endif /* defined(AIXPPC) */

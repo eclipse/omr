@@ -64,6 +64,7 @@ public:
 
    IlInjector(TR::TypeDictionary *types);
    IlInjector(TR::IlInjector *source);
+   virtual ~IlInjector() { };
 
    virtual void initPrimitiveTypes();
    virtual void initialize(TR::IlGeneratorMethodDetails * details,

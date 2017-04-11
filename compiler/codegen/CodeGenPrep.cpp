@@ -29,6 +29,7 @@
 #include <string.h>                            // for strcmp, strstr, etc
 #include <algorithm>                           // For std::find
 #include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
+#include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, feGetEnv
 #include "codegen/Linkage.hpp"                 // for TR::Linkage
 #include "codegen/LinkageConventionsEnum.hpp"

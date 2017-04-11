@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 2000, 2016
+ * (c) Copyright IBM Corp. 2000, 2017
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -73,7 +73,7 @@
 #include "optimizer/TransformUtil.hpp"
 #include "optimizer/UseDefInfo.hpp"             // for TR_UseDefInfo, etc
 #include "optimizer/VPConstraint.hpp"           // for TR::VPConstraint, etc
-#include "optimizer/ValuePropagation.hpp"       // for TR::ValuePropagation, etc
+#include "optimizer/OMRValuePropagation.hpp"       // for OMR::ValuePropagation, etc
 #include "ras/Debug.hpp"                        // for TR_Debug
 #include "ras/DebugCounter.hpp"
 #include "runtime/Runtime.hpp"
@@ -88,11 +88,11 @@
 
 #define OPT_DETAILS "O^O VALUE PROPAGATION: "
 
-extern TR::Node *constrainChildren(TR::ValuePropagation *vp, TR::Node *node);
-extern TR::Node *constrainVcall(TR::ValuePropagation *vp, TR::Node *node);
+extern TR::Node *constrainChildren(OMR::ValuePropagation *vp, TR::Node *node);
+extern TR::Node *constrainVcall(OMR::ValuePropagation *vp, TR::Node *node);
 extern void createGuardSiteForRemovedGuard(TR::Compilation *comp, TR::Node* ifNode);
 
-static void checkForNonNegativeAndOverflowProperties(TR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint = NULL)
+static void checkForNonNegativeAndOverflowProperties(OMR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint = NULL)
    {
    if (!constraint)
       {
@@ -253,7 +253,7 @@ static bool isBoolean(TR::VPConstraint *constraint)
 
 
 
-static int32_t arrayElementSize(const char *signature, int32_t len, TR::Node *node, TR::ValuePropagation *vp)
+static int32_t arrayElementSize(const char *signature, int32_t len, TR::Node *node, OMR::ValuePropagation *vp)
    {
    if (signature[0] != '[')
       return 0;
@@ -282,7 +282,7 @@ static int32_t arrayElementSize(const char *signature, int32_t len, TR::Node *no
 
 
 
-static void constrainBaseObjectOfIndirectAccess(TR::ValuePropagation *vp, TR::Node *node)
+static void constrainBaseObjectOfIndirectAccess(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return;  // 84287 - disabled for now.
 
@@ -331,7 +331,7 @@ static void constrainBaseObjectOfIndirectAccess(TR::ValuePropagation *vp, TR::No
 // When node is successfully folded, isGlobal is set to true iff all
 // constraints in the chain were global, and false otherwise.
 static bool tryFoldCompileTimeLoad(
-   TR::ValuePropagation *vp,
+   OMR::ValuePropagation *vp,
    TR::Node *node,
    bool &isGlobal)
    {
@@ -481,7 +481,7 @@ static bool tryFoldCompileTimeLoad(
    return true; // Safe default
    }
 
-static bool constrainCompileTimeLoad(TR::ValuePropagation *vp, TR::Node *node)
+static bool constrainCompileTimeLoad(OMR::ValuePropagation *vp, TR::Node *node)
    {
    bool isGlobal;
    if (!tryFoldCompileTimeLoad(vp, node, isGlobal))
@@ -492,7 +492,7 @@ static bool constrainCompileTimeLoad(TR::ValuePropagation *vp, TR::Node *node)
    return true;
    }
 
-static bool findConstant(TR::ValuePropagation *vp, TR::Node *node)
+static bool findConstant(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // See if the node is already known to be a constant
    //
@@ -637,7 +637,7 @@ static bool findConstant(TR::ValuePropagation *vp, TR::Node *node)
    return false;
    }
 
-static bool containsUnsafeSymbolReference(TR::ValuePropagation *vp, TR::Node *node)
+static bool containsUnsafeSymbolReference(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (vp->comp()->getSymRefTab()->findDLPStaticSymbolReference(node->getSymbolReference()) ||
        node->getSymbolReference()->isLitPoolReference())
@@ -667,7 +667,7 @@ static bool containsUnsafeSymbolReference(TR::ValuePropagation *vp, TR::Node *no
    return false;
    }
 
-static bool owningMethodDoesNotContainNullChecks(TR::ValuePropagation *vp, TR::Node *node)
+static bool owningMethodDoesNotContainNullChecks(OMR::ValuePropagation *vp, TR::Node *node)
    {
    TR::ResolvedMethodSymbol *method = node->getSymbolReference()->getOwningMethodSymbol(vp->comp());
    if (method && method->skipNullChecks())
@@ -675,7 +675,7 @@ static bool owningMethodDoesNotContainNullChecks(TR::ValuePropagation *vp, TR::N
    return false;
    }
 
-bool constraintFitsInIntegerRange(TR::ValuePropagation *vp, TR::VPConstraint *constraint)
+bool constraintFitsInIntegerRange(OMR::ValuePropagation *vp, TR::VPConstraint *constraint)
    {
    if (constraint == NULL)
       return false;
@@ -701,7 +701,7 @@ bool canMoveLongOpChildDirectly(TR::Node *node, int32_t numChild, TR::Node *arit
    return node->getChild(numChild)->getDataType() == arithNode->getDataType() || node->getOpCodeValue() == TR::lshr && numChild > 0;
    }
 
-bool reduceLongOpToIntegerOp(TR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *nodeConstraint)
+bool reduceLongOpToIntegerOp(OMR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *nodeConstraint)
    {
    if (!constraintFitsInIntegerRange(vp, nodeConstraint))
       return false;
@@ -771,7 +771,7 @@ bool reduceLongOpToIntegerOp(TR::ValuePropagation *vp, TR::Node *node, TR::VPCon
    return false;
    }
 
-static void constrainAConst(TR::ValuePropagation *vp, TR::Node *node, bool isGlobal)
+static void constrainAConst(OMR::ValuePropagation *vp, TR::Node *node, bool isGlobal)
    {
    TR::VPConstraint *constraint = NULL;
    if (node->getAddress() == 0)
@@ -794,13 +794,13 @@ static void constrainAConst(TR::ValuePropagation *vp, TR::Node *node, bool isGlo
    vp->addBlockOrGlobalConstraint(node, constraint, isGlobal);
    }
 
-TR::Node *constrainAConst(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainAConst(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainAConst(vp, node, true /* isGlobal */);
    return node;
    }
 
-static void constrainIntAndFloatConstHelper(TR::ValuePropagation *vp, TR::Node *node, int32_t value, bool isGlobal)
+static void constrainIntAndFloatConstHelper(OMR::ValuePropagation *vp, TR::Node *node, int32_t value, bool isGlobal)
    {
 
    if (value)
@@ -821,26 +821,26 @@ static void constrainIntAndFloatConstHelper(TR::ValuePropagation *vp, TR::Node *
    vp->addBlockOrGlobalConstraint(node, TR::VPIntConst::create(vp, value), isGlobal);
    }
 
-static void constrainIntConst(TR::ValuePropagation *vp, TR::Node *node, bool isGlobal)
+static void constrainIntConst(OMR::ValuePropagation *vp, TR::Node *node, bool isGlobal)
    {
    int32_t value = node->getInt();
    constrainIntAndFloatConstHelper(vp, node, value, isGlobal);
    }
 
-TR::Node *constrainIntConst(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIntConst(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainIntConst(vp, node, true /* isGlobal */);
    return node;
    }
 
-TR::Node *constrainFloatConst(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainFloatConst(OMR::ValuePropagation *vp, TR::Node *node)
    {
    int32_t value = node->getFloatBits();
    constrainIntAndFloatConstHelper(vp, node, value, true /* isGlobal */);
    return node;
    }
 
-static void constrainLongConst(TR::ValuePropagation *vp, TR::Node *node, bool isGlobal)
+static void constrainLongConst(OMR::ValuePropagation *vp, TR::Node *node, bool isGlobal)
    {
    int64_t value = node->getLongInt();
    if (value)
@@ -861,13 +861,13 @@ static void constrainLongConst(TR::ValuePropagation *vp, TR::Node *node, bool is
    vp->addBlockOrGlobalConstraint(node, TR::VPLongConst::create(vp, value), isGlobal);
    }
 
-TR::Node *constrainLongConst(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLongConst(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainLongConst(vp, node, true /* isGlobal */);
    return node;
    }
 
-TR::Node *constrainByteConst(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainByteConst(OMR::ValuePropagation *vp, TR::Node *node)
    {
    int8_t value = node->getByte();
    if (value)
@@ -898,7 +898,7 @@ TR::Node *constrainByteConst(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainShortConst(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainShortConst(OMR::ValuePropagation *vp, TR::Node *node)
    {
    int16_t value = node->getShortInt();
    if (value)
@@ -932,7 +932,7 @@ TR::Node *constrainShortConst(TR::ValuePropagation *vp, TR::Node *node)
 //
 #ifdef J9_PROJECT_SPECIFIC
 #define TR_ENABLE_BCD_SIGN (true)
-TR::Node *constrainBCDSign(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainBCDSign(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (!TR_ENABLE_BCD_SIGN)
       return node;
@@ -1005,7 +1005,7 @@ TR::Node *constrainBCDSign(TR::ValuePropagation *vp, TR::Node *node)
    }
 #endif
 
-TR::Node *constrainBCDAggrLoad(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainBCDAggrLoad(OMR::ValuePropagation *vp, TR::Node *node)
    {
 #ifdef J9_PROJECT_SPECIFIC
    TR::Node *parent = vp->getCurrentParent();
@@ -1106,7 +1106,7 @@ TR::Node *constrainBCDAggrLoad(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainAnyIntLoad(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainAnyIntLoad(OMR::ValuePropagation *vp, TR::Node *node)
    {
    TR::DataType dataType = node->getDataType();
 
@@ -1164,7 +1164,7 @@ TR::Node *constrainAnyIntLoad(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainShortLoad(TR::ValuePropagation * vp, TR::Node * node)
+TR::Node *constrainShortLoad(OMR::ValuePropagation * vp, TR::Node * node)
    {
    if(findConstant(vp,node))
        return node;
@@ -1185,7 +1185,7 @@ TR::Node *constrainShortLoad(TR::ValuePropagation * vp, TR::Node * node)
    return node;
    }
 
-TR::Node *constrainIntLoad(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIntLoad(OMR::ValuePropagation *vp, TR::Node *node)
    {
    bool wasReplacedByConstant = findConstant(vp, node);
    if (wasReplacedByConstant)
@@ -1203,7 +1203,7 @@ TR::Node *constrainIntLoad(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-bool simplifyJ9ClassFlags(TR::ValuePropagation *vp, TR::Node *node, bool isLong)
+bool simplifyJ9ClassFlags(OMR::ValuePropagation *vp, TR::Node *node, bool isLong)
    {
 #ifdef J9_PROJECT_SPECIFIC
    uintptrj_t cdfValue = 0;
@@ -1249,7 +1249,7 @@ bool simplifyJ9ClassFlags(TR::ValuePropagation *vp, TR::Node *node, bool isLong)
    return false;
    }
 
-static void checkUnsafeArrayAccess(TR::ValuePropagation *vp, TR::Node *node)
+static void checkUnsafeArrayAccess(OMR::ValuePropagation *vp, TR::Node *node)
    {
       if (node->getSymbol()->isUnsafeShadowSymbol())
          {
@@ -1283,7 +1283,7 @@ static void checkUnsafeArrayAccess(TR::ValuePropagation *vp, TR::Node *node)
 
 // Also handles lloadi
 //
-TR::Node *constrainLload(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLload(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -1332,7 +1332,7 @@ TR::Node *constrainLload(TR::ValuePropagation *vp, TR::Node *node)
 
 // Also handles ifload
 //
-TR::Node *constrainFload(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainFload(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (!findConstant(vp, node))
       constrainChildren(vp, node);
@@ -1356,7 +1356,7 @@ TR::Node *constrainFload(TR::ValuePropagation *vp, TR::Node *node)
 
 // Also handles idload
 //
-TR::Node *constrainDload(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainDload(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (!findConstant(vp, node))
       constrainChildren(vp, node);
@@ -1381,7 +1381,7 @@ TR::Node *constrainDload(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 
-static const char *getFieldSignature(TR::ValuePropagation *vp, TR::Node *node, int32_t &len)
+static const char *getFieldSignature(OMR::ValuePropagation *vp, TR::Node *node, int32_t &len)
    {
    TR::SymbolReference *symRef = node->getSymbolReference();
    int32_t cookie = symRef->getCPIndex();
@@ -1416,7 +1416,7 @@ static const char *getFieldSignature(TR::ValuePropagation *vp, TR::Node *node, i
    return NULL;
    }
 
-static void addKnownObjectConstraints(TR::ValuePropagation *vp, TR::Node *node)
+static void addKnownObjectConstraints(OMR::ValuePropagation *vp, TR::Node *node)
    {
    TR::KnownObjectTable *knot = vp->comp()->getKnownObjectTable();
    if (!knot)
@@ -1507,7 +1507,7 @@ static void addKnownObjectConstraints(TR::ValuePropagation *vp, TR::Node *node)
 #endif
    }
 
-TR::Node *constrainAload(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainAload(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -1783,7 +1783,7 @@ TR::Node *constrainAload(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 
-static TR::Node *findArrayLengthNode(TR::ValuePropagation *vp, TR::Node *node, List<TR::Node> *arraylengthNodes)
+static TR::Node *findArrayLengthNode(OMR::ValuePropagation *vp, TR::Node *node, List<TR::Node> *arraylengthNodes)
    {
    int32_t nodeVN = vp->getValueNumber(node);
 
@@ -1806,7 +1806,7 @@ static TR::Node *findArrayLengthNode(TR::ValuePropagation *vp, TR::Node *node, L
 
 
 
-static TR::Node *findArrayIndexNode(TR::ValuePropagation *vp, TR::Node *node, int32_t stride)
+static TR::Node *findArrayIndexNode(OMR::ValuePropagation *vp, TR::Node *node, int32_t stride)
   {
   TR::Node *offset = node->getSecondChild();
   bool usingAladd = (TR::Compiler->target.is64Bit()
@@ -1885,7 +1885,7 @@ static TR::Node *findArrayIndexNode(TR::ValuePropagation *vp, TR::Node *node, in
   }
 
 // For TR::aiadd and TR::aladd
-TR::Node *constrainAddressRef(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainAddressRef(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -1914,7 +1914,7 @@ TR::Node *constrainAddressRef(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 
-TR::Node *constrainIiload(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIiload(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -1990,7 +1990,7 @@ TR::Node *constrainIiload(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainIaload(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -2072,6 +2072,7 @@ TR::Node *constrainIaload(TR::ValuePropagation *vp, TR::Node *node)
             break; // OK to attempt compile-time load
          }
 
+      const static char *needInitializedCheck = feGetEnv("TR_needInitializedCheck");
       TR::VPConstraint *base = vp->getConstraint(node->getFirstChild(), isGlobal);
       if (base && node->getOpCode().hasSymbolReference() &&
           (node->getSymbolReference() == vp->comp()->getSymRefTab()->findVftSymbolRef()))
@@ -2162,7 +2163,7 @@ TR::Node *constrainIaload(TR::ValuePropagation *vp, TR::Node *node)
           && base->getClassType()
           && base->getClassType()->asFixedClass()
           && base->getClass()
-          && TR::Compiler->cls.isClassInitialized(vp->comp(), base->getClass()))
+          && (!needInitializedCheck || TR::Compiler->cls.isClassInitialized(vp->comp(), base->getClass())))
          {
          if (symRef == vp->comp()->getSymRefTab()->findJavaLangClassFromClassSymbolRef())
             {
@@ -2615,7 +2616,7 @@ TR::Node *constrainIaload(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainStore(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainStore(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -2635,7 +2636,7 @@ TR::Node *constrainStore(TR::ValuePropagation *vp, TR::Node *node)
 
    if (globalStore)
       {
-      TR::ValuePropagation::Relationship *syncRel = vp->findConstraint(vp->_syncValueNumber);
+      OMR::ValuePropagation::Relationship *syncRel = vp->findConstraint(vp->_syncValueNumber);
       TR::VPSync *sync = NULL;
       if (syncRel && syncRel->constraint)
          sync = syncRel->constraint->asVPSync();
@@ -2696,7 +2697,7 @@ TR::Node *constrainStore(TR::ValuePropagation *vp, TR::Node *node)
 
 // Handles istore, bstore, cstore, sstore
 //
-TR::Node *constrainIntStore(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIntStore(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainStore(vp, node);
 
@@ -2724,7 +2725,7 @@ TR::Node *constrainIntStore(TR::ValuePropagation *vp, TR::Node *node)
          // If so, this negation can be replaced by the first one's load node
          //
          int32_t loadVN = vp->getValueNumber(loadNode);
-         TR::ValuePropagation::BooleanNegationInfo *bni;
+         OMR::ValuePropagation::BooleanNegationInfo *bni;
          for (bni = vp->_booleanNegationInfo.getFirst(); bni; bni = bni->getNext())
             {
             if (bni->_storeValueNumber == loadVN)
@@ -2745,7 +2746,7 @@ TR::Node *constrainIntStore(TR::ValuePropagation *vp, TR::Node *node)
 
          // Mark this node as an active boolean negation
          //
-         bni = new (vp->trStackMemory()) TR::ValuePropagation::BooleanNegationInfo;
+         bni = new (vp->trStackMemory()) OMR::ValuePropagation::BooleanNegationInfo;
          bni->_storeValueNumber = vp->getValueNumber(node);
          bni->_loadNode = loadNode;
          vp->_booleanNegationInfo.add(bni);
@@ -2754,7 +2755,7 @@ TR::Node *constrainIntStore(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLongStore(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLongStore(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainStore(vp, node);
 
@@ -2766,7 +2767,7 @@ TR::Node *constrainLongStore(TR::ValuePropagation *vp, TR::Node *node)
 
 // Also handles iastore
 //
-TR::Node *constrainAstore(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainAstore(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainStore(vp, node);
 
@@ -2789,7 +2790,7 @@ TR::Node *constrainAstore(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-void canRemoveWrtBar(TR::ValuePropagation *vp, TR::Node *node)
+void canRemoveWrtBar(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // If the value being stored is known to be null we can replace the write
    // barrier store with a regular store
@@ -2839,7 +2840,7 @@ void canRemoveWrtBar(TR::ValuePropagation *vp, TR::Node *node)
 
 // Also handles iwrtbar
 //
-TR::Node *constrainWrtBar(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainWrtBar(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -2858,12 +2859,13 @@ TR::Node *constrainWrtBar(TR::ValuePropagation *vp, TR::Node *node)
         vp->getCurrentParent() && vp->getCurrentParent()->getOpCodeValue() != TR::ArrayStoreCHK)
       canRemoveWrtBar(vp, node);
 
-   // TODO (GuardedStorage)
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-   static bool doOpt = false;
-#else
    static bool doOpt = feGetEnv("TR_DisableWrtBarOpt") ? false : true;
-#endif
+
+   if (vp->cg()->isConcurrentScavengeEnabled())
+      {
+      // TODO (GuardedStorage): Why do we need this restriction?
+      doOpt = false;
+      }
 
    TR_WriteBarrierKind gcMode = vp->comp()->getOptions()->getGcMode();
 
@@ -3115,7 +3117,7 @@ TR::Node *constrainWrtBar(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainGoto(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainGoto(OMR::ValuePropagation *vp, TR::Node *node)
    {
 
 
@@ -3136,7 +3138,7 @@ TR::Node *constrainGoto(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainIgoto(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIgoto(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // Remove the current list of block constraints so they don't fall through
    //
@@ -3157,7 +3159,7 @@ TR::Node *constrainIgoto(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainReturn(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainReturn(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (node->getDataType() == TR::Address)
       vp->addGlobalConstraint(node, TR::VPObjectLocation::create(vp, TR::VPObjectLocation::NotStackObject));
@@ -3169,7 +3171,7 @@ TR::Node *constrainReturn(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainMonent(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainMonent(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // After the monitor enter the child must be non-null
    //
@@ -3206,7 +3208,7 @@ TR::Node *constrainMonent(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainMonexit(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainMonexit(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -3251,7 +3253,7 @@ TR::Node *constrainMonexit(TR::ValuePropagation *vp, TR::Node *node)
    // check for global writes and sync
    //
    // find a constraint for sync in the block
-   TR::ValuePropagation::Relationship *syncRel = vp->findConstraint(vp->_syncValueNumber);
+   OMR::ValuePropagation::Relationship *syncRel = vp->findConstraint(vp->_syncValueNumber);
    TR::VPSync *sync = NULL;
    if (syncRel && syncRel->constraint)
       sync = syncRel->constraint->asVPSync();
@@ -3300,7 +3302,7 @@ TR::Node *constrainMonexit(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainMonexitfence(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainMonexitfence(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp,node);
 
@@ -3311,28 +3313,28 @@ TR::Node *constrainMonexitfence(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainTstart(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainTstart(OMR::ValuePropagation *vp, TR::Node *node)
    {
    //TR_ASSERT(0, "Not implemented!");
    constrainChildren(vp,node);
    return node;
    }
 
-TR::Node *constrainTfinish(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainTfinish(OMR::ValuePropagation *vp, TR::Node *node)
    {
    //TR_ASSERT(0, "Not implemented!");
    constrainChildren(vp,node);
    return node;
    }
 
-TR::Node *constrainTabort(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainTabort(OMR::ValuePropagation *vp, TR::Node *node)
    {
    //TR_ASSERT(0, "Not implemented!");
    constrainChildren(vp,node);
    return node;
    }
 
-TR::Node *constrainThrow(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainThrow(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -3421,7 +3423,7 @@ TR::Node *constrainThrow(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainInstanceOf(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainInstanceOf(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -3610,7 +3612,7 @@ TR::Node *constrainInstanceOf(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainCheckcast(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCheckcast(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -3964,19 +3966,19 @@ TR::Node *constrainCheckcast(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainBCDCHK(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainBCDCHK(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
    vp->createExceptionEdgeConstraints(TR::Block::CanCatchUserThrows, NULL, node);
    return node;
    }
 
-TR::Node *constrainCheckcastNullChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCheckcastNullChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainCheckcast(vp, node);
    }
 
-TR::Node *constrainNew(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainNew(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -4013,7 +4015,7 @@ TR::Node *constrainNew(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainNewArray(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainNewArray(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -4074,7 +4076,7 @@ TR::Node *constrainNewArray(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainVariableNew(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainVariableNew(OMR::ValuePropagation *vp, TR::Node *node)
   {
   constrainChildren(vp, node);
 
@@ -4082,7 +4084,7 @@ TR::Node *constrainVariableNew(TR::ValuePropagation *vp, TR::Node *node)
   return node;
   }
 
-TR::Node *constrainVariableNewArray(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainVariableNewArray(OMR::ValuePropagation *vp, TR::Node *node)
   {
   constrainChildren(vp, node);
   TR::Node *typeNode = node->getSecondChild();
@@ -4121,7 +4123,7 @@ TR::Node *constrainVariableNewArray(TR::ValuePropagation *vp, TR::Node *node)
   return node;
   }
 
-TR::Node *constrainANewArray(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainANewArray(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -4210,7 +4212,7 @@ TR::Node *constrainANewArray(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainMultiANewArray(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainMultiANewArray(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -4340,10 +4342,10 @@ static void getLong (TR::VPLongConst* c, int64_t& n)
    n = c->getLong();
    }
 
-static TR::VPConstraint* createIntConstConstraint(TR::ValuePropagation *vp, int32_t n) {return TR::VPIntConst::create(vp, n); }
-static TR::VPConstraint* createIntRangeConstraint(TR::ValuePropagation *vp, int32_t l, int32_t h) {return TR::VPIntRange::create(vp, l, h);}
-static TR::VPConstraint* createLongConstConstraint(TR::ValuePropagation *vp, int64_t n) {return TR::VPLongConst::create(vp, n); }
-static TR::VPConstraint* createLongRangeConstraint(TR::ValuePropagation *vp, int64_t l, int64_t h) {return TR::VPLongRange::create(vp, l, h);}
+static TR::VPConstraint* createIntConstConstraint(OMR::ValuePropagation *vp, int32_t n) {return TR::VPIntConst::create(vp, n); }
+static TR::VPConstraint* createIntRangeConstraint(OMR::ValuePropagation *vp, int32_t l, int32_t h) {return TR::VPIntRange::create(vp, l, h);}
+static TR::VPConstraint* createLongConstConstraint(OMR::ValuePropagation *vp, int64_t n) {return TR::VPLongConst::create(vp, n); }
+static TR::VPConstraint* createLongRangeConstraint(OMR::ValuePropagation *vp, int64_t l, int64_t h) {return TR::VPLongRange::create(vp, l, h);}
 
 static int32_t integerToPowerOf2 (int32_t n) {return (n==0) ? 0 : floorPowerOfTwo(n); }
 static int32_t integerNumberOfLeadingZeros (int32_t n) {return leadingZeroes (n);}
@@ -4364,7 +4366,7 @@ void swap (T& a, T& b)
 
 
 template <typename FUNC, typename FUNC2, typename T>
-void addValidRangeBlockOrGlobalConstraint (TR::ValuePropagation *vp,
+void addValidRangeBlockOrGlobalConstraint (OMR::ValuePropagation *vp,
                                                    TR::Node *node,
                                                    FUNC createRange,
                                                    FUNC2 processValue,
@@ -4396,7 +4398,7 @@ template <typename A,
          typename F,
          typename G,
          typename T>
-static TR::Node* constrainHighestOneBitAndLeadingZerosHelper (TR::ValuePropagation *vp,
+static TR::Node* constrainHighestOneBitAndLeadingZerosHelper (OMR::ValuePropagation *vp,
                                                                      TR::Node *node,
                                                                      A getConst,
                                                                      B getRange,
@@ -4471,7 +4473,7 @@ template <typename A,
          typename F,
          typename G,
          typename T>
-static TR::Node* constrainLowestOneBitAndTrailingZerosHelper (TR::ValuePropagation *vp,
+static TR::Node* constrainLowestOneBitAndTrailingZerosHelper (OMR::ValuePropagation *vp,
                                                                      TR::Node *node,
                                                                      A getConst,
                                                                      B getRange,
@@ -4507,7 +4509,7 @@ static TR::Node* constrainLowestOneBitAndTrailingZerosHelper (TR::ValuePropagati
    return node;
    }
 
-TR::Node * constrainIntegerHighestOneBit(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node * constrainIntegerHighestOneBit(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainHighestOneBitAndLeadingZerosHelper (vp, node, getIntConst,
                                                        getIntRange, getInt, getLowHighInts,
@@ -4517,7 +4519,7 @@ TR::Node * constrainIntegerHighestOneBit(TR::ValuePropagation *vp, TR::Node *nod
    }
 
 
-TR::Node * constrainIntegerNumberOfLeadingZeros(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node * constrainIntegerNumberOfLeadingZeros(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainHighestOneBitAndLeadingZerosHelper (vp, node, getIntConst,
                                                        getIntRange, getInt, getLowHighInts,
@@ -4527,7 +4529,7 @@ TR::Node * constrainIntegerNumberOfLeadingZeros(TR::ValuePropagation *vp, TR::No
 
    }
 
-TR::Node * constrainLongHighestOneBit(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node * constrainLongHighestOneBit(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainHighestOneBitAndLeadingZerosHelper (vp, node, getLongConst,
                                                        getLongRange, getLong, getLowHighLongs,
@@ -4537,7 +4539,7 @@ TR::Node * constrainLongHighestOneBit(TR::ValuePropagation *vp, TR::Node *node)
 
    }
 
-TR::Node * constrainLongNumberOfLeadingZeros(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node * constrainLongNumberOfLeadingZeros(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainHighestOneBitAndLeadingZerosHelper (vp, node, getLongConst,
                                                        getLongRange, getLong, getLowHighLongs,
@@ -4545,7 +4547,7 @@ TR::Node * constrainLongNumberOfLeadingZeros(TR::ValuePropagation *vp, TR::Node 
                                                        createIntRangeConstraint, longNumberOfLeadingZeros, (int64_t) 0, (int64_t) -1);
    }
 
-TR::Node * constrainIntegerLowestOneBit(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node * constrainIntegerLowestOneBit(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainLowestOneBitAndTrailingZerosHelper (vp, node, getIntConst,
                                                        getIntRange, getInt, getLowHighInts,
@@ -4554,7 +4556,7 @@ TR::Node * constrainIntegerLowestOneBit(TR::ValuePropagation *vp, TR::Node *node
    }
 
 
-   TR::Node * constrainIntegerBitCount(TR::ValuePropagation *vp, TR::Node *node)
+   TR::Node * constrainIntegerBitCount(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainLowestOneBitAndTrailingZerosHelper (vp, node, getIntConst,
                                                        getIntRange, getInt, getLowHighInts,
@@ -4563,7 +4565,7 @@ TR::Node * constrainIntegerLowestOneBit(TR::ValuePropagation *vp, TR::Node *node
    }
 
 
-TR::Node * constrainIntegerNumberOfTrailingZeros(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node * constrainIntegerNumberOfTrailingZeros(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainLowestOneBitAndTrailingZerosHelper (vp, node, getIntConst,
                                                        getIntRange, getInt, getLowHighInts,
@@ -4571,7 +4573,7 @@ TR::Node * constrainIntegerNumberOfTrailingZeros(TR::ValuePropagation *vp, TR::N
                                                        createIntRangeConstraint, integerNumberOfTrailingZeros, (int32_t) 0, (int32_t) -1);
    }
 
-TR::Node * constrainLongLowestOneBit(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node * constrainLongLowestOneBit(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainLowestOneBitAndTrailingZerosHelper (vp, node, getLongConst,
                                                        getLongRange, getLong, getLowHighLongs,
@@ -4580,7 +4582,7 @@ TR::Node * constrainLongLowestOneBit(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 
-TR::Node * constrainLongNumberOfTrailingZeros(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node * constrainLongNumberOfTrailingZeros(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainLowestOneBitAndTrailingZerosHelper (vp, node, getLongConst,
                                                        getLongRange, getLong, getLowHighLongs,
@@ -4589,7 +4591,7 @@ TR::Node * constrainLongNumberOfTrailingZeros(TR::ValuePropagation *vp, TR::Node
    }
 
 
-   TR::Node * constrainLongBitCount(TR::ValuePropagation *vp, TR::Node *node)
+   TR::Node * constrainLongBitCount(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainLowestOneBitAndTrailingZerosHelper  (vp, node, getLongConst,
                                                        getLongRange, getLong, getLowHighLongs,
@@ -4603,7 +4605,7 @@ TR::Node * constrainLongNumberOfTrailingZeros(TR::ValuePropagation *vp, TR::Node
 
 // Handles TR::arraylength and TR::contigarraylength
 //
-TR::Node *constrainArraylength(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainArraylength(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -4744,9 +4746,9 @@ TR::Node *constrainArraylength(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-static void refineSymbolReferenceForProfiledToOverridden (TR::ValuePropagation* vp, TR::Node* callNode, TR::SymbolReference * newSymRef)
+static void refineSymbolReferenceForProfiledToOverridden (OMR::ValuePropagation* vp, TR::Node* callNode, TR::SymbolReference * newSymRef)
    {
-   for (TR::ValuePropagation::VirtualGuardInfo *cvg = vp->_convertedGuards.getFirst(); cvg; cvg = cvg->getNext())
+   for (OMR::ValuePropagation::VirtualGuardInfo *cvg = vp->_convertedGuards.getFirst(); cvg; cvg = cvg->getNext())
       {
       if (cvg->_callNode == callNode)
          {
@@ -4764,7 +4766,7 @@ static void refineSymbolReferenceForProfiledToOverridden (TR::ValuePropagation* 
 
 static TR::MethodSymbol *
 refineMethodSymbolInCall(
-   TR::ValuePropagation *vp,
+   OMR::ValuePropagation *vp,
    TR::Node *node,
    TR::SymbolReference *symRef,
    TR_ResolvedMethod *resolvedMethod,
@@ -4783,7 +4785,7 @@ refineMethodSymbolInCall(
    return methodSymbol;
    }
 
-static void devirtualizeCall(TR::ValuePropagation *vp, TR::Node *node)
+static void devirtualizeCall(OMR::ValuePropagation *vp, TR::Node *node)
    {
    TR::SymbolReference *symRef        = node->getSymbolReference();
    TR::MethodSymbol    *methodSymbol  = symRef->getSymbol()->castToMethodSymbol();
@@ -5132,12 +5134,12 @@ static void devirtualizeCall(TR::ValuePropagation *vp, TR::Node *node)
    if ((vp->lastTimeThrough() || !node->getOpCode().isIndirect()) &&
        (vp->_isGlobalPropagation || !vp->getLastRun()) &&
        !methodSymbol->isInterface())
-      vp->_devirtualizedCalls.add(new (vp->trStackMemory()) TR::ValuePropagation::CallInfo(vp, thisType, argInfo));
+      vp->_devirtualizedCalls.add(new (vp->trStackMemory()) OMR::ValuePropagation::CallInfo(vp, thisType, argInfo));
    vp->invalidateUseDefInfo();
    vp->invalidateValueNumberInfo();
    }
 
-TR::Node *constrainCall(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCall(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -5175,7 +5177,7 @@ TR::Node *constrainCall(TR::ValuePropagation *vp, TR::Node *node)
          if (operand && ((operand->isClassObject() == TR_yes) ||
                    (operand->getClassType() && ((operand->getClassType()->isArray() == TR_no) || (operand->getClassType()->isClassObject() == TR_yes)))))
                    {
-           vp->_unsafeCallsToInline.add(new (vp->trStackMemory()) TR::ValuePropagation::CallInfo(vp, NULL, NULL));
+           vp->_unsafeCallsToInline.add(new (vp->trStackMemory()) OMR::ValuePropagation::CallInfo(vp, NULL, NULL));
                    node->setUnsafeGetPutCASCallOnNonArray();
            // printf("change flag for node  %p\n",node);fflush(stdout);
            if (vp->trace())
@@ -5235,6 +5237,11 @@ TR::Node *constrainCall(TR::ValuePropagation *vp, TR::Node *node)
          }
       }
 
+   vp->constrainRecognizedMethod(node);
+
+   // Return if the node is not a regular call (xcall/xcalli) anymore
+   if (!node->getOpCode().isCall() || node->getSymbol()->castToMethodSymbol()->isHelper())
+      return node;
 
    if ( symbol )
       {
@@ -5502,7 +5509,7 @@ TR::Node *constrainCall(TR::ValuePropagation *vp, TR::Node *node)
       vp->addBlockConstraint(node->getFirstChild(), TR::VPNonNullObject::create(vp));
 
    //sync required
-   TR::ValuePropagation::Relationship *syncRel = vp->findConstraint(vp->_syncValueNumber);
+   OMR::ValuePropagation::Relationship *syncRel = vp->findConstraint(vp->_syncValueNumber);
    TR::VPSync *sync = NULL;
    if (syncRel && syncRel->constraint)
       sync = syncRel->constraint->asVPSync();
@@ -5529,7 +5536,7 @@ TR::Node *constrainCall(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 #ifdef J9_PROJECT_SPECIFIC
-void getHelperSymRefs(TR::ValuePropagation *vp, TR::Node *curCallNode, TR::SymbolReference *&getHelpersSymRef, TR::SymbolReference *&helperSymRef, char *helperSig, int32_t helperSigLen, TR::MethodSymbol::Kinds helperCallKind)
+void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, TR::SymbolReference *&getHelpersSymRef, TR::SymbolReference *&helperSymRef, char *helperSig, int32_t helperSigLen, TR::MethodSymbol::Kinds helperCallKind)
    {
    //Function to retrieve the JITHelpers.getHelpers and JITHelpers.<helperSig> method symbol references.
    //
@@ -5575,7 +5582,7 @@ void getHelperSymRefs(TR::ValuePropagation *vp, TR::Node *curCallNode, TR::Symbo
 #endif
 
 #ifdef J9_PROJECT_SPECIFIC
-void transformToOptimizedCloneCall(TR::ValuePropagation *vp, TR::Node *node, bool isDirectCall)
+void transformToOptimizedCloneCall(OMR::ValuePropagation *vp, TR::Node *node, bool isDirectCall)
    {
    TR::SymbolReference *getHelpersSymRef = NULL;
    TR::SymbolReference *optimizedCloneSymRef = NULL;
@@ -5609,7 +5616,7 @@ void transformToOptimizedCloneCall(TR::ValuePropagation *vp, TR::Node *node, boo
 #endif
 
 
-TR::Node *transformCloneCallSetup(TR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint, bool isDirectCall)
+TR::Node *transformCloneCallSetup(OMR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint, bool isDirectCall)
    {
    //Change the call and agruments from object.clone to optimizedClone.
    //
@@ -5639,7 +5646,7 @@ TR::Node *transformCloneCallSetup(TR::ValuePropagation *vp, TR::Node *node, TR::
    }
 
 #ifdef J9_PROJECT_SPECIFIC
-TR::Node *setCloneClassInNode(TR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint, bool isGlobal)
+TR::Node *setCloneClassInNode(OMR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint, bool isGlobal)
    {
 
    // If the child is a resolved class type, hide the class pointer in the
@@ -5677,9 +5684,13 @@ TR::Node *setCloneClassInNode(TR::ValuePropagation *vp, TR::Node *node, TR::VPCo
    }
 #endif
 
-TR::Node *constrainAcall(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainAcall(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainCall(vp, node);
+
+   // Return if the node is not a regular call (xcall/xcalli) anymore
+   if (!node->getOpCode().isCall() || node->getSymbol()->castToMethodSymbol()->isHelper())
+      return node;
 
    // This node can be constrained by the return type of the method.
    //
@@ -5730,7 +5741,7 @@ TR::Node *constrainAcall(TR::ValuePropagation *vp, TR::Node *node)
                          && !vp->_objectCloneCalls.find(vp->_curTree))
                         {
                         vp->_objectCloneCalls.add(vp->_curTree);
-                        vp->_objectCloneTypes.add(new (vp->trStackMemory()) TR::ValuePropagation::ObjCloneInfo(constraint->getClass(), true));
+                        vp->_objectCloneTypes.add(new (vp->trStackMemory()) OMR::ValuePropagation::ObjCloneInfo(constraint->getClass(), true));
                         }
                      else if (constraint->getClassType()
                               && constraint->getClassType()->isArray() == TR_yes
@@ -5750,7 +5761,7 @@ TR::Node *constrainAcall(TR::ValuePropagation *vp, TR::Node *node)
                       && !vp->_objectCloneCalls.find(vp->_curTree))
                      {
                      vp->_objectCloneCalls.add(vp->_curTree);
-                     vp->_objectCloneTypes.add(new (vp->trStackMemory()) TR::ValuePropagation::ObjCloneInfo(constraint->getClass(), false));
+                     vp->_objectCloneTypes.add(new (vp->trStackMemory()) OMR::ValuePropagation::ObjCloneInfo(constraint->getClass(), false));
                      }
                   }
                }
@@ -5862,7 +5873,7 @@ TR::Node *constrainAcall(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 // handles unsigned too
-TR::Node *constrainAdd(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainAdd(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -5953,7 +5964,7 @@ TR::Node *constrainAdd(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 // handles unsigned subtract
-TR::Node *constrainSubtract(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainSubtract(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -6052,7 +6063,7 @@ TR::Node *constrainSubtract(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainImul(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainImul(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -6147,7 +6158,7 @@ TR::Node *constrainImul(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 
-TR::Node *constrainIumul(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIumul(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -6326,7 +6337,7 @@ bool can64BitMultiplyOverflow(uint64_t a, uint64_t b, bool isUnsigned)
     return can64BitSignedMultiplyOverflow((int64_t)a, (int64_t)b);
   }
 
-TR::Node *constrainLmul(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLmul(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -6501,7 +6512,7 @@ bool constrainIntegerDivisionRange(int64_t lhsLow, int64_t lhsHigh, int64_t rhsL
    return true;
    }
 
-TR::Node *cloneDivForDivideByZeroCheck(TR::ValuePropagation *vp, TR::Node *divNode)
+TR::Node *cloneDivForDivideByZeroCheck(OMR::ValuePropagation *vp, TR::Node *divNode)
    {
    TR::Node *divCopy = TR::Node::create(divNode, divNode->getOpCodeValue(), 2);
    divCopy->setAndIncChild(0, divNode->getFirstChild());
@@ -6520,7 +6531,7 @@ bool doesRangeContainZero(int64_t rangeMin, int64_t rangeMax)
       return false;
    }
 
-TR::Node *constrainIdiv(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIdiv(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -6600,7 +6611,7 @@ TR::Node *constrainIdiv(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLdiv(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLdiv(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -6770,7 +6781,7 @@ TR::Node *constrainLdiv(TR::ValuePropagation *vp, TR::Node *node)
    return returnNode;
    }
 
-TR::Node *removeRedundantREM(TR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *nodeConstraint, TR::VPConstraint *firstChildConstraint, TR::VPConstraint *secondChildConstraint)
+TR::Node *removeRedundantREM(OMR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *nodeConstraint, TR::VPConstraint *firstChildConstraint, TR::VPConstraint *secondChildConstraint)
    {
    if (!(node->getOpCode().isRem() && node->getType().isIntegral()))
       return NULL;
@@ -6822,7 +6833,7 @@ TR::Node *removeRedundantREM(TR::ValuePropagation *vp, TR::Node *node, TR::VPCon
    return NULL;
    }
 
-TR::Node *constrainIrem(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIrem(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -6884,7 +6895,7 @@ TR::Node *constrainIrem(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLrem(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLrem(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       {
@@ -6950,7 +6961,7 @@ TR::Node *constrainLrem(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainIneg(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIneg(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -7008,7 +7019,7 @@ TR::Node *constrainIneg(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLneg(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLneg(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -7074,7 +7085,7 @@ TR::Node *constrainLneg(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainIabs(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIabs(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -7138,7 +7149,7 @@ TR::Node *constrainIabs(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLabs(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLabs(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -7211,7 +7222,7 @@ TR::Node *constrainLabs(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 
-TR::Node *constrainIshl(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIshl(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -7235,7 +7246,7 @@ TR::Node *constrainIshl(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLshl(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLshl(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -7268,7 +7279,7 @@ TR::Node *constrainLshl(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-static TR::Node *distributeShift(TR::ValuePropagation *vp, TR::Node *node, int32_t shiftAmount,
+static TR::Node *distributeShift(OMR::ValuePropagation *vp, TR::Node *node, int32_t shiftAmount,
                                 TR::VPConstraint *&constraint)
    {
    //FIXME: temporarily disabled
@@ -7389,7 +7400,7 @@ static TR::Node *distributeShift(TR::ValuePropagation *vp, TR::Node *node, int32
    return replaceNode;
    }
 
-TR::Node *constrainIshr(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIshr(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -7458,7 +7469,7 @@ TR::Node *constrainIshr(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLshr(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLshr(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -7528,7 +7539,7 @@ TR::Node *constrainLshr(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainIushr(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIushr(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -7617,7 +7628,7 @@ TR::Node *constrainIushr(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLushr(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLushr(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -7684,7 +7695,7 @@ TR::Node *constrainLushr(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainIand(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIand(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -8032,7 +8043,7 @@ TR::Node *constrainIand(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLand(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLand(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -8106,7 +8117,7 @@ TR::Node *constrainLand(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainIor(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIor(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -8135,7 +8146,7 @@ TR::Node *constrainIor(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLor(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLor(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -8161,7 +8172,7 @@ TR::Node *constrainLor(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainIxor(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIxor(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -8205,7 +8216,7 @@ TR::Node *constrainIxor(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainLxor(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLxor(OMR::ValuePropagation *vp, TR::Node *node)
    {
    if (findConstant(vp, node))
       return node;
@@ -8231,7 +8242,7 @@ TR::Node *constrainLxor(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-static TR::Node *constrainWidenToLong(TR::ValuePropagation *vp, TR::Node *node, int64_t low, int64_t high, bool isUnsigned)
+static TR::Node *constrainWidenToLong(OMR::ValuePropagation *vp, TR::Node *node, int64_t low, int64_t high, bool isUnsigned)
    {
    if (findConstant(vp, node))
       return node;
@@ -8296,7 +8307,7 @@ static TR::Node *constrainWidenToLong(TR::ValuePropagation *vp, TR::Node *node, 
    return node;
    }
 
-TR::Node *constrainI2l(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainI2l(OMR::ValuePropagation *vp, TR::Node *node)
    {
 
    if (node->getFirstChild()->isNonNegative())
@@ -8305,12 +8316,12 @@ TR::Node *constrainI2l(TR::ValuePropagation *vp, TR::Node *node)
    return constrainWidenToLong(vp, node, TR::getMinSigned<TR::Int32>(), TR::getMaxSigned<TR::Int32>(), false);
    }
 
-TR::Node *constrainIu2l(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIu2l(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainWidenToLong(vp, node, TR::getMinUnsigned<TR::Int32>(), TR::getMaxUnsigned<TR::Int32>(), true);
    }
 
-void replaceWithSmallerType(TR::ValuePropagation *vp, TR::Node *node)
+void replaceWithSmallerType(OMR::ValuePropagation *vp, TR::Node *node)
    {
 #if 1
    return;  // not enabled yet
@@ -8397,7 +8408,7 @@ void replaceWithSmallerType(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 
-static TR::Node *constrainNarrowIntValue(TR::ValuePropagation *vp, TR::Node *node, int32_t low, int32_t high)
+static TR::Node *constrainNarrowIntValue(OMR::ValuePropagation *vp, TR::Node *node, int32_t low, int32_t high)
    {
    if (findConstant(vp, node))
       return node;
@@ -8464,17 +8475,17 @@ static TR::Node *constrainNarrowIntValue(TR::ValuePropagation *vp, TR::Node *nod
    return node;
    }
 
-TR::Node *constrainNarrowToByte(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainNarrowToByte(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainNarrowIntValue(vp, node, TR::getMinSigned<TR::Int8>(), TR::getMaxSigned<TR::Int8>());
    }
 
-TR::Node *constrainNarrowToShort(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainNarrowToShort(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainNarrowIntValue(vp, node, TR::getMinSigned<TR::Int16>(), TR::getMaxSigned<TR::Int16>());
    }
 
-TR::Node *constrainNarrowToChar(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainNarrowToChar(OMR::ValuePropagation *vp, TR::Node *node)
    {
    int32_t low = TR::getMinUnsigned<TR::Int16>();
    int32_t high = TR::getMaxUnsigned<TR::Int16>();
@@ -8554,13 +8565,13 @@ TR::Node *constrainNarrowToChar(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainNarrowToInt(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainNarrowToInt(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainNarrowIntValue(vp, node, TR::getMinSigned<TR::Int32>(), TR::getMaxSigned<TR::Int32>());
    }
 
 /*
-static int32_t findConstantValue(TR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint)
+static int32_t findConstantValue(OMR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint)
    {
    int32_t value = constraint->asIntConst()->getInt();
    int32_t high = 0;
@@ -8593,7 +8604,7 @@ static int32_t findConstantValue(TR::ValuePropagation *vp, TR::Node *node, TR::V
 */
 
 
-static bool constrainWidenToInt(TR::ValuePropagation *vp, TR::Node*& node, int32_t low, int32_t high, bool isUnsigned,
+static bool constrainWidenToInt(OMR::ValuePropagation *vp, TR::Node*& node, int32_t low, int32_t high, bool isUnsigned,
       TR::ILOpCodes correspondingNarrowingOpCode)
    {
 
@@ -8793,67 +8804,67 @@ static bool constrainWidenToInt(TR::ValuePropagation *vp, TR::Node*& node, int32
    return false;
    }
 
-TR::Node *constrainB2i(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainB2i(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainWidenToInt(vp, node, TR::getMinSigned<TR::Int8>(), TR::getMaxSigned<TR::Int8>(), false, TR::i2b);
    return node;
    }
 
-TR::Node *constrainB2s(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainB2s(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainWidenToInt(vp, node, TR::getMinSigned<TR::Int8>(), TR::getMaxSigned<TR::Int8>(), false, TR::s2b);
    return node;
    }
 
-TR::Node *constrainBu2i(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainBu2i(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainWidenToInt(vp, node, TR::getMinUnsigned<TR::Int8>(), TR::getMaxUnsigned<TR::Int8>(), true, TR::i2b);
    return node;
    }
 
-TR::Node *constrainBu2s(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainBu2s(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainWidenToInt(vp, node, TR::getMinUnsigned<TR::Int8>(), TR::getMaxUnsigned<TR::Int8>(), true, TR::s2b);
    return node;
    }
 
-TR::Node *constrainB2l(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainB2l(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainWidenToLong(vp, node, TR::getMinSigned<TR::Int8>(), TR::getMaxSigned<TR::Int8>(), false);
    return node;
    }
 
-TR::Node *constrainBu2l(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainBu2l(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainWidenToLong(vp, node, TR::getMinUnsigned<TR::Int8>(), TR::getMaxUnsigned<TR::Int8>(), true);
    return node;
    }
 
-TR::Node *constrainS2i(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainS2i(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainWidenToInt(vp, node, TR::getMinSigned<TR::Int16>(), TR::getMaxSigned<TR::Int16>(), false, TR::i2s);
    return node;
    }
 
-TR::Node *constrainSu2i(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainSu2i(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainWidenToInt(vp, node, TR::getMinUnsigned<TR::Int16>(), TR::getMaxUnsigned<TR::Int16>(), true, TR::i2s);
    return node;
    }
 
-TR::Node *constrainS2l(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainS2l(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainWidenToLong(vp, node, TR::getMinSigned<TR::Int16>(), TR::getMaxSigned<TR::Int16>(), false);
    return node;
    }
 
-TR::Node *constrainSu2l(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainSu2l(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainWidenToLong(vp, node, TR::getMinUnsigned<TR::Int16>(), TR::getMaxUnsigned<TR::Int16>(), true);
    return node;
    }
 
-static void changeConditionalToGoto(TR::ValuePropagation *vp, TR::Node *node, TR::CFGEdge *branchEdge)
+static void changeConditionalToGoto(OMR::ValuePropagation *vp, TR::Node *node, TR::CFGEdge *branchEdge)
    {
 #ifdef J9_PROJECT_SPECIFIC
    createGuardSiteForRemovedGuard(vp->comp(), node);
@@ -8881,7 +8892,7 @@ static void changeConditionalToGoto(TR::ValuePropagation *vp, TR::Node *node, TR
    vp->printEdgeConstraints(vp->createEdgeConstraints(edge, true));
    }
 
-static void removeConditionalBranch(TR::ValuePropagation *vp, TR::Node *node, TR::CFGEdge *branchEdge)
+static void removeConditionalBranch(OMR::ValuePropagation *vp, TR::Node *node, TR::CFGEdge *branchEdge)
    {
 #ifdef J9_PROJECT_SPECIFIC
    createGuardSiteForRemovedGuard(vp->comp(), node);
@@ -8908,7 +8919,7 @@ static void removeConditionalBranch(TR::ValuePropagation *vp, TR::Node *node, TR
 // check for compatibility between types
 //
 static TR::VPConstraint*
-genTypeResult(TR::ValuePropagation *vp, TR::VPConstraint *objectRefConstraint,
+genTypeResult(OMR::ValuePropagation *vp, TR::VPConstraint *objectRefConstraint,
                TR::VPConstraint *classConstraint, bool &applyType, bool isInstanceOf)
    {
    TR::VPConstraint *newConstraint = NULL;
@@ -9122,7 +9133,7 @@ static void addDelayedConvertedGuard (TR::Node* node,
                                        TR::Node* callNode,
                                        TR::ResolvedMethodSymbol* methodSymbol,
                                        TR_VirtualGuard* oldVirtualGuard,
-                                       TR::ValuePropagation* vp,
+                                       OMR::ValuePropagation* vp,
                                        TR_VirtualGuardKind guardKind,
                                        TR_OpaqueClassBlock* objectClass)
    {
@@ -9159,7 +9170,7 @@ static void addDelayedConvertedGuard (TR::Node* node,
    //do not add a new guard yet ... it will be added in doDelayedTransformation and we will fix the IL accordingly
    vp->comp()->removeVirtualGuard(newGuard);
    //finish the rest of a transformation in doDelayedTransformation
-   vp->_convertedGuards.add(new (vp->trStackMemory()) TR::ValuePropagation::VirtualGuardInfo(vp, oldVirtualGuard, newGuard, newGuardNode, callNode));
+   vp->_convertedGuards.add(new (vp->trStackMemory()) OMR::ValuePropagation::VirtualGuardInfo(vp, oldVirtualGuard, newGuard, newGuardNode, callNode));
 
    }
 
@@ -9188,7 +9199,7 @@ TR_ResolvedMethod * findSingleImplementer(
 
 // Handles ificmpeq, ificmpne, iflcmpeq, iflcmpne, ifacmpeq, ifacmpne
 //
-static TR::Node *constrainIfcmpeqne(TR::ValuePropagation *vp, TR::Node *node, bool branchOnEqual)
+static TR::Node *constrainIfcmpeqne(OMR::ValuePropagation *vp, TR::Node *node, bool branchOnEqual)
    {
    constrainChildren(vp, node);
 
@@ -9421,7 +9432,7 @@ static TR::Node *constrainIfcmpeqne(TR::ValuePropagation *vp, TR::Node *node, bo
                   {
                   char *clazzToBeInitializedCopy = (char *)vp->trMemory()->allocateMemory(clazzNameLen+1, heapAlloc);
                   strcpy(clazzToBeInitializedCopy, clazzToBeInitialized);
-                  vp->_classesToCheckInit.add(new (vp->trStackMemory()) TR::ValuePropagation::ClassInitInfo(vp, clazzToBeInitializedCopy, clazzNameLen));
+                  vp->_classesToCheckInit.add(new (vp->trStackMemory()) OMR::ValuePropagation::ClassInitInfo(vp, clazzToBeInitializedCopy, clazzNameLen));
                   }
                }
             }
@@ -9433,7 +9444,7 @@ static TR::Node *constrainIfcmpeqne(TR::ValuePropagation *vp, TR::Node *node, bo
    //
    if (vp->trace())
       traceMsg(vp->comp(), "   Conditional branch\n");
-   TR::ValuePropagation::EdgeConstraints *edgeConstraints = vp->createEdgeConstraints(edge, true);
+   OMR::ValuePropagation::EdgeConstraints *edgeConstraints = vp->createEdgeConstraints(edge, true);
 
    // Find constraints to apply to the not-equal edge
    //
@@ -10209,19 +10220,19 @@ static TR::Node *constrainIfcmpeqne(TR::ValuePropagation *vp, TR::Node *node, bo
    return node;
    }
 
-TR::Node *constrainIfcmpeq(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIfcmpeq(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainIfcmpeqne(vp, node, true);
    }
 
-TR::Node *constrainIfcmpne(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIfcmpne(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainIfcmpeqne(vp, node, false);
    }
 
 
 
-void getLimits(TR::ValuePropagation *vp, int32_t *zLow, int32_t *zHigh, TR::Node *symNode, bool isGlobal)
+void getLimits(OMR::ValuePropagation *vp, int32_t *zLow, int32_t *zHigh, TR::Node *symNode, bool isGlobal)
    {
          TR::VPConstraint *zConstraint = vp->getConstraint(symNode, isGlobal);
 
@@ -10239,7 +10250,7 @@ void getLimits(TR::ValuePropagation *vp, int32_t *zLow, int32_t *zHigh, TR::Node
             }
    }
 
-void getLimits(TR::ValuePropagation *vp, int64_t *zLow, int64_t *zHigh, TR::Node *symNode, bool isGlobal)
+void getLimits(OMR::ValuePropagation *vp, int64_t *zLow, int64_t *zHigh, TR::Node *symNode, bool isGlobal)
    {
          TR::VPConstraint *zConstraint = vp->getConstraint(symNode, isGlobal);
 
@@ -10279,14 +10290,14 @@ void getExtremes(int64_t *lowEnd, int64_t *highEnd)
       *highEnd = TR::getMaxSigned<TR::Int64>();
    }
 
-TR::Node *makeNewRhsNode(TR::ValuePropagation *vp, TR::Node *node, TR::Node *symNodeY, int32_t constDiff)
+TR::Node *makeNewRhsNode(OMR::ValuePropagation *vp, TR::Node *node, TR::Node *symNodeY, int32_t constDiff)
    {
       TR::Node *newBaNode = TR::Node::create(node, TR::iconst, 0, constDiff);
       TR::Node *newRhsNode = TR::Node::create(TR::isub, 2, symNodeY, newBaNode);
       return newRhsNode;
    }
 
-TR::Node *makeNewRhsNode(TR::ValuePropagation *vp, TR::Node *node, TR::Node *symNodeY, int64_t constDiff)
+TR::Node *makeNewRhsNode(OMR::ValuePropagation *vp, TR::Node *node, TR::Node *symNodeY, int64_t constDiff)
    {
       TR::Node *newBaNode = TR::Node::create(node, TR::lconst, 0, 0);
       newBaNode->setLongInt(constDiff);
@@ -10298,7 +10309,7 @@ TR::Node *makeNewRhsNode(TR::ValuePropagation *vp, TR::Node *node, TR::Node *sym
 // Decide and execute simplification:  x + a < y + b  changes into  x < y + (b - a) .
 //
 template <class IntType>
-static TR::Node *simplifyInequality(TR::ValuePropagation *vp, TR::Node *node, TR::Node *lhsChild, TR::Node *rhsChild, bool isGlobal, bool childrenReversed)
+static TR::Node *simplifyInequality(OMR::ValuePropagation *vp, TR::Node *node, TR::Node *lhsChild, TR::Node *rhsChild, bool isGlobal, bool childrenReversed)
    {
 
    // Pattern match * + a, * + b
@@ -10408,7 +10419,7 @@ static int64_t clippedDifference(int64_t left, int64_t right)
 
 // Handles ificmplt, ificmple, ificmpgt, ificmpge
 //
-static TR::Node *constrainIfcmplessthan(TR::ValuePropagation *vp, TR::Node *node, TR::Node *lhsChild, TR::Node *rhsChild, bool orEqual)
+static TR::Node *constrainIfcmplessthan(OMR::ValuePropagation *vp, TR::Node *node, TR::Node *lhsChild, TR::Node *rhsChild, bool orEqual)
    {
    bool isUnsigned = node->getOpCode().isUnsignedCompare();
 
@@ -10622,7 +10633,7 @@ static TR::Node *constrainIfcmplessthan(TR::ValuePropagation *vp, TR::Node *node
    //
    if (vp->trace())
       traceMsg(vp->comp(), "   Conditional branch\n");
-   TR::ValuePropagation::EdgeConstraints *edgeConstraints = vp->createEdgeConstraints(edge, true);
+   OMR::ValuePropagation::EdgeConstraints *edgeConstraints = vp->createEdgeConstraints(edge, true);
 
    // Find extra constraints to apply to the two edges
    //
@@ -10841,27 +10852,27 @@ static TR::Node *constrainIfcmplessthan(TR::ValuePropagation *vp, TR::Node *node
    return node;
    }
 
-TR::Node *constrainIfcmplt(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIfcmplt(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainIfcmplessthan(vp, node, node->getFirstChild(), node->getSecondChild(), false);
    }
 
-TR::Node *constrainIfcmple(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIfcmple(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainIfcmplessthan(vp, node, node->getFirstChild(), node->getSecondChild(), true);
    }
 
-TR::Node *constrainIfcmpgt(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIfcmpgt(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainIfcmplessthan(vp, node, node->getSecondChild(), node->getFirstChild(), false);
    }
 
-TR::Node *constrainIfcmpge(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIfcmpge(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainIfcmplessthan(vp, node, node->getSecondChild(), node->getFirstChild(), true);
    }
 
-TR::Node *constrainCondBranch(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCondBranch(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // TODO - handle the special cases for conditional branches:
    //    integer compares, long compares, ref compares
@@ -10885,7 +10896,7 @@ TR::Node *constrainCondBranch(TR::ValuePropagation *vp, TR::Node *node)
 
 // Handles icmpeq, icmpne, lcmpeq, lcmpne, acmpeq, acmpne
 //
-static TR::Node *constrainCmpeqne(TR::ValuePropagation *vp, TR::Node *node, bool testEqual)
+static TR::Node *constrainCmpeqne(OMR::ValuePropagation *vp, TR::Node *node, bool testEqual)
    {
    constrainChildren(vp, node);
 
@@ -11026,19 +11037,19 @@ static TR::Node *constrainCmpeqne(TR::ValuePropagation *vp, TR::Node *node, bool
    return node;
    }
 
-TR::Node *constrainCmpeq(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCmpeq(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainCmpeqne(vp, node, true);
    }
 
-TR::Node *constrainCmpne(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCmpne(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainCmpeqne(vp, node, false);
    }
 
 // Handles icmplt, icmple, icmpgt, icmpge
 //
-static TR::Node *constrainCmplessthan(TR::ValuePropagation *vp, TR::Node *node, TR::Node *lhsChild, TR::Node *rhsChild, bool orEqual)
+static TR::Node *constrainCmplessthan(OMR::ValuePropagation *vp, TR::Node *node, TR::Node *lhsChild, TR::Node *rhsChild, bool orEqual)
    {
    TR_ASSERT(!node->getOpCode().isUnsignedCompare(), "This code doesn't handle logical comparisons, but it should be easy to fix it.");
 
@@ -11112,40 +11123,40 @@ static TR::Node *constrainCmplessthan(TR::ValuePropagation *vp, TR::Node *node, 
    return node;
    }
 
-TR::Node *constrainCmplt(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCmplt(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainCmplessthan(vp, node, node->getFirstChild(), node->getSecondChild(), false);
    }
 
-TR::Node *constrainCmple(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCmple(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainCmplessthan(vp, node, node->getFirstChild(), node->getSecondChild(), true);
    }
 
-TR::Node *constrainCmpgt(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCmpgt(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainCmplessthan(vp, node, node->getSecondChild(), node->getFirstChild(), false);
    }
 
-TR::Node *constrainCmpge(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCmpge(OMR::ValuePropagation *vp, TR::Node *node)
    {
    return constrainCmplessthan(vp, node, node->getSecondChild(), node->getFirstChild(), true);
    }
 
-TR::Node *constrainCmp(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCmp(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
    vp->addGlobalConstraint(node, TR::VPIntRange::create(vp, 0, 1));
    return node;
    }
 
-TR::Node *constrainFloatCmp(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainFloatCmp(OMR::ValuePropagation *vp, TR::Node *node)
    {
    vp->addGlobalConstraint(node, TR::VPIntRange::create(vp, -1, 1));
    return node;
    }
 
-TR::Node *constrainSwitch(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainSwitch(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // Process the switch expression before the switch cases
    //
@@ -11288,7 +11299,7 @@ TR::Node *constrainSwitch(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainCase(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainCase(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // Put the current list of block constraints on to the edge
    //
@@ -11305,7 +11316,7 @@ TR::Node *constrainCase(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 static void constrainClassObjectLoadaddr(
-   TR::ValuePropagation *vp,
+   OMR::ValuePropagation *vp,
    TR::Node *node,
    bool isGlobal)
    {
@@ -11333,7 +11344,7 @@ static void constrainClassObjectLoadaddr(
    vp->addBlockOrGlobalConstraint(node, constraint, isGlobal);
    }
 
-TR::Node *constrainLoadaddr(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainLoadaddr(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // If this is loading the address of a class object or the address of a
    // pointer to a class object, the type is the class.
@@ -11406,7 +11417,7 @@ TR::Node *constrainLoadaddr(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-void constrainNewlyFoldedConst(TR::ValuePropagation *vp, TR::Node *node, bool isGlobal)
+void constrainNewlyFoldedConst(OMR::ValuePropagation *vp, TR::Node *node, bool isGlobal)
    {
    switch (node->getOpCodeValue())
       {
@@ -11445,7 +11456,7 @@ void constrainNewlyFoldedConst(TR::ValuePropagation *vp, TR::Node *node, bool is
 // Return 2 if the null check must be taken.
 // Return 0 if the null check may or may not be taken.
 //
-static int32_t handleNullCheck(TR::ValuePropagation *vp, TR::Node *node, bool resolveChkToo)
+static int32_t handleNullCheck(OMR::ValuePropagation *vp, TR::Node *node, bool resolveChkToo)
    {
    // Find the child containing the reference to be null checked. This is not
    // necessarily the direct child of this node.
@@ -11512,7 +11523,7 @@ static int32_t handleNullCheck(TR::ValuePropagation *vp, TR::Node *node, bool re
 // TR::ResolveAndNULLCHK).
 // Return true if the resolve check can be removed.
 //
-static bool handleResolveCheck(TR::ValuePropagation *vp, TR::Node *node, bool nullChkToo)
+static bool handleResolveCheck(OMR::ValuePropagation *vp, TR::Node *node, bool nullChkToo)
    {
    // Process all children of this node's child. If an exception is going to be
    // raised it will be after these children have been evaluated but before the
@@ -11539,7 +11550,7 @@ static bool handleResolveCheck(TR::ValuePropagation *vp, TR::Node *node, bool nu
    // See if the constraint for this unresolved symbol exists. If it does, it
    // means that there has been a resolve check on all paths to this point.
    //
-   TR::ValuePropagation::Relationship *rel = vp->findConstraint(index);
+   OMR::ValuePropagation::Relationship *rel = vp->findConstraint(index);
    if (rel)
       {
       //
@@ -11581,14 +11592,14 @@ static bool handleResolveCheck(TR::ValuePropagation *vp, TR::Node *node, bool nu
    return false;
    }
 
-TR::Node *constrainAsm(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainAsm(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
    vp->createExceptionEdgeConstraints(TR::Block::CanCatchUserThrows, NULL, node);
    return node;
    }
 
-TR::Node *constrainNullChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainNullChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // Process the reference child and see if the null check can be removed
    //
@@ -11633,7 +11644,7 @@ TR::Node *constrainNullChk(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainZeroChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainZeroChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
    TR::Node *child = node->getFirstChild();
@@ -11672,7 +11683,7 @@ TR::Node *constrainZeroChk(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainResolveChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainResolveChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // See if the resolve check can be eliminated
    //
@@ -11736,7 +11747,7 @@ TR::Node *constrainResolveChk(TR::ValuePropagation *vp, TR::Node *node)
 
    // storage access here, sync region ends
    // memory barrier required at next critical region
-   TR::ValuePropagation::Relationship *syncRel = vp->findConstraint(vp->_syncValueNumber);
+   OMR::ValuePropagation::Relationship *syncRel = vp->findConstraint(vp->_syncValueNumber);
    TR::VPSync *sync = NULL;
    if (!removeTheCheck && syncRel && syncRel->constraint)
       sync = syncRel->constraint->asVPSync();
@@ -11764,7 +11775,7 @@ TR::Node *constrainResolveChk(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainResolveNullChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainResolveNullChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // See if the resolve check can be eliminated
    //
@@ -11815,19 +11826,19 @@ TR::Node *constrainResolveNullChk(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainOverflowChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainOverflowChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp,node);
    return node;
    }
 
-TR::Node *constrainUnsignedOverflowChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainUnsignedOverflowChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp,node);
    return node; 
    }
 
-TR::Node *constrainDivChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainDivChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -11937,7 +11948,7 @@ TR::Node *constrainDivChk(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 
-TR::Node *constrainTRT(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainTRT(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
    vp->createExceptionEdgeConstraints(TR::Block::CanCatchBoundCheck, NULL, node);
@@ -11945,7 +11956,7 @@ TR::Node *constrainTRT(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 
-TR::Node *constrainBndChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainBndChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -12075,7 +12086,7 @@ TR::Node *constrainBndChk(TR::ValuePropagation *vp, TR::Node *node)
    }
 
 
-TR::Node *constrainBndChkWithSpineChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainBndChkWithSpineChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -12439,7 +12450,7 @@ TR::Node *constrainBndChkWithSpineChk(TR::ValuePropagation *vp, TR::Node *node)
 
 
 
-TR::Node *constrainArrayCopyBndChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainArrayCopyBndChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -12535,7 +12546,7 @@ TR::Node *constrainArrayCopyBndChk(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainArrayStoreChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainArrayStoreChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -12687,7 +12698,7 @@ TR::Node *constrainArrayStoreChk(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainArrayChk(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainArrayChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -12752,7 +12763,7 @@ TR::Node *constrainArrayChk(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainArraycopy(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainArraycopy(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp, node);
 
@@ -12830,9 +12841,9 @@ TR::Node *constrainArraycopy(TR::ValuePropagation *vp, TR::Node *node)
 
    if (node->getNumChildren() == 3)
       {
-      ListIterator<TR::ValuePropagation::TR_TreeTopNodePair> treesIt1(&vp->_scalarizedArrayCopies);
+      ListIterator<OMR::ValuePropagation::TR_TreeTopNodePair> treesIt1(&vp->_scalarizedArrayCopies);
       bool alreadyAdded = false;
-      TR::ValuePropagation::TR_TreeTopNodePair *scalarizedArrayCopy;
+      OMR::ValuePropagation::TR_TreeTopNodePair *scalarizedArrayCopy;
       for (scalarizedArrayCopy = treesIt1.getFirst();
            scalarizedArrayCopy; scalarizedArrayCopy = treesIt1.getNext())
          {
@@ -12844,7 +12855,7 @@ TR::Node *constrainArraycopy(TR::ValuePropagation *vp, TR::Node *node)
          }
 
       if (!alreadyAdded)
-         vp->_scalarizedArrayCopies.add(new (vp->comp()->trStackMemory()) TR::ValuePropagation::TR_TreeTopNodePair(vp->_curTree, node));
+         vp->_scalarizedArrayCopies.add(new (vp->comp()->trStackMemory()) OMR::ValuePropagation::TR_TreeTopNodePair(vp->_curTree, node));
       }
    else
       {
@@ -12854,7 +12865,7 @@ TR::Node *constrainArraycopy(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainIntegralToBCD(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainIntegralToBCD(OMR::ValuePropagation *vp, TR::Node *node)
    {
 #ifdef J9_PROJECT_SPECIFIC
    constrainChildren(vp, node);
@@ -12886,7 +12897,7 @@ TR::Node *constrainIntegralToBCD(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainBCDToIntegral(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainBCDToIntegral(OMR::ValuePropagation *vp, TR::Node *node)
    {
 #ifdef J9_PROJECT_SPECIFIC
    constrainChildren(vp, node);

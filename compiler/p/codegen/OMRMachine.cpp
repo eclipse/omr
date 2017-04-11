@@ -29,6 +29,7 @@
 #include "codegen/Linkage.hpp"                 // for Linkage
 #include "codegen/LiveRegister.hpp"            // for TR_LiveRegisters
 #include "codegen/Machine.hpp"                 // for MachineBase, Machine, etc
+#include "codegen/Machine_inlines.hpp"
 #include "codegen/MemoryReference.hpp"         // for MemoryReference
 #include "codegen/RealRegister.hpp"            // for RealRegister, etc
 #include "codegen/Register.hpp"                // for Register
@@ -54,6 +55,7 @@
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCOpsDefines.hpp"         // for Op_load, Op_st
 #include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "env/IO.hpp"                          // for PRINTF_POINTER_FORMAT
 
 namespace TR { class AutomaticSymbol; }
 
@@ -69,6 +71,25 @@ static void registerCopy(TR::Instruction *precedingI,
                                         TR::RealRegister *sReg,
                                         TR::CodeGenerator   *cg);
 
+static int32_t spillSizeForRegister(TR::Register *virtReg)
+   {
+   switch (virtReg->getKind())
+      {
+      case TR_GPR:
+         return TR::Compiler->om.sizeofReferenceAddress();
+      case TR_FPR:
+         return virtReg->isSinglePrecision() ? 4 : 8;
+      case TR_VSX_SCALAR:
+         return 8;
+      case TR_CCR:
+         return 4;
+      case TR_VSX_VECTOR:
+      case TR_VRF:
+         return 16;
+      }
+   TR_ASSERT(false, "Unexpected register kind");
+   return 0;
+   }
 
 static const char *
 getRegisterName(TR::Register * reg, TR::CodeGenerator * cg)
@@ -915,26 +936,7 @@ TR::RealRegister *OMR::Power::Machine::reverseSpillState(TR::Instruction      *c
    tmemref = new (self()->cg()->trHeapMemory()) TR::MemoryReference(currentNode, location->getSymbolReference(), TR::Compiler->om.sizeofReferenceAddress(), self()->cg());
    TR::Instruction *spillInstr = NULL;
 
-   int32_t dataSize = 0;
-   switch (rk)
-      {
-      case TR_GPR:
-         dataSize = TR::Compiler->om.sizeofReferenceAddress();
-         break;
-      case TR_FPR:
-         dataSize = spilledRegister->isSinglePrecision()? 4:8;
-         break;
-      case TR_VSX_SCALAR:
-         dataSize = 8;
-         break;
-      case TR_CCR:
-         dataSize = 4;
-         break;
-      case TR_VSX_VECTOR:
-      case TR_VRF:
-         dataSize = 16;
-         break;
-      }
+   int32_t dataSize = spillSizeForRegister(spilledRegister);
 
    if (comp->getOption(TR_DisableOOL))
       {
@@ -1971,9 +1973,41 @@ OMR::Power::Machine::restoreRegisterStateFromSnapShot()
       }
    }
 
+/**
+ * \brief
+ * Decrements the future use count of the given virtual register and unlatches it, if necessary.
+ *
+ * \param[in] virtualRegister The virtual register to act on.
+ *
+ * \details
+ * This method decrements the future use count of the given virtual register. If register
+ * assignment is currently stepping through an out of line code section it also decrements
+ * the out of line use count. If the future use count has reached 0, or if register assignment
+ * is currently stepping through the 'hot path' of a corresponding out of line code section
+ * and the future use count is equal to the out of line use count (indicating that there are
+ * no further uses of this virtual register in any non-OOL path) it will unlatch the register.
+ * (If the register has any OOL uses remaining it will be restored to its previous assignment
+ * elsewhere.)
+ *
+ * If the register's future use count has reaached 0 and it has a backing storage location
+ * and register assignment is currently stepping through an out of line code section (where
+ * we expect the free spill list to be locked) the backing storage location will be freed by
+ * momentarily unlocking the free spill list.
+ *
+ * Typically we will free the backing storage of a spilled register once we unspill and
+ * assign it, however we sometimes have reason to suppress this behavior for out of line
+ * register assignment (where we lock the free spill list). However, if a register's last use
+ * is in an out of line code section this will be the only opportunity we have to free its
+ * backing storage. This is safe because we can be reasonably sure that dead registers have
+ * no further need for their backing storage.
+ */
 void
 OMR::Power::Machine::decFutureUseCountAndUnlatch(TR::Register *virtualRegister)
    {
+   TR::CodeGenerator *cg = self()->cg();
+   TR::Compilation   *comp = cg->comp();
+   bool               trace = comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates);
+
    virtualRegister->decFutureUseCount();
    if (self()->cg()->isOutOfLineColdPath())
       virtualRegister->decOutOfLineUseCount();
@@ -1993,14 +2027,77 @@ OMR::Power::Machine::decFutureUseCountAndUnlatch(TR::Register *virtualRegister)
       {
       if (virtualRegister->getFutureUseCount() != 0)
          {
-         TR::Compilation *comp = self()->cg()->comp();
-         if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+         if (trace)
             {
             traceMsg(comp,"\nOOL: %s's remaining uses are out-of-line, unlatching\n", self()->cg()->getDebug()->getName(virtualRegister));
             }
          }
       virtualRegister->getAssignedRealRegister()->setState(TR::RealRegister::Unlatched);
       virtualRegister->setAssignedRegister(NULL);
+      }
+
+   // If this register is dead and we're assigning on an out of line path
+   // we need to free its backing store, if any, otherwise we will not have
+   // any future opportunity to do so and the backing store will never be re-used.
+   TR_BackingStore *location = virtualRegister->getBackingStorage();
+   if (virtualRegister->getFutureUseCount() == 0 && location != NULL && self()->cg()->isOutOfLineColdPath())
+      {
+      TR_ASSERT(cg->isFreeSpillListLocked(), "Expecting the free spill list to be locked on this path");
+      int32_t size = spillSizeForRegister(virtualRegister);
+      if (trace)
+         traceMsg(comp, "\nFreeing backing storage " POINTER_PRINTF_FORMAT " of size %u from dead virtual %s\n", location, size, cg->getDebug()->getName(virtualRegister));
+      cg->unlockFreeSpillList();
+      cg->freeSpill(location, size, 0);
+      virtualRegister->setBackingStorage(NULL);
+      location->setMaxSpillDepth(0);
+      cg->lockFreeSpillList();
+      }
+   }
+
+/**
+ * \brief
+ * For every currently assigned register, frees its backing storage, if any.
+ *
+ * \details
+ * This method iterates through the physical register file and, for every register in
+ * the assigned state, insures that if the assigned virtual register has a backing
+ * storage location (a.k.a. a spill slot) that it is properly freed.
+ *
+ * Typically we will free the backing storage of a spilled register once we unspill and
+ * assign it, however we sometimes have reason to suppress this behavior for out of line
+ * register assignment (where we lock the free spill list). This routine is intended to be
+ * called once we complete out of line register assignment and can safely free the spill
+ * slot of any currently assigned register.
+ */
+void
+OMR::Power::Machine::disassociateUnspilledBackingStorage()
+   {
+   TR::CodeGenerator *cg = self()->cg();
+   TR::Compilation   *comp = cg->comp();
+   bool               trace = comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates);
+
+   TR_ASSERT(!cg->isOutOfLineHotPath() && !cg->isOutOfLineColdPath(), "Should only be called once register assigner is out of OOL control flow region");
+   TR_ASSERT(!cg->isFreeSpillListLocked(), "Should only be called once the free spill list is unlocked");
+
+   for (int32_t i = TR::RealRegister::FirstGPR; i < TR::RealRegister::NumRegisters - 1; i++) // Skipping SpilledReg
+      {
+      if (i == TR::RealRegister::mq || i == TR::RealRegister::ctr)
+         continue;
+      if (_registerFile[i]->getState() == TR::RealRegister::Assigned)
+         {
+         TR::Register    *virtReg = _registerFile[i]->getAssignedRegister();
+         TR_BackingStore *location = virtReg->getBackingStorage();
+
+         if (location != NULL)
+            {
+            int32_t size = spillSizeForRegister(virtReg);
+            if (trace)
+               traceMsg(comp, "\nDisassociating backing storage " POINTER_PRINTF_FORMAT " of size %u from assigned virtual %s\n", location, size, cg->getDebug()->getName(virtReg));
+            cg->freeSpill(location, size, 0);
+            virtReg->setBackingStorage(NULL);
+            location->setMaxSpillDepth(0);
+            }
+         }
       }
    }
 

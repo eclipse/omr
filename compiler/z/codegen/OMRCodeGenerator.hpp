@@ -329,10 +329,12 @@ public:
    TR_BranchPreloadCallData _outlineCall;
    TR_BranchPreloadCallData _outlineArrayCall;
 
-   // TODO (GuardedStorage)
-   bool _evalCompressionSequence;
-   void setEvalCompressionSequence(bool val);
-   bool isEvalCompressionSequence();
+   // TODO (GuardedStorage): This needs to be revisited. We need to avoid lowering compressedrefs trees if concurrent
+   // scavenge is enabled, rather than trying to pattern match and avoid evaluating them
+   int32_t _evaluatingCompressionSequenceCounter;
+   void incEvaluatingCompressionSequence();
+   void decEvaluatingCompressionSequence();
+   bool isEvaluatingCompressionSequence();
 
    TR::list<TR_BranchPreloadCallData*> *_callsForPreloadList;
 
@@ -342,6 +344,20 @@ public:
    void insertInstructionPrefetches();
    void insertInstructionPrefetchesForCalls(TR_BranchPreloadCallData * data);
    bool hasWarmCallsBeforeReturn();
+
+   /**
+    * \brief Tells the optimzers and codegen whether a load constant node should be rematerialized.
+    *
+    * \details Large constants should be materialized (constant node should be commoned up)
+    * because loading them as immediate values is expensive.
+    *
+    * A constant is large if it's outside of the range specified by the largest negative
+    * const and smallest positive const. And the ranges are hardware platform dependent.
+    */
+   bool materializesLargeConstants() { return true; }
+   bool shouldValueBeInACommonedNode(int64_t value);
+   int64_t getLargestNegConstThatMustBeMaterialized() {return ((-1ll) << 31) - 1;}   // min 32bit signed integer minus 1
+   int64_t getSmallestPosConstThatMustBeMaterialized() {return ((int64_t)0x000000007FFFFFFF) + 1;}   // max 32bit signed integer plus 1
 
    void setNodeAddressOfCachedStaticTree(TR::Node *n) { _nodeAddressOfCachedStatic=n; }
    TR::Node *getNodeAddressOfCachedStatic() { return _nodeAddressOfCachedStatic; }
@@ -416,6 +432,15 @@ public:
    void StopUsingEscapedMemRefsRegisters(int32_t topOfMemRefStackBeforeEvaluation);
 
    bool supportsMergingOfHCRGuards();
+
+   /** \brief
+    *     Determines whether concurrent scavenge of objects during garbage collection is enabled.
+    *
+    *  \return
+    *     true if the code generator will emit read barriers for loads of object references from the heap in support
+    *     of concurrent scavenge; false otherwise.
+    */
+   bool isConcurrentScavengeEnabled();
 
    bool supportsDirectJNICallsForAOT() { return true;}
 
@@ -600,11 +625,6 @@ public:
    int64_t getAvailableHPRSpillMask()           {return _availableHPRSpillMask;}
    int32_t getPreprologueOffset()               { return _preprologueOffset; }
    int32_t setPreprologueOffset(int32_t offset) { return _preprologueOffset = offset; }
-
-   // Flags to VETO all other policies wrt locked regs
-   //
-   bool getLitPoolRegisterIsFree()         {return _cgFlags.testAny(S390CG_litPoolRegisterIsFree);}
-   void setLitPoolRegisterIsFree(bool val) {_cgFlags.set(S390CG_litPoolRegisterIsFree, val);}
 
    bool supportsBranchPreload()          {return _cgFlags.testAny(S390CG_enableBranchPreload);}
    void setEnableBranchPreload()          {_cgFlags.set(S390CG_enableBranchPreload);}
@@ -1213,7 +1233,7 @@ protected:
    /** Miscellaneous S390CG boolean flags. */
    typedef enum
       {
-      S390CG_litPoolRegisterIsFree       = 0x00000001,
+      // Available                       = 0x00000001,
       S390CG_extCodeBaseRegisterIsFree   = 0x00000002,
       S390CG_doingInstructionSelection   = 0x00000004,
       S390CG_addStorageReferenceHints    = 0x00000008,

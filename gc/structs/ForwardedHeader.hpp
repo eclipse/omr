@@ -32,6 +32,8 @@
 #error "MutableHeaderFields requires sizeof(fomrobject_t) == sizeof(j9objectclass_t)"
 #endif /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) != defined(OMR_GC_COMPRESSED_POINTERS) */
 
+#define OMR_FORWARDED_TAG 4
+
 /**
  * Scavenger forwarding header is used to distinguish objects in evacuate space that are being/have been
  * copied into survivor space. Client classes provide an uintptr_t-aligned offset from the head of the
@@ -68,8 +70,10 @@ private:
 	omrobjectptr_t _objectPtr;					/**< the object on which to act */
 	MutableHeaderFields _preserved; 			/**< a backup copy of the header fields which may be modified by this class */
 	const uintptr_t _forwardingSlotOffset;		/**< fomrobject_t offset from _objectPtr to fomrobject_t slot that will hold the forwarding pointer */
-	static const uintptr_t _forwardedTag = 4;	/**< bit mask used to mark forwarding slot value as forwarding pointer */
-
+	static const uintptr_t _forwardedTag = OMR_FORWARDED_TAG;	/**< bit mask used to mark forwarding slot value as forwarding pointer */
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	static const uintptr_t _selfForwardedTag = _forwardedTag | J9_GC_MULTI_SLOT_HOLE;	
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 /*
  * Function members
  */
@@ -96,10 +100,10 @@ public:
 	omrobjectptr_t setForwardedObject(omrobjectptr_t destinationObjectPtr);
 
 	/**
-	 * Return the forwarded version of the object, or NULL if the object has not been forwarded.
+	 * Return the (strictly) forwarded version of the object, or NULL if the object has not been (strictly) forwarded.
 	 */
 	omrobjectptr_t getForwardedObject();
-
+	
 	/**
 	 * @return the object pointer represented by the receiver
 	 */
@@ -119,6 +123,34 @@ public:
 	{
 		return _forwardedTag == ((uintptr_t)_preserved.slot & _forwardedTag);
 	}
+	
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	/**
+	 * If object is forwarded (isForwardedPointer() returns true) the object can be either
+	 * - strictly forwarded (to a remote object, with explicit forwarding pointer)
+	 * - self-forwarded (pointing to itself, implicitly just by notion of a special self-forwarding bit in the header .
+	 */
+	MMINLINE bool
+	isSelfForwardedPointer()
+	{
+		return _selfForwardedTag == ((uintptr_t)_preserved.slot & _selfForwardedTag);
+	}
+	
+	MMINLINE bool
+	isStrictlyForwardedPointer()
+	{
+		return _forwardedTag == ((uintptr_t)_preserved.slot & _selfForwardedTag);
+	}
+
+	/**
+	 * Get either strict or non-strict forwarded version of the object, or NULL if object is not forwarded at all.
+	 */
+	omrobjectptr_t getNonStrictForwardedObject();
+	
+	omrobjectptr_t setSelfForwardedObject();
+	
+	void restoreSelfForwardedPointer();
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 	/**
 	 * This method will assert if the object has been forwarded. Use isForwardedPointer() to test before calling.

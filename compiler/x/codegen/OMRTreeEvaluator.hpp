@@ -230,6 +230,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *compressStringEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod);
    static TR::Register *compressStringNoCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod);
    static TR::Register *andORStringEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ibyteswapEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *PrefetchEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *BBStartEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *BBEndEvaluator(TR::Node *node, TR::CodeGenerator *cg);

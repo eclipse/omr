@@ -29,7 +29,6 @@
 #include "AllocateDescription.hpp"
 #include "Collector.hpp"
 #include "ConcurrentGCStats.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "GCExtensionsBase.hpp"
 #include "GlobalAllocationManager.hpp"
 #include "Heap.hpp"
@@ -119,7 +118,7 @@ MM_EnvironmentBase::initialize(MM_GCExtensionsBase *extensions)
 	}
 #endif /* OMR_GC_SEGREGATED_HEAP */
 
-	return true;
+	return _delegate.initialize(this);
 }
 
 void
@@ -151,11 +150,6 @@ MM_EnvironmentBase::tearDown(MM_GCExtensionsBase *extensions)
 	_hotFieldStats.tearDown(this);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC) */
 
-	if(NULL != _envLanguageInterface) {
-		_envLanguageInterface->kill(this);
-		_envLanguageInterface = NULL;
-	}
-
 	if(NULL != _objectAllocationInterface) {
 		_objectAllocationInterface->kill(this);
 		_objectAllocationInterface = NULL;
@@ -173,6 +167,8 @@ MM_EnvironmentBase::tearDown(MM_GCExtensionsBase *extensions)
 	if (NULL != extensions->globalAllocationManager) {
 		extensions->globalAllocationManager->releaseAllocationContext(this);
 	}
+
+	_delegate.tearDown();
 }
 
 /**
@@ -331,13 +327,13 @@ MM_EnvironmentBase::allocationFailureEndReportIfRequired(MM_AllocateDescription 
 void
 MM_EnvironmentBase::acquireVMAccess()
 {
-	_envLanguageInterface->acquireVMAccess();
+	_delegate.acquireVMAccess();
 }
 
 void
 MM_EnvironmentBase::releaseVMAccess()
 {
-	_envLanguageInterface->releaseVMAccess();
+	_delegate.releaseVMAccess();
 }
 
 bool
@@ -345,7 +341,7 @@ MM_EnvironmentBase::tryAcquireExclusiveVMAccess()
 {
 	if (0 == _exclusiveCount) {
 		/* Check if we won the exclusive access race..return if we lost */
-		if (!_envLanguageInterface->tryAcquireExclusiveVMAccess()) {
+		if (!_delegate.tryAcquireExclusiveVMAccess()) {
 			return false;
 		}
 		/* Report exclusive access time if we won race */
@@ -360,7 +356,7 @@ void
 MM_EnvironmentBase::acquireExclusiveVMAccess()
 {
 	if (0 == _exclusiveCount) {
-		_envLanguageInterface->acquireExclusiveVMAccess();
+		_delegate.acquireExclusiveVMAccess();
 		reportExclusiveAccessAcquire();
 	}
 	_exclusiveCount += 1;
@@ -372,14 +368,14 @@ MM_EnvironmentBase::releaseExclusiveVMAccess()
 	_exclusiveCount -= 1;
 	if (0 == _exclusiveCount) {
 		reportExclusiveAccessRelease();
-		_envLanguageInterface->releaseExclusiveVMAccess();
+		_delegate.releaseExclusiveVMAccess();
 	}
 }
 
 bool
 MM_EnvironmentBase::isExclusiveAccessRequestWaiting()
 {
-	return _envLanguageInterface->isExclusiveAccessRequestWaiting();
+	return _delegate.isExclusiveAccessRequestWaiting();
 }
 
 bool
@@ -407,9 +403,7 @@ MM_EnvironmentBase::acquireExclusiveVMAccessForGC(MM_Collector *collector)
 			 * proceed and wait for it to complete */
 			Assert_MM_true(NULL != extensions->gcExclusiveAccessThreadId);
 
-			_envLanguageInterface->exclusiveAccessForGCBeatenByOtherThread();
-
-			_envLanguageInterface->releaseVMAccess();
+			_delegate.releaseVMAccess(true);
 
 			/* there is a chance the GC will already have executed at this
 			 * point or other threads will re-win and re-execute.  loop until
@@ -424,8 +418,7 @@ MM_EnvironmentBase::acquireExclusiveVMAccessForGC(MM_Collector *collector)
 
 			omrthread_monitor_exit(extensions->gcExclusiveAccessMutex);
 
-			this->acquireVMAccess();
-			_envLanguageInterface->exclusiveAccessForGCObtainedAfterBeatenByOtherThread();
+			_delegate.acquireVMAccess(true);
 		}
 	}
 
@@ -468,7 +461,7 @@ MM_EnvironmentBase::tryAcquireExclusiveVMAccessForGC(MM_Collector *collector)
 			Assert_MM_true(NULL != extensions->gcExclusiveAccessThreadId);
 
 			uintptr_t accessMask;
-			_envLanguageInterface->releaseCriticalHeapAccess(&accessMask);
+			_delegate.releaseCriticalHeapAccess(&accessMask);
 
 			/* there is a chance the GC will already have executed at this point or other threads will re-win and re-execute.  loop until the
 			 * thread sees that no more GCs are being requested.
@@ -479,7 +472,7 @@ MM_EnvironmentBase::tryAcquireExclusiveVMAccessForGC(MM_Collector *collector)
 			}
 			omrthread_monitor_exit(extensions->gcExclusiveAccessMutex);
 
-			_envLanguageInterface->reacquireCriticalHeapAccess(accessMask);
+			_delegate.reacquireCriticalHeapAccess(accessMask);
 
 			/* May have been beaten to a GC, but perhaps not the one we wanted.  Check and if in fact the collection we intended has been
 			 * completed, we will not acquire exclusive access.
@@ -517,7 +510,7 @@ MM_EnvironmentBase::releaseExclusiveVMAccessForGC()
 		omrthread_monitor_notify_all(extensions->gcExclusiveAccessMutex);
 		omrthread_monitor_exit(extensions->gcExclusiveAccessMutex);
 		reportExclusiveAccessRelease();
-		_envLanguageInterface->releaseExclusiveVMAccess();
+		_delegate.releaseExclusiveVMAccess();
 	}
 }
 
@@ -537,7 +530,7 @@ MM_EnvironmentBase::unwindExclusiveVMAccessForGC()
 		omrthread_monitor_exit(extensions->gcExclusiveAccessMutex);
 		reportExclusiveAccessRelease();
 
-		_envLanguageInterface->releaseExclusiveVMAccess();
+		_delegate.releaseExclusiveVMAccess();
 	}
 }
 
@@ -565,7 +558,7 @@ MM_EnvironmentBase::tryAcquireExclusiveForConcurrentKickoff(MM_ConcurrentGCStats
 
 			uintptr_t accessMask = 0;
 
-			_envLanguageInterface->releaseCriticalHeapAccess(&accessMask);
+			_delegate.releaseCriticalHeapAccess(&accessMask);
 
 			/* there is a chance the GC will already have executed at this point or other threads will re-win and re-execute.  loop until the
 			 * thread sees that no more GCs are being requested.
@@ -576,7 +569,7 @@ MM_EnvironmentBase::tryAcquireExclusiveForConcurrentKickoff(MM_ConcurrentGCStats
 			}
 			omrthread_monitor_exit(extensions->gcExclusiveAccessMutex);
 
-			_envLanguageInterface->reacquireCriticalHeapAccess(accessMask);
+			_delegate.reacquireCriticalHeapAccess(accessMask);
 
 			/* May have been beaten to a GC, but perhaps not the one we wanted.  Check and if in fact the collection we intended has been
 			 * completed, we will not acquire exclusive access.
@@ -611,7 +604,7 @@ MM_EnvironmentBase::releaseExclusiveForConcurrentKickoff()
 		omrthread_monitor_notify_all(extensions->gcExclusiveAccessMutex);
 		omrthread_monitor_exit(extensions->gcExclusiveAccessMutex);
 		reportExclusiveAccessRelease();
-		_envLanguageInterface->releaseExclusiveVMAccess();
+		_delegate.releaseExclusiveVMAccess();
 	}
 }
 #endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
@@ -619,13 +612,13 @@ MM_EnvironmentBase::releaseExclusiveForConcurrentKickoff()
 uintptr_t
 MM_EnvironmentBase::relinquishExclusiveVMAccess()
 {
-	return _envLanguageInterface->relinquishExclusiveVMAccess();
+	return _delegate.relinquishExclusiveVMAccess();
 }
 
 void
 MM_EnvironmentBase::assumeExclusiveVMAccess(uintptr_t exclusiveCount)
 {
-	_envLanguageInterface->assumeExclusiveVMAccess(exclusiveCount);
+	_delegate.assumeExclusiveVMAccess(exclusiveCount);
 }
 
 MM_MemorySubSpace *

@@ -23,7 +23,6 @@
 #include "sizeclasses.h"
 
 #include "EnvironmentBase.hpp"
-#include "EnvironmentLanguageInterfaceImpl.hpp"
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
 
@@ -117,8 +116,7 @@ public:
 	bool
 	environmentInitialized(MM_EnvironmentBase* env)
 	{
-		env->_envLanguageInterface = MM_EnvironmentLanguageInterfaceImpl::newInstance(env);
-		return (NULL != env->_envLanguageInterface);
+		return true;
 	}
 
 	/**

@@ -16,6 +16,9 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  *******************************************************************************/
 
+#ifndef TEST_STORE_OP_IL_INJECTOR_HPP
+#define TEST_STORE_OP_IL_INJECTOR_HPP 
+
 #include "ilgen/OpIlInjector.hpp"
 
 namespace TR { class TypeDictionary; }
@@ -39,3 +42,6 @@ class StoreOpIlInjector : public OpIlInjector
    };
 
 } // namespace TestCompiler
+
+#endif
+

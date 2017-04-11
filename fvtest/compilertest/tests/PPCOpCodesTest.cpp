@@ -32,23 +32,23 @@ void
 PPCOpCodesTest::compileUnaryTestMethods()
    {
    int32_t rc = 0;
-   _d2b = (signatureCharD_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::d2b, "d2b", _argTypesUnaryDouble, TR::Int8, rc));
-   _d2s = (signatureCharD_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::d2s, "d2s", _argTypesUnaryDouble, TR::Int16, rc));
-   _f2b = (signatureCharF_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::f2b, "f2b", _argTypesUnaryFloat, TR::Int8, rc));
-   _f2s = (signatureCharF_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::f2s, "f2s", _argTypesUnaryFloat, TR::Int16, rc));
+   compileOpCodeMethod(_d2b, _numberOfUnaryArgs, TR::d2b, "d2b", _argTypesUnaryDouble, TR::Int8, rc);
+   compileOpCodeMethod(_d2s, _numberOfUnaryArgs, TR::d2s, "d2s", _argTypesUnaryDouble, TR::Int16, rc);
+   compileOpCodeMethod(_f2b, _numberOfUnaryArgs, TR::f2b, "f2b", _argTypesUnaryFloat, TR::Int8, rc);
+   compileOpCodeMethod(_f2s, _numberOfUnaryArgs, TR::f2s, "f2s", _argTypesUnaryFloat, TR::Int16, rc);
 
-   _b2i = (signatureCharB_I_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::b2i, "b2i", _argTypesUnaryByte, TR::Int32, rc));
-   _b2l = (signatureCharB_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::b2l, "b2l", _argTypesUnaryByte, TR::Int64, rc));
-   _b2s = (signatureCharB_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::b2s, "b2s", _argTypesUnaryByte, TR::Int16, rc));
-   _bu2i = (unsignedSignatureCharB_I_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bu2i, "bu2i", _argTypesUnaryByte, TR::Int32, rc));
-   _bu2l = (unsignedSignatureCharB_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bu2l, "bu2l", _argTypesUnaryByte, TR::Int64, rc));
-   _bu2s = (unsignedSignatureCharB_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bu2s, "bu2s", _argTypesUnaryByte, TR::Int16, rc));
+   compileOpCodeMethod(_b2i, _numberOfUnaryArgs, TR::b2i, "b2i", _argTypesUnaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_b2l, _numberOfUnaryArgs, TR::b2l, "b2l", _argTypesUnaryByte, TR::Int64, rc);
+   compileOpCodeMethod(_b2s, _numberOfUnaryArgs, TR::b2s, "b2s", _argTypesUnaryByte, TR::Int16, rc);
+   compileOpCodeMethod(_bu2i, _numberOfUnaryArgs, TR::bu2i, "bu2i", _argTypesUnaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_bu2l, _numberOfUnaryArgs, TR::bu2l, "bu2l", _argTypesUnaryByte, TR::Int64, rc);
+   compileOpCodeMethod(_bu2s, _numberOfUnaryArgs, TR::bu2s, "bu2s", _argTypesUnaryByte, TR::Int16, rc);
 
-   _s2i = (signatureCharS_I_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::s2i, "s2i", _argTypesUnaryShort, TR::Int32, rc));
-   _s2l = (signatureCharS_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::s2l, "s2l", _argTypesUnaryShort, TR::Int64, rc));
-   _s2b = (signatureCharS_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::s2b, "s2b", _argTypesUnaryShort, TR::Int8, rc));
-   _su2i = (unsignedSignatureCharS_I_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::su2i, "su2i", _argTypesUnaryShort, TR::Int32, rc));
-   _su2l = (unsignedSignatureCharS_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::su2l, "su2l", _argTypesUnaryShort, TR::Int64, rc));
+   compileOpCodeMethod(_s2i, _numberOfUnaryArgs, TR::s2i, "s2i", _argTypesUnaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_s2l, _numberOfUnaryArgs, TR::s2l, "s2l", _argTypesUnaryShort, TR::Int64, rc);
+   compileOpCodeMethod(_s2b, _numberOfUnaryArgs, TR::s2b, "s2b", _argTypesUnaryShort, TR::Int8, rc);
+   compileOpCodeMethod(_su2i, _numberOfUnaryArgs, TR::su2i, "su2i", _argTypesUnaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_su2l, _numberOfUnaryArgs, TR::su2l, "su2l", _argTypesUnaryShort, TR::Int64, rc);
 
    }
 
@@ -57,29 +57,29 @@ PPCOpCodesTest::compileMemoryOperationTestMethods()
    {
    int32_t rc = 0;
 
-   _bLoad = (signatureCharB_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bload, "bLoad", _argTypesUnaryByte, TR::Int8, rc));
-   _sLoad = (signatureCharS_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::sload, "sLoad", _argTypesUnaryShort, TR::Int16, rc));
+   compileOpCodeMethod(_bLoad, _numberOfUnaryArgs, TR::bload, "bLoad", _argTypesUnaryByte, TR::Int8, rc);
+   compileOpCodeMethod(_sLoad, _numberOfUnaryArgs, TR::sload, "sLoad", _argTypesUnaryShort, TR::Int16, rc);
 
-   _bStore = (signatureCharB_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bstore, "bStore", _argTypesUnaryByte, TR::Int8, rc));
-   _sStore = (signatureCharS_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::sstore, "sStore", _argTypesUnaryShort, TR::Int16, rc));
-   _lStore = (signatureCharJ_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::lstore, "lStore", _argTypesUnaryLong, TR::Int64, rc));
-   _dStore = (signatureCharD_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::dstore, "dStore", _argTypesUnaryDouble, TR::Double, rc));
-   _fStore = (signatureCharF_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::fstore, "fStore", _argTypesUnaryFloat, TR::Float, rc));
+   compileOpCodeMethod(_bStore, _numberOfUnaryArgs, TR::bstore, "bStore", _argTypesUnaryByte, TR::Int8, rc);
+   compileOpCodeMethod(_sStore, _numberOfUnaryArgs, TR::sstore, "sStore", _argTypesUnaryShort, TR::Int16, rc);
+   compileOpCodeMethod(_lStore, _numberOfUnaryArgs, TR::lstore, "lStore", _argTypesUnaryLong, TR::Int64, rc);
+   compileOpCodeMethod(_dStore, _numberOfUnaryArgs, TR::dstore, "dStore", _argTypesUnaryDouble, TR::Double, rc);
+   compileOpCodeMethod(_fStore, _numberOfUnaryArgs, TR::fstore, "fStore", _argTypesUnaryFloat, TR::Float, rc);
 
-   _iStorei = (signatureCharLI_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::istorei, "iStorei", _argTypesBinaryAddressInt, TR::Int32, rc));
-   _lStorei = (signatureCharLJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lstorei, "lStorei", _argTypesBinaryAddressLong, TR::Int64, rc));
-   _dStorei = (signatureCharLD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dstorei, "dStorei", _argTypesBinaryAddressDouble, TR::Double, rc));
-   _fStorei = (signatureCharLF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fstorei, "fStorei", _argTypesBinaryAddressFloat, TR::Float, rc));
-   _sStorei = (signatureCharLS_S_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sstorei, "sStorei", _argTypesBinaryAddressShort, TR::Int16, rc));
-   _aStorei = (signatureCharLL_L_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::astorei, "aStorei", _argTypesBinaryAddressAddress, TR::Address, rc));
+   compileOpCodeMethod(_iStorei, _numberOfBinaryArgs, TR::istorei, "iStorei", _argTypesBinaryAddressInt, TR::Int32, rc);
+   compileOpCodeMethod(_lStorei, _numberOfBinaryArgs, TR::lstorei, "lStorei", _argTypesBinaryAddressLong, TR::Int64, rc);
+   compileOpCodeMethod(_dStorei, _numberOfBinaryArgs, TR::dstorei, "dStorei", _argTypesBinaryAddressDouble, TR::Double, rc);
+   compileOpCodeMethod(_fStorei, _numberOfBinaryArgs, TR::fstorei, "fStorei", _argTypesBinaryAddressFloat, TR::Float, rc);
+   compileOpCodeMethod(_sStorei, _numberOfBinaryArgs, TR::sstorei, "sStorei", _argTypesBinaryAddressShort, TR::Int16, rc);
+   compileOpCodeMethod(_aStorei, _numberOfBinaryArgs, TR::astorei, "aStorei", _argTypesBinaryAddressAddress, TR::Address, rc);
    }
 
 void
 PPCOpCodesTest::compileTernaryTestMethods()
    {
    int32_t rc = 0;
-   _bternary = (signatureCharIBB_B_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::bternary, "bTernary", _argTypesTernaryByte, TR::Int8, rc));
-   _sternary = (signatureCharISS_S_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::sternary, "sTernary", _argTypesTernaryShort, TR::Int16, rc));
+   compileOpCodeMethod(_bternary, _numberOfTernaryArgs, TR::bternary, "bTernary", _argTypesTernaryByte, TR::Int8, rc);
+   compileOpCodeMethod(_sternary, _numberOfTernaryArgs, TR::sternary, "sTernary", _argTypesTernaryShort, TR::Int16, rc);
    }
 
 void
@@ -88,51 +88,51 @@ PPCOpCodesTest::compileCompareTestMethods()
    int32_t rc = 0;
 
    //Compare
-   _sCmpeq = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::scmpeq, "sCmpeq", _argTypesBinaryShort, TR::Int32, rc));
-   _sCmpne = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::scmpne, "sCmpne", _argTypesBinaryShort, TR::Int32, rc));
-   _sCmpgt = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::scmpgt, "sCmpgt", _argTypesBinaryShort, TR::Int32, rc));
-   _sCmplt = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::scmplt, "sCmplt", _argTypesBinaryShort, TR::Int32, rc));
-   _sCmpge = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::scmpge, "sCmpge", _argTypesBinaryShort, TR::Int32, rc));
-   _sCmple = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::scmple, "sCmple", _argTypesBinaryShort, TR::Int32, rc));
+   compileOpCodeMethod(_sCmpeq, _numberOfBinaryArgs, TR::scmpeq, "sCmpeq", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_sCmpne, _numberOfBinaryArgs, TR::scmpne, "sCmpne", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_sCmpgt, _numberOfBinaryArgs, TR::scmpgt, "sCmpgt", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_sCmplt, _numberOfBinaryArgs, TR::scmplt, "sCmplt", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_sCmpge, _numberOfBinaryArgs, TR::scmpge, "sCmpge", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_sCmple, _numberOfBinaryArgs, TR::scmple, "sCmple", _argTypesBinaryShort, TR::Int32, rc);
 
-   _bCmpeq = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bcmpeq, "bCmpeq", _argTypesBinaryByte, TR::Int32, rc));
-   _bCmpgt = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bcmpgt, "bCmpgt", _argTypesBinaryByte, TR::Int32, rc));
+   compileOpCodeMethod(_bCmpeq, _numberOfBinaryArgs, TR::bcmpeq, "bCmpeq", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_bCmpgt, _numberOfBinaryArgs, TR::bcmpgt, "bCmpgt", _argTypesBinaryByte, TR::Int32, rc);
 
-   _iuCmpeq = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iucmpeq, "iuCmpeq", _argTypesBinaryInt, TR::Int32, rc));
-   _iuCmpne = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iucmpne, "iuCmpne", _argTypesBinaryInt, TR::Int32, rc));
-   _iuCmpge = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iucmpge, "iuCmpge", _argTypesBinaryInt, TR::Int32, rc));
+   compileOpCodeMethod(_iuCmpeq, _numberOfBinaryArgs, TR::iucmpeq, "iuCmpeq", _argTypesBinaryInt, TR::Int32, rc);
+   compileOpCodeMethod(_iuCmpne, _numberOfBinaryArgs, TR::iucmpne, "iuCmpne", _argTypesBinaryInt, TR::Int32, rc);
+   compileOpCodeMethod(_iuCmpge, _numberOfBinaryArgs, TR::iucmpge, "iuCmpge", _argTypesBinaryInt, TR::Int32, rc);
 
-   _suCmpeq = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sucmpeq, "suCmpeq", _argTypesBinaryShort, TR::Int32, rc));
-   _suCmpne = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sucmpne, "suCmpne", _argTypesBinaryShort, TR::Int32, rc));
-   _suCmplt = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sucmplt, "suCmplt", _argTypesBinaryShort, TR::Int32, rc));
-   _suCmpge = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sucmpge, "suCmpge", _argTypesBinaryShort, TR::Int32, rc));
-   _suCmpgt = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sucmpgt, "suCmpgt", _argTypesBinaryShort, TR::Int32, rc));
-   _suCmple = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sucmple, "suCmple", _argTypesBinaryShort, TR::Int32, rc));
+   compileOpCodeMethod(_suCmpeq, _numberOfBinaryArgs, TR::sucmpeq, "suCmpeq", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_suCmpne, _numberOfBinaryArgs, TR::sucmpne, "suCmpne", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_suCmplt, _numberOfBinaryArgs, TR::sucmplt, "suCmplt", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_suCmpge, _numberOfBinaryArgs, TR::sucmpge, "suCmpge", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_suCmpgt, _numberOfBinaryArgs, TR::sucmpgt, "suCmpgt", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_suCmple, _numberOfBinaryArgs, TR::sucmple, "suCmple", _argTypesBinaryShort, TR::Int32, rc);
 
    //CompareAndBranch
-   _ifScmpeq = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifscmpeq, "ifScmpeq", _argTypesBinaryShort, TR::Int32, rc));
-   _ifScmpne = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifscmpne, "ifScmpne", _argTypesBinaryShort, TR::Int32, rc));
-   _ifScmpgt = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifscmpgt, "ifScmpgt", _argTypesBinaryShort, TR::Int32, rc));
-   _ifScmplt = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifscmplt, "ifScmplt", _argTypesBinaryShort, TR::Int32, rc));
-   _ifScmpge = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifscmpge, "ifScmpge", _argTypesBinaryShort, TR::Int32, rc));
-   _ifScmple = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifscmple, "ifScmple", _argTypesBinaryShort, TR::Int32, rc));
+   compileOpCodeMethod(_ifScmpeq, _numberOfBinaryArgs, TR::ifscmpeq, "ifScmpeq", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_ifScmpne, _numberOfBinaryArgs, TR::ifscmpne, "ifScmpne", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_ifScmpgt, _numberOfBinaryArgs, TR::ifscmpgt, "ifScmpgt", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_ifScmplt, _numberOfBinaryArgs, TR::ifscmplt, "ifScmplt", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_ifScmpge, _numberOfBinaryArgs, TR::ifscmpge, "ifScmpge", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_ifScmple, _numberOfBinaryArgs, TR::ifscmple, "ifScmple", _argTypesBinaryShort, TR::Int32, rc);
 
-   _ifBcmpeq = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbcmpeq, "ifBcmpeq", _argTypesBinaryByte, TR::Int32, rc));
-   _ifBcmpgt = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbcmpgt, "ifBcmpgt", _argTypesBinaryByte, TR::Int32, rc));
+   compileOpCodeMethod(_ifBcmpeq, _numberOfBinaryArgs, TR::ifbcmpeq, "ifBcmpeq", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_ifBcmpgt, _numberOfBinaryArgs, TR::ifbcmpgt, "ifBcmpgt", _argTypesBinaryByte, TR::Int32, rc);
 
-   _ifBuCmpeq = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbucmpeq, "ifBuCmpeq", _argTypesBinaryByte, TR::Int32, rc));
-   _ifBuCmpne = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbucmpne, "ifBuCmpne", _argTypesBinaryByte, TR::Int32, rc));
-   _ifBuCmplt = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbucmplt, "ifBuCmplt", _argTypesBinaryByte, TR::Int32, rc));
-   _ifBuCmpge = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbucmpge, "ifBuCmpge", _argTypesBinaryByte, TR::Int32, rc));
-   _ifBuCmpgt = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbucmpgt, "ifBuCmpgt", _argTypesBinaryByte, TR::Int32, rc));
-   _ifBuCmple = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbucmple, "ifBuCmple", _argTypesBinaryByte, TR::Int32, rc));
+   compileOpCodeMethod(_ifBuCmpeq, _numberOfBinaryArgs, TR::ifbucmpeq, "ifBuCmpeq", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_ifBuCmpne, _numberOfBinaryArgs, TR::ifbucmpne, "ifBuCmpne", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_ifBuCmplt, _numberOfBinaryArgs, TR::ifbucmplt, "ifBuCmplt", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_ifBuCmpge, _numberOfBinaryArgs, TR::ifbucmpge, "ifBuCmpge", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_ifBuCmpgt, _numberOfBinaryArgs, TR::ifbucmpgt, "ifBuCmpgt", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_ifBuCmple, _numberOfBinaryArgs, TR::ifbucmple, "ifBuCmple", _argTypesBinaryByte, TR::Int32, rc);
 
-   _ifSuCmpeq = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifsucmpeq, "ifSuCmpeq", _argTypesBinaryShort, TR::Int32, rc));
-   _ifSuCmpne = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifsucmpne, "ifSuCmpne", _argTypesBinaryShort, TR::Int32, rc));
-   _ifSuCmpgt = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifsucmpgt, "ifSuCmpgt", _argTypesBinaryShort, TR::Int32, rc));
-   _ifSuCmple = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifsucmple, "ifSuCmple", _argTypesBinaryShort, TR::Int32, rc));
-   _ifSuCmplt = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifsucmplt, "ifSuCmplt", _argTypesBinaryShort, TR::Int32, rc));
-   _ifSuCmpge = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifsucmpge, "ifSuCmpge", _argTypesBinaryShort, TR::Int32, rc));
+   compileOpCodeMethod(_ifSuCmpeq, _numberOfBinaryArgs, TR::ifsucmpeq, "ifSuCmpeq", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_ifSuCmpne, _numberOfBinaryArgs, TR::ifsucmpne, "ifSuCmpne", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_ifSuCmpgt, _numberOfBinaryArgs, TR::ifsucmpgt, "ifSuCmpgt", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_ifSuCmple, _numberOfBinaryArgs, TR::ifsucmple, "ifSuCmple", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_ifSuCmplt, _numberOfBinaryArgs, TR::ifsucmplt, "ifSuCmplt", _argTypesBinaryShort, TR::Int32, rc);
+   compileOpCodeMethod(_ifSuCmpge, _numberOfBinaryArgs, TR::ifsucmpge, "ifSuCmpge", _argTypesBinaryShort, TR::Int32, rc);
 
    }
 
@@ -141,28 +141,28 @@ PPCOpCodesTest::compileAddressTestMethods()
    {
    int32_t rc = 0;
 
-   _a2b = (signatureCharL_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::a2b, "a2b", _argTypesUnaryAddress, TR::Int8, rc));
-   _a2s = (signatureCharL_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::a2s, "a2s", _argTypesUnaryAddress, TR::Int16, rc));
-   _a2l = (signatureCharL_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::a2l, "a2l", _argTypesUnaryAddress, TR::Int64, rc));
-   _b2a = (signatureCharB_L_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::b2a, "b2a", _argTypesUnaryByte, TR::Address, rc));
-   _s2a = (signatureCharS_L_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::s2a, "s2a", _argTypesUnaryShort, TR::Address, rc));
-   _i2a = (signatureCharI_L_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::i2a, "i2a", _argTypesUnaryInt, TR::Address, rc));
-   _bu2a = (unsignedSignatureCharB_L_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bu2a, "bu2a", _argTypesUnaryByte, TR::Address, rc));
-   _lu2a = (unsignedSignatureCharJ_L_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::lu2a, "lu2a", _argTypesUnaryLong, TR::Address, rc));
+   compileOpCodeMethod(_a2b, _numberOfUnaryArgs, TR::a2b, "a2b", _argTypesUnaryAddress, TR::Int8, rc);
+   compileOpCodeMethod(_a2s, _numberOfUnaryArgs, TR::a2s, "a2s", _argTypesUnaryAddress, TR::Int16, rc);
+   compileOpCodeMethod(_a2l, _numberOfUnaryArgs, TR::a2l, "a2l", _argTypesUnaryAddress, TR::Int64, rc);
+   compileOpCodeMethod(_b2a, _numberOfUnaryArgs, TR::b2a, "b2a", _argTypesUnaryByte, TR::Address, rc);
+   compileOpCodeMethod(_s2a, _numberOfUnaryArgs, TR::s2a, "s2a", _argTypesUnaryShort, TR::Address, rc);
+   compileOpCodeMethod(_i2a, _numberOfUnaryArgs, TR::i2a, "i2a", _argTypesUnaryInt, TR::Address, rc);
+   compileOpCodeMethod(_bu2a, _numberOfUnaryArgs, TR::bu2a, "bu2a", _argTypesUnaryByte, TR::Address, rc);
+   compileOpCodeMethod(_lu2a, _numberOfUnaryArgs, TR::lu2a, "lu2a", _argTypesUnaryLong, TR::Address, rc);
 
-   _acmpeq = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::acmpeq, "acmpeq", _argTypesBinaryAddress, TR::Int32, rc));
-   _acmpne = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::acmpne, "acmpne", _argTypesBinaryAddress, TR::Int32, rc));
-   _acmplt = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::acmplt, "acmplt", _argTypesBinaryAddress, TR::Int32, rc));
-   _acmpge = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::acmpge, "acmpge", _argTypesBinaryAddress, TR::Int32, rc));
-   _acmple = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::acmple, "acmple", _argTypesBinaryAddress, TR::Int32, rc));
-   _acmpgt = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::acmpgt, "acmpgt", _argTypesBinaryAddress, TR::Int32, rc));
-   _ifacmpeq = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifacmpeq, "ifacmpeq", _argTypesBinaryAddress, TR::Int32, rc));
-   _ifacmpne = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifacmpne, "ifacmpne", _argTypesBinaryAddress, TR::Int32, rc));
-   _ifacmplt = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifacmplt, "ifacmplt", _argTypesBinaryAddress, TR::Int32, rc));
-   _ifacmpge = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifacmpge, "ifacmpge", _argTypesBinaryAddress, TR::Int32, rc));
-   _ifacmple = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifacmple, "ifacmple", _argTypesBinaryAddress, TR::Int32, rc));
-   _ifacmpgt = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifacmpgt, "ifacmpgt", _argTypesBinaryAddress, TR::Int32, rc));
-   _aternary = (signatureCharILL_L_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::aternary, "aternary", _argTypesTernaryAddress, TR::Address, rc));
+   compileOpCodeMethod(_acmpeq, _numberOfBinaryArgs, TR::acmpeq, "acmpeq", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_acmpne, _numberOfBinaryArgs, TR::acmpne, "acmpne", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_acmplt, _numberOfBinaryArgs, TR::acmplt, "acmplt", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_acmpge, _numberOfBinaryArgs, TR::acmpge, "acmpge", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_acmple, _numberOfBinaryArgs, TR::acmple, "acmple", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_acmpgt, _numberOfBinaryArgs, TR::acmpgt, "acmpgt", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_ifacmpeq, _numberOfBinaryArgs, TR::ifacmpeq, "ifacmpeq", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_ifacmpne, _numberOfBinaryArgs, TR::ifacmpne, "ifacmpne", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_ifacmplt, _numberOfBinaryArgs, TR::ifacmplt, "ifacmplt", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_ifacmpge, _numberOfBinaryArgs, TR::ifacmpge, "ifacmpge", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_ifacmple, _numberOfBinaryArgs, TR::ifacmple, "ifacmple", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_ifacmpgt, _numberOfBinaryArgs, TR::ifacmpgt, "ifacmpgt", _argTypesBinaryAddress, TR::Int32, rc);
+   compileOpCodeMethod(_aternary, _numberOfTernaryArgs, TR::aternary, "aternary", _argTypesTernaryAddress, TR::Address, rc);
 
    }
 
@@ -171,11 +171,11 @@ PPCOpCodesTest::compileShiftOrRolTestMethods()
    {
    int32_t rc = 0;
 
-   _iRol = (signatureCharII_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::irol, "iRol", _argTypesBinaryInt, TR::Int32, rc));
+   compileOpCodeMethod(_iRol, _numberOfBinaryArgs, TR::irol, "iRol", _argTypesBinaryInt, TR::Int32, rc);
 
-   _bShl = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bshl, "bShl", _argTypesBinaryByte, TR::Int8, rc));
-   _buShr = (unsignedSignatureCharBB_B_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bushr, "buShr", _argTypesBinaryByte, TR::Int8, rc));
-   _sShr = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sshr, "sShr", _argTypesBinaryShort, TR::Int16, rc));
+   compileOpCodeMethod(_bShl, _numberOfBinaryArgs, TR::bshl, "bShl", _argTypesBinaryByte, TR::Int8, rc);
+   compileOpCodeMethod(_buShr, _numberOfBinaryArgs, TR::bushr, "buShr", _argTypesBinaryByte, TR::Int8, rc);
+   compileOpCodeMethod(_sShr, _numberOfBinaryArgs, TR::sshr, "sShr", _argTypesBinaryShort, TR::Int16, rc);
    }
 
 void
@@ -183,13 +183,13 @@ PPCOpCodesTest::compileBitwiseTestMethods()
    {
    int32_t rc;
 
-   _sAnd = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sand, "sAnd", _argTypesBinaryShort, TR::Int16, rc));
-   _sOr = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sor, "sOr", _argTypesBinaryShort, TR::Int16, rc));
-   _sXor = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sxor, "sXor", _argTypesBinaryShort, TR::Int16, rc));
+   compileOpCodeMethod(_sAnd, _numberOfBinaryArgs, TR::sand, "sAnd", _argTypesBinaryShort, TR::Int16, rc);
+   compileOpCodeMethod(_sOr, _numberOfBinaryArgs, TR::sor, "sOr", _argTypesBinaryShort, TR::Int16, rc);
+   compileOpCodeMethod(_sXor, _numberOfBinaryArgs, TR::sxor, "sXor", _argTypesBinaryShort, TR::Int16, rc);
 
-   _bAnd = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::band, "bAnd", _argTypesBinaryByte, TR::Int8, rc));
-   _bOr = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bor, "bOr", _argTypesBinaryByte, TR::Int8, rc));
-   _bXor = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bxor, "bXor", _argTypesBinaryByte, TR::Int8, rc));
+   compileOpCodeMethod(_bAnd, _numberOfBinaryArgs, TR::band, "bAnd", _argTypesBinaryByte, TR::Int8, rc);
+   compileOpCodeMethod(_bOr, _numberOfBinaryArgs, TR::bor, "bOr", _argTypesBinaryByte, TR::Int8, rc);
+   compileOpCodeMethod(_bXor, _numberOfBinaryArgs, TR::bxor, "bXor", _argTypesBinaryByte, TR::Int8, rc);
    }
 
 void
@@ -244,13 +244,13 @@ PPCOpCodesTest::invokeUnaryTests()
       OMR_CT_EXPECT_EQ(_d2s, convert(doubleDataArray[i], SHORT_POS), _d2s(doubleDataArray[i]));
 
       sprintf(resolvedMethodName, "d2bConst%d", i + 1);
-      d2bConst = (signatureCharD_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::d2b,
-            resolvedMethodName, _argTypesUnaryDouble, TR::Int8, rc, 2, 1, &doubleDataArray[i]));
+      compileOpCodeMethod(d2bConst, _numberOfUnaryArgs, TR::d2b,
+            resolvedMethodName, _argTypesUnaryDouble, TR::Int8, rc, 2, 1, &doubleDataArray[i]);
       OMR_CT_EXPECT_EQ(d2bConst, convert(doubleDataArray[i], BYTE_POS), d2bConst(DOUBLE_PLACEHOLDER_1));
 
       sprintf(resolvedMethodName, "d2sConst%d", i + 1);
-      d2sConst = (signatureCharD_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::d2s,
-            resolvedMethodName, _argTypesUnaryDouble, TR::Int16, rc, 2, 1, &doubleDataArray[i]));
+      compileOpCodeMethod(d2sConst, _numberOfUnaryArgs, TR::d2s,
+            resolvedMethodName, _argTypesUnaryDouble, TR::Int16, rc, 2, 1, &doubleDataArray[i]);
       OMR_CT_EXPECT_EQ(d2sConst, convert(doubleDataArray[i], SHORT_POS), d2sConst(DOUBLE_PLACEHOLDER_1));
       }
 
@@ -262,13 +262,13 @@ PPCOpCodesTest::invokeUnaryTests()
       OMR_CT_EXPECT_EQ(_f2s, convert(floatDataArray[i], SHORT_POS), _f2s(floatDataArray[i]));
 
       sprintf(resolvedMethodName, "f2bConst%d", i + 1);
-      f2bConst = (signatureCharF_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::f2b,
-            resolvedMethodName, _argTypesUnaryFloat, TR::Int8, rc, 2, 1, &floatDataArray[i]));
+      compileOpCodeMethod(f2bConst, _numberOfUnaryArgs, TR::f2b,
+            resolvedMethodName, _argTypesUnaryFloat, TR::Int8, rc, 2, 1, &floatDataArray[i]);
       OMR_CT_EXPECT_EQ(f2bConst, convert(floatDataArray[i], BYTE_POS), f2bConst(FLOAT_PLACEHOLDER_1));
 
       sprintf(resolvedMethodName, "f2sConst%d", i + 1);
-      f2sConst = (signatureCharF_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::f2s,
-            resolvedMethodName, _argTypesUnaryFloat, TR::Int16, rc, 2, 1, &floatDataArray[i]));
+      compileOpCodeMethod(f2sConst, _numberOfUnaryArgs, TR::f2s,
+            resolvedMethodName, _argTypesUnaryFloat, TR::Int16, rc, 2, 1, &floatDataArray[i]);
       OMR_CT_EXPECT_EQ(f2sConst, convert(floatDataArray[i], SHORT_POS), f2sConst(FLOAT_PLACEHOLDER_1));
       }
 
@@ -281,18 +281,18 @@ PPCOpCodesTest::invokeUnaryTests()
       OMR_CT_EXPECT_EQ(_b2l, convert(byteDataArray[i], LONG_POS), _b2l(byteDataArray[i]));
 
       sprintf(resolvedMethodName, "b2sConst%d", i + 1);
-      b2sConst = (signatureCharB_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::b2s,
-            resolvedMethodName, _argTypesUnaryByte, TR::Int16, rc, 2, 1, &byteDataArray[i]));
+      compileOpCodeMethod(b2sConst, _numberOfUnaryArgs, TR::b2s,
+            resolvedMethodName, _argTypesUnaryByte, TR::Int16, rc, 2, 1, &byteDataArray[i]);
       OMR_CT_EXPECT_EQ(b2sConst, convert(byteDataArray[i], SHORT_POS), b2sConst(BYTE_PLACEHOLDER_1));
 
       sprintf(resolvedMethodName, "b2iConst%d", i + 1);
-      b2iConst = (signatureCharB_I_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::b2i,
-            resolvedMethodName, _argTypesUnaryByte, TR::Int32, rc, 2, 1, &byteDataArray[i]));
+      compileOpCodeMethod(b2iConst, _numberOfUnaryArgs, TR::b2i,
+            resolvedMethodName, _argTypesUnaryByte, TR::Int32, rc, 2, 1, &byteDataArray[i]);
       OMR_CT_EXPECT_EQ(b2iConst, convert(byteDataArray[i], INT_POS), b2iConst(BYTE_PLACEHOLDER_1));
 
       sprintf(resolvedMethodName, "b2lConst%d", i + 1);
-      b2lConst = (signatureCharB_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::b2l,
-            resolvedMethodName, _argTypesUnaryByte, TR::Int64, rc, 2, 1, &byteDataArray[i]));
+      compileOpCodeMethod(b2lConst, _numberOfUnaryArgs, TR::b2l,
+            resolvedMethodName, _argTypesUnaryByte, TR::Int64, rc, 2, 1, &byteDataArray[i]);
       OMR_CT_EXPECT_EQ(b2lConst, convert(byteDataArray[i], LONG_POS), b2lConst(BYTE_PLACEHOLDER_1));
       }
 
@@ -305,18 +305,18 @@ PPCOpCodesTest::invokeUnaryTests()
       OMR_CT_EXPECT_EQ(_bu2l, convert(ubyteDataArray[i], LONG_POS), _bu2l(ubyteDataArray[i]));
 
       sprintf(resolvedMethodName, "bu2sConst%d", i + 1);
-      bu2sConst = (unsignedSignatureCharB_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bu2s,
-            resolvedMethodName, _argTypesUnaryByte, TR::Int16, rc, 2, 1, &ubyteDataArray[i]));
+      compileOpCodeMethod(bu2sConst, _numberOfUnaryArgs, TR::bu2s,
+            resolvedMethodName, _argTypesUnaryByte, TR::Int16, rc, 2, 1, &ubyteDataArray[i]);
       OMR_CT_EXPECT_EQ(bu2sConst, convert(ubyteDataArray[i], SHORT_POS), bu2sConst(BYTE_PLACEHOLDER_1));
 
       sprintf(resolvedMethodName, "bu2iConst%d", i + 1);
-      bu2iConst = (unsignedSignatureCharB_I_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bu2i,
-            resolvedMethodName, _argTypesUnaryByte, TR::Int32, rc, 2, 1, &ubyteDataArray[i]));
+      compileOpCodeMethod(bu2iConst, _numberOfUnaryArgs, TR::bu2i,
+            resolvedMethodName, _argTypesUnaryByte, TR::Int32, rc, 2, 1, &ubyteDataArray[i]);
       OMR_CT_EXPECT_EQ(bu2iConst, convert(ubyteDataArray[i], INT_POS), bu2iConst(BYTE_PLACEHOLDER_1));
 
       sprintf(resolvedMethodName, "bu2lConst%d", i + 1);
-      bu2lConst = (unsignedSignatureCharB_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bu2l,
-            resolvedMethodName, _argTypesUnaryByte, TR::Int64, rc, 2, 1, &ubyteDataArray[i]));
+      compileOpCodeMethod(bu2lConst, _numberOfUnaryArgs, TR::bu2l,
+            resolvedMethodName, _argTypesUnaryByte, TR::Int64, rc, 2, 1, &ubyteDataArray[i]);
       OMR_CT_EXPECT_EQ(bu2lConst, convert(ubyteDataArray[i], LONG_POS), bu2lConst(BYTE_PLACEHOLDER_1));
       }
 
@@ -329,19 +329,19 @@ PPCOpCodesTest::invokeUnaryTests()
       OMR_CT_EXPECT_EQ(_s2l, convert(shortDataArray[i], LONG_POS), _s2l(shortDataArray[i]));
 
       sprintf(resolvedMethodName, "s2bConst%d", i + 1);
-      s2bConst = (signatureCharS_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::s2b,
-            resolvedMethodName, _argTypesUnaryShort, TR::Int8, rc, 2, 1, &shortDataArray[i]));
+      compileOpCodeMethod(s2bConst, _numberOfUnaryArgs, TR::s2b,
+            resolvedMethodName, _argTypesUnaryShort, TR::Int8, rc, 2, 1, &shortDataArray[i]);
       OMR_CT_EXPECT_EQ(s2bConst, convert(shortDataArray[i], BYTE_POS), s2bConst(SHORT_PLACEHOLDER_1));
 
       sprintf(resolvedMethodName, "s2iConst%d", i + 1);
-      s2iConst = (signatureCharS_I_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::s2i,
-            resolvedMethodName, _argTypesUnaryShort, TR::Int32, rc, 2, 1, &shortDataArray[i]));
+      compileOpCodeMethod(s2iConst, _numberOfUnaryArgs, TR::s2i,
+            resolvedMethodName, _argTypesUnaryShort, TR::Int32, rc, 2, 1, &shortDataArray[i]);
       OMR_CT_EXPECT_EQ(s2iConst, convert(shortDataArray[i], INT_POS), s2iConst(SHORT_PLACEHOLDER_1));
 
 
       sprintf(resolvedMethodName, "s2lConst%d", i + 1);
-      s2lConst = (signatureCharS_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::s2l,
-            resolvedMethodName, _argTypesUnaryShort, TR::Int64, rc, 2, 1, &shortDataArray[i]));
+      compileOpCodeMethod(s2lConst, _numberOfUnaryArgs, TR::s2l,
+            resolvedMethodName, _argTypesUnaryShort, TR::Int64, rc, 2, 1, &shortDataArray[i]);
       OMR_CT_EXPECT_EQ(s2lConst, convert(shortDataArray[i], LONG_POS), s2lConst(SHORT_PLACEHOLDER_1));
       }
    //su 2 i,l
@@ -352,14 +352,14 @@ PPCOpCodesTest::invokeUnaryTests()
       OMR_CT_EXPECT_EQ(_su2l, convert(ushortDataArray[i], LONG_POS), _su2l(ushortDataArray[i]));
 
       sprintf(resolvedMethodName, "s2iConst%d", i + 1);
-      su2iConst = (unsignedSignatureCharS_I_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::su2i,
-            resolvedMethodName, _argTypesUnaryShort, TR::Int32, rc, 2, 1, &ushortDataArray[i]));
+      compileOpCodeMethod(su2iConst, _numberOfUnaryArgs, TR::su2i,
+            resolvedMethodName, _argTypesUnaryShort, TR::Int32, rc, 2, 1, &ushortDataArray[i]);
       OMR_CT_EXPECT_EQ(su2iConst, convert(ushortDataArray[i], INT_POS), su2iConst(SHORT_PLACEHOLDER_1));
 
 
       sprintf(resolvedMethodName, "s2lConst%d", i + 1);
-      su2lConst = (unsignedSignatureCharS_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::su2l,
-            resolvedMethodName, _argTypesUnaryShort, TR::Int64, rc, 2, 1, &ushortDataArray[i]));
+      compileOpCodeMethod(su2lConst, _numberOfUnaryArgs, TR::su2l,
+            resolvedMethodName, _argTypesUnaryShort, TR::Int64, rc, 2, 1, &ushortDataArray[i]);
       OMR_CT_EXPECT_EQ(su2lConst, convert(ushortDataArray[i], LONG_POS), su2lConst(SHORT_PLACEHOLDER_1));
       }
    }
@@ -401,7 +401,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "bStoreConst%d", i + 1);
       OMR_CT_EXPECT_EQ(_bStore, byteDataArray[i], _bStore(byteDataArray[i]));
-      bMemCons = (signatureCharB_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bstore, resolvedMethodName, _argTypesUnaryByte, TR::Int8, rc, 2, 1, &(byteDataArray[i])));
+      compileOpCodeMethod(bMemCons, _numberOfUnaryArgs, TR::bstore, resolvedMethodName, _argTypesUnaryByte, TR::Int8, rc, 2, 1, &(byteDataArray[i]));
       OMR_CT_EXPECT_EQ(bMemCons, byteDataArray[i], bMemCons(BYTE_PLACEHOLDER_1));
       }
 
@@ -410,7 +410,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "sStoreConst%d", i + 1);
       OMR_CT_EXPECT_EQ(_sStore, shortDataArray[i], _sStore(shortDataArray[i]));
-      sMemCons = (signatureCharS_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::sstore, resolvedMethodName, _argTypesUnaryShort, TR::Int16, rc, 2, 1, &(shortDataArray[i])));
+      compileOpCodeMethod(sMemCons, _numberOfUnaryArgs, TR::sstore, resolvedMethodName, _argTypesUnaryShort, TR::Int16, rc, 2, 1, &(shortDataArray[i]));
       OMR_CT_EXPECT_EQ(sMemCons, shortDataArray[i], sMemCons(SHORT_PLACEHOLDER_1));
       }
 
@@ -419,7 +419,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "lStoreConst%d", i + 1);
       OMR_CT_EXPECT_EQ(_lStore, longDataArray[i], _lStore(longDataArray[i]));
-      lMemCons = (signatureCharJ_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::lstore, resolvedMethodName, _argTypesUnaryLong, TR::Int64, rc, 2, 1, &(longDataArray[i])));
+      compileOpCodeMethod(lMemCons, _numberOfUnaryArgs, TR::lstore, resolvedMethodName, _argTypesUnaryLong, TR::Int64, rc, 2, 1, &(longDataArray[i]));
       OMR_CT_EXPECT_EQ(lMemCons, longDataArray[i], lMemCons(LONG_PLACEHOLDER_1));
       }
 
@@ -428,7 +428,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "dStoreConst%d", i + 1);
       OMR_CT_EXPECT_DOUBLE_EQ(_dStore, doubleDataArray[i], _dStore(doubleDataArray[i]));
-      dMemCons = (signatureCharD_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::dstore, resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &(doubleDataArray[i])));
+      compileOpCodeMethod(dMemCons, _numberOfUnaryArgs, TR::dstore, resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &(doubleDataArray[i]));
       OMR_CT_EXPECT_DOUBLE_EQ(dMemCons, doubleDataArray[i], dMemCons(DOUBLE_PLACEHOLDER_1));
       }
 
@@ -437,7 +437,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "fStoreConst%d", i + 1);
       OMR_CT_EXPECT_FLOAT_EQ(_fStore, floatDataArray[i], _fStore(floatDataArray[i]));
-      fMemCons = (signatureCharF_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::fstore, resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &(floatDataArray[i])));
+      compileOpCodeMethod(fMemCons, _numberOfUnaryArgs, TR::fstore, resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &(floatDataArray[i]));
       OMR_CT_EXPECT_FLOAT_EQ(fMemCons, floatDataArray[i], fMemCons(FLOAT_PLACEHOLDER_1));
       }
 
@@ -491,7 +491,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "iLoadiConst%d", i + 1);
       uintptrj_t intDataAddress = (uintptrj_t)(&intDataArray[i]);
-      iLoadiCons = (signatureCharL_I_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::iloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int32, rc, 2, 1, &intDataAddress));
+      compileOpCodeMethod(iLoadiCons, _numberOfUnaryArgs, TR::iloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int32, rc, 2, 1, &intDataAddress);
       OMR_CT_EXPECT_EQ(iLoadiCons, intDataArray[i], iLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
 
@@ -501,7 +501,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "sLoadiConst%d", i + 1);
       uintptrj_t shortDataAddress = (uintptrj_t)(&shortDataArray[i]);
-      sLoadiCons = (signatureCharL_S_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::sloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int16, rc, 2, 1, &shortDataAddress));
+      compileOpCodeMethod(sLoadiCons, _numberOfUnaryArgs, TR::sloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int16, rc, 2, 1, &shortDataAddress);
       OMR_CT_EXPECT_EQ(sLoadiCons, shortDataArray[i], sLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
 
@@ -511,7 +511,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "bLoadiConst%d", i + 1);
       uintptrj_t byteDataAddress = (uintptrj_t)(&byteDataArray[i]);
-      bLoadiCons = (signatureCharL_B_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int8, rc, 2, 1, &byteDataAddress));
+      compileOpCodeMethod(bLoadiCons, _numberOfUnaryArgs, TR::bloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int8, rc, 2, 1, &byteDataAddress);
       OMR_CT_EXPECT_EQ(bLoadiCons, byteDataArray[i], bLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
 
@@ -521,7 +521,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "lLoadiConst%d", i + 1);
       uintptrj_t longDataAddress = (uintptrj_t)(&longDataArray[i]);
-      lLoadiCons = (signatureCharL_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::lloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int64, rc, 2, 1, &longDataAddress));
+      compileOpCodeMethod(lLoadiCons, _numberOfUnaryArgs, TR::lloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int64, rc, 2, 1, &longDataAddress);
       OMR_CT_EXPECT_EQ(lLoadiCons, longDataArray[i], lLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
 
@@ -531,7 +531,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "dLoadiConst%d", i + 1);
       uintptrj_t doubleDataAddress = (uintptrj_t)(&doubleDataArray[i]);
-      dLoadiCons = (signatureCharL_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::dloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Double, rc, 2, 1, &doubleDataAddress));
+      compileOpCodeMethod(dLoadiCons, _numberOfUnaryArgs, TR::dloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Double, rc, 2, 1, &doubleDataAddress);
       OMR_CT_EXPECT_EQ(dLoadiCons, doubleDataArray[i], dLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
 
@@ -541,7 +541,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "fLoadiConst%d", i + 1);
       uintptrj_t floatDataAddress = (uintptrj_t)(&floatDataArray[i]);
-      fLoadiCons = (signatureCharL_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::floadi, resolvedMethodName, _argTypesUnaryAddress, TR::Float, rc, 2, 1, &floatDataAddress));
+      compileOpCodeMethod(fLoadiCons, _numberOfUnaryArgs, TR::floadi, resolvedMethodName, _argTypesUnaryAddress, TR::Float, rc, 2, 1, &floatDataAddress);
       OMR_CT_EXPECT_EQ(fLoadiCons, floatDataArray[i], fLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
 
@@ -551,7 +551,7 @@ PPCOpCodesTest::invokeMemoryOperationTests()
       {
       sprintf(resolvedMethodName, "aLoadiConst%d", i + 1);
       uintptrj_t addressDataAddress = (uintptrj_t)(&addressDataArray[i]);
-      aLoadiCons = (signatureCharL_L_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::aloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Address, rc, 2, 1, &addressDataAddress));
+      compileOpCodeMethod(aLoadiCons, _numberOfUnaryArgs, TR::aloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Address, rc, 2, 1, &addressDataAddress);
       OMR_CT_EXPECT_EQ(aLoadiCons, addressDataArray[i], aLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
 
@@ -816,18 +816,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_sCmpeq, compareEQ(sCmpeqDataArr[i][0], sCmpeqDataArr[i][1]), _sCmpeq(sCmpeqDataArr[i][0], sCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpeqConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpeqDataArr[i][0]), 2, &(sCmpeqDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpeqDataArr[i][0]), 2, &(sCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareEQ(sCmpeqDataArr[i][0], sCmpeqDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "sCmpeqConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpeqDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareEQ(sCmpeqDataArr[i][0], sCmpeqDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, sCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpeqConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpeqDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareEQ(sCmpeqDataArr[i][0], sCmpeqDataArr[i][1]), sCompareConst(sCmpeqDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -837,18 +837,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_sCmpne, compareNE(sCmpneDataArr[i][0], sCmpneDataArr[i][1]), _sCmpne(sCmpneDataArr[i][0], sCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpneConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpneDataArr[i][0]), 2, &(sCmpneDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpneDataArr[i][0]), 2, &(sCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareNE(sCmpneDataArr[i][0], sCmpneDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "sCmpneConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpneDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareNE(sCmpneDataArr[i][0], sCmpneDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, sCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpneConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpneDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareNE(sCmpneDataArr[i][0], sCmpneDataArr[i][1]), sCompareConst(sCmpneDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -858,18 +858,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_sCmpgt, compareGT(sCmpgtDataArr[i][0], sCmpgtDataArr[i][1]), _sCmpgt(sCmpgtDataArr[i][0], sCmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpgtConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpgtDataArr[i][0]), 2, &(sCmpgtDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpgtDataArr[i][0]), 2, &(sCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGT(sCmpgtDataArr[i][0], sCmpgtDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "sCmpgtConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpgtDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGT(sCmpgtDataArr[i][0], sCmpgtDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, sCmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpgtConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpgtDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGT(sCmpgtDataArr[i][0], sCmpgtDataArr[i][1]), sCompareConst(sCmpgtDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -879,18 +879,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_sCmplt, compareLT(sCmpltDataArr[i][0], sCmpltDataArr[i][1]), _sCmplt(sCmpltDataArr[i][0], sCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpltConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpltDataArr[i][0]), 2, &(sCmpltDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpltDataArr[i][0]), 2, &(sCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLT(sCmpltDataArr[i][0], sCmpltDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "sCmpltConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpltDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLT(sCmpltDataArr[i][0], sCmpltDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, sCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpltConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpltDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLT(sCmpltDataArr[i][0], sCmpltDataArr[i][1]), sCompareConst(sCmpltDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -900,18 +900,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_sCmpge, compareGE(sCmpgeDataArr[i][0], sCmpgeDataArr[i][1]), _sCmpge(sCmpgeDataArr[i][0], sCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpgeConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpgeDataArr[i][0]), 2, &(sCmpgeDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpgeDataArr[i][0]), 2, &(sCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGE(sCmpgeDataArr[i][0], sCmpgeDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "sCmpgeConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpgeDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGE(sCmpgeDataArr[i][0], sCmpgeDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, sCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpgeConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpgeDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGE(sCmpgeDataArr[i][0], sCmpgeDataArr[i][1]), sCompareConst(sCmpgeDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -921,18 +921,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_sCmple, compareLE(sCmpleDataArr[i][0], sCmpleDataArr[i][1]), _sCmple(sCmpleDataArr[i][0], sCmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpleConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpleDataArr[i][0]), 2, &(sCmpleDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(sCmpleDataArr[i][0]), 2, &(sCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLE(sCmpleDataArr[i][0], sCmpleDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "sCmpleConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpleDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(sCmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLE(sCmpleDataArr[i][0], sCmpleDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, sCmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sCmpleConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::scmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpleDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::scmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(sCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLE(sCmpleDataArr[i][0], sCmpleDataArr[i][1]), sCompareConst(sCmpleDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -943,18 +943,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_bCmpeq, compareEQ(bCmpeqDataArr[i][0], bCmpeqDataArr[i][1]), _bCmpeq(bCmpeqDataArr[i][0], bCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpeqConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpeqDataArr[i][0]), 2, &(bCmpeqDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpeqDataArr[i][0]), 2, &(bCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareEQ(bCmpeqDataArr[i][0], bCmpeqDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bCmpeqConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpeqDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareEQ(bCmpeqDataArr[i][0], bCmpeqDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, bCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpeqConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpeqDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareEQ(bCmpeqDataArr[i][0], bCmpeqDataArr[i][1]), bCompareConst(bCmpeqDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -964,18 +964,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_bCmpgt, compareGT(bCmpgtDataArr[i][0], bCmpgtDataArr[i][1]), _bCmpgt(bCmpgtDataArr[i][0], bCmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpgtConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpgtDataArr[i][0]), 2, &(bCmpgtDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpgtDataArr[i][0]), 2, &(bCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGT(bCmpgtDataArr[i][0], bCmpgtDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bCmpgtConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpgtDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGT(bCmpgtDataArr[i][0], bCmpgtDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, bCmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpgtConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpgtDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGT(bCmpgtDataArr[i][0], bCmpgtDataArr[i][1]), bCompareConst(bCmpgtDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -986,18 +986,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifScmpeq, compareEQ(ifScmpeqDataArr[i][0], ifScmpeqDataArr[i][1]), _ifScmpeq(ifScmpeqDataArr[i][0], ifScmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpeqConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpeqDataArr[i][0]), 2, &(ifScmpeqDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpeqDataArr[i][0]), 2, &(ifScmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareEQ(ifScmpeqDataArr[i][0], ifScmpeqDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifScmpeqConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpeqDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareEQ(ifScmpeqDataArr[i][0], ifScmpeqDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, ifScmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpeqConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpeqDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareEQ(ifScmpeqDataArr[i][0], ifScmpeqDataArr[i][1]), sCompareConst(ifScmpeqDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -1007,18 +1007,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifScmpne, compareNE(ifScmpneDataArr[i][0], ifScmpneDataArr[i][1]), _ifScmpne(ifScmpneDataArr[i][0], ifScmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpneConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpneDataArr[i][0]), 2, &(ifScmpneDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpneDataArr[i][0]), 2, &(ifScmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareNE(ifScmpneDataArr[i][0], ifScmpneDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifScmpneConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpneDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareNE(ifScmpneDataArr[i][0], ifScmpneDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, ifScmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpneConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpneDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareNE(ifScmpneDataArr[i][0], ifScmpneDataArr[i][1]), sCompareConst(ifScmpneDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -1028,18 +1028,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifScmpgt, compareGT(ifScmpgtDataArr[i][0], ifScmpgtDataArr[i][1]), _ifScmpgt(ifScmpgtDataArr[i][0], ifScmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpgtConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpgtDataArr[i][0]), 2, &(ifScmpgtDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpgtDataArr[i][0]), 2, &(ifScmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGT(ifScmpgtDataArr[i][0], ifScmpgtDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifScmpgtConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpgtDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGT(ifScmpgtDataArr[i][0], ifScmpgtDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, ifScmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpgtConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpgtDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGT(ifScmpgtDataArr[i][0], ifScmpgtDataArr[i][1]), sCompareConst(ifScmpgtDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -1049,18 +1049,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifScmplt, compareLT(ifScmpltDataArr[i][0], ifScmpltDataArr[i][1]), _ifScmplt(ifScmpltDataArr[i][0], ifScmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpltConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpltDataArr[i][0]), 2, &(ifScmpltDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpltDataArr[i][0]), 2, &(ifScmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLT(ifScmpltDataArr[i][0], ifScmpltDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifScmpltConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpltDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLT(ifScmpltDataArr[i][0], ifScmpltDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, ifScmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpltConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpltDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLT(ifScmpltDataArr[i][0], ifScmpltDataArr[i][1]), sCompareConst(ifScmpltDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -1070,18 +1070,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifScmpge, compareGE(ifScmpgeDataArr[i][0], ifScmpgeDataArr[i][1]), _ifScmpge(ifScmpgeDataArr[i][0], ifScmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpgeConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpgeDataArr[i][0]), 2, &(ifScmpgeDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpgeDataArr[i][0]), 2, &(ifScmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGE(ifScmpgeDataArr[i][0], ifScmpgeDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifScmpgeConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpgeDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGE(ifScmpgeDataArr[i][0], ifScmpgeDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, ifScmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpgeConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpgeDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareGE(ifScmpgeDataArr[i][0], ifScmpgeDataArr[i][1]), sCompareConst(ifScmpgeDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -1091,18 +1091,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifScmple, compareLE(ifScmpleDataArr[i][0], ifScmpleDataArr[i][1]), _ifScmple(ifScmpleDataArr[i][0], ifScmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpleConst1_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpleDataArr[i][0]), 2, &(ifScmpleDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifScmpleDataArr[i][0]), 2, &(ifScmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLE(ifScmpleDataArr[i][0], ifScmpleDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifScmpleConst2_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpleDataArr[i][0])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifScmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLE(ifScmpleDataArr[i][0], ifScmpleDataArr[i][1]), sCompareConst(SHORT_PLACEHOLDER_1, ifScmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifScmpleConst3_TestCase%d", i + 1);
-      sCompareConst = (signatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifscmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpleDataArr[i][1])));
+      compileOpCodeMethod(sCompareConst, 
+            _numberOfBinaryArgs, TR::ifscmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifScmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(sCompareConst, compareLE(ifScmpleDataArr[i][0], ifScmpleDataArr[i][1]), sCompareConst(ifScmpleDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -1113,18 +1113,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifBcmpeq, compareEQ(ifBcmpeqDataArr[i][0], ifBcmpeqDataArr[i][1]), _ifBcmpeq(ifBcmpeqDataArr[i][0], ifBcmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpeqConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpeqDataArr[i][0]), 2, &(ifBcmpeqDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpeqDataArr[i][0]), 2, &(ifBcmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareEQ(ifBcmpeqDataArr[i][0], ifBcmpeqDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBcmpeqConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpeqDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareEQ(ifBcmpeqDataArr[i][0], ifBcmpeqDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, ifBcmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpeqConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpeqDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareEQ(ifBcmpeqDataArr[i][0], ifBcmpeqDataArr[i][1]), bCompareConst(ifBcmpeqDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -1134,18 +1134,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifBcmpgt, compareGT(ifBcmpgtDataArr[i][0], ifBcmpgtDataArr[i][1]), _ifBcmpgt(ifBcmpgtDataArr[i][0], ifBcmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpgtConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpgtDataArr[i][0]), 2, &(ifBcmpgtDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpgtDataArr[i][0]), 2, &(ifBcmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGT(ifBcmpgtDataArr[i][0], ifBcmpgtDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBcmpgtConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpgtDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGT(ifBcmpgtDataArr[i][0], ifBcmpgtDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, ifBcmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpgtConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpgtDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGT(ifBcmpgtDataArr[i][0], ifBcmpgtDataArr[i][1]), bCompareConst(ifBcmpgtDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -1156,18 +1156,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_iuCmpeq, compareEQ(iuCmpeqDataArr[i][0], iuCmpeqDataArr[i][1]), _iuCmpeq(iuCmpeqDataArr[i][0], iuCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "iuCmpeqConst1_TestCase%d", i + 1);
-      iuCompareConst = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iucmpeq, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 4, 1, &(iuCmpeqDataArr[i][0]), 2, &(iuCmpeqDataArr[i][1])));
+      compileOpCodeMethod(iuCompareConst, 
+            _numberOfBinaryArgs, TR::iucmpeq, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 4, 1, &(iuCmpeqDataArr[i][0]), 2, &(iuCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(iuCompareConst, compareEQ(iuCmpeqDataArr[i][0], iuCmpeqDataArr[i][1]), iuCompareConst(INT_PLACEHOLDER_1, INT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "iuCmpeqConst2_TestCase%d", i + 1);
-      iuCompareConst = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iucmpeq, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 1, &(iuCmpeqDataArr[i][0])));
+      compileOpCodeMethod(iuCompareConst, 
+            _numberOfBinaryArgs, TR::iucmpeq, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 1, &(iuCmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(iuCompareConst, compareEQ(iuCmpeqDataArr[i][0], iuCmpeqDataArr[i][1]), iuCompareConst(INT_PLACEHOLDER_1, iuCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "iuCmpeqConst3_TestCase%d", i + 1);
-      iuCompareConst = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iucmpeq, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &(iuCmpeqDataArr[i][1])));
+      compileOpCodeMethod(iuCompareConst, 
+            _numberOfBinaryArgs, TR::iucmpeq, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &(iuCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(iuCompareConst, compareEQ(iuCmpeqDataArr[i][0], iuCmpeqDataArr[i][1]), iuCompareConst(iuCmpeqDataArr[i][0], INT_PLACEHOLDER_2));
       }
 
@@ -1177,18 +1177,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_iuCmpne, compareNE(iuCmpneDataArr[i][0], iuCmpneDataArr[i][1]), _iuCmpne(iuCmpneDataArr[i][0], iuCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "iuCmpneConst1_TestCase%d", i + 1);
-      iuCompareConst = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iucmpne, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 4, 1, &(iuCmpneDataArr[i][0]), 2, &(iuCmpneDataArr[i][1])));
+      compileOpCodeMethod(iuCompareConst, 
+            _numberOfBinaryArgs, TR::iucmpne, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 4, 1, &(iuCmpneDataArr[i][0]), 2, &(iuCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(iuCompareConst, compareNE(iuCmpneDataArr[i][0], iuCmpneDataArr[i][1]), iuCompareConst(INT_PLACEHOLDER_1, INT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "iuCmpneConst2_TestCase%d", i + 1);
-      iuCompareConst = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iucmpne, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 1, &(iuCmpneDataArr[i][0])));
+      compileOpCodeMethod(iuCompareConst, 
+            _numberOfBinaryArgs, TR::iucmpne, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 1, &(iuCmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(iuCompareConst, compareNE(iuCmpneDataArr[i][0], iuCmpneDataArr[i][1]), iuCompareConst(INT_PLACEHOLDER_1, iuCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "iuCmpneConst3_TestCase%d", i + 1);
-      iuCompareConst = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iucmpne, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &(iuCmpneDataArr[i][1])));
+      compileOpCodeMethod(iuCompareConst, 
+            _numberOfBinaryArgs, TR::iucmpne, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &(iuCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(iuCompareConst, compareNE(iuCmpneDataArr[i][0], iuCmpneDataArr[i][1]), iuCompareConst(iuCmpneDataArr[i][0], INT_PLACEHOLDER_2));
       }
 
@@ -1198,18 +1198,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_iuCmpge, compareGE(iuCmpgeDataArr[i][0], iuCmpgeDataArr[i][1]), _iuCmpge(iuCmpgeDataArr[i][0], iuCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "iuCmpgeConst1_TestCase%d", i + 1);
-      iuCompareConst = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iucmpge, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 4, 1, &(iuCmpgeDataArr[i][0]), 2, &(iuCmpgeDataArr[i][1])));
+      compileOpCodeMethod(iuCompareConst, 
+            _numberOfBinaryArgs, TR::iucmpge, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 4, 1, &(iuCmpgeDataArr[i][0]), 2, &(iuCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(iuCompareConst, compareGE(iuCmpgeDataArr[i][0], iuCmpgeDataArr[i][1]), iuCompareConst(INT_PLACEHOLDER_1, INT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "iuCmpgeConst2_TestCase%d", i + 1);
-      iuCompareConst = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iucmpge, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 1, &(iuCmpgeDataArr[i][0])));
+      compileOpCodeMethod(iuCompareConst, 
+            _numberOfBinaryArgs, TR::iucmpge, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 1, &(iuCmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(iuCompareConst, compareGE(iuCmpgeDataArr[i][0], iuCmpgeDataArr[i][1]), iuCompareConst(INT_PLACEHOLDER_1, iuCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "iuCmpgeConst3_TestCase%d", i + 1);
-      iuCompareConst = (unsignedCompareSignatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iucmpge, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &(iuCmpgeDataArr[i][1])));
+      compileOpCodeMethod(iuCompareConst, 
+            _numberOfBinaryArgs, TR::iucmpge, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &(iuCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(iuCompareConst, compareGE(iuCmpgeDataArr[i][0], iuCmpgeDataArr[i][1]), iuCompareConst(iuCmpgeDataArr[i][0], INT_PLACEHOLDER_2));
       }
 
@@ -1220,18 +1220,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_suCmpeq, compareEQ(suCmpeqDataArr[i][0], suCmpeqDataArr[i][1]), _suCmpeq(suCmpeqDataArr[i][0], suCmpeqDataArr[i][1])) << suCmpeqDataArr[i][0] << " : " << suCmpeqDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpeqConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpeqDataArr[i][0]), 2, &(suCmpeqDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpeqDataArr[i][0]), 2, &(suCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(suCmpeqDataArr[i][0], suCmpeqDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << suCmpeqDataArr[i][0] << " : " << suCmpeqDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpeqConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpeqDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(suCmpeqDataArr[i][0], suCmpeqDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, suCmpeqDataArr[i][1])) << suCmpeqDataArr[i][0] << " : " << suCmpeqDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpeqConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpeqDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(suCmpeqDataArr[i][0], suCmpeqDataArr[i][1]), suCompareConst(suCmpeqDataArr[i][0], SHORT_PLACEHOLDER_2)) << suCmpeqDataArr[i][0] << " : " << suCmpeqDataArr[i][1];
       }
 
@@ -1241,18 +1241,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_suCmpne, compareNE(suCmpneDataArr[i][0], suCmpneDataArr[i][1]), _suCmpne(suCmpneDataArr[i][0], suCmpneDataArr[i][1])) << suCmpneDataArr[i][0] << " : " << suCmpneDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpneConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpneDataArr[i][0]), 2, &(suCmpneDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpneDataArr[i][0]), 2, &(suCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareNE(suCmpneDataArr[i][0], suCmpneDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << suCmpneDataArr[i][0] << " : " << suCmpneDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpneConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpneDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareNE(suCmpneDataArr[i][0], suCmpneDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, suCmpneDataArr[i][1])) << suCmpneDataArr[i][0] << " : " << suCmpneDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpneConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpneDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareNE(suCmpneDataArr[i][0], suCmpneDataArr[i][1]), suCompareConst(suCmpneDataArr[i][0], SHORT_PLACEHOLDER_2)) << suCmpneDataArr[i][0] << " : " << suCmpneDataArr[i][1];
       }
 
@@ -1262,18 +1262,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_suCmpgt, compareGT(suCmpgtDataArr[i][0], suCmpgtDataArr[i][1]), _suCmpgt(suCmpgtDataArr[i][0], suCmpgtDataArr[i][1])) << suCmpgtDataArr[i][0] << " : " << suCmpgtDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpgtConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpgtDataArr[i][0]), 2, &(suCmpgtDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpgtDataArr[i][0]), 2, &(suCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGT(suCmpgtDataArr[i][0], suCmpgtDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << suCmpgtDataArr[i][0] << " : " << suCmpgtDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpgtConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpgtDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGT(suCmpgtDataArr[i][0], suCmpgtDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, suCmpgtDataArr[i][1])) << suCmpgtDataArr[i][0] << " : " << suCmpgtDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpgtConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpgtDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGT(suCmpgtDataArr[i][0], suCmpgtDataArr[i][1]), suCompareConst(suCmpgtDataArr[i][0], SHORT_PLACEHOLDER_2)) << suCmpgtDataArr[i][0] << " : " << suCmpgtDataArr[i][1];
       }
 
@@ -1283,18 +1283,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_suCmplt, compareLT(suCmpltDataArr[i][0], suCmpltDataArr[i][1]), _suCmplt(suCmpltDataArr[i][0], suCmpltDataArr[i][1])) << suCmpltDataArr[i][0] << " : " << suCmpltDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpltConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpltDataArr[i][0]), 2, &(suCmpltDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpltDataArr[i][0]), 2, &(suCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLT(suCmpltDataArr[i][0], suCmpltDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << suCmpltDataArr[i][0] << " : " << suCmpltDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpltConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpltDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLT(suCmpltDataArr[i][0], suCmpltDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, suCmpltDataArr[i][1])) << suCmpltDataArr[i][0] << " : " << suCmpltDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpltConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpltDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLT(suCmpltDataArr[i][0], suCmpltDataArr[i][1]), suCompareConst(suCmpltDataArr[i][0], SHORT_PLACEHOLDER_2)) << suCmpltDataArr[i][0] << " : " << suCmpltDataArr[i][1];
       }
 
@@ -1304,18 +1304,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_suCmpge, compareGE(suCmpgeDataArr[i][0], suCmpgeDataArr[i][1]), _suCmpge(suCmpgeDataArr[i][0], suCmpgeDataArr[i][1])) << suCmpgeDataArr[i][0] << " : " << suCmpgeDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpgeConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpgeDataArr[i][0]), 2, &(suCmpgeDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpgeDataArr[i][0]), 2, &(suCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGE(suCmpgeDataArr[i][0], suCmpgeDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << suCmpgeDataArr[i][0] << " : " << suCmpgeDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpgeConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpgeDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGE(suCmpgeDataArr[i][0], suCmpgeDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, suCmpgeDataArr[i][1])) << suCmpgeDataArr[i][0] << " : " << suCmpgeDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpgeConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpgeDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGE(suCmpgeDataArr[i][0], suCmpgeDataArr[i][1]), suCompareConst(suCmpgeDataArr[i][0], SHORT_PLACEHOLDER_2)) << suCmpgeDataArr[i][0] << " : " << suCmpgeDataArr[i][1];
       }
 
@@ -1325,18 +1325,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_suCmple, compareLE(suCmpleDataArr[i][0], suCmpleDataArr[i][1]), _suCmple(suCmpleDataArr[i][0], suCmpleDataArr[i][1])) << suCmpleDataArr[i][0] << " : " << suCmpleDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpleConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpleDataArr[i][0]), 2, &(suCmpleDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpleDataArr[i][0]), 2, &(suCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLE(suCmpleDataArr[i][0], suCmpleDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << suCmpleDataArr[i][0] << " : " << suCmpleDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpleConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpleDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLE(suCmpleDataArr[i][0], suCmpleDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, suCmpleDataArr[i][1])) << suCmpleDataArr[i][0] << " : " << suCmpleDataArr[i][1];
 
       sprintf(resolvedMethodName, "suCmpleConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpleDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::sucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLE(suCmpleDataArr[i][0], suCmpleDataArr[i][1]), suCompareConst(suCmpleDataArr[i][0], SHORT_PLACEHOLDER_2)) << suCmpleDataArr[i][0] << " : " << suCmpleDataArr[i][1];
       }
 
@@ -1347,18 +1347,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifBuCmpeq, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), _ifBuCmpeq(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpeqConst1_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpeqDataArr[i][0]), 2, &(ifBuCmpeqDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpeqDataArr[i][0]), 2, &(ifBuCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBuCmpeqConst2_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpeqDataArr[i][0])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, ifBuCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpeqConst3_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpeqDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), buCompareConst(ifBuCmpeqDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -1368,18 +1368,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifBuCmpne, compareNE(ifBuCmpneDataArr[i][0], ifBuCmpneDataArr[i][1]), _ifBuCmpne(ifBuCmpneDataArr[i][0], ifBuCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpneConst1_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpneDataArr[i][0]), 2, &(ifBuCmpneDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpneDataArr[i][0]), 2, &(ifBuCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareNE(ifBuCmpneDataArr[i][0], ifBuCmpneDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBuCmpneConst2_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpneDataArr[i][0])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareNE(ifBuCmpneDataArr[i][0], ifBuCmpneDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, ifBuCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpneConst3_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpneDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareNE(ifBuCmpneDataArr[i][0], ifBuCmpneDataArr[i][1]), buCompareConst(ifBuCmpneDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -1391,18 +1391,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifBuCmpgt, compareGT(ifBuCmpgtDataArr[i][0], ifBuCmpgtDataArr[i][1]), _ifBuCmpgt(ifBuCmpgtDataArr[i][0], ifBuCmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpgtConst1_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpgtDataArr[i][0]), 2, &(ifBuCmpgtDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpgtDataArr[i][0]), 2, &(ifBuCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareGT(ifBuCmpgtDataArr[i][0], ifBuCmpgtDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBuCmpgtConst2_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpgtDataArr[i][0])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareGT(ifBuCmpgtDataArr[i][0], ifBuCmpgtDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, ifBuCmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpgtConst3_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpgtDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpgt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareGT(ifBuCmpgtDataArr[i][0], ifBuCmpgtDataArr[i][1]), buCompareConst(ifBuCmpgtDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -1412,18 +1412,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifBuCmplt, compareLT(ifBuCmpltDataArr[i][0], ifBuCmpltDataArr[i][1]), _ifBuCmplt(ifBuCmpltDataArr[i][0], ifBuCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpltConst1_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpltDataArr[i][0]), 2, &(ifBuCmpltDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpltDataArr[i][0]), 2, &(ifBuCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareLT(ifBuCmpltDataArr[i][0], ifBuCmpltDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBuCmpltConst2_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpltDataArr[i][0])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareLT(ifBuCmpltDataArr[i][0], ifBuCmpltDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, ifBuCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpltConst3_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpltDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareLT(ifBuCmpltDataArr[i][0], ifBuCmpltDataArr[i][1]), buCompareConst(ifBuCmpltDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -1433,18 +1433,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifBuCmpge, compareGE(ifBuCmpgeDataArr[i][0], ifBuCmpgeDataArr[i][1]), _ifBuCmpge(ifBuCmpgeDataArr[i][0], ifBuCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpgeConst1_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpgeDataArr[i][0]), 2, &(ifBuCmpgeDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpgeDataArr[i][0]), 2, &(ifBuCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareGE(ifBuCmpgeDataArr[i][0], ifBuCmpgeDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBuCmpgeConst2_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpgeDataArr[i][0])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareGE(ifBuCmpgeDataArr[i][0], ifBuCmpgeDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, ifBuCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpgeConst3_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpgeDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareGE(ifBuCmpgeDataArr[i][0], ifBuCmpgeDataArr[i][1]), buCompareConst(ifBuCmpgeDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -1454,18 +1454,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifBuCmple, compareLE(ifBuCmpleDataArr[i][0], ifBuCmpleDataArr[i][1]), _ifBuCmple(ifBuCmpleDataArr[i][0], ifBuCmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpleConst1_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpleDataArr[i][0]), 2, &(ifBuCmpleDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpleDataArr[i][0]), 2, &(ifBuCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareLE(ifBuCmpleDataArr[i][0], ifBuCmpleDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBuCmpleConst2_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpleDataArr[i][0])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareLE(ifBuCmpleDataArr[i][0], ifBuCmpleDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, ifBuCmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBuCmpleConst3_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbucmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpleDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::ifbucmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareLE(ifBuCmpleDataArr[i][0], ifBuCmpleDataArr[i][1]), buCompareConst(ifBuCmpleDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -1476,18 +1476,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifSuCmpeq, compareEQ(ifSuCmpeqDataArr[i][0], ifSuCmpeqDataArr[i][1]), _ifSuCmpeq(ifSuCmpeqDataArr[i][0], ifSuCmpeqDataArr[i][1])) << ifSuCmpeqDataArr[i][0] << " : " << ifSuCmpeqDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpeqConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpeqDataArr[i][0]), 2, &(ifSuCmpeqDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpeqDataArr[i][0]), 2, &(ifSuCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(ifSuCmpeqDataArr[i][0], ifSuCmpeqDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << ifSuCmpeqDataArr[i][0] << " : " << ifSuCmpeqDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpeqConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpeqDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(ifSuCmpeqDataArr[i][0], ifSuCmpeqDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, ifSuCmpeqDataArr[i][1])) << ifSuCmpeqDataArr[i][0] << " : " << ifSuCmpeqDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpeqConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpeqDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(ifSuCmpeqDataArr[i][0], ifSuCmpeqDataArr[i][1]), suCompareConst(ifSuCmpeqDataArr[i][0], SHORT_PLACEHOLDER_2)) << ifSuCmpeqDataArr[i][0] << " : " << ifSuCmpeqDataArr[i][1];
       }
 
@@ -1497,18 +1497,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifSuCmpne, compareNE(ifSuCmpneDataArr[i][0], ifSuCmpneDataArr[i][1]), _ifSuCmpne(ifSuCmpneDataArr[i][0], ifSuCmpneDataArr[i][1])) << ifSuCmpneDataArr[i][0] << " : " << ifSuCmpneDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpneConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpneDataArr[i][0]), 2, &(ifSuCmpneDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpneDataArr[i][0]), 2, &(ifSuCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareNE(ifSuCmpneDataArr[i][0], ifSuCmpneDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << ifSuCmpneDataArr[i][0] << " : " << ifSuCmpneDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpneConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpneDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareNE(ifSuCmpneDataArr[i][0], ifSuCmpneDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, ifSuCmpneDataArr[i][1])) << ifSuCmpneDataArr[i][0] << " : " << ifSuCmpneDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpneConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpneDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareNE(ifSuCmpneDataArr[i][0], ifSuCmpneDataArr[i][1]), suCompareConst(ifSuCmpneDataArr[i][0], SHORT_PLACEHOLDER_2)) << ifSuCmpneDataArr[i][0] << " : " << ifSuCmpneDataArr[i][1];
       }
 
@@ -1518,18 +1518,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifSuCmpgt, compareGT(ifSuCmpgtDataArr[i][0], ifSuCmpgtDataArr[i][1]), _ifSuCmpgt(ifSuCmpgtDataArr[i][0], ifSuCmpgtDataArr[i][1])) << ifSuCmpgtDataArr[i][0] << " : " << ifSuCmpgtDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpgtConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpgtDataArr[i][0]), 2, &(ifSuCmpgtDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpgtDataArr[i][0]), 2, &(ifSuCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGT(ifSuCmpgtDataArr[i][0], ifSuCmpgtDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << ifSuCmpgtDataArr[i][0] << " : " << ifSuCmpgtDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpgtConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpgtDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGT(ifSuCmpgtDataArr[i][0], ifSuCmpgtDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, ifSuCmpgtDataArr[i][1])) << ifSuCmpgtDataArr[i][0] << " : " << ifSuCmpgtDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpgtConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpgtDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpgt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGT(ifSuCmpgtDataArr[i][0], ifSuCmpgtDataArr[i][1]), suCompareConst(ifSuCmpgtDataArr[i][0], SHORT_PLACEHOLDER_2)) << ifSuCmpgtDataArr[i][0] << " : " << ifSuCmpgtDataArr[i][1];
       }
 
@@ -1539,18 +1539,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifSuCmplt, compareLT(ifSuCmpltDataArr[i][0], ifSuCmpltDataArr[i][1]), _ifSuCmplt(ifSuCmpltDataArr[i][0], ifSuCmpltDataArr[i][1])) << ifSuCmpltDataArr[i][0] << " : " << ifSuCmpltDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpltConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpltDataArr[i][0]), 2, &(ifSuCmpltDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpltDataArr[i][0]), 2, &(ifSuCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLT(ifSuCmpltDataArr[i][0], ifSuCmpltDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << ifSuCmpltDataArr[i][0] << " : " << ifSuCmpltDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpltConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpltDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLT(ifSuCmpltDataArr[i][0], ifSuCmpltDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, ifSuCmpltDataArr[i][1])) << ifSuCmpltDataArr[i][0] << " : " << ifSuCmpltDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpltConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpltDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmplt, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLT(ifSuCmpltDataArr[i][0], ifSuCmpltDataArr[i][1]), suCompareConst(ifSuCmpltDataArr[i][0], SHORT_PLACEHOLDER_2)) << ifSuCmpltDataArr[i][0] << " : " << ifSuCmpltDataArr[i][1];
       }
 
@@ -1560,18 +1560,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifSuCmpge, compareGE(ifSuCmpgeDataArr[i][0], ifSuCmpgeDataArr[i][1]), _ifSuCmpge(ifSuCmpgeDataArr[i][0], ifSuCmpgeDataArr[i][1])) << ifSuCmpgeDataArr[i][0] << " : " << ifSuCmpgeDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpgeConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpgeDataArr[i][0]), 2, &(ifSuCmpgeDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpgeDataArr[i][0]), 2, &(ifSuCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGE(ifSuCmpgeDataArr[i][0], ifSuCmpgeDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << ifSuCmpgeDataArr[i][0] << " : " << ifSuCmpgeDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpgeConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpgeDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGE(ifSuCmpgeDataArr[i][0], ifSuCmpgeDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, ifSuCmpgeDataArr[i][1])) << ifSuCmpgeDataArr[i][0] << " : " << ifSuCmpgeDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpgeConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpgeDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmpge, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareGE(ifSuCmpgeDataArr[i][0], ifSuCmpgeDataArr[i][1]), suCompareConst(ifSuCmpgeDataArr[i][0], SHORT_PLACEHOLDER_2)) << ifSuCmpgeDataArr[i][0] << " : " << ifSuCmpgeDataArr[i][1];
       }
 
@@ -1581,18 +1581,18 @@ PPCOpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(_ifSuCmple, compareLE(ifSuCmpleDataArr[i][0], ifSuCmpleDataArr[i][1]), _ifSuCmple(ifSuCmpleDataArr[i][0], ifSuCmpleDataArr[i][1])) << ifSuCmpleDataArr[i][0] << " : " << ifSuCmpleDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpleConst1_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpleDataArr[i][0]), 2, &(ifSuCmpleDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpleDataArr[i][0]), 2, &(ifSuCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLE(ifSuCmpleDataArr[i][0], ifSuCmpleDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << ifSuCmpleDataArr[i][0] << " : " << ifSuCmpleDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpleConst2_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpleDataArr[i][0])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLE(ifSuCmpleDataArr[i][0], ifSuCmpleDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, ifSuCmpleDataArr[i][1])) << ifSuCmpleDataArr[i][0] << " : " << ifSuCmpleDataArr[i][1];
 
       sprintf(resolvedMethodName, "ifSuCmpleConst3_TestCase%d", i + 1);
-      suCompareConst = (unsignedCompareSignatureCharSS_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifsucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpleDataArr[i][1])));
+      compileOpCodeMethod(suCompareConst, 
+            _numberOfBinaryArgs, TR::ifsucmple, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(suCompareConst, compareLE(ifSuCmpleDataArr[i][0], ifSuCmpleDataArr[i][1]), suCompareConst(ifSuCmpleDataArr[i][0], SHORT_PLACEHOLDER_2)) << ifSuCmpleDataArr[i][0] << " : " << ifSuCmpleDataArr[i][1];
       }
    }
@@ -1756,8 +1756,8 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_b2a, convert(byteDataArr[i], ADDRESS_PLACEHOLDER_1), _b2a(byteDataArr[i]));
 
       sprintf(resolvedMethodName, "b2aConst%d", i + 1);
-      b2aConst = (signatureCharB_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::b2a, resolvedMethodName, _argTypesUnaryByte, TR::Address, rc, 2, 1, &byteDataArr[i]));
+      compileOpCodeMethod(b2aConst, 
+            _numberOfUnaryArgs, TR::b2a, resolvedMethodName, _argTypesUnaryByte, TR::Address, rc, 2, 1, &byteDataArr[i]);
       OMR_CT_EXPECT_EQ(b2aConst, convert(byteDataArr[i], ADDRESS_PLACEHOLDER_1), b2aConst(BYTE_PLACEHOLDER_1));
       }
 
@@ -1767,8 +1767,8 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_s2a, convert(shortDataArr[i], ADDRESS_PLACEHOLDER_1), _s2a(shortDataArr[i]));
 
       sprintf(resolvedMethodName, "s2aConst%d", i + 1);
-      s2aConst = (signatureCharS_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::s2a, resolvedMethodName, _argTypesUnaryShort, TR::Address, rc, 2, 1, &shortDataArr[i]));
+      compileOpCodeMethod(s2aConst, 
+            _numberOfUnaryArgs, TR::s2a, resolvedMethodName, _argTypesUnaryShort, TR::Address, rc, 2, 1, &shortDataArr[i]);
       OMR_CT_EXPECT_EQ(s2aConst, convert(shortDataArr[i], ADDRESS_PLACEHOLDER_1), s2aConst(SHORT_PLACEHOLDER_1));
       }
 
@@ -1778,8 +1778,8 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_i2a, convert(intDataArr[i], ADDRESS_PLACEHOLDER_1), _i2a(intDataArr[i]));
 
       sprintf(resolvedMethodName, "i2aConst%d", i + 1);
-      i2aConst = (signatureCharI_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::i2a, resolvedMethodName, _argTypesUnaryInt, TR::Address, rc, 2, 1, &intDataArr[i]));
+      compileOpCodeMethod(i2aConst, 
+            _numberOfUnaryArgs, TR::i2a, resolvedMethodName, _argTypesUnaryInt, TR::Address, rc, 2, 1, &intDataArr[i]);
       OMR_CT_EXPECT_EQ(i2aConst, convert(intDataArr[i], ADDRESS_PLACEHOLDER_1), i2aConst(INT_PLACEHOLDER_1));
       }
 
@@ -1789,8 +1789,8 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_bu2a, convert(ubyteDataArr[i], ADDRESS_PLACEHOLDER_1), _bu2a(ubyteDataArr[i]));
 
       sprintf(resolvedMethodName, "bu2aConst%d", i + 1);
-      bu2aConst = (unsignedSignatureCharB_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::bu2a, resolvedMethodName, _argTypesUnaryByte, TR::Address, rc, 2, 1, &ubyteDataArr[i]));
+      compileOpCodeMethod(bu2aConst, 
+            _numberOfUnaryArgs, TR::bu2a, resolvedMethodName, _argTypesUnaryByte, TR::Address, rc, 2, 1, &ubyteDataArr[i]);
       OMR_CT_EXPECT_EQ(bu2aConst, convert(ubyteDataArr[i], ADDRESS_PLACEHOLDER_1), bu2aConst(BYTE_PLACEHOLDER_1));
       }
 
@@ -1800,8 +1800,8 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_lu2a, convert(ulongDataArr[i], ADDRESS_PLACEHOLDER_1), _lu2a(ulongDataArr[i]));
 
       sprintf(resolvedMethodName, "lu2aConst%d", i + 1);
-      lu2aConst = (unsignedSignatureCharJ_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::lu2a, resolvedMethodName, _argTypesUnaryLong, TR::Address, rc, 2, 1, &ulongDataArr[i]));
+      compileOpCodeMethod(lu2aConst, 
+            _numberOfUnaryArgs, TR::lu2a, resolvedMethodName, _argTypesUnaryLong, TR::Address, rc, 2, 1, &ulongDataArr[i]);
       OMR_CT_EXPECT_EQ(lu2aConst, convert(ulongDataArr[i], ADDRESS_PLACEHOLDER_1), lu2aConst(LONG_PLACEHOLDER_1));
       }
 
@@ -1811,7 +1811,7 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_a2l, convert(aUnaryDataArr[i], LONG_POS), _a2l(aUnaryDataArr[i]));
 
       sprintf(resolvedMethodName, "a2lConst%d", i + 1);
-      a2lConst = (signatureCharL_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::a2l, resolvedMethodName, _argTypesUnaryAddress, TR::Int64, rc, 2, 1, &aUnaryDataArr[i]));
+      compileOpCodeMethod(a2lConst, _numberOfUnaryArgs, TR::a2l, resolvedMethodName, _argTypesUnaryAddress, TR::Int64, rc, 2, 1, &aUnaryDataArr[i]);
       OMR_CT_EXPECT_EQ(a2lConst, convert(aUnaryDataArr[i], LONG_POS), a2lConst(ADDRESS_PLACEHOLDER_1));
       }
 
@@ -1821,8 +1821,8 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_a2s, convert(aUnaryDataArr[i], SHORT_POS), _a2s(aUnaryDataArr[i]));
 
       sprintf(resolvedMethodName, "a2sConst%d", i + 1);
-      a2sConst = (signatureCharL_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::a2s, resolvedMethodName, _argTypesUnaryAddress, TR::Int16, rc, 2, 1, &aUnaryDataArr[i]));
+      compileOpCodeMethod(a2sConst, 
+            _numberOfUnaryArgs, TR::a2s, resolvedMethodName, _argTypesUnaryAddress, TR::Int16, rc, 2, 1, &aUnaryDataArr[i]);
       OMR_CT_EXPECT_EQ(a2sConst, convert(aUnaryDataArr[i], SHORT_POS), a2sConst(ADDRESS_PLACEHOLDER_1));
       }
 
@@ -1832,8 +1832,8 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_a2b, convert(aUnaryDataArr[i], BYTE_POS), _a2b(aUnaryDataArr[i]));
 
       sprintf(resolvedMethodName, "a2bConst%d", i + 1);
-      a2bConst = (signatureCharL_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::a2b, resolvedMethodName, _argTypesUnaryAddress, TR::Int8, rc, 2, 1, &aUnaryDataArr[i]));
+      compileOpCodeMethod(a2bConst, 
+            _numberOfUnaryArgs, TR::a2b, resolvedMethodName, _argTypesUnaryAddress, TR::Int8, rc, 2, 1, &aUnaryDataArr[i]);
       OMR_CT_EXPECT_EQ(a2bConst, convert(aUnaryDataArr[i], BYTE_POS), a2bConst(ADDRESS_PLACEHOLDER_1));
       }
 
@@ -1844,18 +1844,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_acmpeq, compareEQ(acmpeqDataArr[i][0], acmpeqDataArr[i][1]), _acmpeq(acmpeqDataArr[i][0], acmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "aCmpeqConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpeqDataArr[i][0]), 2, &(acmpeqDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpeqDataArr[i][0]), 2, &(acmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareEQ(acmpeqDataArr[i][0], acmpeqDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "aCmpeqConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpeqDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareEQ(acmpeqDataArr[i][0], acmpeqDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, acmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "aCmpeqConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpeqDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareEQ(acmpeqDataArr[i][0], acmpeqDataArr[i][1]), aCompareConst(acmpeqDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -1865,18 +1865,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_acmpne, compareNE(acmpneDataArr[i][0], acmpneDataArr[i][1]), _acmpne(acmpneDataArr[i][0], acmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "aCmpneConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpneDataArr[i][0]), 2, &(acmpneDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpneDataArr[i][0]), 2, &(acmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareNE(acmpneDataArr[i][0], acmpneDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "aCmpneConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpneDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareNE(acmpneDataArr[i][0], acmpneDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, acmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "aCmpneConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpneDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareNE(acmpneDataArr[i][0], acmpneDataArr[i][1]), aCompareConst(acmpneDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -1886,18 +1886,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_acmpgt, compareGT(acmpgtDataArr[i][0], acmpgtDataArr[i][1]), _acmpgt(acmpgtDataArr[i][0], acmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "acmpgtConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpgtDataArr[i][0]), 2, &(acmpgtDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpgtDataArr[i][0]), 2, &(acmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGT(acmpgtDataArr[i][0], acmpgtDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "acmpgtConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpgtDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGT(acmpgtDataArr[i][0], acmpgtDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, acmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "acmpgtConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpgtDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGT(acmpgtDataArr[i][0], acmpgtDataArr[i][1]), aCompareConst(acmpgtDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -1907,18 +1907,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_acmplt, compareLT(acmpltDataArr[i][0], acmpltDataArr[i][1]), _acmplt(acmpltDataArr[i][0], acmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "acmpltConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpltDataArr[i][0]), 2, &(acmpltDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpltDataArr[i][0]), 2, &(acmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLT(acmpltDataArr[i][0], acmpltDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "acmpltConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpltDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLT(acmpltDataArr[i][0], acmpltDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, acmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "acmpltConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpltDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLT(acmpltDataArr[i][0], acmpltDataArr[i][1]), aCompareConst(acmpltDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -1928,18 +1928,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_acmpge, compareGE(acmpgeDataArr[i][0], acmpgeDataArr[i][1]), _acmpge(acmpgeDataArr[i][0], acmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "acmpgeConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpgeDataArr[i][0]), 2, &(acmpgeDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpgeDataArr[i][0]), 2, &(acmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGE(acmpgeDataArr[i][0], acmpgeDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "acmpgeConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpgeDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGE(acmpgeDataArr[i][0], acmpgeDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, acmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "acmpgeConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpgeDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGE(acmpgeDataArr[i][0], acmpgeDataArr[i][1]), aCompareConst(acmpgeDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -1949,18 +1949,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_acmple, compareLE(acmpleDataArr[i][0], acmpleDataArr[i][1]), _acmple(acmpleDataArr[i][0], acmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "acmpleConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpleDataArr[i][0]), 2, &(acmpleDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(acmpleDataArr[i][0]), 2, &(acmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLE(acmpleDataArr[i][0], acmpleDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "acmpleConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpleDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(acmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLE(acmpleDataArr[i][0], acmpleDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, acmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "acmpleConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::acmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpleDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::acmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(acmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLE(acmpleDataArr[i][0], acmpleDataArr[i][1]), aCompareConst(acmpleDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -1971,18 +1971,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_ifacmpeq, compareEQ(ifacmpeqDataArr[i][0], ifacmpeqDataArr[i][1]), _ifacmpeq(ifacmpeqDataArr[i][0], ifacmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpeqConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpeqDataArr[i][0]), 2, &(ifacmpeqDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpeqDataArr[i][0]), 2, &(ifacmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareEQ(ifacmpeqDataArr[i][0], ifacmpeqDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifacmpeqConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpeqDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareEQ(ifacmpeqDataArr[i][0], ifacmpeqDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ifacmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpeqConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpeqDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpeq, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareEQ(ifacmpeqDataArr[i][0], ifacmpeqDataArr[i][1]), aCompareConst(ifacmpeqDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -1992,18 +1992,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_ifacmpne, compareNE(ifacmpneDataArr[i][0], ifacmpneDataArr[i][1]), _ifacmpne(ifacmpneDataArr[i][0], ifacmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpneConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpneDataArr[i][0]), 2, &(ifacmpneDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpneDataArr[i][0]), 2, &(ifacmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareNE(ifacmpneDataArr[i][0], ifacmpneDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifacmpneConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpneDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareNE(ifacmpneDataArr[i][0], ifacmpneDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ifacmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpneConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpneDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpne, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareNE(ifacmpneDataArr[i][0], ifacmpneDataArr[i][1]), aCompareConst(ifacmpneDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -2013,18 +2013,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_ifacmpgt, compareGT(ifacmpgtDataArr[i][0], ifacmpgtDataArr[i][1]), _ifacmpgt(ifacmpgtDataArr[i][0], ifacmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpgtConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpgtDataArr[i][0]), 2, &(ifacmpgtDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpgtDataArr[i][0]), 2, &(ifacmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGT(ifacmpgtDataArr[i][0], ifacmpgtDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifacmpgtConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpgtDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGT(ifacmpgtDataArr[i][0], ifacmpgtDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ifacmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpgtConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpgtDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpgt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGT(ifacmpgtDataArr[i][0], ifacmpgtDataArr[i][1]), aCompareConst(ifacmpgtDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -2034,18 +2034,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_ifacmplt, compareLT(ifacmpltDataArr[i][0], ifacmpltDataArr[i][1]), _ifacmplt(ifacmpltDataArr[i][0], ifacmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpltConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpltDataArr[i][0]), 2, &(ifacmpltDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpltDataArr[i][0]), 2, &(ifacmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLT(ifacmpltDataArr[i][0], ifacmpltDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifacmpltConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpltDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLT(ifacmpltDataArr[i][0], ifacmpltDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ifacmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpltConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpltDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmplt, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLT(ifacmpltDataArr[i][0], ifacmpltDataArr[i][1]), aCompareConst(ifacmpltDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -2055,18 +2055,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_ifacmpge, compareGE(ifacmpgeDataArr[i][0], ifacmpgeDataArr[i][1]), _ifacmpge(ifacmpgeDataArr[i][0], ifacmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpgeConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpgeDataArr[i][0]), 2, &(ifacmpgeDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpgeDataArr[i][0]), 2, &(ifacmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGE(ifacmpgeDataArr[i][0], ifacmpgeDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifacmpgeConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpgeDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGE(ifacmpgeDataArr[i][0], ifacmpgeDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ifacmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpgeConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpgeDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmpge, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareGE(ifacmpgeDataArr[i][0], ifacmpgeDataArr[i][1]), aCompareConst(ifacmpgeDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -2076,18 +2076,18 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_ifacmple, compareLE(ifacmpleDataArr[i][0], ifacmpleDataArr[i][1]), _ifacmple(ifacmpleDataArr[i][0], ifacmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpleConst1_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpleDataArr[i][0]), 2, &(ifacmpleDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 4, 1, &(ifacmpleDataArr[i][0]), 2, &(ifacmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLE(ifacmpleDataArr[i][0], ifacmpleDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifacmpleConst2_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpleDataArr[i][0])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 1, &(ifacmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLE(ifacmpleDataArr[i][0], ifacmpleDataArr[i][1]), aCompareConst(ADDRESS_PLACEHOLDER_1, ifacmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifacmpleConst3_TestCase%d", i + 1);
-      aCompareConst = (signatureCharLL_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifacmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpleDataArr[i][1])));
+      compileOpCodeMethod(aCompareConst, 
+            _numberOfBinaryArgs, TR::ifacmple, resolvedMethodName, _argTypesBinaryAddress, TR::Int32, rc, 2, 2, &(ifacmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(aCompareConst, compareLE(ifacmpleDataArr[i][0], ifacmpleDataArr[i][1]), aCompareConst(ifacmpleDataArr[i][0], ADDRESS_PLACEHOLDER_2));
       }
 
@@ -2099,38 +2099,38 @@ PPCOpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(_aternary, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), _aternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]));
 
       sprintf(resolvedMethodName, "aTernaryConst1_TestCase%d", i + 1);
-      aTernaryConst = (signatureCharILL_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 6, 1, &aternaryChild1Arr[i], 2, &aternaryArr[i][0], 3, &aternaryArr[i][1]));
+      compileOpCodeMethod(aTernaryConst, 
+            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 6, 1, &aternaryChild1Arr[i], 2, &aternaryArr[i][0], 3, &aternaryArr[i][1]);
       OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(INT_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2, ADDRESS_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "aTernaryConst2_TestCase%d", i + 1);
-      aTernaryConst = (signatureCharILL_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 4, 1, &aternaryChild1Arr[i], 2, &aternaryArr[i][0]));
+      compileOpCodeMethod(aTernaryConst, 
+            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 4, 1, &aternaryChild1Arr[i], 2, &aternaryArr[i][0]);
       OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(INT_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2, aternaryArr[i][1]));
 
       sprintf(resolvedMethodName, "aTernaryConst3_TestCase%d", i + 1);
-      aTernaryConst = (signatureCharILL_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 4, 1, &aternaryChild1Arr[i], 3, &aternaryArr[i][1]));
+      compileOpCodeMethod(aTernaryConst, 
+            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 4, 1, &aternaryChild1Arr[i], 3, &aternaryArr[i][1]);
       OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(INT_PLACEHOLDER_1, aternaryArr[i][0], ADDRESS_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "aTernaryConst4_TestCase%d", i + 1);
-      aTernaryConst = (signatureCharILL_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 4, 2, &aternaryArr[i][0], 3, &aternaryArr[i][1]));
+      compileOpCodeMethod(aTernaryConst, 
+            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 4, 2, &aternaryArr[i][0], 3, &aternaryArr[i][1]);
       OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(aternaryChild1Arr[i], ADDRESS_PLACEHOLDER_2, ADDRESS_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "aTernaryConst5_TestCase%d", i + 1);
-      aTernaryConst = (signatureCharILL_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 2, 1, &aternaryChild1Arr[i]));
+      compileOpCodeMethod(aTernaryConst, 
+            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 2, 1, &aternaryChild1Arr[i]);
       OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(INT_PLACEHOLDER_1, aternaryArr[i][0], aternaryArr[i][1]));
 
       sprintf(resolvedMethodName, "aTernaryConst6_TestCase%d", i + 1);
-      aTernaryConst = (signatureCharILL_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 2, 2, &aternaryArr[i][0]));
+      compileOpCodeMethod(aTernaryConst, 
+            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 2, 2, &aternaryArr[i][0]);
       OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(aternaryChild1Arr[i], ADDRESS_PLACEHOLDER_1, aternaryArr[i][1]));
 
       sprintf(resolvedMethodName, "aTernaryConst7_TestCase%d", i + 1);
-      aTernaryConst = (signatureCharILL_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 2, 3, &aternaryArr[i][1]));
+      compileOpCodeMethod(aTernaryConst, 
+            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 2, 3, &aternaryArr[i][1]);
       OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(aternaryChild1Arr[i], aternaryArr[i][0], ADDRESS_PLACEHOLDER_1));
       }
 
@@ -2210,38 +2210,38 @@ PPCOpCodesTest::invokeTernaryTests()
       OMR_CT_EXPECT_EQ(_bternary, ternary(bternaryChild1Arr[i], byteDataArr[i][0], byteDataArr[i][1]), _bternary(bternaryChild1Arr[i], byteDataArr[i][0], byteDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bTernaryConst1_Testcase%d", i + 1);
-      bTernaryConst = (signatureCharIBB_B_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::bternary,
-            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 6, 1, &bternaryChild1Arr[i], 2, &byteDataArr[i][0], 3, &byteDataArr[i][1]));
+      compileOpCodeMethod(bTernaryConst, _numberOfTernaryArgs, TR::bternary,
+            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 6, 1, &bternaryChild1Arr[i], 2, &byteDataArr[i][0], 3, &byteDataArr[i][1]);
       OMR_CT_EXPECT_EQ(bTernaryConst, ternary(bternaryChild1Arr[i], byteDataArr[i][0], byteDataArr[i][1]), bTernaryConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2, BYTE_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "bTernaryConst2_Testcase%d", i + 1);
-      bTernaryConst = (signatureCharIBB_B_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::bternary,
-            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 4, 1, &bternaryChild1Arr[i], 2, &byteDataArr[i][0]));
+      compileOpCodeMethod(bTernaryConst, _numberOfTernaryArgs, TR::bternary,
+            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 4, 1, &bternaryChild1Arr[i], 2, &byteDataArr[i][0]);
       OMR_CT_EXPECT_EQ(bTernaryConst, ternary(bternaryChild1Arr[i], byteDataArr[i][0], byteDataArr[i][1]), bTernaryConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2, byteDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bTernaryConst3_Testcase%d", i + 1);
-      bTernaryConst = (signatureCharIBB_B_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::bternary,
-            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 4, 1, &bternaryChild1Arr[i], 3, &byteDataArr[i][1]));
+      compileOpCodeMethod(bTernaryConst, _numberOfTernaryArgs, TR::bternary,
+            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 4, 1, &bternaryChild1Arr[i], 3, &byteDataArr[i][1]);
       OMR_CT_EXPECT_EQ(bTernaryConst, ternary(bternaryChild1Arr[i], byteDataArr[i][0], byteDataArr[i][1]), bTernaryConst(BYTE_PLACEHOLDER_1, byteDataArr[i][0], BYTE_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "bTernaryConst4_Testcase%d", i + 1);
-      bTernaryConst = (signatureCharIBB_B_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::bternary,
-            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 4, 2, &byteDataArr[i][0], 3, &byteDataArr[i][1]));
+      compileOpCodeMethod(bTernaryConst, _numberOfTernaryArgs, TR::bternary,
+            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 4, 2, &byteDataArr[i][0], 3, &byteDataArr[i][1]);
       OMR_CT_EXPECT_EQ(bTernaryConst, ternary(bternaryChild1Arr[i], byteDataArr[i][0], byteDataArr[i][1]), bTernaryConst(bternaryChild1Arr[i], BYTE_PLACEHOLDER_2, BYTE_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "bTernaryConst5_Testcase%d", i + 1);
-      bTernaryConst = (signatureCharIBB_B_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::bternary,
-            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 2, 1, &bternaryChild1Arr[i]));
+      compileOpCodeMethod(bTernaryConst, _numberOfTernaryArgs, TR::bternary,
+            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 2, 1, &bternaryChild1Arr[i]);
       OMR_CT_EXPECT_EQ(bTernaryConst, ternary(bternaryChild1Arr[i], byteDataArr[i][0], byteDataArr[i][1]), bTernaryConst(BYTE_PLACEHOLDER_1, byteDataArr[i][0], byteDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bTernaryConst6_Testcase%d", i + 1);
-      bTernaryConst = (signatureCharIBB_B_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::bternary,
-            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 2, 2, &byteDataArr[i][0]));
+      compileOpCodeMethod(bTernaryConst, _numberOfTernaryArgs, TR::bternary,
+            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 2, 2, &byteDataArr[i][0]);
       OMR_CT_EXPECT_EQ(bTernaryConst, ternary(bternaryChild1Arr[i], byteDataArr[i][0], byteDataArr[i][1]), bTernaryConst(bternaryChild1Arr[i], BYTE_PLACEHOLDER_1, byteDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bTernaryConst7_Testcase%d", i + 1);
-      bTernaryConst = (signatureCharIBB_B_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::bternary,
-            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 2, 3, &byteDataArr[i][1]));
+      compileOpCodeMethod(bTernaryConst, _numberOfTernaryArgs, TR::bternary,
+            resolvedMethodName, _argTypesTernaryByte, TR::Int8, rc, 2, 3, &byteDataArr[i][1]);
       OMR_CT_EXPECT_EQ(bTernaryConst, ternary(bternaryChild1Arr[i], byteDataArr[i][0], byteDataArr[i][1]), bTernaryConst(bternaryChild1Arr[i], byteDataArr[i][0], BYTE_PLACEHOLDER_1));
       }
 
@@ -2253,38 +2253,38 @@ PPCOpCodesTest::invokeTernaryTests()
       OMR_CT_EXPECT_EQ(_sternary, ternary(sternaryChild1Arr[i], shortDataArr[i][0], shortDataArr[i][1]), _sternary(sternaryChild1Arr[i], shortDataArr[i][0], shortDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sTernaryConst1_Testcase%d", i + 1);
-      sTernaryConst = (signatureCharISS_S_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::sternary,
-            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 6, 1, &sternaryChild1Arr[i], 2, &shortDataArr[i][0], 3, &shortDataArr[i][1]));
+      compileOpCodeMethod(sTernaryConst, _numberOfTernaryArgs, TR::sternary,
+            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 6, 1, &sternaryChild1Arr[i], 2, &shortDataArr[i][0], 3, &shortDataArr[i][1]);
       OMR_CT_EXPECT_EQ(sTernaryConst, ternary(sternaryChild1Arr[i], shortDataArr[i][0], shortDataArr[i][1]), sTernaryConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2, SHORT_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "sTernaryConst2_Testcase%d", i + 1);
-      sTernaryConst = (signatureCharISS_S_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::sternary,
-            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 4, 1, &sternaryChild1Arr[i], 2, &shortDataArr[i][0]));
+      compileOpCodeMethod(sTernaryConst, _numberOfTernaryArgs, TR::sternary,
+            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 4, 1, &sternaryChild1Arr[i], 2, &shortDataArr[i][0]);
       OMR_CT_EXPECT_EQ(sTernaryConst, ternary(sternaryChild1Arr[i], shortDataArr[i][0], shortDataArr[i][1]), sTernaryConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2, shortDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sTernaryConst3_Testcase%d", i + 1);
-      sTernaryConst = (signatureCharISS_S_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::sternary,
-            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 4, 1, &sternaryChild1Arr[i], 3, &shortDataArr[i][1]));
+      compileOpCodeMethod(sTernaryConst, _numberOfTernaryArgs, TR::sternary,
+            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 4, 1, &sternaryChild1Arr[i], 3, &shortDataArr[i][1]);
       OMR_CT_EXPECT_EQ(sTernaryConst, ternary(sternaryChild1Arr[i], shortDataArr[i][0], shortDataArr[i][1]), sTernaryConst(SHORT_PLACEHOLDER_1, shortDataArr[i][0], SHORT_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "sTernaryConst4_Testcase%d", i + 1);
-      sTernaryConst = (signatureCharISS_S_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::sternary,
-            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 4, 2, &shortDataArr[i][0], 3, &shortDataArr[i][1]));
+      compileOpCodeMethod(sTernaryConst, _numberOfTernaryArgs, TR::sternary,
+            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 4, 2, &shortDataArr[i][0], 3, &shortDataArr[i][1]);
       OMR_CT_EXPECT_EQ(sTernaryConst, ternary(sternaryChild1Arr[i], shortDataArr[i][0], shortDataArr[i][1]), sTernaryConst(sternaryChild1Arr[i], SHORT_PLACEHOLDER_2, SHORT_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "sTernaryConst5_Testcase%d", i + 1);
-      sTernaryConst = (signatureCharISS_S_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::sternary,
-            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 2, 1, &sternaryChild1Arr[i]));
+      compileOpCodeMethod(sTernaryConst, _numberOfTernaryArgs, TR::sternary,
+            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 2, 1, &sternaryChild1Arr[i]);
       OMR_CT_EXPECT_EQ(sTernaryConst, ternary(sternaryChild1Arr[i], shortDataArr[i][0], shortDataArr[i][1]), sTernaryConst(SHORT_PLACEHOLDER_1, shortDataArr[i][0], shortDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sTernaryConst6_Testcase%d", i + 1);
-      sTernaryConst = (signatureCharISS_S_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::sternary,
-            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 2, 2, &shortDataArr[i][0]));
+      compileOpCodeMethod(sTernaryConst, _numberOfTernaryArgs, TR::sternary,
+            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 2, 2, &shortDataArr[i][0]);
       OMR_CT_EXPECT_EQ(sTernaryConst, ternary(sternaryChild1Arr[i], shortDataArr[i][0], shortDataArr[i][1]), sTernaryConst(sternaryChild1Arr[i], SHORT_PLACEHOLDER_1, shortDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sTernaryConst7_Testcase%d", i + 1);
-      sTernaryConst = (signatureCharISS_S_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::sternary,
-            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 2, 3, &shortDataArr[i][1]));
+      compileOpCodeMethod(sTernaryConst, _numberOfTernaryArgs, TR::sternary,
+            resolvedMethodName, _argTypesTernaryShort, TR::Int16, rc, 2, 3, &shortDataArr[i][1]);
       OMR_CT_EXPECT_EQ(sTernaryConst, ternary(sternaryChild1Arr[i], shortDataArr[i][0], shortDataArr[i][1]), sTernaryConst(sternaryChild1Arr[i], shortDataArr[i][0], SHORT_PLACEHOLDER_1));
       }
    }
@@ -2359,18 +2359,18 @@ PPCOpCodesTest::invokeShiftOrRolTests()
       OMR_CT_EXPECT_EQ(_iRol, rol(irolDataArr[i][0], irolDataArr[i][1]), _iRol(irolDataArr[i][0], irolDataArr[i][1]));
 
       sprintf(resolvedMethodName, "iRolConst1_TestCase%d", i + 1);
-      iShiftOrRolConst = (signatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::irol, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 4, 1, &irolDataArr[i][0], 2, &irolDataArr[i][1]));
+      compileOpCodeMethod(iShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::irol, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 4, 1, &irolDataArr[i][0], 2, &irolDataArr[i][1]);
       OMR_CT_EXPECT_EQ(iShiftOrRolConst, rol(irolDataArr[i][0], irolDataArr[i][1]), iShiftOrRolConst(INT_PLACEHOLDER_1, INT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "iRolConst2_TestCase%d", i + 1);
-      iShiftOrRolConst = (signatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::irol, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 1, &irolDataArr[i][0]));
+      compileOpCodeMethod(iShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::irol, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 1, &irolDataArr[i][0]);
       OMR_CT_EXPECT_EQ(iShiftOrRolConst, rol(irolDataArr[i][0], irolDataArr[i][1]), iShiftOrRolConst(INT_PLACEHOLDER_1, irolDataArr[i][1]));
 
       sprintf(resolvedMethodName, "iRolConst3_TestCase%d", i + 1);
-      iShiftOrRolConst = (signatureCharII_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::irol, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &irolDataArr[i][1]));
+      compileOpCodeMethod(iShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::irol, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &irolDataArr[i][1]);
       OMR_CT_EXPECT_EQ(iShiftOrRolConst, rol(irolDataArr[i][0], irolDataArr[i][1]), iShiftOrRolConst(irolDataArr[i][0], INT_PLACEHOLDER_2));
       }
 
@@ -2381,18 +2381,18 @@ PPCOpCodesTest::invokeShiftOrRolTests()
       OMR_CT_EXPECT_EQ(_bShl, shl(bshlDataArr[i][0], bshlDataArr[i][1]), _bShl(bshlDataArr[i][0],bshlDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bShlConst1_TestCase%d", i + 1);
-      bShiftOrRolConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bshl, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &bshlDataArr[i][0], 2, &bshlDataArr[i][1]));
+      compileOpCodeMethod(bShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::bshl, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &bshlDataArr[i][0], 2, &bshlDataArr[i][1]);
       OMR_CT_EXPECT_EQ(bShiftOrRolConst, shl(bshlDataArr[i][0], bshlDataArr[i][1]), bShiftOrRolConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bShlConst2_TestCase%d", i + 1);
-      bShiftOrRolConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bshl, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &bshlDataArr[i][0]));
+      compileOpCodeMethod(bShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::bshl, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &bshlDataArr[i][0]);
       OMR_CT_EXPECT_EQ(bShiftOrRolConst, shl(bshlDataArr[i][0], bshlDataArr[i][1]), bShiftOrRolConst(BYTE_PLACEHOLDER_1, bshlDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bShlConst3_TestCase%d", i + 1);
-      bShiftOrRolConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bshl, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &bshlDataArr[i][1]));
+      compileOpCodeMethod(bShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::bshl, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &bshlDataArr[i][1]);
       OMR_CT_EXPECT_EQ(bShiftOrRolConst, shl(bshlDataArr[i][0], bshlDataArr[i][1]), bShiftOrRolConst(bshlDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -2403,18 +2403,18 @@ PPCOpCodesTest::invokeShiftOrRolTests()
       OMR_CT_EXPECT_EQ(_buShr, shr(bushrDataArr[i][0], bushrDataArr[i][1]), _buShr(bushrDataArr[i][0], bushrDataArr[i][1]));
 
       sprintf(resolvedMethodName, "buShrConst1_TestCase%d", i + 1);
-      buShiftOrRolConst = (unsignedSignatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bushr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &bushrDataArr[i][0], 2, &bushrDataArr[i][1]));
+      compileOpCodeMethod(buShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::bushr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &bushrDataArr[i][0], 2, &bushrDataArr[i][1]);
       OMR_CT_EXPECT_EQ(buShiftOrRolConst, shr(bushrDataArr[i][0], bushrDataArr[i][1]), buShiftOrRolConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "buShrConst2_TestCase%d", i + 1);
-      buShiftOrRolConst = (unsignedSignatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bushr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &bushrDataArr[i][0]));
+      compileOpCodeMethod(buShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::bushr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &bushrDataArr[i][0]);
       OMR_CT_EXPECT_EQ(buShiftOrRolConst, shr(bushrDataArr[i][0], bushrDataArr[i][1]), buShiftOrRolConst(BYTE_PLACEHOLDER_1, bushrDataArr[i][1]));
 
       sprintf(resolvedMethodName, "buShrConst3_TestCase%d", i + 1);
-      buShiftOrRolConst = (unsignedSignatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bushr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &bushrDataArr[i][1]));
+      compileOpCodeMethod(buShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::bushr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &bushrDataArr[i][1]);
       OMR_CT_EXPECT_EQ(buShiftOrRolConst, shr(bushrDataArr[i][0], bushrDataArr[i][1]), buShiftOrRolConst(bushrDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -2425,18 +2425,18 @@ PPCOpCodesTest::invokeShiftOrRolTests()
       OMR_CT_EXPECT_EQ(_sShr, shr(sshrDataArr[i][0], sshrDataArr[i][1]), _sShr(sshrDataArr[i][0], sshrDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sShrConst1_TestCase%d", i + 1);
-      sShiftOrRolConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sshr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 4, 1, &sshrDataArr[i][0], 2, &sshrDataArr[i][1]));
+      compileOpCodeMethod(sShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::sshr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 4, 1, &sshrDataArr[i][0], 2, &sshrDataArr[i][1]);
       OMR_CT_EXPECT_EQ(sShiftOrRolConst, shr(sshrDataArr[i][0], sshrDataArr[i][1]), sShiftOrRolConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "sShrConst2_TestCase%d", i + 1);
-      sShiftOrRolConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sshr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 1, &sshrDataArr[i][0]));
+      compileOpCodeMethod(sShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::sshr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 1, &sshrDataArr[i][0]);
       OMR_CT_EXPECT_EQ(sShiftOrRolConst, shr(sshrDataArr[i][0], sshrDataArr[i][1]), sShiftOrRolConst(SHORT_PLACEHOLDER_1, sshrDataArr[i][1]));
 
       sprintf(resolvedMethodName, "sShrConst3_TestCase%d", i + 1);
-      sShiftOrRolConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sshr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 2, &sshrDataArr[i][1]));
+      compileOpCodeMethod(sShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::sshr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 2, &sshrDataArr[i][1]);
       OMR_CT_EXPECT_EQ(sShiftOrRolConst, shr(sshrDataArr[i][0], sshrDataArr[i][1]), sShiftOrRolConst(sshrDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
    }
@@ -2502,18 +2502,18 @@ PPCOpCodesTest::invokeBitwiseTests()
       OMR_CT_EXPECT_EQ(_bAnd, tand(byteAndArr[i][0], byteAndArr[i][1]), _bAnd(byteAndArr[i][0], byteAndArr[i][1]));
 
       sprintf(resolvedMethodName, "bAndConst1_TestCase%d", i + 1);
-      bBitwiseConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::band, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &(byteAndArr[i][0]), 2, &(byteAndArr[i][1])));
+      compileOpCodeMethod(bBitwiseConst, 
+            _numberOfBinaryArgs, TR::band, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &(byteAndArr[i][0]), 2, &(byteAndArr[i][1]));
       OMR_CT_EXPECT_EQ(bBitwiseConst, tand(byteAndArr[i][0], byteAndArr[i][1]), bBitwiseConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bAndConst2_TestCase%d", i + 1);
-      bBitwiseConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::band, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &(byteAndArr[i][0])));
+      compileOpCodeMethod(bBitwiseConst, 
+            _numberOfBinaryArgs, TR::band, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &(byteAndArr[i][0]));
       OMR_CT_EXPECT_EQ(bBitwiseConst, tand(byteAndArr[i][0], byteAndArr[i][1]), bBitwiseConst(BYTE_PLACEHOLDER_1, byteAndArr[i][1]));
 
       sprintf(resolvedMethodName, "bAndConst3_TestCase%d", i + 1);
-      bBitwiseConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::band, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &(byteAndArr[i][1])));
+      compileOpCodeMethod(bBitwiseConst, 
+            _numberOfBinaryArgs, TR::band, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &(byteAndArr[i][1]));
       OMR_CT_EXPECT_EQ(bBitwiseConst, tand(byteAndArr[i][0], byteAndArr[i][1]), bBitwiseConst(byteAndArr[i][0], BYTE_PLACEHOLDER_2));
      }
 
@@ -2524,18 +2524,18 @@ PPCOpCodesTest::invokeBitwiseTests()
       OMR_CT_EXPECT_EQ(_bOr, tor(byteOrArr[i][0], byteOrArr[i][1]), _bOr(byteOrArr[i][0], byteOrArr[i][1]));
 
       sprintf(resolvedMethodName, "bOrConst1_TestCase%d", i + 1);
-      bBitwiseConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &(byteOrArr[i][0]), 2, &(byteOrArr[i][1])));
+      compileOpCodeMethod(bBitwiseConst, 
+            _numberOfBinaryArgs, TR::bor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &(byteOrArr[i][0]), 2, &(byteOrArr[i][1]));
       OMR_CT_EXPECT_EQ(bBitwiseConst, tor(byteOrArr[i][0], byteOrArr[i][1]), bBitwiseConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bOrConst2_TestCase%d", i + 1);
-      bBitwiseConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &(byteOrArr[i][0])));
+      compileOpCodeMethod(bBitwiseConst, 
+            _numberOfBinaryArgs, TR::bor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &(byteOrArr[i][0]));
       OMR_CT_EXPECT_EQ(bBitwiseConst, tor(byteOrArr[i][0], byteOrArr[i][1]), bBitwiseConst(BYTE_PLACEHOLDER_1, byteOrArr[i][1]));
 
       sprintf(resolvedMethodName, "bOrConst3_TestCase%d", i + 1);
-      bBitwiseConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &(byteOrArr[i][1])));
+      compileOpCodeMethod(bBitwiseConst, 
+            _numberOfBinaryArgs, TR::bor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &(byteOrArr[i][1]));
       OMR_CT_EXPECT_EQ(bBitwiseConst, tor(byteOrArr[i][0], byteOrArr[i][1]), bBitwiseConst(byteOrArr[i][0], BYTE_PLACEHOLDER_2));
      }
 
@@ -2546,18 +2546,18 @@ PPCOpCodesTest::invokeBitwiseTests()
       OMR_CT_EXPECT_EQ(_bXor, txor(byteXorArr[i][0], byteXorArr[i][1]), _bXor(byteXorArr[i][0], byteXorArr[i][1]));
 
       sprintf(resolvedMethodName, "bXorConst1_TestCase%d", i + 1);
-      bBitwiseConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bxor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &(byteXorArr[i][0]), 2, &(byteXorArr[i][1])));
+      compileOpCodeMethod(bBitwiseConst, 
+            _numberOfBinaryArgs, TR::bxor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &(byteXorArr[i][0]), 2, &(byteXorArr[i][1]));
       OMR_CT_EXPECT_EQ(bBitwiseConst, txor(byteXorArr[i][0], byteXorArr[i][1]), bBitwiseConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bXorConst2_TestCase%d", i + 1);
-      bBitwiseConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bxor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &(byteXorArr[i][0])));
+      compileOpCodeMethod(bBitwiseConst, 
+            _numberOfBinaryArgs, TR::bxor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &(byteXorArr[i][0]));
       OMR_CT_EXPECT_EQ(bBitwiseConst, txor(byteXorArr[i][0], byteXorArr[i][1]), bBitwiseConst(BYTE_PLACEHOLDER_1, byteXorArr[i][1]));
 
       sprintf(resolvedMethodName, "bXorConst3_TestCase%d", i + 1);
-      bBitwiseConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bxor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &(byteXorArr[i][1])));
+      compileOpCodeMethod(bBitwiseConst, 
+            _numberOfBinaryArgs, TR::bxor, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &(byteXorArr[i][1]));
       OMR_CT_EXPECT_EQ(bBitwiseConst, txor(byteXorArr[i][0], byteXorArr[i][1]), bBitwiseConst(byteXorArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -2568,18 +2568,18 @@ PPCOpCodesTest::invokeBitwiseTests()
       OMR_CT_EXPECT_EQ(_sAnd, tand(shortAndArr[i][0], shortAndArr[i][1]), _sAnd(shortAndArr[i][0], shortAndArr[i][1]));
 
       sprintf(resolvedMethodName, "sAndConst1_TestCase%d", i + 1);
-      sBitwiseConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sand, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 4, 1, &(shortAndArr[i][0]), 2, &(shortAndArr[i][1])));
+      compileOpCodeMethod(sBitwiseConst, 
+            _numberOfBinaryArgs, TR::sand, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 4, 1, &(shortAndArr[i][0]), 2, &(shortAndArr[i][1]));
       OMR_CT_EXPECT_EQ(sBitwiseConst, tand(shortAndArr[i][0], shortAndArr[i][1]), sBitwiseConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "sAndConst2_TestCase%d", i + 1);
-      sBitwiseConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sand, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 1, &(shortAndArr[i][0])));
+      compileOpCodeMethod(sBitwiseConst, 
+            _numberOfBinaryArgs, TR::sand, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 1, &(shortAndArr[i][0]));
       OMR_CT_EXPECT_EQ(sBitwiseConst, tand(shortAndArr[i][0], shortAndArr[i][1]), sBitwiseConst(SHORT_PLACEHOLDER_1, shortAndArr[i][1]));
 
       sprintf(resolvedMethodName, "sAndConst3_TestCase%d", i + 1);
-      sBitwiseConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sand, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 2, &(shortAndArr[i][1])));
+      compileOpCodeMethod(sBitwiseConst, 
+            _numberOfBinaryArgs, TR::sand, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 2, &(shortAndArr[i][1]));
       OMR_CT_EXPECT_EQ(sBitwiseConst, tand(shortAndArr[i][0], shortAndArr[i][1]), sBitwiseConst(shortAndArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -2590,18 +2590,18 @@ PPCOpCodesTest::invokeBitwiseTests()
       OMR_CT_EXPECT_EQ(_sOr, tor(shortOrArr[i][0], shortOrArr[i][1]), _sOr(shortOrArr[i][0], shortOrArr[i][1]));
 
       sprintf(resolvedMethodName, "sOrConst1_TestCase%d", i + 1);
-      sBitwiseConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 4, 1, &(shortOrArr[i][0]), 2, &(shortOrArr[i][1])));
+      compileOpCodeMethod(sBitwiseConst, 
+            _numberOfBinaryArgs, TR::sor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 4, 1, &(shortOrArr[i][0]), 2, &(shortOrArr[i][1]));
       OMR_CT_EXPECT_EQ(sBitwiseConst, tor(shortOrArr[i][0], shortOrArr[i][1]), sBitwiseConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "sOrConst2_TestCase%d", i + 1);
-      sBitwiseConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 1, &(shortOrArr[i][0])));
+      compileOpCodeMethod(sBitwiseConst, 
+            _numberOfBinaryArgs, TR::sor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 1, &(shortOrArr[i][0]));
       OMR_CT_EXPECT_EQ(sBitwiseConst, tor(shortOrArr[i][0], shortOrArr[i][1]), sBitwiseConst(SHORT_PLACEHOLDER_1, shortOrArr[i][1]));
 
       sprintf(resolvedMethodName, "sOrConst3_TestCase%d", i + 1);
-      sBitwiseConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 2, &(shortOrArr[i][1])));
+      compileOpCodeMethod(sBitwiseConst, 
+            _numberOfBinaryArgs, TR::sor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 2, &(shortOrArr[i][1]));
       OMR_CT_EXPECT_EQ(sBitwiseConst, tor(shortOrArr[i][0], shortOrArr[i][1]), sBitwiseConst(shortOrArr[i][0], SHORT_PLACEHOLDER_2));
      }
 
@@ -2612,18 +2612,18 @@ PPCOpCodesTest::invokeBitwiseTests()
       OMR_CT_EXPECT_EQ(_sXor, txor(shortXorArr[i][0], shortXorArr[i][1]), _sXor(shortXorArr[i][0], shortXorArr[i][1]));
 
       sprintf(resolvedMethodName, "sXorConst1_TestCase%d", i + 1);
-      sBitwiseConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sxor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 4, 1, &(shortXorArr[i][0]), 2, &(shortXorArr[i][1])));
+      compileOpCodeMethod(sBitwiseConst, 
+            _numberOfBinaryArgs, TR::sxor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 4, 1, &(shortXorArr[i][0]), 2, &(shortXorArr[i][1]));
       OMR_CT_EXPECT_EQ(sBitwiseConst, txor(shortXorArr[i][0], shortXorArr[i][1]), sBitwiseConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "sXorConst2_TestCase%d", i + 1);
-      sBitwiseConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sxor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 1, &(shortXorArr[i][0])));
+      compileOpCodeMethod(sBitwiseConst, 
+            _numberOfBinaryArgs, TR::sxor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 1, &(shortXorArr[i][0]));
       OMR_CT_EXPECT_EQ(sBitwiseConst, txor(shortXorArr[i][0], shortXorArr[i][1]), sBitwiseConst(SHORT_PLACEHOLDER_1, shortXorArr[i][1]));
 
       sprintf(resolvedMethodName, "sXorConst3_TestCase%d", i + 1);
-      sBitwiseConst = (signatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sxor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 2, &(shortXorArr[i][1])));
+      compileOpCodeMethod(sBitwiseConst, 
+            _numberOfBinaryArgs, TR::sxor, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 2, &(shortXorArr[i][1]));
       OMR_CT_EXPECT_EQ(sBitwiseConst, txor(shortXorArr[i][0], shortXorArr[i][1]), sBitwiseConst(shortXorArr[i][0], SHORT_PLACEHOLDER_2));
      }
    }
@@ -2635,18 +2635,18 @@ PPCOpCodesTest::compileDisabledConvertTestMethods()
 
    //Jazz103 109976
    //Defect Testarossa 119346
-   _iu2f = (unsignedSignatureCharI_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::iu2f, "iU2f", _argTypesUnaryInt, TR::Float, rc));
-   _iu2d = (unsignedSignatureCharI_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::iu2d, "iU2d", _argTypesUnaryInt, TR::Double, rc));
-   _iu2l = (unsignedSignatureCharI_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::iu2l, "iu2l", _argTypesUnaryInt, TR::Int64, rc));
-   _f2d = (signatureCharF_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::f2d, "f2d", _argTypesUnaryFloat, TR::Double, rc));
-   _d2f = (signatureCharD_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::d2f, "d2f", _argTypesUnaryDouble, TR::Float, rc));
-   _bu2f = (unsignedSignatureCharB_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bu2f, "bu2f", _argTypesUnaryByte, TR::Float, rc));
-   _bu2d = (unsignedSignatureCharB_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::bu2d, "bu2d", _argTypesUnaryByte, TR::Double, rc));
+   compileOpCodeMethod(_iu2f, _numberOfUnaryArgs, TR::iu2f, "iU2f", _argTypesUnaryInt, TR::Float, rc);
+   compileOpCodeMethod(_iu2d, _numberOfUnaryArgs, TR::iu2d, "iU2d", _argTypesUnaryInt, TR::Double, rc);
+   compileOpCodeMethod(_iu2l, _numberOfUnaryArgs, TR::iu2l, "iu2l", _argTypesUnaryInt, TR::Int64, rc);
+   compileOpCodeMethod(_f2d, _numberOfUnaryArgs, TR::f2d, "f2d", _argTypesUnaryFloat, TR::Double, rc);
+   compileOpCodeMethod(_d2f, _numberOfUnaryArgs, TR::d2f, "d2f", _argTypesUnaryDouble, TR::Float, rc);
+   compileOpCodeMethod(_bu2f, _numberOfUnaryArgs, TR::bu2f, "bu2f", _argTypesUnaryByte, TR::Float, rc);
+   compileOpCodeMethod(_bu2d, _numberOfUnaryArgs, TR::bu2d, "bu2d", _argTypesUnaryByte, TR::Double, rc);
 
    //Jazz103 109605
-   _l2a = (signatureCharJ_L_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::l2a, "l2a", _argTypesUnaryLong, TR::Address, rc));
-   _su2a = (unsignedSignatureCharS_L_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::su2a, "su2a", _argTypesUnaryShort, TR::Address, rc));
-   _iu2a = (unsignedSignatureCharI_L_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::iu2a, "iu2a", _argTypesUnaryInt, TR::Address, rc));
+   compileOpCodeMethod(_l2a, _numberOfUnaryArgs, TR::l2a, "l2a", _argTypesUnaryLong, TR::Address, rc);
+   compileOpCodeMethod(_su2a, _numberOfUnaryArgs, TR::su2a, "su2a", _argTypesUnaryShort, TR::Address, rc);
+   compileOpCodeMethod(_iu2a, _numberOfUnaryArgs, TR::iu2a, "iu2a", _argTypesUnaryInt, TR::Address, rc);
 
    }
 
@@ -2684,13 +2684,13 @@ PPCOpCodesTest::invokeDisabledConvertTests()
       OMR_CT_EXPECT_EQ(_iu2d, convert(uintDataArray[i], DOUBLE_POS), _iu2d(uintDataArray[i]));
 
       sprintf(resolvedMethodName, "iu2fConst%d", i + 1);
-      iu2fConst = (unsignedSignatureCharI_F_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::iu2f, resolvedMethodName, _argTypesUnaryInt, TR::Float, rc, 2, 1, &uintDataArray[i]));
+      compileOpCodeMethod(iu2fConst, 
+            _numberOfUnaryArgs, TR::iu2f, resolvedMethodName, _argTypesUnaryInt, TR::Float, rc, 2, 1, &uintDataArray[i]);
       OMR_CT_EXPECT_EQ(iu2fConst, convert(uintDataArray[i], FLOAT_POS), iu2fConst(INT_PLACEHOLDER_1));
 
       sprintf(resolvedMethodName, "iu2dConst%d", i + 1);
-      iu2dConst = (unsignedSignatureCharI_D_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::iu2d, resolvedMethodName, _argTypesUnaryInt, TR::Double, rc, 2, 1, &uintDataArray[i]));
+      compileOpCodeMethod(iu2dConst, 
+            _numberOfUnaryArgs, TR::iu2d, resolvedMethodName, _argTypesUnaryInt, TR::Double, rc, 2, 1, &uintDataArray[i]);
       OMR_CT_EXPECT_EQ(iu2dConst, convert(uintDataArray[i], DOUBLE_POS), iu2dConst(INT_PLACEHOLDER_1));
       }
 
@@ -2701,13 +2701,13 @@ PPCOpCodesTest::invokeDisabledConvertTests()
       OMR_CT_EXPECT_EQ(_bu2d, convert(ubyteDataArray[i], DOUBLE_POS), _bu2d(ubyteDataArray[i]));
 
       sprintf(resolvedMethodName, "bu2fConst%d", i + 1);
-      bu2fConst = (unsignedSignatureCharB_F_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::bu2f, resolvedMethodName, _argTypesUnaryByte, TR::Float, rc, 2, 1, &ubyteDataArray[i]));
+      compileOpCodeMethod(bu2fConst, 
+            _numberOfUnaryArgs, TR::bu2f, resolvedMethodName, _argTypesUnaryByte, TR::Float, rc, 2, 1, &ubyteDataArray[i]);
       OMR_CT_EXPECT_EQ(bu2fConst, convert(ubyteDataArray[i], FLOAT_POS), bu2fConst(BYTE_PLACEHOLDER_1));
 
       sprintf(resolvedMethodName, "bu2dConst%d", i + 1);
-      bu2dConst = (unsignedSignatureCharB_D_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::bu2d, resolvedMethodName, _argTypesUnaryByte, TR::Double, rc, 2, 1, &ubyteDataArray[i]));
+      compileOpCodeMethod(bu2dConst, 
+            _numberOfUnaryArgs, TR::bu2d, resolvedMethodName, _argTypesUnaryByte, TR::Double, rc, 2, 1, &ubyteDataArray[i]);
       OMR_CT_EXPECT_EQ(bu2dConst, convert(ubyteDataArray[i], DOUBLE_POS), bu2dConst(BYTE_PLACEHOLDER_1));
       }
 
@@ -2718,8 +2718,8 @@ PPCOpCodesTest::invokeDisabledConvertTests()
       OMR_CT_EXPECT_EQ(_iu2l, convert(uintDataArray[i], LONG_POS), _iu2l(uintDataArray[i]));
 
       sprintf(resolvedMethodName, "iu2lConst%d", i + 1);
-      iu2lConst = (unsignedSignatureCharI_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::iu2l,
-            resolvedMethodName, _argTypesUnaryInt, TR::Int64, rc, 2, 1, &uintDataArray[i]));
+      compileOpCodeMethod(iu2lConst, _numberOfUnaryArgs, TR::iu2l,
+            resolvedMethodName, _argTypesUnaryInt, TR::Int64, rc, 2, 1, &uintDataArray[i]);
       OMR_CT_EXPECT_EQ(iu2lConst, convert(uintDataArray[i], LONG_POS), iu2lConst(INT_PLACEHOLDER_1));
       }
 
@@ -2730,8 +2730,8 @@ PPCOpCodesTest::invokeDisabledConvertTests()
       OMR_CT_EXPECT_DOUBLE_EQ(_f2d, convert(floatDataArray[i], DOUBLE_POS), _f2d(floatDataArray[i]));
 
       sprintf(resolvedMethodName, "f2dConst%d", i + 1);
-      f2dConst = (signatureCharF_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::f2d,
-            resolvedMethodName, _argTypesUnaryFloat, TR::Double, rc, 2, 1, &floatDataArray[i]));
+      compileOpCodeMethod(f2dConst, _numberOfUnaryArgs, TR::f2d,
+            resolvedMethodName, _argTypesUnaryFloat, TR::Double, rc, 2, 1, &floatDataArray[i]);
       OMR_CT_EXPECT_EQ(f2dConst, convert(floatDataArray[i], DOUBLE_POS), f2dConst(FLOAT_PLACEHOLDER_1));
       }
 
@@ -2742,8 +2742,8 @@ PPCOpCodesTest::invokeDisabledConvertTests()
       OMR_CT_EXPECT_FLOAT_EQ(_d2f, convert(doubleDataArray[i], FLOAT_POS), _d2f(doubleDataArray[i]));
 
       sprintf(resolvedMethodName, "d2fConst%d", i + 1);
-      d2fConst = (signatureCharD_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::d2f,
-            resolvedMethodName, _argTypesUnaryDouble, TR::Float, rc, 2, 1, &doubleDataArray[i]));
+      compileOpCodeMethod(d2fConst, _numberOfUnaryArgs, TR::d2f,
+            resolvedMethodName, _argTypesUnaryDouble, TR::Float, rc, 2, 1, &doubleDataArray[i]);
       OMR_CT_EXPECT_FLOAT_EQ(d2fConst, convert(doubleDataArray[i], FLOAT_POS), d2fConst(DOUBLE_PLACEHOLDER_1));
       }
 
@@ -2754,8 +2754,8 @@ PPCOpCodesTest::invokeDisabledConvertTests()
       OMR_CT_EXPECT_EQ(_l2a, convert(longDataArray[i], ADDRESS_PLACEHOLDER_1), _l2a(longDataArray[i]));
 
       sprintf(resolvedMethodName, "l2aConst%d", i + 1);
-      l2aConst = (signatureCharJ_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::l2a, resolvedMethodName, _argTypesUnaryLong, TR::Address, rc, 2, 1, &longDataArray[i]));
+      compileOpCodeMethod(l2aConst, 
+            _numberOfUnaryArgs, TR::l2a, resolvedMethodName, _argTypesUnaryLong, TR::Address, rc, 2, 1, &longDataArray[i]);
       OMR_CT_EXPECT_EQ(l2aConst, convert(longDataArray[i], ADDRESS_PLACEHOLDER_1), l2aConst(LONG_PLACEHOLDER_1));
       }
 
@@ -2765,8 +2765,8 @@ PPCOpCodesTest::invokeDisabledConvertTests()
       OMR_CT_EXPECT_EQ(_su2a, convert(ushortDataArray[i], ADDRESS_PLACEHOLDER_1), _su2a(ushortDataArray[i]));
 
       sprintf(resolvedMethodName, "su2aConst%d", i + 1);
-      su2aConst = (unsignedSignatureCharS_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::su2a, resolvedMethodName, _argTypesUnaryShort, TR::Address, rc, 2, 1, &ushortDataArray[i]));
+      compileOpCodeMethod(su2aConst, 
+            _numberOfUnaryArgs, TR::su2a, resolvedMethodName, _argTypesUnaryShort, TR::Address, rc, 2, 1, &ushortDataArray[i]);
       OMR_CT_EXPECT_EQ(su2aConst, convert(ushortDataArray[i], ADDRESS_PLACEHOLDER_1), su2aConst(SHORT_PLACEHOLDER_1));
       }
 
@@ -2776,8 +2776,8 @@ PPCOpCodesTest::invokeDisabledConvertTests()
       OMR_CT_EXPECT_EQ(_iu2a, convert(uintDataArray[i], ADDRESS_PLACEHOLDER_1), _iu2a(uintDataArray[i]));
 
       sprintf(resolvedMethodName, "iu2aConst%d", i + 1);
-      iu2aConst = (unsignedSignatureCharI_L_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::iu2a, resolvedMethodName, _argTypesUnaryInt, TR::Address, rc, 2, 1, &uintDataArray[i]));
+      compileOpCodeMethod(iu2aConst, 
+            _numberOfUnaryArgs, TR::iu2a, resolvedMethodName, _argTypesUnaryInt, TR::Address, rc, 2, 1, &uintDataArray[i]);
       OMR_CT_EXPECT_EQ(iu2aConst, convert(uintDataArray[i], ADDRESS_PLACEHOLDER_1), iu2aConst(INT_PLACEHOLDER_1));
       }
    }
@@ -2789,59 +2789,59 @@ PPCOpCodesTest::compileDisabledCompareTestMethods()
 
    //Jazz103 Work Item 106531
    //Compare
-   _lCmpeq = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lcmpeq, "lCmpeq", _argTypesBinaryLong, TR::Int32, rc));
-   _lCmplt = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lcmplt, "lCmplt", _argTypesBinaryLong, TR::Int32, rc));
+   compileOpCodeMethod(_lCmpeq, _numberOfBinaryArgs, TR::lcmpeq, "lCmpeq", _argTypesBinaryLong, TR::Int32, rc);
+   compileOpCodeMethod(_lCmplt, _numberOfBinaryArgs, TR::lcmplt, "lCmplt", _argTypesBinaryLong, TR::Int32, rc);
 
-   _dCmpeq = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dcmpeq, "dCmpeq", _argTypesBinaryDouble, TR::Int32, rc));
-   _dCmpne = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dcmpne, "dCmpne", _argTypesBinaryDouble, TR::Int32, rc));
-   _dCmpgt = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dcmpgt, "dCmpgt", _argTypesBinaryDouble, TR::Int32, rc));
-   _dCmplt = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dcmplt, "dCmplt", _argTypesBinaryDouble, TR::Int32, rc));
-   _dCmpge = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dcmpge, "dCmpge", _argTypesBinaryDouble, TR::Int32, rc));
-   _dCmple = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dcmple, "dCmple", _argTypesBinaryDouble, TR::Int32, rc));
+   compileOpCodeMethod(_dCmpeq, _numberOfBinaryArgs, TR::dcmpeq, "dCmpeq", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_dCmpne, _numberOfBinaryArgs, TR::dcmpne, "dCmpne", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_dCmpgt, _numberOfBinaryArgs, TR::dcmpgt, "dCmpgt", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_dCmplt, _numberOfBinaryArgs, TR::dcmplt, "dCmplt", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_dCmpge, _numberOfBinaryArgs, TR::dcmpge, "dCmpge", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_dCmple, _numberOfBinaryArgs, TR::dcmple, "dCmple", _argTypesBinaryDouble, TR::Int32, rc);
 
-   _fCmpeq = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fcmpeq, "fCmpeq", _argTypesBinaryFloat, TR::Int32, rc));
-   _fCmpne = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fcmpne, "fCmpne", _argTypesBinaryFloat, TR::Int32, rc));
-   _fCmpgt = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fcmpgt, "fCmpgt", _argTypesBinaryFloat, TR::Int32, rc));
-   _fCmplt = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fcmplt, "fCmplt", _argTypesBinaryFloat, TR::Int32, rc));
-   _fCmpge = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fcmpge, "fCmpge", _argTypesBinaryFloat, TR::Int32, rc));
-   _fCmple = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fcmple, "fCmple", _argTypesBinaryFloat, TR::Int32, rc));
+   compileOpCodeMethod(_fCmpeq, _numberOfBinaryArgs, TR::fcmpeq, "fCmpeq", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_fCmpne, _numberOfBinaryArgs, TR::fcmpne, "fCmpne", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_fCmpgt, _numberOfBinaryArgs, TR::fcmpgt, "fCmpgt", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_fCmplt, _numberOfBinaryArgs, TR::fcmplt, "fCmplt", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_fCmpge, _numberOfBinaryArgs, TR::fcmpge, "fCmpge", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_fCmple, _numberOfBinaryArgs, TR::fcmple, "fCmple", _argTypesBinaryFloat, TR::Int32, rc);
 
-   _bCmpne = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bcmpne, "bCmpne", _argTypesBinaryByte, TR::Int32, rc));
-   _bCmple = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bcmple, "bCmple", _argTypesBinaryByte, TR::Int32, rc));
-   _bCmplt = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bcmplt, "bCmplt", _argTypesBinaryByte, TR::Int32, rc));
-   _bCmpge = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bcmpge, "bCmpge", _argTypesBinaryByte, TR::Int32, rc));
+   compileOpCodeMethod(_bCmpne, _numberOfBinaryArgs, TR::bcmpne, "bCmpne", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_bCmple, _numberOfBinaryArgs, TR::bcmple, "bCmple", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_bCmplt, _numberOfBinaryArgs, TR::bcmplt, "bCmplt", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_bCmpge, _numberOfBinaryArgs, TR::bcmpge, "bCmpge", _argTypesBinaryByte, TR::Int32, rc);
 
-   _buCmpeq = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bucmpeq, "buCmpeq", _argTypesBinaryByte, TR::Int32, rc));
-   _buCmpne = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bucmpne, "buCmpne", _argTypesBinaryByte, TR::Int32, rc));
+   compileOpCodeMethod(_buCmpeq, _numberOfBinaryArgs, TR::bucmpeq, "buCmpeq", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_buCmpne, _numberOfBinaryArgs, TR::bucmpne, "buCmpne", _argTypesBinaryByte, TR::Int32, rc);
 
-   _lCmp = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lcmp, "lCmp", _argTypesBinaryLong, TR::Int32, rc));
-   _fCmpl = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fcmpl, "fCmpl", _argTypesBinaryFloat, TR::Int32, rc));
-   _fCmpg = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fcmpg, "fCmpg", _argTypesBinaryFloat, TR::Int32, rc));
-   _dCmpl = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dcmpl, "dCmpl", _argTypesBinaryDouble, TR::Int32, rc));
-   _dCmpg = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dcmpg, "dCmpg", _argTypesBinaryDouble, TR::Int32, rc));
+   compileOpCodeMethod(_lCmp, _numberOfBinaryArgs, TR::lcmp, "lCmp", _argTypesBinaryLong, TR::Int32, rc);
+   compileOpCodeMethod(_fCmpl, _numberOfBinaryArgs, TR::fcmpl, "fCmpl", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_fCmpg, _numberOfBinaryArgs, TR::fcmpg, "fCmpg", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_dCmpl, _numberOfBinaryArgs, TR::dcmpl, "dCmpl", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_dCmpg, _numberOfBinaryArgs, TR::dcmpg, "dCmpg", _argTypesBinaryDouble, TR::Int32, rc);
 
-   _ifLcmpeq = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iflcmpeq, "ifLcmpeq", _argTypesBinaryLong, TR::Int32, rc));
-   _ifLcmpgt = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iflcmpgt, "ifLcmpgt", _argTypesBinaryLong, TR::Int32, rc));
-   _ifLcmplt = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iflcmplt, "ifLcmplt", _argTypesBinaryLong, TR::Int32, rc));
+   compileOpCodeMethod(_ifLcmpeq, _numberOfBinaryArgs, TR::iflcmpeq, "ifLcmpeq", _argTypesBinaryLong, TR::Int32, rc);
+   compileOpCodeMethod(_ifLcmpgt, _numberOfBinaryArgs, TR::iflcmpgt, "ifLcmpgt", _argTypesBinaryLong, TR::Int32, rc);
+   compileOpCodeMethod(_ifLcmplt, _numberOfBinaryArgs, TR::iflcmplt, "ifLcmplt", _argTypesBinaryLong, TR::Int32, rc);
 
-   _ifDcmpeq = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifdcmpeq, "ifDcmpeq", _argTypesBinaryDouble, TR::Int32, rc));
-   _ifDcmpne = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifdcmpne, "ifDcmpne", _argTypesBinaryDouble, TR::Int32, rc));
-   _ifDcmpgt = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifdcmpgt, "ifDcmpgt", _argTypesBinaryDouble, TR::Int32, rc));
-   _ifDcmplt = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifdcmplt, "ifDcmplt", _argTypesBinaryDouble, TR::Int32, rc));
-   _ifDcmpge = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifdcmpge, "ifDcmpge", _argTypesBinaryDouble, TR::Int32, rc));
-   _ifDcmple = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifdcmple, "ifDcmple", _argTypesBinaryDouble, TR::Int32, rc));
+   compileOpCodeMethod(_ifDcmpeq, _numberOfBinaryArgs, TR::ifdcmpeq, "ifDcmpeq", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_ifDcmpne, _numberOfBinaryArgs, TR::ifdcmpne, "ifDcmpne", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_ifDcmpgt, _numberOfBinaryArgs, TR::ifdcmpgt, "ifDcmpgt", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_ifDcmplt, _numberOfBinaryArgs, TR::ifdcmplt, "ifDcmplt", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_ifDcmpge, _numberOfBinaryArgs, TR::ifdcmpge, "ifDcmpge", _argTypesBinaryDouble, TR::Int32, rc);
+   compileOpCodeMethod(_ifDcmple, _numberOfBinaryArgs, TR::ifdcmple, "ifDcmple", _argTypesBinaryDouble, TR::Int32, rc);
 
-   _ifFcmpeq = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iffcmpeq, "ifFcmpeq", _argTypesBinaryFloat, TR::Int32, rc));
-   _ifFcmpne = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iffcmpne, "ifFcmpne", _argTypesBinaryFloat, TR::Int32, rc));
-   _ifFcmpgt = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iffcmpgt, "ifFcmpgt", _argTypesBinaryFloat, TR::Int32, rc));
-   _ifFcmplt = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iffcmplt, "ifFcmplt", _argTypesBinaryFloat, TR::Int32, rc));
-   _ifFcmpge = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iffcmpge, "ifFcmpge", _argTypesBinaryFloat, TR::Int32, rc));
-   _ifFcmple = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iffcmple, "ifFcmple", _argTypesBinaryFloat, TR::Int32, rc));
+   compileOpCodeMethod(_ifFcmpeq, _numberOfBinaryArgs, TR::iffcmpeq, "ifFcmpeq", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_ifFcmpne, _numberOfBinaryArgs, TR::iffcmpne, "ifFcmpne", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_ifFcmpgt, _numberOfBinaryArgs, TR::iffcmpgt, "ifFcmpgt", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_ifFcmplt, _numberOfBinaryArgs, TR::iffcmplt, "ifFcmplt", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_ifFcmpge, _numberOfBinaryArgs, TR::iffcmpge, "ifFcmpge", _argTypesBinaryFloat, TR::Int32, rc);
+   compileOpCodeMethod(_ifFcmple, _numberOfBinaryArgs, TR::iffcmple, "ifFcmple", _argTypesBinaryFloat, TR::Int32, rc);
 
-   _ifBcmpne = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbcmpne, "ifBcmpne", _argTypesBinaryByte, TR::Int32, rc));
-   _ifBcmple = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbcmple, "ifBcmple", _argTypesBinaryByte, TR::Int32, rc));
-   _ifBcmplt = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbcmplt, "ifBcmplt", _argTypesBinaryByte, TR::Int32, rc));
-   _ifBcmpge = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ifbcmpge, "ifBcmpge", _argTypesBinaryByte, TR::Int32, rc));
+   compileOpCodeMethod(_ifBcmpne, _numberOfBinaryArgs, TR::ifbcmpne, "ifBcmpne", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_ifBcmple, _numberOfBinaryArgs, TR::ifbcmple, "ifBcmple", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_ifBcmplt, _numberOfBinaryArgs, TR::ifbcmplt, "ifBcmplt", _argTypesBinaryByte, TR::Int32, rc);
+   compileOpCodeMethod(_ifBcmpge, _numberOfBinaryArgs, TR::ifbcmpge, "ifBcmpge", _argTypesBinaryByte, TR::Int32, rc);
 
    }
 
@@ -3138,18 +3138,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_lCmpeq, compareEQ(lCmpeqDataArr[i][0], lCmpeqDataArr[i][1]), _lCmpeq(lCmpeqDataArr[i][0], lCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "lCmpeqConst1_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(lCmpeqDataArr[i][0]), 2, &(lCmpeqDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::lcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(lCmpeqDataArr[i][0]), 2, &(lCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareEQ(lCmpeqDataArr[i][0], lCmpeqDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lCmpeqConst2_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(lCmpeqDataArr[i][0])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::lcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(lCmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareEQ(lCmpeqDataArr[i][0], lCmpeqDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, lCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "lCmpeqConst3_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(lCmpeqDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::lcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(lCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareEQ(lCmpeqDataArr[i][0], lCmpeqDataArr[i][1]), lCompareConst(lCmpeqDataArr[i][0], LONG_PLACEHOLDER_2));
       }
 
@@ -3160,18 +3160,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_lCmplt, compareLT(lCmpltDataArr[i][0], lCmpltDataArr[i][1]), _lCmplt(lCmpltDataArr[i][0], lCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "lCmpltConst1_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(lCmpltDataArr[i][0]), 2, &(lCmpltDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::lcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(lCmpltDataArr[i][0]), 2, &(lCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareLT(lCmpltDataArr[i][0], lCmpltDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lCmpltConst2_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(lCmpltDataArr[i][0])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::lcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(lCmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareLT(lCmpltDataArr[i][0], lCmpltDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, lCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "lCmpltConst3_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(lCmpltDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::lcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(lCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareLT(lCmpltDataArr[i][0], lCmpltDataArr[i][1]), lCompareConst(lCmpltDataArr[i][0], LONG_PLACEHOLDER_2));
       }
 
@@ -3182,18 +3182,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_dCmpeq, compareEQ(dCmpeqDataArr[i][0], dCmpeqDataArr[i][1]), _dCmpeq(dCmpeqDataArr[i][0], dCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpeqConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpeqDataArr[i][0]), 2, &(dCmpeqDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpeqDataArr[i][0]), 2, &(dCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareEQ(dCmpeqDataArr[i][0], dCmpeqDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "dCmpeqConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpeqDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareEQ(dCmpeqDataArr[i][0], dCmpeqDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, dCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpeqConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpeqDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareEQ(dCmpeqDataArr[i][0], dCmpeqDataArr[i][1]), dCompareConst(dCmpeqDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3203,18 +3203,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_dCmpne, compareNE(dCmpneDataArr[i][0], dCmpneDataArr[i][1]), _dCmpne(dCmpneDataArr[i][0], dCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpneConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpneDataArr[i][0]), 2, &(dCmpneDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpneDataArr[i][0]), 2, &(dCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareNE(dCmpneDataArr[i][0], dCmpneDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "dCmpneConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpneDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareNE(dCmpneDataArr[i][0], dCmpneDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, dCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpneConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpneDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareNE(dCmpneDataArr[i][0], dCmpneDataArr[i][1]), dCompareConst(dCmpneDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3224,18 +3224,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_dCmpgt, compareGT(dCmpgtDataArr[i][0], dCmpgtDataArr[i][1]), _dCmpgt(dCmpgtDataArr[i][0], dCmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpgtConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpgtDataArr[i][0]), 2, &(dCmpgtDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpgtDataArr[i][0]), 2, &(dCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGT(dCmpgtDataArr[i][0], dCmpgtDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "dCmpgtConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpgtDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGT(dCmpgtDataArr[i][0], dCmpgtDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, dCmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpgtConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpgtDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGT(dCmpgtDataArr[i][0], dCmpgtDataArr[i][1]), dCompareConst(dCmpgtDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3245,18 +3245,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_dCmplt, compareLT(dCmpltDataArr[i][0], dCmpltDataArr[i][1]), _dCmplt(dCmpltDataArr[i][0], dCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpltConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpltDataArr[i][0]), 2, &(dCmpltDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpltDataArr[i][0]), 2, &(dCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLT(dCmpltDataArr[i][0], dCmpltDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "dCmpltConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpltDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLT(dCmpltDataArr[i][0], dCmpltDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, dCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpltConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpltDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLT(dCmpltDataArr[i][0], dCmpltDataArr[i][1]), dCompareConst(dCmpltDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3266,18 +3266,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_dCmpge, compareGE(dCmpgeDataArr[i][0], dCmpgeDataArr[i][1]), _dCmpge(dCmpgeDataArr[i][0], dCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpgeConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpgeDataArr[i][0]), 2, &(dCmpgeDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpgeDataArr[i][0]), 2, &(dCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGE(dCmpgeDataArr[i][0], dCmpgeDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "dCmpgeConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpgeDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGE(dCmpgeDataArr[i][0], dCmpgeDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, dCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpgeConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpgeDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGE(dCmpgeDataArr[i][0], dCmpgeDataArr[i][1]), dCompareConst(dCmpgeDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3287,18 +3287,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_dCmple, compareLE(dCmpleDataArr[i][0], dCmpleDataArr[i][1]), _dCmple(dCmpleDataArr[i][0], dCmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpleConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpleDataArr[i][0]), 2, &(dCmpleDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpleDataArr[i][0]), 2, &(dCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLE(dCmpleDataArr[i][0], dCmpleDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "dCmpleConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpleDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLE(dCmpleDataArr[i][0], dCmpleDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, dCmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dCmpleConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpleDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLE(dCmpleDataArr[i][0], dCmpleDataArr[i][1]), dCompareConst(dCmpleDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3309,18 +3309,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_fCmpeq, compareEQ(fCmpeqDataArr[i][0], fCmpeqDataArr[i][1]), _fCmpeq(fCmpeqDataArr[i][0], fCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpeqConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpeqDataArr[i][0]), 2, &(fCmpeqDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpeqDataArr[i][0]), 2, &(fCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareEQ(fCmpeqDataArr[i][0], fCmpeqDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "fCmpeqConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpeqDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareEQ(fCmpeqDataArr[i][0], fCmpeqDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, fCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpeqConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpeqDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareEQ(fCmpeqDataArr[i][0], fCmpeqDataArr[i][1]), fCompareConst(fCmpeqDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3330,18 +3330,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_fCmpne, compareNE(fCmpneDataArr[i][0], fCmpneDataArr[i][1]), _fCmpne(fCmpneDataArr[i][0], fCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpneConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpneDataArr[i][0]), 2, &(fCmpneDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpneDataArr[i][0]), 2, &(fCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareNE(fCmpneDataArr[i][0], fCmpneDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "fCmpneConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpneDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareNE(fCmpneDataArr[i][0], fCmpneDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, fCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpneConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpneDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareNE(fCmpneDataArr[i][0], fCmpneDataArr[i][1]), fCompareConst(fCmpneDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3351,18 +3351,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_fCmpgt, compareGT(fCmpgtDataArr[i][0], fCmpgtDataArr[i][1]), _fCmpgt(fCmpgtDataArr[i][0], fCmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpgtConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpgtDataArr[i][0]), 2, &(fCmpgtDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpgtDataArr[i][0]), 2, &(fCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGT(fCmpgtDataArr[i][0], fCmpgtDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "fCmpgtConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpgtDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGT(fCmpgtDataArr[i][0], fCmpgtDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, fCmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpgtConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpgtDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGT(fCmpgtDataArr[i][0], fCmpgtDataArr[i][1]), fCompareConst(fCmpgtDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3372,18 +3372,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_fCmplt, compareLT(fCmpltDataArr[i][0], fCmpltDataArr[i][1]), _fCmplt(fCmpltDataArr[i][0], fCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpltConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpltDataArr[i][0]), 2, &(fCmpltDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpltDataArr[i][0]), 2, &(fCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLT(fCmpltDataArr[i][0], fCmpltDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "fCmpltConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpltDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLT(fCmpltDataArr[i][0], fCmpltDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, fCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpltConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpltDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLT(fCmpltDataArr[i][0], fCmpltDataArr[i][1]), fCompareConst(fCmpltDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3393,18 +3393,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_fCmpge, compareGE(fCmpgeDataArr[i][0], fCmpgeDataArr[i][1]), _fCmpge(fCmpgeDataArr[i][0], fCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpgeConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpgeDataArr[i][0]), 2, &(fCmpgeDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpgeDataArr[i][0]), 2, &(fCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGE(fCmpgeDataArr[i][0], fCmpgeDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "fCmpgeConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpgeDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGE(fCmpgeDataArr[i][0], fCmpgeDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, fCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpgeConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpgeDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGE(fCmpgeDataArr[i][0], fCmpgeDataArr[i][1]), fCompareConst(fCmpgeDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3414,18 +3414,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_fCmple, compareLE(fCmpleDataArr[i][0], fCmpleDataArr[i][1]), _fCmple(fCmpleDataArr[i][0], fCmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpleConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpleDataArr[i][0]), 2, &(fCmpleDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpleDataArr[i][0]), 2, &(fCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLE(fCmpleDataArr[i][0], fCmpleDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "fCmpleConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpleDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLE(fCmpleDataArr[i][0], fCmpleDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, fCmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fCmpleConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpleDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLE(fCmpleDataArr[i][0], fCmpleDataArr[i][1]), fCompareConst(fCmpleDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3436,18 +3436,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_bCmpne, compareNE(bCmpneDataArr[i][0], bCmpneDataArr[i][1]), _bCmpne(bCmpneDataArr[i][0], bCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpneConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpneDataArr[i][0]), 2, &(bCmpneDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpneDataArr[i][0]), 2, &(bCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareNE(bCmpneDataArr[i][0], bCmpneDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bCmpneConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpneDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareNE(bCmpneDataArr[i][0], bCmpneDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, bCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpneConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpneDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareNE(bCmpneDataArr[i][0], bCmpneDataArr[i][1]), bCompareConst(bCmpneDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -3457,18 +3457,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_bCmple, compareLE(bCmpleDataArr[i][0], bCmpleDataArr[i][1]), _bCmple(bCmpleDataArr[i][0], bCmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpleConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpleDataArr[i][0]), 2, &(bCmpleDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpleDataArr[i][0]), 2, &(bCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLE(bCmpleDataArr[i][0], bCmpleDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bCmpleConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpleDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLE(bCmpleDataArr[i][0], bCmpleDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, bCmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpleConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpleDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLE(bCmpleDataArr[i][0], bCmpleDataArr[i][1]), bCompareConst(bCmpleDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -3478,18 +3478,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_bCmplt, compareLT(bCmpltDataArr[i][0], bCmpltDataArr[i][1]), _bCmplt(bCmpltDataArr[i][0], bCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpltConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpltDataArr[i][0]), 2, &(bCmpltDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpltDataArr[i][0]), 2, &(bCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLT(bCmpltDataArr[i][0], bCmpltDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bCmpltConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpltDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLT(bCmpltDataArr[i][0], bCmpltDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, bCmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpltConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpltDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLT(bCmpltDataArr[i][0], bCmpltDataArr[i][1]), bCompareConst(bCmpltDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -3499,18 +3499,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_bCmpge, compareGE(bCmpgeDataArr[i][0], bCmpgeDataArr[i][1]), _bCmpge(bCmpgeDataArr[i][0], bCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpgeConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpgeDataArr[i][0]), 2, &(bCmpgeDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(bCmpgeDataArr[i][0]), 2, &(bCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGE(bCmpgeDataArr[i][0], bCmpgeDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bCmpgeConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpgeDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(bCmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGE(bCmpgeDataArr[i][0], bCmpgeDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, bCmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bCmpgeConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpgeDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::bcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(bCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGE(bCmpgeDataArr[i][0], bCmpgeDataArr[i][1]), bCompareConst(bCmpgeDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -3521,18 +3521,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_lCmp, comparel(lCmpDataArr[i][0], lCmpDataArr[i][1]), _lCmp(lCmpDataArr[i][0], lCmpDataArr[i][1]));
 
       sprintf(resolvedMethodName, "lCmpConst1_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lcmp, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(lCmpDataArr[i][0]), 2, &(lCmpDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::lcmp, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(lCmpDataArr[i][0]), 2, &(lCmpDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, comparel(lCmpDataArr[i][0], lCmpDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lCmpConst2_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lcmp, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(lCmpDataArr[i][0])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::lcmp, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(lCmpDataArr[i][0]));
       OMR_CT_EXPECT_EQ(lCompareConst, comparel(lCmpDataArr[i][0], lCmpDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, lCmpDataArr[i][1]));
 
       sprintf(resolvedMethodName, "lCmpConst3_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lcmp, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(lCmpDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::lcmp, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(lCmpDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, comparel(lCmpDataArr[i][0], lCmpDataArr[i][1]), lCompareConst(lCmpDataArr[i][0], LONG_PLACEHOLDER_2));
       }
 
@@ -3544,20 +3544,20 @@ PPCOpCodesTest::invokeDisabledCompareTests()
             dCmplDataArr[i][0] << " : " << dCmplDataArr[i][1];
 
       sprintf(resolvedMethodName, "dCmplConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpl, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmplDataArr[i][0]), 2, &(dCmplDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpl, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmplDataArr[i][0]), 2, &(dCmplDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, comparel(dCmplDataArr[i][0], dCmplDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2)) <<
             dCmplDataArr[i][0] << " : " << dCmplDataArr[i][1];
 
       sprintf(resolvedMethodName, "dCmplConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpl, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmplDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpl, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmplDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, comparel(dCmplDataArr[i][0], dCmplDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, dCmplDataArr[i][1])) <<
             dCmplDataArr[i][0] << " : " << dCmplDataArr[i][1];
 
       sprintf(resolvedMethodName, "dCmplConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpl, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmplDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpl, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmplDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, comparel(dCmplDataArr[i][0], dCmplDataArr[i][1]), dCompareConst(dCmplDataArr[i][0], DOUBLE_PLACEHOLDER_2)) <<
             dCmplDataArr[i][0] << " : " << dCmplDataArr[i][1];
       }
@@ -3570,20 +3570,20 @@ PPCOpCodesTest::invokeDisabledCompareTests()
             dCmpgDataArr[i][0] << " : " << dCmpgDataArr[i][1];
 
       sprintf(resolvedMethodName, "dCmpgConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpg, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpgDataArr[i][0]), 2, &(dCmpgDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpg, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(dCmpgDataArr[i][0]), 2, &(dCmpgDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareg(dCmpgDataArr[i][0], dCmpgDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2)) <<
             dCmpgDataArr[i][0] << " : " << dCmpgDataArr[i][1];
 
       sprintf(resolvedMethodName, "dCmpgConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpg, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpgDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpg, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(dCmpgDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareg(dCmpgDataArr[i][0], dCmpgDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, dCmpgDataArr[i][1])) <<
             dCmpgDataArr[i][0] << " : " << dCmpgDataArr[i][1];
 
       sprintf(resolvedMethodName, "dCmpgConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::dcmpg, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpgDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::dcmpg, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(dCmpgDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareg(dCmpgDataArr[i][0], dCmpgDataArr[i][1]), dCompareConst(dCmpgDataArr[i][0], DOUBLE_PLACEHOLDER_2)) <<
             dCmpgDataArr[i][0] << " : " << dCmpgDataArr[i][1];
       }
@@ -3596,20 +3596,20 @@ PPCOpCodesTest::invokeDisabledCompareTests()
             fCmplDataArr[i][0] << " : " << fCmplDataArr[i][1];
 
       sprintf(resolvedMethodName, "fCmplConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpl, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmplDataArr[i][0]), 2, &(fCmplDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpl, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmplDataArr[i][0]), 2, &(fCmplDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, comparel(fCmplDataArr[i][0], fCmplDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2)) <<
             fCmplDataArr[i][0] << " : " << fCmplDataArr[i][1];
 
       sprintf(resolvedMethodName, "fCmplConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpl, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmplDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpl, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmplDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, comparel(fCmplDataArr[i][0], fCmplDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, fCmplDataArr[i][1])) <<
             fCmplDataArr[i][0] << " : " << fCmplDataArr[i][1];
 
       sprintf(resolvedMethodName, "fCmplConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpl, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmplDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpl, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmplDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, comparel(fCmplDataArr[i][0], fCmplDataArr[i][1]), fCompareConst(fCmplDataArr[i][0], FLOAT_PLACEHOLDER_2)) <<
             fCmplDataArr[i][0] << " : " << fCmplDataArr[i][1];
       }
@@ -3622,20 +3622,20 @@ PPCOpCodesTest::invokeDisabledCompareTests()
             fCmpgDataArr[i][0] << " : " << fCmpgDataArr[i][1];
 
       sprintf(resolvedMethodName, "fCmpgConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpg, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpgDataArr[i][0]), 2, &(fCmpgDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpg, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(fCmpgDataArr[i][0]), 2, &(fCmpgDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareg(fCmpgDataArr[i][0], fCmpgDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2)) <<
             fCmpgDataArr[i][0] << " : " << fCmpgDataArr[i][1];
 
       sprintf(resolvedMethodName, "fCmpgConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpg, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpgDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpg, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(fCmpgDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareg(fCmpgDataArr[i][0], fCmpgDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, fCmpgDataArr[i][1])) <<
             fCmpgDataArr[i][0] << " : " << fCmpgDataArr[i][1];
 
       sprintf(resolvedMethodName, "fCmpgConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::fcmpg, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpgDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::fcmpg, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(fCmpgDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareg(fCmpgDataArr[i][0], fCmpgDataArr[i][1]), fCompareConst(fCmpgDataArr[i][0], FLOAT_PLACEHOLDER_2)) <<
             fCmpgDataArr[i][0] << " : " << fCmpgDataArr[i][1];
       }
@@ -3647,18 +3647,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifLcmpeq, compareEQ(ifLcmpeqDataArr[i][0], ifLcmpeqDataArr[i][1]), _ifLcmpeq(ifLcmpeqDataArr[i][0], ifLcmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifLcmpeqConst1_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iflcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(ifLcmpeqDataArr[i][0]), 2, &(ifLcmpeqDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::iflcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(ifLcmpeqDataArr[i][0]), 2, &(ifLcmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareEQ(ifLcmpeqDataArr[i][0], ifLcmpeqDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifLcmpeqConst2_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iflcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(ifLcmpeqDataArr[i][0])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::iflcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(ifLcmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareEQ(ifLcmpeqDataArr[i][0], ifLcmpeqDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, ifLcmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifLcmpeqConst3_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iflcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(ifLcmpeqDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::iflcmpeq, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(ifLcmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareEQ(ifLcmpeqDataArr[i][0], ifLcmpeqDataArr[i][1]), lCompareConst(ifLcmpeqDataArr[i][0], LONG_PLACEHOLDER_2));
       }
 
@@ -3668,18 +3668,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifLcmpgt, compareGT(ifLcmpgtDataArr[i][0], ifLcmpgtDataArr[i][1]), _ifLcmpgt(ifLcmpgtDataArr[i][0], ifLcmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifLcmpgtConst1_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iflcmpgt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(ifLcmpgtDataArr[i][0]), 2, &(ifLcmpgtDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::iflcmpgt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(ifLcmpgtDataArr[i][0]), 2, &(ifLcmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareGT(ifLcmpgtDataArr[i][0], ifLcmpgtDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifLcmpgtConst2_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iflcmpgt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(ifLcmpgtDataArr[i][0])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::iflcmpgt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(ifLcmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareGT(ifLcmpgtDataArr[i][0], ifLcmpgtDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, ifLcmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifLcmpgtConst3_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iflcmpgt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(ifLcmpgtDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::iflcmpgt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(ifLcmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareGT(ifLcmpgtDataArr[i][0], ifLcmpgtDataArr[i][1]), lCompareConst(ifLcmpgtDataArr[i][0], LONG_PLACEHOLDER_2));
       }
 
@@ -3689,18 +3689,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifLcmplt, compareLT(ifLcmpltDataArr[i][0], ifLcmpltDataArr[i][1]), _ifLcmplt(ifLcmpltDataArr[i][0], ifLcmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifLcmpltConst1_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iflcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(ifLcmpltDataArr[i][0]), 2, &(ifLcmpltDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::iflcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 4, 1, &(ifLcmpltDataArr[i][0]), 2, &(ifLcmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareLT(ifLcmpltDataArr[i][0], ifLcmpltDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifLcmpltConst2_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iflcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(ifLcmpltDataArr[i][0])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::iflcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 1, &(ifLcmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareLT(ifLcmpltDataArr[i][0], ifLcmpltDataArr[i][1]), lCompareConst(LONG_PLACEHOLDER_1, ifLcmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifLcmpltConst3_TestCase%d", i + 1);
-      lCompareConst = (signatureCharJJ_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iflcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(ifLcmpltDataArr[i][1])));
+      compileOpCodeMethod(lCompareConst, 
+            _numberOfBinaryArgs, TR::iflcmplt, resolvedMethodName, _argTypesBinaryLong, TR::Int32, rc, 2, 2, &(ifLcmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(lCompareConst, compareLT(ifLcmpltDataArr[i][0], ifLcmpltDataArr[i][1]), lCompareConst(ifLcmpltDataArr[i][0], LONG_PLACEHOLDER_2));
       }
 
@@ -3711,18 +3711,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifDcmpeq, compareEQ(ifDcmpeqDataArr[i][0], ifDcmpeqDataArr[i][1]), _ifDcmpeq(ifDcmpeqDataArr[i][0], ifDcmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpeqConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpeqDataArr[i][0]), 2, &(ifDcmpeqDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpeqDataArr[i][0]), 2, &(ifDcmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareEQ(ifDcmpeqDataArr[i][0], ifDcmpeqDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifDcmpeqConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpeqDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareEQ(ifDcmpeqDataArr[i][0], ifDcmpeqDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, ifDcmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpeqConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpeqDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpeq, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareEQ(ifDcmpeqDataArr[i][0], ifDcmpeqDataArr[i][1]), dCompareConst(ifDcmpeqDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3732,18 +3732,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifDcmpne, compareNE(ifDcmpneDataArr[i][0], ifDcmpneDataArr[i][1]), _ifDcmpne(ifDcmpneDataArr[i][0], ifDcmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpneConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpneDataArr[i][0]), 2, &(ifDcmpneDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpneDataArr[i][0]), 2, &(ifDcmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareNE(ifDcmpneDataArr[i][0], ifDcmpneDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifDcmpneConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpneDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareNE(ifDcmpneDataArr[i][0], ifDcmpneDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, ifDcmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpneConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpneDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpne, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareNE(ifDcmpneDataArr[i][0], ifDcmpneDataArr[i][1]), dCompareConst(ifDcmpneDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3753,18 +3753,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifDcmpgt, compareGT(ifDcmpgtDataArr[i][0], ifDcmpgtDataArr[i][1]), _ifDcmpgt(ifDcmpgtDataArr[i][0], ifDcmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpgtConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpgtDataArr[i][0]), 2, &(ifDcmpgtDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpgtDataArr[i][0]), 2, &(ifDcmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGT(ifDcmpgtDataArr[i][0], ifDcmpgtDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifDcmpgtConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpgtDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGT(ifDcmpgtDataArr[i][0], ifDcmpgtDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, ifDcmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpgtConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpgtDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpgt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGT(ifDcmpgtDataArr[i][0], ifDcmpgtDataArr[i][1]), dCompareConst(ifDcmpgtDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3774,18 +3774,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifDcmplt, compareLT(ifDcmpltDataArr[i][0], ifDcmpltDataArr[i][1]), _ifDcmplt(ifDcmpltDataArr[i][0], ifDcmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpltConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpltDataArr[i][0]), 2, &(ifDcmpltDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpltDataArr[i][0]), 2, &(ifDcmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLT(ifDcmpltDataArr[i][0], ifDcmpltDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifDcmpltConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpltDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLT(ifDcmpltDataArr[i][0], ifDcmpltDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, ifDcmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpltConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpltDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmplt, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLT(ifDcmpltDataArr[i][0], ifDcmpltDataArr[i][1]), dCompareConst(ifDcmpltDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3795,18 +3795,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifDcmpge, compareGE(ifDcmpgeDataArr[i][0], ifDcmpgeDataArr[i][1]), _ifDcmpge(ifDcmpgeDataArr[i][0], ifDcmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpgeConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpgeDataArr[i][0]), 2, &(ifDcmpgeDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpgeDataArr[i][0]), 2, &(ifDcmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGE(ifDcmpgeDataArr[i][0], ifDcmpgeDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifDcmpgeConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpgeDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGE(ifDcmpgeDataArr[i][0], ifDcmpgeDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, ifDcmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpgeConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpgeDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmpge, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareGE(ifDcmpgeDataArr[i][0], ifDcmpgeDataArr[i][1]), dCompareConst(ifDcmpgeDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3816,18 +3816,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifDcmple, compareLE(ifDcmpleDataArr[i][0], ifDcmpleDataArr[i][1]), _ifDcmple(ifDcmpleDataArr[i][0], ifDcmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpleConst1_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpleDataArr[i][0]), 2, &(ifDcmpleDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 4, 1, &(ifDcmpleDataArr[i][0]), 2, &(ifDcmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLE(ifDcmpleDataArr[i][0], ifDcmpleDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifDcmpleConst2_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpleDataArr[i][0])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 1, &(ifDcmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLE(ifDcmpleDataArr[i][0], ifDcmpleDataArr[i][1]), dCompareConst(DOUBLE_PLACEHOLDER_1, ifDcmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifDcmpleConst3_TestCase%d", i + 1);
-      dCompareConst = (signatureCharDD_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifdcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpleDataArr[i][1])));
+      compileOpCodeMethod(dCompareConst, 
+            _numberOfBinaryArgs, TR::ifdcmple, resolvedMethodName, _argTypesBinaryDouble, TR::Int32, rc, 2, 2, &(ifDcmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(dCompareConst, compareLE(ifDcmpleDataArr[i][0], ifDcmpleDataArr[i][1]), dCompareConst(ifDcmpleDataArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -3838,18 +3838,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifFcmpeq, compareEQ(ifFcmpeqDataArr[i][0], ifFcmpeqDataArr[i][1]), _ifFcmpeq(ifFcmpeqDataArr[i][0], ifFcmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpeqConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpeqDataArr[i][0]), 2, &(ifFcmpeqDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpeqDataArr[i][0]), 2, &(ifFcmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareEQ(ifFcmpeqDataArr[i][0], ifFcmpeqDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifFcmpeqConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpeqDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareEQ(ifFcmpeqDataArr[i][0], ifFcmpeqDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, ifFcmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpeqConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpeqDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpeq, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareEQ(ifFcmpeqDataArr[i][0], ifFcmpeqDataArr[i][1]), fCompareConst(ifFcmpeqDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3859,18 +3859,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifFcmpne, compareNE(ifFcmpneDataArr[i][0], ifFcmpneDataArr[i][1]), _ifFcmpne(ifFcmpneDataArr[i][0], ifFcmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpneConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpneDataArr[i][0]), 2, &(ifFcmpneDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpneDataArr[i][0]), 2, &(ifFcmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareNE(ifFcmpneDataArr[i][0], ifFcmpneDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifFcmpneConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpneDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareNE(ifFcmpneDataArr[i][0], ifFcmpneDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, ifFcmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpneConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpneDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpne, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareNE(ifFcmpneDataArr[i][0], ifFcmpneDataArr[i][1]), fCompareConst(ifFcmpneDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3880,18 +3880,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifFcmpgt, compareGT(ifFcmpgtDataArr[i][0], ifFcmpgtDataArr[i][1]), _ifFcmpgt(ifFcmpgtDataArr[i][0], ifFcmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpgtConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpgtDataArr[i][0]), 2, &(ifFcmpgtDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpgtDataArr[i][0]), 2, &(ifFcmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGT(ifFcmpgtDataArr[i][0], ifFcmpgtDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifFcmpgtConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpgtDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpgtDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGT(ifFcmpgtDataArr[i][0], ifFcmpgtDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, ifFcmpgtDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpgtConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpgtDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpgt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpgtDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGT(ifFcmpgtDataArr[i][0], ifFcmpgtDataArr[i][1]), fCompareConst(ifFcmpgtDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3901,18 +3901,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifFcmplt, compareLT(ifFcmpltDataArr[i][0], ifFcmpltDataArr[i][1]), _ifFcmplt(ifFcmpltDataArr[i][0], ifFcmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpltConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpltDataArr[i][0]), 2, &(ifFcmpltDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpltDataArr[i][0]), 2, &(ifFcmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLT(ifFcmpltDataArr[i][0], ifFcmpltDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifFcmpltConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpltDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLT(ifFcmpltDataArr[i][0], ifFcmpltDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, ifFcmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpltConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpltDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmplt, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLT(ifFcmpltDataArr[i][0], ifFcmpltDataArr[i][1]), fCompareConst(ifFcmpltDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3922,18 +3922,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifFcmpge, compareGE(ifFcmpgeDataArr[i][0], ifFcmpgeDataArr[i][1]), _ifFcmpge(ifFcmpgeDataArr[i][0], ifFcmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpgeConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpgeDataArr[i][0]), 2, &(ifFcmpgeDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpgeDataArr[i][0]), 2, &(ifFcmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGE(ifFcmpgeDataArr[i][0], ifFcmpgeDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifFcmpgeConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpgeDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGE(ifFcmpgeDataArr[i][0], ifFcmpgeDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, ifFcmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpgeConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpgeDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmpge, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareGE(ifFcmpgeDataArr[i][0], ifFcmpgeDataArr[i][1]), fCompareConst(ifFcmpgeDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3943,18 +3943,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifFcmple, compareLE(ifFcmpleDataArr[i][0], ifFcmpleDataArr[i][1]), _ifFcmple(ifFcmpleDataArr[i][0], ifFcmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpleConst1_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpleDataArr[i][0]), 2, &(ifFcmpleDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 4, 1, &(ifFcmpleDataArr[i][0]), 2, &(ifFcmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLE(ifFcmpleDataArr[i][0], ifFcmpleDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifFcmpleConst2_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpleDataArr[i][0])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 1, &(ifFcmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLE(ifFcmpleDataArr[i][0], ifFcmpleDataArr[i][1]), fCompareConst(FLOAT_PLACEHOLDER_1, ifFcmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifFcmpleConst3_TestCase%d", i + 1);
-      fCompareConst = (signatureCharFF_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::iffcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpleDataArr[i][1])));
+      compileOpCodeMethod(fCompareConst, 
+            _numberOfBinaryArgs, TR::iffcmple, resolvedMethodName, _argTypesBinaryFloat, TR::Int32, rc, 2, 2, &(ifFcmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(fCompareConst, compareLE(ifFcmpleDataArr[i][0], ifFcmpleDataArr[i][1]), fCompareConst(ifFcmpleDataArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -3965,18 +3965,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifBcmpne, compareNE(ifBcmpneDataArr[i][0], ifBcmpneDataArr[i][1]), _ifBcmpne(ifBcmpneDataArr[i][0], ifBcmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpneConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpneDataArr[i][0]), 2, &(ifBcmpneDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpneDataArr[i][0]), 2, &(ifBcmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareNE(ifBcmpneDataArr[i][0], ifBcmpneDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBcmpneConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpneDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareNE(ifBcmpneDataArr[i][0], ifBcmpneDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, ifBcmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpneConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpneDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareNE(ifBcmpneDataArr[i][0], ifBcmpneDataArr[i][1]), bCompareConst(ifBcmpneDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -3986,18 +3986,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifBcmple, compareLE(ifBcmpleDataArr[i][0], ifBcmpleDataArr[i][1]), _ifBcmple(ifBcmpleDataArr[i][0], ifBcmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpleConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpleDataArr[i][0]), 2, &(ifBcmpleDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpleDataArr[i][0]), 2, &(ifBcmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLE(ifBcmpleDataArr[i][0], ifBcmpleDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBcmpleConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpleDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpleDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLE(ifBcmpleDataArr[i][0], ifBcmpleDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, ifBcmpleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpleConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpleDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLE(ifBcmpleDataArr[i][0], ifBcmpleDataArr[i][1]), bCompareConst(ifBcmpleDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -4007,18 +4007,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifBcmplt, compareLT(ifBcmpltDataArr[i][0], ifBcmpltDataArr[i][1]), _ifBcmplt(ifBcmpltDataArr[i][0], ifBcmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpltConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpltDataArr[i][0]), 2, &(ifBcmpltDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpltDataArr[i][0]), 2, &(ifBcmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLT(ifBcmpltDataArr[i][0], ifBcmpltDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBcmpltConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpltDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpltDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLT(ifBcmpltDataArr[i][0], ifBcmpltDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, ifBcmpltDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpltConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpltDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmplt, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpltDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLT(ifBcmpltDataArr[i][0], ifBcmpltDataArr[i][1]), bCompareConst(ifBcmpltDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -4028,18 +4028,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_ifBcmpge, compareGE(ifBcmpgeDataArr[i][0], ifBcmpgeDataArr[i][1]), _ifBcmpge(ifBcmpgeDataArr[i][0], ifBcmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpgeConst1_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpgeDataArr[i][0]), 2, &(ifBcmpgeDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBcmpgeDataArr[i][0]), 2, &(ifBcmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGE(ifBcmpgeDataArr[i][0], ifBcmpgeDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "ifBcmpgeConst2_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpgeDataArr[i][0])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBcmpgeDataArr[i][0]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGE(ifBcmpgeDataArr[i][0], ifBcmpgeDataArr[i][1]), bCompareConst(BYTE_PLACEHOLDER_1, ifBcmpgeDataArr[i][1]));
 
       sprintf(resolvedMethodName, "ifBcmpgeConst3_TestCase%d", i + 1);
-      bCompareConst = (signatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ifbcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpgeDataArr[i][1])));
+      compileOpCodeMethod(bCompareConst, 
+            _numberOfBinaryArgs, TR::ifbcmpge, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareGE(ifBcmpgeDataArr[i][0], ifBcmpgeDataArr[i][1]), bCompareConst(ifBcmpgeDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -4050,18 +4050,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_buCmpeq, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), _buCmpeq(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "buCmpeqConst1_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(buCmpeqDataArr[i][0]), 2, &(buCmpeqDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(buCmpeqDataArr[i][0]), 2, &(buCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "buCmpeqConst2_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(buCmpeqDataArr[i][0])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(buCmpeqDataArr[i][0]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, buCmpeqDataArr[i][1]));
 
       sprintf(resolvedMethodName, "buCmpeqConst3_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(buCmpeqDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(buCmpeqDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), buCompareConst(buCmpeqDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -4071,18 +4071,18 @@ PPCOpCodesTest::invokeDisabledCompareTests()
       OMR_CT_EXPECT_EQ(_buCmpne, compareNE(buCmpneDataArr[i][0], buCmpneDataArr[i][1]), _buCmpne(buCmpneDataArr[i][0], buCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "buCmpneConst1_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(buCmpneDataArr[i][0]), 2, &(buCmpneDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::bucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(buCmpneDataArr[i][0]), 2, &(buCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareNE(buCmpneDataArr[i][0], buCmpneDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "buCmpneConst2_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(buCmpneDataArr[i][0])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::bucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(buCmpneDataArr[i][0]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareNE(buCmpneDataArr[i][0], buCmpneDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, buCmpneDataArr[i][1]));
 
       sprintf(resolvedMethodName, "buCmpneConst3_TestCase%d", i + 1);
-      buCompareConst = (unsignedCompareSignatureCharBB_I_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(buCmpneDataArr[i][1])));
+      compileOpCodeMethod(buCompareConst, 
+            _numberOfBinaryArgs, TR::bucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(buCmpneDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareNE(buCmpneDataArr[i][0], buCmpneDataArr[i][1]), buCompareConst(buCmpneDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
    }
@@ -4093,17 +4093,17 @@ PPCOpCodesTest::compileDisabledIntegerArithmeticTestMethods()
    int32_t rc = 0;
 
    //Jazz103 Work Item 101901
-   _lAdd = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ladd, "lAdd", _argTypesBinaryLong, TR::Int64, rc));
-   _lSub = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lsub, "lSub", _argTypesBinaryLong, TR::Int64, rc));
-   _lMul = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lmul, "lMul", _argTypesBinaryLong, TR::Int64, rc));
-   _lDiv = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ldiv, "lDiv", _argTypesBinaryLong, TR::Int64, rc));
-   _lRem = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lrem, "lRem", _argTypesBinaryLong, TR::Int64, rc));
+   compileOpCodeMethod(_lAdd, _numberOfBinaryArgs, TR::ladd, "lAdd", _argTypesBinaryLong, TR::Int64, rc);
+   compileOpCodeMethod(_lSub, _numberOfBinaryArgs, TR::lsub, "lSub", _argTypesBinaryLong, TR::Int64, rc);
+   compileOpCodeMethod(_lMul, _numberOfBinaryArgs, TR::lmul, "lMul", _argTypesBinaryLong, TR::Int64, rc);
+   compileOpCodeMethod(_lDiv, _numberOfBinaryArgs, TR::ldiv, "lDiv", _argTypesBinaryLong, TR::Int64, rc);
+   compileOpCodeMethod(_lRem, _numberOfBinaryArgs, TR::lrem, "lRem", _argTypesBinaryLong, TR::Int64, rc);
 
    //Jazz103 Work Item 103809
    //Testrossa Work Item 121966
-   _iuDiv = (unsignedSignatureCharII_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iudiv, "iuDiv", _argTypesBinaryInt, TR::Int32, rc));
-   _iuMul = (unsignedSignatureCharII_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iumul, "iuMul", _argTypesBinaryInt, TR::Int32, rc));
-   _iuRem = (unsignedSignatureCharII_I_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::iurem, "iuRem", _argTypesBinaryInt, TR::Int32, rc));
+   compileOpCodeMethod(_iuDiv, _numberOfBinaryArgs, TR::iudiv, "iuDiv", _argTypesBinaryInt, TR::Int32, rc);
+   compileOpCodeMethod(_iuMul, _numberOfBinaryArgs, TR::iumul, "iuMul", _argTypesBinaryInt, TR::Int32, rc);
+   compileOpCodeMethod(_iuRem, _numberOfBinaryArgs, TR::iurem, "iuRem", _argTypesBinaryInt, TR::Int32, rc);
 
    }
 
@@ -4181,18 +4181,18 @@ PPCOpCodesTest::invokeDisabledIntegerArithmeticTests()
       OMR_CT_EXPECT_EQ(_lAdd, add(longAddArr[i][0], longAddArr[i][1]), _lAdd(longAddArr[i][0], longAddArr[i][1]));
 
       sprintf(resolvedMethodName, "lAddConst1_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ladd,
-            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &longAddArr[i][0], 2, &longAddArr[i][1]));
+      compileOpCodeMethod(lBinaryCons, _numberOfBinaryArgs, TR::ladd,
+            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &longAddArr[i][0], 2, &longAddArr[i][1]);
       OMR_CT_EXPECT_EQ(lBinaryCons, add(longAddArr[i][0], longAddArr[i][1]), lBinaryCons(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lAddConst2_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ladd,
-            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &longAddArr[i][0]));
+      compileOpCodeMethod(lBinaryCons, _numberOfBinaryArgs, TR::ladd,
+            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &longAddArr[i][0]);
       OMR_CT_EXPECT_EQ(lBinaryCons, add(longAddArr[i][0], longAddArr[i][1]), lBinaryCons(LONG_PLACEHOLDER_1, longAddArr[i][1]));
 
       sprintf(resolvedMethodName, "lAddConst3_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ladd,
-            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &longAddArr[i][1]));
+      compileOpCodeMethod(lBinaryCons, _numberOfBinaryArgs, TR::ladd,
+            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &longAddArr[i][1]);
       OMR_CT_EXPECT_EQ(lBinaryCons, add(longAddArr[i][0], longAddArr[i][1]), lBinaryCons(longAddArr[i][0], LONG_PLACEHOLDER_2));
       }
 
@@ -4203,18 +4203,18 @@ PPCOpCodesTest::invokeDisabledIntegerArithmeticTests()
       OMR_CT_EXPECT_EQ(_lSub, sub(longSubArr[i][0], longSubArr[i][1]), _lSub(longSubArr[i][0], longSubArr[i][1]));
 
       sprintf(resolvedMethodName, "lSubConst1_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lsub,
-            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &longSubArr[i][0], 2, &longSubArr[i][1]));
+      compileOpCodeMethod(lBinaryCons, _numberOfBinaryArgs, TR::lsub,
+            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &longSubArr[i][0], 2, &longSubArr[i][1]);
       OMR_CT_EXPECT_EQ(lBinaryCons, sub(longSubArr[i][0], longSubArr[i][1]), lBinaryCons(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lSubConst2_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lsub,
-            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &longSubArr[i][0]));
+      compileOpCodeMethod(lBinaryCons, _numberOfBinaryArgs, TR::lsub,
+            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &longSubArr[i][0]);
       OMR_CT_EXPECT_EQ(lBinaryCons, sub(longSubArr[i][0], longSubArr[i][1]), lBinaryCons(LONG_PLACEHOLDER_1, longSubArr[i][1]));
 
       sprintf(resolvedMethodName, "lSubConst3_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lsub,
-            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &longSubArr[i][1]));
+      compileOpCodeMethod(lBinaryCons, _numberOfBinaryArgs, TR::lsub,
+            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &longSubArr[i][1]);
       OMR_CT_EXPECT_EQ(lBinaryCons, sub(longSubArr[i][0], longSubArr[i][1]), lBinaryCons(longSubArr[i][0], LONG_PLACEHOLDER_2));
       }
 
@@ -4225,18 +4225,18 @@ PPCOpCodesTest::invokeDisabledIntegerArithmeticTests()
       OMR_CT_EXPECT_EQ(_lMul, mul(longMulArr[i][0], longMulArr[i][1]), _lMul(longMulArr[i][0], longMulArr[i][1]));
 
       sprintf(resolvedMethodName, "lMulConst1_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lmul,
-            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &longMulArr[i][0], 2, &longMulArr[i][1]));
+      compileOpCodeMethod(lBinaryCons, _numberOfBinaryArgs, TR::lmul,
+            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &longMulArr[i][0], 2, &longMulArr[i][1]);
       OMR_CT_EXPECT_EQ(lBinaryCons, mul(longMulArr[i][0], longMulArr[i][1]), lBinaryCons(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lMulConst2_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lmul,
-            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &longMulArr[i][0]));
+      compileOpCodeMethod(lBinaryCons, _numberOfBinaryArgs, TR::lmul,
+            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &longMulArr[i][0]);
       OMR_CT_EXPECT_EQ(lBinaryCons, mul(longMulArr[i][0], longMulArr[i][1]), lBinaryCons(LONG_PLACEHOLDER_1, longMulArr[i][1]));
 
       sprintf(resolvedMethodName, "lMulConst3_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lmul,
-            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &longMulArr[i][1]));
+      compileOpCodeMethod(lBinaryCons, _numberOfBinaryArgs, TR::lmul,
+            resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &longMulArr[i][1]);
       OMR_CT_EXPECT_EQ(lBinaryCons, mul(longMulArr[i][0], longMulArr[i][1]), lBinaryCons(longMulArr[i][0], LONG_PLACEHOLDER_2));
       }
 
@@ -4248,18 +4248,18 @@ PPCOpCodesTest::invokeDisabledIntegerArithmeticTests()
       OMR_CT_EXPECT_EQ(_lDiv, div(longDivArr[i][0], longDivArr[i][1]), _lDiv(longDivArr[i][0], longDivArr[i][1]));
 
       sprintf(resolvedMethodName, "lDivConst1_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ldiv, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &longDivArr[i][0], 2, &longDivArr[i][1]));
+      compileOpCodeMethod(lBinaryCons, 
+            _numberOfBinaryArgs, TR::ldiv, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &longDivArr[i][0], 2, &longDivArr[i][1]);
       OMR_CT_EXPECT_EQ(lBinaryCons, div(longDivArr[i][0], longDivArr[i][1]), lBinaryCons(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lDivConst2_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ldiv, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &longDivArr[i][0]));
+      compileOpCodeMethod(lBinaryCons, 
+            _numberOfBinaryArgs, TR::ldiv, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &longDivArr[i][0]);
       OMR_CT_EXPECT_EQ(lBinaryCons, div(longDivArr[i][0], longDivArr[i][1]), lBinaryCons(LONG_PLACEHOLDER_1, longDivArr[i][1]));
 
       sprintf(resolvedMethodName, "lDivConst3_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::ldiv, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &longDivArr[i][1]));
+      compileOpCodeMethod(lBinaryCons, 
+            _numberOfBinaryArgs, TR::ldiv, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &longDivArr[i][1]);
       OMR_CT_EXPECT_EQ(lBinaryCons, div(longDivArr[i][0], longDivArr[i][1]), lBinaryCons(longDivArr[i][0], LONG_PLACEHOLDER_2));
       }
    //lrem
@@ -4270,18 +4270,18 @@ PPCOpCodesTest::invokeDisabledIntegerArithmeticTests()
       OMR_CT_EXPECT_EQ(_lRem, rem(longRemArr[i][0], longRemArr[i][1]), _lRem(longRemArr[i][0], longRemArr[i][1]));
 
       sprintf(resolvedMethodName, "lRemConst1_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lrem, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &longRemArr[i][0], 2, &longRemArr[i][1]));
+      compileOpCodeMethod(lBinaryCons, 
+            _numberOfBinaryArgs, TR::lrem, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &longRemArr[i][0], 2, &longRemArr[i][1]);
       OMR_CT_EXPECT_EQ(lBinaryCons, rem(longRemArr[i][0], longRemArr[i][1]), lBinaryCons(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lRemConst2_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lrem, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &longRemArr[i][0]));
+      compileOpCodeMethod(lBinaryCons, 
+            _numberOfBinaryArgs, TR::lrem, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &longRemArr[i][0]);
       OMR_CT_EXPECT_EQ(lBinaryCons, rem(longRemArr[i][0], longRemArr[i][1]), lBinaryCons(LONG_PLACEHOLDER_1, longRemArr[i][1]));
 
       sprintf(resolvedMethodName, "lRemConst3_Testcase%d", i);
-      lBinaryCons = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lrem, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &longRemArr[i][1]));
+      compileOpCodeMethod(lBinaryCons, 
+            _numberOfBinaryArgs, TR::lrem, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &longRemArr[i][1]);
       OMR_CT_EXPECT_EQ(lBinaryCons, rem(longRemArr[i][0], longRemArr[i][1]), lBinaryCons(longRemArr[i][0], LONG_PLACEHOLDER_2));
       }
    }
@@ -4292,14 +4292,14 @@ PPCOpCodesTest::compileDisabledFloatArithmeticTestMethods()
    int32_t rc = 0;
    //Jazz103 Work Item 110358
 
-   _fAdd = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fadd, "fAdd", _argTypesBinaryFloat, TR::Float, rc));
-   _fSub = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fsub, "fSub", _argTypesBinaryFloat, TR::Float, rc));
-   _fMul = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fmul, "fMul", _argTypesBinaryFloat, TR::Float, rc));
-   _fDiv = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fdiv, "fDiv", _argTypesBinaryFloat, TR::Float, rc));
-   _dAdd = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dadd, "dAdd", _argTypesBinaryDouble, TR::Double, rc));
-   _dSub = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dsub, "dSub", _argTypesBinaryDouble, TR::Double, rc));
-   _dMul = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dmul, "dMul", _argTypesBinaryDouble, TR::Double, rc));
-   _dDiv = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ddiv, "dDiv", _argTypesBinaryDouble, TR::Double, rc));
+   compileOpCodeMethod(_fAdd, _numberOfBinaryArgs, TR::fadd, "fAdd", _argTypesBinaryFloat, TR::Float, rc);
+   compileOpCodeMethod(_fSub, _numberOfBinaryArgs, TR::fsub, "fSub", _argTypesBinaryFloat, TR::Float, rc);
+   compileOpCodeMethod(_fMul, _numberOfBinaryArgs, TR::fmul, "fMul", _argTypesBinaryFloat, TR::Float, rc);
+   compileOpCodeMethod(_fDiv, _numberOfBinaryArgs, TR::fdiv, "fDiv", _argTypesBinaryFloat, TR::Float, rc);
+   compileOpCodeMethod(_dAdd, _numberOfBinaryArgs, TR::dadd, "dAdd", _argTypesBinaryDouble, TR::Double, rc);
+   compileOpCodeMethod(_dSub, _numberOfBinaryArgs, TR::dsub, "dSub", _argTypesBinaryDouble, TR::Double, rc);
+   compileOpCodeMethod(_dMul, _numberOfBinaryArgs, TR::dmul, "dMul", _argTypesBinaryDouble, TR::Double, rc);
+   compileOpCodeMethod(_dDiv, _numberOfBinaryArgs, TR::ddiv, "dDiv", _argTypesBinaryDouble, TR::Double, rc);
 
    }
 void
@@ -4384,18 +4384,18 @@ PPCOpCodesTest::invokeDisabledFloatArithmeticTests()
       OMR_CT_EXPECT_FLOAT_EQ(_fAdd, add(floatAddArr[i][0], floatAddArr[i][1]), _fAdd(floatAddArr[i][0], floatAddArr[i][1]));
 
       sprintf(resolvedMethodName, "fAddConst1_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fadd,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 4, 1, &floatAddArr[i][0], 2, &floatAddArr[i][1]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fadd,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 4, 1, &floatAddArr[i][0], 2, &floatAddArr[i][1]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, add(floatAddArr[i][0], floatAddArr[i][1]), fBinaryConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "fAddConst2_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fadd,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 1, &floatAddArr[i][0]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fadd,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 1, &floatAddArr[i][0]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, add(floatAddArr[i][0], floatAddArr[i][1]), fBinaryConst(FLOAT_PLACEHOLDER_1, floatAddArr[i][1]));
 
       sprintf(resolvedMethodName, "fAddConst3_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fadd,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 2, &floatAddArr[i][1]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fadd,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 2, &floatAddArr[i][1]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, add(floatAddArr[i][0], floatAddArr[i][1]), fBinaryConst(floatAddArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -4406,18 +4406,18 @@ PPCOpCodesTest::invokeDisabledFloatArithmeticTests()
       OMR_CT_EXPECT_FLOAT_EQ(_fSub, sub(floatSubArr[i][0], floatSubArr[i][1]), _fSub(floatSubArr[i][0], floatSubArr[i][1]));
 
       sprintf(resolvedMethodName, "fSubConst1_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fsub,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 4, 1, &floatSubArr[i][0], 2, &floatSubArr[i][1]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fsub,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 4, 1, &floatSubArr[i][0], 2, &floatSubArr[i][1]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, sub(floatSubArr[i][0], floatSubArr[i][1]), fBinaryConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "fSubConst2_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fsub,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 1, &floatSubArr[i][0]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fsub,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 1, &floatSubArr[i][0]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, sub(floatSubArr[i][0], floatSubArr[i][1]), fBinaryConst(FLOAT_PLACEHOLDER_1, floatSubArr[i][1]));
 
       sprintf(resolvedMethodName, "fSubConst3_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fsub,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 2, &floatSubArr[i][1]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fsub,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 2, &floatSubArr[i][1]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, sub(floatSubArr[i][0], floatSubArr[i][1]), fBinaryConst(floatSubArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -4428,18 +4428,18 @@ PPCOpCodesTest::invokeDisabledFloatArithmeticTests()
       OMR_CT_EXPECT_FLOAT_EQ(_fMul, mul(floatMulArr[i][0], floatMulArr[i][1]), _fMul(floatMulArr[i][0], floatMulArr[i][1]));
 
       sprintf(resolvedMethodName, "fMulConst1_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fmul,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 4, 1, &floatMulArr[i][0], 2, &floatMulArr[i][1]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fmul,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 4, 1, &floatMulArr[i][0], 2, &floatMulArr[i][1]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, mul(floatMulArr[i][0], floatMulArr[i][1]), fBinaryConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "fMulConst2_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fmul,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 1, &floatMulArr[i][0]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fmul,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 1, &floatMulArr[i][0]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, mul(floatMulArr[i][0], floatMulArr[i][1]), fBinaryConst(FLOAT_PLACEHOLDER_1, floatMulArr[i][1]));
 
       sprintf(resolvedMethodName, "fMulConst3_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fmul,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 2, &floatMulArr[i][1]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fmul,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 2, &floatMulArr[i][1]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, mul(floatMulArr[i][0], floatMulArr[i][1]), fBinaryConst(floatMulArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -4450,18 +4450,18 @@ PPCOpCodesTest::invokeDisabledFloatArithmeticTests()
       OMR_CT_EXPECT_FLOAT_EQ(_fDiv, div(floatDivArr[i][0], floatDivArr[i][1]), _fDiv(floatDivArr[i][0], floatDivArr[i][1]));
 
       sprintf(resolvedMethodName, "fDivConst1_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fdiv,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 4, 1, &floatDivArr[i][0], 2, &floatDivArr[i][1]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fdiv,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 4, 1, &floatDivArr[i][0], 2, &floatDivArr[i][1]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, div(floatDivArr[i][0], floatDivArr[i][1]), fBinaryConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "fDivConst2_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fdiv,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 1, &floatDivArr[i][0]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fdiv,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 1, &floatDivArr[i][0]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, div(floatDivArr[i][0], floatDivArr[i][1]), fBinaryConst(FLOAT_PLACEHOLDER_1, floatDivArr[i][1]));
 
       sprintf(resolvedMethodName, "fDivConst3_Testcase%d", i);
-      fBinaryConst = (signatureCharFF_F_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::fdiv,
-            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 2, &floatDivArr[i][1]));
+      compileOpCodeMethod(fBinaryConst, _numberOfBinaryArgs, TR::fdiv,
+            resolvedMethodName, _argTypesBinaryFloat, TR::Float, rc, 2, 2, &floatDivArr[i][1]);
       OMR_CT_EXPECT_FLOAT_EQ(fBinaryConst, div(floatDivArr[i][0], floatDivArr[i][1]), fBinaryConst(floatDivArr[i][0], FLOAT_PLACEHOLDER_2));
       }
 
@@ -4471,18 +4471,18 @@ PPCOpCodesTest::invokeDisabledFloatArithmeticTests()
       OMR_CT_EXPECT_DOUBLE_EQ(_dAdd, add(doubleAddArr[i][0], doubleAddArr[i][1]), _dAdd(doubleAddArr[i][0], doubleAddArr[i][1]));
 
       sprintf(resolvedMethodName, "dAddConst1_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dadd,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 4, 1, &doubleAddArr[i][0], 2, &doubleAddArr[i][1]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::dadd,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 4, 1, &doubleAddArr[i][0], 2, &doubleAddArr[i][1]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, add(doubleAddArr[i][0], doubleAddArr[i][1]), dBinaryConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "dAddConst2_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dadd,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 1, &doubleAddArr[i][0]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::dadd,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 1, &doubleAddArr[i][0]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, add(doubleAddArr[i][0], doubleAddArr[i][1]), dBinaryConst(DOUBLE_PLACEHOLDER_1, doubleAddArr[i][1]));
 
       sprintf(resolvedMethodName, "dAddConst3_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dadd,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 2, &doubleAddArr[i][1]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::dadd,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 2, &doubleAddArr[i][1]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, add(doubleAddArr[i][0], doubleAddArr[i][1]), dBinaryConst(doubleAddArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -4492,18 +4492,18 @@ PPCOpCodesTest::invokeDisabledFloatArithmeticTests()
       OMR_CT_EXPECT_DOUBLE_EQ(_dSub, sub(doubleSubArr[i][0], doubleSubArr[i][1]), _dSub(doubleSubArr[i][0], doubleSubArr[i][1]));
 
       sprintf(resolvedMethodName, "dSubConst1_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dsub,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 4, 1, &doubleSubArr[i][0], 2, &doubleSubArr[i][1]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::dsub,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 4, 1, &doubleSubArr[i][0], 2, &doubleSubArr[i][1]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, sub(doubleSubArr[i][0], doubleSubArr[i][1]), dBinaryConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "dSubConst2_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dsub,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 1, &doubleSubArr[i][0]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::dsub,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 1, &doubleSubArr[i][0]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, sub(doubleSubArr[i][0], doubleSubArr[i][1]), dBinaryConst(DOUBLE_PLACEHOLDER_1, doubleSubArr[i][1]));
 
       sprintf(resolvedMethodName, "dSubConst3_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dsub,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 2, &doubleSubArr[i][1]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::dsub,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 2, &doubleSubArr[i][1]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, sub(doubleSubArr[i][0], doubleSubArr[i][1]), dBinaryConst(doubleSubArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -4513,18 +4513,18 @@ PPCOpCodesTest::invokeDisabledFloatArithmeticTests()
       OMR_CT_EXPECT_DOUBLE_EQ(_dMul, mul(doubleMulArr[i][0], doubleMulArr[i][1]), _dMul(doubleMulArr[i][0], doubleMulArr[i][1]));
 
       sprintf(resolvedMethodName, "dMulConst1_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dmul,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 4, 1, &doubleMulArr[i][0], 2, &doubleMulArr[i][1]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::dmul,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 4, 1, &doubleMulArr[i][0], 2, &doubleMulArr[i][1]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, mul(doubleMulArr[i][0], doubleMulArr[i][1]), dBinaryConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "dMulConst2_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dmul,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 1, &doubleMulArr[i][0]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::dmul,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 1, &doubleMulArr[i][0]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, mul(doubleMulArr[i][0], doubleMulArr[i][1]), dBinaryConst(DOUBLE_PLACEHOLDER_1, doubleMulArr[i][1]));
 
       sprintf(resolvedMethodName, "dMulConst3_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::dmul,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 2, &doubleMulArr[i][1]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::dmul,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 2, &doubleMulArr[i][1]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, mul(doubleMulArr[i][0], doubleMulArr[i][1]), dBinaryConst(doubleMulArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
 
@@ -4534,18 +4534,18 @@ PPCOpCodesTest::invokeDisabledFloatArithmeticTests()
       OMR_CT_EXPECT_DOUBLE_EQ(_dDiv, div(doubleDivArr[i][0], doubleDivArr[i][1]), _dDiv(doubleDivArr[i][0], doubleDivArr[i][1]));
 
       sprintf(resolvedMethodName, "dDivConst1_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ddiv,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 4, 1, &doubleDivArr[i][0], 2, &doubleDivArr[i][1]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::ddiv,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 4, 1, &doubleDivArr[i][0], 2, &doubleDivArr[i][1]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, div(doubleDivArr[i][0], doubleDivArr[i][1]), dBinaryConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "dDivConst2_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ddiv,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 1, &doubleDivArr[i][0]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::ddiv,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 1, &doubleDivArr[i][0]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, div(doubleDivArr[i][0], doubleDivArr[i][1]), dBinaryConst(DOUBLE_PLACEHOLDER_1, doubleDivArr[i][1]));
 
       sprintf(resolvedMethodName, "dDivConst3_Testcase%d", i);
-      dBinaryConst = (signatureCharDD_D_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::ddiv,
-            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 2, &doubleDivArr[i][1]));
+      compileOpCodeMethod(dBinaryConst, _numberOfBinaryArgs, TR::ddiv,
+            resolvedMethodName, _argTypesBinaryDouble, TR::Double, rc, 2, 2, &doubleDivArr[i][1]);
       OMR_CT_EXPECT_DOUBLE_EQ(dBinaryConst, div(doubleDivArr[i][0], doubleDivArr[i][1]), dBinaryConst(doubleDivArr[i][0], DOUBLE_PLACEHOLDER_2));
       }
    }
@@ -4556,7 +4556,7 @@ PPCOpCodesTest::compileDisabledMemoryOperationTestMethods()
    int32_t rc = 0;
 
    //Jazz103 111411 : bstorei unexpected results
-   _bStorei = (signatureCharLB_B_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bstorei, "bStorei", _argTypesBinaryAddressByte, TR::Int8, rc));
+   compileOpCodeMethod(_bStorei, _numberOfBinaryArgs, TR::bstorei, "bStorei", _argTypesBinaryAddressByte, TR::Int8, rc);
    }
 
 void
@@ -4598,18 +4598,18 @@ PPCOpCodesTest::compileDisabledUnaryTestMethods()
    {
    int32_t rc = 0;
    //Jazz103 Work Item 109977
-   _dNeg = (signatureCharD_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::dneg, "dNeg", _argTypesUnaryDouble, TR::Double, rc));
-   _fNeg = (signatureCharF_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::fneg, "fNeg", _argTypesUnaryFloat, TR::Float, rc));
-   _lNeg = (signatureCharJ_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::lneg, "lNeg", _argTypesUnaryLong, TR::Int64, rc));
+   compileOpCodeMethod(_dNeg, _numberOfUnaryArgs, TR::dneg, "dNeg", _argTypesUnaryDouble, TR::Double, rc);
+   compileOpCodeMethod(_fNeg, _numberOfUnaryArgs, TR::fneg, "fNeg", _argTypesUnaryFloat, TR::Float, rc);
+   compileOpCodeMethod(_lNeg, _numberOfUnaryArgs, TR::lneg, "lNeg", _argTypesUnaryLong, TR::Int64, rc);
 
-   _lAbs = (signatureCharJ_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::labs, "lAbs", _argTypesUnaryLong, TR::Int64, rc));
+   compileOpCodeMethod(_lAbs, _numberOfUnaryArgs, TR::labs, "lAbs", _argTypesUnaryLong, TR::Int64, rc);
 
-   _lReturn = (signatureCharJ_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::lreturn, "lReturn", _argTypesUnaryLong, TR::Int64, rc));
-   _dReturn = (signatureCharD_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::dreturn, "dReturn", _argTypesUnaryDouble, TR::Double, rc));
-   _fReturn = (signatureCharF_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::freturn, "fReturn", _argTypesUnaryFloat, TR::Float, rc));
+   compileOpCodeMethod(_lReturn, _numberOfUnaryArgs, TR::lreturn, "lReturn", _argTypesUnaryLong, TR::Int64, rc);
+   compileOpCodeMethod(_dReturn, _numberOfUnaryArgs, TR::dreturn, "dReturn", _argTypesUnaryDouble, TR::Double, rc);
+   compileOpCodeMethod(_fReturn, _numberOfUnaryArgs, TR::freturn, "fReturn", _argTypesUnaryFloat, TR::Float, rc);
 
-   _fAbs = (signatureCharF_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::fabs, "fAbs", _argTypesUnaryFloat, TR::Float, rc));
-   _dAbs = (signatureCharD_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::dabs, "dAbs", _argTypesUnaryDouble, TR::Double, rc));
+   compileOpCodeMethod(_fAbs, _numberOfUnaryArgs, TR::fabs, "fAbs", _argTypesUnaryFloat, TR::Float, rc);
+   compileOpCodeMethod(_dAbs, _numberOfUnaryArgs, TR::dabs, "dAbs", _argTypesUnaryDouble, TR::Double, rc);
    }
 
 void
@@ -4635,8 +4635,8 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
       {
       OMR_CT_EXPECT_EQ(_lNeg, neg(longDataArray[i]), _lNeg(longDataArray[i]));
       sprintf(resolvedMethodName, "lNegConst%d", i + 1);
-      lUnaryCons = (signatureCharJ_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::lneg,
-            resolvedMethodName, _argTypesUnaryLong, TR::Int64, rc, 2, 1, &longDataArray[i]));
+      compileOpCodeMethod(lUnaryCons, _numberOfUnaryArgs, TR::lneg,
+            resolvedMethodName, _argTypesUnaryLong, TR::Int64, rc, 2, 1, &longDataArray[i]);
       OMR_CT_EXPECT_EQ(lUnaryCons, neg(longDataArray[i]), lUnaryCons(LONG_PLACEHOLDER_1));
       }
 
@@ -4646,8 +4646,8 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
       {
       OMR_CT_EXPECT_FLOAT_EQ(_fNeg, neg(floatDataArray[i]), _fNeg(floatDataArray[i]));
       sprintf(resolvedMethodName, "fNegConst%d", i + 1);
-      fUnaryCons = (signatureCharF_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::fneg,
-            resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &floatDataArray[i]));
+      compileOpCodeMethod(fUnaryCons, _numberOfUnaryArgs, TR::fneg,
+            resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &floatDataArray[i]);
       OMR_CT_EXPECT_FLOAT_EQ(fUnaryCons, neg(floatDataArray[i]), fUnaryCons(FLOAT_PLACEHOLDER_1));
       }
 
@@ -4657,8 +4657,8 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
       {
       OMR_CT_EXPECT_DOUBLE_EQ(_dNeg, neg(doubleDataArray[i]), _dNeg(doubleDataArray[i]));
       sprintf(resolvedMethodName, "dNegConst%d", i + 1);
-      dUnaryCons = (signatureCharD_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::dneg,
-            resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &doubleDataArray[i]));
+      compileOpCodeMethod(dUnaryCons, _numberOfUnaryArgs, TR::dneg,
+            resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &doubleDataArray[i]);
       OMR_CT_EXPECT_DOUBLE_EQ(dUnaryCons, neg(doubleDataArray[i]), dUnaryCons(DOUBLE_PLACEHOLDER_1));
       }
 
@@ -4668,8 +4668,8 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
       {
       OMR_CT_EXPECT_EQ(_lAbs, abs(longDataArray[i]), _lAbs(longDataArray[i]));
       sprintf(resolvedMethodName, "lAbsConst%d", i + 1);
-      lUnaryCons = (signatureCharJ_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::labs,
-            resolvedMethodName, _argTypesUnaryLong, TR::Int64, rc, 2, 1, &longDataArray[i]));
+      compileOpCodeMethod(lUnaryCons, _numberOfUnaryArgs, TR::labs,
+            resolvedMethodName, _argTypesUnaryLong, TR::Int64, rc, 2, 1, &longDataArray[i]);
       OMR_CT_EXPECT_EQ(lUnaryCons, abs(longDataArray[i]), lUnaryCons(LONG_PLACEHOLDER_1));
       }
 
@@ -4679,7 +4679,7 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
       {
       sprintf(resolvedMethodName, "lReturnCons%d", i + 1);
       OMR_CT_EXPECT_EQ(_lReturn, longDataArray[i], _lReturn(longDataArray[i]));
-      lUnaryCons = (signatureCharJ_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::lreturn, resolvedMethodName, _argTypesUnaryLong, TR::Int64, rc, 2, 1, &(longDataArray[i])));
+      compileOpCodeMethod(lUnaryCons, _numberOfUnaryArgs, TR::lreturn, resolvedMethodName, _argTypesUnaryLong, TR::Int64, rc, 2, 1, &(longDataArray[i]));
       OMR_CT_EXPECT_EQ(lUnaryCons, longDataArray[i], lUnaryCons(LONG_PLACEHOLDER_1));
       }
 
@@ -4689,7 +4689,7 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
       {
       sprintf(resolvedMethodName, "dReturnCons%d", i + 1);
       OMR_CT_EXPECT_DOUBLE_EQ(_dReturn, doubleDataArray[i], _dReturn(doubleDataArray[i]));
-      dUnaryCons = (signatureCharD_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::dreturn, resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &(doubleDataArray[i])));
+      compileOpCodeMethod(dUnaryCons, _numberOfUnaryArgs, TR::dreturn, resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &(doubleDataArray[i]));
       OMR_CT_EXPECT_DOUBLE_EQ(dUnaryCons, doubleDataArray[i], dUnaryCons(DOUBLE_PLACEHOLDER_1));
       }
 
@@ -4699,7 +4699,7 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
       {
       sprintf(resolvedMethodName, "fReturnCons%d", i + 1);
       OMR_CT_EXPECT_FLOAT_EQ(_fReturn, floatDataArray[i], _fReturn(floatDataArray[i]));
-      fUnaryCons = (signatureCharF_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::freturn, resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &(floatDataArray[i])));
+      compileOpCodeMethod(fUnaryCons, _numberOfUnaryArgs, TR::freturn, resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &(floatDataArray[i]));
       OMR_CT_EXPECT_FLOAT_EQ(fUnaryCons, floatDataArray[i], fUnaryCons(FLOAT_PLACEHOLDER_1));
       }
 
@@ -4708,7 +4708,7 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       sprintf(resolvedMethodName, "lConst%d", i + 1);
-      lUnaryCons = (signatureCharJ_J_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::lconst, resolvedMethodName, _argTypesUnaryLong, TR::Int64, rc, 2, 1, &(longDataArray[i])));
+      compileOpCodeMethod(lUnaryCons, _numberOfUnaryArgs, TR::lconst, resolvedMethodName, _argTypesUnaryLong, TR::Int64, rc, 2, 1, &(longDataArray[i]));
       OMR_CT_EXPECT_EQ(lUnaryCons, longDataArray[i], lUnaryCons(LONG_PLACEHOLDER_1));
       }
 
@@ -4717,7 +4717,7 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       sprintf(resolvedMethodName, "dConst%d", i + 1);
-      dUnaryCons = (signatureCharD_D_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::dconst, resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &(doubleDataArray[i])));
+      compileOpCodeMethod(dUnaryCons, _numberOfUnaryArgs, TR::dconst, resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &(doubleDataArray[i]));
       OMR_CT_EXPECT_DOUBLE_EQ(dUnaryCons, doubleDataArray[i], dUnaryCons(DOUBLE_PLACEHOLDER_1));
       }
 
@@ -4726,7 +4726,7 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       sprintf(resolvedMethodName, "fConst%d", i + 1);
-      fUnaryCons = (signatureCharF_F_testMethodType *) (compileOpCodeMethod(_numberOfUnaryArgs, TR::fconst, resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &(floatDataArray[i])));
+      compileOpCodeMethod(fUnaryCons, _numberOfUnaryArgs, TR::fconst, resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &(floatDataArray[i]));
       OMR_CT_EXPECT_FLOAT_EQ(fUnaryCons, floatDataArray[i], fUnaryCons(FLOAT_PLACEHOLDER_1));
       }
 
@@ -4736,8 +4736,8 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
       {
       OMR_CT_EXPECT_EQ(_fAbs, abs(floatDataArray[i]), _fAbs(floatDataArray[i]));
       sprintf(resolvedMethodName, "fAbsConst%d", i + 1);
-      fUnaryCons = (signatureCharF_F_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::fabs, resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &floatDataArray[i]));
+      compileOpCodeMethod(fUnaryCons, 
+            _numberOfUnaryArgs, TR::fabs, resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &floatDataArray[i]);
       OMR_CT_EXPECT_EQ(fUnaryCons, abs(floatDataArray[i]), fUnaryCons(FLOAT_PLACEHOLDER_1));
       }
 
@@ -4747,8 +4747,8 @@ PPCOpCodesTest::invokeDisabledUnaryTests()
       {
       OMR_CT_EXPECT_EQ(_dAbs, abs(doubleDataArray[i]), _dAbs(doubleDataArray[i]));
       sprintf(resolvedMethodName, "dAbsConst%d", i + 1);
-      dUnaryCons = (signatureCharD_D_testMethodType *) (compileOpCodeMethod(
-            _numberOfUnaryArgs, TR::dabs, resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &doubleDataArray[i]));
+      compileOpCodeMethod(dUnaryCons, 
+            _numberOfUnaryArgs, TR::dabs, resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &doubleDataArray[i]);
       OMR_CT_EXPECT_EQ(dUnaryCons, abs(doubleDataArray[i]), dUnaryCons(DOUBLE_PLACEHOLDER_1));
       }
 
@@ -4760,8 +4760,8 @@ PPCOpCodesTest::compileDisabledShiftOrRolTestMethods()
    int32_t rc = 0;
 
    //Jazz103 Work Item 110361
-   _bShr = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::bshr, "bShr", _argTypesBinaryByte, TR::Int8, rc));
-   _suShr = (unsignedSignatureCharSS_S_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::sushr, "suShr", _argTypesBinaryShort, TR::Int16, rc));
+   compileOpCodeMethod(_bShr, _numberOfBinaryArgs, TR::bshr, "bShr", _argTypesBinaryByte, TR::Int8, rc);
+   compileOpCodeMethod(_suShr, _numberOfBinaryArgs, TR::sushr, "suShr", _argTypesBinaryShort, TR::Int16, rc);
    }
 void
 PPCOpCodesTest::invokeDisabledShiftOrRolTests()
@@ -4804,18 +4804,18 @@ PPCOpCodesTest::invokeDisabledShiftOrRolTests()
       OMR_CT_EXPECT_EQ(_bShr, shr(bshrDataArr[i][0], bshrDataArr[i][1]), _bShr(bshrDataArr[i][0], bshrDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bShrConst1_TestCase%d", i + 1);
-      bShiftOrRolConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bshr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &bshrDataArr[i][0], 2, &bshrDataArr[i][1]));
+      compileOpCodeMethod(bShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::bshr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 4, 1, &bshrDataArr[i][0], 2, &bshrDataArr[i][1]);
       OMR_CT_EXPECT_EQ(bShiftOrRolConst, shr(bshrDataArr[i][0], bshrDataArr[i][1]), bShiftOrRolConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "bShrConst2_TestCase%d", i + 1);
-      bShiftOrRolConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bshr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &bshrDataArr[i][0]));
+      compileOpCodeMethod(bShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::bshr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 1, &bshrDataArr[i][0]);
       OMR_CT_EXPECT_EQ(bShiftOrRolConst, shr(bshrDataArr[i][0], bshrDataArr[i][1]), bShiftOrRolConst(BYTE_PLACEHOLDER_1, bshrDataArr[i][1]));
 
       sprintf(resolvedMethodName, "bShrConst3_TestCase%d", i + 1);
-      bShiftOrRolConst = (signatureCharBB_B_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::bshr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &bshrDataArr[i][1]));
+      compileOpCodeMethod(bShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::bshr, resolvedMethodName, _argTypesBinaryByte, TR::Int8, rc, 2, 2, &bshrDataArr[i][1]);
       OMR_CT_EXPECT_EQ(bShiftOrRolConst, shr(bshrDataArr[i][0], bshrDataArr[i][1]), bShiftOrRolConst(bshrDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
@@ -4826,18 +4826,18 @@ PPCOpCodesTest::invokeDisabledShiftOrRolTests()
       OMR_CT_EXPECT_EQ(_suShr, shr(sushrDataArr[i][0], sushrDataArr[i][1]), _suShr(sushrDataArr[i][0], sushrDataArr[i][1]));
 
       sprintf(resolvedMethodName, "suShrConst1_TestCase%d", i + 1);
-      suShiftOrRolConst = (unsignedSignatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sushr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 4, 1, &sushrDataArr[i][0], 2, &sushrDataArr[i][1]));
+      compileOpCodeMethod(suShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::sushr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 4, 1, &sushrDataArr[i][0], 2, &sushrDataArr[i][1]);
       OMR_CT_EXPECT_EQ(suShiftOrRolConst, shr(sushrDataArr[i][0], sushrDataArr[i][1]), suShiftOrRolConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "suShrConst2_TestCase%d", i + 1);
-      suShiftOrRolConst = (unsignedSignatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sushr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 1, &sushrDataArr[i][0]));
+      compileOpCodeMethod(suShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::sushr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 1, &sushrDataArr[i][0]);
       OMR_CT_EXPECT_EQ(suShiftOrRolConst, shr(sushrDataArr[i][0], sushrDataArr[i][1]), suShiftOrRolConst(SHORT_PLACEHOLDER_1, sushrDataArr[i][1]));
 
       sprintf(resolvedMethodName, "suShrConst3_TestCase%d", i + 1);
-      suShiftOrRolConst = (unsignedSignatureCharSS_S_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::sushr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 2, &sushrDataArr[i][1]));
+      compileOpCodeMethod(suShiftOrRolConst, 
+            _numberOfBinaryArgs, TR::sushr, resolvedMethodName, _argTypesBinaryShort, TR::Int16, rc, 2, 2, &sushrDataArr[i][1]);
       OMR_CT_EXPECT_EQ(suShiftOrRolConst, shr(sushrDataArr[i][0], sushrDataArr[i][1]), suShiftOrRolConst(sushrDataArr[i][0], SHORT_PLACEHOLDER_2));
       }
 
@@ -4849,9 +4849,9 @@ PPCOpCodesTest::compileDisabledBitwiseTestMethods()
    int32_t rc;
 
    //Jazz103 Work Item 110362
-   _lAnd = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::land, "lAnd", _argTypesBinaryLong, TR::Int64, rc));
-   _lOr = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lor, "lOr", _argTypesBinaryLong, TR::Int64, rc));
-   _lXor = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfBinaryArgs, TR::lxor, "lXor", _argTypesBinaryLong, TR::Int64, rc));
+   compileOpCodeMethod(_lAnd, _numberOfBinaryArgs, TR::land, "lAnd", _argTypesBinaryLong, TR::Int64, rc);
+   compileOpCodeMethod(_lOr, _numberOfBinaryArgs, TR::lor, "lOr", _argTypesBinaryLong, TR::Int64, rc);
+   compileOpCodeMethod(_lXor, _numberOfBinaryArgs, TR::lxor, "lXor", _argTypesBinaryLong, TR::Int64, rc);
 
    }
 
@@ -4896,18 +4896,18 @@ PPCOpCodesTest::invokeDisabledBitwiseTests()
       OMR_CT_EXPECT_EQ(_lAnd, tand(longAndArr[i][0], longAndArr[i][1]), _lAnd(longAndArr[i][0], longAndArr[i][1]));
 
       sprintf(resolvedMethodName, "lAndConst1_TestCase%d", i + 1);
-      lBitwiseConst = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::land, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &(longAndArr[i][0]), 2, &(longAndArr[i][1])));
+      compileOpCodeMethod(lBitwiseConst, 
+            _numberOfBinaryArgs, TR::land, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &(longAndArr[i][0]), 2, &(longAndArr[i][1]));
       OMR_CT_EXPECT_EQ(lBitwiseConst, tand(longAndArr[i][0], longAndArr[i][1]), lBitwiseConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lAndConst2_TestCase%d", i + 1);
-      lBitwiseConst = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::land, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &(longAndArr[i][0])));
+      compileOpCodeMethod(lBitwiseConst, 
+            _numberOfBinaryArgs, TR::land, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &(longAndArr[i][0]));
       OMR_CT_EXPECT_EQ(lBitwiseConst, tand(longAndArr[i][0], longAndArr[i][1]), lBitwiseConst(LONG_PLACEHOLDER_1, longAndArr[i][1]));
 
       sprintf(resolvedMethodName, "lAndConst3_TestCase%d", i + 1);
-      lBitwiseConst = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::land, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &(longAndArr[i][1])));
+      compileOpCodeMethod(lBitwiseConst, 
+            _numberOfBinaryArgs, TR::land, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &(longAndArr[i][1]));
       OMR_CT_EXPECT_EQ(lBitwiseConst, tand(longAndArr[i][0], longAndArr[i][1]), lBitwiseConst(longAndArr[i][0], LONG_PLACEHOLDER_2));
      }
 
@@ -4918,18 +4918,18 @@ PPCOpCodesTest::invokeDisabledBitwiseTests()
       OMR_CT_EXPECT_EQ(_lOr, tor(longOrArr[i][0], longOrArr[i][1]), _lOr(longOrArr[i][0], longOrArr[i][1]));
 
       sprintf(resolvedMethodName, "lOrConst1_TestCase%d", i + 1);
-      lBitwiseConst = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &(longOrArr[i][0]), 2, &(longOrArr[i][1])));
+      compileOpCodeMethod(lBitwiseConst, 
+            _numberOfBinaryArgs, TR::lor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &(longOrArr[i][0]), 2, &(longOrArr[i][1]));
       OMR_CT_EXPECT_EQ(lBitwiseConst, tor(longOrArr[i][0], longOrArr[i][1]), lBitwiseConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lOrConst2_TestCase%d", i + 1);
-      lBitwiseConst = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &(longOrArr[i][0])));
+      compileOpCodeMethod(lBitwiseConst, 
+            _numberOfBinaryArgs, TR::lor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &(longOrArr[i][0]));
       OMR_CT_EXPECT_EQ(lBitwiseConst, tor(longOrArr[i][0], longOrArr[i][1]), lBitwiseConst(LONG_PLACEHOLDER_1, longOrArr[i][1]));
 
       sprintf(resolvedMethodName, "lOrConst3_TestCase%d", i + 1);
-      lBitwiseConst = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &(longOrArr[i][1])));
+      compileOpCodeMethod(lBitwiseConst, 
+            _numberOfBinaryArgs, TR::lor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &(longOrArr[i][1]));
       OMR_CT_EXPECT_EQ(lBitwiseConst, tor(longOrArr[i][0], longOrArr[i][1]), lBitwiseConst(longOrArr[i][0], LONG_PLACEHOLDER_2));
      }
 
@@ -4940,18 +4940,18 @@ PPCOpCodesTest::invokeDisabledBitwiseTests()
       OMR_CT_EXPECT_EQ(_lXor, txor(longXorArr[i][0], longXorArr[i][1]), _lXor(longXorArr[i][0], longXorArr[i][1]));
 
       sprintf(resolvedMethodName, "lXorConst1_TestCase%d", i + 1);
-      lBitwiseConst = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lxor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &(longXorArr[i][0]), 2, &(longXorArr[i][1])));
+      compileOpCodeMethod(lBitwiseConst, 
+            _numberOfBinaryArgs, TR::lxor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 4, 1, &(longXorArr[i][0]), 2, &(longXorArr[i][1]));
       OMR_CT_EXPECT_EQ(lBitwiseConst, txor(longXorArr[i][0], longXorArr[i][1]), lBitwiseConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2));
 
       sprintf(resolvedMethodName, "lXorConst2_TestCase%d", i + 1);
-      lBitwiseConst = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lxor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &(longXorArr[i][0])));
+      compileOpCodeMethod(lBitwiseConst, 
+            _numberOfBinaryArgs, TR::lxor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 1, &(longXorArr[i][0]));
       OMR_CT_EXPECT_EQ(lBitwiseConst, txor(longXorArr[i][0], longXorArr[i][1]), lBitwiseConst(LONG_PLACEHOLDER_1, longXorArr[i][1]));
 
       sprintf(resolvedMethodName, "lXorConst3_TestCase%d", i + 1);
-      lBitwiseConst = (signatureCharJJ_J_testMethodType *) (compileOpCodeMethod(
-            _numberOfBinaryArgs, TR::lxor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &(longXorArr[i][1])));
+      compileOpCodeMethod(lBitwiseConst, 
+            _numberOfBinaryArgs, TR::lxor, resolvedMethodName, _argTypesBinaryLong, TR::Int64, rc, 2, 2, &(longXorArr[i][1]));
       OMR_CT_EXPECT_EQ(lBitwiseConst, txor(longXorArr[i][0], longXorArr[i][1]), lBitwiseConst(longXorArr[i][0], LONG_PLACEHOLDER_2));
      }
    }
@@ -4961,9 +4961,9 @@ PPCOpCodesTest::compileDisabledTernaryTestMethods()
    {
    int32_t rc = 0;
    //Jazz103 Work Item 109979
-   _fternary = (signatureCharIFF_F_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::fternary, "fTernary", _argTypesTernaryFloat, TR::Float, rc));
-   _dternary = (signatureCharIDD_D_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::dternary, "dTernary", _argTypesTernaryDouble, TR::Double, rc));
-   _lternary = (signatureCharIJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::lternary, "lTernary", _argTypesTernaryLong, TR::Int64, rc));
+   compileOpCodeMethod(_fternary, _numberOfTernaryArgs, TR::fternary, "fTernary", _argTypesTernaryFloat, TR::Float, rc);
+   compileOpCodeMethod(_dternary, _numberOfTernaryArgs, TR::dternary, "dTernary", _argTypesTernaryDouble, TR::Double, rc);
+   compileOpCodeMethod(_lternary, _numberOfTernaryArgs, TR::lternary, "lTernary", _argTypesTernaryLong, TR::Int64, rc);
 
    }
 
@@ -5064,38 +5064,38 @@ PPCOpCodesTest::invokeDisabledTernaryTest()
       OMR_CT_EXPECT_EQ(_fternary, ternary(fternaryChild1Arr[i], floatDataArr[i][0], floatDataArr[i][1]), _fternary(fternaryChild1Arr[i], floatDataArr[i][0], floatDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fTernaryConst1_Testcase%d", i + 1);
-      fTernaryConst = (signatureCharIFF_F_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::fternary,
-            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 6, 1, &fternaryChild1Arr[i], 2, &floatDataArr[i][0], 3, &floatDataArr[i][1]));
+      compileOpCodeMethod(fTernaryConst, _numberOfTernaryArgs, TR::fternary,
+            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 6, 1, &fternaryChild1Arr[i], 2, &floatDataArr[i][0], 3, &floatDataArr[i][1]);
       OMR_CT_EXPECT_EQ(fTernaryConst, ternary(fternaryChild1Arr[i], floatDataArr[i][0], floatDataArr[i][1]), fTernaryConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2, FLOAT_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "fTernaryConst2_Testcase%d", i + 1);
-      fTernaryConst = (signatureCharIFF_F_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::fternary,
-            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 4, 1, &fternaryChild1Arr[i], 2, &floatDataArr[i][0]));
+      compileOpCodeMethod(fTernaryConst, _numberOfTernaryArgs, TR::fternary,
+            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 4, 1, &fternaryChild1Arr[i], 2, &floatDataArr[i][0]);
       OMR_CT_EXPECT_EQ(fTernaryConst, ternary(fternaryChild1Arr[i], floatDataArr[i][0], floatDataArr[i][1]), fTernaryConst(FLOAT_PLACEHOLDER_1, FLOAT_PLACEHOLDER_2, floatDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fTernaryConst3_Testcase%d", i + 1);
-      fTernaryConst = (signatureCharIFF_F_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::fternary,
-            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 4, 1, &fternaryChild1Arr[i], 3, &floatDataArr[i][1]));
+      compileOpCodeMethod(fTernaryConst, _numberOfTernaryArgs, TR::fternary,
+            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 4, 1, &fternaryChild1Arr[i], 3, &floatDataArr[i][1]);
       OMR_CT_EXPECT_EQ(fTernaryConst, ternary(fternaryChild1Arr[i], floatDataArr[i][0], floatDataArr[i][1]), fTernaryConst(FLOAT_PLACEHOLDER_1, floatDataArr[i][0], FLOAT_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "fTernaryConst4_Testcase%d", i + 1);
-      fTernaryConst = (signatureCharIFF_F_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::fternary,
-            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 4, 2, &floatDataArr[i][0], 3, &floatDataArr[i][1]));
+      compileOpCodeMethod(fTernaryConst, _numberOfTernaryArgs, TR::fternary,
+            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 4, 2, &floatDataArr[i][0], 3, &floatDataArr[i][1]);
       OMR_CT_EXPECT_EQ(fTernaryConst, ternary(fternaryChild1Arr[i], floatDataArr[i][0], floatDataArr[i][1]), fTernaryConst(fternaryChild1Arr[i], FLOAT_PLACEHOLDER_2, FLOAT_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "fTernaryConst5_Testcase%d", i + 1);
-      fTernaryConst = (signatureCharIFF_F_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::fternary,
-            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 2, 1, &fternaryChild1Arr[i]));
+      compileOpCodeMethod(fTernaryConst, _numberOfTernaryArgs, TR::fternary,
+            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 2, 1, &fternaryChild1Arr[i]);
       OMR_CT_EXPECT_EQ(fTernaryConst, ternary(fternaryChild1Arr[i], floatDataArr[i][0], floatDataArr[i][1]), fTernaryConst(FLOAT_PLACEHOLDER_1, floatDataArr[i][0], floatDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fTernaryConst6_Testcase%d", i + 1);
-      fTernaryConst = (signatureCharIFF_F_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::fternary,
-            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 2, 2, &floatDataArr[i][0]));
+      compileOpCodeMethod(fTernaryConst, _numberOfTernaryArgs, TR::fternary,
+            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 2, 2, &floatDataArr[i][0]);
       OMR_CT_EXPECT_EQ(fTernaryConst, ternary(fternaryChild1Arr[i], floatDataArr[i][0], floatDataArr[i][1]), fTernaryConst(fternaryChild1Arr[i], FLOAT_PLACEHOLDER_1, floatDataArr[i][1]));
 
       sprintf(resolvedMethodName, "fTernaryConst7_Testcase%d", i + 1);
-      fTernaryConst = (signatureCharIFF_F_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::fternary,
-            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 2, 3, &floatDataArr[i][1]));
+      compileOpCodeMethod(fTernaryConst, _numberOfTernaryArgs, TR::fternary,
+            resolvedMethodName, _argTypesTernaryFloat, TR::Float, rc, 2, 3, &floatDataArr[i][1]);
       OMR_CT_EXPECT_EQ(fTernaryConst, ternary(fternaryChild1Arr[i], floatDataArr[i][0], floatDataArr[i][1]), fTernaryConst(fternaryChild1Arr[i], floatDataArr[i][0], FLOAT_PLACEHOLDER_1));
       }
 
@@ -5107,38 +5107,38 @@ PPCOpCodesTest::invokeDisabledTernaryTest()
       OMR_CT_EXPECT_EQ(_dternary, ternary(dternaryChild1Arr[i], doubleDataArr[i][0], doubleDataArr[i][1]), _dternary(dternaryChild1Arr[i], doubleDataArr[i][0], doubleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dTernaryConst1_Testcase%d", i + 1);
-      dTernaryConst = (signatureCharIDD_D_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::dternary,
-            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 6, 1, &dternaryChild1Arr[i], 2, &doubleDataArr[i][0], 3, &doubleDataArr[i][1]));
+      compileOpCodeMethod(dTernaryConst, _numberOfTernaryArgs, TR::dternary,
+            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 6, 1, &dternaryChild1Arr[i], 2, &doubleDataArr[i][0], 3, &doubleDataArr[i][1]);
       OMR_CT_EXPECT_EQ(dTernaryConst, ternary(dternaryChild1Arr[i], doubleDataArr[i][0], doubleDataArr[i][1]), dTernaryConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2, DOUBLE_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "dTernaryConst2_Testcase%d", i + 1);
-      dTernaryConst = (signatureCharIDD_D_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::dternary,
-            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 4, 1, &dternaryChild1Arr[i], 2, &doubleDataArr[i][0]));
+      compileOpCodeMethod(dTernaryConst, _numberOfTernaryArgs, TR::dternary,
+            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 4, 1, &dternaryChild1Arr[i], 2, &doubleDataArr[i][0]);
       OMR_CT_EXPECT_EQ(dTernaryConst, ternary(dternaryChild1Arr[i], doubleDataArr[i][0], doubleDataArr[i][1]), dTernaryConst(DOUBLE_PLACEHOLDER_1, DOUBLE_PLACEHOLDER_2, doubleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dTernaryConst3_Testcase%d", i + 1);
-      dTernaryConst = (signatureCharIDD_D_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::dternary,
-            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 4, 1, &dternaryChild1Arr[i], 3, &doubleDataArr[i][1]));
+      compileOpCodeMethod(dTernaryConst, _numberOfTernaryArgs, TR::dternary,
+            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 4, 1, &dternaryChild1Arr[i], 3, &doubleDataArr[i][1]);
       OMR_CT_EXPECT_EQ(dTernaryConst, ternary(dternaryChild1Arr[i], doubleDataArr[i][0], doubleDataArr[i][1]), dTernaryConst(DOUBLE_PLACEHOLDER_1, doubleDataArr[i][0], DOUBLE_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "dTernaryConst4_Testcase%d", i + 1);
-      dTernaryConst = (signatureCharIDD_D_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::dternary,
-            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 4, 2, &doubleDataArr[i][0], 3, &doubleDataArr[i][1]));
+      compileOpCodeMethod(dTernaryConst, _numberOfTernaryArgs, TR::dternary,
+            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 4, 2, &doubleDataArr[i][0], 3, &doubleDataArr[i][1]);
       OMR_CT_EXPECT_EQ(dTernaryConst, ternary(dternaryChild1Arr[i], doubleDataArr[i][0], doubleDataArr[i][1]), dTernaryConst(dternaryChild1Arr[i], DOUBLE_PLACEHOLDER_2, DOUBLE_PLACEHOLDER_3));
 
       sprintf(resolvedMethodName, "dTernaryConst5_Testcase%d", i + 1);
-      dTernaryConst = (signatureCharIDD_D_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::dternary,
-            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 2, 1, &dternaryChild1Arr[i]));
+      compileOpCodeMethod(dTernaryConst, _numberOfTernaryArgs, TR::dternary,
+            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 2, 1, &dternaryChild1Arr[i]);
       OMR_CT_EXPECT_EQ(dTernaryConst, ternary(dternaryChild1Arr[i], doubleDataArr[i][0], doubleDataArr[i][1]), dTernaryConst(DOUBLE_PLACEHOLDER_1, doubleDataArr[i][0], doubleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dTernaryConst6_Testcase%d", i + 1);
-      dTernaryConst = (signatureCharIDD_D_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::dternary,
-            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 2, 2, &doubleDataArr[i][0]));
+      compileOpCodeMethod(dTernaryConst, _numberOfTernaryArgs, TR::dternary,
+            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 2, 2, &doubleDataArr[i][0]);
       OMR_CT_EXPECT_EQ(dTernaryConst, ternary(dternaryChild1Arr[i], doubleDataArr[i][0], doubleDataArr[i][1]), dTernaryConst(dternaryChild1Arr[i], DOUBLE_PLACEHOLDER_1, doubleDataArr[i][1]));
 
       sprintf(resolvedMethodName, "dTernaryConst7_Testcase%d", i + 1);
-      dTernaryConst = (signatureCharIDD_D_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::dternary,
-            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 2, 3, &doubleDataArr[i][1]));
+      compileOpCodeMethod(dTernaryConst, _numberOfTernaryArgs, TR::dternary,
+            resolvedMethodName, _argTypesTernaryDouble, TR::Double, rc, 2, 3, &doubleDataArr[i][1]);
       OMR_CT_EXPECT_EQ(dTernaryConst, ternary(dternaryChild1Arr[i], doubleDataArr[i][0], doubleDataArr[i][1]), dTernaryConst(dternaryChild1Arr[i], doubleDataArr[i][0], DOUBLE_PLACEHOLDER_1));
       }
 
@@ -5150,32 +5150,32 @@ PPCOpCodesTest::invokeDisabledTernaryTest()
       sprintf(resolvedMethodName, "lTernaryConst%d", i + 1);
       OMR_CT_EXPECT_EQ(_lternary, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), _lternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]));
 
-      lTernaryConst = (signatureCharIJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 6, 1, &lternaryChild1Arr[i], 2, &longArr[i][0], 3, &longArr[i][1]));
+      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
+            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 6, 1, &lternaryChild1Arr[i], 2, &longArr[i][0], 3, &longArr[i][1]);
       OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2, LONG_PLACEHOLDER_3));
 
-      lTernaryConst = (signatureCharIJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 4, 1, &lternaryChild1Arr[i], 2, &longArr[i][0]));
+      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
+            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 4, 1, &lternaryChild1Arr[i], 2, &longArr[i][0]);
       OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2, longArr[i][1]));
 
-      lTernaryConst = (signatureCharIJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 4, 1, &lternaryChild1Arr[i], 3, &longArr[i][1]));
+      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
+            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 4, 1, &lternaryChild1Arr[i], 3, &longArr[i][1]);
       OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(LONG_PLACEHOLDER_1, longArr[i][0], LONG_PLACEHOLDER_3));
 
-      lTernaryConst = (signatureCharIJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 4, 2, &longArr[i][0], 3, &longArr[i][1]));
+      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
+            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 4, 2, &longArr[i][0], 3, &longArr[i][1]);
       OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(lternaryChild1Arr[i], LONG_PLACEHOLDER_2, LONG_PLACEHOLDER_3));
 
-      lTernaryConst = (signatureCharIJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 2, 1, &lternaryChild1Arr[i]));
+      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
+            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 2, 1, &lternaryChild1Arr[i]);
       OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(LONG_PLACEHOLDER_1, longArr[i][0], longArr[i][1]));
 
-      lTernaryConst = (signatureCharIJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 2, 2, &longArr[i][0]));
+      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
+            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 2, 2, &longArr[i][0]);
       OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(lternaryChild1Arr[i], LONG_PLACEHOLDER_1, longArr[i][1]));
 
-      lTernaryConst = (signatureCharIJJ_J_testMethodType *) (compileOpCodeMethod(_numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 2, 3, &longArr[i][1]));
+      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
+            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 2, 3, &longArr[i][1]);
       OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(lternaryChild1Arr[i], longArr[i][0], LONG_PLACEHOLDER_1));
       }
    }
@@ -5186,11 +5186,11 @@ PPCOpCodesTest::compileDisabledDirectCallTestMethods()
    int32_t rc = 0;
 
    //Jazz103 Work item 115240
-   _acall = (signatureCharL_L_testMethodType *) (compileDirectCallOpCodeMethod(_numberOfUnaryArgs, TR::areturn, TR::acall, "aCompiledMethod", "acall", _argTypesUnaryAddress, TR::Address, rc));
-   _iCall = (signatureCharI_I_testMethodType *) (compileDirectCallOpCodeMethod(_numberOfUnaryArgs, TR::ireturn, TR::icall, "iCompiledMethod", "iCall", _argTypesUnaryInt, TR::Int32, rc));
-   _lCall = (signatureCharJ_J_testMethodType *) (compileDirectCallOpCodeMethod(_numberOfUnaryArgs, TR::lreturn, TR::lcall, "lCompiledMethod", "lCall", _argTypesUnaryLong, TR::Int64, rc));
-   _dCall = (signatureCharD_D_testMethodType *) (compileDirectCallOpCodeMethod(_numberOfUnaryArgs, TR::dreturn, TR::dcall, "dCompiledMethod", "dCall", _argTypesUnaryDouble, TR::Double, rc));
-   _fCall = (signatureCharF_F_testMethodType *) (compileDirectCallOpCodeMethod(_numberOfUnaryArgs, TR::freturn, TR::fcall, "fCompiledMethod", "fCall", _argTypesUnaryFloat, TR::Float, rc));
+   compileDirectCallOpCodeMethod(_acall, _numberOfUnaryArgs, TR::areturn, TR::acall, "aCompiledMethod", "acall", _argTypesUnaryAddress, TR::Address,    rc);
+   compileDirectCallOpCodeMethod(_iCall, _numberOfUnaryArgs, TR::ireturn, TR::icall, "iCompiledMethod", "iCall", _argTypesUnaryInt,     TR::Int32,      rc);
+   compileDirectCallOpCodeMethod(_lCall, _numberOfUnaryArgs, TR::lreturn, TR::lcall, "lCompiledMethod", "lCall", _argTypesUnaryLong,    TR::Int64,      rc);
+   compileDirectCallOpCodeMethod(_dCall, _numberOfUnaryArgs, TR::dreturn, TR::dcall, "dCompiledMethod", "dCall", _argTypesUnaryDouble,  TR::Double,     rc);
+   compileDirectCallOpCodeMethod(_fCall, _numberOfUnaryArgs, TR::freturn, TR::fcall, "fCompiledMethod", "fCall", _argTypesUnaryFloat,   TR::Float,      rc);
    }
 
 void

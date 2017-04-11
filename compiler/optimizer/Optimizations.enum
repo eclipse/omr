@@ -96,7 +96,7 @@
    OPTIMIZATION(prefetchInsertion)
    OPTIMIZATION(longRegAllocation)
    OPTIMIZATION(shrinkWrapping)
-   OPTIMIZATION(jProfiling)
+   OPTIMIZATION(samplingJProfiling)
    OPTIMIZATION(trivialDeadTreeRemoval)
    OPTIMIZATION(osrDefAnalysis)
    OPTIMIZATION(blockShuffling)

@@ -62,7 +62,7 @@ public:
 	virtual uintptr_t contract(MM_EnvironmentBase *env, uintptr_t expandSize);
 	virtual bool canContract(MM_EnvironmentBase *env);
 
-	virtual void tilt(MM_EnvironmentBase *env, uintptr_t allocateSpaceSize, uintptr_t survivorSpaceSize);
+	virtual void tilt(MM_EnvironmentBase *env, uintptr_t allocateSpaceSize, uintptr_t survivorSpaceSize, bool updateMemoryPools = true);
 	virtual void tilt(MM_EnvironmentBase *env, uintptr_t survivorSpaceSizeRequest);
 
 	MM_PhysicalSubArenaVirtualMemorySemiSpace(MM_Heap *heap) :

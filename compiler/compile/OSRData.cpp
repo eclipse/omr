@@ -91,7 +91,7 @@ TR_OSRCompilationData::addInstruction(TR::Instruction* instr)
    }
 
 void
-TR_OSRCompilationData::addInstruction(int32_t instructionPC, TR_ByteCodeInfo &bcInfo)
+TR_OSRCompilationData::addInstruction(int32_t instructionPC, TR_ByteCodeInfo bcInfo)
    {
    bool trace = comp->getOption(TR_TraceOSR);
    if (trace)
@@ -686,18 +686,49 @@ TR_OSRMethodData::inlinesAnyMethod() const
    }
 
 void
-TR_OSRMethodData::addLiveRangeInfo(int32_t byteCodeIndex, TR_BitVector *liveRangeInfo)
+TR_OSRMethodData::addLiveRangeInfo(int32_t byteCodeIndex, TR::OSRPointType osrPoint, TR_BitVector *liveRangeInfo)
    {
-   bcLiveRangeInfoHashTab.Add(byteCodeIndex, liveRangeInfo);
+   TR_BCLiveRangeInfoHashKey key(byteCodeIndex, osrPoint);
+   bcLiveRangeInfoHashTab.Add(key, liveRangeInfo);
    }
 
-
+/*
+ * Get the live range info for a bytecode index
+ * In postExecution OSR, it is possible for the same bytecode index to have different
+ * liveness information, based on whether it was generated for a induction or
+ * an analysis point.
+ *
+ * For example, consider two calls, where the result of one feeds into the other.
+ * For a transition point after the first call, its result is on the stack, whilst,
+ * for an analysis point before the second call, the result has been taken as an
+ * argument and is no longer on the stack.
+ *
+ * This method will default to using the induction OSR point value, as it will
+ * always contain the live values at the analysis point. However, a more exact
+ * result can be achieve by specifing the point type.
+ */
 TR_BitVector *
 TR_OSRMethodData::getLiveRangeInfo(int32_t byteCodeIndex)
    {
+   TR_BitVector* liveRangeInfo = NULL;
+   if (getMethodSymbol()->comp()->getOSRTransitionTarget() == TR::postExecutionOSR)
+      {
+      liveRangeInfo = getLiveRangeInfo(byteCodeIndex, TR::inductionOSR);
+      if (!liveRangeInfo)
+         liveRangeInfo = getLiveRangeInfo(byteCodeIndex, TR::analysisOSR);
+      }
+   else
+      liveRangeInfo = getLiveRangeInfo(byteCodeIndex, TR::inductionOSR);
+   return liveRangeInfo;
+   }
+
+TR_BitVector *
+TR_OSRMethodData::getLiveRangeInfo(int32_t byteCodeIndex, TR::OSRPointType osrPoint)
+   {
+   TR_BCLiveRangeInfoHashKey key(byteCodeIndex, osrPoint);
    CS2::HashIndex hashIndex;
    TR_BitVector* liveRangeInfo = NULL;
-   if (bcLiveRangeInfoHashTab.Locate(byteCodeIndex, hashIndex))
+   if (bcLiveRangeInfoHashTab.Locate(key, hashIndex))
       {
       liveRangeInfo = bcLiveRangeInfoHashTab.DataAt(hashIndex);
       }

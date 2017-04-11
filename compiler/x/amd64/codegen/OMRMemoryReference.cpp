@@ -499,7 +499,7 @@ OMR::X86::AMD64::MemoryReference::generateBinaryEncoding(
    // [RIP+xxx] has 4-byte offset, no SIB, may have an immediate.
    // See x86-64 Architecture Programmer's Manual, Volume 3, sections 1.1 and 1.7.1.
    //
-   intptrj_t rip = (intptrj_t)(modRM + 5) + TR_X86OpCode::getImmediateSize(containingInstruction->getOpCodeValue());
+   intptrj_t rip = (intptrj_t)(modRM + 5) + containingInstruction->getOpCode().info().ImmediateSize();
 
    if (self()->getDataSnippet() || self()->getLabel())
       {

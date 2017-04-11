@@ -23,6 +23,12 @@
 #include "il/symbol/LabelSymbol.hpp"   // for LabelSymbol
 #include "il/symbol/StaticSymbol.hpp"  // for StaticSymbolBase, etc
 
+TR::StaticSymbol*
+OMR::StaticSymbol::self()
+   {
+   return static_cast<TR::StaticSymbol*>(this);
+   }
+
 template <typename AllocatorType>
 TR::StaticSymbol * OMR::StaticSymbol::create(AllocatorType m, TR::DataType d)
    {

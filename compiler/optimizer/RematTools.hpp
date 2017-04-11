@@ -58,13 +58,24 @@ class RematTools
       TR::Node *currentNode, TR::SparseBitVector &scanTargets, 
       TR::SparseBitVector &enabledSymRefs, TR::SparseBitVector &unsafeSymRefs,
       bool trace, TR::SparseBitVector &visitedNodes);
+   static bool getNextTreeTop(TR::TreeTop* &start, TR_BitVector *blocksToFollow,
+      TR::Block *startBlock);
    public:
    static TR_YesNoMaybe gatherNodesToCheck(TR::Compilation *comp,
       TR::Node *privArg, TR::Node *currentNode, TR::SparseBitVector &scanTargets,
       TR::SparseBitVector &symRefsToCheck, bool trace);
+
+   static bool walkTreesCalculatingRematSafety(TR::Compilation *comp,
+      TR::TreeTop *start, TR::TreeTop *end, TR::SparseBitVector &scanTargets, 
+      TR::SparseBitVector &unsafeSymRefs, TR_BitVector *blocksToVisit, bool trace);
    static void walkTreesCalculatingRematSafety(TR::Compilation *comp,
       TR::TreeTop *start, TR::TreeTop *end, TR::SparseBitVector &scanTargets, 
       TR::SparseBitVector &unsafeSymRefs, bool trace);
+
+   static bool walkTreeTopsCalculatingRematFailureAlternatives(TR::Compilation *comp,
+      TR::TreeTop *start, TR::TreeTop *end, TR::list<TR::TreeTop*> &failedArgs,
+      TR::SparseBitVector &scanTargets, RematSafetyInformation &rematInfo,
+      TR_BitVector *blocksToVisit, bool trace);
    static void walkTreeTopsCalculatingRematFailureAlternatives(TR::Compilation *comp,
       TR::TreeTop *start, TR::TreeTop *end, TR::list<TR::TreeTop*> &failedArgs,
       TR::SparseBitVector &scanTargets, RematSafetyInformation &rematInfo, bool trace);

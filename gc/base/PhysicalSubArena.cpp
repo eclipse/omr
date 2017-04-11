@@ -119,7 +119,7 @@ MM_PhysicalSubArena::expandNoCheck(MM_EnvironmentBase *env, uintptr_t expandSize
  * @note For non-semispace PSA's, do nothing (it means nothing to call this on it)
  */
 void
-MM_PhysicalSubArena::tilt(MM_EnvironmentBase *env, uintptr_t allocateSpaceSize, uintptr_t survivorSpaceSize)
+MM_PhysicalSubArena::tilt(MM_EnvironmentBase *env, uintptr_t allocateSpaceSize, uintptr_t survivorSpaceSize, bool updateMemoryPools)
 {
 }
 

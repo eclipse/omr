@@ -726,12 +726,12 @@
 	</event>
 	
 	<event>
-		<name>J9HOOK_MM_PRIVATE_OBJECT_REMOVED_FROM_REMEMBERED_SET</name>
-		<description>Triggered when an object reference is removed from the remembered set</description>
+		<name>J9HOOK_MM_PRIVATE_OLD_TO_OLD_REFERENCE_CREATED</name>
+		<description>Triggered when old to old reference is created by GC (Scavenger) </description>
 		<condition>defined (__cplusplus)</condition>
-		<struct>MM_ObjectRemovedFromRememberedSetEvent</struct>
+		<struct>MM_OldToOldReferenceCreatedEvent</struct>
 		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
-		<data type="void *" name="objectPtr" description="pointer to the object removed from the remembered set" />
+		<data type="void *" name="objectPtr" description="pointer to the parent object" />
 	</event>	
 	
 	<event>

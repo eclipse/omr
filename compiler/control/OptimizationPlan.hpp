@@ -113,8 +113,8 @@ class TR_OptimizationPlan
    bool isOptLevelDowngraded() const { return _flags.testAny(OptLevelDowngraded); }
    void setOptLevelDowngraded(bool b) { _flags.set(OptLevelDowngraded, b); }
 
-   bool isDowngradedDueToJProfiling() const { return _flags.testAny(DowngradedDueToJProfiling); }
-   void setDowngradedDueToJProfiling(bool b) { _flags.set(DowngradedDueToJProfiling, b); }
+   bool isDowngradedDueToSamplingJProfiling() const { return _flags.testAny(DowngradedDueToSamplingJProfiling); }
+   void setDowngradedDueToSamplingJProfiling(bool b) { _flags.set(DowngradedDueToSamplingJProfiling, b); }
 
    // Insert epilogue yieldpoints if the method is being sampled
    bool getInsertEpilogueYieldpoints() const { return _flags.testAny(UseSampling); }
@@ -216,7 +216,7 @@ class TR_OptimizationPlan
       IsGPUCompileCPUCode     = 0x00080000, // compile CPU code using system linkage
       DontFailOnPurpose       = 0x00100000, // Mostly needed to avoid failing for the purpose of upgrading to a higher opt level
       RelaxedCompilationLimits= 0x00200000, // Compilation can use larger limits because method is very very hot
-      DowngradedDueToJProfiling=0x00400000, // Compilation was downgraded to cold just because we wanted to do JProfiling
+      DowngradedDueToSamplingJProfiling=0x00400000, // Compilation was downgraded to cold just because we wanted to do JProfiling
       InducedByDLT             =0x00800000, // Compilation that follows a DLT compilation
    };
    private:

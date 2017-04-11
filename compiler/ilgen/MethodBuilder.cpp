@@ -80,13 +80,13 @@ namespace OMR
 
 MethodBuilder::MethodBuilder(TR::TypeDictionary *types, OMR::VirtualMachineState *vmState)
    : TR::IlBuilder(asMethodBuilder(), types),
-   _methodName(""),
+   _methodName("NoName"),
    _returnType(NoType),
    _numParameters(0),
    _cachedParameterTypes(0),
    _cachedSignature(0),
-   _definingFile(0),
-   _definingLine(0),
+   _definingFile(""),
+   _definingLine(""),
    _symbols(0),
    _newSymbolsAreTemps(false),
    _useBytecodeBuilders(false),
@@ -380,7 +380,8 @@ MethodBuilder::lookupFunction(const char *name)
    TR_HashId functionsID;
    if (! _functions->locate(name, functionsID))
       {
-      if (strncmp(_methodName, name, strlen(_methodName)) == 0)
+      size_t len = strlen(name);
+      if (len == strlen(_methodName) && strncmp(_methodName, name, len) == 0)
          return static_cast<TR::ResolvedMethod *>(_methodSymbol->getResolvedMethod());
       return NULL;
       }

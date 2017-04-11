@@ -257,42 +257,42 @@ enum DataTypes
 namespace TR
 {
 
-   template <TR::DataTypes T> inline const int64_t getMinSigned() { static_assert(T == -1, "getMinSigned is not valid for this type"); return 0; }
-   template <TR::DataTypes T> inline const uint64_t getMinUnsigned() { static_assert(T == -1, "getMinUnsigned is not valid for this type"); return 0; }
-   template <TR::DataTypes T> inline const int64_t getMaxSigned() { static_assert(T == -1, "getMaxSigned is not valid for this type"); return 0; }
-   template <TR::DataTypes T> inline const uint64_t getMaxUnsigned() { static_assert(T == -1, "getMaxUnsigned is not valid for this type"); return 0; }
-   template <TR::DataTypes T> inline const int32_t getMaxSignedPrecision() { static_assert(T == -1, "getMaxSignedPrecision is not valid for this type"); return 0; }
-   template <TR::DataTypes T> inline const int32_t getMaxUnsignedPrecision() { static_assert(T == -1, "getMaxUnsignedPrecision is not valid for this type"); return 0; }
+   template <TR::DataTypes T> inline int64_t getMinSigned() { static_assert(T == -1, "getMinSigned is not valid for this type"); return 0; }
+   template <TR::DataTypes T> inline uint64_t getMinUnsigned() { static_assert(T == -1, "getMinUnsigned is not valid for this type"); return 0; }
+   template <TR::DataTypes T> inline int64_t getMaxSigned() { static_assert(T == -1, "getMaxSigned is not valid for this type"); return 0; }
+   template <TR::DataTypes T> inline uint64_t getMaxUnsigned() { static_assert(T == -1, "getMaxUnsigned is not valid for this type"); return 0; }
+   template <TR::DataTypes T> inline int32_t getMaxSignedPrecision() { static_assert(T == -1, "getMaxSignedPrecision is not valid for this type"); return 0; }
+   template <TR::DataTypes T> inline int32_t getMaxUnsignedPrecision() { static_assert(T == -1, "getMaxUnsignedPrecision is not valid for this type"); return 0; }
 
-   template <> inline const int64_t getMinSigned<TR::Int8 >() { return -128; }
-   template <> inline const int64_t getMinSigned<TR::Int16>() { return -32768; }
-   template <> inline const int64_t getMinSigned<TR::Int32>() { return ((int32_t)0X80000000); }
-   template <> inline const int64_t getMinSigned<TR::Int64>() { return (((int64_t)1)<<63) /**< -9223372036854775808 */; }
+   template <> inline int64_t getMinSigned<TR::Int8 >() { return -128; }
+   template <> inline int64_t getMinSigned<TR::Int16>() { return -32768; }
+   template <> inline int64_t getMinSigned<TR::Int32>() { return ((int32_t)0X80000000); }
+   template <> inline int64_t getMinSigned<TR::Int64>() { return (((int64_t)1)<<63) /**< -9223372036854775808 */; }
 
-   template <> inline const uint64_t getMinUnsigned<TR::Int8 >() { return 0; }
-   template <> inline const uint64_t getMinUnsigned<TR::Int16>() { return 0; }
-   template <> inline const uint64_t getMinUnsigned<TR::Int32>() { return ((uint32_t)0); }
-   template <> inline const uint64_t getMinUnsigned<TR::Int64>() { return ((uint64_t)0); }
+   template <> inline uint64_t getMinUnsigned<TR::Int8 >() { return 0; }
+   template <> inline uint64_t getMinUnsigned<TR::Int16>() { return 0; }
+   template <> inline uint64_t getMinUnsigned<TR::Int32>() { return ((uint32_t)0); }
+   template <> inline uint64_t getMinUnsigned<TR::Int64>() { return ((uint64_t)0); }
 
-   template <> inline const int64_t getMaxSigned<TR::Int8 >() { return 127; }
-   template <> inline const int64_t getMaxSigned<TR::Int16>() { return 32767; }
-   template <> inline const int64_t getMaxSigned<TR::Int32>() { return ((int32_t)0X7FFFFFFF); }
-   template <> inline const int64_t getMaxSigned<TR::Int64>() { return ((int64_t)(((uint64_t)((int64_t)-1))>>1)) /**<  9223372036854775807 */; }
+   template <> inline int64_t getMaxSigned<TR::Int8 >() { return 127; }
+   template <> inline int64_t getMaxSigned<TR::Int16>() { return 32767; }
+   template <> inline int64_t getMaxSigned<TR::Int32>() { return ((int32_t)0X7FFFFFFF); }
+   template <> inline int64_t getMaxSigned<TR::Int64>() { return ((int64_t)(((uint64_t)((int64_t)-1))>>1)) /**<  9223372036854775807 */; }
 
-   template <> inline const uint64_t getMaxUnsigned<TR::Int8 >() { return 255; }
-   template <> inline const uint64_t getMaxUnsigned<TR::Int16>() { return 65535; }
-   template <> inline const uint64_t getMaxUnsigned<TR::Int32>() { return ((uint32_t)0xFFFFFFFF); }
-   template <> inline const uint64_t getMaxUnsigned<TR::Int64>() { return ((uint64_t)-1); }
+   template <> inline uint64_t getMaxUnsigned<TR::Int8 >() { return 255; }
+   template <> inline uint64_t getMaxUnsigned<TR::Int16>() { return 65535; }
+   template <> inline uint64_t getMaxUnsigned<TR::Int32>() { return ((uint32_t)0xFFFFFFFF); }
+   template <> inline uint64_t getMaxUnsigned<TR::Int64>() { return ((uint64_t)-1); }
 
-   template <> inline const int32_t getMaxSignedPrecision<TR::Int8 >() { return 3; }
-   template <> inline const int32_t getMaxSignedPrecision<TR::Int16>() { return 5; }
-   template <> inline const int32_t getMaxSignedPrecision<TR::Int32>() { return 10; }
-   template <> inline const int32_t getMaxSignedPrecision<TR::Int64>() { return 19; }
+   template <> inline int32_t getMaxSignedPrecision<TR::Int8 >() { return 3; }
+   template <> inline int32_t getMaxSignedPrecision<TR::Int16>() { return 5; }
+   template <> inline int32_t getMaxSignedPrecision<TR::Int32>() { return 10; }
+   template <> inline int32_t getMaxSignedPrecision<TR::Int64>() { return 19; }
 
-   template <> inline const int32_t getMaxUnsignedPrecision<TR::Int8 >() { return 3; }
-   template <> inline const int32_t getMaxUnsignedPrecision<TR::Int16>() { return 5; }
-   template <> inline const int32_t getMaxUnsignedPrecision<TR::Int32>() { return 10; }
-   template <> inline const int32_t getMaxUnsignedPrecision<TR::Int64>() { return 20; }
+   template <> inline int32_t getMaxUnsignedPrecision<TR::Int8 >() { return 3; }
+   template <> inline int32_t getMaxUnsignedPrecision<TR::Int16>() { return 5; }
+   template <> inline int32_t getMaxUnsignedPrecision<TR::Int32>() { return 10; }
+   template <> inline int32_t getMaxUnsignedPrecision<TR::Int64>() { return 20; }
 
 } // namespace TR
 
@@ -366,7 +366,7 @@ public:
    static TR::ILOpCodes getDataTypeConversion(TR::DataType t1, TR::DataType t2);
 
    static const char    * getName(TR::DataType dt);
-   static const int32_t   getSize(TR::DataType dt);
+   static int32_t         getSize(TR::DataType dt);
    static void            setSize(TR::DataType dt, int32_t newValue);
    static const char    * getPrefix(TR::DataType dt);
 

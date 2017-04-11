@@ -72,6 +72,18 @@ JitBuilder::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
                                               size_t &codeCacheSizeToAllocate,
                                               void *preferredStartAddress)
    {
+   // We should really rely on the port library to allocate memory, but this connection
+   // has not yet been made, so as a quick workaround for platforms like OS X <= 10.9
+   // where MAP_ANONYMOUS is not defined, is to map MAP_ANON to MAP_ANONYMOUS ourselves
+   #if !defined(MAP_ANONYMOUS)
+      #define NO_MAP_ANONYMOUS
+      #if defined(MAP_ANON)
+         #define MAP_ANONYMOUS MAP_ANON
+      #else
+         #error unexpectedly, no MAP_ANONYMOUS or MAP_ANON definition
+      #endif
+   #endif
+
    // ignore preferredStartAddress for now, since it's NULL anyway
    //   goal would be to allocate code cache segments near the JIT library address
    codeCacheSizeToAllocate = segmentSize;
@@ -85,6 +97,11 @@ JitBuilder::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
                                           0,
                                           0);
 
+   // keep the impact of this fix localized
+   #if defined(NO_MAP_ANONYMOUS)
+      #undef MAP_ANONYMOUS
+      #undef NO_MAP_ANONYMOUS
+   #endif
    TR::CodeCacheMemorySegment *memSegment = (TR::CodeCacheMemorySegment *) ((size_t)memorySlab + codeCacheSizeToAllocate - sizeof(TR::CodeCacheMemorySegment));
    new (memSegment) TR::CodeCacheMemorySegment(memorySlab, reinterpret_cast<uint8_t *>(memSegment));
    return memSegment;

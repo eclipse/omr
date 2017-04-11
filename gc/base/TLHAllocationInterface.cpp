@@ -33,7 +33,6 @@
 #include "AllocateDescription.hpp"
 #include "AllocationContext.hpp"
 #include "EnvironmentBase.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "Forge.hpp"
 #include "FrequentObjectsStats.hpp"
 #include "GCExtensionsBase.hpp"
@@ -283,9 +282,9 @@ MM_TLHAllocationInterface::flushCache(MM_EnvironmentBase *env)
 	MM_GCExtensionsBase *extensions = env->getExtensions();
 	
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)	
-	if (!_owningEnv->_envLanguageInterface->isInlineTLHAllocateEnabled()) {
+	if (!_owningEnv->isInlineTLHAllocateEnabled()) {
 		/* Clear out realHeapAlloc field; tlh code below will take care of rest */
-		_owningEnv->_envLanguageInterface->enableInlineTLHAllocate();
+		_owningEnv->enableInlineTLHAllocate();
 	}	
 #endif /* OMR_GC_THREAD_LOCAL_HEAP */		
 	
@@ -305,10 +304,12 @@ MM_TLHAllocationInterface::reconnectCache(MM_EnvironmentBase *env)
 {
 	uintptr_t vmState;
 	
-	if (!_owningEnv->_envLanguageInterface->isInlineTLHAllocateEnabled()) {
+#if defined(OMR_GC_THREAD_LOCAL_HEAP)
+	if (!_owningEnv->isInlineTLHAllocateEnabled()) {
 		/* Only need to reset heapAlloc and realHeapAlloc if there is an existing TLH to reset */
-		_owningEnv->_envLanguageInterface->enableInlineTLHAllocate();
+		_owningEnv->enableInlineTLHAllocate();
 	}	
+#endif /* OMR_GC_THREAD_LOCAL_HEAP */
 	
 	vmState = env->pushVMstate(J9VMSTATE_GC_TLH_RESET);
 

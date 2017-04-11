@@ -132,12 +132,10 @@ class X86RestartSnippet  : public TR::Snippet
       return estimateRestartJumpLength(estimatedSnippetLocation, _restartLabel);
       }
 
-   // { RTSJ Support begins
    uint32_t estimateRestartJumpLength(TR_X86OpCodes branchOp, int32_t estimatedSnippetLocation)
       {
       return estimateRestartJumpLength(branchOp, estimatedSnippetLocation, _restartLabel);
       }
-   // } RTSJ Support ends
 
    };
 

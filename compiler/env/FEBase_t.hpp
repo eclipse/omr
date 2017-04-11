@@ -80,6 +80,19 @@ FEBase<Derived>::allocateCodeMemory(TR::Compilation *comp, uint32_t warmCodeSize
    return warmCode;
    }
 
+// This code does not really belong here (along with allocateRelocationData, really)
+// We should be relying on the port library to allocate memory, but this connection
+// has not yet been made, so as a quick workaround for platforms like OS X <= 10.9,
+// where MAP_ANONYMOUS is not defined, is to map MAP_ANON to MAP_ANONYMOUS ourselves
+#if !defined(MAP_ANONYMOUS)
+  #define NO_MAP_ANONYMOUS
+  #if defined(MAP_ANON)
+    #define MAP_ANONYMOUS MAP_ANON
+  #else
+    #error unexpectedly, no MAP_ANONYMOUS or MAP_ANON definition
+  #endif
+#endif
+
 template <class Derived>
 uint8_t *
 FEBase<Derived>::allocateRelocationData(TR::Compilation* comp, uint32_t size)
@@ -95,6 +108,12 @@ FEBase<Derived>::allocateRelocationData(TR::Compilation* comp, uint32_t size)
                            -1,
                            0);
    }
+
+// keep the impact of this fix localized
+#if defined(NO_MAP_ANONYMOUS)
+  #undef MAP_ANONYMOUS
+  #undef NO_MAP_ANONYMOUS
+#endif
 
 template <class Derived>
 void

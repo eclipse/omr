@@ -40,8 +40,7 @@ class TR_SingleTimer
 
    char    *title()                       { return _phaseTitle; }
    uint64_t timeTaken()                   { return _total; }
-   char    *timeTakenString(TR::Compilation *);
-
+   double   secondsTaken();
    bool isTimerRunning() const            { return _timerRunning; }
 
    private:

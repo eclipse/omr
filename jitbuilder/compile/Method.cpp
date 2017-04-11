@@ -26,11 +26,8 @@
 #include "ilgen/MethodBuilder.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
-namespace JitBuilder
-{
-
 // needs major overhaul
-ResolvedMethod::ResolvedMethod(TR_OpaqueMethodBlock *method)
+JitBuilder::ResolvedMethod::ResolvedMethod(TR_OpaqueMethodBlock *method)
    {
    // trouble! trouble! where do we get TypeDictionary from now?
    _ilInjector = reinterpret_cast<TR::IlInjector *>(method);
@@ -47,7 +44,7 @@ ResolvedMethod::ResolvedMethod(TR_OpaqueMethodBlock *method)
    strncpy(_signatureChars, resolvedMethod->signatureChars(), 62); // TODO: introduce concept of robustness
    }
 
-ResolvedMethod::ResolvedMethod(TR::MethodBuilder *m)
+JitBuilder::ResolvedMethod::ResolvedMethod(TR::MethodBuilder *m)
    : _fileName(m->getDefiningFile()),
      _lineNumber(m->getDefiningLine()),
      _name((char *)m->getMethodName()), // sad cast
@@ -62,7 +59,7 @@ ResolvedMethod::ResolvedMethod(TR::MethodBuilder *m)
    }
 
 const char *
-ResolvedMethod::signature(TR_Memory * trMemory, TR_AllocationKind allocKind)
+JitBuilder::ResolvedMethod::signature(TR_Memory * trMemory, TR_AllocationKind allocKind)
    {
    if( !_signature )
       {
@@ -79,14 +76,14 @@ ResolvedMethod::signature(TR_Memory * trMemory, TR_AllocationKind allocKind)
    }
 
 TR::DataType
-ResolvedMethod::parmType(uint32_t slot)
+JitBuilder::ResolvedMethod::parmType(uint32_t slot)
    {
    TR_ASSERT((slot < _numParms), "Invalid slot provided for Parameter Type");
    return _parmTypes[slot]->getPrimitiveType();
    }
 
 void
-ResolvedMethod::computeSignatureChars()
+JitBuilder::ResolvedMethod::computeSignatureChars()
    {
    char *name=NULL;
    uint32_t len=3;
@@ -116,7 +113,7 @@ ResolvedMethod::computeSignatureChars()
    }
 
 void
-ResolvedMethod::makeParameterList(TR::ResolvedMethodSymbol *methodSym)
+JitBuilder::ResolvedMethod::makeParameterList(TR::ResolvedMethodSymbol *methodSym)
    {
    ListAppender<TR::ParameterSymbol> la(&methodSym->getParameterList());
    TR::ParameterSymbol *parmSymbol;
@@ -148,7 +145,7 @@ ResolvedMethod::makeParameterList(TR::ResolvedMethodSymbol *methodSym)
    }
 
 char *
-ResolvedMethod::localName(uint32_t slot,
+JitBuilder::ResolvedMethod::localName(uint32_t slot,
                           uint32_t bcIndex,
                           int32_t &nameLength,
                           TR_Memory *trMemory)
@@ -174,7 +171,7 @@ ResolvedMethod::localName(uint32_t slot,
    }
 
 TR::IlInjector *
-ResolvedMethod::getInjector (TR::IlGeneratorMethodDetails * details,
+JitBuilder::ResolvedMethod::getInjector (TR::IlGeneratorMethodDetails * details,
    TR::ResolvedMethodSymbol *methodSymbol,
    TR::FrontEnd *fe,
    TR::SymbolReferenceTable *symRefTab)
@@ -184,8 +181,7 @@ ResolvedMethod::getInjector (TR::IlGeneratorMethodDetails * details,
    }
 
 TR::DataType
-ResolvedMethod::returnType()
+JitBuilder::ResolvedMethod::returnType()
    {
    return _returnType->getPrimitiveType();
    }
-} // namespace JitBuilder

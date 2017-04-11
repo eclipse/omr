@@ -1466,7 +1466,7 @@ TR::Register *OMR::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
 
       generateLabelInstruction(LABEL, node, startLabel, cg);
 
-      if (TR_X86OpCode::hasLongTarget(cvttOpCode))
+      if (TR_X86OpCode(cvttOpCode).hasLongTarget())
          {
          TR_ASSERT(TR::Compiler->target.is64Bit(), "We should only get here on AMD64");
          // We can't compare with 0x8000000000000000.

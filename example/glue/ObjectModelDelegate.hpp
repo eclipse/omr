@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 1991, 2016
+ * (c) Copyright IBM Corp. 1991, 2017
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -51,7 +51,6 @@ private:
 	 *
 	 * The _objectHeaderSlotSizeShift is unique to this example (transparent to OMR). It is used to
 	 * extract example object size from the object header slot.
-	 *
 	 */
 	static const uintptr_t _objectHeaderSlotOffset = 0;
 	static const uintptr_t _objectHeaderSlotFlagsShift = 0;
@@ -132,6 +131,24 @@ public:
 	}
 
 	/**
+	 * Get the total footprint of an object, in bytes, including the object header and all data.
+	 * If the object has a discontiguous representation, this method should return the size of
+	 * the root object plus the total of all the discontiguous parts of the object.
+	 *
+	 * Languages that support indexable objects (e.g. arrays) must provide an implementation
+	 * that distinguishes indexable and scalar objects and handles them appropriately.
+	 *
+	 * @param[in] objectPtr points to the object to determine size for
+	 * @return the total size of an object, in bytes, including discontiguous parts
+	 */
+	MMINLINE uintptr_t
+	getTotalFootprintInBytes(omrobjectptr_t objectPtr)
+	{
+		Assert_MM_false(isIndexable(objectPtr));
+		return getObjectSizeInBytesWithHeader(objectPtr);
+	}
+
+	/**
 	 * If object initialization fails for any reason, this method must return NULL. In that case, the heap
 	 * memory allocated for the object will become floating garbage in the heap and will be recovered in
 	 * the next GC cycle.
@@ -145,7 +162,7 @@ public:
 
 	/**
 	 * Returns TRUE if an object is indexable, FALSE otherwise. Languages that support indexable objects
-	 * (eg, arrays) must provide an implementation that distinguished indexable from scalar objects.
+	 * (e.g. arrays) must provide an implementation that distinguishes indexable from scalar objects.
 	 *
 	 * @param objectPtr pointer to the object
 	 * @return TRUE if object is indexable, FALSE otherwise
@@ -198,7 +215,6 @@ public:
 	 * @param objectPtr points to an object
 	 * @return true if object holds indirect references to heap objects
 	 */
-
 	MMINLINE bool
 	hasIndirectObjectReferents(CLI_THREAD_TYPE *thread, omrobjectptr_t objectPtr)
 	{

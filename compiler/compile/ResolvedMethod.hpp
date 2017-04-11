@@ -169,7 +169,6 @@ public:
    virtual char *classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len);
    virtual char *classSignatureOfFieldOrStatic(int32_t cpIndex, int32_t & len);
    virtual int32_t classCPIndexOfFieldOrStatic(int32_t cpIndex);
-   virtual int32_t packedArrayFieldLength(int32_t cpIndex, TR::Compilation* comp);
    TR_OpaqueClassBlock *getClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex, bool returnClassForAOT = false) { return getClassFromConstantPool(comp, classCPIndexOfFieldOrStatic(cpIndex), returnClassForAOT); }
    virtual TR_OpaqueClassBlock *getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex);
 

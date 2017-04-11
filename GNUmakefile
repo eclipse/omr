@@ -240,6 +240,7 @@ example:: $(test_prereqs)
 
 fvtest/algotest::$(test_prereqs)
 fvtest/gctest:: $(test_prereqs)
+fvtest/jitbuildertest:: $(test_prereqs)
 fvtest/porttest:: $(test_prereqs)
 fvtest/rastest:: $(test_prereqs)
 fvtest/sigtest:: $(test_prereqs)

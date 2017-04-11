@@ -33,6 +33,7 @@
 #include "codegen/Instruction.hpp"             // for Instruction
 #include "codegen/RecognizedMethods.hpp"       // for RecognizedMethod, etc
 #include "compile/Compilation.hpp"             // for self(), etc
+#include "compile/Compilation_inlines.hpp"
 #include "compile/CompilationTypes.hpp"        // for TR_Hotness
 #include "compile/Method.hpp"                  // for TR_Method, etc
 #include "compile/OSRData.hpp"                 // for TR_OSRCompilationData, etc
@@ -352,7 +353,7 @@ OMR::Compilation::Compilation(
    // Access to this list must be performed with assumptionTableMutex in hand
    //
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableFastAssumptionReclamation))
-      _metadataAssumptionList = new (m->trPersistentMemory()) TR_SentinelRuntimeAssumption();
+      _metadataAssumptionList = new (m->trPersistentMemory()) TR::SentinelRuntimeAssumption();
 #endif
 
    //Random fields must be set before allocating codegen
@@ -567,12 +568,6 @@ OMR::Compilation::getHotnessName()
    return TR::Compilation::getHotnessName(self()->getMethodHotness());
    }
 
-TR::Compilation *
-OMR::Compilation::self()
-   {
-   return static_cast<TR::Compilation *>(this);
-   }
-
 
 TR::ResolvedMethodSymbol * OMR::Compilation::createJittedMethodSymbol(TR_ResolvedMethod *resolvedMethod)
    {
@@ -591,6 +586,15 @@ bool OMR::Compilation::canAffordOSRControlFlow()
       return false;
       }
 
+   if (self()->osrInfrastructureRemoved())
+      {
+      if (self()->getOption(TR_TraceOSR))
+         {
+         traceMsg(self(), "canAffordOSRControlFlow returning false due to removal of OSR infrastructure\n");
+         }
+      return false;
+      }
+
    return _canAffordOSRControlFlow;
    }
 
@@ -602,6 +606,13 @@ void OMR::Compilation::setSeenClassPreventingInducedOSR()
 
 bool OMR::Compilation::supportsInduceOSR()
    {
+   if (_osrInfrastructureRemoved)
+      {
+      if (self()->getOption(TR_TraceOSR))
+         traceMsg(self(), "OSR induction cannot be performed after OSR infrastructure has been removed\n");
+      return false;
+      }
+
    if (!self()->canAffordOSRControlFlow())
       {
       if (self()->getOption(TR_TraceOSR))
@@ -627,13 +638,6 @@ bool OMR::Compilation::supportsInduceOSR()
       {
       if (self()->getOption(TR_TraceOSR))
          traceMsg(self(), "Cannot guarantee OSR transfer of control to the interpreter will work for calls preventing induced OSR (e.g. Quad) because of differences in JIT vs interpreter representations\n");
-      return false;
-      }
-
-   if (_osrInfrastructureRemoved)
-      {
-      if (self()->getOption(TR_TraceOSR))
-         traceMsg(self(), "OSR induction cannot be performed after OSR infrastructure has been removed\n");
       return false;
       }
 
@@ -664,7 +668,7 @@ bool OMR::Compilation::isPotentialOSRPoint(TR::Node *node)
    static char *disableMonentOSR = feGetEnv("TR_disableMonentOSR");
 
    bool potentialOSRPoint = false;
-   if (self()->getHCRMode() == TR::osr)
+   if (self()->getOSRTransitionTarget() == TR::postExecutionOSR)
       {
       if (_osrInfrastructureRemoved)
          potentialOSRPoint = false;
@@ -696,10 +700,10 @@ bool OMR::Compilation::isPotentialOSRPointWithSupport(TR::TreeTop *tt)
 
    bool potentialOSRPoint = self()->isPotentialOSRPoint(node);
 
-   if (potentialOSRPoint && !self()->getOption(TR_FullSpeedDebug))
+   if (potentialOSRPoint && self()->getOSRMode() == TR::voluntaryOSR)
       {
 
-      if (self()->getHCRMode() == TR::osr &&
+      if (self()->getOSRTransitionTarget() == TR::postExecutionOSR &&
           (node->getOpCode().isCheck() || node->getOpCodeValue() == TR::treetop))
          {
          // When in OSR HCR mode we need to make sure we check the BCI of the original
@@ -712,8 +716,7 @@ bool OMR::Compilation::isPotentialOSRPointWithSupport(TR::TreeTop *tt)
          if (node->getReferenceCount() > 1)
             {
             TR::TreeTop *cursor = tt->getPrevTreeTop();
-            TR::TreeTop *extendedBlockStart = tt->getNode()->getBlock()->startOfExtendedBlock()->getEntry();
-            while (cursor && cursor != extendedBlockStart)
+            while (cursor)
                {
                if ((cursor->getNode()->getOpCode().isCheck() || cursor->getNode()->getOpCodeValue() == TR::treetop)
                    && cursor->getNode()->getFirstChild() == node)
@@ -721,6 +724,9 @@ bool OMR::Compilation::isPotentialOSRPointWithSupport(TR::TreeTop *tt)
                   potentialOSRPoint = false;
                   break;
                   }
+               if (cursor->getNode()->getOpCodeValue() == TR::BBStart &&
+                   !cursor->getNode()->getBlock()->isExtensionOfPreviousBlock())
+                  break;
                cursor = cursor->getPrevTreeTop();
                }
             }
@@ -738,38 +744,85 @@ bool OMR::Compilation::isPotentialOSRPointWithSupport(TR::TreeTop *tt)
    return potentialOSRPoint;
    }
 
+/*
+ * OSR can operate in two modes, voluntary and involuntary.
+ *
+ * In involuntary OSR, the JITed code does not control when an OSR transition occurs. It can be
+ * initiated externally at any potential OSR point.
+ *
+ * In voluntary OSR, the JITed code does control when an OSR transition occurs, allowing it to
+ * limit the OSR points with transitions.
+ */
+TR::OSRMode
+OMR::Compilation::getOSRMode()
+   {
+   if (self()->getOption(TR_FullSpeedDebug))
+      return TR::involuntaryOSR;
+   return TR::voluntaryOSR;
+   }
+
+/*
+ * The OSR transition destination may be before or after the OSR point.
+ * When located before, the transition will target the bytecode index of
+ * the OSR point, whilst those located after may have an offset bytecode
+ * index.
+ */
+TR::OSRTransitionTarget
+OMR::Compilation::getOSRTransitionTarget()
+   {
+   if (self()->getHCRMode() == TR::osr)
+      return TR::postExecutionOSR;
+   return TR::preExecutionOSR;
+   }
+
+/*
+ * Provides the bytecode offset between the OSR point and the destination
+ * of the transition. Only used when doing postExecutionOSR to indicate
+ * the appropriate bytecode index after the OSR point.
+ */
 int32_t
 OMR::Compilation::getOSRInductionOffset(TR::Node *node)
    {
-   if (self()->getHCRMode() == TR::osr)
+   // If no induction after the OSR point, offset must be 0
+   if (self()->getOSRTransitionTarget() != TR::postExecutionOSR)
+      return 0;
+
+   switch (node->getOpCodeValue())
       {
-      switch (node->getOpCodeValue())
-         {
-         case TR::monent: return 1;
-         case TR::asynccheck: return 0;
-         default: return 3;
-         }
+      case TR::monent: return 1;
+      case TR::asynccheck: return 0;
+      default: return 3;
       }
-   return 0;
    }
 
+/*
+ * An OSR analysis point is used only for OSRDefAnalysis
+ * and will not become a transition point. It is required
+ * for certain OSR points when doing postExecutionOSR.
+ * For example, liveness data must be know before an inlined
+ * call, to reconstruct the caller's frame, but the transition
+ * can only occur after the call.
+ *
+ * An analysis point does not have an induction offset.
+ */
 bool
-OMR::Compilation::requiresLeadingOSRPoint(TR::Node *node)
+OMR::Compilation::requiresAnalysisOSRPoint(TR::Node *node)
    {
-   // Without an induction offset, a leading OSR point is required
-   // This point results in analysis of liveness before the side effect has occured
-   if (self()->getOSRInductionOffset(node) == 0)
-      {
-      return true;
-      }
+   // If no induction after the OSR point, cannot use analysis point
+   if (self()->getOSRTransitionTarget() != TR::postExecutionOSR)
+      return false;
 
    switch (node->getOpCodeValue())
       {
       // Monents only require a trailing OSR point as they will perform OSR when executing the
       // monitor and there is no change in liveness due to the monent
-      case TR::monent: return false;
-      // Calls require leading and trailing OSR points as liveness may change across them
-      default: return true;
+      case TR::monent:
+      // Asyncchecks will not modify liveness
+      case TR::asynccheck:
+         return false;
+      // Calls require an analysis and transition point as liveness may change across them
+      default:
+         return true;
       }
    }
 
@@ -777,6 +830,12 @@ bool
 OMR::Compilation::isProfilingCompilation()
    {
    return _recompilationInfo ? _recompilationInfo->isProfilingCompilation() : false;
+   }
+
+bool
+OMR::Compilation::isJProfilingCompilation()
+   {
+   return false;
    }
 
 #if defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(WINDOWS)
@@ -1956,10 +2015,10 @@ OMR::Compilation::shutdown(TR_FrontEnd * fe)
    bool printCummStats = ((fe!=0) && TR::Options::getCmdLineOptions() && TR::Options::getCmdLineOptions()->getOption(TR_CummTiming));
    if (printCummStats)
       {
-      fprintf(stderr, "Compilation Time   = %s\n", compTime.timeTakenString(TR::comp()));
-      fprintf(stderr, "Gen IL Time        = %s\n", genILTime.timeTakenString(TR::comp()));
-      fprintf(stderr, "Optimization Time  = %s\n", optTime.timeTakenString(TR::comp()));
-      fprintf(stderr, "Code Gen Time      = %s\n", codegenTime.timeTakenString(TR::comp()));
+      fprintf(stderr, "Compilation Time   = %9.6f\n", compTime.secondsTaken());
+      fprintf(stderr, "Gen IL Time        = %9.6f\n", genILTime.secondsTaken());
+      fprintf(stderr, "Optimization Time  = %9.6f\n", optTime.secondsTaken());
+      fprintf(stderr, "Code Gen Time      = %9.6f\n", codegenTime.secondsTaken());
       }
 
 #ifdef DEBUG
@@ -2174,6 +2233,87 @@ bool
 OMR::Compilation::isInlinedDirectCall(uint32_t index)
    {
    return _inlinedCallSites[index].directCall();
+   }
+
+/*
+ * Get the number of pending push slots for a caller, as this will be the size of
+ * the OSRCallSiteRemat table. In the event that the table has not been initialized,
+ * it will return 0.
+ */
+uint32_t
+OMR::Compilation::getOSRCallSiteRematSize(uint32_t callSiteIndex)
+   {
+   if (!_inlinedCallSites[callSiteIndex].osrCallSiteRematTable())
+      return 0;
+
+   int32_t callerIndex = self()->getInlinedCallSite(callSiteIndex)._byteCodeInfo.getCallerIndex();
+   return callerIndex < 0 ? self()->getMethodSymbol()->getNumPPSlots() :
+      self()->getInlinedResolvedMethodSymbol(callerIndex)->getNumPPSlots();
+   }
+
+/*
+ * Get the pending push symbol reference and the corresponding load, to later remat the pending push 
+ * within OSR code blocks inside the callee. To get a mapping, the call site index for the callee and
+ * the caller's pending push slot should be provided.
+ */
+void
+OMR::Compilation::getOSRCallSiteRemat(uint32_t callSiteIndex, uint32_t slot, TR::SymbolReference *&ppSymRef, TR::SymbolReference *&loadSymRef)
+   {
+   int32_t *table = _inlinedCallSites[callSiteIndex].osrCallSiteRematTable();
+   if (!table)
+      {
+      ppSymRef = NULL;
+      loadSymRef = NULL;
+      return;
+      }
+
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+   // Ensure the requested slot is valid, based on the total number of PP slots
+   uint32_t callerNumPPSlots = self()->getOSRCallSiteRematSize(callSiteIndex);
+   TR_ASSERT(slot < callerNumPPSlots, "can only perform call site remat for the caller's pending pushes");
+#endif
+
+   TR::SymbolReferenceTable *symRefTab = self()->getSymRefTab();
+   ppSymRef = table[slot * 2] == 0 ? NULL : symRefTab->getSymRef(table[slot * 2]);
+   loadSymRef = table[slot * 2 + 1] == 0 ? NULL : symRefTab->getSymRef(table[slot * 2 + 1]);
+   }
+
+/*
+ * Set the pending push symbol reference and the corresponding load, to later remat the
+ * pending push within OSR code blocks inside the callee. To correctly add the entry, the callee's
+ * call site index and the caller's pending push with its matching load should be provided.
+ *
+ * It is necessary to provide the pending push symbol reference, rather than just its slot, as the slots
+ * may be shared. The information necessary to find the symref from the slot is stored, as the call site
+ * should be an OSR point, however the pending push symref is expected to be already known, so it is
+ * cheaper to use directly.
+ */
+void
+OMR::Compilation::setOSRCallSiteRemat(uint32_t callSiteIndex, TR::SymbolReference *ppSymRef, TR::SymbolReference *loadSymRef)
+   {
+   int32_t *table = _inlinedCallSites[callSiteIndex].osrCallSiteRematTable();
+   int32_t slot = -ppSymRef->getCPIndex() - 1;
+
+   // If no table exists, allocate it based on the number of PP slots
+   if (!table)
+      {
+      int32_t callerIndex = self()->getInlinedCallSite(callSiteIndex)._byteCodeInfo.getCallerIndex();
+      uint32_t callerNumPPSlots = callerIndex < 0 ? self()->getMethodSymbol()->getNumPPSlots() :
+         self()->getInlinedResolvedMethodSymbol(callerIndex)->getNumPPSlots();
+      table = (int32_t*) self()->trMemory()->allocateHeapMemory(callerNumPPSlots * 2 * sizeof(int32_t));
+      memset(table, 0, callerNumPPSlots * 2 * sizeof(int32_t));
+      _inlinedCallSites[callSiteIndex].setOSRCallSiteRematTable(table);
+      }
+
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+   // Check the pending push is valid
+   uint32_t callerNumPPSlots = self()->getOSRCallSiteRematSize(callSiteIndex);
+   TR_ASSERT(ppSymRef->getSymbol()->isPendingPush(), "can only perform call site remat on pending pushes");
+   TR_ASSERT(slot >= 0 && slot < callerNumPPSlots, "can only perform call site remat for the caller's pending pushes");
+#endif
+
+   table[slot * 2] = ppSymRef->getReferenceNumber();
+   table[slot * 2 + 1] = loadSymRef ? loadSymRef->getReferenceNumber() : 0;
    }
 
 TR_InlinedCallSite *

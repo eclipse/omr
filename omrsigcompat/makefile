@@ -55,12 +55,6 @@ ifneq (,$(findstring zos,$(OMR_HOST_OS)))
 	@# z/os
 	@echo __sigactionset >>$@
 endif
-ifeq (,$(findstring win,$(OMR_HOST_OS)))
-ifeq (,$(findstring zos,$(OMR_HOST_OS)))
-	@# !win && !zos
-	@echo sigvec >>$@
-endif
-endif
 
 clean: clean_exports
 clean_exports:

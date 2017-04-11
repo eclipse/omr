@@ -36,6 +36,7 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTTypeTraits.h"
 #include "clang/AST/Attr.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -150,7 +151,11 @@ namespace OMRChecker {
 
    static CXXThisExpr* getThisExpr(Expr*);
 
-#define trace(x) if (getenv("OMR_CHECK_TRACE")) { llvm::errs() << x << "\n"; }
+#define trace(x) \
+   if (getenv("OMR_CHECK_TRACE")) {\
+      llvm::errs() << __FUNCTION__ << ":" << __LINE__ << ":  "; \
+      llvm::errs() << x << "\n"; \
+   }
 
 /**
  * Extensible Class discovery visitor.
@@ -245,9 +250,10 @@ private:
 class ExtensibleClassCheckingVisitor : public RecursiveASTVisitor<ExtensibleClassCheckingVisitor> {
 public:
    explicit ExtensibleClassCheckingVisitor(ASTContext *Context, ExtensibleClassDiscoveryVisitor &extensible) :
+      currentPass(1),
+      passNumber(),
       Extensible(extensible),
-      Context(Context),
-      currentPass(1)
+      Context(Context)
    { }
 
    /**
@@ -379,9 +385,9 @@ public:
 
    void printRelations() {
       llvm::errs() << "Most Derived Type Map: \n";
-      for (std::map<CXXRecordDecl*, CXXRecordDecl*>::iterator I = MostDerivedType.begin(), E= MostDerivedType.end(); I != E; ++I) {
+      for (std::map<const CXXRecordDecl*, const CXXRecordDecl*>::iterator I = MostDerivedType.begin(), E= MostDerivedType.end(); I != E; ++I) {
          llvm::errs() << "\t\t" << I->first->getQualifiedNameAsString() << " -> " << I->second->getQualifiedNameAsString();
-         CXXRecordDecl * concrete = getAssociatedConcreteType(I->first);
+         auto* concrete = getAssociatedConcreteType(I->first);
          llvm::errs() << " => " << (concrete ? concrete->getQualifiedNameAsString() : "<no concrete found>" );
          llvm::errs() << "\n";
       }
@@ -391,8 +397,8 @@ public:
    /**
     * Returns the most derived type for a decl.
     */
-   CXXRecordDecl *mostDerivedType(CXXRecordDecl *decl) {
-      std::map<CXXRecordDecl*, CXXRecordDecl*>::iterator itr = MostDerivedType.find(decl->getCanonicalDecl());
+   const CXXRecordDecl *mostDerivedType(const CXXRecordDecl *decl) {
+      std::map<const CXXRecordDecl*, const CXXRecordDecl*>::iterator itr = MostDerivedType.find(decl->getCanonicalDecl());
       if (itr != MostDerivedType.end()) { return itr->second; }
       return NULL;
    }
@@ -492,7 +498,7 @@ public:
     *
     * This query only really makes sense for an extensible class.
     */
-   CXXRecordDecl* getAssociatedConcreteType(CXXRecordDecl* decl) {
+   const CXXRecordDecl* getAssociatedConcreteType(const CXXRecordDecl* decl) {
 
       // a concrete type is always part of its own extensible class string.
       if (isOMRConcreteType(decl))
@@ -501,7 +507,7 @@ public:
       // Only extensible decls have a meaningful concrete class string.
       if (isExtensible(decl)) {
          int loopCount = 0;
-         CXXRecordDecl* concrete = mostDerivedType(decl);
+         auto* concrete = mostDerivedType(decl);
          trace("==isExtensible: " << decl->getQualifiedNameAsString() << " concrete: " << (concrete ? concrete->getQualifiedNameAsString() : "no concrete found"));
          while (concrete) {
             if (loopCount++ > 50) {
@@ -539,7 +545,7 @@ private:
     *
     * \FIXME: This could be tighter integrated with getAssociatedConcreteType, reducing complexity.
     */
-   bool inSameClassString(CXXRecordDecl * queryType, CXXRecordDecl * derivedType, int level = 0) {
+   bool inSameClassString(const CXXRecordDecl * queryType, const CXXRecordDecl * derivedType, int level = 0) {
       std::string query_name   = queryType->getQualifiedNameAsString();
       std::string derived_name = derivedType->getQualifiedNameAsString();
 
@@ -556,8 +562,8 @@ private:
       // If any base is in the same class string as the query type, then
       // we are as well. This is a reachability problem.
       trace(prefix << query_name << "\t[ - ]  C = " << derivedType->getQualifiedNameAsString() );
-      for (CXXRecordDecl::base_class_iterator BI = derivedType->bases_begin(), BE = derivedType->bases_end(); BI != BE; ++BI) {
-         CXXRecordDecl* base_class = BI->getType()->getAsCXXRecordDecl();
+      for (auto BI = derivedType->bases_begin(), BE = derivedType->bases_end(); BI != BE; ++BI) {
+         auto* base_class = BI->getType()->getAsCXXRecordDecl();
          if (base_class) {
             if ( isOMRConcreteType(base_class) ) { // Concrete parent terminates search.
                trace(prefix << "not searching " << base_class->getQualifiedNameAsString() << ", is concrete");
@@ -588,7 +594,7 @@ private:
     * Build the most derived type map.
     */
    void BuildMostDerivedTypeMap(CXXRecordDecl* decl) {
-      std::queue<CXXRecordDecl *> toProcess;
+      std::queue<const CXXRecordDecl *> toProcess;
 
       // Only handle complete definitions.
       if (!decl->isCompleteDefinition()) {
@@ -617,7 +623,7 @@ private:
       }
 
       while (!toProcess.empty()) {
-         CXXRecordDecl *toUpdate = toProcess.front();
+         auto* toUpdate = toProcess.front();
          toProcess.pop();
 
          if (toUpdate != toUpdate->getCanonicalDecl()) trace("Missed cannonicalization")
@@ -626,8 +632,8 @@ private:
              && MostDerivedType[toUpdate] != decl) {                 // ... and it wasn't this decl
 
             // Ensure we update everyone who used to think this was most derived
-            CXXRecordDecl *oldDerivedType = MostDerivedType[toUpdate];
-            for (std::map<CXXRecordDecl*, CXXRecordDecl*>::iterator I = MostDerivedType.begin(), E = MostDerivedType.end(); I != E; ++I) {
+            auto* oldDerivedType = MostDerivedType[toUpdate];
+            for (auto I = MostDerivedType.begin(), E = MostDerivedType.end(); I != E; ++I) {
                trace("second == old: " << (I->second == oldDerivedType) );
                trace("First " << I->first->getQualifiedNameAsString()   << " Concrete: " << isOMRConcreteType(I->first));
                trace("Second " << I->second->getQualifiedNameAsString() << " Concrete: " << isOMRConcreteType(I->second));
@@ -652,12 +658,10 @@ private:
     */
    std::map<CXXRecordDecl*, bool> Types;
 
-
-
    /**
     * The most derived type map.
     */
-   std::map<CXXRecordDecl*, CXXRecordDecl*> MostDerivedType;
+   std::map<const CXXRecordDecl*, const CXXRecordDecl*> MostDerivedType;
 
    /**
     * This visitor has determined the map of extensible classes
@@ -678,6 +682,18 @@ private:
 class OMRThisCheckingVisitor : public RecursiveASTVisitor<OMRThisCheckingVisitor> {
 public:
    explicit OMRThisCheckingVisitor(ASTContext *Context, OMRClassCheckingVisitor *ClassChecker) : Context(Context), ClassChecker(ClassChecker) {
+   }
+
+
+   /**
+    * Record the last seen CXXMethodDecl to determine containment
+    *
+    * Warning: This appears to work, **however** this visitor work 
+    *          by executing callbacks in pre-order.
+    */ 
+   bool VisitCXXMethodDecl(CXXMethodDecl* decl) {
+      lastSeenMethodDecl = decl;
+      return true;
    }
 
    bool VisitCallExpr(CallExpr *call) {
@@ -703,22 +719,33 @@ public:
    }
 
    bool VisitCXXMemberCallExpr(CXXMemberCallExpr *call) {
-      //TODO: Check that this member call expression is inside of an extensible class!
       if (!isExtensibleMemberCall(call)) {
+         trace("Call isn't an Extensible Member Call" << call);
          return true;
       }
-
       Expr *receiver = call->getImplicitObjectArgument()->IgnoreParenImpCasts();
 
       if (receiver->isImplicitCXXThis()) {
-         // Don't diagnose implicit this recievers that are calling self.
-         if (!isSelfCall(call)) {
-            // Ignore member function calls that specifically call a base class member function
-            MemberExpr * memberFunc;
-            // hasQualifier checks for a nested name specifier, e.g. the 'IBM::Foo::' part of 'IBM::Foo::baz()'
-            if ((memberFunc = dyn_cast<MemberExpr>(call->getCallee())) && memberFunc->hasQualifier()) {
+         trace("Reciever is implicit this");
+         // Don't diagnose implicit this receivers that are calling self.
+         if (isSelfCall(call)) { 
+            trace("callee is self()");
+            // Need still to verify that the self() call is to the right receiver! Otherwise 
+            // we can pass upcasts in the case where we have an extensible class hierarchy
+            // deriving from an extensible class hierarchy. 
+            if (callerAndCalleeHaveSameMDT(call)) {
+               trace("callee is correct self()");
                return true;
+            } else { 
+               DiagnosticsEngine &diagEngine = Context->getDiagnostics();
+               unsigned diagID = diagEngine.getCustomDiagID(DiagnosticsEngine::Error,
+                                                            "self call is resolving outside the current extensible class. You probably didn't define self() in all extensible OMR layers.");
+               diagEngine.Report(call->getExprLoc(), diagID);
             }
+         } else { 
+            if (isAllowedSelflessCall(call))
+               return true; 
+
             DiagnosticsEngine &diagEngine = Context->getDiagnostics();
             unsigned diagID = diagEngine.getCustomDiagID(DiagnosticsEngine::Error, "Implicit this receivers are prohibited in extensible classes");
             DiagnosticBuilder builder = diagEngine.Report(receiver->getExprLoc(), diagID);
@@ -726,12 +753,12 @@ public:
             builder.AddFixItHint(FixItHint::CreateInsertion(receiver->getExprLoc(), staticCastHint));
          }
       } else if (isa<CXXStaticCastExpr>(receiver)) {
-         CXXStaticCastExpr *cast = dyn_cast<CXXStaticCastExpr>(receiver);
-         CXXRecordDecl *targetClass = cast->getType()->getAs<PointerType>() ? cast->getType()->getAs<PointerType>()->getPointeeType()->getAsCXXRecordDecl()->getCanonicalDecl() : NULL;
+         CXXStaticCastExpr *cast        = dyn_cast<CXXStaticCastExpr>(receiver);
+         CXXRecordDecl *targetClass     = cast->getType()->getAs<PointerType>() ?  cast->getType()->getAs<PointerType>()->getPointeeType()->getAsCXXRecordDecl()->getCanonicalDecl() : NULL;
          trace("targetClass of static cast" << (targetClass ? targetClass->getQualifiedNameAsString() : "NULL" ) );
          CXXThisExpr *thisExpr = getThisExpr(cast->getSubExpr());
          if (thisExpr) {
-            CXXRecordDecl *thisConcrete = ClassChecker->getAssociatedConcreteType(thisExpr->getType()->getAs<PointerType>()->getPointeeType()->getAsCXXRecordDecl());
+            auto *thisConcrete = ClassChecker->getAssociatedConcreteType(thisExpr->getType()->getAs<PointerType>()->getPointeeType()->getAsCXXRecordDecl());
             if (thisConcrete) {
                trace("Associated concrete class: " << thisConcrete->getQualifiedNameAsString() );
                if (targetClass == NULL || targetClass != thisConcrete) {
@@ -740,7 +767,8 @@ public:
                   DiagnosticBuilder builder = diagEngine.Report(cast->getExprLoc(), diagID);
                   std::string staticCastHint = "self()->";
                   builder.AddFixItHint(FixItHint::CreateReplacement(cast->getExprLoc(), staticCastHint));
-               } else {  // Static cast is correct, but we want a warning.
+               } else {
+                  // Static cast is correct, but, we want a warning.
                   DiagnosticsEngine &diagEngine = Context->getDiagnostics();
                   unsigned diagID = diagEngine.getCustomDiagID(DiagnosticsEngine::Warning, "extensible class dereference prefers calls to self()");
                   DiagnosticBuilder builder = diagEngine.Report(cast->getExprLoc(), diagID);
@@ -778,6 +806,121 @@ public:
       return !name.compare(0, prefix.size(), prefix);
    }
 
+
+   const CXXMethodDecl* getCallerDecl(const clang::Stmt* expr) {
+      return lastSeenMethodDecl; 
+   }
+
+   /**
+    * Return true iff the call is in a fashion that self() may be safely
+    * elided. Examples would be explicit base class calls, or calls inside 
+    * the most derived class
+    */
+   bool isAllowedSelflessCall(CXXMemberCallExpr* call) { 
+      /*
+       * Ignore member function calls that specifically call a base class member function
+       */
+      MemberExpr * memberFunc;
+      // hasQualifier checks for a nested name specifier, e.g. the 'IBM::Foo::' part of 'IBM::Foo::baz()'
+      if ((memberFunc = dyn_cast<MemberExpr>(call->getCallee())) && memberFunc->hasQualifier()) {
+         trace("isAllowedSelflessCall: True because it's a qualified base class member function"); 
+         return true;
+      }
+      
+
+      /*
+       * If the call has resolved to the most derived type, then we 
+       * can allow it. This can only happen inside the most derived 
+       * type.
+       */
+      const CXXMethodDecl* calleeDecl        = call->getMethodDecl();
+      const CXXRecordDecl* calleeClassDecl   = calleeDecl->getParent(); 
+      const CXXRecordDecl* calleeMostDerived = ClassChecker->mostDerivedType(calleeClassDecl); 
+      const CXXMethodDecl* callerMethod = getCallerDecl(call); 
+      const CXXRecordDecl* callerDecl = callerMethod->getParent(); 
+
+      if (calleeMostDerived->getCanonicalDecl() == callerDecl->getCanonicalDecl())  {
+         trace("isAllowedSelflessCall: True because caller is most derived type"); 
+         return true;
+      } else { 
+         trace("isAllowedSelflessCall: false"); 
+         if (getenv("OMR_CHECK_TRACE")) {
+            llvm::errs() << "isAllowedSelflessCall: calleeDecl            => " << calleeDecl->getQualifiedNameAsString()  << "\n";
+            llvm::errs() << "isAllowedSelflessCall: calleeClassDecl       => " << calleeClassDecl->getQualifiedNameAsString()   << "\n";
+            llvm::errs() << "isAllowedSelflessCall: calleeMostDerived     => " << calleeMostDerived->getQualifiedNameAsString()   << "\n";
+            llvm::errs() << "isAllowedSelflessCall: callerDecl            => " << (callerDecl ? callerDecl->getQualifiedNameAsString() : "NULL")   << "\n";
+         }
+      }
+
+      return false;
+   }
+
+   bool computeCallInformation(const CXXMemberCallExpr* call,
+                               const CXXRecordDecl* &calleeMostDerived,
+                               const CXXRecordDecl* &callerMostDerived) {
+      // This is the called method decl 
+      CXXMethodDecl* calleeDecl = call->getMethodDecl();
+      if (!calleeDecl) {
+         trace("Didn't find callee decl. Assuming not correct self call");
+         return false;
+      }
+
+      // This is the class that defines the callee method -- so where self() is defined. 
+      CXXRecordDecl* calleeClassDecl  = calleeDecl->getParent(); 
+      if (!calleeClassDecl) {
+         trace("Didn't find callee class decl. Assuming not correct self call");
+         return false;
+      }
+
+      // Most derived type of the callee. 
+      calleeMostDerived = ClassChecker->mostDerivedType(calleeClassDecl); 
+      if (!calleeMostDerived) {
+         trace("Didn't find a most derived type for the callee class. Assuming not correct self call");
+         return false;
+      }
+
+      // This is the method we're analyzing.
+      const CXXMethodDecl* callerMethod = getCallerDecl(call); 
+      if (!callerMethod) {
+         trace("Didn't find a caller method... Assuming not correct self call. Call node: ");
+         call->dump();
+         return false;
+      }
+
+      // This is the class that is making the call (caller) 
+      const CXXRecordDecl* callerDecl = callerMethod->getParent(); 
+      if (!calleeMostDerived) {
+         trace("Didn't didn't find the caller method decl. Assuming not correct self call");
+         return false;
+      }
+
+      // Most dervied type of the caller 
+      callerMostDerived = ClassChecker->mostDerivedType(callerDecl);
+     
+      if (getenv("OMR_CHECK_TRACE")) {
+         llvm::errs() << "computeCallInformation: calleeDecl            => " << calleeDecl->getQualifiedNameAsString()  << "\n";
+         llvm::errs() << "computeCallInformation: calleeClassDecl       => " << calleeClassDecl->getQualifiedNameAsString()   << "\n";
+         llvm::errs() << "computeCallInformation: calleeMostDerived     => " << calleeMostDerived->getQualifiedNameAsString()   << "\n";
+         llvm::errs() << "\n";
+         llvm::errs() << "computeCallInformation: callerDecl            => " << (callerDecl ? callerDecl->getQualifiedNameAsString() : "NULL")   << "\n";
+         llvm::errs() << "computeCallInformation: callerMostDerived     => " << (callerMostDerived ? callerMostDerived->getQualifiedNameAsString() : "NULL")   << "\n";
+      }
+      return true;  
+   } 
+
+   /**
+    * Return true iff the caller and callee have the same 
+    * most derived type. 
+    */
+   bool callerAndCalleeHaveSameMDT(CXXMemberCallExpr *call) { 
+      const CXXRecordDecl* calleeMostDerived, *callerMostDerived;
+      if (computeCallInformation(call, calleeMostDerived,  callerMostDerived)) {
+         if (calleeMostDerived == callerMostDerived) 
+            return true; 
+      }
+      return false;
+   }
+
    /**
     * Return true iff a CXXMemberCallExpr is
     * 1) contained inside an extensible class member function definition
@@ -787,15 +930,19 @@ public:
    bool isExtensibleMemberCall(CXXMemberCallExpr* call) {
       // > Retrieves the implicit object argument for the member call.
       // > For example, in "x.f(5)", this returns the sub-expression "x".
-      Expr*             reciever = call->getImplicitObjectArgument()->IgnoreParenImpCasts();
+      Expr*             receiver = call->getImplicitObjectArgument()->IgnoreParenImpCasts();
 
       if (getenv("OMR_CHECK_TRACE")) {
+         auto bestDynamic = receiver->getBestDynamicClassType(); 
          llvm::errs() << "BestDynamicClassType => ";
-         reciever->getBestDynamicClassType()->printQualifiedName(llvm::errs());
+         if (bestDynamic) 
+            receiver->getBestDynamicClassType()->printQualifiedName(llvm::errs());
+         else 
+            llvm::errs() << "NULL";
          llvm::errs() << "\n";
       }
 
-      return isExtensible(reciever->getBestDynamicClassType());
+      return isExtensible(receiver->getBestDynamicClassType());
    }
 
    /**
@@ -831,10 +978,11 @@ private:
       return ClassChecker->isExtensible(decl);
    }
 
-   //const NamedDecl * getNamedDecl(
-
    ASTContext *Context;
    OMRClassCheckingVisitor *ClassChecker;
+   
+   /* To determine containment */
+   const CXXMethodDecl* lastSeenMethodDecl;
 };
 
 class OMRCheckingConsumer : public ASTConsumer {
@@ -930,7 +1078,6 @@ static CXXThisExpr *getThisExpr(Expr *E) {
      if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
        if (ICE->getCastKind() == CK_NoOp ||
            ICE->getCastKind() == CK_LValueToRValue ||
-           ICE->getCastKind() == CK_DerivedToBase ||
            ICE->getCastKind() == CK_UncheckedDerivedToBase) {
          E = ICE->getSubExpr();
          continue;

@@ -42,6 +42,7 @@
 #include "MemoryPoolSplitAddressOrderedList.hpp"
 #include "MemoryPoolHybrid.hpp"
 #include "MemoryPoolLargeObjects.hpp"
+#include "ParallelGlobalGC.hpp"
 #include "SweepPoolManagerAddressOrderedList.hpp"
 #include "SweepPoolManagerSplitAddressOrderedList.hpp"
 #include "SweepPoolManagerHybrid.hpp"
@@ -78,13 +79,7 @@ MM_ConfigurationStandard::initialize(MM_EnvironmentBase* env)
 	MM_GCExtensionsBase* extensions = env->getExtensions();
 	bool result = MM_Configuration::initialize(env);
 	if (result) {
-		extensions->payAllocationTax = false;
-#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-		extensions->payAllocationTax = extensions->payAllocationTax || extensions->concurrentMark;
-#endif /* OMR_GC_MODRON_CONCURRENT_MARK */
-#if defined(OMR_GC_CONCURRENT_SWEEP)
-		extensions->payAllocationTax = extensions->payAllocationTax || extensions->concurrentSweep;
-#endif /* OMR_GC_CONCURRENT_SWEEP */
+		extensions->payAllocationTax = extensions->isConcurrentMarkEnabled() || extensions->isConcurrentSweepEnabled();
 		extensions->setStandardGC(true);
 	}
 

@@ -107,13 +107,7 @@ static uint64_t highResClockResolution()
    }
 
 uint64_t
-OMR::VMEnv::getHighResClockResolution(TR::Compilation *comp)
-   {
-   return ::highResClockResolution();
-   }
-
-uint64_t
-OMR::VMEnv::getHighResClockResolution(OMR_VMThread *omrVMThread)
+OMR::VMEnv::getHighResClockResolution()
    {
    return ::highResClockResolution();
    }

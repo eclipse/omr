@@ -73,18 +73,16 @@ protected:
 private:
 	static MM_GCWriteBarrierType getWriteBarrierType(MM_EnvironmentBase* env)
 	{
+		MM_GCWriteBarrierType writeBarrierType = gc_modron_wrtbar_none;
 		MM_GCExtensionsBase* extensions = env->getExtensions();
-		MM_GCWriteBarrierType writeBarrierType = gc_modron_wrtbar_illegal;
-		if (extensions->scavengerEnabled) {
-			if (extensions->concurrentMark) {
+		if (extensions->isScavengerEnabled()) {
+			if (extensions->isConcurrentMarkEnabled()) {
 				writeBarrierType = gc_modron_wrtbar_cardmark_and_oldcheck;
 			} else {
 				writeBarrierType = gc_modron_wrtbar_oldcheck;
 			}
-		} else if (extensions->concurrentMark) {
+		} else if (extensions->isConcurrentMarkEnabled()) {
 			writeBarrierType = gc_modron_wrtbar_cardmark;
-		} else {
-			writeBarrierType = gc_modron_wrtbar_none;
 		}
 		return writeBarrierType;
 	}

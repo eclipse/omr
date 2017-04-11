@@ -27,7 +27,6 @@
 #include "thread_api.h"
 
 #include "Base.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "MemorySubSpace.hpp"
 
 class MM_MemoryPool;

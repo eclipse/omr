@@ -77,6 +77,7 @@ class OMR_EXTENSIBLE CodeGenPhase
     * what the phases need to do. These will be divided up into
     * each extensible layer and can call base class if needed.
     */
+   static void performUncommonCallConstNodesPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performReserveCodeCachePhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performLowerTreesPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performSetupForInstructionSelectionPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);

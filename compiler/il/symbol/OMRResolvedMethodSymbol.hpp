@@ -40,6 +40,7 @@ namespace OMR { typedef OMR::ResolvedMethodSymbol ResolvedMethodSymbolConnector;
 #include "infra/Assert.hpp"            // for TR_ASSERT
 #include "infra/Flags.hpp"             // for flags32_t
 #include "infra/List.hpp"              // for List, etc
+#include "infra/TRlist.hpp"            // for TR::list
 
 class TR_BitVector;
 class TR_ExtraLinkageInfo;
@@ -118,6 +119,11 @@ public:
    uint32_t getNumOSRPoints() { return _osrPoints.size(); }
    bool sharesStackSlot(TR::SymbolReference *symRef);
 
+   TR_ByteCodeInfo& getOSRByteCodeInfo(TR::Node *node);
+   bool isOSRRelatedNode(TR::Node *node);
+   bool isOSRRelatedNode(TR::Node *node, TR_ByteCodeInfo &bci);
+   TR::TreeTop *getOSRTransitionTreeTop(TR::TreeTop *tt);
+
    uint32_t getNumParameterSlots() const     {return _resolvedMethod->numberOfParameterSlots(); }
 
    uint32_t getNumPPSlots() const            { return _resolvedMethod->numberOfPendingPushes(); }
@@ -139,6 +145,7 @@ public:
    bool genIL(TR_FrontEnd *fe, TR::Compilation *comp, TR::SymbolReferenceTable *symRefTab, TR::IlGenRequest & customRequest);
    bool allCallerOSRBlocksArePresent(int32_t inlinedSiteIndex, TR::Compilation *comp);
    void cleanupUnreachableOSRBlocks(int32_t inlinedSiteIndex, TR::Compilation *comp);
+   void insertRematableStoresFromCallSites(TR::Compilation *comp, int32_t siteIndex, TR::TreeTop *induceOSRTree);
    void insertStoresForDeadStackSlotsBeforeInducingOSR(TR::Compilation *comp, int32_t inlinedSiteIndex, TR_ByteCodeInfo &byteCodeInfo, TR::TreeTop *induceOSRTree, TR::ResolvedMethodSymbol *callSymbolForDeadSlots);
    bool sharesStackSlots(TR::Compilation *comp);
    void resetLiveLocalIndices();
@@ -290,6 +297,13 @@ public:
 
    TR::SymbolReference *getPythonConstsSymbolRef() { return _pythonConstsSymRef; }
 
+   int32_t getProfilingByteCodeIndex(int32_t bytecodeIndex);
+   void addProfilingOffsetInfo(int32_t startBCI, int32_t endBCI);
+   void setProfilerFrequency(int32_t bytecodeIndex, int32_t frequency);
+   int32_t getProfilerFrequency(int32_t bytecodeIndex);
+   void clearProfilingOffsetInfo();
+   void dumpProfilingOffsetInfo(TR::Compilation *comp);
+
 protected:
    enum Properties
       {
@@ -346,6 +360,8 @@ private:
    TR_BitVector                              *_cannotAttemptOSR;
    TR_BitVector                              *_shouldNotAttemptOSR;
    uint8_t                                   _unimplementedOpcode;
+
+   TR::list< std::pair<int32_t, std::pair<int32_t, int32_t> > > _bytecodeProfilingOffsets;
 
    //used if estimateCodeSize is called
    enum

@@ -504,7 +504,7 @@ static void reassociateBigConstants(TR::Node *node, TR::Simplifier *s)
             int64_t diff = node->getSecondChild()->get64bitIntegralValue() -
                            base_node->getSecondChild()->get64bitIntegralValue();
 
-            if (!s->comp()->cg()->isMaterialized(diff) &&
+            if (!s->comp()->cg()->shouldValueBeInACommonedNode(diff) &&
                 performTransformation(s->comp(), "%sReusing big constant from node 0x%p in node 0x%p\n", s->optDetailString(), base_node, node))
                {
                node->getFirstChild()->recursivelyDecReferenceCount();
@@ -12721,7 +12721,7 @@ TR::Node *ificmpeqSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
 
    bitwiseToLogical(node, block, s);
 
-   if (firstChild->getOpCode().isBooleanCompare() && !firstChild->getOpCode().isLongCompare() &&
+   if (firstChild->getOpCode().isBooleanCompare() &&
        (secondChild->getOpCode().isLoadConst()) &&
        ((secondChild->getInt() == 0) || (secondChild->getInt() == 1)) &&
        (firstChild->getOpCode().convertCmpToIfCmp() != TR::BadILOp) &&
@@ -12818,7 +12818,7 @@ TR::Node *ificmpneSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
 
         ( firstChild->getOpCodeValue() == TR::iushr ||
           firstChild->getFirstChild()->isNonNegative()
-        ) && //Either a logical shift or a positive first child to guaruntee zero-extend
+        ) && //Either a logical shift or a positive first child to guarantee zero-extend
 
         secondChild->getOpCode().isLoadConst() &&
         secondChild->getInt() == 0 //Second child is a const 0

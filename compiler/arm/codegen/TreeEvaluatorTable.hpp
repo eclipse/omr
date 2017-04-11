@@ -917,4 +917,6 @@
 	TR::TreeEvaluator::longNumberOfTrailingZeros,
 	TR::TreeEvaluator::longBitCount,
 
+   TR::TreeEvaluator::unImpOpEvaluator,                 // TR::ibyteswap
+
    TR::TreeEvaluator::NOPEvaluator,         // Temporarily using for TR::Prefetch

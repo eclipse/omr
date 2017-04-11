@@ -48,6 +48,7 @@ protected:
 	MM_HeapLinkedFreeHeader ** _referenceHeapFreeList;
 	MM_SweepPoolState* _sweepPoolState;	/**< GC Sweep Pool State */
 	MM_SweepPoolManagerAddressOrderedListBase* _sweepPoolManager;		/**< pointer to SweepPoolManager class */
+	MM_HeapLinkedFreeHeader *_lastFreeEntry;							/**< address of the last free entry in the pool; valid after compact; NOT maintained during allocation */ 
 
 public:
 	
@@ -86,6 +87,16 @@ protected:
 			return false;
 		}
 	}
+	
+	/**
+	 * set the address of the last free entry in the pool
+	 */
+	virtual void setLastFreeEntry(void * addr) { _lastFreeEntry = (MM_HeapLinkedFreeHeader *)addr; }
+	
+	/**
+	 * get the address of the last free entry in the pool
+	 */
+	virtual MM_HeapLinkedFreeHeader *getLastFreeEntry() { return _lastFreeEntry; }
 	
 #if defined(OMR_GC_LARGE_OBJECT_AREA)
 	/**
@@ -224,6 +235,7 @@ public:
 		,_referenceHeapFreeList(NULL)
 		,_sweepPoolState(NULL)
 		,_sweepPoolManager(NULL)
+		,_lastFreeEntry(NULL)
 	{
 //		_typeId = __FUNCTION__;
 	};
@@ -233,6 +245,7 @@ public:
 		,_referenceHeapFreeList(NULL)
 		,_sweepPoolState(NULL)
 		,_sweepPoolManager(NULL)
+		,_lastFreeEntry(NULL)
 	{
 //		_typeId = __FUNCTION__;
 	};

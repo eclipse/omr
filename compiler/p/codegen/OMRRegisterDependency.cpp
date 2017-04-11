@@ -633,8 +633,8 @@ findDependencyChainHead(TR::RegisterDependency *dep,
    }
 
 static void assignFreeRegisters(TR::Instruction              *currentInstruction,
-                                TR::RegisterDependency    *dep,
-                                TR_PPCRegisterDependencyMap& map,
+                                TR::RegisterDependency       *dep,
+                                TR_PPCRegisterDependencyMap&  map,
                                 TR::CodeGenerator            *cg)
    {
    TR::Machine *machine = cg->machine();
@@ -653,22 +653,20 @@ static void assignFreeRegisters(TR::Instruction              *currentInstruction
    }
 
 static void assignContendedRegisters(TR::Instruction              *currentInstruction,
-                                     TR::RegisterDependency    *dep,
-                                     TR_PPCRegisterDependencyMap& map,
-                                     bool                         depsBlocked,
+                                     TR::RegisterDependency       *dep,
+                                     TR_PPCRegisterDependencyMap&  map,
+                                     bool                          depsBlocked,
                                      TR::CodeGenerator            *cg)
    {
    TR::Machine *machine = cg->machine();
 
    dep = findDependencyChainHead(dep, map);
 
-
    TR::Register *virtReg = dep->getRegister();
    TR::RealRegister::RegNum targetRegNum = dep->getRealRegister();
    TR::RealRegister *targetReg = machine->getPPCRealRegister(targetRegNum);
    TR::RealRegister *assignedReg = virtReg->getAssignedRealRegister() ?
       toRealRegister(virtReg->getAssignedRealRegister()) :  NULL;
-
 
    // Chain of length 1
    if (!assignedReg || !map.getDependencyWithTarget(assignedReg->getRegisterNumber()))
@@ -677,6 +675,7 @@ static void assignContendedRegisters(TR::Instruction              *currentInstru
       virtReg->block();
       return;
       }
+
    // Chain of length 2, handled here instead of below to get 3*xor exchange on GPRs
    if (map.getDependencyWithTarget(assignedReg->getRegisterNumber()) == map.getDependencyWithAssigned(targetRegNum))
       {
@@ -694,7 +693,7 @@ static void assignContendedRegisters(TR::Instruction              *currentInstru
    TR::RealRegister *spareReg = machine->findBestFreeRegister(currentInstruction, virtReg->getKind(),
                                                                 targetRegNum == TR::RealRegister::NoReg ? dep->getExcludeGPR0() : false, false,
                                                                 targetRegNum == TR::RealRegister::NoReg ? virtReg : targetReg->getAssignedRegister());
-   bool                haveFreeSpare = spareReg != NULL;
+   bool haveFreeSpare = spareReg != NULL;
    if (!spareReg)
       {
       // If the regs in this dep group are not blocked we need to make sure we don't spill a reg that's in the middle of the chain
@@ -754,44 +753,46 @@ static void assignContendedRegisters(TR::Instruction              *currentInstru
    }
 
 void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstruction,
-                                                    TR_RegisterKinds  kindToBeAssigned,
-                                                    uint32_t          numberOfRegisters,
+                                                    TR_RegisterKinds   kindToBeAssigned,
+                                                    uint32_t           numberOfRegisters,
                                                     TR::CodeGenerator *cg)
    {
-   TR::Machine *machine = cg->machine();
-   TR::Register   *virtReg;
-   TR::RealRegister::RegNum dependentRegNum;
-   TR::RealRegister *dependentRealReg, *assignedRegister, *realReg;
-   int i, j;
-   TR::Compilation *comp = cg->comp();
+   TR::Machine              *machine = cg->machine();
+   TR::Register             *virtReg;
+   TR::RealRegister::RegNum  dependentRegNum;
+   TR::RealRegister         *dependentRealReg, *assignedRegister, *realReg;
+   int                       i, j;
+   TR::Compilation          *comp = cg->comp();
 
-   int num_gprs = 0;
-   int num_fprs = 0;
-   int num_vrfs = 0;
+   int numGPRs = 0;
+   int numFPRs = 0;
+   int numVRFs = 0;
+   bool haveSpilledCCRs = false;
 
    // Use to do lookups using real register numbers
    TR_PPCRegisterDependencyMap map(_dependencies, numberOfRegisters);
 
    if (!comp->getOption(TR_DisableOOL))
       {
-      for (i = 0; i< numberOfRegisters; i++)
+      for (i = 0; i < numberOfRegisters; i++)
          {
-         virtReg = _dependencies[i].getRegister();
+         virtReg         = _dependencies[i].getRegister();
          dependentRegNum = _dependencies[i].getRealRegister();
          if (dependentRegNum == TR::RealRegister::SpilledReg)
             {
-            TR_ASSERT(virtReg->getBackingStorage(),"should have a backing store if dependentRegNum == spillRegIndex()\n");
+            TR_ASSERT(virtReg->getBackingStorage(), "Should have a backing store if dependentRegNum == SpilledReg");
             if (virtReg->getAssignedRealRegister())
                {
                // this happens when the register was first spilled in main line path then was reverse spilled
                // and assigned to a real register in OOL path. We protected the backing store when doing
                // the reverse spill so we could re-spill to the same slot now
-               traceMsg (comp,"\nOOL: Found register spilled in main line and re-assigned inside OOL");
-               TR::Node *currentNode = currentInstruction->getNode();
-               TR::RealRegister *assignedReg    = toRealRegister(virtReg->getAssignedRegister());
+               traceMsg(comp,"\nOOL: Found register spilled in main line and re-assigned inside OOL");
+               TR::Node            *currentNode = currentInstruction->getNode();
+               TR::RealRegister    *assignedReg = toRealRegister(virtReg->getAssignedRegister());
                TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(currentNode, (TR::SymbolReference*)virtReg->getBackingStorage()->getSymbolReference(), sizeof(uintptr_t), cg);
+               TR_RegisterKinds     rk = virtReg->getKind();
+
                TR::InstOpCode::Mnemonic opCode;
-               TR_RegisterKinds rk = virtReg->getKind();
                switch (rk)
                   {
                   case TR_GPR:
@@ -801,7 +802,7 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
                      opCode = virtReg->isSinglePrecision() ? TR::InstOpCode::lfs : TR::InstOpCode::lfd;
                      break;
                   default:
-                     TR_ASSERT(0, "\nRegister kind not supported in OOL spill\n");
+                     TR_ASSERT(0, "Register kind not supported in OOL spill");
                      break;
                   }
 
@@ -811,31 +812,12 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
                virtReg->setAssignedRegister(NULL);
                assignedReg->setState(TR::RealRegister::Free);
                if (comp->getDebug())
-                  cg->traceRegisterAssignment("Generate reload of virt %s due to spillRegIndex dep at inst %p\n",comp->getDebug()->getName(virtReg),currentInstruction);
+                  cg->traceRegisterAssignment("Generate reload of virt %s due to spillRegIndex dep at inst %p\n", comp->getDebug()->getName(virtReg),currentInstruction);
                cg->traceRAInstruction(inst);
                }
 
             if (!(std::find(cg->getSpilledRegisterList()->begin(), cg->getSpilledRegisterList()->end(), virtReg) != cg->getSpilledRegisterList()->end()))
                cg->getSpilledRegisterList()->push_front(virtReg);
-            }
-         // we also need to free up all locked backing storage if we are exiting the OOL during backwards RA assignment
-         else if (currentInstruction->isLabel() && virtReg->getAssignedRealRegister())
-            {
-            TR::PPCLabelInstruction *labelInstr = (TR::PPCLabelInstruction *)currentInstruction;
-            TR_BackingStore * location = virtReg->getBackingStorage();
-            TR_RegisterKinds rk = virtReg->getKind();
-            int32_t dataSize;
-            if (labelInstr->getLabelSymbol()->isStartOfColdInstructionStream() && location)
-               {
-               traceMsg (comp,"\nOOL: Releasing backing storage (%p)\n", location);
-               if (rk == TR_GPR)
-                  dataSize = TR::Compiler->om.sizeofReferenceAddress();
-               else
-                  dataSize = 8;
-               location->setMaxSpillDepth(0);
-               cg->freeSpill(location,dataSize,0);
-               virtReg->setBackingStorage(NULL);
-               }
             }
          }
       }
@@ -844,47 +826,60 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
       {
       map.addDependency(_dependencies[i], i);
 
-      virtReg = _dependencies[i].getRegister();
       dependentRegNum = _dependencies[i].getRealRegister();
 
       if (dependentRegNum != TR::RealRegister::SpilledReg)
          {
-         if (virtReg->getKind() == TR_GPR)
-            num_gprs++;
-         else if (virtReg->getKind() == TR_FPR)
-            num_fprs++;
-         else if (virtReg->getKind() == TR_VRF)
-            num_vrfs++;
+         virtReg = _dependencies[i].getRegister();
+         switch (virtReg->getKind())
+            {
+            case TR_GPR:
+               ++numGPRs;
+               break;
+            case TR_FPR:
+               ++numFPRs;
+               break;
+            case TR_VRF:
+               ++numVRFs;
+               break;
+            case TR_CCR:
+               if (virtReg->getAssignedRegister() == NULL &&
+                   virtReg->getBackingStorage() == NULL)
+                  haveSpilledCCRs = true;
+               break;
+            default:
+               break;
+            }
          }
       }
 
 #ifdef DEBUG
-   int locked_gprs = 0;
-   int locked_fprs = 0;
-   int locked_vrfs = 0;
+   int lockedGPRs = 0;
+   int lockedFPRs = 0;
+   int lockedVRFs = 0;
 
    // count up how many registers are locked for each type
    for(i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; i++)
       {
         realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
         if (realReg->getState() == TR::RealRegister::Locked)
-           locked_gprs++;
+           lockedGPRs++;
       }
    for(i = TR::RealRegister::FirstFPR; i <= TR::RealRegister::LastFPR; i++)
       {
         realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
         if (realReg->getState() == TR::RealRegister::Locked)
-           locked_fprs++;
+           lockedFPRs++;
       }
    for(i = TR::RealRegister::FirstVRF; i <= TR::RealRegister::LastVRF; i++)
       {
         realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
         if (realReg->getState() == TR::RealRegister::Locked)
-           locked_vrfs++;
+           lockedVRFs++;
       }
-   TR_ASSERT( locked_gprs == machine->getNumberOfLockedRegisters(TR_GPR),"Inconsistent number of locked GPRs");
-   TR_ASSERT( locked_fprs == machine->getNumberOfLockedRegisters(TR_FPR),"Inconsistent number of locked FPRs");
-   TR_ASSERT( locked_vrfs == machine->getNumberOfLockedRegisters(TR_VRF), "Inconsistent number of locked VRFs");
+   TR_ASSERT(lockedGPRs == machine->getNumberOfLockedRegisters(TR_GPR), "Inconsistent number of locked GPRs");
+   TR_ASSERT(lockedFPRs == machine->getNumberOfLockedRegisters(TR_FPR), "Inconsistent number of locked FPRs");
+   TR_ASSERT(lockedVRFs == machine->getNumberOfLockedRegisters(TR_VRF), "Inconsistent number of locked VRFs");
 #endif
 
    // To handle circular dependencies, we block a real register if (1) it is already assigned to a correct
@@ -892,26 +887,26 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
    // However, if all available registers are requested, we do not block in case (2) to avoid all registers
    // being blocked.
 
-   bool block_gprs = true;
-   bool block_fprs = true;
-   bool block_vrfs = true;
+   bool haveSpareGPRs = true;
+   bool haveSpareFPRs = true;
+   bool haveSpareVRFs = true;
 
-   TR_ASSERT(num_gprs <= (TR::RealRegister::LastGPR - TR::RealRegister::FirstGPR + 1 - machine->getNumberOfLockedRegisters(TR_GPR)), "Too many GPR dependencies, unable to assign" );
-   TR_ASSERT(num_fprs <= (TR::RealRegister::LastFPR - TR::RealRegister::FirstFPR + 1 - machine->getNumberOfLockedRegisters(TR_FPR)), "Too many FPR dependencies, unable to assign" );
-   TR_ASSERT(num_vrfs <= (TR::RealRegister::LastVRF - TR::RealRegister::FirstVRF + 1 - machine->getNumberOfLockedRegisters(TR_VRF)), "Too many VRF dependencies, unable to assign" );
+   TR_ASSERT(numGPRs <= (TR::RealRegister::LastGPR - TR::RealRegister::FirstGPR + 1 - machine->getNumberOfLockedRegisters(TR_GPR)), "Too many GPR dependencies, unable to assign" );
+   TR_ASSERT(numFPRs <= (TR::RealRegister::LastFPR - TR::RealRegister::FirstFPR + 1 - machine->getNumberOfLockedRegisters(TR_FPR)), "Too many FPR dependencies, unable to assign" );
+   TR_ASSERT(numVRFs <= (TR::RealRegister::LastVRF - TR::RealRegister::FirstVRF + 1 - machine->getNumberOfLockedRegisters(TR_VRF)), "Too many VRF dependencies, unable to assign" );
 
-   if (num_gprs == (TR::RealRegister::LastGPR - TR::RealRegister::FirstGPR + 1 - machine->getNumberOfLockedRegisters(TR_GPR)))
-        block_gprs = false;
-   if (num_fprs == (TR::RealRegister::LastFPR - TR::RealRegister::FirstFPR + 1 - machine->getNumberOfLockedRegisters(TR_FPR)))
-        block_fprs = false;
-   if (num_vrfs == (TR::RealRegister::LastVRF - TR::RealRegister::FirstVRF + 1 - machine->getNumberOfLockedRegisters(TR_VRF)))
-        block_vrfs = false;
+   if (numGPRs == (TR::RealRegister::LastGPR - TR::RealRegister::FirstGPR + 1 - machine->getNumberOfLockedRegisters(TR_GPR)))
+      haveSpareGPRs = false;
+   if (numFPRs == (TR::RealRegister::LastFPR - TR::RealRegister::FirstFPR + 1 - machine->getNumberOfLockedRegisters(TR_FPR)))
+      haveSpareFPRs = false;
+   if (numVRFs == (TR::RealRegister::LastVRF - TR::RealRegister::FirstVRF + 1 - machine->getNumberOfLockedRegisters(TR_VRF)))
+      haveSpareVRFs = false;
 
    for (i = 0; i < numberOfRegisters; i++)
       {
       virtReg = _dependencies[i].getRegister();
 
-      if (virtReg->getAssignedRealRegister()!=NULL)
+      if (virtReg->getAssignedRealRegister() != NULL)
          {
          if (_dependencies[i].getRealRegister() == TR::RealRegister::NoReg)
             {
@@ -927,12 +922,39 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
             // any spare registers are left to avoid blocking all existing registers
             if (_dependencies[i].getRealRegister() == assignedRegNum ||
                 (map.getDependencyWithTarget(assignedRegNum) &&
-                 ((virtReg->getKind() != TR_GPR || block_gprs) &&
-                  (virtReg->getKind() != TR_FPR || block_fprs) &&
-                  (virtReg->getKind() != TR_VRF || block_vrfs))))
+                 ((virtReg->getKind() != TR_GPR || haveSpareGPRs) &&
+                  (virtReg->getKind() != TR_FPR || haveSpareFPRs) &&
+                  (virtReg->getKind() != TR_VRF || haveSpareVRFs))))
                {
                virtReg->block();
                }
+            }
+         }
+      }
+
+   // If spilled CCRs are present in the dependencies and we are not blocking GPRs
+   // (because we may not have any spare ones) we will assign the CCRs first.
+   // This is because in order to assign a spilled virtual to a physical CCR
+   // we need to reverse spill it to a GPR first and then assign it to the
+   // CCR, so we do that first to avoid having all the GPRs become assigned and blocked.
+   // Note: It is safe to assign CCRs before GPRs in any circumstance, but the extra
+   // checks are cheap and let us avoid an extra loop through the dependencies for
+   // what should be a relatively infrequent situation anyway.
+   if (haveSpilledCCRs && !haveSpareGPRs)
+      {
+      for (i = 0; i < numberOfRegisters; i++)
+         {
+         virtReg = _dependencies[i].getRegister();
+         if (virtReg->getKind() != TR_CCR)
+            continue;
+         dependentRegNum = _dependencies[i].getRealRegister();
+         dependentRealReg = machine->getPPCRealRegister(dependentRegNum);
+
+         if (dependentRegNum != TR::RealRegister::NoReg &&
+             dependentRegNum != TR::RealRegister::SpilledReg &&
+             dependentRealReg->getState() == TR::RealRegister::Free)
+            {
+            assignFreeRegisters(currentInstruction, &_dependencies[i], map, cg);
             }
          }
       }
@@ -955,13 +977,13 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
    // Assign all virtual regs that depend on a specfic real reg that is not free
    for (i = 0; i < numberOfRegisters; i++)
       {
-      virtReg     = _dependencies[i].getRegister();
+      virtReg          = _dependencies[i].getRegister();
       assignedRegister = NULL;
       if (virtReg->getAssignedRealRegister() != NULL)
          {
          assignedRegister = toRealRegister(virtReg->getAssignedRealRegister());
          }
-      dependentRegNum = _dependencies[i].getRealRegister();
+      dependentRegNum  = _dependencies[i].getRealRegister();
       dependentRealReg = machine->getPPCRealRegister(dependentRegNum);
       if (dependentRegNum != TR::RealRegister::NoReg &&
           dependentRegNum != TR::RealRegister::SpilledReg &&
@@ -971,13 +993,13 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
          switch (_dependencies[i].getRegister()->getKind())
             {
             case TR_GPR:
-               depsBlocked = block_gprs;
+               depsBlocked = haveSpareGPRs;
                break;
             case TR_FPR:
-               depsBlocked = block_fprs;
+               depsBlocked = haveSpareFPRs;
                break;
             case TR_VRF:
-               depsBlocked = block_vrfs;
+               depsBlocked = haveSpareVRFs;
                break;
             }
          assignContendedRegisters(currentInstruction, &_dependencies[i], map, depsBlocked, cg);
@@ -985,15 +1007,15 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
       }
 
    // Assign all virtual regs that depend on NoReg but exclude gr0
-   for (i=0; i<numberOfRegisters; i++)
+   for (i = 0; i < numberOfRegisters; i++)
       {
       if (_dependencies[i].getRealRegister() == TR::RealRegister::NoReg && _dependencies[i].getExcludeGPR0())
          {
          TR::RealRegister *realOne;
 
-         virtReg     = _dependencies[i].getRegister();
-         realOne     = virtReg->getAssignedRealRegister();
-         if (realOne!=NULL && toRealRegister(realOne)->getRegisterNumber()==TR::RealRegister::gr0)
+         virtReg = _dependencies[i].getRegister();
+         realOne = virtReg->getAssignedRealRegister();
+         if (realOne != NULL && toRealRegister(realOne)->getRegisterNumber() == TR::RealRegister::gr0)
             {
             if ((assignedRegister = machine->findBestFreeRegister(currentInstruction, virtReg->getKind(), true, false, virtReg)) == NULL)
                {
@@ -1010,14 +1032,14 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
       }
 
    // Assign all virtual regs that depend on NoReg
-   for (i=0; i<numberOfRegisters; i++)
+   for (i = 0; i < numberOfRegisters; i++)
       {
       if (_dependencies[i].getRealRegister() == TR::RealRegister::NoReg && !_dependencies[i].getExcludeGPR0())
          {
          TR::RealRegister *realOne;
 
-         virtReg     = _dependencies[i].getRegister();
-         realOne     = virtReg->getAssignedRealRegister();
+         virtReg = _dependencies[i].getRegister();
+         realOne = virtReg->getAssignedRealRegister();
          if (!realOne)
             {
             machine->assignOneRegister(currentInstruction, virtReg, false);
@@ -1029,12 +1051,11 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
    unblockRegisters(numberOfRegisters);
    for (i = 0; i < numberOfRegisters; i++)
       {
-      TR::Register     *dependentRegister = getRegisterDependency(i)->getRegister();
+      TR::Register *dependentRegister = getRegisterDependency(i)->getRegister();
       // dependentRegister->getAssignedRegister() is NULL if the reg has already been spilled due to a spilledReg dep
       if (comp->getOption(TR_DisableOOL) || (!(cg->isOutOfLineColdPath()) && !(cg->isOutOfLineHotPath())))
          {
-         TR_ASSERT(dependentRegister->getAssignedRegister(),
-             "assignedRegister can not  be NULL");
+         TR_ASSERT(dependentRegister->getAssignedRegister(), "Assigned register can not be NULL");
          }
       if (dependentRegister->getAssignedRegister())
          {

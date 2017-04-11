@@ -25,6 +25,7 @@
 
     ReserveCodeCachePhase,
     LowerTreesPhase,
+    UncommonCallConstNodesPhase,
     SetupForInstructionSelectionPhase,
     RemoveUnusedLocalsPhase,
     InstructionSelectionPhase,

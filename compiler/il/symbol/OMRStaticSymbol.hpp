@@ -46,6 +46,8 @@ namespace OMR
  */
 class OMR_EXTENSIBLE StaticSymbol : public TR::Symbol
    {
+protected:
+   TR::StaticSymbol* self();
 
 public:
 

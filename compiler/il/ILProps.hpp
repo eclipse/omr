@@ -119,7 +119,7 @@ namespace ILProp2
       New                          = 0x00800000, // object allocation opcodes
       ZeroExtension                = 0x01000000,
       SignExtension                = 0x02000000,
-      // Available                 = 0x04000000,
+      ByteSwap                     = 0x04000000,
       // Available                 = 0x08000000,
       // Available                 = 0x10000000,
       // Available                 = 0x20000000,

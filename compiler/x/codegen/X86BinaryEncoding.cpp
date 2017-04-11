@@ -1419,9 +1419,7 @@ TR::X86RegInstruction::enlarge(int32_t requestedEnlargementSize, int32_t maxEnla
 
    TR::Compilation *comp = TR::comp();
    if (  TR::Compiler->target.is64Bit()
-      && !getOpCode().needs16BitOperandPrefix()
-      && !getOpCode().needsSSE42OpcodePrefix()
-      && !getOpCode().needsScalarPrefix()
+      && !getOpCode().info().hasMandatoryPrefix()
       && performTransformation(comp, "O^O Enlarging instruction %p by %d bytes by repeating the REX prefix\n", this, enlargementSize))
       {
       setRexRepeatCount(enlargementSize);

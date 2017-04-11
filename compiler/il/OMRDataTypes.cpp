@@ -307,7 +307,7 @@ static int32_t OMRDataTypeSizes[] =
 
 static_assert(TR::NumOMRTypes == (sizeof(OMRDataTypeSizes) / sizeof(OMRDataTypeSizes[0])), "OMRDataTypeSizes is not the correct size");
 
-const int32_t
+int32_t
 OMR::DataType::getSize(TR::DataType dt)
    {
    TR_ASSERT(dt < TR::NumOMRTypes, "dataTypeSizeMap called on unrecognized data type");

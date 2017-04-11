@@ -76,7 +76,7 @@ class OMR_EXTENSIBLE Machine
        _numberRegisters[TR_VRF] = numVRFRegs; // TODO vrf gra : needs this but every platform will need to pass numVRFRegs in
       }
 
-   TR::Machine * self();
+   inline TR::Machine * self();
 
    uint8_t getNumberOfRegisters(TR_RegisterKinds rk) { return _numberRegisters[rk]; }
 

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 2000, 2016
+ * (c) Copyright IBM Corp. 2000, 2017
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -76,7 +76,8 @@
 #include "optimizer/UseDefInfo.hpp"                // for TR_UseDefInfo
 #include "optimizer/ValueNumberInfo.hpp"
 #include "optimizer/VPConstraint.hpp"              // for TR::VPConstraint, etc
-#include "optimizer/ValuePropagation.hpp"
+#include "optimizer/OMRValuePropagation.hpp"
+#include "optimizer/LocalValuePropagation.hpp"
 #include "ras/Debug.hpp"                           // for TR_DebugBase
 #include "ras/DebugCounter.hpp"
 #include "env/IO.hpp"
@@ -84,7 +85,6 @@
 #ifdef J9_PROJECT_SPECIFIC
 #include "env/VMJ9.h"
 #include "optimizer/IdiomRecognitionUtils.hpp"     // for createTableLoad
-#include "optimizer/VPBCDConstraint.hpp"           // for VP BCD constraint handling, etc
 #endif
 
 namespace TR { class CFGNode; }
@@ -108,7 +108,7 @@ extern void collectArraylengthNodes(TR::Node *node, vcount_t visitCount, List<TR
 //
 // ***************************************************************************
 
-TR::ValuePropagation::ValuePropagation(TR::OptimizationManager *manager)
+OMR::ValuePropagation::ValuePropagation(TR::OptimizationManager *manager)
    : TR::Optimization(manager),
      _parmValues(NULL),
      _currentParent(NULL),
@@ -136,18 +136,21 @@ TR::ValuePropagation::ValuePropagation(TR::OptimizationManager *manager)
      _arrayCloneCalls(trMemory()),
      _objectCloneTypes(trMemory()),
      _arrayCloneTypes(trMemory()),
-     _bcdSignConstraints(NULL),
      _parmInfo(NULL),
      _parmTypeValid(NULL),
      _constNodeInfo(comp()->allocator())
    {
+   // DANGER !!!
+   // Virtual methods on ValuePropagation should only be called when the most derived class of VP's
+   // constructor is completed for correct behavior.
+   // setVP does not call any virtual method on VP, so it's ok to be here.
    _vcHandler.setVP(this);
    }
 
 
 
 
-void TR::ValuePropagation::initialize()
+void OMR::ValuePropagation::initialize()
    {
    _resetClassesThatShouldNotBeNewlyExtended.deleteAll();
    _enableVersionBlocks       = false;
@@ -159,7 +162,6 @@ void TR::ValuePropagation::initialize()
    _constantZeroConstraint      = new (trStackMemory()) TR::VPIntConst(0);
    _unreachablePathConstraint   = new (trStackMemory()) TR::VPUnreachablePath();
 
-   _bcdSignConstraints = NULL;
 
    _invalidateUseDefInfo      = false;
    _invalidateValueNumberInfo = false;
@@ -318,10 +320,10 @@ void TR::ValuePropagation::initialize()
             if (comp()->getOutFile() != NULL)
                {
                trfprintf(comp()->getOutFile(), "Time taken for %s = ", myTimer.title());
-               trfprintf(comp()->getOutFile(), "%s seconds\n", myTimer.timeTakenString(comp()));
+               trfprintf(comp()->getOutFile(), "%9.6f seconds\n", myTimer.secondsTaken());
                }
 #ifdef OPT_TIMING
-            statStructuralAnalysisTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution(comp()));
+            statStructuralAnalysisTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution());
 #endif
             }
          }
@@ -341,7 +343,7 @@ void TR::ValuePropagation::initialize()
      _unsafeArrayAccessNodes = new (trStackMemory()) TR_BitVector(comp()->getNodeCount(), trMemory(), stackAlloc, growable);
    }
 
-TR::ValuePropagation::Relationship *TR::ValuePropagation::copyRelationships(Relationship *first)
+OMR::ValuePropagation::Relationship *OMR::ValuePropagation::copyRelationships(Relationship *first)
    {
    TR_LinkHeadAndTail<Relationship> list;
    for (Relationship *rel = first; rel; rel = rel->getNext())
@@ -352,7 +354,7 @@ TR::ValuePropagation::Relationship *TR::ValuePropagation::copyRelationships(Rela
    return list.getFirst();
    }
 
-TR::ValuePropagation::StoreRelationship *TR::ValuePropagation::copyStoreRelationships(StoreRelationship *first)
+OMR::ValuePropagation::StoreRelationship *OMR::ValuePropagation::copyStoreRelationships(StoreRelationship *first)
    {
    TR_LinkHeadAndTail<StoreRelationship> list;
    for (StoreRelationship *rel = first; rel; rel = rel->getNext())
@@ -363,7 +365,7 @@ TR::ValuePropagation::StoreRelationship *TR::ValuePropagation::copyStoreRelation
    return list.getFirst();
    }
 
-TR::ValuePropagation::ValueConstraint *TR::ValuePropagation::createValueConstraint(int32_t valueNumber, Relationship *relationships, StoreRelationship *storeRelationships)
+OMR::ValuePropagation::ValueConstraint *OMR::ValuePropagation::createValueConstraint(int32_t valueNumber, Relationship *relationships, StoreRelationship *storeRelationships)
    {
    ValueConstraint *vc;
    if (!_valueConstraintCache->isEmpty())
@@ -374,14 +376,14 @@ TR::ValuePropagation::ValueConstraint *TR::ValuePropagation::createValueConstrai
    return vc;
    }
 
-void TR::ValuePropagation::freeValueConstraint(ValueConstraint *vc)
+void OMR::ValuePropagation::freeValueConstraint(ValueConstraint *vc)
    {
    freeRelationships(vc->relationships);
    freeStoreRelationships(vc->storeRelationships);
    _valueConstraintCache->push(vc);
    }
 
-int32_t TR::ValuePropagation::getValueNumber(TR::Node *node)
+int32_t OMR::ValuePropagation::getValueNumber(TR::Node *node)
    {
    static const char *disableLocalVPConstNumbering = feGetEnv("TR_DisableLocalVPConstNumbering");
    if (_isGlobalPropagation)
@@ -434,7 +436,7 @@ int32_t TR::ValuePropagation::getValueNumber(TR::Node *node)
       }
    }
 
-TR::VPConstraint *TR::ValuePropagation::getConstraint(TR::Node *node, bool &isGlobal, TR::Node *relative)
+TR::VPConstraint *OMR::ValuePropagation::getConstraint(TR::Node *node, bool &isGlobal, TR::Node *relative)
    {
    /*
      If we return a non-null constraint, isGlobal will be set accordingly.
@@ -498,7 +500,7 @@ TR::VPConstraint *TR::ValuePropagation::getConstraint(TR::Node *node, bool &isGl
    return constraint;
    }
 
-void TR::ValuePropagation::removeNode(TR::Node *node, bool anchorIt)
+void OMR::ValuePropagation::removeNode(TR::Node *node, bool anchorIt)
    {
    // If the node has a reference count more than one, anchor it in a
    // treetop _preceeding_ the current treetop to avoid swing-down problems.
@@ -540,7 +542,7 @@ void TR::ValuePropagation::removeNode(TR::Node *node, bool anchorIt)
       }
    }
 
-void TR::ValuePropagation::removeChildren(TR::Node *node, bool anchorIt)
+void OMR::ValuePropagation::removeChildren(TR::Node *node, bool anchorIt)
    {
    for (int32_t i = node->getNumChildren()-1; i >= 0; i--)
       {
@@ -559,7 +561,7 @@ static bool canCauseOSR(TR::TreeTop *tt, TR::Compilation *comp)
    return false;
    }
 
-void TR::ValuePropagation::processTrees(TR::TreeTop *startTree, TR::TreeTop *endTree)
+void OMR::ValuePropagation::processTrees(TR::TreeTop *startTree, TR::TreeTop *endTree)
    {
    TR::TreeTop *treeTop;
    TR::TreeTop *lastRealTreeTop = _curBlock->getLastRealTreeTop();
@@ -684,7 +686,7 @@ void TR::ValuePropagation::processTrees(TR::TreeTop *startTree, TR::TreeTop *end
       }
    }
 
-int32_t TR::ValuePropagation::getPrimitiveArrayType(char primitiveArrayChar)
+int32_t OMR::ValuePropagation::getPrimitiveArrayType(char primitiveArrayChar)
    {
    switch (primitiveArrayChar)
       {
@@ -700,7 +702,7 @@ int32_t TR::ValuePropagation::getPrimitiveArrayType(char primitiveArrayChar)
       }
    }
 
-bool TR::ValuePropagation::canTransformArrayCopyCallForSmall(TR::Node *node, int32_t &srcLength, int32_t &dstLength, int32_t &elementSize, TR::DataType &type )
+bool OMR::ValuePropagation::canTransformArrayCopyCallForSmall(TR::Node *node, int32_t &srcLength, int32_t &dstLength, int32_t &elementSize, TR::DataType &type )
    {
    TR::Node *srcArrayNode = node->getFirstChild();
    TR::Node *srcOffsetNode = node->getSecondChild();
@@ -787,7 +789,7 @@ TR_ResolvedMethod * findResolvedClassMethod(TR::Compilation * comp, char * class
 #endif
 
 
-void TR::ValuePropagation::removeArrayCopyNode(TR::TreeTop *arraycopyTree)
+void OMR::ValuePropagation::removeArrayCopyNode(TR::TreeTop *arraycopyTree)
    {
    ListElement<TR_TreeTopWrtBarFlag> *elem = _unknownTypeArrayCopyTrees.getListHead();
    ListElement<TR_TreeTopWrtBarFlag> *prev = NULL;
@@ -927,7 +929,7 @@ TR::Node* generateLenForArrayCopy(TR::Compilation *comp, int32_t elementSize, TR
    }
 
 
-bool TR::ValuePropagation::canRunTransformToArrayCopy()
+bool OMR::ValuePropagation::canRunTransformToArrayCopy()
    {
    if (!lastTimeThrough())
       return false;
@@ -940,7 +942,7 @@ bool TR::ValuePropagation::canRunTransformToArrayCopy()
    return true;
    }
 
-bool TR::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode)
+bool OMR::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode)
    {
    if (!canRunTransformToArrayCopy())
       return false;
@@ -1026,7 +1028,7 @@ bool TR::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode
 
    }
 
-void TR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
+void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
    {
    bool is64BitTarget = TR::Compiler->target.is64Bit();
 
@@ -2034,7 +2036,7 @@ TR::Node *generateArrayAddressTree(
    return array;
    }
 
-TR::TreeTop* TR::ValuePropagation::createPrimitiveOrReferenceCompareNode(TR::Node* node)
+TR::TreeTop* OMR::ValuePropagation::createPrimitiveOrReferenceCompareNode(TR::Node* node)
    {
 #ifdef J9_PROJECT_SPECIFIC
    TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node, comp()->getSymRefTab()->findOrCreateVftSymbolRef());
@@ -2051,7 +2053,7 @@ TR::TreeTop* TR::ValuePropagation::createPrimitiveOrReferenceCompareNode(TR::Nod
 #endif
    }
 
-TR::TreeTop* TR::ValuePropagation::createArrayStoreCompareNode(TR::Node *src, TR::Node *dst)
+TR::TreeTop* OMR::ValuePropagation::createArrayStoreCompareNode(TR::Node *src, TR::Node *dst)
    {
    TR::Node *vftDst = TR::Node::createWithSymRef(TR::aloadi, 1, 1, dst, comp()->getSymRefTab()->findOrCreateVftSymbolRef());
    TR::Node *instanceofNode = TR::Node::createWithSymRef(TR::instanceof, 2, 2, src, vftDst, comp()->getSymRefTab()->findOrCreateInstanceOfSymbolRef(comp()->getMethodSymbol()));
@@ -2060,7 +2062,7 @@ TR::TreeTop* TR::ValuePropagation::createArrayStoreCompareNode(TR::Node *src, TR
    return cmpTree;
    }
 
-TR::TreeTop* TR::ValuePropagation::createPrimitiveArrayNodeWithoutFlags(TR::TreeTop* tree, TR::TreeTop* newTree, TR::SymbolReference* srcRef, TR::SymbolReference* dstRef, TR::SymbolReference * lenRef, bool useFlagsOnOriginalArraycopy, bool isOptimizedReferenceArraycopy)
+TR::TreeTop* OMR::ValuePropagation::createPrimitiveArrayNodeWithoutFlags(TR::TreeTop* tree, TR::TreeTop* newTree, TR::SymbolReference* srcRef, TR::SymbolReference* dstRef, TR::SymbolReference * lenRef, bool useFlagsOnOriginalArraycopy, bool isOptimizedReferenceArraycopy)
    {
    TR::Node* root = tree->getNode()->getFirstChild();
    TR::Node* len = TR::Node::createLoad(root, lenRef);
@@ -2195,7 +2197,7 @@ TR::TreeTop *createStoresForArraycopyChildren(TR::Compilation *comp, TR::TreeTop
    }
 
 #ifdef J9_PROJECT_SPECIFIC
-void TR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR::TreeTop *arrayTranslateTree, TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, TR::SymbolReference *srcOffRef, TR::SymbolReference *dstOffRef, TR::SymbolReference *lenRef,TR::SymbolReference *tableRef, bool hasTable )
+void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR::TreeTop *arrayTranslateTree, TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, TR::SymbolReference *srcOffRef, TR::SymbolReference *dstOffRef, TR::SymbolReference *lenRef,TR::SymbolReference *tableRef, bool hasTable )
    {
 
    bool is64BitTarget = TR::Compiler->target.is64Bit();
@@ -2443,7 +2445,7 @@ void TR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR::
   }
 #endif
 
-TR::TreeTop* TR::ValuePropagation::createConverterCallNodeAfterStores(
+TR::TreeTop* OMR::ValuePropagation::createConverterCallNodeAfterStores(
    TR::TreeTop         *tree,
    TR::TreeTop         *origTree,
    TR::SymbolReference *srcRef,
@@ -2541,7 +2543,7 @@ TR::TreeTop* TR::ValuePropagation::createConverterCallNodeAfterStores(
    }
 
 //-------------------------- realtime support
-TR::TreeTop *TR::ValuePropagation::buildSameLeafTest(TR::Node *offset,TR::Node *len,TR::Node *spineShiftNode)
+TR::TreeTop *OMR::ValuePropagation::buildSameLeafTest(TR::Node *offset,TR::Node *len,TR::Node *spineShiftNode)
    {
    TR::TreeTop *ifTree = TR::TreeTop::create(comp());
    TR::Node *ifNode;
@@ -2601,7 +2603,7 @@ TR::Node *generateArrayletAddressTree(TR::Compilation* comp, TR::Node *vcallNode
    return node;
    }
 
-void TR::ValuePropagation::generateRTArrayNodeWithoutFlags(TR_RealTimeArrayCopy *rtArrayCopy,TR::TreeTop *dupArraycopyTree, TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, TR::SymbolReference *srcOffRef, TR::SymbolReference *dstOffRef, TR::SymbolReference *lenRef, bool primitive)
+void OMR::ValuePropagation::generateRTArrayNodeWithoutFlags(TR_RealTimeArrayCopy *rtArrayCopy,TR::TreeTop *dupArraycopyTree, TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, TR::SymbolReference *srcOffRef, TR::SymbolReference *dstOffRef, TR::SymbolReference *lenRef, bool primitive)
    {
    TR::DataType type = rtArrayCopy->_type;
    uint32_t elementSize = TR::Symbol::convertTypeToSize(type);
@@ -2710,7 +2712,7 @@ void TR::ValuePropagation::generateRTArrayNodeWithoutFlags(TR_RealTimeArrayCopy 
    }
 
 
-TR::TreeTop* TR::ValuePropagation::createArrayCopyVCallNodeAfterStores(
+TR::TreeTop* OMR::ValuePropagation::createArrayCopyVCallNodeAfterStores(
    TR::TreeTop         *tree,
    TR::SymbolReference *srcRef,
    TR::SymbolReference *dstRef,
@@ -2889,7 +2891,7 @@ void   createAndInsertTestBlock(TR::Compilation *comp,TR::TreeTop *ifTree, TR::T
 
 // Check if the contiguous size field is zero, which indicates the array is discontiguous.
 //
-TR::TreeTop *TR::ValuePropagation::createSpineCheckNode(TR::Node *node, TR::SymbolReference *objSymRef)
+TR::TreeTop *OMR::ValuePropagation::createSpineCheckNode(TR::Node *node, TR::SymbolReference *objSymRef)
    {
    TR::Node *objNode = TR::Node::createLoad(node, objSymRef);
    TR::Node *sizeNode = TR::Node::createWithSymRef(TR::iloadi, 1, 1, objNode, comp()->getSymRefTab()->findOrCreateContiguousArraySizeSymbolRef());
@@ -2900,7 +2902,7 @@ TR::TreeTop *TR::ValuePropagation::createSpineCheckNode(TR::Node *node, TR::Symb
 
 // Spills the original arguments to System.arraycopy before the spine check.
 //
-TR::TreeTop *TR::ValuePropagation::createAndInsertStoresForArrayCopySpineCheck(
+TR::TreeTop *OMR::ValuePropagation::createAndInsertStoresForArrayCopySpineCheck(
    TR_ArrayCopySpineCheck *checkInfo)
    {
    TR::TreeTop *storeTree;
@@ -2917,7 +2919,7 @@ TR::TreeTop *TR::ValuePropagation::createAndInsertStoresForArrayCopySpineCheck(
    }
 
 
-TR::TreeTop *TR::ValuePropagation::createArrayCopyCallForSpineCheck(
+TR::TreeTop *OMR::ValuePropagation::createArrayCopyCallForSpineCheck(
    TR_ArrayCopySpineCheck *checkInfo)
    {
    TR::Node *srcObjNode, *srcOffNode, *dstObjNode, *dstOffNode, *lenNode;
@@ -2963,7 +2965,7 @@ TR::TreeTop *TR::ValuePropagation::createArrayCopyCallForSpineCheck(
    }
 
 
-void TR::ValuePropagation::transformArrayCopySpineCheck(TR_ArrayCopySpineCheck *checkInfo)
+void OMR::ValuePropagation::transformArrayCopySpineCheck(TR_ArrayCopySpineCheck *checkInfo)
    {
 
    TR::CFG *cfg = comp()->getFlowGraph();
@@ -3035,7 +3037,7 @@ void TR::ValuePropagation::transformArrayCopySpineCheck(TR_ArrayCopySpineCheck *
    }
 
 
-void TR::ValuePropagation::transformRealTimeArrayCopy(TR_RealTimeArrayCopy *rtArrayCopyTree)
+void OMR::ValuePropagation::transformRealTimeArrayCopy(TR_RealTimeArrayCopy *rtArrayCopyTree)
    {
 #ifdef J9_PROJECT_SPECIFIC
    TR::CFG *cfg = comp()->getFlowGraph();
@@ -3354,7 +3356,7 @@ void TR::ValuePropagation::transformRealTimeArrayCopy(TR_RealTimeArrayCopy *rtAr
    }
 
 #ifdef J9_PROJECT_SPECIFIC
-void TR::ValuePropagation::transformRTMultiLeafArrayCopy(TR_RealTimeArrayCopy *rtArrayCopyTree)
+void OMR::ValuePropagation::transformRTMultiLeafArrayCopy(TR_RealTimeArrayCopy *rtArrayCopyTree)
    {
    //copied from transformRealTimeArrayCopy
    TR::CFG *cfg = comp()->getFlowGraph();
@@ -3443,7 +3445,7 @@ const char* transformedTargetName (TR::RecognizedMethod rm)
    }
 
 #ifdef J9_PROJECT_SPECIFIC
-void TR::ValuePropagation::transformObjectCloneCall(TR::TreeTop *callTree, TR::ValuePropagation::ObjCloneInfo *cloneInfo)
+void OMR::ValuePropagation::transformObjectCloneCall(TR::TreeTop *callTree, OMR::ValuePropagation::ObjCloneInfo *cloneInfo)
    {
    TR_OpaqueClassBlock *j9class = cloneInfo->_clazz;
    static char *disableObjectCloneOpt = feGetEnv("TR_disableFastObjectClone");
@@ -3541,7 +3543,7 @@ void TR::ValuePropagation::transformObjectCloneCall(TR::TreeTop *callTree, TR::V
    return;
    }
 
-void TR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, TR_OpaqueClassBlock *j9arrayClass)
+void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, TR_OpaqueClassBlock *j9arrayClass)
    {
    static char *disableArrayCloneOpt = feGetEnv("TR_disableFastArrayClone");
    if (disableArrayCloneOpt || TR::Compiler->om.canGenerateArraylets())
@@ -3656,7 +3658,7 @@ void TR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, TR_Opa
    callTree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(callNode, TR::treetop, 1, arraycopy)));
    }
 
-void TR::ValuePropagation::transformConverterCall(TR::TreeTop *callTree)
+void OMR::ValuePropagation::transformConverterCall(TR::TreeTop *callTree)
    {
 
    if (callTree->getEnclosingBlock()->isCold()||
@@ -4097,7 +4099,7 @@ TR::TreeTop *TR::LocalValuePropagation::processBlock(TR::TreeTop *startTree)
    }
 
 
-void TR::ValuePropagation::launchNode(TR::Node *node, TR::Node *parent, int32_t whichChild)
+void OMR::ValuePropagation::launchNode(TR::Node *node, TR::Node *parent, int32_t whichChild)
    {
    if (node && node->getVisitCount() != _visitCount)
       {

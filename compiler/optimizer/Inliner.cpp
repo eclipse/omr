@@ -1956,7 +1956,7 @@ TR_InlinerBase::addGuardForVirtual(
    // compilation and those later processes will handle them using OSR so we don't want to complicate
    // that with additional OSR at this point
    if ((comp()->getHCRMode() != TR::osr || guard->_kind != TR_HCRGuard)
-       && callerSymbol->supportsInduceOSR(callNode->getByteCodeInfo(), block1, calleeSymbol, comp(), false))
+       && callNode->getSymbolReference()->getOwningMethodSymbol(comp())->supportsInduceOSR(callNode->getByteCodeInfo(), block1, calleeSymbol, comp(), false))
       {
       bool shouldUseOSR = heuristicForUsingOSR(callNode, calleeSymbol, callerSymbol, createdHCRAndVirtualGuard);
 
@@ -2048,7 +2048,8 @@ bool TR_InlinerBase::heuristicForUsingOSR(TR::Node *callNode, TR::ResolvedMethod
       int32_t osrCallerNumLiveStackSlots = 0;
       totalOSRCallersStackSlots = totalOSRCallersStackSlots + osrCallerNumStackSlots;
 
-      TR_BitVector *deadSymRefs = osrMethodData->getLiveRangeInfo(byteCodeIndex);
+      TR_BitVector *deadSymRefs = osrMethodData->getLiveRangeInfo(byteCodeIndex,
+         comp()->getOSRTransitionTarget() == TR::postExecutionOSR ? TR::analysisOSR : TR::inductionOSR);
       if (deadSymRefs)
          {
          osrCallerNumLiveStackSlots = osrMethodData->getNumSymRefs() - deadSymRefs->elementCount();
@@ -2382,6 +2383,71 @@ TR_ParameterToArgumentMapper::lookForModifiedParameters(TR::Node * node)
       }
    }
 
+/*
+ * The OSRCallSiteRematTables for this inlined method and those inlined within it
+ * may contain symbol references for parms that have been mapped to args. Therefore,
+ * its necessary to update the tables based on the mapper.
+ *
+ * This will only be applied in voluntary OSR when induction is still possible.
+ */
+void
+TR_ParameterToArgumentMapper::mapOSRCallSiteRematTable(uint32_t siteIndex)
+   {
+   static const char *disableOSRCallSiteRemat = feGetEnv("TR_DisableOSRCallSiteRemat");
+   if (!comp()->getOption(TR_EnableOSR) || comp()->getOSRMode() != TR::voluntaryOSR ||
+       comp()->osrInfrastructureRemoved() || disableOSRCallSiteRemat)
+      return;
+
+   TR::SymbolReference *ppSymRef, *loadSymRef;
+   for (uint32_t i = 0; i < comp()->getOSRCallSiteRematSize(siteIndex); ++i)
+      {
+      comp()->getOSRCallSiteRemat(siteIndex, i, ppSymRef, loadSymRef);
+
+      // Only apply mapper to parms contained within remat table
+      if (!ppSymRef || !loadSymRef)
+         continue;
+      TR::Symbol *symbol = loadSymRef->getSymbol();
+      if (!symbol->isParm())
+         continue;
+
+      // Map the parms to new symrefs
+      TR::ParameterSymbol *parm = symbol->getParmSymbol();
+      TR_ParameterMapping * parmMap = _mappings.getFirst();
+      for (; parmMap; parmMap = parmMap->getNext())
+         if (symbol == parmMap->_parmSymbol)
+            {
+            if (parmMap->_isConst)
+               {
+               // Should be able to do const, current side table does not allow it
+               comp()->setOSRCallSiteRemat(siteIndex, ppSymRef, NULL);
+               TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrCallSiteRemat/mapParm/const/(%s)",  comp()->signature()));
+               }
+            else if (loadSymRef->getOffset() > 0)
+               {
+               comp()->setOSRCallSiteRemat(siteIndex, ppSymRef, NULL);
+               TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrCallSiteRemat/mapParm/addr/(%s)",  comp()->signature()));
+               }
+            else
+               {
+               comp()->setOSRCallSiteRemat(siteIndex, ppSymRef, parmMap->_replacementSymRef);
+               TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrCallSiteRemat/mapParm/success/(%s)",  comp()->signature()));
+               }
+            break;
+            }
+
+      if (!parmMap)
+         TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrCallSiteRemat/mapParm/missing/(%s)",  comp()->signature()));
+      }
+
+   // Update the remat tables for calls within the current
+   for (int32_t childIndex = 0; childIndex < comp()->getNumInlinedCallSites(); ++childIndex)
+      {
+      TR_InlinedCallSite &ics = comp()->getInlinedCallSite(childIndex);
+      if (siteIndex == ics._byteCodeInfo.getCallerIndex())
+         mapOSRCallSiteRematTable(childIndex);
+      }
+   }
+
 TR::Node *
 TR_ParameterToArgumentMapper::map(TR::Node * node, TR::ParameterSymbol * parm, bool seenBBStart)
    {
@@ -2552,7 +2618,8 @@ TR_TransformInlinedFunction::transform()
    // If the first block has exception predecessors or multiply predecessors then we can't merge
    // the first block with the caller's block
    //
-   if ((firstBlock->getPredecessors().size() > 1) ||
+   if (comp()->isJProfilingCompilation() ||
+       (firstBlock->getPredecessors().size() > 1) ||
        firstBlock->hasExceptionSuccessors() ||
        comp()->fe()->isMethodEnterTracingEnabled(calleeResolvedMethod->getPersistentIdentifier()) ||
        TR::Compiler->vm.canMethodEnterEventBeHooked(comp()))
@@ -2576,6 +2643,8 @@ TR_TransformInlinedFunction::transform()
       {
       transformNode(_currentTreeTop->getNode(), 0, 0);
       }
+
+   _parameterMapper.mapOSRCallSiteRematTable(comp()->getCurrentInlinedSiteIndex());
 
    if (_resultTempSymRef)
       {
@@ -4504,45 +4573,6 @@ void TR_InlinerBase::inlineFromGraph(TR_CallStack *prevCallStack, TR_CallTarget 
    callStack.commit();
    }
 
-static void computeNumLivePendingSlotsAndNestingDepth(TR::Optimizer* optimizer, TR_CallTarget* calltarget, TR_CallStack* callStack, int32_t& numLivePendingPushSlots, int32_t& nestingDepth)
-   {
-   if (optimizer->comp()->getOption(TR_EnableOSR))
-       {
-       TR::Block *containingBlock = calltarget->_myCallSite->_callNodeTreeTop->getEnclosingBlock();
-       int32_t weight = 1;
-       if (!containingBlock->isCold() && containingBlock->getStructureOf())
-          containingBlock->getStructureOf()->calculateFrequencyOfExecution(&weight);
-       nestingDepth = weight/10;
-
-       TR_OSRMethodData *osrMethodData = optimizer->comp()->getOSRCompilationData()->findOrCreateOSRMethodData(optimizer->comp()->getCurrentInlinedSiteIndex(), callStack->_methodSymbol);
-       TR_Array<List<TR::SymbolReference> > *pendingPushSymRefs = callStack->_methodSymbol->getPendingPushSymRefs();
-       int32_t numPendingSlots = 0;
-
-       if (pendingPushSymRefs)
-          numPendingSlots = pendingPushSymRefs->size();
-
-       TR_BitVector *deadSymRefs = osrMethodData->getLiveRangeInfo(calltarget->_myCallSite->_callNode->getByteCodeIndex());
-
-       for (int32_t i=0;i<numPendingSlots;i++)
-         {
-         List<TR::SymbolReference> symRefsAtThisSlot = (*pendingPushSymRefs)[i];
-
-         if (symRefsAtThisSlot.isEmpty()) continue;
-
-         ListIterator<TR::SymbolReference> symRefsIt(&symRefsAtThisSlot);
-         TR::SymbolReference *nextSymRef;
-         for (nextSymRef = symRefsIt.getCurrent(); nextSymRef; nextSymRef=symRefsIt.getNext())
-            {
-            if (!deadSymRefs || !deadSymRefs->get(nextSymRef->getReferenceNumber()))
-               numLivePendingPushSlots++;
-            }
-         }
-
-       optimizer->comp()->incNumLivePendingPushSlots(numLivePendingPushSlots);
-       optimizer->comp()->incNumLoopNestingLevels(nestingDepth);
-       }
-   }
-
 static void updateCallersFlags(TR::ResolvedMethodSymbol* callerSymbol, TR::ResolvedMethodSymbol* calleeSymbol, TR::Optimizer * optimizer)
    {
 
@@ -4860,8 +4890,6 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
     in the calleee that wasn' there when we gen'd IL for it
    */
 
-   // RTSJ support: code to compute previousBBStartInCaller moved up
-
    for (tt = callNodeTreeTop->getNextTreeTop(); tt; tt = tt->getNextTreeTop())
       if (tt->getNode()->getOpCodeValue() == TR::BBEnd)
          {
@@ -4966,7 +4994,6 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
             callerCFG->copyExceptionSuccessors(blockContainingTheCall, n, succAndPredAreNotOSRBlocks);
          else
             debugTrace(tracer(),"\ndon't add exception edges from callee OSR block(block_%d) to caller catch blocks\n",n->getNumber());
-         callerCFG->copyExceptionSuccessors(blockContainingTheCall, n, succAndPredAreNotOSRBlocks);
          }
       }
 
@@ -5010,6 +5037,18 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
          if (disableTailRecursion)
             _disableTailRecursion = true;
          }
+      }
+   else if (comp()->getOSRMode() == TR::involuntaryOSR && tif->crossedBasicBlock())
+      {
+      /**
+       * In involuntary OSR mode, we need to split block even for cases without virtual guard. This is 
+       * because in involuntary OSR a block with OSR point must have an exception edge to the osrCatchBlock
+       * of correct callerIndex. Split the block here so that the OSR points from callee
+       * and from caller are separated.
+       */
+      TR::Block * blockOfCaller = previousBBStartInCaller->getNode()->getBlock();
+      TR::Block * blockOfCallerInCalleeCFG = nextBBEndInCaller->getNode()->getBlock()->split(callNodeTreeTop, callerCFG);
+      callerCFG->copyExceptionSuccessors(blockOfCaller, blockOfCallerInCalleeCFG);
       }
 
    // move the NULLCHK to before the inlined code

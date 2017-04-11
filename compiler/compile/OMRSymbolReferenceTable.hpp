@@ -397,7 +397,6 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateVolatileWriteDoubleSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateMonitorEntrySymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateMonitorExitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
-   TR::SymbolReference * findOrCreateNewStructHeaderSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
 
    // Z
    TR::SymbolReference * findDLPStaticSymbolReference(TR::SymbolReference * staticSymbolReference);

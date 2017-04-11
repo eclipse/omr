@@ -822,6 +822,8 @@
    lnotz,
    lpopcnt,
 
+   ibyteswap,// swap bytes in an integer
+
    Prefetch, // Prefetch
 
 

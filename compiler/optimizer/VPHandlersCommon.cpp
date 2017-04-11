@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 2000, 2016
+ * (c) Copyright IBM Corp. 2000, 2017
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -37,7 +37,7 @@
 #include "infra/Assert.hpp"                          // for TR_ASSERT
 #include "infra/List.hpp"                            // for List
 #include "optimizer/VPConstraint.hpp"           // for TR::VPConstraint, etc
-#include "optimizer/ValuePropagation.hpp"
+#include "optimizer/OMRValuePropagation.hpp"
 #include "runtime/Runtime.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
@@ -49,7 +49,7 @@ class TR_OpaqueClassBlock;
 
 #define OPT_DETAILS "O^O VALUE PROPAGATION: "
 
-TR::Node *constrainCall(TR::ValuePropagation *vp, TR::Node *node);
+TR::Node *constrainCall(OMR::ValuePropagation *vp, TR::Node *node);
 
 // **************************************************************************
 //
@@ -60,7 +60,7 @@ TR::Node *constrainCall(TR::ValuePropagation *vp, TR::Node *node);
 // Default handler - don't do anything with this node, but visit the children
 // to see if they need processing
 //
-TR::Node *constrainChildren(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainChildren(OMR::ValuePropagation *vp, TR::Node *node)
    {
    TR::Node *myParent = vp->getCurrentParent();
    for (int32_t i = node->getNumChildren()-1; i >= 0; i--)
@@ -72,7 +72,7 @@ TR::Node *constrainChildren(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-TR::Node *constrainChildrenFirstToLast(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainChildrenFirstToLast(OMR::ValuePropagation *vp, TR::Node *node)
    {
    TR::Node *myParent = vp->getCurrentParent();
    for (int32_t i = 0; i < node->getNumChildren(); i++)
@@ -84,7 +84,7 @@ TR::Node *constrainChildrenFirstToLast(TR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
-bool checkMethodSignature(TR::ValuePropagation *vp, TR::SymbolReference *symRef, const char *sig)
+bool checkMethodSignature(OMR::ValuePropagation *vp, TR::SymbolReference *symRef, const char *sig)
    {
    TR::Symbol *symbol = symRef->getSymbol();
    if (!symbol->isResolvedMethod())
@@ -99,7 +99,7 @@ bool checkMethodSignature(TR::ValuePropagation *vp, TR::SymbolReference *symRef,
    }
 
 
-TR::TreeTop *searchForToStringCall(TR::ValuePropagation *vp,TR::TreeTop *tt, TR::TreeTop *exitTree,
+TR::TreeTop *searchForToStringCall(OMR::ValuePropagation *vp,TR::TreeTop *tt, TR::TreeTop *exitTree,
                                                       TR::Node *newBuffer, vcount_t visitCount,
                                                       TR::TreeTop **toStringTree, bool useStringBuffer)
    {
@@ -126,7 +126,7 @@ TR::TreeTop *searchForToStringCall(TR::ValuePropagation *vp,TR::TreeTop *tt, TR:
    return tt;
    }
 
-TR::TreeTop *searchForStringAppend(TR::ValuePropagation *vp,const char *sig, TR::TreeTop *tt, TR::TreeTop *exitTree,
+TR::TreeTop *searchForStringAppend(OMR::ValuePropagation *vp,const char *sig, TR::TreeTop *tt, TR::TreeTop *exitTree,
                                     TR::ILOpCodes opCode, TR::Node *newBuffer, vcount_t visitCount, TR::Node **string)
    {
    int len = 0;
@@ -166,7 +166,7 @@ TR::TreeTop *searchForStringAppend(TR::ValuePropagation *vp,const char *sig, TR:
    return tt;
    }
 
-static int cacheStringAppend(TR::ValuePropagation *vp,TR::Node *node)
+static int cacheStringAppend(OMR::ValuePropagation *vp,TR::Node *node)
    {
    return 0;
 
@@ -206,7 +206,7 @@ static int cacheStringAppend(TR::ValuePropagation *vp,TR::Node *node)
       TR_ResolvedMethod *m = symbol->castToResolvedMethodSymbol()->getResolvedMethod();
       if (strncmp(m->signatureChars(), "(Ljava/lang/String;Ljava/lang/String;)V", m->signatureLength())==0)
         {
-	      vp->_cachedStringPeepHolesVcalls.add(new (vp->comp()->trStackMemory()) TR::ValuePropagation::VPTreeTopPair(tt,tt->getPrevRealTreeTop()));
+	      vp->_cachedStringPeepHolesVcalls.add(new (vp->comp()->trStackMemory()) OMR::ValuePropagation::VPTreeTopPair(tt,tt->getPrevRealTreeTop()));
 		}
     }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -323,9 +323,9 @@ static int cacheStringAppend(TR::ValuePropagation *vp,TR::Node *node)
    if (!toStringTree)
       return 0;
 
-   vp->_cachedStringBufferVcalls.add(new (vp->comp()->trStackMemory()) TR::ValuePropagation::VPStringCached(appendTree[0],appendTree[1],appendedString[0],appendedString[1],newTree,toStringTree));
+   vp->_cachedStringBufferVcalls.add(new (vp->comp()->trStackMemory()) OMR::ValuePropagation::VPStringCached(appendTree[0],appendTree[1],appendedString[0],appendedString[1],newTree,toStringTree));
 }
-TR::Node *constrainVcall(TR::ValuePropagation *vp, TR::Node *node)
+TR::Node *constrainVcall(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainCall(vp, node);
    // Look for System.arraycopy call. If the node is transformed into an arraycopy

@@ -92,22 +92,31 @@ public:
 			*_slot = compressed;
 		}
 	}
-	
-	MMINLINE bool atomicWriteReferenceToSlot(omrobjectptr_t reference)
+
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	/**
+	 * Atomically replace heap reference. It is accepted to fail - some other thread
+	 * might have raced us and put a more up to date value.
+	 * @return true if write succeeded
+	 */ 	
+	MMINLINE bool atomicWriteReferenceToSlot(omrobjectptr_t oldReference, omrobjectptr_t newReference)
 	{
-		fomrobject_t compressedOld = *_slot;
-		fomrobject_t compressedNew = convertTokenFromPointer(reference);
-	
 		bool swapResult = false;
-		if (sizeof(fomrobject_t) == sizeof(uintptr_t)) {
-			swapResult = ((uintptr_t)compressedOld == MM_AtomicOperations::lockCompareExchange((uintptr_t *)_slot, (uintptr_t)compressedOld, (uintptr_t)compressedNew));
-		} else if (sizeof(fomrobject_t) == sizeof(uint32_t)) {
+		
+		if (oldReference != newReference) {
+			fomrobject_t compressedOld = convertTokenFromPointer(oldReference);
+			fomrobject_t compressedNew = convertTokenFromPointer(newReference);
+		
+#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
 			swapResult = ((uint32_t)(uintptr_t)compressedOld == MM_AtomicOperations::lockCompareExchangeU32((uint32_t *)_slot, (uint32_t)(uintptr_t)compressedOld, (uint32_t)(uintptr_t)compressedNew));
-		} else {
-			//Assert_MM_unreachable();
+#else
+			swapResult = ((uintptr_t)compressedOld == MM_AtomicOperations::lockCompareExchange((uintptr_t *)_slot, (uintptr_t)compressedOld, (uintptr_t)compressedNew));
+#endif /* OMR_INTERP_COMPRESSED_OBJECT_HEADER */
 		}
+		
 		return swapResult;
 	}
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 	/**
 	 *	Update of slot address.

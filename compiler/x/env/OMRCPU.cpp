@@ -21,13 +21,7 @@
 #include "env/CPU.hpp"
 #include "env/JitConfig.hpp"
 #include "env/ProcessorInfo.hpp"
-
-
-#if defined(LINUX) || defined(OSX)
-extern "C" bool jitGetCPUID(TR_X86CPUIDBuffer *buf) asm ("jitGetCPUID");
-#else
-extern "C" bool _cdecl jitGetCPUID(TR_X86CPUIDBuffer *buf);
-#endif
+#include "x/runtime/X86Runtime.hpp"
 
 TR_X86CPUIDBuffer *
 OMR::X86::CPU::queryX86TargetCPUID(TR::Compilation *comp)

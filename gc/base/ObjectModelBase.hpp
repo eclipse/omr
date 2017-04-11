@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 1991, 2016
+ * (c) Copyright IBM Corp. 1991, 2017
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -113,7 +113,6 @@ protected:
 		return (fomrobject_t*)(objectPtr) + _delegate.getObjectHeaderSlotOffset();
 	}
 
-
 public:
 	/**
 	 * Initialize the receiver, a new instance of GC_ObjectModel
@@ -210,6 +209,23 @@ public:
 	getConsumedSizeInBytesWithHeader(omrobjectptr_t objectPtr)
 	{
 		return adjustSizeInBytes(getSizeInBytesWithHeader(objectPtr));
+	}
+
+	/**
+	 * Determine the total footprint of an object, in bytes, including padding bytes added to bring tail
+	 * of object into heap alignment (see GC_ObjectModelBase::adjustSizeInBytes()). If the object has
+	 * a discontiguous representation, this method should return the size of the root object plus the
+	 * total of all the discontiguous parts of the object.
+	 *
+	 * This method should also account for any expansion bytes added to the object since instantiation.
+	 *
+	 * @param[in] objectPtr points to the object to determine size for
+	 * @return the total size of an object, in bytes, including padding bytes and discontiguous parts
+	 */
+	MMINLINE uintptr_t
+	getTotalFootprintInBytes(omrobjectptr_t objectPtr)
+	{
+		return adjustSizeInBytes(_delegate.getTotalFootprintInBytes(objectPtr));
 	}
 
 	/**
@@ -311,7 +327,7 @@ public:
 
 	/**
 	 * Returns TRUE if an object is indexable, FALSE otherwise. Languages that support indexable objects
-	 * (eg, arrays) must provide an implementation that distinguished indexable from scalar objects.
+	 * (e.g. arrays) must provide an implementation that distinguishes indexable from scalar objects.
 	 *
 	 * @param objectPtr pointer to the object
 	 * @return TRUE if object is indexable, FALSE otherwise
@@ -331,7 +347,12 @@ public:
 	isDeadObject(void *objectPtr)
 	{
 		fomrobject_t *headerSlotPtr = getObjectHeaderSlotAddress((omrobjectptr_t)objectPtr);
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		/* for ConcurrentScavenger, forwarded bit must be 0, otherwise it's a self-forwarded object */
+		return J9_GC_OBJ_HEAP_HOLE == (*headerSlotPtr & (J9_GC_OBJ_HEAP_HOLE | OMR_FORWARDED_TAG));
+#else
 		return J9_GC_OBJ_HEAP_HOLE == (*headerSlotPtr & J9_GC_OBJ_HEAP_HOLE);
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */ 		
 	}
 
 	/**

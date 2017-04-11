@@ -160,6 +160,10 @@ static bool identicalSubTrees(TR::Node *node1, TR::Node *node2)
    if (node1->getOpCode().isLoadVar() &&
        node1->getSymbolReference() != node2->getSymbolReference())
       return false;
+   
+   if (node1->getNumChildren() != node2->getNumChildren())
+      return false;
+   
 
    for (int32_t i = 0; i < node1->getNumChildren(); i++)
       if (!identicalSubTrees(node1->getChild(i), node2->getChild(i)))

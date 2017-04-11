@@ -75,6 +75,10 @@ getCompactionReasonAsString(CompactReason reason)
 			return "very low free space (less than 128kB)";
 		case COMPACT_ALWAYS:
 			return "forced compaction";
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		case COMPACT_ABORTED_SCAVENGE:
+			return "previous scavenge aborted";
+#endif
 		case COMPACT_CONTRACT:
 			return "compact to aid heap contraction";
 		default:
@@ -145,6 +149,10 @@ getPercolateReasonAsString(PercolateReason mode)
 		return "Previous scavenge failed to expand";
 	case CRITICAL_REGIONS:
 		return "Active JNI critical regions";
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	case ABORTED_SCAVENGE:
+		return "previous scavenge aborted";
+#endif		
 	case NONE_SET:
 	default:
 		return "unknown";

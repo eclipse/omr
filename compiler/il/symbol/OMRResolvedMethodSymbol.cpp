@@ -131,7 +131,8 @@ OMR::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod * method, TR::
      _pythonConstsSymRef(NULL),
      _pythonNumLocalVars(0),
      _pythonLocalVarSymRefs(NULL),
-     _properties(0)
+     _properties(0),
+     _bytecodeProfilingOffsets(comp->allocator())
    {
    _flags.setValue(KindMask, IsResolvedMethod);
 
@@ -771,6 +772,7 @@ OMR::ResolvedMethodSymbol::genInduceOSRCall(TR::TreeTop* insertionPoint,
       self()->genOSRHelperCall(inlinedSiteIndex, self()->comp()->getSymRefTab());
       }
 
+   self()->insertRematableStoresFromCallSites(self()->comp(), inlinedSiteIndex, induceOSRCallTree);
    self()->insertStoresForDeadStackSlotsBeforeInducingOSR(self()->comp(), inlinedSiteIndex, insertionPoint->getNode()->getByteCodeInfo(), induceOSRCallTree, callSymbolForDeadSlots);
    traceMsg(self()->comp(), "last real tree n%dn\n", enclosingBlock->getLastRealTreeTop()->getNode()->getGlobalIndex());
    return induceOSRCallTree;
@@ -889,7 +891,17 @@ OMR::ResolvedMethodSymbol::genAndAttachOSRCodeBlocks(int32_t currentInlinedSiteI
          TR::Block * OSRCatchBlock = osrMethodData->findOrCreateOSRCatchBlock(ttnode);
          TR_OSRPoint *osrPoint = NULL;
 
-         if (self()->comp()->requiresLeadingOSRPoint(ttnode))
+         // Generate an OSR point for the induction point, ignoring whether it is after or not
+         TR_ByteCodeInfo offsetBCI = ttnode->getByteCodeInfo();
+         offsetBCI.setByteCodeIndex(offsetBCI.getByteCodeIndex() + self()->comp()->getOSRInductionOffset(ttnode));
+         osrPoint = new (self()->comp()->trHeapMemory()) TR_OSRPoint(offsetBCI, osrMethodData, self()->comp()->trMemory());
+         osrPoint->setOSRIndex(self()->addOSRPoint(osrPoint));
+         if (self()->comp()->getOption(TR_TraceOSR))
+            traceMsg(self()->comp(), "offset osr point added for [%p] at offset bci %d:%d\n",
+               ttnode, offsetBCI.getCallerIndex(), offsetBCI.getByteCodeIndex());
+
+         // Generate an OSR point for the analysis point, if needed
+         if (self()->comp()->requiresAnalysisOSRPoint(ttnode))
             {
             osrPoint = new (self()->comp()->trHeapMemory()) TR_OSRPoint(ttnode->getByteCodeInfo(), osrMethodData, self()->comp()->trMemory());
             osrPoint->setOSRIndex(self()->addOSRPoint(osrPoint));
@@ -898,23 +910,6 @@ OMR::ResolvedMethodSymbol::genAndAttachOSRCodeBlocks(int32_t currentInlinedSiteI
                   ttnode, ttnode->getByteCodeInfo().getCallerIndex(),
                   ttnode->getByteCodeInfo().getByteCodeIndex());
             }
-
-         int32_t osrOffset = self()->comp()->getOSRInductionOffset(ttnode);
-         if (osrOffset > 0)
-            {
-            TR_ByteCodeInfo offsetBCI = ttnode->getByteCodeInfo();
-            offsetBCI.setByteCodeIndex(offsetBCI.getByteCodeIndex() + osrOffset);
-            osrPoint = new (self()->comp()->trHeapMemory()) TR_OSRPoint(offsetBCI, osrMethodData, self()->comp()->trMemory());
-            osrPoint->setOSRIndex(self()->addOSRPoint(osrPoint));
-            if (self()->comp()->getOption(TR_TraceOSR))
-               traceMsg(self()->comp(), "offset osr point added for [%p] at offset bci %d:%d\n",
-                  ttnode, offsetBCI.getCallerIndex(), offsetBCI.getByteCodeIndex());
-            }
-
-         if (self()->comp()->getOption(TR_TraceOSR))
-            TR_ASSERT(osrPoint != NULL, "neither leading nor trailing osr point could be added for [%p] at or offset from %d:%d\n",
-               ttnode, ttnode->getByteCodeInfo().getCallerIndex(),
-               ttnode->getByteCodeInfo().getByteCodeIndex());
 
          // Add an exception edge from the current block to the OSR catch block if there isn't already one
          auto edge = block->getExceptionSuccessors().begin();
@@ -1268,19 +1263,16 @@ OMR::ResolvedMethodSymbol::genIL(TR_FrontEnd * fe, TR::Compilation * comp, TR::S
             if (doOSR)
                {
                TR_ASSERT(comp->getOSRCompilationData(), "OSR compilation data is NULL\n");
-               if (comp->canAffordOSRControlFlow())
+               self()->genAndAttachOSRCodeBlocks(comp->getCurrentInlinedSiteIndex());
+               if (!self()->getOSRPoints().isEmpty())
                   {
-                  self()->genAndAttachOSRCodeBlocks(comp->getCurrentInlinedSiteIndex());
-                  if (!self()->getOSRPoints().isEmpty())
-                     {
-                     self()->genOSRHelperCall(comp->getCurrentInlinedSiteIndex(), symRefTab);
-                     if (comp->getOption(TR_TraceOSR))
-                        comp->dumpMethodTrees("Trees after OSR in genIL", self());
-                     }
-
-                  if (!comp->isOutermostMethod())
-                     self()->cleanupUnreachableOSRBlocks(comp->getCurrentInlinedSiteIndex(), comp);
+                  self()->genOSRHelperCall(comp->getCurrentInlinedSiteIndex(), symRefTab);
+                  if (comp->getOption(TR_TraceOSR))
+                     comp->dumpMethodTrees("Trees after OSR in genIL", self());
                   }
+
+               if (!comp->isOutermostMethod())
+                  self()->cleanupUnreachableOSRBlocks(comp->getCurrentInlinedSiteIndex(), comp);
                }
 
             if (optimizer)
@@ -1428,8 +1420,6 @@ OMR::ResolvedMethodSymbol::getNumberOfBackEdges()
       }
    return numBackEdges;
    }
-
-
 
 void
 OMR::ResolvedMethodSymbol::resetLiveLocalIndices()
@@ -1678,8 +1668,101 @@ OMR::ResolvedMethodSymbol::cleanupUnreachableOSRBlocks(int32_t inlinedSiteIndex,
       }
    }
 
+void
+OMR::ResolvedMethodSymbol::insertRematableStoresFromCallSites(TR::Compilation *comp, int32_t siteIndex, TR::TreeTop *induceOSRTree)
+   {
+   TR::TreeTop *prev = induceOSRTree->getPrevTreeTop();
+   TR::TreeTop *next = induceOSRTree;
+   TR::SymbolReference *ppSymRef, *loadSymRef;
 
+   while (siteIndex > -1)
+      {
+      for (uint32_t i = 0; i < comp->getOSRCallSiteRematSize(siteIndex); ++i)
+         {
+         comp->getOSRCallSiteRemat(siteIndex, i, ppSymRef, loadSymRef);
+         if (!ppSymRef || !loadSymRef)
+            continue;
+         TR::Node *load = TR::Node::createLoad(loadSymRef);
+         TR::Node *store = TR::Node::createStore(ppSymRef, load);
+         TR::TreeTop *storeTree = TR::TreeTop::create(comp, store);
+         prev->join(storeTree);
+         storeTree->join(next);
+         prev = storeTree;
+         }
+      
+      siteIndex = comp->getInlinedCallSite(siteIndex)._byteCodeInfo.getCallerIndex();
+      }
+   }
 
+/*
+ * Returns the bytecode info for an OSR point, taking into account the
+ * possibility that the treetop for a call has different BCI to the OSR
+ * point.
+ */
+TR_ByteCodeInfo&
+OMR::ResolvedMethodSymbol::getOSRByteCodeInfo(TR::Node *node)
+   {
+   TR_ByteCodeInfo &nodeBCI = node->getByteCodeInfo();
+   if (node->getNumChildren() > 0 && (node->getOpCodeValue() == TR::treetop || node->getOpCode().isCheck()))
+      nodeBCI = node->getFirstChild()->getByteCodeInfo();
+   return nodeBCI;
+   }
+
+/*
+ * Checks the provided node is pending push store or load expected to be
+ * around an OSR point.
+ *
+ * Pending push stores are used to ensure the stack can be reconstructed 
+ * after the transition, whilst anchored loads are also related as they
+ * may be used to avoid the side effects of the prior mentioned stores.
+ * As these anchored loads can be placed before the stores, they may
+ * sit between the OSR point and the transition.
+ */
+bool
+OMR::ResolvedMethodSymbol::isOSRRelatedNode(TR::Node *node)
+   {
+   return (node->getOpCode().isStoreDirect()
+         && node->getOpCode().hasSymbolReference()
+         && node->getSymbolReference()->getSymbol()->isPendingPush())
+      || (node->getOpCodeValue() == TR::treetop
+         && node->getFirstChild()->getOpCode().isLoadVarDirect()
+         && node->getFirstChild()->getOpCode().hasSymbolReference()
+         && node->getFirstChild()->getSymbolReference()->getSymbol()->isPendingPush());
+   }
+
+/*
+ * Checks that the provided node is related to the OSR point's BCI.
+ * This applies to pending push stores and loads sharing the BCI.
+ */
+bool
+OMR::ResolvedMethodSymbol::isOSRRelatedNode(TR::Node *node, TR_ByteCodeInfo &osrBCI)
+   {
+   TR_ByteCodeInfo &bci = node->getByteCodeInfo();
+   bool byteCodeIndex = osrBCI.getCallerIndex() == bci.getCallerIndex()
+      && osrBCI.getByteCodeIndex() == bci.getByteCodeIndex();
+   return byteCodeIndex && self()->isOSRRelatedNode(node);
+   }
+
+/*
+ * This function will return the transition treetop for the provided OSR point,
+ * depending on the transition target and surrounding treetops.
+ */
+TR::TreeTop *
+OMR::ResolvedMethodSymbol::getOSRTransitionTreeTop(TR::TreeTop *tt)
+   {
+   if (self()->comp()->getOSRTransitionTarget() == TR::postExecutionOSR)
+      {
+      TR_ByteCodeInfo bci = self()->getOSRByteCodeInfo(tt->getNode());
+      TR::TreeTop *cursor = tt->getNextTreeTop();
+      while (cursor && self()->isOSRRelatedNode(cursor->getNode(), bci))
+         {
+         tt = cursor;
+         cursor = cursor->getNextTreeTop();
+         }
+      }
+
+   return tt;
+   }
 
 void
 OMR::ResolvedMethodSymbol::insertStoresForDeadStackSlotsBeforeInducingOSR(TR::Compilation *comp, int32_t inlinedSiteIndex, TR_ByteCodeInfo &byteCodeInfo, TR::TreeTop *induceOSRTree, TR::ResolvedMethodSymbol *callSymbolForDeadSlots)
@@ -1704,12 +1787,14 @@ OMR::ResolvedMethodSymbol::insertStoresForDeadStackSlotsBeforeInducingOSR(TR::Co
    TR::TreeTop *prev = induceOSRTree->getPrevTreeTop();
    TR::TreeTop *next = induceOSRTree;
 
+   TR::OSRPointType pointType = TR::inductionOSR;
+
    while (osrMethodData)
       {
       if (comp->getOption(TR_TraceOSR))
          traceMsg(comp, "Inserting stores for dead stack slots in method at caller index %d and bytecode index %d for induceOSR call %p\n", callSite, byteCodeIndex, induceOSRTree->getNode());
 
-      TR_BitVector *deadSymRefs = osrMethodData->getLiveRangeInfo(byteCodeIndex);
+      TR_BitVector *deadSymRefs = osrMethodData->getLiveRangeInfo(byteCodeIndex, pointType);
       if (deadSymRefs)
          {
          TR_BitVectorIterator bvi(*deadSymRefs);
@@ -1738,6 +1823,7 @@ OMR::ResolvedMethodSymbol::insertStoresForDeadStackSlotsBeforeInducingOSR(TR::Co
          callSite = callSiteInfo._byteCodeInfo.getCallerIndex();
          osrMethodData = comp->getOSRCompilationData()->findCallerOSRMethodData(osrMethodData);
          byteCodeIndex = callSiteInfo._byteCodeInfo.getByteCodeIndex();
+         pointType = comp->getOSRTransitionTarget() == TR::postExecutionOSR ? TR::analysisOSR : TR::inductionOSR;
          }
       else
          osrMethodData = NULL;
@@ -1759,7 +1845,6 @@ OMR::ResolvedMethodSymbol::findOSRPoint(TR_ByteCodeInfo &bcInfo)
 
    return NULL;
    }
-
 
 
 void
@@ -2002,24 +2087,11 @@ OMR::ResolvedMethodSymbol::detectInternalCycles(TR::CFG *cfg, TR::Compilation *c
                      // As this method is performed soon after ilgen, the exception handler
                      // may be prepended with an asynccheck and pending pushes
                      // These should be retained in the copy, so skip them when ripping out trees
-                     if (comp->getHCRMode() == TR::osr)
+                     if (comp->getOSRTransitionTarget() == TR::postExecutionOSR)
                         {
                         TR::TreeTop *next = retain->getNextTreeTop();
                         if (next && next->getNode()->getOpCodeValue() == TR::asynccheck)
-                           {
-                           TR_ByteCodeInfo osrPointBCI = next->getNode()->getByteCodeInfo();
-                           retain = next;
-                           next = next->getNextTreeTop();
-                           // Pending pushes should have the same BCI as the OSR point
-                           while (next
-                                 && next->getNode()->getOpCode().isStoreDirect()
-                                 && next->getNode()->getByteCodeInfo().getCallerIndex() == osrPointBCI.getCallerIndex()
-                                 && next->getNode()->getByteCodeInfo().getByteCodeIndex() == osrPointBCI.getByteCodeIndex())
-                              {
-                              retain = next;
-                              next = next->getNextTreeTop();
-                              }
-                           }
+                           retain = self()->getOSRTransitionTreeTop(next);
                         }
 
                      retain->join(clonedCatch->getExit());
@@ -2282,6 +2354,107 @@ OMR::ResolvedMethodSymbol::setNoTemps(bool b)
    {
    TR_ASSERT(self()->isJittedMethod(), "Should have been created as a jitted method.");
    _methodFlags.set(NoTempsSet, b);
+   }
+
+/**
+ * \brief Returns the bytecode that represents the start of the ilgen created basic block
+ *
+ * This function takes a bytecode index and looks up to find the stashed bytecode
+ * index which corresponds to the start of the basic block in which bytecodeIndex
+ * was generated at ilgen time. This is useful when trying to reassociate profiling
+ * information when blocks have been split due to inlining
+ *
+ *  @param bytecodeIndex The bytecode of the instruction whose basic block start is to be found
+ *  @return The bytecode index of the start of the containing ilgen basic block, -1 if unknown
+ */
+int32_t OMR::ResolvedMethodSymbol::getProfilingByteCodeIndex(int32_t bytecodeIndex)
+   {
+   for (auto itr = _bytecodeProfilingOffsets.begin(), end = _bytecodeProfilingOffsets.end(); itr != end; ++itr)
+      {
+      if (itr->first >= bytecodeIndex)
+         return itr->second.first;
+      }
+   return -1;
+   }
+
+/**
+ * \brief Save the profiling frequency of a given bytecode index
+ *
+ * This function stashes a profiling frequency against a given bytecode index for later retrieval
+ * (usually as part of profiling re-association.
+ *
+ * @param bytecodeIndex The bytecode index of the start of the block whose frequency we wish to save
+ * @param frequency The normalized block frequency to save for later use
+ */
+void OMR::ResolvedMethodSymbol::setProfilerFrequency(int32_t bytecodeIndex, int32_t frequency)
+   {
+   for (auto itr = _bytecodeProfilingOffsets.begin(), end = _bytecodeProfilingOffsets.end(); itr != end; ++itr)
+      {
+      if (itr->first >= bytecodeIndex)
+         itr->second.second = frequency;
+      }
+   }
+
+/**
+ * \brief Return the saved profiling frequency for the given bytecode index
+ *
+ * This function returns a profiling frequency that was saved against a given byte code index for
+ * later retrieval.
+ *
+ * @param bytecodeIndex The bytecode index of the start of the block whose frequency we wish to retrieve
+ * @return The normalized saved frequency, -1 if unknown
+ */
+int32_t OMR::ResolvedMethodSymbol::getProfilerFrequency(int32_t bytecodeIndex)
+   {
+   for (auto itr = _bytecodeProfilingOffsets.begin(), end = _bytecodeProfilingOffsets.end(); itr != end; ++itr)
+      {
+      if (itr->first >= bytecodeIndex)
+         return itr->second.second;
+      }
+   return -1;
+   }
+
+static bool compareProfilingOffsetInfo(const std::pair<int32_t, int32_t> &first, const std::pair<int32_t, int32_t> &second)
+   {
+   return first.first < second.first;
+   }
+
+/**
+ * \brief Save the bytecode range of a basic block during ilgen
+ *
+ * @param startBCI The bytecode index of the start of the basic block
+ * @param endBCI The bytecode index of the end of the basic block
+ */
+void OMR::ResolvedMethodSymbol::addProfilingOffsetInfo(int32_t startBCI, int32_t endBCI)
+   {
+   for (auto itr = _bytecodeProfilingOffsets.begin(), end = _bytecodeProfilingOffsets.end(); itr != end; ++itr)
+       {
+       if (itr->first >= endBCI)
+          {
+          _bytecodeProfilingOffsets.insert(itr, std::make_pair(endBCI, std::make_pair(startBCI, -1)));
+          return;
+          }
+       }
+   _bytecodeProfilingOffsets.push_back(std::make_pair(endBCI, std::make_pair(startBCI, -1)));
+   }
+
+/**
+ * \brief Print the saved basic block bytecode ranges and associated block frequencies
+ *
+ * @param comp The compilation object
+ */
+void OMR::ResolvedMethodSymbol::dumpProfilingOffsetInfo(TR::Compilation *comp)
+   {
+   for (auto itr = _bytecodeProfilingOffsets.begin(), end = _bytecodeProfilingOffsets.end(); itr != end; ++itr)
+       traceMsg(comp, "  %d:%d\n", itr->first, itr->second.first);
+   }
+
+/**
+ * \brief Clear the saved basic block and profiling information
+ */
+void OMR::ResolvedMethodSymbol::clearProfilingOffsetInfo()
+   {
+   _bytecodeProfilingOffsets.clear();
    }
 
 //Explicit instantiations

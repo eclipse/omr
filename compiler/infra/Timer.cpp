@@ -67,30 +67,9 @@ uint32_t TR_SingleTimer::stopTiming(TR::Compilation *comp)
    }
 
 
-char *TR_SingleTimer::timeTakenString(TR::Compilation *comp)
+double TR_SingleTimer::secondsTaken()
    {
-   static char timeString[32];
-   uint32_t    mins,
-               uSecs,
-               totalSecs,
-               frequency;
-   double      fSecs;
-
-   frequency = TR::Compiler->vm.getHighResClockResolution(comp);
-   if (frequency != 0)
-      {
-      totalSecs = _total / frequency;
-      uSecs =     _total % frequency;
-
-      mins = totalSecs / 60;
-      fSecs = totalSecs % 60;
-      fSecs += (double)uSecs / (double)frequency;
-
-      sprintf(timeString,"%2d:%.6f", mins, fSecs);
-      }
-   else
-      {
-      sprintf(timeString,"* * * * timer not supported!\n");
-      }
-   return timeString;
+   uint64_t frequency = TR::Compiler->vm.getHighResClockResolution();
+   return frequency ? (double)_total / (double)frequency : 0.0;
    }
+

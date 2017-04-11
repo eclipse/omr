@@ -578,7 +578,7 @@ MM_VerboseHandlerOutputStandard::handleConcurrentKickoff(J9HookInterface** hook,
 
 	const char* reasonString = getConcurrentKickoffReason(eventData);
 
-	if (extensions->scavengerEnabled) {
+	if (extensions->isScavengerEnabled()) {
 		writer->formatAndOutput(
 				env, 1, "<kickoff reason=\"%s\" targetBytes=\"%zu\" thresholdFreeBytes=\"%zu\"  remainingFree=\"%zu\" tenureFreeBytes=\"%zu\" nurseryFreeBytes=\"%zu\" />",
 				reasonString, event->traceTarget, event->kickOffThreshold, event->remainingFree, event->commonData->tenureFreeBytes, event->commonData->nurseryFreeBytes);

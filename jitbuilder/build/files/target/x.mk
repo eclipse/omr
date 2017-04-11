@@ -33,7 +33,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRMemoryReference.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OpBinary.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OpNames.cpp \
-    $(JIT_OMR_DIRTY_DIR)/x/codegen/OpProperties.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OutlinedInstructions.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/RegisterRematerialization.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/SubtractAnalyser.cpp \

@@ -1139,9 +1139,6 @@ bool TR::LocalDeadStoreElimination::examineNewUsesForKill(TR::Node *node, TR::No
 
 void TR::LocalDeadStoreElimination::killStoreNodes(TR::Node *node)
    {
-   TR::SparseBitVector usedef_vector(comp()->allocator());
-   node->getSymbolReference()->getUseDefAliases().getAliasesWithClear(usedef_vector);
-
    for (auto it = _storeNodes->begin(); it != _storeNodes->end(); ++it)
       {
       TR::Node *storeNode = *it;
@@ -1151,8 +1148,7 @@ void TR::LocalDeadStoreElimination::killStoreNodes(TR::Node *node)
          TR::SymbolReference *storeSymRef=storeNode->getSymbolReference();
 
          // TODO: improve by not killing stores that are definitely disjoint
-         // if (node->getSymbolReference()->getUseDefAliases().contains(storeSymRef, comp()))
-         if (usedef_vector[storeSymRef->getReferenceNumber()])
+         if (node->getSymbolReference()->getUseDefAliases().contains(storeSymRef, comp()))
         *it = NULL;
          }
       }

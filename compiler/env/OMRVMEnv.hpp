@@ -63,8 +63,7 @@ public:
    uint64_t getHighResClock(TR::Compilation *comp);
    uint64_t getHighResClock(OMR_VMThread *omrVMThread);
 
-   uint64_t getHighResClockResolution(TR::Compilation *comp);
-   uint64_t getHighResClockResolution(OMR_VMThread *omrVMThread);
+   uint64_t getHighResClockResolution();
 
    uintptrj_t thisThreadGetPendingExceptionOffset() { return 0; }
 

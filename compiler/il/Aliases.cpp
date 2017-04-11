@@ -144,7 +144,6 @@ OMR::SymbolReference::getUseonlyAliasesBV(TR::SymbolReferenceTable * symRefTab)
             case TR_newObjectNoZeroInit:
             case TR_newArray:
             case TR_multiANewArray:
-            case TR_newObjectNoTenantInit:
             default:
                return &symRefTab->aliasBuilder.defaultMethodUseAliases();
             }
@@ -314,7 +313,6 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
             case TR_newObjectNoZeroInit:
             case TR_newArray:
             case TR_multiANewArray:
-            case TR_newObjectNoTenantInit:
                if ((comp->generateArraylets() || comp->isDLT()) && includeGCSafePoint)
                   return &symRefTab->aliasBuilder.gcSafePointSymRefNumbers();
                else
@@ -528,10 +526,6 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
 
             if (!methodInfo->doesntKillNonIntPrimitiveStatics())
                *aliases |= symRefTab->aliasBuilder.nonIntPrimitiveStaticSymRefs();
-
-#ifdef J9_PROJECT_SPECIFIC
-            *aliases |= symRefTab->aliasBuilder.tenantDataMetaSymRefs();
-#endif
 
             TR_BitVector *methodAliases = symRefTab->aliasBuilder.methodAliases(self());
             *aliases &= *methodAliases;

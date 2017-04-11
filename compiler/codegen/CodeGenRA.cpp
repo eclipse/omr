@@ -24,6 +24,7 @@
 #include <algorithm>                           // for std::find, etc
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
+#include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/FrontEnd.hpp"                // for feGetEnv, etc
 #include "codegen/GCStackAtlas.hpp"            // for GCStackAtlas
 #include "codegen/Instruction.hpp"             // for Instruction

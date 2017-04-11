@@ -305,6 +305,16 @@ MM_ParallelGlobalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_Allo
 	didCompact = _compactThisCycle;
 #endif /* OMR_GC_MODRON_COMPACTION */
 	_cli->parallelGlobalGC_masterThreadGarbageCollect_gcComplete(env, didCompact);
+
+#if defined(OMR_GC_MODRON_COMPACTION)
+	if (didCompact) {
+		/* Free space will have changed as a result of compaction so recalculate
+		 * any expand or contract target.
+		 * Concurrent Scavenger requires this be done after fixup heap for walk pass.
+		*/
+		env->_cycleState->_activeSubSpace->checkResize(env, allocDescription, env->_cycleState->_gcCode.isExplicitGC());
+	}
+#endif
 	
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	/* Merge sublists in the remembered set (if necessary) */
@@ -356,8 +366,16 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 	if(_extensions->compactOnGlobalGC) {
 		compactReason = COMPACT_ALWAYS;
 		goto compactionReqd;
+	}
+
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	/* Aborted CS need global GC with Nursery compaction */
+	if (J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_ABORTED_SCAVENGE == gcCode.getCode()) {
+		compactReason = COMPACT_ABORTED_SCAVENGE;
+		goto compactionReqd;
 	}	
-	
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
 	/* Is this a system GC ? */ 
 	if(gcCode.isExplicitGC()) { 
 		/* If the user as specified -XcompactexplicitGC then compact*/
@@ -712,11 +730,6 @@ MM_ParallelGlobalGC::masterThreadCompact(MM_EnvironmentBase *env, MM_AllocateDes
 	
 	/* Remember the gc count of the last compaction */ 
 	_extensions->globalGCStats.compactStats._lastHeapCompaction= _extensions->globalGCStats.gcCount;
-	
-	/* Free space will have changed as a result of compaction so recalculate
-	 * any expand or contract target.
- 	*/ 
-	env->_cycleState->_activeSubSpace->checkResize(env, allocDescription, env->_cycleState->_gcCode.isExplicitGC());
 }
 #endif /* OMR_GC_MODRON_COMPACTION */
 

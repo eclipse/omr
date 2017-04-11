@@ -95,6 +95,8 @@ public:
       TR::IlType(name),
       _type(type)
       { }
+   virtual ~PrimitiveType()
+      { }
 
    virtual TR::DataType getPrimitiveType()
       {
@@ -126,10 +128,11 @@ public:
 
    void cacheSymRef(TR::SymbolReference *symRef) { _symRef = symRef; }
    TR::SymbolReference *getSymRef()              { return _symRef; }
+   void clearSymRef()                            { _symRef = NULL; }
 
    TR::IlType *getType()                         { return _type; }
 
-   TR::DataType getPrimitiveType()             { return _type->getPrimitiveType(); }
+   TR::DataType getPrimitiveType()               { return _type->getPrimitiveType(); }
 
    size_t getOffset()                            { return _offset; }
 
@@ -157,6 +160,8 @@ public:
       _size(0),
       _closed(false)
       { }
+   virtual ~StructType()
+      { }
 
    TR::DataType getPrimitiveType()                 { return TR::Address; }
    void Close(size_t finalSize)                      { TR_ASSERT(_size <= finalSize, "Final size %d of struct %s is less than its current size %d\n", finalSize, _name, _size); _size = finalSize; _closed = true; };
@@ -170,6 +175,8 @@ public:
    TR::SymbolReference *getFieldSymRef(const char *name);
    bool isStruct() { return true; }
    virtual size_t getSize() { return _size; }
+
+   void clearSymRefs();
 
 protected:
    FieldInfo * findField(const char *fieldName);
@@ -261,11 +268,9 @@ StructType::getFieldSymRef(const char *fieldName)
 
       TR::DataType type = info->getPrimitiveType();
 
-      TR::Symbol *symbol = NULL;
-      if (TR::Int32 == type)
-         symbol = comp->getSymRefTab()->findOrCreateGenericIntShadowSymbol();
-      else
-         symbol = TR::Symbol::createShadow(comp->trHeapMemory(), type);
+      char *fullName = (char *) comp->trMemory()->allocateHeapMemory((strlen(info->_name) + 1 + strlen(_name) + 1) * sizeof(char));
+      sprintf(fullName, "%s.%s", _name, info->_name);
+      TR::Symbol *symbol = TR::Symbol::createNamedShadow(comp->trHeapMemory(), type, info->_type->getSize(), fullName);
 
       // TBD: should we create a dynamic "constant" pool for accesses made by the method being compiled?
       symRef = new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), symbol, comp->getMethodSymbol()->getResolvedMethodIndex(), -1);
@@ -286,6 +291,18 @@ StructType::getFieldSymRef(const char *fieldName)
    return (TR::IlReference *)symRef;
    }
 
+void
+StructType::clearSymRefs()
+   {
+   FieldInfo *field = _firstField;
+   while (field)
+      {
+      field->clearSymRef();
+      field = field->_next;
+      }
+   }
+
+
 class UnionType : public TR::IlType
    {
 public:
@@ -300,6 +317,8 @@ public:
       _symRefBV(4, trMemory),
       _trMemory(trMemory)
       { }
+   virtual ~UnionType()
+      { }
 
    TR::DataType getPrimitiveType()                 { return TR::Address; }
    void Close();
@@ -310,6 +329,8 @@ public:
    TR::SymbolReference *getFieldSymRef(const char *name);
    virtual bool isUnion() { return true; }
    virtual size_t getSize() { return _size; }
+
+   void clearSymRefs();
 
 protected:
    FieldInfo * findField(const char *fieldName);
@@ -381,7 +402,9 @@ UnionType::getFieldSymRef(const char *fieldName)
       auto symRefTab = comp->getSymRefTab();
       TR::DataType type = info->getPrimitiveType();
 
-      TR::Symbol *symbol = TR::Symbol::createShadow(comp->trHeapMemory(), type);
+      char *fullName = (char *) comp->trMemory()->allocateHeapMemory((strlen(info->_name) + 1 + strlen(_name) + 1) * sizeof(char));
+      sprintf(fullName, "%s.%s", _name, info->_name);
+      TR::Symbol *symbol = TR::Symbol::createNamedShadow(comp->trHeapMemory(), type, info->_type->getSize(), fullName);
       symRef = new (comp->trHeapMemory()) TR::SymbolReference(symRefTab, symbol, comp->getMethodSymbol()->getResolvedMethodIndex(), -1);
       symRef->setOffset(0);
       symRef->setReallySharesSymbol();
@@ -400,6 +423,19 @@ UnionType::getFieldSymRef(const char *fieldName)
    return static_cast<TR::IlReference *>(symRef);
    }
 
+void
+UnionType::clearSymRefs()
+   {
+   FieldInfo *field = _firstField;
+   while (field)
+      {
+      field->clearSymRef();
+      field = field->_next;
+      }
+   _symRefBV.init(4, _trMemory);
+   }
+
+
 class PointerType : public TR::IlType
    {
 public:
@@ -407,8 +443,7 @@ public:
 
    PointerType(TR::IlType *baseType) :
       TR::IlType(_nameArray),
-      _baseType(baseType),
-      _symRef(0)
+      _baseType(baseType)
       {
       char *baseName = (char *)_baseType->getName();
       TR_ASSERT(strlen(baseName) < 45, "cannot store name of pointer type");
@@ -424,11 +459,8 @@ public:
 
    virtual size_t getSize() { return TR::DataType::getSize(TR::Address); }
 
-   TR::SymbolReference *getSymRef();
-
 protected:
    TR::IlType          * _baseType;
-   TR::SymbolReference * _symRef;
    char                  _nameArray[48];
    };
 
@@ -662,4 +694,23 @@ TypeDictionary::FieldReference(const char *typeName, const char *fieldName)
    TR_ASSERT(false, "No type with name `%s`", typeName);
    return NULL;
    }
+
+void
+TypeDictionary::NotifyCompilationDone()
+   {
+   // clear all symbol references for fields
+   TR_HashTabIterator structIterator(_structsByName);
+   for (StructType *aStruct = (StructType *)structIterator.getFirst();aStruct;aStruct = (StructType *)structIterator.getNext())
+      {
+      aStruct->clearSymRefs();
+      }
+
+   // clear all symbol references for union fields
+   TR_HashTabIterator unionIterator(_unionsByName);
+   for (UnionType *aUnion = (UnionType *)unionIterator.getFirst();aUnion;aUnion = (UnionType *)unionIterator.getNext())
+      {
+      aUnion->clearSymRefs();
+      }
+   }
+
 } // namespace OMR

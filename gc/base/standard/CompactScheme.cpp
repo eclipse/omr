@@ -33,7 +33,6 @@
 #include "Debug.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "Heap.hpp"
 #include "HeapLinkedFreeHeader.hpp"
 #include "HeapMapIterator.hpp"
@@ -403,7 +402,7 @@ MM_CompactScheme::createSubAreaTable(MM_EnvironmentStandard *env, bool singleThr
 		GC_HeapRegionIteratorStandard regionIterator(_rootManager);
 		uintptr_t i = 0;
 		while(NULL != (region = regionIterator.nextRegion())) {
-			if (!region->isCommitted()) {
+			if (!region->isCommitted() || (0 == region->getSize())) {
 				continue;
 			}
 			void *lowAddress = region->getLowAddress();
@@ -510,7 +509,7 @@ MM_CompactScheme::completeSubAreaTable(MM_EnvironmentStandard *env)
 		 */
 		GC_HeapRegionIteratorStandard regionIterator2(_rootManager);
 		while(NULL != (region = regionIterator2.nextRegion())) {
-			if (!region->isCommitted()) {
+			if (!region->isCommitted() || (0 == region->getSize())) {
 				continue;
 			}
 			MM_MemorySubSpace *subspace = region->getSubSpace();
@@ -638,6 +637,7 @@ MM_CompactScheme::flushPool(MM_EnvironmentStandard *env, MM_CompactMemoryPoolSta
 	memoryPool->setFreeMemorySize(poolState->_freeBytes);
 	memoryPool->setFreeEntryCount(poolState->_freeHoles);
 	memoryPool->setLargestFreeEntry(poolState->_largestFreeEntry);
+	memoryPool->setLastFreeEntry(poolState->_previousFreeEntry);
 }
 
 void MM_CompactScheme::rebuildFreelist(MM_EnvironmentStandard *env)
@@ -649,7 +649,7 @@ void MM_CompactScheme::rebuildFreelist(MM_EnvironmentStandard *env)
 	SubAreaEntry *subAreaTable = _subAreaTable;
 
 	while(NULL != (region = regionIterator.nextRegion())) {
-		if (!region->isCommitted()) {
+		if (!region->isCommitted() || (0 == region->getSize())) {
 			continue;
 		}
 		MM_MemorySubSpace *memorySubSpace = region->getSubSpace();
@@ -810,7 +810,7 @@ MM_CompactScheme::moveObjects(MM_EnvironmentStandard *env, uintptr_t &objectCoun
 	SubAreaEntry *subAreaTable = _subAreaTable;
 
 	while(NULL != (region = regionIterator.nextRegion())) {
-		if (!region->isCommitted()) {
+		if (!region->isCommitted() || (0 == region->getSize())) {
 			continue;
 		}
 		intptr_t i;
@@ -1346,7 +1346,7 @@ MM_CompactScheme::fixupObjects(MM_EnvironmentStandard *env, uintptr_t& objectCou
 	SubAreaEntry *subAreaTable = _subAreaTable;
 
 	while (NULL != (region = regionIterator.nextRegion())) {
-		if (!region->isCommitted()) {
+		if (!region->isCommitted() || (0 == region->getSize())) {
 			continue;
 		}
 		intptr_t i;
@@ -1406,7 +1406,7 @@ MM_CompactScheme::rebuildMarkbits(MM_EnvironmentStandard *env)
 	SubAreaEntry *subAreaTable = _subAreaTable;
 
 	while(NULL != (region = regionIterator.nextRegion())) {
-		if (!region->isCommitted()) {
+		if (!region->isCommitted() || (0 == region->getSize())) {
 			continue;
 		}
 		intptr_t i;
@@ -1468,7 +1468,7 @@ MM_CompactScheme::parallelFixHeapForWalk(MM_EnvironmentBase *env)
 	SubAreaEntry *subAreaTable = _subAreaTable;
 
 	while(NULL != (region = regionIterator.nextRegion())) {
-		if (!region->isCommitted()) {
+		if (!region->isCommitted() || (0 == region->getSize())) {
 			continue;
 		}
 		intptr_t i = 0;

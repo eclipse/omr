@@ -1242,8 +1242,10 @@ TR::Register *OMR::Power::TreeEvaluator::compareIntsForEquality(TR::InstOpCode::
    TR::Node     *secondChild = node->getSecondChild();
 
 #ifdef J9_PROJECT_SPECIFIC
-   if (cg->profiledPointersRequireRelocation() && node->isProfiledGuard() && secondChild->getOpCodeValue() == TR::aconst &&
-       (secondChild->isClassPointerConstant() || secondChild->isMethodPointerConstant()))
+if (cg->profiledPointersRequireRelocation() && secondChild->getOpCodeValue() == TR::aconst &&
+   (secondChild->isClassPointerConstant() || secondChild->isMethodPointerConstant()))
+   {
+   if (node->isProfiledGuard())
       {
       TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
       TR_AOTGuardSite *site = comp->addAOTNOPSite();
@@ -1252,6 +1254,12 @@ TR::Register *OMR::Power::TreeEvaluator::compareIntsForEquality(TR::InstOpCode::
       site->setNode(node);
       site->setAconstNode(secondChild);
       }
+   else
+      {
+      TR_ASSERT(!(node->isNopableInlineGuard()),"Should not evaluate class or method pointer constants underneath NOPable guards as they are runtime assumptions handled by virtualGuardHelper");
+      cg->evaluate(secondChild);
+      }
+   }
 #endif
 
    if (firstChild->getOpCodeValue() == TR::b2i &&
@@ -1625,16 +1633,24 @@ TR::Register *OMR::Power::TreeEvaluator::compareLongsForEquality(TR::InstOpCode:
       {
 
 #ifdef J9_PROJECT_SPECIFIC
-      if (cg->profiledPointersRequireRelocation() && node->isProfiledGuard() && secondChild->getOpCodeValue() == TR::aconst &&
-          (secondChild->isClassPointerConstant() || secondChild->isMethodPointerConstant()))
-         {
-         TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
-         TR_AOTGuardSite *site = comp->addAOTNOPSite();
-         site->setType(TR_ProfiledGuard);
-         site->setGuard(virtualGuard);
-         site->setNode(node);
-         site->setAconstNode(secondChild);
-         }
+if (cg->profiledPointersRequireRelocation() && secondChild->getOpCodeValue() == TR::aconst &&
+   (secondChild->isClassPointerConstant() || secondChild->isMethodPointerConstant()))
+   {
+   if (node->isProfiledGuard())
+      {
+      TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
+      TR_AOTGuardSite *site = comp->addAOTNOPSite();
+      site->setType(TR_ProfiledGuard);
+      site->setGuard(virtualGuard);
+      site->setNode(node);
+      site->setAconstNode(secondChild);
+      }
+   else
+      {
+      TR_ASSERT(!(node->isNopableInlineGuard()),"Should not evaluate class or method pointer constants underneath NOPable guards as they are runtime assumptions handled by virtualGuardHelper");
+      cg->evaluate(secondChild);
+      }
+   }
 #endif
 
       if (secondChild->getOpCode().isLoadConst() &&

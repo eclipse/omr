@@ -1453,40 +1453,13 @@ TR::Register *OMR::X86::i386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
       {
       // Evaluation hasn't been done yet; do a general long multiply.
       //
-      static const char *p = feGetEnv("TR_NoInlineLongMultiply");
-      if (!p)
-         {
-         TR_X86BinaryCommutativeAnalyser  temp(cg);
-         temp.longMultiplyAnalyser(node);
+      TR_X86BinaryCommutativeAnalyser  temp(cg);
+      temp.longMultiplyAnalyser(node);
 
-         if (debug("traceInlineLongMultiply"))
-            diagnostic("\ninlined long multiply at node [" POINTER_PRINTF_FORMAT "] in method %s", node, comp->signature());
+      if (debug("traceInlineLongMultiply"))
+         diagnostic("\ninlined long multiply at node [" POINTER_PRINTF_FORMAT "] in method %s", node, comp->signature());
 
-         targetRegister = node->getRegister();
-         }
-      else
-         {
-#ifdef J9_PROJECT_SPECIFIC
-         lowRegister  = cg->allocateRegister();
-         highRegister = cg->allocateRegister();
-         targetRegister = cg->allocateRegisterPair(lowRegister, highRegister);
-         node->setRegister(targetRegister);
-         TR::RegisterDependencyConditions  *dependencies = generateRegisterDependencyConditions((uint8_t)0, 2, cg);
-         dependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
-         dependencies->addPostCondition(highRegister, TR::RealRegister::edx, cg);
-         TR::IA32PrivateLinkage *linkage = TR::toIA32PrivateLinkage(cg->getLinkage(TR_Private));
-         TR::IA32LinkageUtils::pushLongArg(secondChild, cg);
-         TR::IA32LinkageUtils::pushLongArg(firstChild, cg);
-         instr = generateHelperCallInstruction(node, TR_IA32longMultiply, dependencies, cg);
-         if (!linkage->getProperties().getCallerCleanup())
-            {
-            instr->setAdjustsFramePointerBy(-16);  // 2 long args
-            }
-#else
-         TR_ASSERT(0, "Unsupported front end");
-         return NULL;
-#endif
-         }
+      targetRegister = node->getRegister();
       }
    else
       {
@@ -1806,27 +1779,27 @@ TR::Register *OMR::X86::i386::TreeEvaluator::integerPairShlEvaluator(TR::Node *n
       }
    else
       {
-#if J9_PROJECT_SPECIFIC
-      TR::Register *lowRegister  = cg->allocateRegister();
-      TR::Register *highRegister = cg->allocateRegister();
-      TR::RegisterDependencyConditions  *dependencies = generateRegisterDependencyConditions((uint8_t)0, 2, cg);
-      dependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
-      dependencies->addPostCondition(highRegister, TR::RealRegister::edx, cg);
-      TR::IA32PrivateLinkage *linkage = TR::toIA32PrivateLinkage(cg->getLinkage(TR_Private));
-      TR::IA32LinkageUtils::pushLongArg(firstChild, cg);
-      TR::IA32LinkageUtils::pushIntegerWordArg(secondChild, cg);
-      TR::X86ImmSymInstruction  *instr = generateHelperCallInstruction(node, TR_IA32longShiftLeft, dependencies, cg);
-      if (!linkage->getProperties().getCallerCleanup())
+      targetRegister = cg->longClobberEvaluate(firstChild);
+      TR::Register* shiftAmountReg = cg->evaluate(secondChild);
+      if (shiftAmountReg->getLowOrder())
          {
-         instr->setAdjustsFramePointerBy(-12);  // 1 long, 1 integer arg
+         shiftAmountReg = shiftAmountReg->getLowOrder();
          }
 
-      targetRegister = cg->allocateRegisterPair(lowRegister, highRegister);
+      TR::RegisterDependencyConditions  *shiftDependencies = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
+      shiftDependencies->addPreCondition(shiftAmountReg, TR::RealRegister::ecx, cg);
+      shiftDependencies->addPostCondition(shiftAmountReg, TR::RealRegister::ecx, cg);
+
+      generateRegRegInstruction(SHLD4RegRegCL, node, targetRegister->getHighOrder(), targetRegister->getLowOrder(), shiftDependencies, cg);
+      generateRegInstruction(SHL4RegCL, node, targetRegister->getLowOrder(), shiftDependencies, cg);
+      generateRegImmInstruction(TEST1RegImm1, node, shiftAmountReg, 32, cg);
+      generateRegRegInstruction(CMOVNE4RegReg, node, targetRegister->getHighOrder(), targetRegister->getLowOrder(), cg);
+      generateRegMemInstruction(CMOVNE4RegMem, node, targetRegister->getLowOrder(),
+                                generateX86MemoryReference(cg->findOrCreate4ByteConstant(node, 0), cg), cg);
+
       node->setRegister(targetRegister);
-#else
-      TR_ASSERT(0, "Unsupported front end");
-      return NULL;
-#endif
+      cg->decReferenceCount(firstChild);
+      cg->decReferenceCount(secondChild);
       }
 
    return targetRegister;
@@ -1889,29 +1862,31 @@ TR::Register *OMR::X86::i386::TreeEvaluator::integerPairRolEvaluator(TR::Node *n
       }
    else
       {
-#ifdef J9_PROJECT_SPECIFIC
-      TR::RegisterPair *targetAsPair = targetRegister->getRegisterPair();
-      TR::Register *rotateAmountReg = cg->intClobberEvaluate(secondChild);
-      TR::RegisterDependencyConditions  *dependencies = generateRegisterDependencyConditions((uint8_t)3, 3, cg);
+      targetRegister = cg->longClobberEvaluate(firstChild);
+      TR::Register *shiftAmountReg = cg->evaluate(secondChild);
+      if (shiftAmountReg->getLowOrder())
+         {
+         shiftAmountReg = shiftAmountReg->getLowOrder();
+         }
 
-      dependencies->addPreCondition(targetAsPair->getLowOrder(), TR::RealRegister::eax, cg);
-      dependencies->addPreCondition(targetAsPair->getHighOrder(), TR::RealRegister::edx, cg);
-      dependencies->addPreCondition(rotateAmountReg, TR::RealRegister::ecx, cg);
+      TR::RegisterDependencyConditions  *shiftDependencies = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
+      shiftDependencies->addPreCondition(shiftAmountReg, TR::RealRegister::ecx, cg);
+      shiftDependencies->addPostCondition(shiftAmountReg, TR::RealRegister::ecx, cg);
 
-      dependencies->addPostCondition(targetAsPair->getLowOrder(), TR::RealRegister::eax, cg);
-      dependencies->addPostCondition(targetAsPair->getHighOrder(), TR::RealRegister::edx, cg);
-      dependencies->addPostCondition(rotateAmountReg, TR::RealRegister::ecx, cg);
+      TR::Register *scratchReg = cg->allocateRegister();
+      generateRegRegInstruction(MOV4RegReg, node, scratchReg, targetRegister->getHighOrder(), cg);
+      generateRegImmInstruction(TEST1RegImm1, node, shiftAmountReg, 32, cg);
+      generateRegRegInstruction(CMOVNE4RegReg, node, targetRegister->getHighOrder(), targetRegister->getLowOrder(), cg);
+      generateRegRegInstruction(CMOVNE4RegReg, node, targetRegister->getLowOrder(), scratchReg, cg);
 
-      generateHelperCallInstruction(node, TR_IA32longRotateLeft, dependencies, cg);
+      generateRegRegInstruction(MOV4RegReg, node, scratchReg, targetRegister->getHighOrder(), cg);
+      generateRegRegInstruction(SHLD4RegRegCL, node, targetRegister->getHighOrder(), targetRegister->getLowOrder(), shiftDependencies, cg);
+      generateRegRegInstruction(SHLD4RegRegCL, node, targetRegister->getLowOrder(), scratchReg, shiftDependencies, cg);
 
+      cg->stopUsingRegister(scratchReg);
       node->setRegister(targetRegister);
       cg->decReferenceCount(firstChild);
       cg->decReferenceCount(secondChild);
-      cg->stopUsingRegister(rotateAmountReg);
-#else
-      TR_ASSERT(0, "Unsupported front end");
-      return NULL;
-#endif
       }
 
    return targetRegister;
@@ -1952,26 +1927,30 @@ TR::Register *OMR::X86::i386::TreeEvaluator::integerPairShrEvaluator(TR::Node *n
       }
    else
       {
-#ifdef J9_PROJECT_SPECIFIC
-      TR::Register *lowRegister  = cg->allocateRegister();
-      TR::Register *highRegister = cg->allocateRegister();
-      TR::RegisterDependencyConditions  *dependencies = generateRegisterDependencyConditions((uint8_t)0, 2, cg);
-      dependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
-      dependencies->addPostCondition(highRegister, TR::RealRegister::edx, cg);
-      TR::IA32PrivateLinkage *linkage = TR::toIA32PrivateLinkage(cg->getLinkage(TR_Private));
-      TR::IA32LinkageUtils::pushLongArg(firstChild, cg);
-      TR::IA32LinkageUtils::pushIntegerWordArg(secondChild, cg);
-      TR::X86ImmSymInstruction  *instr = generateHelperCallInstruction(node, TR_IA32longShiftRightArithmetic, dependencies, cg);
-      if (!linkage->getProperties().getCallerCleanup())
+      targetRegister = cg->longClobberEvaluate(firstChild);
+      TR::Register *shiftAmountReg = cg->evaluate(secondChild);
+      if (shiftAmountReg->getLowOrder())
          {
-         instr->setAdjustsFramePointerBy(-12);  // 1 long, 1 integer arg
+         shiftAmountReg = shiftAmountReg->getLowOrder();
          }
-      targetRegister = cg->allocateRegisterPair(lowRegister, highRegister);
+
+      TR::RegisterDependencyConditions  *shiftDependencies = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
+      shiftDependencies->addPreCondition(shiftAmountReg, TR::RealRegister::ecx, cg);
+      shiftDependencies->addPostCondition(shiftAmountReg, TR::RealRegister::ecx, cg);
+
+      TR::Register *scratchReg = cg->allocateRegister();
+      generateRegRegInstruction(SHRD4RegRegCL, node, targetRegister->getLowOrder(), targetRegister->getHighOrder(), shiftDependencies, cg);
+      generateRegInstruction(SAR4RegCL, node, targetRegister->getHighOrder(), shiftDependencies, cg);
+      generateRegRegInstruction(MOV4RegReg, node, scratchReg, targetRegister->getHighOrder(), cg);
+      generateRegImmInstruction(SAR4RegImm1, node, scratchReg, 31, cg);
+      generateRegImmInstruction(TEST1RegImm1, node, shiftAmountReg, 32, cg);
+      generateRegRegInstruction(CMOVNE4RegReg, node, targetRegister->getLowOrder(), targetRegister->getHighOrder(), cg);
+      generateRegRegInstruction(CMOVNE4RegReg, node, targetRegister->getHighOrder(), scratchReg, cg);
+
+      cg->stopUsingRegister(scratchReg);
       node->setRegister(targetRegister);
-#else
-      TR_ASSERT(0, "Unsupported front end");
-      return NULL;
-#endif
+      cg->decReferenceCount(firstChild);
+      cg->decReferenceCount(secondChild);
       }
 
    return targetRegister;
@@ -2015,28 +1994,27 @@ TR::Register *OMR::X86::i386::TreeEvaluator::integerPairUshrEvaluator(TR::Node *
       }
    else
       {
-#ifdef J9_PROJECT_SPECIFIC
-      TR::Register *lowRegister  = cg->allocateRegister();
-      TR::Register *highRegister = cg->allocateRegister();
-      TR::RegisterDependencyConditions  *dependencies = generateRegisterDependencyConditions((uint8_t)0, 2, cg);
-      dependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
-      dependencies->addPostCondition(highRegister, TR::RealRegister::edx, cg);
-      TR::IA32PrivateLinkage *linkage = TR::toIA32PrivateLinkage(cg->getLinkage(TR_Private));
-      TR::IA32LinkageUtils::pushLongArg(firstChild, cg);
-      TR::IA32LinkageUtils::pushIntegerWordArg(secondChild, cg);
-      TR::X86ImmSymInstruction  *instr = generateHelperCallInstruction(node, TR_IA32longShiftRightLogical, dependencies, cg);
-      if (!linkage->getProperties().getCallerCleanup())
+      targetRegister = cg->longClobberEvaluate(firstChild);
+      TR::Register *shiftAmountReg = cg->evaluate(secondChild);
+      if (shiftAmountReg->getLowOrder())
          {
-         instr->setAdjustsFramePointerBy(-12);  // 1 long, 1 integer arg
+         shiftAmountReg = shiftAmountReg->getLowOrder();
          }
 
-      targetRegister = cg->allocateRegisterPair(lowRegister, highRegister);
-      node->setRegister(targetRegister);
-#else
-      TR_ASSERT(0, "Unsupported front end");
-      return NULL;
-#endif
+      TR::RegisterDependencyConditions  *shiftDependencies = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
+      shiftDependencies->addPreCondition(shiftAmountReg, TR::RealRegister::ecx, cg);
+      shiftDependencies->addPostCondition(shiftAmountReg, TR::RealRegister::ecx, cg);
 
+      generateRegRegInstruction(SHRD4RegRegCL, node, targetRegister->getLowOrder(), targetRegister->getHighOrder(), shiftDependencies, cg);
+      generateRegInstruction(SHR4RegCL, node, targetRegister->getHighOrder(), shiftDependencies, cg);
+      generateRegImmInstruction(TEST1RegImm1, node, shiftAmountReg, 32, cg);
+      generateRegRegInstruction(CMOVNE4RegReg, node, targetRegister->getLowOrder(), targetRegister->getHighOrder(), cg);
+      generateRegMemInstruction(CMOVNE4RegMem, node, targetRegister->getHighOrder(),
+                                generateX86MemoryReference(cg->findOrCreate4ByteConstant(node, 0), cg), cg);
+
+      node->setRegister(targetRegister);
+      cg->decReferenceCount(firstChild);
+      cg->decReferenceCount(secondChild);
       }
 
    return targetRegister;

@@ -1565,7 +1565,7 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
                   // This cast is ok because we only need the low 32 bits of the address
                   // *(int32_t *)cursor = -(int32_t)(intptrj_t)(cursor+4);
                   // if it is X86MEMIMM instruction, offset need consider immedidate length
-                  *(int32_t *)cursor = -(int32_t)(intptrj_t)(cursor+4 + TR_X86OpCode::getImmediateSize(containingInstruction->getOpCodeValue()));
+                  *(int32_t *)cursor = -(int32_t)(intptrj_t)(cursor+4 + containingInstruction->getOpCode().info().ImmediateSize());
                   }
                else
                   {

@@ -27,6 +27,7 @@
 #include "env/RawAllocator.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "ilgen/MethodBuilder.hpp"
+#include "ilgen/TypeDictionary.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/JBJitConfig.hpp"
@@ -190,6 +191,7 @@ compileMethodBuilder(TR::MethodBuilder *m, uint8_t **entry)
 
    int32_t rc=0;
    *entry = compileMethodFromDetails(NULL, details, warm, rc);
+   m->typeDictionary()->NotifyCompilationDone();
    return rc;
    }
 

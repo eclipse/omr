@@ -23,6 +23,7 @@
 #include "codegen/BackingStore.hpp"                 // for TR_BackingStore
 #include "codegen/CodeGenPhase.hpp"                 // for CodeGenPhase, etc
 #include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
+#include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/FrontEnd.hpp"                     // for feGetEnv, etc
 #include "codegen/GCStackAtlas.hpp"                 // for GCStackAtlas
@@ -3163,6 +3164,25 @@ int32_t OMR::Power::CodeGenerator::getMaximumNumbersOfAssignableFPRs()
 int32_t OMR::Power::CodeGenerator::getMaximumNumbersOfAssignableVRs()
    {
    return TR::RealRegister::LastVSR - TR::RealRegister::FirstVSR  + 1;
+   }
+
+/**
+ * \brief
+ * Determine if value fits in the immediate field (if any) of instructions that machine provides.
+ *
+ * \details
+ *
+ * A node with a large constant can be materialized and left as commoned nodes.
+ * Smaller constants can be uncommoned so that they re-materialize every time when needed as a call
+ * parameter. This query is platform specific as constant loading can be expensive on some platforms
+ * but cheap on others, depending on their magnitude.
+ */
+bool OMR::Power::CodeGenerator::shouldValueBeInACommonedNode(int64_t value)
+   {
+   int64_t smallestPos = self()->getSmallestPosConstThatMustBeMaterialized();
+   int64_t largestNeg = self()->getLargestNegConstThatMustBeMaterialized();
+
+   return ((value >= smallestPos) || (value <= largestNeg));
    }
 
 bool OMR::Power::CodeGenerator::isRotateAndMask(TR::Node * node)

@@ -312,7 +312,12 @@ generateExtendedFloatConstantReg(TR::Node *node, TR::CodeGenerator *cg, int64_t 
       mrHi->stopUsingMemRefRegister(cg);
       mrLo->stopUsingMemRefRegister(cg);
       }
-
+      
+   if (cg->isLiteralPoolOnDemandOn())
+      {
+      cg->stopUsingRegister(litBase);
+      }
+      
    return trgReg;
    }
 
@@ -745,6 +750,11 @@ commonLong2FloatEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             two_pow_64_hi->stopUsingMemRefRegister(cg);
          if (two_pow_64_lo)
             two_pow_64_lo->stopUsingMemRefRegister(cg);
+         }
+         
+      if (cg->isLiteralPoolOnDemandOn())
+         {
+         cg->stopUsingRegister(litBase);
          }
       }
    else
@@ -1291,6 +1301,12 @@ OMR::Z::TreeEvaluator::fbits2iEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    cg->decReferenceCount(node->getFirstChild());
    if (node->getNumChildren() == 2)
       cg->decReferenceCount(node->getSecondChild());
+      
+   if (cg->isLiteralPoolOnDemandOn())
+      {
+      cg->stopUsingRegister(litBase);
+      }
+      
    return targetReg;
    }
 
@@ -1368,6 +1384,7 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool disabled = true;
    TR::Compilation *comp = cg->comp();
    TR::Node * firstChild = node->getFirstChild();
+   TR::Register * targetReg = NULL;
    TR::Register * sourceReg = NULL;
    TR::Instruction * cursor = NULL;
    TR::LabelSymbol * infinityNumber = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -1392,7 +1409,7 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if(TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
          {
          TR::RegisterDependencyConditions * deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
-         TR::Register * targetReg = cg->allocateRegister();
+         targetReg = cg->allocateRegister();
          //Not clobber evaluating because non FPSE path doesnt
          sourceReg = cg->evaluate(firstChild);
          cleansedNumber->setEndInternalControlFlow();
@@ -1428,7 +1445,6 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             }
          cg->decReferenceCount(firstChild);
          node->setRegister(targetReg);
-         return targetReg;
          }
       else
          {
@@ -1437,7 +1453,7 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          sourceReg = cg->evaluate(firstChild);
          TR::Register * evenReg = cg->allocate64bitRegister();
          TR::Register * oddReg = cg->allocate64bitRegister();
-         TR::Register * targetReg = cg->allocateConsecutiveRegisterPair(oddReg, evenReg);
+         targetReg = cg->allocateConsecutiveRegisterPair(oddReg, evenReg);
          TR::RegisterDependencyConditions * lgdrDeps = NULL;
          cleansedNumber->setEndInternalControlFlow();
          generateRXInstruction(cg, TR::InstOpCode::TCDB, node, sourceReg, (uint32_t) 0x03f);
@@ -1478,12 +1494,10 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             }
          cg->decReferenceCount(firstChild) ;
          node->setRegister(targetReg);
-         return targetReg;
          }
       }
    else
       {
-      TR::Register * targetReg;
       TR::Register * sourceReg;
       TR::RegisterDependencyConditions * deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
       sourceReg = cg->evaluate(firstChild);
@@ -1536,8 +1550,14 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          cg->decReferenceCount(node->getSecondChild());
          }
       cg->decReferenceCount(firstChild);
-      return targetReg;
       }
+      
+   if (cg->isLiteralPoolOnDemandOn())
+      {
+      cg->stopUsingRegister(litBase);
+      }
+      
+   return targetReg;
    }
 
 TR::Register *

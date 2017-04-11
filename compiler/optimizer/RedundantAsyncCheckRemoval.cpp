@@ -154,13 +154,14 @@ int32_t TR_RedundantAsyncCheckRemoval::perform()
    // resulted in the removal of all async checks - then sampling might
    // be effected.  Insert async checks on method exits.
    //
-   if (comp()->getLoopWasVersionedWrtAsyncChecks() ||
+   if ((comp()->getMethodHotness() < scorching) &&	// make sure we don't add unnecessary checks at scorching
+       (comp()->getLoopWasVersionedWrtAsyncChecks() ||
        (_numAsyncChecksInserted == 0 && _foundShortRunningLoops &&
         comp()->getRecompilationInfo() &&
 #ifdef J9_PROJECT_SPECIFIC
         comp()->getRecompilationInfo()->useSampling() &&
 #endif
-        comp()->getRecompilationInfo()->shouldBeCompiledAgain()))
+        comp()->getRecompilationInfo()->shouldBeCompiledAgain())))
       {
       _numAsyncChecksInserted += TR_AsyncCheckInsertion::insertReturnAsyncChecks(comp());
       }

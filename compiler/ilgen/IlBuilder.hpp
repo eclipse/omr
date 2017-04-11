@@ -105,6 +105,7 @@ public:
       {
       }
    IlBuilder(TR::IlBuilder *source);
+   virtual ~IlBuilder() { }
 
    void initSequence();
 

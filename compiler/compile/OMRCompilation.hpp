@@ -83,7 +83,7 @@ class TR_PrexArgInfo;
 class TR_RandomGenerator;
 class TR_RegisterCandidates;
 class TR_ResolvedMethod;
-class TR_RuntimeAssumption;
+namespace OMR { class RuntimeAssumption; }
 class TR_VirtualGuard;
 class TR_VirtualGuardSite;
 namespace TR { class AOTClassInfo; }
@@ -298,7 +298,7 @@ public:
 
    ~Compilation() throw();
 
-   TR::Compilation *self();
+   inline TR::Compilation *self();
 
    TR::Region &region() { return _region; }
 
@@ -589,6 +589,7 @@ public:
       TR_InlinedCallSite _site;
       TR::ResolvedMethodSymbol *_resolvedMethod;
       TR::SymbolReference *_callSymRef;
+      int32_t *_osrCallSiteRematTable;
       bool _directCall;
 
       public:
@@ -598,7 +599,7 @@ public:
                              TR::ResolvedMethodSymbol *resolvedMethod,
                              TR::SymbolReference *callSymRef,
                              bool directCall):
-         _resolvedMethod(resolvedMethod), _callSymRef(callSymRef), _directCall(directCall)
+         _resolvedMethod(resolvedMethod), _callSymRef(callSymRef), _directCall(directCall), _osrCallSiteRematTable(0)
          {
          _site._methodInfo = methodInfo;
          _site._byteCodeInfo = bcInfo;
@@ -608,6 +609,8 @@ public:
       TR_ResolvedMethod *resolvedMethod() { return _resolvedMethod->getResolvedMethod(); }
       TR::ResolvedMethodSymbol *resolvedMethodSymbol() { return _resolvedMethod; }
       TR::SymbolReference *callSymRef(){ return _callSymRef; }
+      int32_t *osrCallSiteRematTable() { return _osrCallSiteRematTable; }
+      void setOSRCallSiteRematTable(int32_t *array) { _osrCallSiteRematTable = array; }
       bool directCall() { return _directCall; }
       };
 
@@ -617,6 +620,9 @@ public:
    TR_ResolvedMethod  *getInlinedResolvedMethod(uint32_t index);
    TR::ResolvedMethodSymbol  *getInlinedResolvedMethodSymbol(uint32_t index);
    TR::SymbolReference *getInlinedCallerSymRef(uint32_t index);
+   uint32_t getOSRCallSiteRematSize(uint32_t callSiteIndex);
+   void getOSRCallSiteRemat(uint32_t callSiteIndex, uint32_t slot, TR::SymbolReference *&ppSymRef, TR::SymbolReference *&loadSymRef);
+   void setOSRCallSiteRemat(uint32_t callSiteIndex, TR::SymbolReference *ppSymRef, TR::SymbolReference *loadSymRef);
    bool isInlinedDirectCall(uint32_t index);
 
    TR_InlinedCallSite *getCurrentInlinedCallSite();
@@ -739,6 +745,7 @@ public:
    TR_OptimizationPlan * getOptimizationPlan() {return _optimizationPlan;}
 
    bool isProfilingCompilation();
+   bool isJProfilingCompilation();
 
    TR::Recompilation *getRecompilationInfo() { return _recompilationInfo; }
    void setRecompilationInfo(TR::Recompilation * i) { _recompilationInfo = i;    }
@@ -817,8 +824,11 @@ public:
     */
    bool isPotentialOSRPoint(TR::Node *node);
    bool isPotentialOSRPointWithSupport(TR::TreeTop *tt);
+
+   TR::OSRMode getOSRMode();
+   TR::OSRTransitionTarget getOSRTransitionTarget();
    int32_t getOSRInductionOffset(TR::Node *node);
-   bool requiresLeadingOSRPoint(TR::Node *node);
+   bool requiresAnalysisOSRPoint(TR::Node *node);
 
    // for OSR
    TR_OSRCompilationData* getOSRCompilationData() {return _osrCompilationData;}
@@ -934,8 +944,8 @@ public:
 
 #ifdef J9_PROJECT_SPECIFIC
    // Access to this list must be performed with assumptionTableMutex in hand
-   TR_RuntimeAssumption** getMetadataAssumptionList() { return &_metadataAssumptionList; }
-   void setMetadataAssumptionList(TR_RuntimeAssumption *a) { _metadataAssumptionList = a; }
+   OMR::RuntimeAssumption** getMetadataAssumptionList() { return &_metadataAssumptionList; }
+   void setMetadataAssumptionList(OMR::RuntimeAssumption *a) { _metadataAssumptionList = a; }
 #endif
 
    // To TransformUtil
@@ -1118,7 +1128,7 @@ private:
 protected:
 #ifdef J9_PROJECT_SPECIFIC
    TR_CHTable *                      _transientCHTable;   // per compilation CHTable
-   TR_RuntimeAssumption *            _metadataAssumptionList; // A special TR_RuntimeAssumption to play the role of a sentinel for a linked list
+   OMR::RuntimeAssumption *            _metadataAssumptionList; // A special OMR::RuntimeAssumption to play the role of a sentinel for a linked list
 #endif
 
 private:

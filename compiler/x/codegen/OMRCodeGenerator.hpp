@@ -125,80 +125,6 @@ struct TR_X86ProcessorInfo
       TR_UnknownVendor                 = 0x04
       };
 
-   enum TR_X86ProcessorFeatures
-      {
-      TR_BuiltInFPU                    = 0x00000001,
-      TR_VirtualModeExtension          = 0x00000002,
-      TR_DebuggingExtension            = 0x00000004,
-      TR_PageSizeExtension             = 0x00000008,
-      TR_RDTSCInstruction              = 0x00000010,
-      TR_ModelSpecificRegisters        = 0x00000020,
-      TR_PhysicalAddressExtension      = 0x00000040,
-      TR_MachineCheckException         = 0x00000080,
-      TR_CMPXCHG8BInstruction          = 0x00000100,
-      TR_APICHardware                  = 0x00000200,
-      TR_FastSystemCalls               = 0x00000800,
-      TR_MemoryTypeRangeRegisters      = 0x00001000,
-      TR_PageGlobalFlag                = 0x00002000,
-      TR_MachineCheckArchitecture      = 0x00004000,
-      TR_CMOVInstructions              = 0x00008000,
-      TR_PageAttributeTable            = 0x00010000,
-      TR_36BitPageSizeExtension        = 0x00020000,
-      TR_ProcessorSerialNumber         = 0x00040000, // GenuineIntel only
-      TR_CLFLUSHInstruction            = 0x00080000, // GenuineIntel only
-      // Reserved by Intel             = 0x00100000,
-      TR_DebugTraceStore               = 0x00200000, // GenuineIntel only
-      TR_ACPIRegisters                 = 0x00400000, // GenuineIntel only
-      TR_MMXInstructions               = 0x00800000,
-      TR_FastFPSavesRestores           = 0x01000000,
-      TR_SSE                           = 0x02000000,
-      TR_SSE2                          = 0x04000000, // GenuineIntel Only
-      TR_SelfSnoop                     = 0x08000000, // GenuineIntel Only
-      TR_HyperThreading                = 0x10000000, // GenuineIntel Only
-      TR_ThermalMonitor                = 0x20000000, // GenuineIntel Only
-      // Reserved by Intel             = 0x40000000, // IA64-specific
-      // Reserved by Intel             = 0x80000000
-      TR_X86ProcessorInfoInitialized   = 0x80000000  // FIXME: Using a reserved bit for our purposes.
-      };
-
-   enum TR_X86ProcessorFeatures2
-      {
-      TR_SSE3                          = 0x00000001,
-      TR_Monitor                       = 0x00000008,
-      TR_SpeedStep                     = 0x00000080,
-      TR_CMPXCHG16BInstruction         = 0x00002000,
-      TR_SSE4_1                        = 0x00080000,
-      TR_SSE4_2                        = 0x00100000,
-      TR_POPCNT                        = 0x00800000,
-      TR_AESNI                         = 0x02000000
-      };
-
-
-   enum TR_ProcessorDescription
-      {
-      TR_ProcessorUnknown          = 0x00000000,
-      TR_ProcessorIntelPentium     = 0x00000001,
-      TR_ProcessorIntelP6          = 0x00000002,
-      TR_ProcessorIntelPentium4    = 0x00000003,
-
-      TR_ProcessorAMDK5            = 0x00000004,
-      TR_ProcessorAMDK6            = 0x00000005,
-      TR_ProcessorAMDAthlonDuron   = 0x00000006,
-      TR_ProcessorAMDOpteron       = 0x00000007,
-
-      TR_ProcessorIntelCore2       = 0x00000008,
-      TR_ProcessorIntelTulsa       = 0x00000009,
-      TR_ProcessorIntelNehalem     = 0x0000000a,
-
-      TR_ProcessorAMDFamily15h     = 0x0000000b,
-      TR_ProcessorIntelWestmere    = 0x0000000c,
-      TR_ProcessorIntelSandyBridge = 0x0000000d,
-      TR_ProcessorIntelIvyBridge   = 0x0000000e,
-      TR_ProcessorIntelHaswell     = 0x0000000f,
-      TR_ProcessorIntelBroadwell   = 0x00000010
-      };
-
-
    bool hasBuiltInFPU()                    {return _featureFlags.testAny(TR_BuiltInFPU);}
    bool supportsVirtualModeExtension()     {return _featureFlags.testAny(TR_VirtualModeExtension);}
    bool supportsDebuggingExtension()       {return _featureFlags.testAny(TR_DebuggingExtension);}
@@ -208,7 +134,7 @@ struct TR_X86ProcessorInfo
    bool supportsPhysicalAddressExtension() {return _featureFlags.testAny(TR_PhysicalAddressExtension);}
    bool supportsMachineCheckException()    {return _featureFlags.testAny(TR_MachineCheckException);}
    bool supportsCMPXCHG8BInstruction()     {return _featureFlags.testAny(TR_CMPXCHG8BInstruction);}
-   bool supportsCMPXCHG16BInstruction()     {return _featureFlags2.testAny(TR_CMPXCHG16BInstruction);}
+   bool supportsCMPXCHG16BInstruction()    {return _featureFlags2.testAny(TR_CMPXCHG16BInstruction);}
    bool hasAPICHardware()                  {return _featureFlags.testAny(TR_APICHardware);}
    bool hasMemoryTypeRangeRegisters()      {return _featureFlags.testAny(TR_MemoryTypeRangeRegisters);}
    bool supportsPageGlobalFlag()           {return _featureFlags.testAny(TR_PageGlobalFlag);}
@@ -225,11 +151,20 @@ struct TR_X86ProcessorInfo
    bool supportsFastFPSavesRestores()      {return _featureFlags.testAny(TR_FastFPSavesRestores);}
    bool supportsSSE()                      {return _featureFlags.testAny(TR_SSE);}
    bool supportsSSE2()                     {return _featureFlags.testAny(TR_SSE2);}
+   bool supportsSSE3()                     {return _featureFlags2.testAny(TR_SSE3);}
+   bool supportsSSSE3()                    {return _featureFlags2.testAny(TR_SSSE3);}
    bool supportsSSE4_1()                   {return _featureFlags2.testAny(TR_SSE4_1);}
    bool supportsSSE4_2()                   {return _featureFlags2.testAny(TR_SSE4_2);}
+   bool supportsAVX()                      {return _featureFlags2.testAny(TR_AVX);}
+   bool supportsAVX2()                     {return _featureFlags8.testAny(TR_AVX2);}
+   bool supportsBMI1()                     {return _featureFlags8.testAny(TR_BMI1);}
+   bool supportsBMI2()                     {return _featureFlags8.testAny(TR_BMI2);}
+   bool supportsFMA()                      {return _featureFlags2.testAny(TR_FMA);}
+   bool supportsCLMUL()                    {return _featureFlags2.testAny(TR_CLMUL);}
    bool supportsAESNI()                    {return _featureFlags2.testAny(TR_AESNI);}
    bool supportsPOPCNT()                   {return _featureFlags2.testAny(TR_POPCNT);}
    bool supportsSelfSnoop()                {return _featureFlags.testAny(TR_SelfSnoop);}
+   bool supportsTM()                       {return _featureFlags8.testAny(TR_RTM);}
    bool supportsHyperThreading()           {return _featureFlags.testAny(TR_HyperThreading);}
    bool hasThermalMonitor()                {return _featureFlags.testAny(TR_ThermalMonitor);}
 
@@ -273,7 +208,7 @@ struct TR_X86ProcessorInfo
 private:
 
    flags8_t   _vendorFlags;
-   flags32_t  _featureFlags;  // cache feature flags for re-use
+   flags32_t  _featureFlags;   // cache feature flags for re-use
    flags32_t  _featureFlags2;  // cache feature flags 2 for re-use
    flags32_t  _featureFlags8;  // cache feature flags 8 for re-use
 
@@ -358,10 +293,15 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    bool getSupportsEncodeUtf16LittleWithSurrogateTest();
    bool getSupportsEncodeUtf16BigWithSurrogateTest();
 
+   virtual bool getSupportsIbyteswap();
+
    bool supportsMergingOfHCRGuards();
 
    bool supportsAtomicAdd()                {return true;}
    bool hasTMEvaluator()                       {return true;}
+
+   int64_t getLargestNegConstThatMustBeMaterialized() { TR_ASSERT(0, "Not Implemented on x86"); return 0; }
+   int64_t getSmallestPosConstThatMustBeMaterialized() { TR_ASSERT(0, "Not Implemented on x86"); return 0; }
 
    void performNonLinearRegisterAssignmentAtBranch(TR::X86LabelInstruction *branchInstruction, TR_RegisterKinds kindsToBeAssigned);
    void prepareForNonLinearRegisterAssignmentAtMerge(TR::X86LabelInstruction *mergeInstruction);
@@ -888,3 +828,4 @@ class TR_X86ScratchRegisterManager: public TR_ScratchRegisterManager
    };
 
 #endif
+

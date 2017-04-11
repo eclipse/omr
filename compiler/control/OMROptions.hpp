@@ -226,7 +226,7 @@ enum TR_CompilationOptions
    TR_DisableDynamicSamplingWindow        = 0x00000020 + 4,
    TR_DisableAsyncCheckVersioning         = 0x00000040 + 4,
    TR_DisableInterpreterProfiling         = 0x00000080 + 4,
-   // Available                           = 0x00000100 + 4,
+   TR_ConcurrentLPQ                       = 0x00000100 + 4,
    TR_EnableVPICForResolvedVirtualCalls   = 0x00000200 + 4,
    TR_DisableRegisterPressureSimulation   = 0x00000400 + 4,
    TR_DisableBlockVersioner               = 0x00000800 + 4,
@@ -239,7 +239,7 @@ enum TR_CompilationOptions
    TR_DisableInliningOfNatives            = 0x00040000 + 4,
    TR_AssignEveryGlobalRegister           = 0x00080000 + 4,
    TR_DisableZ196                         = 0x00100000 + 4,
-   // Available                           = 0x00200000 + 4,
+   TR_EarlyLPQ                            = 0x00200000 + 4,
    TR_DisableUpgradingColdCompilations    = 0x00400000 + 4, // for cold methods due to classLoadPhase for instance
    TR_VerboseInterpreterProfiling         = 0x00800000 + 4,
    TR_TraceRegisterPressureDetails        = 0x01000000 + 4,
@@ -257,7 +257,7 @@ enum TR_CompilationOptions
    TR_DisableLookahead                    = 0x00000040 + 5,
    TR_TraceBFGeneration                   = 0x00000080 + 5,
    TR_DisableDFP                          = 0x00000100 + 5,
-   // Available                           = 0x00000200 + 5,
+   TR_SuspendEarly                        = 0x00000200 + 5,
    TR_EnableEarlyCompilationDuringIdleCpu = 0x00000400 + 5,
    TR_DisableCallGraphInlining            = 0x00000800 + 5, // interpreter profiling
    TR_enableProfiledDevirtualization      = 0x00001000 + 5,
@@ -300,14 +300,14 @@ enum TR_CompilationOptions
    TR_DisableScorchingSampleThresholdScalingBasedOnNumProc = 0x00100000 + 6,
    TR_CummTiming                          = 0x00200000 + 6,
    TR_ReserveAllLocks                     = 0x00400000 + 6,
-   TR_DisableJProfiling                   = 0x00800000 + 6,
-   TR_UseJProfilingForLPQ                 = 0x01000000 + 6,
-   TR_UseJProfilingForAllFirstTimeComps   = 0x02000000 + 6,
+   TR_DisableSamplingJProfiling           = 0x00800000 + 6,
+   TR_UseSamplingJProfilingForLPQ         = 0x01000000 + 6,
+   TR_UseSamplingJProfilingForAllFirstTimeComps   = 0x02000000 + 6,
    TR_NoStoreAOT                          = 0x04000000 + 6,
    TR_NoLoadAOT                           = 0x08000000 + 6,
    TR_DisableNewLoopTransfer              = 0x10000000 + 6, // loop versioning for virtual guards
-   TR_UseJProfilingForDLT                 = 0x20000000 + 6,
-   TR_UseJProfilingForInterpSampledMethods= 0x40000000 + 6,
+   TR_UseSamplingJProfilingForDLT                 = 0x20000000 + 6,
+   TR_UseSamplingJProfilingForInterpSampledMethods= 0x40000000 + 6,
    // Available                           = 0x80000000 + 6,
 
    // Option word 7
@@ -713,7 +713,7 @@ enum TR_CompilationOptions
    TR_EnableBranchPreload                             = 0x08000000 + 20,
    TR_TerseRegisterPressureTrace                      = 0x20000000 + 20,
    TR_DisableMutableCallSiteGuards                    = 0x40000000 + 20,  // JSR292
-   // Available                                       = 0x80000000 + 20,
+   TR_DisableCallConstUncommoning                     = 0x80000000 + 20,
 
    // Option word 21
    // Available                                       = 0x00000020 + 21,
@@ -956,7 +956,7 @@ enum TR_CompilationOptions
    TR_IncreaseCountsForMethodsCompiledOutsideStartup  = 0x00200000 + 29,
    TR_EnableMethodTrampolineReservation               = 0x00400000 + 29,
    TR_UseGlueIfMethodTrampolinesAreNotNeeded          = 0x00800000 + 29,
-   // Avaialble                                       = 0x01000000 + 29,
+   TR_EnableFpreductionAnnotation                     = 0x01000000 + 29,
    // Avialable                                       = 0x02000000 + 29,
    TR_DisableCrackedEditOptimization                  = 0x04000000 + 29,
    TR_InhibitRIBufferProcessingDuringDeepSteady       = 0x08000000 + 29,
@@ -980,7 +980,7 @@ enum TR_CompilationOptions
    TR_RestrictStaticFieldFolding                      = 0x00004000 + 30,
    // Available                                       = 0x00008000 + 30,
    // Available                                       = 0x00010000 + 30,
-   // Available                                       = 0x00020000 + 30,
+   TR_EnableJProfiling                                = 0x00020000 + 30,
    TR_DisableForcedEXInlining                         = 0x00040000 + 30,
    TR_EnableOnsiteCacheForSuperClassTest              = 0x00080000 + 30,
    TR_DisableVMCSProfiling                            = 0x00100000 + 30,
@@ -1156,18 +1156,18 @@ enum TR_VerboseFlags
    TR_NumVerboseOptions        // Must be the last one;
    };
 
-enum TR_JProfilingFlags
+enum TR_SamplingJProfilingFlags
    {
-   TR_JProfilingInvokeVirtual,
-   TR_JProfilingInvokeInterface,
-   TR_JProfilingInvokeStatic,
-   TR_JProfilingBranches,
-   TR_JProfilingCheckCast,
-   TR_JProfilingInstanceOf,
-   // Any new option added here must be added also to _jprofilingOptionNames
+   TR_SamplingJProfilingInvokeVirtual,
+   TR_SamplingJProfilingInvokeInterface,
+   TR_SamplingJProfilingInvokeStatic,
+   TR_SamplingJProfilingBranches,
+   TR_SamplingJProfilingCheckCast,
+   TR_SamplingJProfilingInstanceOf,
+   // Any new option added here must be added also to _samplingJProfilingOptionNames
 
    // The below must be the last option...
-   TR_NumJProfilingFlags,
+   TR_NumSamplingJProfilingFlags,
    };
 
 // Used for _processOptionsStatus to determine
@@ -1185,34 +1185,6 @@ enum TR_ProcessOptionsFlags
    TR_JITProcessErrorUnknown = 0x00000080
    };
 
-/**
- * Enum describing how the HW profiler frequencies are calculated.
- *
- * When we have wider C++11 support, this should be changed to a declaration
- * closer to the below:
- *
- * \verbatim
- * enum class TR_HWProfileFreqCalcMethod : uint32_t
- * \endverbatim
- *
- * The enum type is defined to a 32 bit value because of the option parsing
- * code.
- *
- * For now, because of z/OS V1.13 XL C/C++, we cannot do sensible things here
- * so resort to the mildly insensible.
- */
-namespace TR
-   {
-   namespace HWProfileFreqCalcMethod
-      {
-      enum
-         {
-         first_method,
-         avg_method,
-         max_method
-         };
-      }
-   }
 
 #define TR_FILTER_EXCLUDE_NAME_ONLY         1
 #define TR_FILTER_EXCLUDE_NAME_AND_SIG      2
@@ -1505,10 +1477,6 @@ public:
    void            setLogFile(TR::FILE * f)  {_logFile = f;}
    char *          getLogFileName()      {return _logFileName;}
 
-   char *          getListingFileName()  {return _listingFileName;}
-
-   char *          getPDFFileName()      {return _pdfFileName;}
-
    char *          getBlockShufflingSequence(){ return _blockShufflingSequence; }
 
    int32_t         getRandomSeed(){ return _randomSeed; }
@@ -1543,10 +1511,10 @@ public:
    bool      getAllOptions(uint32_t mask)      {return (_options[mask & TR_OWM] & (mask & ~TR_OWM)) == mask;}
    bool      getOption(uint32_t mask);
 
-   static bool  getJProfilingOption(TR_JProfilingFlags op)   { return _jprofilingOptionFlags.isSet(op); }
-   static void  setJProfilingOption(TR_JProfilingFlags op)   { _jprofilingOptionFlags.set(op); }
-   static void  resetJProfilingOption(TR_JProfilingFlags op) { _jprofilingOptionFlags.reset(op); }
-   static bool  isAnyJProfilingOptionSet()                   { return !_jprofilingOptionFlags.isEmpty(); }
+   static bool  getSamplingJProfilingOption(TR_SamplingJProfilingFlags op)   { return _samplingJProfilingOptionFlags.isSet(op); }
+   static void  setSamplingJProfilingOption(TR_SamplingJProfilingFlags op)   { _samplingJProfilingOptionFlags.set(op); }
+   static void  resetSamplingJProfilingOption(TR_SamplingJProfilingFlags op) { _samplingJProfilingOptionFlags.reset(op); }
+   static bool  isAnySamplingJProfilingOptionSet()                   { return !_samplingJProfilingOptionFlags.isEmpty(); }
 
    static bool  getVerboseOption(TR_VerboseFlags op)     {  return _verboseOptionFlags.isSet(op); }
    static void  setVerboseOption(TR_VerboseFlags op)     { _verboseOptionFlags.set(op); }
@@ -1630,10 +1598,6 @@ public:
    int32_t   getDLTOptLevel()                  {return _dltOptLevel;}
    int32_t   getProfilingCount()               {return _profilingCount;}
    int32_t   getProfilingFrequency()           {return _profilingFrequency;}
-   int32_t   getHWProfileSuperColdOnlySteps()  {return _HWProfileSuperColdOnlySteps;}
-   int32_t   getHWProfileHotnessCalc()         {return _HWProfileHotnessCalc;}
-   int32_t   getHWProfileFreqCalc()            {return _HWProfileFreqCalcMethod;}
-   int32_t   getHWProfileFreqCalcInlineHeuristic() {return _HWProfileFreqCalcInlineHeuristic;}
    int32_t   insertDebuggingCounters()         {return _insertDebuggingCounters;}
    int32_t   getLastSearchCount()              {return _lastSearchCount;}
 
@@ -1863,7 +1827,6 @@ public:
    static int64_t INLINE_calleeToBigSum;
    static int64_t INLINE_calleeToDeepSum;
    static int64_t INLINE_calleeHasTooManyNodesSum;
-   static int32_t INLINE_HWProfileHotCallsThreshold;
 
    static int32_t _inlinerVeryLargeCompiledMethodAdjustFactor;
 
@@ -2065,9 +2028,9 @@ private:
    static char *setVerboseBits(char *option, void *base, TR::OptionTable *entry);
    static char *setVerboseBitsInJitPrivateConfig(char *option, void *base, TR::OptionTable *entry);
 
-   // Set jprofiling bits
+   // Set samplingjprofiling bits
    //
-   static char *setJProfilingBits(char* option, void *base, TR::OptionTable *entry);
+   static char *setSamplingJProfilingBits(char* option, void *base, TR::OptionTable *entry);
 
    // Reset bit(s) defined by "mask" at offset "offset" from the base
    //
@@ -2233,11 +2196,6 @@ private:
    char                       *_suffixLogsFormat;
    TR::FILE *                      _logFile;
 
-   // Listing file option
-   char                       *_listingFileName;
-
-   // Profiling options
-   char                       *_pdfFileName;
 
    char                       *_optFileName;
    int32_t                    *_customStrategy;     // Actually array of TR_OptimizerImpl::Optimizations numbers read from optFileName
@@ -2321,9 +2279,9 @@ private:
    static char                   *_verboseOptionNames[TR_NumVerboseOptions];
    static bool                 _quickstartDetected; // set when Quickstart was specified on the command line
 
-   typedef OptionFlagArray<TR_JProfilingFlags, TR_NumJProfilingFlags> JProfilingOptionFlagArray;
-   static JProfilingOptionFlagArray _jprofilingOptionFlags;
-   static char                     *_jprofilingOptionNames[TR_NumJProfilingFlags];
+   typedef OptionFlagArray<TR_SamplingJProfilingFlags, TR_NumSamplingJProfilingFlags> SamplingJProfilingOptionFlagArray;
+   static SamplingJProfilingOptionFlagArray _samplingJProfilingOptionFlags;
+   static char                     *_samplingJProfilingOptionNames[TR_NumSamplingJProfilingFlags];
 
    // Miscellaneous options
    //
@@ -2360,11 +2318,6 @@ private:
    int32_t                     _dltOptLevel;
    int32_t                     _profilingCount;
    int32_t                     _profilingFrequency;
-   int32_t                     _HWProfileSuperColdOnlySteps;   //Used by PDF
-   int32_t                     _HWProfileFreqCalcMethod;
-   int32_t                     _HWProfileFreqCalcInlineHeuristic;
-   int32_t                     _HWProfileHotnessCalc;
-
    int32_t                     _counterBucketGranularity;
    int32_t                     _minCounterFidelity;
    int64_t                     _debugCounterWarmupSeconds;

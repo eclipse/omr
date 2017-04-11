@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 2000, 2016
+ * (c) Copyright IBM Corp. 2000, 2017
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -16,7 +16,8 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  *******************************************************************************/
 
-#include "optimizer/ValuePropagation.hpp"
+#include "optimizer/OMRValuePropagation.hpp"
+#include "optimizer/GlobalValuePropagation.hpp"
 
 #include <algorithm>                            // for std::find, etc
 #include <stddef.h>                             // for size_t
@@ -82,7 +83,6 @@
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
-#include "optimizer/VPBCDConstraint.hpp"        // for VP BCD constraint handling, etc
 #endif
 
 
@@ -111,7 +111,7 @@ void collectArraylengthNodes(TR::Node *node, vcount_t visitCount, List<TR::Node>
       collectArraylengthNodes(node->getChild(childNum), visitCount, arraylengthNodes);
    }
 
-TR::ValuePropagation::Relationship *TR::ValuePropagation::createRelationship(int32_t relative, TR::VPConstraint *constraint)
+OMR::ValuePropagation::Relationship *OMR::ValuePropagation::createRelationship(int32_t relative, TR::VPConstraint *constraint)
    {
    Relationship *rel = _relationshipCache.pop();
    if (!rel)
@@ -122,12 +122,12 @@ TR::ValuePropagation::Relationship *TR::ValuePropagation::createRelationship(int
    return rel;
    }
 
-void TR::ValuePropagation::freeRelationship(Relationship *rel)
+void OMR::ValuePropagation::freeRelationship(Relationship *rel)
    {
    _relationshipCache.add(rel);
    }
 
-void TR::ValuePropagation::freeRelationships(TR_LinkHead<Relationship> &list)
+void OMR::ValuePropagation::freeRelationships(TR_LinkHead<Relationship> &list)
    {
    Relationship *cur, *next;
    for (cur = list.getFirst(); cur; cur = next)
@@ -138,7 +138,7 @@ void TR::ValuePropagation::freeRelationships(TR_LinkHead<Relationship> &list)
    list.setFirst(NULL);
    }
 
-TR::ValuePropagation::StoreRelationship *TR::ValuePropagation::createStoreRelationship(TR::Symbol *symbol, Relationship *firstRel)
+OMR::ValuePropagation::StoreRelationship *OMR::ValuePropagation::createStoreRelationship(TR::Symbol *symbol, Relationship *firstRel)
    {
    StoreRelationship *rel = _storeRelationshipCache.pop();
    if (!rel)
@@ -149,13 +149,13 @@ TR::ValuePropagation::StoreRelationship *TR::ValuePropagation::createStoreRelati
    return rel;
    }
 
-void TR::ValuePropagation::freeStoreRelationship(StoreRelationship *rel)
+void OMR::ValuePropagation::freeStoreRelationship(StoreRelationship *rel)
    {
    freeRelationships(rel->relationships);
    _storeRelationshipCache.add(rel);
    }
 
-void TR::ValuePropagation::freeStoreRelationships(TR_LinkHead<StoreRelationship> &list)
+void OMR::ValuePropagation::freeStoreRelationships(TR_LinkHead<StoreRelationship> &list)
    {
    StoreRelationship *cur, *next;
    for (cur = list.getFirst(); cur; cur = next)
@@ -166,17 +166,17 @@ void TR::ValuePropagation::freeStoreRelationships(TR_LinkHead<StoreRelationship>
    list.setFirst(NULL);
    }
 
-void TR::ValuePropagation::freeValueConstraints(ValueConstraints &valueConstraints)
+void OMR::ValuePropagation::freeValueConstraints(ValueConstraints &valueConstraints)
    {
    _vcHandler.empty(valueConstraints);
    }
 
-TR::ValuePropagation::ValueConstraint *TR::ValuePropagation::copyValueConstraints(ValueConstraints &valueConstraints)
+OMR::ValuePropagation::ValueConstraint *OMR::ValuePropagation::copyValueConstraints(ValueConstraints &valueConstraints)
    {
    return _vcHandler.copyAll(valueConstraints);
    }
 
-void TR::ValuePropagation::addConstraint(TR::VPConstraint *constraint, int32_t hash)
+void OMR::ValuePropagation::addConstraint(TR::VPConstraint *constraint, int32_t hash)
    {
    ConstraintsHashTableEntry *entry = new (trStackMemory()) ConstraintsHashTableEntry;
    entry->constraint = constraint;
@@ -184,7 +184,7 @@ void TR::ValuePropagation::addConstraint(TR::VPConstraint *constraint, int32_t h
    _constraintsHashTable[hash] = entry;
    }
 
-void TR::ValuePropagation::addLoopDef(TR::Node *node)
+void OMR::ValuePropagation::addLoopDef(TR::Node *node)
    {
    // If the loop def entry does not already exist, create it
    //
@@ -202,7 +202,7 @@ void TR::ValuePropagation::addLoopDef(TR::Node *node)
    _loopDefsHashTable[hash] = entry;
    }
 
-TR::ValuePropagation::LoopDefsHashTableEntry *TR::ValuePropagation::findLoopDef(TR::Node *node)
+OMR::ValuePropagation::LoopDefsHashTableEntry *OMR::ValuePropagation::findLoopDef(TR::Node *node)
    {
    // Find the loop def entry
    //
@@ -227,7 +227,7 @@ static bool worthPropagatingConstraints(TR::Compilation *comp, bool isGlobalProp
 
 
 
-bool TR::ValuePropagation::propagateConstraint(TR::Node *node, int32_t valueNumber, Relationship *first, Relationship *rel, ValueConstraints *valueConstraints)
+bool OMR::ValuePropagation::propagateConstraint(TR::Node *node, int32_t valueNumber, Relationship *first, Relationship *rel, ValueConstraints *valueConstraints)
    {
    // Go through the relationships list for this value number and propagate the
    // effects of the given new relationship to the others.
@@ -315,7 +315,7 @@ bool TR::ValuePropagation::propagateConstraint(TR::Node *node, int32_t valueNumb
 // number.
 // Return the relationship if it is new or changed from the existing one.
 //
-TR::VPConstraint *TR::ValuePropagation::addConstraintToList(TR::Node *node, int32_t valueNumber, int32_t relative, TR::VPConstraint *constraint, ValueConstraints *valueConstraints, bool replaceExisting)
+TR::VPConstraint *OMR::ValuePropagation::addConstraintToList(TR::Node *node, int32_t valueNumber, int32_t relative, TR::VPConstraint *constraint, ValueConstraints *valueConstraints, bool replaceExisting)
    {
    // If we are really adding a global constraint, go do that.
    //
@@ -587,7 +587,7 @@ TR::VPConstraint *TR::ValuePropagation::addConstraintToList(TR::Node *node, int3
    return c;
    }
 
-TR::VPConstraint *TR::ValuePropagation::addGlobalConstraint(TR::Node *node, TR::VPConstraint *constraint, TR::Node *relative)
+TR::VPConstraint *OMR::ValuePropagation::addGlobalConstraint(TR::Node *node, TR::VPConstraint *constraint, TR::Node *relative)
    {
    // No global constraints for local value propagation
    //
@@ -597,7 +597,7 @@ TR::VPConstraint *TR::ValuePropagation::addGlobalConstraint(TR::Node *node, TR::
    return addGlobalConstraint(node, getValueNumber(node), constraint, relativeVN);
    }
 
-TR::VPConstraint *TR::ValuePropagation::addGlobalConstraint(TR::Node *node, int32_t valueNumber, TR::VPConstraint *constraint, int32_t relative)
+TR::VPConstraint *OMR::ValuePropagation::addGlobalConstraint(TR::Node *node, int32_t valueNumber, TR::VPConstraint *constraint, int32_t relative)
    {
    TR_ASSERT(_isGlobalPropagation, "Local VP can't add global constraint");
 
@@ -705,7 +705,7 @@ TR::VPConstraint *TR::ValuePropagation::addGlobalConstraint(TR::Node *node, int3
    return c;
    }
 
-TR::VPConstraint *TR::ValuePropagation::addEdgeConstraint(TR::Node *node, TR::VPConstraint *constraint, EdgeConstraints *constraints, TR::Node *relative)
+TR::VPConstraint *OMR::ValuePropagation::addEdgeConstraint(TR::Node *node, TR::VPConstraint *constraint, EdgeConstraints *constraints, TR::Node *relative)
    {
    if (!_isGlobalPropagation)
       return constraint;
@@ -721,7 +721,7 @@ TR::VPConstraint *TR::ValuePropagation::addEdgeConstraint(TR::Node *node, TR::VP
    return constraint;
    }
 
-TR::VPConstraint *TR::ValuePropagation::addBlockConstraint(TR::Node *node, TR::VPConstraint *constraint, TR::Node *relative, bool mustBeValid)
+TR::VPConstraint *OMR::ValuePropagation::addBlockConstraint(TR::Node *node, TR::VPConstraint *constraint, TR::Node *relative, bool mustBeValid)
    {
    if (!constraint)
       return NULL;
@@ -741,7 +741,7 @@ TR::VPConstraint *TR::ValuePropagation::addBlockConstraint(TR::Node *node, TR::V
    return constraint;
    }
 
-TR::VPConstraint *TR::ValuePropagation::addBlockOrGlobalConstraint(TR::Node *node, TR::VPConstraint *constraint, bool isGlobal, TR::Node *relative)
+TR::VPConstraint *OMR::ValuePropagation::addBlockOrGlobalConstraint(TR::Node *node, TR::VPConstraint *constraint, bool isGlobal, TR::Node *relative)
    {
    if (isGlobal)
       return addGlobalConstraint(node, constraint, relative);
@@ -749,7 +749,7 @@ TR::VPConstraint *TR::ValuePropagation::addBlockOrGlobalConstraint(TR::Node *nod
    return addBlockConstraint(node, constraint, relative);
    }
 
-void TR::ValuePropagation::mergeRelationships(TR_LinkHead<Relationship> &fromList, TR_LinkHead<Relationship> &toList,
+void OMR::ValuePropagation::mergeRelationships(TR_LinkHead<Relationship> &fromList, TR_LinkHead<Relationship> &toList,
       int32_t valueNumber, bool preserveFrom, StoreRelationship *mergingStore, List<TR::Symbol> *storeSymbols,
       bool inBothLists)
    {
@@ -890,7 +890,7 @@ void TR::ValuePropagation::mergeRelationships(TR_LinkHead<Relationship> &fromLis
       }
    }
 
-void TR::ValuePropagation::mergeStoreRelationships(ValueConstraint *fromvc, ValueConstraint *tovc, bool preserveFrom)
+void OMR::ValuePropagation::mergeStoreRelationships(ValueConstraint *fromvc, ValueConstraint *tovc, bool preserveFrom)
    {
    // Merge (i.e. logical OR) the store relationships in the "from" list into
    // the "to" list.
@@ -1076,7 +1076,7 @@ void TR::ValuePropagation::mergeStoreRelationships(ValueConstraint *fromvc, Valu
       }
    }
 
-void TR::ValuePropagation::mergeValueConstraints(ValueConstraint *fromvc, ValueConstraint *tovc, bool preserveFrom)
+void OMR::ValuePropagation::mergeValueConstraints(ValueConstraint *fromvc, ValueConstraint *tovc, bool preserveFrom)
    {
    // First merge the non-store relationships.
    //
@@ -1087,7 +1087,7 @@ void TR::ValuePropagation::mergeValueConstraints(ValueConstraint *fromvc, ValueC
    mergeStoreRelationships(fromvc, tovc, preserveFrom);
    }
 
-void TR::ValuePropagation::mergeEdgeConstraints(EdgeConstraints *fromEdge, EdgeConstraints *toEdge)
+void OMR::ValuePropagation::mergeEdgeConstraints(EdgeConstraints *fromEdge, EdgeConstraints *toEdge)
    {
    // Merge (i.e. logical OR) the "from" list into the "to" list.
    // Both lists are ordered by value number.
@@ -1163,7 +1163,7 @@ void TR::ValuePropagation::mergeEdgeConstraints(EdgeConstraints *fromEdge, EdgeC
    freeValueConstraints(*fromVC.getBase());
    }
 
-void TR::ValuePropagation::mergeConstraintIntoEdge(ValueConstraint *constraint, EdgeConstraints *edge)
+void OMR::ValuePropagation::mergeConstraintIntoEdge(ValueConstraint *constraint, EdgeConstraints *edge)
    {
    // Merge (i.e. logical OR) the value constraint into the list.
    //
@@ -1176,7 +1176,7 @@ void TR::ValuePropagation::mergeConstraintIntoEdge(ValueConstraint *constraint, 
       }
    }
 
-void TR::ValuePropagation::mergeBackEdgeConstraints(EdgeConstraints *edge)
+void OMR::ValuePropagation::mergeBackEdgeConstraints(EdgeConstraints *edge)
    {
    // Merge store constraints into the given exit edge for defs that have
    // been seen on the loop back edges.
@@ -1193,7 +1193,7 @@ void TR::ValuePropagation::mergeBackEdgeConstraints(EdgeConstraints *edge)
 
 // Create a global constraint entry
 //
-TR::ValuePropagation::GlobalConstraint *TR::ValuePropagation::GlobalConstraint::create(TR::Compilation * c, int32_t valueNumber)
+OMR::ValuePropagation::GlobalConstraint *OMR::ValuePropagation::GlobalConstraint::create(TR::Compilation * c, int32_t valueNumber)
    {
    GlobalConstraint *entry;
    entry = new (c->trStackMemory()) GlobalConstraint;
@@ -1204,14 +1204,14 @@ TR::ValuePropagation::GlobalConstraint *TR::ValuePropagation::GlobalConstraint::
 // Hash function for the global constraints hash table
 //
 inline
-uint32_t TR::ValuePropagation::hashGlobalConstraint(int32_t valueNumber)
+uint32_t OMR::ValuePropagation::hashGlobalConstraint(int32_t valueNumber)
    {
    return valueNumber & _globalConstraintsHTMaxBucketIndex; // exploiting the fact that size is power of two
    }
 
 // Find the global constraint for the given value number.
 //
-TR::ValuePropagation::GlobalConstraint *TR::ValuePropagation::findGlobalConstraint(int32_t valueNumber)
+OMR::ValuePropagation::GlobalConstraint *OMR::ValuePropagation::findGlobalConstraint(int32_t valueNumber)
    {
    if (!_isGlobalPropagation)
       return NULL;
@@ -1228,7 +1228,7 @@ TR::ValuePropagation::GlobalConstraint *TR::ValuePropagation::findGlobalConstrai
 
 // Create the global constraint for the given value number.
 //
-TR::ValuePropagation::GlobalConstraint *TR::ValuePropagation::createGlobalConstraint(int32_t valueNumber)
+OMR::ValuePropagation::GlobalConstraint *OMR::ValuePropagation::createGlobalConstraint(int32_t valueNumber)
    {
    uint32_t hash = hashGlobalConstraint(valueNumber);
    GlobalConstraint *entry = GlobalConstraint::create(comp(), valueNumber);
@@ -1239,7 +1239,7 @@ TR::ValuePropagation::GlobalConstraint *TR::ValuePropagation::createGlobalConstr
 
 // Create an edge constraint entry
 //
-TR::ValuePropagation::EdgeConstraints *TR::ValuePropagation::EdgeConstraints::create(TR::Compilation * c, TR::CFGEdge *edge)
+OMR::ValuePropagation::EdgeConstraints *OMR::ValuePropagation::EdgeConstraints::create(TR::Compilation * c, TR::CFGEdge *edge)
    {
    EdgeConstraints *entry;
    entry = new (c->trStackMemory()) EdgeConstraints;
@@ -1250,7 +1250,7 @@ TR::ValuePropagation::EdgeConstraints *TR::ValuePropagation::EdgeConstraints::cr
 // Find the edge constraints for the given edge. Create edge constraints if
 // they don't currently exist.
 //
-TR::ValuePropagation::EdgeConstraints *TR::ValuePropagation::getEdgeConstraints(TR::CFGEdge *edge)
+OMR::ValuePropagation::EdgeConstraints *OMR::ValuePropagation::getEdgeConstraints(TR::CFGEdge *edge)
    {
    int32_t hash = ((uintptrj_t)edge) % VP_HASH_TABLE_SIZE;
    EdgeConstraints *entry;
@@ -1268,7 +1268,7 @@ TR::ValuePropagation::EdgeConstraints *TR::ValuePropagation::getEdgeConstraints(
    return entry;
    }
 
-TR::ValuePropagation::EdgeConstraints *TR::ValuePropagation::createEdgeConstraints(TR::CFGEdge *edge, bool keepBlockList)
+OMR::ValuePropagation::EdgeConstraints *OMR::ValuePropagation::createEdgeConstraints(TR::CFGEdge *edge, bool keepBlockList)
    {
    if (!_isGlobalPropagation)
       return NULL;
@@ -1301,7 +1301,7 @@ static bool reduceCostOfAnalysisByTreatingBlockConservatively(TR::Block *b)
    }
 
 
-void TR::ValuePropagation::createExceptionEdgeConstraints(uint32_t exceptions, ValueConstraint *extraConstraint, TR::Node *reason)
+void OMR::ValuePropagation::createExceptionEdgeConstraints(uint32_t exceptions, ValueConstraint *extraConstraint, TR::Node *reason)
    {
    if (!_isGlobalPropagation)
       return;
@@ -1355,7 +1355,7 @@ void TR::ValuePropagation::createExceptionEdgeConstraints(uint32_t exceptions, V
       }
    }
 
-void TR::ValuePropagation::removeConstraint(int32_t valueNumber, ValueConstraints &valueConstraints, int32_t relative)
+void OMR::ValuePropagation::removeConstraint(int32_t valueNumber, ValueConstraints &valueConstraints, int32_t relative)
    {
    // Find the constraint for the given value number in the given value
    // constraint list and remove it.
@@ -1385,7 +1385,7 @@ void TR::ValuePropagation::removeConstraint(int32_t valueNumber, ValueConstraint
       }
    }
 
-TR::ValuePropagation::StoreRelationship *TR::ValuePropagation::findStoreRelationship(TR_LinkHead<StoreRelationship> &list, TR::Symbol *symbol)
+OMR::ValuePropagation::StoreRelationship *OMR::ValuePropagation::findStoreRelationship(TR_LinkHead<StoreRelationship> &list, TR::Symbol *symbol)
    {
    StoreRelationship *rel;
    for (rel = list.getFirst(); rel; rel = rel->getNext())
@@ -1398,7 +1398,7 @@ TR::ValuePropagation::StoreRelationship *TR::ValuePropagation::findStoreRelation
    return NULL;
    }
 
-TR::ValuePropagation::Relationship *TR::ValuePropagation::findConstraintInList(TR_LinkHead<Relationship> &list, int32_t relative)
+OMR::ValuePropagation::Relationship *OMR::ValuePropagation::findConstraintInList(TR_LinkHead<Relationship> &list, int32_t relative)
    {
    // Find the constraint for the given value number in the given relationship
    // list.
@@ -1414,7 +1414,7 @@ TR::ValuePropagation::Relationship *TR::ValuePropagation::findConstraintInList(T
    return NULL;
    }
 
-TR::ValuePropagation::Relationship *TR::ValuePropagation::findValueConstraint(int32_t valueNumber, ValueConstraints &valueConstraints, int32_t relative)
+OMR::ValuePropagation::Relationship *OMR::ValuePropagation::findValueConstraint(int32_t valueNumber, ValueConstraints &valueConstraints, int32_t relative)
    {
    // Find the constraint for the given value number in the given value
    // constraint list.
@@ -1425,17 +1425,17 @@ TR::ValuePropagation::Relationship *TR::ValuePropagation::findValueConstraint(in
    return NULL;
    }
 
-TR::ValuePropagation::Relationship *TR::ValuePropagation::findConstraint(int32_t valueNumber, int32_t relative)
+OMR::ValuePropagation::Relationship *OMR::ValuePropagation::findConstraint(int32_t valueNumber, int32_t relative)
    {
    return findValueConstraint(valueNumber, _curConstraints, relative);
    }
 
-TR::ValuePropagation::Relationship *TR::ValuePropagation::findEdgeConstraint(int32_t valueNumber, EdgeConstraints *edge, int32_t relative)
+OMR::ValuePropagation::Relationship *OMR::ValuePropagation::findEdgeConstraint(int32_t valueNumber, EdgeConstraints *edge, int32_t relative)
    {
    return findValueConstraint(valueNumber, edge->valueConstraints, relative);
    }
 
-TR::ValuePropagation::StoreRelationship *TR::ValuePropagation::findStoreValueConstraint(int32_t valueNumber, TR::Symbol *symbol, ValueConstraints &valueConstraints)
+OMR::ValuePropagation::StoreRelationship *OMR::ValuePropagation::findStoreValueConstraint(int32_t valueNumber, TR::Symbol *symbol, ValueConstraints &valueConstraints)
    {
    // Find the store constraint for the given value number and symbol in the
    // given value constraint list.
@@ -1446,17 +1446,17 @@ TR::ValuePropagation::StoreRelationship *TR::ValuePropagation::findStoreValueCon
    return NULL;
    }
 
-TR::ValuePropagation::StoreRelationship *TR::ValuePropagation::findStoreConstraint(int32_t valueNumber, TR::Symbol *symbol)
+OMR::ValuePropagation::StoreRelationship *OMR::ValuePropagation::findStoreConstraint(int32_t valueNumber, TR::Symbol *symbol)
    {
    return findStoreValueConstraint(valueNumber, symbol, _curConstraints);
    }
 
-TR::ValuePropagation::StoreRelationship *TR::ValuePropagation::findStoreEdgeConstraint(int32_t valueNumber, TR::Symbol *symbol, EdgeConstraints *edge)
+OMR::ValuePropagation::StoreRelationship *OMR::ValuePropagation::findStoreEdgeConstraint(int32_t valueNumber, TR::Symbol *symbol, EdgeConstraints *edge)
    {
    return findStoreValueConstraint(valueNumber, symbol, edge->valueConstraints);
    }
 
-TR::ValuePropagation::Relationship *TR::ValuePropagation::findGlobalConstraint(int32_t valueNumber, int32_t relative)
+OMR::ValuePropagation::Relationship *OMR::ValuePropagation::findGlobalConstraint(int32_t valueNumber, int32_t relative)
    {
    GlobalConstraint *gc = findGlobalConstraint(valueNumber);
    if (!gc)
@@ -1464,7 +1464,7 @@ TR::ValuePropagation::Relationship *TR::ValuePropagation::findGlobalConstraint(i
    return findConstraintInList(gc->constraints, relative);
    }
 
-TR::VPConstraint *TR::ValuePropagation::applyGlobalConstraints(TR::Node *node, int32_t valueNumber, TR::VPConstraint *constraint, int32_t relative)
+TR::VPConstraint *OMR::ValuePropagation::applyGlobalConstraints(TR::Node *node, int32_t valueNumber, TR::VPConstraint *constraint, int32_t relative)
    {
    // See if there are global constraints for this value number that can be
    // applied to further constrain the given local constraint.
@@ -1537,7 +1537,7 @@ TR::VPConstraint *TR::ValuePropagation::applyGlobalConstraints(TR::Node *node, i
    return c;
    }
 
-TR::VPConstraint *TR::ValuePropagation::getStoreConstraint(TR::Node *node, TR::Node *relative)
+TR::VPConstraint *OMR::ValuePropagation::getStoreConstraint(TR::Node *node, TR::Node *relative)
    {
    // See if there is an existing constraint for this node
    //
@@ -1570,7 +1570,7 @@ TR::VPConstraint *TR::ValuePropagation::getStoreConstraint(TR::Node *node, TR::N
    }
 
 
-void TR::ValuePropagation::createStoreConstraints(TR::Node *node)
+void OMR::ValuePropagation::createStoreConstraints(TR::Node *node)
    {
    // Only need store constraints for global VP
    //
@@ -1606,14 +1606,14 @@ void TR::ValuePropagation::createStoreConstraints(TR::Node *node)
    }
 
 
-bool TR::ValuePropagation::hasBeenStored(int32_t valueNumber, TR::Symbol *symbol, ValueConstraints &valueConstraints)
+bool OMR::ValuePropagation::hasBeenStored(int32_t valueNumber, TR::Symbol *symbol, ValueConstraints &valueConstraints)
    {
    // See if the given value number has a store constraint in the given list
    //
    return (findStoreValueConstraint(valueNumber, symbol, valueConstraints) != NULL);
    }
 
-void TR::ValuePropagation::setUnreachableStore(StoreRelationship *store)
+void OMR::ValuePropagation::setUnreachableStore(StoreRelationship *store)
    {
    // Mark the store constraints in the given list as unreachable
    //
@@ -1621,14 +1621,14 @@ void TR::ValuePropagation::setUnreachableStore(StoreRelationship *store)
    store->relationships.setFirst(createRelationship(AbsoluteConstraint, TR::VPUnreachablePath::create(this)));
    }
 
-bool TR::ValuePropagation::isUnreachableStore(StoreRelationship *store)
+bool OMR::ValuePropagation::isUnreachableStore(StoreRelationship *store)
    {
    Relationship *rel = store->relationships.getFirst();
    return (rel && rel->constraint->asUnreachablePath());
    }
 
 
-bool TR::ValuePropagation::isDefInUnreachableBlock(int32_t defIndex)
+bool OMR::ValuePropagation::isDefInUnreachableBlock(int32_t defIndex)
    {
    TR::TreeTop *defTT = _useDefInfo->getTreeTop(defIndex);
    TR::Node *defNode = defTT->getNode();
@@ -1667,7 +1667,7 @@ bool TR::ValuePropagation::isDefInUnreachableBlock(int32_t defIndex)
    }
 
 
-TR_YesNoMaybe TR::ValuePropagation::isCastClassObject(TR::VPClassType *type)
+TR_YesNoMaybe OMR::ValuePropagation::isCastClassObject(TR::VPClassType *type)
    {
    if (type && type->asResolvedClass())
       {
@@ -1686,7 +1686,7 @@ TR_YesNoMaybe TR::ValuePropagation::isCastClassObject(TR::VPClassType *type)
    return TR_maybe;
    }
 
-void TR::ValuePropagation::checkTypeRelationship(TR::VPConstraint *lhs, TR::VPConstraint *rhs,
+void OMR::ValuePropagation::checkTypeRelationship(TR::VPConstraint *lhs, TR::VPConstraint *rhs,
                                                 int32_t &value, bool isInstanceOf, bool isCheckCast)
    {
    if (trace())
@@ -1806,7 +1806,7 @@ void TR::ValuePropagation::checkTypeRelationship(TR::VPConstraint *lhs, TR::VPCo
    }
 
 
-void TR::ValuePropagation::invalidateParmConstraintsIfNeeded(TR::Node *node, TR::VPConstraint *constraint)
+void OMR::ValuePropagation::invalidateParmConstraintsIfNeeded(TR::Node *node, TR::VPConstraint *constraint)
    {
    if (_isGlobalPropagation)
       return; //nothing to do
@@ -1841,7 +1841,7 @@ void TR::ValuePropagation::invalidateParmConstraintsIfNeeded(TR::Node *node, TR:
       }
    }
 
-TR::VPConstraint *TR::ValuePropagation::mergeDefConstraints(TR::Node *node, int32_t relative, bool &isGlobal, bool forceMerge)
+TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int32_t relative, bool &isGlobal, bool forceMerge)
    {
    isGlobal = true; // Will be reset if local constraints found
 
@@ -2709,7 +2709,7 @@ TR::VPConstraint *TR::ValuePropagation::mergeDefConstraints(TR::Node *node, int3
    return constraint;
    }
 
-void TR::ValuePropagation::replaceByConstant(TR::Node *node, TR::VPConstraint *constraint, bool isGlobal)
+void OMR::ValuePropagation::replaceByConstant(TR::Node *node, TR::VPConstraint *constraint, bool isGlobal)
    {
    if (isGlobal)
       addGlobalConstraint(node, constraint);
@@ -2800,7 +2800,7 @@ void TR::ValuePropagation::replaceByConstant(TR::Node *node, TR::VPConstraint *c
    setEnableSimplifier();
    }
 
-void TR::ValuePropagation::removeRestOfBlock()
+void OMR::ValuePropagation::removeRestOfBlock()
    {
    // Remove the rest of the trees in the block.
    //
@@ -2815,7 +2815,7 @@ void TR::ValuePropagation::removeRestOfBlock()
       }
    }
 
-void TR::ValuePropagation::mustTakeException()
+void OMR::ValuePropagation::mustTakeException()
    {
    // Make sure this hasn't already been done
    //
@@ -2851,7 +2851,7 @@ void TR::ValuePropagation::mustTakeException()
       }
    }
 
-bool TR::ValuePropagation::registerPreXClass(TR::VPConstraint *constraint)
+bool OMR::ValuePropagation::registerPreXClass(TR::VPConstraint *constraint)
    {
    if (!constraint->isFixedClass())
       return false;
@@ -2867,7 +2867,7 @@ bool TR::ValuePropagation::registerPreXClass(TR::VPConstraint *constraint)
    return true;
    }
 
-TR::Node *TR::ValuePropagation::findThrowInBlock(TR::Block *block, TR::TreeTop *&treeTop)
+TR::Node *OMR::ValuePropagation::findThrowInBlock(TR::Block *block, TR::TreeTop *&treeTop)
    {
   // if (comp()->getFlowGraph()->getRemovedNodes().find(block))
     if(block->nodeIsRemoved())
@@ -2891,7 +2891,7 @@ TR::Node *TR::ValuePropagation::findThrowInBlock(TR::Block *block, TR::TreeTop *
    }
 
 
-bool TR::ValuePropagation::isHighWordZero(TR::Node *node)
+bool OMR::ValuePropagation::isHighWordZero(TR::Node *node)
    {
    // See if there is a constraint for this value
    //
@@ -2911,7 +2911,7 @@ bool TR::ValuePropagation::isHighWordZero(TR::Node *node)
    return false;
    }
 
-void TR::ValuePropagation::checkForInductionVariableIncrement(TR::Node *node)
+void OMR::ValuePropagation::checkForInductionVariableIncrement(TR::Node *node)
    {
    // If we are the first time through a loop see if this is an increment of a
    // local. If so save the node in the induction variable info for the loop.
@@ -3174,7 +3174,7 @@ void TR::ValuePropagation::checkForInductionVariableIncrement(TR::Node *node)
       }
    }
 
-void TR::ValuePropagation::checkForInductionVariableLoad(TR::Node *node)
+void OMR::ValuePropagation::checkForInductionVariableLoad(TR::Node *node)
    {
    // If we are the last time through a loop see if this is a load of an
    // induction variable.
@@ -3215,7 +3215,7 @@ void TR::ValuePropagation::checkForInductionVariableLoad(TR::Node *node)
       }
    }
 
-void TR::ValuePropagation::collectInductionVariableEntryConstraints()
+void OMR::ValuePropagation::collectInductionVariableEntryConstraints()
    {
    // If this is the last time through the loop, induction variables have
    // already been identified. Make sure that the entry values for each one are
@@ -3259,7 +3259,7 @@ void TR::ValuePropagation::collectInductionVariableEntryConstraints()
       }
    }
 
-bool TR::ValuePropagation::checkLoopTestBlock(TR::Symbol *sym)
+bool OMR::ValuePropagation::checkLoopTestBlock(TR::Symbol *sym)
    {
    // the symbol could be an induction variable even though it
    // has more than two defs. find the loop test block and check
@@ -3350,7 +3350,7 @@ bool TR::ValuePropagation::checkLoopTestBlock(TR::Symbol *sym)
    }
 
 
-void TR::ValuePropagation::checkBackEdgeCoverage()
+void OMR::ValuePropagation::checkBackEdgeCoverage()
    {
    // For each valid induction variable there should be a constraint on the
    // back edge to show that increments to the induction variable have
@@ -3384,7 +3384,7 @@ void TR::ValuePropagation::checkBackEdgeCoverage()
       }
    }
 
-void TR::ValuePropagation::setUpInductionVariables(TR_StructureSubGraphNode *node)
+void OMR::ValuePropagation::setUpInductionVariables(TR_StructureSubGraphNode *node)
    {
    TR_RegionStructure *region = node->getStructure()->asRegion();
    region->clearInductionVariables();
@@ -3627,7 +3627,7 @@ void TR::ValuePropagation::setUpInductionVariables(TR_StructureSubGraphNode *nod
       }
    }
 
-void TR::ValuePropagation::collectBackEdgeConstraints()
+void OMR::ValuePropagation::collectBackEdgeConstraints()
    {
    // Merge the constraint lists from the back edges of a natural loop.
    // Only those constraints that apply to value numbers for def nodes and
@@ -3832,7 +3832,7 @@ int32_t TR::GlobalValuePropagation::perform()
 
 
 
-void TR::ValuePropagation::getParmValues()
+void OMR::ValuePropagation::getParmValues()
    {
    // Determine how many parms there are
    //
@@ -4085,7 +4085,7 @@ void TR::ValuePropagation::getParmValues()
 
 
 
-bool TR::ValuePropagation::isParmInvariant(TR::Symbol *sym)
+bool OMR::ValuePropagation::isParmInvariant(TR::Symbol *sym)
    {
    int32_t index = sym->getParmSymbol()->getOrdinal();
    return (_parmInfo[index] ? false : true);
@@ -4510,7 +4510,7 @@ void TR::GlobalValuePropagation::processImproperLoop(TR_StructureSubGraphNode *n
       printStructureInfo(node->getStructure(), false, lastTimeThrough);
    }
 
-void TR::ValuePropagation::generalizeStores(ValueConstraints &stores, ValueConstraints *vC)
+void OMR::ValuePropagation::generalizeStores(ValueConstraints &stores, ValueConstraints *vC)
    {
    ValueConstraint *vc, *newVc;
 
@@ -4533,7 +4533,7 @@ void TR::ValuePropagation::generalizeStores(ValueConstraints &stores, ValueConst
       }
    }
 
-void TR::ValuePropagation::findStoresInBlock(TR::Block *block, ValueConstraints &stores)
+void OMR::ValuePropagation::findStoresInBlock(TR::Block *block, ValueConstraints &stores)
    {
    // Scan this block for stores that are to be put into the containing
    // improper region's list of generalized store constraints.
@@ -4825,7 +4825,7 @@ void TR::GlobalValuePropagation::processBlock(TR_StructureSubGraphNode *node, bo
    propagateOutputConstraints(node, lastTimeThrough, false, List1, &List2);
    }
 
-TR::CFGEdge *TR::ValuePropagation::findOutEdge(TR::CFGEdgeList &edges, TR::CFGNode *target)
+TR::CFGEdge *OMR::ValuePropagation::findOutEdge(TR::CFGEdgeList &edges, TR::CFGNode *target)
    {
    // Find the output edge in the list of edges to the given node
    //
@@ -4836,19 +4836,19 @@ TR::CFGEdge *TR::ValuePropagation::findOutEdge(TR::CFGEdgeList &edges, TR::CFGNo
    return *edge;
    }
 
-bool TR::ValuePropagation::isUnreachablePath(ValueConstraints &valueConstraints)
+bool OMR::ValuePropagation::isUnreachablePath(ValueConstraints &valueConstraints)
    {
    return !valueConstraints.isEmpty() &&
           !_vcHandler.getRoot(valueConstraints)->relationships.isEmpty() &&
           _vcHandler.getRoot(valueConstraints)->relationships.getFirst()->constraint->asUnreachablePath();
    }
 
-bool TR::ValuePropagation::isUnreachablePath(EdgeConstraints *constraints)
+bool OMR::ValuePropagation::isUnreachablePath(EdgeConstraints *constraints)
    {
    return isUnreachablePath(constraints->valueConstraints);
    }
 
-void TR::ValuePropagation::setUnreachablePath()
+void OMR::ValuePropagation::setUnreachablePath()
    {
 #if 0
    freeValueConstraints(_curConstraints);
@@ -4858,13 +4858,13 @@ void TR::ValuePropagation::setUnreachablePath()
 #endif
    }
 
-void TR::ValuePropagation::setUnreachablePath(ValueConstraints &vc)
+void OMR::ValuePropagation::setUnreachablePath(ValueConstraints &vc)
    {
    freeValueConstraints(vc);
    addConstraintToList(NULL, 0, AbsoluteConstraint, TR::VPUnreachablePath::create(this), &vc);
    }
 
-void TR::ValuePropagation::setUnreachablePath(TR::CFGEdge *edge)
+void OMR::ValuePropagation::setUnreachablePath(TR::CFGEdge *edge)
    {
    if (!_isGlobalPropagation)
       return;
@@ -4879,7 +4879,7 @@ void TR::ValuePropagation::setUnreachablePath(TR::CFGEdge *edge)
    }
 
 
-void TR::ValuePropagation::printStructureInfo(TR_Structure *s, bool starting, bool lastTimeThrough)
+void OMR::ValuePropagation::printStructureInfo(TR_Structure *s, bool starting, bool lastTimeThrough)
    {
    traceMsg(comp(), "\n%s ", starting ? "Starting " : "Stopping ");
    char *type;
@@ -4937,7 +4937,7 @@ void TR::ValuePropagation::printStructureInfo(TR_Structure *s, bool starting, bo
       }
    }
 
-void TR::ValuePropagation::printParentStructure(TR_Structure *s)
+void OMR::ValuePropagation::printParentStructure(TR_Structure *s)
    {
    if (s->getParent())
       {
@@ -4947,7 +4947,7 @@ void TR::ValuePropagation::printParentStructure(TR_Structure *s)
    }
 
 
-void TR::ValuePropagation::printValueConstraints(ValueConstraints &valueConstraints)
+void OMR::ValuePropagation::printValueConstraints(ValueConstraints &valueConstraints)
    {
    ValueConstraintIterator iter(valueConstraints);
    ValueConstraint *vc;
@@ -4957,7 +4957,7 @@ void TR::ValuePropagation::printValueConstraints(ValueConstraints &valueConstrai
       }
    }
 
-void TR::ValuePropagation::printGlobalConstraints()
+void OMR::ValuePropagation::printGlobalConstraints()
    {
    traceMsg(comp(), "   Global constraints:\n");
    for (int32_t i = 0; i <= _globalConstraintsHTMaxBucketIndex; i++)
@@ -4974,7 +4974,7 @@ void TR::ValuePropagation::printGlobalConstraints()
       }
    }
 
-void TR::ValuePropagation::printEdgeConstraints(EdgeConstraints *constraints)
+void OMR::ValuePropagation::printEdgeConstraints(EdgeConstraints *constraints)
    {
    if (!_isGlobalPropagation || comp()->getOutFile() == NULL)
       return;
@@ -5000,7 +5000,7 @@ void TR::ValuePropagation::printEdgeConstraints(EdgeConstraints *constraints)
       }
    }
 
-void TR::ValuePropagation::Relationship::print(TR::ValuePropagation *vp)
+void OMR::ValuePropagation::Relationship::print(OMR::ValuePropagation *vp)
    {
    if (vp->comp()->getOutFile() == NULL)
       return;
@@ -5017,7 +5017,7 @@ void TR::ValuePropagation::Relationship::print(TR::ValuePropagation *vp)
       constraint->print(vp->comp(), vp->comp()->getOutFile(), relative);
    }
 
-void TR::ValuePropagation::Relationship::print(TR::ValuePropagation *vp, int32_t valueNumber, int32_t indent)
+void OMR::ValuePropagation::Relationship::print(OMR::ValuePropagation *vp, int32_t valueNumber, int32_t indent)
    {
    if (vp->comp()->getOutFile() == NULL)
       return;
@@ -5037,7 +5037,7 @@ void TR::ValuePropagation::Relationship::print(TR::ValuePropagation *vp, int32_t
       {
       // Induction variable use constraint
       //
-      TR::ValuePropagation::InductionVariable *iv;
+      OMR::ValuePropagation::InductionVariable *iv;
       for (iv = vp->_loopInfo->_inductionVariables.getFirst(); iv; iv = iv->getNext())
          {
          if (iv->_valueNumber == valueNumber)
@@ -5053,7 +5053,7 @@ void TR::ValuePropagation::Relationship::print(TR::ValuePropagation *vp, int32_t
    trfprintf(vp->comp()->getOutFile(), "\n");
    }
 
-void TR::ValuePropagation::StoreRelationship::print(TR::ValuePropagation *vp, int32_t valueNumber, int32_t indent)
+void OMR::ValuePropagation::StoreRelationship::print(OMR::ValuePropagation *vp, int32_t valueNumber, int32_t indent)
    {
    if (vp->comp()->getOutFile() == NULL)
       return;
@@ -5069,7 +5069,7 @@ void TR::ValuePropagation::StoreRelationship::print(TR::ValuePropagation *vp, in
       trfprintf(vp->comp()->getOutFile(), "%*.sptr %p symbol %p has no relationships\n", indent, " ", this, symbol);
    }
 
-void TR::ValuePropagation::ValueConstraint::print(TR::ValuePropagation *vp, int32_t indent)
+void OMR::ValuePropagation::ValueConstraint::print(OMR::ValuePropagation *vp, int32_t indent)
    {
    if (vp->comp()->getOutFile() == NULL)
       return;
@@ -5084,7 +5084,7 @@ void TR::ValuePropagation::ValueConstraint::print(TR::ValuePropagation *vp, int3
 // constraints if intersection fails
 // for a particular value number
 //
-bool TR::ValuePropagation::removeConstraints()
+bool OMR::ValuePropagation::removeConstraints()
    {
    static char *p = feGetEnv("TR_FixIntersect");
    if (!p)
@@ -5093,7 +5093,7 @@ bool TR::ValuePropagation::removeConstraints()
       return true;
    }
 
-bool TR::ValuePropagation::removeConstraints(int32_t valueNumber, ValueConstraints *vc, bool findStores)
+bool OMR::ValuePropagation::removeConstraints(int32_t valueNumber, ValueConstraints *vc, bool findStores)
    {
    if (trace())
       {
@@ -5139,7 +5139,7 @@ bool TR::ValuePropagation::removeConstraints(int32_t valueNumber, ValueConstrain
 // this routine removes both valueconstraints
 // and store relationships collected on the vn so far
 //
-bool TR::ValuePropagation::removeConstraints(int32_t valueNumber, ValueConstraints *valueConstraints)
+bool OMR::ValuePropagation::removeConstraints(int32_t valueNumber, ValueConstraints *valueConstraints)
    {
    if (trace())
       traceMsg(comp(), "   Intersection of constraints failed for valueNumber [%d], removing constraints\n", valueNumber);
@@ -5200,7 +5200,7 @@ bool TR::ValuePropagation::removeConstraints(int32_t valueNumber, ValueConstrain
    }
 
 
-bool TR::ValuePropagation::removeStoreConstraints(ValueConstraints *valueConstraints, int32_t valueNumber, int32_t relative)
+bool OMR::ValuePropagation::removeStoreConstraints(ValueConstraints *valueConstraints, int32_t valueNumber, int32_t relative)
    {
    ValueConstraint *vc = _vcHandler.find(valueNumber, *valueConstraints);
    if (vc)
@@ -5231,7 +5231,7 @@ bool TR::ValuePropagation::removeStoreConstraints(ValueConstraints *valueConstra
    return false;
    }
 
-bool TR::ValuePropagation::removeConstraints(int32_t valueNumber)
+bool OMR::ValuePropagation::removeConstraints(int32_t valueNumber)
    {
    if (trace())
       traceMsg(comp(), "   Intersection failed for value number [%d], removing global constraints\n", valueNumber);
@@ -5755,7 +5755,7 @@ int32_t TR::ArraycopyTransformation::perform()
    }
 
 
-void TR::ValuePropagation::createNewBlockInfoForVersioning(TR::Block *block)
+void OMR::ValuePropagation::createNewBlockInfoForVersioning(TR::Block *block)
    {
 
    if (!block->isCatchBlock() && !_bndChecks->isEmpty() && !_bndChecks->isSingleton())
@@ -5779,7 +5779,7 @@ void TR::ValuePropagation::createNewBlockInfoForVersioning(TR::Block *block)
    }
 
 
-void TR::ValuePropagation::versionBlocks()
+void OMR::ValuePropagation::versionBlocks()
    {
 
    TR::CFG *_cfg = comp()->getFlowGraph();
@@ -6107,7 +6107,7 @@ void TR::ValuePropagation::versionBlocks()
 
 //walk the bndchks collected for this block and add to appropriate bucket based on arrayLenght.
 //returns True if to version block and false if not.
-bool TR::ValuePropagation::prepareForBlockVersion(TR_LinkHead<ArrayLengthToVersion> *arrayLengths)
+bool OMR::ValuePropagation::prepareForBlockVersion(TR_LinkHead<ArrayLengthToVersion> *arrayLengths)
    {
    bool isGlobal;
    TR_BitVector invariantVariables(comp()->getSymRefCount(), trMemory(), stackAlloc);
@@ -6422,7 +6422,7 @@ bool TR::ValuePropagation::prepareForBlockVersion(TR_LinkHead<ArrayLengthToVersi
    }
 
 
-void TR::ValuePropagation::buildBoundCheckComparisonNodes(BlockVersionInfo *blockInfo, List<TR::Node> *comparisonNodes)
+void OMR::ValuePropagation::buildBoundCheckComparisonNodes(BlockVersionInfo *blockInfo, List<TR::Node> *comparisonNodes)
    {
    //walk arrayLength and for each one walk all buckets - create tests for min and max.
    TR::Node *nextComparisonNode;
@@ -6516,7 +6516,7 @@ void TR::ValuePropagation::buildBoundCheckComparisonNodes(BlockVersionInfo *bloc
 
 
 
-void TR::ValuePropagation::removeBndChecksFromFastVersion(BlockVersionInfo *blockInfo)
+void OMR::ValuePropagation::removeBndChecksFromFastVersion(BlockVersionInfo *blockInfo)
    {
 
    for (ArrayLengthToVersion *array = blockInfo->_arrayLengths->getFirst(); array; array = array->getNext())
@@ -6547,7 +6547,7 @@ void TR::ValuePropagation::removeBndChecksFromFastVersion(BlockVersionInfo *bloc
    }
 
 // deals only with constants. (i+5), (i+2-3)
-TR::Node *TR::ValuePropagation::findVarOfSimpleFormOld(TR::Node *node) //ArrayIndexNodeFromOffset(TR::Node *node, int32_t stride)
+TR::Node *OMR::ValuePropagation::findVarOfSimpleFormOld(TR::Node *node) //ArrayIndexNodeFromOffset(TR::Node *node, int32_t stride)
    {
    if (node->getOpCode().hasSymbolReference() &&
        !node->hasUnresolvedSymbolReference() &&
@@ -6587,7 +6587,7 @@ TR::Node *TR::ValuePropagation::findVarOfSimpleFormOld(TR::Node *node) //ArrayIn
 // i has to be any subtree, but its children are walked through, and if they have a symbol reference
 // they have to be either a param or an auto (we are trying to avoid object fields)
 // and of course they have to be not defined before then; see design 1839
-TR::Node *TR::ValuePropagation::findVarOfSimpleForm(TR::Node *node) //ArrayIndexNodeFromOffset(TR::Node *node, int32_t stride)
+TR::Node *OMR::ValuePropagation::findVarOfSimpleForm(TR::Node *node) //ArrayIndexNodeFromOffset(TR::Node *node, int32_t stride)
    {
    if (node->getOpCode().hasSymbolReference() &&
        !node->hasUnresolvedSymbolReference() &&
@@ -6655,7 +6655,7 @@ TR::Node *TR::ValuePropagation::findVarOfSimpleForm(TR::Node *node) //ArrayIndex
    }
 
 
-void TR::ValuePropagation::createNewBucketForArrayIndex(ArrayLengthToVersion *array, TR_LinkHead<ArrayLengthToVersion> *arrayLengths, int32_t c, TR::Node *baseNode, TR::Node *bndchkNode, TR_OpaqueClassBlock *instanceOfClass)
+void OMR::ValuePropagation::createNewBucketForArrayIndex(ArrayLengthToVersion *array, TR_LinkHead<ArrayLengthToVersion> *arrayLengths, int32_t c, TR::Node *baseNode, TR::Node *bndchkNode, TR_OpaqueClassBlock *instanceOfClass)
    {
    if (!array )
       {         //create a new arrayLengthToVersion
@@ -6681,7 +6681,7 @@ void TR::ValuePropagation::createNewBucketForArrayIndex(ArrayLengthToVersion *ar
    array->_arrayIndicesInfo->add(arrayIndex);
    }
 
-void TR::ValuePropagation::collectDefSymRefs(TR::Node *node, TR::Node *parent)
+void OMR::ValuePropagation::collectDefSymRefs(TR::Node *node, TR::Node *parent)
    {
    if (!node)
       return;
@@ -6772,7 +6772,7 @@ void TR::ValuePropagation::collectDefSymRefs(TR::Node *node, TR::Node *parent)
 
 //add in decresing order when constants
 //non-constants arraylen will be at the head of list.
-void  TR::ValuePropagation::addToSortedList(TR_LinkHead<ArrayLengthToVersion> *arrayLengths, ArrayLengthToVersion *newArrayLen)
+void  OMR::ValuePropagation::addToSortedList(TR_LinkHead<ArrayLengthToVersion> *arrayLengths, ArrayLengthToVersion *newArrayLen)
    {
    if (!newArrayLen->_arrayLen->getOpCode().isLoadConst())
       {
@@ -6799,7 +6799,7 @@ void  TR::ValuePropagation::addToSortedList(TR_LinkHead<ArrayLengthToVersion> *a
    }
 
 
-TR::TreeTop* TR::ValuePropagation::createReferenceArrayNodeWithoutFlags(TR::TreeTop* tree, TR::TreeTop* newTree, TR::SymbolReference* srcObjectRef, TR::SymbolReference* dstObjectRef, TR::SymbolReference* lenRef, TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, bool useFlagsOnOriginalArraycopy)
+TR::TreeTop* OMR::ValuePropagation::createReferenceArrayNodeWithoutFlags(TR::TreeTop* tree, TR::TreeTop* newTree, TR::SymbolReference* srcObjectRef, TR::SymbolReference* dstObjectRef, TR::SymbolReference* lenRef, TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, bool useFlagsOnOriginalArraycopy)
    {
    TR::Node* root = tree->getNode()->getFirstChild();
    TR::Node* len = TR::Node::createLoad(root, lenRef);
@@ -6856,7 +6856,7 @@ TR::TreeTop* TR::ValuePropagation::createReferenceArrayNodeWithoutFlags(TR::Tree
    }
 
 
-void TR::ValuePropagation::transformReferenceArrayCopyWithoutCreatingStoreTrees(TR_TreeTopWrtBarFlag *arrayTree, TR::SymbolReference *srcObjRef, TR::SymbolReference *dstObjRef, TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, TR::SymbolReference *lenRef)
+void OMR::ValuePropagation::transformReferenceArrayCopyWithoutCreatingStoreTrees(TR_TreeTopWrtBarFlag *arrayTree, TR::SymbolReference *srcObjRef, TR::SymbolReference *dstObjRef, TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, TR::SymbolReference *lenRef)
    {
    TR::Node *node = arrayTree->_treetop->getNode();
    if (node->getOpCodeValue() != TR::arraycopy)
@@ -6913,7 +6913,7 @@ void TR::ValuePropagation::transformReferenceArrayCopyWithoutCreatingStoreTrees(
    }
 
 
-void TR::ValuePropagation::transformReferenceArrayCopy(TR_TreeTopWrtBarFlag *arrayTree)
+void OMR::ValuePropagation::transformReferenceArrayCopy(TR_TreeTopWrtBarFlag *arrayTree)
    {
    TR::Node *node = arrayTree->_treetop->getNode();
    if (node->getOpCodeValue() != TR::arraycopy)
@@ -6930,7 +6930,7 @@ void TR::ValuePropagation::transformReferenceArrayCopy(TR_TreeTopWrtBarFlag *arr
    transformReferenceArrayCopyWithoutCreatingStoreTrees(arrayTree, srcObjRef, dstObjRef, srcRef, dstRef, lenRef);
    }
 
-void TR::ValuePropagation::transformUnknownTypeArrayCopy(TR_TreeTopWrtBarFlag *arrayTree)
+void OMR::ValuePropagation::transformUnknownTypeArrayCopy(TR_TreeTopWrtBarFlag *arrayTree)
    {
 #ifdef J9_PROJECT_SPECIFIC
    TR::Node *node = arrayTree->_treetop->getNode();
@@ -6997,7 +6997,7 @@ void TR::ValuePropagation::transformUnknownTypeArrayCopy(TR_TreeTopWrtBarFlag *a
    }
 
 
-static void changeBranchToGoto(TR::ValuePropagation *vp, TR::Node *guardNode, TR::Block *guard)
+static void changeBranchToGoto(OMR::ValuePropagation *vp, TR::Node *guardNode, TR::Block *guard)
    {
    // change the if to goto
    TR::Node::recreate(guardNode, TR::Goto);
@@ -7022,7 +7022,7 @@ static void changeBranchToGoto(TR::ValuePropagation *vp, TR::Node *guardNode, TR
    }
 
 
-void TR::ValuePropagation::transformStringConcats(VPStringCached *stringCached)
+void OMR::ValuePropagation::transformStringConcats(VPStringCached *stringCached)
   {
    if (!performTransformation(comp(), "%sSimplified String Concatenation:(StringCache) [%p] \n", OPT_DETAILS, stringCached->_treetop1, stringCached->_treetop2)&& getStringCacheRef())
        return;
@@ -7066,7 +7066,7 @@ void TR::ValuePropagation::transformStringConcats(VPStringCached *stringCached)
   TR::TransformUtil::removeTree(comp(), newTree);
   }
 
-TR::SymbolReference * TR::ValuePropagation::getStringCacheRef()
+TR::SymbolReference * OMR::ValuePropagation::getStringCacheRef()
   {
 
 #ifdef J9_PROJECT_SPECIFIC
@@ -7112,7 +7112,7 @@ TR::SymbolReference * TR::ValuePropagation::getStringCacheRef()
 #endif
 }
 
-void TR::ValuePropagation::transformStringCtors(VPTreeTopPair *treeTopPair)
+void OMR::ValuePropagation::transformStringCtors(VPTreeTopPair *treeTopPair)
 {
 
   if (!performTransformation(comp(), "%sSimplified String Concatenation:(StringCache) [%p] \n", OPT_DETAILS, treeTopPair->_treetop1,treeTopPair->_treetop2)&& getStringCacheRef())
@@ -7167,30 +7167,19 @@ void TR::ValuePropagation::transformStringCtors(VPTreeTopPair *treeTopPair)
   treeTopPair->_treetop1->unlink(true);
 }
 
-void TR::ValuePropagation::replacePackedArrayLoad(TR::Node *loadNode, TR::Node *packedNode, TR::Node *curNode, vcount_t visitCount)
+/** \brief
+ *     Extension point for language specific optimizations on recognized methods
+ *
+ * \parm node
+ *     The call node to be constrained
+ */
+void OMR::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
    {
-   if (curNode->getVisitCount() == visitCount)
-      return;
-
-   curNode->setVisitCount(visitCount);
-
-   for (uint16_t i = 0; i < curNode->getNumChildren(); i++)
-      {
-      TR::Node *childNode = curNode->getChild(i);
-      if (childNode == loadNode)
-         {
-         curNode->setAndIncChild(i, packedNode);
-         loadNode->recursivelyDecReferenceCount();
-         if (trace())
-            traceMsg(comp(), "Replacing child %d of node [" POINTER_PRINTF_FORMAT "] from load node [" POINTER_PRINTF_FORMAT "] to packed node [" POINTER_PRINTF_FORMAT "]\n", i, curNode, loadNode, packedNode);
-         }
-      else
-         replacePackedArrayLoad(loadNode, packedNode, childNode, visitCount);
-      }
    }
 
 
-bool TR::ValuePropagation::checkAllUnsafeReferences(TR::Node *node, vcount_t visitCount)
+
+bool OMR::ValuePropagation::checkAllUnsafeReferences(TR::Node *node, vcount_t visitCount)
    {
    if (node->getVisitCount() == visitCount)
       return true;
@@ -7224,7 +7213,7 @@ bool TR::ValuePropagation::checkAllUnsafeReferences(TR::Node *node, vcount_t vis
 
 
 
-void TR::ValuePropagation::doDelayedTransformations()
+void OMR::ValuePropagation::doDelayedTransformations()
    {
    // If there were unreachable blocks, remove them
    ListIterator<VPStringCached> treesIt0(&_cachedStringBufferVcalls);
@@ -8176,3 +8165,152 @@ void constrainRangeByPrecision(const int64_t low, const int64_t high, const int3
    if (isNonNegative)
       lowResult = 0;
    }
+
+#if USE_TREES
+void OMR::ValuePropagation::ValueConstraintHandler::setVP(OMR::ValuePropagation * vp)
+   {
+   _vp = vp;
+   }
+
+OMR::ValuePropagation::ValueConstraint * OMR::ValuePropagation::ValueConstraintHandler::allocate(int32_t key)
+   {
+   return _vp->createValueConstraint(key, NULL, NULL);
+   }
+
+void OMR::ValuePropagation::ValueConstraintHandler::free(ValueConstraint * vc)
+   {
+   _vp->freeValueConstraint(vc);
+   }
+
+OMR::ValuePropagation::ValueConstraint * OMR::ValuePropagation::ValueConstraintHandler::copy(ValueConstraint * vc)
+   {
+   Relationship *rel = _vp->copyRelationships(vc->relationships.getFirst());
+   StoreRelationship *storeRel = _vp->copyStoreRelationships(vc->storeRelationships.getFirst());
+   ValueConstraint *newvc = _vp->createValueConstraint(vc->getValueNumber(), rel, storeRel);
+   return newvc;
+   }
+
+TR::Compilation * OMR::ValuePropagation::ValueConstraintHandler::comp()
+   {
+   return _vp->comp();
+   }
+
+#else
+void OMR::ValuePropagation::ValueConstraintHandler::setVP(OMR::ValuePropagation * vp)
+   {
+   _vp = vp;
+   }
+
+OMR::ValuePropagation::ValueConstraint * OMR::ValuePropagation::ValueConstraintHandler::allocate(int32_t key)
+   {
+   return _vp->createValueConstraint(key, NULL, NULL);
+   }
+
+void OMR::ValuePropagation::ValueConstraintHandler::free(ValueConstraint * vc)
+   {
+   _vp->freeValueConstraint(vc);
+   }
+
+OMR::ValuePropagation::ValueConstraint * OMR::ValuePropagation::ValueConstraintHandler::copy(ValueConstraint * vc)
+   {
+   Relationship *rel = _vp->copyRelationships(vc->relationships.getFirst());
+   StoreRelationship *storeRel = _vp->copyStoreRelationships(vc->storeRelationships.getFirst());
+   ValueConstraint *newvc = _vp->createValueConstraint(vc->getValueNumber(), rel, storeRel);
+   return newvc;
+   }
+
+void OMR::ValuePropagation::ValueConstraintHandler::empty(ValueConstraints & valueConstraints)
+   {
+   ValueConstraint *vc;
+   while (vc = valueConstraints.pop())
+      free(vc);
+   }
+
+OMR::ValuePropagation::ValueConstraint * OMR::ValuePropagation::ValueConstraintHandler::copyAll(ValueConstraints & valueConstraints)
+   {
+   TR_LinkHeadAndTail<ValueConstraint> newList;
+   ValueConstraint *vc, *newVc;
+   for (vc = valueConstraints.getFirst(); vc; vc = vc->getNext())
+      {
+      newList.append(copy(vc));
+      }
+   return newList.getFirst();
+   }
+
+OMR::ValuePropagation::ValueConstraint * OMR::ValuePropagation::ValueConstraintHandler::getRoot(ValueConstraints & list)
+   {
+   return list.getFirst();
+   }
+
+void OMR::ValuePropagation::ValueConstraintHandler::setRoot(ValueConstraints & list, ValueConstraint * vc)
+   {
+   list.setFirst(vc);
+   }
+
+OMR::ValuePropagation::ValueConstraint * OMR::ValuePropagation::ValueConstraintHandler::find(int32_t key, ValueConstraints & list)
+   {
+   ValueConstraint *prev, *cur;
+   for (cur = list.getFirst(), prev = NULL; cur; prev = cur, cur = cur->getNext())
+      {
+      if (cur->getValueNumber() < key)
+         continue;
+      if (cur->getValueNumber() > key)
+         break;
+      return cur;
+      }
+   return NULL;
+   }
+
+OMR::ValuePropagation::ValueConstraint * OMR::ValuePropagation::ValueConstraintHandler::findOrCreate(int32_t key, ValueConstraints & list)
+   {
+   ValueConstraint *prev, *cur;
+   for (cur = list.getFirst(), prev = NULL; cur; prev = cur, cur = cur->getNext())
+      {
+      if (cur->getValueNumber() < key)
+         continue;
+      if (cur->getValueNumber() > key)
+         break;
+      return cur;
+      }
+   ValueConstraint *result = allocate(key);
+   result->setNext(cur);
+   if (prev) prev->setNext(result);
+   else list.setFirst(result);
+   return result;
+   }
+
+OMR::ValuePropagation::ValueConstraint * OMR::ValuePropagation::ValueConstraintHandler::remove(int32_t key, ValueConstraints & list)
+   {
+   ValueConstraint *prev, *cur;
+   for (cur = list.getFirst(), prev = NULL; cur; prev = cur, cur = cur->getNext())
+      {
+      if (cur->getValueNumber() < key)
+         continue;
+      if (cur->getValueNumber() > key)
+         break;
+      if (prev) prev->setNext(cur->getNext());
+      else list.setFirst(cur->getNext());
+      return cur;
+      }
+   return NULL;
+   }
+#endif
+
+OMR::ValuePropagation::InductionVariable::InductionVariable(TR::Symbol * sym, TR::Node * entryDef, int32_t incrVN, TR::VPConstraint * incr, OMR::ValuePropagation * vp)
+   : _symbol(sym), _entryDef(entryDef), _entryConstraint(0), _incrementVN(incrVN), _increment(incr)
+   {
+   _valueNumber = vp->_numValueNumbers++;
+   _onlyIncrValid = false;
+   }
+
+OMR::ValuePropagation::CallInfo::CallInfo(OMR::ValuePropagation * vp, TR_OpaqueClassBlock * thisType, TR_PrexArgInfo * argInfo)
+   : _tt(vp->_curTree), _block(vp->_curBlock), _thisType(thisType), _argInfo(argInfo)
+   {}
+
+OMR::ValuePropagation::VirtualGuardInfo::VirtualGuardInfo(OMR::ValuePropagation * vp, TR_VirtualGuard * vgOld, TR_VirtualGuard * vgNew, TR::Node * newGNode, TR::Node * cn)
+   : _currentTree(vp->_curTree), _block(vp->_curBlock), _oldVirtualGuard(vgOld), _newVirtualGuard(vgNew), _newGuardNode(newGNode), _callNode(cn)
+   {}
+
+OMR::ValuePropagation::ClassInitInfo::ClassInitInfo(OMR::ValuePropagation * vp, char * sig, int32_t len)
+   : _tt(vp->_curTree), _block(vp->_curBlock), _sig(sig), _len(len)
+   {}

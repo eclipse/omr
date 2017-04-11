@@ -211,6 +211,9 @@ public:
 		
 	MMINLINE void setLargestFreeEntry(uintptr_t largestFreeEntry) { _largestFreeEntry = largestFreeEntry; }
 	
+	virtual void setLastFreeEntry(void * addr) {}
+	virtual MM_HeapLinkedFreeHeader *getLastFreeEntry() { return NULL; }
+	
 	/**
 	 * Allocates the contiguous portion of an object.  This means all mixed objects, all indexable objects outside of arraylet
 	 * VMs, and arraylet spines (including their leaves, if inline) take this path.

@@ -45,6 +45,9 @@ class GC_ObjectHeapIteratorAddressOrderedList : public GC_ObjectHeapIterator
 	 */
 private:
 	bool _includeDeadObjects;
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	bool _includeForwardedObjects;
+#endif	/* OMR_GC_CONCURRENT_SCAVENGER */
 
 	omrobjectptr_t _scanPtr;
 	omrobjectptr_t _scanPtrTop;
@@ -74,6 +77,11 @@ private:
 	 * @parm increment - the number of bytes to advance the scanPtr by
 	 */
 	void advanceScanPtr(uintptr_t increment);
+
+	/**
+	 * Helper method that filters out special 'objects' like dead or forwarded ones
+	 */
+	bool shouldReturnCurrentObject();
 	
 protected:
 	
@@ -87,6 +95,9 @@ public:
 	GC_ObjectHeapIteratorAddressOrderedList(MM_GCExtensionsBase *extensions, MM_HeapRegionDescriptor *region, bool includeDeadObjects) :
 		/* Iterator base values */
 		_includeDeadObjects(includeDeadObjects),
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		_includeForwardedObjects(false),
+#endif
 		_isDeadObject(false),
 		_isSingleSlotHole(false),
 		_deadObjectSize(0),
@@ -107,6 +118,9 @@ public:
 	GC_ObjectHeapIteratorAddressOrderedList(MM_GCExtensionsBase *extensions, omrobjectptr_t base, omrobjectptr_t top, bool includeDeadObjects, bool skipFirstObject = false) :
 		/* Iterator base values */
 		_includeDeadObjects(includeDeadObjects),
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		_includeForwardedObjects(false),
+#endif		
 		_scanPtr(base),
 		_scanPtrTop(top),
 		/* Iterator scan values */
@@ -120,6 +134,9 @@ public:
 	virtual omrobjectptr_t nextObjectNoAdvance();
 	virtual void advance(uintptr_t size);
 	virtual void reset(uintptr_t *base, uintptr_t *top);
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	void includeForwardedObjects() { _includeForwardedObjects = true; }
+#endif
 
 	/**
 	 * @see GC_ObjectHeapIterator::nextObject()
@@ -129,6 +146,11 @@ public:
 		omrobjectptr_t currentObject;
 
 		while(_scanPtr < _scanPtrTop) {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+			/* There are no known users of this type of iteration, while there are still forwarded objects in the heap */
+			Assert_MM_false(MM_ForwardedHeader(_scanPtr).isForwardedPointer());
+#endif
+		
 			_isDeadObject = _extensions->objectModel.isDeadObject(_scanPtr);
 			currentObject = _scanPtr;
 			if(!_isDeadObject) {

@@ -110,10 +110,13 @@ void TR::PPCLabelInstruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
 
       // Unlock the free spill list.
       //
-      // TODO: live registers that are not spilled at this point should have their backing
-      // storage returned to the free spill list.
-      //
       cg()->unlockFreeSpillList();
+
+      // Disassociate backing storage that was previously reserved for a spilled virtual if
+      // virtual is no longer spilled. This occurs because the the free spill list was
+      // locked.
+      //
+      machine->disassociateUnspilledBackingStorage();
       }
    }
 
@@ -227,10 +230,13 @@ void TR::PPCConditionalBranchInstruction::assignRegisters(TR_RegisterKinds kindT
 
       // Unlock the free spill list.
       //
-      // TODO: live registers that are not spilled at this point should have their backing
-      // storage returned to the free spill list.
-      //
       cg()->unlockFreeSpillList();
+
+      // Disassociate backing storage that was previously reserved for a spilled virtual if
+      // virtual is no longer spilled. This occurs because the the free spill list was
+      // locked.
+      //
+      machine->disassociateUnspilledBackingStorage();
       }
    }
 

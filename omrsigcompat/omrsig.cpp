@@ -47,19 +47,6 @@ static sighandler_t omrsig_signal_internal(int signum, sighandler_t handler);
 static int omrsig_sigaction_internal(int signum, const struct sigaction *act, struct sigaction *oldact, bool primary);
 static bool validSignalNum(int signum, bool nullAction);
 static bool handlerIsFunction(const struct sigaction *act);
-#if !defined(WIN32) && !defined(J9ZOS390)
-#if defined(OMR_OMRSIG_HAS_SIGVEC)
-static void sa_mask_to_sv_mask(const sigset_t *sa_mask, int *sv_mask);
-static void sv_mask_to_sa_mask(const int *sv_mask, sigset_t *sa_mask);
-#if (defined(S390) && defined(OMR_ENV_DATA64))
-static void sa_flags_to_sv_flags(const long unsigned int *sa_flags, int *sv_flags);
-static void sv_flags_to_sa_flags(const int *sv_flags, long unsigned int *sa_flags);
-#else /* (defined(S390) && defined(OMR_ENV_DATA64)) */
-static void sa_flags_to_sv_flags(const int *sa_flags, int *sv_flags);
-static void sv_flags_to_sa_flags(const int *sv_flags, int *sa_flags);
-#endif /* (defined(S390) && defined(OMR_ENV_DATA64)) */
-#endif /* defined(OMR_OMRSIG_HAS_SIGVEC) */
-#endif /* !defined(WIN32) && !defined(J9ZOS390) */
 
 #if defined(WIN32)
 
@@ -595,127 +582,7 @@ sysv_signal(int signum, sighandler_t handler) __THROW
 	return omrsig_signal_internal(signum, handler);
 }
 
-#if defined(OMR_OMRSIG_HAS_SIGVEC)
-
-static void
-sv_mask_to_sa_mask(const int *sv_mask, sigset_t *sa_mask)
-{
-	/* sv_mask's are ints while sa_mask's are not necessarily ints. */
-	sigemptyset(sa_mask);
-	for (unsigned int i = 1; (i < NSIG) && (i < sizeof(sv_mask) * 8); i += 1) {
-		if (*sv_mask & sigmask(i)) {
-			sigaddset(sa_mask, i);
-		}
-	}
-}
-
-static void
-#if (defined(S390) && defined(OMR_ENV_DATA64))
-sv_flags_to_sa_flags(const int *sv_flags, long unsigned int *sa_flags)
-#else /* (defined(S390) && defined(OMR_ENV_DATA64)) */
-sv_flags_to_sa_flags(const int *sv_flags, int *sa_flags)
-#endif /* (defined(S390) && defined(OMR_ENV_DATA64)) */
-{
-	*sa_flags = 0;
-	if (*sv_flags & SV_ONSTACK) {
-		*sa_flags |= SA_ONSTACK;
-	}
-#if !defined(AIXPPC)
-	if (0 == (*sv_flags & SV_INTERRUPT)) {
-		*sa_flags |= SA_RESTART;
-	}
-	if (*sv_flags & SV_RESETHAND) {
-		*sa_flags |= SA_RESETHAND;
-	}
-#endif /* !defined(AIXPPC) */
-}
-
-static void
-sa_mask_to_sv_mask(const sigset_t *sa_mask, int *sv_mask)
-{
-	*sv_mask = 0;
-	for (unsigned int i = 1; (i < NSIG) && (i < sizeof(sv_mask) * 8); i += 1) {
-		if (1 == sigismember(sa_mask, i)) {
-			*sv_mask |= sigmask(i);
-		}
-	}
-}
-
-static void
-#if (defined(S390) && defined(OMR_ENV_DATA64))
-sa_flags_to_sv_flags(const long unsigned int *sa_flags, int *sv_flags)
-#else /* (defined(S390) && defined(OMR_ENV_DATA64)) */
-sa_flags_to_sv_flags(const int *sa_flags, int *sv_flags)
-#endif /* (defined(S390) && defined(OMR_ENV_DATA64)) */
-{
-	*sv_flags = 0;
-	if (*sa_flags & SA_ONSTACK) {
-		*sv_flags |= SV_ONSTACK;
-	}
-#if defined(AIXPPC)
-	/* On AIX, sigvec does not respect SV_RESETHAND and always applies SV_INTERRUPT. */
-	*sv_flags |= SV_INTERRUPT;
-#else /* defined(AIXPPC) */
-	if (*sa_flags & SA_RESETHAND) {
-		*sv_flags |= SV_RESETHAND;
-	}
-	if (0 == (*sa_flags & SA_RESTART)) {
-		*sv_flags |= SV_INTERRUPT;
-	}
-#endif /* defined(AIXPPC) */
-}
-
-#endif /* defined(OMR_OMRSIG_HAS_SIGVEC) */
-
 #endif /* !defined(J9ZOS390) */
 #endif /* !defined(WIN32) */
 
 } /* extern "C" { */
-
-#if (!defined(J9ZOS390) && !defined(WIN32))
-
-#if defined(OMR_OMRSIG_HAS_SIGVEC)
-
-int
-#if defined(OSX)
-sigvec(int sig, struct sigvec * vec, struct sigvec *ovec)
-#else /* defined(OSX) */
-sigvec(int sig, const struct sigvec *vec, struct sigvec *ovec) __THROW
-#endif /* defined(OSX) */
-{
-	int rc = 0;
-
-	if ((NULL == vec) && (NULL == ovec)) {
-		rc = 0;
-	} else {
-		struct sigaction act = {{0}};
-		/* If a new secondary handler is given, create a struct sigaction for it. */
-		if (NULL != vec) {
-			act.sa_handler = vec->sv_handler;
-			sv_mask_to_sa_mask(&vec->sv_mask, &act.sa_mask);
-			sv_flags_to_sa_flags(&vec->sv_flags, &act.sa_flags);
-		}
-
-		struct sigaction oldact = {{0}};
-		if (NULL == ovec) {
-			rc = omrsig_sigaction_internal(sig, &act, NULL, false);
-		} else if (NULL == vec) {
-			rc = omrsig_sigaction_internal(sig, NULL, &oldact, false);
-		} else {
-			rc = omrsig_sigaction_internal(sig, &act, &oldact, false);
-		}
-
-		/* If a previous argument is given, convert the struct sigaction to struct sigvec. */
-		if (NULL != ovec) {
-			ovec->sv_handler = oldact.sa_handler;
-			sa_mask_to_sv_mask(&act.sa_mask, &ovec->sv_mask);
-			sa_flags_to_sv_flags(&act.sa_flags, &ovec->sv_flags);
-		}
-	}
-	return rc;
-}
-
-#endif /* defined(OMR_OMRSIG_HAS_SIGVEC) */
-
-#endif /* (!defined(J9ZOS390) && !defined(WIN32)) */
-

@@ -52,7 +52,8 @@ public:
 		set_allocate,
 		disable_allocation,
 		restore_allocation_and_set_survivor,
-		backout
+		backout,
+		restore_tilt_after_percolate
 	};	 
 private:
 	MM_MemorySubSpace *_memorySubSpaceAllocate;

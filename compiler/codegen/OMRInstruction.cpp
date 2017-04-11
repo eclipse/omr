@@ -28,12 +28,6 @@
 
 namespace TR { class Node; }
 
-TR::Instruction *
-OMR::Instruction::self()
-   {
-   return static_cast<TR::Instruction *>(this);
-   }
-
 namespace OMR
 {
 Instruction::Instruction(

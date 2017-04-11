@@ -88,6 +88,8 @@ namespace TR
 #if (_MSC_VER < 1800)
    #define va_copy(d,s) ((d)=(s))
    #define va_copy_end(x)
+#else /* (_MSC_VER < 1800) */
+   #define va_copy_end(x) va_end(x)
 #endif /* (_MSC_VER < 1800) */
 #elif defined(J9ZOS390) && !defined(__C99)  // zOS defines it only if __C99 is defined
    #define va_copy(d,s) (memcpy((d),(s),sizeof(va_list)))

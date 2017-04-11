@@ -23,6 +23,7 @@
 #include <limits.h>
 #if defined(WIN32)
 #include <windows.h>
+#define strdup _strdup
 #endif /* WIN32 */
 
 #include "HookGen.hpp"
@@ -370,6 +371,8 @@ HookGen::createFile(char *path, const char *fileName)
 
 /**
  * Get the actual filename from the relative path which includes the file name
+ *
+ * @NOTE caller is responsible for freeing memory
  */
 const char *
 HookGen::getActualFileName(const char *fileName)
@@ -381,7 +384,7 @@ HookGen::getActualFileName(const char *fileName)
 	} else {
 		location = fileName;
 	}
-	return location;
+	return strdup(location);
 }
 
 /**

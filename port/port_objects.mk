@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# (c) Copyright IBM Corp. 2015, 2016
+# (c) Copyright IBM Corp. 2015, 2017
 #
 #  This program and the accompanying materials are made available
 #  under the terms of the Eclipse Public License v1.0 and
@@ -267,7 +267,7 @@ endif
 ifeq (osx,$(OMR_HOST_OS))
   vpath % $(PORT_SRCDIR)osx_include
   MODULE_INCLUDES += $(PORT_SRCDIR)osx_include
-  
+
   vpath % $(PORT_SRCDIR)osx
   MODULE_INCLUDES += $(PORT_SRCDIR)osx
 endif
@@ -336,10 +336,10 @@ endif
 ifeq (1,$(OMR_OPT_CUDA))
   ifeq (win,$(OMR_HOST_OS))
     # CUDA for Windows platforms
-    CUDA_HOME := $(DEV_TOOLS)/NVIDIA/CUDA/v5.5
+    CUDA_HOME ?= $(DEV_TOOLS)/NVIDIA/CUDA/v5.5
   else
     # CUDA for non-Windows platforms
-    CUDA_HOME := /usr/local/cuda-5.5
+    CUDA_HOME ?= /usr/local/cuda-5.5
   endif
 
 omrcuda$(OBJEXT) : MODULE_INCLUDES += $(CUDA_HOME)/include

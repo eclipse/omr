@@ -241,12 +241,8 @@ class OMR_EXTENSIBLE Block : public TR::CFGNode
 
    TR::TreeTop *getExceptingTree();
 
-   // { RTSJ Support begins
-
    bool hasExceptionPredecessors();
    bool hasExceptionSuccessors();
-
-   // } RTSJ Support ends
 
    /**
     * Field functions
@@ -369,6 +365,8 @@ class OMR_EXTENSIBLE Block : public TR::CFGNode
    //
    int32_t getNormalizedFrequency(TR::CFG *);
    int32_t getGlobalNormalizedFrequency(TR::CFG *);
+
+   bool isOSRInduceBlock(TR::Compilation *);
 
    /**
     * Field functions end

@@ -28,6 +28,7 @@
 #include "CardCleaningStats.hpp"
 #include "CycleState.hpp"
 #include "CompactStats.hpp"
+#include "EnvironmentDelegate.hpp"
 #include "GCCode.hpp"
 #include "GCExtensionsBase.hpp"
 #include "LargeObjectAllocateStats.hpp"
@@ -47,7 +48,6 @@ class MM_Collector;
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
 class MM_ConcurrentGCStats;
 #endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
-class MM_EnvironmentLanguageInterface;
 class MM_HeapRegionQueue;
 class MM_MemorySpace;
 class MM_ObjectAllocationInterface;
@@ -85,6 +85,7 @@ protected:
 	OMR_VM *_omrVM;
 	OMR_VMThread *_omrVMThread;
 	OMRPortLibrary *_portLibrary; /**< the port library associated with the environment */
+	MM_EnvironmentDelegate _delegate;
 
 private:
 	uintptr_t _workUnitIndex;
@@ -113,8 +114,6 @@ protected:
 #endif /* OMR_GC_SEGREGATED_HEAP */
 
 public:
-	MM_EnvironmentLanguageInterface *_envLanguageInterface;
-
 	MM_ObjectAllocationInterface *_objectAllocationInterface; /**< Per-thread interface that guides object allocation decisions */
 
 	MM_WorkStack _workStack;
@@ -516,6 +515,34 @@ public:
 	 */
 	bool exclusiveAccessBeatenByOtherThread() { return _exclusiveAccessBeatenByOtherThread; }
 
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	/**
+	 * Force thread to use out-of-line request for VM access. This may be required if there
+	 * is there is an event waiting to be hooked the next time the thread acquires VM access.
+	 */
+	void forceOutOfLineVMAccess() { _delegate.forceOutOfLineVMAccess(); }
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
+#if defined (OMR_GC_THREAD_LOCAL_HEAP)
+	/**
+	 * Disable inline TLH allocates by hiding the real heap allocation address from
+	 * JIT/Interpreter in realHeapAlloc and setting heapALloc == HeapTop so TLH
+	 * looks full.
+	 *
+	 */
+	void disableInlineTLHAllocate() { _delegate.disableInlineTLHAllocate(); }
+
+	/**
+	 * Re-enable inline TLH allocate by restoring heapAlloc from realHeapAlloc
+	 */
+	void enableInlineTLHAllocate() { _delegate.enableInlineTLHAllocate(); }
+
+	/**
+	 * Determine if inline TLH allocate is enabled; its enabled if realheapAlloc is NULL.
+	 * @return TRUE if inline TLH allocates currently enabled for this thread; FALSE otherwise
+	 */
+	bool isInlineTLHAllocateEnabled() { return _delegate.isInlineTLHAllocateEnabled(); }
+#endif /* OMR_GC_THREAD_LOCAL_HEAP */
 
 	MMINLINE uintptr_t getWorkUnitIndex() { return _workUnitIndex; }
 	MMINLINE uintptr_t getWorkUnitToHandle() { return _workUnitToHandle; }
@@ -562,6 +589,49 @@ public:
 	MMINLINE void setAllocationColor(uint32_t allocationColor) { _allocationColor = allocationColor; }
 
 	MMINLINE MM_WorkStack *getWorkStack() { return &_workStack; }
+
+	/**
+	 * Get a pointer to common GC metadata attached to this environment. The GC environment structure
+	 * is defined by the client language and bound to the environment delegate attached to this class.
+	 * It is typically used to hold thread-local GC-related stats and caches that are merged at key
+	 * points into global structures.
+	 */
+	MMINLINE GC_Environment *getGCEnvironment() { return _delegate.getGCEnvironment(); }
+
+	/**
+	 * Called on each participating GC thread before starting mark phase. This can be used
+	 * to reset local thread stats and reference buffers prior to commencing marking.
+	 */
+	MMINLINE void
+	markingPhaseStarted()
+	{
+		_markStats.clear();
+		_workPacketStats.clear();
+
+		_delegate.markingStarted();
+
+#if defined(OMR_GC_MODRON_STANDARD) || defined(OMR_GC_REALTIME)
+		/* record that this thread is participating in this cycle */
+		_markStats._gcCount = _workPacketStats._gcCount = getExtensions()->globalGCStats.gcCount;
+#endif /* defined(OMR_GC_MODRON_STANDARD) || defined(OMR_GC_REALTIME) */
+	}
+
+	/**
+	 * Called on each participating GC thread after completing mark phase. This can be used
+	 * to merge local thread stats and reference buffers into global containers to compleete marking.
+	 */
+	MMINLINE void
+	markingPhaseFinished()
+	{
+		_delegate.markingFinished();
+
+#if defined(OMR_GC_MODRON_STANDARD) || defined(OMR_GC_REALTIME)
+		MM_GCExtensionsBase *extensions = getExtensions();
+		extensions->globalGCStats.markStats.merge(&_markStats);
+		extensions->globalGCStats.workPacketStats.merge(&_workPacketStats);
+#endif /* defined(OMR_GC_MODRON_STANDARD) || defined(OMR_GC_REALTIME) */
+	}
+
 #if defined(OMR_GC_SEGREGATED_HEAP)
 	MMINLINE MM_HeapRegionQueue *getRegionWorkList() const { return _regionWorkList; }
 	MMINLINE MM_HeapRegionQueue *getRegionLocalFree() const { return _regionLocalFree; }
@@ -578,6 +648,7 @@ public:
 		,_omrVM(omrVMThread->_vm)
 		,_omrVMThread(omrVMThread)
 		,_portLibrary(omrVMThread->_vm->_runtime->_portLibrary)
+		,_delegate()
 		,_workUnitIndex(0)
 		,_workUnitToHandle(0)
 		,_threadScanned(false)
@@ -595,7 +666,6 @@ public:
 		,_regionLocalFree(NULL)
 		,_regionLocalFull(NULL)
 #endif /* OMR_GC_SEGREGATED_HEAP */
-		,_envLanguageInterface(NULL)
 		,_objectAllocationInterface(NULL)
 		,_workStack()
 		,_threadType(MUTATOR_THREAD)
@@ -643,7 +713,6 @@ public:
 		,_regionLocalFree(NULL)
 		,_regionLocalFull(NULL)
 #endif /* OMR_GC_SEGREGATED_HEAP */
-		,_envLanguageInterface(NULL)
 		,_objectAllocationInterface(NULL)
 		,_workStack()
 		,_threadType(MUTATOR_THREAD)

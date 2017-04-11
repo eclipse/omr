@@ -746,4 +746,5 @@
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::lnolz (J9)
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::lnotz (J9)
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::lpopcnt (J9)
+   TR::TreeEvaluator::ibyteswapEvaluator,                  // TR::ibyteswap
    TR::TreeEvaluator::PrefetchEvaluator,                // TR::Prefetch

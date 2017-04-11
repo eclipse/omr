@@ -32,6 +32,7 @@
 #include "il/Symbol.hpp"            // for Symbol
 #include "il/SymbolReference.hpp"   // for SymbolReference
 #include "infra/Assert.hpp"         // for TR_ASSERT
+#include "infra/deque.hpp"          // for TR::deque
 #include "infra/TRlist.hpp"         // for TR::list
 
 class TR_ReachingDefinitions;
@@ -77,50 +78,44 @@ class TR_UseDefInfo : public TR::Allocatable<TR_UseDefInfo, TR::Allocator>
    class AuxiliaryData
       {
       private:
-         AuxiliaryData(TR::Compilation *c) :
-             _onceReadSymbols(c->allocator("UseDefAux"), BitVector(c->allocator("UseDefAux"))),
-             _onceWrittenSymbols(c->allocator("UseDefAux"), BitVector(c->allocator("UseDefAux"))),
-             _defsForSymbol(c->allocator("UseDefAux"), BitVector(c->allocator("UseDefAux"))),
-             _symsKilledByMustKills(c->allocator("UseDefAux"), TR::SparseBitVector(c->allocator("UseDefAux"))),
-             _neverReadSymbols(c->allocator("UseDefAux")),
-             _neverReferencedSymbols(c->allocator("UseDefAux")),
-             _neverWrittenSymbols(c->allocator("UseDefAux")),
-             _volatileOrAliasedToVolatileSymbols(c->allocator("UseDefAux")),
-             _onceWrittenSymbolsIndices(c->allocator("UseDefAux"), TR::SparseBitVector(c->allocator("UseDefAux"))),
-             _onceReadSymbolsIndices(c->allocator("UseDefAux"), TR::SparseBitVector(c->allocator("UseDefAux"))),
-             _nodeSideTableToSymRefNumMap(c->allocator("UseDefAux")),
-             _symRefToLocalIndexMap(c->allocator("UseDefAux")),
-             _expandedAtoms(c->allocator("UseDefAux"), CS2::Pair<TR::Node *, TR::TreeTop *>(NULL, NULL)),
-             _sideTableToUseDefMap(c->allocator("UseDefAux")),
-             _numAliases(c->allocator("UseDefAux")),
-             _nodesByGlobalIndex(c->allocator("UseDefAux")),
-             _loadsBySymRefNum(c->allocator("UseDefAux")),
-             _defsForOSR(c->allocator("UseDefAux"), TR_UseDefInfo::BitVector(c->allocator("UseDefAux")))
+         AuxiliaryData(int32_t numSymRefs, ncount_t nodeCount, TR::Allocator allocator) :
+             _onceReadSymbols(numSymRefs, BitVector(allocator), allocator),
+             _onceWrittenSymbols(numSymRefs, BitVector(allocator), allocator),
+             _defsForSymbol(allocator, BitVector(allocator)),
+             _neverReadSymbols(allocator),
+             _neverReferencedSymbols(allocator),
+             _neverWrittenSymbols(allocator),
+             _volatileOrAliasedToVolatileSymbols(allocator),
+             _onceWrittenSymbolsIndices(numSymRefs, TR::SparseBitVector(allocator), allocator),
+             _onceReadSymbolsIndices(numSymRefs, TR::SparseBitVector(allocator), allocator),
+             _expandedAtoms(allocator, CS2::Pair<TR::Node *, TR::TreeTop *>(NULL, NULL)),
+             _sideTableToUseDefMap(allocator),
+             _numAliases(numSymRefs, allocator),
+             _nodesByGlobalIndex(nodeCount, allocator),
+             _loadsBySymRefNum(numSymRefs, allocator),
+             _defsForOSR(allocator, TR_UseDefInfo::BitVector(allocator))
             {}
 
-      CS2::ArrayOf<BitVector,TR::Allocator> _onceReadSymbols;
-      CS2::ArrayOf<BitVector,TR::Allocator> _onceWrittenSymbols;
+      TR::deque<BitVector> _onceReadSymbols;
+      TR::deque<BitVector> _onceWrittenSymbols;
       // defsForSymbol are known definitions of the symbol
       CS2::ArrayOf<BitVector, TR::Allocator> _defsForSymbol;
-      CS2::ArrayOf<TR::SparseBitVector, TR::Allocator> _symsKilledByMustKills;    // symbol localIndex killed by function call due to mustDef
       TR::BitVector _neverReadSymbols;
       TR::BitVector _neverReferencedSymbols;
       TR::BitVector _neverWrittenSymbols;
       TR::BitVector _volatileOrAliasedToVolatileSymbols;
-      CS2::ArrayOf<TR::SparseBitVector, TR::Allocator> _onceWrittenSymbolsIndices;
-      CS2::ArrayOf<TR::SparseBitVector, TR::Allocator> _onceReadSymbolsIndices;
+      TR::deque<TR::SparseBitVector> _onceWrittenSymbolsIndices;
+      TR::deque<TR::SparseBitVector> _onceReadSymbolsIndices;
 
-      CS2::ArrayOf<int32_t, TR::Allocator>             _nodeSideTableToSymRefNumMap;
-      CS2::ArrayOf<uint32_t, TR::Allocator>            _symRefToLocalIndexMap;
       CS2::ArrayOf<CS2::Pair<TR::Node *, TR::TreeTop *>, TR::Allocator> _expandedAtoms;    //TR::Node            **_expandedNodes;
 
 
       protected:
       CS2::ArrayOf<uint32_t, TR::Allocator> _sideTableToUseDefMap;
       private:
-      CS2::ArrayOf<uint32_t, TR::Allocator> _numAliases;
-      CS2::ArrayOf<TR::Node *, TR::Allocator> _nodesByGlobalIndex;
-      CS2::ArrayOf<TR::Node *, TR::Allocator> _loadsBySymRefNum;
+      TR::deque<uint32_t> _numAliases;
+      TR::deque<TR::Node *> _nodesByGlobalIndex;
+      TR::deque<TR::Node *> _loadsBySymRefNum;
 
       protected:
       // used only in TR_OSRDefInfo - should extend AuxiliaryData really:
@@ -291,7 +286,15 @@ class TR_UseDefInfo : public TR::Allocatable<TR_UseDefInfo, TR::Allocator>
    void fillInDataStructures(AuxiliaryData &aux);
 
    bool indexSymbolsAndNodes(AuxiliaryData &aux);
-   bool findUseDefNodes(TR::Block *block, TR::Node *node, TR::Node *parent, TR::TreeTop *treeTop, AuxiliaryData &aux, bool considerImplicitStores = false);
+   bool findUseDefNodes(
+      TR::Block *block,
+      TR::Node *node,
+      TR::Node *parent,
+      TR::TreeTop *treeTop,
+      AuxiliaryData &aux,
+      TR::deque<uint32_t> &symRefToLocalIndexMap,
+      bool considerImplicitStores = false
+      );
    bool assignAdjustedNodeIndex(TR::Block *, TR::Node *node, TR::Node *parent, TR::TreeTop *treeTop, AuxiliaryData &aux, bool considerImplicitStores = false);
    bool childIndexIndicatesImplicitStore(TR::Node * node, int32_t childIndex);
    void insertData(TR::Block *, TR::Node *node, TR::Node *parent, TR::TreeTop *treeTop, AuxiliaryData &aux, TR::SparseBitVector &, bool considerImplicitStores = false);

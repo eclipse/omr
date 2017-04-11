@@ -121,7 +121,7 @@ private:
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	MM_MasterGCThread _masterGCThread; /**< An object which manages the state of the master GC thread */
 	
-	enum ConcurrentState {
+	volatile enum ConcurrentState {
 		concurrent_state_idle,
 		concurrent_state_init,
 		concurrent_state_roots,
@@ -144,6 +144,7 @@ public:
 	 * Function members
 	 */
 private:
+public:
 	/**
 	 * Hook callback. Called when a global collect has started
 	 */
@@ -220,6 +221,7 @@ private:
 	MMINLINE void flushRememberedSet(MM_EnvironmentStandard *env);
 	void pruneRememberedSetList(MM_EnvironmentStandard *env);
 	void pruneRememberedSetOverflow(MM_EnvironmentStandard *env);
+
 	/**
 	 * Checks if the  Object should be remembered or not
 	 * @param env Standard Environment
@@ -235,7 +237,15 @@ private:
 	bool backOutFixSlot(GC_SlotObject *slotObject);
 
 	void backoutFixupAndReverseForwardPointersInSurvivor(MM_EnvironmentStandard *env);
+	void processRememberedSetInBackout(MM_EnvironmentStandard *env);
 	void completeBackOut(MM_EnvironmentStandard *env);
+
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	void fixupNurserySlots(MM_EnvironmentStandard *env);
+	void fixupObjectScan(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
+	bool fixupSlot(GC_SlotObject *slotObject);
+	bool fixupSlotWithoutCompression(volatile omrobjectptr_t *slotPtr);
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 	/**
  	 * Request for percolate GC
@@ -340,6 +350,14 @@ private:
 
 	void setBackOutFlag(MM_EnvironmentBase *env, BackOutState value);
 	MMINLINE bool isBackOutFlagRaised() { return backOutFlagCleared < _backOutFlag; }
+	MMINLINE bool shouldAbortScanLoop() {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		/* Concurrent Scavenger needs to drain the scan queue, even if Scavenge aborted */
+		return false;
+#else		
+		return isBackOutFlagRaised();
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */		
+	}
 
 	void reportGCStart(MM_EnvironmentStandard *env);
 	void reportGCEnd(MM_EnvironmentStandard *env);
@@ -714,7 +732,7 @@ public:
 		, _masterGCThread(env)
 		, _concurrentState(concurrent_state_idle)
 		, _concurrentScavengerSwitchCount(0)
-		, _forceConcurrentTermination(false)		
+		, _forceConcurrentTermination(false)
 #endif		
 		, _omrVM(env->getOmrVM())
 	{

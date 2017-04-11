@@ -162,6 +162,11 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    void apply24BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol *);
    void apply8BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol *);
 
+   // ARM specific thresholds for constant re-materialization
+   int64_t getLargestNegConstThatMustBeMaterialized() {return -32769;}  // minimum 16-bit signed int minus 1
+   int64_t getSmallestPosConstThatMustBeMaterialized() {return 32768;}  // maximum 16-bit signed int plus 1
+   bool shouldValueBeInACommonedNode(int64_t); // no virt, cast
+
    // @@ bool canNullChkBeImplicit(TR::Node *node);
 
    bool hasCall()                 {return _flags.testAny(HasCall);}

@@ -60,11 +60,13 @@ class TableOf : public CS2_TAR_DECL {
 
   /// \brief Add a table entry at the next available position and return its index.
   TableIndex AddEntry();
+  TableIndex AddEntryNoConstruct();
 
   template <class Initializer>
     TableIndex AddEntry(Initializer &element);
 
   TableIndex AddEntryAtPosition(TableIndex);
+  TableIndex AddEntryAtPositionNoConstruct(TableIndex);
 
   template <class Initializer>
   TableIndex AddEntryAtPosition(TableIndex, Initializer element);
@@ -146,6 +148,7 @@ class TableOf : public CS2_TAR_DECL {
   TableIndex fLowestPossibleRemoved;
   TableIndex fHighestPossibleRemoved;
   TableIndex ClearLastOneIfThereIsOne(bool&);
+  bool       CheckEntryAtPosition(TableIndex);
   SupportingBitVector<Allocator> fFreeVector;
 };
 
@@ -339,9 +342,10 @@ CS2_TBL_TEMP inline void CS2_TBL_DECL::MakeEmpty () {
 
 // TableOf::AddEntry
 //
-// Add an entry to the table at the next available index.
-
-CS2_TBL_TEMP inline TableIndex CS2_TBL_DECL::AddEntry () {
+// Add an entry to the table at the next available index without constructing
+// the object. ONLY USE THIS IF YOU ARE GOING TO EXPLICITLY CONSTRUCT THE
+// THE DerivedElement YOURSELF.
+CS2_TBL_TEMP inline TableIndex CS2_TBL_DECL::AddEntryNoConstruct () {
   TableIndex newIndex;
   bool foundone;
 
@@ -356,7 +360,13 @@ CS2_TBL_TEMP inline TableIndex CS2_TBL_DECL::AddEntry () {
   CS2_TAR_DECL::GrowTo (fHighestIndex+1);
 
 found:
+  return newIndex;
+}
+
+// Add an entry to the table at the next available index
+CS2_TBL_TEMP inline TableIndex CS2_TBL_DECL::AddEntry () {
   // Construct the new table entry
+  TableIndex newIndex = AddEntryNoConstruct();
   new (&ElementAt(newIndex)) typename CS2_TAR_DECL::DerivedElement;
   return newIndex;
 }
@@ -364,30 +374,19 @@ found:
 CS2_TBL_TEMP
   template <class Initializer>
 inline TableIndex CS2_TBL_DECL::AddEntry (Initializer &initializer) {
-  TableIndex newIndex;
-  bool foundone;
-
-  newIndex = ClearLastOneIfThereIsOne(foundone);
-  while (foundone) {
-    if (newIndex <=fHighestIndex) goto found;
-    newIndex = ClearLastOneIfThereIsOne(foundone);
-  }
-
-  newIndex = fHighestIndex + 1;
-  CS2_TAR_DECL::GrowTo (newIndex + 1);
-  fHighestIndex = newIndex;
-
-found:
   // Construct the new table entry
+  TableIndex newIndex = AddEntryNoConstruct();
   new (&ElementAt(newIndex)) typename CS2_TAR_DECL::DerivedElement(initializer);
   return newIndex;
 }
 
 // TableOf::AddEntryAtPosition
 //
-// Add an entry to the table at the specified position.
-
-CS2_TBL_TEMP inline TableIndex CS2_TBL_DECL::AddEntryAtPosition (TableIndex newIndex) {
+// Add an entry to the table at the specified position without constructing
+// the object. ONLY USE THIS IF YOU ARE GOING TO EXPLICITLY CONSTRUCT THE
+// THE DerivedElement YOURSELF.
+CS2_TBL_TEMP inline bool CS2_TBL_DECL::CheckEntryAtPosition (TableIndex newIndex) {
+  bool shouldConstruct = true;
   if (fHighestIndex < newIndex) {
     if (fHighestIndex < newIndex-1) {
        if (fLowestPossibleRemoved == fHighestPossibleRemoved &&
@@ -417,48 +416,32 @@ CS2_TBL_TEMP inline TableIndex CS2_TBL_DECL::AddEntryAtPosition (TableIndex newI
     }
   } else {
     CS2Assert (!Exists(newIndex), ("Trying to add index " CS2_ZU " on top of existing element", newIndex));
-    return newIndex; // NO ADD
+    shouldConstruct = false;
   }
-  // Construct the new table entry
-  new (&ElementAt(newIndex)) typename CS2_TAR_DECL::DerivedElement;
+
+  return shouldConstruct;
+}
+
+// Add an entry to the table at the specified position.
+CS2_TBL_TEMP inline TableIndex CS2_TBL_DECL::AddEntryAtPositionNoConstruct (TableIndex newIndex) {
+  bool ignore = CheckEntryAtPosition(newIndex);
+  return newIndex;
+}
+
+CS2_TBL_TEMP inline TableIndex CS2_TBL_DECL::AddEntryAtPosition (TableIndex newIndex) {
+  if (CheckEntryAtPosition(newIndex)) {
+     // Construct the new table entry
+     new (&ElementAt(newIndex)) typename CS2_TAR_DECL::DerivedElement;
+  }
   return newIndex;
 }
 
 CS2_TBL_TEMP template <class Initializer>
   inline TableIndex CS2_TBL_DECL::AddEntryAtPosition (TableIndex newIndex, Initializer initializer) {
-  if (fHighestIndex < newIndex) {
-    if (fHighestIndex < newIndex-1) {
-       if (fLowestPossibleRemoved == fHighestPossibleRemoved &&
-           !fFreeVector.ValueAt(fLowestPossibleRemoved)) {
-          fLowestPossibleRemoved = fHighestIndex + 1;
-       }
-       fHighestPossibleRemoved = newIndex - 1;
-       while (fHighestIndex < newIndex-1) {
-          fHighestIndex+=1;
-          fFreeVector[fHighestIndex]=true;
-       }
-    }
-    fHighestIndex = newIndex;
-    CS2_TAR_DECL::GrowTo (newIndex+1);
-  } else if (fFreeVector.ValueAt(newIndex)) {
-    fFreeVector[newIndex]=false;
-    if (newIndex == fHighestPossibleRemoved) {
-       if (fLowestPossibleRemoved == fHighestPossibleRemoved) {
-          fLowestPossibleRemoved = 0;
-          fHighestPossibleRemoved = 0;
-       } else {
-          --fHighestPossibleRemoved;
-       }
-    } else if (newIndex == fLowestPossibleRemoved) {
-       // lowest cannot == highest in this case
-       ++fLowestPossibleRemoved;
-    }
-  } else {
-    CS2Assert (!Exists(newIndex), ("Trying to add index " CS2_ZU " on top of existing element", newIndex));
-    return newIndex; // NO ADD
+  if (CheckEntryAtPosition(newIndex)) {
+     // Construct the new table entry
+     new (&ElementAt(newIndex)) typename CS2_TAR_DECL::DerivedElement(initializer);
   }
-  // Construct the new table entry
-  new (&ElementAt(newIndex)) typename CS2_TAR_DECL::DerivedElement(initializer);
   return newIndex;
 }
 

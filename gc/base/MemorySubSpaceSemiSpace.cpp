@@ -430,6 +430,11 @@ MM_MemorySubSpaceSemiSpace::tearDown(MM_EnvironmentBase *env)
 void
 MM_MemorySubSpaceSemiSpace::flip(MM_EnvironmentBase *env, Flip_step step)
 {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+	bool debug = _extensions->debugTiltedScavenge;
+#endif
+
 	switch (step) {
 	case set_evacuate:
 		_memorySubSpaceEvacuate = _memorySubSpaceAllocate;
@@ -448,12 +453,83 @@ MM_MemorySubSpaceSemiSpace::flip(MM_EnvironmentBase *env, Flip_step step)
 		_memorySubSpaceAllocate->isAllocatable(true);
 		_memorySubSpaceSurvivor = _memorySubSpaceEvacuate;
 		break;
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	case backout:
-		_memorySubSpaceAllocate = _memorySubSpaceEvacuate;
-		_memorySubSpaceAllocate->isAllocatable(true);
-		_memorySubSpaceEvacuate = _memorySubSpaceSurvivor;
-		getMemorySpace()->setDefaultMemorySubSpace(getDefaultMemorySubSpace());
+		/* We have objects on both sides of Nursery. We will unify the two sides and do a compacting slide (after percolate global GC)
+		 * Enforce Allocate be in low address range, since compact slide in percolate global GC moves objects to low addresses.
+		 * Note: _allocateSpaceBase/Top are stale (not updated in set_allocate), since they are overloaded to point to Evacuate during an active cycle
+		 */
+		if (_allocateSpaceBase < _survivorSpaceBase) {
+			_memorySubSpaceAllocate = _memorySubSpaceEvacuate;
+			_memorySubSpaceEvacuate = _memorySubSpaceSurvivor;
+			getMemorySpace()->setDefaultMemorySubSpace(getDefaultMemorySubSpace());
+			if(debug) {
+				omrtty_printf("tilt backout _allocateSpaceBase/Top %llx/%llx _survivorSpaceBase/Top %llx/%llx tilt sizes %llx %llx\n",
+						_allocateSpaceBase, _allocateSpaceTop, _survivorSpaceBase, _survivorSpaceTop,
+						(uintptr_t)_allocateSpaceTop - (uintptr_t)_allocateSpaceBase +  (uintptr_t)_survivorSpaceTop - (uintptr_t)_survivorSpaceBase, (uintptr_t)0);
+			}
+		} else {
+			_memorySubSpaceSurvivor = _memorySubSpaceEvacuate;
+			cacheRanges(_memorySubSpaceAllocate, &_allocateSpaceBase, &_allocateSpaceTop);
+			cacheRanges(_memorySubSpaceSurvivor, &_survivorSpaceBase, &_survivorSpaceTop);
+			if(debug) {
+				omrtty_printf("tilt backout forced flip _allocateSpaceBase/Top %llx/%llx _survivorSpaceBase/Top %llx/%llx tilt sizes %llx %llx\n",
+						_allocateSpaceBase, _allocateSpaceTop, _survivorSpaceBase, _survivorSpaceTop,
+						(uintptr_t)_allocateSpaceTop - (uintptr_t)_allocateSpaceBase +  (uintptr_t)_survivorSpaceTop - (uintptr_t)_survivorSpaceBase, (uintptr_t)0);
+			}
+		}
+
+		/* Tilt 100% on PhysicalSubArena level (leave SubSpaces unchanged). Give everything to the low address (Allocate) part */
+		_physicalSubArena->tilt(env, (uintptr_t)_allocateSpaceTop - (uintptr_t)_allocateSpaceBase +  (uintptr_t)_survivorSpaceTop - (uintptr_t)_survivorSpaceBase, (uintptr_t)0, false);
+
+		/* disable potentially successful allocation (in case of forced abort) to trigger another (percolate) GC */
+		_memorySubSpaceAllocate->isAllocatable(false);
+		getMemorySpace()->getTenureMemorySubSpace()->isAllocatable(false);
+
 		break;
+	case restore_tilt_after_percolate:
+	{
+		/* Make Survivor space from the last free entry in the unified Nursery */
+		uintptr_t heapAlignedLastFreeEntrySize = MM_Math::roundToFloor(_extensions->heapAlignment, getDefaultMemorySubSpace()->getMemoryPool()->getLastFreeEntry()->getSize());
+
+		/* for now, assumed fixed size of 64 sections in Nursery */
+		const uint64_t maxSectionCount = 64;
+		uint64_t sectionSize = (getCurrentSize()) / maxSectionCount;
+
+		heapAlignedLastFreeEntrySize = MM_Math::roundToFloor(sectionSize, heapAlignedLastFreeEntrySize);
+		if(debug) {
+			omrtty_printf("tilt restore_tilt_after_percolate heapAlignedLastFreeEntry %llx section (%llx) aligned size %llx\n",
+					getDefaultMemorySubSpace()->getMemoryPool()->getLastFreeEntry(), sectionSize, heapAlignedLastFreeEntrySize);
+		}
+
+		/* allocate/survivor base/top still hold the values from before we did 100% tilt */
+		uintptr_t allocateSize = (uintptr_t)_allocateSpaceTop - (uintptr_t)_allocateSpaceBase;
+		uintptr_t survivorSize = (uintptr_t)_survivorSpaceTop - (uintptr_t)_survivorSpaceBase;
+		if (allocateSize < survivorSize) {
+			allocateSize = survivorSize;
+			survivorSize = (uintptr_t)_allocateSpaceTop - (uintptr_t)_allocateSpaceBase;
+		}
+
+		if(debug) {
+			omrtty_printf("tilt restore_tilt_after_percolate allocateSize %llx survivorSize %llx\n", allocateSize, survivorSize);
+		}
+		if (heapAlignedLastFreeEntrySize < survivorSize) {
+			allocateSize += (survivorSize - heapAlignedLastFreeEntrySize);
+			survivorSize = heapAlignedLastFreeEntrySize;
+		}
+		if(debug) {
+			omrtty_printf("tilt restore_tilt_after_percolate adjusted allocateSize %llx survivorSize %llx\n", allocateSize, survivorSize);
+		}
+
+		tilt(env, allocateSize, survivorSize);
+
+		/* Restore allocation, which we had disabled in the backout step */
+		_memorySubSpaceAllocate->isAllocatable(true);
+		getMemorySpace()->getTenureMemorySubSpace()->isAllocatable(true);
+
+	}
+		break;
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	default:
 		Assert_MM_unreachable();
 	}
@@ -518,23 +594,25 @@ MM_MemorySubSpaceSemiSpace::masterTeardownForSuccessfulGC(MM_EnvironmentBase *en
 #endif
 	flip(env, restore_allocation_and_set_survivor);
 
-#if !defined(OMR_GC_CONCURRENT_SCAVENGER)
 	/* Adjust memory between the semi spaces where applicable */
 	checkResize(env);
 	performResize(env);
-#endif
 }
 
 
 void
 MM_MemorySubSpaceSemiSpace::masterTeardownForAbortedGC(MM_EnvironmentBase *env)
 {
-	/* Build free list in survivor */
-	_memorySubSpaceSurvivor->rebuildFreeList(env);
-
+	/* Build free list in survivor. */
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	/* There might be live objects in Survivor (newly allocated one since the start of Concurrent Scavenge cycle)
+	 * Sweep in percolate global will rebuild it, so we can skip it here
+	 */
 	flip(env, backout);
-#endif
+#else
+	_memorySubSpaceSurvivor->rebuildFreeList(env);
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
 }
 
 /**
@@ -546,6 +624,10 @@ MM_MemorySubSpaceSemiSpace::checkSubSpaceMemoryPostCollectTilt(MM_EnvironmentBas
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 
 	if(extensions->tiltedScavenge) {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		/* for now, support static tilting only */
+		_desiredSurvivorSpaceRatio = extensions->survivorSpaceMinimumSizeRatio;
+#else
 		uintptr_t flipBytes;
 		uintptr_t flipBytesDelta;
 		bool debug = extensions->debugTiltedScavenge;
@@ -660,7 +742,7 @@ MM_MemorySubSpaceSemiSpace::checkSubSpaceMemoryPostCollectTilt(MM_EnvironmentBas
 			omrtty_printf("\tAdjusted survivor size: %zu  ratio: %zu\n",(uintptr_t)(currentSize * _desiredSurvivorSpaceRatio),
 				(uintptr_t) (_desiredSurvivorSpaceRatio * 100));
 		}
-
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 	}
 }
 
@@ -839,8 +921,17 @@ void
 MM_MemorySubSpaceSemiSpace::checkResize(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, bool systemGC)
 {
 	uintptr_t oldVMState = env->pushVMstate(J9VMSTATE_GC_CHECK_RESIZE);
-	checkSubSpaceMemoryPostCollectTilt(env);
-	checkSubSpaceMemoryPostCollectResize(env);
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	/* this we are called at the end of precolate global GC, due to aborted Concurrent Scavenge,
+	 * we have to restore tilt (that has been set to 100% to do unified sliding compact of Nursery */
+	if (J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_ABORTED_SCAVENGE == env->_cycleState->_gcCode.getCode()) {
+		flip(env, MM_MemorySubSpaceSemiSpace::restore_tilt_after_percolate);
+	} else
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+	{
+		checkSubSpaceMemoryPostCollectTilt(env);
+		checkSubSpaceMemoryPostCollectResize(env);
+	}
 	env->popVMstate(oldVMState);
 }
 
@@ -852,7 +943,15 @@ MM_MemorySubSpaceSemiSpace::performResize(MM_EnvironmentBase *env, MM_AllocateDe
 	
 	if (_desiredSurvivorSpaceRatio > 0.0) {
 		uintptr_t desiredSurvivorSpaceSize = (uintptr_t)(getCurrentSize() * _desiredSurvivorSpaceRatio);
+
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		/* for now, assumed fixed size of 64 sections in Nursery */
+		const uint64_t maxSectionCount = 64;
+		uint64_t sectionSize = (getCurrentSize()) / maxSectionCount;
+		desiredSurvivorSpaceSize = MM_Math::roundToCeiling(sectionSize, desiredSurvivorSpaceSize);
+#else
 		desiredSurvivorSpaceSize = MM_Math::roundToCeiling(regionSize, desiredSurvivorSpaceSize);
+#endif
 		tilt(env, desiredSurvivorSpaceSize);
 		_desiredSurvivorSpaceRatio = 0.0;
 	}

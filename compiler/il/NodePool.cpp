@@ -62,7 +62,13 @@ TR::NodePool::allocate(ncount_t poolIndex)
    {
    if (!poolIndex)
       {
-      poolIndex = _poolIndex = _pool.AddEntry();
+      // We are calling AddEntryNoConstruct instead of AddEntry
+      // because TR::NodePool::allocate is only called from OMR::Node's
+      // operator new, which means that AddEntry calls TR::Node's constructor
+      // and then once TR::NodePool::allocate returns, operator new calls
+      // a different TR::Node constructor resulting in TR::Node getting
+      // constructed twice, increasing compilation time.
+      poolIndex = _poolIndex = _pool.AddEntryNoConstruct();
       _globalIndex++;
       TR_ASSERT(_globalIndex < MAX_NODE_COUNT, "Reached TR::Node allocation limit");
       }
@@ -77,7 +83,13 @@ TR::NodePool::allocate(ncount_t poolIndex)
 OMR::Node::OptAttributes *
 TR::NodePool::allocateOptAttributes()
    {
-   ncount_t optAttribPoolIndex = _optAttribPool.AddEntryAtPosition(_poolIndex);
+   // We are calling AddEntryAtPositionNoConstruct instead of AddEntryAtPosition
+   // because TR::NodePool::allocateOptAttributes is only called from
+   // OMR::Node::OptAttributes operator new, which means that AddEntryAtPosition
+   // calls OMR::Node::OptAttributes' constructor and then once
+   // TR::NodePool::allocateOptAttributes returns, operator new calls
+   // OMR::Node::OptAttributes' constructor again, increasing compilation time.
+   ncount_t optAttribPoolIndex = _optAttribPool.AddEntryAtPositionNoConstruct(_poolIndex);
    TR_ASSERT(optAttribPoolIndex == _poolIndex, "Cannot eliminate variable _optAttribPoolIndex and use _poolIndex instead. Was hoping this was possible");
    _optAttribGlobalIndex++;
    OMR::Node::OptAttributes & oa = _optAttribPool.ElementAt(_poolIndex);

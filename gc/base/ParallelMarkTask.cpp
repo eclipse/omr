@@ -25,7 +25,6 @@
 
 #include "ParallelMarkTask.hpp"
 
-#include "EnvironmentLanguageInterface.hpp"
 #include "EnvironmentBase.hpp"
 #include "MarkingScheme.hpp"
 #include "GlobalGCStats.hpp"
@@ -54,17 +53,8 @@ MM_ParallelMarkTask::run(MM_EnvironmentBase *env)
 void
 MM_ParallelMarkTask::setup(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
+	env->markingPhaseStarted();
 	
-	env->_markStats.clear();
-	env->_workPacketStats.clear();
-
-	env->_envLanguageInterface->parallelMarkTask_setup(env);
-
-	/* record that this thread is participating in this cycle */
-	env->_markStats._gcCount = extensions->globalGCStats.gcCount;
-	env->_workPacketStats._gcCount = extensions->globalGCStats.gcCount;
-
 	if(env->isMasterThread()) {
 		Assert_MM_true(_cycleState == env->_cycleState);
 	} else {
@@ -76,13 +66,8 @@ MM_ParallelMarkTask::setup(MM_EnvironmentBase *env)
 void
 MM_ParallelMarkTask::cleanup(MM_EnvironmentBase *env)
 {
-	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
+	env->markingPhaseFinished();
 
-	env->_envLanguageInterface->parallelMarkTask_cleanup(env);
-
-	extensions->globalGCStats.markStats.merge(&env->_markStats);
-	extensions->globalGCStats.workPacketStats.merge(&env->_workPacketStats);
 	if (env->isMasterThread()) {
 		Assert_MM_true(_cycleState == env->_cycleState);
 	} else {
@@ -90,6 +75,7 @@ MM_ParallelMarkTask::cleanup(MM_EnvironmentBase *env)
 	}
 	
 	/* record the thread-specific parallelism stats in the trace buffer. This partially duplicates info in -Xtgc:parallel */
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 	Trc_MM_ParallelMarkTask_parallelStats(
 		env->getLanguageVMThread(),
 		(uint32_t)env->getSlaveID(),

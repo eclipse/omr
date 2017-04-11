@@ -82,14 +82,18 @@ MM_ForwardedHeader::setForwardedObject(omrobjectptr_t destinationObjectPtr)
 /**
  * If this is a forwarded pointer then return the forwarded location.
  *
- * @return a pointer to the forwarded location, or NULL if this not a forwarded pointer.
+ * @return a (strict) pointer to the forwarded location, or NULL if this not a (strict) forwarded pointer.
  */
 omrobjectptr_t
 MM_ForwardedHeader::getForwardedObject()
 {
 	omrobjectptr_t forwardedObject = NULL;
 
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	if (isStrictlyForwardedPointer()) {
+#else
 	if (isForwardedPointer()) {
+#endif
 #if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN)
 		/* Compressed big endian - read two halves separately */
 		uint32_t hi = (uint32_t)_preserved.overlap;
@@ -106,5 +110,66 @@ MM_ForwardedHeader::getForwardedObject()
 	return forwardedObject;
 }
 
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+omrobjectptr_t
+MM_ForwardedHeader::setSelfForwardedObject()
+{
+	ForwardedHeaderAssert(!isForwardedPointer());
+	volatile MutableHeaderFields* objectHeader = (volatile MutableHeaderFields *)((fomrobject_t*)_objectPtr + _forwardingSlotOffset);
+	fomrobject_t oldValue = _preserved.slot;
 
+	fomrobject_t newValue = oldValue | _selfForwardedTag;
 
+	omrobjectptr_t forwardedObject = _objectPtr;
+
+#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+	if (oldValue != MM_AtomicOperations::lockCompareExchangeU32((volatile uint32_t*)&objectHeader->slot, oldValue, newValue)) {
+#else /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+	if (oldValue != MM_AtomicOperations::lockCompareExchange((volatile uintptr_t*)&objectHeader->slot, (uintptr_t)oldValue, (uintptr_t)newValue)) {
+#endif /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+		/* if we lost on self-forwarding, return where we are really forwarded */
+		MM_ForwardedHeader forwardedHeader(_objectPtr);
+		ForwardedHeaderAssert(forwardedHeader.isStrictlyForwardedPointer());
+		forwardedObject = forwardedHeader.getNonStrictForwardedObject();
+	}
+
+	ForwardedHeaderAssert(NULL != forwardedObject);
+	return forwardedObject;
+}
+
+void
+MM_ForwardedHeader::restoreSelfForwardedPointer()
+{
+	ForwardedHeaderAssert(isSelfForwardedPointer());
+	volatile MutableHeaderFields* objectHeader = (volatile MutableHeaderFields *)((fomrobject_t*)_objectPtr + _forwardingSlotOffset);
+	fomrobject_t oldValue = _preserved.slot;
+
+	fomrobject_t newValue = oldValue & ~_selfForwardedTag;
+
+	objectHeader->slot = newValue;
+}
+
+omrobjectptr_t
+MM_ForwardedHeader::getNonStrictForwardedObject()
+{
+	omrobjectptr_t forwardedObject = NULL;
+
+	if (isStrictlyForwardedPointer()) {
+#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN)
+		/* Compressed big endian - read two halves separately */
+		uint32_t hi = (uint32_t)_preserved.overlap;
+		uint32_t lo = (uint32_t)_preserved.slot & ~_forwardedTag;
+		uintptr_t restoredForwardingSlotValue = (((uintptr_t)hi) <<32 ) | ((uintptr_t)lo);
+#else /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN) */
+		/* Little endian or not compressed - read all uintptr_t bytes at once */
+		uintptr_t restoredForwardingSlotValue = *(uintptr_t *)(&_preserved.slot) & ~_forwardedTag;
+#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN) */
+
+		forwardedObject = (omrobjectptr_t)(restoredForwardingSlotValue);
+	} else if (isSelfForwardedPointer()) {
+		forwardedObject = _objectPtr;
+	}
+
+	return forwardedObject;
+}
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */

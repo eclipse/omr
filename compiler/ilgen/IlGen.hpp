@@ -34,6 +34,9 @@ class TR_IlGenerator
    virtual int32_t currentCallSiteIndex() { return -1; }
    virtual void setCallerMethod(TR::ResolvedMethodSymbol * caller) {}
    virtual TR::ResolvedMethodSymbol *methodSymbol() const = 0;
+
+   // contributes to eliminate warnings in JitBuilder builds
+   virtual ~TR_IlGenerator() { }
    };
 
 #endif

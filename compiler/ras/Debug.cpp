@@ -3874,7 +3874,6 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_transactionAbort:          return "transactionAbort";
          case TR_transactionExit:           return "transactionExit";
          case TR_asyncCheck:                return "jitCheckAsyncMessages";
-         case TR_tenantInitialize:          return "jitTenantInitialize";
 
          case TR_estimateGPU:               return "estimateGPU";
          case TR_regionEntryGPU:            return "regionEntryGPU";
@@ -3906,7 +3905,6 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_newArrayNoZeroInit:        return "jitNewArrayNoZeroInit";
          case TR_aNewArray:                 return "jitANewArray";
          case TR_aNewArrayNoZeroInit:       return "jitANewArrayNoZeroInit";
-         case TR_newObjectNoTenantInit:     return "jitNewObjectNoTenantInit";
 
          case TR_multiANewArray:            return "jitAMultiANewArray";
          case TR_aThrow:                    return "jitThrowException";
@@ -4031,13 +4029,8 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          {
          switch (index)
             {
-            case TR_IA32longMultiply:                                 return "__longMultiply";
             case TR_IA32longDivide:                                   return "__longDivide";
             case TR_IA32longRemainder:                                return "__longRemainder";
-            case TR_IA32longShiftLeft:                                return "__longShiftLeft";
-            case TR_IA32longRotateLeft:                               return "__longRotateLeft";
-            case TR_IA32longShiftRightLogical:                        return "__longShiftRightLogical";
-            case TR_IA32longShiftRightArithmetic:                     return "__longShiftRightArithmetic";
             case TR_IA32floatRemainder:                               return "__floatRemainder";
             case TR_IA32floatRemainderSSE:                            return "__SSEfloatRemainderIA32Thunk";
             case TR_IA32doubleRemainder:                              return "__doubleRemainder";
@@ -4249,6 +4242,8 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_PPCAESDecryptVMX:                                 return "PPCAESDecryptVMX";
          case TR_PPCAESEncrypt:                                    return "PPCAESEncrypt";
          case TR_PPCAESDecrypt:                                    return "PPCAESDecrypt";
+         case TR_PPCAESCBCDecrypt:                                 return "PPCAESCBCDecrypt";
+         case TR_PPCAESCBCEncrypt:                                 return "PPCAESCBCEncrypt";
          case TR_PPCAESKeyExpansion:                               return "PPCAESKeyExpansion";
          case TR_PPCVectorLogDouble:                               return "__logd2";
          }

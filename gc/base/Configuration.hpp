@@ -29,9 +29,6 @@
 #include "InitializationParameters.hpp"
 
 class MM_Dispatcher;
-class MM_EnvironmentLanguageInterface;
-class MM_EnvironmentBase;
-class MM_EnvironmentLanguageInterface;
 class MM_GCExtensionsBase;
 class MM_GlobalCollector;
 class MM_Heap;

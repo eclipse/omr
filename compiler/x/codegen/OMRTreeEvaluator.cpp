@@ -3242,10 +3242,10 @@ TR::Register *OMR::X86::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, T
    // arraytranslate
    //    input ptr
    //    output ptr
-   //    translation table (dummy)
-   //    terminal character (dummy when src is byte and dest is word, otherwise, it's a mask)
+   //    translation table (not used)
+   //    terminal character (not used when src is byte and dest is word, otherwise, it's a mask)
    //    input length (in elements)
-   //    stopping char (dummy for X)
+   //    stopping char (not used for X)
    // Number of elements translated is returned
    //
 
@@ -3255,19 +3255,24 @@ TR::Register *OMR::X86::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, T
    TR::Register *srcPtrReg, *dstPtrReg, *transTableReg, *termCharReg, *lengthReg;
    bool stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyRegAddr(node->getChild(0), srcPtrReg, cg);
    bool stopUsingCopyReg2 = TR::TreeEvaluator::stopUsingCopyRegAddr(node->getChild(1), dstPtrReg, cg);
-   bool stopUsingCopyReg4 = TR::TreeEvaluator::stopUsingCopyRegInteger(node->getChild(3), termCharReg, cg);
+   bool stopUsingCopyReg4 = false;
+   if (!sourceByte)
+      {
+      stopUsingCopyReg4 = TR::TreeEvaluator::stopUsingCopyRegInteger(node->getChild(3), termCharReg, cg);
+      }
+   
    bool stopUsingCopyReg5 = TR::TreeEvaluator::stopUsingCopyRegInteger(node->getChild(4), lengthReg, cg);
    TR::Register *resultReg = cg->allocateRegister();
    TR::Register *dummy1 = cg->allocateRegister();
    TR::Register *dummy2 = cg->allocateRegister(TR_FPR);
    TR::Register *dummy3 = cg->allocateRegister(TR_FPR);
+   TR::Register *dummy4 = cg->allocateRegister(TR_FPR);
 
    bool arraytranslateOT = false;
-   if  (sourceByte && (node->getChild(3)->getOpCodeValue() == TR::iconst) && (node->getChild(3)->getInt() == 0))
-	arraytranslateOT = true;
+   if (sourceByte && (node->getChild(3)->getOpCodeValue() == TR::iconst) && (node->getChild(3)->getInt() == 0))
+      arraytranslateOT = true;
 
-   int noOfDependencies = (sourceByte && !arraytranslateOT) ? 7 : 8;
-
+   int noOfDependencies = (sourceByte)? 8 : 9;
 
    TR::RegisterDependencyConditions  *dependencies =
       generateRegisterDependencyConditions((uint8_t)0, noOfDependencies, cg);
@@ -3276,22 +3281,18 @@ TR::Register *OMR::X86::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, T
    dependencies->addPostCondition(lengthReg, TR::RealRegister::ecx, cg);
    dependencies->addPostCondition(resultReg, TR::RealRegister::eax, cg);
 
-
    dependencies->addPostCondition(dummy1, TR::RealRegister::ebx, cg);
    dependencies->addPostCondition(dummy2, TR::RealRegister::xmm1, cg);
    dependencies->addPostCondition(dummy3, TR::RealRegister::xmm2, cg);
+   dependencies->addPostCondition(dummy4, TR::RealRegister::xmm3, cg);
 
 
    TR_RuntimeHelper helper ;
    if (sourceByte)
       {
-      
       TR_ASSERT(!node->isTargetByteArrayTranslate(), "Both source and target are byte for array translate");
       if (arraytranslateOT)
-      {
          helper = TR::Compiler->target.is64Bit() ? TR_AMD64arrayTranslateTROT : TR_IA32arrayTranslateTROT;
-         dependencies->addPostCondition(termCharReg, TR::RealRegister::edx, cg);
-      }
       else
          helper = TR::Compiler->target.is64Bit() ? TR_AMD64arrayTranslateTROTNoBreak : TR_IA32arrayTranslateTROTNoBreak;
       }
@@ -3306,9 +3307,17 @@ TR::Register *OMR::X86::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, T
    cg->stopUsingRegister(dummy1);
    cg->stopUsingRegister(dummy2);
    cg->stopUsingRegister(dummy3);
+   cg->stopUsingRegister(dummy4);
 
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-      cg->decReferenceCount(node->getChild(i));
+   cg->decReferenceCount(node->getChild(0));               // Input
+   cg->decReferenceCount(node->getChild(1));               // Output
+   cg->recursivelyDecReferenceCount(node->getChild(2));    // Translate table (not used)
+   if (sourceByte)
+      cg->recursivelyDecReferenceCount(node->getChild(3)); // Terminal char (not used)
+   else
+      cg->decReferenceCount(node->getChild(3));            // Terminal char (used)
+   cg->decReferenceCount(node->getChild(4));               // Length
+   cg->recursivelyDecReferenceCount(node->getChild(5));    // Stopping char (not used)
 
    if (stopUsingCopyReg1)
       cg->getLiveRegisters(TR_GPR)->registerIsDead(srcPtrReg);
@@ -3756,7 +3765,7 @@ TR::Register *OMR::X86::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::Cod
    bool isShortConstantArrayWithZero = false;
 
    static bool isConstArraysetEnabled = (NULL == feGetEnv("TR_DisableConstArrayset"));
-   if (isConstArraysetEnabled && cg->getX86ProcessorInfo().supportsSSE4_1() && TR::Compiler->target.is64Bit())
+   if (isConstArraysetEnabled && cg->getX86ProcessorInfo().supportsSSSE3() && TR::Compiler->target.is64Bit())
       {
       if (valueNode->getOpCode().isLoadConst() && !valueNode->getOpCode().isFloat() && !valueNode->getOpCode().isDouble())
          {
@@ -5239,4 +5248,17 @@ TR::Register *
 OMR::X86::TreeEvaluator::VMifArrayCmpEvaluator(TR::Node*, TR::CodeGenerator*)
    {
    return 0;
+   }
+
+TR::Register *
+OMR::X86::TreeEvaluator::ibyteswapEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT(node->getNumChildren() == 1, "Wrong number of children in byteswapEvaluator");
+   TR::Node *child = node->getFirstChild();
+   bool nodeIs64Bit = TR::TreeEvaluator::getNodeIs64Bit(child, cg);
+   TR::Register *target = TR::TreeEvaluator::intOrLongClobberEvaluate(child, nodeIs64Bit, cg);
+   generateRegInstruction(BSWAPReg(nodeIs64Bit), node, target, cg);
+   node->setRegister(target);
+   cg->decReferenceCount(child);
+   return target;
    }

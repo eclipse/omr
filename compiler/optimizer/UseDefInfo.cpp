@@ -107,7 +107,11 @@ void TR_UseDefInfo::prepareUseDefInfo(bool requiresGlobals, bool prefersGlobals,
    comp()->printMemStatsBefore("prepareUseDefInfo");
    LexicalTimer tlex("useDefInfo", comp()->phaseTimer());
 
-   TR_UseDefInfo::AuxiliaryData aux(comp());
+   TR_UseDefInfo::AuxiliaryData aux(
+      comp()->getSymRefCount(),
+      comp()->getNodeCount(),
+      comp()->allocator("UseDefAux")
+      );
 
    int32_t i;
    dumpOptDetails(comp(), "   (Building use/def info)\n");
@@ -130,14 +134,9 @@ void TR_UseDefInfo::prepareUseDefInfo(bool requiresGlobals, bool prefersGlobals,
    TR::SymbolReferenceTable *symRefTab = comp()->getSymRefTab();
    int32_t numSymRefs = comp()->getSymRefCount();
 
-   aux._numAliases.GrowTo(numSymRefs);
-
    _sideTableToSymRefNumMap.GrowTo(numSymRefs);
-   aux._nodeSideTableToSymRefNumMap.GrowTo(comp()->getNodeCount());
 
    aux._neverReadSymbols.GrowTo(numSymRefs);
-   aux._onceReadSymbols.GrowTo(numSymRefs);
-   aux._onceReadSymbolsIndices.GrowTo(numSymRefs);
    if (_hasLoadsAsDefs &&
        !cannotOmitTrivialDefs &&
        (comp()->getMethodHotness() < hot))
@@ -154,8 +153,6 @@ void TR_UseDefInfo::prepareUseDefInfo(bool requiresGlobals, bool prefersGlobals,
 
    aux._neverReferencedSymbols.GrowTo(numSymRefs);
    aux._neverWrittenSymbols.GrowTo(numSymRefs);
-   aux._onceWrittenSymbols.GrowTo(numSymRefs);
-   aux._onceWrittenSymbolsIndices.GrowTo(numSymRefs);
 
    aux._volatileOrAliasedToVolatileSymbols.GrowTo(numSymRefs);
 
@@ -171,9 +168,6 @@ void TR_UseDefInfo::prepareUseDefInfo(bool requiresGlobals, bool prefersGlobals,
             }
          }
       }
-
-   aux._nodesByGlobalIndex.GrowTo(comp()->getNodeCount());
-   aux._loadsBySymRefNum.GrowTo(numSymRefs);
 
    aux._neverWrittenSymbols.SetAll(numSymRefs);
    aux._neverReadSymbols.SetAll(numSymRefs);
@@ -1152,10 +1146,9 @@ bool TR_UseDefInfo::indexSymbolsAndNodes(AuxiliaryData &aux)
    TR::TreeTop *treeTop = NULL;
    TR::Block *block = NULL;
 
-   // a cleared _symRefToLocalIndexMap is required for each call to indexSymbolsAndNodes - would be better to create as a local variable here,
-   // and pass down to findUseDefNodes, but findUseDefNodes is recursive, and don't want to increase stack size, so keep in aux
-   aux._symRefToLocalIndexMap.MakeEmpty();
-   aux._symRefToLocalIndexMap.GrowTo(comp()->getSymRefCount());
+   // A cleared symRefToLocalIndexMap is required for each call to indexSymbolsAndNodes - so we create it as a local variable here,
+   // and pass it down to findUseDefNodes, as findUseDefNodes is recursive.
+   TR::deque<uint32_t> symRefToLocalIndexMap(comp()->getSymRefCount(), comp()->allocator());
 
    for (treeTop = comp()->getStartTree(); treeTop; treeTop = treeTop->getNextTreeTop())
       {
@@ -1163,7 +1156,7 @@ bool TR_UseDefInfo::indexSymbolsAndNodes(AuxiliaryData &aux)
          {
          block = treeTop->getNode()->getBlock();
          }
-      if (!findUseDefNodes(block, treeTop->getNode(), NULL, treeTop, aux))
+      if (!findUseDefNodes(block, treeTop->getNode(), NULL, treeTop, aux, symRefToLocalIndexMap))
          return false; // indices overflowed, can't build
       }
 
@@ -1241,7 +1234,15 @@ bool TR_UseDefInfo::skipAnalyzingForCompileTime(TR::Node *node, TR::Block *block
 
 
 
-bool TR_UseDefInfo::findUseDefNodes(TR::Block *block, TR::Node *node, TR::Node *parent, TR::TreeTop *treeTop, AuxiliaryData &aux, bool considerImplicitStores)
+bool TR_UseDefInfo::findUseDefNodes(
+   TR::Block *block,
+   TR::Node *node,
+   TR::Node *parent,
+   TR::TreeTop *treeTop,
+   AuxiliaryData &aux,
+   TR::deque<uint32_t> &symRefToLocalIndexMap,
+   bool considerImplicitStores
+   )
    {
    vcount_t visitCount = comp()->getVisitCount();
    if (visitCount == node->getVisitCount())
@@ -1254,7 +1255,7 @@ bool TR_UseDefInfo::findUseDefNodes(TR::Block *block, TR::Node *node, TR::Node *
    for (int32_t i = 0; i < node->getNumChildren(); i++)
       {
       bool shouldConsiderLoadAddrChildrenImplicitStores = parentCouldHaveImplicitStoreChildren && childIndexIndicatesImplicitStore(node, i);
-      if (!findUseDefNodes(block, node->getChild(i), node, treeTop, aux,shouldConsiderLoadAddrChildrenImplicitStores))
+      if (!findUseDefNodes(block, node->getChild(i), node, treeTop, aux, symRefToLocalIndexMap, shouldConsiderLoadAddrChildrenImplicitStores))
          return false;
       }
 
@@ -1323,7 +1324,7 @@ bool TR_UseDefInfo::findUseDefNodes(TR::Block *block, TR::Node *node, TR::Node *
          {
          if (num_aliases > 0)
             {
-            if (aux._symRefToLocalIndexMap[symRef->getReferenceNumber()] == 0)
+            if (symRefToLocalIndexMap[symRef->getReferenceNumber()] == 0)
                {
                localIndex = _numExpandedDefUseNodes;
                _numExpandedDefUseNodes += num_aliases;
@@ -1331,11 +1332,11 @@ bool TR_UseDefInfo::findUseDefNodes(TR::Block *block, TR::Node *node, TR::Node *
                useDefIndex = _numDefUseNodes++;
                //             traceMsg(comp(), "UDI: setting useDefIndex to %d _numDefUseNodes = %d\n",useDefIndex,_numDefUseNodes);
 
-               aux._symRefToLocalIndexMap[symRef->getReferenceNumber()] = localIndex;
+               symRefToLocalIndexMap[symRef->getReferenceNumber()] = localIndex;
                }
             else
                {
-               localIndex = aux._symRefToLocalIndexMap[symRef->getReferenceNumber()];
+               localIndex = symRefToLocalIndexMap[symRef->getReferenceNumber()];
                useDefIndex = _numDefUseNodes++;
                }
             }
@@ -1777,8 +1778,6 @@ void TR_UseDefInfo::insertData(TR::Block *block, TR::Node *node,TR::Node *parent
             if (aux._expandedAtoms[k].getKey() == NULL)
                aux._expandedAtoms[k] = CS2::Pair<TR::Node *, TR::TreeTop *>(node, treeTop);
             }
-
-         aux._nodeSideTableToSymRefNumMap[k] = aliasedSymRef->getReferenceNumber();
 
          if (trace())
             traceMsg(comp(), "    symbol (u/d index=%d) is defined by node with localIndex %d \n",j, k);

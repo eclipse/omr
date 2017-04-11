@@ -467,6 +467,7 @@ class TR_ParameterToArgumentMapper
 
       void                  initialize(TR_CallStack *callStack);
       TR::Node *             map(TR::Node *, TR::ParameterSymbol *, bool);
+      void                   mapOSRCallSiteRematTable(uint32_t siteIndex);
       void                  adjustReferenceCounts();
       TR::Node *             fixCallNodeArgs(bool);
       TR::TreeTop *          firstTempTreeTop()   { return _firstTempTreeTop; }

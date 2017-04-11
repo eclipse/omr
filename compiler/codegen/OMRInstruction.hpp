@@ -69,7 +69,7 @@ class OMR_EXTENSIBLE Instruction
    public:
    typedef uint32_t TCollectableReferenceMask;
 
-   TR::Instruction* self();
+   inline TR::Instruction* self();
 
    /*
     * Need to move them to FE specific files once more clean up is done.

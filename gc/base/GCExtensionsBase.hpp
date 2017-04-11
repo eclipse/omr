@@ -464,8 +464,8 @@ public:
 
 	bool payAllocationTax;
 
-	bool concurrentMark;
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+	bool concurrentMark;
 	bool concurrentKickoffEnabled;
 	double concurrentSlackFragmentationAdjustmentWeight; /**< weight(from 0.0 to 5.0) used for calculating free tenure space (how much percentage of the fragmentation need to remove from freeBytes) */
 	bool debugConcurrentMark;
@@ -764,6 +764,36 @@ public:
 #endif /* defined(OMR_GC_OBJECT_MAP) */
 
 	MMINLINE bool
+	isScavengerEnabled()
+	{
+#if defined(OMR_GC_MODRON_SCAVENGER)
+		return scavengerEnabled;
+#else
+		return false;
+#endif /* defined(OMR_GC_MODRON_SCAVENGER) */
+	}
+
+	MMINLINE bool
+	isConcurrentMarkEnabled()
+	{
+#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+		return concurrentMark;
+#else
+		return false;
+#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
+	}
+
+	MMINLINE bool
+	isConcurrentSweepEnabled()
+	{
+#if defined(OMR_GC_CONCURRENT_SWEEP)
+		return concurrentSweep;
+#else
+		return false;
+#endif /* defined(OMR_GC_CONCURRENT_SWEEP) */
+	}
+
+	MMINLINE bool
 	isSegregatedHeap()
 	{
 #if defined(OMR_GC_COMBINATION_SPEC)
@@ -1014,6 +1044,9 @@ public:
 		, scavenger(NULL)
 #endif /* OMR_GC_MODRON_SCAVENGER */
 		, environments(NULL)
+#if defined(OMR_GC_CONCURRENT_SWEEP)
+		, concurrentSweep(false)
+#endif /* OMR_GC_CONCURRENT_SWEEP */
 		, largePageWarnOnError(false)
 		, largePageFailOnError(false)
 		, largePageFailedToSatisfy(false)
@@ -1110,7 +1143,12 @@ public:
 		, scavengerScanCacheMinimumSize(DEFAULT_SCAN_CACHE_MINIMUM_SIZE)
 		, tiltedScavenge(true)
 		, debugTiltedScavenge(false)
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		/* until we get dynamic tilting, make default tilting at mild 70% */
+		, survivorSpaceMinimumSizeRatio(0.30)
+#else
 		, survivorSpaceMinimumSizeRatio(0.10)
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 		, survivorSpaceMaximumSizeRatio(0.50)
 		, tiltedScavengeMaximumIncrease(0.10)
 		, scavengerCollectorExpandRatio(0.1)
@@ -1149,8 +1187,8 @@ public:
 		, nocompactOnSystemGC(0)
 		, compactToSatisfyAllocate(false)
 #endif /* OMR_GC_MODRON_COMPACTION */
-		, concurrentMark(false)
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+		, concurrentMark(false)
 		, concurrentKickoffEnabled(true)
 		, concurrentSlackFragmentationAdjustmentWeight(0.0)
 		, debugConcurrentMark(false)

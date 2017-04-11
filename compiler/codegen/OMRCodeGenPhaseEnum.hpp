@@ -26,6 +26,7 @@
  // The entries in this file must be kept in sync with compiler/codegen/OMRCodeGenPhaseFunctionTable.hpp
       ReserveCodeCachePhase,
       LowerTreesPhase,
+      UncommonCallConstNodesPhase,
       SetupForInstructionSelectionPhase,
       InstructionSelectionPhase,
       CreateStackAtlasPhase,

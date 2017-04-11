@@ -24,6 +24,24 @@
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
+#include "env/jittypes.h"
+#include "gtest/gtest.h"
+#include "il/DataTypes.hpp"
+#include "ilgen/BinaryOpIlInjector.hpp"
+#include "ilgen/ChildlessUnaryOpIlInjector.hpp"
+#include "ilgen/CmpBranchOpIlInjector.hpp"
+#include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
+#include "ilgen/StoreOpIlInjector.hpp"
+#include "ilgen/TernaryOpIlInjector.hpp"
+#include "ilgen/TypeDictionary.hpp"
+#include "ilgen/UnaryOpIlInjector.hpp"
+#include "tests/CallIlInjector.hpp"
+#include "tests/IndirectLoadIlInjector.hpp"
+#include "tests/IndirectStoreIlInjector.hpp"
+
 
 namespace TR { class ResolvedMethod; }
 
@@ -173,25 +191,218 @@ class OpCodesTest : public TestDriver
    //Unsupported OpCodes are tested in this function
    virtual void UnsupportedOpCodesTests();
 
-   uint8_t *
-   compileOpCodeMethod(int32_t opCodeArgsNum,
+   template <typename functiontype> 
+   int32_t  
+   compileOpCodeMethod(functiontype& resultpointer,
+         int32_t opCodeArgsNum,
          TR::ILOpCodes opCode,
          char * resolvedMethodName,
          TR::DataType * argTypes,
          TR::DataType returnType,
          int32_t & returnCode,
          uint16_t numArgs = 0,
-         ...);
+         ...)
+   {
+   if ((numArgs % 2) != 0)
+      {
+      fprintf(stderr, "Error: numArgs must be called with zero or an even args, numArgs is %d", numArgs);
+      exit(-1);
+      }
 
-   uint8_t *
-   compileDirectCallOpCodeMethod(int32_t opCodeArgsNum,
+   OpIlInjector * opCodeInjector = 0;
+   TR::ILOpCode op(opCode);
+
+   TR::TypeDictionary types;
+
+   CmpBranchOpIlInjector        cmpBranchIlInjector(&types, this, opCode);
+   BinaryOpIlInjector           opCodeBinaryIlInjector(&types, this, opCode);
+   UnaryOpIlInjector            opCodeUnaryInjector(&types, this, opCode);
+   TernaryOpIlInjector          ternaryOpIlInjector(&types, this, opCode);
+   ChildlessUnaryOpIlInjector   childlessUnaryOpIlInjector(&types, this, opCode);
+   StoreOpIlInjector            storeOpIlInjector(&types, this, opCode);
+   IndirectLoadIlInjector       indirectLoadIlInjector(&types, this, opCode);
+   IndirectStoreIlInjector      indirectStoreIlInjector(&types, this, opCode);
+
+   if (op.isBooleanCompare() && op.isBranch())
+      {
+      opCodeInjector = &cmpBranchIlInjector;
+      }
+   else if (op.isTernary())
+      {
+      opCodeInjector = &ternaryOpIlInjector;
+      }
+   else if (op.isStoreIndirect())
+      {
+      opCodeInjector = &indirectStoreIlInjector;
+      }
+   else if (op.isLoadIndirect())
+      {
+      opCodeInjector = &indirectLoadIlInjector;
+      }
+   else if (((op.isLoadVar() || op.isLoadConst()) && !op.isIndirect()) || op.isReturn() )
+      {
+      opCodeInjector = &childlessUnaryOpIlInjector;
+      }
+   else if (op.isStore() && !op.isStoreIndirect())
+      {
+      opCodeInjector = &storeOpIlInjector;
+      }
+   else
+      {
+      switch (opCodeArgsNum) 
+         {
+         case 1:
+            opCodeInjector = &opCodeUnaryInjector;
+            break;
+         case 2:
+            opCodeInjector = &opCodeBinaryIlInjector;
+            break;
+         default:
+            fprintf(stderr, "didn't select an injector based on argument number %d", opCodeArgsNum);
+            exit(-1);
+         }
+      }
+
+   TR_ASSERT(opCodeInjector, "Didn't select an injector!"); 
+
+   TR::IlType **argIlTypes = new TR::IlType*[opCodeArgsNum];
+   for (uint32_t a=0;a < opCodeArgsNum;a++)
+      argIlTypes[a] = types.PrimitiveType(argTypes[a]);
+
+   if (numArgs != 0)
+      {
+      va_list args;
+      va_start(args, numArgs);
+      for (int32_t i = 0; i < numArgs; i = i + 2)
+         {
+
+         uint32_t pos = va_arg(args, uint32_t);
+         void * value = va_arg(args, void *);
+
+         switch (argTypes[pos - 1])
+             {
+             case TR::Int8:
+                {
+                int8_t *int8Value = (int8_t *) value;
+                opCodeInjector->bconstParm(pos, *int8Value);
+                break;
+                }
+             case TR::Int16:
+                {
+                int16_t * int16Value = (int16_t *) value;
+                opCodeInjector->sconstParm(pos, *int16Value);
+                break;
+                }
+             case TR::Int32:
+                {
+                int32_t * int32Value = (int32_t *) value;
+                opCodeInjector->iconstParm(pos, *int32Value);
+                break;
+                }
+             case TR::Int64:
+                {
+                int64_t * int64Value = (int64_t *) value;
+                opCodeInjector->lconstParm(pos, *int64Value);
+                break;
+                }
+             case TR::Float:
+                {
+                float * floatValue = (float *) value;
+                opCodeInjector->fconstParm(pos, *floatValue);
+                break;
+                }
+             case TR::Double:
+                {
+                double * doubleValue = (double *) value;
+                opCodeInjector->dconstParm(pos, *doubleValue);
+                break;
+                }
+             case TR::Address:
+                {
+                uintptrj_t * addressValue = (uintptrj_t *) value;
+                opCodeInjector->aconstParm(pos, *addressValue);
+                break;
+                }
+             default:
+                TR_ASSERT(0, "Wrong dataType or not supported dataType");
+             }
+          }
+      va_end(args);
+      }
+   TR::ResolvedMethod opCodeCompilee(__FILE__, LINETOSTR(__LINE__), resolvedMethodName, opCodeArgsNum, argIlTypes, types.PrimitiveType(returnType), 0, opCodeInjector);
+   TR::IlGeneratorMethodDetails opCodeDetails(&opCodeCompilee);
+   uint8_t *startPC= compileMethod(opCodeDetails, warm, returnCode);
+   EXPECT_TRUE(COMPILATION_SUCCEEDED == returnCode || 
+               COMPILATION_IL_GEN_FAILURE == returnCode || 
+               COMPILATION_REQUESTED == returnCode) 
+      << "compileOpCodeMethod: Compiling method " << resolvedMethodName << " failed unexpectedly";
+   resultpointer = reinterpret_cast<functiontype>(startPC);
+   return returnCode;
+   }
+
+   template <typename functiontype>
+   int32_t 
+   compileDirectCallOpCodeMethod(functiontype& resultpointer,
+         int32_t opCodeArgsNum,
          TR::ILOpCodes opCodeCompilee,
          TR::ILOpCodes opCode,
          char * compileeResolvedMethodName,
          char * testResolvedMethodName,
          TR::DataType * argTypes,
          TR::DataType returnType,
-         int32_t & returnCode);
+         int32_t & returnCode)
+      {
+      TR::TypeDictionary types;
+      ChildlessUnaryOpIlInjector functionIlInjector(&types, this, opCodeCompilee);
+
+      TR::IlType **argIlTypes = new TR::IlType*[opCodeArgsNum];
+      for (int32_t i=0;i < opCodeArgsNum;i++)
+         argIlTypes[i] = types.PrimitiveType(argTypes[i]);
+
+      TR::ResolvedMethod functionCompilee(__FILE__, LINETOSTR(__LINE__), compileeResolvedMethodName, opCodeArgsNum, argIlTypes, types.PrimitiveType(returnType), 0, &functionIlInjector);
+      TR::IlGeneratorMethodDetails functionDetails(&functionCompilee);
+      switch (returnType)
+         {
+         case TR::Int32:
+            _int32Compilee = &functionCompilee;
+            _int32CompiledMethod = (signatureCharI_I_testMethodType *) (compileMethod(functionDetails, warm, returnCode));
+            functionCompilee.setEntryPoint((void *)_int32CompiledMethod);
+            break;
+         case TR::Int64:
+            _int64Compilee = &functionCompilee;
+            _int64CompiledMethod = (signatureCharJ_J_testMethodType *) (compileMethod(functionDetails, warm, returnCode));
+            functionCompilee.setEntryPoint((void *)_int64CompiledMethod);
+            break;
+         case TR::Double:
+            _doubleCompilee = &functionCompilee;
+            _doubleCompiledMethod = (signatureCharD_D_testMethodType *) (compileMethod(functionDetails, warm, returnCode));
+            functionCompilee.setEntryPoint((void *)_doubleCompiledMethod);
+            break;
+         case TR::Float:
+            _floatCompilee = &functionCompilee;
+            _floatCompiledMethod = (signatureCharF_F_testMethodType *) (compileMethod(functionDetails, warm, returnCode));
+            functionCompilee.setEntryPoint((void *)_floatCompiledMethod);
+            break;
+         case TR::Address:
+            _addressCompilee = &functionCompilee;
+            _addressCompiledMethod = (signatureCharL_L_testMethodType *) (compileMethod(functionDetails, warm, returnCode));
+            functionCompilee.setEntryPoint((void *)_addressCompiledMethod);
+            break;
+         default:
+            TR_ASSERT(0, "compilee dataType should be int32, int64, double, float or address");
+         }
+      EXPECT_TRUE(COMPILATION_SUCCEEDED == returnCode || COMPILATION_REQUESTED == returnCode) 
+         << "Compiling callee method " << compileeResolvedMethodName << " failed unexpectedly";
+
+      CallIlInjector callIlInjector(&types, this, opCode);
+      TR::ResolvedMethod callCompilee(__FILE__, LINETOSTR(__LINE__), testResolvedMethodName, opCodeArgsNum, argIlTypes, types.PrimitiveType(returnType), 0, &callIlInjector);
+      TR::IlGeneratorMethodDetails callDetails(&callCompilee);
+      uint8_t *startPC = compileMethod(callDetails, warm, returnCode);
+      EXPECT_TRUE(COMPILATION_SUCCEEDED == returnCode || COMPILATION_REQUESTED == returnCode) 
+         << "Compiling test method " << testResolvedMethodName << " failed unexpectedly";
+      resultpointer = reinterpret_cast<functiontype>(startPC);
+      return returnCode;;
+      }
 
    void
    addUnsupportedOpCodeTest(int32_t opCodeArgsNum,
@@ -290,6 +501,7 @@ class OpCodesTest : public TestDriver
    static const uintptrj_t ADDRESS_PLACEHOLDER_3;
 
    protected:
+   static signatureCharI_I_testMethodType *_iByteswap;
    //Neg
    static signatureCharB_B_testMethodType *_bNeg;
    static signatureCharS_S_testMethodType *_sNeg;
@@ -692,6 +904,13 @@ class OpCodesTest : public TestDriver
    static TR::DataType _argTypesBinaryAddressAddress[_numberOfBinaryArgs];
 
    // straight C(++) implementations of testMethodType for initial test validation purposes
+   uint16_t byteswap(uint16_t a) { return (((a & 0xff) << 8) | ((a & 0xff00) >> 8));}
+   uint32_t byteswap(uint32_t a) { return (uint32_t)byteswap(uint16_t(a & 0xffff)) << 16 | (uint32_t)byteswap(uint16_t((a >> 16) & 0xffff)); }
+   uint64_t byteswap(uint64_t a) { return (uint64_t)byteswap(uint32_t(a & 0xffffffff)) << 32 | (uint64_t)byteswap(uint32_t((a >> 32) & 0xffffffff)); }
+   int16_t byteswap(int16_t a) { return byteswap((uint16_t)a); }
+   int32_t byteswap(int32_t a) { return byteswap((uint32_t)a); }
+   int64_t byteswap(int64_t a) { return byteswap((uint64_t)a); }
+
    template <typename T> static T neg(T a) { return -a;}
    template <typename T> static T abs(T a) { return a >= (T) 0 ? a : -a;}
 

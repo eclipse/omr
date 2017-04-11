@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 2000, 2016
+ * (c) Copyright IBM Corp. 2000, 2017
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -43,7 +43,7 @@
 #include "ilgen/IlGenRequest.hpp"               // for IlGenRequest
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/ValuePropagation.hpp"       // for TR::ValuePropagation, etc
+#include "optimizer/OMRValuePropagation.hpp"       // for OMR::ValuePropagation, etc
 
 #ifdef J9_PROJECT_SPECIFIC
 #include "env/PersistentCHTable.hpp"            // for TR_PersistentCHTable
@@ -652,7 +652,7 @@ const char *TR::VPResolvedClass::getClassSignature(int32_t &len)
    return _sig;
    }
 
-TR::VPClassType *TR::VPResolvedClass::getArrayClass(TR::ValuePropagation *vp)
+TR::VPClassType *TR::VPResolvedClass::getArrayClass(OMR::ValuePropagation *vp)
    {
    TR_OpaqueClassBlock *arrayClass = vp->fe()->getArrayClassFromComponentClass(getClass());
    if (arrayClass)
@@ -678,7 +678,7 @@ bool TR::VPResolvedClass::isPrimitiveArray(TR::Compilation *comp)
    return TR::Compiler->cls.isPrimitiveArray(comp, _class);
    }
 
-bool TR::VPResolvedClass::isJavaLangObject(TR::ValuePropagation *vp)
+bool TR::VPResolvedClass::isJavaLangObject(OMR::ValuePropagation *vp)
    {
 #ifdef J9_PROJECT_SPECIFIC
    void *javaLangObject = vp->comp()->getObjectClassPointer();
@@ -708,7 +708,7 @@ bool TR::VPConstString::isConstString()
    return true;
    }
 
-TR::VPClassType *TR::VPFixedClass::getArrayClass(TR::ValuePropagation *vp)
+TR::VPClassType *TR::VPFixedClass::getArrayClass(OMR::ValuePropagation *vp)
    {
    TR_OpaqueClassBlock *arrayClass = vp->fe()->getArrayClassFromComponentClass(getClass());
    if (arrayClass)
@@ -737,7 +737,7 @@ const char *TR::VPUnresolvedClass::getClassSignature(int32_t &len)
    return _sig;
    }
 
-TR::VPClassType *TR::VPUnresolvedClass::getArrayClass(TR::ValuePropagation *vp)
+TR::VPClassType *TR::VPUnresolvedClass::getArrayClass(OMR::ValuePropagation *vp)
    {
    char *arraySig = (char *)vp->trMemory()->allocateStackMemory(_len+2);
    arraySig[0] = '[';
@@ -811,7 +811,7 @@ TR_YesNoMaybe TR::VPObjectLocation::isJ9ClassObject()
    return isWithin(J9ClassObject);
    }
 
-TR::VPRelation *TR::VPLessThanOrEqual::getComplement(TR::ValuePropagation *vp)
+TR::VPRelation *TR::VPLessThanOrEqual::getComplement(OMR::ValuePropagation *vp)
    {
    TR::VPRelation *rel = TR::VPGreaterThanOrEqual::create(vp, -increment());
    if (hasArtificialIncrement())
@@ -819,7 +819,7 @@ TR::VPRelation *TR::VPLessThanOrEqual::getComplement(TR::ValuePropagation *vp)
    return rel;
    }
 
-TR::VPRelation *TR::VPGreaterThanOrEqual::getComplement(TR::ValuePropagation *vp)
+TR::VPRelation *TR::VPGreaterThanOrEqual::getComplement(OMR::ValuePropagation *vp)
    {
    TR::VPRelation *rel = TR::VPLessThanOrEqual::create(vp, -increment());
    if (hasArtificialIncrement())
@@ -827,14 +827,14 @@ TR::VPRelation *TR::VPGreaterThanOrEqual::getComplement(TR::ValuePropagation *vp
    return rel;
    }
 
-TR::VPRelation *TR::VPEqual::getComplement(TR::ValuePropagation *vp)
+TR::VPRelation *TR::VPEqual::getComplement(OMR::ValuePropagation *vp)
    {
    if (increment() == 0)
       return this;
    return TR::VPEqual::create(vp, -increment());
    }
 
-TR::VPRelation *TR::VPNotEqual::getComplement(TR::ValuePropagation *vp)
+TR::VPRelation *TR::VPNotEqual::getComplement(OMR::ValuePropagation *vp)
    {
    if (increment() == 0)
       return this;
@@ -847,7 +847,7 @@ TR::VPRelation *TR::VPNotEqual::getComplement(TR::ValuePropagation *vp)
 //
 // ***************************************************************************
 
-TR::VPConstraint *TR::VPConstraint::create(TR::ValuePropagation *vp, const char *sig, int32_t len, TR_ResolvedMethod *method, bool isFixedClass)
+TR::VPConstraint *TR::VPConstraint::create(OMR::ValuePropagation *vp, const char *sig, int32_t len, TR_ResolvedMethod *method, bool isFixedClass)
    {
    // Create a constraint if possible from any arbitrary signature
    //
@@ -868,11 +868,11 @@ TR::VPConstraint *TR::VPConstraint::create(TR::ValuePropagation *vp, const char 
    return NULL;
    }
 
-TR::VPShortConst *TR::VPShortConst::create(TR::ValuePropagation *vp, int16_t v)
+TR::VPShortConst *TR::VPShortConst::create(OMR::ValuePropagation *vp, int16_t v)
    {
    int32_t hash = ((uint32_t)v) % VP_HASH_TABLE_SIZE;
    TR::VPShortConst * constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
        {
        constraint = entry->constraint->asShortConst();
@@ -884,7 +884,7 @@ TR::VPShortConst *TR::VPShortConst::create(TR::ValuePropagation *vp, int16_t v)
    return constraint;
    }
 
-TR::VPIntConst *TR::VPIntConst::create(TR::ValuePropagation *vp, int32_t v)
+TR::VPIntConst *TR::VPIntConst::create(OMR::ValuePropagation *vp, int32_t v)
    {
    // If the constant is zero, return the cached constraint
    //
@@ -895,7 +895,7 @@ TR::VPIntConst *TR::VPIntConst::create(TR::ValuePropagation *vp, int32_t v)
    //
    int32_t hash = ((uint32_t)v) % VP_HASH_TABLE_SIZE;
    TR::VPIntConst *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asIntConst();
@@ -907,7 +907,7 @@ TR::VPIntConst *TR::VPIntConst::create(TR::ValuePropagation *vp, int32_t v)
    return constraint;
    }
 
-TR::VPConstraint *TR::VPShortConst::createExclusion(TR::ValuePropagation *vp, int16_t v)
+TR::VPConstraint *TR::VPShortConst::createExclusion(OMR::ValuePropagation *vp, int16_t v)
    {
    if (v == TR::getMinSigned<TR::Int16>())
        return TR::VPShortRange::create(vp,v+1,TR::getMaxSigned<TR::Int16>());
@@ -916,7 +916,7 @@ TR::VPConstraint *TR::VPShortConst::createExclusion(TR::ValuePropagation *vp, in
    return TR::VPMergedConstraints::create(vp, TR::VPShortRange::create(vp,TR::getMinSigned<TR::Int16>(),v-1),TR::VPShortRange::create(vp,v+1,TR::getMaxSigned<TR::Int16>()));
    }
 
-TR::VPConstraint *TR::VPIntConst::createExclusion(TR::ValuePropagation *vp, int32_t v)
+TR::VPConstraint *TR::VPIntConst::createExclusion(OMR::ValuePropagation *vp, int32_t v)
    {
    if (v == TR::getMinSigned<TR::Int32>())
       return TR::VPIntRange::create(vp, v+1, TR::getMaxSigned<TR::Int32>());
@@ -925,7 +925,7 @@ TR::VPConstraint *TR::VPIntConst::createExclusion(TR::ValuePropagation *vp, int3
    return TR::VPMergedConstraints::create(vp, TR::VPIntRange::create(vp, TR::getMinSigned<TR::Int32>(), v-1), TR::VPIntRange::create(vp, v+1, TR::getMaxSigned<TR::Int32>()));
    }
 
-TR::VPShortConstraint * TR::VPShortRange::create(TR::ValuePropagation * vp, int16_t low, int16_t high, TR_YesNoMaybe canOverflow)
+TR::VPShortConstraint * TR::VPShortRange::create(OMR::ValuePropagation * vp, int16_t low, int16_t high, TR_YesNoMaybe canOverflow)
    {
    if (low == TR::getMinSigned<TR::Int16>() && high == TR::getMaxSigned<TR::Int16>())
        return NULL;
@@ -938,7 +938,7 @@ TR::VPShortConstraint * TR::VPShortRange::create(TR::ValuePropagation * vp, int1
 
    int32_t hash = ((uint32low<<8)+uint32high) % VP_HASH_TABLE_SIZE;
    TR::VPShortRange *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for(entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
        {
         constraint = entry->constraint->asShortRange();
@@ -954,19 +954,19 @@ TR::VPShortConstraint * TR::VPShortRange::create(TR::ValuePropagation * vp, int1
    return constraint;
    }
 
-TR::VPShortConstraint *TR::VPShortRange::create(TR::ValuePropagation *vp)
+TR::VPShortConstraint *TR::VPShortRange::create(OMR::ValuePropagation *vp)
    {
    return TR::VPShortRange::createWithPrecision(vp, VP_UNDEFINED_PRECISION);
    }
 
-TR::VPShortConstraint *TR::VPShortRange::createWithPrecision(TR::ValuePropagation *vp, int32_t precision, bool isNonNegative)
+TR::VPShortConstraint *TR::VPShortRange::createWithPrecision(OMR::ValuePropagation *vp, int32_t precision, bool isNonNegative)
    {
    int64_t lo, hi;
    constrainRangeByPrecision(TR::getMinSigned<TR::Int16>(), TR::getMaxSigned<TR::Int16>(), precision, lo, hi, isNonNegative);
    return TR::VPShortRange::create(vp, lo, hi);
    }
 
-TR::VPIntConstraint *TR::VPIntRange::create(TR::ValuePropagation *vp, int32_t low, int32_t high, TR_YesNoMaybe canOverflow)
+TR::VPIntConstraint *TR::VPIntRange::create(OMR::ValuePropagation *vp, int32_t low, int32_t high, TR_YesNoMaybe canOverflow)
    {
    if (low == TR::getMinSigned<TR::Int32>() && high == TR::getMaxSigned<TR::Int32>())
       return NULL;
@@ -982,7 +982,7 @@ TR::VPIntConstraint *TR::VPIntRange::create(TR::ValuePropagation *vp, int32_t lo
    //
    int32_t hash = ((uint32_t)((low << 16) + high)) % VP_HASH_TABLE_SIZE;
    TR::VPIntRange *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asIntRange();
@@ -1000,12 +1000,12 @@ TR::VPIntConstraint *TR::VPIntRange::create(TR::ValuePropagation *vp, int32_t lo
    return constraint;
    }
 
-TR::VPIntConstraint *TR::VPIntRange::create(TR::ValuePropagation *vp, TR::DataTypes dt, TR_YesNoMaybe isUnsigned)
+TR::VPIntConstraint *TR::VPIntRange::create(OMR::ValuePropagation *vp, TR::DataTypes dt, TR_YesNoMaybe isUnsigned)
    {
    return TR::VPIntRange::createWithPrecision(vp, dt, VP_UNDEFINED_PRECISION, isUnsigned);
    }
 
-TR::VPIntConstraint *TR::VPIntRange::createWithPrecision(TR::ValuePropagation *vp, TR::DataType dt, int32_t precision, TR_YesNoMaybe isUnsigned, bool isNonNegative)
+TR::VPIntConstraint *TR::VPIntRange::createWithPrecision(OMR::ValuePropagation *vp, TR::DataType dt, int32_t precision, TR_YesNoMaybe isUnsigned, bool isNonNegative)
    {
    TR_ASSERT(dt > TR::NoType && dt < TR::Int64, "Bad range for datatype in integerLoad constant propagation\n");
 
@@ -1039,7 +1039,7 @@ TR::VPIntConstraint *TR::VPIntRange::createWithPrecision(TR::ValuePropagation *v
    return TR::VPIntRange::create(vp, lo, hi);
    }
 
-TR::VPLongConst *TR::VPLongConst::create(TR::ValuePropagation *vp, int64_t v)
+TR::VPLongConst *TR::VPLongConst::create(OMR::ValuePropagation *vp, int64_t v)
    {
    // If the constraint does not already exist, create it
    //
@@ -1047,7 +1047,7 @@ TR::VPLongConst *TR::VPLongConst::create(TR::ValuePropagation *vp, int64_t v)
    hash += (int32_t)v;
    hash = ((uint32_t)hash) % VP_HASH_TABLE_SIZE;
    TR::VPLongConst *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asLongConst();
@@ -1058,7 +1058,7 @@ TR::VPLongConst *TR::VPLongConst::create(TR::ValuePropagation *vp, int64_t v)
    vp->addConstraint(constraint, hash);
    return constraint;
    }
-TR::VPConstraint *TR::VPLongConst::createExclusion(TR::ValuePropagation *vp, int64_t v)
+TR::VPConstraint *TR::VPLongConst::createExclusion(OMR::ValuePropagation *vp, int64_t v)
    {
    if (v == TR::getMinSigned<TR::Int64>())
       return TR::VPLongRange::create(vp, v+1, TR::getMaxSigned<TR::Int64>());
@@ -1067,7 +1067,7 @@ TR::VPConstraint *TR::VPLongConst::createExclusion(TR::ValuePropagation *vp, int
    return TR::VPMergedConstraints::create(vp, TR::VPLongRange::create(vp, TR::getMinSigned<TR::Int64>(), v-1), TR::VPLongRange::create(vp, v+1, TR::getMaxSigned<TR::Int64>()));
    }
 
-TR::VPLongConstraint *TR::VPLongRange::create(TR::ValuePropagation *vp, int64_t low, int64_t high,
+TR::VPLongConstraint *TR::VPLongRange::create(OMR::ValuePropagation *vp, int64_t low, int64_t high,
                                             bool powerOfTwo, TR_YesNoMaybe canOverflow)
    {
    if (low == TR::getMinSigned<TR::Int64>() && high == TR::getMaxSigned<TR::Int64>() && !powerOfTwo)
@@ -1080,7 +1080,7 @@ TR::VPLongConstraint *TR::VPLongRange::create(TR::ValuePropagation *vp, int64_t 
    //
    int32_t hash = ((uint32_t)low + (uint32_t)high) % VP_HASH_TABLE_SIZE;
    TR::VPLongRange *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asLongRange();
@@ -1100,7 +1100,7 @@ TR::VPLongConstraint *TR::VPLongRange::create(TR::ValuePropagation *vp, int64_t 
    return constraint;
    }
 
-TR::VPConstraint *TR::VPClass::create(TR::ValuePropagation *vp, TR::VPClassType *type, TR::VPClassPresence *presence,
+TR::VPConstraint *TR::VPClass::create(OMR::ValuePropagation *vp, TR::VPClassType *type, TR::VPClassPresence *presence,
                                     TR::VPPreexistentObject *preexistence, TR::VPArrayInfo *arrayInfo, TR::VPObjectLocation *location)
    {
    // We shouldn't create a class constraint that contains the "null" constraint
@@ -1159,7 +1159,7 @@ TR::VPConstraint *TR::VPClass::create(TR::ValuePropagation *vp, TR::VPClassType 
       (((int32_t)(intptrj_t)arrayInfo)>>2) + (((int32_t)(intptrj_t)location)>>2);
    hash = ((uint32_t)hash) % VP_HASH_TABLE_SIZE;
    TR::VPClass *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asClass();
@@ -1176,7 +1176,7 @@ TR::VPConstraint *TR::VPClass::create(TR::ValuePropagation *vp, TR::VPClassType 
    return constraint;
    }
 
-TR::VPClassType *TR::VPClassType::create(TR::ValuePropagation *vp, TR::SymbolReference *symRef, bool isFixedClass, bool isPointerToClass)
+TR::VPClassType *TR::VPClassType::create(OMR::ValuePropagation *vp, TR::SymbolReference *symRef, bool isFixedClass, bool isPointerToClass)
    {
    if (!symRef->isUnresolved())
       {
@@ -1196,7 +1196,7 @@ TR::VPClassType *TR::VPClassType::create(TR::ValuePropagation *vp, TR::SymbolRef
    return TR::VPClassType::create(vp, sig, len, symRef->getOwningMethod(vp->comp()), isFixedClass);
    }
 
-TR::VPClassType *TR::VPClassType::create(TR::ValuePropagation *vp, const char *sig, int32_t len, TR_ResolvedMethod *method, bool isFixed, TR_OpaqueClassBlock *classObject)
+TR::VPClassType *TR::VPClassType::create(OMR::ValuePropagation *vp, const char *sig, int32_t len, TR_ResolvedMethod *method, bool isFixed, TR_OpaqueClassBlock *classObject)
    {
 #ifdef J9_PROJECT_SPECIFIC
    if (!classObject)
@@ -1223,7 +1223,7 @@ TR::VPClassType *TR::VPClassType::create(TR::ValuePropagation *vp, const char *s
 #pragma noinline(TR::VPResolvedClass::VPResolvedClass(TR_OpaqueClassBlock *, TR::Compilation *, int32_t))
 #endif
 
-TR::VPResolvedClass *TR::VPResolvedClass::create(TR::ValuePropagation *vp, TR_OpaqueClassBlock *klass)
+TR::VPResolvedClass *TR::VPResolvedClass::create(OMR::ValuePropagation *vp, TR_OpaqueClassBlock *klass)
    {
    // If the class is final, we really want to make this a fixed class
    //
@@ -1245,7 +1245,7 @@ TR::VPResolvedClass *TR::VPResolvedClass::create(TR::ValuePropagation *vp, TR_Op
    //
    int32_t hash = (int32_t)((((uintptrj_t)klass) >> 2) % VP_HASH_TABLE_SIZE);
    TR::VPResolvedClass *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asResolvedClass();
@@ -1258,13 +1258,13 @@ TR::VPResolvedClass *TR::VPResolvedClass::create(TR::ValuePropagation *vp, TR_Op
    return constraint;
    }
 
-TR::VPFixedClass *TR::VPFixedClass::create(TR::ValuePropagation *vp, TR_OpaqueClassBlock *klass)
+TR::VPFixedClass *TR::VPFixedClass::create(OMR::ValuePropagation *vp, TR_OpaqueClassBlock *klass)
    {
    // If the constraint does not already exist, create it
    //
    int32_t hash = (int32_t)((((uintptrj_t)klass) << 2) % VP_HASH_TABLE_SIZE);
    TR::VPFixedClass *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asFixedClass();
@@ -1278,7 +1278,7 @@ TR::VPFixedClass *TR::VPFixedClass::create(TR::ValuePropagation *vp, TR_OpaqueCl
    return constraint;
    }
 
-TR::VPKnownObject *TR::VPKnownObject::create(TR::ValuePropagation *vp, TR::KnownObjectTable::Index index, bool isJavaLangClass)
+TR::VPKnownObject *TR::VPKnownObject::create(OMR::ValuePropagation *vp, TR::KnownObjectTable::Index index, bool isJavaLangClass)
    {
    TR::KnownObjectTable *knot = vp->comp()->getKnownObjectTable();
    TR_ASSERT(knot, "Can't create a TR::VPKnownObject without a known-object table");
@@ -1287,7 +1287,7 @@ TR::VPKnownObject *TR::VPKnownObject::create(TR::ValuePropagation *vp, TR::Known
 
    int32_t hash = (index * 3331) % VP_HASH_TABLE_SIZE;
    TR::VPKnownObject *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->getKnownObject();
@@ -1325,7 +1325,7 @@ TR::VPKnownObject *TR::VPKnownObject::create(TR::ValuePropagation *vp, TR::Known
    return constraint;
    }
 
-TR::VPConstString *TR::VPConstString::create(TR::ValuePropagation *vp, TR::SymbolReference *symRef)
+TR::VPConstString *TR::VPConstString::create(OMR::ValuePropagation *vp, TR::SymbolReference *symRef)
    {
 #ifdef J9_PROJECT_SPECIFIC
    TR::VMAccessCriticalSection vpConstStringCriticalSection(vp->comp(),
@@ -1350,7 +1350,7 @@ TR::VPConstString *TR::VPConstString::create(TR::ValuePropagation *vp, TR::Symbo
 
       int32_t hash = (int32_t)(((uintptrj_t)hashValue) % VP_HASH_TABLE_SIZE);
 
-      TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+      OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
       TR::VPConstString *constraint;
       for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
          {
@@ -1396,13 +1396,13 @@ bool TR::VPConstString::getFieldByName(TR::SymbolReference *symRef, void* &val, 
    return TR::Compiler->cls.getStringFieldByName(comp, _symRef, symRef, val);
    }
 
-TR::VPUnresolvedClass *TR::VPUnresolvedClass::create(TR::ValuePropagation *vp, const char *sig, int32_t len, TR_ResolvedMethod *method)
+TR::VPUnresolvedClass *TR::VPUnresolvedClass::create(OMR::ValuePropagation *vp, const char *sig, int32_t len, TR_ResolvedMethod *method)
    {
    // If the constraint does not already exist, create it
    //
    int32_t hash = (((uint32_t)(uintptrj_t)method >> 2) + len) % VP_HASH_TABLE_SIZE;
    TR::VPUnresolvedClass *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asUnresolvedClass();
@@ -1418,22 +1418,22 @@ TR::VPUnresolvedClass *TR::VPUnresolvedClass::create(TR::ValuePropagation *vp, c
    return constraint;
    }
 
-TR::VPNullObject *TR::VPNullObject::create(TR::ValuePropagation *vp)
+TR::VPNullObject *TR::VPNullObject::create(OMR::ValuePropagation *vp)
    {
    return vp->_nullObjectConstraint;
    }
 
-TR::VPNonNullObject *TR::VPNonNullObject::create(TR::ValuePropagation *vp)
+TR::VPNonNullObject *TR::VPNonNullObject::create(OMR::ValuePropagation *vp)
    {
    return vp->_nonNullObjectConstraint;
    }
 
-TR::VPPreexistentObject *TR::VPPreexistentObject::create(TR::ValuePropagation *vp, TR_OpaqueClassBlock *c)
+TR::VPPreexistentObject *TR::VPPreexistentObject::create(OMR::ValuePropagation *vp, TR_OpaqueClassBlock *c)
    {
    TR_ASSERT(vp->comp()->ilGenRequest().details().supportsInvalidation(), "Can't use TR::VPPreexistentObject unless the compiled method supports invalidation");
    int32_t hash = (int32_t)((((uintptrj_t)c) << 2) % VP_HASH_TABLE_SIZE);
    TR::VPPreexistentObject *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->getPreexistence();
@@ -1449,13 +1449,13 @@ TR::VPPreexistentObject *TR::VPPreexistentObject::create(TR::ValuePropagation *v
    //return vp->_preexistentObjectConstraint;
    }
 
-TR::VPArrayInfo *TR::VPArrayInfo::create(TR::ValuePropagation *vp, int32_t lowBound, int32_t highBound, int32_t elementSize)
+TR::VPArrayInfo *TR::VPArrayInfo::create(OMR::ValuePropagation *vp, int32_t lowBound, int32_t highBound, int32_t elementSize)
    {
    // If the constraint does not already exist, create it
    //
    int32_t hash = ((uint32_t)((lowBound << 16) + highBound + elementSize)) % VP_HASH_TABLE_SIZE;
    TR::VPArrayInfo *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asArrayInfo();
@@ -1467,7 +1467,7 @@ TR::VPArrayInfo *TR::VPArrayInfo::create(TR::ValuePropagation *vp, int32_t lowBo
    return constraint;
    }
 
-TR::VPArrayInfo *TR::VPArrayInfo::create(TR::ValuePropagation *vp, char *sig)
+TR::VPArrayInfo *TR::VPArrayInfo::create(OMR::ValuePropagation *vp, char *sig)
    {
    TR_ASSERT(*sig == '[', "expecting array signature");
    TR::DataType d = TR::Symbol::convertSigCharToType(sig[1]);
@@ -1480,14 +1480,14 @@ TR::VPArrayInfo *TR::VPArrayInfo::create(TR::ValuePropagation *vp, char *sig)
    return TR::VPArrayInfo::create(vp, 0, TR::getMaxSigned<TR::Int32>() / stride, stride);
    }
 
-TR::VPMergedConstraints *TR::VPMergedConstraints::create(TR::ValuePropagation *vp, TR::VPConstraint *first, TR::VPConstraint *second)
+TR::VPMergedConstraints *TR::VPMergedConstraints::create(OMR::ValuePropagation *vp, TR::VPConstraint *first, TR::VPConstraint *second)
    {
    // If the constraint does not already exist, create it
    //
    int32_t hash = (int32_t)(((((uintptrj_t)first) >> 2) + (((uintptrj_t)second) >> 2)) % VP_HASH_TABLE_SIZE);
 
    TR::VPMergedConstraints *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asMergedConstraints();
@@ -1514,11 +1514,11 @@ TR::VPMergedConstraints *TR::VPMergedConstraints::create(TR::ValuePropagation *v
    return constraint;
    }
 
-TR::VPObjectLocation *TR::VPObjectLocation::create(TR::ValuePropagation *vp, VPObjectLocationKind kind)
+TR::VPObjectLocation *TR::VPObjectLocation::create(OMR::ValuePropagation *vp, VPObjectLocationKind kind)
    {
    int32_t hash = (kind * 4109) % VP_HASH_TABLE_SIZE;
    TR::VPObjectLocation *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asObjectLocation();
@@ -1530,7 +1530,7 @@ TR::VPObjectLocation *TR::VPObjectLocation::create(TR::ValuePropagation *vp, VPO
    return constraint;
    }
 
-TR::VPMergedConstraints *TR::VPMergedConstraints::create(TR::ValuePropagation *vp, ListElement<TR::VPConstraint> *list)
+TR::VPMergedConstraints *TR::VPMergedConstraints::create(OMR::ValuePropagation *vp, ListElement<TR::VPConstraint> *list)
    {
    // If the constraint does not already exist, create it
    //
@@ -1549,7 +1549,7 @@ TR::VPMergedConstraints *TR::VPMergedConstraints::create(TR::ValuePropagation *v
    hash = ((uint32_t)hash) % VP_HASH_TABLE_SIZE;
 
    TR::VPMergedConstraints *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asMergedConstraints();
@@ -1571,16 +1571,16 @@ TR::VPMergedConstraints *TR::VPMergedConstraints::create(TR::ValuePropagation *v
    return constraint;
    }
 
-TR::VPUnreachablePath *TR::VPUnreachablePath::create(TR::ValuePropagation *vp)
+TR::VPUnreachablePath *TR::VPUnreachablePath::create(OMR::ValuePropagation *vp)
    {
    return vp->_unreachablePathConstraint;
    }
 
-TR::VPSync *TR::VPSync::create(TR::ValuePropagation *vp, TR_YesNoMaybe v)
+TR::VPSync *TR::VPSync::create(OMR::ValuePropagation *vp, TR_YesNoMaybe v)
    {
    int32_t hash = ((uint32_t)(v << 2) * 4109) % VP_HASH_TABLE_SIZE;
    TR::VPSync *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asVPSync();
@@ -1593,13 +1593,13 @@ TR::VPSync *TR::VPSync::create(TR::ValuePropagation *vp, TR_YesNoMaybe v)
    return constraint;
    }
 
-TR::VPLessThanOrEqual *TR::VPLessThanOrEqual::create(TR::ValuePropagation *vp, int32_t incr)
+TR::VPLessThanOrEqual *TR::VPLessThanOrEqual::create(OMR::ValuePropagation *vp, int32_t incr)
    {
    // If the constraint does not already exist, create it
    //
    int32_t hash = ((uint32_t)((incr << 16) + LessThanOrEqualPriority)) % VP_HASH_TABLE_SIZE;
    TR::VPLessThanOrEqual *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asLessThanOrEqual();
@@ -1611,13 +1611,13 @@ TR::VPLessThanOrEqual *TR::VPLessThanOrEqual::create(TR::ValuePropagation *vp, i
    return constraint;
    }
 
-TR::VPGreaterThanOrEqual *TR::VPGreaterThanOrEqual::create(TR::ValuePropagation *vp, int32_t incr)
+TR::VPGreaterThanOrEqual *TR::VPGreaterThanOrEqual::create(OMR::ValuePropagation *vp, int32_t incr)
    {
    // If the constraint does not already exist, create it
    //
    int32_t hash = ((uint32_t)((incr << 16) + GreaterThanOrEqualPriority)) % VP_HASH_TABLE_SIZE;
    TR::VPGreaterThanOrEqual *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asGreaterThanOrEqual();
@@ -1629,13 +1629,13 @@ TR::VPGreaterThanOrEqual *TR::VPGreaterThanOrEqual::create(TR::ValuePropagation 
    return constraint;
    }
 
-TR::VPEqual *TR::VPEqual::create(TR::ValuePropagation *vp, int32_t incr)
+TR::VPEqual *TR::VPEqual::create(OMR::ValuePropagation *vp, int32_t incr)
    {
    // If the constraint does not already exist, create it
    //
    int32_t hash = ((uint32_t)((incr << 16) + EqualPriority)) % VP_HASH_TABLE_SIZE;
    TR::VPEqual *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asEqual();
@@ -1647,13 +1647,13 @@ TR::VPEqual *TR::VPEqual::create(TR::ValuePropagation *vp, int32_t incr)
    return constraint;
    }
 
-TR::VPNotEqual *TR::VPNotEqual::create(TR::ValuePropagation *vp, int32_t incr)
+TR::VPNotEqual *TR::VPNotEqual::create(OMR::ValuePropagation *vp, int32_t incr)
    {
    // If the constraint does not already exist, create it
    //
    int32_t hash = ((uint32_t)((incr << 16) + NotEqualPriority)) % VP_HASH_TABLE_SIZE;
    TR::VPNotEqual *constraint;
-   TR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
    for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
       {
       constraint = entry->constraint->asNotEqual();
@@ -1671,7 +1671,7 @@ TR::VPNotEqual *TR::VPNotEqual::create(TR::ValuePropagation *vp, int32_t incr)
 //
 // ***************************************************************************
 
-TR::VPConstraint * TR::VPConstraint::merge(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint * TR::VPConstraint::merge(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    // If this is the same constraint, just return it
    //
@@ -1685,7 +1685,7 @@ TR::VPConstraint * TR::VPConstraint::merge(TR::VPConstraint *other, TR::ValuePro
    return merge1(other, vp);
    }
 
-TR::VPConstraint * TR::VPConstraint::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint * TR::VPConstraint::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -1695,7 +1695,7 @@ TR::VPConstraint * TR::VPConstraint::merge1(TR::VPConstraint *other, TR::ValuePr
    }
 
 
-TR::VPConstraint *TR::VPShortConstraint::merge1(TR::VPConstraint * other, TR::ValuePropagation * vp)
+TR::VPConstraint *TR::VPShortConstraint::merge1(TR::VPConstraint * other, OMR::ValuePropagation * vp)
    {
    TRACER(vp, this, other);
 
@@ -1716,7 +1716,7 @@ TR::VPConstraint *TR::VPShortConstraint::merge1(TR::VPConstraint * other, TR::Va
      return NULL;
    }
 
-TR::VPConstraint *TR::VPIntConstraint::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPIntConstraint::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -1787,7 +1787,7 @@ TR::VPConstraint *TR::VPIntConstraint::merge1(TR::VPConstraint *other, TR::Value
    return NULL;
    }
 
-TR::VPConstraint *TR::VPLongConstraint::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPLongConstraint::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -1845,7 +1845,7 @@ TR::VPConstraint *TR::VPLongConstraint::merge1(TR::VPConstraint *other, TR::Valu
    return NULL;
    }
 
-TR::VPConstraint *TR::VPClass::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPClass::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -1911,7 +1911,7 @@ TR::VPConstraint *TR::VPClass::merge1(TR::VPConstraint *other, TR::ValuePropagat
    return NULL;
    }
 
-TR::VPConstraint *TR::VPResolvedClass::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPResolvedClass::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -1937,7 +1937,7 @@ TR::VPConstraint *TR::VPResolvedClass::merge1(TR::VPConstraint *other, TR::Value
    return NULL;
    }
 
-TR::VPConstraint *TR::VPFixedClass::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPFixedClass::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -1960,7 +1960,7 @@ TR::VPConstraint *TR::VPFixedClass::merge1(TR::VPConstraint *other, TR::ValuePro
    return NULL;
    }
 
-TR::VPConstraint *TR::VPKnownObject::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPKnownObject::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2006,7 +2006,7 @@ TR::VPConstraint *TR::VPKnownObject::merge1(TR::VPConstraint *other, TR::ValuePr
    return Super::merge1(other, vp);
    }
 
-TR::VPConstraint *TR::VPConstString::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPConstString::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2022,7 +2022,7 @@ TR::VPConstraint *TR::VPConstString::merge1(TR::VPConstraint *other, TR::ValuePr
    return NULL;
    }
 
-TR::VPConstraint *TR::VPArrayInfo::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPArrayInfo::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2044,7 +2044,7 @@ TR::VPConstraint *TR::VPArrayInfo::merge1(TR::VPConstraint *other, TR::ValueProp
    return TR::VPArrayInfo::create(vp, lowBound, highBound, elementSize);
    }
 
-TR::VPConstraint *TR::VPObjectLocation::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPObjectLocation::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2065,7 +2065,7 @@ TR::VPConstraint *TR::VPObjectLocation::merge1(TR::VPConstraint *other, TR::Valu
    return NULL;
    }
 
-TR::VPConstraint *TR::VPSync::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPSync::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2080,7 +2080,7 @@ TR::VPConstraint *TR::VPSync::merge1(TR::VPConstraint *other, TR::ValuePropagati
    return this;
    }
 
-TR::VPConstraint *TR::VPMergedConstraints::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPMergedConstraints::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2110,7 +2110,7 @@ TR::VPConstraint *TR::VPMergedConstraints::merge1(TR::VPConstraint *other, TR::V
    return NULL;
    }
 
-TR::VPConstraint *TR::VPMergedConstraints::shortMerge(TR::VPConstraint * other, ListElement<TR::VPConstraint> *otherNext, TR::ValuePropagation * vp)
+TR::VPConstraint *TR::VPMergedConstraints::shortMerge(TR::VPConstraint * other, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation * vp)
    {
    TR::VPShortConstraint *otherCur = other->asShortConstraint();
 
@@ -2220,7 +2220,7 @@ TR::VPConstraint *TR::VPMergedConstraints::shortMerge(TR::VPConstraint * other, 
    return NULL;
    }
 
-TR::VPConstraint *TR::VPMergedConstraints::intMerge(TR::VPConstraint *other, ListElement<TR::VPConstraint> *otherNext, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPMergedConstraints::intMerge(TR::VPConstraint *other, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation *vp)
    {
    TR::VPIntConstraint *otherCur = other->asIntConstraint();
    //if (otherCur && otherCur->isUnsigned())
@@ -2437,7 +2437,7 @@ TR::VPConstraint *TR::VPMergedConstraints::intMerge(TR::VPConstraint *other, Lis
    return NULL;
    }
 
-TR::VPConstraint *TR::VPMergedConstraints::longMerge(TR::VPConstraint *other, ListElement<TR::VPConstraint> *otherNext, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPMergedConstraints::longMerge(TR::VPConstraint *other, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation *vp)
    {
    TR_ScratchList<TR::VPConstraint>         result(vp->trMemory());
    ListElement<TR::VPConstraint> *next = _constraints.getListHead();
@@ -2641,7 +2641,7 @@ TR::VPConstraint *TR::VPMergedConstraints::longMerge(TR::VPConstraint *other, Li
    return NULL;
    }
 
-TR::VPConstraint *TR::VPLessThanOrEqual::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPLessThanOrEqual::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2655,7 +2655,7 @@ TR::VPConstraint *TR::VPLessThanOrEqual::merge1(TR::VPConstraint *other, TR::Val
    return NULL;
    }
 
-TR::VPConstraint *TR::VPGreaterThanOrEqual::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPGreaterThanOrEqual::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2669,7 +2669,7 @@ TR::VPConstraint *TR::VPGreaterThanOrEqual::merge1(TR::VPConstraint *other, TR::
    return NULL;
    }
 
-TR::VPConstraint *TR::VPEqual::merge1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPEqual::merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2696,7 +2696,7 @@ TR::VPConstraint *TR::VPEqual::merge1(TR::VPConstraint *other, TR::ValuePropagat
 //
 // ***************************************************************************
 
-TR::VPConstraint * TR::VPConstraint::intersect(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint * TR::VPConstraint::intersect(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    // If this is the same constraint, just return it
    //
@@ -2733,7 +2733,7 @@ TR::VPConstraint * TR::VPConstraint::intersect(TR::VPConstraint *other, TR::Valu
    }
 
 
-TR::VPConstraint * TR::VPConstraint::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint * TR::VPConstraint::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2743,7 +2743,7 @@ TR::VPConstraint * TR::VPConstraint::intersect1(TR::VPConstraint *other, TR::Val
    }
 
 // //unsigned version of the intersect routine below
-// TR::VPConstraint *TR::VPIntConstraint::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp, bool Unsigned)
+// TR::VPConstraint *TR::VPIntConstraint::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp, bool Unsigned)
 //    {
 //    TR::VPIntConstraint *otherInt = other->asIntConstraint();
 //     if (otherInt)
@@ -2759,7 +2759,7 @@ TR::VPConstraint * TR::VPConstraint::intersect1(TR::VPConstraint *other, TR::Val
 //    return NULL;
 //    }
 
-TR::VPConstraint *TR::VPShortConstraint::intersect1(TR::VPConstraint * other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPShortConstraint::intersect1(TR::VPConstraint * other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2807,7 +2807,7 @@ TR::VPConstraint *TR::VPShortConstraint::intersect1(TR::VPConstraint * other, TR
    return NULL;
    }
 
-TR::VPConstraint *TR::VPIntConstraint::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPIntConstraint::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2849,7 +2849,7 @@ TR::VPConstraint *TR::VPIntConstraint::intersect1(TR::VPConstraint *other, TR::V
    return NULL;
    }
 
-TR::VPConstraint *TR::VPLongConstraint::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPLongConstraint::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -2888,7 +2888,7 @@ TR::VPConstraint *TR::VPLongConstraint::intersect1(TR::VPConstraint *other, TR::
    }
 
 
-TR::VPClassType *TR::VPClassType::classTypesCompatible(TR::VPClassType * otherType, TR::ValuePropagation *vp)
+TR::VPClassType *TR::VPClassType::classTypesCompatible(TR::VPClassType * otherType, OMR::ValuePropagation *vp)
    {
    TR::VPResolvedClass *rc = asResolvedClass();
    TR::VPResolvedClass *otherRc = otherType->asResolvedClass();
@@ -2928,7 +2928,7 @@ TR::VPClassType *TR::VPClassType::classTypesCompatible(TR::VPClassType * otherTy
 // this routine encapsulates code that used to exist
 // in VPClass::intersect
 // it is called directly by handlers for instanceOf, checkCast
-void TR::VPClass::typeIntersect(TR::VPClassPresence* &presence, TR::VPClassType* &type, TR::VPConstraint *other, TR::ValuePropagation *vp)
+void TR::VPClass::typeIntersect(TR::VPClassPresence* &presence, TR::VPClassType* &type, TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (type && TR::VPConstraint::isSpecialClass((uintptrj_t)type->getClass()))
       type = NULL;
@@ -3111,7 +3111,7 @@ void TR::VPClass::typeIntersect(TR::VPClassPresence* &presence, TR::VPClassType*
       }
    }
 
-TR::VPConstraint *TR::VPClass::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPClass::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3338,7 +3338,7 @@ TR::VPConstraint *TR::VPClass::intersect1(TR::VPConstraint *other, TR::ValueProp
    return NULL;
    }
 
-TR::VPConstraint *TR::VPResolvedClass::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPResolvedClass::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3425,7 +3425,7 @@ TR::VPConstraint *TR::VPResolvedClass::intersect1(TR::VPConstraint *other, TR::V
    return this;
    }
 
-TR::VPConstraint *TR::VPFixedClass::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPFixedClass::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3522,7 +3522,7 @@ TR::VPConstraint *TR::VPFixedClass::intersect1(TR::VPConstraint *other, TR::Valu
    return NULL;
    }
 
-TR::VPConstraint *TR::VPKnownObject::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPKnownObject::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3553,7 +3553,7 @@ TR::VPConstraint *TR::VPKnownObject::intersect1(TR::VPConstraint *other, TR::Val
    return Super::intersect1(other, vp);
    }
 
-TR::VPConstraint *TR::VPConstString::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPConstString::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
 #ifdef J9_PROJECT_SPECIFIC
    TRACER(vp, this, other);
@@ -3603,7 +3603,7 @@ TR::VPConstraint *TR::VPConstString::intersect1(TR::VPConstraint *other, TR::Val
    return NULL;
    }
 
-TR::VPConstraint *TR::VPUnresolvedClass::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPUnresolvedClass::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3622,7 +3622,7 @@ TR::VPConstraint *TR::VPUnresolvedClass::intersect1(TR::VPConstraint *other, TR:
    return this;
    }
 
-TR::VPConstraint *TR::VPNullObject::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPNullObject::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3643,7 +3643,7 @@ TR::VPConstraint *TR::VPNullObject::intersect1(TR::VPConstraint *other, TR::Valu
    return NULL;
    }
 
-TR::VPConstraint *TR::VPNonNullObject::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPNonNullObject::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3656,7 +3656,7 @@ TR::VPConstraint *TR::VPNonNullObject::intersect1(TR::VPConstraint *other, TR::V
    return NULL;
    }
 
-TR::VPConstraint *TR::VPPreexistentObject::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPPreexistentObject::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3667,7 +3667,7 @@ TR::VPConstraint *TR::VPPreexistentObject::intersect1(TR::VPConstraint *other, T
    return NULL;
    }
 
-TR::VPConstraint *TR::VPArrayInfo::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPArrayInfo::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3702,7 +3702,7 @@ TR::VPConstraint *TR::VPArrayInfo::intersect1(TR::VPConstraint *other, TR::Value
    return TR::VPArrayInfo::create(vp, lowBound, highBound, elementSize);
    }
 
-TR::VPConstraint *TR::VPObjectLocation::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPObjectLocation::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3731,7 +3731,7 @@ TR::VPConstraint *TR::VPObjectLocation::intersect1(TR::VPConstraint *other, TR::
       return TR::VPObjectLocation::create(vp, result);
    }
 
-TR::VPConstraint *TR::VPSync::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPSync::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3751,7 +3751,7 @@ TR::VPConstraint *TR::VPSync::intersect1(TR::VPConstraint *other, TR::ValuePropa
    return NULL;
    }
 
-TR::VPConstraint *TR::VPMergedConstraints::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPMergedConstraints::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -3783,7 +3783,7 @@ TR::VPConstraint *TR::VPMergedConstraints::intersect1(TR::VPConstraint *other, T
 
 //this is the unsigned version of the
 //intersect routine below
-// TR::VPConstraint *TR::VPMergedConstraints::intIntersect(TR::VPIntConstraint *otherCur, ListElement<TR::VPConstraint> *otherNext, TR::ValuePropagation *vp, bool isUnsigned)
+// TR::VPConstraint *TR::VPMergedConstraints::intIntersect(TR::VPIntConstraint *otherCur, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation *vp, bool isUnsigned)
 //    {
 //    TR_ScratchList<TR::VPConstraint>         result(vp->trMemory());
 //    ListElement<TR::VPConstraint> *next = _constraints.getListHead();
@@ -3880,7 +3880,7 @@ TR::VPConstraint *TR::VPMergedConstraints::intersect1(TR::VPConstraint *other, T
 //       }
 //    }
 
-TR::VPConstraint *TR::VPMergedConstraints::shortIntersect(TR::VPConstraint * other, ListElement<TR::VPConstraint> *otherNext, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPMergedConstraints::shortIntersect(TR::VPConstraint * other, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation *vp)
    {
    TR::VPShortConstraint *otherCur = other->asShortConstraint();
 
@@ -3976,7 +3976,7 @@ TR::VPConstraint *TR::VPMergedConstraints::shortIntersect(TR::VPConstraint * oth
     return NULL;
    }
 
-TR::VPConstraint *TR::VPMergedConstraints::intIntersect(TR::VPConstraint *other, ListElement<TR::VPConstraint> *otherNext, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPMergedConstraints::intIntersect(TR::VPConstraint *other, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation *vp)
    {
 
    TR::VPIntConstraint *otherCur = other->asIntConstraint();
@@ -4157,7 +4157,7 @@ TR::VPConstraint *TR::VPMergedConstraints::intIntersect(TR::VPConstraint *other,
       }
    }
 
-TR::VPConstraint *TR::VPMergedConstraints::longIntersect(TR::VPConstraint *other, ListElement<TR::VPConstraint> *otherNext, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPMergedConstraints::longIntersect(TR::VPConstraint *other, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation *vp)
    {
    TR_ScratchList<TR::VPConstraint>         result(vp->trMemory());
    ListElement<TR::VPConstraint> *next = _constraints.getListHead();
@@ -4335,7 +4335,7 @@ TR::VPConstraint *TR::VPMergedConstraints::longIntersect(TR::VPConstraint *other
       }
    }
 
-TR::VPConstraint *TR::VPLessThanOrEqual::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPLessThanOrEqual::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -4359,7 +4359,7 @@ TR::VPConstraint *TR::VPLessThanOrEqual::intersect1(TR::VPConstraint *other, TR:
    return NULL;
    }
 
-TR::VPConstraint *TR::VPGreaterThanOrEqual::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPGreaterThanOrEqual::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -4390,7 +4390,7 @@ TR::VPConstraint *TR::VPGreaterThanOrEqual::intersect1(TR::VPConstraint *other, 
    return NULL;
    }
 
-TR::VPConstraint *TR::VPNotEqual::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPNotEqual::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -4404,7 +4404,7 @@ TR::VPConstraint *TR::VPNotEqual::intersect1(TR::VPConstraint *other, TR::ValueP
    return NULL;
    }
 
-TR::VPConstraint *TR::VPEqual::intersect1(TR::VPConstraint *other, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPEqual::intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TRACER(vp, this, other);
 
@@ -4437,17 +4437,17 @@ TR::VPConstraint *TR::VPEqual::intersect1(TR::VPConstraint *other, TR::ValueProp
 
 
 
-TR::VPConstraint *TR::VPConstraint::add(TR::VPConstraint *other, TR::DataType type, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPConstraint::add(TR::VPConstraint *other, TR::DataType type, OMR::ValuePropagation *vp)
    {
    return NULL;
    }
 
-TR::VPConstraint *TR::VPConstraint::subtract(TR::VPConstraint *other, TR::DataType type, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPConstraint::subtract(TR::VPConstraint *other, TR::DataType type, OMR::ValuePropagation *vp)
    {
    return NULL;
    }
 
-TR::VPConstraint *TR::VPShortConstraint::add(TR::VPConstraint *other, TR::DataType dt, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPShortConstraint::add(TR::VPConstraint *other, TR::DataType dt, OMR::ValuePropagation *vp)
    {
     TR::VPShortConstraint *otherShort = other->asShortConstraint();
     if(!otherShort)
@@ -4469,7 +4469,7 @@ TR::VPConstraint *TR::VPShortConstraint::add(TR::VPConstraint *other, TR::DataTy
    return getRange(low, high, lowOverflow, highOverflow, vp);
    }
 
-TR::VPConstraint *TR::VPIntConstraint::add(TR::VPConstraint *other, TR::DataType dt, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPIntConstraint::add(TR::VPConstraint *other, TR::DataType dt, OMR::ValuePropagation *vp)
    {
    // TODO - handle add and subtract for merged constraints
    //
@@ -4498,7 +4498,7 @@ TR::VPConstraint *TR::VPIntConstraint::add(TR::VPConstraint *other, TR::DataType
    }
 
 // // unsigned subtract operation
-// TR::VPConstraint *TR::VPIntConstraint::subtract(TR::VPIntConstraint *otherInt, TR::ValuePropagation *vp, bool Unsigned)
+// TR::VPConstraint *TR::VPIntConstraint::subtract(TR::VPIntConstraint *otherInt, OMR::ValuePropagation *vp, bool Unsigned)
 //    {
 //    TR_ASSERT(isUnsigned() && otherInt->isUnsigned(), "Expecting unsigned constraints in subtract\n");
 //    uint32_t low = (uint32_t)getLow() - (uint32_t)otherInt->getHigh();
@@ -4554,7 +4554,7 @@ TR::VPConstraint *TR::VPIntConstraint::add(TR::VPConstraint *other, TR::DataType
 //    return range;
 //    }
 
-TR::VPConstraint *TR::VPShortConstraint::subtract(TR::VPConstraint *other, TR::DataType dt, TR::ValuePropagation * vp)
+TR::VPConstraint *TR::VPShortConstraint::subtract(TR::VPConstraint *other, TR::DataType dt, OMR::ValuePropagation * vp)
    {
    TR::VPShortConstraint *otherShort = other->asShortConstraint();
 
@@ -4577,7 +4577,7 @@ TR::VPConstraint *TR::VPShortConstraint::subtract(TR::VPConstraint *other, TR::D
    return getRange(low, high, lowOverflow, highOverflow, vp);
    }
 
-TR::VPConstraint *TR::VPIntConstraint::subtract(TR::VPConstraint *other, TR::DataType dt, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPIntConstraint::subtract(TR::VPConstraint *other, TR::DataType dt, OMR::ValuePropagation *vp)
    {
    TR::VPIntConstraint *otherInt = other->asIntConstraint();
    if (!otherInt)
@@ -4602,7 +4602,7 @@ TR::VPConstraint *TR::VPIntConstraint::subtract(TR::VPConstraint *other, TR::Dat
    return getRange(low, high, lowOverflow, highOverflow, vp);
    }
 
-TR::VPConstraint *TR::VPShortConstraint::getRange(int16_t low, int16_t high, bool lowCanOverflow, bool highCanOverflow, TR::ValuePropagation * vp)
+TR::VPConstraint *TR::VPShortConstraint::getRange(int16_t low, int16_t high, bool lowCanOverflow, bool highCanOverflow, OMR::ValuePropagation * vp)
    {
    //This function returns a VP constraint range, with the appropriate setting of the canOverflow bit, for either an addition or subtraction
    //operation. The function takes the results of the lower- and upper-bound calculations for the operation, both performed in the same precision
@@ -4640,7 +4640,7 @@ TR::VPConstraint *TR::VPShortConstraint::getRange(int16_t low, int16_t high, boo
    return TR::VPShortRange::create(vp, low, high, TR_no);
    }
 
-TR::VPConstraint *TR::VPIntConstraint::getRange(int32_t low, int32_t high, bool lowCanOverflow, bool highCanOverflow, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPIntConstraint::getRange(int32_t low, int32_t high, bool lowCanOverflow, bool highCanOverflow, OMR::ValuePropagation *vp)
    {
    //This function returns a VP constraint range, with the appropriate setting of the canOverflow bit, for either an addition or subtraction
    //operation. The function takes the results of the lower- and upper-bound calculations for the operation, both performed in the same precision
@@ -4678,7 +4678,7 @@ TR::VPConstraint *TR::VPIntConstraint::getRange(int32_t low, int32_t high, bool 
    return TR::VPIntRange::create(vp, low, high, TR_no);
    }
 
-TR::VPConstraint *TR::VPLongConstraint::add(TR::VPConstraint *other, TR::DataType dt, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPLongConstraint::add(TR::VPConstraint *other, TR::DataType dt, OMR::ValuePropagation *vp)
    {
    // TODO - handle add and subtract for merged constraints
    //
@@ -4701,7 +4701,7 @@ TR::VPConstraint *TR::VPLongConstraint::add(TR::VPConstraint *other, TR::DataTyp
    return getRange(low, high, lowOverflow, highOverflow, vp);
    }
 
-TR::VPConstraint *TR::VPLongConstraint::subtract(TR::VPConstraint *other, TR::DataType dt, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPLongConstraint::subtract(TR::VPConstraint *other, TR::DataType dt, OMR::ValuePropagation *vp)
    {
    TR::VPLongConstraint *otherLong = other->asLongConstraint();
    if (!otherLong)
@@ -4722,7 +4722,7 @@ TR::VPConstraint *TR::VPLongConstraint::subtract(TR::VPConstraint *other, TR::Da
    return getRange(low, high, lowOverflow, highOverflow, vp);
    }
 
-TR::VPConstraint *TR::VPLongConstraint::getRange(int64_t low, int64_t high, bool lowCanOverflow, bool highCanOverflow, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPLongConstraint::getRange(int64_t low, int64_t high, bool lowCanOverflow, bool highCanOverflow, OMR::ValuePropagation *vp)
    {
    //This function returns a VP constraint range, with the appropriate setting of the canOverflow bit, for either an addition or subtraction
    //operation. The function takes the results of the lower- and upper-bound calculations for the operation, both performed in the same precision
@@ -4766,12 +4766,12 @@ TR::VPConstraint *TR::VPLongConstraint::getRange(int64_t low, int64_t high, bool
 //
 // ***************************************************************************
 
-bool TR::VPConstraint::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPConstraint::mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    return false;
    }
 
-bool TR::VPShortConst::mustBeEqual(TR::VPConstraint * other, TR::ValuePropagation *vp)
+bool TR::VPShortConst::mustBeEqual(TR::VPConstraint * other, OMR::ValuePropagation *vp)
    {
    TR::VPShortConst * otherConst = other->asShortConst();
    if (isUnsigned() && otherConst && otherConst->isUnsigned())
@@ -4779,7 +4779,7 @@ bool TR::VPShortConst::mustBeEqual(TR::VPConstraint * other, TR::ValuePropagatio
    return otherConst && otherConst->getShort() == getShort();
    }
 
-bool TR::VPIntConst::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPIntConst::mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TR::VPIntConst *otherConst = other->asIntConst();
    if (isUnsigned() && otherConst && otherConst->isUnsigned())
@@ -4787,13 +4787,13 @@ bool TR::VPIntConst::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagation *
    return otherConst && otherConst->getInt() == getInt();
    }
 
-bool TR::VPLongConst::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPLongConst::mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TR::VPLongConst *otherConst = other->asLongConst();
    return otherConst && otherConst->getLong() == getLong();
    }
 
-bool TR::VPClass::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPClass::mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (isNullObject() && other->isNullObject())
       return true;
@@ -4821,12 +4821,12 @@ bool TR::VPClass::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
    return false;
    }
 
-bool TR::VPNullObject::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPNullObject::mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    return other->isNullObject();
    }
 
-bool TR::VPConstString::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPConstString::mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (other->getKnownObject())
       return other->mustBeEqual(this, vp);
@@ -4834,7 +4834,7 @@ bool TR::VPConstString::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagatio
       return false;
    }
 
-bool TR::VPKnownObject::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPKnownObject::mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    // An expression with a Known Object constraint could be null.  Since there
    // are two possible values, we can't generally prove we mustBeEqual to
@@ -4844,7 +4844,7 @@ bool TR::VPKnownObject::mustBeEqual(TR::VPConstraint *other, TR::ValuePropagatio
    return Super::mustBeEqual(other, vp);
    }
 
-bool TR::VPKnownObject::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPKnownObject::mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    // An expression with a Known Object constraint could be null.  To have any
    // hope of proving we're notEqual to some other expression, its constraint
@@ -4859,7 +4859,7 @@ bool TR::VPKnownObject::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropaga
    return Super::mustBeNotEqual(other, vp);
    }
 
-bool TR::VPConstString::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPConstString::mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (other->getKnownObject())
       return other->getKnownObject()->mustBeNotEqual(this, vp);
@@ -4867,7 +4867,7 @@ bool TR::VPConstString::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropaga
       return false;
    }
 
-bool TR::VPConstraint::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPConstraint::mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (isNullObject())
       {
@@ -4881,7 +4881,7 @@ bool TR::VPConstraint::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagat
       }
    return false;
    }
-bool TR::VPShortConstraint::mustBeNotEqual(TR::VPConstraint * other, TR::ValuePropagation *vp)
+bool TR::VPShortConstraint::mustBeNotEqual(TR::VPConstraint * other, OMR::ValuePropagation *vp)
    {
    TR::VPShortConstraint *otherShort = other->asShortConstraint();
    if(otherShort)
@@ -4907,7 +4907,7 @@ bool TR::VPShortConstraint::mustBeNotEqual(TR::VPConstraint * other, TR::ValuePr
    return false;
    }
 
-bool TR::VPIntConstraint::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPIntConstraint::mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TR::VPIntConstraint *otherInt = other->asIntConstraint();
    if (otherInt)
@@ -4934,7 +4934,7 @@ bool TR::VPIntConstraint::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropa
    return false;
    }
 
-bool TR::VPLongConstraint::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPLongConstraint::mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    TR::VPLongConstraint *otherLong = other->asLongConstraint();
    if (otherLong)
@@ -4955,7 +4955,7 @@ bool TR::VPLongConstraint::mustBeNotEqual(TR::VPConstraint *other, TR::ValueProp
    return false;
    }
 
-bool TR::VPMergedConstraints::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPMergedConstraints::mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (!other->asMergedConstraints())
       return other->mustBeNotEqual(this, vp);
@@ -4973,7 +4973,7 @@ bool TR::VPMergedConstraints::mustBeNotEqual(TR::VPConstraint *other, TR::ValueP
 
 
 //FIXME: this is too conservative, can do more for non-fixed objects
-bool TR::VPClass::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPClass::mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (isNullObject() && other->isNonNullObject())
       return true;
@@ -5003,41 +5003,41 @@ bool TR::VPClass::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *
    return false;
    }
 
-bool TR::VPNullObject::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPNullObject::mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    return other->isNonNullObject();
    }
 
-bool TR::VPNonNullObject::mustBeNotEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPNonNullObject::mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    return other->isNullObject();
    }
 
-bool TR::VPConstraint::mustBeLessThan(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPConstraint::mustBeLessThan(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    return false;
    }
 
-bool TR::VPShortConstraint::mustBeLessThan(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPShortConstraint::mustBeLessThan(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (isUnsigned() && other->isUnsigned())
        return ((uint16_t)getHigh() < (uint16_t)other->getLowShort());
    return getHigh() < other->getLowShort();
    }
 
-bool TR::VPIntConstraint::mustBeLessThan(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPIntConstraint::mustBeLessThan(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (isUnsigned() && other->isUnsigned())
       return ((uint32_t)getHigh() < (uint32_t)other->getLowInt());
    return getHigh() < other->getLowInt();
    }
 
-bool TR::VPLongConstraint::mustBeLessThan(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPLongConstraint::mustBeLessThan(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    return getHigh() < other->getLowLong();
    }
 
-bool TR::VPMergedConstraints::mustBeLessThan(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPMergedConstraints::mustBeLessThan(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (_type.isInt16())
       {
@@ -5054,31 +5054,31 @@ bool TR::VPMergedConstraints::mustBeLessThan(TR::VPConstraint *other, TR::ValueP
    return getHighInt() < other->getLowInt();
    }
 
-bool TR::VPConstraint::mustBeLessThanOrEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPConstraint::mustBeLessThanOrEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    return false;
    }
 
-bool TR::VPShortConstraint::mustBeLessThanOrEqual(TR::VPConstraint * other, TR::ValuePropagation *vp)
+bool TR::VPShortConstraint::mustBeLessThanOrEqual(TR::VPConstraint * other, OMR::ValuePropagation *vp)
    {
    if (isUnsigned() && other->isUnsigned())
         return ((uint16_t)getHigh() <= (uint16_t)other->getLowShort());
    return getHigh() <= other->getLowShort();
    }
 
-bool TR::VPIntConstraint::mustBeLessThanOrEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPIntConstraint::mustBeLessThanOrEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (isUnsigned() && other->isUnsigned())
       return ((uint32_t)getHigh() <= (uint32_t)other->getLowInt());
    return getHigh() <= other->getLowInt();
    }
 
-bool TR::VPLongConstraint::mustBeLessThanOrEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPLongConstraint::mustBeLessThanOrEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    return getHigh() <= other->getLowLong();
    }
 
-bool TR::VPMergedConstraints::mustBeLessThanOrEqual(TR::VPConstraint *other, TR::ValuePropagation *vp)
+bool TR::VPMergedConstraints::mustBeLessThanOrEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    if (_type.isInt64())
       return getHighLong() <= other->getLowLong();
@@ -5197,14 +5197,14 @@ bool TR::VPEqual::mustBeGreaterThanOrEqual()
 //
 // ***************************************************************************
 
-TR::VPConstraint *TR::VPRelation::propagateAbsoluteConstraint(TR::VPConstraint *constraint, int32_t relative, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPRelation::propagateAbsoluteConstraint(TR::VPConstraint *constraint, int32_t relative, OMR::ValuePropagation *vp)
    {
    // Default propagation is to do nothing
    //
    return NULL;
    }
 
-TR::VPConstraint *TR::VPLessThanOrEqual::propagateAbsoluteConstraint(TR::VPConstraint *constraint, int32_t relative, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPLessThanOrEqual::propagateAbsoluteConstraint(TR::VPConstraint *constraint, int32_t relative, OMR::ValuePropagation *vp)
    {
    // x <= y + I and x == (M to N)    ==> y == ((M-I) to TR::getMaxSigned<TR::Int32>())
    //
@@ -5251,7 +5251,7 @@ TR::VPConstraint *TR::VPLessThanOrEqual::propagateAbsoluteConstraint(TR::VPConst
    return constraint;
    }
 
-TR::VPConstraint *TR::VPGreaterThanOrEqual::propagateAbsoluteConstraint(TR::VPConstraint *constraint, int32_t relative, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPGreaterThanOrEqual::propagateAbsoluteConstraint(TR::VPConstraint *constraint, int32_t relative, OMR::ValuePropagation *vp)
    {
    // x >= y + I and x == (M to N)    ==> y == (TR::getMinSigned<TR::Int32>() to (M-I))
    //
@@ -5299,7 +5299,7 @@ TR::VPConstraint *TR::VPGreaterThanOrEqual::propagateAbsoluteConstraint(TR::VPCo
    return constraint;
    }
 
-TR::VPConstraint *TR::VPEqual::propagateAbsoluteConstraint(TR::VPConstraint *constraint, int32_t relative, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPEqual::propagateAbsoluteConstraint(TR::VPConstraint *constraint, int32_t relative, OMR::ValuePropagation *vp)
    {
    // x == y + I and x == (M to N)    ==> y == ((M-I) to N-I))
    //
@@ -5333,7 +5333,7 @@ TR::VPConstraint *TR::VPEqual::propagateAbsoluteConstraint(TR::VPConstraint *con
    return constraint;
    }
 
-TR::VPConstraint *TR::VPNotEqual::propagateAbsoluteConstraint(TR::VPConstraint *constraint, int32_t relative, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPNotEqual::propagateAbsoluteConstraint(TR::VPConstraint *constraint, int32_t relative, OMR::ValuePropagation *vp)
    {
    // x != y + I and x == N           ==> y != (N-I)
    //
@@ -5408,7 +5408,7 @@ TR::VPConstraint *TR::VPNotEqual::propagateAbsoluteConstraint(TR::VPConstraint *
    return newConstraint;
    }
 
-TR::VPConstraint *TR::VPLessThanOrEqual::propagateRelativeConstraint(TR::VPRelation *other, int32_t relative, int32_t otherRelative, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPLessThanOrEqual::propagateRelativeConstraint(TR::VPRelation *other, int32_t relative, int32_t otherRelative, OMR::ValuePropagation *vp)
    {
    // x <= y + M and x >= z + N    ==> y >= z + (N-M)
    //
@@ -5452,7 +5452,7 @@ TR::VPConstraint *TR::VPLessThanOrEqual::propagateRelativeConstraint(TR::VPRelat
    return constraint;
    }
 
-TR::VPConstraint *TR::VPGreaterThanOrEqual::propagateRelativeConstraint(TR::VPRelation *other, int32_t relative, int32_t otherRelative, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPGreaterThanOrEqual::propagateRelativeConstraint(TR::VPRelation *other, int32_t relative, int32_t otherRelative, OMR::ValuePropagation *vp)
    {
    // x >= y + M and x <= z + N    ==> y <= z + (N-M)
    //
@@ -5496,7 +5496,7 @@ TR::VPConstraint *TR::VPGreaterThanOrEqual::propagateRelativeConstraint(TR::VPRe
    return constraint;
    }
 
-TR::VPConstraint *TR::VPEqual::propagateRelativeConstraint(TR::VPRelation *other, int32_t relative, int32_t otherRelative, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPEqual::propagateRelativeConstraint(TR::VPRelation *other, int32_t relative, int32_t otherRelative, OMR::ValuePropagation *vp)
    {
    // x == y + M and x <= z + N    ==> y <= z + (N-M)
    // x == y + M and x >= z + N    ==> y >= z + (N-M)
@@ -5577,7 +5577,7 @@ TR::VPConstraint *TR::VPEqual::propagateRelativeConstraint(TR::VPRelation *other
    return constraint;
    }
 
-TR::VPConstraint *TR::VPNotEqual::propagateRelativeConstraint(TR::VPRelation *other, int32_t relative, int32_t otherRelative, TR::ValuePropagation *vp)
+TR::VPConstraint *TR::VPNotEqual::propagateRelativeConstraint(TR::VPRelation *other, int32_t relative, int32_t otherRelative, OMR::ValuePropagation *vp)
    {
    // x != y + M and x == z + N    ==> y != z + (N-M)
    //
@@ -5619,7 +5619,7 @@ TR::VPConstraint *TR::VPNotEqual::propagateRelativeConstraint(TR::VPRelation *ot
 // ***************************************************************************
 
 
-void TR::VPConstraint::print(TR::ValuePropagation *vp)
+void TR::VPConstraint::print(OMR::ValuePropagation *vp)
    {
    print(vp->comp(), vp->comp()->getOutFile());
    }
@@ -6045,7 +6045,7 @@ const char *TR::VPNotEqual::name()                   { return "NotEqual";       
 //
 // ***************************************************************************
 
-TR::VPConstraint::Tracer::Tracer(TR::ValuePropagation *vpArg, TR::VPConstraint *self, TR::VPConstraint *other, const char *name)
+TR::VPConstraint::Tracer::Tracer(OMR::ValuePropagation *vpArg, TR::VPConstraint *self, TR::VPConstraint *other, const char *name)
    :_vp(vpArg), _self(self), _other(other), _name(name)
    {
    if (comp()->getOption(TR_TraceVPConstraints))

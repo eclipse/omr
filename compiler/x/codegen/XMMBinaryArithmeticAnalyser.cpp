@@ -134,21 +134,6 @@ void TR_X86XMMBinaryArithmeticAnalyser::genericXMMAnalyser(TR::Node *root)
                           *sourceSymRef = NULL;
    TR::MemoryReference  *tempMR;
 
-#ifdef ENABLE_FULL_STRICTFP
-   bool                    operandNeedsScaling = false;
-
-   // For strictfp double precision multiplication and division, scale down one of the operands
-   // first to prevent double denormalized mantissa rounding.
-   //
-   if ((isStrictFP(_compil->getCurrentMethod()) || _compil->getOption(TR_StrictFP)) &&
-       (root->getOpCode().isMul() || root->getOpCode().isDiv()) &&
-       (root->getOpCode().isDouble()))
-      {
-      // TODO
-      operandNeedsScaling = true;
-      }
-#endif
-
    do
       {
       setInputs(targetChild, targetRegister, sourceChild, sourceRegister);
@@ -183,12 +168,7 @@ void TR_X86XMMBinaryArithmeticAnalyser::genericXMMAnalyser(TR::Node *root)
 
       if (sourceRegister->getKind() == TR_X87)
          sourceRegister = TR::TreeEvaluator::coerceFPRToXMMR(sourceChild, sourceRegister, _codeGen);
-#ifdef ENABLE_FULL_STRICTFP
-      if (operandNeedsScaling)
-         {
-         // TODO
-         }
-#endif
+
       if (mustUseRegRegOp())
          {
          TR_ASSERT(targetRegister, "target register cannot be NULL\n");
@@ -240,14 +220,7 @@ void TR_X86XMMBinaryArithmeticAnalyser::genericXMMAnalyser(TR::Node *root)
          }
       else
          TR_ASSERT(0, "missing XMM arithmetic action\n");
-#ifdef ENABLE_FULL_STRICTFP
-      // Scale the result back up.
-      //
-      if (operandNeedsScaling)
-         {
-         // TODO
-         }
-#endif
+
       root->setRegister(sourceRegister);
       }
    else
@@ -261,12 +234,7 @@ void TR_X86XMMBinaryArithmeticAnalyser::genericXMMAnalyser(TR::Node *root)
       //
       if (copiesTargetReg())
          targetRegister = copyRegister(root, targetRegister, _codeGen);
-#ifdef ENABLE_FULL_STRICTFP
-      if (operandNeedsScaling)
-         {
-         // TODO
-         }
-#endif
+
       if (mustUseRegRegOp())
          {
          TR_ASSERT(sourceRegister, "source register cannot be NULL\n");
@@ -318,14 +286,7 @@ void TR_X86XMMBinaryArithmeticAnalyser::genericXMMAnalyser(TR::Node *root)
          }
       else
          TR_ASSERT(0, "missing XMM arithmetic action\n");
-#ifdef ENABLE_FULL_STRICTFP
-      // Scale the result back up.
-      //
-      if (operandNeedsScaling)
-         {
-         // TODO
-         }
-#endif
+
       root->setRegister(targetRegister);
       }
 

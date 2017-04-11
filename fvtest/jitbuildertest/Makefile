@@ -26,7 +26,8 @@ OBJECTS := \
 	main \
 	selftest \
 	UnionTest \
-	FieldAddressTest
+	FieldAddressTest \
+	AnonymousTest
 
 OBJECTS := $(addsuffix $(OBJEXT),$(OBJECTS))
 

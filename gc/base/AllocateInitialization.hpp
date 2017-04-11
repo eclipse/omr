@@ -29,7 +29,6 @@
 #include "AtomicOperations.hpp"
 #include "Base.hpp"
 #include "EnvironmentBase.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
 #include "ObjectAllocationInterface.hpp"

@@ -57,6 +57,8 @@ public:
    IlType() :
       _name(0)
       { }
+   virtual ~IlType()
+      { }
 
    const char *getName() { return _name; }
    virtual char *getSignatureName();
@@ -406,6 +408,11 @@ public:
    TR::IlType* toIlType(typename std::enable_if<std::is_pointer<T>::value && is_supported<typename std::remove_pointer<T>::type>::value>::type* = 0) {
       return PointerTo(toIlType<typename std::remove_pointer<T>::type>());
    }
+
+   /*
+    * @brief advise that compilation is complete so compilation-specific objects like symbol references can be cleared from caches
+    */
+   void NotifyCompilationDone();
 
 protected:
    TR::SegmentProvider *_segmentProvider;

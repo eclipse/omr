@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 1991, 2015
+ * (c) Copyright IBM Corp. 2000, 2017
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -16,5 +16,16 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  ******************************************************************************/
 
-#include "EnvironmentLanguageInterface.hpp"
+#ifndef OMR_INSTRUCTION_INLINE_INCL
+#define OMR_INSTRUCTION_INLINE_INCL
+
+#include "codegen/OMRInstruction.hpp"
+
+TR::Instruction *
+OMR::Instruction::self()
+   {
+   return static_cast<TR::Instruction *>(this);
+   }
+
+#endif
 

@@ -19,7 +19,6 @@
 
 #include "CollectorLanguageInterface.hpp"
 #include "EnvironmentBase.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
 #include "HeapRegionIterator.hpp"

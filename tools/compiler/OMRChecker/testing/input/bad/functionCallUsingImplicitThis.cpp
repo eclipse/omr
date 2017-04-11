@@ -36,6 +36,17 @@ class OMR_EXTENSIBLE ExtClass
 
 } // namespace OMR
 
+namespace TR
+{ 
+   
+class OMR_EXTENSIBLE ExtClass : public OMR::ExtClass
+   {
+
+
+   };
+
+}
+
 void OMR::ExtClass::functionCalled() {}
 
 void OMR::ExtClass::callingFunction() { functionCalled(); }

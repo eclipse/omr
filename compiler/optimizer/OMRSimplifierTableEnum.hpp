@@ -114,6 +114,7 @@
    bnegSimplifier,          // TR::bneg
    snegSimplifier,          // TR::sneg
 
+
    iabsSimplifier,           // TR::iabs
    labsSimplifier,           // TR::labs
    dftSimplifier,            // TR::fabs   todo
@@ -796,6 +797,8 @@
    dftSimplifier, //TR::lnolz
    dftSimplifier, //TR::lnotz
    dftSimplifier, //TR::lpopcnt
+
+   dftSimplifier,            // TR::ibyteswap
 
    dftSimplifier,           // TR::Prefetch
 

@@ -299,7 +299,7 @@ class OMR_EXTENSIBLE CodeGenerator
 
    TR_ALLOC(TR_Memory::CodeGenerator)
 
-   TR::CodeGenerator *self();
+   inline TR::CodeGenerator *self();
 
    TR_StackMemory trStackMemory();
    TR_Memory *trMemory() { return _trMemory; }
@@ -308,6 +308,8 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::Compilation *comp() { return _compilation; }
    TR_FrontEnd *fe();
    TR_Debug *getDebug();
+
+   void uncommonCallConstNodes();
 
    void preLowerTrees();
    void postLowerTrees() {}
@@ -494,6 +496,18 @@ class OMR_EXTENSIBLE CodeGenerator
    bool supportsMarshallingUnmarshallingIntrinsics() {return true;} // no virt, default
    bool supportsMergingOfHCRGuards() {return false;} // no virt, default
 
+   /** \brief
+    *     Determines whether concurrent scavenge of objects during garbage collection is enabled.
+    *
+    *  \return
+    *     true if the code generator will emit read barriers for loads of object references from the heap in support
+    *     of concurrent scavenge; false otherwise.
+    */
+   bool isConcurrentScavengeEnabled()
+   {
+      return false;
+   }
+
    // --------------------------------------------------------------------------
    // Z only
    //
@@ -614,10 +628,8 @@ class OMR_EXTENSIBLE CodeGenerator
    bool canBeAffectedByStoreTagStalls() { return false; } // no virt, default
 
    bool isMaterialized(TR::Node *); // no virt, cast
-   bool isMaterialized(int64_t); // no virt, cast
-   bool materializesLargeConstants() { return false;}
-   int32_t getLargestNegConstThatMustBeMaterialized() {return -32769;} // no virt, cast
-   int32_t getSmallestPosConstThatMustBeMaterialized() {return 32768;} // no virt, cast
+   bool shouldValueBeInACommonedNode(int64_t) { return false; } // no virt, cast
+   bool materializesLargeConstants() { return false; }
 
    bool canUseImmedInstruction(int64_t v) {return false;} // no virt
    bool needsNormalizationBeforeShifts() { return false; } // no virt, cast
@@ -1520,6 +1532,8 @@ class OMR_EXTENSIBLE CodeGenerator
    void setSupportsLM() { _flags4.set(SupportsLM);}
 
    virtual bool getSupportsTLE();
+
+   virtual bool getSupportsIbyteswap();
 
    bool getSupportsAutoSIMD() { return _flags4.testAny(SupportsAutoSIMD);}
    void setSupportsAutoSIMD() { _flags4.set(SupportsAutoSIMD);}

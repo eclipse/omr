@@ -311,7 +311,7 @@ private:
 	bool tracingRateDropped(MM_EnvironmentStandard *env);
 #if defined(OMR_GC_MODRON_SCAVENGER)	
 	uintptr_t potentialFreeSpace(MM_EnvironmentStandard *env, MM_AllocateDescription *allocDescription);
-	static void hookObjectRemovedFromRememberedSet(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
+	static void hookOldToOldReferenceCreated(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
 #endif /*OMR_GC_MODRON_SCAVENGER */	
 	static void hookCardCleanPass2Start(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
 
@@ -427,7 +427,7 @@ public:
 	void completeTracing(MM_EnvironmentStandard *env);
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	void scanRememberedSet(MM_EnvironmentStandard *env);
-	void objectRemovedFromRememberedSet(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
+	void oldToOldReferenceCreated(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 #endif /* OMR_GC_MODRON_SCAVENGER */
 	
 	void recordCardCleanPass2Start(MM_EnvironmentStandard *env);

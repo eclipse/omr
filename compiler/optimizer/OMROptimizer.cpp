@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 2000, 2016
+ * (c) Copyright IBM Corp. 2000, 2017
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -96,7 +96,8 @@
 #include "optimizer/Inliner.hpp" // for OMR_InlinerPolicy
 #include "ras/Debug.hpp"
 #include "optimizer/InductionVariable.hpp"
-#include "optimizer/ValuePropagation.hpp"
+#include "optimizer/GlobalValuePropagation.hpp"
+#include "optimizer/LocalValuePropagation.hpp"
 #include "optimizer/RegDepCopyRemoval.hpp"
 #include "optimizer/SinkStores.hpp"
 #include "optimizer/PartialRedundancy.hpp"
@@ -1707,7 +1708,7 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
          if (doTiming)
             {
             myTimer.stopTiming(comp());
-            statStructuralAnalysisTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution(comp()));
+            statStructuralAnalysisTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution());
             }
 #endif
          }
@@ -1772,7 +1773,7 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
             if (doTiming)
                {
                myTimer.stopTiming(comp());
-               statUseDefsTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution(comp()));
+               statUseDefsTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution());
                }
 #endif
 
@@ -1819,7 +1820,7 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
             if (doTiming)
                {
                myTimer.stopTiming(comp());
-               statUseDefsTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution(comp()));
+               statUseDefsTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution());
                }
 #endif
 
@@ -1864,7 +1865,7 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
             if (doTiming)
                {
                myTimer.stopTiming(comp());
-               statGlobalValNumTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution(comp()));
+               statGlobalValNumTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution());
                }
 #endif
 
@@ -1897,7 +1898,7 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
             if (doTiming)
                {
                myTimer.stopTiming(comp());
-               statGlobalValNumTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution(comp()));
+               statGlobalValNumTiming.update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution());
                }
 #endif
             if (valueNumberInfo->infoIsValid())
@@ -2080,7 +2081,7 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
       if (doTiming)
          {
            myTimer.stopTiming(comp());
-           statOptTiming[optNum].update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution(comp()));
+           statOptTiming[optNum].update((double)myTimer.timeTaken()*1000.0/TR::Compiler->vm.getHighResClockResolution());
          }
 #endif
 

@@ -17,6 +17,7 @@
  *******************************************************************************/
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGenerator_inlines.hpp"
 
 #include <limits.h>                                    // for INT_MAX
 #include <stdint.h>                                    // for int32_t, etc
@@ -120,6 +121,7 @@ void TR_X86ProcessorInfo::initialize(TR::Compilation *comp)
    //
    _featureFlags.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags(comp));
    _featureFlags2.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags2(comp));
+   _featureFlags8.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags8(comp));
 
    // Determine the processor vendor.
    //
@@ -226,23 +228,20 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
 
    // Determine whether or not x87 or SSE should be used for floating point.
    //
-   static char * forceSSE2 = feGetEnv("TR_forceSSE2");
-   static char * forceX87 = feGetEnv("TR_forceX87");
 
 #if defined(TR_TARGET_X86) && !defined(J9HAMMER)
    if (_targetProcessorInfo.supportsSSE2() && TR::Compiler->target.cpu.getX86OSSupportsSSE2(comp))
       supportsSSE2 = true;
 #endif // defined(TR_TARGET_X86) && !defined(J9HAMMER)
 
-   if (TR::Compiler->target.cpu.getX86SupportsTM(comp) && !comp->getOption(TR_DisableTM))
+   if (_targetProcessorInfo.supportsTM() && !comp->getOption(TR_DisableTM))
       {
-
-	 /**
-	  * Due to many verions of Haswell and a small number of Broadwell have defects for TM and then disabled by Intel,
-	  * we will return false for any versions before Broadwell.
-	  *
-	  * TODO: Need to figure out from which mode of Broadwell start supporting TM
-	  */
+      /**
+        * Due to many verions of Haswell and a small number of Broadwell have defects for TM and then disabled by Intel,
+        * we will return false for any versions before Broadwell.
+        *
+        * TODO: Need to figure out from which mode of Broadwell start supporting TM
+        */
       if (!_targetProcessorInfo.isIntelHaswell())
          {
          if (TR::Compiler->target.is64Bit())
@@ -250,14 +249,13 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
             self()->setSupportsTM(); // disable tm on 32bits for now
             }
          }
-	  }
+      }
 
-   if (!forceX87 &&
-       (TR::Compiler->target.is64Bit() ||
+   if (TR::Compiler->target.is64Bit()
 #if defined(TR_TARGET_X86) && !defined(J9HAMMER)
-        supportsSSE2 ||
+       || supportsSSE2
 #endif
-        forceSSE2))
+      )
       {
       self()->setUseSSEForSinglePrecision();
       self()->setUseSSEForDoublePrecision();
@@ -1020,6 +1018,12 @@ OMR::X86::CodeGenerator::getSupportsEncodeUtf16BigWithSurrogateTest()
    {
    return TR::CodeGenerator::getX86ProcessorInfo().supportsSSE4_1() &&
           !self()->comp()->getOptions()->getOption(TR_DisableSIMDUTF16BEEncoder);
+   }
+
+bool
+OMR::X86::CodeGenerator::getSupportsIbyteswap()
+   {
+   return true;
    }
 
 bool
@@ -1935,7 +1939,8 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
 
 #ifdef J9_PROJECT_SPECIFIC
    if ((!self()->comp()->getOptions()->getOption(TR_DisableGuardedCountingRecompilations) && TR::Options::getCmdLineOptions()->allowRecompilation()) ||
-       (self()->comp()->getOptions()->getEnableGPU(TR_EnableGPU) && self()->comp()->hasIntStreamForEach()))
+       (self()->comp()->getOptions()->getEnableGPU(TR_EnableGPU) && self()->comp()->hasIntStreamForEach()) ||
+       self()->comp()->isJProfilingCompilation())
 #else
    if (!self()->comp()->getOptions()->getOption(TR_DisableGuardedCountingRecompilations) &&
        TR::Options::getCmdLineOptions()->allowRecompilation())

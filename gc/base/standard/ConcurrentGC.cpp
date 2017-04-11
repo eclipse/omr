@@ -53,7 +53,6 @@
 #include "Debug.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentStandard.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
 #include "HeapMapIterator.hpp"
@@ -489,16 +488,16 @@ MM_ConcurrentGC::reportConcurrentRememberedSetScanEnd(MM_EnvironmentStandard *en
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 /**
- * Hook function called when an object is removed from the remembered set.
- * This is a wrapper into the non-static MM_ConcurrentGC::objectRemovedFromRememberedSet
+ * Hook function called when an old-to-old reference is created by external GC (Scavenger).
+ * This is a wrapper into the non-static MM_ConcurrentGC::oldToOldReferenceCreated
  */
 void
-MM_ConcurrentGC::hookObjectRemovedFromRememberedSet(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData)
+MM_ConcurrentGC::hookOldToOldReferenceCreated(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData)
 {
-	MM_ObjectRemovedFromRememberedSetEvent* event = (MM_ObjectRemovedFromRememberedSetEvent*)eventData;
+	MM_OldToOldReferenceCreatedEvent* event = (MM_OldToOldReferenceCreatedEvent*)eventData;
 	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(event->currentThread);
 
-	((MM_ConcurrentGC *)userData)->objectRemovedFromRememberedSet(env, static_cast<omrobjectptr_t>(event->objectPtr));
+	((MM_ConcurrentGC *)userData)->oldToOldReferenceCreated(env, static_cast<omrobjectptr_t>(event->objectPtr));
 }
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
@@ -710,8 +709,8 @@ MM_ConcurrentGC::initialize(MM_EnvironmentBase *env)
 	(*mmPrivateHooks)->J9HookRegister(mmPrivateHooks, J9HOOK_MM_PRIVATE_CARD_CLEANING_PASS_2_START, hookCardCleanPass2Start, (void *)this);
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
-	/* attach to the hooks for objects removed from the remembered set */
-	(*mmPrivateHooks)->J9HookRegister(mmPrivateHooks, J9HOOK_MM_PRIVATE_OBJECT_REMOVED_FROM_REMEMBERED_SET, hookObjectRemovedFromRememberedSet, this);
+	/* attach to the hooks for creation old-to-old references by external GC (Scavenger) */
+	(*mmPrivateHooks)->J9HookRegister(mmPrivateHooks, J9HOOK_MM_PRIVATE_OLD_TO_OLD_REFERENCE_CREATED, hookOldToOldReferenceCreated, this);
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
 	return true;
@@ -839,6 +838,9 @@ MM_ConcurrentGC::determineInitWork(MM_EnvironmentStandard *env)
 		GC_HeapRegionIterator regionIterator(regionManager);
 
 		while(NULL != (region = regionIterator.nextRegion())) {
+			if (0 == region->getSize()) {
+				continue;
+			}
 			/* Get reference to owning subspace */
 			MM_MemorySubSpace *subspace = region->getSubSpace();
 
@@ -3587,23 +3589,24 @@ MM_ConcurrentGC::scanRememberedSet(MM_EnvironmentStandard *env)
 }
 
 /**
- * Process object removed from remembered set.
- * The scavenger has removed an object from the remembered set because
- * it no longer contains any references into the new area. As tenuring does not
- * invoke the concurrent write barrier we need to rescan the object, as slots which
- * previously contained new area references could now contain references into old area.
- *
- * @param objectPtr  Reference to the object removed from the remembered set
+ * Process event from an external GC (Scavenger) when old-to-old reference is created
+ * from an existing old-to-new or new-to-new reference.
+ * We need to rescan the parent object, as slots which during original scan contained
+ * new area references could now contain references into old area.
+ * @param objectPtr  Parent old object that has a reference to a child old object
  */
 void
-MM_ConcurrentGC::objectRemovedFromRememberedSet(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
+MM_ConcurrentGC::oldToOldReferenceCreated(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
 {
-	if (objectPtr >= _heapBase
-		&& objectPtr < _heapAlloc
-		&& _markingScheme->isMarkedOutline(objectPtr) ) {
-		_cardTable->dirtyCard(env,objectPtr);
+	/* todo: Consider doing mark and push-to-scan on child object.
+	 * Child object will be tenured only once during a Scavenge cycle,
+	 * so there are no risks of creating duplicates in scan queue. */
+	if (CONCURRENT_OFF != _stats->getExecutionMode()) {
+		Assert_MM_true(_extensions->isOld(objectPtr));
+		if (_markingScheme->isMarkedOutline(objectPtr) ) {
+			_cardTable->dirtyCard(env,objectPtr);
+		}
 	}
-
 }
 #endif /* OMR_GC_MODRON_SCAVENGER */
 

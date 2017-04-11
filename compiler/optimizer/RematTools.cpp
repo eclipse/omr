@@ -20,6 +20,7 @@
 #include "il/ILOps.hpp"                                   // for ILOpCode, etc
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop_inlines.hpp"
+#include "il/Block.hpp"
 
 void RematSafetyInformation::add(TR::TreeTop *argStore, TR::SparseBitVector &symRefDependencies)
    {
@@ -57,6 +58,66 @@ void RematSafetyInformation::dumpInfo(TR::Compilation *comp)
          traceMsg(comp,"    candidate is unsafe for remat - no candidates under consideration");
          }
       }
+   }
+
+/*
+ * This function allows the remat methods to follow nodes along a path. The path is described
+ * as a bit vector of blocks that may be visited, including both the start and the end blocks.
+ * To ensure the path is deterministic, none of the blocks along the path may be a merge point,
+ * except for the start block. Due to this, the function must be provided with the start block,
+ * to avoid revisiting it.
+ *
+ * Modifies the provided TreeTop pointer to point at the next treetop or the treetop for
+ * the first valid successor if one exists.
+ *
+ * Returns true if it was able to find a valid treetop, false otherwise.
+ */
+bool RematTools::getNextTreeTop(TR::TreeTop *&treeTop, TR_BitVector *blocksToVisit, TR::Block *startBlock)
+   {
+   if (!blocksToVisit || !treeTop->getNode() || treeTop->getNode()->getOpCodeValue() != TR::BBEnd)
+      {
+      treeTop = treeTop->getNextTreeTop();
+      return true;
+      }
+
+   TR::Block *block = treeTop->getNode()->getBlock();
+   TR::Block *nextBlock = NULL;
+
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+   blocksToVisit->reset(block->getNumber());
+#endif
+
+   for (auto e = block->getSuccessors().begin(); e != block->getSuccessors().end(); ++e)
+      if (blocksToVisit->get((*e)->getTo()->getNumber()) && (*e)->getTo() != startBlock)
+         {
+         nextBlock = (*e)->getTo()->asBlock();
+         break;
+         }
+
+   if (!nextBlock)
+      for (auto e = block->getExceptionSuccessors().begin(); e != block->getExceptionSuccessors().end(); ++e)
+         if (blocksToVisit->get((*e)->getTo()->getNumber()) && (*e)->getTo() != startBlock)
+            {
+            nextBlock = (*e)->getTo()->asBlock();
+            break;
+            }
+
+   if (nextBlock)
+      {
+      if (nextBlock->getPredecessors().size() + nextBlock->getExceptionPredecessors().size() != 1)
+         {
+         TR_ASSERT(0, "blocks on the path must have a single predecessor");
+         return false;
+         }
+      else
+         {
+         treeTop = nextBlock->getFirstRealTreeTop();
+         return true;
+         }
+      }
+
+   TR_ASSERT(0, "there should always be a remaining block to visit");
+   return false;
    }
    
 /*
@@ -242,20 +303,39 @@ void RematTools::walkNodesCalculatingRematSafety(TR::Compilation *comp,
       traceMsg(comp, "\n");
       }
    }
-   
+
 /*
  * This method walks the nodes between the start treetop inclusive and
- * the end treetop exclusive. When it encounters a node in the scanTargets
- * it adds the symref of the scan target to its set of interest and continues
- * scanning. Any symrefs killed after they have been added to the set of interest
- * are added to the unsafeSymRefs vector for later use
+ * the end treetop exclusive. If these nodes are in different blocks,
+ * a path between them must be provided as a BitVector of blocks to visit.
+ * This should contain the block containing the start treetop, the block
+ * containing the end treetop and all in between. If the nodes are in the
+ * same block, a NULL pointer can be provided.
+ *
+ * When it encounters a node in the scanTargets it adds the symref of the
+ * scan target to its set of interest and continues scanning. Any symrefs
+ * killed after they have been added to the set of interest are added to
+ * the unsafeSymRefs vector for later use
+ *
+ * Returns true to indicate it successfully completed the analysis.
  */
-void RematTools::walkTreesCalculatingRematSafety(TR::Compilation *comp,
+bool RematTools::walkTreesCalculatingRematSafety(TR::Compilation *comp,
    TR::TreeTop *start, TR::TreeTop *end, TR::SparseBitVector &scanTargets, 
-   TR::SparseBitVector &unsafeSymRefs, bool trace)
+   TR::SparseBitVector &unsafeSymRefs, TR_BitVector *blocksToVisit, bool trace)
    {
+   TR::Block *firstBlock = start->getEnclosingBlock();
+   TR_BitVector *blocks = blocksToVisit;
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+   if (blocks)
+      {
+      blocks = new (comp->trStackMemory()) TR_BitVector(comp->getFlowGraph()->getNextNodeNumber(), comp->trMemory(), stackAlloc);
+      (*blocks) = (*blocksToVisit);
+      }
+#endif
+
    TR::SparseBitVector enabledSymRefs(comp->allocator());
    TR::SparseBitVector visitedNodes(comp->allocator());
+
    while (start != end)
       {
       if (start->getNode())
@@ -263,21 +343,54 @@ void RematTools::walkTreesCalculatingRematSafety(TR::Compilation *comp,
          walkNodesCalculatingRematSafety(comp, start->getNode(),
             scanTargets, enabledSymRefs, unsafeSymRefs, trace, visitedNodes);
          }
-      start = start->getNextTreeTop();
+      if (!getNextTreeTop(start, blocks, firstBlock))
+         {
+         traceMsg(comp, "  remat tools: failed to follow path for remat safety at [%p]\n", start->getNode());
+         return false;
+         }
       }
+
+   return true;
    }
-   
+
+void RematTools::walkTreesCalculatingRematSafety(TR::Compilation *comp,
+   TR::TreeTop *start, TR::TreeTop *end, TR::SparseBitVector &scanTargets,
+   TR::SparseBitVector &unsafeSymRefs, bool trace)
+   {
+   // As no path is provided, the call cannot fail so its return value is ignored
+   walkTreesCalculatingRematSafety(comp, start, end, scanTargets, unsafeSymRefs, NULL, trace);
+   }
+
 /*
+ * This method walks the nodes between the start treetop inclusive and
+ * the end treetop exclusive. If these nodes are in different blocks,
+ * a path between them must be provided as a BitVector of blocks to visit.
+ * This should contain the block containing the start treetop, the block
+ * containing the end treetop and all in between. If the nodes are in the
+ * same block, a NULL pointer can be provided.
+ *
  * This method is used to find alternative temps which we might be able to load from
  * if we can't full rematerialize a privatized inliner arg. If we find a store of
  * one of the failed arguments, we record the store node and add the symref to the
  * dependencies for the arg. If the symref is not killed before the end of the block
  * we do a partial rematerialization by simply loading the temp.
+ * Returns true to indicate it successfully completed the analysis.
  */
-void RematTools::walkTreeTopsCalculatingRematFailureAlternatives(TR::Compilation *comp,
+bool RematTools::walkTreeTopsCalculatingRematFailureAlternatives(TR::Compilation *comp,
    TR::TreeTop *start, TR::TreeTop *end, TR::list<TR::TreeTop*> &failedArgs,
-   TR::SparseBitVector &scanTargets, RematSafetyInformation &rematInfo, bool trace)
+   TR::SparseBitVector &scanTargets, RematSafetyInformation &rematInfo, TR_BitVector *blocksToVisit,
+   bool trace)
    {
+   TR::Block *firstBlock = start->getEnclosingBlock();
+   TR_BitVector *blocks = blocksToVisit;
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+   if (blocks)
+      {
+      blocks = new (comp->trStackMemory()) TR_BitVector(comp->getFlowGraph()->getNextNodeNumber(), comp->trMemory(), stackAlloc);
+      (*blocks) = (*blocksToVisit);
+      }
+#endif
+
    TR::SparseBitVector failedTargets(comp->allocator());
    for (auto iter = failedArgs.begin(); iter != failedArgs.end(); ++iter)
       {
@@ -290,7 +403,7 @@ void RematTools::walkTreeTopsCalculatingRematFailureAlternatives(TR::Compilation
          traceMsg(comp, "  priv arg remat: visiting [%p]: isStore %d privArg %d failedTargetMatch %d", start->getNode(),
             start->getNode()->getOpCode().isStoreDirect(),
             start->getNode()->getSymbol() && start->getNode()->getSymbol()->isAuto(),
-            failedTargets.ValueAt(start->getNode()->getFirstChild()->getGlobalIndex()));
+            start->getNode()->getNumChildren() > 0 ? failedTargets.ValueAt(start->getNode()->getFirstChild()->getGlobalIndex()) : -1);
       if (start->getNode() && start->getNode()->getOpCode().isStoreDirect() &&
           start->getNode()->getSymbol()->isAuto() &&
           failedTargets.ValueAt(start->getNode()->getFirstChild()->getGlobalIndex()))
@@ -313,6 +426,21 @@ void RematTools::walkTreeTopsCalculatingRematFailureAlternatives(TR::Compilation
                 }
             }
          }
-      start = start->getNextTreeTop();
+      if (!getNextTreeTop(start, blocks, firstBlock))
+         {
+         traceMsg(comp, "  remat tools: failed to follow path for failure alternatives at [%p]\n", start->getNode());
+         return false;
+         }
       }
+
+   return true;
    }
+
+void RematTools::walkTreeTopsCalculatingRematFailureAlternatives(TR::Compilation *comp,
+   TR::TreeTop *start, TR::TreeTop *end, TR::list<TR::TreeTop*> &failedArgs,
+   TR::SparseBitVector &scanTargets, RematSafetyInformation &rematInfo, bool trace)
+   {
+   // As no path is provided, the call cannot fail so its return value is ignored
+   walkTreeTopsCalculatingRematFailureAlternatives(comp, start, end, failedArgs, scanTargets, rematInfo, NULL, trace);
+   }
+

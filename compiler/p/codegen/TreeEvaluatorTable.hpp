@@ -747,4 +747,5 @@
    TR::TreeEvaluator::longNumberOfLeadingZeros,         // TR::lnolz (J9)
    TR::TreeEvaluator::longNumberOfTrailingZeros,        // TR::lnotz (J9)
    TR::TreeEvaluator::longBitCount,                     // TR::lpopcnt (J9)
+   TR::TreeEvaluator::unImpOpEvaluator,                 // TR::ibyteswap
    TR::TreeEvaluator::PrefetchEvaluator,                // TR::Prefetch

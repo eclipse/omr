@@ -29,12 +29,7 @@
 #include "codegen/OMRMachine.hpp"
 
 #include "codegen/Machine.hpp"      // for TR::Machine
-
-TR::Machine *
-OMR::Machine::self()
-   {
-   return static_cast<TR::Machine *>(this);
-   }
+#include "codegen/Machine_inlines.hpp"
 
 uint8_t
 OMR::Machine::getNumberOfGPRs()

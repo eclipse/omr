@@ -44,6 +44,54 @@ namespace TR
       osr,
       traditional
       };
+
+/*
+ * An OSR transition can occur before or after the OSR point's
+ * side-effect, depending on the current mode.
+ *
+ * In preExecutionOSR, the transition occurs before the side-effects
+ * of executing the OSR point's bytecode, resulting in it being
+ * evaluated in the interpreter.
+ *
+ * In postExecutionOSR, the transition occurs after the side-effects
+ * of executing the OSR point's bytecode, resulting in the interpreter
+ * resuming execution at following bytecode.
+ */
+   enum OSRTransitionTarget
+      {
+      preExecutionOSR,
+      postExecutionOSR
+      };
+
+/*
+ * OSR can operate in two modes, voluntary and involuntary.
+ *
+ * In involuntary OSR, the JITed code does not control when an OSR transition occurs. It can be
+ * initiated externally at any potential OSR point.
+ *
+ * In voluntary OSR, the JITed code does control when an OSR transition occurs, allowing it to
+ * limit the OSR points with transitions.
+ */
+   enum OSRMode
+      {
+      voluntaryOSR,
+      involuntaryOSR
+      };
+
+/*
+ * There are two types of OSR points, induction and analysis.
+ *
+ * An induction point is a normal OSR point, which undergoes the
+ * OSR analysis and may have a transition for it, based on the mode.
+ *
+ * An analysis point is used only for the OSR analysis will not have
+ * a transition point for it.
+ */
+   enum OSRPointType
+      {
+      inductionOSR,
+      analysisOSR 
+      };
    }
 
 /**
@@ -119,7 +167,7 @@ class TR_OSRCompilationData
                            int32_t symRefOrder, int32_t symSize, bool takesTwoSlots);
    void ensureSlotSharingInfoAt(const TR_ByteCodeInfo& T);
    void addInstruction(TR::Instruction* instr);
-   void addInstruction(int32_t instructionPC, TR_ByteCodeInfo &bcInfo);
+   void addInstruction(int32_t instructionPC, TR_ByteCodeInfo bcInfo);
 
    void checkOSRLimits();
 
@@ -250,7 +298,8 @@ class TR_OSRMethodData
    void setNumSymRefs(int32_t numBits) {_numSymRefs = numBits; }
    int32_t getNumSymRefs() { return _numSymRefs; }
 
-   void addLiveRangeInfo(int32_t byteCodeIndex, TR_BitVector *liveRangeInfo);
+   void addLiveRangeInfo(int32_t byteCodeIndex, TR::OSRPointType osrPoint, TR_BitVector *liveRangeInfo);
+   TR_BitVector *getLiveRangeInfo(int32_t byteCodeIndex, TR::OSRPointType osrPoint);
    TR_BitVector *getLiveRangeInfo(int32_t byteCodeIndex);
 
    bool linkedToCaller() { return _linkedToCaller; }
@@ -261,7 +310,8 @@ class TR_OSRMethodData
    private:
    void createOSRBlocks(TR::Node* n);
 
-   typedef CS2::HashTable<int32_t, TR_BitVector *, TR::Allocator> TR_BCLiveRangeInfoHashTable;
+   typedef CS2::CompoundHashKey<int32_t, TR::OSRPointType> TR_BCLiveRangeInfoHashKey;
+   typedef CS2::HashTable<TR_BCLiveRangeInfoHashKey, TR_BitVector *, TR::Allocator> TR_BCLiveRangeInfoHashTable;
    typedef CS2::HashTable<int32_t, TR_OSRSlotSharingInfo*, TR::Allocator> TR_BCInfoHashTable;
    typedef CS2::HashTable<int32_t, TR_Array<int32_t>, TR::Allocator> TR_Slot2ScratchBufferOffset;
 

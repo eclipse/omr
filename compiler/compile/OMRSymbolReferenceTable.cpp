@@ -182,12 +182,6 @@ OMR::SymbolReferenceTable::findVftSymbolRef()
    return element(vftSymbol);
    }
 
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateNewStructHeaderSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_newStructHeader, true, true, true);
-   }
-
 
 // Denotes the address of the ramMethod in the vtable.
 //

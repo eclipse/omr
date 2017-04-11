@@ -25,6 +25,7 @@
  // The entries in this file must be kept in sync with compiler/codegen/OMRCodeGenPhaseEnum.hpp
    TR::CodeGenPhase::performReserveCodeCachePhase,                                           //ReserveCodeCachePhase
    TR::CodeGenPhase::performLowerTreesPhase,                                                 //LowerTreesPhase
+   TR::CodeGenPhase::performUncommonCallConstNodesPhase,                                     //UncommonCallConstNodesPhase
    TR::CodeGenPhase::performSetupForInstructionSelectionPhase,                               //SetupForInstructionSelectionPhase
    TR::CodeGenPhase::performInstructionSelectionPhase,                                       //InstructionSelectionPhase
    TR::CodeGenPhase::performCreateStackAtlasPhase,                                           //CreateStackAtlasPhase

@@ -17,6 +17,7 @@
  *******************************************************************************/
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGenerator_inlines.hpp"
 
 #include <limits.h>                       // for INT_MAX
 #include <stdint.h>                       // for uint32_t, int16_t, int32_t, etc

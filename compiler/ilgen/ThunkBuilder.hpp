@@ -68,6 +68,7 @@ class ThunkBuilder : public TR::MethodBuilder
     */
    ThunkBuilder(TR::TypeDictionary *types, const char *name, TR::IlType *returnType,
                 uint32_t numCalleeParams, TR::IlType **calleeParamTypes);
+   virtual ~ThunkBuilder() { }
 
    virtual bool buildIL();
 

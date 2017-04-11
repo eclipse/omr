@@ -28,7 +28,6 @@
 #include "ConfigurationFlat.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "GCExtensionsBase.hpp"
 #include "GlobalCollector.hpp"
 #include "Heap.hpp"

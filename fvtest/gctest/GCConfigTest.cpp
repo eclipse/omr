@@ -18,7 +18,6 @@
 
 #include "CollectorLanguageInterface.hpp"
 #include "EnvironmentBase.hpp"
-#include "EnvironmentLanguageInterface.hpp"
 #include "GCConfigTest.hpp"
 #include "ObjectAllocationModel.hpp"
 #include "ObjectModel.hpp"
