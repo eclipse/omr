@@ -7814,6 +7814,25 @@ TR::Node *constrainIand(OMR::ValuePropagation *vp, TR::Node *node)
                         }
                      }
                   }
+                OMR::Node *classChild = firstGrandChild->getFirstChild();
+                if ((classChild->getOpCodeValue() == TR::aloadi) &&
+                    (classChild->getSymbolReference() == vp->comp()->getSymRefTab()->findClassFromJavaLangClassSymbolRef()))
+                   {
+                   bool classChildGlobal;
+                   TR::VPConstraint *classChildConstraint = vp->getConstraint(classChild->getFirstChild(), classChildGlobal);
+                   if (classChildConstraint && classChildConstraint->isJavaLangClassObject() == TR_yes
+                       && classChildConstraint->isNonNullObject()
+                       && classChildConstraint->getClassType()
+                       && classChildConstraint->getClassType()->asFixedClass()
+                       && classChildConstraint->getClass())
+                      {
+                      bool classChildIsArray = TR::Compiler->cls.isClassArray(vp->comp(), classChildConstraint->getClass());
+                      if (classChildIsArray)
+                         constraint = TR::VPIntConst::create(vp, 1);
+                       else
+                         constraint = TR::VPIntConst::create(vp, 0);
+                      }
+                   }
                }
             }
 
