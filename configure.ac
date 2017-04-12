@@ -44,6 +44,7 @@ AC_ARG_VAR([OMR_HOST_OS], [The operating system where the package will run. One 
 AC_ARG_VAR([OMR_HOST_ARCH], [The architecture of the CPU where the package will run. One of: arm,ppc,s390,x86])
 AC_ARG_VAR([OMR_TARGET_DATASIZE], [Specifies whether the package will run in 32- or 64-bit mode. One of: 31,32,64])
 AC_ARG_VAR([OMR_TOOLCHAIN], [The toolchain used to build the package. One of: gcc,xlc,msvc])
+AC_ARG_VAR([OMR_ZOS_TARGET], [The zOS target used during compilation. One of: zOSV1R13,zOSV2R1])
 AC_ARG_VAR([OMR_CROSS_CONFIGURE],
 	[Indicates that configure is not being run on a system that is capable of building the package.
 	Compiler and feature detection tests will be invalid. All options must be configured manually.
@@ -187,6 +188,16 @@ AS_CASE([$OMR_TOOLCHAIN],
 	[AC_MSG_ERROR([An invalid value was provided for OMR_TOOLCHAIN: $OMR_TOOLCHAIN])]
 )
 AC_MSG_RESULT([$OMR_TOOLCHAIN])
+
+AC_MSG_CHECKING([OMR_ZOS_TARGET])
+AS_IF([test "x$OMR_ZOS_TARGET" = "x"],
+	[OMR_ZOS_TARGET=zOSV1R13])
+AS_CASE([$OMR_ZOS_TARGET],
+	[zOSV1R13],[],
+	[zOSV2R1],[],
+	[AC_MSG_ERROR([An invalid value was provided for OMR_ZOS_TARGET: $OMR_ZOS_TARGET])]
+)
+AC_MSG_RESULT([$OMR_ZOS_TARGET])
 
 # Default OMRGLUE to example/glue if it was not specified
 OMRGLUE=${OMRGLUE:-"./example/glue"}
