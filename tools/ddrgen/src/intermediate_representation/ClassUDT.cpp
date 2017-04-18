@@ -69,13 +69,29 @@ ClassUDT::getSymbolTypeName()
 DDR_RC
 ClassUDT::enumerateType(BlobGenerator *blobGenerator, bool addFieldsOnly)
 {
+#if defined(AIXPPC)
+	if (!_isDuplicate) {
+		return blobGenerator->dispatchEnumerateType(this, addFieldsOnly);
+	} else {
+		return DDR_RC_OK;
+	}
+#else /* defined(AIXPPC) */
 	return blobGenerator->dispatchEnumerateType(this, addFieldsOnly);
+#endif /* !defined(AIXPPC) */
 }
 
 DDR_RC
 ClassUDT::buildBlob(BlobGenerator *blobGenerator, bool addFieldsOnly, string prefix)
 {
+#if defined(AIXPPC)
+	if (!_isDuplicate) {
+		return blobGenerator->dispatchBuildBlob(this, addFieldsOnly, prefix);
+	} else {
+		return DDR_RC_OK;
+	}
+#else /* defined(AIXPPC) */
 	return blobGenerator->dispatchBuildBlob(this, addFieldsOnly, prefix);
+#endif /* !defined(AIXPPC) */
 }
 
 DDR_RC

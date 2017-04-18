@@ -30,7 +30,7 @@ using std::vector;
 
 class Symbol_IR {
 public:
-	std::vector<Type *> _types;
+	vector<Type *> _types;
 
 	~Symbol_IR();
 

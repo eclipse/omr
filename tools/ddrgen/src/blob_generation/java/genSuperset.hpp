@@ -50,6 +50,15 @@ private:
 	unordered_map<string, string> _baseTypedefMap; /* Types remapped for assembled type names. */
 	unordered_map<string, string> _baseTypedefReplace; /* Type names which are replaced everywhere. */
 	set<string> _baseTypedefIgnore; /* Set of types to not rename when found as a typedef */
+#if defined(AIXPPC)
+	/* Keep a set of names of structures already printed, to avoid printing duplicates in the superset. 
+	 * Currently, only use this approach for AIX, where removeDuplicates() runs too slowly. Using this
+	 * method on other platforms has not been tested yet. There may still be issues related to differences
+	 * in the DWARF/intermediate representation structures between platforms which may be revealed by this
+	 * approach. Consequently, I have put the alternative duplicate removal code in #if defined statements.
+	 */
+	set<string> _printedTypes;
+#endif /* defined(AIXPPC) */
 	intptr_t _file;
 	OMRPortLibrary *_portLibrary;
 

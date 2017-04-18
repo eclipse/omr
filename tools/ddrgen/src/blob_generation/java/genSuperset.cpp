@@ -410,6 +410,19 @@ JavaSupersetGenerator::dispatchPrintToSuperset(ClassUDT *type, bool addFieldsOnl
 			} else {
 				lineToPrint += "\n";
 			}
+#if defined(AIXPPC)
+			if (_printedTypes.end() != _printedTypes.find(lineToPrint)) {
+				type->_isDuplicate = true;
+
+				/* Still print the sub UDTs. This is because a previous duplicate of this UDT could have
+				 * contained an empty version of the same sub UDT as this one, which was skipped over due
+				 * to its emptiness.
+				 */
+				 goto PrintSubUDTS;
+			} else {
+				_printedTypes.insert(lineToPrint);
+			}
+#endif /* defined(AIXPPC) */
 			omrfile_write(_file, lineToPrint.c_str(), lineToPrint.length());
 		}
 
@@ -433,6 +446,7 @@ JavaSupersetGenerator::dispatchPrintToSuperset(ClassUDT *type, bool addFieldsOnl
 		}
 	}
 
+PrintSubUDTS:
 	if ((DDR_RC_OK == rc) && (!addFieldsOnly)) {
 		for (vector<UDT *>::iterator v = type->_subUDTs.begin(); v != type->_subUDTs.end(); ++v) {
 			rc = (*v)->printToSuperset(this, false, prefix);
@@ -454,6 +468,19 @@ JavaSupersetGenerator::dispatchPrintToSuperset(UnionUDT *type, bool addFieldsOnl
 		if (!addFieldsOnly) {
 			string nameFormatted = getUDTname(type);
 			string lineToPrint = "S|" + nameFormatted + "|" + nameFormatted + "Pointer|\n";
+#if defined(AIXPPC)
+			if (_printedTypes.end() != _printedTypes.find(lineToPrint)) {
+				type->_isDuplicate = true;
+
+				/* Still print the sub UDTs. This is because a previous duplicate of this UDT could have
+				 * contained an empty version of the same sub UDT as this one, which was skipped over due
+				 * to its emptiness.
+				 */
+				goto PrintSubUDTS;
+			} else {
+				_printedTypes.insert(lineToPrint);
+			}
+#endif /* defined(AIXPPC) */
 			omrfile_write(_file, lineToPrint.c_str(), lineToPrint.length());
 		}
 
@@ -479,6 +506,7 @@ JavaSupersetGenerator::dispatchPrintToSuperset(UnionUDT *type, bool addFieldsOnl
 		}
 	}
 
+PrintSubUDTS:
 	if ((DDR_RC_OK == rc) && (!addFieldsOnly)) {
 		for (vector<UDT *>::iterator v = type->_subUDTs.begin(); v != type->_subUDTs.end(); ++v) {
 			rc = (*v)->printToSuperset(this, false, prefix);
@@ -500,6 +528,14 @@ JavaSupersetGenerator::dispatchPrintToSuperset(EnumUDT *type, bool addFieldsOnly
 		if (!addFieldsOnly) {
 			string nameFormatted = getUDTname(type);
 			string lineToPrint = "S|" + nameFormatted + "|" + nameFormatted + "Pointer|\n";
+#if defined(AIXPPC)
+			if (_printedTypes.end() != _printedTypes.find(lineToPrint)) {
+				type->_isDuplicate = true;
+				return rc;
+			} else {
+				_printedTypes.insert(lineToPrint);
+			}
+#endif /* defined(AIXPPC) */
 			omrfile_write(_file, lineToPrint.c_str(), lineToPrint.length());
 		}
 
@@ -520,6 +556,19 @@ JavaSupersetGenerator::dispatchPrintToSuperset(NamespaceUDT *type, bool addField
 		if (!addFieldsOnly) {
 			string nameFormatted = getUDTname(type);
 			string lineToPrint = "S|" + nameFormatted + "|" + nameFormatted + "Pointer|\n";
+#if defined(AIXPPC)
+			if (_printedTypes.end() != _printedTypes.find(lineToPrint)) {
+				type->_isDuplicate = true;
+
+				/* Still print the sub UDTs. This is because a previous duplicate of this UDT could have
+				 * contained an empty version of the same sub UDT as this one, which was skipped over due
+				 * to its emptiness.
+				 */
+				goto PrintSubUDTS;
+			} else {
+				_printedTypes.insert(lineToPrint);
+			}
+#endif /* defined(AIXPPC) */
 			omrfile_write(_file, lineToPrint.c_str(), lineToPrint.length());
 		}
 
@@ -530,6 +579,7 @@ JavaSupersetGenerator::dispatchPrintToSuperset(NamespaceUDT *type, bool addField
 		}
 	}
 
+PrintSubUDTS:
 	if (!addFieldsOnly) {
 		for (vector<UDT *>::iterator v = type->_subUDTs.begin(); v != type->_subUDTs.end(); ++v) {
 			rc = (*v)->printToSuperset(this, false, prefix);
