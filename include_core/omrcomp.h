@@ -19,8 +19,6 @@
 #ifndef OMRCOMP_H
 #define OMRCOMP_H
 
-#include <stddef.h>
-
 #if defined(__MINGW32__) || defined(__MINGW64__)
 /* mingw is used in compilation on some windows platforms. The version used
  * does not support __thiscall, used in stdint.h on windows. Defining it to
@@ -28,6 +26,8 @@
  * defined within stdint.h.
  */
 #define __thiscall
+#else
+#include <stddef.h>
 #endif /* __MINGW32__ || __MINGW64__ */
 
 #include <stdint.h>
