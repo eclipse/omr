@@ -3398,12 +3398,6 @@ bool OMR::Power::CodeGenerator::supportsSinglePrecisionSQRT()
    return TR::Compiler->target.cpu.getSupportsHardwareSQRT();
    }
 
-bool OMR::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
-   {
-   return self()->isMethodInAtomicLongGroup(method);
-   }
-
-
 int32_t
 OMR::Power::CodeGenerator::getPreferredLoopUnrollFactor()
    {

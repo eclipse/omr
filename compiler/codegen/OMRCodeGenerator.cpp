@@ -1104,36 +1104,6 @@ bool OMR::CodeGenerator::terseSimulateTreeEvaluation()
 TR::SymbolReference *OMR::CodeGenerator::getSymRef(TR_RuntimeHelper h) { return _symRefTab->getSymRef(h); }
 
 
-bool OMR::CodeGenerator::isMethodInAtomicLongGroup (TR::RecognizedMethod rm)
-   {
-
-   switch (rm)
-      {
-#ifdef J9_PROJECT_SPECIFIC
-      case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
-         return true;
-#endif
-      default:
-         return false;
-      }
-
-
-   return false;
-   }
-
 TR::Linkage *
 OMR::CodeGenerator::getLinkage(TR_LinkageConventions lc)
    {

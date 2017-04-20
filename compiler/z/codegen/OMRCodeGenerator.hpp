@@ -987,8 +987,6 @@ public:
       return TR::Compiler->target.isZOS() && TR::Compiler->target.is32Bit();
       }
 
-   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
-
    bool isAddressScaleIndexSupported(int32_t scale) { if (scale <= 2) return true; return false; }
    using OMR::CodeGenerator::getSupportsConstantOffsetInAddressing;
    bool getSupportsConstantOffsetInAddressing(int64_t value);

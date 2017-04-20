@@ -3263,21 +3263,6 @@ void OMR::X86::CodeGenerator::simulateNodeEvaluation(TR::Node * node, TR_Registe
       summary->spill(TR_eaxSpill, self());
    }
 
-bool OMR::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
-   {
-#ifdef J9_PROJECT_SPECIFIC
-   if ((method==TR::java_lang_Object_clone) ||
-      (method==TR::java_lang_Integer_rotateLeft))
-      {
-      return true;
-      }
-   else
-#endif
-      {
-      return false;
-      }
-   }
-
 uint8_t OMR::X86::CodeGenerator::old32BitPaddingEncoding[PADDING_TABLE_MAX_ENCODING_LENGTH][PADDING_TABLE_MAX_ENCODING_LENGTH]=
    {
       {0x90},                                     // 1: xchg eax,eax

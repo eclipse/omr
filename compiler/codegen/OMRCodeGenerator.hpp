@@ -589,7 +589,6 @@ class OMR_EXTENSIBLE CodeGenerator
    //
    int32_t getPreferredLoopUnrollFactor() {return -1;} // no virt, default
    bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method) {return false;} // no virt, default
-   bool isMethodInAtomicLongGroup (TR::RecognizedMethod rm);
 
    // --------------------------------------------------------------------------
    // Optimizer, not code generator
