@@ -58,6 +58,9 @@ testMain(int argc, char ** argv, char **envp)
 	intptr_t rw_rc = omrthread_rwmutex_init(&exampleVM._vmAccessMutex, 0, "VM exclusive access");
 	Assert_MM_true(J9THREAD_RWMUTEX_OK == rw_rc);
 
+	/* Set up the vm access mutex */
+	omrthread_rwmutex_init(&exampleVM._vmAccessMutex, 0, "VM exclusive access");
+
 	/* Initialize root table */
 	exampleVM.rootTable = hashTableNew(
 			exampleVM._omrVM->_runtime->_portLibrary, OMR_GET_CALLSITE(), 0, sizeof(RootEntry), 0, 0, OMRMEM_CATEGORY_MM,
