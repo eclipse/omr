@@ -64,8 +64,11 @@ namespace OMR { typedef OMR::Compilation CompilationConnector; }
 #include "ras/Debug.hpp"                      // for TR_DebugBase
 #include "ras/DebugCounter.hpp"               // for TR_DebugCounter, etc
 
-
+#ifdef GLUELESS
+struct OMR_VMThread;
+#else
 #include "omr.h"
+#endif
 
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 

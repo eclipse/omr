@@ -47,8 +47,13 @@
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "infra/Assert.hpp"                    // for TR_ASSERT
 #include "ras/Debug.hpp"                       // for createDebugObject, etc
-#include "omr.h"
 #include "env/SystemSegmentProvider.hpp"
+
+#ifdef GLUELESS
+struct OMR_VMThread;
+#else
+#include "omr.h"
+#endif 
 
 static void
 writePerfToolEntry(void *start, uint32_t size, const char *name)

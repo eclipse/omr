@@ -20,7 +20,10 @@
 #include "env/CompilerEnv.hpp"
 #include "infra/Assert.hpp"
 #include "env/defines.h"
+
+#ifndef GLUELESS
 #include "omrcfg.h"
+#endif
 
 TR::CPU *
 OMR::CPU::self()
@@ -33,17 +36,17 @@ void
 OMR::CPU::initializeByHostQuery()
    {
 
+   char SwapTest[2] = { 1, 0 };
+   bool isHostLittleEndian = (*(short *)SwapTest == 1);
+
+#ifndef GLUELESS
 #ifdef OMR_ENV_LITTLE_ENDIAN
    _endianness = TR::endian_little;
 #else
    _endianness = TR::endian_big;
 #endif
-
    // Validate host endianness #define with an additional compile-time test
    //
-   char SwapTest[2] = { 1, 0 };
-   bool isHostLittleEndian = (*(short *)SwapTest == 1);
-
    if (_endianness == TR::endian_little)
       {
       TR_ASSERT(isHostLittleEndian, "expecting host to be little endian");
@@ -52,6 +55,12 @@ OMR::CPU::initializeByHostQuery()
       {
       TR_ASSERT(!isHostLittleEndian, "expecting host to be big endian");
       }
+#else 
+   // Don't have OMR glue, so we're not relying on OMR's processor detection,
+   // so we just use the computed endianness
+   
+   _endianness = isHostLittleEndian ? TR::endian_little : TR::endian_big; 
+#endif
 
 #if defined(TR_HOST_X86)
    _majorArch = TR::arch_x86;
