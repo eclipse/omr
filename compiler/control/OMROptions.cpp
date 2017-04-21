@@ -903,6 +903,8 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&OMR::Options::_maxNumVisitedSubclasses, 0, "P%d", NOT_IN_SUBSET},
    {"maxPeekedBytecodeSize=", "O<nnn>\tmaximum number of bytecodes that can be peeked into",
         TR::Options::setStaticNumeric, (intptrj_t)&OMR::Options::_maxPeekedBytecodeSize, 0, "F%d", NOT_IN_SUBSET},
+   {"maxCheckcastProfiledClasses=", "O<nnn>\tmaximum number of inlined profiled classes",
+        TR::Options::set32BitNumeric, offsetof(OMR::Options,_numCheckcastProfiledClasses), 0,"%d"},
    {"maxSizeForVPInliningAtWarm=", "O<nnn>\tMax size for methods inlined during VP", TR::Options::set32BitNumeric, offsetof(OMR::Options, _maxSzForVPInliningWarm), 0, " %d" },
    {"maxSleepTimeMsForCompThrottling=", "M<nnn>\tUpper bound for sleep time during compilation throttling (ms)",
                        TR::Options::setStaticNumeric, (intptrj_t)&OMR::Options::_maxSleepTimeMsForCompThrottling, 0, "F%d", NOT_IN_SUBSET },
@@ -2704,6 +2706,7 @@ OMR::Options::jitPreProcess()
       _GCRDecCount = TR_DEFAULT_GCR_DEC_COUNT;
       _numInterfaceCallCacheSlots = 4;
       _numInterfaceCallStaticSlots = 1;
+      _numCheckcastProfiledClasses = 3;
       _stackPCDumpNumberOfBuffers=4;
       _stackPCDumpNumberOfFrames=5;
       _maxSpreadCountLoopless = TR_MAX_SPREAD_COUNT_LOOPLESS;
