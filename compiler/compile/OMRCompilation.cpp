@@ -785,11 +785,16 @@ OMR::Compilation::getOSRInductionOffset(TR::Node *node)
    if (self()->getOSRTransitionTarget() != TR::postExecutionOSR)
       return 0;
 
+   if ((node->getOpCodeValue() == TR::treetop || node->getOpCode().isCheck()) && node->getFirstChild()->getOpCode().isCall())
+      return 3;
+
    switch (node->getOpCodeValue())
       {
       case TR::monent: return 1;
       case TR::asynccheck: return 0;
-      default: return 3;
+      default:
+         TR_ASSERT(0, "OSR induction offsets only exist for OSR points");
+         return 0;
       }
    }
 
@@ -810,6 +815,10 @@ OMR::Compilation::requiresAnalysisOSRPoint(TR::Node *node)
    if (self()->getOSRTransitionTarget() != TR::postExecutionOSR)
       return false;
 
+   // Calls require an analysis and transition point as liveness may change across them
+   if ((node->getOpCodeValue() == TR::treetop || node->getOpCode().isCheck()) && node->getFirstChild()->getOpCode().isCall())
+      return true;
+
    switch (node->getOpCodeValue())
       {
       // Monents only require a trailing OSR point as they will perform OSR when executing the
@@ -818,9 +827,9 @@ OMR::Compilation::requiresAnalysisOSRPoint(TR::Node *node)
       // Asyncchecks will not modify liveness
       case TR::asynccheck:
          return false;
-      // Calls require an analysis and transition point as liveness may change across them
       default:
-         return true;
+         TR_ASSERT(0, "OSR analysis points only exist for OSR points");
+         return false;
       }
    }
 
