@@ -12882,6 +12882,88 @@ TR::Node *ificmpneSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
    return node;
    }
 
+/**
+ * \brief
+ * Simplify add/subtract operations under integer comparison nodes
+ * to save an add/sub instruction during codegen.
+ *
+ * \details
+ *
+ * e.g. This following is a before-after comparison.
+ *
+ * Before:
+ * ificmple --> block_17 BBStart at n13n ()
+ *   iadd (X>=0 cannotOverflow )
+ *     ==>iRegLoad (in GPR_0112) (cannotOverflow canBeAssignedToHPR SeenRealReference )
+ *     iconst -1 (X!=0 X<=0 )
+ *   ==>iconst 0 (X==0 X>=0 X<=0 )
+ *
+ *
+ * After:
+ * ificmple --> block_17 BBStart at n13n ()
+ *   ==>iRegLoad (in GPR_0112) (cannotOverflow canBeAssignedToHPR SeenRealReference )
+ *   iconst 1 (X==0 X>=0 X<=0 )
+ *
+ *
+ * The iadd node needs to be single reference and marked as 'cannotOverflow' to
+ * ensure functional correctness.
+*/
+TR::Node* reduceIntegerCompareArithmetics(TR::Node* node, TR::Simplifier * s)
+   {
+   TR::Node* firstChild = node->getFirstChild();
+   TR::Node* secondChild = node->getSecondChild();
+   TR::ILOpCodes op = firstChild->getOpCodeValue();
+
+   if((op == TR::iadd || op == TR::isub) &&
+           firstChild->chkCannotOverflow()  &&
+           firstChild->isSingleRef() &&
+           firstChild->getSecondChild()->getOpCode().isLoadConst() &&
+           firstChild->getSecondChild()->getConstValue() != 0 &&
+           secondChild->getOpCode().isLoadConst())
+      {
+      int64_t const1 = firstChild->getSecondChild()->getConstValue();
+      int64_t const2 = secondChild->getConstValue();
+      int64_t const3 = 0;
+
+      if(op == TR::iadd)
+         {
+         const3 = const2 - const1;
+         }
+      else if(op == TR::isub)
+         {
+         const3 = const2 + const1;
+         }
+
+      if(const3 > ((int64_t)0x000000007FFFFFFF) ||
+              const3 < ((-1ll) << 31))
+         {
+         // Can't set iconst value if const3 is outside of int32_t range.
+         return node;
+         }
+
+      dumpOptDetails(s->comp(), "%sEliminating add/sub operation under node n%dn\n",
+                     s->optDetailString(),
+                     node->getGlobalIndex());
+
+      node->setAndIncChild(0, firstChild->getFirstChild());
+      firstChild->recursivelyDecReferenceCount();
+
+      if(secondChild->isSingleRef())
+         {
+         secondChild->setConstValue(const3);
+         }
+      else
+         {
+         TR::Node* newConstNode = TR::Node::create(secondChild->getOpCodeValue(), 0);
+         newConstNode->setConstValue(const3);
+         node->setAndIncChild(1, newConstNode);
+         secondChild->decReferenceCount();
+         }
+      }
+
+   return node;
+   }
+
 //---------------------------------------------------------------------
 // Integer if compare less than (signed and unsigned)
 //
@@ -12920,6 +13002,7 @@ TR::Node *ificmpltSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       unsignedIntCompareNarrower(node, s, TR::ifsucmplt, TR::ifbucmplt);
       }
 
+   reduceIntegerCompareArithmetics(node, s);
 
    partialRedundantCompareElimination(node, block, s);
    return node;
@@ -12963,6 +13046,7 @@ TR::Node *ificmpleSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       unsignedIntCompareNarrower(node, s, TR::ifsucmple, TR::ifbucmple);
       }
 
+   reduceIntegerCompareArithmetics(node, s);
 
    partialRedundantCompareElimination(node, block, s);
    return node;
@@ -13006,6 +13090,7 @@ TR::Node *ificmpgtSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       unsignedIntCompareNarrower(node, s, TR::ifsucmpgt, TR::ifbucmpgt);
       }
 
+   reduceIntegerCompareArithmetics(node, s);
 
    partialRedundantCompareElimination(node, block, s);
    return node;
@@ -13049,6 +13134,7 @@ TR::Node *ificmpgeSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       unsignedIntCompareNarrower(node, s, TR::ifsucmpge, TR::ifbucmpge);
       }
 
+   reduceIntegerCompareArithmetics(node, s);
 
    partialRedundantCompareElimination(node, block, s);
    return node;

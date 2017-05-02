@@ -267,5 +267,5 @@ TR::Node * NewSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 TR::Node * lowerTreeSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * arrayLengthSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 
-
+TR::Node * reduceIntegerCompareArithmetics(TR::Node* node,TR::Simplifier * s);
 #endif
