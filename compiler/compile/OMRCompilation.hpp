@@ -895,6 +895,7 @@ public:
    int32_t getGPUPtxCount() { return _gpuPtxCount; }
 
    bool isDLT() { return _flags.testAny(IsDLTCompile);}
+   bool isDebuggingMode() { return _options->getOption(TR_FullSpeedDebug) || _options->getOption(TR_MimicInterpreterFrameShape);}
 
    // surely J9 specific
    void * getAotMethodCodeStart() const { return _aotMethodCodeStart; }

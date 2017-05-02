@@ -1346,8 +1346,8 @@ TR::Register *OMR::ARM::TreeEvaluator::BBStartEvaluator(TR::Node *node, TR::Code
    TR::Node * fenceNode = TR::Node::createRelative32BitFenceNode(node, &block->getInstructionBoundaries()._startPC);
    TR::Instruction * fence = generateAdminInstruction(cg, ARMOp_fence, node, deps, fenceNode);
 
-   if (block->isCatchBlock() && comp->getOption(TR_FullSpeedDebug))
-      fence->setNeedsGCMap(); // a catch entry is a gc point in FSD mode
+   if (block->isCatchBlock() && comp->isDebuggingMode())
+      fence->setNeedsGCMap(); // a catch entry is a gc point in debugging mode
 
    return NULL;
    }
