@@ -1889,7 +1889,7 @@ TR_InlinerBase::addGuardForVirtual(
    // this is necessary to ensure the stack has the correct contents when it transitions, therefore, it
    // is necessary to add the store here as well
    //
-   if (comp()->getOSRTransitionTarget() == TR::postExecutionOSR)
+   if (comp()->getOSRTransitionTarget() & TR::postExecutionOSR)
       {
       TR::TreeTop *cursor = callNodeTreeTop->getNextTreeTop();
       TR_ByteCodeInfo bci = callNode->getByteCodeInfo();
@@ -1977,7 +1977,7 @@ TR_InlinerBase::addGuardForVirtual(
    // compilation and those later processes will handle them using OSR so we don't want to complicate
    // that with additional OSR at this point
    if ((comp()->getHCRMode() != TR::osr || guard->_kind != TR_HCRGuard)
-       && callNode->getSymbolReference()->getOwningMethodSymbol(comp())->supportsInduceOSR(callNode->getByteCodeInfo(), block1, calleeSymbol, comp(), false))
+       && callNode->getSymbolReference()->getOwningMethodSymbol(comp())->supportsInduceOSR(callNode->getByteCodeInfo(), block1, comp(), false))
       {
       bool shouldUseOSR = heuristicForUsingOSR(callNode, calleeSymbol, callerSymbol, createdHCRAndVirtualGuard);
 
@@ -2069,8 +2069,7 @@ bool TR_InlinerBase::heuristicForUsingOSR(TR::Node *callNode, TR::ResolvedMethod
       int32_t osrCallerNumLiveStackSlots = 0;
       totalOSRCallersStackSlots = totalOSRCallersStackSlots + osrCallerNumStackSlots;
 
-      TR_BitVector *deadSymRefs = osrMethodData->getLiveRangeInfo(byteCodeIndex,
-         comp()->getOSRTransitionTarget() == TR::postExecutionOSR ? TR::analysisOSR : TR::inductionOSR);
+      TR_BitVector *deadSymRefs = osrMethodData->getLiveRangeInfo(byteCodeIndex, TR::preExecutionOSR);
       if (deadSymRefs)
          {
          osrCallerNumLiveStackSlots = osrMethodData->getNumSymRefs() - deadSymRefs->elementCount();

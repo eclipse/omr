@@ -686,9 +686,11 @@ TR_OSRMethodData::inlinesAnyMethod() const
    }
 
 void
-TR_OSRMethodData::addLiveRangeInfo(int32_t byteCodeIndex, TR::OSRPointType osrPoint, TR_BitVector *liveRangeInfo)
+TR_OSRMethodData::addLiveRangeInfo(int32_t byteCodeIndex, TR::OSRTransitionTarget target, TR_BitVector *liveRangeInfo)
    {
-   TR_BCLiveRangeInfoHashKey key(byteCodeIndex, osrPoint);
+   TR_ASSERT(target == TR::postExecutionOSR || target == TR::preExecutionOSR, "can only add live range info for pre or post transition target");
+
+   TR_BCLiveRangeInfoHashKey key(byteCodeIndex, target);
    bcLiveRangeInfoHashTab.Add(key, liveRangeInfo);
    }
 
@@ -711,21 +713,23 @@ TR_BitVector *
 TR_OSRMethodData::getLiveRangeInfo(int32_t byteCodeIndex)
    {
    TR_BitVector* liveRangeInfo = NULL;
-   if (getMethodSymbol()->comp()->getOSRTransitionTarget() == TR::postExecutionOSR)
+   if (getMethodSymbol()->comp()->getOSRTransitionTarget() & TR::postExecutionOSR)
       {
-      liveRangeInfo = getLiveRangeInfo(byteCodeIndex, TR::inductionOSR);
+      liveRangeInfo = getLiveRangeInfo(byteCodeIndex, TR::postExecutionOSR);
       if (!liveRangeInfo)
-         liveRangeInfo = getLiveRangeInfo(byteCodeIndex, TR::analysisOSR);
+         liveRangeInfo = getLiveRangeInfo(byteCodeIndex, TR::preExecutionOSR);
       }
    else
-      liveRangeInfo = getLiveRangeInfo(byteCodeIndex, TR::inductionOSR);
+      liveRangeInfo = getLiveRangeInfo(byteCodeIndex, TR::preExecutionOSR);
    return liveRangeInfo;
    }
 
 TR_BitVector *
-TR_OSRMethodData::getLiveRangeInfo(int32_t byteCodeIndex, TR::OSRPointType osrPoint)
+TR_OSRMethodData::getLiveRangeInfo(int32_t byteCodeIndex, TR::OSRTransitionTarget target)
    {
-   TR_BCLiveRangeInfoHashKey key(byteCodeIndex, osrPoint);
+   TR_ASSERT(target == TR::postExecutionOSR || target == TR::preExecutionOSR, "can only get live range info for pre or post transition target");
+
+   TR_BCLiveRangeInfoHashKey key(byteCodeIndex, target);
    CS2::HashIndex hashIndex;
    TR_BitVector* liveRangeInfo = NULL;
    if (bcLiveRangeInfoHashTab.Locate(key, hashIndex))

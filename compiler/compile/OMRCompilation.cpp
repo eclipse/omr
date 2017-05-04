@@ -666,7 +666,7 @@ bool OMR::Compilation::isPotentialOSRPoint(TR::Node *node, TR::Node **osrPointNo
    static char *disableMonentOSR = feGetEnv("TR_disableMonentOSR");
 
    bool potentialOSRPoint = false;
-   if (self()->getOSRTransitionTarget() == TR::postExecutionOSR)
+   if (self()->getOSRTransitionTarget() & TR::postExecutionOSR)
       {
       if (node->getOpCodeValue() == TR::treetop || node->getOpCode().isCheck())
          node = node->getFirstChild(); 
@@ -706,7 +706,7 @@ bool OMR::Compilation::isPotentialOSRPointWithSupport(TR::TreeTop *tt)
 
    if (potentialOSRPoint && self()->getOSRMode() == TR::voluntaryOSR)
       {
-      if (self()->getOSRTransitionTarget() == TR::postExecutionOSR && tt->getNode() != osrNode)
+      if (self()->getOSRTransitionTarget() & TR::postExecutionOSR && tt->getNode() != osrNode)
          {
          // The OSR point applies where the node is anchored, rather than where it may
          // be commoned. Therefore, it is necessary to check if the node is anchored under
@@ -735,7 +735,7 @@ bool OMR::Compilation::isPotentialOSRPointWithSupport(TR::TreeTop *tt)
          TR_ByteCodeInfo &bci = osrNode->getByteCodeInfo();
          TR::ResolvedMethodSymbol *method = bci.getCallerIndex() == -1 ?
             self()->getMethodSymbol() : self()->getInlinedResolvedMethodSymbol(bci.getCallerIndex());
-         potentialOSRPoint = method->supportsInduceOSR(bci, tt->getEnclosingBlock(), NULL, self(), false);
+         potentialOSRPoint = method->supportsInduceOSR(bci, tt->getEnclosingBlock(), self(), false);
          }
       }
 
@@ -768,9 +768,21 @@ OMR::Compilation::getOSRMode()
 TR::OSRTransitionTarget
 OMR::Compilation::getOSRTransitionTarget()
    {
+   TR::OSRTransitionTarget target = TR::disableOSR;
+
+   // Under NextGenHCR, transitions will occur after the OSR points
+   // Otherwise, the default is before
    if (self()->getHCRMode() == TR::osr)
-      return TR::postExecutionOSR;
-   return TR::preExecutionOSR;
+      {
+      target = TR::postExecutionOSR;
+      // If OSROnGuardFailure is enabled, transitions will also occur before
+      if (self()->getOption(TR_EnableOSROnGuardFailure))
+         target = TR::preAndPostExecutionOSR;
+      }
+   else if (self()->getOption(TR_EnableOSR))
+      target = TR::preExecutionOSR;
+
+   return target;
    }
 
 /*
@@ -782,7 +794,7 @@ int32_t
 OMR::Compilation::getOSRInductionOffset(TR::Node *node)
    {
    // If no induction after the OSR point, offset must be 0
-   if (self()->getOSRTransitionTarget() != TR::postExecutionOSR)
+   if (!(self()->getOSRTransitionTarget() & TR::postExecutionOSR))
       return 0;
    
    TR::Node *osrNode;
@@ -818,7 +830,7 @@ bool
 OMR::Compilation::requiresAnalysisOSRPoint(TR::Node *node)
    {
    // If no induction after the OSR point, cannot use analysis point
-   if (self()->getOSRTransitionTarget() != TR::postExecutionOSR)
+   if (!(self()->getOSRTransitionTarget() & TR::postExecutionOSR))
       return false;
 
    TR::Node *osrNode;
@@ -831,7 +843,7 @@ OMR::Compilation::requiresAnalysisOSRPoint(TR::Node *node)
    if (osrNode->getOpCode().isCall())
       return true;
 
-   switch (node->getOpCodeValue())
+   switch (osrNode->getOpCodeValue())
       {
       // Monents only require a trailing OSR point as they will perform OSR when executing the
       // monitor and there is no change in liveness due to the monent
@@ -2333,6 +2345,26 @@ OMR::Compilation::setOSRCallSiteRemat(uint32_t callSiteIndex, TR::SymbolReferenc
 
    table[slot * 2] = ppSymRef->getReferenceNumber();
    table[slot * 2 + 1] = loadSymRef ? loadSymRef->getReferenceNumber() : 0;
+   }
+
+/*
+ * Check if it is not possible to perform an OSR transition during this call site.
+ * A true result means transitioning within this method is definitely not possible, however,
+ * a false result does not ensure OSR is possible.
+ */
+bool
+OMR::Compilation::cannotAttemptOSRDuring(uint32_t index)
+   {
+   return _inlinedCallSites[index].cannotAttemptOSRDuring();
+   }
+
+/*
+ * Store a known cannotAttemptOSRDuring result against this call site.
+ */
+void
+OMR::Compilation::setCannotAttemptOSRDuring(uint32_t index, bool cannotOSR)
+   {
+   _inlinedCallSites[index].setCannotAttemptOSRDuring(cannotOSR);
    }
 
 TR_InlinedCallSite *

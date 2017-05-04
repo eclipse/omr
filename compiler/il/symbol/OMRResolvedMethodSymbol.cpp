@@ -127,7 +127,6 @@ OMR::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod * method, TR::
      _comp(comp),
      _firstJitTempIndex(-1),
      _cannotAttemptOSR(NULL),
-     _shouldNotAttemptOSR(NULL),
      _pythonConstsSymRef(NULL),
      _pythonNumLocalVars(0),
      _pythonLocalVarSymRefs(NULL),
@@ -565,11 +564,11 @@ OMR::ResolvedMethodSymbol::genInduceOSRCallNode(TR::TreeTop* insertionPoint,
 
 
 bool
-OMR::ResolvedMethodSymbol::induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder)
+OMR::ResolvedMethodSymbol::induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder, int32_t offset)
    {
    TR::Block *block = insertionPoint->getEnclosingBlock();
 
-   if (self()->supportsInduceOSR(induceBCI, block, NULL, self()->comp()))
+   if (self()->supportsInduceOSR(induceBCI, block, self()->comp(), TR::postExecutionOSR))
       {
       TR::CFG *cfg = self()->comp()->getFlowGraph();
       cfg->setStructure(NULL);
@@ -590,6 +589,8 @@ OMR::ResolvedMethodSymbol::induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCo
                traceMsg(self()->comp(), "  Split of block_%d at n%dn produced block_%d\n", block->getNumber(), remainderTree->getNode()->getGlobalIndex(), remainderBlock->getNumber());
             }
          }
+
+      induceBCI.setByteCodeIndex(induceBCI.getByteCodeIndex() + offset);
 
       // create a block that will be the target of the branch with BCI for the induceOSR
       TR::Block *osrBlock = TR::Block::createEmptyBlock(self()->comp(), MAX_COLD_BLOCK_COUNT);
@@ -618,7 +619,7 @@ OMR::ResolvedMethodSymbol::induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCo
 TR::TreeTop *
 OMR::ResolvedMethodSymbol::induceImmediateOSRWithoutChecksBefore(TR::TreeTop *insertionPoint)
    {
-   if (self()->supportsInduceOSR(insertionPoint->getNode()->getByteCodeInfo(), insertionPoint->getEnclosingBlock(), NULL, self()->comp()))
+   if (self()->supportsInduceOSR(insertionPoint->getNode()->getByteCodeInfo(), insertionPoint->getEnclosingBlock(), self()->comp()))
       return self()->genInduceOSRCallAndCleanUpFollowingTreesImmediately(insertionPoint, insertionPoint->getNode()->getByteCodeInfo(), false, false, self()->comp());
    if (self()->comp()->getOption(TR_TraceOSR))
       traceMsg(self()->comp(), "induceImmediateOSRWithoutChecksBefore n%dn failed - supportsInduceOSR returned false\n", insertionPoint->getNode()->getGlobalIndex());
@@ -891,24 +892,25 @@ OMR::ResolvedMethodSymbol::genAndAttachOSRCodeBlocks(int32_t currentInlinedSiteI
          TR::Block * OSRCatchBlock = osrMethodData->findOrCreateOSRCatchBlock(ttnode);
          TR_OSRPoint *osrPoint = NULL;
 
-         // Generate an OSR point for the induction point, ignoring whether it is after or not
-         TR_ByteCodeInfo offsetBCI = ttnode->getByteCodeInfo();
-         offsetBCI.setByteCodeIndex(offsetBCI.getByteCodeIndex() + self()->comp()->getOSRInductionOffset(ttnode));
-         osrPoint = new (self()->comp()->trHeapMemory()) TR_OSRPoint(offsetBCI, osrMethodData, self()->comp()->trMemory());
-         osrPoint->setOSRIndex(self()->addOSRPoint(osrPoint));
-         if (self()->comp()->getOption(TR_TraceOSR))
-            traceMsg(self()->comp(), "offset osr point added for [%p] at offset bci %d:%d\n",
-               ttnode, offsetBCI.getCallerIndex(), offsetBCI.getByteCodeIndex());
-
-         // Generate an OSR point for the analysis point, if needed
-         if (self()->comp()->requiresAnalysisOSRPoint(ttnode))
+         if (comp()->getOSRTransitionTarget() & TR::preExecutionOSR || self()->comp()->requiresAnalysisOSRPoint(ttnode))
             {
             osrPoint = new (self()->comp()->trHeapMemory()) TR_OSRPoint(ttnode->getByteCodeInfo(), osrMethodData, self()->comp()->trMemory());
             osrPoint->setOSRIndex(self()->addOSRPoint(osrPoint));
             if (self()->comp()->getOption(TR_TraceOSR))
-               traceMsg(self()->comp(), "osr point added for [%p] at %d:%d\n",
+               traceMsg(self()->comp(), "pre osr point added for [%p] for bci %d:%d\n",
                   ttnode, ttnode->getByteCodeInfo().getCallerIndex(),
                   ttnode->getByteCodeInfo().getByteCodeIndex());
+            }
+
+         if (comp()->getOSRTransitionTarget() & TR::postExecutionOSR)
+            {
+            TR_ByteCodeInfo offsetBCI = ttnode->getByteCodeInfo();
+            offsetBCI.setByteCodeIndex(offsetBCI.getByteCodeIndex() + self()->comp()->getOSRInductionOffset(ttnode));
+            osrPoint = new (self()->comp()->trHeapMemory()) TR_OSRPoint(offsetBCI, osrMethodData, self()->comp()->trMemory());
+            osrPoint->setOSRIndex(self()->addOSRPoint(osrPoint));
+            if (self()->comp()->getOption(TR_TraceOSR))
+               traceMsg(self()->comp(), "post osr point added for [%p] for bci %d:%d\n",
+                  ttnode, offsetBCI.getCallerIndex(), offsetBCI.getByteCodeIndex());
             }
 
          // Add an exception edge from the current block to the OSR catch block if there isn't already one
@@ -1222,7 +1224,6 @@ OMR::ResolvedMethodSymbol::genIL(TR_FrontEnd * fe, TR::Compilation * comp, TR::S
          if (comp->getOption(TR_EnableOSR) && !comp->isPeekingMethod())
             {
             _cannotAttemptOSR = new (comp->trHeapMemory()) TR_BitVector(1, comp->trMemory(), heapAlloc, growable);
-            _shouldNotAttemptOSR = new (comp->trHeapMemory()) TR_BitVector(1, comp->trMemory(), heapAlloc, growable);
             }
 
          if (_tempIndex == -1)
@@ -1250,9 +1251,11 @@ OMR::ResolvedMethodSymbol::genIL(TR_FrontEnd * fe, TR::Compilation * comp, TR::S
             // parms, and locals alive. Only do this in non HCR mode since under HCR we will be more selective about where to
             // add OSR points.
             //
-            bool doOSR =
-               comp->getOption(TR_EnableOSR) && comp->supportsInduceOSR() &&
-               !comp->isPeekingMethod()  && (comp->getOption(TR_EnableNextGenHCR) || !comp->getOption(TR_EnableHCR)) ;
+            bool doOSR = comp->getOption(TR_EnableOSR)
+               && !comp->isPeekingMethod()
+               && (comp->getOption(TR_EnableNextGenHCR) || !comp->getOption(TR_EnableHCR))
+               && comp->supportsInduceOSR()
+               && !self()->cannotAttemptOSRDuring(comp->getCurrentInlinedSiteIndex(), comp);
 
             optimizer = TR::Optimizer::createOptimizer(comp, self(), true);
             previousOptimizer = comp->getOptimizer();
@@ -1436,142 +1439,179 @@ OMR::ResolvedMethodSymbol::resetLiveLocalIndices()
    }
 
 bool
-OMR::ResolvedMethodSymbol::supportsInduceOSR(TR_ByteCodeInfo bci,
+OMR::ResolvedMethodSymbol::supportsInduceOSR(TR_ByteCodeInfo &bci,
                                            TR::Block *blockToOSRAt,
-                                           TR::ResolvedMethodSymbol *calleeSymbolIfCallNode,
                                            TR::Compilation *comp,
                                            bool runCleanup)
    {
    if (!comp->supportsInduceOSR())
       return false;
 
-   if (self()->cannotAttemptOSR(bci, blockToOSRAt, calleeSymbolIfCallNode, comp, runCleanup))
+   // Check it is possible to transition within this call site
+   if (self()->cannotAttemptOSRDuring(bci.getCallerIndex(), comp, runCleanup))
+      return false;
+
+   // Check it is possible to transition at this BCI
+   if (self()->cannotAttemptOSRAt(bci, blockToOSRAt, comp))
       return false;
 
    return true;
    }
 
-
+/*
+ * Prevent OSR transitions to the specified bytecode index.
+ * Will only prevent those directed immediately to this index,
+ * not those from a deeper frame.
+ * See setCannotAttemptOSRDuring to prevent these cases.
+ */
 void
 OMR::ResolvedMethodSymbol::setCannotAttemptOSR(int32_t n)
    {
    _cannotAttemptOSR->set(n);
    }
 
-
-void
-OMR::ResolvedMethodSymbol::setShouldNotAttemptOSR(int32_t n)
-   {
-   _shouldNotAttemptOSR->set(n);
-   }
-
-
+/*
+ * Check if OSR can be attempted within the specified call site index.
+ * Will check OSR infrastructure, such as code and catch blocks, is still present.
+ *
+ * If it is not possible to transition, this will be stored in TR_InlinedCallSiteInfo, as it is
+ * assumed that once a transition is not possible, it will not become possible later.
+ *
+ * runCleanup: If there are missing OSR blocks detected, runnning cleanup will remove those that are no longer needed.
+ */
 bool
-OMR::ResolvedMethodSymbol::cannotAttemptOSR(TR_ByteCodeInfo bci,
-                                          TR::Block *blockToOSRAt,
-                                          TR::ResolvedMethodSymbol *calleeSymbolIfCallNode,
-                                          TR::Compilation *comp,
-                                          bool runCleanup)
+OMR::ResolvedMethodSymbol::cannotAttemptOSRDuring(int32_t callSite, TR::Compilation *comp, bool runCleanup)
    {
    if (comp->getOption(TR_TraceOSR))
-      traceMsg(comp, "Checking if OSR can be attempted at bytecode index %d\n", bci.getByteCodeIndex());
+      traceMsg(comp, "Checking if OSR can be attempted during call site %d\n", callSite);
 
-   if (!comp->canAffordOSRControlFlow())
-      {
-      if (comp->getOption(TR_TraceOSR))
-         traceMsg(comp, "Cannot afford OSR control flow\n");
-      return true;
-      }
-
-   if (_shouldNotAttemptOSR->get(bci.getByteCodeIndex()))
-      {
-      if (comp->getOption(TR_TraceOSR))
-         traceMsg(comp, "Should not attempt OSR at this bytecode\n");
-      return true;
-      }
-
-   if (bci.doNotProfile())
-     {
-     if (comp->getOption(TR_TraceOSR))
-        traceMsg(comp, "Node was not present at IL gen time\n");
-
-     return true; // if this is a call node created by the optimizer (string peepholes) it may not exist in the bytecodes
-     }
-
-   TR::SymbolReferenceTable *symRefTab = comp->getSymRefTab();
-   int32_t callSite = bci.getCallerIndex();
-   int32_t byteCodeIndex = bci.getByteCodeIndex();
-
+   int32_t origCallSite = callSite;
    TR_OSRMethodData *osrMethodData = comp->getOSRCompilationData()->findOrCreateOSRMethodData(callSite, self());
-   TR::Block * OSRCatchBlock = osrMethodData->getOSRCatchBlock();
+   bool cannotAttemptOSR = false;
+   int32_t byteCodeIndex;
 
-   // Walk up the inlined call stack and safety check every call to see if OSR is safe - note that we only check
-   // cannotOSR in this case as we only abort the OSR if correctness is in jeopardy
-   while (osrMethodData)
+   // Walk up the inlined call stack and safety check every call to see if OSR is safe - note that we check
+   // cannotAttemptOSRDuring, not cannotAttemptOSRAt
+   while (osrMethodData->getInlinedSiteIndex() > -1)
       {
-      if (comp->getOption(TR_TraceOSR))
-         traceMsg(comp, "Checking if OSR can be attempted at caller index %d and bytecode index %d\n", callSite, byteCodeIndex);
+      TR_ASSERT(callSite == osrMethodData->getInlinedSiteIndex(), "OSR method data and inlined call sites array being walked out of sync\n");
 
-      auto *callerSymbol = osrMethodData->getMethodSymbol();
-
-      if (callerSymbol->_cannotAttemptOSR->get(byteCodeIndex))
-        {
-        if (comp->getOption(TR_TraceOSR))
-           traceMsg(comp, "Cannot attempt OSR at this bytecode in caller\n");
-        return true;
-        }
-
-      TR_ASSERT((callSite == osrMethodData->getInlinedSiteIndex()), "OSR method data and inlined call sites array being walked out of sync\n");
-      if (osrMethodData->getInlinedSiteIndex() > -1)
+      TR_InlinedCallSite &callSiteInfo = comp->getInlinedCallSite(callSite);
+      cannotAttemptOSR = comp->cannotAttemptOSRDuring(callSite);
+      if (!cannotAttemptOSR)
          {
-         TR_InlinedCallSite &callSiteInfo = comp->getInlinedCallSite(callSite);
          callSite = callSiteInfo._byteCodeInfo.getCallerIndex();
-         if (callSiteInfo._byteCodeInfo.doNotProfile())
-            {
-            if (comp->getOption(TR_TraceOSR))
-               traceMsg(comp, "Node in caller was not present at IL gen time\n");
+         byteCodeIndex = callSiteInfo._byteCodeInfo.getByteCodeIndex();
+         if (comp->getOption(TR_TraceOSR))
+            traceMsg(comp, "Checking if OSR can be attempted at caller bytecode index %d:%d\n", callSite, byteCodeIndex);
 
-            return true;
-            }
-
+         // Check OSR method data has been generated for the caller
          osrMethodData = comp->getOSRCompilationData()->findCallerOSRMethodData(osrMethodData);
          if (!osrMethodData)
             {
             if (comp->getOption(TR_TraceOSR))
-               traceMsg(comp, "OSR method data is NULL\n");
-
-            return true;
+               traceMsg(comp, "Cannot attempt OSR as OSR method data for caller of callee %d is NULL\n", callSite);
+            cannotAttemptOSR = true;
+            break;
             }
 
-         byteCodeIndex = callSiteInfo._byteCodeInfo.getByteCodeIndex();
+         // Check the OSR catch/code blocks exist
+         TR::Block * osrCodeBlock = osrMethodData->getOSRCodeBlock();
+         if (!osrCodeBlock || osrCodeBlock->isUnreachable())
+            {
+            if (comp->getOption(TR_TraceOSR))
+               traceMsg(comp, "Cannot attempt OSR as OSR code block for site index %d is absent\n",
+                  osrMethodData->getInlinedSiteIndex());
+            if (runCleanup)
+               self()->cleanupUnreachableOSRBlocks(origCallSite, comp);
+            cannotAttemptOSR = true;
+            break;
+            }
+
+         // Check it is possible to transition during the caller
+         auto *callerSymbol = osrMethodData->getMethodSymbol();
+         if (callerSymbol->_cannotAttemptOSR->get(byteCodeIndex))
+            {
+            if (comp->getOption(TR_TraceOSR))
+               traceMsg(comp, "Cannot attempt OSR during caller bytecode index %d:%d\n", callSite, byteCodeIndex);
+            cannotAttemptOSR = true;
+            break;
+            }
+
+         // Check the caller existed during ILGen
+         if (callSiteInfo._byteCodeInfo.doNotProfile())
+            {
+            if (comp->getOption(TR_TraceOSR))
+               traceMsg(comp, "Cannot attempt OSR during caller bytecode index %d:%d as it did not exist at ilgen\n", callSite, byteCodeIndex);
+            cannotAttemptOSR = true;
+            break;
+            }
          }
       else
-         {
-         osrMethodData = NULL;
-         }
+         break;
       }
 
-   auto *symToCheckOSRBlocksReachability = self();
-   if (calleeSymbolIfCallNode)
-      symToCheckOSRBlocksReachability = calleeSymbolIfCallNode;
+   // Store the result against the call site now that it is known 
+   //
+   if (origCallSite > -1 && !comp->cannotAttemptOSRDuring(origCallSite) && cannotAttemptOSR)
+      comp->setCannotAttemptOSRDuring(origCallSite, cannotAttemptOSR);
+   return cannotAttemptOSR; 
+   }
 
-   if (comp->getMethodSymbol() != symToCheckOSRBlocksReachability
-       && !symToCheckOSRBlocksReachability->allCallerOSRBlocksArePresent(callSite, comp))
+/*
+ * Check whether OSR can be attempted at the specified bytecode index.
+ * This will check transition is possible in the context of this call site, ignoring those higher in the call stack.
+ *
+ * TODO: Return enum encoding the failure case, so that OSR modes can manage the different failures.
+ *
+ * bci: Bytecode info to perform the transition at
+ * blockToOSRAt: Block containing the transition, to verify the exception edge is present.
+ * comp: Compilation object.
+ */
+bool
+OMR::ResolvedMethodSymbol::cannotAttemptOSRAt(TR_ByteCodeInfo &bci,
+                                          TR::Block *blockToOSRAt,
+                                          TR::Compilation *comp)
+   {
+   int32_t callSite = bci.getCallerIndex();
+   int32_t byteCodeIndex = bci.getByteCodeIndex();
+   if (comp->getOption(TR_TraceOSR))
+      traceMsg(comp, "Checking if OSR can be attempted at bytecode index %d:%d\n",
+         callSite, byteCodeIndex);
+
+   // Check it is possible to transition at this index
+   if (self()->_cannotAttemptOSR->get(byteCodeIndex))
       {
-      if (runCleanup)
-         symToCheckOSRBlocksReachability->cleanupUnreachableOSRBlocks(callSite, comp);
       if (comp->getOption(TR_TraceOSR))
-         traceMsg(comp, "Some caller OSR blocks are not present\n");
-
+         traceMsg(comp, "Cannot attempt OSR at bytecode index %d:%d\n",
+            callSite, byteCodeIndex);
       return true;
       }
 
-   if (blockToOSRAt && (!OSRCatchBlock || !blockToOSRAt->hasExceptionSuccessor(OSRCatchBlock)))
+   // Check the BCI existed at ilgen
+   if (bci.doNotProfile())
       {
-      if (comp->getOption(TR_TraceOSR) && OSRCatchBlock)
-         traceMsg(comp, "Missing OSR exception successor block_%d for block_%d - cannot OSR\n", OSRCatchBlock->getNumber(), blockToOSRAt->getNumber());
-      if (comp->getOption(TR_TraceOSR) && !OSRCatchBlock)
-         traceMsg(comp, "Missing OSR exception successor for block_%d - cannot OSR\n", blockToOSRAt->getNumber());
+      if (comp->getOption(TR_TraceOSR))
+         traceMsg(comp, "Cannot attempt OSR at bytecode index %d:%d as it did not exist at ilgen\n",
+            callSite, byteCodeIndex);
+      return true;
+      }
+
+   TR_OSRMethodData *osrMethodData = comp->getOSRCompilationData()->findOrCreateOSRMethodData(callSite, self());
+   TR::Block * osrCatchBlock = osrMethodData->getOSRCatchBlock();
+
+   // If a block is specified, check the osrCatchBlock exists and there is an exception edge to it
+   if (blockToOSRAt && (!osrCatchBlock || !blockToOSRAt->hasExceptionSuccessor(osrCatchBlock)))
+      {
+      if (comp->getOption(TR_TraceOSR))
+         {
+         if (osrCatchBlock)
+            traceMsg(comp, "Cannot attempt OSR as block_%d is missing an edge to OSR catch block: block_%d\n",
+               blockToOSRAt->getNumber(), osrCatchBlock->getNumber());
+         else
+            traceMsg(comp, "Cannot attempt OSR as call site index %d lacks an OSR catch block for block_%d\n",
+               callSite, blockToOSRAt->getNumber());
+         }
       return true;
       }
 
@@ -1579,35 +1619,6 @@ OMR::ResolvedMethodSymbol::cannotAttemptOSR(TR_ByteCodeInfo bci,
      traceMsg(comp, "OSR can be attempted\n");
 
    return false;
-   }
-
-bool
-OMR::ResolvedMethodSymbol::allCallerOSRBlocksArePresent(int32_t inlinedSiteIndex, TR::Compilation *comp)
-   {
-   TR_OSRMethodData *osrMethodData = inlinedSiteIndex > -1 ? comp->getOSRCompilationData()->findCallerOSRMethodData(comp->getOSRCompilationData()->findOrCreateOSRMethodData(inlinedSiteIndex, self())) : NULL;
-   TR::Block * OSRCatchBlock = osrMethodData ? osrMethodData->getOSRCatchBlock() : NULL;
-
-   bool allCallersOSRCodeBlocksAreStillInCFG = true;
-   while (osrMethodData)
-      {
-      TR::Block * CallerOSRCodeBlock = osrMethodData->getOSRCodeBlock();
-      if (!CallerOSRCodeBlock ||
-          CallerOSRCodeBlock->isUnreachable())
-         {
-         if (comp->getOption(TR_TraceOSR))
-            traceMsg(comp, "Osr catch block at inlined site index %d is absent\n", osrMethodData->getInlinedSiteIndex());
-
-         return false;
-         }
-      else if (comp->getOption(TR_TraceOSR))
-         traceMsg(comp, "Osr catch block at inlined site index %d is present\n", osrMethodData->getInlinedSiteIndex());
-
-      if (osrMethodData->getInlinedSiteIndex() > -1)
-         osrMethodData = comp->getOSRCompilationData()->findCallerOSRMethodData(osrMethodData);
-      else
-         osrMethodData = NULL;
-      }
-   return true;
    }
 
 void
@@ -1752,7 +1763,7 @@ OMR::ResolvedMethodSymbol::isOSRRelatedNode(TR::Node *node, TR_ByteCodeInfo &osr
 TR::TreeTop *
 OMR::ResolvedMethodSymbol::getOSRTransitionTreeTop(TR::TreeTop *tt)
    {
-   if (self()->comp()->getOSRTransitionTarget() == TR::postExecutionOSR)
+   if (self()->comp()->getOSRTransitionTarget() & TR::postExecutionOSR)
       {
       TR_ByteCodeInfo bci = self()->getOSRByteCodeInfo(tt->getNode());
       TR::TreeTop *cursor = tt->getNextTreeTop();
@@ -1789,14 +1800,14 @@ OMR::ResolvedMethodSymbol::insertStoresForDeadStackSlotsBeforeInducingOSR(TR::Co
    TR::TreeTop *prev = induceOSRTree->getPrevTreeTop();
    TR::TreeTop *next = induceOSRTree;
 
-   TR::OSRPointType pointType = TR::inductionOSR;
+   TR::OSRTransitionTarget pointType = TR::preAndPostExecutionOSR;
 
    while (osrMethodData)
       {
       if (comp->getOption(TR_TraceOSR))
          traceMsg(comp, "Inserting stores for dead stack slots in method at caller index %d and bytecode index %d for induceOSR call %p\n", callSite, byteCodeIndex, induceOSRTree->getNode());
 
-      TR_BitVector *deadSymRefs = osrMethodData->getLiveRangeInfo(byteCodeIndex, pointType);
+      TR_BitVector *deadSymRefs = pointType == TR::preAndPostExecutionOSR ? osrMethodData->getLiveRangeInfo(byteCodeIndex) : osrMethodData->getLiveRangeInfo(byteCodeIndex, pointType);
       if (deadSymRefs)
          {
          TR_BitVectorIterator bvi(*deadSymRefs);
@@ -1825,7 +1836,7 @@ OMR::ResolvedMethodSymbol::insertStoresForDeadStackSlotsBeforeInducingOSR(TR::Co
          callSite = callSiteInfo._byteCodeInfo.getCallerIndex();
          osrMethodData = comp->getOSRCompilationData()->findCallerOSRMethodData(osrMethodData);
          byteCodeIndex = callSiteInfo._byteCodeInfo.getByteCodeIndex();
-         pointType = comp->getOSRTransitionTarget() == TR::postExecutionOSR ? TR::analysisOSR : TR::inductionOSR;
+         pointType = TR::preExecutionOSR;
          }
       else
          osrMethodData = NULL;
