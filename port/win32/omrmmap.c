@@ -335,8 +335,8 @@ omrmmap_dont_need(struct OMRPortLibrary *portLibrary, const void *startAddress, 
 	Trc_PRT_mmap_dont_need(pageSize, startAddress, length);
 
 	if (pageSize > 0 && length >= pageSize) {
-		uintptr_t const *endAddress = (uintptr_t const *)((U_8 *) startAddress + length);
-		uintptr_t const *roundedStart = (uintptr_t const *) ROUND_UP_TO_POWEROF2((uintptr_t) startAddress, pageSize);
+		uintptr_t endAddress = (uintptr_t) startAddress + length;
+		uintptr_t roundedStart = ROUND_UP_TO_POWEROF2((uintptr_t) startAddress, pageSize);
 		size_t roundedLength = ROUND_DOWN_TO_POWEROF2(endAddress - roundedStart, pageSize);
 		Trc_PRT_mmap_dont_need_oscall(roundedStart, roundedLength);
 		if (roundedLength >= pageSize) {
