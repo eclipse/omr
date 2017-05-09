@@ -59,8 +59,10 @@ namespace TR
  */
    enum OSRTransitionTarget
       {
-      preExecutionOSR,
-      postExecutionOSR
+      disableOSR = 0,
+      preExecutionOSR = 1,
+      postExecutionOSR = 2,
+      preAndPostExecutionOSR = 3
       };
 
 /*
@@ -76,21 +78,6 @@ namespace TR
       {
       voluntaryOSR,
       involuntaryOSR
-      };
-
-/*
- * There are two types of OSR points, induction and analysis.
- *
- * An induction point is a normal OSR point, which undergoes the
- * OSR analysis and may have a transition for it, based on the mode.
- *
- * An analysis point is used only for the OSR analysis will not have
- * a transition point for it.
- */
-   enum OSRPointType
-      {
-      inductionOSR,
-      analysisOSR 
       };
    }
 
@@ -298,8 +285,8 @@ class TR_OSRMethodData
    void setNumSymRefs(int32_t numBits) {_numSymRefs = numBits; }
    int32_t getNumSymRefs() { return _numSymRefs; }
 
-   void addLiveRangeInfo(int32_t byteCodeIndex, TR::OSRPointType osrPoint, TR_BitVector *liveRangeInfo);
-   TR_BitVector *getLiveRangeInfo(int32_t byteCodeIndex, TR::OSRPointType osrPoint);
+   void addLiveRangeInfo(int32_t byteCodeIndex, TR::OSRTransitionTarget target, TR_BitVector *liveRangeInfo);
+   TR_BitVector *getLiveRangeInfo(int32_t byteCodeIndex, TR::OSRTransitionTarget target);
    TR_BitVector *getLiveRangeInfo(int32_t byteCodeIndex);
 
    bool linkedToCaller() { return _linkedToCaller; }
@@ -310,7 +297,7 @@ class TR_OSRMethodData
    private:
    void createOSRBlocks(TR::Node* n);
 
-   typedef CS2::CompoundHashKey<int32_t, TR::OSRPointType> TR_BCLiveRangeInfoHashKey;
+   typedef CS2::CompoundHashKey<int32_t, TR::OSRTransitionTarget> TR_BCLiveRangeInfoHashKey;
    typedef CS2::HashTable<TR_BCLiveRangeInfoHashKey, TR_BitVector *, TR::Allocator> TR_BCLiveRangeInfoHashTable;
    typedef CS2::HashTable<int32_t, TR_OSRSlotSharingInfo*, TR::Allocator> TR_BCInfoHashTable;
    typedef CS2::HashTable<int32_t, TR_Array<int32_t>, TR::Allocator> TR_Slot2ScratchBufferOffset;

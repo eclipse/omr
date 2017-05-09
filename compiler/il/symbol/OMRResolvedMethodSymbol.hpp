@@ -143,7 +143,6 @@ public:
    const char * signature(TR_Memory * m) { return _resolvedMethod->signature(m); }
 
    bool genIL(TR_FrontEnd *fe, TR::Compilation *comp, TR::SymbolReferenceTable *symRefTab, TR::IlGenRequest & customRequest);
-   bool allCallerOSRBlocksArePresent(int32_t inlinedSiteIndex, TR::Compilation *comp);
    void cleanupUnreachableOSRBlocks(int32_t inlinedSiteIndex, TR::Compilation *comp);
    void insertRematableStoresFromCallSites(TR::Compilation *comp, int32_t siteIndex, TR::TreeTop *induceOSRTree);
    void insertStoresForDeadStackSlotsBeforeInducingOSR(TR::Compilation *comp, int32_t inlinedSiteIndex, TR_ByteCodeInfo &byteCodeInfo, TR::TreeTop *induceOSRTree, TR::ResolvedMethodSymbol *callSymbolForDeadSlots);
@@ -167,7 +166,7 @@ public:
 
    bool canInjectInduceOSR(TR::Node* node);
 
-   bool induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder);
+   bool induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder, int32_t offset);
    TR::TreeTop *induceImmediateOSRWithoutChecksBefore(TR::TreeTop *insertionPoint);
 
    int32_t incTempIndex(TR_FrontEnd * fe);
@@ -273,11 +272,10 @@ public:
    bool detectInternalCycles(TR::CFG *cfg, TR::Compilation *comp);
    bool catchBlocksHaveRealPredecessors(TR::CFG *cfg, TR::Compilation *comp);
 
-   void setCannotAttemptOSR(int32_t);
-   bool cannotAttemptOSR(TR_ByteCodeInfo bci, TR::Block *blockToOSRAt, TR::ResolvedMethodSymbol *calleeSymbolIfCallNode, TR::Compilation *comp, bool runCleanup = true);
-   bool supportsInduceOSR(TR_ByteCodeInfo bci, TR::Block *blockToOSRAt, TR::ResolvedMethodSymbol *calleeSymbolIfCallNode, TR::Compilation *comp, bool runCleanup = true);
-
-   void setShouldNotAttemptOSR(int32_t n);
+   void setCannotAttemptOSR(int32_t n);
+   bool cannotAttemptOSRAt(TR_ByteCodeInfo &bci, TR::Block *blockToOSRAt, TR::Compilation *comp);
+   bool cannotAttemptOSRDuring(int32_t callSite, TR::Compilation *comp, bool runCleanup = true);
+   bool supportsInduceOSR(TR_ByteCodeInfo &bci, TR::Block *blockToOSRAt, TR::Compilation *comp, bool runCleanup = true);
 
    typedef enum
       {
@@ -357,8 +355,18 @@ private:
    int32_t                                   _firstJitTempIndex;
    mcount_t                                  _methodIndex;
 
+   // cannotAttemptOSRAt specifies bytecode indices that cannot be transitioned to.
+   // cannotAttemptOSRDuring specifies bytecode indices that cannot be transition from within.
+   //
+   // Under preExecutionOSR, cannotAttemptOSRAt and cannotAttemptOSRDuring are expected to be equivalent.
+   // However, under postExecutionOSR, may differ. cannotAttemptOSRDuring will contain bytecode indices
+   // of calls that cannot be transitioned from within, whilst cannotAttemptOSRAt will contain the offset
+   // transition points.
+   //
+   // cannotAttemptOSRDuring encodes a similar concept as OSR analysis points, in that a transition is never
+   // expected to the index, but it must be checked to ensure a transition within it is valid.
+   //
    TR_BitVector                              *_cannotAttemptOSR;
-   TR_BitVector                              *_shouldNotAttemptOSR;
    uint8_t                                   _unimplementedOpcode;
 
    TR::list< std::pair<int32_t, std::pair<int32_t, int32_t> > > _bytecodeProfilingOffsets;
