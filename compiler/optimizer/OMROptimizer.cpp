@@ -1458,9 +1458,18 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
          }
          break;
 
+      case IfMethodHandleInvokesNoDebug:
+         {
+         if (!comp()->getOption(TR_FullSpeedDebug) &&
+            comp()->getMethodSymbol()->hasMethodHandleInvokes() && 
+            !comp()->getOption(TR_DisableMethodHandleInvokeOpts))
+            doThisOptimization = true;
+         }
+         break;
       case IfMethodHandleInvokes:
          {
-         if (comp()->getMethodSymbol()->hasMethodHandleInvokes() && !comp()->getOption(TR_DisableMethodHandleInvokeOpts))
+         if (comp()->getMethodSymbol()->hasMethodHandleInvokes() && 
+               !comp()->getOption(TR_DisableMethodHandleInvokeOpts))
             doThisOptimization = true;
          }
          break;
