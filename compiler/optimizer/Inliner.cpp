@@ -3669,18 +3669,6 @@ TR_ResolvedMethod* TR_IndirectCallSite::getResolvedMethod (TR_OpaqueClassBlock* 
    return _callerResolvedMethod->getResolvedVirtualMethod(comp(), klass, _vftSlot);
    }
 
-
-TR_ResolvedMethod* TR_IndirectCallSite::findSingleJittedImplementer (TR_InlinerBase *inliner)
-   {
-   return inliner->getUtil()->findSingleJittedImplementer(this);
-   }
-
-TR_ResolvedMethod*
-OMR_InlinerUtil::findSingleJittedImplementer(TR_IndirectCallSite *callsite)
-   {
-   return NULL;
-   }
-
 bool TR_IndirectCallSite::hasFixedTypeArgInfo()
    {
    return _ecsPrexArgInfo && _ecsPrexArgInfo->get(0) && _ecsPrexArgInfo->get(0)->classIsFixed();
@@ -3812,28 +3800,31 @@ OMR_InlinerUtil::addTargetIfMethodIsNotOverridenInReceiversHierarchy(TR_Indirect
    }
 
 /**
- * find the single implementer and add it as the target of this callsite
+ * find the single jitted implementer and add it as the target of this callsite.
+ * It should always be the last resort when looking for callsite targets.
  */
 bool
-OMR_InlinerUtil::addTargetIfThereIsSingleImplementer (TR_IndirectCallSite *callsite)
+TR_IndirectCallSite::addTargetIfThereIsSingleJittedImplementer(TR_InlinerBase* inliner)
    {
    return false;
    }
 
+/**
+ * find the only one implementer and add it as the target of this callsite
+ */
 bool
-TR_IndirectCallSite::addTargetIfThereIsSingleImplementer (TR_InlinerBase* inliner)
+TR_IndirectCallSite::addTargetIfThereIsSingleImplementer(TR_InlinerBase* inliner)
    {
-   return inliner->getUtil()->addTargetIfThereIsSingleImplementer(this);
+   return false;
    }
 
 bool TR_IndirectCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner)
    {
-   //inliner->tracer()->dumpPrexArgInfo(_ecsPrexArgInfo);
-
    if (addTargetIfMethodIsNotOverriden(inliner) ||
        addTargetIfMethodIsNotOverridenInReceiversHierarchy(inliner) ||
        addTargetIfThereIsSingleImplementer(inliner) ||
-       findCallTargetUsingArgumentPreexistence(inliner))
+       findCallTargetUsingArgumentPreexistence(inliner) ||
+       addTargetIfThereIsSingleJittedImplementer(inliner))
       {
       return true;
       }

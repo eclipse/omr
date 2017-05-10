@@ -521,8 +521,6 @@ class OMR_InlinerUtil : public TR::OptimizationUtil, public OMR_InlinerHelper
       OMR_InlinerUtil(TR::Compilation *comp);
       static TR::TreeTop * storeValueInATemp(TR::Compilation *comp, TR::Node *, TR::SymbolReference * &, TR::TreeTop *, TR::ResolvedMethodSymbol *, List<TR::SymbolReference> & tempList, List<TR::SymbolReference> & availableTemps, List<TR::SymbolReference> * moreTemps, bool behavesLikeTemp = true, TR::TreeTop ** newStoreValueATreeTop = NULL, bool isIndirect = false, int32_t offset = 0);
       virtual bool addTargetIfMethodIsNotOverridenInReceiversHierarchy(TR_IndirectCallSite *callsite);
-      virtual TR_ResolvedMethod *findSingleJittedImplementer(TR_IndirectCallSite *callsite);
-      virtual bool addTargetIfThereIsSingleImplementer (TR_IndirectCallSite *callsite);
       virtual TR_PrexArgInfo* createPrexArgInfoForCallTarget(TR_VirtualGuardSelection *guard, TR_ResolvedMethod *implementer);
       virtual TR_InnerPreexistenceInfo *createInnerPrexInfo(TR::Compilation * c, TR::ResolvedMethodSymbol *methodSymbol, TR_CallStack *callStack, TR::TreeTop *callTree, TR::Node *callNode, TR_VirtualGuardKind guardKind);
       virtual TR_InlinerTracer * getInlinerTracer(TR::Optimization *optimization);
