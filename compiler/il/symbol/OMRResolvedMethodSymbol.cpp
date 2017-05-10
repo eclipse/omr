@@ -858,6 +858,33 @@ OMR::ResolvedMethodSymbol::genAndAttachOSRCodeBlocks(int32_t currentInlinedSiteI
    TR_OSRMethodData *osrMethodData = self()->comp()->getOSRCompilationData()->findOrCreateOSRMethodData(currentInlinedSiteIndex, self());
    //Using this flag we avoid processing twice a call before which we are injecting an induceOSR
    bool skipNextTT = false;
+
+   //In involuntaryOSR, method entries are yeild points and therefore OSRCatchBlock is not optional. 
+   //Adding asynccheck to make the rest of optimizer keep the OSR infrastructure for this method. 
+   if (self()->comp()->getOSRMode() == TR::involuntaryOSR && self()->comp()->isOutermostMethod())
+      {
+      bool hasOSRPoint = false;
+      for (TR::TreeTop* tt = self()->getFirstTreeTop(); tt && !hasOSRPoint; tt = tt->getNextTreeTop())
+         {
+         if (self()->comp()->isPotentialOSRPoint(tt->getNode()))
+            {
+            hasOSRPoint = true;
+            }
+         }
+
+      //hasOSRPoint can only be false when there are no other OSRPoints except 
+      //the stackOverflowCHK which is not explicitly represented in the trees
+      if (!hasOSRPoint)
+         {
+         TR::Block *firstBlock = self()->getFirstTreeTop()->getEnclosingBlock();
+         TR::Node *asynccheck = TR::Node::createWithSymRef(firstBlock->getEntry()->getNode(), TR::asynccheck, 0,
+               comp()->getSymRefTab()->findOrCreateAsyncCheckSymbolRef(self()));
+         firstBlock->prepend(TR::TreeTop::create(comp(), asynccheck));
+         if (self()->comp()->getOption(TR_TraceOSR))
+            traceMsg(comp(), "insert asyncCHK node n%dn at method entry in involuntaryOSR\n", asynccheck->getGlobalIndex());
+         }
+      }
+
    for (TR::TreeTop* tt = self()->getFirstTreeTop(); tt; tt = tt->getNextTreeTop())
       {
       TR::Node* ttnode = tt->getNode();
