@@ -943,45 +943,41 @@ omrvmem_reserve_memory_ex(struct OMRPortLibrary *portLibrary, struct J9PortVmemI
 		update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
 		Trc_PRT_vmem_omrvmem_reserve_memory_invalid_input();
 #else /* OMR_ENV_DATA64 */
-	if (0) {
+		if (0) {
 #endif /* OMR_ENV_DATA64 */
 	} else if (0 == params.pageSize) {
 		/* Invalid input */
 		update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
 		Trc_PRT_vmem_omrvmem_reserve_memory_invalid_input();
 	} else {
-		/* Handle default page size differently */
-		if (FOUR_K == params.pageSize) {
-			if (0 != (params.pageFlags & OMRPORT_VMEM_PAGE_FLAG_PAGEABLE)) {
-				baseAddress = reserve4KPages(portLibrary, identifier, &params, category);
-			} else {
-				update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
-				Trc_PRT_vmem_omrvmem_reserve_memory_invalid_input();
-			}
-		} else {
 #if defined(OMR_ENV_DATA64)
-			if (((UDATA) params.startAddress >= TWO_G)
-					&& isRmode64Supported()
-					&& !use2To32GArea
-					&& J9_ARE_ALL_BITS_SET(params.mode, OMRPORT_VMEM_MEMORY_MODE_EXECUTE)
-			) {
-				baseAddress = reserve_memory_with_moservices(portLibrary, identifier, &params, category);
+		if (((UDATA) params.startAddress >= TWO_G)
+				&& isRmode64Supported()
+				&& !use2To32GArea
+				&& J9_ARE_ALL_BITS_SET(params.mode, OMRPORT_VMEM_MEMORY_MODE_EXECUTE)
+		) {
+			baseAddress = reserve_memory_with_moservices(portLibrary, identifier, &params, category);
+		} else
+#endif /* OMR_ENV_DATA64 */
+			if (FOUR_K == params.pageSize) {
+				if (0 != (params.pageFlags & OMRPORT_VMEM_PAGE_FLAG_PAGEABLE)) {
+					baseAddress = reserve4KPages(portLibrary, identifier, &params, category);
+				} else {
+					update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
+					Trc_PRT_vmem_omrvmem_reserve_memory_invalid_input();
+				}
 			} else {
 				baseAddress = reservePages(portLibrary, identifier, &params, category);
 			}
-#else /* OMR_ENV_DATA64 */
-			baseAddress = reservePages(portLibrary, identifier, &params, category);
-#endif /* OMR_ENV_DATA64 */
-		}
-			if ((NULL != baseAddress) && isStrictAndOutOfRange(&params, baseAddress)) {
-				/* if strict flag is set and returned pointer is not within range then fail */
-				omrvmem_free_memory(portLibrary, baseAddress, params.byteAmount, identifier);
-				Trc_PRT_vmem_omrvmem_reserve_memory_ex_UnableToAllocateWithinSpecifiedRange(params.byteAmount, params.startAddress, params.endAddress);
-				baseAddress = NULL;
-				update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
-			}
-		}
 
+		if ((NULL != baseAddress) && isStrictAndOutOfRange(&params, baseAddress)) {
+			/* if strict flag is set and returned pointer is not within range then fail */
+			omrvmem_free_memory(portLibrary, baseAddress, params.byteAmount, identifier);
+			Trc_PRT_vmem_omrvmem_reserve_memory_ex_UnableToAllocateWithinSpecifiedRange(params.byteAmount, params.startAddress, params.endAddress);
+			baseAddress = NULL;
+			update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
+		}
+	}
 	Trc_PRT_vmem_omrvmem_reserve_memory_Exit_replacement(baseAddress, params.startAddress);
 
 	LP_DEBUG_PRINTF2("\t omrvmem_reserve_memory_ex returning 0x%zx, allocator = %i, \n", \
