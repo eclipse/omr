@@ -971,10 +971,12 @@ TR::Register *OMR::X86::TreeEvaluator::baddEvaluator(TR::Node *node, TR::CodeGen
    // target register generated and we return NULL to the caller (which should be
    // a store) to indicate that the store has already been done.
    //
-
+   
+   // Need special handling when Eflags results are needed. Otherwise, the later part of baddEvaluator could optimize
+   // the instruction to a 4 bytes LEA.
    if (NEED_CC(node))
       {
-      TR_ASSERT(node->getOpCodeValue() == TR::badd,
+      TR_ASSERT(node->getOpCodeValue() == TR::badd || node->getOpCodeValue() == TR::buadd,
                 "CC computation not supported for this node %p with opcode %s\n", node, cg->comp()->getDebug()->getName(node->getOpCode()));
 
       // we need eflags from integerAddAnalyser for the CC sequence
@@ -1223,7 +1225,19 @@ TR::Register *OMR::X86::TreeEvaluator::caddEvaluator(TR::Node *node, TR::CodeGen
    TR::MemoryReference *tempMR              = NULL;
    bool                 oursIsTheOnlyMemRef = true;
    TR::Compilation     *comp                = cg->comp();
+   
+   // Need special handling when Eflags results are needed. Otherwise, the later part of caddEvaluator could optimize
+   // the instruction to a 4 bytes LEA or ADD4RegReg which only works when Eflags can be ignored.
+   if (NEED_CC(node))
+      {    
+      TR_ASSERT(node->getOpCodeValue() == TR::cadd,
+                "CC computation not supported for this node %p with opcode %s\n", node, cg->comp()->getDebug()->getName(node->getOpCode()));
 
+      TR_X86BinaryCommutativeAnalyser  temp(cg);
+      temp.integerAddAnalyser(node, ADD2RegReg, ADD2RegMem, true/* produce eflags */);
+      return node->getRegister();
+      }    
+ 
    TR_ASSERT(TR::Compiler->target.is32Bit(), "AMD64 baddEvaluator not yet supported");
 
    // See if we can generate a direct memory operation. In this case there is no
