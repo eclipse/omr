@@ -99,7 +99,7 @@ MemToMemVarLenMacroOp::generateLoop()
          generateRRInstruction(_cg, TR::InstOpCode::LTR, _rootNode, _regLen, _regLen); //Because transformLengthMinusOneForMemoryOps uses TR::iadd
 
       _doneLabel  = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
-      _startControlFlow = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, _rootNode, _doneLabel);
+      _startControlFlow = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, _rootNode, _doneLabel);
       }
    if (getKind() == MemToMemMacroOp::IsMemInit)
       generateInstruction(0, 1);
@@ -154,7 +154,7 @@ MemToMemVarLenMacroOp::generateLoop()
          }
       }
 
-   generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, _rootNode, bottomOfLoop);
+   generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, _rootNode, bottomOfLoop);
 
    generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _rootNode, topOfLoop);
 
@@ -1095,9 +1095,9 @@ MemInitVarLenMacroOp::generateRemainder()
          _doneLabel  = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
 
       if(TR::Compiler->target.is64Bit())
-         generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::CG, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_BNHRC, _doneLabel, false, false);
+         generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::CG, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_MASK12, _doneLabel, false, false);
       else
-         generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_BNHRC, _doneLabel, false, false);
+         generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_MASK12, _doneLabel, false, false);
 
       if (_firstByteInitialized)
          generateRIInstruction(_cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, _rootNode, _regLen, -1);
@@ -1127,7 +1127,7 @@ MemInitVarLenMacroOp::generateRemainder()
       if (!_doneLabel)
          _doneLabel  = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
 
-      generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNHRC, _rootNode, _doneLabel);
+      generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, _rootNode, _doneLabel);
 
       cursor = generateSS1Instruction(_cg, TR::InstOpCode::MVC, _rootNode, 0,
                new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, 1, _cg),
@@ -1164,12 +1164,12 @@ MemClearVarLenMacroOp::generateRemainder()
    if(TR::Compiler->target.is64Bit())
       {
       cursor = generateS390ImmOp(_cg, TR::InstOpCode::NG, _rootNode, _regLen, _regLen, (int64_t)0xFF);
-      generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::CG, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_BLRC, _doneLabel, false, false);
+      generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::CG, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_MASK4, _doneLabel, false, false);
       }
    else
       {
       cursor = generateS390ImmOp(_cg, TR::InstOpCode::N, _rootNode, _regLen, _regLen, (int32_t)0xFF);
-      generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_BLRC, _doneLabel, false, false);
+      generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_MASK4, _doneLabel, false, false);
       }
 
    // Check to see if ImmOp generated a lit mem ref
@@ -1398,7 +1398,7 @@ MemCmpConstLenMacroOp::generateInstruction(int32_t offset, int64_t length, TR::I
 
    if (!inRemainder())
       {
-      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, _rootNode, _falseLabel);
+      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, _rootNode, _falseLabel);
       }
 
    return cursor;
@@ -1517,7 +1517,7 @@ MemCmpVarLenMacroOp::generateInstruction(int32_t offset, int64_t length)
 
    if (!useEXForRemainder() || !inRemainder())
       {
-      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, _rootNode, _falseLabel);
+      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, _rootNode, _falseLabel);
       }
 
    return cursor;
@@ -1634,14 +1634,14 @@ generateCmpSignResult(TR::CodeGenerator * cg, TR::Node * rootNode, TR::Register 
    // If we don't swap them, we have to generate "LCR resultReg, resultReg".
    //
 #else
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, rootNode, falseLabel);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, rootNode, falseLabel);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, rootNode, trueLabel);
    generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), rootNode, resultReg, resultReg);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, rootNode, doneLabel);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, rootNode, falseLabel);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, rootNode, gtLabel);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, rootNode, gtLabel);
 
    generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), rootNode, resultReg, -1);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, rootNode, doneLabel);
@@ -1806,7 +1806,7 @@ MemToMemTypedVarLenMacroOp::generateLoop()
 
    // Skip the loop if length is zero.
    TR::LabelSymbol * doneLoop = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
-   startControlFlow = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCodeFromNode(_lenNode), _dstNode, _lenReg, (int32_t)0, TR::InstOpCode::COND_BNHRC, doneLoop, false, false);
+   startControlFlow = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCodeFromNode(_lenNode), _dstNode, _lenReg, (int32_t)0, TR::InstOpCode::COND_MASK12, doneLoop, false, false);
 
    if (_isForward)
       {
@@ -2217,7 +2217,7 @@ TR::Instruction * MemCpyAtomicMacroOp::generateSTXLoop(int32_t strideSize, TR::I
    TR::LabelSymbol * endOfLoop = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
    cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _dstNode, topOfLoop);
 
-   cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCode(), _lenNode, _lenReg, strideSize * _unrollFactor, TR::InstOpCode::COND_BLRC, endOfLoop);
+   cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCode(), _lenNode, _lenReg, strideSize * _unrollFactor, TR::InstOpCode::COND_MASK4, endOfLoop);
 
    cursor = generateInstruction(loadOp, storeOp, _workReg, (int32_t) 0);
 
@@ -2314,7 +2314,7 @@ MemCpyAtomicMacroOp::generateOneSTXthenSTYLoopLabel(TR::LabelSymbol * oolStartLa
    cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _rootNode, oolStartLabel);
 
    TR::LabelSymbol * skipRoutineLabel = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
-   cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCode(), _lenNode, _lenReg, strideSize1, TR::InstOpCode::COND_BLRC, skipRoutineLabel);
+   cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCode(), _lenNode, _lenReg, strideSize1, TR::InstOpCode::COND_MASK4, skipRoutineLabel);
 
    // Initialize _startReg to _endReg here
    cursor = generateRRInstruction(_cg, TR::InstOpCode::getLoadRegOpCode(), _dstNode, _startReg, _endReg);
@@ -2371,7 +2371,7 @@ MemCpyAtomicMacroOp::generateOneSTXthenSTYLoopLabel(TR::LabelSymbol * oolStartLa
 
    cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _rootNode, skipRoutineLabel);
 
-   cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, _srcNode, doneCopyLabel);
+   cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, _srcNode, doneCopyLabel);
 
    oolPath->swapInstructionListsWithCompilation();
 
@@ -2436,7 +2436,7 @@ MemCpyAtomicMacroOp::generateLoop()
    TR::LabelSymbol * oolStartLabel6 = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
 
    // If length <= 0, skip to doneArrayCopyLabel
-   startControlFlow = cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCodeFromNode(_lenNode), _dstNode, _lenReg, (int32_t) 0, TR::InstOpCode::COND_BNHRC, doneArrayCopyLabel, false, false);
+   startControlFlow = cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCodeFromNode(_lenNode), _dstNode, _lenReg, (int32_t) 0, TR::InstOpCode::COND_MASK12, doneArrayCopyLabel, false, false);
 
    // backwards array copy
    // update end reg and start reg to be added with length
@@ -2514,22 +2514,22 @@ MemCpyAtomicMacroOp::generateLoop()
       cursor = generateRILInstruction(_cg, TR::InstOpCode::NILF, _srcNode, _alignedReg, 0x7);
 
       // NILL/NILF will set condition code to 0 if result 0 (8 byte aligned) or to 1 if result not 0 (
-      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, _srcNode, fourByteLoop); // not aligned with 8 bytes
-      //cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x0, TR::InstOpCode::COND_BNERC, fourByteLoop); // alignment with 8 bytes
+      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, _srcNode, fourByteLoop); // not aligned with 8 bytes
+      //cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x0, TR::InstOpCode::COND_MASK6, fourByteLoop); // alignment with 8 bytes
       cursor = generateSTXLoop(8, TR::InstOpCode::LG, TR::InstOpCode::STG, false);
 
       cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _rootNode, fourByteLoop);
       cursor = generateRIInstruction(_cg, TR::InstOpCode::NILL, _srcNode, _alignedReg, 0x3); // 0x3 == 11, last 2 bits
 
       // NILL will set condition code to 0 if result 0 (4 byte aligned) or to 1 if result not 0 (
-      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, _srcNode, twoByteLoop); // not aligned with 4 bytes
+      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, _srcNode, twoByteLoop); // not aligned with 4 bytes
       cursor = generateSTXLoop(4, TR::InstOpCode::L, TR::InstOpCode::ST, false);
 
       cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _rootNode, twoByteLoop);
       cursor = generateRIInstruction(_cg, TR::InstOpCode::NILL, _srcNode, _alignedReg, 0x1); // 0x1 == 1, last bit
 
       // NILL will set condition code to 0 if result 0 (2 byte aligned) or to 1 if result not 0 (
-      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, _srcNode, oneByteLoop); // not aligned with 2 bytes
+      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, _srcNode, oneByteLoop); // not aligned with 2 bytes
       cursor = generateSTXLoop(2, TR::InstOpCode::LH, TR::InstOpCode::STH, false);
 
       cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _rootNode, oneByteLoop);
@@ -2583,15 +2583,15 @@ MemCpyAtomicMacroOp::generateLoop()
 
          cursor = generateRILInstruction(_cg, TR::InstOpCode::NILF, _srcNode, _alignedReg, 0x7);
 
-         cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x2, TR::InstOpCode::COND_BERC, oolStartLabel2); // 0x2 = 0x010
+         cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x2, TR::InstOpCode::COND_MASK8, oolStartLabel2); // 0x2 = 0x010
          cursor = generateOneSTXthenSTYLoopLabel(oolStartLabel2, preDoneCopyLabel2, 2, TR::InstOpCode::LH, TR::InstOpCode::STH, 4, TR::InstOpCode::L, TR::InstOpCode::ST);
          cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _dstNode, preDoneCopyLabel2);
-         cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, _srcNode, remainderLabel);
+         cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, _srcNode, remainderLabel);
 
-         cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x6, TR::InstOpCode::COND_BERC, oolStartLabel3); // 0x6 = 0x110
+         cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x6, TR::InstOpCode::COND_MASK8, oolStartLabel3); // 0x6 = 0x110
          cursor = generateOneSTXthenSTYLoopLabel(oolStartLabel3, preDoneCopyLabel3, 2, TR::InstOpCode::LH, TR::InstOpCode::STH, 4, TR::InstOpCode::L, TR::InstOpCode::ST);
          cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _dstNode, preDoneCopyLabel3);
-         cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, _srcNode, remainderLabel);
+         cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, _srcNode, remainderLabel);
          }
 
       if (_cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
@@ -2608,23 +2608,23 @@ MemCpyAtomicMacroOp::generateLoop()
 
       cursor = generateRILInstruction(_cg, TR::InstOpCode::NILF, _srcNode, _alignedReg, 0x7);
 
-      cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x0, TR::InstOpCode::COND_BERC, oolStartLabel4); // 0x0 = 0x000
+      cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x0, TR::InstOpCode::COND_MASK8, oolStartLabel4); // 0x0 = 0x000
 
       cursor = generateSTXLoopLabel(oolStartLabel4, preDoneCopyLabel4, 8, TR::InstOpCode::LG, TR::InstOpCode::STG);
       cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _dstNode, preDoneCopyLabel4);
-      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, _srcNode, remainderLabel);
+      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, _srcNode, remainderLabel);
       if (_destType == TR::Int16)
          {
-         cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x4, TR::InstOpCode::COND_BERC, oolStartLabel5); // 0x4 = 0x100
+         cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x4, TR::InstOpCode::COND_MASK8, oolStartLabel5); // 0x4 = 0x100
          cursor = generateSTXLoopLabel(oolStartLabel5, preDoneCopyLabel5, 4, TR::InstOpCode::L, TR::InstOpCode::ST);
          cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _dstNode, preDoneCopyLabel5);
-         cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, _srcNode, remainderLabel);
+         cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, _srcNode, remainderLabel);
          }
-      cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x8, TR::InstOpCode::COND_BERC, oolStartLabel1); // 0x8 = 0x1000
+      cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _srcNode, _alignedReg, 0x8, TR::InstOpCode::COND_MASK8, oolStartLabel1); // 0x8 = 0x1000
 
       cursor = generateOneSTXthenSTYLoopLabel(oolStartLabel1, preDoneCopyLabel1, 4, TR::InstOpCode::L, TR::InstOpCode::ST, 8, TR::InstOpCode::LG, TR::InstOpCode::STG);
       cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _dstNode, preDoneCopyLabel1);
-      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, _srcNode, remainderLabel);
+      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, _srcNode, remainderLabel);
 
       // Create separate ool for unalignable arrays
       // reason to separate this from Remainder loop is to help branch prediction
@@ -2632,7 +2632,7 @@ MemCpyAtomicMacroOp::generateLoop()
       cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, _srcNode, oolStartLabel6);
       cursor = generateSTXLoopLabel(oolStartLabel6, preDoneCopyLabel6, strideSize(), unalignedLoadOp, unalignedStoreOp);
       cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _dstNode, preDoneCopyLabel6);
-      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, _srcNode, remainderLabel);
+      cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, _srcNode, remainderLabel);
 
       generateRemainder = true;
       }

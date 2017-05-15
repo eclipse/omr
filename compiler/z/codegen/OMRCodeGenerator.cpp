@@ -3747,7 +3747,7 @@ TR_S390Peephole::LRReduction()
       // from:
       // SLR @01, @04
       // LTR @01, @01
-      // BRC (BERC, 0x8) Label
+      // BRC (MASK8, 0x8) Label
       //
       // to:
       // SLR @01, @04
@@ -3757,13 +3757,13 @@ TR_S390Peephole::LRReduction()
          {
          TR::InstOpCode::S390BranchCondition branchCond = ((TR::S390BranchInstruction *) next)->getBranchCondition();
 
-         if ((branchCond == TR::InstOpCode::COND_BERC || branchCond == TR::InstOpCode::COND_BNERC) &&
+         if ((branchCond == TR::InstOpCode::COND_MASK8 || branchCond == TR::InstOpCode::COND_MASK6) &&
             performTransformation(comp(), "\nO^O S390 PEEPHOLE: Removing redundant Load and Test instruction at %p, because CC can be reused from logical instruction %p\n",_cursor, prev))
             {
             _cg->deleteInst(_cursor);
-            if (branchCond == TR::InstOpCode::COND_BERC)
+            if (branchCond == TR::InstOpCode::COND_MASK8)
                ((TR::S390BranchInstruction *) next)->setBranchCondition(TR::InstOpCode::COND_MASK10);
-            else if (branchCond == TR::InstOpCode::COND_BNERC)
+            else if (branchCond == TR::InstOpCode::COND_MASK6)
                ((TR::S390BranchInstruction *) next)->setBranchCondition(TR::InstOpCode::COND_MASK5);
             performed = true;
             return performed;

@@ -69,7 +69,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
    // Unsigned compare is used for address comparisons, and as such will almost
    // never be compared to constants, including NULL.  Avoid complications with
    // below optimization and just skip it.
-   if ( firstChild->isHighWordZero() && !isUnsignedCmp && (brCmpLowTrueCond==TR::InstOpCode::COND_BERC || brCmpLowTrueCond==TR::InstOpCode::COND_BNERC) )
+   if ( firstChild->isHighWordZero() && !isUnsignedCmp && (brCmpLowTrueCond==TR::InstOpCode::COND_MASK8 || brCmpLowTrueCond==TR::InstOpCode::COND_MASK6) )
       {
       firstHighZero = true;
       }

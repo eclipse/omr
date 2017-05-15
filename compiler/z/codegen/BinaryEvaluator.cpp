@@ -109,7 +109,7 @@ TR::RegisterPair * lnegFor32Bit(TR::Node * node, TR::CodeGenerator * cg, TR::Reg
 
 
    // Check to see if we need to propagate an overflow bit from LS int to MS int.
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, doneLNeg);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, doneLNeg);
    cursor->setStartInternalControlFlow();
 
    // Increment MS int due to overflow in LS int
@@ -152,7 +152,7 @@ TR::RegisterPair * lnegFor128Bit(TR::Node * node, TR::CodeGenerator * cg, TR::Re
 
 
    // Check to see if we need to propagate an overflow bit from low word long to high word long.
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, doneLNeg);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, doneLNeg);
    cursor->setStartInternalControlFlow();
 
 
@@ -225,7 +225,7 @@ laddConst(TR::Node * node, TR::CodeGenerator * cg, TR::RegisterPair * targetRegi
          generateS390ImmOp(cg, TR::InstOpCode::AL, node, tempReg, lowOrder, l_value);
 
          // Check for overflow in LS(h_value) int. If overflow, increment MS(l_value) int.
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNCRC, node, doneLAdd);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, node, doneLAdd);
          cursor->setStartInternalControlFlow();
 
          // Increment MS int due to overflow in LS int
@@ -774,9 +774,9 @@ lDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
             //special case, need to check if dividend is 0x8000000000000000 - but need to check it in 2 steps
             TR::LabelSymbol * doDiv = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
             generateS390ImmOp(cg, TR::InstOpCode::C, node, dividendPair->getHighOrder(), dividendPair->getHighOrder(), (int32_t) 0x80000000);
-            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, node, doDiv);
+            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, doDiv);
             cursor->setStartInternalControlFlow();
-            generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, dividendPair->getLowOrder(), (signed char)0, TR::InstOpCode::COND_BERC, endDiv);
+            generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, dividendPair->getLowOrder(), (signed char)0, TR::InstOpCode::COND_MASK8, endDiv);
             cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doDiv);
             endDiv->setEndInternalControlFlow();
 
@@ -822,7 +822,7 @@ lDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
                {
                TR::LabelSymbol * skipSet = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
-               cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, dividendPair->getHighOrder(), (signed char)0, TR::InstOpCode::COND_BNLRC, skipSet);
+               cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, dividendPair->getHighOrder(), (signed char)0, TR::InstOpCode::COND_MASK10, skipSet);
                cursor->setStartInternalControlFlow();
 
                //adjustment to dividend if dividend is negative
@@ -945,14 +945,14 @@ lDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
             generateS390ImmOp(cg, TR::InstOpCode::CG, node, dividendPair->getHighOrder(), dividendPair->getHighOrder(),
                   (int64_t)(CONSTANT64(0x8000000000000000)) , dependencies, litPoolBase);
 
-            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, node, gotoDiv);
+            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, gotoDiv);
             cursor->setStartInternalControlFlow();
             dontDiv->setEndInternalControlFlow();
 
             //  Fix up for remainder case
             if (!isDivision)
                {
-               cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, divisorPair->getHighOrder(), (signed char)-1, TR::InstOpCode::COND_BNERC, gotoDiv);
+               cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, divisorPair->getHighOrder(), (signed char)-1, TR::InstOpCode::COND_MASK6, gotoDiv);
                // Check to see if compare generated a register to build constChar
                TR::Instruction *compareInstr=(cursor->getOpCode().isCompare())?NULL:cursor->getPrev();
                if(compareInstr && compareInstr->getNumRegisterOperands()==2)
@@ -965,7 +965,7 @@ lDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
                }
             else
                {
-               generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, divisorPair->getHighOrder(), (signed char)-1, TR::InstOpCode::COND_BERC, dontDiv);
+               generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, divisorPair->getHighOrder(), (signed char)-1, TR::InstOpCode::COND_MASK8, dontDiv);
                }
 
             // Label to do the division
@@ -1164,7 +1164,7 @@ lDivRemGenericEvaluator64(TR::Node * node, TR::CodeGenerator * cg, bool isDivisi
             //special case, need to check if dividend is 0x8000000000000000 - but need to check it in 2 steps
             generateS390ImmOp(cg, TR::InstOpCode::CG, node, firstRegister, firstRegister, (int64_t) CONSTANT64(0x8000000000000000));
 
-            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, endDiv);
+            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, endDiv);
             cursor->setStartInternalControlFlow();
 
             generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doDiv);
@@ -1210,7 +1210,7 @@ lDivRemGenericEvaluator64(TR::Node * node, TR::CodeGenerator * cg, bool isDivisi
                {
                TR::LabelSymbol * skipSet = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
-               cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, firstRegister, (signed char)0,TR::InstOpCode::COND_BNLRC, skipSet);
+               cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, firstRegister, (signed char)0,TR::InstOpCode::COND_MASK10, skipSet);
                cursor->setStartInternalControlFlow();
 
                //adjustment to dividend if dividend is negative
@@ -1316,9 +1316,9 @@ lDivRemGenericEvaluator64(TR::Node * node, TR::CodeGenerator * cg, bool isDivisi
       //  We have to check for a special case where we do 0x8000000000000000/0xffffffffffffffff
       //  JAVA requires we return 0x8000000000000000 rem 0x00000000
       generateS390ImmOp(cg, TR::InstOpCode::CG, node, quoRegister, quoRegister, (int64_t) CONSTANT64(0x8000000000000000));
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, node, doDiv);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, doDiv);
       generateS390ImmOp(cg, TR::InstOpCode::CG, node, sourceRegister, sourceRegister, -1);
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, node, doDiv);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, doDiv);
       genLoadLongConstant(cg, node, 0, remRegister);
 
       skipDiv = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -1515,10 +1515,10 @@ iDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
    if (needCheck)
       {
       generateS390ImmOp(cg, TR::InstOpCode::C, node, remRegister, remRegister, (int32_t) 0x80000000);
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, node, doDiv);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, doDiv);
       cursor->setStartInternalControlFlow();
 
-      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, sourceRegister, (signed char)-1, TR::InstOpCode::COND_BNERC, doDiv);
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, sourceRegister, (signed char)-1, TR::InstOpCode::COND_MASK6, doDiv);
       cursor =
          generateRRInstruction(cg, TR::InstOpCode::LR, node, quoRegister, remRegister);
 
@@ -2010,7 +2010,7 @@ lsubHelper(TR::Node * node, TR::CodeGenerator * cg)
             generateS390ImmOp(cg, TR::InstOpCode::AL, node, tempReg, lowOrder, l_value);
 
             // Check for overflow in LS(h_value) int. If overflow, increment MS(l_value) int.
-            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNCRC, node, doneLSub);
+            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, node, doneLSub);
 
             // Increment MS int due to overflow in LS int
             generateRIInstruction(cg, TR::InstOpCode::AHI, node, highOrder, 1);
@@ -2935,7 +2935,7 @@ lmulHelper(TR::Node * node, TR::CodeGenerator * cg)
       // Prod = Al*Bl
       generateRRInstruction(cg, TR::InstOpCode::MR, node, trgtRegPair, src2RegPair->getLowOrder());
 
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, node, lmul1);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, node, lmul1);
       cursor->setStartInternalControlFlow();
 
       generateRRInstruction(cg, TR::InstOpCode::ALR, node, trgtRegPair->getHighOrder(), src2RegPair->getLowOrder());
@@ -2943,7 +2943,7 @@ lmulHelper(TR::Node * node, TR::CodeGenerator * cg)
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, lmul1);
 
       generateRIInstruction(cg, TR::InstOpCode::CHI, node, src2RegPair->getLowOrder(), 0);
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNMRC, node, lmul2);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, node, lmul2);
 
       generateRRInstruction(cg, TR::InstOpCode::ALR, node, trgtRegPair->getHighOrder(), tempRegisterPair->getLowOrder());
 
@@ -3611,7 +3611,7 @@ OMR::Z::TreeEvaluator::lmulhEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::LabelSymbol * doneMulh = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
       // positive first child, branch to posMulh label
-      cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, sourceRegister, (signed char)0, TR::InstOpCode::COND_BNLRC, posMulh);
+      cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, sourceRegister, (signed char)0, TR::InstOpCode::COND_MASK10, posMulh);
       cursor->setStartInternalControlFlow();
 
       // Negative first child, do complements on register
@@ -3943,7 +3943,7 @@ OMR::Z::TreeEvaluator::idivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
          // If the divisor is -1 we need to check the dividend for 0x80000000
          generateS390ImmOp(cg, TR::InstOpCode::C, node, targetRegister, targetRegister, (int32_t )0x80000000);
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, node, doDiv);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, doDiv);
          cursor->setStartInternalControlFlow();
          TR::RegisterDependencyConditions * dependencies
            = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
@@ -3972,7 +3972,7 @@ OMR::Z::TreeEvaluator::idivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             generateRRInstruction(cg, TR::InstOpCode::LTR, node, targetRegister, targetRegister);
 
             // if positive value, branch to doShift
-            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, node, doShift);
+            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, node, doShift);
             cursor->setStartInternalControlFlow();
             doShift->setEndInternalControlFlow();
 

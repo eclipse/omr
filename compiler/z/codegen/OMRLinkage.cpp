@@ -2161,7 +2161,7 @@ OMR::Z::Linkage::pushJNIReferenceArg(TR::Node * callNode, TR::Node * child, int3
           }
        generateRIInstruction(self()->cg(), TR::InstOpCode::getCmpHalfWordImmOpCode(), child, whatReg, 0);
 
-       TR::Instruction * br = generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, child, nonNullLabel);
+       TR::Instruction * br = generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, child, nonNullLabel);
        br->setStartInternalControlFlow();
        generateRRInstruction(self()->cg(), TR::InstOpCode::getXORRegOpCode(), child, pushRegister, pushRegister);
 

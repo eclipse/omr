@@ -524,7 +524,7 @@ TR_S390BinaryAnalyser::longSubtractAnalyser(TR::Node * root)
       if (!((ENABLE_ZARCH_FOR_32 && zArchTrexsupported) || setsOrReadsCC))
          {
          // Check for overflow in LS int. If overflow, we are done.
-         generateS390BranchInstruction(cg(), TR::InstOpCode::BRC,TR::InstOpCode::COND_BCRC, root, doneLSub);
+         generateS390BranchInstruction(cg(), TR::InstOpCode::BRC,TR::InstOpCode::COND_MASK3, root, doneLSub);
 
          // Increment MS int due to overflow in LS int
          generateRIInstruction(cg(), TR::InstOpCode::AHI, root, highDiff, -1);

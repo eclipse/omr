@@ -464,7 +464,7 @@ convertToFixed(TR::Node * node, TR::CodeGenerator * cg)
 
       doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
       generateRRInstruction(cg, compareOp, node, srcRegister, srcRegister);
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BORC, node, doneLabel);   //NaN results in CC3
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK1, node, doneLabel);   //NaN results in CC3
       cursor->setStartInternalControlFlow();
 
       //3) Convert to Fixed
@@ -566,9 +566,9 @@ convertFromFixed(TR::Node * node, TR::CodeGenerator * cg)
       TR::RegisterDependencyConditions * deps = NULL;
       skipAddLabel->setEndInternalControlFlow();
       generateRRInstruction(cg, TR::InstOpCode::LTR, node, srcRegister, srcRegister);
-      // if positive or zero, done BNLRC
+      // if positive or zero, done BNLRC (changed to MASK10) 
       // otherwise, add double constant 0x41f0000000000000 to converted value
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, node, skipAddLabel);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, node, skipAddLabel);
       cursor->setStartInternalControlFlow();
       switch(node->getDataType())
          {
@@ -722,7 +722,7 @@ commonLong2FloatEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::LabelSymbol *startLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
       startLabel->setStartInternalControlFlow();
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startLabel, deps);
-      TR::Instruction *cursor =generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, node, doneLabel);
+      TR::Instruction *cursor =generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, node, doneLabel);
       if (is128)
          {
          generateRXInstruction(cg, TR::InstOpCode::LD, node, tempFloatReg->getHighOrder(), two_pow_64_hi);
@@ -1096,12 +1096,12 @@ OMR::Z::TreeEvaluator::floatRemHelper(TR::Node * node, TR::CodeGenerator * cg)
       generateRRInstruction(cg, TR::InstOpCode::LER, node, targetRegister, firstRegister);
       labelOK->setEndInternalControlFlow();
       cursor = generateRRFInstruction(cg, TR::InstOpCode::DIEBR, node, targetRegister, secondRegister, tempRegister, 0x5);
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BCRC, node, labelNotExact);    // remainder not exact
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK3, node, labelNotExact);    // remainder not exact
       cursor->setStartInternalControlFlow();
       generateRXInstruction(cg, TR::InstOpCode::TCEB, node, targetRegister, 0x800);  // c is +0 ?
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, labelOK);        // it is not +0
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, labelOK);        // it is not +0
       generateRXInstruction(cg, TR::InstOpCode::TCEB, node, firstRegister, 0x555);   // a is < +0 ?
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, labelOK);        // it is not < +0
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, labelOK);        // it is not < +0
       generateRRInstruction(cg, TR::InstOpCode::LCEBR, node, targetRegister, targetRegister); // negate answer to be -0
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelOK);        // it is not < +0
       }
@@ -1110,12 +1110,12 @@ OMR::Z::TreeEvaluator::floatRemHelper(TR::Node * node, TR::CodeGenerator * cg)
       generateRRInstruction(cg, TR::InstOpCode::LDR, node, targetRegister, firstRegister);
       labelOK->setEndInternalControlFlow();
       cursor = generateRRFInstruction(cg, TR::InstOpCode::DIDBR, node, targetRegister, secondRegister, tempRegister, 0x5);
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BCRC, node, labelNotExact);    // remainder not exact
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK3, node, labelNotExact);    // remainder not exact
       cursor->setStartInternalControlFlow();
       generateRXInstruction(cg, TR::InstOpCode::TCDB, node, targetRegister, 0x800);  // c is +0 ?
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, labelOK);        // it is not +0
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, labelOK);        // it is not +0
       generateRXInstruction(cg, TR::InstOpCode::TCDB, node, firstRegister, 0x555);   // a is < +0 ?
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, labelOK);        // it is not < +0
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, labelOK);        // it is not < +0
       generateRRInstruction(cg, TR::InstOpCode::LCDBR, node, targetRegister, targetRegister); // negate answer to be -0
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelOK);        // it is not < +0
       }
@@ -1251,7 +1251,7 @@ OMR::Z::TreeEvaluator::fbits2iEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       }
    cleansedNumber->setEndInternalControlFlow();
    generateRXInstruction(cg, TR::InstOpCode::TCEB, node, sourceReg, (uint32_t) 0x03f);
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, cleansedNumber);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, cleansedNumber);
    cursor->setStartInternalControlFlow();
    TR::MemoryReference * positiveInfinity = generateS390MemoryReference((int32_t)0x7f800000, TR::Int32, cg, litBase);
    TR::MemoryReference * negativeInfinity = generateS390MemoryReference((int32_t)0xff800000, TR::Int32, cg, litBase);
@@ -1261,7 +1261,7 @@ OMR::Z::TreeEvaluator::fbits2iEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       deps->addPostCondition(litBase, TR::RealRegister::AssignAny);
       }
    generateRXInstruction(cg, TR::InstOpCode::TCEB, node, sourceReg, (uint32_t) 0x00f);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, infinityNumber);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, infinityNumber);
    if (node->normalizeNanValues())
       {
       generateRXInstruction(cg, TR::InstOpCode::LE, node, sourceReg, NaN);
@@ -1269,7 +1269,7 @@ OMR::Z::TreeEvaluator::fbits2iEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cleansedNumber);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, infinityNumber);
    generateRXInstruction(cg, TR::InstOpCode::TCEB, node, sourceReg, (uint32_t) 0x010);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, positiveInfinityNumber);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, positiveInfinityNumber);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, negativeInfinityNumber);
    generateRXInstruction(cg, TR::InstOpCode::LE, node, sourceReg, negativeInfinity);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cleansedNumber);
@@ -1414,7 +1414,7 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          sourceReg = cg->evaluate(firstChild);
          cleansedNumber->setEndInternalControlFlow();
          generateRXInstruction(cg, TR::InstOpCode::TCDB, node, sourceReg, (uint32_t) 0x03f);
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, cleansedNumber);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, cleansedNumber);
          cursor->setStartInternalControlFlow();
 
          if (litBase)
@@ -1422,7 +1422,7 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             deps->addPostCondition(litBase, TR::RealRegister::AssignAny);
             }
          generateRXInstruction(cg, TR::InstOpCode::TCDB, node, sourceReg, (uint32_t) 0x00f);
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, infinityNumber);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, infinityNumber);
          if (node->normalizeNanValues())
             {
             generateRXInstruction(cg, TR::InstOpCode::LD, node, sourceReg, NaN);
@@ -1430,7 +1430,7 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cleansedNumber);
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, infinityNumber);
          generateRXInstruction(cg, TR::InstOpCode::TCDB, node, sourceReg, (uint32_t) 0x010);
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, positiveInfinityNumber);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, positiveInfinityNumber);
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, negativeInfinityNumber);
          generateRXInstruction(cg, TR::InstOpCode::LD, node, sourceReg, negativeInfinity);
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cleansedNumber);
@@ -1457,14 +1457,14 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          TR::RegisterDependencyConditions * lgdrDeps = NULL;
          cleansedNumber->setEndInternalControlFlow();
          generateRXInstruction(cg, TR::InstOpCode::TCDB, node, sourceReg, (uint32_t) 0x03f);
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, cleansedNumber);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, cleansedNumber);
          cursor->setStartInternalControlFlow();
          if (litBase)
             {
             deps->addPostCondition(litBase, TR::RealRegister::AssignAny);
             }
          generateRXInstruction(cg, TR::InstOpCode::TCDB, node, sourceReg, (uint32_t) 0x00f);
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, infinityNumber);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, infinityNumber);
          if (node->normalizeNanValues())
             {
             generateRXInstruction(cg, TR::InstOpCode::LD, node, sourceReg, NaN);
@@ -1472,7 +1472,7 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cleansedNumber);
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, infinityNumber);
          generateRXInstruction(cg, TR::InstOpCode::TCDB, node, sourceReg, (uint32_t) 0x010);
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, positiveInfinityNumber);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, positiveInfinityNumber);
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, negativeInfinityNumber);
          generateRXInstruction(cg, TR::InstOpCode::LD, node, sourceReg, negativeInfinity);
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cleansedNumber);
@@ -1503,14 +1503,14 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       sourceReg = cg->evaluate(firstChild);
       cleansedNumber->setEndInternalControlFlow();
       generateRXInstruction(cg, TR::InstOpCode::TCDB, node, sourceReg, (uint32_t) 0x03f);
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, cleansedNumber);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, cleansedNumber);
       cursor->setStartInternalControlFlow();
       if (litBase)
          {
          deps->addPostCondition(litBase, TR::RealRegister::AssignAny);
          }
       generateRXInstruction(cg, TR::InstOpCode::TCDB, node, sourceReg, (uint32_t) 0x00f);
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, infinityNumber);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, infinityNumber);
       if (node->normalizeNanValues())
          {
          generateRXInstruction(cg, TR::InstOpCode::LD, node, sourceReg, NaN);
@@ -1518,7 +1518,7 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cleansedNumber);
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, infinityNumber);
       generateRXInstruction(cg, TR::InstOpCode::TCDB, node, sourceReg, (uint32_t) 0x010);
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, positiveInfinityNumber);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, positiveInfinityNumber);
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, negativeInfinityNumber);
       generateRXInstruction(cg, TR::InstOpCode::LD, node, sourceReg, negativeInfinity);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cleansedNumber);
@@ -1613,9 +1613,9 @@ l2dHelper64(TR::Node * node, TR::CodeGenerator * cg)
       skipAddLabel->setEndInternalControlFlow();
 
       generateRRInstruction(cg, TR::InstOpCode::LTGR, node, longRegister, longRegister);
-      //if positive or zero, done BNLRC
+      //if positive or zero, done BNLRC (changed to MASK10)
       //otherwise, add double constant representing 2^64 to converted value
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, node, skipAddLabel);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, node, skipAddLabel);
       cursor->setStartInternalControlFlow();
       deps->addPostCondition(targetFloatRegister, TR::RealRegister::AssignAny);
       generateS390ImmOp(cg, TR::InstOpCode::ADB, node, targetFloatRegister, targetFloatRegister, (int64_t) CONSTANT64(0x43f0000000000000), deps);
@@ -1663,9 +1663,9 @@ l2fHelper64(TR::Node * node, TR::CodeGenerator * cg)
       skipAddLabel->setEndInternalControlFlow();
 
       generateRRInstruction(cg, TR::InstOpCode::LTGR, node, longRegister, longRegister);
-      //if positive or zero, done BNLRC
+      //if positive or zero, done BNLRC (changed to MASK10)
       //otherwise, add double constant 0x43f0000000000000 to converted value
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, node, skipAddLabel);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, node, skipAddLabel);
       cursor->setStartInternalControlFlow();
       deps->addPostCondition(targetFloatRegister, TR::RealRegister::AssignAny);
       //cannot use opcodes TR::InstOpCode::AE or TR::InstOpCode::AEB with generateS390ImmOp,
@@ -1788,7 +1788,7 @@ f2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    //Test if NaN
    cursor = generateRXInstruction(cg, TR::InstOpCode::TCEB, node, tempFloatRegister, (uint32_t) 0x30);
    //If NaN , go to label6
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, node, label6);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, label6);
    //Load as positive FP
    cursor = generateRRInstruction(cg, TR::InstOpCode::LPEBR, node, tempFloatRegister, tempFloatRegister);
    cursor = generateRXInstruction(cg, TR::InstOpCode::STE, node, tempFloatRegister, oddMR);
@@ -1802,7 +1802,7 @@ f2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    //tempRegister now has actual exponent value
    cursor = generateRIInstruction(cg, TR::InstOpCode::CHI, node, tempRegister, 63);
    // if exponent is bigger than 63, overflow , go to label 6
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, node, label6);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, node, label6);
    //clear exponent bits, odd register will have only fraction
    cursor = generateS390ImmOp(cg, TR::InstOpCode::N, node, oddRegister, oddRegister, (int32_t) 0x007fffff, dependencies);
    cursor = generateRIInstruction(cg, TR::InstOpCode::LA, node, tempRegister2, 1);
@@ -1812,9 +1812,9 @@ f2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    //oddRegister has fraction in 0-22 bits and bit 23 is 1
    cursor = generateRIInstruction(cg, TR::InstOpCode::CHI, node, tempRegister, 23);
    //if exponent value is 23, go to label5
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, label5);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, label5);
    //if exponent value is >23, go to label3
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, node, label3);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, label3);
    // exponent value is less than 23
    cursor = generateRRInstruction(cg, TR::InstOpCode::LCR, node, tempRegister, tempRegister);
    //tempRegister now has complement of the exponent
@@ -1848,12 +1848,12 @@ f2lHelper(TR::Node * node, TR::CodeGenerator * cg)
 
    TR::MemoryReference * evenMRcopy2 = generateS390MemoryReference(*evenMR, 0, cg); // prevent duplicate use of memory reference
    cursor = generateSIInstruction(cg, TR::InstOpCode::TM, node, evenMRcopy2, (uint32_t) 0x00000080);
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, label7);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, label7);
 
    cursor = generateRRInstruction(cg, TR::InstOpCode::LCR, node, evenRegister, evenRegister);
    cursor = generateRRInstruction(cg, TR::InstOpCode::LCR, node, oddRegister, oddRegister);
 
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, label7);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, label7);
    cursor = generateRIInstruction(cg, TR::InstOpCode::AHI, node, evenRegister, -1);
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, label7);
 
@@ -1864,7 +1864,7 @@ f2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    cursor = generateRSInstruction(cg, TR::InstOpCode::SLDL, node, targetRegisterPair, 63);
    TR::MemoryReference * evenMRcopy3 = generateS390MemoryReference(*evenMR, 0, cg); // prevent duplicate use of memory reference
    cursor = generateSIInstruction(cg, TR::InstOpCode::TM, node, evenMRcopy3, (uint32_t) 0x00000080);
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BORC, node, label7);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK1, node, label7);
 
    cursor = generateRIInstruction(cg, TR::InstOpCode::AHI, node, evenRegister, -1);
    cursor = generateRIInstruction(cg, TR::InstOpCode::AHI, node, oddRegister, -1);
@@ -1909,7 +1909,7 @@ f2lHelper64(TR::Node * node, TR::CodeGenerator * cg)
    doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    cursor = generateRRInstruction(cg, TR::InstOpCode::CEBR, node, floatRegister, floatRegister);
    // if NaN, then done
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BORC, node, doneLabel);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK1, node, doneLabel);
    // this path requires internal control flow
    doneLabel->setEndInternalControlFlow();
    cursor->setStartInternalControlFlow();
@@ -2012,13 +2012,13 @@ d2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    generateRRFInstruction(cg, TR::InstOpCode::FIDBR, node, tempFloatRegister, floatRegister, (int8_t) 0x5, true);
    generateRXInstruction(cg, TR::InstOpCode::TCDB, node, tempFloatRegister, (uint32_t) 0xccf);
    // if 0 then done
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, node, label7);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, label7);
    cursor->setStartInternalControlFlow();
 
    generateRXInstruction(cg, TR::InstOpCode::STE, node, tempFloatRegister, tempMR1);
    generateRXInstruction(cg, TR::InstOpCode::TCDB, node, tempFloatRegister, (uint32_t) 0x30);
    //If NaN, go to label6
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, node, label6);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, label6);
    // Load as positive
    generateRRInstruction(cg, TR::InstOpCode::LPDBR, node, tempFloatRegister, tempFloatRegister);
    TR::MemoryReference * tempMR2copy = generateS390MemoryReference(*tempMR2, 0, cg);
@@ -2033,7 +2033,7 @@ d2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    //tempRegister now has actual exponent value
    generateRIInstruction(cg, TR::InstOpCode::CHI, node, tempRegister, 63);
    // go to label6 , if exponent is bigger than 63, 'cause it is overflow
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, node, label6);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, node, label6);
    //clear exponent bits, evenRegister will have only fraction
 
    generateS390ImmOp(cg, TR::InstOpCode::N, node, evenRegister, evenRegister, (int32_t) 0x000fffff, dependencies);
@@ -2043,9 +2043,9 @@ d2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    // 20th bit of evenRegister is made 1
    generateRIInstruction(cg, TR::InstOpCode::CHI, node, tempRegister, 52);
    //exponent == 52 -> go to label5
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, label5);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, label5);
    //exponent > 52 -> go to label3
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, node, label3);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, label3);
    generateRRInstruction(cg, TR::InstOpCode::LCR, node, tempRegister, tempRegister);
    generateRIInstruction(cg, TR::InstOpCode::AHI, node, tempRegister, 52);
    // tempRegister now have (52 - exponent)
@@ -2071,10 +2071,10 @@ d2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label5);
    TR::MemoryReference * tempMR1copy = generateS390MemoryReference(*tempMR1, 0, cg);
    generateSIInstruction(cg, TR::InstOpCode::TM, node, tempMR1copy, (uint32_t) 0x00000080);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZRC, node, label7);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, label7);
    generateRRInstruction(cg, TR::InstOpCode::LCR, node, evenRegister, evenRegister);
    generateRRInstruction(cg, TR::InstOpCode::LCR, node, oddRegister, oddRegister);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, label7);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, label7);
    generateRIInstruction(cg, TR::InstOpCode::AHI, node, evenRegister, -1);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, label7);
    //LABEL6
@@ -2083,7 +2083,7 @@ d2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    generateRSInstruction(cg, TR::InstOpCode::SLDL, node, targetRegisterPair, 63);
    TR::MemoryReference * tempMR1copy2 = generateS390MemoryReference(*tempMR1, 0, cg);
    generateSIInstruction(cg, TR::InstOpCode::TM, node, tempMR1copy2, (uint32_t) 0x00000080);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BORC, node, label7);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK1, node, label7);
    generateRIInstruction(cg, TR::InstOpCode::AHI, node, evenRegister, -1);
    generateRIInstruction(cg, TR::InstOpCode::AHI, node, oddRegister, -1);
 
@@ -2129,7 +2129,7 @@ d2lHelper64(TR::Node * node, TR::CodeGenerator * cg)
       // if NaN
       generateRXInstruction(cg, TR::InstOpCode::TCDB, node, floatRegister, (uint32_t) 0x00f);
 
-      TR::Instruction *cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNZRC, node, label1);
+      TR::Instruction *cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, label1);
       cursor->setStartInternalControlFlow();
       label1->setEndInternalControlFlow();
       dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
@@ -2170,145 +2170,145 @@ OMR::Z::TreeEvaluator::d2fEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC, false);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpneEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC, false);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpltEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC, false);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpgeEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, TR::InstOpCode::COND_BNHRC, false);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, TR::InstOpCode::COND_MASK12, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpgtEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC, false);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpleEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNHRC, TR::InstOpCode::COND_BNLRC, false);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, TR::InstOpCode::COND_MASK10, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpequEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC, true);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpneuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC, true);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpltuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC, true);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpgeuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, TR::InstOpCode::COND_BNHRC, true);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, TR::InstOpCode::COND_MASK12, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpgtuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC, true);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::iffcmpleuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNHRC, TR::InstOpCode::COND_BNLRC, true);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, TR::InstOpCode::COND_MASK10, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC, false);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpneEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC, false);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpltEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC, false);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpgeEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, TR::InstOpCode::COND_BNHRC, false);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, TR::InstOpCode::COND_MASK12, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpgtEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC, false);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpleEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNHRC, TR::InstOpCode::COND_BNLRC, false);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, TR::InstOpCode::COND_MASK10, false);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpequEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC, true);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpneuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC, true);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpltuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC, true);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpgeuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, TR::InstOpCode::COND_BNHRC, true);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, TR::InstOpCode::COND_MASK12, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpgtuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC, true);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4, true);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fcmpleuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNHRC, TR::InstOpCode::COND_BNLRC, true);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, TR::InstOpCode::COND_MASK10, true);
    }
 
 ////  GRA Support ////////////////////////////////////////////////////////////////////////
