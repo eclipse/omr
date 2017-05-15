@@ -7189,7 +7189,7 @@ fi
 # Restore the value of $cross_compiling.
 cross_compiling=$save_cross_compiling
 
-ac_config_files="$ac_config_files include_core/omrversionstrings.h:include_core/omrversionstrings.h.in omrmakefiles/configure.mk:omrmakefiles/configure.mk.in"
+ac_config_files="$ac_config_files include_core/omrversionstrings.h:include_core/omrversionstrings.h.in omrmakefiles/configure.mk:omrmakefiles/configure.mk.in ./omr.rc:./omr.rc.in"
 
 
 ac_config_headers="$ac_config_headers include_core/omrcfg.h:include_core/omrcfg.h.in"
@@ -7908,6 +7908,7 @@ do
   case $ac_config_target in
     "include_core/omrversionstrings.h") CONFIG_FILES="$CONFIG_FILES include_core/omrversionstrings.h:include_core/omrversionstrings.h.in" ;;
     "omrmakefiles/configure.mk") CONFIG_FILES="$CONFIG_FILES omrmakefiles/configure.mk:omrmakefiles/configure.mk.in" ;;
+    "./omr.rc") CONFIG_FILES="$CONFIG_FILES ./omr.rc:./omr.rc.in" ;;
     "include_core/omrcfg.h") CONFIG_HEADERS="$CONFIG_HEADERS include_core/omrcfg.h:include_core/omrcfg.h.in" ;;
     "toolconfigure") CONFIG_COMMANDS="$CONFIG_COMMANDS toolconfigure" ;;
 
@@ -8537,4 +8538,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
-

@@ -49,6 +49,14 @@ AC_ARG_VAR([OMR_CROSS_CONFIGURE],
 	Compiler and feature detection tests will be invalid. All options must be configured manually.
 	One of: yes,no. (Default: no)])
 
+AC_ARG_VAR([OMR_PRODUCT_DESCRIPTION], [The description of product integerating OMR. (Default: J9 Virtual Machine Runtime\0)])
+AC_ARG_VAR([OMR_PRODUCT_NAME], [The name of product integerating OMR. (Default: IBM SDK, Java(tm) 2 Technology Edition\0)])
+AC_ARG_VAR([OMR_PRODUCT_VERSION], [The version of product integerating OMR. (Default: R2.9\0)])
+
+OMR_PRODUCT_DESCRIPTION=${OMR_PRODUCT_DESCRIPTION:-"AC_PACKAGE_STRING AC_PACKAGE_URL"}
+OMR_PRODUCT_NAME=${OMR_PRODUCT_NAME:-"AC_PACKAGE_NAME"}
+OMR_PRODUCT_VERSION=${OMR_PRODUCT_VERSION:-"AC_PACKAGE_VERSION"}
+
 AC_ARG_ENABLE([optimized],
 	AS_HELP_STRING([--enable-optimized], [Create an optimized build. (Default: yes)]),
 	[],
@@ -606,6 +614,7 @@ cross_compiling=$save_cross_compiling
 AC_CONFIG_FILES([
 	include_core/omrversionstrings.h:include_core/omrversionstrings.h.in
 	omrmakefiles/configure.mk:omrmakefiles/configure.mk.in
+	omr.rc
 ])
 
 AC_CONFIG_HEADERS([include_core/omrcfg.h:include_core/omrcfg.h.in])
@@ -624,3 +633,4 @@ AC_CONFIG_COMMANDS([toolconfigure],
 		[OMR_HOSTCONFIG_ENV="CC= CXX="])])
 
 AC_OUTPUT
+
