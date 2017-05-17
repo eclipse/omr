@@ -1260,12 +1260,9 @@ void TR_LoopUnroller::modifyOriginalLoop(TR_RegionStructure *loop, TR_StructureS
             {
             if (exitNode->getStructure()->getParent() == parent)
                {
-               bool found = (std::find(loopNode->getSuccessors().begin(), loopNode->getSuccessors().end(), correspondingExitEdge) != loopNode->getSuccessors().end());
-               loopNode->getSuccessors().remove(correspondingExitEdge);
-               TR_ASSERT(found, "GLU: bad structure while removing edge");
-               found = (std::find(exitNode->getPredecessors().begin(), exitNode->getPredecessors().end(), correspondingExitEdge) != exitNode->getPredecessors().end());
-               exitNode->getPredecessors().remove(correspondingExitEdge);
-               TR_ASSERT(found, "GLU: bad structure while removing edge");
+               TR_ASSERT(loopNode == correspondingExitEdge->getFrom(), "Edge origination mismatch");
+               TR_ASSERT(exitNode == correspondingExitEdge->getTo(), "Edge destination mismatch");
+               manuallyRemoveEdgeFromCFG(*correspondingExitEdge);
                }
             else
                removeExternalEdge(parent, loopNode, exitNode->getNumber());
@@ -1346,14 +1343,9 @@ void TR_LoopUnroller::modifyOriginalLoop(TR_RegionStructure *loop, TR_StructureS
             //Remove L->X or L->X* in P
             if (exitNode->getStructure()->getParent() == parent)
                {
-
-               bool found = (std::find(loopNode->getSuccessors().begin(), loopNode->getSuccessors().end(), correspondingExitEdge) != loopNode->getSuccessors().end());
-               loopNode->getSuccessors().remove(correspondingExitEdge);
-               TR_ASSERT(found, "GLU: bad structure while removing edge");
-               found = (std::find(exitNode->getPredecessors().begin(), exitNode->getPredecessors().end(), correspondingExitEdge) != exitNode->getPredecessors().end());
-               exitNode->getPredecessors().remove(correspondingExitEdge);
-               TR_ASSERT(found,
-            		   "GLU: bad structure while removing edge");
+               TR_ASSERT(loopNode == correspondingExitEdge->getFrom(), "Edge origination mismatch");
+               TR_ASSERT(exitNode == correspondingExitEdge->getTo(), "Edge destination mismatch");
+               manuallyRemoveEdgeFromCFG(*correspondingExitEdge);
                }
             else
                {
@@ -1621,6 +1613,21 @@ void TR_LoopUnroller::modifyOriginalLoop(TR_RegionStructure *loop, TR_StructureS
 
    }
 
+void TR_LoopUnroller::manuallyRemoveEdgeFromCFG(TR::CFGEdge &edge)
+   {
+   TR::CFGNode *from = edge.getFrom();
+   TR::CFGNode *to = edge.getTo();
+   auto successorIterator = std::find(from->getSuccessors().begin(), from->getSuccessors().end(), &edge);
+   auto predecessorIterator = std::find(to->getPredecessors().begin(), to->getPredecessors().end(), &edge);
+   bool found = (
+      (successorIterator != from->getSuccessors().end())
+      && (predecessorIterator != to->getPredecessors().end())
+      );
+   TR_ASSERT(found, "GLU: bad structure while removing edge");
+   from->getSuccessors().erase(successorIterator);
+   to->getPredecessors().erase(predecessorIterator);
+   }
+
 void TR_LoopUnroller::removeExternalEdge(TR_RegionStructure *parent,
                                                 TR_StructureSubGraphNode *from,
                                                 int32_t to)
@@ -1642,13 +1649,7 @@ void TR_LoopUnroller::removeExternalEdge(TR_RegionStructure *parent,
 
    if (numExitEdgesTo(from->getStructure()->asRegion(), to) == 0)
       {
-      bool found = (std::find(relevantEdge->getFrom()->getSuccessors().begin(), relevantEdge->getFrom()->getSuccessors().end(), relevantEdge) != relevantEdge->getFrom()->getSuccessors().end());
-      relevantEdge->getFrom()->getSuccessors().remove(relevantEdge);
-      TR_ASSERT(found, "GLU: bad structure while removing edge");
-      found = (std::find(relevantEdge->getTo()->getPredecessors().begin(), relevantEdge->getTo()->getPredecessors().end(), relevantEdge) != relevantEdge->getTo()->getPredecessors().end());
-      relevantEdge->getTo()->getPredecessors().remove(relevantEdge);
-      TR_ASSERT(found,
-    		  "GLU: bad structure while removing edge");
+      manuallyRemoveEdgeFromCFG(*relevantEdge);
       parent->getExitEdges().remove(relevantEdge);
       }
    }

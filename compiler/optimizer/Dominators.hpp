@@ -95,7 +95,7 @@ class TR_Dominators
    struct StackInfo
       {
       typedef TR::CFGEdgeList list_type;
-      typedef std::list<TR::CFGEdge*, TR::typed_allocator<TR::CFGEdge*, TR::Allocator> >::iterator iterator_type;
+      typedef TR::CFGEdgeList::iterator iterator_type;
       StackInfo(list_type &list, iterator_type position, int32_t parent) :
          list(list),
          listPosition(position),

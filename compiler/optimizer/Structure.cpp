@@ -440,22 +440,30 @@ void TR_RegionStructure::removeEdge(TR::CFGEdge *edge, bool isExitEdge)
    //
    TR::CFGNode *fromNode = edge->getFrom();
    TR::CFGNode *toNode   = edge->getTo();
-   if(std::find(fromNode->getSuccessors().begin(), fromNode->getSuccessors().end(), edge) != fromNode->getSuccessors().end())
-      {
-      fromNode->getSuccessors().remove(edge);
-      TR_ASSERT((std::find(toNode->getPredecessors().begin(), toNode->getPredecessors().end(), edge) != toNode->getPredecessors().end())
-                ,"bad structure found trying to remove an out edge");
-      toNode->getPredecessors().remove(edge);
-      }
-   else
-      {
-      TR_ASSERT((std::find(fromNode->getExceptionSuccessors().begin(), fromNode->getExceptionSuccessors().end(), edge) != fromNode->getExceptionSuccessors().end())
-                ,"bad structure found trying to remove an out edge");
-      fromNode->getExceptionSuccessors().remove(edge);
-      TR_ASSERT((std::find(toNode->getExceptionPredecessors().begin(), toNode->getExceptionPredecessors().end(), edge) != toNode->getExceptionPredecessors().end())
-                ,"bad structure found trying to remove an out edge");
-      toNode->getExceptionPredecessors().remove(edge);
-      }
+   auto successorIterator = std::find(fromNode->getSuccessors().begin(), fromNode->getSuccessors().end(), edge);
+   bool isRegularEdge = successorIterator != fromNode->getSuccessors().end();
+
+   TR::CFGEdgeList &successorList = isRegularEdge ?
+      fromNode->getSuccessors() :
+      fromNode->getExceptionSuccessors();
+
+   TR::CFGEdgeList &predecessorList = isRegularEdge ?
+      toNode->getPredecessors() :
+      toNode->getExceptionPredecessors();
+
+   auto predecessorIterator = std::find(predecessorList.begin(), predecessorList.end(), edge);
+
+   successorIterator = isRegularEdge ?
+      successorIterator :
+      std::find(successorList.begin(), successorList.end(), edge);
+
+   TR_ASSERT(
+      (predecessorIterator != predecessorList.end()) && (successorIterator != successorList.end()),
+      "bad structure found trying to remove an out edge"
+      );
+
+   predecessorList.erase(predecessorIterator);
+   successorList.erase(successorIterator);
 
    bool cleanupAlreadyDone = false;
    if (isExitEdge)
@@ -1223,8 +1231,11 @@ void TR_RegionStructure::collapseIntoParent()
                      if ((*pred)->getFrom()->getNumber() == getNumber() &&
                          toStructureSubGraphNode((*pred)->getFrom())->getStructure() == this)
                         {
-                        nodeInParent->getSuccessors().remove(*pred);
-                        target->getPredecessors().remove(*pred);
+                        TR::CFGEdgeList &successorList = nodeInParent->getSuccessors();
+                        auto successorIterator = std::find(successorList.begin(), successorList.end(), *pred);
+                        if (successorIterator != successorList.end()) successorList.erase(successorIterator);
+
+                        target->getPredecessors().erase(pred);
                         break;
                         }
                      }
@@ -1241,7 +1252,9 @@ void TR_RegionStructure::collapseIntoParent()
             // Disconnect this edge from the original target node in the child
             // region. This target node is not used in the parent region.
             //
-            toNode->getPredecessors().remove(*edge);
+            TR::CFGEdgeList &predecessorList = toNode->getPredecessors();
+            auto predecessorIterator = std::find(predecessorList.begin(), predecessorList.end(), *edge);
+            if (predecessorIterator != predecessorList.end()) predecessorList.erase(predecessorIterator);
             }
          else
             {
@@ -1276,8 +1289,11 @@ void TR_RegionStructure::collapseIntoParent()
                      if (((*pred)->getFrom()->getNumber() == getNumber()) &&
                          (toStructureSubGraphNode((*pred)->getFrom())->getStructure() == this))
                         {
-                        nodeInParent->getExceptionSuccessors().remove(*pred);
-                        target->getExceptionPredecessors().remove(*pred);
+                        TR::CFGEdgeList &successorList = nodeInParent->getExceptionSuccessors();
+                        auto successorIterator = std::find(successorList.begin(), successorList.end(), *pred);
+                        if (successorIterator != successorList.end()) successorList.erase(successorIterator);
+
+                        target->getExceptionPredecessors().erase(pred);
                         break;
                         }
                      }
@@ -1287,7 +1303,9 @@ void TR_RegionStructure::collapseIntoParent()
                }
             TR_ASSERT(target, "Structure error collapsing regions");
 
-            toNode->getExceptionPredecessors().remove(*edge);
+            TR::CFGEdgeList &predecessorList = toNode->getExceptionPredecessors();
+            auto predecessorIterator = std::find(predecessorList.begin(), predecessorList.end(), *edge);
+            if (predecessorIterator != predecessorList.end()) predecessorList.erase(predecessorIterator);
             }
          else
             {

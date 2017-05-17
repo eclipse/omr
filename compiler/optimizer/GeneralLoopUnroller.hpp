@@ -273,6 +273,9 @@ class TR_LoopUnroller
       };
    TR_ScratchList<ListsOfArrayAccesses> _listOfListsOfArrayAccesses;
    friend class TR_SPMDKernelParallelizer;
+
+private:
+   void manuallyRemoveEdgeFromCFG(TR::CFGEdge &edge);
    };
 
 

@@ -604,7 +604,7 @@ private:
    TR::Block * _firstBlock;
    TR::Block * _nextBlockInExtendedBlock;
    TR::CFG   * _cfg;
-   std::list<TR::CFGEdge*, TR::typed_allocator<TR::CFGEdge*, TR::Allocator> >::iterator _iterator;
+   TR::CFGEdgeList::iterator _iterator;
    TR::CFGEdgeList* _list;
    };
 

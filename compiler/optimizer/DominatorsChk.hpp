@@ -88,7 +88,7 @@ class TR_DominatorsChk
    class StackInfo
       {
       public:
-      std::list<TR::CFGEdge*, TR::typed_allocator<TR::CFGEdge*, TR::Allocator> >::iterator curIterator;
+      TR::CFGEdgeList::iterator curIterator;
       TR::CFGEdgeList * list;
       int32_t                  parent;
       };

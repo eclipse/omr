@@ -168,7 +168,7 @@ class multipleJumpSuccessorIterator : public SuccessorIterator
       else
          return (*_iterator)->getTo()->asBlock();
       }
-   std::list<TR::CFGEdge*, TR::typed_allocator<TR::CFGEdge*, TR::Allocator> >::iterator _iterator;
+   TR::CFGEdgeList::iterator _iterator;
    TR::CFGEdgeList* _list;
    };
 
