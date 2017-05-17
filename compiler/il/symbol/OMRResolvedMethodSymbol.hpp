@@ -166,7 +166,12 @@ public:
 
    bool canInjectInduceOSR(TR::Node* node);
 
-   bool induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder, int32_t offset);
+   /*
+    * Insert an OSR guard after the insertionPoint using induceBCI. Checks will be performed with induceBCI, but the transition destination will
+    * have the offset applied. Branch will be the destination treetop of the OSR guard.
+    * forceInduce can be used if it is well known a transition should be supported, such as at the start of the method.
+    */
+   bool induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder, int32_t offset, bool forceInduce=false);
    TR::TreeTop *induceImmediateOSRWithoutChecksBefore(TR::TreeTop *insertionPoint);
 
    int32_t incTempIndex(TR_FrontEnd * fe);
