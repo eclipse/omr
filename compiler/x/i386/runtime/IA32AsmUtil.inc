@@ -24,6 +24,21 @@
    public compareAndExchange8b
    public _patchingFence16
 
+	; Wipe the entire FP stack without raising any exceptions.
+	;
+		align 16
+clearFPStack proc near
+		ffree     st(0)
+		ffree     st(1)
+		ffree     st(2)
+		ffree     st(3)
+		ffree     st(4)
+		ffree     st(5)
+		ffree     st(6)
+		ffree     st(7)
+		ret
+clearFPStack endp
+
 ; Atomically Compare And Exchange the value contained data pointed to by ptr
 ; with oldValue, and if equal, replace by newValue
 ; Return zero on failure. Nonzero otherwise.
