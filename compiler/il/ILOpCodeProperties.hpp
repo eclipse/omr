@@ -5556,36 +5556,6 @@
    },
 
    {
-   /* .opcode               = */ TR::MethodEnterHook,
-   /* .name                 = */ "MethodEnterHook",
-   /* .properties1          = */ ILProp1::TreeTop | ILProp1::HasSymbolRef,
-   /* .properties2          = */ ILProp2::MustBeLowered | ILProp2::MayUseVMThread | ILProp2::MayUseSystemStack,
-   /* .properties3          = */ 0,
-   /* .properties4          = */ 0,
-   /* .dataType             = */ TR::NoType,
-   /* .typeProperties       = */ 0,
-   /* .swapChildrenOpCode   = */ TR::BadILOp,
-   /* .reverseBranchOpCode  = */ TR::BadILOp,
-   /* .booleanCompareOpCode = */ TR::BadILOp,
-   /* .ifCompareOpCode      = */ TR::BadILOp,
-   },
-
-   {
-   /* .opcode               = */ TR::MethodExitHook,
-   /* .name                 = */ "MethodExitHook",
-   /* .properties1          = */ ILProp1::TreeTop | ILProp1::HasSymbolRef,
-   /* .properties2          = */ ILProp2::MustBeLowered | ILProp2::MayUseVMThread | ILProp2::MayUseSystemStack,
-   /* .properties3          = */ 0,
-   /* .properties4          = */ 0,
-   /* .dataType             = */ TR::NoType,
-   /* .typeProperties       = */ 0,
-   /* .swapChildrenOpCode   = */ TR::BadILOp,
-   /* .reverseBranchOpCode  = */ TR::BadILOp,
-   /* .booleanCompareOpCode = */ TR::BadILOp,
-   /* .ifCompareOpCode      = */ TR::BadILOp,
-   },
-
-   {
    /* .opcode               = */ TR::PassThrough,
    /* .name                 = */ "PassThrough",
    /* .properties1          = */ 0,

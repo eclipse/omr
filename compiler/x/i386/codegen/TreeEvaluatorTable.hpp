@@ -388,8 +388,6 @@
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::fternary
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::dternary
    TR::TreeEvaluator::treetopEvaluator,                 // TR::treetop
-   TR::TreeEvaluator::badILOpEvaluator,                    // TR::MethodEnterHook (J9)
-   TR::TreeEvaluator::badILOpEvaluator,                    // TR::MethodExitHook (J9)
    TR::TreeEvaluator::passThroughEvaluator,             // TR::PassThrough
    TR::TreeEvaluator::compressedRefsEvaluator,          // TR::compressedRefs
    TR::TreeEvaluator::BBStartEvaluator,                 // TR::BBStart

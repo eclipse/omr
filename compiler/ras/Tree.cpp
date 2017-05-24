@@ -2699,8 +2699,6 @@ int32_t childTypes[] =
    TR::Float | (TR::Int32<<8),     // TR::fternary
    TR::Double | (TR::Int32<<8),    // TR::dternary
    TR::NoType,                     // TR::treetop
-   TR::NoType,                     // TR::MethodEnterHook
-   TR::NoType,                     // TR::MethodExitHook
    TR::NoType,                     // TR::PassThrough
    TR::Address,                   // TR::compressedRefs   FIXME:IL: shouldn't second arg be TR::Int64?  Type info should be like TR::aladd
    TR::NoType,                     // TR::BBStart
@@ -3154,6 +3152,9 @@ int32_t childTypes[] =
    TR::DecimalDouble | (TR::Int32<<16),                      // TR::ddModifyPrecision
    TR::DecimalLongDouble | (TR::Int32<<16),                  // TR::deModifyPrecision
 
+   TR::NoType,                                               // TR::MethodEnterHook
+   TR::NoType,                                               // TR::MethodExitHook
+ 
    TR::Int32,                                                // TR::i2df
    TR::Int32,                                                // TR::iu2df
    TR::Int64,                                                // TR::l2df
