@@ -65,8 +65,8 @@ endif
 
 tool_targets += tools/hookgen
 
-HOOK_DEFINITION_FILES := $(abspath ./gc/base/omrmmprivate.hdf ./gc/include/omrmm.hdf ./fvtest/algotest/hooksample.hdf)
-HOOK_DEFINITION_SENTINEL := $(patsubst %.hdf,%.sentinel, $(HOOK_DEFINITION_FILES))
+HOOK_DEFINITION_FILES = $(abspath ./gc/base/omrmmprivate.hdf ./gc/include/omrmm.hdf ./fvtest/algotest/hooksample.hdf)
+HOOK_DEFINITION_SENTINEL = $(patsubst %.hdf,%.sentinel, $(HOOK_DEFINITION_FILES))
 define HOOKGEN_COMMAND
 cd $(exe_output_dir) && ./hookgen $<
 endef
