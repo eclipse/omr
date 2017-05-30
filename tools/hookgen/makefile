@@ -30,4 +30,11 @@ MODULE_INCLUDES += $(OMR_PUGIXML_DIR)
 vpath %.cpp $(OMR_PUGIXML_DIR)
 vpath %.c $(OMR_PUGIXML_DIR)
 
+# HookGen build failed with pase vac13 and it only run on AIX.
+# So, we use the default vac on AIX build system
+ifdef I5_VERSION
+CXX := /usr/bin/xlC_r
+CXXLINKEXE := $(CXX)
+endif
+
 include $(top_srcdir)/omrmakefiles/rules.mk
