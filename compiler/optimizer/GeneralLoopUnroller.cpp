@@ -714,10 +714,11 @@ void TR_LoopUnroller::modifyBranchTree(TR_RegionStructure *loop,
 
       if (getIndexType().isAddress())
          {
-         firstChild = TR::Node::create(geta2xOpCode(getTestChildType()), 1, firstChild);
+         firstChild = TR::Node::create(geta2xOpCode(getTestChildType()), 1, firstChild); // Liqun: getTestChildType is always int64 or int32, where to fix it?
          }
       else if (firstChild->getType().isAggregate() && !getTestChildType().isAggregate())
          {
+         // Aggregate to any type is TR::BadILOp
          TR::ILOpCodes o2xOp = TR::ILOpCode::getProperConversion(firstChild->getDataType(), getTestChildType().getDataType(), true);
          TR_ASSERT(o2xOp != TR::BadILOp,"could not find conv op for %s -> %s conversion\n",TR::DataType::getName(firstChild->getDataType()),TR::DataType::getName(getTestChildType().getDataType()));
          firstChild = TR::Node::create(o2xOp, 1, firstChild);
@@ -937,6 +938,7 @@ void TR_LoopUnroller::modifyOriginalLoop(TR_RegionStructure *loop, TR_StructureS
          modifyBranchTree(loop, loopNode, branchNode);
          }
 
+      // Liqun: We might want to add support for acmp
       //convert the != condition to a '<' or '>' condition.
       if (branch->getOpCodeValue() == TR::ificmpne)
          {
