@@ -24,6 +24,9 @@ ARTIFACT_TYPE := c_shared
 
 OBJECTS := bindthreadagent
 OBJECTS := $(addsuffix $(OBJEXT),$(OBJECTS))
+ifeq (win,$(OMR_HOST_OS))
+	OBJECTS += $(top_srcdir)/omr.res
+endif
 
 MODULE_INCLUDES += ../util
 EXPORT_FUNCTIONS_FILE := omragent.exportlist

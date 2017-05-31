@@ -182,10 +182,12 @@ endef
 RC_INCLUDES=$(call buildCPPIncludeFlags,$(MODULE_INCLUDES) $(GLOBAL_INCLUDES))
 
 # compilation rule for message text files
-%.res: %.mc
+%.rc: %.mc
 	mc $<
-	$(RC) $(RC_INCLUDES) $*.rc
-	$(RM) $*.rc
+
+# compilation rule for text resource files on Windows
+%.res: %.rc
+	$(RC) $(RC_INCLUDES) $<
 
 define AR_COMMAND
 $(AR) -out:$@ $(OBJECTS)

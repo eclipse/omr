@@ -23,6 +23,9 @@ MODULE_NAME := sltestlib
 ARTIFACT_TYPE := c_shared
 OBJECTS := sltest
 OBJECTS := $(addsuffix $(OBJEXT),$(OBJECTS))
+ifeq (win,$(OMR_HOST_OS))
+	OBJECTS += $(top_srcdir)/omr.res
+endif
 EXPORT_FUNCTIONS_FILE := sltestlib.exportlist
 
 include $(top_srcdir)/omrmakefiles/rules.mk
