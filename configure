@@ -659,6 +659,7 @@ CCLINKEXE
 CCLINKSHARED
 CCLINK
 OMR_CROSS_COMPILE
+OMR_GC_IDLE_HEAP_MANAGER
 OMRTHREAD_LIB_UNIX
 OMRTHREAD_LIB_ZOS
 OMRTHREAD_LIB_WIN32
@@ -740,6 +741,9 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+OMR_PRODUCT_VERSION
+OMR_PRODUCT_NAME
+OMR_PRODUCT_DESCRIPTION
 OMR_CROSS_CONFIGURE
 OMR_TOOLCHAIN
 OMR_TARGET_DATASIZE
@@ -798,8 +802,7 @@ PACKAGE_VERSION
 PACKAGE_TARNAME
 PACKAGE_NAME
 PATH_SEPARATOR
-SHELL
-OMR_GC_IDLE_HEAP_MANAGER'
+SHELL'
 ac_subst_files='OMR_VERSION_STRING
 OMR_JIT_VERSION_STRING'
 ac_user_opts='
@@ -899,6 +902,9 @@ OMR_HOST_ARCH
 OMR_TARGET_DATASIZE
 OMR_TOOLCHAIN
 OMR_CROSS_CONFIGURE
+OMR_PRODUCT_DESCRIPTION
+OMR_PRODUCT_NAME
+OMR_PRODUCT_VERSION
 CC
 CFLAGS
 LDFLAGS
@@ -1699,6 +1705,14 @@ Some influential environment variables:
               capable of building the package. Compiler and feature detection
               tests will be invalid. All options must be configured manually.
               One of: yes,no. (Default: no)
+  OMR_PRODUCT_DESCRIPTION
+              The description of product integerating OMR. (Default: J9
+              Virtual Machine Runtime\0)
+  OMR_PRODUCT_NAME
+              The name of product integerating OMR. (Default: IBM SDK,
+              Java(tm) 2 Technology Edition\0)
+  OMR_PRODUCT_VERSION
+              The version of product integerating OMR. (Default: R2.9\0)
   CC          C compiler command
   CFLAGS      C compiler flags
   LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
@@ -2752,6 +2766,14 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
+
+
+
+
+
+OMR_PRODUCT_DESCRIPTION=${OMR_PRODUCT_DESCRIPTION:-"OMR 1.0 "}
+OMR_PRODUCT_NAME=${OMR_PRODUCT_NAME:-"OMR"}
+OMR_PRODUCT_VERSION=${OMR_PRODUCT_VERSION:-"1.0"}
 
 # Check whether --enable-optimized was given.
 if test "${enable_optimized+set}" = set; then :
@@ -7034,6 +7056,26 @@ fi
 
 fi
 
+# Check whether --enable-OMR_GC_IDLE_HEAP_MANAGER was given.
+if test "${enable_OMR_GC_IDLE_HEAP_MANAGER+set}" = set; then :
+  enableval=$enable_OMR_GC_IDLE_HEAP_MANAGER; if test "x${enableval}" = xyes; then :
+  OMR_GC_IDLE_HEAP_MANAGER=1
+
+   $as_echo "#define OMR_GC_IDLE_HEAP_MANAGER 1" >>confdefs.h
+
+else
+  OMR_GC_IDLE_HEAP_MANAGER=0
+
+
+fi
+else
+  OMR_GC_IDLE_HEAP_MANAGER=0
+
+
+fi
+
+
+
 ###
 ### Variable Substitution
 ###
@@ -7048,16 +7090,7 @@ fi
 
 CC=$BUILD_CC
 
-if test "${enable_OMR_GC_IDLE_HEAP_MANAGER+set}" = set; then :
-  enableval=$enable_OMR_GC_IDLE_HEAP_MANAGER; if test "x${enableval}" = xyes; then :
-  OMR_GC_IDLE_HEAP_MANAGER=1
-   $as_echo "#define OMR_GC_IDLE_HEAP_MANAGER 1" >>confdefs.h
-else
-  OMR_GC_IDLE_HEAP_MANAGER=0
-fi
-else
-  OMR_GC_IDLE_HEAP_MANAGER=0
-fi
+
 
 
 
@@ -7189,7 +7222,7 @@ fi
 # Restore the value of $cross_compiling.
 cross_compiling=$save_cross_compiling
 
-ac_config_files="$ac_config_files include_core/omrversionstrings.h:include_core/omrversionstrings.h.in omrmakefiles/configure.mk:omrmakefiles/configure.mk.in ./omr.rc:./omr.rc.in"
+ac_config_files="$ac_config_files include_core/omrversionstrings.h:include_core/omrversionstrings.h.in omrmakefiles/configure.mk:omrmakefiles/configure.mk.in omr.rc"
 
 
 ac_config_headers="$ac_config_headers include_core/omrcfg.h:include_core/omrcfg.h.in"
@@ -7908,7 +7941,7 @@ do
   case $ac_config_target in
     "include_core/omrversionstrings.h") CONFIG_FILES="$CONFIG_FILES include_core/omrversionstrings.h:include_core/omrversionstrings.h.in" ;;
     "omrmakefiles/configure.mk") CONFIG_FILES="$CONFIG_FILES omrmakefiles/configure.mk:omrmakefiles/configure.mk.in" ;;
-    "./omr.rc") CONFIG_FILES="$CONFIG_FILES ./omr.rc:./omr.rc.in" ;;
+    "omr.rc") CONFIG_FILES="$CONFIG_FILES omr.rc" ;;
     "include_core/omrcfg.h") CONFIG_HEADERS="$CONFIG_HEADERS include_core/omrcfg.h:include_core/omrcfg.h.in" ;;
     "toolconfigure") CONFIG_COMMANDS="$CONFIG_COMMANDS toolconfigure" ;;
 
@@ -8538,3 +8571,5 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
+
+
