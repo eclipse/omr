@@ -1075,6 +1075,12 @@ TR::Register *OMR::X86::TreeEvaluator::integerStoreEvaluator(TR::Node *node, TR:
    if (instr && node->getOpCode().isIndirect())
       cg->setImplicitExceptionPoint(instr);
 
+   if (node->getSymbol()->isUnsafeShadowSymbol())
+      {
+      instr->setNeedsGCMap(0xFF00FFFF);
+      instr->setNode(node);
+      }
+
    if (usingCompressedPointers)
       cg->decReferenceCount(node->getSecondChild());
 
