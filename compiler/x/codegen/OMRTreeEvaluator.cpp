@@ -471,6 +471,11 @@ OMR::X86::TreeEvaluator::insertLoadMemory(
       i = generateRegMemInstruction(opCode, node, target, tempMR, cg);
       }
 
+   if (node && node->canCauseGC())
+      {
+      i->setNeedsGCMap(0);
+      i->setNode(node);
+      }
    // HCR in insertLoadMemory to do: handle unresolved data
    if (node && node->getSymbol()->isStatic() && node->getSymbol()->isClassObject() && cg->wantToPatchClassPointer(NULL, node))
       {
@@ -1074,6 +1079,12 @@ TR::Register *OMR::X86::TreeEvaluator::integerStoreEvaluator(TR::Node *node, TR:
 
    if (instr && node->getOpCode().isIndirect())
       cg->setImplicitExceptionPoint(instr);
+
+   if (node && node->canCauseGC())
+      {
+      instr->setNeedsGCMap(0);
+      instr->setNode(node);
+      }
 
    if (usingCompressedPointers)
       cg->decReferenceCount(node->getSecondChild());

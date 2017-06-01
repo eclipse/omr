@@ -314,6 +314,12 @@ TR::Register *OMR::X86::TreeEvaluator::performFload(TR::Node *node, TR::MemoryRe
       targetRegister = cg->allocateSinglePrecisionRegister(TR_X87);
       instr = generateFPRegMemInstruction(FLDRegMem, node, targetRegister, sourceMR, cg);
       }
+
+   if (node && node->canCauseGC())
+      {
+      instr->setNeedsGCMap(0);
+      instr->setNode(node);
+      }
    if (node->getOpCode().isIndirect())
       cg->setImplicitExceptionPoint(instr);
    node->setRegister(targetRegister);
@@ -356,6 +362,12 @@ TR::Register *OMR::X86::TreeEvaluator::performDload(TR::Node *node, TR::MemoryRe
       {
       targetRegister = cg->allocateRegister(TR_X87);
       instr = generateFPRegMemInstruction(DLDRegMem, node, targetRegister, sourceMR, cg);
+      }
+
+   if (node && node->canCauseGC())
+      {
+      instr->setNeedsGCMap(0);
+      instr->setNode(node);
       }
    if (node->getOpCode().isIndirect())
       cg->setImplicitExceptionPoint(instr);
@@ -495,6 +507,12 @@ TR::Register *OMR::X86::TreeEvaluator::floatingPointStoreEvaluator(TR::Node *nod
 
    cg->decReferenceCount(valueChild);
    tempMR->decNodeReferenceCounts(cg);
+
+   if (node && node->canCauseGC())
+      {
+      exceptionPoint->setNeedsGCMap(0);
+      exceptionPoint->setNode(node);
+      }
    if (nodeIsIndirect)
       cg->setImplicitExceptionPoint(exceptionPoint);
 

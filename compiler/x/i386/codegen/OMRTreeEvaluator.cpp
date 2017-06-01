@@ -583,6 +583,11 @@ TR::Register *OMR::X86::i386::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR:
 	 }
       }
 
+   if (instr && node && node->canCauseGC())
+      {
+      instr->setNeedsGCMap(0);
+      instr->setNode(node);
+      }
    if (instr && node->getOpCode().isIndirect())
       cg->setImplicitExceptionPoint(instr);
 
@@ -3026,6 +3031,11 @@ TR::Register *OMR::X86::i386::TreeEvaluator::dstoreEvaluator(TR::Node *node, TR:
 
       cg->decReferenceCount(valueChild);
       storeLowMR->decNodeReferenceCounts(cg);
+      if (node && node->canCauseGC())
+         {
+         instr->setNeedsGCMap(0);
+         instr->setNode(node);
+         }
       if (nodeIsIndirect)
          {
          cg->setImplicitExceptionPoint(instr);
@@ -3108,6 +3118,7 @@ TR::Register *OMR::X86::i386::TreeEvaluator::performLload(TR::Node *node, TR::Me
    TR::Compilation *comp = cg->comp();
    TR::Register *lowRegister = NULL, *highRegister = NULL;
    TR::SymbolReference *symRef = node->getSymbolReference();
+   TR::Instruction* instr = NULL;
    bool isVolatile = false;
 
    if (symRef && !symRef->isUnresolved())
@@ -3127,7 +3138,7 @@ TR::Register *OMR::X86::i386::TreeEvaluator::performLload(TR::Node *node, TR::Me
          if (p.isGenuineIntel())
             {
             TR::Register *xmmReg = cg->allocateRegister(TR_FPR);
-            generateRegMemInstruction(cg->getXMMDoubleLoadOpCode(), node, xmmReg, sourceMR, cg);
+            instr = generateRegMemInstruction(cg->getXMMDoubleLoadOpCode(), node, xmmReg, sourceMR, cg);
 
             //allocate: lowRegister
             lowRegister = cg->allocateRegister();
@@ -3150,7 +3161,7 @@ TR::Register *OMR::X86::i386::TreeEvaluator::performLload(TR::Node *node, TR::Me
             TR::Register *reg = cg->allocateRegister(TR_FPR);
 
             //generate: xmm <- sourceMR
-            generateRegMemInstruction(cg->getXMMDoubleLoadOpCode(), node, reg, sourceMR, cg);
+            instr = generateRegMemInstruction(cg->getXMMDoubleLoadOpCode(), node, reg, sourceMR, cg);
             //generate: stack1 <- xmm
             TR::MemoryReference *stack = generateX86MemoryReference(*stackLow, 0, cg);
             generateMemRegInstruction(MOVSDMemReg, node, stack, reg, cg);
@@ -3192,7 +3203,7 @@ TR::Register *OMR::X86::i386::TreeEvaluator::performLload(TR::Node *node, TR::Me
 
          generateRegRegInstruction (MOV4RegReg, node, ecxReg, highRegister, cg);
          generateRegRegInstruction (MOV4RegReg, node, ebxReg, lowRegister, cg);
-         generateMemInstruction ( TR::Compiler->target.isSMP() ? LCMPXCHG8BMem : CMPXCHG8BMem, node, sourceMR, deps, cg);
+         instr = generateMemInstruction ( TR::Compiler->target.isSMP() ? LCMPXCHG8BMem : CMPXCHG8BMem, node, sourceMR, deps, cg);
 
          cg->stopUsingRegister(ecxReg);
          cg->stopUsingRegister(ebxReg);
@@ -3211,6 +3222,11 @@ TR::Register *OMR::X86::i386::TreeEvaluator::performLload(TR::Node *node, TR::Me
          }
       }
 
+   if (instr && node && node->canCauseGC())
+      {
+      instr->setNeedsGCMap(0);
+      instr->setNode(node);
+      }
    TR::RegisterPair *longRegister = cg->allocateRegisterPair(lowRegister, highRegister);
    node->setRegister(longRegister);
    return longRegister;
