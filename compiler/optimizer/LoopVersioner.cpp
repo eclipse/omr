@@ -4897,18 +4897,11 @@ void TR_LoopVersioner::buildIwrtbarComparisonsTree(List<TR::TreeTop> *iwrtbarTre
       TR::TreeTop *iwrtbarTree = nextTree->getData();
       TR::Node *iwrtbarNode = iwrtbarTree->getNode();
       if (iwrtbarNode->getOpCodeValue() != TR::wrtbari)
-        iwrtbarNode = iwrtbarNode->getFirstChild();
-
-      //traceMsg(comp(), "iwrtbar node %p\n", iwrtbarNode);
-
-      //vcount_t visitCount = comp()->incVisitCount();
-      //collectAllExpressionsToBeChecked(nullCheckTrees, divCheckTrees, checkCastTrees, arrayStoreCheckTrees, divCheckNode->getFirstChild()->getSecondChild(), comparisonTrees, exitGotoBlock, visitCount);
+         iwrtbarNode = iwrtbarNode->getFirstChild();
 
       if (performTransformation(comp(), "%s Creating test outside loop for checking if %p is iwrtbar is required\n", OPT_DETAILS_LOOP_VERSIONER, iwrtbarNode))
          {
-         TR::Node *duplicateBase = iwrtbarNode->getLastChild()->duplicateTree();
-         duplicateBase->setIsNull(false);
-         duplicateBase->setIsNonNull(false);
+         TR::Node *duplicateBase = iwrtbarNode->getLastChild()->duplicateTreeForCodeMotion();
          TR::Node *ifNode, *ifNode1, *ifNode2;
 
          bool isX86 = false;
@@ -4926,57 +4919,48 @@ void TR_LoopVersioner::buildIwrtbarComparisonsTree(List<TR::TreeTop> *iwrtbarTre
          if (!isX86 && (isVariableHeapBase || isVariableHeapSize))
             {
             if (TR::Compiler->target.is64Bit())
-               ifNode1 =  TR::Node::create(TR::lucmpge, 2, TR::Node::create(TR::a2l, 1, duplicateBase), TR::Node::createWithSymRef(TR::lload, 0, comp()->getSymRefTab()->findOrCreateThreadLowTenureAddressSymbolRef()));
+               ifNode1 = TR::Node::create(TR::lucmpge, 2, TR::Node::create(TR::a2l, 1, duplicateBase), TR::Node::createWithSymRef(TR::lload, 0, comp()->getSymRefTab()->findOrCreateThreadLowTenureAddressSymbolRef()));
             else
-               ifNode1 =  TR::Node::create(TR::iucmpge, 2, TR::Node::create(TR::a2i, 1, duplicateBase), TR::Node::createWithSymRef(TR::iload, 0, comp()->getSymRefTab()->findOrCreateThreadLowTenureAddressSymbolRef()));
+               ifNode1 = TR::Node::create(TR::iucmpge, 2, TR::Node::create(TR::a2i, 1, duplicateBase), TR::Node::createWithSymRef(TR::iload, 0, comp()->getSymRefTab()->findOrCreateThreadLowTenureAddressSymbolRef()));
             }
          else
             {
             if (TR::Compiler->target.is64Bit())
                {
-               ifNode1 =  TR::Node::create(TR::lucmpge, 2, TR::Node::create(TR::a2l, 1, duplicateBase), TR::Node::create(duplicateBase, TR::lconst, 0, 0));
+               ifNode1 = TR::Node::create(TR::lucmpge, 2, TR::Node::create(TR::a2l, 1, duplicateBase), TR::Node::create(duplicateBase, TR::lconst, 0, 0));
                ifNode1->getSecondChild()->setLongInt(fej9->getLowTenureAddress());
                }
             else
-               ifNode1 =  TR::Node::create(TR::iucmpge, 2, TR::Node::create(TR::a2i, 1, duplicateBase), TR::Node::create(duplicateBase, TR::iconst, 0, fej9->getLowTenureAddress()));
+               ifNode1 = TR::Node::create(TR::iucmpge, 2, TR::Node::create(TR::a2i, 1, duplicateBase), TR::Node::create(duplicateBase, TR::iconst, 0, fej9->getLowTenureAddress()));
             }
-
-         //comparisonTrees->add(ifNode);
 
          dumpOptDetails(comp(), "1 The node %p has been created for testing if iwrtbar is required\n", ifNode1);
 
-         duplicateBase = iwrtbarNode->getLastChild()->duplicateTree();
-         duplicateBase->setIsNull(false);
-         duplicateBase->setIsNonNull(false);
-
-         //printf(" stack compare value %p\n", stackCompareValue);
+         duplicateBase = iwrtbarNode->getLastChild()->duplicateTreeForCodeMotion();
 
          if (!isX86 && (isVariableHeapBase || isVariableHeapSize))
             {
             if (TR::Compiler->target.is64Bit())
-               ifNode2 =  TR::Node::create(TR::lucmplt, 2, TR::Node::create(TR::a2l, 1, duplicateBase), TR::Node::createWithSymRef(TR::lload, 0, comp()->getSymRefTab()->findOrCreateThreadHighTenureAddressSymbolRef()));
+               ifNode2 = TR::Node::create(TR::lucmplt, 2, TR::Node::create(TR::a2l, 1, duplicateBase), TR::Node::createWithSymRef(TR::lload, 0, comp()->getSymRefTab()->findOrCreateThreadHighTenureAddressSymbolRef()));
             else
-               ifNode2 =  TR::Node::create(TR::iucmplt, 2, TR::Node::create(TR::a2i, 1, duplicateBase), TR::Node::createWithSymRef(TR::iload, 0, comp()->getSymRefTab()->findOrCreateThreadHighTenureAddressSymbolRef()));
+               ifNode2 = TR::Node::create(TR::iucmplt, 2, TR::Node::create(TR::a2i, 1, duplicateBase), TR::Node::createWithSymRef(TR::iload, 0, comp()->getSymRefTab()->findOrCreateThreadHighTenureAddressSymbolRef()));
             }
          else
             {
             if (TR::Compiler->target.is64Bit())
                {
-               ifNode2 =  TR::Node::create(TR::lucmplt, 2, TR::Node::create(TR::a2l, 1, duplicateBase), TR::Node::create(duplicateBase, TR::lconst, 0, 0));
+               ifNode2 = TR::Node::create(TR::lucmplt, 2, TR::Node::create(TR::a2l, 1, duplicateBase), TR::Node::create(duplicateBase, TR::lconst, 0, 0));
                ifNode2->getSecondChild()->setLongInt(fej9->getHighTenureAddress());
                }
             else
-               ifNode2 =  TR::Node::create(TR::iucmplt, 2, TR::Node::create(TR::a2i, 1, duplicateBase), TR::Node::create(duplicateBase, TR::iconst, 0, fej9->getHighTenureAddress()));
+               ifNode2 = TR::Node::create(TR::iucmplt, 2, TR::Node::create(TR::a2i, 1, duplicateBase), TR::Node::create(duplicateBase, TR::iconst, 0, fej9->getHighTenureAddress()));
             }
 
-         ifNode =  TR::Node::createif(TR::ificmpne, TR::Node::create(TR::iand, 2, ifNode1, ifNode2), TR::Node::create(duplicateBase, TR::iconst, 0, 0), exitGotoBlock->getEntry());
+         ifNode = TR::Node::createif(TR::ificmpne, TR::Node::create(TR::iand, 2, ifNode1, ifNode2), TR::Node::create(duplicateBase, TR::iconst, 0, 0), exitGotoBlock->getEntry());
 
          comparisonTrees->add(ifNode);
 
          dumpOptDetails(comp(), "2 The node %p has been created for testing if iwrtbar is required\n", ifNode2);
-
-
-         //printf("Found opportunity for skipping wrtbar %p in %s at freq %d\n", iwrtbarNode, comp()->signature(), iwrtbarTree->getEnclosingBlock()->getFrequency()); fflush(stdout);
 
          iwrtbarNode->setSkipWrtBar(true);
          }
