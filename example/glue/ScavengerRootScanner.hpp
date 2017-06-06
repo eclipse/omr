@@ -102,6 +102,7 @@ public:
 
 	void scanClearable(MM_EnvironmentBase *env)
 	{
+		OMRPORT_ACCESS_FROM_OMRVM(env->getOmrVM());
 		OMR_VM_Example *omrVM = (OMR_VM_Example *)env->getOmrVM()->_language_vm;
 		if (NULL != omrVM->objectTable) {
 			if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
@@ -113,6 +114,8 @@ public:
 						if (fwdHeader.isForwardedPointer()) {
 							objectEntry->objPtr = fwdHeader.getForwardedObject();
 						} else {
+							omrmem_free_memory((void *)objectEntry->name);
+							objectEntry->name = NULL;
 							hashTableDoRemove(&state);
 						}
 					}
