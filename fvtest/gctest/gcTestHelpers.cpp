@@ -114,9 +114,12 @@ GCTestEnvironment::GCTestTearDown()
 		exampleVM._vmAccessMutex = NULL;
 	}
 
+	omrthread_detach(exampleVM.self);
+
 	/* Shut down VM */
 	omr_error_t rc = OMR_Shutdown(exampleVM._omrVM);
 	ASSERT_EQ(OMR_ERROR_NONE, rc) << "TearDown(): OMR_Shutdown failed, rc=" << rc;
+
 }
 
 void
