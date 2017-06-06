@@ -66,7 +66,6 @@ typedef struct J9HookInterface {
 #define J9HOOK_TAG_AGENT_ID  0x20000000
 #define J9HOOK_TAG_COUNTED  0x40000000
 #define J9HOOK_TAG_ONCE  0x80000000
-#define J9HOOK_TAG_SAMPLING_MASK	0x00ff0000
 #define J9HOOK_AGENTID_FIRST  ((uintptr_t)0)
 #define J9HOOK_AGENTID_DEFAULT  ((uintptr_t)1)
 #define J9HOOK_AGENTID_LAST  ((uintptr_t)-1)
@@ -88,7 +87,6 @@ typedef struct OMRHookInfo4Dump {
 typedef struct OMREventInfo4Dump {
 	struct OMRHookInfo4Dump longestHook;
 	struct OMRHookInfo4Dump lastHook;
-	uint64_t count;
 }OMREventInfo4Dump;
 
 typedef struct J9CommonHookInterface {

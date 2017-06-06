@@ -69,7 +69,7 @@ private:
 	RCType startPrivateHeader();
 	RCType completePrivateHeader(const char *structName);
 	void writeEventToPublicHeader(const char *name, const char *description, const char *condition, const char *structName, const char *reverse, pugi::xml_node event);
-	void writeEventToPrivateHeader(const char *name, const char *condition, const char *once, int sampling, const char *structName, pugi::xml_node event);
+	void writeEventToPrivateHeader(const char *name, const char *condition, const char *once, const char *structName, pugi::xml_node event);
 	void writeEvent(pugi::xml_node event);
 
 	static void displayUsage();

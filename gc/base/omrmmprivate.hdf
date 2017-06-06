@@ -168,7 +168,6 @@
 			code which has hooked the J9HOOK_MM_WALK_HEAP_START hook, such as
 			GC_VMInterface::initializeExtensions.
 		</description>
-		<trace-sampling intervals="100" />
 		<struct>MM_WalkHeapStartEvent</struct>
 		<data type="struct OMR_VM*" name="omrVM" description="OMR vm instance" />
 	</event>
@@ -182,7 +181,6 @@
 			These actions are actually performed by code which has hooked the
 			J9HOOK_MM_WALK_HEAP_END hook, such as GC_VMInterface::initializeExtensions.
 		</description>
-		<trace-sampling intervals="100" />
 		<struct>MM_WalkHeapEndEvent</struct>
 		<data type="struct OMR_VM*" name="omrVM" description="OMR vm instance" />
 	</event>
@@ -731,7 +729,6 @@
 		<name>J9HOOK_MM_PRIVATE_OLD_TO_OLD_REFERENCE_CREATED</name>
 		<description>Triggered when old to old reference is created by GC (Scavenger) </description>
 		<condition>defined (__cplusplus)</condition>
-		<trace-sampling intervals="100" />
 		<struct>MM_OldToOldReferenceCreatedEvent</struct>
 		<data type="struct OMR_VMThread*" name="currentThread" description="the current thread" />
 		<data type="void *" name="objectPtr" description="pointer to the parent object" />

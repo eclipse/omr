@@ -220,7 +220,7 @@ HookGen::writeEventToPublicHeader(const char *name, const char *description, con
  * Write an event to the private header
  */
 void
-HookGen::writeEventToPrivateHeader(const char *name, const char *condition, const char *once, int sampling, const char *structName, pugi::xml_node event)
+HookGen::writeEventToPrivateHeader(const char *name, const char *condition, const char *once, const char *structName, pugi::xml_node event)
 {
 	if (NULL != condition) {
 		fprintf(_privateFile, "#if %s\n", condition);
@@ -236,7 +236,7 @@ HookGen::writeEventToPrivateHeader(const char *name, const char *condition, cons
 	for (pugi::xml_node data = event.child("data"); data; data = data.next_sibling("data")) {
 		fprintf(_privateFile, "\t\teventData.%s = (arg_%s); \\\n", data.attribute("name").as_string(), data.attribute("name").as_string());
 	}
-	fprintf(_privateFile, "\t\t(*J9_HOOK_INTERFACE(hookInterface))->J9HookDispatch(J9_HOOK_INTERFACE(hookInterface), %s%s%s%d, &eventData); \\\n", name, once == NULL ? "" : " | J9HOOK_TAG_ONCE", " | ", sampling<<16);
+	fprintf(_privateFile, "\t\t(*J9_HOOK_INTERFACE(hookInterface))->J9HookDispatch(J9_HOOK_INTERFACE(hookInterface), %s%s, &eventData); \\\n", name, once == NULL ? "" : " | J9HOOK_TAG_ONCE");
 	for (pugi::xml_node data = event.child("data"); data; data = data.next_sibling("data")) {
 		if (data.attribute("return").as_bool()) {
 			fprintf(_privateFile, "\t\t(arg_%s) = eventData.%s; /* return argument */ \\\n", data.attribute("name").as_string(), data.attribute("name").as_string());
@@ -290,8 +290,6 @@ HookGen::writeEvent(pugi::xml_node event)
 	const char *structName = event.child("struct").text().as_string();
 	const char *once = event.child("once").text().as_string();
 	const char *reverse = event.child("reverse").text().as_string();
-	pugi::xml_node sampling_node = event.child("trace-sampling");
-	int sampling = 0;
 
 	if (event.child("condition").empty()) {
 		condition = NULL;
@@ -299,22 +297,12 @@ HookGen::writeEvent(pugi::xml_node event)
 	if (event.child("once").empty()) {
 		once = NULL;
 	}
-	if (sampling_node) {
-		sampling = sampling_node.attribute("intervals").as_int(0);
-		if (sampling < 0) {
-			sampling = 0;
-		}
-		if (sampling > 100) {
-			sampling = 0xff;
-		}
-	}
-
 	if (event.child("reverse").empty()) {
 		reverse = NULL;
 	}
 
 	writeEventToPublicHeader(name, description, condition, structName, reverse, event);
-	writeEventToPrivateHeader(name, condition, once, sampling, structName, event);
+	writeEventToPrivateHeader(name, condition, once, structName, event);
 }
 
 /**
