@@ -243,6 +243,10 @@ MM_GCExtensionsBase::tearDown(MM_EnvironmentBase* env)
 	scavengerHotFieldStats.tearDown(env);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC) */
 
+#if defined(OMR_GC_MODRON_SCAVENGER)
+	rememberedSet.tearDown(env);
+#endif /* OMR_GC_MODRON_SCAVENGER */
+
 	objectModel.tearDown(this);
 	mixedObjectModel.tearDown(this);
 	indexableObjectModel.tearDown(this);
