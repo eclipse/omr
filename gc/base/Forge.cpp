@@ -42,6 +42,8 @@ MM_Forge::initialize(MM_EnvironmentBase* env)
 
 	for (uintptr_t i = 0; i < MM_AllocationCategory::CATEGORY_COUNT; i++) {
 		_statistics[i].category = (MM_AllocationCategory::Enum) i;
+		_statistics[i].allocated = 0;
+		_statistics[i].highwater = 0;
 	}
 	
 	return true;
