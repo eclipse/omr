@@ -36,9 +36,6 @@ MM_GCExtensionsBase::newInstance(MM_EnvironmentBase* env)
 	/* Avoid using MM_Forge to allocate memory for the extension, since MM_Forge itself has not been created! */
 	extensions = static_cast<MM_GCExtensionsBase*>(omrmem_allocate_memory(sizeof(MM_GCExtensionsBase), OMRMEM_CATEGORY_MM));
 	if (extensions) {
-		/* Initialize all the fields to zero */
-		memset((void*)extensions, 0, sizeof(*extensions));
-
 		new (extensions) MM_GCExtensionsBase();
 		if (!extensions->initialize(env)) {
 			extensions->kill(env);

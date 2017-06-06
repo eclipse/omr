@@ -347,7 +347,6 @@ public:
 	bool rootScannerStatsEnabled; /**< Enable/disable recording of performance statistics for the root scanner.  Defaults to false. */
 
 	/* bools and counters for -Xgc:fvtest options */
-	/* these are all memset to 0 in GCExtensions::newInstance */
 	bool fvtest_forceOldResize;
 	uintptr_t fvtest_oldResizeCounter;
 #if defined(OMR_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC)
@@ -1178,6 +1177,7 @@ public:
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 #endif /* OMR_GC_MODRON_SCAVENGER */
 		, _omrVM(NULL)
+		,_forge()
 		, _globalCollector(NULL)
 #if defined(OMR_GC_OBJECT_MAP)
 		, _objectMap(NULL)
@@ -1203,6 +1203,9 @@ public:
 #if defined(OMR_GC_STACCATO)
 		, staccatoRememberedSet(NULL)
 #endif /* OMR_GC_STACCATO */
+
+		, heapBaseForBarrierRange0(NULL)
+		, heapSizeForBarrierRange0(0)
 		, doOutOfLineAllocationTrace(true) /* Tracing after ever x bytes allocated per thread. Enabled by default. */
 		, doFrequentObjectAllocationSampling(false) /* Finds most frequently allocated classes. Disabled by default. */
 		, oolObjectSamplingBytesGranularity(16*1024*1024) /* Default granularity set to 16M (shows <1% perf loss). */
@@ -1220,6 +1223,12 @@ public:
 		, gcExclusiveAccessThreadId(NULL)
 		, gcExclusiveAccessMutex(NULL)
 		, _lightweightNonReentrantLockPool(NULL)
+#if defined(OMR_GC_COMBINATION_SPEC)
+		, _isSegregatedHeap(false)
+		, _isVLHGC(false)
+		, _isMetronomeGC(false)
+		, _isStandardGC(false)
+#endif /* OMR_GC_COMBINATION_SPEC */
 		, tlhMinimumSize(MINIMUM_TLH_SIZE)
 		, tlhMaximumSize(131072)
 		, tlhInitialSize(2048)
@@ -1229,6 +1238,7 @@ public:
 		, allocationStats()
 		, bytesAllocatedMost(0)
 		, vmThreadAllocatedMost(NULL)
+		, gcModeString(NULL)
 		, splitFreeListSplitAmount(0)
 		, enableHybridMemoryPool(false)
 		, largeObjectArea(false)
@@ -1262,7 +1272,36 @@ public:
 		, markingArraySplitMaximumAmount(DEFAULT_ARRAY_SPLIT_MAXIMUM_SIZE)
 		, markingArraySplitMinimumAmount(DEFAULT_ARRAY_SPLIT_MINIMUM_SIZE)
 		, rootScannerStatsEnabled(false)
+		, fvtest_forceOldResize(0)
+		, fvtest_oldResizeCounter(0)
+#if defined(OMR_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC)
+		, fvtest_scanCacheCount(0)
+#if defined(OMR_GC_MODRON_SCAVENGER)
+		, fvtest_forceScavengerBackout(0)
+		, fvtest_backoutCounter(0)
+		, fvtest_forcePoisonEvacuate(0)
+		, fvtest_forceNurseryResize(0)
+		, fvtest_nurseryResizeCounter(0)
+#endif /* OMR_GC_MODRON_SCAVENGER */
+#endif /* OMR_GC_MODRON_SCAVENGER || OMR_GC_VLHGC */
+		, fvtest_alwaysApplyOverflowRounding(0)
+		, fvtest_forceExcessiveAllocFailureAfter(0)
+		, fvtest_verifyHeapAbove(0)
+		, fvtest_verifyHeapBelow(0)
+#if defined(OMR_GC_VLHGC)
+		, fvtest_tarokVerifyMarkMapClosure(0)
+#endif /* defined(OMR_GC_VLHGC) */
+		, fvtest_disableInlineAllocation(0)
+		, fvtest_forceSweepChunkArrayCommitFailure(0)
+		, fvtest_forceSweepChunkArrayCommitFailureCounter(0)
+		, fvtest_forceMarkMapCommitFailure(0)
+		, fvtest_forceMarkMapCommitFailureCounter(0)
+		, fvtest_forceMarkMapDecommitFailure(0)
+		, fvtest_forceMarkMapDecommitFailureCounter(0)
+		, fvtest_forceReferenceChainWalkerMarkMapCommitFailure(0)
+		, fvtest_forceReferenceChainWalkerMarkMapCommitFailureCounter(0)
 		, softMx(0) /* softMx only set if specified */
+		, batchClearTLH(0)
 		, gcThreadCountForced(false)
 #if defined(OMR_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC)
 		, scavengerScanOrdering(OMR_GC_SCAVENGER_SCANORDERING_HIERARCHICAL)
@@ -1284,6 +1323,7 @@ public:
 		, concurrentScavengerRequested(false)
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 		, scavengerFailedTenureThreshold(0)
+		, maxScavengeBeforeGlobal(0)
 		, scvArraySplitMaximumAmount(DEFAULT_ARRAY_SPLIT_MAXIMUM_SIZE)
 		, scvArraySplitMinimumAmount(DEFAULT_ARRAY_SPLIT_MINIMUM_SIZE)
 		, scavengerScanCacheMaximumSize(DEFAULT_SCAN_CACHE_MAXIMUM_SIZE)
@@ -1320,14 +1360,18 @@ public:
 		, excessiveGCnewRatioWeight((float)0.95)
 		, excessiveGCratio(95)
 		, excessiveGCFreeSizeRatio((float)0.03)
+		, heap(NULL)
 		, heapRegionManager(NULL)
 		, memoryManager(NULL)
+		, aggressive(0)
+		, sweepHeapSectioning(0)
 #if defined(OMR_GC_MODRON_COMPACTION)
 		, compactOnGlobalGC(0) /* By default we will only compact on triggers, no forced compactions */
 		, noCompactOnGlobalGC(0)
 		, compactOnSystemGC(0)
 		, nocompactOnSystemGC(0)
 		, compactToSatisfyAllocate(false)
+		, payAllocationTax(false)
 #endif /* OMR_GC_MODRON_COMPACTION */
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
 		, concurrentMark(false)
@@ -1345,9 +1389,34 @@ public:
 		, concurrentSlack(0)
 		, cardCleanPass2Boost(2)
 		, cardCleaningPasses(2)
+		, fvtest_concurrentCardTablePreparationDelay(0)
+		, fvtest_forceConcurrentTLHMarkMapCommitFailure(0)
+		, fvtest_forceConcurrentTLHMarkMapCommitFailureCounter(0)
+		, fvtest_forceConcurrentTLHMarkMapDecommitFailure(0)
+		, fvtest_forceConcurrentTLHMarkMapDecommitFailureCounter(0)
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
+#if defined (OMR_GC_HEAP_CARD_TABLE)
+		, fvtest_forceCardTableCommitFailure(0)
+		, fvtest_forceCardTableCommitFailureCounter(0)
+		, fvtest_forceCardTableDecommitFailure(0)
+		, fvtest_forceCardTableDecommitFailureCounter(0)
+#endif /* OMR_GC_HEAP_CARD_TABLE */
+		, dispatcher(NULL)
+		, cardTable(NULL)
+		, memoryMax(0)
+		, initialMemorySize(0)
+		, minNewSpaceSize(0)
+		, newSpaceSize(0)
+		, maxNewSpaceSize(0)
+		, minOldSpaceSize(0)
+		, oldSpaceSize(0)
+		, maxOldSpaceSize(0)
+		, allocationIncrement(0)
+		, fixedAllocationIncrement(0)
 		, lowMinimum(0)
 		, allowMergedSpaces(1)
+		, maxSizeDefaultMemorySpace(0)
+		, allocationIncrementSetByUser(0)
 #if defined(J9_GC_OBJECT_HEAP_TAIL_PADDING)
 		, heapTailPadding(J9_GC_OBJECT_HEAP_TAIL_PADDING)  /* Minimum amount of readable space past the end of the heap. See Jazz 31620. */
 #else /* J9_GC_OBJECT_HEAP_TAIL_PADDING */
@@ -1368,7 +1437,9 @@ public:
 		, headRoom(1024 * 1024)          // bytes
 		, synchronousGCOnOOM(true)
 		, extraYield(false)
+		, realtimeGC(NULL)
 		, fixHeapForWalk(false)
+		, minArraySizeToSetAsScanned(0)
 		, overflowCacheCount(0) /**< initial value of 0.  This is set in workpackets initialization or via the commandline */
 #endif /* defined(OMR_GC_REALTIME) */
 #if defined(OMR_GC_STACCATO)
@@ -1420,6 +1491,8 @@ public:
 		, suballocatorInitialSize(SUBALLOCATOR_INITIAL_SIZE) /* default for J9Heap suballocator initial size is 200 MB */
 		, suballocatorCommitSize(SUBALLOCATOR_COMMIT_SIZE) /* default for J9Heap suballocator commit size is 50 MB */
 		, shouldAllowShiftingCompression(true) /* VM Design 1810: shifting compression enabled, by default, for compressed refs */
+		, shouldForceSpecifiedShiftingCompression(0)
+		, forcedShiftingCompressionAmount(0)
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 		, preferredHeapBase(PREFERRED_HEAP_BASE)
 		, currentEnvironmentCount(0)
