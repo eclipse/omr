@@ -49,6 +49,7 @@ testMain(int argc, char ** argv, char **envp)
 	exampleVM.rootTable = NULL;
 	exampleVM.objectTable = NULL;
 	exampleVM._vmAccessMutex = NULL;
+	exampleVM._vmExclusiveAccessCount = 0;
 
 	/* Initialize the VM */
 	omr_error_t rc = OMR_Initialize_VM(&exampleVM._omrVM, &omrVMThread, &exampleVM, NULL);
