@@ -5012,6 +5012,8 @@ TR::Register* OMR::X86::TreeEvaluator::performSimpleAtomicMemoryUpdate(TR::Node*
 TR::Register *OMR::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    static bool useJapaneseCompression = (feGetEnv("TR_JapaneseComp") != NULL);
+   static bool disableECCP256Multiply = (feGetEnv("TR_disableECCP256Multiply") != NULL);
+   static bool disableECCP256Mod = (feGetEnv("TR_disableECCP256Mod") != NULL);
    static bool disableECCP256AESCBC = (feGetEnv("TR_disableECCP256AESCBC") != NULL);
 
    TR::Compilation *comp = cg->comp();
@@ -5174,6 +5176,16 @@ TR::Register *OMR::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::C
    else if (symbol->getRecognizedMethod() == TR::java_lang_String_andOR)
       {
       return TR::TreeEvaluator::andORStringEvaluator(node, cg);
+      }
+   else if (symbol->getRecognizedMethod() == TR::com_ibm_crypto_provider_P256PrimeField_multiply
+         && !disableECCP256Multiply && !TR::Compiler->om.canGenerateArraylets())
+      {
+       return TR::TreeEvaluator::VMP256MultiplyEvaluator(node, cg);
+      }
+   else if (symbol->getRecognizedMethod() == TR::com_ibm_crypto_provider_P256PrimeField_mod
+         && !disableECCP256Mod && !TR::Compiler->om.canGenerateArraylets())
+      {
+       return TR::TreeEvaluator::VMP256ModEvaluator(node, cg);
       }
    else if ((symbol->getRecognizedMethod() == TR::com_ibm_crypto_provider_AEScryptInHardware_cbcEncrypt)
          && cg->enableAESInHardwareTransformations() && !disableECCP256AESCBC
