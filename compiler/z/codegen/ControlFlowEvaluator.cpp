@@ -299,10 +299,10 @@ generateS390lcmpEvaluator(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCod
 
       generateRRInstruction(cg, TR::InstOpCode::OR, node, workReg, firstReg->getLowOrder());
 
-      TR::InstOpCode::S390BranchCondition cmpOpCode = TR::InstOpCode::COND_BERC;
+      TR::InstOpCode::S390BranchCondition cmpOpCode = TR::InstOpCode::COND_MASK8;
       if (node->getOpCodeValue()==TR::iflcmpne  || node->getOpCodeValue()==TR::iflucmpne)
          {
-         cmpOpCode = TR::InstOpCode::COND_BNERC;
+         cmpOpCode = TR::InstOpCode::COND_MASK6;
          }
       generateS390BranchInstruction(cg, brOpCode, cmpOpCode, node, trueTarget, deps);
 
@@ -697,7 +697,7 @@ OMR::Z::TreeEvaluator::fcmplEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * targetRegister = cg->allocateRegister();
 
    // Generate compare code, find out if ops were reversed
-   brCond = generateS390CompareOps(node, cg, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC);
+   brCond = generateS390CompareOps(node, cg, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4);
    branchOp = TR::InstOpCode::BRC;
 
    // Assume A == B, set targetRegister value to 0
@@ -707,7 +707,7 @@ OMR::Z::TreeEvaluator::fcmplEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    // done if A==B
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
    deps->addPostCondition(targetRegister,TR::RealRegister::AssignAny);
-   TR::Instruction *cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, doneCmp);
+   TR::Instruction *cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, doneCmp);
    cursor->setStartInternalControlFlow();
 
    // Found A != B, assume A > B, set targetRegister value to 1
@@ -720,7 +720,7 @@ OMR::Z::TreeEvaluator::fcmplEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    if (node->getOpCodeValue() == TR::fcmpg || node->getOpCodeValue() == TR::dcmpg)
       {
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNANRC, node, doneCmp);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK1, node, doneCmp);
       }
 
    //Got here? means either A<B or (TR::fcmpl instruction and (A==NaN || B==NaN))
@@ -840,10 +840,10 @@ lcmpHelper(TR::Node * node, TR::CodeGenerator * cg)
          generateRRInstruction(cg, TR::InstOpCode::CR, node, src1RegPair->getHighOrder(), src2RegPair->getHighOrder());
          }
       // If LT we are done
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, node, labelLT);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, labelLT);
 
       // If GT, we invert the result register
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, node, labelGT);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, labelGT);
 
       //  High order words were equal
 
@@ -862,7 +862,7 @@ lcmpHelper(TR::Node * node, TR::CodeGenerator * cg)
          }
 
       // If LT, we are done
-      cursor2 = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, node, labelLT);
+      cursor2 = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, labelLT);
       if(cursor)
         cursor->setStartInternalControlFlow();
       else
@@ -870,7 +870,7 @@ lcmpHelper(TR::Node * node, TR::CodeGenerator * cg)
 
 
       // If GT, invert the result
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, node, labelGT);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, labelGT);
 
       // The two longs are equal
       generateRIInstruction(cg, TR::InstOpCode::LHI, node, targetRegister, 0);
@@ -962,11 +962,11 @@ lcmpHelper64(TR::Node * node, TR::CodeGenerator * cg)
          generateRRInstruction(cg, TR::InstOpCode::CGR, node, src1Reg, src2Reg);
          }
       // If LT we are done
-      TR::Instruction *cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, node, labelLT);
+      TR::Instruction *cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, labelLT);
       cursor->setStartInternalControlFlow();
 
       // If GT, we invert the result register
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, node, labelGT);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, labelGT);
       //  High order words were equal
 
       // The two longs are equal
@@ -1403,11 +1403,11 @@ OMR::Z::TreeEvaluator::ificmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg
          node->getOpCodeValue() == TR::ifiucmpeq ||
          node->getOpCodeValue() == TR::ifacmpeq)
       {
-      reg = generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC);
+      reg = generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8);
       }
    else
       {
-      reg = generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC);
+      reg = generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6);
       }
    generateMergedHCRGuardCodeIfNeeded(node, cg);
    return reg;
@@ -1455,7 +1455,7 @@ OMR::Z::TreeEvaluator::ificmpltEvaluator(TR::Node * node, TR::CodeGenerator * cg
    if (handledBIF)
       return result;
 
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2);
    }
 
 /**
@@ -1478,7 +1478,7 @@ OMR::Z::TreeEvaluator::ificmpgeEvaluator(TR::Node * node, TR::CodeGenerator * cg
    if (handledBIF)
       return result;
 
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, TR::InstOpCode::COND_BNHRC);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, TR::InstOpCode::COND_MASK12);
    }
 
 /**
@@ -1501,7 +1501,7 @@ OMR::Z::TreeEvaluator::ificmpgtEvaluator(TR::Node * node, TR::CodeGenerator * cg
    if (handledBIF)
       return result;
 
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4);
    }
 
 /**
@@ -1523,7 +1523,7 @@ OMR::Z::TreeEvaluator::ificmpleEvaluator(TR::Node * node, TR::CodeGenerator * cg
    if (handledBIF)
       return result;
 
-   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNHRC, TR::InstOpCode::COND_BNLRC);
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, TR::InstOpCode::COND_MASK10);
    }
 
 /**
@@ -1536,12 +1536,12 @@ OMR::Z::TreeEvaluator::iflcmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC);
+      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8);
       }
    else
       {
-      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_NOP, TR::InstOpCode::COND_BERC, CMP4CONTROLFLOW);
-      }
+      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_NOP, TR::InstOpCode::COND_MASK8, CMP4CONTROLFLOW);
+}
    generateMergedHCRGuardCodeIfNeeded(node, cg);
    return NULL;
    }
@@ -1561,11 +1561,11 @@ OMR::Z::TreeEvaluator::iflcmpneEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC);
+      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6);
       }
    else
       {
-      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC, CMP4CONTROLFLOW);
+      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6, CMP4CONTROLFLOW);
       }
 
    generateMergedHCRGuardCodeIfNeeded(node, cg);
@@ -1582,11 +1582,11 @@ OMR::Z::TreeEvaluator::iflcmpleEvaluator(TR::Node * node, TR::CodeGenerator * cg
    PRINT_ME("iflcmple", node, cg);
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNHRC, TR::InstOpCode::COND_BNLRC);
+      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, TR::InstOpCode::COND_MASK10);
       }
    else
       {
-      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BNHRC, CMP4CONTROLFLOW);
+      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK12, CMP4CONTROLFLOW);
       }
    return NULL;
    }
@@ -1600,11 +1600,11 @@ OMR::Z::TreeEvaluator::iflcmpltEvaluator(TR::Node * node, TR::CodeGenerator * cg
    PRINT_ME("iflcmplt", node, cg);
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC);
+      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2);
       }
    else
       {
-      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BLRC, CMP4CONTROLFLOW);
+      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK4, CMP4CONTROLFLOW);
       }
    return NULL;
    }
@@ -1618,11 +1618,11 @@ OMR::Z::TreeEvaluator::iflcmpgeEvaluator(TR::Node * node, TR::CodeGenerator * cg
    PRINT_ME("iflcmpge", node, cg);
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, TR::InstOpCode::COND_BNHRC);
+      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, TR::InstOpCode::COND_MASK12);
       }
    else
       {
-      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BNLRC, CMP4CONTROLFLOW);
+      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK10, CMP4CONTROLFLOW);
       }
    return NULL;
    }
@@ -1636,11 +1636,11 @@ OMR::Z::TreeEvaluator::iflcmpgtEvaluator(TR::Node * node, TR::CodeGenerator * cg
    PRINT_ME("iflcmpgt", node, cg);
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC);
+      generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4);
       }
    else
       {
-      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BHRC, CMP4CONTROLFLOW);
+      generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK2, CMP4CONTROLFLOW);
       }
    return NULL;
    }
@@ -1675,11 +1675,11 @@ OMR::Z::TreeEvaluator::ifbcmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg
    PRINT_ME("ifbcmpeq", node, cg);
    if (node->getOpCodeValue() == TR::ifbcmpeq || node->getOpCodeValue() == TR::ifbucmpeq)
       {
-      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC);
+      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8);
       }
    else
       {
-      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC);
+      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6);
       }
    }
 
@@ -1737,11 +1737,11 @@ OMR::Z::TreeEvaluator::ifscmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg
    PRINT_ME("ifscmpeq", node, cg);
    if (node->getOpCodeValue() == TR::ifscmpeq)
       {
-      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC);
+      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8);
       }
    else
       {
-      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC);
+      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6);
       }
    }
 
@@ -1795,11 +1795,11 @@ OMR::Z::TreeEvaluator::ifsucmpeqEvaluator(TR::Node * node, TR::CodeGenerator * c
    PRINT_ME("ifsucmpeq", node, cg);
    if (node->getOpCodeValue() == TR::ifsucmpeq)
       {
-      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC);
+      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8);
       }
    else
       {
-      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC);
+      return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6);
       }
    }
 
@@ -1895,11 +1895,11 @@ OMR::Z::TreeEvaluator::icmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             }
          }
 
-      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC);
+      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8);
       }
    else
       {
-      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC);
+      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6);
       }
    }
 
@@ -1932,7 +1932,7 @@ OMR::Z::TreeEvaluator::icmpltEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       return firstReg;
       }
 
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2);
    }
 
 /**
@@ -1942,7 +1942,7 @@ TR::Register *
 OMR::Z::TreeEvaluator::icmpgeEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    PRINT_ME("icmpge", node, cg);
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, TR::InstOpCode::COND_BNHRC);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, TR::InstOpCode::COND_MASK12);
    }
 
 /**
@@ -1974,7 +1974,7 @@ OMR::Z::TreeEvaluator::icmpgtEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       return secondReg;
       }
 
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4);
    }
 
 /**
@@ -1984,7 +1984,7 @@ TR::Register *
 OMR::Z::TreeEvaluator::icmpleEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    PRINT_ME("icmple", node, cg);
-   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNHRC, TR::InstOpCode::COND_BNLRC);
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, TR::InstOpCode::COND_MASK10);
    }
 
 /**
@@ -1996,11 +1996,11 @@ OMR::Z::TreeEvaluator::lcmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    PRINT_ME("lcmpeq", node, cg);
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, CMP4BOOLEAN);
       }
    else
       {
-      return generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_NOP, TR::InstOpCode::COND_BERC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_NOP, TR::InstOpCode::COND_MASK8, CMP4BOOLEAN);
       }
    }
 
@@ -2013,11 +2013,11 @@ OMR::Z::TreeEvaluator::lcmpneEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    PRINT_ME("lcmpne", node, cg);
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, CMP4BOOLEAN);
       }
    else
       {
-      return generateS390lcmpEvaluator(node, cg,  TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator(node, cg,  TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6, CMP4BOOLEAN);
       }
    }
 
@@ -2030,11 +2030,11 @@ OMR::Z::TreeEvaluator::lcmpleEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    PRINT_ME("lcmple", node, cg);
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNHRC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, CMP4BOOLEAN);
       }
    else
       {
-      return generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BNHRC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK12, CMP4BOOLEAN);
       }
    }
 
@@ -2047,11 +2047,11 @@ OMR::Z::TreeEvaluator::lcmpltEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    PRINT_ME("lcmplt", node, cg);
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, CMP4BOOLEAN);
       }
    else
       {
-      return generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BLRC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK4, CMP4BOOLEAN);
       }
    }
 
@@ -2064,11 +2064,11 @@ OMR::Z::TreeEvaluator::lcmpgeEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    PRINT_ME("lcmpge", node, cg);
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNLRC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK10, CMP4BOOLEAN);
       }
    else
       {
-      return generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BNLRC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK10, CMP4BOOLEAN);
       }
    }
 
@@ -2081,11 +2081,11 @@ OMR::Z::TreeEvaluator::lcmpgtEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    PRINT_ME("lcmpgt", node, cg);
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BHRC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator64(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, CMP4BOOLEAN);
       }
    else
       {
-      return generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BLRC, TR::InstOpCode::COND_BHRC, TR::InstOpCode::COND_BHRC, CMP4BOOLEAN);
+      return generateS390lcmpEvaluator(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, TR::InstOpCode::COND_MASK2, TR::InstOpCode::COND_MASK2, CMP4BOOLEAN);
       }
    }
 
@@ -2114,11 +2114,11 @@ OMR::Z::TreeEvaluator::bcmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    PRINT_ME("bcmpeq", node, cg);
    if (node->getOpCodeValue() == TR::bcmpeq || node->getOpCodeValue() == TR::bucmpeq)
       {
-      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC);
+      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8);
       }
    else
       {
-      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC);
+      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6);
       }
    }
 
@@ -2172,11 +2172,11 @@ OMR::Z::TreeEvaluator::scmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    PRINT_ME("scmpeq", node, cg);
    if (node->getOpCodeValue() == TR::scmpeq)
       {
-      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC);
+      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8);
       }
    else
       {
-      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC);
+      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6);
       }
    }
 
@@ -2230,11 +2230,11 @@ OMR::Z::TreeEvaluator::sucmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    PRINT_ME("sucmpeq", node, cg);
    if (node->getOpCodeValue() == TR::sucmpeq)
       {
-      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, TR::InstOpCode::COND_BERC);
+      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, TR::InstOpCode::COND_MASK8);
       }
    else
       {
-      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC);
+      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6);
       }
    }
 
@@ -2439,14 +2439,14 @@ OMR::Z::TreeEvaluator::tableEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       case AddressTable32bit:
          {
          if(!node->chkCannotOverflow())
-           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, selectorReg, numBranchTableEntries, TR::InstOpCode::COND_BNLRC, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);       //make sure the case selector is within range of our case constants
+           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, selectorReg, numBranchTableEntries, TR::InstOpCode::COND_MASK10, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);       //make sure the case selector is within range of our case constants
          generateRSInstruction(cg, TR::InstOpCode::SLL, node, selectorReg, 2);
          }
          break;
       case AddressTable64bitIntLookup:
          {
          if(!node->chkCannotOverflow())
-           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, selectorReg, numBranchTableEntries, TR::InstOpCode::COND_BNLRC, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);
+           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, selectorReg, numBranchTableEntries, TR::InstOpCode::COND_MASK10, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);
 
          generateRSInstruction(cg, TR::InstOpCode::SLLG, node, selectorReg, selectorReg, 3);
          }
@@ -2455,7 +2455,7 @@ OMR::Z::TreeEvaluator::tableEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       case AddressTable64bitLongLookup:
          {
          if(!node->chkCannotOverflow())
-           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, selectorReg, numBranchTableEntries, TR::InstOpCode::COND_BNLRC, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);
+           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, selectorReg, numBranchTableEntries, TR::InstOpCode::COND_MASK10, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);
          generateRSInstruction(cg, TR::InstOpCode::SLLG, node, selectorReg, selectorReg, 3);
          generateRRInstruction(cg, TR::InstOpCode::LGFR, node, selectorReg, selectorReg);
          }
@@ -2463,21 +2463,21 @@ OMR::Z::TreeEvaluator::tableEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       case RelativeTable32bit:
          {
          if(!node->chkCannotOverflow())
-           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, selectorReg, numBranchTableEntries, TR::InstOpCode::COND_BNLRC, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);       //make sure the case selector is within range of our case constants
+           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, selectorReg, numBranchTableEntries, TR::InstOpCode::COND_MASK10, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);       //make sure the case selector is within range of our case constants
          generateRSInstruction(cg, TR::InstOpCode::SLL, node, selectorReg, 2);
          }
          break;
       case RelativeTable64bitIntLookup:
          {
          if(!node->chkCannotOverflow())
-           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node,selectorReg, numBranchTableEntries, TR::InstOpCode::COND_BNLRC, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);       //make sure the case selector is within range of our case constants
+           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node,selectorReg, numBranchTableEntries, TR::InstOpCode::COND_MASK10, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);       //make sure the case selector is within range of our case constants
          generateRSInstruction(cg, TR::InstOpCode::SLL, node, selectorReg, 2);
          }
          break;
       case RelativeTable64bitLongLookup:
          {
          if(!node->chkCannotOverflow())
-           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, selectorReg, numBranchTableEntries, TR::InstOpCode::COND_BNLRC, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);
+           generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, selectorReg, numBranchTableEntries, TR::InstOpCode::COND_MASK10, node->getSecondChild()->getBranchDestination()->getNode()->getLabel(), false, false);
          generateRSInstruction(cg, TR::InstOpCode::SLLG, node, selectorReg, selectorReg, 2);
          }
          break;
@@ -2578,14 +2578,14 @@ OMR::Z::TreeEvaluator::lookupEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             else
                {
                generateS390ImmOp(cg, TR::InstOpCode::C, node, selectorReg->getHighOrder(), selectorReg->getHighOrder(), (int32_t)((child->getCaseConstant() >> 32) & 0x00000000FFFFFFFFl));
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, node, skipLoCompareLabel);
+               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, skipLoCompareLabel);
                generateS390ImmOp(cg, TR::InstOpCode::C, node, selectorReg->getLowOrder(), selectorReg->getLowOrder(), (int32_t) (child->getCaseConstant() &0x00000000FFFFFFFFl));
                }
             }
          else
             generateS390ImmOp(cg, TR::InstOpCode::C, node, selectorReg, selectorReg, child->getCaseConstant());
 
-         brCond = TR::InstOpCode::COND_BERC;
+         brCond = TR::InstOpCode::COND_MASK8;
          }
 
       // If key == val -> branch to target BB
@@ -2920,7 +2920,7 @@ TR::Register *OMR::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node
             appendTo = generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), reference, targetRegister, tempMR, appendTo);
             tempMR->stopUsingMemRefRegister(cg);
 
-            appendTo = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, snippetLabel, appendTo);
+            appendTo = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, snippetLabel, appendTo);
             TR::Instruction *brInstr = appendTo;
             brInstr->setExceptBranchOp();
             }
@@ -3116,14 +3116,14 @@ OMR::Z::TreeEvaluator::ZEROCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node *valueToCheck = node->getFirstChild();
    if (valueToCheck->getOpCode().getOpCodeValue() == TR::acmpeq)
       {
-      TR::InstOpCode::S390BranchCondition opBranchCond = generateS390CompareOps(valueToCheck, cg, TR::InstOpCode::COND_BNERC, TR::InstOpCode::COND_BNERC);
+      TR::InstOpCode::S390BranchCondition opBranchCond = generateS390CompareOps(valueToCheck, cg, TR::InstOpCode::COND_MASK6, TR::InstOpCode::COND_MASK6);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, opBranchCond, node, slowPathOOLLabel);
       }
    else
       {
       TR::Register *valueReg = cg->evaluate(valueToCheck);
       generateRIInstruction(cg, TR::InstOpCode::CHI, node, valueReg, 0);
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BERC, node, slowPathOOLLabel);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, slowPathOOLLabel);
       }
 
    // Outlined instructions for check failure
@@ -3479,7 +3479,7 @@ TR::InstOpCode::S390BranchCondition OMR::Z::TreeEvaluator::getBranchConditionFro
       case TR::lcmpeq:
       case TR::lucmpeq:
          {
-         return TR::InstOpCode::COND_BERC;
+         return TR::InstOpCode::COND_MASK8;
          }
          break;
       case TR::icmpne:
@@ -3488,7 +3488,7 @@ TR::InstOpCode::S390BranchCondition OMR::Z::TreeEvaluator::getBranchConditionFro
       case TR::lcmpne:
       case TR::lucmpne:
          {
-         return TR::InstOpCode::COND_BNERC;
+         return TR::InstOpCode::COND_MASK6;
          }
          break;
       case TR::icmplt:
@@ -3496,7 +3496,7 @@ TR::InstOpCode::S390BranchCondition OMR::Z::TreeEvaluator::getBranchConditionFro
       case TR::lcmplt:
       case TR::lucmplt:
          {
-         return TR::InstOpCode::COND_BLRC;
+         return TR::InstOpCode::COND_MASK8;
          }
          break;
       case TR::icmple:
@@ -3504,7 +3504,7 @@ TR::InstOpCode::S390BranchCondition OMR::Z::TreeEvaluator::getBranchConditionFro
       case TR::lcmple:
       case TR::lucmple:
          {
-         return TR::InstOpCode::COND_BNHRC;
+         return TR::InstOpCode::COND_MASK12;
          }
          break;
       case TR::icmpgt:
@@ -3512,7 +3512,7 @@ TR::InstOpCode::S390BranchCondition OMR::Z::TreeEvaluator::getBranchConditionFro
       case TR::lcmpgt:
       case TR::lucmpgt:
          {
-         return TR::InstOpCode::COND_BHRC;
+         return TR::InstOpCode::COND_MASK2;
          }
          break;
       case TR::icmpge:
@@ -3520,13 +3520,13 @@ TR::InstOpCode::S390BranchCondition OMR::Z::TreeEvaluator::getBranchConditionFro
       case TR::lcmpge:
       case TR::lucmpge:
          {
-         return TR::InstOpCode::COND_BNLRC;
+         return TR::InstOpCode::COND_MASK10;
          }
          break;
       default:
          {
          TR_ASSERT(0, "Unsupported compare type under ternary");
-         return TR::InstOpCode::COND_BERC;      //not a valid return value.  We should never ever get here.
+         return TR::InstOpCode::COND_MASK8;      //not a valid return value.  We should never ever get here.
          }
          break;
       }
@@ -3540,40 +3540,30 @@ TR::InstOpCode::S390BranchCondition OMR::Z::TreeEvaluator::mapBranchConditionToL
    {
    switch (incomingBc)
       {
-      case TR::InstOpCode::COND_BERC:
+      case TR::InstOpCode::COND_MASK8:
          {
-         return TR::InstOpCode::COND_BNERC;
+         return TR::InstOpCode::COND_MASK6;
          }
          break;
-      case TR::InstOpCode::COND_BNERC:
+      case TR::InstOpCode::COND_MASK6:
          {
-         return TR::InstOpCode::COND_BERC;
+         return TR::InstOpCode::COND_MASK8;
          }
          break;
-      case TR::InstOpCode::COND_BLRC:
+      case TR::InstOpCode::COND_MASK2:
          {
-         return TR::InstOpCode::COND_BNLRC;
+         return TR::InstOpCode::COND_MASK12;
          }
          break;
-      case TR::InstOpCode::COND_BNHRC:
+      case TR::InstOpCode::COND_MASK10:
          {
-         return TR::InstOpCode::COND_BHRC;
-         }
-         break;
-      case TR::InstOpCode::COND_BHRC:
-         {
-         return TR::InstOpCode::COND_BNHRC;
-         }
-         break;
-      case TR::InstOpCode::COND_BNLRC:
-         {
-         return TR::InstOpCode::COND_BLRC;
+         return TR::InstOpCode::COND_MASK8;
          }
          break;
       default:
          {
         TR_ASSERT(0, "Unsupported compare mapping");
-        return TR::InstOpCode::COND_BERC;      //not a valid return value.  We should never ever get here.
+        return TR::InstOpCode::COND_MASK8;      //not a valid return value.  We should never ever get here.
         }
         break;
       }
@@ -3734,8 +3724,8 @@ OMR::Z::TreeEvaluator::ternaryEvaluator(TR::Node *node, TR::CodeGenerator *cg)
             
             auto mnemonic = is64BitRegister ? TR::InstOpCode::LOCGR: TR::InstOpCode::LOCR;
 
-            generateRRFInstruction(cg, mnemonic, node, trueReg->getHighOrder(), falseReg->getHighOrder(), getMaskForBranchCondition(TR::InstOpCode::COND_BERC)>>4, true);
-            generateRRFInstruction(cg, mnemonic, node, trueReg->getLowOrder(), falseReg->getLowOrder(), getMaskForBranchCondition(TR::InstOpCode::COND_BERC)>>4, true);
+            generateRRFInstruction(cg, mnemonic, node, trueReg->getHighOrder(), falseReg->getHighOrder(), getMaskForBranchCondition(TR::InstOpCode::COND_MASK8)>>4, true);
+            generateRRFInstruction(cg, mnemonic, node, trueReg->getLowOrder(), falseReg->getLowOrder(), getMaskForBranchCondition(TR::InstOpCode::COND_MASK8)>>4, true);
             }
          else
             {
@@ -3845,14 +3835,14 @@ OMR::Z::TreeEvaluator::ternaryEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
             auto mnemonic = trueReg->getKind() == TR_GPR64 || cg->use64BitRegsOn32Bit() ? TR::InstOpCode::LOCGR: TR::InstOpCode::LOCR;
 
-            generateRRFInstruction(cg, mnemonic, node, trueReg->getHighOrder(), falseReg->getHighOrder(), getMaskForBranchCondition(TR::InstOpCode::COND_BERC) >> 4, true);
-            generateRRFInstruction(cg, mnemonic, node, trueReg->getLowOrder(), falseReg->getLowOrder(), getMaskForBranchCondition(TR::InstOpCode::COND_BERC) >> 4, true);
+            generateRRFInstruction(cg, mnemonic, node, trueReg->getHighOrder(), falseReg->getHighOrder(), getMaskForBranchCondition(TR::InstOpCode::COND_MASK8) >> 4, true);
+            generateRRFInstruction(cg, mnemonic, node, trueReg->getLowOrder(), falseReg->getLowOrder(), getMaskForBranchCondition(TR::InstOpCode::COND_MASK8) >> 4, true);
             }
          else
             {
             auto mnemonic = trueVal->getOpCode().is8Byte() ? TR::InstOpCode::LOCGR: TR::InstOpCode::LOCR;
 
-            generateRRFInstruction(cg, mnemonic, node, trueReg, falseReg->getRegister(), getMaskForBranchCondition(TR::InstOpCode::COND_BERC)>>4, true);
+            generateRRFInstruction(cg, mnemonic, node, trueReg, falseReg->getRegister(), getMaskForBranchCondition(TR::InstOpCode::COND_MASK8)>>4, true);
             }
          }
       else
@@ -3860,7 +3850,7 @@ OMR::Z::TreeEvaluator::ternaryEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          TR::LabelSymbol *branchDestination = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
          branchDestination->setEndInternalControlFlow();
 
-         TR::Instruction *branchInst = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNERC, node, branchDestination);
+         TR::Instruction *branchInst = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, branchDestination);
          branchInst->setStartInternalControlFlow();
 
          TR::RegisterDependencyConditions* conditions = NULL;
@@ -4048,7 +4038,7 @@ TR::Instruction *generateAlwaysTrapSequence(TR::Node *node, TR::CodeGenerator *c
    TR::RegisterDependencyConditions *regDeps =
          new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
    regDeps->addPostCondition(zeroReg, TR::RealRegister::AssignAny);
-   cursor = new (cg->trHeapMemory()) TR::S390RRFInstruction(TR::InstOpCode::CLRT, node, zeroReg, zeroReg, getMaskForBranchCondition(TR::InstOpCode::COND_BERC)>>4, true, cg);
+   cursor = new (cg->trHeapMemory()) TR::S390RRFInstruction(TR::InstOpCode::CLRT, node, zeroReg, zeroReg, getMaskForBranchCondition(TR::InstOpCode::COND_MASK8)>>4, true, cg);
    cursor->setDependencyConditions(regDeps);
 
    cg->stopUsingRegister(zeroReg);

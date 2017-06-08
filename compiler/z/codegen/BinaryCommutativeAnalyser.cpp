@@ -2050,7 +2050,7 @@ TR_S390BinaryCommutativeAnalyser::longAddAnalyser(TR::Node * root, TR::InstOpCod
       if (!((ENABLE_ZARCH_FOR_32 && zArchTrexSupported) || setsOrReadsCC))
       {
       // Check for overflow in LS int. If overflow, increment MS int.
-      generateS390BranchInstruction(cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNCRC, root, doneLAdd);
+      generateS390BranchInstruction(cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, root, doneLAdd);
 
       // Increment MS int due to overflow in LS int
       generateRIInstruction(cg(), TR::InstOpCode::AHI, root, highSum, 1);

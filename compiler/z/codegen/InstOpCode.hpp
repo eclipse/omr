@@ -101,23 +101,17 @@ getMaskForBranchCondition (TR::InstOpCode::S390BranchCondition branchCond)
       case TR::InstOpCode::COND_NOP         :
       case TR::InstOpCode::COND_VGNOP       : return 0x00 ;
       case TR::InstOpCode::COND_MASK1       :
-      case TR::InstOpCode::COND_BNANRC      :
       case TR::InstOpCode::COND_BO          :
-      case TR::InstOpCode::COND_BOR         :
-      case TR::InstOpCode::COND_BORC        : return 0x10 ;
+      case TR::InstOpCode::COND_BOR         : return 0x10 ;
       case TR::InstOpCode::COND_MASK2       :
       case TR::InstOpCode::COND_BH          :
       case TR::InstOpCode::COND_BHR         :
-      case TR::InstOpCode::COND_BHRC        :
       case TR::InstOpCode::COND_BP          :
-      case TR::InstOpCode::COND_BPR         :
-      case TR::InstOpCode::COND_BPRC        : return 0x20 ;
-      case TR::InstOpCode::COND_MASK3       :
-      case TR::InstOpCode::COND_BCRC        : return 0x30 ;
+      case TR::InstOpCode::COND_BPR         : return 0x20 ;
+      case TR::InstOpCode::COND_MASK3       : return 0x30 ;
       case TR::InstOpCode::COND_MASK4       :
       case TR::InstOpCode::COND_BL          :
       case TR::InstOpCode::COND_BLR         :
-      case TR::InstOpCode::COND_BLRC        :
       case TR::InstOpCode::COND_BM          :
       case TR::InstOpCode::COND_BMR         :
       case TR::InstOpCode::COND_BMRC        : return 0x40 ;
@@ -125,42 +119,30 @@ getMaskForBranchCondition (TR::InstOpCode::S390BranchCondition branchCond)
       case TR::InstOpCode::COND_MASK6       :
       case TR::InstOpCode::COND_BNE         :
       case TR::InstOpCode::COND_BNER        :
-      case TR::InstOpCode::COND_BNERC       :
       case TR::InstOpCode::COND_BNZ         :
-      case TR::InstOpCode::COND_BNZR        :
-      case TR::InstOpCode::COND_BNZRC       : return 0x60 ;
-      case TR::InstOpCode::COND_MASK7       :
-      case TR::InstOpCode::COND_BNZORC      : return 0x70 ;
+      case TR::InstOpCode::COND_BNZR        : return 0x60 ;
+      case TR::InstOpCode::COND_MASK7       : return 0x70 ;
       case TR::InstOpCode::COND_MASK8       :
       case TR::InstOpCode::COND_BE          :
       case TR::InstOpCode::COND_BER         :
-      case TR::InstOpCode::COND_BERC        :
       case TR::InstOpCode::COND_BZ          :
-      case TR::InstOpCode::COND_BZR         :
-      case TR::InstOpCode::COND_BZRC        : return 0x80 ;
+      case TR::InstOpCode::COND_BZR         : return 0x80 ;
       case TR::InstOpCode::COND_MASK9       : return 0x90 ;
       case TR::InstOpCode::COND_MASK10      :
       case TR::InstOpCode::COND_BNL         :
       case TR::InstOpCode::COND_BNLR        :
-      case TR::InstOpCode::COND_BNLRC       :
       case TR::InstOpCode::COND_BNM         :
-      case TR::InstOpCode::COND_BNMR        :
-      case TR::InstOpCode::COND_BNMRC       : return 0xA0 ;
+      case TR::InstOpCode::COND_BNMR        : return 0xA0 ;
       case TR::InstOpCode::COND_MASK11      : return 0xB0 ;
       case TR::InstOpCode::COND_MASK12      :
-      case TR::InstOpCode::COND_BNCRC       :
       case TR::InstOpCode::COND_BNH         :
       case TR::InstOpCode::COND_BNHR        :
-      case TR::InstOpCode::COND_BNHRC       :
       case TR::InstOpCode::COND_BNP         :
       case TR::InstOpCode::COND_BNPR        : return 0xC0 ;
-      case TR::InstOpCode::COND_MASK13      :
-      case TR::InstOpCode::COND_BNPRC       : return 0xD0 ;
+      case TR::InstOpCode::COND_MASK13      : return 0xD0 ;
       case TR::InstOpCode::COND_MASK14      :
-      case TR::InstOpCode::COND_BNNANRC     :
       case TR::InstOpCode::COND_BNO         :
-      case TR::InstOpCode::COND_BNOR        :
-      case TR::InstOpCode::COND_BNORC       : return 0xE0 ;
+      case TR::InstOpCode::COND_BNOR        : return 0xE0 ;
       case TR::InstOpCode::COND_MASK15      :
       case TR::InstOpCode::COND_BC          :
       case TR::InstOpCode::COND_BCR         :
@@ -182,52 +164,36 @@ getReverseBranchCondition(TR::InstOpCode::S390BranchCondition bc)
    {
    switch (bc)
       {
-      case TR::InstOpCode::COND_BNCRC:
-         return TR::InstOpCode::COND_BNMRC;
       case TR::InstOpCode::COND_BNH:
          return TR::InstOpCode::COND_BNL;
       case TR::InstOpCode::COND_BNHR:
          return TR::InstOpCode::COND_BNLR;
-      case TR::InstOpCode::COND_BNHRC:
-         return TR::InstOpCode::COND_BNLRC;
       case TR::InstOpCode::COND_BNP:
          return TR::InstOpCode::COND_BNM;
       case TR::InstOpCode::COND_BNL:
          return TR::InstOpCode::COND_BNH;
       case TR::InstOpCode::COND_BNLR:
          return TR::InstOpCode::COND_BNHR;
-      case TR::InstOpCode::COND_BNLRC:
-         return TR::InstOpCode::COND_BNHRC;
       case TR::InstOpCode::COND_BNM:
          return TR::InstOpCode::COND_BNP;
       case TR::InstOpCode::COND_BNMR:
          return TR::InstOpCode::COND_BNP;
-      case TR::InstOpCode::COND_BNMRC:
-         return TR::InstOpCode::COND_BNCRC;
       case TR::InstOpCode::COND_BL:
          return TR::InstOpCode::COND_BH;
       case TR::InstOpCode::COND_BLR:
          return TR::InstOpCode::COND_BHR;
-      case TR::InstOpCode::COND_BLRC:
-         return TR::InstOpCode::COND_BHRC;
       case TR::InstOpCode::COND_BM:
          return TR::InstOpCode::COND_BP;
       case TR::InstOpCode::COND_BMR:
          return TR::InstOpCode::COND_BPR;
-      case TR::InstOpCode::COND_BMRC:
-         return TR::InstOpCode::COND_BPRC;
       case TR::InstOpCode::COND_BH:
          return TR::InstOpCode::COND_BL;
       case TR::InstOpCode::COND_BHR:
          return TR::InstOpCode::COND_BLR;
-      case TR::InstOpCode::COND_BHRC:
-         return TR::InstOpCode::COND_BLRC;
       case TR::InstOpCode::COND_BP:
          return TR::InstOpCode::COND_BM;
       case TR::InstOpCode::COND_BPR:
          return TR::InstOpCode::COND_BMR;
-      case TR::InstOpCode::COND_BPRC:
-         return TR::InstOpCode::COND_BMRC;
       default:
          {
          uint8_t mask = (getMaskForBranchCondition(bc)>>4);
