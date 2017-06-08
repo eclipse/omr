@@ -943,7 +943,7 @@ omrvmem_reserve_memory_ex(struct OMRPortLibrary *portLibrary, struct J9PortVmemI
 		update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
 		Trc_PRT_vmem_omrvmem_reserve_memory_invalid_input();
 #else /* OMR_ENV_DATA64 */
-	if (0) {
+		if (0) {
 #endif /* OMR_ENV_DATA64 */
 	} else if (0 == params.pageSize) {
 		/* Invalid input */
