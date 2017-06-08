@@ -564,11 +564,11 @@ OMR::ResolvedMethodSymbol::genInduceOSRCallNode(TR::TreeTop* insertionPoint,
 
 
 bool
-OMR::ResolvedMethodSymbol::induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder, int32_t offset)
+OMR::ResolvedMethodSymbol::induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder, int32_t offset, bool force)
    {
    TR::Block *block = insertionPoint->getEnclosingBlock();
 
-   if (self()->supportsInduceOSR(induceBCI, block, self()->comp()))
+   if (force || self()->supportsInduceOSR(induceBCI, block, self()->comp()))
       {
       TR::CFG *cfg = self()->comp()->getFlowGraph();
       cfg->setStructure(NULL);
