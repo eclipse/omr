@@ -159,6 +159,8 @@ GCConfigTest::TearDown()
 	omrmem_free_memory((void *)verboseFile);
 	verboseFile = NULL;
 
+	cli->kill(env);
+
 	/* Shut down the dispatcher threads */
 	omr_error_t rc = OMR_GC_ShutdownDispatcherThreads(exampleVM->_omrVMThread);
 	ASSERT_EQ(OMR_ERROR_NONE, rc) << "TearDown(): OMR_GC_ShutdownDispatcherThreads failed, rc=" << rc;

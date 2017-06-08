@@ -36,9 +36,6 @@ MM_GCExtensionsBase::newInstance(MM_EnvironmentBase* env)
 	/* Avoid using MM_Forge to allocate memory for the extension, since MM_Forge itself has not been created! */
 	extensions = static_cast<MM_GCExtensionsBase*>(omrmem_allocate_memory(sizeof(MM_GCExtensionsBase), OMRMEM_CATEGORY_MM));
 	if (extensions) {
-		/* Initialize all the fields to zero */
-		memset((void*)extensions, 0, sizeof(*extensions));
-
 		new (extensions) MM_GCExtensionsBase();
 		if (!extensions->initialize(env)) {
 			extensions->kill(env);
@@ -242,6 +239,10 @@ MM_GCExtensionsBase::tearDown(MM_EnvironmentBase* env)
 #if defined(OMR_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC)
 	scavengerHotFieldStats.tearDown(env);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC) */
+
+#if defined(OMR_GC_MODRON_SCAVENGER)
+	rememberedSet.tearDown(env);
+#endif /* OMR_GC_MODRON_SCAVENGER */
 
 	objectModel.tearDown(this);
 	mixedObjectModel.tearDown(this);

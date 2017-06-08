@@ -51,12 +51,15 @@ MM_MarkingDelegate::scanRoots(MM_EnvironmentBase *env)
 void
 MM_MarkingDelegate::masterCleanupAfterGC(MM_EnvironmentBase *env)
 {
+	OMRPORT_ACCESS_FROM_OMRVM(env->getOmrVM());
 	J9HashTableState state;
 	ObjectEntry *rEntry = NULL;
 	OMR_VM_Example *omrVM = (OMR_VM_Example *)env->getOmrVM()->_language_vm;
 	rEntry = (ObjectEntry *)hashTableStartDo(omrVM->objectTable, &state);
 	while (rEntry != NULL) {
 		if (!_markingScheme->isMarked(rEntry->objPtr)) {
+			omrmem_free_memory((void *)rEntry->name);
+			rEntry->name = NULL;
 			hashTableDoRemove(&state);
 		}
 		rEntry = (ObjectEntry *)hashTableNextDo(&state);

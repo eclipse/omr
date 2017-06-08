@@ -687,11 +687,11 @@ omrthread_shutdown(void)
 	lib->global_pool = 0;
 
 	free_monitor_pools();
-#ifndef LINUX
+
 	TLS_DESTROY(lib->self_ptr);
+
 	pool_kill(lib->thread_pool);
 	lib->thread_pool = 0;
-#endif /* LINUX */
 #if defined(OMR_THR_FORK_SUPPORT)
 	pool_kill(lib->rwmutexPool);
 #endif /* defined(OMR_THR_FORK_SUPPORT) */
