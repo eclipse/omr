@@ -25,6 +25,14 @@ OBJECTS := omrsig
 OBJECTS := $(addsuffix $(OBJEXT),$(OBJECTS))
 EXPORT_FUNCTIONS_FILE := omrsig.exportlist
 
+ifeq (win,$(OMR_HOST_OS))
+OMR_RES_FILE := $(top_srcdir)/omr.res
+ifneq ("$(wildcard $(COPYRIGHT_RC_FILE))","")
+OBJECTS += $(OMR_RES_FILE)
+omrsig.dll: $(OMR_RES_FILE)
+endif
+endif
+
 ## Create platform specific exports
 
 $(EXPORT_FUNCTIONS_FILE):

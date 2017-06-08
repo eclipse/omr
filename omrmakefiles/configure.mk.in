@@ -102,6 +102,14 @@ OMRTHREAD_LIB_WIN32 := @OMRTHREAD_LIB_WIN32@
 OMRTHREAD_LIB_ZOS := @OMRTHREAD_LIB_ZOS@
 
 ###
+### Version information used to generate .rc file on Windows
+###
+
+OMR_PRODUCT_DESCRIPTION := @OMR_PRODUCT_DESCRIPTION@
+OMR_PRODUCT_NAME := @OMR_PRODUCT_NAME@
+OMR_PRODUCT_VERSION := @OMR_PRODUCT_VERSION@
+
+###
 ### Global Autoconfigure Flags
 ###
 

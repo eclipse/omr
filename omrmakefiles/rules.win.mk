@@ -181,6 +181,10 @@ endef
 
 RC_INCLUDES=$(call buildCPPIncludeFlags,$(MODULE_INCLUDES) $(GLOBAL_INCLUDES))
 
+# compilation rule for text resource files
+%.res: %.rc
+    $(RC) $(RC_INCLUDES) $<
+
 # compilation rule for message text files
 %.res: %.mc
 	mc $<
