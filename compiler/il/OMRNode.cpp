@@ -5169,6 +5169,27 @@ OMR::Node::printIsNonZero()
    return self()->isNonZero() ? "X!=0 " : "";
    }
 
+bool                   OMR::Node::profileInfoCannotBeTrusted()    { return _flags.testAny(profileInfoIsUntrustworthy); }
+void                   OMR::Node::setProfileInfoCannotBeTrusted() {  _flags.set(profileInfoIsUntrustworthy); }
+const char *           OMR::Node::printIsProfileInfoCannotBeTrusted() { return self()->profileInfoCannotBeTrusted() ? "profileInfoIsUntrustworthy " : ""; }
+ 
+void OMR::Node::setProfileInfoCannotBeTrusted(bool v)
+       {
+       TR::Compilation * c = TR::comp();
+       if (performNodeTransformation2(c,"O^O NODE FLAGS: Setting profileInfoIsUntrustworthy flag on node %p to %d\n", this, v))
+          _flags.set(profileInfoIsUntrustworthy, v);
+       }
+ 
+bool OMR::Node::canCheckIfProfileInfoCannotBeTrusted()
+       {
+       switch (self()->getOpCodeValue())
+          {
+          case TR::instanceof:
+             return true;
+          default:
+             return false;
+          }
+       }
 
 
 bool

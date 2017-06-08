@@ -892,6 +892,12 @@ public:
    bool isNonNull();
    void setIsNonNull(bool v);
 
+   bool profileInfoCannotBeTrusted();
+   void setProfileInfoCannotBeTrusted();
+   const char * printIsProfileInfoCannotBeTrusted();
+   void setProfileInfoCannotBeTrusted(bool v);
+   bool canCheckIfProfileInfoCannotBeTrusted();
+
    bool pointsToNull();
    void setPointsToNull(bool v);
    bool chkPointsToNull();
@@ -1981,6 +1987,7 @@ protected:
 
       // Flag used by TR::checkcast, TR::checkCastForArrayStore, and TR::instanceof
       referenceIsNonNull                    = 0x00008000, ///< Sometimes we can't mark the child as non-null (because it's not provably non-null everywhere) but we know it's non-null by the time we run this parent
+      profileInfoIsUntrustworthy             = 0x00004000,
 
       // Flag used by TR::Return
       returnIsDummy                         = 0x00001000,
