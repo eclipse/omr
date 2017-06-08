@@ -1156,7 +1156,8 @@ OMR::ResolvedMethodSymbol::genOSRHelperCall(int32_t currentInlinedSiteIndex, TR:
    OSRCodeBlock->append(osrTT);
 
    bool disableOSRwithTM = feGetEnv("TR_disableOSRwithTM") ? true: false;
-   if (self()->comp()->cg()->getSupportsTM() && !self()->comp()->getOption(TR_DisableTLE) && !disableOSRwithTM)
+   if (self()->comp()->cg()->getSupportsTM() && !self()->comp()->getOption(TR_DisableTLE) && !disableOSRwithTM
+       && self()->comp()->getHCRMode() != TR::osr)
       {
       TR::Node *tabortNode = TR::Node::create(osrNode, TR::tabort, 0, 0);
       TR::TreeTop *tabortTT = TR::TreeTop::create(self()->comp(),tabortNode, NULL,NULL);
