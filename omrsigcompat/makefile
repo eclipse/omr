@@ -23,6 +23,9 @@ MODULE_NAME := omrsig
 ARTIFACT_TYPE := c_shared
 OBJECTS := omrsig
 OBJECTS := $(addsuffix $(OBJEXT),$(OBJECTS))
+ifeq (win,$(OMR_HOST_OS))
+	OBJECTS += $(top_srcdir)/omr.res
+endif
 EXPORT_FUNCTIONS_FILE := omrsig.exportlist
 
 ## Create platform specific exports

@@ -24,7 +24,9 @@ ARTIFACT_TYPE := c_shared
 
 OBJECTS := invalidAgentMissingOnLoad
 OBJECTS := $(addsuffix $(OBJEXT),$(OBJECTS))
-
+ifeq (win,$(OMR_HOST_OS))
+	OBJECTS += $(top_srcdir)/omr.res
+endif
 EXPORT_FUNCTIONS_FILE := invalidAgentMissingOnLoad.exportlist
 
 include $(top_srcdir)/omrmakefiles/rules.mk
