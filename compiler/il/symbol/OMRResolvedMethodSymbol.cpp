@@ -1278,6 +1278,14 @@ OMR::ResolvedMethodSymbol::genIL(TR_FrontEnd * fe, TR::Compilation * comp, TR::S
                && comp->supportsInduceOSR()
                && !self()->cannotAttemptOSRDuring(comp->getCurrentInlinedSiteIndex(), comp);
 
+            if (!comp->isPeekingMethod())
+               {
+               if (comp->getOSRMode() == TR::involuntaryOSR && !doOSR)
+                  {
+                  comp->failCompilation<TR::TransformationUnsupportedUnderInvolentaryOSR>("doOSR must be true for involuntaryOSR mode");
+                  }
+               }
+
             optimizer = TR::Optimizer::createOptimizer(comp, self(), true);
             previousOptimizer = comp->getOptimizer();
             comp->setOptimizer(optimizer);
