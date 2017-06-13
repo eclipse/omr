@@ -741,6 +741,7 @@ LDFLAGS
 CFLAGS
 CC
 OMR_CROSS_CONFIGURE
+OMR_ZOS_TARGET
 OMR_TOOLCHAIN
 OMR_TARGET_DATASIZE
 OMR_HOST_ARCH
@@ -898,6 +899,7 @@ OMR_HOST_OS
 OMR_HOST_ARCH
 OMR_TARGET_DATASIZE
 OMR_TOOLCHAIN
+OMR_ZOS_TARGET
 OMR_CROSS_CONFIGURE
 CC
 CFLAGS
@@ -1694,6 +1696,8 @@ Some influential environment variables:
               One of: 31,32,64
   OMR_TOOLCHAIN
               The toolchain used to build the package. One of: gcc,xlc,msvc
+  OMR_ZOS_TARGET
+              The zOS target used during compilation. One of: zOSV1R13,zOSV2R1
   OMR_CROSS_CONFIGURE
               Indicates that configure is not being run on a system that is
               capable of building the package. Compiler and feature detection
@@ -2736,6 +2740,7 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 ###
 ### Options
 ###
+
 
 
 
@@ -4278,6 +4283,23 @@ case $OMR_TOOLCHAIN in #(
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OMR_TOOLCHAIN" >&5
 $as_echo "$OMR_TOOLCHAIN" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking OMR_ZOS_TARGET" >&5
+$as_echo_n "checking OMR_ZOS_TARGET... " >&6; }
+if test "x$OMR_ZOS_TARGET" = "x"; then :
+  OMR_ZOS_TARGET=zOSV1R13
+fi
+case $OMR_ZOS_TARGET in #(
+  zOSV1R13) :
+     ;; #(
+  zOSV2R1) :
+     ;; #(
+  *) :
+    as_fn_error $? "An invalid value was provided for OMR_ZOS_TARGET: $OMR_ZOS_TARGET" "$LINENO" 5
+ ;;
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $OMR_ZOS_TARGET" >&5
+$as_echo "$OMR_ZOS_TARGET" >&6; }
 
 # Default OMRGLUE to example/glue if it was not specified
 OMRGLUE=${OMRGLUE:-"./example/glue"}

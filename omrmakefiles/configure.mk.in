@@ -117,6 +117,7 @@ OMR_HOST_OS := @OMR_HOST_OS@
 OMR_HOST_ARCH := @OMR_HOST_ARCH@
 OMR_TARGET_DATASIZE := @OMR_TARGET_DATASIZE@
 OMR_TOOLCHAIN := @OMR_TOOLCHAIN@
+OMR_ZOS_TARGET := @OMR_ZOS_TARGET@
 
 lib_output_dir := @lib_output_dir@
 exe_output_dir := @exe_output_dir@

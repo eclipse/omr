@@ -39,14 +39,11 @@ endif
 ifeq ($(OMR_OPTIMIZE),1)
     COPTFLAGS=-O3 -Wc,TUNE\(10\) -Wc,inline\(auto,noreport,600,5000\)
 
-    # OMRTODO: The COMPAT=ZOSV1R13 option does not appear to be related to
-    # optimizations.  This linker option is supplied only on the compile line,
-    # and never when we link. It might be relevant to note that this was added
-    # at the same time as the compilation flag "-Wc,target=ZOSV1R10", which
-    # would give a performance boost.
-    # option means: "COMPAT=ZOSV1R13 is the minimum level that supports conditional sequential RLDs"
+    # -Wl,compat and -Wc,TARGET must agree with each other.
+    #
+    # Details for -Wl,compat can be found here: 
     # http://www-01.ibm.com/support/knowledgecenter/SSLTBW_2.1.0/com.ibm.zos.v2r1.ieab100/compat.htm
-    COPTFLAGS+=-Wl,compat=ZOSV1R13
+    COPTFLAGS+=-Wl,compat=$(OMR_ZOS_TARGET)
 endif
 ifneq ($(OMR_OPTIMIZE),1)
     COPTFLAGS=-0
@@ -68,7 +65,7 @@ GLOBAL_CPPFLAGS+=-DJ9ZOS390 -DLONGLONG -DJ9VM_TIERED_CODE_CACHE -D_ALL_SOURCE -D
 # TARGET   Generate code for the target operating system
 # list     Generate assembly listing
 # offset   In assembly listing, show addresses as offsets of function entry points
-GLOBAL_FLAGS+=-Wc,xplink,convlit\(ISO8859-1\),rostring,FLOAT\(IEEE,FOLD,AFP\),enum\(4\) -Wa,goff -Wc,NOANSIALIAS -Wc,TARGET\(zOSV1R13\) -W "c,list,offset"
+GLOBAL_FLAGS+=-Wc,xplink,convlit\(ISO8859-1\),rostring,FLOAT\(IEEE,FOLD,AFP\),enum\(4\) -Wa,goff -Wc,NOANSIALIAS -Wc,TARGET\($(OMR_ZOS_TARGET)\) -W "c,list,offset"
 
 ifeq (1,$(OMR_ENV_DATA64))
   GLOBAL_CPPFLAGS+=-DJ9ZOS39064
