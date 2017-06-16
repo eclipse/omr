@@ -207,27 +207,28 @@ OMR::Node::getChild(int32_t c)
 inline TR::Node *
 OMR::Node::getFirstChild()
    {
-   TR_ASSERT(self()->getNumChildren() >= 1, "getFirstChild() called on node %p with no children", this);
+   TR_ASSERT(self()->getNumChildren() >= 1, "getFirstChild() called on node " POINTER_PRINTF_FORMAT " with no children", this);
    return self()->getChild(0);
    }
 
 inline TR::Node *
 OMR::Node::getLastChild()
    {
-   TR_ASSERT(self()->getNumChildren() >= 1, "getLastChild() called on node with no children");
+   TR_ASSERT(self()->getNumChildren() >= 1, "getLastChild() called on node " POINTER_PRINTF_FORMAT " with no children", this);
    return self()->getChild(_numChildren - 1);
    }
 
 inline TR::Node *
 OMR::Node::getSecondChild()
    {
-   TR_ASSERT(self()->getNumChildren() >= 2, "getSecondChild() called on node with less than 2 children()");
+   TR_ASSERT(self()->getNumChildren() >= 2, "getSecondChild() called on node " POINTER_PRINTF_FORMAT " with less than 2 children", this);
    return self()->getChild(1);
    }
 
 inline TR::Node *
 OMR::Node::getThirdChild()
    {
+   TR_ASSERT(self()->getNumChildren() >= 3, "getThirdChild() called on node " POINTER_PRINTF_FORMAT " with less than 3 children", this);
    return self()->getChild(2);
    }
 
