@@ -25,6 +25,7 @@
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
 #include "omrgcstartup.hpp"
+#include <valgrind/memcheck.h>
 
 omrobjectptr_t
 OMR_GC_AllocateObject(OMR_VMThread * omrVMThread, MM_AllocateInitialization *allocator)
@@ -38,8 +39,15 @@ OMR_GC_AllocateObject(OMR_VMThread * omrVMThread, MM_AllocateInitialization *all
 			return NULL;
 		}
 	}
+	omrobjectptr_t objectPtr = allocator->allocateAndInitializeObject(omrVMThread);
+	GC_ObjectModel *objectModel = &(env->getExtensions()->objectModel);
+	int objectSize = objectModel->getConsumedSizeInBytesWithHeader(objectPtr);
 
-	return allocator->allocateAndInitializeObject(omrVMThread);
+	uintptr_t poolAddr = env->getExtensions()->getPoolAddressFromObject((uintptr_t)objectPtr);
+
+	VALGRIND_MEMPOOL_ALLOC(poolAddr,objectPtr,objectSize);
+
+	return objectPtr;
 }
 
 omr_error_t
