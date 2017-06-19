@@ -286,7 +286,20 @@ MM_GCExtensionsBase::tearDown(MM_EnvironmentBase* env)
 void
 MM_GCExtensionsBase::identityHashDataAddRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, uintptr_t size, void* lowAddress, void* highAddress)
 {
-	/* empty */
+	_memoryHeapRangeMap.insert(std::pair<uintptr_t,uintptr_t>((uintptr_t)lowAddress,(uintptr_t)highAddress));
+}
+
+uintptr_t
+MM_GCExtensionsBase::getPoolAddressFromObject(uintptr_t objectAddr)
+{
+	std::map<uintptr_t,uintptr_t>::iterator itr;
+	for(itr = _memoryHeapRangeMap.begin();itr != _memoryHeapRangeMap.end(); ++itr)
+	{
+		//high address is exclusive
+		if(itr->first <= objectAddr && itr->second > objectAddr)
+			return itr->first;
+	}
+	return 0;
 }
 
 void
