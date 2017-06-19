@@ -88,7 +88,7 @@ testMain(int argc, char ** argv, char **envp)
 	uintptr_t allocSize = 24;
 	uintptr_t allocatedCount = 0;
 	uintptr_t adjustedSize = extensions->objectModel.adjustSizeInBytes(allocSize);
-	while (true) {
+	for(int i = 0; i<1000;i++) {
 		MM_ObjectAllocationModel allocationModel(env, allocSize, allocatedFlags);
 		omrobjectptr_t obj = (omrobjectptr_t)OMR_GC_AllocateObject(omrVMThread, &allocationModel);
 		if (NULL != obj) {
