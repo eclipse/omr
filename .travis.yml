@@ -35,6 +35,7 @@ addons:
       - gcc-multilib
       - g++-multilib
       - ninja-build
+      - valgrind
 env:
   matrix:
     - BUILD_WITH_CMAKE=yes
