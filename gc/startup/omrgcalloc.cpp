@@ -41,12 +41,12 @@ OMR_GC_AllocateObject(OMR_VMThread * omrVMThread, MM_AllocateInitialization *all
 	}
 	omrobjectptr_t objectPtr = allocator->allocateAndInitializeObject(omrVMThread);
 	GC_ObjectModel *objectModel = &(env->getExtensions()->objectModel);
-	int objectSize = objectModel->getConsumedSizeInBytesWithHeader(objectPtr);
 
-	uintptr_t poolAddr = env->getExtensions()->getPoolAddressFromObject((uintptr_t)objectPtr);
-
-	VALGRIND_MEMPOOL_ALLOC(poolAddr,objectPtr,objectSize);
-
+	if (objectPtr != NULL) {
+		int objectSize = objectModel->getConsumedSizeInBytesWithHeader(objectPtr);
+		uintptr_t poolAddr = env->getExtensions()->getPoolAddressFromObject((uintptr_t)objectPtr);
+		VALGRIND_MEMPOOL_ALLOC(poolAddr,objectPtr,objectSize);
+	}
 	return objectPtr;
 }
 
