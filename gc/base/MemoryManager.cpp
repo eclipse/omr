@@ -22,6 +22,7 @@
 #include "ModronAssertions.h"
 #include "GCExtensionsBase.hpp"
 #include "NonVirtualMemory.hpp"
+#include <valgrind/memcheck.h>
 
 MM_MemoryManager*
 MM_MemoryManager::newInstance(MM_EnvironmentBase* env)
@@ -68,8 +69,8 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 
 	uintptr_t allocateSize = size;
 
-	uintptr_t concurrentScavengerPageSize = 0;
 	uintptr_t concurrentScavengerPageAlignmentIncrement = 0;
+	uintptr_t concurrentScavengerPageSize = 0;
 	if (extensions->isConcurrentScavengerEnabled()) {
 		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 		/* allocate extra memory to guarantee proper alignment regardless start address location */
@@ -354,6 +355,10 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 		}
 	}
 
+	//add handle's Memory Base to valgrind mempool
+	VALGRIND_CREATE_MEMPOOL(handle->getMemoryBase(), 0, 0);
+	extensions->ValgrindMemppolAddr = (uintptr_t) handle->getMemoryBase();
+
 	return NULL != instance;
 }
 
@@ -497,6 +502,10 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 	handle->setVirtualMemory(NULL);
 	handle->setMemoryBase(NULL);
 	handle->setMemoryTop(NULL);
+
+	//clear valgrind mempool address
+	env->getExtensions()->ValgrindMemppolAddr = 0;
+
 }
 
 bool

@@ -45,8 +45,6 @@
 #include "ScavengerStats.hpp"
 #include "SublistPool.hpp"
 
-#include <map>
-
 class MM_CardTable;
 class MM_ClassLoaderRememberedSet;
 class MM_Collector;
@@ -192,8 +190,6 @@ private:
 	void *concurrentScavengerPageStartAddress; /**< start address for Concurrent Scavenger Page, UDATA_MAX if it is not initialized */
 #endif	/* OMR_GC_CONCURRENT_SCAVENGER */
 #endif /* OMR_GC_MODRON_SCAVENGER */
-
-	std::map<uintptr_t,uintptr_t> _memoryHeapRangeMap;
 
 protected:
 	OMR_VM* _omrVM;
@@ -727,6 +723,8 @@ public:
 	bool compactOnIdle; /**< Forces compaction if global GC executed while VM Runtime State set to IDLE, default is false */
 #endif
 
+	uintptr_t ValgrindMemppolAddr; /** <Memory pool's address for valgrind> **/
+
 	/* Function Members */
 private:
 
@@ -1064,7 +1062,6 @@ public:
 
 	virtual void identityHashDataAddRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, uintptr_t size, void* lowAddress, void* highAddress);
 	virtual void identityHashDataRemoveRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, uintptr_t size, void* lowAddress, void* highAddress);
-	virtual uintptr_t getPoolAddressFromObject(uintptr_t objectAddr);
 
 #define CONCURRENT_SCAVENGER_PAGE_MINIMUM_SECTION_SIZE (512 * 1024)
 #define CONCURRENT_SCAVENGER_PAGE_SECTIONS 64
