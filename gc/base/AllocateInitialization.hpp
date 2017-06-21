@@ -33,7 +33,7 @@
 #include "Heap.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectModel.hpp"
-
+#include <valgrind/memcheck.h>
 /**
  * Base class for language-specific object allocation and initialization. Subclasses
  * must complete initialization of the attached MM_AllocateDescription before calling
@@ -197,6 +197,9 @@ public:
 			_allocateDescription.setAllocationSucceeded(NULL != heapBytes);
 
 			if (NULL != heapBytes) {
+				/* Allocate object in valgrind before modifying it */
+				VALGRIND_MEMPOOL_ALLOC(env->getExtensions()->ValgrindMemppolAddr,heapBytes,_allocateDescription.getBytesRequested());
+
 				/* wipe allocated space if requested and allowed (NON_ZERO_TLH flag set inhibits zeroing) */
 				if (shouldZeroMemory(env)) {
 					OMRZeroMemory(heapBytes, _allocateDescription.getContiguousBytes());
