@@ -24,6 +24,7 @@
 /* #include "ModronAssertions.h" -- removed for now because it causes a compile error in TraceOutput.cpp on xlC */
 
 #include"AtomicOperations.hpp"
+#include<valgrind/memcheck.h>
 
 /* Split pointer for all compressed platforms */
 #if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
@@ -83,11 +84,15 @@ private:
 	getNextImpl()
 	{
 #if defined(SPLIT_NEXT_POINTER)		
+	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(this));
 		uintptr_t lowBits = _next;
 		uintptr_t highBits = _nextHighBits;
+	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(this));
 		return (highBits << 32) | lowBits;
 #else /* defined(SPLIT_NEXT_POINTER) */
-		return _next;
+	    uintptr_t next = _next;
+		VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(this));
+		return next;
 #endif /* defined(SPLIT_NEXT_POINTER) */
 	}
 	
@@ -102,12 +107,14 @@ private:
 	MMINLINE void
 	setNextImpl(uintptr_t value)
 	{
+	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(this));
 #if defined(SPLIT_NEXT_POINTER)
 		_next = (uint32_t)value;
 		_nextHighBits = (uint32_t)(value >> 32);
 #else /* defined(SPLIT_NEXT_POINTER) */
 		_next = value;
 #endif /* defined(SPLIT_NEXT_POINTER) */
+	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(this));
 	}
 
 public:
@@ -142,7 +149,12 @@ public:
 	 * from the beginning of the header.
 	 * @return size in bytes
 	 */
-	MMINLINE uintptr_t getSize() { return _size; }
+	MMINLINE uintptr_t getSize()	{
+	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(this));
+	    uintptr_t size = _size;
+	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(this));
+	    return size;
+	}
 
 	/**
 	 * Set the size in bytes of this free entry.
@@ -173,6 +185,7 @@ public:
 	MMINLINE static void
 	fillWithSingleSlotHoles(void* addrBase, uintptr_t freeEntrySize)
 	{
+	    VALGRIND_MAKE_MEM_DEFINED(addrBase, freeEntrySize);
 #if defined(SPLIT_NEXT_POINTER)
 		uint32_t *freeSlot = (uint32_t *) addrBase;
 		while(freeEntrySize) {
@@ -184,6 +197,7 @@ public:
 		while(freeEntrySize) {
 			*freeSlot++ = J9_GC_SINGLE_SLOT_HOLE;
 			freeEntrySize -= sizeof(uintptr_t);
+		    VALGRIND_MAKE_MEM_NOACCESS(addrBase, freeEntrySize);
 		}
 #endif /* defined(SPLIT_NEXT_POINTER) */
 	}
@@ -197,6 +211,7 @@ public:
 	MMINLINE static MM_HeapLinkedFreeHeader*
 	fillWithHoles(void* addrBase, uintptr_t freeEntrySize)
 	{
+		VALGRIND_MAKE_MEM_DEFINED(addrBase, freeEntrySize);
 		MM_HeapLinkedFreeHeader *freeEntry = NULL;
 		if (freeEntrySize < sizeof(MM_HeapLinkedFreeHeader)) {
 			/* Entry will be abandoned. Recycle the remainder as single slot entries */
@@ -208,6 +223,7 @@ public:
 			freeEntry->setNext(NULL);
 			freeEntry->setSize(freeEntrySize);
 		}
+		VALGRIND_MAKE_MEM_NOACCESS(addrBase, freeEntrySize);
 		return freeEntry;
 	}
 
