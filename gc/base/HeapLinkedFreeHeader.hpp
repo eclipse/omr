@@ -84,15 +84,15 @@ private:
 	getNextImpl()
 	{
 #if defined(SPLIT_NEXT_POINTER)		
-	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(this));
+	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(*this));
 		uintptr_t lowBits = _next;
 		uintptr_t highBits = _nextHighBits;
-	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(this));
+	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(*this));
 		return (highBits << 32) | lowBits;
 #else /* defined(SPLIT_NEXT_POINTER) */
-	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(this));
+	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(*this));
 	    uintptr_t next = _next;
-		VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(this));
+		VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(*this));
 		return next;
 #endif /* defined(SPLIT_NEXT_POINTER) */
 	}
@@ -108,14 +108,14 @@ private:
 	MMINLINE void
 	setNextImpl(uintptr_t value)
 	{
-	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(this));
+	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(*this));
 #if defined(SPLIT_NEXT_POINTER)
 		_next = (uint32_t)value;
 		_nextHighBits = (uint32_t)(value >> 32);
 #else /* defined(SPLIT_NEXT_POINTER) */
 		_next = value;
 #endif /* defined(SPLIT_NEXT_POINTER) */
-	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(this));
+	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(*this));
 	}
 
 public:
@@ -151,9 +151,9 @@ public:
 	 * @return size in bytes
 	 */
 	MMINLINE uintptr_t getSize()	{
-	    VALGRIND_MAKE_MEM_DEFINED(&_size, sizeof(_size));
+	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(*this));
 	    uintptr_t size = _size;
-	    VALGRIND_MAKE_MEM_NOACCESS(&_size, sizeof(_size));
+	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(*this));
 	    return size;
 	}
 
@@ -161,9 +161,9 @@ public:
 	 * Set the size in bytes of this free entry.
 	 */
 	MMINLINE void setSize(uintptr_t size) {
-	    VALGRIND_MAKE_MEM_DEFINED(&_size, sizeof(_size));
+	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(*this));
 		_size = size;
-	    VALGRIND_MAKE_MEM_NOACCESS(&_size, sizeof(_size));
+	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(*this));
 	}
 
 	/**
@@ -200,9 +200,9 @@ public:
 		while(freeEntrySize) {
 			*freeSlot++ = J9_GC_SINGLE_SLOT_HOLE;
 			freeEntrySize -= sizeof(uintptr_t);
-		    VALGRIND_MAKE_MEM_NOACCESS(addrBase, freeEntrySize);
 		}
 #endif /* defined(SPLIT_NEXT_POINTER) */
+	    VALGRIND_MAKE_MEM_NOACCESS(addrBase, freeEntrySize);
 	}
 
 	/**
