@@ -90,6 +90,7 @@ private:
 	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(this));
 		return (highBits << 32) | lowBits;
 #else /* defined(SPLIT_NEXT_POINTER) */
+	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(this));
 	    uintptr_t next = _next;
 		VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(this));
 		return next;
@@ -150,9 +151,9 @@ public:
 	 * @return size in bytes
 	 */
 	MMINLINE uintptr_t getSize()	{
-	    VALGRIND_MAKE_MEM_DEFINED(this, sizeof(this));
+	    VALGRIND_MAKE_MEM_DEFINED(&_size, sizeof(_size));
 	    uintptr_t size = _size;
-	    VALGRIND_MAKE_MEM_NOACCESS(this, sizeof(this));
+	    VALGRIND_MAKE_MEM_NOACCESS(&_size, sizeof(_size));
 	    return size;
 	}
 
@@ -160,7 +161,9 @@ public:
 	 * Set the size in bytes of this free entry.
 	 */
 	MMINLINE void setSize(uintptr_t size) {
+	    VALGRIND_MAKE_MEM_DEFINED(&_size, sizeof(_size));
 		_size = size;
+	    VALGRIND_MAKE_MEM_NOACCESS(&_size, sizeof(_size));
 	}
 
 	/**
