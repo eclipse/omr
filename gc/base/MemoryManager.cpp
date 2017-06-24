@@ -504,8 +504,11 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 	handle->setMemoryTop(NULL);
 
 	//clear valgrind mempool address
-	VALGRIND_DESTROY_MEMPOOL(env->getExtensions()->ValgrindMemppolAddr);
-	env->getExtensions()->ValgrindMemppolAddr = 0;
+	if(env->getExtensions()->ValgrindMemppolAddr != 0)
+	{
+		VALGRIND_DESTROY_MEMPOOL(env->getExtensions()->ValgrindMemppolAddr);
+		env->getExtensions()->ValgrindMemppolAddr = 0;
+	}
 
 }
 
