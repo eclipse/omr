@@ -36,6 +36,8 @@ addons:
       - g++-multilib
       - ninja-build
       - valgrind
+install:
+  - if [ $TRAVIS_OS_NAME = osx ]; then brew install valgrind; fi
 env:
   matrix:
     - BUILD_WITH_CMAKE=yes
