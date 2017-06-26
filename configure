@@ -887,7 +887,7 @@ enable_OMRTHREAD_LIB_WIN32
 enable_OMRTHREAD_LIB_ZOS
 enable_OMRTHREAD_LIB_UNIX
 enable_OMR_GC_IDLE_HEAP_MANAGER
-OMR_VALGRIND_MEMCHECK
+enable_OMR_VALGRIND_MEMCHECK
 '
       ac_precious_vars='build_alias
 host_alias

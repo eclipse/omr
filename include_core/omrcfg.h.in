@@ -225,4 +225,10 @@
  */
 #undef OMR_THR_YIELD_ALG
 
+/**
+ * Flag to enable integration of valgrind api.
+ */
+#undef OMR_VALGRIND_MEMCHECK
+
+
 #endif /* !defined(OMRCFG_H_) */
