@@ -89,11 +89,13 @@ private:
 	uintptr_t _loaSize;
 	uintptr_t _soaSize;
 	double _currentLOARatio;
+	double _minLOAFreeRatio;
+	double *_loaFreeRatioHistory; /**<history of LOA free/total size ratio  for a past few global GCs */
+
 
 	uintptr_t _soaObjectSizeLWM;
-	uintptr_t _expandedLOA;
 
-	uintptr_t _soaBytesAfterLastGC;
+	uintptr_t _soaFreeBytesAfterLastGC;
 
 protected:
 public:
@@ -231,8 +233,7 @@ public:
 		, _soaSize(0)
 		, _currentLOARatio(_extensions->largeObjectAreaInitialRatio)
 		, _soaObjectSizeLWM(UDATA_MAX)
-		, _expandedLOA(0)
-		, _soaBytesAfterLastGC(0)
+		, _soaFreeBytesAfterLastGC(0)
 	{
 		_typeId = __FUNCTION__;
 	}
