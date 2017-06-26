@@ -18,6 +18,7 @@
 
 #include "omrcfg.h"
 #include "omrthread.h"
+#include <algorithm>
 
 #include "MemoryPoolLargeObjects.hpp"
 
@@ -104,6 +105,16 @@ MM_MemoryPoolLargeObjects::initialize(MM_EnvironmentBase* env)
 	_largeObjectAllocateStats = MM_LargeObjectAllocateStats::newInstance(env, (uint16_t)_extensions->largeObjectAllocationProfilingTopK, _extensions->largeObjectAllocationProfilingThreshold, _extensions->largeObjectAllocationProfilingVeryLargeObjectThreshold, (float)_extensions->largeObjectAllocationProfilingSizeClassRatio / (float)100.0,
 																		 _extensions->heap->getMaximumMemorySize(), _extensions->tlhMaximumSize + minimumFreeEntrySize, _extensions->tlhMinimumSize);
 
+	_loaFreeRatioHistory = (double*)env->getForge()->allocate(_extensions->loaFreeHistorySize * sizeof(double), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
+
+	/*
+	 * initialize _loaFreeRatioArray
+	 */
+
+	for (int i = 0; i < _extensions->loaFreeHistorySize; i++ ){
+		_loaFreeRatioHistory[i] = 0;
+	}
+
 	if (NULL == _largeObjectAllocateStats) {
 		return false;
 	}
@@ -137,6 +148,10 @@ MM_MemoryPoolLargeObjects::tearDown(MM_EnvironmentBase* env)
 		_largeObjectAllocateStats->kill(env);
 		_largeObjectAllocateStats = NULL;
 	}
+	if (NULL != _loaFreeRatioHistory){
+		env->getForge()->free(_loaFreeRatioHistory);
+	}
+
 
 	MM_MemoryPool::tearDown(env);
 }
@@ -195,11 +210,13 @@ MM_MemoryPoolLargeObjects::resizeLOA(MM_EnvironmentBase* env)
 {
 	bool debug = _extensions->debugLOAResize;
 
-	_soaBytesAfterLastGC = _memoryPoolSmallObjects->getApproximateFreeMemorySize();
+	_soaFreeBytesAfterLastGC = _memoryPoolSmallObjects->getApproximateFreeMemorySize();
 
-	uintptr_t minimumSOAFreeRequired = (_soaSize / _extensions->heapFreeMinimumRatioDivisor) * _extensions->heapFreeMinimumRatioMultiplier;
+	float  minimumFreeRatio = ((float)_extensions->heapFreeMinimumRatioMultiplier) / ((float)_extensions->heapFreeMinimumRatioDivisor);
 
-	if ((_soaBytesAfterLastGC < minimumSOAFreeRequired) && (LOA_EMPTY != _currentLOABase)) {
+	uintptr_t minimumSOAFreeRequired = uintptr_t (_soaSize * minimumFreeRatio);
+
+	if ((_soaFreeBytesAfterLastGC < minimumSOAFreeRequired) && (LOA_EMPTY != _currentLOABase)) {
 		MM_HeapLinkedFreeHeader* moveListHead;
 		MM_HeapLinkedFreeHeader* moveListTail;
 		uintptr_t moveListMemoryCount;
@@ -207,94 +224,113 @@ MM_MemoryPoolLargeObjects::resizeLOA(MM_EnvironmentBase* env)
 		uintptr_t spaceDelta;
 		void* newLOABase;
 		double oldLOARatio;
+		uintptr_t contractRequired;
+		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 		/* Calculate LOA size based on new loa ratio */
 		uintptr_t loaMinimumSize = MM_Math::roundToFloor(_extensions->heapAlignment,
-													 (uintptr_t)((float)_memorySubSpace->getActiveMemorySize() * _extensions->largeObjectAreaMinimumRatio));
+				(uintptr_t)((float)_memorySubSpace->getActiveMemorySize() * _extensions->largeObjectAreaMinimumRatio));
 
 		/* No point having a LOA less than minimum size of a free entry for pool */
 		loaMinimumSize = loaMinimumSize < _memoryPoolLargeObjects->getMinimumFreeEntrySize() ? 0 : loaMinimumSize;
 
-		/* Recalculate minimum size required to account for memory transfer.  This is solving the following equation for MinimumRequired:
-		 *
-		 * RatioMultipler     FreeSpace + MinimumRequired
-		 * --------------  =  ----------------------------
-		 *  RatioDivisor      TotalSpace + MinimumRequired
-		 *
-		 * Which is:
-		 *
-		 *                    RatioMultipler * TotalSpace - RatioDivisor * FreeSpace
-		 * MinimumRequired =  ------------------------------------------------------
-		 *                                 RatioDivisor - RatioMultipler
+		/* We are short on free memory, but try to be fair to both SOA and LOA.
+		 * largeObjectAreaInitialRatio is considered optimal and will be used as long as free SOA meets min free ratio requirement.
+		 * If, for example, SOA free is only 40% of the minimum, than we will contract LOA to 40% of the optimal size.
 		 */
-		uintptr_t minimumLOAContractRequired = _extensions->heapFreeMinimumRatioMultiplier * _soaSize;
-		minimumLOAContractRequired -= _extensions->heapFreeMinimumRatioDivisor * _soaBytesAfterLastGC;
-		minimumLOAContractRequired /= _extensions->heapFreeMinimumRatioDivisor - _extensions->heapFreeMinimumRatioMultiplier;
 
-		/* If transferring minimumRequired would reduce LOA below its minimum
-		 * size then just transfer as much as possible
-		 */
-		if (_loaSize - loaMinimumSize < minimumLOAContractRequired) {
-			minimumLOAContractRequired = _loaSize - loaMinimumSize;
-		}
-
-		/* If minimum required now zero then there is no storage available for transfer */
-		if (0 == minimumLOAContractRequired) {
-			return;
-		}
-
-		/* LOA base may land in a middle of a live object, but it should be fine */
-		newLOABase = (void*)((uint8_t*)_currentLOABase + minimumLOAContractRequired); 
-
-		newLOABase = (void*)MM_Math::roundToCeiling(_extensions->heapAlignment, (uintptr_t)newLOABase);
-
-		_memoryPoolLargeObjects->removeFreeEntriesWithinRange(env, _currentLOABase, newLOABase,
-															  _memoryPoolSmallObjects->getMinimumFreeEntrySize(),
-															  moveListHead, moveListTail, moveListMemoryCount, moveListMemorySize);
-
-		if (NULL != moveListHead) {
-			_memoryPoolSmallObjects->addFreeEntries(env, moveListHead, moveListTail, moveListMemoryCount, moveListMemorySize);
-		}
-
-		spaceDelta = (NULL != newLOABase) ? (uintptr_t)newLOABase - (uintptr_t)_currentLOABase : _loaSize;
-		oldLOARatio = _currentLOARatio;
-
-		if ((_loaSize - spaceDelta) < _memoryPoolLargeObjects->getMinimumFreeEntrySize()) {
-			spaceDelta = _loaSize;
-			_soaSize += spaceDelta;
-			_loaSize = 0;
-			_currentLOABase = LOA_EMPTY;
-			_currentLOARatio = 0;
-		} else {
-			_soaSize += spaceDelta;
-			_loaSize -= spaceDelta;
-			_currentLOABase = newLOABase;
-			_currentLOARatio = ((double)_loaSize) / (_loaSize + _soaSize);
-
-			/* Rounding during float operations may result in a new LOA ratio less than
-			 * minimum so fix up if necessary
-			 */
-			if (_currentLOARatio < _extensions->largeObjectAreaMinimumRatio) {
-				_currentLOARatio = _extensions->largeObjectAreaMinimumRatio;
-			}
-			assume0(0 != _currentLOARatio);
-		}
+		uintptr_t newLOAsize = _soaFreeBytesAfterLastGC * (uintptr_t)( _extensions->largeObjectAreaInitialRatio / minimumFreeRatio);
 
 		if (debug) {
-			OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-			omrtty_printf("LOA Rebalanced to meet minimum SOA requirements: LOA ratio has decreased from %.3f --> %.3f\n",
-						 oldLOARatio,
-						 _currentLOARatio);
+			omrtty_printf("post GC resize LOA: newLOAsize %zu\n", newLOAsize);
 		}
 
-		_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_CONTRACT_MIN_SOA);
-		_memorySubSpace->reportHeapResizeAttempt(env, spaceDelta , HEAP_LOA_CONTRACT);
+		if (newLOAsize < _loaSize){
 
-		/* Verify all pools in valid state after we are done */
-		assume0(_memoryPoolSmallObjects->isMemoryPoolValid(env, true));
-		assume0(_memoryPoolLargeObjects->isMemoryPoolValid(env, true));
-		assume0(_memoryPoolSmallObjects->isValidListOrdering());
-		assume0(_memoryPoolLargeObjects->isValidListOrdering());
+			/* The above formula makes sense if LOA is completely free. But if LOA is already partially occupied than we want
+			 * to contract LOA even less (since LOA clearly shows being useful).
+			 *
+			 * The size we contract by is proportionate to free LOA ratio. If, for example, LOA is completely full (no free memory),
+			 * we will not contract LOA at all.
+			 *
+			 * We do not just take the current LOA occupancy, but we look into the history of several global GCs and take the highest LOA occupancy.
+			 *
+			 */
+
+			contractRequired = (uintptr_t)((_loaSize - newLOAsize) * _minLOAFreeRatio);
+
+			newLOAsize = _loaSize - contractRequired;
+
+			if (debug) {
+				omrtty_printf("newLOAsize adjusted by LOA occupnacy %zu\n", newLOAsize);
+			}
+
+			if ((double)newLOAsize/(double)_memorySubSpace->getActiveMemorySize() < _extensions->largeObjectAreaMinimumRatio){
+
+				contractRequired = (uintptr_t)((double)_loaSize - ((double)(_memorySubSpace->getActiveMemorySize() * _extensions->largeObjectAreaMinimumRatio)));
+				newLOAsize = _loaSize - contractRequired;
+				if (debug) {
+					omrtty_printf("newLOAsize adjusted min LOA ratio %zu\n", newLOAsize);
+				}
+			}
+
+			/* If minimum required now zero then there is no storage available for transfer */
+			if (0 < contractRequired) {
+
+
+				/* LOA base may land in a middle of a live object, but it should be fine */
+				newLOABase = (void*)((uint8_t*)_currentLOABase + contractRequired);
+
+				newLOABase = (void*)MM_Math::roundToCeiling(_extensions->heapAlignment, (uintptr_t)newLOABase);
+
+				_memoryPoolLargeObjects->removeFreeEntriesWithinRange(env, _currentLOABase, newLOABase,
+						_memoryPoolSmallObjects->getMinimumFreeEntrySize(),
+						moveListHead, moveListTail, moveListMemoryCount, moveListMemorySize);
+
+				if (NULL != moveListHead) {
+					_memoryPoolSmallObjects->addFreeEntries(env, moveListHead, moveListTail, moveListMemoryCount, moveListMemorySize);
+				}
+
+				spaceDelta = (NULL != newLOABase) ? (uintptr_t)newLOABase - (uintptr_t)_currentLOABase : _loaSize;
+				oldLOARatio = _currentLOARatio;
+
+				if ((_loaSize - spaceDelta) < _memoryPoolLargeObjects->getMinimumFreeEntrySize()) {
+					spaceDelta = _loaSize;
+					_soaSize += spaceDelta;
+					_loaSize = 0;
+					_currentLOABase = LOA_EMPTY;
+					_currentLOARatio = 0;
+				} else {
+					_soaSize += spaceDelta;
+					_loaSize -= spaceDelta;
+					_currentLOABase = newLOABase;
+					_currentLOARatio = ((double)_loaSize) / (_loaSize + _soaSize);
+
+					/* Rounding during float operations may result in a new LOA ratio less than
+					 * minimum so fix up if necessary
+					 */
+					if (_currentLOARatio < _extensions->largeObjectAreaMinimumRatio) {
+						_currentLOARatio = _extensions->largeObjectAreaMinimumRatio;
+					}
+					assume0(0 != _currentLOARatio);
+				}
+
+				if (debug) {
+					omrtty_printf("LOA Rebalanced to meet minimum SOA requirements: LOA ratio has decreased from %.3f --> %.3f\n",
+							oldLOARatio,
+							_currentLOARatio);
+				}
+
+				_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_CONTRACT_MIN_SOA);
+				_memorySubSpace->reportHeapResizeAttempt(env, spaceDelta , HEAP_LOA_CONTRACT);
+
+				/* Verify all pools in valid state after we are done */
+				assume0(_memoryPoolSmallObjects->isMemoryPoolValid(env, true));
+				assume0(_memoryPoolLargeObjects->isMemoryPoolValid(env, true));
+				assume0(_memoryPoolSmallObjects->isValidListOrdering());
+				assume0(_memoryPoolLargeObjects->isValidListOrdering());
+			}
+		}
 	}
 }
 
@@ -321,99 +357,78 @@ MM_MemoryPoolLargeObjects::calculateTargetLOARatio(MM_EnvironmentBase* env, uint
 	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	bool debug = _extensions->debugLOAResize;
 	double newLOARatio = _currentLOARatio;
-
-	/* Calculate what ratio of LOA is free */
+	float maxLOAFreeRatio = ((float)_extensions->heapFreeMaximumRatioMultiplier) / ((float)_extensions->heapFreeMinimumRatioDivisor);
 	uintptr_t loaFreeBytes = _memoryPoolLargeObjects->getActualFreeMemorySize();
-	double loaRatioFree;
 
-	if (0 == _loaSize) {
-		loaRatioFree = (double)0;
-	} else {
-		loaRatioFree = (double)loaFreeBytes / (double)_loaSize;
+	//shift elements to make room for current loa free Ratio
+	for (int i = _extensions->loaFreeHistorySize; i > 0 ; i--){
+		_loaFreeRatioHistory[i] = _loaFreeRatioHistory[i-1];
 	}
+	if (0 == _loaSize) {
+		_loaFreeRatioHistory[0] = (double)0;
+	} else {
+		_loaFreeRatioHistory[0] = (double)loaFreeBytes / (double)_loaSize;
+	}
+
+	_minLOAFreeRatio = *std::min_element(_loaFreeRatioHistory, _loaFreeRatioHistory + _extensions->loaFreeHistorySize);
 
 	/* If we have had an allocation failure in the LOA then we need to consider
 	 * whether its time we expanded the LOA
 	 */
 	if (allocSize >= _extensions->largeObjectMinimumSize) {
-		/* If the allocation size is 5 times greater than current LOA size..expand LOA */
+		/* If the allocation size is 1/5 times greater than current LOA size..expand LOA */
 		if (allocSize > _loaSize / LOA_EXPAND_TRGGER3) {
 			if (_currentLOARatio < _extensions->largeObjectAreaMaximumRatio) {
 				newLOARatio += LOA_RESIZE_AMOUNT_NORMAL;
 			}
 		} else if (_currentLOARatio >= _extensions->largeObjectAreaInitialRatio) {
-			if (loaRatioFree < LOA_EXPAND_TRIGGER1) {
+			if (_minLOAFreeRatio < LOA_EXPAND_TRIGGER1) {
 				if (_currentLOARatio < _extensions->largeObjectAreaMaximumRatio) {
 					newLOARatio += LOA_RESIZE_AMOUNT_NORMAL;
 				}
 			}
 		} else {
 			/* currentLOARatio < _extensions->largeObjectAreaInitialRatio */
-			if (loaRatioFree < LOA_EXPAND_TRIGGER2) {
+			if (_minLOAFreeRatio < LOA_EXPAND_TRIGGER2) {
 				assume0(_extensions->largeObjectAreaInitialRatio <= _extensions->largeObjectAreaMaximumRatio);
 				newLOARatio += LOA_RESIZE_AMOUNT_NORMAL;
 			}
 		}
-
 		/* Belt and braces check. Because _currentLOARatio is a float we need to check that
 		 * we have not exceeded maximum and if we have round down to maximum
-	 	*/
+		 */
 		if (newLOARatio > _extensions->largeObjectAreaMaximumRatio) {
 			newLOARatio = _extensions->largeObjectAreaMaximumRatio;
 		}
 
-		// TODO set the reason only if we actually resized
-		_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_EXPAND_FAILED_ALLOCATE);
-	} else {
-		/* Don't shrink the LOA if within first few GCs */
-		if (_extensions->globalGCStats.gcCount >= JVM_INITIALIZATION_COLLECTIONS) {
-			if (_currentLOARatio > _extensions->largeObjectAreaInitialRatio) {
-				if (loaRatioFree > LOA_CONTRACT_TRIGGER1) {
-					if (_currentLOARatio >= LOA_MINIMUM_SIZE1) {
-						newLOARatio -= LOA_RESIZE_AMOUNT_NORMAL;
-						if (newLOARatio < LOA_MINIMUM_SIZE1) {
-							newLOARatio = LOA_MINIMUM_SIZE1;
-						}
-					}
-				}
-			} else if (_currentLOARatio > 0) {
-				/* Current size of LOA equal to or less than intial size so contract more slowly */
-				if (loaRatioFree > LOA_CONTRACT_TRIGGER2) {
-					if (_currentLOARatio > LOA_MINIMUM_SIZE1) {
-						newLOARatio -= LOA_RESIZE_AMOUNT_NORMAL;
-						if (newLOARatio < LOA_MINIMUM_SIZE1) {
-							newLOARatio = LOA_MINIMUM_SIZE1;
-						}
-					} else if (_currentLOARatio >= LOA_MINIMUM_SIZE2) {
-						newLOARatio -= LOA_RESIZE_AMOUNT_SMALL;
-					} else {
-						/* LOA not required */
-						newLOARatio = 0;
-					}
-					_expandedLOA = 0;
-				}
+		if (_currentLOARatio != newLOARatio) {
+			_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_EXPAND_FAILED_ALLOCATE);
+		}
+	} else if (_minLOAFreeRatio > maxLOAFreeRatio) {
+		if (_currentLOARatio >= _extensions->largeObjectAreaMinimumRatio) {
+			newLOARatio -= LOA_RESIZE_AMOUNT_NORMAL;
+			/* Ensure we do not contract below minimum */
+			if (newLOARatio < _extensions->largeObjectAreaMinimumRatio) {
+				newLOARatio = _extensions->largeObjectAreaMinimumRatio;
 			}
+			_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_CONTRACT_UNDERUTILIZED);
 		}
 
-		/* Ensure we do not shrink below minimum
-	 	*/
-		if (newLOARatio < _extensions->largeObjectAreaMinimumRatio) {
-			newLOARatio = _extensions->largeObjectAreaMinimumRatio;
-		}
-		// TODO set the reason only if we actually resized
-		_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_CONTRACT_UNDERUTILIZED);
-
+	} else if (newLOARatio < _extensions->largeObjectAreaMinimumRatio) {
+		newLOARatio = _extensions->largeObjectAreaMinimumRatio;
+		_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_EXPAND_HEAP_ALIGNMENT);
 	}
 
 	if (debug && newLOARatio != _currentLOARatio) {
 		omrtty_printf("LOA Calculate target ratio: ratio has %s from  %.3f --> %.3f\n",
-					 newLOARatio < _currentLOARatio ? "decreased" : "increased",
-					 _currentLOARatio,
-					 newLOARatio);
+				newLOARatio < _currentLOARatio ? "decreased" : "increased",
+						_currentLOARatio,
+						newLOARatio);
 	}
 
 	return newLOARatio;
 }
+
 
 /**
  * Reset the LOA ratio, and size to minimum size.
@@ -445,19 +460,17 @@ MM_MemoryPoolLargeObjects::resetLOASize(MM_EnvironmentBase* env, double newLOARa
 	uintptr_t oldLOASize = _loaSize;
 	uintptr_t newLOASize, oldAreaSize;
 	bool debug = _extensions->debugLOAResize;
+	HeapResizeType resizeType = HEAP_NO_RESIZE;
 
 	/* Has LOA changed in size ? */
 	if (_currentLOARatio != newLOARatio) {
-
-		_currentLOARatio = newLOARatio;
 
 		/* Get total size of owning subspace */
 		oldAreaSize = _memorySubSpace->getActiveMemorySize();
 
 		/* Calculate LOA size based on new loa ratio */
-		newLOASize = MM_Math::roundToFloor(_extensions->heapAlignment, (uintptr_t)(oldAreaSize * _currentLOARatio));
+		newLOASize = MM_Math::roundToFloor(_extensions->heapAlignment, (uintptr_t)(oldAreaSize * newLOARatio));
 
-		HeapResizeType resizeType = HEAP_NO_RESIZE;
 		uintptr_t resizeSize = 0;
 		/* Does this leave a reasonable sized LOA ? */
 		if (newLOASize < _extensions->largeObjectMinimumSize) {
@@ -466,18 +479,17 @@ MM_MemoryPoolLargeObjects::resetLOASize(MM_EnvironmentBase* env, double newLOARa
 			_soaSize = oldAreaSize;
 			_loaSize = 0;
 		} else {
+			_currentLOARatio = newLOARatio;
 			_loaSize = newLOASize;
 			/* ..and SOA is whats left after LOA allocation */
 			_soaSize = oldAreaSize - _loaSize;
 		}
 
 		/* Rememeber if we expanded or contracted the LOA */
-		if (newLOASize > oldLOASize) {
-			_expandedLOA = _expandedLOA + 1;
+		if ( _loaSize > oldLOASize) {
 			resizeType = HEAP_LOA_EXPAND;
 			resizeSize = newLOASize - oldLOASize;
-		} else if (newLOASize < oldLOASize) {
-			_expandedLOA = 0;
+		} else if (_loaSize < oldLOASize) {
 			resizeType = HEAP_LOA_CONTRACT;
 			resizeSize = oldLOASize - newLOASize;
 		}

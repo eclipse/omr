@@ -440,6 +440,7 @@ public:
 	double dnssMaximumContraction;
 	double dnssMinimumExpansion;
 	double dnssMinimumContraction;
+	int loaFreeHistorySize; /**< max size of _loaFreeRatioHistory array */
 	bool enableSplitHeap; /**< true if we are using gencon with -Xgc:splitheap (we will fail to boostrap if we can't allocate both ranges) */
 
 	enum HeapInitializationSplitHeapSection {
@@ -1246,7 +1247,7 @@ public:
 #if defined(OMR_GC_LARGE_OBJECT_AREA)
 		, largeObjectMinimumSize(64 * 1024)
 		, largeObjectAreaInitialRatio(0.050) /* initial LOA 5% */
-		, largeObjectAreaMinimumRatio(0) /* initial LOA 0% */
+		, largeObjectAreaMinimumRatio(0.01) /* initial LOA 1% */
 		, largeObjectAreaMaximumRatio(0.500) /* maximum LOA 50% */
 		, debugLOAResize(false)
 		, debugLOAFreelist(false)
@@ -1350,6 +1351,7 @@ public:
 		, dnssMaximumContraction(0.5)
 		, dnssMinimumExpansion(0.0)
 		, dnssMinimumContraction(0.0)
+		, loaFreeHistorySize(15)
 		, enableSplitHeap(false)
 		, splitHeapSection(HEAP_INITIALIZATION_SPLIT_HEAP_UNKNOWN)
 #endif /* OMR_GC_MODRON_SCAVENGER */
