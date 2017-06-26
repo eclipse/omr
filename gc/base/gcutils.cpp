@@ -210,6 +210,8 @@ const char *
 getLoaResizeReasonAsString(LoaResizeReason reason)
 {
 	switch(reason) {
+	case LOA_EXPAND_HEAP_ALIGNMENT:
+		return "expand to align heap";
 	case LOA_EXPAND_FAILED_ALLOCATE:
 		return "expand on failed allocate";
 	case LOA_CONTRACT_AGGRESSIVE:
