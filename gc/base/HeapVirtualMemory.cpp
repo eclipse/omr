@@ -29,7 +29,10 @@
 #include "MemoryManager.hpp"
 #include "MemorySubSpace.hpp"
 #include "PhysicalArena.hpp"
+
+#if defined(OMR_VALGRIND_MEMCHECK)
 #include <valgrind/memcheck.h>
+#endif
 
 #define HIGH_ADDRESS UDATA_MAX
 #define OVERFLOW_ROUNDING ((uintptr_t)16 * 1024)
@@ -342,8 +345,10 @@ MM_HeapVirtualMemory::heapAddRange(MM_EnvironmentBase* env, MM_MemorySubSpace* s
 	
 	env->getExtensions()->identityHashDataAddRange(env, subspace, size, lowAddress, highAddress);
 
+#if defined(OMR_VALGRIND_MEMCHECK)
 	//add heap range to valgrind
 	VALGRIND_MAKE_MEM_NOACCESS(lowAddress,size);
+#endif
 
 	return result;
 }

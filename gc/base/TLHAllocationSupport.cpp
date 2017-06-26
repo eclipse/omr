@@ -44,7 +44,10 @@
 #include "MemorySubSpace.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
+
+#if defined(OMR_VALGRIND_MEMCHECK)
 #include <valgrind/memcheck.h>
+#endif
 
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 /**
@@ -171,12 +174,16 @@ MM_TLHAllocationSupport::refresh(MM_EnvironmentBase *env, MM_AllocateDescription
 		/* Cache the current TLH because it is bigger than the minimum size */
 		MM_HeapLinkedFreeHeaderTLH* newCache = (MM_HeapLinkedFreeHeaderTLH*)getRealAlloc();
 
+#if defined(OMR_VALGRIND_MEMCHECK)
 	    VALGRIND_MAKE_MEM_DEFINED(newCache, sizeof(*newCache));
-		newCache->setSize(getSize());
+#endif
+	    newCache->setSize(getSize());
 		newCache->_memoryPool = getMemoryPool();
 		newCache->_memorySubSpace = getMemorySubSpace();
 		newCache->setNext(_abandonedList);
+#if defined(OMR_VALGRIND_MEMCHECK)
 	    VALGRIND_MAKE_MEM_DEFINED(newCache, sizeof(*newCache));
+#endif
 
 		_abandonedList = newCache;
 		++_abandonedListSize;

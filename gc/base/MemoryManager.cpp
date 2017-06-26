@@ -22,7 +22,9 @@
 #include "ModronAssertions.h"
 #include "GCExtensionsBase.hpp"
 #include "NonVirtualMemory.hpp"
+#if defined(OMR_VALGRIND_MEMCHECK)
 #include <valgrind/memcheck.h>
+#endif
 
 MM_MemoryManager*
 MM_MemoryManager::newInstance(MM_EnvironmentBase* env)
@@ -355,9 +357,11 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 		}
 	}
 
-	//add handle's Memory Base to valgrind mempool
+#if defined(OMR_VALGRIND_MEMCHECK)
+	//add handle's Memory Base to Valgrind memory pool
 	VALGRIND_CREATE_MEMPOOL(handle->getMemoryBase(), 0, 0);
-	extensions->ValgrindMemppolAddr = (uintptr_t) handle->getMemoryBase();
+	extensions->valgrindMemppolAddr = (uintptr_t) handle->getMemoryBase();
+#endif
 
 	return NULL != instance;
 }
@@ -503,12 +507,14 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 	handle->setMemoryBase(NULL);
 	handle->setMemoryTop(NULL);
 
+#if defined(OMR_VALGRIND_MEMCHECK)
 	//clear valgrind mempool address
-	if(env->getExtensions()->ValgrindMemppolAddr != 0)
+	if(env->getExtensions()->valgrindMemppolAddr != 0)
 	{
-		VALGRIND_DESTROY_MEMPOOL(env->getExtensions()->ValgrindMemppolAddr);
-		env->getExtensions()->ValgrindMemppolAddr = 0;
+		VALGRIND_DESTROY_MEMPOOL(env->getExtensions()->valgrindMemppolAddr);
+		env->getExtensions()->valgrindMemppolAddr = 0;
 	}
+#endif
 
 }
 
