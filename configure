@@ -887,7 +887,7 @@ enable_OMRTHREAD_LIB_WIN32
 enable_OMRTHREAD_LIB_ZOS
 enable_OMRTHREAD_LIB_UNIX
 enable_OMR_GC_IDLE_HEAP_MANAGER
-enable_OMR_VALGRIND_MEMCHECK
+enable_valgrind
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1562,8 +1562,7 @@ Optional Features:
   --enable-OMR_EXAMPLE    Whether we are building OMR against the example
                           code. (Default: no)
   --enable-OMR_RTTI       Whether we are building OMR with RTTI. (Default: no)
-  --enable-OMR_VALGRIND_MEMCHECK
-                          Enable valgrind memory checking tool. (Default: no)
+  --enable-valgrind       Integrate valgrind memcheck API. (Default: no)
   --disable-OMR_GC_ALLOCATION_TAX
 
   --disable-OMR_GC_ARRAYLETS
@@ -6415,9 +6414,9 @@ else
 
 fi
 
-# Check whether --enable-OMR_VALGRIND_MEMCHECK was given.
-if test "${enable_OMR_VALGRIND_MEMCHECK+set}" = set; then :
-  enableval=$enable_OMR_VALGRIND_MEMCHECK; if test "x${enableval}" = xyes; then :
+# Check whether --enable-valgrind was given.
+if test "${enable_valgrind+set}" = set; then :
+  enableval=$enable_valgrind; if test "x${enableval}" = xyes; then :
   OMR_VALGRIND_MEMCHECK=1
 
    $as_echo "#define OMR_VALGRIND_MEMCHECK 1" >>confdefs.h
