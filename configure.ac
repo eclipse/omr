@@ -520,6 +520,7 @@ AS_IF([[test "$cross_compiling" != "yes"] && [test "$OMR_HOST_OS" != osx] && [te
 )
 
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_IDLE_HEAP_MANAGER])
+OMRCFG_DEFINE_FLAG_OFF([OMR_VALGRIND_MEMCHECK])
 
 ###
 ### Variable Substitution
