@@ -370,7 +370,7 @@ bool OMR::alwaysTrue(TR::CFGEdge * e)
    }
 
 
-TR_OrderedExceptionHandlerIterator::TR_OrderedExceptionHandlerIterator(TR::Block * tryBlock)
+TR_OrderedExceptionHandlerIterator::TR_OrderedExceptionHandlerIterator(TR::Block * tryBlock, TR::Region &region)
    {
    if (tryBlock->getExceptionSuccessors().empty())
       _dim = 0;
@@ -387,7 +387,7 @@ TR_OrderedExceptionHandlerIterator::TR_OrderedExceptionHandlerIterator(TR::Block
          }
 
       _dim = handlerDim * inlineDim;
-      _handlers = (TR::Block **)tryBlock->trMemory()->allocateStackMemory(_dim*sizeof(TR::Block *));
+      _handlers = (TR::Block **)region.allocate(_dim*sizeof(TR::Block *));
       memset(_handlers, 0, _dim*sizeof(TR::Block *));
 
       for (auto e = tryBlock->getExceptionSuccessors().begin(); e != tryBlock->getExceptionSuccessors().end(); ++e)
@@ -535,7 +535,6 @@ TR::CFGNode::CFGNode(TR_Memory * m)
      _frequency(-1),
      _forwardTraversalIndex(-1),
      _backwardTraversalIndex(-1),
-     _m(m),
      _successors(m->heapMemoryRegion()),
      _predecessors(m->heapMemoryRegion()),
      _exceptionSuccessors(m->heapMemoryRegion()),
@@ -548,11 +547,34 @@ TR::CFGNode::CFGNode(int32_t n, TR_Memory * m)
      _frequency(-1),
      _forwardTraversalIndex(-1),
      _backwardTraversalIndex(-1),
-     _m(m),
      _successors(m->heapMemoryRegion()),
      _predecessors(m->heapMemoryRegion()),
      _exceptionSuccessors(m->heapMemoryRegion()),
      _exceptionPredecessors(m->heapMemoryRegion())
+   {
+   }
+TR::CFGNode::CFGNode(TR::Region &region)
+   : _nodeNumber(-1),
+     _visitCount(0),
+     _frequency(-1),
+     _forwardTraversalIndex(-1),
+     _backwardTraversalIndex(-1),
+     _successors(region),
+     _predecessors(region),
+     _exceptionSuccessors(region),
+     _exceptionPredecessors(region)
+   {
+   }
+TR::CFGNode::CFGNode(int32_t n, TR::Region &region)
+   : _nodeNumber(n),
+     _visitCount(0),
+     _frequency(-1),
+     _forwardTraversalIndex(-1),
+     _backwardTraversalIndex(-1),
+     _successors(region),
+     _predecessors(region),
+     _exceptionSuccessors(region),
+     _exceptionPredecessors(region)
    {
    }
 

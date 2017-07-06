@@ -2184,7 +2184,7 @@ void OMR::Power::CodeGenerator::doBinaryEncoding()
                          (*oiIterator)->getFirstInstruction()->getNode()->getSymbolReference()->canCauseGC();
 
          if (needsETE && block && !block->getExceptionSuccessors().empty())
-            block->addExceptionRangeForSnippet(startOffset, endOffset);
+            block->addExceptionRangeForSnippet(self()->comp(), startOffset, endOffset);
 
          ++oiIterator;
          }

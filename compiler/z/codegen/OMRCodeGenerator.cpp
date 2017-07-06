@@ -6566,7 +6566,7 @@ OMR::Z::CodeGenerator::doBinaryEncoding()
             uint32_t startOffset = (*oiIterator)->getFirstInstruction()->getBinaryEncoding() - self()->getCodeStart();
             uint32_t endOffset   = (*oiIterator)->getAppendInstruction()->getBinaryEncoding() - self()->getCodeStart();
 
-            block->addExceptionRangeForSnippet(startOffset, endOffset);
+            block->addExceptionRangeForSnippet(self()->comp(), startOffset, endOffset);
             }
 
          ++oiIterator;
