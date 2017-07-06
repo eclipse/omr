@@ -425,16 +425,21 @@ TR_OrderedExceptionHandlerIterator::getCurrent()
    }
 
 
-TR::CFGEdge::CFGEdge(TR::CFGNode *pF, TR::CFGNode *pT, TR_AllocationKind allocKind)
+TR::CFGEdge::CFGEdge(TR::CFGNode *pF, TR::CFGNode *pT)
    : _pFrom(pF), _pTo(pT), _visitCount(0), _frequency(0), _id(-1)
    {}
 
 TR::CFGEdge * TR::CFGEdge::createEdge (TR::CFGNode *pF, TR::CFGNode *pT, TR_Memory* trMemory, TR_AllocationKind allocKind)
    {
-   TR::CFGEdge * newEdge =  new (trMemory, allocKind) TR::CFGEdge(pF, pT, allocKind);
+   return TR::CFGEdge::createEdge(pF, pT, allocKind == heapAlloc ? trMemory->heapMemoryRegion() : trMemory->currentStackRegion());
+   }
 
-   pF->addSuccessor(newEdge, allocKind);
-   pT->addPredecessor(newEdge, allocKind);
+TR::CFGEdge * TR::CFGEdge::createEdge (TR::CFGNode *pF, TR::CFGNode *pT, TR::Region &region)
+   {
+   TR::CFGEdge * newEdge =  new (region) TR::CFGEdge(pF, pT);
+
+   pF->addSuccessor(newEdge);
+   pT->addPredecessor(newEdge);
    if (pT->getFrequency() >= 0)
       newEdge->setFrequency(pT->getFrequency());
    if ((pF->getFrequency() >= 0) && (pF->getFrequency() < newEdge->getFrequency()))
@@ -445,10 +450,15 @@ TR::CFGEdge * TR::CFGEdge::createEdge (TR::CFGNode *pF, TR::CFGNode *pT, TR_Memo
 
 TR::CFGEdge * TR::CFGEdge::createExceptionEdge (TR::CFGNode *pF, TR::CFGNode *pT, TR_Memory* trMemory, TR_AllocationKind allocKind)
    {
-   TR::CFGEdge * newEdge =  new (trMemory, allocKind) TR::CFGEdge(pF, pT, allocKind);
+   return TR::CFGEdge::createExceptionEdge(pF, pT, allocKind == heapAlloc ? trMemory->heapMemoryRegion() : trMemory->currentStackRegion());
+   }
 
-   pF->addExceptionSuccessor(newEdge, allocKind);
-   pT->addExceptionPredecessor(newEdge, allocKind);
+TR::CFGEdge * TR::CFGEdge::createExceptionEdge (TR::CFGNode *pF, TR::CFGNode *pT, TR::Region &region)
+   {
+   TR::CFGEdge * newEdge =  new (region) TR::CFGEdge(pF, pT);
+
+   pF->addExceptionSuccessor(newEdge);
+   pT->addExceptionPredecessor(newEdge);
 
    return newEdge;
    }
