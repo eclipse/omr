@@ -126,7 +126,7 @@ void TR_BitVector::setChunkSize(int32_t chunkSize)
       return;
    if (chunkSize == 0)
       {
-      if (_chunks && _allocationKind == persistentAlloc)
+      if (_chunks && _region == NULL)
          jitPersistentFree(_chunks);
       _chunks = NULL;
       _numChunks = 0;
@@ -164,7 +164,7 @@ void TR_BitVector::setChunkSize(int32_t chunkSize)
 
    TR_ASSERT(_growable == growable, "Bit vector is not growable");
 
-   chunk_t *newChunks = (chunk_t*)_trMemory->allocateMemory(chunkSize*sizeof(chunk_t), _allocationKind, TR_Memory::BitVector);
+   chunk_t *newChunks = _region != NULL ? (chunk_t*)_region->allocate(chunkSize*sizeof(chunk_t)) : (chunk_t*)TR_Memory::jitPersistentAlloc(chunkSize*sizeof(chunk_t), TR_Memory::BitVector);
    memset(newChunks, 0, chunkSize*sizeof(chunk_t));
    #ifdef TRACK_TRBITVECTOR_MEMORY
    _memoryUsed += chunkSize*sizeof(chunk_t);
@@ -173,7 +173,7 @@ void TR_BitVector::setChunkSize(int32_t chunkSize)
       {
       uint32_t chunksToCopy = (chunkSize < _numChunks) ? chunkSize : _numChunks;
       memcpy(newChunks, _chunks, chunksToCopy*sizeof(chunk_t));
-      if(_allocationKind == persistentAlloc)
+      if(_region == NULL)
          jitPersistentFree(_chunks);
       }
 
@@ -188,7 +188,7 @@ void TR_BitVector::setChunkSize(int32_t chunkSize)
 const char *TR_BitVector::getHexString()
    {
    int32_t chunk_hexlen = (BITS_IN_CHUNK/4);
-   char *buf = (char *)_trMemory->allocateMemory(_numChunks*chunk_hexlen + 1, _allocationKind, TR_Memory::BitVector);
+   char *buf = _region ? (char *)_region->allocate(_numChunks*chunk_hexlen + 1) : (char*)TR_Memory::jitPersistentAlloc(_numChunks*chunk_hexlen + 1);
    char *pos = buf;
    #ifdef TRACK_TRBITVECTOR_MEMORY
    _memoryUsed += _numChunks*chunk_hexlen + 1;

@@ -106,6 +106,7 @@ class TR_SingleBitContainer
 
    TR_SingleBitContainer() : _value(false) {}
    TR_SingleBitContainer(int64_t initBits, TR_Memory * m, TR_AllocationKind allocKind = heapAlloc) : _value(false) { }
+   TR_SingleBitContainer(int64_t initBits, TR::Region &region) : _value(false) { }
    int32_t get(int32_t n) { TR_ASSERT(n == 0, "SingleBitContainers only contain one bit\n"); return _value; }
    int32_t get() { return _value; }
    void set() { _value = true; }
@@ -156,25 +157,71 @@ class TR_BitVector
 
    // Construct an empty bit vector. All bits are initially off.
    //
-   TR_BitVector() : _numChunks(0), _chunks(NULL), _firstChunkWithNonZero(0), _lastChunkWithNonZero(-1), _allocationKind(heapAlloc), _growable(growable), _trMemory(0) { }
+   TR_BitVector() : _numChunks(0), _chunks(NULL), _firstChunkWithNonZero(0), _lastChunkWithNonZero(-1), _growable(growable), _region(0) { }
 
    // Construct a bit vector with a certain number of bits pre-allocated.
    // All bits are initially off.
    //
    TR_BitVector(int64_t initBits, TR_Memory * m, TR_AllocationKind allocKind = heapAlloc, TR_BitVectorGrowable growableOrNot = growable, TR_MemoryBase::ObjectType ot= TR_MemoryBase::BitVector)
       {
-      _allocationKind = allocKind;
       _chunks = NULL;
       _numChunks = getChunkIndex(initBits-1)+1;
       _firstChunkWithNonZero = _numChunks;
       _lastChunkWithNonZero = -1;
-      _trMemory = m;
+
+      _region = NULL;
+      switch (allocKind)
+         {
+         case heapAlloc:
+            _region = &(m->heapMemoryRegion());
+            break;
+         case stackAlloc:
+            _region = &(m->currentStackRegion());
+            break;
+         case persistentAlloc:
+            _region = NULL;
+            break;
+         default:
+            // Default to heap memory to match TR_Memory behavior
+            _region = &(m->heapMemoryRegion());
+            TR_ASSERT(false, "Unhandled allocation type!");
+         }
+
       #ifdef TRACK_TRBITVECTOR_MEMORY
       _memoryUsed=sizeof(TR_BitVector);
       #endif
       if (_numChunks)
          {
-         _chunks = (chunk_t*)m->allocateMemory(_numChunks*sizeof(chunk_t), _allocationKind, ot);
+         if (_region)
+            {
+            _chunks = (chunk_t*)_region->allocate(_numChunks*sizeof(chunk_t));
+            }
+         else
+            {
+            TR_ASSERT(allocKind == persistentAlloc, "Should not allocate through trMemory except for persistent memory");
+            _chunks = (chunk_t*)TR_Memory::jitPersistentAlloc(_numChunks*sizeof(chunk_t), TR_Memory::BitVector);
+            }
+         memset(_chunks, 0, _numChunks*sizeof(chunk_t));
+         #ifdef TRACK_TRBITVECTOR_MEMORY
+         _memoryUsed += _numChunks*sizeof(chunk_t);
+         #endif
+         }
+      _growable = growableOrNot;
+      }
+
+   TR_BitVector(int64_t initBits, TR::Region &region, TR_BitVectorGrowable growableOrNot = growable, TR_MemoryBase::ObjectType ot= TR_MemoryBase::BitVector)
+      {
+      _chunks = NULL;
+      _numChunks = getChunkIndex(initBits-1)+1;
+      _firstChunkWithNonZero = _numChunks;
+      _lastChunkWithNonZero = -1;
+      _region = &region;
+      #ifdef TRACK_TRBITVECTOR_MEMORY
+      _memoryUsed=sizeof(TR_BitVector);
+      #endif
+      if (_numChunks)
+         {
+         _chunks = (chunk_t*)_region->allocate(_numChunks*sizeof(chunk_t));
          memset(_chunks, 0, _numChunks*sizeof(chunk_t));
          #ifdef TRACK_TRBITVECTOR_MEMORY
          _memoryUsed += _numChunks*sizeof(chunk_t);
@@ -194,8 +241,7 @@ class TR_BitVector
    TR_BitVector(const TR_BitVector &v2)
       : _numChunks(0), _firstChunkWithNonZero(0), _lastChunkWithNonZero(-1), _chunks(NULL), _growable(growable)
       {
-      _allocationKind = v2._allocationKind;
-      _trMemory = v2._trMemory;
+      _region = v2._region;
       *this = v2;
       _growable = v2._growable;
       }
@@ -212,8 +258,7 @@ class TR_BitVector
       else
          {
          TR_BitVector &v2 = *(bc._bitVector);
-         _allocationKind = v2._allocationKind;
-         _trMemory = v2._trMemory;
+         _region = v2._region;
          *this = v2;
          _growable = v2._growable;
          }
@@ -225,10 +270,44 @@ class TR_BitVector
    //
    void init(int64_t initBits, TR_Memory * m, TR_AllocationKind allocKind = heapAlloc, TR_BitVectorGrowable growableOrNot = notGrowable)
       {
-      _trMemory = m;
-      if (_chunks && _allocationKind == persistentAlloc)
+      // If persistent memory was used, free it
+      if (_chunks && _region == NULL)
          jitPersistentFree(_chunks);
-      _allocationKind = allocKind;  // THIS IS DANGEROUS! Should we assert that allocKinds should match?
+
+      _region = NULL;
+      switch (allocKind)
+         {
+         case heapAlloc:
+            _region = &(m->heapMemoryRegion());
+            break;
+         case stackAlloc:
+            _region = &(m->currentStackRegion());
+            break;
+         case persistentAlloc:
+            _region = NULL;
+            break;
+         default:
+            // Default to heap memory to match TR_Memory behavior
+            _region = &(m->heapMemoryRegion());
+            TR_ASSERT(false, "Unhandled allocation type!");
+         }
+
+      _growable = growable;
+      _chunks = NULL;
+      _numChunks = 0;
+      _firstChunkWithNonZero = 0;
+      _lastChunkWithNonZero = -1;
+      setChunkSize(getChunkIndex(initBits-1)+1);
+      _growable = growableOrNot;
+      }
+
+   void init(int64_t initBits, TR::Region &region, TR_BitVectorGrowable growableOrNot = notGrowable)
+      {
+      // If persistent memory was used, free it
+      if (_chunks && _region == NULL)
+         jitPersistentFree(_chunks);
+
+      _region = &region;
       _growable = growable;
       _chunks = NULL;
       _numChunks = 0;
@@ -772,7 +851,7 @@ class TR_BitVector
    // chunk and the rest define the chunk index.
 
    chunk_t             *_chunks;
-   TR_Memory *          _trMemory;
+   TR::Region          *_region;
    #ifdef TRACK_TRBITVECTOR_MEMORY
    uint32_t             _memoryUsed;
    #endif
@@ -780,7 +859,6 @@ class TR_BitVector
    // _firstChunkWithNonZero and _lastChunkWithNonero must be maintained precisely
    int32_t              _firstChunkWithNonZero; // == _numChunks if empty
    int32_t              _lastChunkWithNonZero;  // == -1 if empty
-   TR_AllocationKind    _allocationKind;
    TR_BitVectorGrowable _growable;
 
    friend class TR_BitVectorIterator;
