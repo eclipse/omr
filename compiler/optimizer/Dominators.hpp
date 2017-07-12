@@ -63,7 +63,7 @@ class TR_Dominators
 
    protected:
 
-   typedef TR::SparseBitVector SparseBitVector;
+   typedef TR::BitVector SparseBitVector;
 
    private:
 
