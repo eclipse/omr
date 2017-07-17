@@ -54,6 +54,7 @@ omrthread_spinlock_acquire(omrthread_t self, omrthread_monitor_t monitor)
 	uintptr_t oldState = J9THREAD_MONITOR_SPINLOCK_UNOWNED;
 	uintptr_t newState = J9THREAD_MONITOR_SPINLOCK_OWNED;
 	omrthread_library_t const lib = self->library;
+	BOOLEAN spinning = TRUE;
 
 #if defined(OMR_THR_JLM)
 	J9ThreadMonitorTracing *tracing = NULL;
@@ -67,13 +68,9 @@ omrthread_spinlock_acquire(omrthread_t self, omrthread_monitor_t monitor)
 	uintptr_t spinCount1Init = monitor->spinCount1;
 
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
-	BOOLEAN spinning = TRUE;
  	if (monitor->spinThreads < lib->maxSpinThreads) {
  		VM_AtomicSupport::add(&monitor->spinThreads, 1);
  	} else {
- 		spinCount1Init = 1;
- 		spinCount2Init = 1;
- 		spinCount3Init = 1;
  		spinning = FALSE;
  	}
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
@@ -90,8 +87,8 @@ omrthread_spinlock_acquire(omrthread_t self, omrthread_monitor_t monitor)
 				goto update_jlm;
 			}
 			/* Stop spinning if adaptive spin heuristic disables spinning */
-			if (J9_ARE_ALL_BITS_SET(monitor->flags, J9THREAD_MONITOR_DISABLE_SPINNING)) {
-				goto update_jlm;
+			if (!spinning || J9_ARE_ALL_BITS_SET(monitor->flags, J9THREAD_MONITOR_DISABLE_SPINNING)) {
+				goto done;
 			}
 			VM_AtomicSupport::yieldCPU();
 			/* begin tight loop */
@@ -129,6 +126,7 @@ update_jlm:
 	}
 #endif /* OMR_THR_JLM */
 
+done:
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
 	if (spinning) {
 		VM_AtomicSupport::subtract(&monitor->spinThreads, 1);
