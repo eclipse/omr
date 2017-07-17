@@ -24,6 +24,7 @@ compiler_library(infra
 	${CMAKE_CURRENT_SOURCE_DIR}/HashTab.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/IGBase.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/IGNode.cpp 
+	${CMAKE_CURRENT_SOURCE_DIR}/ILTraverser.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ILWalk.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/InterferenceGraph.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/OMRMonitor.cpp 
@@ -33,5 +34,6 @@ compiler_library(infra
 	${CMAKE_CURRENT_SOURCE_DIR}/STLUtils.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Timer.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/TreeServices.cpp 
+	${CMAKE_CURRENT_SOURCE_DIR}/TrilDumper.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/OMRCfg.cpp 
 )

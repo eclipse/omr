@@ -32,6 +32,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/infra/STLUtils.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/IGBase.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/IGNode.cpp \
+    $(JIT_OMR_DIRTY_DIR)/infra/ILTraverser.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/ILWalk.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/InterferenceGraph.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/OMRMonitor.cpp \
@@ -41,6 +42,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/infra/TreeServices.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/OMRCfg.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/SimpleRegex.cpp \
+    $(JIT_OMR_DIRTY_DIR)/infra/TrilDumper.cpp \
     $(JIT_OMR_DIRTY_DIR)/ilgen/IlGenRequest.cpp \
     $(JIT_OMR_DIRTY_DIR)/il/symbol/OMRSymbol.cpp \
     $(JIT_OMR_DIRTY_DIR)/il/OMRBlock.cpp \
