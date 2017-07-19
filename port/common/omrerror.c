@@ -333,7 +333,7 @@ omrerror_set_last_error_with_message_format(struct OMRPortLibrary *portLibrary, 
 	ptBuffers->portableErrorCode = portableCode;
 
 	va_start(args, format);
-	requiredSize = portLibrary->str_vprintf(portLibrary, NULL, (uint32_t)-1, format, args);
+	requiredSize = (uint32_t)portLibrary->str_vprintf(portLibrary, NULL, (uint32_t)-1, format, args);
 	va_end(args);
 
 	/* Store the message, allocate a bigger buffer if required.  Keep the old buffer around
