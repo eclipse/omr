@@ -45,7 +45,9 @@ class CFGEdge : public TR_Link<CFGEdge>
    //
 
    static CFGEdge * createEdge (CFGNode *pF, CFGNode *pT, TR_Memory* trMemory, TR_AllocationKind allocKind = heapAlloc);
+   static CFGEdge * createEdge (CFGNode *pF, CFGNode *pT, TR::Region &region);
    static CFGEdge * createExceptionEdge (CFGNode *pF, CFGNode *pT, TR_Memory* trMemory, TR_AllocationKind allocKind = heapAlloc);
+   static CFGEdge * createExceptionEdge (CFGNode *pF, CFGNode *pT, TR::Region &region);
 
    CFGNode *getFrom() {return _pFrom;}
    CFGNode *getTo()   {return _pTo;}
@@ -89,7 +91,7 @@ class CFGEdge : public TR_Link<CFGEdge>
    private:
 
    //keeping this c-tor private since there is no real need to make it public right now
-   CFGEdge(CFGNode *pF, CFGNode *pT, TR_AllocationKind allocKind = heapAlloc);
+   CFGEdge(CFGNode *pF, CFGNode *pT);
 
    enum  // flags
       {

@@ -26,6 +26,7 @@
 #include "compile/Compilation.hpp"  // for Compilation
 #include "cs2/sparsrbit.h"          // for ASparseBitVector<>::Cursor
 #include "env/TRMemory.hpp"         // for TR_Memory, etc
+#include "env/Region.hpp"         // for TR_Memory, etc
 #include "il/Block.hpp"             // for Block
 #include "il/DataTypes.hpp"         // for TR_YesNoMaybe
 #include "il/Node.hpp"              // for Node, vcount_t
@@ -278,8 +279,14 @@ class TR_StructureSubGraphNode : public TR::CFGNode
    TR_StructureSubGraphNode(TR_Structure *s)
       : TR::CFGNode(s->getNumber(), s->trMemory()), _structure(s), _index(0) {s->setSubGraphNode(this);}
 
+   TR_StructureSubGraphNode(TR_Structure *s, TR::Region &region)
+      : TR::CFGNode(s->getNumber(), region), _structure(s), _index(0) {s->setSubGraphNode(this);}
+
    TR_StructureSubGraphNode(int32_t n, TR_Memory * m)
       : TR::CFGNode(n, m), _structure(0), _index (0) {}
+
+   TR_StructureSubGraphNode(int32_t n, TR::Region &r)
+      : TR::CFGNode(n, r), _structure(0), _index (0) {}
 
    static TR_StructureSubGraphNode *create(int32_t num, TR_RegionStructure *region);
 

@@ -440,7 +440,7 @@ class TR_OrderedExceptionHandlerIterator
 public:
    TR_ALLOC(TR_Memory::OrderedExceptionHandlerIterator)
 
-   TR_OrderedExceptionHandlerIterator(TR::Block * tryBlock);
+   TR_OrderedExceptionHandlerIterator(TR::Block * tryBlock, TR::Region &region);
 
    TR::Block * getFirst();
 

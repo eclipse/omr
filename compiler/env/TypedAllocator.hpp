@@ -63,6 +63,7 @@ public:
       return !(left == right);
       }
 
+   untyped_allocator backingAllocator() { return _backingAllocator; }
 protected:
    explicit typed_allocator( untyped_allocator backingAllocator ) throw() : _backingAllocator(backingAllocator) {}
 

@@ -3361,7 +3361,7 @@ TR::Node *constrainThrow(OMR::ValuePropagation *vp, TR::Node *node)
       printf("\n\n throw type %.*s\n", len, sig);
       }
 
-   TR_OrderedExceptionHandlerIterator oehi(vp->_curBlock);
+   TR_OrderedExceptionHandlerIterator oehi(vp->_curBlock, vp->comp()->trMemory()->currentStackRegion());
    for (TR::Block *catchBlock = oehi.getFirst(); catchBlock; catchBlock = oehi.getNext())
       {
       if (catchBlock->isOSRCatchBlock())

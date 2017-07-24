@@ -1994,7 +1994,7 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
       bool      needsETE = (*oiIterator)->getCallNode() && (*oiIterator)->getCallNode()->getSymbolReference()->canCauseGC();
 
       if (needsETE && block && !block->getExceptionSuccessors().empty())
-         block->addExceptionRangeForSnippet(startOffset, endOffset);
+         block->addExceptionRangeForSnippet(self()->comp(), startOffset, endOffset);
 
       ++oiIterator;
       }

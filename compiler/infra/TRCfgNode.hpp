@@ -50,10 +50,8 @@ class CFGNode : public ::TR_Link1<CFGNode>
 
    CFGNode(TR_Memory * m);
    CFGNode(int32_t n, TR_Memory * m);
-
-   TR_Memory *        trMemory()  { return _m; }
-   TR_HeapMemory   trHeapMemory() { return trMemory(); }
-   TR_StackMemory trStackMemory() { return trMemory(); }
+   CFGNode(TR::Region &region);
+   CFGNode(int32_t n, TR::Region &region);
 
    TR::CFGEdgeList& getSuccessors()            {return _successors;}
    TR::CFGEdgeList& getPredecessors()          {return _predecessors;}
@@ -141,7 +139,6 @@ class CFGNode : public ::TR_Link1<CFGNode>
    virtual TR_StructureSubGraphNode *asStructureSubGraphNode() {return NULL;}
 
    private:
-   TR_Memory * _m;
    template <typename FUNC>
    CFGEdge * getEdgeMatchingNodeInAList (CFGNode * n, TR::CFGEdgeList& list, FUNC blockGetter);
    static CFGNode * fromBlockGetter (CFGEdge * e) {return e->getFrom();};

@@ -289,7 +289,7 @@ class OMR_EXTENSIBLE Block : public TR::CFGNode
    void setInstructionBoundaries(uint32_t startPC, uint32_t endPC);
    InstructionBoundaries & getInstructionBoundaries()  { return _instructionBoundaries; }
 
-   void addExceptionRangeForSnippet(uint32_t startPC, uint32_t endPC);
+   void addExceptionRangeForSnippet(OMR::Compilation *comp, uint32_t startPC, uint32_t endPC);
    InstructionBoundaries * getFirstSnippetBoundaries() { return _snippetBoundaries.getFirst(); }
 
    TR::Instruction *getFirstInstruction()                         { return _firstInstruction; }
