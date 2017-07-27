@@ -32,4 +32,8 @@ macro(omr_warn_if_not_defined var)
    endif()
 endmacro(omr_warn_if_not_defined)
 
+
+omr_assert_defined("OMR_C_DEFINITION_PREFIX")
+
 omr_warn_if_not_defined("OMR_WARNING_AS_ERROR_FLAG")
+
