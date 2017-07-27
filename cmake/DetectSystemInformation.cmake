@@ -63,6 +63,7 @@ macro(omr_detect_system_information)
 
    if(OMR_HOST_OS STREQUAL "linux")
       # Linux specifics
+      set(OMR_TOOLCONFIG "gnu") 
    endif()
 
    if(OMR_HOST_OS STREQUAL "win")
@@ -73,6 +74,7 @@ macro(omr_detect_system_information)
       else()
          set(TARGET_MACHINE i386)
       endif()
+      set(OMR_TOOLCONFIG "msvc") 
    endif()
 
    if(OMR_HOST_OS STREQUAL "zos")

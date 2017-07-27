@@ -1,4 +1,4 @@
-###############################################################################
+##############################################################################
 #
 # (c) Copyright IBM Corp. 2017
 #
@@ -27,8 +27,13 @@ message(STATUS "CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "CMAKE_CROSSCOMPILING=${CMAKE_CROSSCOMPILING}")
 
 include(cmake/DetectSystemInformation.cmake)
-
 omr_detect_system_information()
+
+# Pickup toolconfig based on platform. 
+include(cmake/platform/toolcfg/${OMR_TOOLCONFIG}.cmake OPTIONAL)
+
+# Verify toolconfig!
+include(cmake/platform/toolcfg/verify.cmake)
 
 # Remove a specified option from a variable
 macro(omr_remove_option var opt)
@@ -47,8 +52,8 @@ if(OMR_HOST_OS STREQUAL "linux")
 		-D_FILE_OFFSET_BITS=64
 	)
 	if(OMR_WARNINGS_AS_ERRORS)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+           set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${OMR_WARNING_AS_ERROR_FLAG}")
+           set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OMR_WARNING_AS_ERROR_FLAG}")
 	endif()
 endif()
 
@@ -114,7 +119,7 @@ if(OMR_HOST_OS STREQUAL "win")
 	set(common_flags "-MD -Zm400 /wd4577 /wd4091")
 	add_definitions(-D_HAS_EXCEPTIONS=0)
 	if(OMR_WARNINGS_AS_ERRORS)
-		set(common_flags "${common_flags} /WX")
+           set(common_flags "${common_flags} ${OMR_WARNING_AS_ERROR_FLAG}")
 		# TODO we also want to be setting warning as error on linker flags
 	endif()
 
