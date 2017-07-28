@@ -96,6 +96,7 @@ add_library(omrutil STATIC
 	xlphelp.c
 	xml.c
 )
+omr_set_target_flags(omrutil)
 
 if(OMR_HOST_OS STREQUAL "win")
 	target_sources(omrutil

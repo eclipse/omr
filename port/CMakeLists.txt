@@ -26,6 +26,7 @@ set(VPATH "")
 add_library(omrport STATIC 
 	ut_omrport.c
 )
+omr_set_target_flags(omrport)
 
 
 if(OMR_HOST_OS STREQUAL "aix")

@@ -70,7 +70,7 @@ add_executable(omrporttest
 	${cudaSources}
 )
 
-
+omr_set_target_flags(omrporttest)
 
 target_link_libraries(omrporttest
 	omrGtestGlue

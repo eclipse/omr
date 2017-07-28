@@ -33,6 +33,7 @@ add_executable(omrthreadtest
 	sanityTestHelper.cpp
 	threadTestHelp.cpp
 )
+omr_set_target_flags(omrthreadtest)
 
 #TODO Unported makefile fragment:
 #ifeq (1,$(OMR_THR_FORK_SUPPORT))

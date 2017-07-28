@@ -43,6 +43,7 @@ add_library(omrglue
 	VerboseManagerImpl.cpp
 	VerboseManagerImpl.hpp
 )
+omr_set_target_flags(omrglue) 
 
 target_include_directories(omrglue PUBLIC .)
 target_link_libraries(omrglue PUBLIC omrgc)

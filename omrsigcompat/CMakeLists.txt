@@ -19,6 +19,7 @@
 add_library(omrsig SHARED
 	omrsig.cpp
 )
+omr_set_target_flags(omrsig)
 
 #TODO need more comprehensive symbols
 set(exportedSyms

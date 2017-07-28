@@ -33,6 +33,7 @@ add_library(omrglue STATIC
 	VerboseManagerImpl.cpp
 	omrExampleVM.cpp
 )
+omr_set_target_flags(omrglue) 
 
 target_include_directories(omrglue PUBLIC . ..)
 

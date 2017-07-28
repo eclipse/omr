@@ -38,6 +38,7 @@ add_library(omrcore
 	ut_omrvm.c
 	ut_omrvm.h
 )
+omr_set_target_flags(omrcore)
 
 add_dependencies(omrcore omrgc_tracegen)
 target_include_directories(omrcore

@@ -285,6 +285,7 @@ add_library(j9thrstatic
 	${resolvedPaths}
 	ut_j9thr.c
 )
+omr_set_target_flags(j9thrstatic)
 
 target_include_directories(j9thrstatic
 	INTERFACE
