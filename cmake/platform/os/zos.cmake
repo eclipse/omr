@@ -115,3 +115,9 @@ macro(omr_os_global_configuration)
    message(STATUS "DEBUG: so LDFLAGS=${CMAKE_SHARED_LINKER_FLAGS}")
 
 endmacro()
+
+
+# Setup z/OS things on a per-target basis. 
+macro(omr_os_target_configuration target) 
+      target_include_directories(${target} PRIVATE util/a2e/headers)
+endmacro()

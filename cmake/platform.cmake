@@ -75,35 +75,7 @@ macro(omr_set_target_flags target)
       target_compile_options(${target} PRIVATE ${OMR_WARNING_AS_ERROR_FLAG}) 
    endif()
 
-   if(OMR_HOST_OS STREQUAL "win")
-
-      # we want to disable C4091, and C4577
-      # C4577 is a bogus warning about specifying noexcept when exceptions are disabled
-      # C4091 is caused by broken windows sdk (https://connect.microsoft.com/VisualStudio/feedback/details/1302025/warning-c4091-in-sdk-7-1a-shlobj-h-1051-dbghelp-h-1054-3056)
-      set(linker_common "-subsystem:console -machine:${TARGET_MACHINE}")
-
-      if(NOT OMR_ENV_DATA64)
-         set(linker_common "${linker_common} /SAFESEH")
-      endif()
-
-      target_link_libraries(${target} PRIVATE "${linker_common} /LARGEADDRESSAWARE wsetargv.obj")
-      if(OMR_ENV_DATA64)
-         #TODO: makefile has this but it seems to break linker
-         #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRTD")
-      endif()
-
-      if(OMR_ENV_DATA64)
-         target_link_libraries(${target} PRIVATE "-entry:_DllMainCRTStartup")
-      else()
-         target_link_libraries(${traget} PRIVATE "-entry:_DllMainCRTStartup@12")
-      endif()
-
-   endif()
-
-   # FIXME BEFORE DELIVERY: HAVEN'T TARGETized ZOS
-   if(OMR_HOST_OS STREQUAL "zos")
-      target_include_directories(${target} PRIVATE util/a2e/headers)
-   endif()
+   omr_os_target_configuration(${target})
 
 endmacro(omr_set_target_flags)
 ###

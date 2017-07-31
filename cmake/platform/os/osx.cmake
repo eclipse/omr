@@ -29,3 +29,8 @@ set(OMR_OS_COMPILE_OPTIONS
 macro(omr_os_global_configuration) 
    message(STATUS "Executing OSX global configuration") 
 endmacro()
+
+
+# Setup OS/X things on a per-target basis. 
+macro(omr_os_target_configuration target) 
+endmacro()
