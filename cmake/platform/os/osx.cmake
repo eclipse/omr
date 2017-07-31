@@ -23,3 +23,9 @@ set(OMR_OS_DEFINITIONS
 set(OMR_OS_COMPILE_OPTIONS
    -pthread
    )
+
+
+# Setup things that can't be done on a per-target basis. 
+macro(omr_os_global_configuration) 
+   message(STATUS "Executing OSX global configuration") 
+endmacro()
