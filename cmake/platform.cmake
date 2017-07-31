@@ -85,6 +85,10 @@ if(OMR_HOST_OS STREQUAL "win")
    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 endif()
 
+if(OMR_HOST_OS STREQUAL "zos")
+   enable_language(ASM-ZOS)
+endif()
+
 macro(omr_set_target_flags target)
 
    add_prefix(OMR_OS_DEFINITIONS_PREFIXED   ${OMR_C_DEFINITION_PREFIX} ${OMR_OS_DEFINITIONS})
@@ -130,8 +134,6 @@ macro(omr_set_target_flags target)
 
    # FIXME BEFORE DELIVERY: HAVEN'T TARGETized ZOS
    if(OMR_HOST_OS STREQUAL "zos")
-
-      enable_language(ASM-ZOS)
 
       target_include_directories(${target} PRIVATE util/a2e/headers)
 
