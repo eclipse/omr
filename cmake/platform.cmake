@@ -53,10 +53,6 @@ macro(omr_remove_option var opt)
       )
 endmacro(omr_remove_option)
 
-# interface library for exporting symbols from dynamic library
-# currently does nothing except on zos
-add_library(omr_shared INTERFACE)
-
 # TODO: Figure out how to do this on a per-target basis?
 if(OMR_HOST_OS STREQUAL "win")
    #      Make sure we are building without incremental linking
@@ -165,10 +161,6 @@ macro(omr_set_target_flags target)
 
       set(CMAKE_C_FLAGS "-Wc,ARCH\\\(7\\\) -Wc,\"langlvl(extc99)\" ${OMR_GLOBAL_FLAGS}")
       set(CMAKE_CXX_FLAGS "-Wc,ARCH\\\(7\\\) -Wc,\"langlvl(extended)\" ${OMR_GLOBAL_FLAGS} -I/usr/lpp/cbclib/include")
-
-
-
-      target_compile_options(omr_shared INTERFACE "-Wc,DLL,EXPORTALL")
 
       set(CMAKE_SHARED_LINKER_FLAGS "-Wl,xplink,dll")
 

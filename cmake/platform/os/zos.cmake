@@ -34,3 +34,5 @@ else()
 endif()
 
 set(OMR_OS_COMPILE_OPTIONS)
+
+set(OMR_EXPORT_ALL "-Wc,DLL,EXPORTALL")

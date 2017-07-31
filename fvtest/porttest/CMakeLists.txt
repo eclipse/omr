@@ -92,7 +92,7 @@ endif()
 
 add_library(sltestlib SHARED
 	sltestlib/sltest.c)
-target_link_libraries(sltestlib PRIVATE omr_shared)
+target_compile_options(sltestlib PRIVATE ${OMR_EXPORT_ALL})
 
 
 add_test(NAME porttest COMMAND omrporttest)

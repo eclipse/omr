@@ -83,7 +83,8 @@ endif()
 #endif
 #endif
 
-target_link_libraries(omrsig omrutil omr_shared)
+target_compile_options(omrsig PRIVATE ${OMR_EXPORT_ALL})
+target_link_libraries(omrsig  PRIVATE omrutil)
 
 #TODO ensure we are linking in the same way as source makefile:
 #MODULE_STATIC_LIBS += omrutil
