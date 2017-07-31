@@ -41,17 +41,9 @@ include(cmake/platform/toolcfg/${OMR_TOOLCONFIG}.cmake OPTIONAL)
 # Verify toolconfig!
 include(cmake/platform/toolcfg/verify.cmake)
 
+# Include useful tool macros.
 include(cmake/AddPrefix.cmake)
-
-# Remove a specified option from a variable
-macro(omr_remove_option var opt)
-   string( REGEX REPLACE
-      "(^| )${opt}($| )"
-      ""
-      ${var}
-      "${${var}}"
-      )
-endmacro(omr_remove_option)
+include(cmake/RemoveOption.cmake)
 
 # Some operating systems / toolchains have requirements that can't be 
 # expressed on a per-target basis. Do that setup here: 
