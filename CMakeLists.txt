@@ -18,6 +18,8 @@
 
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 
+message(STATUS "Starting with CMake version ${CMAKE_VERSION}")
+
 # Warn user that CMake support is currently experimental
 message(WARNING
 "CMake support is currently experimental.\n\
