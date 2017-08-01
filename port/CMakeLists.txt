@@ -333,6 +333,7 @@ add_tracegen(common/omrport.tdf)
 target_sources(omrport PRIVATE ${resolvedPaths})
 
 target_link_libraries(omrport
+    PRIVATE
 	j9thrstatic
 	j9hashtable
 )
@@ -350,14 +351,14 @@ target_compile_definitions(omrport PRIVATE -DOMRPORT_LIBRARY_DEFINE)
 #TODO hack to get to compile. Need platform checks
 if(NOT OMR_HOST_OS STREQUAL "win")
 	if(NOT OMR_HOST_OS STREQUAL "zos")
-		target_link_libraries(omrport dl)
+		target_link_libraries(omrport PRIVATE dl)
 	endif()
 endif()
 
 if(OMR_HOST_OS STREQUAL "osx")
-  target_link_libraries(omrport iconv)
+  target_link_libraries(omrport PRIVATE iconv)
 endif()
 
 if(OMR_HOST_OS STREQUAL "win")
-	target_link_libraries(omrport psapi pdh)
+	target_link_libraries(omrport PRIVATE psapi pdh)
 endif()

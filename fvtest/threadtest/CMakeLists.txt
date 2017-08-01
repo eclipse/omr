@@ -69,6 +69,7 @@ omr_set_target_flags(omrthreadtest)
 #include $(top_srcdir)/omrmakefiles/rules.mk
 
 target_link_libraries(omrthreadtest
+    PRIVATE
 	omrtestutil
 	omrGtestGlue
 	j9thrstatic
@@ -76,6 +77,7 @@ target_link_libraries(omrthreadtest
 )
 if(OMR_HOST_OS STREQUAL "win")
     target_link_libraries(omrthreadtest
+        PRIVATE
         ws2_32
         shell32
         Iphlpapi
@@ -85,7 +87,7 @@ if(OMR_HOST_OS STREQUAL "win")
 endif()
 
 if(OMR_HOST_OS STREQUAL "zos")
-	target_link_libraries(omrthreadtest j9a2e)
+	target_link_libraries(omrthreadtest PRIVATE j9a2e)
 endif()
 
 add_test(NAME threadtest COMMAND omrthreadtest)

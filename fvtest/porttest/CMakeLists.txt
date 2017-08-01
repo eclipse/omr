@@ -73,6 +73,7 @@ add_executable(omrporttest
 omr_set_target_flags(omrporttest)
 
 target_link_libraries(omrporttest
+    PRIVATE
 	omrGtestGlue
 	omrcore
 	omrport
@@ -80,18 +81,20 @@ target_link_libraries(omrporttest
 )
 if(OMR_HOST_OS STREQUAL "win")
 	target_link_libraries(omrporttest
+        PRIVATE
 		ws2_32
 		omrglue
 	)
 endif()
 
 if(OMR_HOST_OS STREQUAL "zos")
-	target_link_libraries(omrporttest j9a2e)
+	target_link_libraries(omrporttest PRIVATE j9a2e)
 endif()
 
 
 add_library(sltestlib SHARED
 	sltestlib/sltest.c)
+
 target_compile_options(sltestlib PRIVATE ${OMR_EXPORT_ALL})
 
 
