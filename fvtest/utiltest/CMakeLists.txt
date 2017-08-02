@@ -20,12 +20,14 @@ add_executable(omrutiltest
 	main.cpp
 )
 
-target_link_libraries(omrutiltest
+target_link_libraries(omrutiltest PRIVATE
 	#omrGtestGlue
 	omrGtest
 	omrutil
 	omrglue
 )
+
+omr_set_target_flags(omrutiltest)
 
 target_include_directories(omrutiltest
 	PRIVATE
@@ -33,7 +35,7 @@ target_include_directories(omrutiltest
 )
 
 if(OMR_HOST_OS STREQUAL "zos")
-	target_link_libraries(omrutiltest j9a2e)
+	target_link_libraries(omrutiltest PRIVATE j9a2e)
 endif()
 
 add_test(NAME utiltest COMMAND omrutiltest)

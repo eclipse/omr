@@ -1,4 +1,4 @@
-###############################################################################
+##############################################################################
 #
 # (c) Copyright IBM Corp. 2017
 #
@@ -16,15 +16,20 @@
 #    Multiple authors (IBM Corp.) - initial implementation and documentation
 ###############################################################################
 
+set(OMR_OS_DEFINITIONS 
+   -DLINUX
+   -D_FILE_OFFSET_BITS=64
+   )
 
-add_executable(hookgen
-	HookGen.cpp
-	main.cpp
-)
+set(OMR_OS_COMPILE_OPTIONS
+   -pthread
+   )
 
-target_link_libraries(hookgen PRIVATE pugixml)
-if(OMR_HOST_OS STREQUAL "zos")
-	target_link_libraries(hookgen PRIVATE j9a2e)
-endif()
+# Setup things that can't be done on a per-target basis. 
+macro(omr_os_global_configuration) 
+   message(STATUS "Executing Linux global configuration") 
+endmacro()
 
-omr_set_target_flags(hookgen)
+# Setup Linux things on a per-target basis. 
+macro(omr_os_target_configuration target) 
+endmacro()

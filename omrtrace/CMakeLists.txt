@@ -27,6 +27,7 @@ add_library(omrtrace STATIC
 	omrtracepublish.cpp
 	omrtracewrappers.cpp
 )
+omr_set_target_flags(omrtrace)
 
 target_link_libraries(omrtrace
 	PUBLIC

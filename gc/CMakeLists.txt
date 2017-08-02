@@ -23,6 +23,7 @@ add_hookgen(include/omrmm.hdf
 	${CMAKE_CURRENT_SOURCE_DIR}/../include_core/mmomrhook.h
 	${CMAKE_CURRENT_SOURCE_DIR}/base/mmomrhook_internal.h
 )
+
 add_hookgen(base/omrmmprivate.hdf
 	${CMAKE_CURRENT_SOURCE_DIR}/base/mmprivatehook.h
 	${CMAKE_CURRENT_SOURCE_DIR}/base/mmprivatehook_internal.h
@@ -264,6 +265,8 @@ add_library(omrgc
 
 	$<TARGET_OBJECTS:omrgc_tracegen>
 )
+omr_set_target_flags(omrgc)
+
 add_dependencies(omrgc omrgc_hookgen)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")

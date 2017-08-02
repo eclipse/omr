@@ -1,4 +1,4 @@
-###############################################################################
+##############################################################################
 #
 # (c) Copyright IBM Corp. 2017
 #
@@ -16,15 +16,21 @@
 #    Multiple authors (IBM Corp.) - initial implementation and documentation
 ###############################################################################
 
+set(OMR_OS_DEFINITIONS 
+   -DOSX	
+   -D_FILE_OFFSET_BITS=64)
 
-add_executable(hookgen
-	HookGen.cpp
-	main.cpp
-)
+set(OMR_OS_COMPILE_OPTIONS
+   -pthread
+   )
 
-target_link_libraries(hookgen PRIVATE pugixml)
-if(OMR_HOST_OS STREQUAL "zos")
-	target_link_libraries(hookgen PRIVATE j9a2e)
-endif()
 
-omr_set_target_flags(hookgen)
+# Setup things that can't be done on a per-target basis. 
+macro(omr_os_global_configuration) 
+   message(STATUS "Executing OSX global configuration") 
+endmacro()
+
+
+# Setup OS/X things on a per-target basis. 
+macro(omr_os_target_configuration target) 
+endmacro()

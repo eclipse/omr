@@ -1,4 +1,4 @@
-###############################################################################
+##############################################################################
 #
 # (c) Copyright IBM Corp. 2017
 #
@@ -16,15 +16,11 @@
 #    Multiple authors (IBM Corp.) - initial implementation and documentation
 ###############################################################################
 
+set(OMR_ARCH_DEFINITIONS "")
 
-add_executable(hookgen
-	HookGen.cpp
-	main.cpp
-)
-
-target_link_libraries(hookgen PRIVATE pugixml)
-if(OMR_HOST_OS STREQUAL "zos")
-	target_link_libraries(hookgen PRIVATE j9a2e)
+if(OMR_ENV_DATA64)
+   list(APPEND OMR_ARCH_DEFINITIONS -DJ9HAMMER)
+else()
+   list(APPEND OMR_ARCH_DEFINITIONS -DJ9X86)
 endif()
 
-omr_set_target_flags(hookgen)

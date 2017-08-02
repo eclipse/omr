@@ -33,17 +33,7 @@ endif()
 
 set(MASM2GAS_PATH ${OMR_ROOT}/tools/compiler/scripts/masm2gas.pl CACHE INTERNAL "MASM2GAS PATH")
 
-# Given a prefix, and a list of arguments, prefix the list of arguments and
-# assign to out: ie, add_prefix(out "-I" "a;b;c") should set out to
-# "-Ia;-Ib;-Ic".
-function(add_prefix out prefix) 
-   set(ret "")
-   foreach(var IN ITEMS ${ARGN}) 
-      list(APPEND ret "${prefix}${var}")
-   endforeach()
-   set(${out} ${ret} PARENT_SCOPE)
-endfunction(add_prefix) 
-
+include(${OMR_ROOT}/cmake/AddPrefix.cmake) 
 
 # Platform setup code!
 # TODO: THis needs to be abstracted for cross platform builds

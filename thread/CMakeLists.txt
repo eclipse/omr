@@ -284,6 +284,7 @@ add_library(j9thrstatic
 	${resolvedPaths}
 	ut_j9thr.c
 )
+omr_set_target_flags(j9thrstatic)
 
 target_include_directories(j9thrstatic
 	INTERFACE
@@ -291,6 +292,7 @@ target_include_directories(j9thrstatic
 )
 
 target_link_libraries(j9thrstatic
+    PRIVATE
 	-pthread
 	omrutil
 	j9pool

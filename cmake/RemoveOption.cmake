@@ -1,4 +1,4 @@
-###############################################################################
+##############################################################################
 #
 # (c) Copyright IBM Corp. 2017
 #
@@ -16,15 +16,14 @@
 #    Multiple authors (IBM Corp.) - initial implementation and documentation
 ###############################################################################
 
+# Remove a specified option from a variable
+macro(omr_remove_option var opt)
+   string( REGEX REPLACE
+      "(^| )${opt}($| )"
+      ""
+      ${var}
+      "${${var}}"
+      )
+endmacro(omr_remove_option)
 
-add_executable(hookgen
-	HookGen.cpp
-	main.cpp
-)
 
-target_link_libraries(hookgen PRIVATE pugixml)
-if(OMR_HOST_OS STREQUAL "zos")
-	target_link_libraries(hookgen PRIVATE j9a2e)
-endif()
-
-omr_set_target_flags(hookgen)

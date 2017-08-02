@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# (c) Copyright IBM Corp. 2017
+# (c) Copyright IBM Corp. 2017, 2017
 #
 #  This program and the accompanying materials are made available
 #  under the terms of the Eclipse Public License v1.0 and
@@ -16,39 +16,14 @@
 #    Multiple authors (IBM Corp.) - initial implementation and documentation
 ###############################################################################
 
-add_tracegen(omrti.tdf)
-add_tracegen(omrvm.tdf)
+# Given a prefix, and a list of arguments, prefix the list of arguments and
+# assign to out: ie, add_prefix(out "-I" "a;b;c") should set out to
+# "-Ia;-Ib;-Ic".
+function(add_prefix out prefix) 
+   set(ret "")
+   foreach(var IN ITEMS ${ARGN}) 
+      list(APPEND ret "${prefix}${var}")
+   endforeach()
+   set(${out} ${ret} PARENT_SCOPE)
+endfunction(add_prefix) 
 
-add_library(omrcore
-	OMR_Agent.cpp
-	OMR_MethodDictionary.cpp
-	OMR_MethodDictionary.hpp
-	OMR_Profiler.cpp
-	OMR_Runtime.cpp
-	OMR_TI.cpp
-	OMR_TIMemorySize.cpp
-	OMR_VM.cpp
-	OMR_VMThread.cpp
-	omrrasinit.c
-	omrti.tdf
-	omrtrcinit.c
-	startup/omrvmstartup.cpp
-	ut_omrti.c
-	ut_omrti.h
-	ut_omrvm.c
-	ut_omrvm.h
-)
-omr_set_target_flags(omrcore)
-
-add_dependencies(omrcore omrgc_tracegen)
-target_include_directories(omrcore
-	PUBLIC
-		.
-)
-
-target_link_libraries(omrcore
-	PUBLIC
-		omrgc # mminitcore.h
-		omrport
-		omrtrace
-)
