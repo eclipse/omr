@@ -16,6 +16,9 @@
 #    Multiple authors (IBM Corp.) - initial implementation and documentation
 ###############################################################################
 
-set(OMR_ARCH_DEFINITIONS J9ARM ARMGNU FIXUP_UNALIGNED)
+set(OMR_ARCH_DEFINITIONS
+   -DJ9ARM
+   -DARMGNU
+   -DFIXUP_UNALIGNED)
 
 

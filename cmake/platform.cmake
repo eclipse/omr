@@ -51,12 +51,9 @@ omr_os_global_configuration()
 
 macro(omr_set_target_flags target)
 
-   add_prefix(OMR_OS_DEFINITIONS_PREFIXED   ${OMR_C_DEFINITION_PREFIX} ${OMR_OS_DEFINITIONS})
-   add_prefix(OMR_ARCH_DEFINITIONS_PREFIXED ${OMR_C_DEFINITION_PREFIX} ${OMR_ARCH_DEFINITIONS})
-
    target_compile_definitions(${target} PRIVATE
-      ${OMR_OS_DEFINITIONS_PREFIXED}
-      ${OMR_ARCH_DEFINITIONS_PREFIXED}
+      ${OMR_OS_DEFINITIONS}
+      ${OMR_ARCH_DEFINITIONS}
       )
 
    target_compile_options(${target} PRIVATE 

@@ -17,8 +17,8 @@
 ###############################################################################
 
 set(OMR_OS_DEFINITIONS 
-	        OSX	
-		_FILE_OFFSET_BITS=64)
+   -DOSX	
+   -D_FILE_OFFSET_BITS=64)
 
 set(OMR_OS_COMPILE_OPTIONS
    -pthread

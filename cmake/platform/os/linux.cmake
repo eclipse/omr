@@ -17,8 +17,9 @@
 ###############################################################################
 
 set(OMR_OS_DEFINITIONS 
-		LINUX
-		_FILE_OFFSET_BITS=64)
+   -DLINUX
+   -D_FILE_OFFSET_BITS=64
+   )
 
 set(OMR_OS_COMPILE_OPTIONS
    -pthread

@@ -19,28 +19,28 @@
 # Note, this file currently conflates Windows and MSVC. 
 
 set(OMR_OS_DEFINITIONS 
-   WIN32
-   _CRT_SECURE_NO_WARNINGS
-   CRTAPI1=_cdecl
-   CRTAPI2=_cdecl
-   _WIN_95
-   _WIN32_WINDOWS=0x0500
-   _WIN32_DCOM
-   _MT
-   _WINSOCKAPI_
-   _WIN32_WINVER=${OMR_WINVER}
-   _WIN32_WINNT=${OMR_WINVER}
-   _DLL
-   _HAS_EXCEPTIONS=0
+   -DWIN32
+   -D_CRT_SECURE_NO_WARNINGS
+   -DCRTAPI1=_cdecl
+   -DCRTAPI2=_cdecl
+   -D_WIN_95
+   -D_WIN32_WINDOWS=0x0500
+   -D_WIN32_DCOM
+   -D_MT
+   -D_WINSOCKAPI_
+   -D_WIN32_WINVER=${OMR_WINVER}
+   -D_WIN32_WINNT=${OMR_WINVER}
+   -D_DLL
+   -D_HAS_EXCEPTIONS=0
    )
 
 if(OMR_ENV_DATA64)
    list(APPEND OMR_OS_DEFINITIONS 
-      WIN64
-      _AMD64_=1)
+      -DWIN64
+      -D_AMD64_=1)
 else()
    list(APPEND OMR_OS_DEFINITIONS 
-      _X86_)
+      -D_X86_)
 endif()
 
 set(OMR_OS_COMPILE_OPTIONS "/GS-")
