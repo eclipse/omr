@@ -45,6 +45,9 @@ target_include_directories(trace
 		./
 )
 
+omr_set_target_flags(trace)
+omr_set_target_flags(tracegen)
+
 if(OMR_HOST_OS STREQUAL "zos")
 	target_link_libraries(trace j9a2e)
 endif()

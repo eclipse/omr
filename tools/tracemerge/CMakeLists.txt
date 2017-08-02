@@ -25,6 +25,7 @@ target_include_directories(tracemerge
 	PRIVATE
 		../tracegen/
 )
+omr_set_target_flags(tracemerge)
 
 target_link_libraries(tracemerge
 	PRIVATE

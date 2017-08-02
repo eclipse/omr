@@ -22,7 +22,9 @@ add_executable(hookgen
 	main.cpp
 )
 
-target_link_libraries(hookgen pugixml)
+target_link_libraries(hookgen PRIVATE pugixml)
 if(OMR_HOST_OS STREQUAL "zos")
-	target_link_libraries(hookgen j9a2e)
+	target_link_libraries(hookgen PRIVATE j9a2e)
 endif()
+
+omr_set_target_flags(hookgen)
