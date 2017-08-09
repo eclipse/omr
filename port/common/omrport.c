@@ -254,7 +254,10 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrsysinfo_cgroup_is_limits_supported, /* sysinfo_cgroup_is_limits_supported */
 	omrsysinfo_cgroup_is_limits_enabled, /* sysinfo_cgroup_is_limits_enabled */
 	omrsysinfo_cgroup_enable_limits, /* sysinfo_cgroup_enable_limits */
-	omrsysinfo_cgroup_get_memlimit, /* sysinfo_cgroup_get_memlimit */	
+	omrsysinfo_cgroup_get_memlimit, /* sysinfo_cgroup_get_memlimit */
+	omrsysinfo_cgroup_use_memlimit_for_heap, /* sysinfo_cgroup_use_memlimit_for_heap */
+	omrsysinfo_get_usable_memory, /* sysinfo_get_usable_memory */
+	omrsysinfo_get_physical_memory_for_heap, /* sysinfo_get_physical_memory_for_heap */
 	omrport_init_library, /* port_init_library */
 	omrport_startup_library, /* port_startup_library */
 	omrport_create_library, /* port_create_library */
