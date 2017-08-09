@@ -105,4 +105,90 @@ OMR::DataType::isAggregate()
    return self()->getDataType() == TR::Aggregate;
    }
 
+TR::DataType&
+OMR::DataType::operator=(const TR::DataType& rhs)
+   {
+   _type = rhs._type;
+   return *(static_cast<TR::DataType *>(this));
+   }
+
+TR::DataType&
+OMR::DataType::operator=(TR::DataTypes rhs)
+   {
+   _type = rhs;
+   return *(static_cast<TR::DataType *>(this));
+   }
+
+bool
+OMR::DataType::operator==(const TR::DataType& rhs)
+   {
+   return _type == rhs._type;
+   }
+
+bool
+OMR::DataType::operator==(TR::DataTypes rhs)
+   {
+   return _type == rhs;
+   }
+
+bool
+OMR::DataType::operator!=(const TR::DataType& rhs)
+   {
+   return _type != rhs._type;
+   }
+
+bool
+OMR::DataType::operator!=(TR::DataTypes rhs)
+   {
+   return _type != rhs;
+   }
+
+bool
+OMR::DataType::operator<=(const TR::DataType& rhs)
+   {
+   return _type <= rhs._type;
+   }
+
+bool
+OMR::DataType::operator<=(TR::DataTypes rhs)
+   {
+   return _type <= rhs;
+   }
+
+bool		
+OMR::DataType::operator<(const TR::DataType& rhs)		
+   {		
+   return _type < rhs._type;		
+   }		
+		
+bool		
+OMR::DataType::operator<(TR::DataTypes rhs)		
+   {		
+   return _type < rhs;		
+   }		
+		
+bool		
+OMR::DataType::operator>=(const TR::DataType& rhs)		
+   {		
+   return _type >= rhs._type;		
+   }		
+		
+bool		
+OMR::DataType::operator>=(TR::DataTypes rhs)		
+   {		
+   return _type >= rhs;		
+   }		
+		
+bool		
+OMR::DataType::operator>(const TR::DataType& rhs)		
+   {		
+   return _type > rhs._type;		
+   }		
+		
+bool		
+OMR::DataType::operator>(TR::DataTypes rhs)		
+   {		
+   return _type > rhs;		
+   }		
+
 #endif // OMR_DATATYPES_INLINES_INCL

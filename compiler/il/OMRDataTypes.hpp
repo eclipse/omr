@@ -309,26 +309,26 @@ public:
 
    TR::DataTypes getDataType() const { return _type; }
 
-   TR::DataType& operator=(const TR::DataType& rhs);
-   TR::DataType& operator=(TR::DataTypes rhs);
+   inline TR::DataType& operator=(const TR::DataType& rhs);
+   inline TR::DataType& operator=(TR::DataTypes rhs);
 
-   bool operator==(const TR::DataType& rhs);
-   bool operator==(TR::DataTypes rhs);
+   inline bool operator==(const TR::DataType& rhs);
+   inline bool operator==(TR::DataTypes rhs);
 
-   bool operator!=(const TR::DataType& rhs);
-   bool operator!=(TR::DataTypes rhs);
+   inline bool operator!=(const TR::DataType& rhs);
+   inline bool operator!=(TR::DataTypes rhs);
 
-   bool operator<=(const TR::DataType& rhs);
-   bool operator<=(TR::DataTypes rhs);
+   inline bool operator<=(const TR::DataType& rhs);
+   inline bool operator<=(TR::DataTypes rhs);
 
-   bool operator<(const TR::DataType& rhs);
-   bool operator<(TR::DataTypes rhs);
+   inline bool operator<(const TR::DataType& rhs);
+   inline bool operator<(TR::DataTypes rhs);
 
-   bool operator>=(const TR::DataType& rhs);
-   bool operator>=(TR::DataTypes rhs);
+   inline bool operator>=(const TR::DataType& rhs);
+   inline bool operator>=(TR::DataTypes rhs);
 
-   bool operator>(const TR::DataType& rhs);
-   bool operator>(TR::DataTypes rhs);
+   inline bool operator>(const TR::DataType& rhs);
+   inline bool operator>(TR::DataTypes rhs);
 
    inline operator int();
 
