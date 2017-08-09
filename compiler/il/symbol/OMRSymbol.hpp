@@ -79,7 +79,7 @@ public:
    /**
     * \brief Downcast to concrete instance
     */
-   TR::Symbol * self();
+   inline TR::Symbol * self();
 
    template <typename AllocatorType>
    static TR::Symbol * create(AllocatorType);

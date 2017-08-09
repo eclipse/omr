@@ -38,21 +38,6 @@
 #include "infra/Flags.hpp"                     // for flags32_t
 #include "ras/Debug.hpp"                       // for TR_DebugBase
 
-/**
- * Downcast to concrete instance
- *
- * This method is defined out-of-line because it requires a complete definition
- * of OMR::Symbol which is unavailable at the time the class OMR::Symbol is
- * being defined.
- *
- * This must be a static_cast or else the downcast will be unsafe.
- */
-TR::Symbol *
-OMR::Symbol::self()
-   {
-   return static_cast<TR::Symbol *>( this);
-   }
-
 template <typename AllocatorType>
 TR::Symbol * OMR::Symbol::create(AllocatorType m)
    {
