@@ -16,7 +16,7 @@
  *    Multiple authors (IBM Corp.) - initial implementation and documentation
  ******************************************************************************/
 
-#include "il/OMRDataTypes.hpp"
+#include "il/DataTypes.hpp"
 
 #include <ctype.h>                    // for isdigit
 #include <stddef.h>                   // for NULL
@@ -145,7 +145,7 @@ OMR::DataType::operator>(TR::DataTypes rhs)
 bool
 OMR::DataType::canGetMaxPrecisionFromType()
    {
-   switch (getDataType())
+   switch (self()->getDataType())
       {
       case TR::Int8:
       case TR::Int16:
@@ -160,7 +160,7 @@ OMR::DataType::canGetMaxPrecisionFromType()
 int32_t
 OMR::DataType::getMaxPrecisionFromType()
    {
-   switch (getDataType())
+   switch (self()->getDataType())
       {
       case TR::Int8: return TR::getMaxSignedPrecision<TR::Int8>();
       case TR::Int16: return TR::getMaxSignedPrecision<TR::Int16>();
@@ -175,12 +175,12 @@ OMR::DataType::getMaxPrecisionFromType()
 TR::DataType
 OMR::DataType::getVectorIntegralType()
    {
-   switch(getDataType())
+   switch(self()->getDataType())
       {
       case TR::VectorInt8:
       case TR::VectorInt16:
       case TR::VectorInt32:
-      case TR::VectorInt64: return getDataType();
+      case TR::VectorInt64: return self()->getDataType();
       case TR::VectorFloat: return TR::VectorInt32;
       case TR::VectorDouble: return TR::VectorInt64;
       default:
@@ -192,7 +192,7 @@ OMR::DataType::getVectorIntegralType()
 TR::DataType
 OMR::DataType::getVectorElementType()
    {
-   switch(getDataType())
+   switch(self()->getDataType())
       {
       case TR::VectorInt8: return TR::Int8;
       case TR::VectorInt16: return TR::Int16;
@@ -209,7 +209,7 @@ OMR::DataType::getVectorElementType()
 TR::DataType
 OMR::DataType::vectorToScalar()
    {
-   switch (getDataType())
+   switch (self()->getDataType())
       {
       case TR::VectorInt8:
          return TR::Int8;
@@ -231,7 +231,7 @@ OMR::DataType::vectorToScalar()
 TR::DataType
 OMR::DataType::scalarToVector()
    {
-   switch (getDataType())
+   switch (self()->getDataType())
       {
       case TR::Int8:
          return TR::VectorInt8;
@@ -353,7 +353,7 @@ OMR::DataType::getName(TR::DataType dt)
 const char *
 OMR::DataType::toString() const
    {
-   return TR::DataType::getName(getDataType());
+   return TR::DataType::getName(self()->getDataType());
    }
 
 
