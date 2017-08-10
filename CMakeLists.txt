@@ -33,15 +33,6 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
 include(OmrAssert)
 include(OmrFindFiles)
 
-###
-### Getting the glue directory
-###
-
-if (NOT DEFINED OMR_GLUE)
-    set(OMR_GLUE "./example/glue" CACHE PATH "The glue directory")
-    message(STATUS "Glue not set, defaulting to example glue")
-endif()
-
 # TODO: OMR_EXAMPLE flag
 # TODO: OMR_RTTI flag
 
@@ -91,6 +82,11 @@ if(CMAKE_CROSSCOMPILING)
 	include(${OMR_TOOLS_IMPORTFILE})
 endif()
 
+if(OMR_EXAMPLE)
+	message(STATUS "Building example (Enabled by OMR_EXAMPLE).")
+	add_subdirectory(example)
+endif(OMR_EXAMPLE)
+
 add_subdirectory(thread)
 add_subdirectory(port)
 add_subdirectory(util)
@@ -103,8 +99,7 @@ add_subdirectory(omrsigcompat)
 add_subdirectory(fvtest)
 
 if(OMR_GC)
-  add_subdirectory(gc)
-  add_subdirectory("${OMR_GLUE}")
+	add_subdirectory(gc)
 endif(OMR_GC)
 
 if(OMR_JITBUILDER)
