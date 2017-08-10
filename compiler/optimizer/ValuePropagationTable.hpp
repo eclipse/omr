@@ -835,7 +835,6 @@ const ValuePropagationPtr constraintHandlers[] =
 
    constrainChildren,        // TR::icmpset
    constrainChildren,        // TR::lcmpset
-   constrainChildren,        // TR::bztestnset
    constrainChildren,        // TR::ibatomicor
    constrainChildren,        // TR::isatomicor
    constrainChildren,        // TR::iiatomicor

@@ -5453,32 +5453,6 @@ OMR::X86::TreeEvaluator::icmpsetEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return resultReg;
    }
 
-TR::Register *
-OMR::X86::TreeEvaluator::bztestnsetEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR::Node *pointer      = node->getChild(0);
-   TR::Node *replaceValue = node->getChild(1);
-
-   TR::Register *pointerReg = cg->evaluate(pointer);
-   TR::MemoryReference *memRef = generateX86MemoryReference(pointerReg, 0, cg);
-   TR::Register *replaceReg = cg->evaluate(replaceValue);
-
-   if (replaceValue->getReferenceCount() > 1)
-      {
-      TR::Register* replaceRegPrev = replaceReg;
-      replaceReg = cg->allocateRegister();
-      generateRegRegInstruction(MOV1RegReg, node, replaceReg, replaceRegPrev, cg);
-      }
-
-   generateMemRegInstruction(XCHG1RegMem, node, memRef, replaceReg, cg);
-
-   node->setRegister(replaceReg);
-   cg->decReferenceCount(replaceValue);
-   cg->decReferenceCount(pointer);
-
-   return replaceReg;
-   }
-
 
 TR::Register *OMR::X86::TreeEvaluator::PrefetchEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {

@@ -692,7 +692,6 @@
    lsubSimplifier,          // TR::lusubb
    dftSimplifier,           // TR::icmpset
    dftSimplifier,           // TR::lcmpset
-   dftSimplifier,           // TR::btestnset
    dftSimplifier,           // TR::ibatomicor
    dftSimplifier,           // TR::isatomicor
    dftSimplifier,           // TR::iiatomicor

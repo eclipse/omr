@@ -661,7 +661,6 @@
    TR::TreeEvaluator::integerSubEvaluator,              // TR::lusubb
    TR::TreeEvaluator::icmpsetEvaluator,                 // TR::icmpset
    TR::TreeEvaluator::icmpsetEvaluator,                 // TR::lcmpset
-   TR::TreeEvaluator::bztestnsetEvaluator,              // TR::bztestnset
    TR::TreeEvaluator::atomicorEvaluator,                // TR::ibatomicor
    TR::TreeEvaluator::atomicorEvaluator,                // TR::isatomicor
    TR::TreeEvaluator::atomicorEvaluator,                // TR::iiatomicor

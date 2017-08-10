@@ -710,7 +710,6 @@
 
    icmpset,    // icmpset(pointer,c,r): compare *pointer with c, if it matches, replace with r.  Returns 0 on match, 1 otherwise
    lcmpset,    // the operation is done atomically - return type is int for both [il]cmpset
-   bztestnset, // bztestnset(pointer,c): atomically sets *pointer to c and returns the original value of *p (represents Test And Set on Z)
 
    // the atomic ops.. atomically update the symref.  first child is address, second child is the RHS
    // interestingly, these ops act like loads and stores at the same time
