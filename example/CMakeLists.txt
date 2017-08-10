@@ -16,6 +16,10 @@
 #    Multiple authors (IBM Corp.) - initial implementation and documentation
 ###############################################################################
 
+include(OmrAssert)
+
+omr_assert(TEST OMR_EXAMPLE)
+
 add_executable(example
   main.cpp
 )
