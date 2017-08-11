@@ -5,6 +5,11 @@
 * libclang-dev libraries 
 * llvm-dev libraries. 
 
+### Prerequisites for Ubuntu
+* llvm
+* clang
+* make
+
 ## Building
 
 ### With the Makefile directly
