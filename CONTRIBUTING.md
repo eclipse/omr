@@ -76,7 +76,7 @@ Correct race in frobnicator
 
 This patch eliminates the race condition in issue #1234.
 
-Issue: #1234
+Issue #1234
 ```
 
 Sign off on your commit in the footer. By doing this, you assert original
@@ -113,7 +113,7 @@ The guidelines are changed to:
 - Encourage contributors to put more information into the commit
   message.
 
-Issue: #124
+Issue #124
 Signed-off-by: Robert Young <rwy0717@gmail.com>
 ```
 
