@@ -29,6 +29,7 @@ add_library(omrport_obj OBJECT
 	ut_omrport.c
 )
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 if(OMR_HOST_OS STREQUAL "aix")
 	list(APPEND OBJECTS omrgetsp.c)

@@ -58,9 +58,6 @@ include(cmake/config.cmake)
 
 enable_testing()
 
-#include current source dir and current bin dir automatically
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
 include_directories(
   ${PROJECT_BINARY_DIR}
   ./include/
