@@ -24,6 +24,7 @@
 #define PUT_TEST_RESOLVEDMETHOD_INTO_TR
 #endif // TR_RESOLVEDMETHOD_COMPOSED
 
+#include <string>
 #include <string.h>
 
 #include "compile/OMRMethod.hpp"
@@ -103,14 +104,14 @@ class ResolvedMethod : public ResolvedMethodBase, public Method
    public:
    ResolvedMethod(TR_OpaqueMethodBlock *method);
    ResolvedMethod(TR::MethodBuilder *methodBuilder);
-   ResolvedMethod(const char      * fileName,
-                  const char      * lineNumber,
-                  char            * name,
-                  int32_t           numParms,
-                  TR::IlType     ** parmTypes,
-                  TR::IlType      * returnType,
-                  void            * entryPoint,
-                  TR::IlInjector  * ilInjector)
+   ResolvedMethod(const std::string  & fileName,
+                  const char         * lineNumber,
+                  const std::string  & name,
+                  int32_t              numParms,
+                  TR::IlType        ** parmTypes,
+                  TR::IlType         * returnType,
+                  void               * entryPoint,
+                  TR::IlInjector     * ilInjector)
       : _fileName(fileName),
         _lineNumber(lineNumber),
         _name(name),
@@ -129,8 +130,8 @@ class ResolvedMethod : public ResolvedMethodBase, public Method
    virtual const char          * signature(TR_Memory *, TR_AllocationKind);
    char                        * localName (uint32_t slot, uint32_t bcIndex, int32_t &nameLength, TR_Memory *trMemory);
 
-   virtual char                * classNameChars()                           { return (char *)_fileName; }
-   virtual char                * nameChars()                                { return _name; }
+   virtual char                * classNameChars()                           { return (char *) _fileName.c_str(); }
+   virtual char                * nameChars()                                { return (char *) _name.c_str(); }
    virtual char                * signatureChars()                           { return _signatureChars; }
    virtual uint16_t              signatureLength()                          { return strlen(signatureChars()); }
 
@@ -166,10 +167,10 @@ class ResolvedMethod : public ResolvedMethodBase, public Method
                                TR::SymbolReferenceTable *symRefTab);
 
    protected:
-   const char *_fileName;
+   std::string _fileName;
    const char *_lineNumber;
 
-   char *_name;
+   std::string _name;
    char *_signature;
    char _signatureChars[64];
 
@@ -194,14 +195,14 @@ namespace TR
             : TestCompiler::ResolvedMethod(method)
             { }
 
-         ResolvedMethod(char            * fileName,
-                        char            * lineNumber,
-                        char            * name,
-                        int32_t           numArgs,
-                        TR::IlType     ** parmTypes,
-                        TR::IlType      * returnType,
-                        void            * entryPoint,
-                        TR::IlInjector  * ilInjector)
+         ResolvedMethod(const std::string  & fileName,
+                        char               * lineNumber,
+                        const std::string  & name,
+                        int32_t              numArgs,
+                        TR::IlType        ** parmTypes,
+                        TR::IlType         * returnType,
+                        void               * entryPoint,
+                        TR::IlInjector     * ilInjector)
             : TestCompiler::ResolvedMethod(fileName, lineNumber, name, numArgs,
                                    parmTypes, returnType,
                                    entryPoint, ilInjector)

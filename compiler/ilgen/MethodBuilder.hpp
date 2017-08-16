@@ -27,14 +27,16 @@
 #endif
 
 
+#include <map>
+#include <set>
+#include <string>
 #include <fstream>
+#include <string>
 #include "ilgen/IlBuilder.hpp"
 
 // Maximum length of _definingLine string (including null terminator)
 #define MAX_LINE_NUM_LEN 7
 
-class TR_HashTabInt;
-class TR_HashTabString;
 class TR_BitVector;
 namespace TR { class BytecodeBuilder; }
 namespace TR { class ResolvedMethod; }
@@ -73,10 +75,10 @@ class MethodBuilder : public TR::IlBuilder
 
    TR::TypeDictionary *typeDictionary()                      { return _types; }
 
-   const char *getDefiningFile()                             { return _definingFile; }
+   std::string getDefiningFile()                             { return _definingFile; }
    const char *getDefiningLine()                             { return _definingLine; }
 
-   const char *getMethodName()                               { return _methodName; }
+   std::string getMethodName()                               { return _methodName; }
    void AllLocalsHaveBeenDefined()                           { _newSymbolsAreTemps = true; }
 
    TR::IlType *getReturnType()                               { return _returnType; }
@@ -91,18 +93,18 @@ class MethodBuilder : public TR::IlBuilder
       }
 
    TR::SymbolReference *lookupSymbol(const char *name);
-   void defineSymbol(const char *name, TR::SymbolReference *v);
-   bool symbolDefined(const char *name);
-   bool isSymbolAnArray(const char * name);
+   void defineSymbol(const std::string &name, TR::SymbolReference *v);
+   bool symbolDefined(const std::string &name);
+   bool isSymbolAnArray(const std::string &name);
 
-   TR::ResolvedMethod *lookupFunction(const char *name);
+   TR::ResolvedMethod *lookupFunction(const std::string &name);
 
    TR::BytecodeBuilder *OrphanBytecodeBuilder(int32_t bcIndex=0, char *name=NULL);
 
    void AppendBuilder(TR::BytecodeBuilder *bb);
    void AppendBuilder(TR::IlBuilder *b)    { this->OMR::IlBuilder::AppendBuilder(b); }
 
-   void DefineFile(const char *file)                         { _definingFile = file; }
+   void DefineFile(const std::string &file)                  { _definingFile = file; }
 
    void DefineLine(const char *line)
       {
@@ -113,26 +115,26 @@ class MethodBuilder : public TR::IlBuilder
       snprintf(_definingLine, MAX_LINE_NUM_LEN * sizeof(char), "%d", line);
       }
 
-   void DefineName(const char *name);
-   void DefineParameter(const char *name, TR::IlType *type);
-   void DefineArrayParameter(const char *name, TR::IlType *dt);
+   void DefineName(const std::string &name);
+   void DefineParameter(const std::string &name, TR::IlType *type);
+   void DefineArrayParameter(const std::string &name, TR::IlType *dt);
    void DefineReturnType(TR::IlType *dt);
-   void DefineLocal(const char *name, TR::IlType *dt);
-   void DefineMemory(const char *name, TR::IlType *dt, void *location);
-   void DefineFunction(const char* const name,
-                       const char* const fileName,
-                       const char* const lineNumber,
-                       void           * entryPoint,
-                       TR::IlType     * returnType,
-                       int32_t          numParms,
+   void DefineLocal(const std::string &name, TR::IlType *dt);
+   void DefineMemory(const std::string &name, TR::IlType *dt, void *location);
+   void DefineFunction(const std::string  & name,
+                       const std::string  & fileName,
+                       const char* const    lineNumber,
+                       void               * entryPoint,
+                       TR::IlType         * returnType,
+                       int32_t              numParms,
                        ...);
-   void DefineFunction(const char* const name,
-                       const char* const fileName,
-                       const char* const lineNumber,
-                       void           * entryPoint,
-                       TR::IlType     * returnType,
-                       int32_t          numParms,
-                       TR::IlType     ** parmTypes);
+   void DefineFunction(const std::string  & name,
+                       const std::string  & fileName,
+                       const char* const    lineNumber,
+                       void               * entryPoint,
+                       TR::IlType         * returnType,
+                       int32_t              numParms,
+                       TR::IlType        ** parmTypes);
 
    /**
     * @brief will be called if a Call is issued to a function that has not yet been defined, provides a
@@ -140,7 +142,7 @@ class MethodBuilder : public TR::IlBuilder
     *        front via the constructor.
     * @returns true if the function was found and DefineFunction has been called for it, otherwise false
     */
-   virtual bool RequestFunction(const char *name) { return false; }
+   virtual bool RequestFunction(const std::string &name) { return false; }
 
    /**
     * @brief append the first bytecode builder object to this method
@@ -167,47 +169,49 @@ class MethodBuilder : public TR::IlBuilder
    int32_t GetNextBytecodeFromWorklist();
    
    protected:
-   void initMaps();
    virtual uint32_t countBlocks();
    virtual bool connectTrees();
 
    private:
 
    // These values are typically defined outside of a compilation
-   const char                * _methodName;
-   TR::IlType                * _returnType;
-   int32_t                     _numParameters;
-   TR_HashTabString          * _parameterSlot;
-   TR_HashTabString          * _symbolTypes;
-   TR_HashTabInt             * _symbolNameFromSlot;
-   TR_HashTabString          * _symbolIsArray;
-   TR_HashTabString          * _memoryLocations;
-   TR_HashTabString          * _functions;
+   std::string                                                  _methodName;
+   TR::IlType                                                 * _returnType;
+   int32_t                                                      _numParameters;
 
-   TR::IlType               ** _cachedParameterTypes;
-   char                      * _cachedSignature;
-   const char                * _definingFile;
-   char                        _definingLine[MAX_LINE_NUM_LEN];
-   TR::IlType                * _cachedParameterTypesArray[10];
-   char                        _cachedSignatureArray[100];
+   std::map<const std::string, int32_t>                         _parameterSlot;
+   std::map<const std::string, TR::IlType *>                    _symbolTypes;
+   std::map<int32_t, const std::string>                         _symbolNameFromSlot;
+   std::set<std::string>                                        _symbolIsArray;
+   std::map<const std::string, void *>                          _memoryLocations;
+
+   typedef std::map<const std::string, TR::ResolvedMethod *>    NameToFunctionMap;
+   NameToFunctionMap                                            _functions;
+
+   TR::IlType                                                ** _cachedParameterTypes;
+   char                                                       * _cachedSignature;
+   std::string                                                  _definingFile;
+   char                                                         _definingLine[MAX_LINE_NUM_LEN];
+   TR::IlType                                                 * _cachedParameterTypesArray[10];
+   char                                                         _cachedSignatureArray[100];
 
    // This map should only be accessed inside a compilation via lookupSymbol
-   TR_HashTabString          * _symbols;
-   bool                        _newSymbolsAreTemps;
+   std::map<const std::string, TR::SymbolReference *>           _symbols;
+   bool                                                         _newSymbolsAreTemps;
 
-   int32_t                     _nextValueID;
+   int32_t                                                      _nextValueID;
 
-   bool                        _useBytecodeBuilders;
-   uint32_t                    _numBlocksBeforeWorklist;
-   List<TR::BytecodeBuilder> * _countBlocksWorklist;
-   List<TR::BytecodeBuilder> * _connectTreesWorklist;
-   List<TR::BytecodeBuilder> * _allBytecodeBuilders;
-   OMR::VirtualMachineState  * _vmState;
+   bool                                                         _useBytecodeBuilders;
+   uint32_t                                                     _numBlocksBeforeWorklist;
+   List<TR::BytecodeBuilder>                                  * _countBlocksWorklist;
+   List<TR::BytecodeBuilder>                                  * _connectTreesWorklist;
+   List<TR::BytecodeBuilder>                                  * _allBytecodeBuilders;
+   OMR::VirtualMachineState                                   * _vmState;
 
-   TR_BitVector              * _bytecodeWorklist;
-   TR_BitVector              * _bytecodeHasBeenInWorklist;
+   TR_BitVector                                               * _bytecodeWorklist;
+   TR_BitVector                                               * _bytecodeHasBeenInWorklist;
 
-   std::fstream              * _rpCpp;
+   std::fstream                                               * _rpCpp;
    };
 
 } // namespace OMR

@@ -32,15 +32,17 @@
 #endif
 
 
+#include <map>
+#include <string>
 #include "ilgen/IlBuilder.hpp"
 
-class TR_HashTabString;
-
-namespace TR { typedef TR::SymbolReference IlReference; }
-
-namespace TR { class SegmentProvider; }
-namespace TR { class Region; }
 class TR_Memory;
+
+namespace OMR { class StructType; }
+namespace OMR { class UnionType; }
+namespace TR  { class SegmentProvider; }
+namespace TR  { class Region; }
+namespace TR  { typedef TR::SymbolReference IlReference; }
 
 
 namespace OMR
@@ -51,16 +53,16 @@ class IlType
 public:
    TR_ALLOC(TR_Memory::IlGenerator)
 
-   IlType(const char *name) :
+   IlType(const std::string &name) :
       _name(name)
       { }
    IlType() :
-      _name(0)
+      _name()
       { }
    virtual ~IlType()
       { }
 
-   const char *getName() { return _name; }
+   const char *getName() { return _name.c_str(); }
    virtual char *getSignatureName();
 
    virtual TR::DataType getPrimitiveType() { return TR::NoType; }
@@ -75,7 +77,7 @@ public:
    virtual size_t getSize();
 
 protected:
-   const char *_name;
+   std::string _name;
    };
 
 
@@ -134,8 +136,8 @@ public:
    TypeDictionary();
    ~TypeDictionary() throw();
 
-   TR::IlType * LookupStruct(const char *structName);
-   TR::IlType * LookupUnion(const char *unionName);
+   TR::IlType * LookupStruct(const std::string &structName);
+   TR::IlType * LookupUnion(const std::string &unionName);
 
    /**
     * @brief Begin definition of a new structure type
@@ -146,7 +148,7 @@ public:
     * fields of the type. This method must be invoked once before any
     * calls to `DefineField()` and `CloseStruct()`.
     */
-   TR::IlType * DefineStruct(const char *structName);
+   TR::IlType * DefineStruct(const std::string &structName);
 
    /**
     * @brief Define a member of a new structure type
@@ -165,7 +167,7 @@ public:
     * This method can only be called after a call to `DefineStruct` and
     * before a call to `CloseStruct` with the same `structName`.
     */
-   void DefineField(const char *structName, const char *fieldName, TR::IlType *type, size_t offset);
+   void DefineField(const std::string &structName, const std::string &fieldName, TR::IlType *type, size_t offset);
 
    /**
     * @brief Define a member of a new structure type
@@ -182,7 +184,7 @@ public:
     * This method can only be called after a call to `DefineStruct` and
     * before a call to `CloseStruct` with the same `structName`.
     */
-   void DefineField(const char *structName, const char *fieldName, TR::IlType *type);
+   void DefineField(const std::string &structName, const std::string &fieldName, TR::IlType *type);
 
    /**
     * @brief End definition of a new structure type
@@ -196,7 +198,7 @@ public:
     * done as an initial attempt to help ensure that adequate padding is added to
     * the end of the new struct for use in arrays and nested structs.
     */
-   void CloseStruct(const char *structName, size_t finalSize);
+   void CloseStruct(const std::string &structName, size_t finalSize);
 
    /**
     * @brief End definition of a new structure type
@@ -206,9 +208,9 @@ public:
     * specified, the size of the new struct at the time of call to this method
     * will be the final size of the new struct type.
     */
-   void CloseStruct(const char *structName);
+   void CloseStruct(const std::string &structName);
 
-   TR::IlType * GetFieldType(const char *structName, const char *fieldName);
+   TR::IlType * GetFieldType(const std::string &structName, const std::string &fieldName);
 
    /**
     * @brief Returns the offset of a field in a struct
@@ -216,12 +218,12 @@ public:
     * @param fieldName the name of the field in the struct
     * @return the memory offset of the field in bytes
     */
-   size_t OffsetOf(const char *structName, const char *fieldName);
+   size_t OffsetOf(const std::string &structName, const std::string &fieldName);
 
-   TR::IlType * DefineUnion(const char *unionName);
-   void UnionField(const char *unionName, const char *fieldName, TR::IlType *type);
-   void CloseUnion(const char *unionName);
-   TR::IlType * UnionFieldType(const char *unionName, const char *fieldName);
+   TR::IlType * DefineUnion(const std::string &unionName);
+   void UnionField(const std::string &unionName, const std::string &fieldName, TR::IlType *type);
+   void CloseUnion(const std::string &unionName);
+   TR::IlType * UnionFieldType(const std::string &unionName, const std::string &fieldName);
 
    TR::IlType *PrimitiveType(TR::DataType primitiveType)
       {
@@ -231,10 +233,10 @@ public:
    //TR::IlType *ArrayOf(TR::IlType *baseType);
 
    TR::IlType *PointerTo(TR::IlType *baseType);
-   TR::IlType *PointerTo(const char *structName);
+   TR::IlType *PointerTo(const std::string &structName);
    TR::IlType *PointerTo(TR::DataType baseType)  { return PointerTo(_primitiveType[baseType]); }
 
-   TR::IlReference *FieldReference(const char *typeName, const char *fieldName);
+   TR::IlReference *FieldReference(const std::string &typeName, const std::string &fieldName);
    TR_Memory *trMemory() { return _trMemory; }
 
    //TR::IlReference *ArrayReference(TR::IlType *arrayType);
@@ -415,46 +417,53 @@ public:
    void NotifyCompilationDone();
 
 protected:
-   TR::SegmentProvider *_segmentProvider;
-   TR::Region *_memoryRegion;
-   TR_Memory *_trMemory;
-   TR_HashTabString * _structsByName;
-   TR_HashTabString * _unionsByName;
+   TR::SegmentProvider                                    * _segmentProvider;
+   TR::Region                                             * _memoryRegion;
+   TR_Memory                                              * _trMemory;
+
+   std::map<const std::string, OMR::StructType *>           _structsByName;
+   typedef std::map<const std::string, OMR::StructType *>::iterator StructIterator;
+
+   std::map<const std::string, OMR::UnionType *>            _unionsByName;
+   typedef std::map<const std::string, OMR::UnionType *>::iterator  UnionIterator;
 
    // convenience for primitive types
-   TR::IlType       * _primitiveType[TR::NumOMRTypes];
-   TR::IlType       * NoType;
-   TR::IlType       * Int8;
-   TR::IlType       * Int16;
-   TR::IlType       * Int32;
-   TR::IlType       * Int64;
-   TR::IlType       * Word;
-   TR::IlType       * Float;
-   TR::IlType       * Double;
-   TR::IlType       * Address;
-   TR::IlType       * VectorInt8;
-   TR::IlType       * VectorInt16;
-   TR::IlType       * VectorInt32;
-   TR::IlType       * VectorInt64;
-   TR::IlType       * VectorFloat;
-   TR::IlType       * VectorDouble;
+   TR::IlType                                             * _primitiveType[TR::NumOMRTypes];
+   TR::IlType                                             * NoType;
+   TR::IlType                                             * Int8;
+   TR::IlType                                             * Int16;
+   TR::IlType                                             * Int32;
+   TR::IlType                                             * Int64;
+   TR::IlType                                             * Word;
+   TR::IlType                                             * Float;
+   TR::IlType                                             * Double;
+   TR::IlType                                             * Address;
+   TR::IlType                                             * VectorInt8;
+   TR::IlType                                             * VectorInt16;
+   TR::IlType                                             * VectorInt32;
+   TR::IlType                                             * VectorInt64;
+   TR::IlType                                             * VectorFloat;
+   TR::IlType                                             * VectorDouble;
 
-   TR::IlType       * _pointerToPrimitiveType[TR::NumOMRTypes];
-   TR::IlType       * pNoType;
-   TR::IlType       * pInt8;
-   TR::IlType       * pInt16;
-   TR::IlType       * pInt32;
-   TR::IlType       * pInt64;
-   TR::IlType       * pWord;
-   TR::IlType       * pFloat;
-   TR::IlType       * pDouble;
-   TR::IlType       * pAddress;
-   TR::IlType       * pVectorInt8;
-   TR::IlType       * pVectorInt16;
-   TR::IlType       * pVectorInt32;
-   TR::IlType       * pVectorInt64;
-   TR::IlType       * pVectorFloat;
-   TR::IlType       * pVectorDouble;
+   TR::IlType                                             * _pointerToPrimitiveType[TR::NumOMRTypes];
+   TR::IlType                                             * pNoType;
+   TR::IlType                                             * pInt8;
+   TR::IlType                                             * pInt16;
+   TR::IlType                                             * pInt32;
+   TR::IlType                                             * pInt64;
+   TR::IlType                                             * pWord;
+   TR::IlType                                             * pFloat;
+   TR::IlType                                             * pDouble;
+   TR::IlType                                             * pAddress;
+   TR::IlType                                             * pVectorInt8;
+   TR::IlType                                             * pVectorInt16;
+   TR::IlType                                             * pVectorInt32;
+   TR::IlType                                             * pVectorInt64;
+   TR::IlType                                             * pVectorFloat;
+   TR::IlType                                             * pVectorDouble;
+
+   OMR::StructType * getStruct(const std::string &structName);
+   OMR::UnionType  * getUnion(const std::string &unionName);
    };
 
 } // namespace OMR
@@ -466,7 +475,7 @@ namespace TR
 class IlType : public OMR::IlType
    {
    public:
-      IlType(const char *name)
+      IlType(const std::string &name)
          : OMR::IlType(name)
          { }
       IlType()

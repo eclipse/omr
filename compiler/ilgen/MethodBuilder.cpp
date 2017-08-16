@@ -32,6 +32,7 @@
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Recompilation.hpp"
+#include "infra/Assert.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/HashTab.hpp"
 #include "infra/List.hpp"
@@ -86,7 +87,6 @@ MethodBuilder::MethodBuilder(TR::TypeDictionary *types, OMR::VirtualMachineState
    _cachedParameterTypes(0),
    _cachedSignature(0),
    _definingFile(""),
-   _symbols(0),
    _newSymbolsAreTemps(false),
    _nextValueID(0),
    _useBytecodeBuilders(false),
@@ -95,7 +95,14 @@ MethodBuilder::MethodBuilder(TR::TypeDictionary *types, OMR::VirtualMachineState
    _allBytecodeBuilders(0),
    _vmState(vmState),
    _bytecodeWorklist(NULL),
-   _bytecodeHasBeenInWorklist(NULL)
+   _bytecodeHasBeenInWorklist(NULL),
+   _parameterSlot(),
+   _symbolTypes(),
+   _symbolNameFromSlot(),
+   _symbolIsArray(),
+   _memoryLocations(),
+   _functions(),
+   _symbols()
    {
 
    _definingLine[0] = '\0';
@@ -125,26 +132,12 @@ MethodBuilder::MethodBuilder(TR::TypeDictionary *types, OMR::VirtualMachineState
       strcpy(_replayName, "this");
       _haveReplayName = true;
    })
-
-   initMaps();
    }
 
 TR::MethodBuilder *
 MethodBuilder::asMethodBuilder()
    {
    return static_cast<TR::MethodBuilder *>(this);
-   }
-
-void
-MethodBuilder::initMaps()
-   {
-   _parameterSlot = new (PERSISTENT_NEW) TR_HashTabString(typeDictionary()->trMemory());
-   _symbolTypes = new (PERSISTENT_NEW) TR_HashTabString(typeDictionary()->trMemory());
-   _symbolNameFromSlot = new (PERSISTENT_NEW) TR_HashTabInt(typeDictionary()->trMemory());
-   _symbolIsArray = new (PERSISTENT_NEW) TR_HashTabString(typeDictionary()->trMemory());
-   _memoryLocations = new (PERSISTENT_NEW) TR_HashTabString(typeDictionary()->trMemory());
-   _functions = new (PERSISTENT_NEW) TR_HashTabString(typeDictionary()->trMemory());
-   _symbols = new (PERSISTENT_NEW) TR_HashTabString(typeDictionary()->trMemory());
    }
 
 void
@@ -319,26 +312,28 @@ MethodBuilder::connectTrees()
    }
 
 bool
-MethodBuilder::symbolDefined(const char *name)
+MethodBuilder::symbolDefined(const std::string &name)
    {
-   TR_HashId id=0, typeID=0;
    // _symbols not good enough because symbol can be defined even if it has
    // never been stored to, but _symbolTypes will contain all symbols, even
    // if they have never been used. See ::DefineLocal, for example, which can
    // be called in a MethodBuilder contructor. In contrast, ::DefineSymbol
    // which inserts into _symbols, can only be called from within a MethodBuilder's
    // ::buildIL() method ).
-   return (_symbolTypes->locate(name, typeID));
+   return _symbolTypes.find(name) != _symbolTypes.end();
    }
 
 void
-MethodBuilder::defineSymbol(const char *name, TR::SymbolReference *symRef)
+MethodBuilder::defineSymbol(const std::string &name, TR::SymbolReference *symRef)
    {
-   TR_HashId id1=0, id2=0, id3;
+   TR_ASSERT_FATAL(_symbols.find(name) == _symbols.end(), "Symbol '%s' already defined", name.c_str());
 
-   _symbols->add(name, id1, (void *)symRef);
-   _symbolNameFromSlot->add(symRef->getCPIndex(), id2, (void *)name);
-   _symbolTypes->add(name, id3, (void *)(uintptr_t) symRef->getSymbol()->getDataType());
+   _symbols.insert(std::make_pair(name, symRef));
+   _symbolNameFromSlot.insert(std::make_pair(symRef->getCPIndex(), name));
+   
+   TR::IlType *type = typeDictionary()->PrimitiveType(symRef->getSymbol()->getDataType());
+   _symbolTypes.insert(std::make_pair(name, type));
+
    if (!_newSymbolsAreTemps)
       _methodSymbol->setFirstJitTempIndex(_methodSymbol->getTempIndex());
    }
@@ -346,22 +341,24 @@ MethodBuilder::defineSymbol(const char *name, TR::SymbolReference *symRef)
 TR::SymbolReference *
 MethodBuilder::lookupSymbol(const char *name)
    {
-   TR_HashId symbolsID=0;
-   bool present = _symbols->locate(name, symbolsID);
-   if (present)
-      return (TR::SymbolReference *)_symbols->getData(symbolsID);
+   const std::string stdName(name);
+
+   std::map<const std::string, TR::SymbolReference *>::iterator symbolsIterator = _symbols.find(stdName);
+   if (symbolsIterator != _symbols.end())  // Found
+      return symbolsIterator->second;
 
    TR::SymbolReference *symRef;
-   TR_HashId typesID;
-   _symbolTypes->locate(name, typesID);
+   std::map<const std::string, TR::IlType *>::iterator symTypesIterator =  _symbolTypes.find(stdName);
 
-   TR::DataType type = ((TR::IlType *)(_symbolTypes->getData(typesID)))->getPrimitiveType();
+   TR_ASSERT_FATAL(symTypesIterator != _symbolTypes.end(), "Symbol '%s' doesn't exist", name);
 
-   TR_HashId slotID;
-   if (_parameterSlot->locate(name, slotID))
+   TR::DataType type = symTypesIterator->second->getPrimitiveType();
+
+   std::map<const std::string, int32_t>::iterator paramSlotsIterator = _parameterSlot.find(stdName);
+   if (paramSlotsIterator != _parameterSlot.end())
       {
       symRef = symRefTab()->findOrCreateAutoSymbol(_methodSymbol,
-                                                   (int32_t)(uintptr_t)_parameterSlot->getData(slotID),
+                                                   paramSlotsIterator->second,
                                                    type,
                                                    true, false, true);
       }
@@ -369,36 +366,34 @@ MethodBuilder::lookupSymbol(const char *name)
       {
       symRef = symRefTab()->createTemporary(_methodSymbol, type);
       symRef->getSymbol()->getAutoSymbol()->setName(name);
-      TR_HashId nameFromSlotID;
-      _symbolNameFromSlot->add(symRef->getCPIndex(), nameFromSlotID, (void *)name);
+      _symbolNameFromSlot.insert(std::make_pair(symRef->getCPIndex(), stdName));
       }
    symRef->getSymbol()->setNotCollected();
 
-   _symbols->add(name, symbolsID, (void *)symRef);
+   _symbols.insert(std::make_pair(stdName, symRef));
 
    return symRef;
    }
 
 TR::ResolvedMethod *
-MethodBuilder::lookupFunction(const char *name)
+MethodBuilder::lookupFunction(const std::string &name)
    {
-   TR_HashId functionsID;
-   if (! _functions->locate(name, functionsID))
+   NameToFunctionMap::iterator it = _functions.find(name);
+
+   if (it == _functions.end())  // Not found
       {
-      size_t len = strlen(name);
-      if (len == strlen(_methodName) && strncmp(_methodName, name, len) == 0)
+      if (name == _methodName)
          return static_cast<TR::ResolvedMethod *>(_methodSymbol->getResolvedMethod());
       return NULL;
       }
 
-   return (TR::ResolvedMethod *)(_functions->getData(functionsID));
+   return it->second;
    }
 
 bool
-MethodBuilder::isSymbolAnArray(const char *name)
+MethodBuilder::isSymbolAnArray(const std::string &name)
    {
-   TR_HashId isArrayID;
-   return _symbolIsArray->locate(name, isArrayID);
+   return _symbolIsArray.find(name) != _symbolIsArray.end();
    }
 
 TR::BytecodeBuilder *
@@ -422,56 +417,53 @@ MethodBuilder::AppendBuilder(TR::BytecodeBuilder *bb)
    }
 
 void
-MethodBuilder::DefineName(const char *name)
+MethodBuilder::DefineName(const std::string &name)
    {
-   MB_REPLAY("DefineName(\"%s\");", name);
+   MB_REPLAY("DefineName(\"%s\");", name.c_str());
    _methodName = name;
    }
 
 void
-MethodBuilder::DefineLocal(const char *name, TR::IlType *dt)
+MethodBuilder::DefineLocal(const std::string &name, TR::IlType *dt)
    {
-   MB_REPLAY("DefineLocal(\"%s\", %s);", name, REPLAY_TYPE(dt));
-   TR_HashId typesID;
-   _symbolTypes->add(name, typesID, (void *)dt);
+   MB_REPLAY("DefineLocal(\"%s\", %s);", name.c_str(), REPLAY_TYPE(dt));
+
+   TR_ASSERT_FATAL(_symbolTypes.find(name) == _symbolTypes.end(), "Symbol '%s' already defined", name.c_str());
+   _symbolTypes.insert(std::make_pair(name, dt));
    }
 
 void
-MethodBuilder::DefineMemory(const char *name, TR::IlType *dt, void *location)
+MethodBuilder::DefineMemory(const std::string &name, TR::IlType *dt, void *location)
    {
-   MB_REPLAY("DefineMemory(\"%s\", %s, " REPLAY_POINTER_FMT ");", name, REPLAY_TYPE(dt), REPLAY_POINTER(location, name));
-   TR_HashId typesID;
-   _symbolTypes->add(name, typesID, (void *) dt);
+   MB_REPLAY("DefineMemory(\"%s\", %s, " REPLAY_POINTER_FMT ");", name.c_str(), REPLAY_TYPE(dt), REPLAY_POINTER(location, name.c_str()));
 
-   TR_HashId locationsID;
-   _memoryLocations->add(name, locationsID, location);
+   TR_ASSERT_FATAL(_memoryLocations.find(name) == _memoryLocations.end(), "Memory '%s' already defined", name.c_str());
+
+   _symbolTypes.insert(std::make_pair(name, dt));
+   _memoryLocations.insert(std::make_pair(name, location));
    }
 
 void
-MethodBuilder::DefineParameter(const char *name, TR::IlType *dt)
+MethodBuilder::DefineParameter(const std::string &name, TR::IlType *dt)
    {
-   MB_REPLAY("DefineParameter(\"%s\", %s);", name, REPLAY_TYPE(dt));
-   TR_HashId slotID;
-   _parameterSlot->add(name, slotID, (void *)(uintptr_t) _numParameters);
+   MB_REPLAY("DefineParameter(\"%s\", %s);", name.c_str(), REPLAY_TYPE(dt));
 
-   TR_HashId nameFromSlotID;
-   _symbolNameFromSlot->add(_numParameters, nameFromSlotID, (void *) name);
+   TR_ASSERT_FATAL(_parameterSlot.find(name) == _parameterSlot.end(), "Parameter '%s' already defined", name.c_str());
 
-   TR_HashId typesID;
-   _symbolTypes->add(name, typesID, (void *) dt);
+   _parameterSlot.insert(std::make_pair(name, _numParameters));
+   _symbolNameFromSlot.insert(std::make_pair(_numParameters, name));
+   _symbolTypes.insert(std::make_pair(name, dt));
 
    _numParameters++;
    }
 
 void
-MethodBuilder::DefineArrayParameter(const char *name, TR::IlType *elementType)
+MethodBuilder::DefineArrayParameter(const std::string &name, TR::IlType *elementType)
    {
-   MB_REPLAY("DefineArrayParameter(\"%s\", %s);", name, REPLAY_TYPE(elementType));
+   MB_REPLAY("DefineArrayParameter(\"%s\", %s);", name.c_str(), REPLAY_TYPE(elementType));
    DefineParameter(name, elementType);
 
-   TR_HashId isArrayID;
-   // doesn't actually matter what we put there; its presence says isArray
-   _symbolIsArray->add(name, isArrayID, (void *)(uintptr_t) 1);
+   _symbolIsArray.insert(name);
    }
 
 void
@@ -482,12 +474,12 @@ MethodBuilder::DefineReturnType(TR::IlType *dt)
    }
 
 void
-MethodBuilder::DefineFunction(const char* const name,
-                              const char* const fileName,
-                              const char* const lineNumber,
-                              void           * entryPoint,
-                              TR::IlType     * returnType,
-                              int32_t          numParms,
+MethodBuilder::DefineFunction(const std::string  & name,
+                              const std::string  & fileName,
+                              const char* const    lineNumber,
+                              void               * entryPoint,
+                              TR::IlType         * returnType,
+                              int32_t              numParms,
                               ...)
    {
    TR::IlType **parmTypes = (TR::IlType **) malloc(numParms * sizeof(TR::IlType *));
@@ -503,20 +495,22 @@ MethodBuilder::DefineFunction(const char* const name,
    }
 
 void
-MethodBuilder::DefineFunction(const char* const name,
-                              const char* const fileName,
-                              const char* const lineNumber,
-                              void           * entryPoint,
-                              TR::IlType     * returnType,
-                              int32_t          numParms,
-                              TR::IlType     ** parmTypes)
+MethodBuilder::DefineFunction(const std::string  & name,
+                              const std::string  & fileName,
+                              const char* const    lineNumber,
+                              void               * entryPoint,
+                              TR::IlType         * returnType,
+                              int32_t              numParms,
+                              TR::IlType        ** parmTypes)
    {   
-   MB_REPLAY("DefineFunction((const char* const)\"%s\",", name);
-   MB_REPLAY("               (const char* const)\"%s\",", fileName);
+   MB_REPLAY("DefineFunction((const std::string &)\"%s\",", name.c_str());
+   MB_REPLAY("               (const std::string &)\"%s\",", fileName.c_str());
    MB_REPLAY("               (const char* const)\"%s\",", lineNumber);
-   MB_REPLAY("               " REPLAY_POINTER_FMT ",", REPLAY_POINTER(entryPoint, name));
+   MB_REPLAY("               " REPLAY_POINTER_FMT ",", REPLAY_POINTER(entryPoint, name.c_str()));
    MB_REPLAY("               %s,", REPLAY_TYPE(returnType));
    MB_REPLAY_NONL("               %d", numParms);
+
+   TR_ASSERT_FATAL(_functions.find(name) == _functions.end(), "Function '%s' already defined", name.c_str());
 
    for (int32_t p=0;p < numParms;p++)
       {   
@@ -524,26 +518,25 @@ MethodBuilder::DefineFunction(const char* const name,
       }   
    MB_REPLAY(");");
 
-   TR::ResolvedMethod *method = new (PERSISTENT_NEW) TR::ResolvedMethod((char*)fileName,
+   TR::ResolvedMethod *method = new (PERSISTENT_NEW) TR::ResolvedMethod(fileName,
                                                                         (char*)lineNumber,
-                                                                        (char*)name,
+                                                                        name,
                                                                         numParms,
                                                                         parmTypes,
                                                                         returnType,
                                                                         entryPoint,
                                                                         0);
 
-   TR_HashId functionsID;
-   _functions->add(name, functionsID, (void *)method);
+   _functions.insert(std::make_pair(name, method));
    }
 
 const char *
 MethodBuilder::getSymbolName(int32_t slot)
    {
-   TR_HashId nameFromSlotID;
-   if (_symbolNameFromSlot->locate(slot, nameFromSlotID))
-      return (const char *)_symbolNameFromSlot->getData(nameFromSlotID);
-   return NULL;
+   std::map<int32_t, const std::string>::iterator it = _symbolNameFromSlot.find(slot);
+   TR_ASSERT_FATAL(it != _symbolNameFromSlot.end(), "No symbol found in slot %d", slot);
+
+   return it->second.c_str();
    }
 
 TR::IlType **
@@ -556,13 +549,13 @@ MethodBuilder::getParameterTypes()
    TR::IlType **paramTypesArray = _cachedParameterTypesArray;
    for (int32_t p=0;p < _numParameters;p++)
       {
-      TR_HashId nameFromSlotID;
-      _symbolNameFromSlot->locate(p, nameFromSlotID);
-      const char *name = (const char *) _symbolNameFromSlot->getData(nameFromSlotID);
+      std::map<int32_t, const std::string>::iterator symNamesIterator = _symbolNameFromSlot.find(p);
+      TR_ASSERT_FATAL(symNamesIterator != _symbolNameFromSlot.end(), "No symbol found in slot %d");
+      const std::string name = symNamesIterator->second;
 
-      TR_HashId typesID;
-      _symbolTypes->locate(name, typesID);
-      paramTypesArray[p] = (TR::IlType *) _symbolTypes->getData(typesID);
+      std::map<const std::string, TR::IlType *>::iterator symTypesIterator = _symbolTypes.find(name);
+      TR_ASSERT_FATAL(symTypesIterator != _symbolTypes.end(), "No matching symbol type for parameter '%s'", name.c_str());
+      paramTypesArray[p] = symTypesIterator->second;
       }
 
    _cachedParameterTypes = paramTypesArray;

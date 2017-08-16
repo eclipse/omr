@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sstream>
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
@@ -54,7 +55,7 @@
 #define ILB_REPLAY(...)	     { REPLAY({sprintf(_rpLine, ##__VA_ARGS__); (*_rpILCpp) << "\t" << _rpLine << std::endl;}) }
 #define REPLAY_VALUE(v)      ((v)->getSymbol()->getAutoSymbol()->getName())
 #define REPLAY_TYPE(t)       ((t)->getName())
-#define REPLAY_BUILDER(b)    ((b)->getName())
+#define REPLAY_BUILDER(b)    ((b)->getName().c_str())
 #define REPLAY_BOOL(b)       ( b? "true" : "false")
 
 
@@ -162,12 +163,14 @@ IlBuilder::setupForBuildIL()
    }
 
 
-char *
+std::string
 IlBuilder::getName()
    {
    if (!_haveReplayName)
       {
-      sprintf(_replayName, "B_%p", this);
+      std::stringstream stream;
+      stream << "B_" << static_cast<const void *>(this);
+      _replayName = stream.str();
       _haveReplayName = true;
       }
    return _replayName;
@@ -227,21 +230,21 @@ IlBuilder::printBlock(TR::Block *block)
    }
 
 TR::SymbolReference *
-IlBuilder::lookupSymbol(const char *name)
+IlBuilder::lookupSymbol(const std::string &name)
    {
    TR_ASSERT(_methodBuilder, "cannot look up symbols in an IlBuilder that has no MethodBuilder");
-   return _methodBuilder->lookupSymbol(name);
+   return _methodBuilder->lookupSymbol(name.c_str());
    }
 
 void
-IlBuilder::defineSymbol(const char *name, TR::SymbolReference *symRef)
+IlBuilder::defineSymbol(const std::string &name, TR::SymbolReference *symRef)
    {
    TR_ASSERT(_methodBuilder, "cannot define symbols in an IlBuilder that has no MethodBuilder");
    _methodBuilder->defineSymbol(name, symRef);
    }
 
 void
-IlBuilder::defineValue(const char *name, TR::IlType *type)
+IlBuilder::defineValue(const std::string &name, TR::IlType *type)
    {
    TR::DataType dt = type->getPrimitiveType();
    TR::SymbolReference *newSymRef = symRefTab()->createTemporary(methodSymbol(), dt);
@@ -626,15 +629,15 @@ IlBuilder::indirectLoadNode(TR::IlType *dt, TR::Node *addr, bool isVectorLoad)
  * @param value IlValue that should be written to the local variable, which should be the same data type
  */
 void
-IlBuilder::Store(const char *varName, TR::IlValue *value)
+IlBuilder::Store(const std::string &varName, TR::IlValue *value)
    {
-   ILB_REPLAY("%s->Store(\"%s\", %s);", REPLAY_BUILDER(this), varName, REPLAY_VALUE(value));
+   ILB_REPLAY("%s->Store(\"%s\", %s);", REPLAY_BUILDER(this), varName.c_str(), REPLAY_VALUE(value));
 
    if (!_methodBuilder->symbolDefined(varName))
       _methodBuilder->defineValue(varName, _types->PrimitiveType(value->getDataType()));
    TR::SymbolReference *symRef = lookupSymbol(varName);
 
-   TraceIL("IlBuilder[ %p ]::Store %s %d gets %d\n", this, varName, symRef->getCPIndex(), value->getID());
+   TraceIL("IlBuilder[ %p ]::Store %s %d gets %d\n", this, varName.c_str(), symRef->getCPIndex(), value->getID());
    storeNode(symRef, loadValue(value));
    }
 
@@ -658,9 +661,9 @@ IlBuilder::StoreOver(TR::IlValue *dest, TR::IlValue *value)
  * @param value IlValue with the vector data that should be written to the local variable, and should have the same data type
  */
 void
-IlBuilder::VectorStore(const char *varName, TR::IlValue *value)
+IlBuilder::VectorStore(const std::string &varName, TR::IlValue *value)
    {
-   ILB_REPLAY("%s->VectorStore(\"%s\", %s);", REPLAY_BUILDER(this), varName, REPLAY_VALUE(value));
+   ILB_REPLAY("%s->VectorStore(\"%s\", %s);", REPLAY_BUILDER(this), varName.c_str(), REPLAY_VALUE(value));
 
    TR::Node *valueNode = loadValue(value);
    TR::DataType dt = valueNode->getDataType();
@@ -674,7 +677,7 @@ IlBuilder::VectorStore(const char *varName, TR::IlValue *value)
       _methodBuilder->defineValue(varName, _types->PrimitiveType(dt));
    TR::SymbolReference *symRef = lookupSymbol(varName);
 
-   TraceIL("IlBuilder[ %p ]::VectorStore %s %d gets %d\n", this, varName, symRef->getCPIndex(), value->getID());
+   TraceIL("IlBuilder[ %p ]::VectorStore %s %d gets %d\n", this, varName.c_str(), symRef->getCPIndex(), value->getID());
    storeNode(symRef, loadValue(value));
    }
 
@@ -756,19 +759,19 @@ IlBuilder::CreateLocalStruct(TR::IlType *structType)
    }
 
 void
-IlBuilder::StoreIndirect(const char *type, const char *field, TR::IlValue *object, TR::IlValue *value)
+IlBuilder::StoreIndirect(const std::string &type, const std::string &field, TR::IlValue *object, TR::IlValue *value)
   {
-  ILB_REPLAY("%s->StoreIndirect(\"%s\", \"%s\", %s, %s);", REPLAY_BUILDER(this), type, field, REPLAY_VALUE(object), REPLAY_VALUE(value));
+  ILB_REPLAY("%s->StoreIndirect(\"%s\", \"%s\", %s, %s);", REPLAY_BUILDER(this), type.c_str(), field.c_str(), REPLAY_VALUE(object), REPLAY_VALUE(value));
 
   TR::SymbolReference *symRef = (TR::SymbolReference*)_types->FieldReference(type, field);
   TR::DataType fieldType = symRef->getSymbol()->getDataType();
-  TraceIL("IlBuilder[ %p ]::StoreIndirect %s.%s (%d) into (%d)\n", this, type, field, value->getID(), object->getID());
+  TraceIL("IlBuilder[ %p ]::StoreIndirect %s.%s (%d) into (%d)\n", this, type.c_str(), field.c_str(), value->getID(), object->getID());
   TR::ILOpCodes storeOp = comp()->il.opCodeForIndirectStore(fieldType);
   genTreeTop(TR::Node::createWithSymRef(storeOp, 2, loadValue(object), loadValue(value), 0, symRef));
   }
 
 TR::IlValue *
-IlBuilder::Load(const char *name)
+IlBuilder::Load(const std::string &name)
    {
    TR::SymbolReference *symRef = lookupSymbol(name);
    TR::Node *valueNode = TR::Node::createLoad(symRef);
@@ -777,7 +780,7 @@ IlBuilder::Load(const char *name)
    }
 
 TR::IlValue *
-IlBuilder::VectorLoad(const char *name)
+IlBuilder::VectorLoad(const std::string &name)
    {
    TR::SymbolReference *nameSymRef = lookupSymbol(name);
    TR::DataType returnType = nameSymRef->getSymbol()->getDataType();
@@ -785,20 +788,20 @@ IlBuilder::VectorLoad(const char *name)
 
    TR::Node *loadNode = TR::Node::createWithSymRef(0, TR::comp()->il.opCodeForDirectLoad(returnType), 0, nameSymRef);
    TR::IlValue *returnValue = newValue(returnType, loadNode);
-   TraceIL("IlBuilder[ %p ]::%d is VectorLoad %s (%d)\n", this, returnValue->getID(), name, nameSymRef->getCPIndex());
+   TraceIL("IlBuilder[ %p ]::%d is VectorLoad %s (%d)\n", this, returnValue->getID(), name.c_str(), nameSymRef->getCPIndex());
 
-   ILB_REPLAY("%s = %s->Load(\"%s\");", REPLAY_VALUE(returnValue), REPLAY_BUILDER(this), name)
+   ILB_REPLAY("%s = %s->Load(\"%s\");", REPLAY_VALUE(returnValue), REPLAY_BUILDER(this), name.c_str());
    return returnValue;
    }
 
 TR::IlValue *
-IlBuilder::LoadIndirect(const char *type, const char *field, TR::IlValue *object)
+IlBuilder::LoadIndirect(const std::string &type, const std::string &field, TR::IlValue *object)
    {
    TR::SymbolReference *symRef = (TR::SymbolReference *)_types->FieldReference(type, field);
    TR::DataType fieldType = symRef->getSymbol()->getDataType();
    TR::IlValue *returnValue = newValue(fieldType, TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(fieldType), 1, loadValue(object), 0, symRef));
-   TraceIL("IlBuilder[ %p ]::%d is LoadIndirect %s.%s from (%d)\n", this, returnValue->getID(), type, field, object->getID());
-   ILB_REPLAY("%s = %s->LoadIndirect(%s, %s, %s);", REPLAY_VALUE(returnValue), REPLAY_BUILDER(this), type, field, REPLAY_VALUE(object));
+   TraceIL("IlBuilder[ %p ]::%d is LoadIndirect %s.%s from (%d)\n", this, returnValue->getID(), type.c_str(), field.c_str(), object->getID());
+   ILB_REPLAY("%s = %s->LoadIndirect(%s, %s, %s);", REPLAY_VALUE(returnValue), REPLAY_BUILDER(this), type.c_str(), field.c_str(), REPLAY_VALUE(object));
    return returnValue;
    }
 
@@ -877,7 +880,7 @@ IlBuilder::IndexAt(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index)
  * a pointer to the type of the field.
  */
 TR::IlValue *
-IlBuilder::StructFieldInstanceAddress(const char* structName, const char* fieldName, TR::IlValue* obj) {
+IlBuilder::StructFieldInstanceAddress(const std::string &structName, const std::string &fieldName, TR::IlValue* obj) {
    auto offset = typeDictionary()->OffsetOf(structName, fieldName);
    auto ptype = typeDictionary()->PointerTo(typeDictionary()->GetFieldType(structName, fieldName));
    TR::IlValue* offsetValue = NULL;
@@ -900,7 +903,7 @@ IlBuilder::StructFieldInstanceAddress(const char* structName, const char* fieldN
  * offset of all union fields is zero.
  */
 TR::IlValue *
-IlBuilder::UnionFieldInstanceAddress(const char* unionName, const char* fieldName, TR::IlValue* obj) {
+IlBuilder::UnionFieldInstanceAddress(const std::string &unionName, const std::string &fieldName, TR::IlValue* obj) {
    auto ptype = typeDictionary()->PointerTo(typeDictionary()->UnionFieldType(unionName, fieldName));
    return ConvertTo(ptype, obj);
 }
@@ -1739,10 +1742,10 @@ IlBuilder::processCallArgs(TR::Compilation *comp, int numArgs, va_list args)
  *    The list is a computed address followed by the actual arguments
  */
 TR::IlValue *
-IlBuilder::ComputedCall(const char *functionName, int32_t numArgs, ...)
+IlBuilder::ComputedCall(const std::string &functionName, int32_t numArgs, ...)
    {
    // TODO: figure out Call REPLAY
-   TraceIL("IlBuilder[ %p ]::ComputedCall %s\n", this, functionName);
+   TraceIL("IlBuilder[ %p ]::ComputedCall %s\n", this, functionName.c_str());
    va_list args;
    va_start(args, numArgs);
    TR::IlValue **argValues = processCallArgs(_comp, numArgs, args);
@@ -1750,7 +1753,7 @@ IlBuilder::ComputedCall(const char *functionName, int32_t numArgs, ...)
    TR::ResolvedMethod *resolvedMethod = _methodBuilder->lookupFunction(functionName);
    if (resolvedMethod == NULL && _methodBuilder->RequestFunction(functionName))
       resolvedMethod = _methodBuilder->lookupFunction(functionName);
-   TR_ASSERT(resolvedMethod, "Could not identify function %s\n", functionName);
+   TR_ASSERT(resolvedMethod, "Could not identify function %s\n", functionName.c_str());
 
    TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateComputedStaticMethodSymbol(JITTED_METHOD_INDEX, -1, resolvedMethod);
    return genCall(methodSymRef, numArgs, argValues, false /*isDirectCall*/);
@@ -1763,24 +1766,24 @@ IlBuilder::ComputedCall(const char *functionName, int32_t numArgs, ...)
  *    the computed address followed by the actual arguments
  */
 TR::IlValue *
-IlBuilder::ComputedCall(const char *functionName, int32_t numArgs, TR::IlValue **argValues)
+IlBuilder::ComputedCall(const std::string &functionName, int32_t numArgs, TR::IlValue **argValues)
    {
    // TODO: figure out Call REPLAY
-   TraceIL("IlBuilder[ %p ]::ComputedCall %s\n", this, functionName);
+   TraceIL("IlBuilder[ %p ]::ComputedCall %s\n", this, functionName.c_str());
    TR::ResolvedMethod *resolvedMethod = _methodBuilder->lookupFunction(functionName);
    if (resolvedMethod == NULL && _methodBuilder->RequestFunction(functionName))
       resolvedMethod = _methodBuilder->lookupFunction(functionName);
-   TR_ASSERT(resolvedMethod, "Could not identify function %s\n", functionName);
+   TR_ASSERT(resolvedMethod, "Could not identify function %s\n", functionName.c_str());
 
    TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateComputedStaticMethodSymbol(JITTED_METHOD_INDEX, -1, resolvedMethod);
    return genCall(methodSymRef, numArgs, argValues, false /*isDirectCall*/);
    }
 
 TR::IlValue *
-IlBuilder::Call(const char *functionName, int32_t numArgs, ...)
+IlBuilder::Call(const std::string &functionName, int32_t numArgs, ...)
    {
    // TODO: figure out Call REPLAY
-   TraceIL("IlBuilder[ %p ]::Call %s\n", this, functionName);
+   TraceIL("IlBuilder[ %p ]::Call %s\n", this, functionName.c_str());
    va_list args;
    va_start(args, numArgs);
    TR::IlValue **argValues = processCallArgs(_comp, numArgs, args);
@@ -1788,21 +1791,21 @@ IlBuilder::Call(const char *functionName, int32_t numArgs, ...)
    TR::ResolvedMethod *resolvedMethod = _methodBuilder->lookupFunction(functionName);
    if (resolvedMethod == NULL && _methodBuilder->RequestFunction(functionName))
       resolvedMethod = _methodBuilder->lookupFunction(functionName);
-   TR_ASSERT(resolvedMethod, "Could not identify function %s\n", functionName);
+   TR_ASSERT(resolvedMethod, "Could not identify function %s\n", functionName.c_str());
 
    TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateStaticMethodSymbol(JITTED_METHOD_INDEX, -1, resolvedMethod);
    return genCall(methodSymRef, numArgs, argValues);
    }
 
 TR::IlValue *
-IlBuilder::Call(const char *functionName, int32_t numArgs, TR::IlValue ** argValues)
+IlBuilder::Call(const std::string &functionName, int32_t numArgs, TR::IlValue ** argValues)
    {
    // TODO: figure out Call REPLAY
-   TraceIL("IlBuilder[ %p ]::Call %s\n", this, functionName);
+   TraceIL("IlBuilder[ %p ]::Call %s\n", this, functionName.c_str());
    TR::ResolvedMethod *resolvedMethod = _methodBuilder->lookupFunction(functionName);
    if (resolvedMethod == NULL && _methodBuilder->RequestFunction(functionName))
       resolvedMethod = _methodBuilder->lookupFunction(functionName);
-   TR_ASSERT(resolvedMethod, "Could not identify function %s\n", functionName);
+   TR_ASSERT(resolvedMethod, "Could not identify function %s\n", functionName.c_str());
 
    TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateStaticMethodSymbol(JITTED_METHOD_INDEX, -1, resolvedMethod);
    return genCall(methodSymRef, numArgs, argValues);

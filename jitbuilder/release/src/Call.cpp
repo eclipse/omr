@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <dlfcn.h>
 #include <errno.h>
+#include <string>
 
 #include "Jit.hpp"
 #include "ilgen/TypeDictionary.hpp"

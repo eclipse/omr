@@ -17,6 +17,8 @@
  *******************************************************************************/
 
 #include <stdint.h>
+#include <string>
+
 #include "compile/Compilation.hpp"
 #include "ilgen/IlBuilder.hpp"
 #include "ilgen/ThunkBuilder.hpp"
@@ -47,8 +49,8 @@ ThunkBuilder::ThunkBuilder(TR::TypeDictionary *types, const char *name, TR::IlTy
    _numCalleeParams(numCalleeParams),
    _calleeParamTypes(calleeParamTypes)
    {
-   DefineLine(__FILE__);
-   DefineFile(LINETOSTR(__LINE__));
+   DefineFile(__FILE__);
+   DefineLine(LINETOSTR(__LINE__));
    DefineName(name);
    DefineReturnType(returnType);
    DefineParameter("target", Address); // target

@@ -58,13 +58,13 @@ SwitchMethod::SwitchMethod(TR::TypeDictionary *d)
  * "printString" is always going to be called anyway.
  */
 bool
-SwitchMethod::RequestFunction(const char *name)
+SwitchMethod::RequestFunction(const std::string &name)
    {
-   if (strncmp(name, "printString", 12) != 0)
+   if (name == "printString")
       return false;
 
-   DefineFunction((char *)"printString", 
-                  (char *)__FILE__,
+   DefineFunction("printString", 
+                  __FILE__,
                   (char *)PRINTSTRING_LINE,
                   (void *)&printString,
                   NoType,

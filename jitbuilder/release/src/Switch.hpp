@@ -20,6 +20,7 @@
 #ifndef SWITCH_INCL
 #define SWITCH_INCL
 
+#include <string>
 #include "ilgen/MethodBuilder.hpp"
 
 namespace TR { class TypeDictionary; }
@@ -35,7 +36,7 @@ class SwitchMethod : public TR::MethodBuilder
    SwitchMethod(TR::TypeDictionary *);
    virtual bool buildIL();
 
-   virtual bool RequestFunction(const char *name);
+   virtual bool RequestFunction(const std::string &name);
    };
 
 #endif // !defined(SWITCH_INCL)

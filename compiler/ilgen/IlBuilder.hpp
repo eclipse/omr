@@ -27,7 +27,8 @@
 
 #include <fstream>
 #include <stdarg.h>
-#include <string.h>
+#include <string>
+
 #include "ilgen/IlInjector.hpp"
 #include "il/ILHelpers.hpp"
 
@@ -118,7 +119,7 @@ public:
 
    virtual bool isBytecodeBuilder()             { return false; }
 
-   char *getName();
+   std::string getName();
 
    void print(const char *title, bool recurse=false);
    void printBlock(TR::Block *block);
@@ -201,13 +202,13 @@ public:
    // memory
    TR::IlValue *CreateLocalArray(int32_t numElements, TR::IlType *elementType);
    TR::IlValue *CreateLocalStruct(TR::IlType *structType);
-   TR::IlValue *Load(const char *name);
-   void Store(const char *name, TR::IlValue *value);
+   TR::IlValue *Load(const std::string &name);
+   void Store(const std::string &name, TR::IlValue *value);
    void StoreOver(TR::IlValue *dest, TR::IlValue *value);
    TR::IlValue *LoadAt(TR::IlType *dt, TR::IlValue *address);
    void StoreAt(TR::IlValue *address, TR::IlValue *value);
-   TR::IlValue *LoadIndirect(const char *type, const char *field, TR::IlValue *object);
-   void StoreIndirect(const char *type, const char *field, TR::IlValue *object, TR::IlValue *value);
+   TR::IlValue *LoadIndirect(const std::string &type, const std::string &field, TR::IlValue *object);
+   void StoreIndirect(const std::string &type, const std::string &field, TR::IlValue *object, TR::IlValue *value);
    TR::IlValue *IndexAt(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index);
    TR::IlValue *AtomicAddWithOffset(TR::IlValue *baseAddress, TR::IlValue *offset, TR::IlValue *value);
    TR::IlValue *AtomicAdd(TR::IlValue *baseAddress, TR::IlValue * value);
@@ -222,21 +223,21 @@ public:
     * is to use the field's address instead. This is not an elegent solution and
     * should be revisited.
     */
-   TR::IlValue *StructFieldInstanceAddress(const char* structName, const char* fieldName, TR::IlValue* obj);
-   TR::IlValue *UnionFieldInstanceAddress(const char* unionName, const char* fieldName, TR::IlValue* obj);
+   TR::IlValue *StructFieldInstanceAddress(const std::string &structName, const std::string &fieldName, TR::IlValue* obj);
+   TR::IlValue *UnionFieldInstanceAddress(const std::string &unionName, const std::string &fieldName, TR::IlValue* obj);
 
    // vector memory
-   TR::IlValue *VectorLoad(const char *name);
+   TR::IlValue *VectorLoad(const std::string &name);
    TR::IlValue *VectorLoadAt(TR::IlType *dt, TR::IlValue *address);
-   void VectorStore(const char *name, TR::IlValue *value);
+   void VectorStore(const std::string &name, TR::IlValue *value);
    void VectorStoreAt(TR::IlValue *address, TR::IlValue *value);
 
    // control
    void AppendBuilder(TR::IlBuilder *builder);
-   TR::IlValue *Call(const char *name, int32_t numArgs, ...);
-   TR::IlValue *Call(const char *name, int32_t numArgs, TR::IlValue **argValues);
-   TR::IlValue *ComputedCall(const char *name, int32_t numArgs, ...);
-   TR::IlValue *ComputedCall(const char *name, int32_t numArgs, TR::IlValue **args);
+   TR::IlValue *Call(const std::string &name, int32_t numArgs, ...);
+   TR::IlValue *Call(const std::string &name, int32_t numArgs, TR::IlValue **argValues);
+   TR::IlValue *ComputedCall(const std::string &name, int32_t numArgs, ...);
+   TR::IlValue *ComputedCall(const std::string &name, int32_t numArgs, TR::IlValue **args);
    TR::IlValue *genCall(TR::SymbolReference *methodSymRef, int32_t numArgs, TR::IlValue ** paramValues, bool isDirectCall = true);
    void Goto(TR::IlBuilder **dest);
    void Goto(TR::IlBuilder *dest);
@@ -425,7 +426,7 @@ protected:
    /**
     * @brief part of experimental "replay" support; the name of the replay file name
     */
-   char                          _replayName[21];
+   std::string                   _replayName;
 
    /**
     * @brief part of experimental "replay" support: character array used to assemble each line of output
@@ -435,11 +436,11 @@ protected:
 
    virtual bool buildIL() { return true; }
 
-   TR::SymbolReference *lookupSymbol(const char *name);
-   void defineSymbol(const char *name, TR::SymbolReference *v);
+   TR::SymbolReference *lookupSymbol(const std::string &name);
+   void defineSymbol(const std::string &name, TR::SymbolReference *v);
    TR::IlValue *newValue(TR::IlType *dt, TR::Node *n=NULL);
    TR::IlValue *newValue(TR::DataType dt, TR::Node *n=NULL);
-   void defineValue(const char *name, TR::IlType *dt);
+   void defineValue(const std::string &name, TR::IlType *dt);
 
    TR::Node *loadValue(TR::IlValue *v);
    void storeNode(TR::SymbolReference *symRef, TR::Node *v);
