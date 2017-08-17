@@ -70,4 +70,6 @@ public:
 
 }
 
+#include "il/Symbol_inlines.hpp"
+
 #endif

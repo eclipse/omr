@@ -26,6 +26,7 @@
 #include "il/Block.hpp"                   // for TR::Block
 #include "il/DataTypes.hpp"               // for TR::DataType, DataTypes
 #include "il/Node.hpp"                    // for Node (ptr only), etc
+#include "il/SymbolReference.hpp"         // for TR::SymbolReference
 #include "infra/Array.hpp"                // for TR_Array
 #include "infra/Assert.hpp"               // for TR_ASSERT
 #include "infra/BitVector.hpp"            // for TR_BitVector, etc
@@ -39,7 +40,6 @@ class TR_GlobalRegisterAllocator;
 class TR_Structure;
 namespace TR { class Compilation; }
 namespace TR { class Symbol; }
-namespace TR { class SymbolReference; }
 namespace TR { class TreeTop; }
 namespace TR { class NodeChecklist; }
 
@@ -188,7 +188,7 @@ public:
 
    TR_BitVector &          getBlocksLiveOnEntry()     { return _liveOnEntry; }
    TR_BitVector &          getBlocksLiveOnExit()      { return _liveOnExit; }
-   TR::Symbol *            getSymbol();
+   TR::Symbol *            getSymbol()                { return _symRef->getSymbol(); }
 
    TR::DataType           getDataType();
    TR::DataType            getType();

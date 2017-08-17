@@ -32,6 +32,7 @@ namespace OMR { typedef OMR::DataType DataTypeConnector; }
 #include <stddef.h>                     // for size_t
 #include <stdint.h>                     // for int32_t, uint8_t, uint32_t, etc
 #include "il/ILOpCodes.hpp"             // for ILOpCodes
+#include "infra/Annotations.hpp"        // for OMR_EXTENSIBLE
 
 #if defined(TR_HOST_ARM) && !defined(__VFP_FP__)
 #include "env/CompilerEnv.hpp"
@@ -297,52 +298,54 @@ namespace TR
 namespace OMR
 {
 
-class DataType
+class OMR_EXTENSIBLE DataType
    {
 public:
    DataType() : _type(TR::NoType) { }
    DataType(TR::DataTypes t) : _type(t) { }
 
+   inline TR::DataType* self();
+   inline const TR::DataType* self() const;
+
    TR::DataTypes getDataType() const { return _type; }
 
-   TR::DataType& operator=(const TR::DataType& rhs);
-   TR::DataType& operator=(TR::DataTypes rhs);
+   inline TR::DataType& operator=(const TR::DataType& rhs);
+   inline TR::DataType& operator=(TR::DataTypes rhs);
 
-   bool operator==(const TR::DataType& rhs);
-   bool operator==(TR::DataTypes rhs);
+   inline bool operator==(const TR::DataType& rhs);
+   inline bool operator==(TR::DataTypes rhs);
 
-   bool operator!=(const TR::DataType& rhs);
-   bool operator!=(TR::DataTypes rhs);
+   inline bool operator!=(const TR::DataType& rhs);
+   inline bool operator!=(TR::DataTypes rhs);
 
-   bool operator<=(const TR::DataType& rhs);
-   bool operator<=(TR::DataTypes rhs);
+   inline bool operator<=(const TR::DataType& rhs);
+   inline bool operator<=(TR::DataTypes rhs);
 
-   bool operator<(const TR::DataType& rhs);
-   bool operator<(TR::DataTypes rhs);
+   inline bool operator<(const TR::DataType& rhs);
+   inline bool operator<(TR::DataTypes rhs);
 
-   bool operator>=(const TR::DataType& rhs);
-   bool operator>=(TR::DataTypes rhs);
+   inline bool operator>=(const TR::DataType& rhs);
+   inline bool operator>=(TR::DataTypes rhs);
 
-   bool operator>(const TR::DataType& rhs);
-   bool operator>(TR::DataTypes rhs);
+   inline bool operator>(const TR::DataType& rhs);
+   inline bool operator>(TR::DataTypes rhs);
 
-   operator int() { return getDataType(); }
+   inline operator int();
 
-   bool isInt8()  { return getDataType() == TR::Int8; }
-   bool isInt16() { return getDataType() == TR::Int16; }
-   bool isInt32() { return getDataType() == TR::Int32; }
-   bool isInt64() { return getDataType() == TR::Int64; }
+   inline bool isInt8();
+   inline bool isInt16();
+   inline bool isInt32();
+   inline bool isInt64();
 
-   bool isIntegral() { return isInt8() || isInt16() || isInt32() || isInt64(); }
+   inline bool isIntegral();
 
-   bool isFloatingPoint() { return isBFPorHFP(); }
-   bool isVector() { return getDataType() == TR::VectorInt8 || getDataType() == TR::VectorInt16 || getDataType() == TR::VectorInt32 || getDataType() == TR::VectorInt64 ||
-                            getDataType() == TR::VectorFloat || getDataType() == TR::VectorDouble; }
-   bool isBFPorHFP() { return getDataType() == TR::Float || getDataType() == TR::Double; }
-   bool isDouble() { return getDataType() == TR::Double; }
+   inline bool isFloatingPoint();
+   inline bool isVector();
+   inline bool isBFPorHFP();
+   inline bool isDouble();
 
-   bool isAddress() { return getDataType() == TR::Address; }
-   bool isAggregate() { return getDataType() == TR::Aggregate; }
+   inline bool isAddress();
+   inline bool isAggregate();
 
    bool canGetMaxPrecisionFromType();
    int32_t getMaxPrecisionFromType();

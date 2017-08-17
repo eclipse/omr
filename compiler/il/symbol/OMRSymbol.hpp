@@ -79,7 +79,7 @@ public:
    /**
     * \brief Downcast to concrete instance
     */
-   TR::Symbol * self();
+   inline TR::Symbol * self();
 
    template <typename AllocatorType>
    static TR::Symbol * create(AllocatorType);
@@ -127,47 +127,47 @@ public:
     * If the symbol is of the correct type the get method downcasts the
     * symbol to the correct type otherwise it returns 0.
     */
-   TR::RegisterMappedSymbol                   *getRegisterMappedSymbol();
-   TR::AutomaticSymbol                        *getAutoSymbol();
-   TR::ParameterSymbol                        *getParmSymbol();
-   TR::AutomaticSymbol                        *getInternalPointerAutoSymbol();
-   TR::AutomaticSymbol                        *getLocalObjectSymbol();
-   TR::StaticSymbol                           *getStaticSymbol();
-   TR::ResolvedMethodSymbol                   *getResolvedMethodSymbol();
-   TR::MethodSymbol                           *getMethodSymbol();
-   TR::Symbol                                 *getShadowSymbol();
-   TR::Symbol                                 *getNamedShadowSymbol();
-   TR::RegisterMappedSymbol                   *getMethodMetaDataSymbol();
-   TR::LabelSymbol                            *getLabelSymbol();
-   TR::ResolvedMethodSymbol                   *getJittedMethodSymbol();
-   TR::StaticSymbol                           *getRecognizedStaticSymbol();
-   TR::AutomaticSymbol                        *getVariableSizeSymbol();
-   TR::StaticSymbol                           *getCallSiteTableEntrySymbol();
-   TR::StaticSymbol                           *getMethodTypeTableEntrySymbol();
-   TR::AutomaticSymbol                        *getRegisterSymbol();
+   inline TR::RegisterMappedSymbol                   *getRegisterMappedSymbol();
+   inline TR::AutomaticSymbol                        *getAutoSymbol();
+   inline TR::ParameterSymbol                        *getParmSymbol();
+   inline TR::AutomaticSymbol                        *getInternalPointerAutoSymbol();
+   inline TR::AutomaticSymbol                        *getLocalObjectSymbol();
+   inline TR::StaticSymbol                           *getStaticSymbol();
+   inline TR::ResolvedMethodSymbol                   *getResolvedMethodSymbol();
+   inline TR::MethodSymbol                           *getMethodSymbol();
+   inline TR::Symbol                                 *getShadowSymbol();
+   inline TR::Symbol                                 *getNamedShadowSymbol();
+   inline TR::RegisterMappedSymbol                   *getMethodMetaDataSymbol();
+   inline TR::LabelSymbol                            *getLabelSymbol();
+   inline TR::ResolvedMethodSymbol                   *getJittedMethodSymbol();
+   inline TR::StaticSymbol                           *getRecognizedStaticSymbol();
+   inline TR::AutomaticSymbol                        *getVariableSizeSymbol();
+   inline TR::StaticSymbol                           *getCallSiteTableEntrySymbol();
+   inline TR::StaticSymbol                           *getMethodTypeTableEntrySymbol();
+   inline TR::AutomaticSymbol                        *getRegisterSymbol();
 
    // These methods perform an explicit (debug) assume that the symbol is a correct type
    // and then return the symbol explicitly cast to the type.
    //
-   TR::RegisterMappedSymbol            *castToRegisterMappedSymbol();
-   TR::AutomaticSymbol                 *castToAutoSymbol();
-   TR::AutomaticSymbol                 *castToVariableSizeSymbol();
-   TR::AutomaticSymbol                 *castToAutoMarkerSymbol();
-   TR::ParameterSymbol                 *castToParmSymbol();
-   TR::AutomaticSymbol                 *castToInternalPointerAutoSymbol();
-   TR::AutomaticSymbol                 *castToLocalObjectSymbol();
-   TR::ResolvedMethodSymbol            *castToResolvedMethodSymbol();
-   TR::MethodSymbol                    *castToMethodSymbol();
-   TR::Symbol                          *castToShadowSymbol();
-   TR::RegisterMappedSymbol            *castToMethodMetaDataSymbol();
-   TR::LabelSymbol                     *castToLabelSymbol();
-   TR::ResolvedMethodSymbol            *castToJittedMethodSymbol();
-   TR::AutomaticSymbol                 *castToRegisterSymbol();
+   inline TR::RegisterMappedSymbol            *castToRegisterMappedSymbol();
+   inline TR::AutomaticSymbol                 *castToAutoSymbol();
+   inline TR::AutomaticSymbol                 *castToVariableSizeSymbol();
+   inline TR::AutomaticSymbol                 *castToAutoMarkerSymbol();
+   inline TR::ParameterSymbol                 *castToParmSymbol();
+   inline TR::AutomaticSymbol                 *castToInternalPointerAutoSymbol();
+   inline TR::AutomaticSymbol                 *castToLocalObjectSymbol();
+   inline TR::ResolvedMethodSymbol            *castToResolvedMethodSymbol();
+   inline TR::MethodSymbol                    *castToMethodSymbol();
+   inline TR::Symbol                          *castToShadowSymbol();
+   inline TR::RegisterMappedSymbol            *castToMethodMetaDataSymbol();
+   inline TR::LabelSymbol                     *castToLabelSymbol();
+   inline TR::ResolvedMethodSymbol            *castToJittedMethodSymbol();
+   inline TR::AutomaticSymbol                 *castToRegisterSymbol();
 
-   TR::StaticSymbol                    *castToStaticSymbol();
-   TR::StaticSymbol                    *castToNamedStaticSymbol();
-   TR::StaticSymbol                    *castToCallSiteTableEntrySymbol();
-   TR::StaticSymbol                    *castToMethodTypeTableEntrySymbol();
+   inline TR::StaticSymbol                    *castToStaticSymbol();
+   inline TR::StaticSymbol                    *castToNamedStaticSymbol();
+   inline TR::StaticSymbol                    *castToCallSiteTableEntrySymbol();
+   inline TR::StaticSymbol                    *castToMethodTypeTableEntrySymbol();
 
    int32_t getOffset();
 
@@ -177,9 +177,9 @@ public:
 
    bool isReferenced();
 
-   static uint32_t convertTypeToSize(TR::DataType dt);
+   static uint32_t convertTypeToSize(TR::DataType dt) { return TR::DataType::getSize(dt); }
 
-   static uint32_t convertTypeToNumberOfSlots(TR::DataType dt);
+   static uint32_t convertTypeToNumberOfSlots(TR::DataType dt) { return (dt == TR::Int64 || dt == TR::Double)? 2 : 1; }
 
    static TR::DataType convertSigCharToType(char sigChar);
 
@@ -209,7 +209,7 @@ public:
 
    void          setDataType(TR::DataType dt);
    TR::DataType  getDataType() { return (TR::DataTypes)_flags.getValue(DataTypeMask);}
-   TR::DataType  getType();
+   inline TR::DataType  getType();
 
    int32_t getKind()             { return _flags.getValue(KindMask);}
 
@@ -217,19 +217,19 @@ public:
    bool isParm()                 { return _flags.testValue(KindMask, IsParameter); }
    bool isMethodMetaData()       { return _flags.testValue(KindMask, IsMethodMetaData); }
    bool isResolvedMethod()       { return _flags.testValue(KindMask, IsResolvedMethod); }
-   bool isMethod();
+   inline bool isMethod();
    bool isStatic()               { return _flags.testValue(KindMask, IsStatic); }
    bool isShadow()               { return _flags.testValue(KindMask, IsShadow); }
    bool isLabel()                { return _flags.testValue(KindMask, IsLabel); }
    void setIsLabel()             { _flags.setValue(KindMask, IsLabel);}
 
-   bool isRegisterMappedSymbol();
+   inline bool isRegisterMappedSymbol();
 
-   bool isAutoOrParm();
+   inline bool isAutoOrParm();
    bool isAutoField()            { return false; }
    bool isParmField()            { return false; }
    bool isWeakSymbol()           { return false; }
-   bool isRegularShadow();
+   inline bool isRegularShadow();
 
    void setIsInGlobalRegister(bool b)       { _flags.set(IsInGlobalRegister, b); }
    bool isInGlobalRegister()                { return _flags.testAny(IsInGlobalRegister); }
@@ -240,7 +240,7 @@ public:
    void setVolatile()                       { _flags.set(Volatile); }
    void resetVolatile()                     { _flags.reset(Volatile); }
    bool isVolatile()                        { return _flags.testAny(Volatile); }
-   bool isSyncVolatile();
+   inline bool isSyncVolatile();
 
    void setInitializedReference()           { _flags.set(InitializedReference); }
    void setUninitializedReference()         { _flags.reset(InitializedReference); }
@@ -251,14 +251,14 @@ public:
 
    void setNotCollected()                   { _flags.set(NotCollected); }
    bool isNotCollected()                    { return _flags.testAny(NotCollected); }
-   bool isCollectedReference();
+   inline bool isCollectedReference();
 
    void setFinal()                          { _flags.set(Final); }
    bool isFinal()                           { return _flags.testAny(Final); }
 
    void setInternalPointer()                { _flags.set(InternalPointer); }
    bool isInternalPointer()                 { return _flags.testAny(InternalPointer); }
-   bool isInternalPointerAuto();
+   inline bool isInternalPointerAuto();
 
    void setPrivate()                        { _flags.set(Private); }
    bool isPrivate()                         { return _flags.testAny(Private); }
@@ -272,165 +272,165 @@ public:
    void setHoldsMonitoredObject()           { _flags.set(HoldsMonitoredObject); }
    bool holdsMonitoredObject()              { return _flags.testAny(HoldsMonitoredObject); }
 
-   bool isNamed();
+   inline bool isNamed();
 
    // flag methods specific to Autos
    //
-   void setSpillTempAuto();
-   bool isSpillTempAuto();
+   inline void setSpillTempAuto();
+   inline bool isSpillTempAuto();
 
-   void setLocalObject();
-   bool isLocalObject();
+   inline void setLocalObject();
+   inline bool isLocalObject();
 
-   void setBehaveLikeNonTemp();
-   bool behaveLikeNonTemp();
+   inline void setBehaveLikeNonTemp();
+   inline bool behaveLikeNonTemp();
 
-   void setPinningArrayPointer();
-   bool isPinningArrayPointer();
+   inline void setPinningArrayPointer();
+   inline bool isPinningArrayPointer();
 
-   bool isRegisterSymbol();
-   void setIsRegisterSymbol();
+   inline bool isRegisterSymbol();
+   inline void setIsRegisterSymbol();
 
-   void setAutoAddressTaken();
-   bool isAutoAddressTaken();
+   inline void setAutoAddressTaken();
+   inline bool isAutoAddressTaken();
 
-   void setSpillTempLoaded();
-   bool isSpillTempLoaded();
+   inline void setSpillTempLoaded();
+   inline bool isSpillTempLoaded();
 
-   void setAutoMarkerSymbol();
-   bool isAutoMarkerSymbol();
+   inline void setAutoMarkerSymbol();
+   inline bool isAutoMarkerSymbol();
 
-   void setVariableSizeSymbol();
-   bool isVariableSizeSymbol();
+   inline void setVariableSizeSymbol();
+   inline bool isVariableSizeSymbol();
 
-   void setThisTempForObjectCtor();
-   bool isThisTempForObjectCtor();
+   inline void setThisTempForObjectCtor();
+   inline bool isThisTempForObjectCtor();
 
    // flag methods specific to Parms
    //
-   void setParmHasToBeOnStack();
-   bool isParmHasToBeOnStack();
+   inline void setParmHasToBeOnStack();
+   inline bool isParmHasToBeOnStack();
 
-   void setReferencedParameter();
-   void resetReferencedParameter();
-   bool isReferencedParameter();
+   inline void setReferencedParameter();
+   inline void resetReferencedParameter();
+   inline bool isReferencedParameter();
 
-   void setReinstatedReceiver();
-   bool isReinstatedReceiver();
+   inline void setReinstatedReceiver();
+   inline bool isReinstatedReceiver();
 
    // flag methods specific to statics
    //
-   void setConstString();
-   bool isConstString();
+   inline void setConstString();
+   inline bool isConstString();
 
-   void setAddressIsCPIndexOfStatic(bool b);
-   bool addressIsCPIndexOfStatic();
+   inline void setAddressIsCPIndexOfStatic(bool b);
+   inline bool addressIsCPIndexOfStatic();
 
-   bool isRecognizedStatic();
+   inline bool isRecognizedStatic();
 
-   void setCompiledMethod();
-   bool isCompiledMethod();
+   inline void setCompiledMethod();
+   inline bool isCompiledMethod();
 
-   void setStartPC();
-   bool isStartPC();
+   inline void setStartPC();
+   inline bool isStartPC();
 
-   void setCountForRecompile();
-   bool isCountForRecompile();
+   inline void setCountForRecompile();
+   inline bool isCountForRecompile();
 
-   void setRecompilationCounter();
-   bool isRecompilationCounter();
+   inline void setRecompilationCounter();
+   inline bool isRecompilationCounter();
 
-   void setGCRPatchPoint();
-   bool isGCRPatchPoint();
+   inline void setGCRPatchPoint();
+   inline bool isGCRPatchPoint();
 
    // flag methods specific to resolved
    //
-   bool isJittedMethod();
+   inline bool isJittedMethod();
 
    // flag methods specific to shadows
    //
-   void setArrayShadowSymbol();
-   bool isArrayShadowSymbol();
+   inline void setArrayShadowSymbol();
+   inline bool isArrayShadowSymbol();
 
-   bool isRecognizedShadow();
+   inline bool isRecognizedShadow();
 
-   void setArrayletShadowSymbol();
-   bool isArrayletShadowSymbol();
+   inline void setArrayletShadowSymbol();
+   inline bool isArrayletShadowSymbol();
 
-   void setPythonLocalVariableShadowSymbol();
-   bool isPythonLocalVariableShadowSymbol();
+   inline void setPythonLocalVariableShadowSymbol();
+   inline bool isPythonLocalVariableShadowSymbol();
 
-   void setGlobalFragmentShadowSymbol();
-   bool isGlobalFragmentShadowSymbol();
+   inline void setGlobalFragmentShadowSymbol();
+   inline bool isGlobalFragmentShadowSymbol();
 
-   void setMemoryTypeShadowSymbol();
-   bool isMemoryTypeShadowSymbol();
+   inline void setMemoryTypeShadowSymbol();
+   inline bool isMemoryTypeShadowSymbol();
 
    void setOrdered() { _flags.set(Ordered); }
    bool isOrdered()  { return _flags.testAny(Ordered); }
 
-   void setPythonConstantShadowSymbol();
-   bool isPythonConstantShadowSymbol();
+   inline void setPythonConstantShadowSymbol();
+   inline bool isPythonConstantShadowSymbol();
 
-   void setPythonNameShadowSymbol();
-   bool isPythonNameShadowSymbol();
+   inline void setPythonNameShadowSymbol();
+   inline bool isPythonNameShadowSymbol();
 
    // flag methods specific to labels
    //
-   void setStartOfColdInstructionStream();
-   bool isStartOfColdInstructionStream();
+   inline void setStartOfColdInstructionStream();
+   inline bool isStartOfColdInstructionStream();
 
-   void setStartInternalControlFlow();
-   bool isStartInternalControlFlow();
+   inline void setStartInternalControlFlow();
+   inline bool isStartInternalControlFlow();
 
-   void setEndInternalControlFlow();
-   bool isEndInternalControlFlow();
+   inline void setEndInternalControlFlow();
+   inline bool isEndInternalControlFlow();
 
-   void setVMThreadLive();
-   bool isVMThreadLive();
+   inline void setVMThreadLive();
+   inline bool isVMThreadLive();
 
-   void setInternalControlFlowMerge();
-   bool isInternalControlFlowMerge();
+   inline void setInternalControlFlowMerge();
+   inline bool isInternalControlFlowMerge();
 
-   void setEndOfColdInstructionStream();
-   bool isEndOfColdInstructionStream();
+   inline void setEndOfColdInstructionStream();
+   inline bool isEndOfColdInstructionStream();
 
-   bool isNonLinear();
-   void setNonLinear();
+   inline bool isNonLinear();
+   inline void setNonLinear();
 
-   void setGlobalLabel();
-   bool isGlobalLabel();
+   inline void setGlobalLabel();
+   inline bool isGlobalLabel();
 
-   void setRelativeLabel();
-   bool isRelativeLabel();
+   inline void setRelativeLabel();
+   inline bool isRelativeLabel();
 
-   void setConstMethodType();
-   bool isConstMethodType();
+   inline void setConstMethodType();
+   inline bool isConstMethodType();
 
-   void setConstMethodHandle();
-   bool isConstMethodHandle();
+   inline void setConstMethodHandle();
+   inline bool isConstMethodHandle();
 
-   bool isConstObjectRef();
-   bool isStaticField();
-   bool isFixedObjectRef();
+   inline bool isConstObjectRef();
+   inline bool isStaticField();
+   inline bool isFixedObjectRef();
 
-   void setCallSiteTableEntry();
-   bool isCallSiteTableEntry();
+   inline void setCallSiteTableEntry();
+   inline bool isCallSiteTableEntry();
 
    void setHasAddrTaken() {  _flags2.set(HasAddrTaken); }
    bool isHasAddrTaken()  { return _flags2.testAny(HasAddrTaken); }
 
-   void setMethodTypeTableEntry();
-   bool isMethodTypeTableEntry();
+   inline void setMethodTypeTableEntry();
+   inline bool isMethodTypeTableEntry();
 
-   void setNotDataAddress();
-   bool isNotDataAddress();
+   inline void setNotDataAddress();
+   inline bool isNotDataAddress();
 
-   void setUnsafeShadowSymbol();
-   bool isUnsafeShadowSymbol();
+   inline void setUnsafeShadowSymbol();
+   inline bool isUnsafeShadowSymbol();
 
-   void setNamedShadowSymbol();
-   bool isNamedShadowSymbol();
+   inline void setNamedShadowSymbol();
+   inline bool isNamedShadowSymbol();
 
    void setImmutableField() { _flags2.set(ImmutableField); }
    bool isImmutableField()  { return _flags2.testAny(ImmutableField); }

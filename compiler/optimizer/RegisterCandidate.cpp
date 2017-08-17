@@ -188,12 +188,6 @@ TR_RegisterCandidate::getRegisterKinds()
     return TR_GPR;
   }
 
-TR::Symbol *
-TR_RegisterCandidate::getSymbol()
-   {
-   return _symRef->getSymbol();
-   }
-
 void TR_RegisterCandidate::addAllBlocksInStructure(TR_Structure *structure, TR::Compilation *comp, const char *description, vcount_t count, bool recursiveCall)
    {
    if (!recursiveCall)
@@ -584,7 +578,7 @@ TR_RegisterCandidate::setWeight(TR::Block * * blocks, int32_t *blockStructureWei
       int32_t blockWeight = _blocks.getNumberOfLoadsAndStores(blockNumber);
       bool firstBlock = firstBlocks.isSet(blockNumber);
       if ((firstBlock && isAllBlocks() && cg->getSupportsGlRegDepOnFirstBlock()) ||
-           (!firstBlock && (symbolIsLive(b) || (hasLoopExitBlock(b) && (blockWeight==0)))))
+           (!firstBlock && (((blockWeight == 0) && hasLoopExitBlock(b)) || symbolIsLive(b))))
          _liveOnEntry.set(blockNumber);
 
       TR_BlockStructure * blockStructure = b->getStructureOf();
@@ -3689,79 +3683,89 @@ TR_RegisterCandidates::computeAvailableRegisters(TR_RegisterCandidate *rc, int32
    int8_t i;
    for (i = firstRegister; i <= lastRegister; ++i)
       {
-      _liveOnEntryConflicts[i].empty();
-      _liveOnEntryConflicts[i] = _liveOnEntryUsage[i];
-      _liveOnEntryConflicts[i] &= rc->getBlocksLiveOnEntry();
+      TR_BitVector &liveOnEntryConflicts = _liveOnEntryConflicts[i];
+      liveOnEntryConflicts = _liveOnEntryUsage[i];
+      liveOnEntryConflicts &= rc->getBlocksLiveOnEntry();
 
-      _liveOnExitConflicts[i].empty();
-      _liveOnExitConflicts[i] = _liveOnExitUsage[i];
-      _liveOnExitConflicts[i] &= rc->getBlocksLiveOnExit();
+      TR_BitVector &liveOnExitConflicts = _liveOnExitConflicts[i];
+      liveOnExitConflicts = _liveOnExitUsage[i];
+      liveOnExitConflicts &= rc->getBlocksLiveOnExit();
 
-      _entryExitConflicts[i].empty();
-      _entryExitConflicts[i] = _liveOnEntryUsage[i];
-      _entryExitConflicts[i] &= rc->getBlocksLiveOnExit();
+      TR_BitVector &entryExitConflicts = _entryExitConflicts[i];
+      entryExitConflicts = _liveOnEntryUsage[i];
+      entryExitConflicts &= rc->getBlocksLiveOnExit();
 
-      _exitEntryConflicts[i].empty();
-      _exitEntryConflicts[i] = _liveOnExitUsage[i];
-      _exitEntryConflicts[i] &= rc->getBlocksLiveOnEntry();
+      TR_BitVector &exitEntryConflicts = _exitEntryConflicts[i];
+      exitEntryConflicts = _liveOnExitUsage[i];
+      exitEntryConflicts &= rc->getBlocksLiveOnEntry();
 
       comp()->incOrResetVisitCount();
 
-      TR_BitVectorIterator bvi(_entryExitConflicts[i]);
+      TR_BitVectorIterator bvi(entryExitConflicts);
       while (bvi.hasMoreElements())
          {
          int32_t blockNumber = bvi.getNextElement();
          TR::Block * b = blocks[blockNumber];
 
-         if (overlapTable->find(blockNumber) == overlapTable->end())
+         auto overlapLookup = overlapTable->find(blockNumber);
+         Coordinates *overlaps = NULL;
+         if (overlapLookup == overlapTable->end())
             {
-            Coordinates *c = new (comp()->trMemory()->currentStackRegion()) Coordinates((CoordinatesComparator()), (CoordinatesAllocator(comp()->trMemory()->currentStackRegion())));
-            (*overlapTable)[blockNumber] = c;
-            ComputeOverlaps(b, comp(), *c);
+            overlaps = new (comp()->trMemory()->currentStackRegion()) Coordinates((CoordinatesComparator()), (CoordinatesAllocator(comp()->trMemory()->currentStackRegion())));
+            (*overlapTable)[blockNumber] = overlaps;
+            ComputeOverlaps(b, comp(), *overlaps);
             }
-         Coordinates &overlaps = *(*overlapTable)[blockNumber];
+         else
+            {
+            overlaps = overlapLookup->second;
+            }
          CS2::HashIndex hi1, hi2;
 
          TR_RegisterCandidate *rc1 = b->getGlobalRegisters(comp())[i].getRegisterCandidateOnEntry();
          if (rc1)
             {
-            Coordinates::iterator rc1Itr = overlaps.find(rc1->getSymbolReference()->getReferenceNumber());
-            Coordinates::iterator rcItr = overlaps.find(rc->getSymbolReference()->getReferenceNumber());
+            Coordinates::iterator rc1Itr = overlaps->find(rc1->getSymbolReference()->getReferenceNumber());
+            Coordinates::iterator rcItr = overlaps->find(rc->getSymbolReference()->getReferenceNumber());
 
-            if (rc1Itr == overlaps.end() ||
-                rcItr == overlaps.end() ||
+            if (rc1Itr == overlaps->end() ||
+                rcItr == overlaps->end() ||
                 rc1Itr->second.last < rcItr->second.first)
                {
-               _entryExitConflicts[i].reset(blockNumber);
+               entryExitConflicts.reset(blockNumber);
                }
             }
          }
 
       comp()->incVisitCount();
-      bvi.setBitVector(_exitEntryConflicts[i]);
+      bvi.setBitVector(exitEntryConflicts);
       while (bvi.hasMoreElements())
          {
          int32_t blockNumber = bvi.getNextElement();
          TR::Block * b = blocks[blockNumber];
 
-         if (overlapTable->find(blockNumber) == overlapTable->end())
+         auto overlapLookup = overlapTable->find(blockNumber);
+         Coordinates *overlaps = NULL;
+         if (overlapLookup == overlapTable->end())
             {
-            Coordinates *c = new (comp()->trMemory()->currentStackRegion()) Coordinates((CoordinatesComparator()), (CoordinatesAllocator(comp()->trMemory()->currentStackRegion())));
-            (*overlapTable)[blockNumber] = c;
-            ComputeOverlaps(b, comp(), *c);
+            overlaps = new (comp()->trMemory()->currentStackRegion()) Coordinates((CoordinatesComparator()), (CoordinatesAllocator(comp()->trMemory()->currentStackRegion())));
+            (*overlapTable)[blockNumber] = overlaps;
+            ComputeOverlaps(b, comp(), *overlaps);
             }
-         Coordinates &overlaps = *(*overlapTable)[blockNumber];
+         else
+            {
+            overlaps = overlapLookup->second;
+            }
 
          TR_RegisterCandidate *rc2 = b->getGlobalRegisters(comp())[i].getRegisterCandidateOnEntry();
          if (rc2)
             {
-            Coordinates::iterator rcItr = overlaps.find(rc->getSymbolReference()->getReferenceNumber());
-            Coordinates::iterator rc2Itr = overlaps.find(rc2->getSymbolReference()->getReferenceNumber());
-            if (rcItr == overlaps.end() ||
-                rc2Itr == overlaps.end()  ||
+            Coordinates::iterator rcItr = overlaps->find(rc->getSymbolReference()->getReferenceNumber());
+            Coordinates::iterator rc2Itr = overlaps->find(rc2->getSymbolReference()->getReferenceNumber());
+            if (rcItr == overlaps->end() ||
+                rc2Itr == overlaps->end()  ||
                 rcItr->second.last < rc2Itr->second.first)
                {
-               _exitEntryConflicts[i].reset(blockNumber);
+               exitEntryConflicts.reset(blockNumber);
                }
             }
          }
@@ -3793,19 +3797,19 @@ TR_RegisterCandidates::computeAvailableRegisters(TR_RegisterCandidate *rc, int32
          {
          traceMsg(comp(), "For candidate %d real register %d : \n", rc->getSymbolReference()->getReferenceNumber(), i);
          traceMsg(comp(), "live on entry conflicts : ");
-         _liveOnEntryConflicts[i].print(comp());
+         liveOnEntryConflicts.print(comp());
          traceMsg(comp(), "\nlive on exit conflicts : ");
-         _liveOnExitConflicts[i].print(comp());
+         liveOnExitConflicts.print(comp());
          traceMsg(comp(), "\nentry exit conflicts : ");
-         _entryExitConflicts[i].print(comp());
+         entryExitConflicts.print(comp());
          traceMsg(comp(), "\nexit entry conflicts : ");
-         _exitEntryConflicts[i].print(comp());
+         exitEntryConflicts.print(comp());
          traceMsg(comp(), "\n");
          }
 
-      if (_liveOnEntryConflicts[i].isEmpty() && _liveOnExitConflicts[i].isEmpty() &&
-          _exitEntryConflicts[i].isEmpty() &&
-          _entryExitConflicts[i].isEmpty() &&
+      if (liveOnEntryConflicts.isEmpty() && liveOnExitConflicts.isEmpty() &&
+          exitEntryConflicts.isEmpty() &&
+          entryExitConflicts.isEmpty() &&
           comp()->cg()->isGlobalRegisterAvailable(i, rc->getDataType()) &&
           ((i != comp()->cg()->getVMThreadGlobalRegisterNumber()) || !rc->isDontAssignVMThreadRegister()))
          {
