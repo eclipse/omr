@@ -156,6 +156,7 @@
 		<data type="uint64_t" name="timestamp" description="time of event" />
 		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
 		<data type="void*" name="subSpace" description="the subspace which was collected" />
+		<data type="bool" name="cycleEnd" description="true, if last GC increment in a cycle" />
 	</event>
 	
 	<event>
@@ -974,29 +975,29 @@
 	</event>
 		
 	<event>
-		<name>J9HOOK_MM_PRIVATE_CONCURRENT_GMP_START</name>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_START</name>
 		<description>
-			Triggered when concurrent GMP work begins.
+			Triggered when concurrent phase work begins.
 			NOTE:  Only expected to be used by verbose GC output.
 		</description>
-		<struct>MM_ConcurrentGMPStartEvent</struct>
+		<struct>MM_ConcurrentPhaseStartEvent</struct>
 		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
 		<data type="uint64_t" name="timestamp" description="time of event" />
 		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
-		<data type="void *" name="concurrentGMPStats" description="internal statistics for concurrent GMP" /> 
+		<data type="void *" name="concurrentStats" description="internal statistics for concurrent phase" /> 
 	</event>
 	
-	<event>
-		<name>J9HOOK_MM_PRIVATE_CONCURRENT_GMP_END</name>
+		<event>
+		<name>J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_END</name>
 		<description>
-			Triggered when concurrent GMP work ends.
+			Triggered when concurrent phase work ends.
 			NOTE:  Only expected to be used by verbose GC output.
 		</description>
-		<struct>MM_ConcurrentGMPEndEvent</struct>
+		<struct>MM_ConcurrentPhaseEndEvent</struct>
 		<data type="struct OMR_VMThread*" name="currentThread" description="current thread" />
 		<data type="uint64_t" name="timestamp" description="time of event" />
 		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
-		<data type="void *" name="concurrentGMPStats" description="internal statistics for concurrent GMP" /> 
+		<data type="void *" name="concurrentStats" description="internal statistics for concurrent phase" />
 	</event>
 	
 	<event>

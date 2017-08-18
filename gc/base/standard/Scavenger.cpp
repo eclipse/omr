@@ -469,7 +469,7 @@ MM_Scavenger::reportScavengeStart(MM_EnvironmentStandard *env)
 }
 
 void
-MM_Scavenger::reportScavengeEnd(MM_EnvironmentStandard *env)
+MM_Scavenger::reportScavengeEnd(MM_EnvironmentStandard *env, bool lastIncrement)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
@@ -485,7 +485,8 @@ MM_Scavenger::reportScavengeEnd(MM_EnvironmentStandard *env)
 		env->getOmrVMThread(),
 		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_SCAVENGE_END,
-		env->_cycleState->_activeSubSpace
+		env->_cycleState->_activeSubSpace,
+		lastIncrement
 	);
 }
 
@@ -647,7 +648,7 @@ MM_Scavenger::mergeHotFieldStats(MM_EnvironmentStandard *env)
  * Clear any global stats associated to the scavenger.
  */
 void
-MM_Scavenger::clearGCStats(MM_EnvironmentStandard *env)
+MM_Scavenger::clearGCStats(MM_EnvironmentBase *env)
 {
 	_extensions->scavengerStats.clear();
 }
@@ -656,7 +657,7 @@ MM_Scavenger::clearGCStats(MM_EnvironmentStandard *env)
  * Merge the current threads scavenge stats into the global scavenge stats.
  */
 void
-MM_Scavenger::mergeGCStats(MM_EnvironmentStandard *env)
+MM_Scavenger::mergeGCStats(MM_EnvironmentBase *env)
 {
 	OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
 
@@ -3477,19 +3478,12 @@ MM_Scavenger::masterThreadGarbageCollect(MM_EnvironmentBase *envBase, MM_Allocat
 		}
 
 		reportGCCycleStart(env);
+		masterSetupForGC(env);
 	}
 	reportGCStart(env);
 	reportGCIncrementStart(env);
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (!isConcurrentInProgress())
-#endif
-	{
-		reportScavengeStart(env);
-
-		_extensions->scavengerStats._startTime = omrtime_hires_clock();
-
-		masterSetupForGC(env);
-	}
+	reportScavengeStart(env);
+	_extensions->scavengerStats._startTime = omrtime_hires_clock();
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	if (_extensions->concurrentScavenger) {
@@ -3500,17 +3494,17 @@ MM_Scavenger::masterThreadGarbageCollect(MM_EnvironmentBase *envBase, MM_Allocat
 		scavenge(env);
 	}
 
+	_extensions->scavengerStats._endTime = omrtime_hires_clock();
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (!isConcurrentInProgress())
+	if (isConcurrentInProgress()) {
+		reportScavengeEnd(env, false);
+	} else
 #endif
 	{
+		reportScavengeEnd(env, true);
+
 		/* defer to collector language interface */
 		_cli->scavenger_masterThreadGarbageCollect_scavengeComplete(env);
-
-		/* Record the completion time of the scavenge */
-		_extensions->scavengerStats._endTime = omrtime_hires_clock();
-
-		reportScavengeEnd(env);
 
 		/* Reset the resizable flag of the semi space.
 		 * NOTE: Must be done before we attempt to resize the new space.
@@ -3786,19 +3780,28 @@ MM_Scavenger::getCollectorExpandSize(MM_EnvironmentBase *env)
 void
 MM_Scavenger::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, uint32_t gcCode)
 {
-	_cycleState = MM_CycleState();
 	env->_cycleState = &_cycleState;
-	env->_cycleState->_gcCode = MM_GCCode(gcCode);
-	env->_cycleState->_type = _cycleType;
-	env->_cycleState->_collectionStatistics = &_collectionStatistics;
 
-	/* If we are in an excessiveGC level beyond normal then an aggressive GC is
-	 * conducted to free up as much space as possible
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	/* Cycle state is initialized only once at the beginning of a cycle. We do not want, in mid-end cycle phases, to reset some members
+	 * that are initialized at the beginning (such as verboseContextID).
 	 */
-	if (!env->_cycleState->_gcCode.isExplicitGC()) {
-		if(excessive_gc_normal != _extensions->excessiveGCLevel) {
-			/* convert the current mode to excessive GC mode */
-			env->_cycleState->_gcCode = MM_GCCode(J9MMCONSTANT_IMPLICIT_GC_EXCESSIVE);
+	if (!isConcurrentInProgress())
+#endif
+	{
+		_cycleState = MM_CycleState();
+		_cycleState._gcCode = MM_GCCode(gcCode);
+		_cycleState._type = _cycleType;
+		_cycleState._collectionStatistics = &_collectionStatistics;
+
+		/* If we are in an excessiveGC level beyond normal then an aggressive GC is
+		 * conducted to free up as much space as possible
+		 */
+		if (!_cycleState._gcCode.isExplicitGC()) {
+			if(excessive_gc_normal != _extensions->excessiveGCLevel) {
+				/* convert the current mode to excessive GC mode */
+				_cycleState._gcCode = MM_GCCode(J9MMCONSTANT_IMPLICIT_GC_EXCESSIVE);
+			}
 		}
 	}
 
@@ -3814,7 +3817,7 @@ MM_Scavenger::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *su
 {
 	calcGCStats((MM_EnvironmentStandard*)env);
 
-	return ;
+	Assert_MM_true(env->_cycleState == &_cycleState);
 }
 
 /**
@@ -4535,6 +4538,8 @@ MM_Scavenger::scavengeComplete(MM_EnvironmentBase *envBase)
 
 	Assert_MM_true(concurrent_state_complete == _concurrentState);
 
+	clearGCStats(env);
+
 	GC_OMRVMThreadListIterator threadIterator(_extensions->getOmrVM());
 	OMR_VMThread *walkThread = NULL;
 
@@ -4597,7 +4602,7 @@ MM_Scavenger::scavengeIncremental(MM_EnvironmentBase *env)
 		case concurrent_state_scan:
 		{
 			/* This is just for corner cases that must be run in STW mode.
-			 * Default main scan phase is done by scavengeConcurrent. */
+			 * Default main scan phase is done within masterThreadConcurrentCollect. */
 
 			timeout = scavengeScan(env);
 
@@ -4639,23 +4644,33 @@ MM_Scavenger::workThreadProcessRoots(MM_EnvironmentStandard *env)
 	rootScanner.scavengeRememberedSet(env);
 
 	rootScanner.scanRoots(env);
+
+	mergeGCStats(env);
 }
 
 void
 MM_Scavenger::workThreadScan(MM_EnvironmentStandard *env)
 {
+	/* Clear thread local stats */
+	memset((void *)&(env->_scavengerStats), 0, sizeof(MM_ScavengerStats));
+
 	completeScan(env);
 	// todo: are these two steps really necessary?
 	// we probably have to clear all things for master since it'll be doing final release/clear on behalf of mutator threads
 	// but is it really needed for slaves as well?
 	addCopyCachesToFreeList(env);
 	abandonTLHRemainders(env);
+
+	mergeGCStats(env);
 }
 
 void
 MM_Scavenger::workThreadComplete(MM_EnvironmentStandard *env)
 {
 	Assert_MM_true(_extensions->concurrentScavenger);
+
+	/* Clear thread local stats */
+	memset((void *)&(env->_scavengerStats), 0, sizeof(MM_ScavengerStats));
 
 	MM_ScavengerRootScanner rootScanner(env, this);
 
@@ -4703,45 +4718,61 @@ MM_Scavenger::workThreadComplete(MM_EnvironmentStandard *env)
 }
 
 uintptr_t
-MM_Scavenger::scavengeConcurrent(MM_EnvironmentBase *env, UDATA totalBytesToScavenge, volatile bool *forceExit)
+MM_Scavenger::masterThreadConcurrentCollect(MM_EnvironmentBase *env)
 {
 	Assert_MM_true(concurrent_state_scan == _concurrentState);
 
-	MM_ConcurrentScavengeTask scavengeTask(env, _dispatcher, this, MM_ConcurrentScavengeTask::SCAVENGE_SCAN, totalBytesToScavenge, forceExit, env->_cycleState);
+	clearGCStats(env);
+
+	MM_ConcurrentScavengeTask scavengeTask(env, _dispatcher, this, MM_ConcurrentScavengeTask::SCAVENGE_SCAN, UDATA_MAX, &_forceConcurrentTermination, env->_cycleState);
 	/* Concurrent background task will run with different (typically lower) number of threads. */
 	_dispatcher->run(env, &scavengeTask, _extensions->concurrentScavengerBackgroundThreads);
 
-	uintptr_t bytesScanned = scavengeTask.getBytesScanned();
 	/* we can't assert the work queue is empty. some mutator threads could have just flushed their copy caches, after the task terminated */
 	_concurrentState = concurrent_state_complete;
 	/* make allocate space non-allocatable to trigger the final GC phase */
 	_activeSubSpace->flip(env, MM_MemorySubSpaceSemiSpace::disable_allocation);
 
-	return bytesScanned;
+	/* return the number of bytes scanned since the caller needs to pass it into postConcurrentUpdateStatsAndReport for stats reporting */
+	return scavengeTask.getBytesScanned();
 }
 
-uintptr_t
-MM_Scavenger::masterThreadConcurrentCollect(MM_EnvironmentBase *env)
+void MM_Scavenger::preConcurrentInitializeStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats)
 {
-	/* note that we can't check isConcurrentWorkAvailable at this point since another thread could have set _forceConcurrentTermination since the
-	 * master thread calls this outside of the control monitor
-	 */
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 	Assert_MM_true(NULL == env->_cycleState);
-	Assert_MM_true(concurrent_state_scan == _concurrentState);
-
 	env->_cycleState = &_cycleState;
 
-	/* We pass a pointer to _forceConcurrentTermination so that we can cause the concurrent to terminate early by setting the
-	 * flag to true if we want to interrupt it so that the master thread returns to the control mutex in order to receive a
-	 * new GC request.
-	 */
-	uintptr_t bytesConcurrentlyScanned = scavengeConcurrent(env, 100000, &_forceConcurrentTermination);
+	stats->_cycleID = _cycleState._verboseContextID;
+
+	TRIGGER_J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_START(
+			_extensions->privateHookInterface,
+			env->getOmrVMThread(),
+			omrtime_hires_clock(),
+			J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_START,
+			stats);
+
+	_extensions->scavengerStats._startTime = omrtime_hires_clock();
+}
+
+void MM_Scavenger::postConcurrentUpdateStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats, UDATA bytesConcurrentlyScanned)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
+	stats->_terminationWasRequested = _forceConcurrentTermination;
+
+	_extensions->scavengerStats._endTime = omrtime_hires_clock();
+
+	TRIGGER_J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_END(
+		_extensions->privateHookInterface,
+		env->getOmrVMThread(),
+		omrtime_hires_clock(),
+		J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_END,
+		stats);
 
 	env->_cycleState = NULL;
-
-	/* return the number of bytes scanned since the caller needs to pass it into postConcurrentUpdateStatsAndReport for stats reporting */
-	return bytesConcurrentlyScanned;
 }
+
 
 void
 MM_Scavenger::switchConcurrentForThread(MM_EnvironmentBase *env)

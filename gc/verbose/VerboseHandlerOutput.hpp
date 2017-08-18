@@ -445,6 +445,16 @@ public:
 	 * @param eventData hook specific event data.
 	 */
 	void handleGCEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData);
+	
+	void handleConcurrentStart(J9HookInterface** hook, UDATA eventNum, void* eventData);
+	void handleConcurrentEnd(J9HookInterface** hook, UDATA eventNum, void* eventData);
+	
+	virtual	void handleConcurrentStartInternal(J9HookInterface** hook, UDATA eventNum, void* eventData) {}
+	virtual void handleConcurrentEndInternal(J9HookInterface** hook, UDATA eventNum, void* eventData) {}
+	virtual const char *getConcurrentTypeString() { return NULL; }
+	
+	virtual void handleConcurrentGCOpStart(J9HookInterface** hook, uintptr_t eventNum, void* eventData) {}
+	virtual void handleConcurrentGCOpEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData) {}
 
 	void handleHeapResize(J9HookInterface** hook, uintptr_t eventNum, void* eventData);
 

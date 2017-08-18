@@ -30,7 +30,7 @@
 class MM_AllocateDescription;
 class MM_AllocationContext;
 class MM_CollectorLanguageInterface;
-class MM_ConcurrentGMPStats;
+class MM_ConcurrentPhaseStatsBase;
 class MM_MemoryPool;
 class MM_ObjectAllocationInterface;
 class MM_MemorySubSpace;
@@ -275,11 +275,15 @@ public:
 	virtual void preMasterGCThreadInitialize(MM_EnvironmentBase *env) {}
 	virtual	void masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, bool initMarkMap = false, bool rebuildMarkBits = false) {}
 	virtual bool isConcurrentWorkAvailable(MM_EnvironmentBase *env) { return false; }
-	virtual	void preConcurrentInitializeStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentGMPStats *stats) {}
+	virtual	void preConcurrentInitializeStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats) {}
 	virtual uintptr_t masterThreadConcurrentCollect(MM_EnvironmentBase *env) { return 0; }
-	virtual	void postConcurrentUpdateStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentGMPStats *stats, UDATA bytesConcurrentlyScanned) {}
+	virtual	void postConcurrentUpdateStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats, UDATA bytesConcurrentlyScanned) {}
 	virtual void forceConcurrentFinish() {}
 	virtual void completeExternalConcurrentCycle(MM_EnvironmentBase *env) {}
+	/**
+	 * @return pointer to collector/phase specific concurrent stats structure
+	 */
+	virtual MM_ConcurrentPhaseStatsBase *getConcurrentPhaseStats() { return NULL; }
 	
 	MM_Collector(MM_CollectorLanguageInterface *cli)
 		: MM_BaseVirtual()

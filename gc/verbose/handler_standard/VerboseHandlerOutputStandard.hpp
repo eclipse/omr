@@ -133,6 +133,10 @@ public:
 	 * @param eventData hook specific event data.
 	 */
 	void handleScavengePercolate(J9HookInterface** hook, uintptr_t eventNum, void* eventData);
+	
+	virtual const char *getConcurrentTypeString() { return "scavenge"; }
+	
+	virtual void handleConcurrentGCOpEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
