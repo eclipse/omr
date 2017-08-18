@@ -23,6 +23,7 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "CollectionStatistics.hpp"
+#include "ConcurrentPhaseStatsBase.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "VerboseHandlerOutput.hpp"
 #include "VerboseManager.hpp"
@@ -808,6 +809,47 @@ MM_VerboseHandlerOutput::handleGCEnd(J9HookInterface** hook, uintptr_t eventNum,
 	writer->formatAndOutput(env, 0, "<gc-end %s activeThreads=\"%zu\">", tagTemplate, activeThreads);
 	outputMemoryInfo(env, _manager->getIndentLevel() + 1, stats);
 	writer->formatAndOutput(env, 0, "</gc-end>");
+	exitAtomicReportingBlock();
+}
+
+void
+MM_VerboseHandlerOutput::handleConcurrentStart(J9HookInterface** hook, UDATA eventNum, void* eventData)
+{
+	MM_ConcurrentPhaseStartEvent *event = (MM_ConcurrentPhaseStartEvent *)eventData;
+	MM_ConcurrentPhaseStatsBase *stats = (MM_ConcurrentPhaseStatsBase *)event->concurrentStats;
+	MM_VerboseWriterChain* writer = _manager->getWriterChain();
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(event->currentThread);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	UDATA contextId = stats->_cycleID;
+	char tagTemplate[200];
+	getTagTemplate(tagTemplate, sizeof(tagTemplate), _manager->getIdAndIncrement(), getConcurrentTypeString(), contextId, omrtime_current_time_millis());
+
+	enterAtomicReportingBlock();
+	writer->formatAndOutput(env, 0, "<concurrent-start %s>", tagTemplate);
+	handleConcurrentStartInternal(hook, eventNum, eventData);
+	writer->formatAndOutput(env, 0, "</concurrent-start>");
+	writer->flush(env);
+	exitAtomicReportingBlock();
+}
+
+void
+MM_VerboseHandlerOutput::handleConcurrentEnd(J9HookInterface** hook, UDATA eventNum, void* eventData)
+{
+	MM_ConcurrentPhaseEndEvent *event = (MM_ConcurrentPhaseEndEvent *)eventData;
+	MM_ConcurrentPhaseStatsBase *stats = (MM_ConcurrentPhaseStatsBase *)event->concurrentStats;
+	MM_VerboseWriterChain* writer = _manager->getWriterChain();
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(event->currentThread);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	UDATA contextId = stats->_cycleID;
+	char tagTemplate[200];
+	getTagTemplate(tagTemplate, sizeof(tagTemplate), _manager->getIdAndIncrement(), getConcurrentTypeString(), contextId, omrtime_current_time_millis());
+
+	enterAtomicReportingBlock();
+	writer->formatAndOutput(env, 0, "<concurrent-end %s>", tagTemplate);
+	handleConcurrentEndInternal(hook, eventNum, eventData);
+	handleConcurrentGCOpEnd(hook, eventNum, eventData);
+	writer->formatAndOutput(env, 0, "</concurrent-end>");
+	writer->flush(env);
 	exitAtomicReportingBlock();
 }
 

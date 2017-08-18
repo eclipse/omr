@@ -52,6 +52,9 @@ static void verboseHandlerCompactEnd(J9HookInterface** hook, uintptr_t eventNum,
 #if defined(OMR_GC_MODRON_SCAVENGER)
 static void verboseHandlerScavengeEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
 static void verboseHandlerScavengePercolate(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
+
+static void verboseHandlerConcurrentStart(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+static void verboseHandlerConcurrentEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
@@ -131,6 +134,9 @@ MM_VerboseHandlerOutputStandard::enableVerbose()
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	(*_mmPrivateHooks)->J9HookRegisterWithCallSite(_mmPrivateHooks, J9HOOK_MM_PRIVATE_SCAVENGE_END, verboseHandlerScavengeEnd, OMR_GET_CALLSITE(), (void *)this);
 	(*_mmPrivateHooks)->J9HookRegisterWithCallSite(_mmPrivateHooks, J9HOOK_MM_PRIVATE_PERCOLATE_COLLECT, verboseHandlerScavengePercolate, OMR_GET_CALLSITE(), (void *)this);
+
+	(*_mmPrivateHooks)->J9HookRegisterWithCallSite(_mmPrivateHooks, J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_START, verboseHandlerConcurrentStart, OMR_GET_CALLSITE(), this);
+	(*_mmPrivateHooks)->J9HookRegisterWithCallSite(_mmPrivateHooks, J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_END, verboseHandlerConcurrentEnd, OMR_GET_CALLSITE(), this);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
 	/* Concurrent */
@@ -186,6 +192,11 @@ MM_VerboseHandlerOutputStandard::disableVerbose()
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	(*_mmPrivateHooks)->J9HookUnregister(_mmPrivateHooks, J9HOOK_MM_PRIVATE_SCAVENGE_END, verboseHandlerScavengeEnd, NULL);
 	(*_mmPrivateHooks)->J9HookUnregister(_mmPrivateHooks, J9HOOK_MM_PRIVATE_PERCOLATE_COLLECT, verboseHandlerScavengePercolate, NULL);
+
+	/* Concurrent GMP */
+	(*_mmPrivateHooks)->J9HookUnregister(_mmPrivateHooks, J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_START, verboseHandlerConcurrentStart, NULL);
+	(*_mmPrivateHooks)->J9HookUnregister(_mmPrivateHooks, J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_END, verboseHandlerConcurrentEnd, NULL);
+
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
 	/* Concurrent */
@@ -396,7 +407,9 @@ MM_VerboseHandlerOutputStandard::handleScavengeEnd(J9HookInterface** hook, uintp
 	enterAtomicReportingBlock();
 	handleGCOPOuterStanzaStart(env, "scavenge", env->_cycleState->_verboseContextID, duration, deltaTimeSuccess);
 
-	writer->formatAndOutput(env, 1, "<scavenger-info tenureage=\"%zu\" tenuremask=\"%4zx\" tiltratio=\"%zu\" />", scavengerStats->_tenureAge, scavengerStats->getFlipHistory(0)->_tenureMask, scavengerStats->_tiltRatio);
+	if (event->cycleEnd) {
+		writer->formatAndOutput(env, 1, "<scavenger-info tenureage=\"%zu\" tenuremask=\"%4zx\" tiltratio=\"%zu\" />", scavengerStats->_tenureAge, scavengerStats->getFlipHistory(0)->_tenureMask, scavengerStats->_tiltRatio);
+	}
 
 	if (0 != scavengerStats->_flipCount) {
 		writer->formatAndOutput(env, 1, "<memory-copied type=\"nursery\" objects=\"%zu\" bytes=\"%zu\" bytesdiscarded=\"%zu\" />",
@@ -439,6 +452,23 @@ MM_VerboseHandlerOutputStandard::handleScavengeEnd(J9HookInterface** hook, uintp
 	writer->flush(env);
 	exitAtomicReportingBlock();
 }
+
+void
+MM_VerboseHandlerOutputStandard::handleConcurrentGCOpEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData)
+{
+	/* convert event from concurrent-end to scavenge-end */
+	MM_ScavengeEndEvent scavengeEndEvent;
+	MM_ConcurrentPhaseEndEvent *event = (MM_ConcurrentPhaseEndEvent *)eventData;
+
+	scavengeEndEvent.currentThread = event->currentThread;
+	scavengeEndEvent.timestamp = event->timestamp;
+	scavengeEndEvent.eventid = event->eventid;
+	scavengeEndEvent.subSpace = NULL; //unknown info
+	scavengeEndEvent.cycleEnd = false;
+
+	handleScavengeEnd(hook, J9HOOK_MM_PRIVATE_SCAVENGE_END, &scavengeEndEvent);
+}
+
 
 void
 MM_VerboseHandlerOutputStandard::handleScavengeEndInternal(MM_EnvironmentBase* env, void* eventData)
@@ -997,6 +1027,18 @@ void
 verboseHandlerScavengePercolate(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData)
 {
 	((MM_VerboseHandlerOutputStandard *)userData)->handleScavengePercolate(hook, eventNum, eventData);
+}
+
+void
+verboseHandlerConcurrentStart(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
+{
+	((MM_VerboseHandlerOutput *)userData)->handleConcurrentStart(hook, eventNum, eventData);
+}
+
+void
+verboseHandlerConcurrentEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
+{
+	((MM_VerboseHandlerOutput *)userData)->handleConcurrentEnd(hook, eventNum, eventData);
 }
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 

@@ -181,6 +181,8 @@ MM_MasterGCThread::masterThreadEntryPoint()
 		
 		_collector->preMasterGCThreadInitialize(env);
 		
+		MM_ConcurrentPhaseStatsBase *stats = _collector->getConcurrentPhaseStats();
+
 		/* first, notify the thread that started us that we are ready to enter the waiting state */
 		_masterThreadState = STATE_WAITING;
 		_masterGCThread = omrthread_self();
@@ -222,13 +224,12 @@ MM_MasterGCThread::masterThreadEntryPoint()
 				if (_collector->isConcurrentWorkAvailable(env)) {
 					_masterThreadState = STATE_RUNNING_CONCURRENT;
 					// todo: remove this VLHGC specific structure
-					MM_ConcurrentGMPStats stats;
-					_collector->preConcurrentInitializeStatsAndReport(env, &stats);
+					_collector->preConcurrentInitializeStatsAndReport(env, stats);
 					/* ensure that we get out of this monitor so that the mutator can wake up */
 					omrthread_monitor_exit(_collectorControlMutex);
 					uintptr_t bytesConcurrentlyScanned = _collector->masterThreadConcurrentCollect(env);
 					omrthread_monitor_enter(_collectorControlMutex);
-					_collector->postConcurrentUpdateStatsAndReport(env, &stats, bytesConcurrentlyScanned);
+					_collector->postConcurrentUpdateStatsAndReport(env, stats, bytesConcurrentlyScanned);
 					if (STATE_RUNNING_CONCURRENT == _masterThreadState) {
 						/* we are still in the concurrent state (might have changed if a GC was requested) so set it back to waiting */
 						_masterThreadState = STATE_WAITING;

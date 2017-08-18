@@ -29,6 +29,7 @@
 
 #include "CollectionStatisticsStandard.hpp"
 #include "Collector.hpp"
+#include "ConcurrentPhaseStatsBase.hpp"
 #include "CopyScanCacheList.hpp"
 #include "CopyScanCacheStandard.hpp"
 #include "CycleState.hpp"
@@ -124,6 +125,8 @@ private:
 	
 	/* TODO: put it parent Collector class and share with Balanced? */ 
 	volatile bool _forceConcurrentTermination;
+	
+	MM_ConcurrentPhaseStatsBase _concurrentPhaseStats;
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 #define IS_CONCURRENT_ENABLED _extensions->isConcurrentScavengerEnabled()
@@ -357,7 +360,7 @@ public:
 	void reportGCIncrementStart(MM_EnvironmentStandard *env);
 	void reportGCIncrementEnd(MM_EnvironmentStandard *env);
 	void reportScavengeStart(MM_EnvironmentStandard *env);
-	void reportScavengeEnd(MM_EnvironmentStandard *env);
+	void reportScavengeEnd(MM_EnvironmentStandard *env, bool lastIncrement);
 
 	MMINLINE MM_ScavengerHotFieldStats *getHotFieldStats(MM_EnvironmentStandard *env) { return &(env->_hotFieldStats); }
 	void masterClearHotFieldStats();
@@ -410,8 +413,8 @@ public:
 	 */
 	bool processRememberedThreadReference(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 
-	void clearGCStats(MM_EnvironmentStandard *env);
-	void mergeGCStats(MM_EnvironmentStandard *env);
+	void clearGCStats(MM_EnvironmentBase *env);
+	void mergeGCStats(MM_EnvironmentBase *env);
 	bool canCalcGCStats(MM_EnvironmentStandard *env);
 	void calcGCStats(MM_EnvironmentStandard *env);
 
@@ -509,6 +512,7 @@ protected:
 	 * @param env Master GC thread.
 	 */
 	virtual void preMasterGCThreadInitialize(MM_EnvironmentBase *env);
+	virtual MM_ConcurrentPhaseStatsBase *getConcurrentPhaseStats() { return &_concurrentPhaseStats; }
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	
 public:
@@ -522,10 +526,11 @@ public:
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	/* API for interaction with MasterGCTread */
 	virtual bool isConcurrentWorkAvailable(MM_EnvironmentBase *env);
+	virtual void preConcurrentInitializeStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats);
 	virtual uintptr_t masterThreadConcurrentCollect(MM_EnvironmentBase *env);
+	virtual void postConcurrentUpdateStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats, UDATA bytesConcurrentlyScanned);
 
 	/* master thread */
-	uintptr_t scavengeConcurrent(MM_EnvironmentBase *env, UDATA totalBytesToScavenge, volatile bool *forceExit);
 	bool scavengeIncremental(MM_EnvironmentBase *env);
 	
 	bool scavengeInit(MM_EnvironmentBase *env);
@@ -566,7 +571,11 @@ public:
 	 * Enabled/disable approriate thread local resources when starting or finishing Concurrent Scavenger Cycle
 	 */ 
 	void switchConcurrentForThread(MM_EnvironmentBase *env);	
-#endif
+	
+	void reportConcurrentScavengeStart(MM_EnvironmentStandard *env);
+	void reportConcurrentScavengeEnd(MM_EnvironmentStandard *env);
+	
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 	/**
 	 * Determine whether the object pointer is found within the heap proper.
