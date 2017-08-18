@@ -304,12 +304,18 @@ protected:
    TR_BitVector *getUseonlyAliasesBV(TR::SymbolReferenceTable *symRefTab);
    TR_BitVector *getUseDefAliasesBV( bool isDirectCall = false, bool gcSafe = false);
 
+public:
    /**
     * Enum values for _flags field.
     */
 #define ENUM_NAME FlagsEnum
 #define ENUM_FILE "il/SymbolReferenceFlagsEnum.hpp"
 #include "infra/EnumTableFactor.hpp"
+
+   uint32_t getFlags()                      { return _flags.getValue(); }
+   void setFlagValue(uint32_t v, bool b)    { _flags.setValue(v, b); }
+
+protected:
 
    TR::Symbol *                _symbol;                ///< Pointer to the symbol being referenced
 
