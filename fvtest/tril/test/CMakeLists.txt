@@ -40,6 +40,7 @@ add_executable(triltest
    MethodInfoTest.cpp
    IlGenTest.cpp
    CompileTest.cpp
+   SymRefTabTest.cpp
 )
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../tril/ ${CMAKE_CURRENT_BINARY_DIR}/tril)
