@@ -103,8 +103,8 @@ class ILTraverser
     */
    void removeObserver(Observer* o)
       {
-      auto i = std::find(_observers.cbegin(), _observers.cend(), o);
-      if (i != _observers.cend())
+      auto i = std::find(_observers.begin(), _observers.end(), o);
+      if (i != _observers.end())
          {
          _observers.erase(i);
          }
