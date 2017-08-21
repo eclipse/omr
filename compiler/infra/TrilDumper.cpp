@@ -83,7 +83,7 @@ void TR::TrilDumper::visitingMethod(TR::ResolvedMethodSymbol* method)
       else if (symbol->isResolvedMethod()) kind = "resolvedMethod";
       else if (symbol->isStatic()) kind = "static";
 
-      fprintf(_outputFile, "(symref offset=%d flags=%#x (%s name=\"%s\" type=%s size=%d flags=%#x flags2=%#x)) ",
+      fprintf(_outputFile, "(symref offset=%d rawflags=%#x (%s name=\"%s\" type=%s size=%d rawflags=%#x rawflags2=%#x)) ",
               symref->getOffset(),
               symref->getFlags(),
               kind.c_str(),

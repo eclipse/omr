@@ -17,10 +17,19 @@
  ******************************************************************************/
 
 #include "ilgen.hpp"
+#include "type_info.hpp"
 
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
 
 #include <unordered_map>
 #include <string>
@@ -285,6 +294,141 @@ bool Tril::TRLangBuilder::cfgFor(const ASTNode* const tree) {
    return isFallthroughNeeded;
 }
 
+TR::Symbol* Tril::TRLangBuilder::generateSymbol(const ASTNode* symbolNode) {
+    auto typeName = symbolNode->getArgByName("type")->getValue()->getString();
+    auto symbolType = Tril::TypeInfo::getTRDataTypes(typeName);
+
+    std::string symbolKind = symbolNode->getName();
+    TR::Symbol* symbol;
+    TraceIL("Creating %s symbol from ASTNode %p\n", symbolKind.c_str(), symbolNode);
+    if (symbolKind == "auto") {
+        symbol = TR::AutomaticSymbol::create(comp()->trHeapMemory(), symbolType);
+        TraceIL("  type = %s\n", typeName);
+    }
+    else if (symbolKind == "label") {
+        symbol = TR::LabelSymbol::create(comp()->trHeapMemory(), comp()->cg());
+    }
+    else if (symbolKind == "method") {
+        symbol = TR::MethodSymbol::create(comp()->trHeapMemory());
+    }
+    else if (symbolKind == "parm") {
+        symbol = TR::ParameterSymbol::create(comp()->trHeapMemory(), symbolType, false, 0);
+        TraceIL("  type = %s\n", typeName);
+    }
+    else if (symbolKind == "regmapped") {
+        symbol = TR::RegisterMappedSymbol::create(comp()->trHeapMemory(), symbolType);
+        TraceIL("  type = %s\n", typeName);
+    }
+//    else if (symbolKind == "resolvedmethod") {
+//        symbol = TR::ResolvedMethodSymbol::create(comp()->trHeapMemory(), , comp());
+//    }
+    else if (symbolKind == "static") {
+        symbol = TR::StaticSymbol::create(comp()->trHeapMemory(), symbolType);
+    }
+    else {
+        symbol = TR::Symbol::create(comp()->trHeapMemory(), symbolType);
+        TraceIL("  type = %s\n", typeName);
+    }
+
+    auto symbolName = symbolNode->getArgByName("name");
+    if (symbolName) {
+        auto str = symbolName->getValue()->getString();
+        symbol->setName(str);
+        TraceIL("  name = %s\n", str);
+    }
+
+    auto symbolSize = symbolNode->getArgByName("size");
+    if (symbolSize) {
+        auto size = symbolSize->getValue()->get<uint32_t>();
+        symbol->setSize(size);
+        TraceIL("  size = %d\n", size);
+    }
+
+    auto flags = symbolNode->getArgByName("rawflags");
+    if (flags) {
+        auto value = flags->getValue()->get<uint32_t>();
+        symbol->setFlagValue(value, true);
+        TraceIL("  setting raw flags to %#x\n", value);
+    }
+    flags = symbolNode->getArgByName("rawflags2");
+    if (flags) {
+        auto value = flags->getValue()->get<uint32_t>();
+        symbol->setFlag2Value(value, true);
+        TraceIL("  setting raw flags2 to %#x\n", value);
+    }
+
+    flags = symbolNode->getArgByName("setflags");
+    while (flags) {
+        auto flagName = flags->getValue()->getString();
+        auto flagValue = TR::Symbol::getFlagsEnumTable().at(flagName);
+        symbol->setFlagValue(flagValue, true);
+        TraceIL("  setting flag %s (%#x)\n", flagName, flagValue)
+        flags = flags->next;
+    }
+    flags = symbolNode->getArgByName("setflags2");
+    while (flags) {
+        auto flagName = flags->getValue()->getString();
+        auto flagValue = TR::Symbol::getFlagsEnumTable().at(flagName);
+        symbol->setFlag2Value(flagValue, true);
+        TraceIL("  setting flag2 %s (%#x)\n", flagName, flagValue)
+        flags = flags->next;
+    }
+    flags = symbolNode->getArgByName("clearflags");
+    while (flags) {
+        auto flagName = flags->getValue()->getString();
+        auto flagValue = TR::Symbol::getFlagsEnumTable().at(flagName);
+        symbol->setFlagValue(flagValue, false);
+        TraceIL("  clearing flag %s (%#x)\n", flagName, flagValue)
+        flags = flags->next;
+    }
+    flags = symbolNode->getArgByName("clearflags2");
+    while (flags) {
+        auto flagName = flags->getValue()->getString();
+        auto flagValue = TR::Symbol::getFlagsEnumTable().at(flagName);
+        symbol->setFlag2Value(flagValue, false);
+        TraceIL("  clearing flag2 %s (%#x)\n", flagName, flagValue)
+        flags = flags->next;
+    }
+
+    return symbol;
+}
+
+TR::SymbolReference* Tril::TRLangBuilder::generateSymRef(const ASTNode* symrefNode) {
+    auto symbol = generateSymbol(symrefNode->getChildren());
+
+    auto symrefOffset = symrefNode->getArgByName("offset")->getValue()->get<intptrj_t>();
+    auto symref = new (comp()->trHeapMemory()) TR::SymbolReference(symRefTab(), symbol, symrefOffset);
+    TraceIL("Creating symbol reference from ASTNode %p\n", symrefNode);
+    TraceIL("  symbol = %p\n", symbol);
+    TraceIL("  offset = %d\n", symrefOffset);
+
+    auto flags = symrefNode->getArgByName("rawflags");
+    if (flags) {
+        auto value = flags->getValue()->get<uint32_t>();
+        symbol->setFlagValue(value, true);
+        TraceIL("  setting raw flags to %#x\n", value);
+    }
+
+    flags = symrefNode->getArgByName("setflags");
+    while (flags) {
+        auto flagName = flags->getValue()->getString();
+        auto flagValue = TR::SymbolReference::getFlagsEnumTable().at(flagName);
+        symbol->setFlagValue(flagValue, true);
+        TraceIL("  setting flag %s (%#x)\n", flagName, flagValue)
+        flags = flags->next;
+    }
+    flags = symrefNode->getArgByName("clearflags");
+    while (flags) {
+        auto flagName = flags->getValue()->getString();
+        auto flagValue = TR::SymbolReference::getFlagsEnumTable().at(flagName);
+        symbol->setFlagValue(flagValue, false);
+        TraceIL("  clearing flag %s (%#x)\n", flagName, flagValue)
+        flags = flags->next;
+    }
+
+    return symref;
+}
+
 /*
  * Generating IL from a Tril AST is done in three steps:
  *
@@ -304,13 +448,29 @@ bool Tril::TRLangBuilder::injectIL() {
 
     // assign block names
     while (block) {
-       if (block->getArgByName("name") != nullptr) {
+       if (strcmp("block", block->getName()) == 0 && block->getArgByName("name") != nullptr) {
            auto name = block->getArgByName("name")->getValue()->getString();
            _blockMap[name] = blockIndex;
-           TraceIL("Name of block %d set to \"%s\"\n", blockIndex, name);
+           TraceIL("Name of block %d set to \"%s\"\n", blockIndex + 2, name);
+           ++blockIndex;
        }
-       ++blockIndex;
        block = block->next;
+    }
+
+    TraceIL("=== %s ===\n", "Generating Symbol Reference Table");
+    block = _trees;
+    generateToBlock(0);
+
+    // iterate over each symreftab entry to add the defined symbols
+    while (block) {
+        if (strcmp("symreftab", block->getName()) == 0) {
+            const ASTNode* symrefNode = block->getChildren();
+            while (symrefNode) {
+                generateSymRef(symrefNode);
+                symrefNode = symrefNode->next;
+            }
+        }
+        block = block->next;
     }
 
     TraceIL("=== %s ===\n", "Generating IL");
@@ -319,14 +479,16 @@ bool Tril::TRLangBuilder::injectIL() {
 
     // iterate over each treetop in each basic block
     while (block) {
-       const ASTNode* t = block->getChildren();
-       while (t) {
-           auto node = toTRNode(t);
-           const auto tt = genTreeTop(node);
-           TraceIL("Created TreeTop %p for node n%dn (%p)\n", tt, node->getGlobalIndex(), node);
-           t = t->next;
+       if (strcmp("block", block->getName()) == 0) {
+           const ASTNode* t = block->getChildren();
+           while (t) {
+               auto node = toTRNode(t);
+               const auto tt = genTreeTop(node);
+               TraceIL("Created TreeTop %p for node n%dn (%p)\n", tt, node->getGlobalIndex(), node);
+               t = t->next;
+           }
+           generateToBlock(_currentBlockNumber + 1);
        }
-       generateToBlock(_currentBlockNumber + 1);
        block = block->next;
     }
 
@@ -336,39 +498,41 @@ bool Tril::TRLangBuilder::injectIL() {
 
     // iterate over each basic block
     while (block) {
-       auto isFallthroughNeeded = true;
+       if (strcmp("block", block->getName()) == 0) {
+           auto isFallthroughNeeded = true;
 
-       // create CFG edges from the nodes withing the current basic block
-       const ASTNode* t = block->getChildren();
-       while (t) {
-           isFallthroughNeeded = isFallthroughNeeded && cfgFor(t);
-           t = t->next;
-       }
+           // create CFG edges from the nodes withing the current basic block
+           const ASTNode* t = block->getChildren();
+           while (t) {
+               isFallthroughNeeded = isFallthroughNeeded && cfgFor(t);
+               t = t->next;
+           }
 
-       // create fall-through edge
-       auto fallthroughArg = block->getArgByName("fallthrough");
-       if (fallthroughArg != nullptr) {
-           auto target = std::string(fallthroughArg->getValue()->getString());
-           if (target == "@exit") {
-               cfg()->addEdge(_currentBlock, cfg()->getEnd());
-               TraceIL("Added fallthrough edge from block %d to \"%s\"\n", _currentBlockNumber, target.c_str());
+           // create fall-through edge
+           auto fallthroughArg = block->getArgByName("fallthrough");
+           if (fallthroughArg != nullptr) {
+               auto target = std::string(fallthroughArg->getValue()->getString());
+               if (target == "@exit") {
+                   cfg()->addEdge(_currentBlock, cfg()->getEnd());
+                   TraceIL("Added fallthrough edge from block %d to \"%s\"\n", _currentBlockNumber, target.c_str());
+               }
+               else if (target == "@none") {
+                   // do nothing, no fall-throught block specified
+               }
+               else {
+                   auto destBlock = _blockMap.at(target);
+                   cfg()->addEdge(_currentBlock, _blocks[destBlock]);
+                   TraceIL("Added fallthrough edge from block %d to block %d \"%s\"\n", _currentBlockNumber, destBlock, target.c_str());
+               }
            }
-           else if (target == "@none") {
-               // do nothing, no fall-throught block specified
+           else if (isFallthroughNeeded) {
+               auto dest = _currentBlockNumber + 1 == numBlocks() ? cfg()->getEnd() : _blocks[_currentBlockNumber + 1];
+               cfg()->addEdge(_currentBlock, dest);
+               TraceIL("Added fallthrough edge from block %d to following block\n", _currentBlockNumber);
            }
-           else {
-               auto destBlock = _blockMap.at(target);
-               cfg()->addEdge(_currentBlock, _blocks[destBlock]);
-               TraceIL("Added fallthrough edge from block %d to block %d \"%s\"\n", _currentBlockNumber, destBlock, target.c_str());
-           }
-       }
-       else if (isFallthroughNeeded) {
-           auto dest = _currentBlockNumber + 1 == numBlocks() ? cfg()->getEnd() : _blocks[_currentBlockNumber + 1];
-           cfg()->addEdge(_currentBlock, dest);
-           TraceIL("Added fallthrough edge from block %d to following block\n", _currentBlockNumber);
-       }
 
-       generateToBlock(_currentBlockNumber + 1);
+           generateToBlock(_currentBlockNumber + 1);
+       }
        block = block->next;
     }
 

@@ -63,6 +63,9 @@ class TRLangBuilder : public TR::IlInjector {
          */
         bool cfgFor(const ASTNode* const tree);
 
+        TR::Symbol* generateSymbol(const ASTNode* symbolNode);
+        TR::SymbolReference* generateSymRef(const ASTNode* symrefNode);
+
     private:
         TR::TypeDictionary _types;
         const ASTNode* _trees;    // pointer to the AST node list representing Trees
