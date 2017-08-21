@@ -156,7 +156,8 @@ class ILTraverser
    TR::Compilation* comp() { return _comp; }
 
    private:
-   std::vector<Observer*, TR::typed_allocator<Observer*, TR::Allocator>> _observers;
+   typedef TR::typed_allocator<Observer*, TR::Region&> ObserverAllocator;
+   std::vector<Observer*, ObserverAllocator> _observers;
    TR::NodeChecklist _visitedNodes;
    TR::Compilation* _comp;
    };
