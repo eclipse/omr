@@ -59,6 +59,42 @@ void TR::TrilDumper::visitingMethod(TR::ResolvedMethodSymbol* method)
          }
       fprintf(_outputFile, "] ");
       }
+
+   // dump symref table
+   fprintf(_outputFile, "(symreftab ");
+   auto symreftab = method->comp()->getSymRefTab();
+   for (auto i = (int)symreftab->getLastCommonNonhelperSymbol() + symreftab->getNumHelperSymbols(); i < symreftab->getNumSymRefs(); ++i)
+      {
+      auto symref = symreftab->getSymRef(i);
+      if (symref == NULL)
+         {
+         fprintf(_outputFile, "(NULLSYMREF %d)", i);
+         continue;
+         }
+
+      auto symbol = symref->getSymbol();
+
+      std::string kind = "symbol";
+      if (symbol->isAuto()) kind = "auto";
+      else if (symbol->isLabel()) kind = "label";
+      else if (symbol->isMethod()) kind = "method";
+      else if (symbol->isParm()) kind = "parm";
+      else if (symbol->isRegisterMappedSymbol()) kind = "parm";
+      else if (symbol->isResolvedMethod()) kind = "resolvedMethod";
+      else if (symbol->isStatic()) kind = "static";
+
+      fprintf(_outputFile, "(symref offset=%d flags=%#x (%s name=\"%s\" type=%s size=%d flags=%#x flags2=%#x)) ",
+              symref->getOffset(),
+              symref->getFlags(),
+              kind.c_str(),
+              symbol->getName(),
+              TR::DataType::getName(symbol->getDataType()),
+              symbol->getSize(),
+              symbol->getFlags(),
+              symbol->getFlags2()
+              );
+      }
+   fprintf(_outputFile, ") ");
    }
 
 void TR::TrilDumper::returnedToMethod(TR::ResolvedMethodSymbol* method)
