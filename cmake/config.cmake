@@ -16,6 +16,8 @@
 #    Multiple authors (IBM Corp.) - initial implementation and documentation
 ###############################################################################
 
+include(CMakeDependentOption)
+
 set(OMR_WARNINGS_AS_ERRORS ON CACHE BOOL "Treat compile warnings as errors")
 
 ###
@@ -46,35 +48,36 @@ set(OMR_TRACE_LIB "omrtrace" CACHE STRING "Name of the trace library to link aga
 ###
 
 # TODO: This is a pretty crazy list, can we move it to their subprojects?
-
-set(OMR_GC_ALLOCATION_TAX ON CACHE BOOL "TODO: Document")
-set(OMR_GC_ARRAYLETS ON CACHE BOOL "TODO: Document")
-set(OMR_GC_BATCH_CLEAR_TLH ON CACHE BOOL "TODO: Document")
-set(OMR_GC_COMBINATION_SPEC ON CACHE BOOL "TODO: Document")
-set(OMR_GC_DEBUG_ASSERTS ON CACHE BOOL "TODO: Document")
-set(OMR_GC_HEAP_CARD_TABLE ON CACHE BOOL "TODO: Document")
-set(OMR_GC_LARGE_OBJECT_AREA ON CACHE BOOL "TODO: Document")
-set(OMR_GC_MINIMUM_OBJECT_SIZE ON CACHE BOOL "TODO: Document")
-set(OMR_GC_MODRON_STANDARD ON CACHE BOOL "TODO: Document")
-set(OMR_GC_NON_ZERO_TLH ON CACHE BOOL "TODO: Document")
-set(OMR_GC_THREAD_LOCAL_HEAP ON CACHE BOOL "TODO: Document")
-set(OMR_GC_COMPRESSED_POINTERS OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_TLH_PREFETCH_FTA OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_OBJECT_MAP OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_DYNAMIC_CLASS_UNLOADING OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_LEAF_BITS OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_MODRON_COMPACTION OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_MODRON_CONCURRENT_MARK OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_MODRON_SCAVENGER OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_CONCURRENT_SCAVENGER OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_CONCURRENT_SWEEP OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_HYBRID_ARRAYLETS OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_IDLE_HEAP_MANAGER OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_OBJECT_ALLOCATION_NOTIFY OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_REALTIME OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_SEGREGATED_HEAP OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_STACCATO OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_VLHGC OFF CACHE BOOL "TODO: Document")
+cmake_dependent_option(OMR_GC_ALLOCATION_TAX "Enable allocation tax capabilities" ON "OMR_GC_MODRON_STANDARD" OFF)
+cmake_dependent_option(OMR_GC_ARRAYLETS "Arrays are broken into an array spine and chunks of data (arraylets)" ON "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_BATCH_CLEAR_TLH "Zero any TLH allocated" ON "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_COMBINATION_SPEC "Set on specs which implement LIR 16325:  reduce memory footprint by combining multiple sidecars into the same set of libraries." ON
+	"OMR_GC_ARRAYLETS;OMR_GC_HEAP_CARD_TABLE;OMR_GC_HYBRID_ARRAYLETS;OMR_GC_MODRON_STANDARD;OMR_GC_REALTIME" OFF)
+#TODO this should also depend on 64bit
+cmake_dependent_option(OMR_GC_COMPRESSED_POINTERS "Object fields are compressed to 32-bits" OFF "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_CONCURRENT_SCAVENGER "" OFF "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_CONCURRENT_SWEEP "Enable concurrent sweep in Modron" OFF "OMR_GC_ALLOCATION_TAX;OMR_GC_MODRON_STANDARD" OFF)
+cmake_dependent_option(OMR_GC_DEBUG_ASSERTS "Specialized GC assertions are used instead of standard trace asserts for GC assertions" ON "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_DYNAMIC_CLASS_UNLOADING "Dynamic class unloading is supported" OFF "OMR_GC_MODRON_SCAVENGER" OFF)
+cmake_dependent_option(OMR_GC_HEAP_CARD_TABLE "Means that the heap has a card table which is used to track modifications during the GC cycle (be it concurrent or incremental)." ON "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_HYBRID_ARRAYLETS "Arraylet header has bimodal shape in runtime, separate for contiguous and discontiguous arraylets" OFF "OMR_GC_ARRAYLETS" OFF)
+cmake_dependent_option(OMR_GC_IDLE_HEAP_MANAGER "Enable VM idle heap management(decommit excess free java heap pages)" OFF "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_LARGE_OBJECT_AREA "Enable large object area (LOA) support" ON "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_LLEAD_BITS "Add leaf bit instance descriptions to classes" ON "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_MINIMUM_OBJECT_SIZE "Guarantee a minimum size to all objects allocated" ON "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_MODRON_COMPACTION "Enable compaction in Modron" OFF "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_MODRON_CONCURRENT_MARK "Enable concurrent mark in Modron" OFF "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_MODRON_SCAVENGER "Enable scavenger in Modron" OFF "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_MODRON_STANDARD "Enable Modron standard configuration" ON "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_NON_ZERO_TLH "Enable Modron standard configuration" ON "OMR_GC_THREAD_LOCAL_HEAP" OFF)
+cmake_dependent_option(OMR_GC_OBJECT_ALLOCATION_NOTIFY "TODO: Document" OFF "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_REALTIME "TODO: Document" OFF "OMR_GC_ARRAYLETS;OMR_GC_OBJECT_ACCESS_BARRIER;OMR_GC_SEGREGATED_HEAP" OFF)
+cmake_dependent_option(OMR_GC_SEGREGATED_HEAP "Enable Segregated Heap model." OFF "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_STACCATO "Enable Staccato Garbage Collection" OFF "OMR_GC_REALTIME" OFF)
+cmake_dependent_option(OMR_GC_THREAD_LOCAL_HEAP "Allocator uses a thread local heap for objects" ON "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_TLH_PREFETCH_FTA "Enable tlhPrefetchFTA" OFF "OMR_GC_THREAD_LOCAL_HEAP" OFF)
+cmake_dependent_option(OMR_GC_OBJECT_MAP "TODO: Document" OFF "OMR_GC" OFF)
+cmake_dependent_option(OMR_GC_VLHGC "Enables the Very Large Heap Garbage Collector" OFF "OMR_GC_HEAP_CARD_TABLE" OFF)
 
 set(OMR_INTERP_HAS_SEMAPHORES ON CACHE BOOL "TODO: Document")
 set(OMR_INTERP_COMPRESSED_OBJECT_HEADER OFF CACHE BOOL "TODO: Document")
