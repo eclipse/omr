@@ -1,20 +1,26 @@
 ***********************************************************************
+* Copyright (c) 2012, 2016 IBM Corp. and others
 *
-* (c) Copyright IBM Corp. 2012, 2016
+* This program and the accompanying materials are made available under
+* the terms of the Eclipse Public License 2.0 which accompanies this
+* distribution and is available at
+* https://www.eclipse.org/legal/epl-1.0/ or the Apache License,
+* Version 2.0 which accompanies this distribution and is available at
+* https://www.apache.org/licenses/LICENSE-2.0.
 *
-*  This program and the accompanying materials are made available
-*  under the terms of the Eclipse Public License v1.0 and
-*  Apache License v2.0 which accompanies this distribution.
+* This Source Code is also Distributed under one or more Secondary
+* Licenses, as those terms are defined by the Eclipse Public License,
+*  v. 2.0: GNU General Public License, version 2 with the GNU
+* Classpath Exception [1] and GNU General Public License, version 2
+* with the OpenJDK Assembly Exception [2].
 *
-*      The Eclipse Public License is available at
-*      http://www.eclipse.org/legal/epl-v10.html
-*
-*      The Apache License v2.0 is available at
-*      http://www.opensource.org/licenses/apache2.0.php
+* [1] https://www.gnu.org/software/classpath/license.html
+* [2] http://openjdk.java.net/legal/assembly-exception.html
 *
 * Contributors:
-*    Multiple authors (IBM Corp.) - initial API and implementation
-*    and/or initial documentation
+*   Multiple authors (IBM Corp.) - initial API and implementation
+*   and/or initial documentation
+*
 ***********************************************************************
 
          TITLE 'omrvmem_support_below_bar_32'
@@ -198,23 +204,6 @@ OMRSTORAGE RMODE ANY                                                     000000
 @@CCN@19 ALIAS C'omrfree_memory_below_bar'                               000000
 @@CCN@11 ALIAS C'omrallocate_4K_pages_below_bar'                         000000
 @@CCN@1  ALIAS C'omrallocate_1M_pageable_pages_below_bar'                000000
-* /********************************************************************  000001
-*  *                                                                     000002
-*  * (c) Copyright IBM Corp. 2001, 2016                                  000003
-*  *                                                                     000004
-*  *  This program and the accompanying materials are made available     000005
-*  *  under the terms of the Eclipse Public License v1.0 and             000006
-*  *  Apache License v2.0 which accompanies this distribution.           000007
-*  *                                                                     000008
-*  *      The Eclipse Public License is available at                     000009
-*  *      http://www.eclipse.org/legal/epl-v10.html                      000010
-*  *                                                                     000011
-*  *      The Apache License v2.0 is available at                        000012
-*  *      http://www.opensource.org/licenses/apache2.0.php               000013
-*  *                                                                     000014
-*  * Contributors:                                                       000015
-*  *    Multiple authors (IBM Corp.) - initial API and implementation a  000016
-*  ********************************************************************  000017
 *                                                                        000018
 * /*                                                                     000019
 *  * This file is used to generate the HLASM corresponding to the C cal  000020
