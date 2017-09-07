@@ -31,10 +31,22 @@ class TR_UseDefInfo;
 namespace TR { class Optimizer; }
 namespace TR { class ParameterSymbol; }
 
-class TR_ValueNumberInfo : public TR::Allocatable<TR_ValueNumberInfo, TR::Allocator>
+class TR_ValueNumberInfo
    {
 
    public:
+  
+   static void *operator new(size_t size, TR::Allocator a)
+      { return a.allocate(size); }
+   static void  operator delete(void *ptr, size_t size)
+      { ((TR_ValueNumberInfo*)ptr)->allocator().deallocate(ptr, size); } /* t->allocator() must return the same allocator as used for new */
+
+   /* Virtual destructor is necessary for the above delete operator to work
+    * See "Modern C++ Design" section 4.7
+    */
+   virtual ~TR_ValueNumberInfo() {}     
+ 
+
    TR_ValueNumberInfo(TR::Compilation *);
    TR_ValueNumberInfo(TR::Compilation *, TR::Optimizer *, bool requiresGlobals = false, bool prefersGlobals = true, bool noUseDefInfo = false);
 

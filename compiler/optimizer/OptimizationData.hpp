@@ -25,11 +25,21 @@
 namespace TR
 {
 
-class OptimizationData : public TR::Allocatable<OptimizationData, TR::Allocator>
+class OptimizationData
 	{
 	public:
 
-	OptimizationData(TR::Compilation *comp) : _comp(comp) {}
+	static void *operator new(size_t size, TR::Allocator a)
+           { return a.allocate(size); }
+        static void  operator delete(void *ptr, size_t size)
+           { ((OptimizationData*)ptr)->allocator().deallocate(ptr, size); } /* t->allocator() must return the same allocator as used for new */
+
+        /* Virtual destructor is necessary for the above delete operator to work
+         * See "Modern C++ Design" section 4.7
+         */
+        virtual ~OptimizationData() {}
+
+        OptimizationData(TR::Compilation *comp) : _comp(comp) {}
 
 	TR::Compilation *comp() { return _comp; }
 	TR::Allocator allocator() { return comp()->allocator(); }

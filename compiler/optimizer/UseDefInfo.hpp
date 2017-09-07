@@ -56,10 +56,20 @@ namespace TR { class TreeTop; }
  * This means that there are a total of Z index values.
  * The bit vectors that hold use information are of size (Z-X).
  */
-class TR_UseDefInfo : public TR::Allocatable<TR_UseDefInfo, TR::Allocator>
+class TR_UseDefInfo
    {
    TR::Region _region;
    public:
+
+   static void *operator new(size_t size, TR::Allocator a)
+      { return a.allocate(size); }
+   static void  operator delete(void *ptr, size_t size)
+      { ((TR_UseDefInfo*)ptr)->allocator().deallocate(ptr, size); } /* t->allocator() better return the same allocator as used for new */
+
+   /* Virtual destructor is necessary for the above delete operator to work
+    * See "Modern C++ Design" section 4.7
+    */
+   virtual ~TR_UseDefInfo() {}
 
    // Construct use def info for the current method's trees. This also assigns
    // use/def index values to the relevant nodes.

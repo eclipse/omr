@@ -25,20 +25,29 @@
 namespace TR
 {
 
-class OptimizationUtil: public TR::Allocatable<OptimizationUtil, TR::Allocator>
-	{
-	public:
+class OptimizationUtil
+   {
+   public:
+   static void *operator new(size_t size, TR::Allocator a)
+      { return a.allocate(size); }
+   static void  operator delete(void *ptr, size_t size)
+      { ((OptimizationUtil*)ptr)->allocator().deallocate(ptr, size); } /* t->allocator() must return the same allocator as used for new */
 
-	OptimizationUtil(TR::Compilation *comp) : _comp(comp) {}
+   /* Virtual destructor is necessary for the above delete operator to work
+    * See "Modern C++ Design" section 4.7
+    */
+   virtual ~OptimizationUtil() {}
 
-	TR::Compilation *comp() { return _comp; }
-   TR_FrontEnd *fe() {return _comp->fe(); }
-	TR::Allocator allocator() { return comp()->allocator(); }
-   TR_Memory * trMemory()                    { return comp()->trMemory(); }
+   OptimizationUtil(TR::Compilation *comp) : _comp(comp) {}
 
-	private:
-	TR::Compilation *_comp;
-	};
+   TR::Compilation *comp() { return _comp; }
+   TR_FrontEnd *fe() { return _comp->fe(); }
+   TR::Allocator allocator() { return comp()->allocator(); }
+   TR_Memory * trMemory() { return comp()->trMemory(); }
+
+   private:
+   TR::Compilation *_comp;
+   };
 
 }
 #endif

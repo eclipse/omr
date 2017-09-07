@@ -46,9 +46,20 @@ namespace TR { class TreeTop; }
 // Store Sinking
 // There are two implementations: TR_TrivialSinkStores and TR_GeneralSinkStores
 
-class TR_LiveOnNotAllPaths : public TR::Allocatable<TR_LiveOnNotAllPaths, TR::Allocator>
+class TR_LiveOnNotAllPaths
    {
    public:
+   
+   static void *operator new(size_t size, TR::Allocator a)
+      { return a.allocate(size); }
+   static void  operator delete(void *ptr, size_t size)
+      { ((TR_LiveOnNotAllPaths*)ptr)->allocator().deallocate(ptr, size); } /* t->allocator() must return the same allocator as used for new */
+
+   /* Virtual destructor is necessary for the above delete operator to work
+    * See "Modern C++ Design" section 4.7
+    */
+   virtual ~TR_LiveOnNotAllPaths() {}
+  
    TR_LiveOnNotAllPaths(TR::Compilation *comp, TR_Liveness *liveOnSomePaths, TR_LiveOnAllPaths *liveOnAllPaths);
 
    TR::Compilation *   comp()          { return _comp; }

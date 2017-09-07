@@ -100,9 +100,20 @@ template<class Container>class TR_BackwardUnionDFSetAnalysis<Container *>;
 // the analyses to perform TR::Node and TR::TreeTop related computations.
 //
 //
-class TR_DataFlowAnalysis : public TR::Allocatable<TR_DataFlowAnalysis, TR::Allocator>
+class TR_DataFlowAnalysis
    {
    public:
+
+   static void *operator new(size_t size, TR::Allocator a)
+      { return a.allocate(size); }
+   static void  operator delete(void *ptr, size_t size)
+      { ((TR_DataFlowAnalysis*)ptr)->allocator().deallocate(ptr, size); } /* t->allocator() better return the same allocator as used for new */
+
+   /* Virtual destructor is necessary for the above delete operator to work
+    * See "Modern C++ Design" section 4.7
+    */
+   virtual ~TR_DataFlowAnalysis() {}
+
 
    TR_DataFlowAnalysis(TR::Compilation *comp, TR::CFG *cfg, TR::Optimizer *optimizer, bool trace)
       : _comp(comp),

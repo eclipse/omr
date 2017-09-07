@@ -50,10 +50,19 @@ namespace TR { class Optimization; }
 namespace OMR
 {
 
-class OMR_EXTENSIBLE Optimization: public TR_HasRandomGenerator,
-                                   public TR::Allocatable<TR::Optimization, TR::Allocator>
+class OMR_EXTENSIBLE Optimization: public TR_HasRandomGenerator
    {
-public:
+   public:
+
+   static void *operator new(size_t size, TR::Allocator a)
+      { return a.allocate(size); }
+   static void  operator delete(void *ptr, size_t size)
+      { ((Optimization*)ptr)->allocator().deallocate(ptr, size); } /* t->allocator() better return the same allocator as used for new */
+
+   /* Virtual destructor is necessary for the above delete operator to work
+    * See "Modern C++ Design" section 4.7
+    */
+   virtual ~Optimization() {}
 
    inline TR::Optimization * self();
 
