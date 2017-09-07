@@ -1,19 +1,23 @@
 ###############################################################################
-#
-# (c) Copyright IBM Corp. 2015, 2016
-#
-#  This program and the accompanying materials are made available
-#  under the terms of the Eclipse Public License v1.0 and
-#  Apache License v2.0 which accompanies this distribution.
-#
-#      The Eclipse Public License is available at
-#      http://www.eclipse.org/legal/epl-v10.html
-#
-#      The Apache License v2.0 is available at
-#      http://www.opensource.org/licenses/apache2.0.php
-#
+# Copyright (c) 2015, 2016 IBM Corp. and others
+# 
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+# 
+# This Source Code is also Distributed under one or more Secondary Licenses,
+# as those terms are defined by the Eclipse Public License, v. 2.0: GNU
+# General Public License, version 2 with the GNU Classpath Exception [1]
+# and GNU General Public License, version 2 with the OpenJDK Assembly
+# Exception [2].
+# 
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+# 
 # Contributors:
-#    Multiple authors (IBM Corp.) - initial implementation and documentation
+#   Multiple authors (IBM Corp.) - initial implementation and documentation
 ###############################################################################
 
 # This makefile fragment defines logic that is common to building both shared and static libraries.
