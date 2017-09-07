@@ -863,3 +863,51 @@ omrsysinfo_cgroup_get_memlimit(struct OMRPortLibrary *portLibrary, uint64_t *lim
 {
 	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
 }
+
+/**
+ * Enable port library to use cgroup limits on memory
+ * for determining heap size
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ *
+ * @return void
+ */
+void
+omrsysinfo_cgroup_use_memlimit_for_heap(struct OMRPortLibrary *portLibrary)
+{
+}
+
+/**
+ * Windows: returns physical memory
+ * Unix like systems: OMR_MIN(physical memory, RLIMIT_AS)
+ * where RLIMIT_AS is resourlce limitation on address space.
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ *
+ * @return usable memory in the system
+ */
+uint64_t
+omrsysinfo_get_usable_memory(struct OMRPortLibrary *portLibrary)
+{
+	return 0;
+}
+
+/**
+ * Returns physical memory to be used for heap.
+ * For most platforms the heap default is a fraction of the available physical memory.
+ *
+ * Windows: half the physical memory with default of 16 MB and a max of 512 MB
+ *
+ * Linux, AIX, and z/OS:  half of OMR_MIN(physical memory, RLIMIT_AS) with a default of
+ * 16 MB and a max of 512 MB.
+ * RLIMIT_AS is the resource limitation on address space.
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ *
+ * @return physical memory to be used for heap
+ */
+uint64_t
+omrsysinfo_get_physical_memory_for_heap(struct OMRPortLibrary *portLibrary)
+{
+	return 0;
+}

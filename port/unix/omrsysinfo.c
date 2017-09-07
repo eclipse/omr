@@ -1611,6 +1611,7 @@ omrsysinfo_startup(struct OMRPortLibrary *portLibrary)
 	(void) find_executable_name(portLibrary, &PPG_si_executableName);
 
 #if defined(LINUX)
+	PPG_useCgroupMemLimitForHeap = FALSE;
 	PPG_cgroupEntryList = NULL;
 #endif /* defined(LINUX) */
 	return 0;
@@ -3560,3 +3561,53 @@ _end:
 #endif /* defined(LINUX) */
 	return rc;
 }
+
+void
+omrsysinfo_cgroup_use_memlimit_for_heap(struct OMRPortLibrary *portLibrary)
+{
+#if defined(LINUX)
+	PPG_useCgroupMemLimitForHeap = TRUE;
+#endif /* defined(LINUX) */
+}
+
+uint64_t
+omrsysinfo_get_usable_memory(struct OMRPortLibrary *portLibrary)
+{
+	uint64_t usableMemory = 0;
+	uint64_t memoryLimit = 0;
+
+#if defined(LINUX)
+	if (PPG_useCgroupMemLimitForHeap) {
+		int32_t rc = portLibrary->sysinfo_cgroup_get_memlimit(portLibrary, &usableMemory);
+		if (0 != rc) {
+			usableMemory = portLibrary->sysinfo_get_physical_memory(portLibrary);
+		}
+	}
+#else /* defined(LINUX) */
+	usableMemory = portLibrary->sysinfo_get_physical_memory(portLibrary);
+#endif /* defined(LINUX) */
+
+	if (OMRPORT_LIMIT_LIMITED == portLibrary->sysinfo_get_limit(portLibrary, OMRPORT_RESOURCE_ADDRESS_SPACE, &memoryLimit)) {
+		/* there is a limit on the memory we can use so take the minimum of this usable amount and the physical memory */
+		usableMemory = OMR_MIN(memoryLimit, usableMemory);
+	}
+
+	return usableMemory;    
+}
+
+uint64_t
+omrsysinfo_get_physical_memory_for_heap(struct OMRPortLibrary *portLibrary)
+{
+	uint64_t heapMemory = portLibrary->sysinfo_get_usable_memory(portLibrary);
+
+	if (0 == heapMemory) {
+		heapMemory = OMR_HEAP_MEMORY_DEFAULT;
+	} else {
+		Assert_PRT_true(OMR_HEAP_MEMORY_FRACTION < 1);
+		heapMemory = (heapMemory / 100) * (uint64_t)(OMR_HEAP_MEMORY_FRACTION * 100);
+		heapMemory = OMR_MIN(heapMemory, OMR_HEAP_MEMORY_MAX);
+	}
+
+	return heapMemory;
+}
+

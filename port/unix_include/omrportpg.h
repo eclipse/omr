@@ -79,6 +79,7 @@ typedef struct OMRPortPlatformGlobals {
 	int32_t introspect_threadSuspendSignal;
 #endif /* defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL) */
 #if defined(LINUX)
+	BOOLEAN useCgroupMemLimitForHeap; /**< indicates if cgroup memory limit be used for the heap */
 	BOOLEAN cgroupLimitsEnabled; /**< indicates if port library supports cgroup limits */
 	OMRCgroupEntry *cgroupEntryList; /**< head of the circular linked list, each element contains information about cgroup of the process for a subsystem */
 #endif /* defined(LINUX) */
@@ -120,6 +121,7 @@ typedef struct OMRPortPlatformGlobals {
 #endif
 
 #if defined(LINUX)
+#define PPG_useCgroupMemLimitForHeap (portLibrary->portGlobals->platformGlobals.useCgroupMemLimitForHeap)
 #define PPG_cgroupLimitsEnabled (portLibrary->portGlobals->platformGlobals.cgroupLimitsEnabled)
 #define PPG_cgroupEntryList (portLibrary->portGlobals->platformGlobals.cgroupEntryList)
 #endif /* defined(LINUX) */

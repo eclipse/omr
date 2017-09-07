@@ -519,6 +519,12 @@ extern J9_CFUNC int32_t
 omrsysinfo_cgroup_enable_limits(struct OMRPortLibrary *portLibrary);
 extern J9_CFUNC int32_t 
 omrsysinfo_cgroup_get_memlimit(struct OMRPortLibrary *portLibrary, uint64_t *limit);
+extern J9_CFUNC void
+omrsysinfo_cgroup_use_memlimit_for_heap(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC uint64_t
+omrsysinfo_get_usable_memory(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC uint64_t
+omrsysinfo_get_physical_memory_for_heap(struct OMRPortLibrary *portLibrary);
 
 /* J9SourceJ9Signal*/
 extern J9_CFUNC int32_t

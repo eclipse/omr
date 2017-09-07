@@ -1001,6 +1001,10 @@ typedef struct OMROSKernelInfo {
 	uint32_t minorRevision;
 } OMROSKernelInfo;
 
+#define OMR_HEAP_MEMORY_DEFAULT ((uint64_t)(16 * 1024 * 1024))
+#define OMR_HEAP_MEMORY_MAX ((uint64_t)(512 * 1024 * 1024))
+#define OMR_HEAP_MEMORY_FRACTION ((double)0.5) /* use half of the usable memory */
+
 struct OMRPortLibrary;
 typedef struct J9Heap J9Heap;
 
@@ -1446,6 +1450,12 @@ typedef struct OMRPortLibrary {
 	int32_t ( *sysinfo_cgroup_enable_limits)(struct OMRPortLibrary *portLibrary);
 	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_get_memlimit "omrsysinfo_cgroup_get_memlimit"*/
 	int32_t (*sysinfo_cgroup_get_memlimit)(struct OMRPortLibrary *portLibrary, uint64_t *limit);
+	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_use_memlimit_for_heap "omrsysinfo_cgroup_use_memlimit_for_heap"*/
+	void (*sysinfo_cgroup_use_memlimit_for_heap)(struct OMRPortLibrary *portLibrary);
+	/** see @ref omrsysinfo.c::omrsysinfo_get_usable_memory "omrsysinfo_get_usable_memory"*/
+	uint64_t (*sysinfo_get_usable_memory)(struct OMRPortLibrary *portLibrary);
+	/** see @ref omrsysinfo.c::omrsysinfo_get_physical_memory_for_heap "omrsysinfo_get_physical_memory_for_heap"*/
+	uint64_t (*sysinfo_get_physical_memory_for_heap)(struct OMRPortLibrary *portLibrary);
 	/** see @ref omrport.c::omrport_init_library "omrport_init_library"*/
 	int32_t (*port_init_library)(struct OMRPortLibrary *portLibrary, uintptr_t size) ;
 	/** see @ref omrport.c::omrport_startup_library "omrport_startup_library"*/
@@ -1890,6 +1900,9 @@ extern J9_CFUNC int32_t omrport_getVersion(struct OMRPortLibrary *portLibrary);
 #define omrsysinfo_cgroup_is_limits_enabled() privateOmrPortLibrary->sysinfo_cgroup_is_limits_enabled(privateOmrPortLibrary) 
 #define omrsysinfo_cgroup_enable_limits() privateOmrPortLibrary->sysinfo_cgroup_enable_limits(privateOmrPortLibrary)
 #define omrsysinfo_cgroup_get_memlimit(param1) privateOmrPortLibrary->sysinfo_cgroup_get_memlimit(privateOmrPortLibrary, param1)
+#define omrsysinfo_cgroup_use_memlimit_for_heap() privateOmrPortLibrary->sysinfo_cgroup_use_memlimit_for_heap(privateOmrPortLibrary)
+#define omrsysinfo_get_usable_memory() privateOmrPortLibrary->sysinfo_get_usable_memory(privateOmrPortLibrary)
+#define omrsysinfo_get_physical_memory_for_heap() privateOmrPortLibrary->sysinfo_get_physical_memory_for_heap(privateOmrPortLibrary) 
 #define omrintrospect_startup() privateOmrPortLibrary->introspect_startup(privateOmrPortLibrary)
 #define omrintrospect_shutdown() privateOmrPortLibrary->introspect_shutdown(privateOmrPortLibrary)
 #define omrintrospect_set_suspend_signal_offset(param1) privateOmrPortLibrary->introspect_set_suspend_signal_offset(privateOmrPortLibrary, param1)
