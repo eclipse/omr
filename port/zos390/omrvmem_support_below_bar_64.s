@@ -1,20 +1,24 @@
 ***********************************************************************
-*
-* (c) Copyright IBM Corp. 1991, 2016
-*
-*  This program and the accompanying materials are made available
-*  under the terms of the Eclipse Public License v1.0 and
-*  Apache License v2.0 which accompanies this distribution.
-*
-*      The Eclipse Public License is available at
-*      http://www.eclipse.org/legal/epl-v10.html
-*
-*      The Apache License v2.0 is available at
-*      http://www.opensource.org/licenses/apache2.0.php
-*
-* Contributors:
-*    Multiple authors (IBM Corp.) - initial API and implementation
-*    and/or initial documentation
+* Copyright (c) 1991, 2016 IBM Corp. and others
+* 
+* This program and the accompanying materials are made available 
+* under the terms of the Eclipse Public License 2.0 which accompanies 
+* this distribution and is available at  
+* https://www.eclipse.org/legal/epl-2.0/ or the Apache License, 
+* Version 2.0 which accompanies this distribution and
+* is available at https://www.apache.org/licenses/LICENSE-2.0.
+* 
+* This Source Code may also be made available under the following
+* Secondary Licenses when the conditions for such availability set
+* forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+* General Public License, version 2 with the GNU Classpath 
+* Exception [1] and GNU General Public License, version 2 with the
+* OpenJDK Assembly Exception [2].
+* 
+* [1] https://www.gnu.org/software/classpath/license.html
+* [2] http://openjdk.java.net/legal/assembly-exception.html
+* 
+* SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 ***********************************************************************
 
          TITLE 'omrvmem_support_below_bar_64'
@@ -198,61 +202,6 @@ OMRSTORAGE RMODE ANY                                                     000000
 @@CCN@19 ALIAS C'omrfree_memory_below_bar'                               000000
 @@CCN@11 ALIAS C'omrallocate_4K_pages_below_bar'                         000000
 @@CCN@1  ALIAS C'omrallocate_1M_pageable_pages_below_bar'                000000
-* /********************************************************************  000001
-*  *                                                                     000002
-*  * (c) Copyright IBM Corp. 2001, 2016                                  000003
-*  *                                                                     000004
-*  *  This program and the accompanying materials are made available     000005
-*  *  under the terms of the Eclipse Public License v1.0 and             000006
-*  *  Apache License v2.0 which accompanies this distribution.           000007
-*  *                                                                     000008
-*  *      The Eclipse Public License is available at                     000009
-*  *      http://www.eclipse.org/legal/epl-v10.html                      000010
-*  *                                                                     000011
-*  *      The Apache License v2.0 is available at                        000012
-*  *      http://www.opensource.org/licenses/apache2.0.php               000013
-*  *                                                                     000014
-*  * Contributors:                                                       000015
-*  *    Multiple authors (IBM Corp.) - initial API and implementation a  000016
-*  ********************************************************************  000017
-*                                                                        000018
-* /*                                                                     000019
-*  * This file is used to generate the HLASM corresponding to the C cal  000020
-*  * that use the STORAGE macro in omrvmem.c                             000021
-*  *                                                                     000022
-*  * This file is compiled manually using the METAL-C compiler that was  000023
-*  * introduced in z/OS V1R9. The generated output (omrstorage.s) is th  000024
-*  * inserted into omrvmem_support_below_bar_[31|64].s which is compile  000025
-*  *                                                                     000026
-*  * omrvmem_support_below_bar_[31|64].s indicates where to put the con  000027
-*  * Search for:                                                         000028
-*  *   Insert contents of omrstorage.s below                             000029
-*  *                                                                     000030
-*  * *******                                                             000031
-*  * NOTE!!!!! You must strip the line numbers from any pragma statemen  000032
-*  *   (CMVC 140560)                                                     000033
-*  * *******                                                             000034
-*  *                                                                     000035
-*  * It should be obvious, however, just to be clear be sure to omit th  000036
-*  * first two lines from omrstorage.s which will look something like:   000037
-*  *                                                                     000038
-*  *          TITLE '5694A01 V1.9 z/OS XL C                              000039
-*  *                     ./omrstorage.c'                                 000040
-*  *                                                                     000041
-*  * To compile for 64-bit use:                                          000042
-*  *  xlc -S -qmetal -Wc,lp64 -qlongname omrstorage.c                    000043
-*  *                                                                     000044
-*  * To compile for 31-bit use:                                          000045
-*  *  xlc -S -qmetal -qlongname omrstorage.c                             000046
-*  *                                                                     000047
-*  * z/OS V1R9 elements and features:                                    000048
-*  *   http://www-03.ibm.com/systems/z/os/zos/bkserv/r9pdf/index.html    000049
-*  *    - One stop shopping for all things z/OS.                         000050
-*  *                                                                     000051
-*  * z/OS V1R9 z/OS V1R9.0 Metal C Programming Guide and Reference:      000052
-*  *   http://publibz.boulder.ibm.com/epubs/pdf/ccrug100.pdf             000053
-*  *                                                                     000054
-*  */                                                                    000055
 *                                                                        000056
 * #pragma prolog(omrallocate_1M_pageable_pages_below_bar,"MYPROLOG")     000057
 * #pragma epilog(omrallocate_1M_pageable_pages_below_bar,"MYEPILOG")     000058
