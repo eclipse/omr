@@ -1,10 +1,11 @@
-*******************************************************************************
+**********************************************************************
 * Copyright (c) 1991, 2016 IBM Corp. and others
 * 
-* This program and the accompanying materials are made available under
-* the terms of the Eclipse Public License 2.0 which accompanies this
-* distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-* or the Apache License, Version 2.0 which accompanies this distribution and
+* This program and the accompanying materials are made available 
+* under the terms of the Eclipse Public License 2.0 which accompanies
+* this distribution and is available at 
+* https://www.eclipse.org/legal/epl-2.0/ or the Apache License, 
+* Version 2.0 which accompanies this distribution and
 * is available at https://www.apache.org/licenses/LICENSE-2.0.
 *      
 * This Source Code may also be made available under the following
@@ -18,7 +19,7 @@
 * [2] http://openjdk.java.net/legal/assembly-exception.html
 *
 * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
-*******************************************************************************
+***********************************************************************
          TITLE 'thrcputime.s'
 
          AIF ('&SYSPARM' EQ 'BIT64').JMP1
