@@ -1,20 +1,24 @@
 ***********************************************************************
-*
-* (c) Copyright IBM Corp. 1991, 2016
-*
-*  This program and the accompanying materials are made available
-*  under the terms of the Eclipse Public License v1.0 and
-*  Apache License v2.0 which accompanies this distribution.
-*
-*      The Eclipse Public License is available at
-*      http://www.eclipse.org/legal/epl-v10.html
-*
-*      The Apache License v2.0 is available at
-*      http://www.opensource.org/licenses/apache2.0.php
-*
-* Contributors:
-*    Multiple authors (IBM Corp.) - initial API and implementation
-*    and/or initial documentation
+* Copyright (c) 1991, 2016 IBM Corp. and others
+* 
+* This program and the accompanying materials are made available 
+* under the terms of the Eclipse Public License 2.0 which accompanies 
+* this distribution and is available at  
+* https://www.eclipse.org/legal/epl-2.0/ or the Apache License, 
+* Version 2.0 which accompanies this distribution and
+* is available at https://www.apache.org/licenses/LICENSE-2.0.
+* 
+* This Source Code may also be made available under the following
+* Secondary Licenses when the conditions for such availability set
+* forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+* General Public License, version 2 with the GNU Classpath 
+* Exception [1] and GNU General Public License, version 2 with the
+* OpenJDK Assembly Exception [2].
+* 
+* [1] https://www.gnu.org/software/classpath/license.html
+* [2] http://openjdk.java.net/legal/assembly-exception.html
+* 
+* SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 ***********************************************************************
 
          TITLE 'omrvmem_support_above_bar'
@@ -201,52 +205,6 @@ OMRIARV64 RMODE ANY                                                      000000
 @@CCN@25 ALIAS C'omrallocate_2G_pages'                                   000000
 @@CCN@14 ALIAS C'omrallocate_1M_pageable_pages_above_bar'                000000
 @@CCN@2  ALIAS C'omrallocate_1M_fixed_pages'                             000000
-* /********************************************************************  000001
-*  *                                                                     000002
-*  * (c) Copyright IBM Corp. 1991, 2016                                  000003
-*  *                                                                     000004
-*  *  This program and the accompanying materials are made available     000005
-*  *  under the terms of the Eclipse Public License v1.0 and             000006
-*  *  Apache License v2.0 which accompanies this distribution.           000007
-*  *                                                                     000008
-*  *      The Eclipse Public License is available at                     000009
-*  *      http://www.eclipse.org/legal/epl-v10.html                      000010
-*  *                                                                     000011
-*  *      The Apache License v2.0 is available at                        000012
-*  *      http://www.opensource.org/licenses/apache2.0.php               000013
-*  *                                                                     000014
-*  * Contributors:                                                       000015
-*  *    Multiple authors (IBM Corp.) - initial API and implementation a  000016
-*  ********************************************************************  000017
-*                                                                        000018
-* /*                                                                     000019
-*  * This file is used to generate the HLASM corresponding to the C cal  000020
-*  * that use the IARV64 macro in omrvmem.c                              000021
-*  *                                                                     000022
-*  * This file is compiled manually using the METAL-C compiler that was  000023
-*  * introduced in z/OS V1R9. The generated output (omriarv64.s) is the  000024
-*  * inserted into omrvmem_support_above_bar.s which is compiled by our  000025
-*  *                                                                     000026
-*  * omrvmem_support_above_bar.s indicates where to put the contents of  000027
-*  * Search for:                                                         000028
-*  *   Insert contents of omriarv64.s below                              000029
-*  *                                                                     000030
-*  * *******                                                             000031
-*  * NOTE!!!!! You must strip the line numbers from any pragma statemen  000032
-*  * *******                                                             000033
-*  *                                                                     000034
-*  * It should be obvious, however, just to be clear be sure to omit th  000035
-*  * first two lines from omriarv64.s which will look something like:    000036
-*  *                                                                     000037
-*  *          TITLE '5694A01 V1.9 z/OS XL C                              000038
-*  *                     ./omriarv64.c'                                  000039
-*  *                                                                     000040
-*  * To compile:                                                         000041
-*  *  xlc -S -qmetal -Wc,lp64 -qlongname omriarv64.c                     000042
-*  *                                                                     000043
-*  * z/OS V1R9 z/OS V1R9.0 Metal C Programming Guide and Reference:      000044
-*  *   http://publibz.boulder.ibm.com/epubs/pdf/ccrug100.pdf             000045
-*  */                                                                    000046
 *                                                                        000047
 * #include "omriarv64.h"                                                 000048
 *                                                                        000049
