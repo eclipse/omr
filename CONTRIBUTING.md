@@ -183,7 +183,7 @@ the ECA and that signed-off on your commits is the same, down to the case.
 to ensure that their contributions fulfill the legal requirements of their
 organization. This document is not legal advice.**
 
-OMR is dual-licensed under the Eclipse Public License v1.0 and the Apache
+OMR is dual-licensed under the Eclipse Public License 2.0 and the Apache
 License v2.0. Any previously unlicensed contribution should be released under
 the same license.
 
