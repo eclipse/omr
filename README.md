@@ -91,7 +91,7 @@ What's the licence?
 ===================
 
 All Eclipse OMR project materials are made available under the Eclipse Public
-License V1.0 and the Apache 2.0 license. You can choose which license you wish
+License 2.0 and the Apache 2.0 license. You can choose which license you wish
 to follow.  Please see our LICENSE file for more details.
 
 
