@@ -25,6 +25,9 @@
 CXX?=g++
 CXXFLAGS=-g -std=c++0x -O2 -c -fno-rtti -fPIC -I./include/compiler -I./include
 
+OMR_ROOT_DIR=../..
+JIT_BUILDER_DIR=$(OMR_ROOT_DIR)/jitbuilder
+
 .SUFFIXES: .cpp .o
 
 # NOTE: replay purposefully left out of these lists
@@ -307,6 +310,8 @@ thunks : libjitbuilder.a Thunk.o
 Thunk.o: src/Thunk.cpp
 	$(CXX) -o $@ $(CXXFLAGS) $<
 
+libjitbuilder.a :
+	make -C $(JIT_BUILDER_DIR)
 
 clean:
 	@rm -f $(ALL_TESTS) replay *.o
