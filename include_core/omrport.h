@@ -23,6 +23,10 @@
 #if !defined(OMRPORT_H_)
 #define OMRPORT_H_
 
+#if !defined(_XOPEN_SOURCE)
+#define _XOPEN_SOURCE
+#endif // !defined(_XOPEN_SOURCE)
+
 /*
  * @ddr_namespace: map_to_type=J9PortLibrary
  */
