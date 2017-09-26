@@ -5025,6 +5025,7 @@ void OMR::Options::setQuickStart()
    {
    _quickstartDetected = true;
    _initialOptLevel = cold;
+   _tocSizeInKB = 64;
    self()->setOption (TR_DisableInterpreterProfiling, true);
    self()->setOption (TR_ForceAOT, true);
    self()->setOption (TR_DisableAggressiveRecompilations, true);
