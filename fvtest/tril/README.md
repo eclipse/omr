@@ -50,13 +50,13 @@ on your machine
     ```
 
 3. Build tril using `cmake`. To ensure OMR gets built in a compatible
-   configuration, we currently reccomend you use the CMake cache that drives
+   configuration, we currently recommend you use the CMake cache that drives
    our TravisCI builds.
 
     ```sh
     mkdir build
     cd build
-    cmake -C../cmake/caches/Travis.cmake ..
+    cmake -C../cmake/caches/<spec_name>.cmake ..
     ```
 
     At this point you can use whatever generated build system to build

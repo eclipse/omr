@@ -33,7 +33,7 @@ environment:
 
 before_build:
   - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
-  - cmd: cmake -Wdev -G "Visual Studio 11 2012 Win64" -Ccmake\caches\Appveyor.cmake.
+  - cmd: cmake -Wdev -G "Visual Studio 11 2012 Win64" -Ccmake\caches\win_x86-64.cmake.
 
 build:
   project: omr.sln
