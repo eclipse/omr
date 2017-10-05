@@ -900,6 +900,9 @@ static int32_t strHash(const char *str)
    return result;
    }
 
+#include "infra/TrilDumper.hpp"
+#include <stdio.h>
+
 int32_t OMR::Compilation::compile()
    {
 
@@ -999,6 +1002,17 @@ int32_t OMR::Compilation::compile()
      _ilGenSuccess = _methodSymbol->genIL(self()->fe(), self(), self()->getSymRefTab(), _ilGenRequest);
      if (printCodegenTime) genILTime.stopTiming(self());
    }
+
+   if (_ilGenSuccess)
+      {
+      auto comp = self();
+      auto sym = comp->getJittedMethodSymbol();
+      TR::TrilDumper dumper{stderr};
+      TR::ILTraverser traverser(comp);
+      traverser.registerObserver(&dumper);
+      traverser.traverse(sym);
+      fprintf(stderr, "\n");
+      }
 
    // Force a crash during compilation if the crashDuringCompile option is set
    TR_ASSERT_FATAL(!self()->getOption(TR_CrashDuringCompilation), "crashDuringCompile option is set");

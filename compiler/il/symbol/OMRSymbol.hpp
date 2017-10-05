@@ -53,6 +53,8 @@ namespace OMR { typedef OMR::Symbol SymbolConnector; }
 #include "infra/Assert.hpp"         // for TR_ASSERT
 #include "infra/Flags.hpp"          // for flags32_t
 
+#include <map>
+
 class TR_FrontEnd;
 class TR_ResolvedMethod;
 namespace TR { class AutomaticSymbol; }
@@ -200,6 +202,7 @@ public:
    uint32_t getFlags()                      { return _flags.getValue(); }
    uint32_t getFlags2()                     { return _flags2.getValue(); }
    void setFlagValue(uint32_t v, bool b)    { _flags.setValue(v, b); }
+   void setFlag2Value(uint32_t v, bool b)   { _flags2.setValue(v, b); }
 
    uint16_t getLocalIndex()                 { return _localIndex; }
    uint16_t setLocalIndex(uint16_t li)      { return (_localIndex = li); }
@@ -444,130 +447,16 @@ public:
    /**
     * Enum values for _flags field.
     */
-   enum
-      {
-      /**
-       * The low bits of the flag field are used to store the data type, and
-       * this is the mask used to access that data
-       */
-      DataTypeMask              = 0x000000FF,
-      // RegisterMappedSymbols must be before data symbols TODO: Why?
-      IsAutomatic               = 0x00000000,
-      IsParameter               = 0x00000100,
-      IsMethodMetaData          = 0x00000200,
-      LastRegisterMapped        = 0x00000200,
+#define ENUM_NAME FlagsEnum
+#define ENUM_FILE "il/symbol/SymbolFlagsEnum.hpp"
+#include "infra/EnumTableFactor.hpp"
 
-      IsStatic                  = 0x00000300,
-      IsMethod                  = 0x00000400,
-      IsResolvedMethod          = 0x00000500,
-      IsShadow                  = 0x00000600,
-      IsLabel                   = 0x00000700,
-
-      /**
-       * Mask used to access register kind
-       */
-      KindMask                  = 0x00000700,
-
-
-      IsInGlobalRegister        = 0x00000800,
-      Const                     = 0x00001000,
-      Volatile                  = 0x00002000,
-      InitializedReference      = 0x00004000,
-      ClassObject               = 0x00008000, ///< class object pointer
-      NotCollected              = 0x00010000,
-      Final                     = 0x00020000,
-      InternalPointer           = 0x00040000,
-      Private                   = 0x00080000,
-      AddressOfClassObject      = 0x00100000, ///< address of a class object pointer
-      SlotSharedByRefAndNonRef  = 0x00400000, ///< used in fsd to indicate that an reference symbol shares a slot with a nonreference symbol
-
-      HoldsMonitoredObject      = 0x08000000,
-      IsNamed                   = 0x00800000, ///< non-methods: symbol is actually an instance of a named subclass
-
-      // only use by Symbols for which isAuto is true
-      //
-      SpillTemp                 = 0x80000000,
-      IsLocalObject             = 0x40000000,
-      BehaveLikeNonTemp         = 0x20000000, ///< used for temporaries that are
-                                              ///< to behave as regular locals to
-                                              ///< preserve floating point semantics
-      PinningArrayPointer       = 0x10000000,
-      RegisterAuto              = 0x00020000, ///< Symbol to be translated to register at instruction selection
-      AutoAddressTaken          = 0x04000000, ///< a loadaddr of this auto exists
-      SpillTempLoaded           = 0x04000000, ///< share bit with loadaddr because spill temps will never have their address taken. Used to remove store to spill if never loaded
-      AutoMarkerSymbol          = 0x02000000, ///< dummy symbol marking some auto boundary
-      VariableSizeSymbol        = 0x01000000, ///< non-java only?: specially managed automatic symbols that contain both an activeSize and a size
-      ThisTempForObjectCtor     = 0x01000000, ///< java only; this temp for j/l/Object constructor
-
-      // only use by Symbols for which isParm is true
-      //
-      ParmHasToBeOnStack        = 0x80000000, ///< parameter is both loadAddr-ed and assigned a global register,
-                                              ///< or parameter has been stored (store opcode)
-      ReferencedParameter       = 0x40000000,
-      ReinstatedReceiver        = 0x20000000, ///< Receiver reinstated for DLT
-
-      // only use by Symbols for which isStatic is true
-      ConstString               = 0x80000000,
-      AddressIsCPIndexOfStatic  = 0x40000000,
-      RecognizedStatic          = 0x20000000,
-      // Available              = 0x10000000,
-      SetUpDLPFlags             = 0xF0000000, ///< Used by TR::StaticSymbol::SetupDLPFlags(), == ConstString | AddressIsCPIndexOfStatic | RecognizedStatic
-      CompiledMethod            = 0x08000000,
-      StartPC                   = 0x04000000,
-      CountForRecompile         = 0x02000000,
-      RecompilationCounter      = 0x01000000,
-      GCRPatchPoint             = 0x00400000,
-
-      //Only Used by Symbols for which isResolvedMethod is true;
-      IsJittedMethod            = 0x80000000,
-
-      // only use by Symbols for which isShadow is true
-      //
-      ArrayShadow               = 0x80000000,
-      RecognizedShadow          = 0x40000000, // recognized field
-      ArrayletShadow            = 0x20000000,
-      PythonLocalVariable       = 0x10000000, // Python local variable shadow  TODO: If we ever move this somewhere else, can we move UnsafeShadow from flags2 to here?
-      GlobalFragmentShadow      = 0x08000000,
-      MemoryTypeShadow          = 0x04000000,
-      Ordered                   = 0x02000000,
-      PythonConstant            = 0x01000000, // Python constant shadow
-      PythonName                = 0x00800000, // Python name shadow
-
-      // only use by Symbols for which isLabel is true
-      //
-      StartOfColdInstructionStream = 0x80000000, // label at the start of an out-of-line instruction stream
-      StartInternalControlFlow     = 0x40000000,
-      EndInternalControlFlow       = 0x20000000,
-      // Available                 = 0x10000000,
-      IsVMThreadLive               = 0x08000000, // reg assigner has determined that vmthread must be in the proper register at this label
-      // Available                 = 0x04000000,
-      InternalControlFlowMerge     = 0x02000000, // mainline merge label for OOL instructions
-      EndOfColdInstructionStream   = 0x01000000,
-      NonLinear                    = 0x01000000, // TAROK and temporary.  This bit is used in conjunction with StartOfColdInstructionStream
-                                                 //    to distinguish "classic" OOL instructions and the new form for Tarok.
-
-      IsGlobalLabel                = 0x30000000,
-      LabelKindMask                = 0x30000000,
-      OOLMask                      = 0x81000000, // Tarok and temporary
-
-      LastEnum
-      };
-
-   enum // For _flags2
-      {
-      RelativeLabel             = 0x00000001, // Label Symbols only *+N
-      ConstMethodType           = 0x00000002, // JSR292
-      ConstMethodHandle         = 0x00000004, // JSR292
-      CallSiteTableEntry        = 0x00000008, // JSR292
-      HasAddrTaken              = 0x00000010, // used to denote that we have a loadaddr of this symbol
-      MethodTypeTableEntry      = 0x00000020, // JSR292
-      NotDataAddress            = 0x00000040, // isStatic only: AOT
-      RealRegister              = 0x00000080, // RegisterSymbol is machine real register
-      UnsafeShadow              = 0x00000100,
-      NamedShadow               = 0x00000200,
-      ImmutableField            = 0x00000400,
-      PendingPush               = 0x00000800,
-      };
+   /**
+    * Enum values for _flags2 field
+    */
+#define ENUM_NAME Flags2Enum
+#define ENUM_FILE "il/symbol/SymbolFlags2Enum.hpp"
+#include "infra/EnumTableFactor.hpp"
 
 protected:
 

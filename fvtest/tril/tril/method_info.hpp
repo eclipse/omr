@@ -23,6 +23,7 @@
 #define METHOD_INFO_HPP
 
 #include "il/DataTypes.hpp"
+#include "type_info.hpp"
 #include "ilgen.hpp"
 
 #include <vector>
@@ -43,13 +44,13 @@ class MethodInfo {
          */
         explicit MethodInfo(const ASTNode* methodNode) : _methodNode{methodNode} {
             auto returnTypeArg = _methodNode->getArgByName("return");
-            _returnType = getTRDataTypes(returnTypeArg->getValue()->getString());
+            _returnType = Tril::TypeInfo::getTRDataTypes(returnTypeArg->getValue()->getString());
 
             auto argTypesArg = _methodNode->getArgByName("args");
             if (argTypesArg != nullptr) {
                 auto typeValue = argTypesArg->getValue();
                 while (typeValue != nullptr) {
-                    _argTypes.push_back(getTRDataTypes(typeValue->getString()));
+                    _argTypes.push_back(Tril::TypeInfo::getTRDataTypes(typeValue->getString()));
                     typeValue = typeValue->next;
                 }
             }
@@ -89,25 +90,6 @@ class MethodInfo {
          * @brief Returns the number of arguments the Tril method takes
          */
         std::size_t getArgCount() const { return _argTypes.size(); }
-
-        /**
-         * @brief Gets the TR::DataTypes value from the data type's name
-         * @param name is the name of the data type as a string
-         * @return the TR::DataTypes value corresponding to the specified name
-         */
-        static TR::DataTypes getTRDataTypes(const std::string& name) {
-            if (name == "Int8") return TR::Int8;
-            else if (name == "Int16") return TR::Int16;
-            else if (name == "Int32") return TR::Int32;
-            else if (name == "Int64") return TR::Int64;
-            else if (name == "Address") return TR::Address;
-            else if (name == "Float") return TR::Float;
-            else if (name == "Double") return TR::Double;
-            else if (name == "NoType") return TR::NoType;
-            else {
-                throw std::runtime_error{std::string{"Unknown type name: "}.append(name)};
-            }
-        }
 
     private:
         const ASTNode* _methodNode;

@@ -29,7 +29,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 
-TR::ILTraverser::ILTraverser(TR::Compilation * comp) : _observers(comp->allocator()), _visitedNodes(comp), _comp(comp)
+TR::ILTraverser::ILTraverser(TR::Compilation * comp) : _observers(ObserverAllocator(comp->trMemory()->currentStackRegion())), _visitedNodes(comp), _comp(comp)
    {
    }
 

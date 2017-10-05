@@ -307,26 +307,18 @@ protected:
    TR_BitVector *getUseonlyAliasesBV(TR::SymbolReferenceTable *symRefTab);
    TR_BitVector *getUseDefAliasesBV( bool isDirectCall = false, bool gcSafe = false);
 
-   enum // flags
-      {
-      Unresolved                        = 0x00000001,
-      CanGCandReturn                    = 0x00000002,
-      CanGCandExcept                    = 0x00000004,
-      ReallySharesSymbol                = 0x00000008,
-      StackAllocatedArrayAccess         = 0x00000010,
-      SideEffectInfo                    = 0x00000020,
-      LiteralPoolAddress                = 0x00000040,
-      FromLiteralPool                   = 0x00000080,
-      OverriddenBitAddress              = 0x00000100,
-      InitMethod                        = 0x00000200, ///< J9
-      TempVariableSizeSymRef            = 0x00000400,
-      Adjunct                           = 0x00000800, ///< auto symbol represents the adjunct part of the dual symbol
-      Dual                              = 0x00001000, ///< auto symbol represents a dual symbol consisting of two parts
-      TemporaryNegativeOffset           = 0x00002000,
-      HoldsMonitoredObjectForSyncMethod = 0x00004000,
-      AccessedAtRuntimeBase             = 0x10000000,
-      AccessedAtRuntimeMask             = 0x30000000
-      };
+public:
+   /**
+    * Enum values for _flags field.
+    */
+#define ENUM_NAME FlagsEnum
+#define ENUM_FILE "il/SymbolReferenceFlagsEnum.hpp"
+#include "infra/EnumTableFactor.hpp"
+
+   uint32_t getFlags()                      { return _flags.getValue(); }
+   void setFlagValue(uint32_t v, bool b)    { _flags.setValue(v, b); }
+
+protected:
 
    TR::Symbol *                _symbol;                ///< Pointer to the symbol being referenced
 

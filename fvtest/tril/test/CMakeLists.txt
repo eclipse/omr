@@ -35,6 +35,7 @@ add_executable(triltest
    MethodInfoTest.cpp
    IlGenTest.cpp
    CompileTest.cpp
+   SymRefTabTest.cpp
 )
 
 target_link_libraries(triltest
