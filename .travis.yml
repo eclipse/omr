@@ -33,20 +33,14 @@ addons:
     packages:
       - libnuma-dev
       - bison
-      - clang-3.4
-      - libclang-3.4-dev
       - libdwarf-dev
       - libelf-dev
-      - llvm-3.4
-      - gcc-multilib
-      - g++-multilib
-      - ninja-build
+compiler:
+  - clang
+  - gcc
 before_install:
   - if [ $TRAVIS_OS_NAME = osx ]; then brew install ccache ; fi
 env:
-  matrix:
-    - BUILD_WITH_CMAKE=yes CMAKE_GENERATOR=Ninja
-    - BUILD_WITH_CMAKE=yes CMAKE_GENERATOR="Unix Makefiles"
   global:
     - GTEST_COLOR=1
     - GTEST_FILTER=-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended
@@ -55,22 +49,62 @@ env:
     # apport is available in apt whitelist
 matrix:
   exclude:
+    - os: linux
+      compiler: gcc
+    - os: linux
+      compiler: clang
     - os: osx
-      env: BUILD_WITH_CMAKE=yes CMAKE_GENERATOR="Unix Makefiles"
+      compiler: gcc
     - os: osx
-      env: BUILD_WITH_CMAKE=yes CMAKE_GENERATOR=Ninja
+      compiler: clang
   include:
     - os: linux
       env: SPEC=linux_x86-64 PLATFORM=amd64-linux64-gcc
+      compiler: gcc
     - os: linux
       env: SPEC=linux_x86-64_cmprssptrs PLATFORM=amd64-linux64-gcc
+      compiler: gcc
     - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - bison
+            - clang-3.4
+            - libclang-3.4-dev
+            - llvm-3.4
       env: RUN_LINT=yes RUN_BUILD=no SPEC=linux_x86-64 PLATFORM=amd64-linux64-gcc
       dist: precise
+      compiler: gcc
     - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-multilib
+            - g++-multilib
       env: SPEC=linux_x86 PLATFORM=amd64-linux-gcc
+      compiler: gcc
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - libnuma-dev
+            - bison
+            - libdwarf-dev
+            - libelf-dev 
+            - ninja-build
+      env: SPEC=linux_x86-64 PLATFORM=amd64-linux64-gcc BUILD_WITH_CMAKE=yes CMAKE_GENERATOR=Ninja
+      compiler: gcc
+    - os: linux
+      env: SPEC=linux_x86-64 PLATFORM=amd64-linux64-gcc BUILD_WITH_CMAKE=yes CMAKE_GENERATOR="Unix Makefiles"
+      compiler: gcc
     - os: osx
-      env: BUILD_WITH_CMAKE=yes CMAKE_GENERATOR=Ninja
+      env: SPEC=osx_x86-64 BUILD_WITH_CMAKE=yes CMAKE_GENERATOR=Ninja
       compiler: clang
 before_script:
   - ulimit -c unlimited
