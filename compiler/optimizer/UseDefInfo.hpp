@@ -220,7 +220,7 @@ class TR_UseDefInfo
    // For Languages where an auto can alias a volatile, extra care needs to be taken when setting up use-def
    // The conservative answer is to not index autos that have volatile aliases.
 
-   void setVolatileSybolsIndexAndRecurse(TR::BitVector &volatileSymbols, int32_t symRefNum);
+   void setVolatileSymbolsIndexAndRecurse(TR::BitVector &volatileSymbols, int32_t symRefNum);
    void findAndPopulateVolatileSymbolsIndex(TR::BitVector &volatileSymbols);
 
    bool shouldIndexVolatileSym(TR::SymbolReference *ref, AuxiliaryData &aux);
