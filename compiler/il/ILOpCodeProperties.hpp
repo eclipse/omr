@@ -10312,22 +10312,6 @@
    },
 
    {
-   /* .opcode               = */ TR::bztestnset,
-   /* .name                 = */ "bztestnset",
-   /* .properties1          = */ ILProp1::Call | ILProp1::HasSymbolRef,
-   /* .properties2          = */ 0,
-   /* .properties3          = */ ILProp3::LikeUse | ILProp3::LikeDef,
-   /* .properties4          = */ 0,
-   /* .dataType             = */ TR::Int8,
-   /* .typeProperties       = */ ILTypeProp::Size_1 | ILTypeProp::Integer,
-   /* .childProperties      = */ TWO_CHILD(TR::Address, ILChildProp::UnspecifiedChildType),
-   /* .swapChildrenOpCode   = */ TR::BadILOp,
-   /* .reverseBranchOpCode  = */ TR::BadILOp,
-   /* .booleanCompareOpCode = */ TR::BadILOp,
-   /* .ifCompareOpCode      = */ TR::BadILOp,
-   },
-
-   {
    /* .opcode               = */ TR::ibatomicor,
    /* .name                 = */ "ibatomicor",
    /* .properties1          = */ ILProp1::LoadVar | ILProp1::Store | ILProp1::Indirect | ILProp1::TreeTop | ILProp1::HasSymbolRef,

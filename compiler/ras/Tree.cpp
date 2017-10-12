@@ -2970,7 +2970,6 @@ int32_t childTypes[] =
    TR::Int64 | (TR::Int8<<24),    // TR::lusubb
    TR::Int32 | (TR::Address<<8),    // TR::icmpset
    TR::Int64 | (TR::Address<<8),    // TR::lcmpset
-   TR::Int8  | (TR::Address<<8),    // TR::bztestnset
    TR::Int8  | (TR::Address<<8),     // TR::ibatomicor
    TR::Int16 | (TR::Address<<8),     // TR::isatomicor
    TR::Int32 | (TR::Address<<8),     // TR::iiatomicor
