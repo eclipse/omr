@@ -34,6 +34,9 @@ else()
 	)
 endif()
 
+set(OMR_C_LANGUAGE_STANDARD "") 
+set(OMR_CXX_LANGUAGE_STANDARD "") 
+
 # Testarossa build variables. Longer term the distinction between TR and the rest
 # of the OMR code should be heavily reduced. In the mean time, we keep
 # the distinction

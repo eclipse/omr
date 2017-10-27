@@ -38,12 +38,16 @@ else()
 	)
 endif()
 
+set(OMR_C_LANGUAGE_STANDARD "") 
+set(OMR_CXX_LANGUAGE_STANDARD "") 
 
 if(OMR_HOST_OS STREQUAL "aix")
 	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
-		-qlanglvl=extended
 		-qinfo=pro
 	)
+
+	set(OMR_C_LANGUAGE_STANDARD "-qlanglvl=extended")
+	set(OMR_CXX_LANGUAGE_STANDARD "-qlanglvl=extended")
 
 	set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} -lm -liconv -ldl -lperfstat")
 

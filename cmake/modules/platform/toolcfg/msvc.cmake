@@ -36,6 +36,9 @@ else()
 	set(TARGET_MACHINE "i386")
 endif()
 
+set(OMR_C_LANGUAGE_STANDARD "") 
+set(OMR_CXX_LANGUAGE_STANDARD "") 
+
 list(APPEND OMR_PLATFORM_LINKER_OPTIONS
 	-subsystem:console
 	-machine:${TARGET_MACHINE}

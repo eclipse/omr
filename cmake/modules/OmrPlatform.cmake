@@ -62,10 +62,12 @@ macro(omr_platform_global_setup)
 
 	omr_append_flags(CMAKE_C_FLAGS
 		${OMR_PLATFORM_C_COMPILE_OPTIONS}
+		${OMR_C_LANGUAGE_STANDARD}
 	)
 
 	omr_append_flags(CMAKE_CXX_FLAGS
 		${OMR_PLATFORM_CXX_COMPILE_OPTIONS}
+		${OMR_CXX_LANUAGE_STANDARD} 
 	)
 
 	omr_append_flags(CMAKE_EXE_LINKER_FLAGS
