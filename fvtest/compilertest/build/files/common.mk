@@ -244,6 +244,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     $(JIT_OMR_DIRTY_DIR)/control/CompilationController.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/FEInliner.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/Runtime.cpp \
+    $(JIT_OMR_DIRTY_DIR)/runtime/RuntimeHelper.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/Trampoline.cpp \
     $(JIT_OMR_DIRTY_DIR)/control/CompileMethod.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRIO.cpp \

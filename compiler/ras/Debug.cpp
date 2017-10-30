@@ -3860,6 +3860,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
       {
       switch (index)
          {
+         case TR_CRC32:                     return "CRC32";
          case TR_checkCast:                 return "jitCheckCast";
          case TR_checkCastForArrayStore:    return "jitCheckCastForArrayStore";
          case TR_instanceOf:                return "jitInstanceOf";

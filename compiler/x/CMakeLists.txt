@@ -53,6 +53,7 @@ compiler_library(x
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/OMRRealRegister.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/OMRRegisterDependency.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/OMRSnippet.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/codegen/X86FastCallLinkage.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/X86SystemLinkage.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/XMMBinaryArithmeticAnalyser.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/OMRCodeGenerator.cpp

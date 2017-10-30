@@ -32,6 +32,7 @@
 #include "ruby/config.h"
 #endif
 
+#include "runtime/RuntimeHelpers.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 
 namespace TR { class Compilation; }
@@ -168,31 +169,32 @@ enum TR_RuntimeHelper
 class TR_RuntimeHelperTable
    {
 public:
-   void* getAddress(TR_RuntimeHelper h)
+   inline void* getAddress(TR_RuntimeHelper h)
       {
       return h < TR_numRuntimeHelpers ? _helpers[h] : (void *) (uintptr_t) 0xDEADB00F;
       }
-   TR_LinkageConventions getLinkage(TR_RuntimeHelper h)
+   inline TR_LinkageConventions getLinkage(TR_RuntimeHelper h)
       {
       return h < TR_numRuntimeHelpers ? _linkage[h] : TR_None;
       }
    // Linkage convention is essential when calling a helper
    // For example, on X86, there are private linkage, System V ABI, fastcall, cdecl, etc.
-   void setAddress(TR_RuntimeHelper h, void * a, TR_LinkageConventions lc = TR_Helper)
+   inline void setAddress(TR_RuntimeHelper h, void * a, TR_LinkageConventions lc = TR_Helper)
       {
       _helpers[h] = translateAddress(a);
       _linkage[h] = lc;
       }
 
-   void setConstant(TR_RuntimeHelper h, void * a)
+   inline void setConstant(TR_RuntimeHelper h, void * a)
       {
       _helpers[h] = a;
       }
-
+   
+   inline void initialize();
 private:
    // translate address is to allow each platform converting a C function pointer
    // to an address callable by assembly, which is essential for P and Z.
-   void* translateAddress(void* a);
+   static void* translateAddress(void* a);
    void*                 _helpers[TR_numRuntimeHelpers];
    TR_LinkageConventions _linkage[TR_numRuntimeHelpers];
    };
@@ -204,6 +206,10 @@ extern TR_RuntimeHelperTable runtimeHelpers;
 inline void*                 runtimeHelperValue(TR_RuntimeHelper h) { return runtimeHelpers.getAddress(h); }
 inline TR_LinkageConventions runtimeHelperLinkage(TR_RuntimeHelper h) { return runtimeHelpers.getLinkage(h); }
 
+inline void TR_RuntimeHelperTable::initialize()
+   {
+   setAddress(TR_CRC32, (void*)OMR::Runtime::CRC32, TR_FastCall);
+   }
 
 // -----------------------------------------------------------------------------
 
