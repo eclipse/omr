@@ -657,7 +657,7 @@
    /* .properties4          = */ 0,
    /* .dataType             = */ TR::Int32,
    /* .typeProperties       = */ ILTypeProp::Size_4 | ILTypeProp::Integer,
-   /* .childProperties      = */ ONE_CHILD(ILChildProp::UnspecifiedChildType), // ireturn is used to return all types smaller than Int32
+   /* .childProperties      = */ ONE_CHILD(ILChildProp::UnspecifiedChildType),
    /* .swapChildrenOpCode   = */ TR::BadILOp,
    /* .reverseBranchOpCode  = */ TR::BadILOp,
    /* .booleanCompareOpCode = */ TR::BadILOp,

@@ -260,12 +260,12 @@ bool TR::ILValidator::treesAreValid(TR::TreeTop *start, TR::TreeTop *stop)
          for (auto i = 0; i < actChildCount; ++i)
             {
             auto childOpcode = node->getChild(i)->getOpCode();
-            const auto expChildType = opcode.expectedChildType(i);
-            const auto actChildType = childOpcode.getDataType().getDataType();
-            const auto expChildTypeName = (expChildType >= TR::NumTypes) ? "UnspecifiedChildType" : TR::DataType::getName(expChildType);
-            const auto actChildTypeName = TR::DataType::getName(actChildType);
             if (childOpcode.getOpCodeValue() != TR::GlRegDeps)
                {
+               const auto expChildType = opcode.expectedChildType(i);
+               const auto actChildType = childOpcode.getDataType().getDataType();
+               const auto expChildTypeName = (expChildType >= TR::NumTypes) ? "UnspecifiedChildType" : TR::DataType::getName(expChildType);
+               const auto actChildTypeName = TR::DataType::getName(actChildType);
                validityRule(iter, ((expChildType >= TR::NumTypes) || (actChildType == expChildType)),
                             "Child %d has unexpected type %s (expected %s)" , i, actChildTypeName, expChildTypeName);
                }
@@ -274,15 +274,6 @@ bool TR::ILValidator::treesAreValid(TR::TreeTop *start, TR::TreeTop *stop)
                // make sure the node is allowed to have a GlRegDeps child
                // and make sure that it is the last child
                validityRule(iter, opcode.canHaveGlRegDeps() && (i == actChildCount - 1), "Unexpected GlRegDeps child %d", i);
-               }
-
-            // ireturn may have i, or s, or b returns. 
-            if (opcode.getOpCodeValue() == TR::ireturn) 
-               {
-               validityRule(iter,(actChildType == TR::Int32 ||
-                                  actChildType == TR::Int16 ||
-                                  actChildType == TR::Int8),
-                                 "ireturn has an invalid child type %s (expected Int{8,16,32})", actChildTypeName);
                }
             }
          }

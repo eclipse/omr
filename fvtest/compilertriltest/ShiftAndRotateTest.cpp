@@ -177,7 +177,7 @@ TEST_P(Int8ShiftAndRotate, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int8 (block (ireturn (%s (bconst %d) (iconst %d)) )))", param.opcode.c_str(), param.lhs, param.rhs);
+    std::snprintf(inputTrees, 120, "(method return=Int8 (block (ireturn (b2i (%s (bconst %d) (iconst %d)) ))))", param.opcode.c_str(), param.lhs, param.rhs);
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
@@ -194,7 +194,7 @@ TEST_P(Int8ShiftAndRotate, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int8 args=[Int8, Int32] (block (ireturn (%s (bload parm=0) (iload parm=1)) )))", param.opcode.c_str());
+    std::snprintf(inputTrees, 120, "(method return=Int8 args=[Int8, Int32] (block (ireturn (b2i (%s (bload parm=0) (iload parm=1)) ))))", param.opcode.c_str());
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
@@ -218,7 +218,7 @@ TEST_P(Int16ShiftAndRotate, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int16 (block (ireturn (%s (sconst %d) (iconst %d)) )))", param.opcode.c_str(), param.lhs, param.rhs);
+    std::snprintf(inputTrees, 120, "(method return=Int16 (block (ireturn (s2i (%s (sconst %d) (iconst %d)) ))))", param.opcode.c_str(), param.lhs, param.rhs);
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
@@ -236,7 +236,7 @@ TEST_P(Int16ShiftAndRotate, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int16 args=[Int16, Int32] (block (ireturn (%s (sload parm=0) (iload parm=1)) )))", param.opcode.c_str());
+    std::snprintf(inputTrees, 120, "(method return=Int16 args=[Int16, Int32] (block (ireturn (s2i (%s (sload parm=0) (iload parm=1)) ))))", param.opcode.c_str());
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
@@ -341,7 +341,7 @@ TEST_P(UInt8ShiftAndRotate, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int8 (block (ireturn (%s (bconst %d) (iconst %d)) )))", param.opcode.c_str(), param.lhs, param.rhs);
+    std::snprintf(inputTrees, 120, "(method return=Int8 (block (ireturn (bu2i (%s (bconst %d) (iconst %d)) ))))", param.opcode.c_str(), param.lhs, param.rhs);
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
@@ -358,7 +358,7 @@ TEST_P(UInt8ShiftAndRotate, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int8 args=[Int8, Int32] (block (ireturn (%s (bload parm=0) (iload parm=1)) )))", param.opcode.c_str());
+    std::snprintf(inputTrees, 120, "(method return=Int8 args=[Int8, Int32] (block (ireturn (bu2i (%s (bload parm=0) (iload parm=1)) ))))", param.opcode.c_str());
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
@@ -381,7 +381,7 @@ TEST_P(UInt16ShiftAndRotate, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int16 (block (ireturn (%s (sconst %d) (iconst %d)) )))", param.opcode.c_str(), param.lhs, param.rhs);
+    std::snprintf(inputTrees, 120, "(method return=Int16 (block (ireturn (su2i (%s (sconst %d) (iconst %d)) ))))", param.opcode.c_str(), param.lhs, param.rhs);
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
@@ -398,7 +398,7 @@ TEST_P(UInt16ShiftAndRotate, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int16 args=[Int16, Int32] (block (ireturn (%s (sload parm=0) (iload parm=1)) )))", param.opcode.c_str());
+    std::snprintf(inputTrees, 120, "(method return=Int16 args=[Int16, Int32] (block (ireturn (su2i (%s (sload parm=0) (iload parm=1)) ))))", param.opcode.c_str());
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
