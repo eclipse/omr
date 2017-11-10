@@ -429,7 +429,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    void setLowestCommonCodePatchingAlignmentBoundary(int32_t b) {_lowestCommonCodePatchingAlignmentBoundary = b;}
 
    // NOT NEEDED, overridden in amd64/i386
-   bool internalPointerSupportImplemented() {return false;} // no virt
+   bool internalPointerSupportImplemented() {return false;}
 
    bool supportsSinglePrecisionSQRT() {return true;}
 
