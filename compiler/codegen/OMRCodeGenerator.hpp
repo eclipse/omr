@@ -528,8 +528,6 @@ class OMR_EXTENSIBLE CodeGenerator
    // allocate is used by the main compilation class to get a code
    // generator for the current compilation.
    //
-   static TR::CodeGenerator *armAllocate(TR::Compilation *comp);
-
    TR::Recompilation *allocateRecompilationInfo() { return NULL; }
 
    // --------------------------------------------------------------------------
