@@ -434,10 +434,10 @@ class OMR_EXTENSIBLE CodeGenerator
    // Code Generator Phases
    //
    void generateCode();
-   void doRegisterAssignment(TR_RegisterKinds kindsToAssign);  // no virt
-   void doBinaryEncoding(); // no virt, no cast
-   void doPeephole() { return; } // no virt, no cast, default avail
-   bool hasComplexAddressingMode() { return false; } // no virt, default
+   void doRegisterAssignment(TR_RegisterKinds kindsToAssign); 
+   void doBinaryEncoding();
+   void doPeephole() { return; }
+   bool hasComplexAddressingMode() { return false; }
    void removeUnusedLocals();
 
    void identifyUnneededByteConvNodes(TR::Node*, TR::TreeTop *, vcount_t, TR::DataType);
@@ -499,8 +499,8 @@ class OMR_EXTENSIBLE CodeGenerator
    void startUsingRegister(TR::Register *reg);
    void stopUsingRegister(TR::Register *reg);
 
-   void setCurrentBlockIndex(int32_t blockIndex) { } // no virt, default, cast
-   int32_t getCurrentBlockIndex() { return -1; } // no virt, default
+   void setCurrentBlockIndex(int32_t blockIndex) { }
+   int32_t getCurrentBlockIndex() { return -1; }
 
    TR::Instruction *lastInstructionBeforeCurrentEvaluationTreeTop()
       {
@@ -518,7 +518,7 @@ class OMR_EXTENSIBLE CodeGenerator
    bool isRegisterClobberable(TR::Register *reg, uint16_t count);
 
    // ilgen
-   bool ilOpCodeIsSupported(TR::ILOpCodes); // no virt, default, cast
+   bool ilOpCodeIsSupported(TR::ILOpCodes);
 
 
 
@@ -535,8 +535,8 @@ class OMR_EXTENSIBLE CodeGenerator
    // --------------------------------------------------------------------------
    // Capabilities
    //
-   bool supports32bitAiadd() {return true;}  // no virt, default
-   bool supportsMergingGuards() {return false;} // no virt, default
+   bool supports32bitAiadd() {return true;} 
+   bool supportsMergingGuards() {return false;}
 
    // --------------------------------------------------------------------------
    // Z only
@@ -548,28 +548,28 @@ class OMR_EXTENSIBLE CodeGenerator
    bool AddArtificiallyInflatedNodeToStack(TR::Node* n);
 
    // Used to model register liveness without Future Use Count.
-   bool isInternalControlFlowReg(TR::Register *reg) {return false;}  // no virt, default
-   void startInternalControlFlow(TR::Instruction *instr) {} // no virt, default, cast
-   void endInternalControlFlow(TR::Instruction *instr) {} // no virt, default, cast
+   bool isInternalControlFlowReg(TR::Register *reg) {return false;} 
+   void startInternalControlFlow(TR::Instruction *instr) {}
+   void endInternalControlFlow(TR::Instruction *instr) {}
 
 
 
    // --------------------------------------------------------------------------
    // P only
    //
-   intptrj_t hiValue(intptrj_t address); // no virt, 1 impl
+   intptrj_t hiValue(intptrj_t address);
 
    // --------------------------------------------------------------------------
    // Lower trees
    //
    void rematerializeCmpUnderTernary(TR::Node*node);
-   bool yankIndexScalingOp() {return false;} // no virt, default
+   bool yankIndexScalingOp() {return false;}
 
    void cleanupFlags(TR::Node*node);
 
-   bool shouldYankCompressedRefs() { return false; } // no virt, default, cast
-   bool materializesHeapBase() { return true; } // no virt, default, cast
-   bool canFoldLargeOffsetInAddressing() { return false; } // no virt, default, cast
+   bool shouldYankCompressedRefs() { return false; }
+   bool materializesHeapBase() { return true; }
+   bool canFoldLargeOffsetInAddressing() { return false; }
 
    void insertDebugCounters();
 
@@ -591,21 +591,21 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::Instruction *generateDebugCounter(const char *name, TR_ScratchRegisterManager &srm, int32_t delta = 1, int8_t fidelity = TR::DebugCounter::Undetermined, int32_t staticDelta = 1, TR::Instruction *cursor = NULL);
    TR::Instruction *generateDebugCounter(const char *name, TR::Register *deltaReg, TR_ScratchRegisterManager &srm, int8_t fidelity = TR::DebugCounter::Undetermined, int32_t staticDelta = 1, TR::Instruction *cursor = NULL);
 
-   TR::Instruction *generateDebugCounterBump(TR::Instruction *cursor, TR::DebugCounterBase *counter, int32_t delta, TR::RegisterDependencyConditions *cond){ return cursor; } // no virt, default, cast
-   TR::Instruction *generateDebugCounterBump(TR::Instruction *cursor, TR::DebugCounterBase *counter, TR::Register *deltaReg, TR::RegisterDependencyConditions *cond){ return cursor; } // no virt, default, cast
-   TR::Instruction *generateDebugCounterBump(TR::Instruction *cursor, TR::DebugCounterBase *counter, int32_t delta, TR_ScratchRegisterManager &srm){ return cursor; } // no virt, default, cast
-   TR::Instruction *generateDebugCounterBump(TR::Instruction *cursor, TR::DebugCounterBase *counter, TR::Register *deltaReg, TR_ScratchRegisterManager &srm){ return cursor; } // no virt, default, cast
+   TR::Instruction *generateDebugCounterBump(TR::Instruction *cursor, TR::DebugCounterBase *counter, int32_t delta, TR::RegisterDependencyConditions *cond){ return cursor; }
+   TR::Instruction *generateDebugCounterBump(TR::Instruction *cursor, TR::DebugCounterBase *counter, TR::Register *deltaReg, TR::RegisterDependencyConditions *cond){ return cursor; }
+   TR::Instruction *generateDebugCounterBump(TR::Instruction *cursor, TR::DebugCounterBase *counter, int32_t delta, TR_ScratchRegisterManager &srm){ return cursor; }
+   TR::Instruction *generateDebugCounterBump(TR::Instruction *cursor, TR::DebugCounterBase *counter, TR::Register *deltaReg, TR_ScratchRegisterManager &srm){ return cursor; }
 
    // NOT USED?
-   bool supportsDebugCounters(TR::DebugCounterInjectionPoint injectionPoint){ return injectionPoint == TR::TR_BeforeCodegen; } // no virt, default
+   bool supportsDebugCounters(TR::DebugCounterInjectionPoint injectionPoint){ return injectionPoint == TR::TR_BeforeCodegen; }
 
-   void incrementEventCounter(TR::Node *node, TR::SymbolReference *symRef, TR::CodeGenerator *cg) { TR_ASSERT(0,"not implemented\n");} // no virt, default
+   void incrementEventCounter(TR::Node *node, TR::SymbolReference *symRef, TR::CodeGenerator *cg) { TR_ASSERT(0,"not implemented\n");}
 
    // --------------------------------------------------------------------------
    // Linkage
    //
-   void initializeLinkage(); // no virt, default, cast
-   TR::Linkage *createLinkage(TR_LinkageConventions lc); // no virt, default, cast
+   void initializeLinkage();
+   TR::Linkage *createLinkage(TR_LinkageConventions lc);
    TR::Linkage *createLinkageForCompilation();
 
    TR::Linkage *getLinkage() {return _bodyLinkage;}
@@ -617,8 +617,8 @@ class OMR_EXTENSIBLE CodeGenerator
    // --------------------------------------------------------------------------
    // Optimizer, code generator capabilities
    //
-   int32_t getPreferredLoopUnrollFactor() {return -1;} // no virt, default
-   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method) {return false;} // no virt, default
+   int32_t getPreferredLoopUnrollFactor() {return -1;}
+   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method) {return false;}
    bool isMethodInAtomicLongGroup (TR::RecognizedMethod rm);
 
    // --------------------------------------------------------------------------
@@ -629,62 +629,62 @@ class OMR_EXTENSIBLE CodeGenerator
 
    bool getSupportsProfiledInlining() { return _flags4.testAny(SupportsProfiledInlining);}
    void setSupportsProfiledInlining() { _flags4.set(SupportsProfiledInlining);}
-   bool supportsInliningOfIsInstance() {return false;} // no virt, default
-   bool supportsPassThroughCopyToNewVirtualRegister() { return false; } // no virt, default
+   bool supportsInliningOfIsInstance() {return false;}
+   bool supportsPassThroughCopyToNewVirtualRegister() { return false; }
 
-   uint8_t getSizeOfCombinedBuffer() {return 0;} // no virt, default
+   uint8_t getSizeOfCombinedBuffer() {return 0;}
 
    // The number of nodes we want between a monexit and the next monent before transforming a monitored region with
    // transactional lock elision.
-   int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 15; } // no virt, default
+   int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 15; }
 
-   bool doRematerialization() {return false;} // no virt, default
+   bool doRematerialization() {return false;}
 
    // --------------------------------------------------------------------------
    // Architecture, not code generator
    //
-   int16_t getMinShortForLongCompareNarrower() { return SHRT_MIN; } // no virt, default
-   int8_t getMinByteForLongCompareNarrower() { return SCHAR_MIN; } // no virt, default
+   int16_t getMinShortForLongCompareNarrower() { return SHRT_MIN; }
+   int8_t getMinByteForLongCompareNarrower() { return SCHAR_MIN; }
 
-   bool branchesAreExpensive() { return true; } // no virt, default
-   bool opCodeIsNoOp(TR::ILOpCode &opCode); // no virt, 1 impl
-   bool opCodeIsNoOpOnThisPlatform(TR::ILOpCode &opCode) {return false;} // no virt
+   bool branchesAreExpensive() { return true; }
+   bool opCodeIsNoOp(TR::ILOpCode &opCode);
+   bool opCodeIsNoOpOnThisPlatform(TR::ILOpCode &opCode) {return false;}
 
-   bool supportsSinglePrecisionSQRT() {return false;} // no virt
-   bool supportsFusedMultiplyAdd() {return false;} // no virt
-   bool supportsNegativeFusedMultiplyAdd() {return false;} // no virt
+   bool supportsSinglePrecisionSQRT() {return false;}
+   bool supportsFusedMultiplyAdd() {return false;}
+   bool supportsNegativeFusedMultiplyAdd() {return false;}
 
-   bool supportsComplexAddressing() {return false;} // no virt
-   bool canBeAffectedByStoreTagStalls() { return false; } // no virt, default
+   bool supportsComplexAddressing() {return false;}
+   bool canBeAffectedByStoreTagStalls() { return false; }
 
-   bool isMaterialized(TR::Node *); // no virt, cast
-   bool shouldValueBeInACommonedNode(int64_t) { return false; } // no virt, cast
+   bool isMaterialized(TR::Node *);
+   bool shouldValueBeInACommonedNode(int64_t) { return false; }
    bool materializesLargeConstants() { return false; }
 
-   bool canUseImmedInstruction(int64_t v) {return false;} // no virt
-   bool needsNormalizationBeforeShifts() { return false; } // no virt, cast
+   bool canUseImmedInstruction(int64_t v) {return false;}
+   bool needsNormalizationBeforeShifts() { return false; }
 
    uint32_t getNumberBytesReadInaccessible() { return _numberBytesReadInaccessible; }
    uint32_t getNumberBytesWriteInaccessible() { return _numberBytesWriteInaccessible; }
 
-   bool codegenSupportsUnsignedIntegerDivide() {return false;} // no virt
-   bool mulDecompositionCostIsJustified(int numOfOperations, char bitPosition[], char operationType[], int64_t value); // no virt
+   bool codegenSupportsUnsignedIntegerDivide() {return false;}
+   bool mulDecompositionCostIsJustified(int numOfOperations, char bitPosition[], char operationType[], int64_t value);
 
-   bool codegenSupportsLoadlessBNDCheck() {return false;} // no virt, cast
+   bool codegenSupportsLoadlessBNDCheck() {return false;}
 
    // called to determine if multiply decomposition exists in platform codegen so that codegen sequences are used
    // instead of the IL transformed multiplies
-   bool codegenMulDecomposition(int64_t multiplier) {return false;} // no virt
+   bool codegenMulDecomposition(int64_t multiplier) {return false;}
 
    // --------------------------------------------------------------------------
    // FrontEnd, not code generator
    //
-   bool getSupportsNewObjectAlignment() { return false; } // no virt
-   bool getSupportsTenuredObjectAlignment() { return false; } // no virt
-   bool isObjectOfSizeWorthAligning(uint32_t size) { return false; } // no virt
+   bool getSupportsNewObjectAlignment() { return false; }
+   bool getSupportsTenuredObjectAlignment() { return false; }
+   bool isObjectOfSizeWorthAligning(uint32_t size) { return false; }
 
    // J9
-   int32_t getInternalPtrMapBit() { return 31;} // no virt
+   int32_t getInternalPtrMapBit() { return 31;}
 
    uint32_t getMaxObjectSizeGuaranteedNotToOverflow() { return _maxObjectSizeGuaranteedNotToOverflow; }
 
@@ -704,13 +704,13 @@ class OMR_EXTENSIBLE CodeGenerator
    // --------------------------------------------------------------------------
    // FE capability, not code generator
    //
-   bool internalPointerSupportImplemented() {return false;} // no virt, cast
+   bool internalPointerSupportImplemented() {return false;}
    bool supportsInternalPointers();
 
    // --------------------------------------------------------------------------
    // Behaviour on a particular arch, not code generator
    //
-   bool supportsLongRegAllocation() {return false;}  // no virt
+   bool supportsLongRegAllocation() {return false;} 
 
    // --------------------------------------------------------------------------
    // GC
@@ -724,7 +724,7 @@ class OMR_EXTENSIBLE CodeGenerator
    TR_GCStackMap *buildGCMapForInstruction(TR::Instruction *instr);
    void buildRegisterMapForInstruction(TR_GCStackMap *map);
    // IA32 only?
-   uint32_t getRegisterMapInfoBitsMask() {return 0;} // no virt, cast
+   uint32_t getRegisterMapInfoBitsMask() {return 0;}
 
    // --------------------------------------------------------------------------
    // Shrink wrapping
@@ -735,18 +735,18 @@ class OMR_EXTENSIBLE CodeGenerator
    int32_t getLowestSavedRegister() {return _lowestSavedReg;}
    void setLowestSavedRegister(int32_t v) {_lowestSavedReg = v;}
 
-   bool processInstruction(TR::Instruction *instr, TR_BitVector **registerUsageInfo, int32_t &blockNum, int32_t &isFence, bool traceIt) {return false;} // no virt, cast
-   uint32_t isPreservedRegister(int32_t regIndex) { return 0; } // no virt, cast
-   bool isReturnInstruction(TR::Instruction *instr) { return false; } // no virt, cast
-   bool isBranchInstruction(TR::Instruction *instr) { return false; } // no virt, cast
-   int32_t isFenceInstruction(TR::Instruction *instr) { return false; } // no virt
-   bool isAlignmentInstruction(TR::Instruction *instr) { return false; } // no virt
-   bool isLabelInstruction(TR::Instruction *instr) { return false; } // no virt
-   TR::Instruction *splitEdge(TR::Instruction *cursor, bool isFallThrough, bool needsJump, TR::Instruction *newSplitLabel, TR::list<TR::Instruction*> *jmpInstrs, bool firstJump = false) { return NULL; } // no virt
-   TR::Instruction *splitBlockEntry(TR::Instruction *instr) { return NULL; } // no virt
-   int32_t computeRegisterSaveDescription(TR_BitVector *regs, bool populateInfo = false) { return 0; } // no virt
-   void processIncomingParameterUsage(TR_BitVector **registerUsageInfo, int32_t blockNum) { return; } // no virt
-   void updateSnippetMapWithRSD(TR::Instruction *cur, int32_t rsd) { return; } // no virt
+   bool processInstruction(TR::Instruction *instr, TR_BitVector **registerUsageInfo, int32_t &blockNum, int32_t &isFence, bool traceIt) {return false;}
+   uint32_t isPreservedRegister(int32_t regIndex) { return 0; }
+   bool isReturnInstruction(TR::Instruction *instr) { return false; }
+   bool isBranchInstruction(TR::Instruction *instr) { return false; }
+   int32_t isFenceInstruction(TR::Instruction *instr) { return false; }
+   bool isAlignmentInstruction(TR::Instruction *instr) { return false; }
+   bool isLabelInstruction(TR::Instruction *instr) { return false; }
+   TR::Instruction *splitEdge(TR::Instruction *cursor, bool isFallThrough, bool needsJump, TR::Instruction *newSplitLabel, TR::list<TR::Instruction*> *jmpInstrs, bool firstJump = false) { return NULL; }
+   TR::Instruction *splitBlockEntry(TR::Instruction *instr) { return NULL; }
+   int32_t computeRegisterSaveDescription(TR_BitVector *regs, bool populateInfo = false) { return 0; }
+   void processIncomingParameterUsage(TR_BitVector **registerUsageInfo, int32_t blockNum) { return; }
+   void updateSnippetMapWithRSD(TR::Instruction *cur, int32_t rsd) { return; }
    bool isTargetSnippetOrOutOfLine(TR::Instruction *instr, TR::Instruction **start, TR::Instruction **end) { return false; }
 
    // --------------------------------------------------------------------------
@@ -863,12 +863,12 @@ class OMR_EXTENSIBLE CodeGenerator
    void addSymbolAndDataTypeToMap(TR::Symbol *symbol, TR::DataType dt);
    TR::DataType getDataTypeFromSymbolMap(TR::Symbol *symbol);
 
-   bool prepareForGRA(); // no virt, cast
+   bool prepareForGRA();
 
    uint32_t getGlobalRegister(TR_GlobalRegisterNumber n) {return _globalRegisterTable[n];}
    uint32_t *setGlobalRegisterTable(uint32_t *p) {return (_globalRegisterTable = p);}
 
-   TR_GlobalRegisterNumber getGlobalRegisterNumber(uint32_t realReg) { return -1; } // no virt, cast
+   TR_GlobalRegisterNumber getGlobalRegisterNumber(uint32_t realReg) { return -1; }
 
    TR_GlobalRegisterNumber getFirstGlobalGPR() {return 0;}
    TR_GlobalRegisterNumber getLastGlobalGPR()  {return _lastGlobalGPR;}
@@ -879,8 +879,8 @@ class OMR_EXTENSIBLE CodeGenerator
    TR_GlobalRegisterNumber getLastGlobalHPR() {return _lastGlobalHPR;}
    TR_GlobalRegisterNumber setLastGlobalHPR(TR_GlobalRegisterNumber n) {return (_lastGlobalHPR = n);}
 
-   TR_GlobalRegisterNumber getGlobalHPRFromGPR (TR_GlobalRegisterNumber n) {return 0;} // no virt, cast
-   TR_GlobalRegisterNumber getGlobalGPRFromHPR (TR_GlobalRegisterNumber n) {return 0;} // no virt
+   TR_GlobalRegisterNumber getGlobalHPRFromGPR (TR_GlobalRegisterNumber n) {return 0;}
+   TR_GlobalRegisterNumber getGlobalGPRFromHPR (TR_GlobalRegisterNumber n) {return 0;}
 
    TR_GlobalRegisterNumber getFirstGlobalFPR() {return _lastGlobalGPR + 1;}
    TR_GlobalRegisterNumber setFirstGlobalFPR(TR_GlobalRegisterNumber n) {return (_firstGlobalFPR = n);}
@@ -949,42 +949,42 @@ class OMR_EXTENSIBLE CodeGenerator
 
    bool is8BitGlobalGPR(TR_GlobalRegisterNumber n) {return n <= _last8BitGlobalGPR;}
 
-   TR_GlobalRegisterNumber getLinkageGlobalRegisterNumber(int8_t linkageRegisterIndex, TR::DataType type){ return -1; } // no virt, cast
-   TR_BitVector *getGlobalGPRsPreservedAcrossCalls(){ return NULL; } // no virt, cast
-   TR_BitVector *getGlobalFPRsPreservedAcrossCalls(){ return NULL; } // no virt, cast
+   TR_GlobalRegisterNumber getLinkageGlobalRegisterNumber(int8_t linkageRegisterIndex, TR::DataType type){ return -1; }
+   TR_BitVector *getGlobalGPRsPreservedAcrossCalls(){ return NULL; }
+   TR_BitVector *getGlobalFPRsPreservedAcrossCalls(){ return NULL; }
 
    int32_t getFirstBit(TR_BitVector &bv);
-   TR_GlobalRegisterNumber pickRegister(TR_RegisterCandidate *, TR::Block * *, TR_BitVector & availableRegisters, TR_GlobalRegisterNumber & highRegisterNumber, TR_LinkHead<TR_RegisterCandidate> *candidates); // no virt
+   TR_GlobalRegisterNumber pickRegister(TR_RegisterCandidate *, TR::Block * *, TR_BitVector & availableRegisters, TR_GlobalRegisterNumber & highRegisterNumber, TR_LinkHead<TR_RegisterCandidate> *candidates);
    TR_RegisterCandidate *findCoalescenceForRegisterCopy(TR::Node *node, TR_RegisterCandidate *rc, bool *isUnpreferred);
    TR_GlobalRegisterNumber findCoalescenceRegisterForParameter(TR::Node *callNode, TR_RegisterCandidate *rc, uint32_t childIndex, bool *isUnpreferred);
    TR_RegisterCandidate *findUsedCandidate(TR::Node *node, TR_RegisterCandidate *rc, TR_BitVector *visitedNodes);
 
-   bool allowGlobalRegisterAcrossBranch(TR_RegisterCandidate *, TR::Node * branchNode); // no virt
-   void removeUnavailableRegisters(TR_RegisterCandidate * rc, TR::Block * * blocks, TR_BitVector & availableRegisters) {} // no virt
-   void setUnavailableRegistersUsage(TR_Array<TR_BitVector>  & liveOnEntryUsage, TR_Array<TR_BitVector>   & liveOnExitUsage) {} // no virt
+   bool allowGlobalRegisterAcrossBranch(TR_RegisterCandidate *, TR::Node * branchNode);
+   void removeUnavailableRegisters(TR_RegisterCandidate * rc, TR::Block * * blocks, TR_BitVector & availableRegisters) {}
+   void setUnavailableRegistersUsage(TR_Array<TR_BitVector>  & liveOnEntryUsage, TR_Array<TR_BitVector>   & liveOnExitUsage) {}
 
-   int32_t getMaximumNumberOfGPRsAllowedAcrossEdge(TR::Node *) { return INT_MAX; } // no virt
-   int32_t getMaximumNumberOfFPRsAllowedAcrossEdge(TR::Node *) { return INT_MAX; } // no virt
-   int32_t getMaximumNumberOfVRFsAllowedAcrossEdge(TR::Node *) { return INT_MAX; } // no virt
-   int32_t getMaximumNumberOfGPRsAllowedAcrossEdge(TR::Block *block); // no virt
-   int32_t getMaximumNumbersOfAssignableGPRs() { return INT_MAX; } // no virt, cast
-   int32_t getMaximumNumbersOfAssignableFPRs() { return INT_MAX; } // no virt, cast
-   int32_t getMaximumNumbersOfAssignableVRs()  { return INT_MAX; } // no virt, cast
+   int32_t getMaximumNumberOfGPRsAllowedAcrossEdge(TR::Node *) { return INT_MAX; }
+   int32_t getMaximumNumberOfFPRsAllowedAcrossEdge(TR::Node *) { return INT_MAX; }
+   int32_t getMaximumNumberOfVRFsAllowedAcrossEdge(TR::Node *) { return INT_MAX; }
+   int32_t getMaximumNumberOfGPRsAllowedAcrossEdge(TR::Block *block);
+   int32_t getMaximumNumbersOfAssignableGPRs() { return INT_MAX; }
+   int32_t getMaximumNumbersOfAssignableFPRs() { return INT_MAX; }
+   int32_t getMaximumNumbersOfAssignableVRs()  { return INT_MAX; }
    virtual bool willBeEvaluatedAsCallByCodeGen(TR::Node *node, TR::Compilation *comp){ return true;}
-   bool isGlobalRegisterAvailable(TR_GlobalRegisterNumber, TR::DataType) { return true; } // no virt
+   bool isGlobalRegisterAvailable(TR_GlobalRegisterNumber, TR::DataType) { return true; }
 
-   bool areAssignableGPRsScarce(); // no virt, 1 impl
+   bool areAssignableGPRsScarce();
 
    TR_Array<TR::Register *>& getRegisterArray() {return _registerArray;}
 
-   bool needToAvoidCommoningInGRA() {return false;} // no virt
+   bool needToAvoidCommoningInGRA() {return false;}
 
-   bool considerTypeForGRA(TR::Node *node) {return true;} // no virt
-   bool considerTypeForGRA(TR::DataType dt) {return true;} // no virt
-   bool considerTypeForGRA(TR::SymbolReference *symRef) {return true;} // no virt
+   bool considerTypeForGRA(TR::Node *node) {return true;}
+   bool considerTypeForGRA(TR::DataType dt) {return true;}
+   bool considerTypeForGRA(TR::SymbolReference *symRef) {return true;}
 
-   void enableLiteralPoolRegisterForGRA () {} // no virt
-   bool excludeInvariantsFromGRAEnabled() { return false; } // no virt
+   void enableLiteralPoolRegisterForGRA () {}
+   bool excludeInvariantsFromGRAEnabled() { return false; }
 
    TR_BitVector *getBlocksWithCalls();
 
@@ -998,7 +998,7 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::RegisterIterator *setFPRegisterIterator(TR::RegisterIterator *iter) {return (_fpRegisterIterator = iter);}
 
    // X86 only
-   uint32_t estimateBinaryLength(TR::MemoryReference *) { return 0; } // no virt
+   uint32_t estimateBinaryLength(TR::MemoryReference *) { return 0; }
 
 #ifdef DEBUG
    static void shutdown(TR_FrontEnd *fe, TR::FILE *logFile);
@@ -1120,16 +1120,16 @@ class OMR_EXTENSIBLE CodeGenerator
                                           uintptr_t generatingLineNumber,
                                           TR::Node *node) {}
 
-   void apply8BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol * label); // no virt
-   void apply12BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol * label, bool isCheckDisp = true); // no virt
-   void apply16BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol * label); // no virt
-   void apply16BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol * label,int8_t d, bool isInstrOffset = false); // no virt
-   void apply24BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol *); // no virt
-   void apply16BitLoadLabelRelativeRelocation(TR::Instruction *, TR::LabelSymbol *, TR::LabelSymbol *, int32_t); // no virt
-   void apply32BitLoadLabelRelativeRelocation(TR::Instruction *, TR::LabelSymbol *, TR::LabelSymbol *, int32_t);  // no virt
-   void apply64BitLoadLabelRelativeRelocation(TR::Instruction *, TR::LabelSymbol *); // no virt
-   void apply32BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol *); // no virt
-   void apply32BitLabelTableRelocation(int32_t * cursor, TR::LabelSymbol *); // no virt
+   void apply8BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol * label);
+   void apply12BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol * label, bool isCheckDisp = true);
+   void apply16BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol * label);
+   void apply16BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol * label,int8_t d, bool isInstrOffset = false);
+   void apply24BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol *);
+   void apply16BitLoadLabelRelativeRelocation(TR::Instruction *, TR::LabelSymbol *, TR::LabelSymbol *, int32_t);
+   void apply32BitLoadLabelRelativeRelocation(TR::Instruction *, TR::LabelSymbol *, TR::LabelSymbol *, int32_t); 
+   void apply64BitLoadLabelRelativeRelocation(TR::Instruction *, TR::LabelSymbol *);
+   void apply32BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol *);
+   void apply32BitLabelTableRelocation(int32_t * cursor, TR::LabelSymbol *);
 
    TR::list<TR_Pair<TR_ResolvedMethod,TR::Instruction> *> &getJNICallSites() { return _jniCallSites; }  // registerAssumptions()
 
@@ -1146,20 +1146,20 @@ class OMR_EXTENSIBLE CodeGenerator
    // Local snippet sharing facility: most RISC platforms can make use of it. The platform
    // specific code generators should override isSnippetMatched if they choose to use it.
    TR::LabelSymbol * lookUpSnippet(int32_t snippetKind, TR::SymbolReference *symRef);
-   bool isSnippetMatched(TR::Snippet *snippet, int32_t snippetKind, TR::SymbolReference *symRef) {return false;} // no virt, cast
+   bool isSnippetMatched(TR::Snippet *snippet, int32_t snippetKind, TR::SymbolReference *symRef) {return false;}
 
    // called to emit any constant data snippets.  The platform specific code generators
    // should override these methods if they use constant data snippets.
    //
    void emitDataSnippets() {}
-   bool hasDataSnippets() {return false;} // no virt, cast
+   bool hasDataSnippets() {return false;}
    int32_t setEstimatedLocationsForDataSnippetLabels(int32_t estimatedSnippetStart) {return 0;}
 
    // called to emit any target address snippets.  The platform specific code generators
    // should override these methods if they use target address snippets.
    //
    void emitTargetAddressSnippets() {}
-   bool hasTargetAddressSnippets() {return false;} // no virt, cast
+   bool hasTargetAddressSnippets() {return false;}
    int32_t setEstimatedLocationsForTargetAddressSnippetLabels(int32_t estimatedSnippetStart) {return 0;}
 
    // --------------------------------------------------------------------------
@@ -1204,7 +1204,7 @@ class OMR_EXTENSIBLE CodeGenerator
    // --------------------------------------------------------------------------
    // Register assignment
    //
-   TR_RegisterKinds prepareRegistersForAssignment(); // no virt
+   TR_RegisterKinds prepareRegistersForAssignment();
    void addToUnlatchedRegisterList(TR::RealRegister *reg);
    void freeUnlatchedRegisters();
 
@@ -1242,10 +1242,10 @@ class OMR_EXTENSIBLE CodeGenerator
    //
 
    // P now
-   bool isRotateAndMask(TR::Node *node) { return false; } // no virt
+   bool isRotateAndMask(TR::Node *node) { return false; }
 
-   TR::Instruction *generateNop(TR::Node *node, TR::Instruction *instruction=0, TR_NOPKind nopKind=TR_NOPStandard); // no virt, cast
-   bool isOutOfLineHotPath() { TR_ASSERT(0, "isOutOfLineHotPath is only implemented for 390 and ppc"); return false;} // no virt
+   TR::Instruction *generateNop(TR::Node *node, TR::Instruction *instruction=0, TR_NOPKind nopKind=TR_NOPStandard);
+   bool isOutOfLineHotPath() { TR_ASSERT(0, "isOutOfLineHotPath is only implemented for 390 and ppc"); return false;}
 
    //Rather confusingly not used -only- in BCD related codegen.
    //... has leaked into non-BCD code.
@@ -1263,15 +1263,15 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::AheadOfTimeCompile *setAheadOfTimeCompile(TR::AheadOfTimeCompile *p) {return (_aheadOfTimeCompile = p);}
 
    // J9, X86
-   bool canTransformUnsafeCopyToArrayCopy() { return false; } // no virt
+   bool canTransformUnsafeCopyToArrayCopy() { return false; }
    bool canTransformUnsafeSetMemory() { return false; }
 
-   bool canNullChkBeImplicit(TR::Node *); // no virt, cast
+   bool canNullChkBeImplicit(TR::Node *);
    bool canNullChkBeImplicit(TR::Node *, bool doChecks);
 
    bool IsInMemoryType(TR::DataType type) { return false; }
 
-   bool nodeMayCauseException(TR::Node *node) { return false; } // no virt
+   bool nodeMayCauseException(TR::Node *node) { return false; }
 
    // Should these be in codegen?
    bool isSupportedAdd(TR::Node *addr);
@@ -1290,7 +1290,7 @@ class OMR_EXTENSIBLE CodeGenerator
    // to be processed for it to be worth it to execute the 'translate' built-in function
    // arrayTranslateAndTestMinimumNumberOfIterations returns the minimum number of iterations
    // that the loop must run for the transformation to be worthwhile.
-   int32_t arrayTranslateTableRequiresAlignment(bool isByteSource, bool isByteTarget)  { return 0; } // no virt
+   int32_t arrayTranslateTableRequiresAlignment(bool isByteSource, bool isByteTarget)  { return 0; }
 
    // These methods used to return a default value of INT_MAX. However, in at least one place,
    // and quite possibly elsewhere, the optimizer tests for
@@ -1315,10 +1315,10 @@ class OMR_EXTENSIBLE CodeGenerator
    // strictly more information to codegen, which can then generate the best sequence at its
    // discretion, fabricating a loop if necessary. But at least in the case of idiom
    // recognition's MemCpy pattern, we want Design 94472 for this.
-   int32_t arrayTranslateMinimumNumberOfElements(bool isByteSource, bool isByteTarget); // no virt
+   int32_t arrayTranslateMinimumNumberOfElements(bool isByteSource, bool isByteTarget);
 
    // TO TransformUtil.  Make platform specific
-   int32_t arrayTranslateAndTestMinimumNumberOfIterations(); // no virt
+   int32_t arrayTranslateAndTestMinimumNumberOfIterations();
    static int32_t defaultArrayTranslateMinimumNumberOfIterations(const char *methodName);
    static bool useOldArrayTranslateMinimumNumberOfIterations()
       {
@@ -1328,16 +1328,16 @@ class OMR_EXTENSIBLE CodeGenerator
 
    // the following functions evaluate whether a codegen for the node or for static
    // symbol reference requires entry in the literal pool
-   bool arithmeticNeedsLiteralFromPool(TR::Node *node) { return false; } // no virt
-   bool bitwiseOpNeedsLiteralFromPool(TR::Node *parent, TR::Node *child) { return false; } // no virt
-   bool bndsChkNeedsLiteralFromPool(TR::Node *node) { return false; } // no virt
-   bool constLoadNeedsLiteralFromPool(TR::Node *node) { return false; } // no virt, cast
-   void setOnDemandLiteralPoolRun(bool answer) {} // no virt, cast
-   bool isLiteralPoolOnDemandOn () { return false; } // no virt, cast
-   bool supportsOnDemandLiteralPool() { return false; } // no virt, cast
-   bool supportsDirectIntegralLoadStoresFromLiteralPool() { return false; } // no virt
-   bool supportsHighWordFacility() { return false; } // no virt, default, cast
-   bool doInlineAllocate(TR::Node *node) { TR_ASSERT(0, "unexpected call to OMR::CodeGenerator::doInlineAllocate"); return false; } // no virt, default
+   bool arithmeticNeedsLiteralFromPool(TR::Node *node) { return false; }
+   bool bitwiseOpNeedsLiteralFromPool(TR::Node *parent, TR::Node *child) { return false; }
+   bool bndsChkNeedsLiteralFromPool(TR::Node *node) { return false; }
+   bool constLoadNeedsLiteralFromPool(TR::Node *node) { return false; }
+   void setOnDemandLiteralPoolRun(bool answer) {}
+   bool isLiteralPoolOnDemandOn () { return false; }
+   bool supportsOnDemandLiteralPool() { return false; }
+   bool supportsDirectIntegralLoadStoresFromLiteralPool() { return false; }
+   bool supportsHighWordFacility() { return false; }
+   bool doInlineAllocate(TR::Node *node) { TR_ASSERT(0, "unexpected call to OMR::CodeGenerator::doInlineAllocate"); return false; }
 
    bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg) { return false; }
 
@@ -1393,37 +1393,37 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::DataType IntJ() { return TR::Compiler->target.is64Bit() ? TR::Int64 : TR::Int32; }
 
    // will a BCD left shift always leave the sign code unchanged and thus allow it to be propagated through and upwards
-   bool propagateSignThroughBCDLeftShift(TR::DataType type) { return false; } // no virt
+   bool propagateSignThroughBCDLeftShift(TR::DataType type) { return false; }
 
-   bool supportsLengthMinusOneForMemoryOpts() {return false;} // no virt, cast
+   bool supportsLengthMinusOneForMemoryOpts() {return false;}
 
    // Java, likely Z
-   bool supportsTrapsInTMRegion() { return true; } // no virt
+   bool supportsTrapsInTMRegion() { return true; }
 
    // Allows a platform code generator to assert that a particular node operation will use 64 bit values
    // that are not explicitly present in the node datatype.
-   bool usesImplicit64BitGPRs(TR::Node *node) { return false; } // no virt
+   bool usesImplicit64BitGPRs(TR::Node *node) { return false; }
 
    // General utility?
    static bool treeContainsCall(TR::TreeTop * treeTop);
 
    // IA32 only?
-   int32_t getVMThreadGlobalRegisterNumber() {return -1;} // no virt
-   int32_t arrayInitMinimumNumberOfBytes() {return 8;} // no virt
+   int32_t getVMThreadGlobalRegisterNumber() {return -1;}
+   int32_t arrayInitMinimumNumberOfBytes() {return 8;}
 
-   int32_t getMaxPatchableInstructionLength() { return 0; } // no virt
+   int32_t getMaxPatchableInstructionLength() { return 0; }
 
    TR::Instruction *saveOrRestoreRegisters(TR_BitVector *regs, TR::Instruction *cursor, bool doSaves);
 
    void addCountersToEdges(TR::Block *block);
 
-   bool getSupportsBitOpCodes() {return false;} // no virt, default
+   bool getSupportsBitOpCodes() {return false;}
 
    bool getMappingAutomatics() {return _flags1.testAny(MappingAutomatics);}
    void setMappingAutomatics() {_flags1.set(MappingAutomatics);}
 
-   bool getSupportsDirectJNICalls() {return _flags1.testAny(SupportsDirectJNICalls);} // no virt
-   bool supportsDirectJNICallsForAOT() { return false;} // no virt, default
+   bool getSupportsDirectJNICalls() {return _flags1.testAny(SupportsDirectJNICalls);}
+   bool supportsDirectJNICallsForAOT() { return false;}
 
    void setSupportsDirectJNICalls() {_flags1.set(SupportsDirectJNICalls);}
 
@@ -1605,7 +1605,7 @@ class OMR_EXTENSIBLE CodeGenerator
    bool getSupportsScaledIndexAddressing() { return _flags1.testAny(SupportsScaledIndexAddressing); }
    void setSupportsScaledIndexAddressing() { _flags1.set(SupportsScaledIndexAddressing); }
 
-   bool isAddressScaleIndexSupported(int32_t scale) { return false; } // no virt
+   bool isAddressScaleIndexSupported(int32_t scale) { return false; }
 
    bool getSupportsConstantOffsetInAddressing(int64_t value);
    bool getSupportsConstantOffsetInAddressing() { return _flags3.testAny(SupportsConstantOffsetInAddressing); }
