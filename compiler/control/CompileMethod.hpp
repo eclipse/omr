@@ -22,9 +22,11 @@
 #include <stdint.h>                      // for int32_t, uint8_t
 #include "compile/CompilationTypes.hpp"  // for TR_Hotness
 #include "env/ConcreteFE.hpp"            // for FrontEnd
+#include "env/SystemSegmentProvider.hpp"
 
 struct OMR_VMThread;
 class TR_ResolvedMethod;
+class TR_FilterBST;
 namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class JitConfig; }
 
@@ -32,3 +34,30 @@ int32_t init_options(TR::JitConfig *jitConfig, char * cmdLineOptions);
 int32_t commonJitInit(OMR::FrontEnd &fe, char * cmdLineOptions);
 uint8_t *compileMethod(OMR_VMThread *omrVMThread, TR_ResolvedMethod &compilee, TR_Hotness hotness, int32_t &rc);
 uint8_t *compileMethodFromDetails(OMR_VMThread *omrVMThread, TR::IlGeneratorMethodDetails &details, TR_Hotness hotness, int32_t &rc);
+
+
+/** 
+ * If anyone objects to the compilation of this method, 
+ * let them speak now or forever hold their peace. 
+ *
+ * @returns true iff the method can be compiled. 
+ */
+bool methodCanBeCompiled(OMR::FrontEnd *fe,
+                         TR_ResolvedMethod &method,
+                         TR_FilterBST *&filter,
+                         TR_Memory *trMemory);
+
+/**
+ * Try and compile a method. 
+ *
+ * If successfull, the address of the start of the method will be returned, otherwise,
+ * the return-code will indicate the failure reason. 
+ */
+uint8_t*
+tryAndCompileCompilation(TR::Compilation& compiler,
+                         TR_ResolvedMethod& compilee,
+                         TR::Options* options,
+                         TR_Memory& trMemory,
+                         TR::SegmentAllocator &scratchSegmentProvider,
+                         uint64_t translationStartTime,
+                         int32_t& rc);

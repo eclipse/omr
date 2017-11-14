@@ -28,6 +28,7 @@
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
 #include "control/CompileMethod.hpp"
+#include "control/CompilationStateManager.hpp"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
 #include "ilgen.hpp"
@@ -70,11 +71,11 @@ int32_t Tril::SimpleCompiler::compileWithVerifier(TR::IlVerifier* verifier) {
        methodDetails.setIlVerifier(verifier);
        }
 
-    int32_t rc = 0;
-    auto entry_point = compileMethodFromDetails(NULL, methodDetails, warm, rc);
-
+    CompilationStateManager sm(NULL, methodDetails, warm); 
+    sm.compile(); 
+    auto rc = sm.getReturnCode(); 
     // if compilation was successful, set the entry point for the compiled body
-    if (rc == 0) setEntryPoint(entry_point);
+    if (rc == 0) setEntryPoint(sm.getStartPC());
 
     // return the return code for the compilation
     return rc;

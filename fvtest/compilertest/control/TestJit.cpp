@@ -23,6 +23,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "control/CompileMethod.hpp"
+#include "control/CompilationStateManager.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/FrontEnd.hpp"
 #include "env/IO.hpp"
@@ -212,7 +213,10 @@ extern "C"
 uint8_t *
 compileMethod(TR::IlGeneratorMethodDetails & details, TR_Hotness hotness, int32_t &rc)
    {
-   return compileMethodFromDetails(NULL, details, hotness, rc);
+   CompilationStateManager sm(NULL, details, hotness); 
+   sm.compile(); 
+   rc = sm.getReturnCode(); 
+   return sm.getStartPC();  
    }
 
 extern "C"

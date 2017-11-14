@@ -201,7 +201,7 @@ int32_t init_options(TR::JitConfig *jitConfig, char *cmdLineOptions)
    return 0;
    }
 
-static bool methodCanBeCompiled(OMR::FrontEnd *fe, TR_ResolvedMethod &method, TR_FilterBST *&filter, TR_Memory *trMemory)
+bool methodCanBeCompiled(OMR::FrontEnd *fe, TR_ResolvedMethod &method, TR_FilterBST *&filter, TR_Memory *trMemory)
    {
    if (!method.isCompilable(trMemory))
       return false;
@@ -244,114 +244,41 @@ printCompFailureInfo(TR::JitConfig *jitConfig, TR::Compilation * comp, const cha
       }
    }
 
-uint8_t *
-compileMethod(
-      OMR_VMThread *omrVMThread,
-      TR_ResolvedMethod &compilee,
-      TR_Hotness hotness,
-      int32_t &rc)
-   {
-   TR::IlGeneratorMethodDetails details(&compilee);
-   return compileMethodFromDetails(omrVMThread, details, hotness, rc);
-   }
 
-uint8_t *
-compileMethodFromDetails(
-      OMR_VMThread *omrVMThread,
-      TR::IlGeneratorMethodDetails & details,
-      TR_Hotness hotness,
-      int32_t &rc)
+uint8_t* tryAndCompileCompilation(TR::Compilation& compiler,
+                                  TR_ResolvedMethod& compilee,
+                                  TR::Options* options,
+                                  TR_Memory& trMemory,
+                                  TR::SegmentAllocator &scratchSegmentProvider,
+                                  uint64_t translationStartTime,
+                                  int32_t& rc) 
    {
-   uint64_t translationStartTime = TR::Compiler->vm.getUSecClock();
    OMR::FrontEnd &fe = OMR::FrontEnd::singleton();
    auto jitConfig = fe.jitConfig();
-   TR::RawAllocator rawAllocator;
-   TR::SystemSegmentProvider defaultSegmentProvider(1 << 16, rawAllocator);
-   TR::DebugSegmentProvider debugSegmentProvider(1 << 16, rawAllocator);
-   TR::SegmentAllocator &scratchSegmentProvider =
-      TR::Options::getCmdLineOptions()->getOption(TR_EnableScratchMemoryDebugging) ?
-         static_cast<TR::SegmentAllocator &>(debugSegmentProvider) :
-         static_cast<TR::SegmentAllocator &>(defaultSegmentProvider);
-   TR::Region dispatchRegion(scratchSegmentProvider, rawAllocator);
-   TR_Memory trMemory(*fe.persistentMemory(), dispatchRegion);
-   TR_ResolvedMethod & compilee = *((TR_ResolvedMethod *)details.getMethod());
-
-   TR::CompileIlGenRequest request(details);
-
-   // initialize return code before compilation starts
-   rc = COMPILATION_REQUESTED;
-
-   uint8_t *startPC = 0;
-
-   TR_FilterBST *filterInfo = 0;
-   TR_OptimizationPlan *plan = 0;
-   if (!methodCanBeCompiled(&fe, compilee, filterInfo, &trMemory))
-      {
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileExclude))
-         {
-         TR_VerboseLog::write("<JIT: %s cannot be translated>\n",
-                              compilee.signature(&trMemory));
-         }
-      return 0;
-      }
-
-   if (0 == (plan = TR_OptimizationPlan::alloc(hotness, false, false)))
-      {
-      // FIXME: maybe it would be better to allocate the plan on the stack
-      // so that we don't have to deal with OOM ugliness below
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileExclude))
-         {
-         TR_VerboseLog::write("<JIT: %s out-of-memory allocating optimization plan>\n",
-                              compilee.signature(&trMemory));
-         }
-      return 0;
-      }
-
-   int32_t optionSetIndex = filterInfo ? filterInfo->getOptionSet() : 0;
-   int32_t lineNumber = filterInfo ? filterInfo->getLineNumber() : 0;
-   TR::Options options(
-         &trMemory,
-         optionSetIndex,
-         lineNumber,
-         &compilee,
-         0,
-         plan,
-         false);
-
-   // FIXME: once we can do recompilation , we need to pass in the old start PC  -----------------------^
-
-   // FIXME: what happens if we can't allocate memory at the new above?
-   // FIXME: perhaps use stack memory instead
-
-   TR_ASSERT(TR::comp() == NULL, "there seems to be a current TLS TR::Compilation object %p for this thread. At this point there should be no current TR::Compilation object", TR::comp());
-   TR::Compilation compiler(0, omrVMThread, &fe, &compilee, request, options, dispatchRegion, &trMemory, plan);
-   TR_ASSERT(TR::comp() == &compiler, "the TLS TR::Compilation object %p for this thread does not match the one %p just created.", TR::comp(), &compiler);
-
+   uint8_t *startPC = NULL;
    try
       {
       //fprintf(stderr,"loading JIT debug\n");
       if (TR::Options::requiresDebugObject()
-          || options.getLogFileName()
-          || options.enableDebugCounters())
+          || options->getLogFileName()
+          || options->enableDebugCounters())
          {
          compiler.setDebug(createDebugObject(&compiler));
          }
-
-      compiler.setIlVerifier(details.getIlVerifier());
 
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileStart))
          {
          const char *signature = compilee.signature(&trMemory);
          TR_VerboseLog::writeLineLocked(TR_Vlog_COMPSTART,"compiling %s",
-                                                          signature);
+                                        signature);
          }
 
       if (compiler.getOutFile() != NULL && compiler.getOption(TR_TraceAll))
          {
          const char *signature = compilee.signature(&trMemory);
          traceMsg((&compiler), "<compile hotness=\"%s\" method=\"%s\">\n",
-                               compiler.getHotnessName(compiler.getMethodHotness()),
-                               signature);
+                  compiler.getHotnessName(compiler.getMethodHotness()),
+                  signature);
          }
 
       compiler.getJittedMethodSymbol()->setLinkage(TR_System);
@@ -375,18 +302,18 @@ compileMethodFromDetails(
             const char *signature = compilee.signature(&trMemory);
             TR_VerboseLog::vlogAcquire();
             TR_VerboseLog::writeLine(TR_Vlog_COMP,"(%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
-                                           compiler.getHotnessName(compiler.getMethodHotness()),
-                                           signature,
-                                           startPC,
-                                           compiler.cg()->getCodeEnd());
+                                     compiler.getHotnessName(compiler.getMethodHotness()),
+                                     signature,
+                                     startPC,
+                                     compiler.cg()->getCodeEnd());
 
             if (TR::Options::getVerboseOption(TR_VerbosePerformance))
                {
                TR_VerboseLog::write(
-                  " time=%llu mem=%lluKB",
-                  translationTime,
-                  static_cast<unsigned long long>(scratchSegmentProvider.bytesAllocated()) / 1024
-                  );
+                                    " time=%llu mem=%lluKB",
+                                    translationTime,
+                                    static_cast<unsigned long long>(scratchSegmentProvider.bytesAllocated()) / 1024
+                                   );
                }
 
             TR_VerboseLog::vlogRelease();
@@ -394,8 +321,8 @@ compileMethodFromDetails(
             }
 
          if (
-               TR::Options::getCmdLineOptions()->getOption(TR_PerfTool)
-            || TR::Options::getCmdLineOptions()->getOption(TR_EnableObjectFileGeneration)
+             TR::Options::getCmdLineOptions()->getOption(TR_PerfTool)
+             || TR::Options::getCmdLineOptions()->getOption(TR_EnableObjectFileGeneration)
             )
             {
             TR::CodeCacheManager &codeCacheManager(fe.codeCacheManager());
@@ -417,9 +344,9 @@ compileMethodFromDetails(
 
          if (compiler.getOutFile() != NULL && compiler.getOption(TR_TraceAll))
             traceMsg((&compiler), "<result success=\"true\" startPC=\"%#p\" time=\"%lld.%lldms\"/>\n",
-                                  startPC,
-                                  translationTime/1000,
-                                  translationTime%1000);
+                     startPC,
+                     translationTime/1000,
+                     translationTime%1000);
          }
       else /* of rc == COMPILATION_SUCCEEDED */
          {
@@ -451,8 +378,101 @@ compileMethodFromDetails(
    // frontends are properly calling the destructor
    fe.unreserveCodeCache(compiler.getCurrentCodeCache());
 
-   TR_OptimizationPlan::freeOptimizationPlan(plan);
-
-
    return startPC;
    }
+
+uint8_t *
+compileMethod(
+      OMR_VMThread *omrVMThread,
+      TR_ResolvedMethod &compilee,
+      TR_Hotness hotness,
+      int32_t &rc)
+   {
+   TR::IlGeneratorMethodDetails details(&compilee);
+   return compileMethodFromDetails(omrVMThread, details, hotness, rc);
+   }
+
+
+
+uint8_t *
+compileMethodFromDetails(
+      OMR_VMThread *omrVMThread,
+      TR::IlGeneratorMethodDetails & details,
+      TR_Hotness hotness,
+      int32_t &rc)
+   {
+   uint64_t translationStartTime = TR::Compiler->vm.getUSecClock();
+   uint8_t* startPC = NULL;
+   OMR::FrontEnd &fe = OMR::FrontEnd::singleton();
+   auto jitConfig = fe.jitConfig();
+   TR::RawAllocator rawAllocator;
+   TR::SystemSegmentProvider defaultSegmentProvider(1 << 16, rawAllocator);
+   TR::DebugSegmentProvider debugSegmentProvider(1 << 16, rawAllocator);
+   TR::SegmentAllocator &scratchSegmentProvider =
+      TR::Options::getCmdLineOptions()->getOption(TR_EnableScratchMemoryDebugging) ?
+         static_cast<TR::SegmentAllocator &>(debugSegmentProvider) :
+         static_cast<TR::SegmentAllocator &>(defaultSegmentProvider);
+   TR::Region dispatchRegion(scratchSegmentProvider, rawAllocator);
+   TR_Memory trMemory(*fe.persistentMemory(), dispatchRegion);
+   TR_ResolvedMethod & compilee = *((TR_ResolvedMethod *)details.getMethod());
+
+   TR::CompileIlGenRequest request(details);
+
+   // initialize return code before compilation starts
+   rc = COMPILATION_REQUESTED;
+
+
+   TR_FilterBST *filterInfo = 0;
+   TR_OptimizationPlan *plan = 0;
+   if (!methodCanBeCompiled(&fe, compilee, filterInfo, &trMemory))
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileExclude))
+         {
+         TR_VerboseLog::write("<JIT: %s cannot be translated>\n",
+                              compilee.signature(&trMemory));
+         }
+      return 0;
+      }
+
+   if (0 == (plan = TR_OptimizationPlan::alloc(hotness, false, false)))
+      {
+      // FIXME: maybe it would be better to allocate the plan on the stack
+      // so that we don't have to deal with OOM ugliness below
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileExclude))
+         {
+         TR_VerboseLog::write("<JIT: %s out-of-memory allocating optimization plan>\n",
+                              compilee.signature(&trMemory));
+         }
+      return 0;
+      }
+   else
+      {
+      int32_t optionSetIndex = filterInfo ? filterInfo->getOptionSet() : 0;
+      int32_t lineNumber = filterInfo ? filterInfo->getLineNumber() : 0;
+      auto* options= new (trMemory.trHeapMemory()) TR::Options(
+                                                               &trMemory,
+                                                               optionSetIndex,
+                                                               lineNumber,
+                                                               &compilee,
+                                                               0,
+                                                               plan,
+                                                               false);
+
+      // FIXME: once we can do recompilation , we need to pass in the old start PC  -----------------------^
+
+      // FIXME: what happens if we can't allocate memory at the new above?
+      // FIXME: perhaps use stack memory instead
+
+      TR_ASSERT(TR::comp() == NULL, "there seems to be a current TLS TR::Compilation object %p for this thread. At this point there should be no current TR::Compilation object", TR::comp());
+      TR::Compilation compiler(0, omrVMThread, &fe, &compilee, request, *options, dispatchRegion, &trMemory, plan);
+      TR_ASSERT(TR::comp() == &compiler, "the TLS TR::Compilation object %p for this thread does not match the one %p just created.", TR::comp(), &compiler);
+
+      compiler.setIlVerifier(details.getIlVerifier());
+
+      startPC = tryAndCompileCompilation(compiler, compilee, options, trMemory, scratchSegmentProvider, translationStartTime, rc); 
+      }
+   TR_OptimizationPlan::freeOptimizationPlan(plan);
+   return startPC;
+   }
+
+

@@ -26,6 +26,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/control/OMROptions.cpp \
     $(JIT_OMR_DIRTY_DIR)/control/OptimizationPlan.cpp \
     $(JIT_OMR_DIRTY_DIR)/control/OMRRecompilation.cpp  \
+    $(JIT_OMR_DIRTY_DIR)/control/CompilationStateManager.cpp  \
     $(JIT_OMR_DIRTY_DIR)/env/ExceptionTable.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/Assert.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/BitVector.cpp \

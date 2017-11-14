@@ -25,4 +25,5 @@ compiler_library(control
 	${CMAKE_CURRENT_SOURCE_DIR}/OMRRecompilation.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/CompilationController.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/CompileMethod.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CompilationStateManager.cpp
 )
