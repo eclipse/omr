@@ -362,7 +362,7 @@ public:
    void setNodeAddressOfCachedStaticTree(TR::Node *n) { _nodeAddressOfCachedStatic=n; }
    TR::Node *getNodeAddressOfCachedStatic() { return _nodeAddressOfCachedStatic; }
 
-   bool supportsNamedVirtualRegisters(); // no virt, default
+   bool supportsNamedVirtualRegisters();
    TR::SparseBitVector & getBucketPlusIndexRegisters()  { return _bucketPlusIndexRegisters; }
 
    // For hanging multiple loads from register symbols onto one common DEPEND
