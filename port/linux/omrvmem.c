@@ -1218,14 +1218,18 @@ getMemoryInRangeForDefaultPages(struct OMRPortLibrary *portLibrary, struct J9Por
 		} else {
 			smartAddress = findAvailableMemoryBlockNoMalloc(portLibrary, startAddress, currentAddress, byteAmount, TRUE);
 		}
-
-		allocatedAddress = default_pageSize_reserve_memory(portLibrary, smartAddress, byteAmount, identifier, mode, PPG_vmem_pageSize[0], category);
-
+		/* only allocate when smartAddress is not NULL */
+		if (NULL != smartAddress) {
+			allocatedAddress = default_pageSize_reserve_memory(portLibrary, smartAddress, byteAmount, identifier, mode, PPG_vmem_pageSize[0], category);
+		}
 		if (NULL != allocatedAddress) {
-			/* If the memoryPointer located outside of the range, free it and set the pointer to NULL */
-			if ((startAddress <= allocatedAddress) && (endAddress >= allocatedAddress)) {
+			/* if OMRPORT_VMEM_STRICT_ADDRESS is not set we accept whatever we get back */
+			if (0 == (vmemOptions & OMRPORT_VMEM_STRICT_ADDRESS)) {
+				return allocatedAddress;
+			} else if ((startAddress <= allocatedAddress) && (endAddress >= allocatedAddress)) {
 				memoryPointer = allocatedAddress;
 			} else if (0 != omrvmem_free_memory(portLibrary, allocatedAddress, byteAmount, identifier)) {
+				/* If the memoryPointer located outside of the range, free it and set the pointer to NULL */
 				return NULL;
 			}
 		}
@@ -1237,6 +1241,10 @@ getMemoryInRangeForDefaultPages(struct OMRPortLibrary *portLibrary, struct J9Por
 	}
 
 	if (NULL == memoryPointer) {
+		/* return after first attempt when OMRPORT_VMEM_ADDRESS_HINT is set */
+		if (0 != (vmemOptions & OMRPORT_VMEM_ADDRESS_HINT)) {
+			return default_pageSize_reserve_memory(portLibrary, currentAddress, byteAmount, identifier, mode, PPG_vmem_pageSize[0], category);			
+		}
 		/* try all addresses within range */
 		while ((startAddress <= currentAddress) && (endAddress >= currentAddress)) {
 			memoryPointer = default_pageSize_reserve_memory(portLibrary, currentAddress, byteAmount, identifier, mode, PPG_vmem_pageSize[0], category);
