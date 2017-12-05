@@ -1617,22 +1617,40 @@ omrsysinfo_os_kernel_info(struct OMRPortLibrary *portLibrary, struct OMROSKernel
 	return FALSE;
 }
 
-int32_t 
-omrsysinfo_cgroup_is_limits_supported(struct OMRPortLibrary *portLibrary)
-{
-	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
-}
-
-BOOLEAN 
-omrsysinfo_cgroup_is_limits_enabled(struct OMRPortLibrary *portLibrary)
+BOOLEAN
+omrsysinfo_cgroup_is_system_available(struct OMRPortLibrary *portLibrary)
 {
 	return FALSE;
 }
 
-int32_t 
-omrsysinfo_cgroup_enable_limits(struct OMRPortLibrary *portLibrary)
+uint64_t
+omrsysinfo_cgroup_get_available_subsystems(struct OMRPortLibrary *portLibrary)
 {
-	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
+	return 0;
+}
+
+uint64_t
+omrsysinfo_cgroup_are_subsystems_available(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlags)
+{
+	return 0;
+}
+
+uint64_t
+omrsysinfo_cgroup_get_enabled_subsystems(struct OMRPortLibrary *portLibrary)
+{
+	return 0;
+}
+
+uint64_t
+omrsysinfo_cgroup_enable_subsystems(struct OMRPortLibrary *portLibrary, uint64_t requestedSubsystems)
+{
+	return 0;
+}
+
+uint64_t
+omrsysinfo_cgroup_are_subsystems_enabled(struct OMRPortLibrary *portLibrary, uint64_t subsystemsFlags)
+{
+	return 0;
 }
 
 int32_t

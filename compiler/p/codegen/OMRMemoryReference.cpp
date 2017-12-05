@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -337,7 +337,7 @@ void OMR::Power::MemoryReference::addToOffset(TR::Node * node, intptrj_t amount,
          }
 
       if (!node)
-         node = comp->getAppendInstruction()->getNode();
+         node = cg->getAppendInstruction()->getNode();
 
       if (_baseRegister != NULL)
          {
@@ -423,7 +423,7 @@ void OMR::Power::MemoryReference::forceIndexedForm(TR::Node * node, TR::CodeGene
    self()->setOffset(0);
    TR::Register  *newIndex = cg->allocateRegister();
    if (!cursor)
-      cursor = cg->comp()->getAppendInstruction();
+      cursor = cg->getAppendInstruction();
    if (!node)
       node = cursor->getNode();
    loadActualConstant(cg, node, displacement, newIndex, cursor);
@@ -698,7 +698,7 @@ void OMR::Power::MemoryReference::consolidateRegisters(TR::Register *srcReg, TR:
    TR::Register *tempTargetRegister;
    TR::Compilation *comp = cg->comp();
 
-       TR::Node *tempNode = (srcTree==NULL)?comp->getAppendInstruction()->getNode():srcTree;
+       TR::Node *tempNode = (srcTree==NULL)?cg->getAppendInstruction()->getNode():srcTree;
 
    if (self()->getUnresolvedSnippet() != NULL)
       {

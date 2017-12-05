@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -416,8 +416,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
       return  ((size < (lineSize<<1)) && (size > (lineSize >> 2)));
       }
 
-   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
-
    using OMR::CodeGenerator::getSupportsConstantOffsetInAddressing;
    bool getSupportsConstantOffsetInAddressing(int64_t value) { return (value>=LOWER_IMMED) && (value<=UPPER_IMMED);}
 
@@ -442,23 +440,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    int32_t getMaximumNumbersOfAssignableFPRs();
    int32_t getMaximumNumbersOfAssignableVRs();
    bool doRematerialization();
-
-
-   bool specializedEpilogues() { return _specializedEpilogues; }
-   TR_BitVector *getBlocksThatModifyRegister(TR::RealRegister::RegNum reg)
-      {
-      return _blocksThatModifyRegister[reg];
-      }
-
-   // checks if reg has to be restored in block blockNumber during epilogue
-   bool restoreRegister(TR::RealRegister::RegNum reg, int32_t blockNumber)
-      {
-      if (_specializedEpilogues)
-         return _reachingBlocks->_blockAnalysisInfo[blockNumber]->intersects(*_blocksThatModifyRegister[reg]) ||
-                _blocksThatModifyRegister[reg]->get(blockNumber);
-      else
-         return true;
-      }
 
    bool isRotateAndMask(TR::Node * node);
 
@@ -589,10 +570,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    uint32_t *                       _tbTabletbOff;
    uint32_t *                       _tbTableEnd;
    uint32_t                         _numVRF;
-
-   bool                             _specializedEpilogues;
-   TR_ReachingBlocks                *_reachingBlocks;
-   TR_BitVector                     **_blocksThatModifyRegister;
 
    };
 

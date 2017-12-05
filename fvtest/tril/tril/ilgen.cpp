@@ -67,6 +67,9 @@ class OpCodeTable : public TR::ILOpCode {
 
 std::unordered_map<std::string, TR::ILOpCodes> OpCodeTable::_opcodeNameMap;
 
+
+
+
 /*
  * The general algorithm for generating a TR::Node from it's AST representation
  * is like this:
@@ -287,8 +290,26 @@ TR::Node* Tril::TRLangBuilder::toTRNode(const ASTNode* const tree) {
                                                                                           targetAddress,
                                                                                           0);
 
-         TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateStaticMethodSymbol(JITTED_METHOD_INDEX, -1, method);
-         node  = TR::Node::createWithSymRef(opcode.getOpCodeValue(), childCount, methodSymRef);
+        TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateStaticMethodSymbol(JITTED_METHOD_INDEX, -1, method);
+        
+        /* Default linkage is always system, unless overridden */
+        TR_LinkageConventions linkageConvention = TR_System; 
+
+        /* Calls can have a customized linkage */
+        const auto* linkageArg= tree->getArgByName("linkage");
+        if (linkageArg != NULL) { 
+           const auto* linkageString = linkageArg->getValue()->getString();
+           linkageConvention = convertStringToLinkage(linkageString); 
+           if (linkageConvention == TR_None) {
+              TraceIL("  failed to find customized linkage %s, aborting parsing\n", linkageString);
+              return NULL; 
+           }
+           TraceIL("  customizing linakge of call to %s (linkageConvention=%d)\n", linkageString, linkageConvention);
+        }
+
+        /* Set linkage explicitly */
+        methodSymRef->getSymbol()->castToMethodSymbol()->setLinkage(linkageConvention);     
+        node  = TR::Node::createWithSymRef(opcode.getOpCodeValue(), childCount, methodSymRef);
      }
      else {
         TraceIL("  unrecognized opcode; using default creation mechanism\n", "");
@@ -309,6 +330,8 @@ TR::Node* Tril::TRLangBuilder::toTRNode(const ASTNode* const tree) {
      int i = 0;
      while (t) {
          auto child = toTRNode(t);
+         if (child == NULL) 
+            return NULL; 
          TraceIL("Setting n%dn (%p) as child %d of n%dn (%p)\n", child->getGlobalIndex(), child, i, node->getGlobalIndex(), node);
          node->setAndIncChild(i, child);
          t = t->next;
@@ -396,6 +419,8 @@ bool Tril::TRLangBuilder::injectIL() {
        const ASTNode* t = block->getChildren();
        while (t) {
            auto node = toTRNode(t);
+           if (node == NULL) 
+              return false;
            const auto tt = genTreeTop(node);
            TraceIL("Created TreeTop %p for node n%dn (%p)\n", tt, node->getGlobalIndex(), node);
            t = t->next;

@@ -581,8 +581,8 @@ void OMR::X86::TreeEvaluator::removeLiveDiscardableStatics(TR::CodeGenerator *cg
             {
             diagnostic("\n---> Deleting static discardable candidate %s at %s instruction " POINTER_PRINTF_FORMAT,
                   regCursor->getRegisterName(comp),
-                  comp->getAppendInstruction()->getOpCode().getOpCodeName(cg),
-                  comp->getAppendInstruction());
+                  cg->getAppendInstruction()->getOpCode().getOpCodeName(cg),
+                  cg->getAppendInstruction());
             }
          }
       else
@@ -3496,6 +3496,24 @@ static void generateRepMovsInstruction(TR_X86OpCodes repmovs, TR::Node *node, TR
    generateInstruction(repmovs, node, dependencies, cg);
    }
 
+/** \brief
+*    Generate instructions to do array copy for 64-bit primitives on IA-32.
+*
+*  \param node
+*     The tree node
+*
+*  \param dstReg
+*     The destination array address register
+*
+*  \param srcReg
+*     The source array address register
+*
+*  \param sizeReg
+*     The register holding the total size of elements to be copied, in bytes
+*
+*  \param cg
+*     The code generator
+*/
 static void arrayCopy64BitPrimitiveOnIA32(TR::Node* node, TR::Register* dstReg, TR::Register* srcReg, TR::Register* sizeReg, TR::CodeGenerator* cg)
    {
    TR::Register* scratch = cg->allocateRegister();
@@ -3568,6 +3586,102 @@ static void arrayCopy64BitPrimitiveOnIA32(TR::Node* node, TR::Register* dstReg, 
    cg->stopUsingRegister(scratch);
    }
 
+/** \brief
+*    Generate instructions to do array copy for 16-bit primitives.
+*
+*  \param node
+*     The tree node
+*
+*  \param dstReg
+*     The destination array address register
+*
+*  \param srcReg
+*     The source array address register
+*
+*  \param sizeReg
+*     The register holding the total size of elements to be copied, in bytes
+*
+*  \param cg
+*     The code generator
+*/
+static void arrayCopy16BitPrimitive(TR::Node* node, TR::Register* dstReg, TR::Register* srcReg, TR::Register* sizeReg, TR::CodeGenerator* cg)
+   {
+   TR::RegisterDependencyConditions* dependencies = generateRegisterDependencyConditions((uint8_t)3, (uint8_t)3, cg);
+   dependencies->addPreCondition(srcReg, TR::RealRegister::esi, cg);
+   dependencies->addPreCondition(dstReg, TR::RealRegister::edi, cg);
+   dependencies->addPreCondition(sizeReg, TR::RealRegister::ecx, cg);
+   dependencies->addPostCondition(srcReg, TR::RealRegister::esi, cg);
+   dependencies->addPostCondition(dstReg, TR::RealRegister::edi, cg);
+   dependencies->addPostCondition(sizeReg, TR::RealRegister::ecx, cg);
+
+   TR::LabelSymbol* mainBegLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol* mainEndLabel = generateLabelSymbol(cg);
+   mainBegLabel->setStartInternalControlFlow();
+   mainEndLabel->setEndInternalControlFlow();
+
+   generateLabelInstruction(LABEL, node, mainBegLabel, cg);
+   if (node->isForwardArrayCopy())
+      {
+      generateRegImmInstruction(SHRRegImm1(), node, sizeReg, 2, cg);
+      generateInstruction(REPMOVSD, node, cg);
+      generateLabelInstruction(JAE1, node, mainEndLabel, cg);
+      generateRegMemInstruction(L2RegMem, node, sizeReg, generateX86MemoryReference(srcReg, 0, cg), cg);
+      generateMemRegInstruction(S2MemReg, node, generateX86MemoryReference(dstReg, 0, cg), sizeReg, cg);
+      }
+   else // decide direction during runtime
+      {
+      TR::LabelSymbol* residueLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol* backwardLabel = generateLabelSymbol(cg);
+
+      generateRegRegInstruction(SUBRegReg(), node, dstReg, srcReg, cg);  // dst = dst - src
+      generateRegRegInstruction(CMPRegReg(), node, dstReg, sizeReg, cg); // cmp dst, size
+      generateRegMemInstruction(LEARegMem(), node, dstReg, generateX86MemoryReference(dstReg, srcReg, 0, cg), cg); // dst = dst + src
+      generateLabelInstruction(JB4, node, backwardLabel, cg);   // jb, skip backward copy setup
+
+      generateRegImmInstruction(SHRRegImm1(), node, sizeReg, 2, cg);
+      generateInstruction(REPMOVSD, node, cg);
+      generateLabelInstruction(LABEL, node, residueLabel, cg);
+      generateLabelInstruction(JAE1, node, mainEndLabel, cg);
+      generateRegMemInstruction(L2RegMem, node, sizeReg, generateX86MemoryReference(srcReg, 0, cg), cg);
+      generateMemRegInstruction(S2MemReg, node, generateX86MemoryReference(dstReg, 0, cg), sizeReg, cg);
+
+      TR_OutlinedInstructions* backwardPath = new (cg->trHeapMemory()) TR_OutlinedInstructions(backwardLabel, cg);
+      cg->getOutlinedInstructionsList().push_front(backwardPath);
+      backwardPath->swapInstructionListsWithCompilation();
+      generateLabelInstruction(LABEL, node, backwardLabel, cg);
+      generateRegMemInstruction(LEARegMem(), node, srcReg, generateX86MemoryReference(srcReg, sizeReg, 0, -2, cg), cg);
+      generateRegMemInstruction(LEARegMem(), node, dstReg, generateX86MemoryReference(dstReg, sizeReg, 0, -2, cg), cg);
+      generateInstruction(STD, node, cg);
+      generateRegImmInstruction(SHRRegImm1(), node, sizeReg, 2, cg);
+      generateInstruction(REPMOVSD, node, cg);
+      generateInstruction(CLD, node, cg);
+      generateLabelInstruction(JMP4, node, residueLabel, cg);
+      backwardPath->swapInstructionListsWithCompilation();
+      }
+   generateLabelInstruction(LABEL, node, mainEndLabel, dependencies, cg);
+   }
+
+/** \brief
+*    Generate instructions to do array copy.
+*
+*  \param node
+*     The tree node
+*
+*  \param elementSize
+*     The size of an element, in bytes
+*
+*  \param dstReg
+*     The destination array address register
+*
+*  \param srcReg
+*     The source array address register
+*
+*  \param sizeReg
+*     The register holding the total size of elements to be copied, in bytes
+*
+*  \param cg
+*     The code generator
+*/
 static void arrayCopyDefault(TR::Node* node, uint8_t elementSize, TR::Register* dstReg, TR::Register* srcReg, TR::Register* sizeReg, TR::CodeGenerator* cg)
    {
    TR::RegisterDependencyConditions* dependencies = generateRegisterDependencyConditions((uint8_t)3, (uint8_t)3, cg);
@@ -3783,7 +3897,7 @@ static void generateArrayElementLoad(TR::Node* node, TR::Register* valueReg, uin
  *     The destination array address register
  *
  *  \param srcReg
- *     The srouce array address register
+ *     The source array address register
  *
  *  \param size
  *     The number of elements that will be copied
@@ -3838,7 +3952,7 @@ static void arraycopyForShortConstArrayWithDirection(TR::Node* node, TR::Registe
  *     The destination array address register
  *
  *  \param srcReg
- *     The srouce array address register
+ *     The source array address register
  *
  *  \param size
  *     The number of elements that will be copied
@@ -3992,6 +4106,7 @@ TR::Register *OMR::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Co
 
    TR::DataType dt = node->getArrayCopyElementType();
    uint32_t elementSize = 1;
+   static bool avoidREPMOVSW = feGetEnv("TR_AvoidREPMOVSWForArrayCopy");
    static bool forceByteArrayElementCopy = feGetEnv("TR_ForceByteArrayElementCopy");
    if (!forceByteArrayElementCopy)
       {
@@ -4041,6 +4156,10 @@ TR::Register *OMR::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Co
       if (elementSize == 8 && TR::Compiler->target.is32Bit())
          {
          arrayCopy64BitPrimitiveOnIA32(node, dstReg, srcReg, sizeReg, cg);
+         }
+      else if (elementSize == 2 && avoidREPMOVSW)
+         {
+         arrayCopy16BitPrimitive(node, dstReg, srcReg, sizeReg, cg);
          }
       else
          {
@@ -4114,7 +4233,7 @@ TR::Register *OMR::X86::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, T
 
    bool arraytranslateOT = false;
    if  (sourceByte && (node->getChild(3)->getOpCodeValue() == TR::iconst) && (node->getChild(3)->getInt() == 0))
-	arraytranslateOT = true;
+      arraytranslateOT = true;
 
    int noOfDependencies = (sourceByte && !arraytranslateOT) ? 8 : 9;
 
@@ -5255,9 +5374,9 @@ TR::Register *OMR::X86::TreeEvaluator::BBEndEvaluator(TR::Node *node, TR::CodeGe
       TR::Machine *machine = cg->machine();
 
       if (cg->enableRegisterAssociations() &&
-          comp->getAppendInstruction()->getOpCodeValue() != ASSOCREGS)
+          cg->getAppendInstruction()->getOpCodeValue() != ASSOCREGS)
          {
-         machine->createRegisterAssociationDirective(comp->getAppendInstruction());
+         machine->createRegisterAssociationDirective(cg->getAppendInstruction());
          }
 
       bool needVMThreadDep =

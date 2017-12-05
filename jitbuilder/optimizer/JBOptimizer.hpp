@@ -52,8 +52,6 @@ class Optimizer : public OMR::OptimizerConnector
    Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
          const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0);
 
-   static const OptimizationStrategy *optimizationStrategy( TR::Compilation *c);
-
    private:
    TR::Optimizer *self();
    };

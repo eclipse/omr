@@ -577,13 +577,13 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR:
          TR_ResolvedMethod *m = comp->fe()->createResolvedMethod(cg->trMemory(), caller, node->getSymbolReference()->getOwningMethod(comp));
          if (m->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicLong_lazySet)
             {
-	    if (lowMR)
-	       lowMR->setIgnoreVolatile();
+            if (lowMR)
+               lowMR->setIgnoreVolatile();
             if (highMR)
-	       highMR->setIgnoreVolatile();
+               highMR->setIgnoreVolatile();
             }
 #endif
-	 }
+         }
       }
 
    if (instr && node->getOpCode().isIndirect())
@@ -3731,6 +3731,47 @@ OMR::X86::I386::TreeEvaluator::integerPairByteswapEvaluator(TR::Node *node, TR::
    node->setRegister(target);
    cg->decReferenceCount(child);
    return target;
+   }
+
+TR::Register*
+OMR::X86::I386::TreeEvaluator::integerPairMinMaxEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_X86OpCodes SETccHi = BADIA32Op;
+   TR_X86OpCodes SETccLo = BADIA32Op;
+   switch (node->getOpCodeValue())
+      {
+      case TR::lmin:
+         SETccHi = SETL1Reg;
+         SETccLo = SETB1Reg;
+         break;
+      case TR::lmax:
+         SETccHi = SETG1Reg;
+         SETccLo = SETA1Reg;
+         break;
+      default:
+         TR_ASSERT(false, "INCORRECT IL OPCODE.");
+         break;
+      }
+   auto operand0 = cg->evaluate(node->getChild(0));
+   auto operand1 = cg->evaluate(node->getChild(1));
+   auto result = cg->allocateRegisterPair(cg->allocateRegister(), cg->allocateRegister());
+
+   generateRegRegInstruction(CMP4RegReg, node, operand0->getLowOrder(), operand1->getLowOrder(), cg);
+   generateRegInstruction(SETccLo, node, result->getLowOrder(), cg); // t1 = (low0 < low1)
+   generateRegRegInstruction(CMP4RegReg, node, operand0->getHighOrder(), operand1->getHighOrder(), cg);
+   generateRegInstruction(SETccHi, node, result->getHighOrder(), cg); // t2 = (high0 < high1)
+   generateRegRegInstruction(CMOVE4RegReg, node, result->getHighOrder(), result->getLowOrder(), cg); // if (high0 == high1) then t2 = t1 = (low0 < low1)
+
+   generateRegRegInstruction(TEST1RegReg,  node, result->getHighOrder(), result->getHighOrder(),  cg);
+   generateRegRegInstruction(MOV4RegReg,   node, result->getLowOrder(),  operand0->getLowOrder(),  cg);
+   generateRegRegInstruction(MOV4RegReg,   node, result->getHighOrder(), operand0->getHighOrder(), cg);
+   generateRegRegInstruction(CMOVE4RegReg, node, result->getLowOrder(),  operand1->getLowOrder(),  cg);
+   generateRegRegInstruction(CMOVE4RegReg, node, result->getHighOrder(), operand1->getHighOrder(), cg);
+
+   node->setRegister(result);
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   return result;
    }
 
 TR::Register *

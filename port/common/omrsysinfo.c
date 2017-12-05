@@ -812,42 +812,88 @@ omrsysinfo_os_kernel_info(struct OMRPortLibrary *portLibrary, struct OMROSKernel
 }
 
 /**
- * Checks if the port library can use cgroup limits
+ * Checks if the platform supports cgroup system and the port library can use it
  *
  * @param[in] portLibrary pointer to OMRPortLibrary
  *
- * @return 0 if the port library can use cgroup limits, otherwise negative error code
+ * @return TRUE if the the cgroup system is available, otherwise FALSE
  */
-int32_t 
-omrsysinfo_cgroup_is_limits_supported(struct OMRPortLibrary *portLibrary)
-{
-	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
-}
-
-/**
- * Returns TRUE if port library is using cgroup limits, FALSE otherwise
- *
- * @param[in] portLibrary pointer to OMRPortLibrary
- *
- * @return TRUE if port library has been enabled to use cgroup limits, FALSE otherwise
- */
-BOOLEAN 
-omrsysinfo_cgroup_is_limits_enabled(struct OMRPortLibrary *portLibrary)
+BOOLEAN
+omrsysinfo_cgroup_is_system_available(struct OMRPortLibrary *portLibrary)
 {
 	return FALSE;
 }
 
 /**
- * Enable port library to use cgroup limits 
+ * Returns cgroup subsystems available for port library to use
  *
- * @param[in] portLibrary pointer to OMRPortLibrary 
+ * @param[in] portLibrary pointer to OMRPortLibrary
  *
- * @return 0 if the port library can use cgroup limits, otherwise negative error code
+ * @return bitwise-OR of flags of type OMR_CGROUP_SUBSYSTEMS_* indicating the
+ * subsystems that are available
  */
-int32_t 
-omrsysinfo_cgroup_enable_limits(struct OMRPortLibrary *portLibrary)
+uint64_t
+omrsysinfo_cgroup_get_available_subsystems(struct OMRPortLibrary *portLibrary)
 {
-	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
+	return 0;
+}
+
+/**
+ * Checks if the specified cgroup subsystems are available for port library to use.
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ * @param[in] subsystemFlags bitwise-OR of flags of type OMR_CGROUP_SUBSYSTEMS_*
+ *
+ * @return bitwise-OR of flags of type OMR_CGROUP_SUBSYSTEMS_* indicating the
+ * subsystems that are available 
+ */
+uint64_t
+omrsysinfo_cgroup_are_subsystems_available(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlags)
+{
+	return FALSE;
+}
+
+/**
+ * Returns cgroup subsystems enabled for port library to use
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ *
+ * @return bitwise-OR of flags of type OMR_CGROUP_SUBSYSTEMS_* indicating the
+ * subsystems that are enbaled
+ */
+uint64_t
+omrsysinfo_cgroup_get_enabled_subsystems(struct OMRPortLibrary *portLibrary)
+{
+	return 0;
+}
+
+/**
+ * Enable port library to use specified cgroup subsystems
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ * @param[in] subsystems bitwise-OR of flags of type OMR_CGROUP_SUBSYSTEMS_* 
+ * indicating the subsystems to be enabled 
+ *                           
+ * @return bitwise-OR of flags of type OMR_CGROUP_SUBSYSTEMS_* indicating the subsystems that are enabled
+ */
+uint64_t
+omrsysinfo_cgroup_enable_subsystems(struct OMRPortLibrary *portLibrary, uint64_t requestedSubsystems)
+{
+	return 0;
+}
+
+/**
+ * Check which subsystems are enabled in port library
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ * @param[in] subsystemsFlags bitwise-OR of flags of type OMR_CGROUP_SUBSYSTEMS_*
+ *
+ * @return bitwise-OR of flags of type OMR_CGROUP_SUBSYSTEMS_* indicating the subsystems that are enabled
+ */
+uint64_t
+omrsysinfo_cgroup_are_subsystems_enabled(struct OMRPortLibrary *portLibrary, uint64_t subsystemsFlags)
+{
+	return 0;
 }
 
 /**

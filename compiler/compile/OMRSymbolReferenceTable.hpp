@@ -98,9 +98,6 @@ class SymbolReferenceTable
 
       firstArrayShadowSymbol,
 
-      lastWCodeNonhelperSymbol = firstArrayShadowSymbol + TR::NumTypes,
-      lastWCodeNonhelperSymbolX,
-
       firstArrayletShadowSymbol = firstArrayShadowSymbol + TR::NumTypes,
 
       firstCommonNonhelperNonArrayShadowSymbol = firstArrayletShadowSymbol + TR::NumTypes,
@@ -248,7 +245,7 @@ class SymbolReferenceTable
    int32_t getNonhelperIndex(CommonNonhelperSymbol s);
    int32_t getNumHelperSymbols()                      { return _numHelperSymbols; }
    int32_t getArrayShadowIndex(TR::DataType t)        { return _numHelperSymbols + firstArrayShadowSymbol + t; }
-   int32_t getArrayletShadowIndex(TR::DataType t) { return _numHelperSymbols + firstArrayShadowSymbol + TR::NumTypes + t; }
+   int32_t getArrayletShadowIndex(TR::DataType t) { return _numHelperSymbols + firstArrayletShadowSymbol + t; }
 
    template <class BitVector>
    void getAllSymRefs(BitVector &allSymRefs)
@@ -366,6 +363,7 @@ class SymbolReferenceTable
    TR::SymbolReference * findThisRangeExtensionSymRef(TR::ResolvedMethodSymbol *owningMethodSymbol = 0);
 
    TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, uintptrj_t *referenceLocation);
+   TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, uintptrj_t *referenceLocation, bool isArrayWithConstantElements);
    TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, TR::KnownObjectTable::Index objectIndex);
    TR::SymbolReference * findOrCreateThisRangeExtensionSymRef(TR::ResolvedMethodSymbol *owningMethodSymbol = 0);
    TR::SymbolReference * findOrCreateContiguousArraySizeSymbolRef();
@@ -374,6 +372,8 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateNewObjectNoZeroInitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateArrayStoreExceptionSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateArrayShadowSymbolRef(TR::DataType, TR::Node * baseAddress = 0);
+   TR::SymbolReference * findOrCreateImmutableArrayShadowSymbolRef(TR::DataType);
+   TR::SymbolReference * createImmutableArrayShadowSymbolRef(TR::DataType, TR::Symbol *sym);
    TR::SymbolReference * findOrCreateArrayletShadowSymbolRef(TR::DataType type);
    TR::SymbolReference * findOrCreateAsyncCheckSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = 0);
    TR::SymbolReference * findOrCreateExcpSymbolRef();
@@ -425,6 +425,7 @@ class SymbolReferenceTable
    TR::SymbolReference * createRefinedArrayShadowSymbolRef(TR::DataType);
    TR::SymbolReference * createRefinedArrayShadowSymbolRef(TR::DataType, TR::Symbol *); // TODO: to be changed to a special sym ref
    bool                 isRefinedArrayShadow(TR::SymbolReference *symRef);
+   bool                 isImmutableArrayShadow(TR::SymbolReference *symRef);
 
 
    // A RegisterSymbol is a pseudo memory location that represents some machine

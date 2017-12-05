@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,7 +176,7 @@ bool isConditionCodeSetForCompareToZero(TR::Node *node, bool justTestZeroFlag)
    //
    TR::Instruction     *prevInstr;
    TR::X86RegInstruction  *prevRegInstr;
-   for (prevInstr = comp->getAppendInstruction();
+   for (prevInstr = comp->cg()->getAppendInstruction();
         prevInstr;
         prevInstr = prevInstr->getPrev())
       {
@@ -524,101 +524,50 @@ TR::Register *OMR::X86::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGe
    return NULL;
    }
 
-
 TR::Register *OMR::X86::TreeEvaluator::minmaxEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Node *child  = node->getFirstChild();
-   TR::DataType data_type = child->getDataType();
-   TR::DataType type = child->getType();
-   TR_X86OpCodes  move_op = MOVRegReg(TR::Compiler->target.is64Bit() && type.isInt64());
-   TR_X86OpCodes  cmp_op = CMPRegReg(TR::Compiler->target.is64Bit() && type.isInt64());
-   bool two_reg = (TR::Compiler->target.is32Bit() && type.isInt64());
-   bool isMin = false;
-   if ((node->getOpCodeValue() == TR::imin) || (node->getOpCodeValue() == TR::lmin))
-      isMin = true;
-
-   TR::Register *trgReg;
-   TR::Register *reg = cg->evaluate(child);
-
-   TR::LabelSymbol *startLabel       = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol *doneLabel        = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   startLabel->setStartInternalControlFlow();
-   doneLabel->setEndInternalControlFlow();
-   generateLabelInstruction(LABEL, node, startLabel, cg);
-
-   if (cg->canClobberNodesRegister(child))
+   TR_X86OpCodes CMP  = BADIA32Op;
+   TR_X86OpCodes MOV  = BADIA32Op;
+   TR_X86OpCodes CMOV = BADIA32Op;
+   switch (node->getOpCodeValue())
       {
-      trgReg = reg; // use first child as a target
+      case TR::imin:
+         CMP = CMP4RegReg;
+         MOV = MOV4RegReg;
+         CMOV = CMOVG4RegReg;
+         break;
+      case TR::imax:
+         CMP = CMP4RegReg;
+         MOV = MOV4RegReg;
+         CMOV = CMOVL4RegReg;
+         break;
+      case TR::lmin:
+         CMP = CMP8RegReg;
+         MOV = MOV8RegReg;
+         CMOV = CMOVG8RegReg;
+         break;
+      case TR::lmax:
+         CMP = CMP8RegReg;
+         MOV = MOV8RegReg;
+         CMOV = CMOVL8RegReg;
+         break;
+      default:
+         TR_ASSERT(false, "INCORRECT IL OPCODE.");
+         break;
       }
-   else
-      {
-      switch (data_type)
-         {
-         case TR::Int32:
-            trgReg = cg->allocateRegister();
-            break;
-         case TR::Int64:
-            if (two_reg)
-               trgReg = cg->allocateRegisterPair(cg->allocateRegister(), cg->allocateRegister());
-            else
-               trgReg = cg->allocateRegister();
-            break;
-         default:
-            TR_ASSERT(false, "assertion failure");
-         }
-      if (two_reg)
-         {
-         generateRegRegInstruction(move_op, node, trgReg->getLowOrder(), reg->getLowOrder(), cg);
-         generateRegRegInstruction(move_op, node, trgReg->getHighOrder(), reg->getHighOrder(), cg);
-         }
-      else
-         {
-         generateRegRegInstruction(move_op, node, trgReg, reg, cg);
-         }
-      }
+   
+   auto operand0 = cg->evaluate(node->getChild(0));
+   auto operand1 = cg->evaluate(node->getChild(1));
+   auto result = cg->allocateRegister();
+   generateRegRegInstruction(CMP,  node, operand0, operand1, cg);
+   generateRegRegInstruction(MOV,  node, result,  operand0, cg);
+   generateRegRegInstruction(CMOV, node, result,  operand1, cg);
 
-   child = node->getChild(1);
-   reg = cg->evaluate(child);
-   TR::RegisterDependencyConditions *dep;
-   if (two_reg)
-      {
-      TR::LabelSymbol *gtLabel = generateLabelSymbol(cg);
-      generateRegRegInstruction(cmp_op, node, reg->getHighOrder(), trgReg->getHighOrder(), cg);
-      generateLabelInstruction(isMin ? JG4 : JL4, node, doneLabel, false, cg);
-      generateLabelInstruction(JNE4, node, gtLabel, false, cg);
-      generateRegRegInstruction(cmp_op, node, reg->getLowOrder(), trgReg->getLowOrder(), cg);
-      generateLabelInstruction(isMin ? JA4 : JB4, node, doneLabel, false, cg);
-      generateLabelInstruction(LABEL, node, gtLabel, cg);
-      generateRegRegInstruction(move_op, node, trgReg->getHighOrder(), reg->getHighOrder(), cg);
-      generateRegRegInstruction(move_op, node, trgReg->getLowOrder(), reg->getLowOrder(), cg);
-
-      dep = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg->trMemory());
-      dep->addPostCondition(trgReg->getLowOrder(), TR::RealRegister::NoReg, cg);
-      dep->addPostCondition(trgReg->getHighOrder(), TR::RealRegister::NoReg, cg);
-      dep->addPostCondition(reg->getLowOrder(), TR::RealRegister::NoReg, cg);
-      dep->addPostCondition(reg->getHighOrder(), TR::RealRegister::NoReg, cg);
-      }
-   else
-      {
-      generateRegRegInstruction(cmp_op, node, reg, trgReg, cg);
-      generateLabelInstruction(isMin ? JG4 : JL4, node, doneLabel, false, cg);
-      generateRegRegInstruction(move_op, node, trgReg, reg, cg);
-
-      dep = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg->trMemory());
-      dep->addPostCondition(trgReg, TR::RealRegister::NoReg, cg);
-      dep->addPostCondition(reg, TR::RealRegister::NoReg, cg);
-      }
-
-   generateLabelInstruction(LABEL, node, doneLabel, dep, cg);
-
-   node->setRegister(trgReg);
-   for (int i = 0; i < node->getNumChildren(); i++)
-      {
-      cg->decReferenceCount(node->getChild(i));
-      }
-   return trgReg;
+   node->setRegister(result);
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   return result;
    }
-
 
 
 void
@@ -1652,7 +1601,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerIfCmpneEvaluator(TR::Node *node, T
       //             (virtualGuard->getTestType() == TR_VftTest) &&
       //             !TR::Compiler->cls.sameClassLoaders(comp, virtualGuard->getThisClass(), comp->getCurrentMethod()->classOfMethod()))
       //            {
-      //            TR::Instruction *guardInstr = comp->getAppendInstruction();
+      //            TR::Instruction *guardInstr = comp->cg()->getAppendInstruction();
       //            comp->getStaticPICSites()->add(guardInstr);
       //            }
       //         }

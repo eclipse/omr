@@ -413,8 +413,10 @@ MM_MemorySubSpaceSemiSpace::initialize(MM_EnvironmentBase *env)
 
 	_memorySubSpaceSurvivor->isAllocatable(false);
 
+	/* this memoryPool can be used by scavenger, maximum tlh size should be max(_extensions->tlhMaximumSize, _extensions->scavengerScanCacheMaximumSize) */
+	uintptr_t tlhMaximumSize = OMR_MAX(_extensions->tlhMaximumSize, _extensions->scavengerScanCacheMaximumSize);
 	_largeObjectAllocateStats = MM_LargeObjectAllocateStats::newInstance(env, (uint16_t)_extensions->largeObjectAllocationProfilingTopK, _extensions->largeObjectAllocationProfilingThreshold, _extensions->largeObjectAllocationProfilingVeryLargeObjectThreshold, (float)_extensions->largeObjectAllocationProfilingSizeClassRatio / (float)100.0,
-			_extensions->heap->getMaximumMemorySize(), _extensions->tlhMaximumSize + _extensions->minimumFreeEntrySize, _extensions->tlhMinimumSize);
+			_extensions->heap->getMaximumMemorySize(), tlhMaximumSize + _extensions->minimumFreeEntrySize, _extensions->tlhMinimumSize);
 	if (NULL == _largeObjectAllocateStats) {
 		return false;
 	}
@@ -506,8 +508,17 @@ MM_MemorySubSpaceSemiSpace::flip(MM_EnvironmentBase *env, Flip_step step)
 	{
 		Assert_MM_true(_extensions->concurrentScavenger);
 		uintptr_t lastFreeEntrySize = 0;
-		if (NULL != getDefaultMemorySubSpace()->getMemoryPool()->getLastFreeEntry()) {
-			lastFreeEntrySize = getDefaultMemorySubSpace()->getMemoryPool()->getLastFreeEntry()->getSize();
+		MM_HeapLinkedFreeHeader *lastFreeEntry = getDefaultMemorySubSpace()->getMemoryPool()->getLastFreeEntry();
+		if (NULL != lastFreeEntry) {
+			lastFreeEntrySize = lastFreeEntry->getSize();
+			if(debug) {
+				omrtty_printf("tilt restore_tilt_after_percolate last free entry %llx size %llx\n",
+						lastFreeEntry, lastFreeEntrySize);
+			}
+			/* rely on the last free entry only if at the very end of SemiSpace (no objects after it) */
+			if (((uintptr_t)lastFreeEntry + lastFreeEntrySize) != OMR_MAX((uintptr_t)_allocateSpaceTop, (uintptr_t)_survivorSpaceTop)) {
+				lastFreeEntrySize = 0;
+			}
 		}
 		/* Make Survivor space from the last free entry in the unified Nursery */
 		uintptr_t heapAlignedLastFreeEntrySize = MM_Math::roundToFloor(_extensions->heapAlignment, lastFreeEntrySize);
@@ -520,7 +531,7 @@ MM_MemorySubSpaceSemiSpace::flip(MM_EnvironmentBase *env, Flip_step step)
 					lastFreeEntrySize, _extensions->getConcurrentScavengerPageSectionSize(), heapAlignedLastFreeEntrySize);
 		}
 
-		/* allocate/survivor base/top still hold the values from before we did 100% tilt */
+		/* allocate/survivor base/top still hold the values from before when we did 100% tilt */
 		uintptr_t allocateSize = (uintptr_t)_allocateSpaceTop - (uintptr_t)_allocateSpaceBase;
 		uintptr_t survivorSize = (uintptr_t)_survivorSpaceTop - (uintptr_t)_survivorSpaceBase;
 		if (allocateSize < survivorSize) {

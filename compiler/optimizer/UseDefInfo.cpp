@@ -105,7 +105,6 @@ TR_UseDefInfo::TR_UseDefInfo(TR::Compilation *comp, TR::CFG *cfg, TR::Optimizer 
 
 void TR_UseDefInfo::prepareUseDefInfo(bool requiresGlobals, bool prefersGlobals, bool cannotOmitTrivialDefs, bool conversionRegsOnly)
    {
-   comp()->printMemStatsBefore("prepareUseDefInfo");
    LexicalTimer tlex("useDefInfo", comp()->phaseTimer());
 
    TR_UseDefInfo::AuxiliaryData aux(
@@ -2902,7 +2901,6 @@ void TR_UseDefInfo::buildDefUseInfo(bool loadAsDef)
    {
    LexicalTimer tlex("buildDefUseInfo", comp()->phaseTimer());
 
-   comp()->printMemStatsBefore("buildDefUseInfo");
    // Build def/use info from the use/def info
    //
    //We build uses for real defs (stores) only.
@@ -2947,7 +2945,6 @@ void TR_UseDefInfo::buildDefUseInfo(bool loadAsDef)
             }
          }
       }
-   comp()->printMemStatsAfter("buildDefUseInfo");
    }
 
 bool TR_UseDefInfo::canComputeReachingDefs()

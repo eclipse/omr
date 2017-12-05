@@ -284,8 +284,6 @@ OMR::CodeGenPhase::performBinaryEncodingPhase(TR::CodeGenerator * cg, TR::CodeGe
 
    cg->doBinaryEncoding();
 
-   comp->printMemStatsAfter("binary encoding");
-
    if (debug("verifyFinalNodeReferenceCounts"))
       {
       if (cg->getDebug())
@@ -358,7 +356,6 @@ OMR::CodeGenPhase::performRegisterAssigningPhase(TR::CodeGenerator * cg, TR::Cod
          if(cg->getDebug()) cg->getDebug()->dumpMethodInstrs(comp->getOutFile(),"Before Local RA",false);
 
       cg->doRegisterAssignment(nonColourableKindsToAssign);
-      comp->printMemStatsAfter("localRA");
 
       if (comp->compilationShouldBeInterrupted(AFTER_REGISTER_ASSIGNMENT_CONTEXT))
          {
@@ -558,10 +555,7 @@ OMR::CodeGenPhase::performLowerTreesPhase(TR::CodeGenerator * cg, TR::CodeGenPha
    cg->lowerTrees();
 
    if (comp->getOption(TR_TraceCG))
-      {
       comp->dumpMethodTrees("Post Lower Trees");
-      comp->printMemStatsAfter("lowerTrees");
-      }
    }
 
 

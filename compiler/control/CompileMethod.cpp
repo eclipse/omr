@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -449,7 +449,7 @@ compileMethodFromDetails(
    // TR::Compilation. We'll need exceptions working instead of setjmp
    // before we can get working, and we need to make sure the other
    // frontends are properly calling the destructor
-   fe.unreserveCodeCache(compiler.getCurrentCodeCache());
+   TR::CodeCacheManager::instance()->unreserveCodeCache(compiler.getCurrentCodeCache());
 
    TR_OptimizationPlan::freeOptimizationPlan(plan);
 

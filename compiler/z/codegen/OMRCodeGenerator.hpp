@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -369,7 +369,6 @@ public:
    TR::Instruction *getCurrentDEPEND() {return _currentDEPEND; }
    void setCurrentDEPEND(TR::Instruction *instr) { _currentDEPEND=instr; }
 
-   uintptr_t getOutgoingArgLevelDuringTreeEvaluation() { return _outgoingArgLevelDuringTreeEvaluation; }
    void changeRegisterKind(TR::Register * temp, TR_RegisterKinds rk);
 
 
@@ -728,18 +727,8 @@ public:
 
    bool doRematerialization() {return true;}
 
-   /**
-    * The number of nodes we want between a monexit and the next monent before transforming a monitored region with
-    * transactional lock elision.  On Z, we require 25-30 cycles between transactions, or else the latter transaction will
-    * be aborted (with significant penalty).  The 45 is an estimate based on CPI of 1.5-2, and average of 1 instruction per node.
-    */
-   int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 45; }
-
    void dumpDataSnippets(TR::FILE *outFile);
    void dumpTargetAddressSnippets(TR::FILE *outFile);
-
-   bool specializedEpilogues() { return _cgFlags.testAny(S390CG_specializedEpilogues); }
-   void setSpecializedEpilogues(bool b) { _cgFlags.set(S390CG_specializedEpilogues, b); }
 
    bool getSupportsBitOpCodes() { return true;}
 
@@ -759,12 +748,6 @@ public:
    void setFCondMoveBranchOpCond(TR::InstOpCode::S390BranchCondition b) { fCondMoveBranchOpCond = (getMaskForBranchCondition(b)) & 0xF; }
 
    uint8_t getRCondMoveBranchOpCond() { return 0xF - fCondMoveBranchOpCond; }
-
-   void markBlockThatModifiesRegister(TR::RealRegister::RegNum reg, int32_t blockNum);
-
-   /** Checks if reg has to be restored in block blockNumber during epilogue */
-   bool restoreRegister(TR::RealRegister::RegNum reg, int32_t blockNumber);
-   void performReachingBlocks();
 
    /** Support for shrinkwrapping */
    bool processInstruction(TR::Instruction *instr, TR_BitVector **registerUsageInfo, int32_t &blockNum, int32_t &isFence, bool traceIt); // virt
@@ -957,10 +940,6 @@ public:
    // Snippet Data functions
    void addDataConstantSnippet(TR::S390ConstantDataSnippet * snippet);
 
-   // Identify the Inst selection phase
-   bool getDoingInstructionSelection() { return _cgFlags.testAny(S390CG_doingInstructionSelection); }
-   void setDoingInstructionSelection(bool b) { _cgFlags.set(S390CG_doingInstructionSelection, b); }
-
    // Target Address List functions
    int32_t setEstimatedOffsetForTargetAddressSnippets();
    int32_t setEstimatedLocationsForTargetAddressSnippetLabels(int32_t estimatedSnippetStart);
@@ -981,7 +960,6 @@ public:
       {
       return 1 << (reg-1);
       }
-   bool fixedPointOverflowExceptionEnabled() { return false; }
 
    bool opCodeIsNoOpOnThisPlatform(TR::ILOpCode &opCode);
 
@@ -996,8 +974,6 @@ public:
       {
       return TR::Compiler->target.isZOS() && TR::Compiler->target.is32Bit();
       }
-
-   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
 
    bool isAddressScaleIndexSupported(int32_t scale) { if (scale <= 2) return true; return false; }
    using OMR::CodeGenerator::getSupportsConstantOffsetInAddressing;
@@ -1042,9 +1018,6 @@ public:
 
    bool mulDecompositionCostIsJustified(int32_t numOfOperations, char bitPosition[], char operationType[], int64_t value);
 
-   bool disableCommoningOfVolatiles() { return false; } // TODO : Identitiy needs folding
-   bool allowDSEOfVolatiles() { return true; } // TODO : Identitiy needs folding
-
    bool canUseGoldenEagleImmediateInstruction( int32_t value )
      {
      return true;
@@ -1086,8 +1059,6 @@ public:
    virtual void setVMThreadRequired(bool v); //override TR::CodeGenerator::setVMThreadRequired
 
    bool ilOpCodeIsSupported(TR::ILOpCodes);
-
-   void setupSpecializedEpilogues();
 
    void setUsesZeroBasePtr( bool v = true );
    bool getUsesZeroBasePtr();
@@ -1142,13 +1113,6 @@ public:
  private:
    TR_BitVector _globalGPRsPreservedAcrossCalls;
    TR_BitVector _globalFPRsPreservedAcrossCalls;
-
-   TR_BitVector *getBlocksThatModifyRegister(TR::RealRegister::RegNum reg)
-      {
-      return _blocksThatModifyRegister[reg];
-      }
-
-
 
    TR::S390ImmInstruction          *_returnTypeInfoInstruction;
    RegisterAssignmentDirection     assignmentDirection;
@@ -1213,9 +1177,6 @@ private:
 
    TR::SymbolReference* _reusableTempSlot;
 
-   TR_ReachingBlocks                *_reachingBlocks;
-   TR_BitVector                     **_blocksThatModifyRegister;
-
    TR_BitVector  *_currentlyRestrictedRegisters;
    TR_BitVector  *_killedRestrictedRegisters;
 
@@ -1231,13 +1192,13 @@ protected:
       {
       // Available                       = 0x00000001,
       S390CG_extCodeBaseRegisterIsFree   = 0x00000002,
-      S390CG_doingInstructionSelection   = 0x00000004,
+      // Available                       = 0x00000004,
       S390CG_addStorageReferenceHints    = 0x00000008,
       S390CG_isOutOfLineHotPath          = 0x00000010,
       S390CG_literalPoolOnDemandOnRun    = 0x00000020,
       S390CG_prefetchNextStackCacheLine  = 0x00000040,
       S390CG_doesExit                    = 0x00000080,
-      S390CG_specializedEpilogues        = 0x00000100,
+      // Available                       = 0x00000100,
       S390CG_implicitNullChecks          = 0x00000200,
       S390CG_reusableSlotIsFree          = 0x00000400,
       S390CG_conditionalMovesEvaluation  = 0x00000800,
@@ -1260,7 +1221,6 @@ private:
    int32_t _currentlyClobberedRestrictedRegister;
    TR::SparseBitVector _bucketPlusIndexRegisters;
    TR::Instruction *_currentDEPEND;
-   uintptr_t _outgoingArgLevelDuringTreeEvaluation;
    };
 
 }
@@ -1271,13 +1231,7 @@ private:
 class TR_S390Peephole
    {
 public:
-   TR_S390Peephole(TR::Compilation* comp, TR::CodeGenerator *cg)
-      : _fe(comp->fe()),
-        _outFile(comp->getOutFile()),
-        _cursor(comp->getFirstInstruction()),
-        _cg(cg)
-      {
-      }
+   TR_S390Peephole(TR::Compilation* comp, TR::CodeGenerator *cg);
 
    void perform();
 
@@ -1346,13 +1300,10 @@ private:
    bool revertTo32BitShift();
    bool inlineEXtargetHelper(TR::Instruction *, TR::Instruction *);
    bool inlineEXtarget();
-   void markBlockThatModifiesRegister(TR::Instruction *, TR::Register *, int32_t);
+   void markBlockThatModifiesRegister(TR::Instruction *, TR::Register *);
    void reloadLiteralPoolRegisterForCatchBlock();
 
    TR::Compilation * comp() { return TR::comp(); }
-
-private:
-   void setupSpecializedEpilogues();
 
 private:
    TR_FrontEnd * _fe;

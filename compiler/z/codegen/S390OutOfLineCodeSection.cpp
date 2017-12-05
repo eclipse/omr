@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -214,10 +214,10 @@ void TR_S390OutOfLineCodeSection::assignRegisters(TR_RegisterKinds kindsToBeAssi
 
    // Link in the helper stream into the mainline code.
    // We will end up with the OOL items attached at the bottom of the instruction stream
-   TR::Instruction *appendInstruction = comp->getAppendInstruction();
+   TR::Instruction *appendInstruction = _cg->getAppendInstruction();
    appendInstruction->setNext(_firstInstruction);
    _firstInstruction->setPrev(appendInstruction);
-   comp->setAppendInstruction(_appendInstruction);
+   _cg->setAppendInstruction(_appendInstruction);
 
    setHasBeenRegisterAssigned(true);
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -747,7 +747,7 @@ TR::PPCSystemLinkage::createPrologue(
    //Preserve JIT pseudo-TOC as required by FrontEnd.
    if(cg()->hasCall())
       {
-      cg()->comp()->setAppendInstruction(cursor);
+      cg()->setAppendInstruction(cursor);
       TR::TreeEvaluator::preserveTOCRegister(firstNode, cg(), NULL);
       }
 
@@ -780,8 +780,7 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
    for (regIndex=TR::RealRegister::LastFPR; regIndex>=savedFirst; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex-1))
       {
       saveSize = saveSize - 8;
-      if (cg()->restoreRegister(regIndex, blockNumber))
-         cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::lfd, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, 8, cg()), cursor);
+      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::lfd, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, 8, cg()), cursor);
       }
 
    savedFirst = TR::RealRegister::gr13;
@@ -799,8 +798,7 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
          for (regIndex=TR::RealRegister::LastGPR; regIndex>=savedFirst; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex-1))
             {
             saveSize = saveSize - TR::Compiler->om.sizeofReferenceAddress();
-            if (cg()->restoreRegister(regIndex, blockNumber))
-               cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
+            cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
             }
       else
          {
@@ -830,11 +828,8 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
 
    if (machine->getLinkRegisterKilled())
       {
-      if (cg()->restoreRegister(TR::RealRegister::lr, blockNumber))
-         {
-         cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, gr0, new (trHeapMemory()) TR::MemoryReference(sp, 2*TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
-         cursor = generateSrc1Instruction(cg(), TR::InstOpCode::mtlr, currentNode, gr0, 0, cursor);
-         }
+      cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, gr0, new (trHeapMemory()) TR::MemoryReference(sp, 2*TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
+      cursor = generateSrc1Instruction(cg(), TR::InstOpCode::mtlr, currentNode, gr0, 0, cursor);
       }
 
    if ( bodySymbol->isEHAware() ||

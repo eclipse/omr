@@ -23,8 +23,8 @@
 #include <stdio.h>
 #include "compile/Method.hpp"
 #include "OpCodesTest.hpp"
-#include "tests/Qux2IlInjector.hpp"
 #include "tests/Qux2Test.hpp"
+#include "tests/injectors/Qux2IlInjector.hpp"
 #include "gtest/gtest.h"
 #include "ilgen/TypeDictionary.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"

@@ -21,6 +21,7 @@
 
 #if defined(LINUX)
 
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>                     // for getpid, pid_t
 #include "codegen/ELFObjectFileGenerator.hpp"

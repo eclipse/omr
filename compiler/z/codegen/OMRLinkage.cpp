@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -139,93 +139,16 @@ OMR::Z::Linkage::Linkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions e
       }
    }
 
-bool
-OMR::Z::Linkage::restoreRegister(TR::RealRegister::RegNum reg, int32_t blockNumber)
-   {
-   return self()->cg()->restoreRegister(reg, blockNumber);
-   }
-
-int8_t
-OMR::Z::Linkage::getNumRegsToRestore(TR::RealRegister::RegNum firstUsedReg,
-                                    TR::RealRegister::RegNum lastUsedReg,
-                                    int32_t blockNumber)
-   {
-   int8_t numNeededToRestore = 0;
-   for (int32_t regNum = firstUsedReg; regNum <= lastUsedReg; regNum++)
-      {
-      if (self()->restoreRegister(REGNUM(regNum), blockNumber))
-         {
-         numNeededToRestore++;
-         }
-      }
-   return numNeededToRestore;
-   }
-
-uint8_t
-OMR::Z::Linkage::getRestoreBump(TR::RealRegister::RegNum firstSaved,
-                               TR::RealRegister::RegNum lastSaved,
-                               int32_t blockNumber, bool backwards)
-   {
-   //see how many consecutive regs from first we can remove
-
-   uint8_t bump=0;
-   bool stillCons = true;
-   bool restoreEndReg = false;
-
-   uint8_t firstReg = firstSaved;
-   uint8_t lastReg = lastSaved;
-   int8_t dir = 1;
-
-   if (backwards)
-      {
-      firstReg = lastSaved;
-      lastReg = firstSaved;
-      dir = -1;
-      }
-
-   for (int8_t curReg = firstReg; curReg != lastReg; curReg+=dir)
-      {
-      if ((!stillCons && bump != 0) || restoreEndReg)
-         {
-         break;
-         }
-
-      if (!self()->restoreRegister(REGNUM(curReg), blockNumber))
-         {
-         bump++;
-         }
-      else
-         {
-         if ((curReg == firstSaved && !backwards) ||
-             (curReg == lastSaved && backwards)) // can't do anything without the ends
-            {
-            restoreEndReg = true;
-            }
-         stillCons=false;
-         }
-      }
-
-   if (restoreEndReg)
-      return 0;
-
-   return bump;
-   }
 
 void
-OMR::Z::Linkage::markPreservedRegsInDep(TR::RegisterDependencyConditions * deps, int32_t blockNum)
+OMR::Z::Linkage::markPreservedRegsInDep(TR::RegisterDependencyConditions * deps)
    {
-   bool specializedEpilogues = self()->cg()->specializedEpilogues();
    for (int32_t curReg = TR::RealRegister::FirstGPR; curReg <= TR::RealRegister::LastFPR; curReg++)
       {
       if (self()->getPreserved(REGNUM(curReg)) &&
           deps->searchPostConditionRegister(REGNUM(curReg)))
          {
          self()->getS390RealRegister(REGNUM(curReg))->setModified(true);
-         if (specializedEpilogues)
-            {
-            TR::RealRegister * rReg = self()->getS390RealRegister(REGNUM(curReg));
-            self()->cg()->markBlockThatModifiesRegister(rReg->getRegisterNumber(), blockNum);
-            }
          }
       }
 
@@ -233,10 +156,6 @@ OMR::Z::Linkage::markPreservedRegsInDep(TR::RegisterDependencyConditions * deps,
   if (deps && deps->searchPostConditionRegister(self()->cg()->getReturnAddressRegister()))
      {
      self()->getS390RealRegister(self()->getReturnAddressRegister())->setModified(true);
-     if (specializedEpilogues)
-        {
-        self()->cg()->markBlockThatModifiesRegister(self()->getReturnAddressRegister(), blockNum);
-        }
      }
   }
 
@@ -246,23 +165,12 @@ OMR::Z::Linkage::markPreservedRegsInBlock(int32_t blockNum)
    // kill RAReg
    self()->getS390RealRegister(self()->getReturnAddressRegister())->setModified(true);
 
-   bool specializedEpilogues = self()->cg()->specializedEpilogues();
-   if (specializedEpilogues)
-      {
-      self()->cg()->markBlockThatModifiesRegister(self()->getReturnAddressRegister(), blockNum);
-      }
-
    // catch blocks kill all preserved regs
    for (int32_t curReg = TR::RealRegister::FirstGPR; curReg <= TR::RealRegister::LastFPR; curReg++)
       {
       if (self()->getPreserved(REGNUM(curReg)))
          {
          self()->getS390RealRegister(REGNUM(curReg))->setModified(true);
-         if (specializedEpilogues)
-            {
-            TR::RealRegister * rReg = self()->getS390RealRegister(REGNUM(curReg));
-            self()->cg()->markBlockThatModifiesRegister(rReg->getRegisterNumber(), blockNum);
-            }
          }
       }
    }
@@ -278,55 +186,6 @@ OMR::Z::Linkage::useCachedStaticAreaAddresses(TR::Compilation *c)
    else
       {
       return false;
-      }
-   }
-
-void
-OMR::Z::Linkage::analyzePrologue()
-   {
-   if (self()->cg()->specializedEpilogues())
-      {
-      int32_t check=0;
-
-      TR::Instruction * instr = self()->getFirstPrologueInstruction();
-      TR::Instruction * lastInstr = self()->getLastPrologueInstruction();
-
-      TR_ASSERT( instr, "need to keep track of prologue first instruction");
-      TR_ASSERT( lastInstr, "need to keep track of prologue last instruction");
-
-      TR::Node * firstNode = self()->comp()->getStartTree()->getNode();
-      int32_t curBlockNum = -1;
-      int32_t raRegNum = self()->getS390RealRegister(self()->getReturnAddressRegister())->getRegisterNumber();
-
-      while (instr && instr != lastInstr->getNext())
-         {
-         // keep track of current block number to mark regs
-         curBlockNum =  firstNode->getBlock()->getNumber();
-         TR_ASSERT(curBlockNum > 0, "Instruction %p without valid block index\n", instr);
-
-         TR::Register *reg = instr->getRegisterOperand(1);
-         if (reg && reg->getKind() != TR_FPR && !reg->getRegisterPair() && reg->getKind() != TR_VRF)
-             // reg could be FP reg pairs which causes trouble below
-             // the target reg for extendedLoadOp can only be GPR
-            {
-            // we don't mark targets of stores
-            if (!instr->isStore())
-               {
-               // we don't mark targets to raREG in prolog
-               // example.: because we reload GPR14 after the stack overflow check with specializedEpilogues
-               // <bug fix> remove extended load opcode check (old code commented out) as other
-               // <bug fix> opcodes can set register and need to be considered
-               // <bug fix> if (instr->getOpCodeValue() == TR::InstOpCode::getExtendedLoadOpCode() &&
-               // <bug fix>  !(toRealRegister(reg)->getRegisterNumber() == raRegNum))
-               if (!(toRealRegister(reg)->getRegisterNumber() == raRegNum))
-                  {
-                  TR::RealRegister * rReg = toRealRegister(reg);
-                  self()->cg()->markBlockThatModifiesRegister(rReg->getRegisterNumber(), curBlockNum);
-                  }
-               }
-            }
-         instr = instr->getNext();
-         }
       }
    }
 
@@ -3339,22 +3198,13 @@ OMR::Z::Linkage::restorePreservedRegs(TR::RealRegister::RegNum firstUsedReg,
    TR::Instruction * cursor, TR::Node * nextNode, TR::RealRegister * spReg, TR::MemoryReference * rsa,
    TR::RealRegister::RegNum spRealReg)
    {
-   int8_t frontBump = 0;
-   int8_t backBump = 0;
-   bool specializedEpilogues = false;
    bool break64 = TR::Compiler->target.is64Bit() && self()->comp()->getOption(TR_Enable39064Epilogue);
 
    // restoring preserved regs is unavoidable in Java due to GC object moves
 
-   if (specializedEpilogues)
-      {
-      frontBump = self()->getRestoreBump(firstUsedReg, lastUsedReg, blockNumber);
-      backBump = self()->getRestoreBump(firstUsedReg, lastUsedReg, blockNumber, true);
-      }
-
    // Update new start and end
-   uint8_t newFirstUsedReg = firstUsedReg + frontBump;
-   uint8_t newLastUsedReg = lastUsedReg - backBump;
+   uint8_t newFirstUsedReg = firstUsedReg;
+   uint8_t newLastUsedReg = lastUsedReg;
    uint8_t newNumUsedRegs = newLastUsedReg - newFirstUsedReg + 1;
 
    // can't break 64-bit LOAD MULTIPLE down
@@ -3378,12 +3228,6 @@ OMR::Z::Linkage::restorePreservedRegs(TR::RealRegister::RegNum firstUsedReg,
    //NOTE: Can never re-use memrefs in > 1 instruction
    //NOTE: LMG GPRx,GPRx only loads 4-bytes of data
 
-   if (frontBump > 0)
-      {
-      rsa = generateS390MemoryReference(spReg,
-               (rsa->getOffset() + (frontBump * self()->cg()->machine()->getGPRSize())), self()->cg());
-      }
-
    // 64-bit optimized case
    if (break64 ||
        newNumUsedRegs == 1)
@@ -3392,24 +3236,15 @@ OMR::Z::Linkage::restorePreservedRegs(TR::RealRegister::RegNum firstUsedReg,
       int32_t curDisp = rsa->getOffset();
       for (uint8_t i = 0; i < newNumUsedRegs; i++)
          {
-         if (specializedEpilogues && self()->restoreRegister(REGNUM(curReg), blockNumber))
-            {
-            cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(),
-                      nextNode, self()->getS390RealRegister(REGNUM(curReg)), rsa, cursor);
-            }
-         else if (!specializedEpilogues)
-            {
-            cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(),
-                      nextNode, self()->getS390RealRegister(REGNUM(curReg)), rsa, cursor);
-            }
+         cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(),
+                   nextNode, self()->getS390RealRegister(REGNUM(curReg)), rsa, cursor);
+
          curDisp += self()->cg()->machine()->getGPRSize();
          curReg++;
 
          // generate the next rsa
 
-         if (i != newNumUsedRegs &&
-             ((specializedEpilogues && self()->restoreRegister(REGNUM(curReg), blockNumber)) ||
-             !specializedEpilogues))
+         if (i != newNumUsedRegs)
             {
             rsa = generateS390MemoryReference(spReg, curDisp, self()->cg());
             }

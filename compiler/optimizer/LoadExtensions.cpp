@@ -104,7 +104,6 @@ int32_t TR_LoadExtensions::perform()
       optimizer()->setUseDefInfo(NULL);
 
       _useDefInfo = new (comp()->allocator()) TR_UseDefInfo(comp(), comp()->getFlowGraph(), optimizer(), false, false, false, true, true);
-      comp()->printMemStatsAfter("use defs (Load Extensions)");
 
       if (_useDefInfo->infoIsValid())
          optimizer()->setUseDefInfo(_useDefInfo);

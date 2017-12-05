@@ -577,7 +577,6 @@ OMR::Optimization::nodeIsOrderDependent(TR::Node *node, uint32_t depth, bool has
    bool constNeedsAnchor = node->getOpCode().isLoadConst() && node->anchorConstChildren();
    return ((node->getOpCode().isLoad() && node->getOpCode().hasSymbolReference() &&
             !(cachedStaticReg && node->getOpCodeValue() == TR::aload && linkage->isAddressOfStaticSymRef(node->getSymbolReference())) &&
-            !(cachedStaticReg && node->getOpCodeValue() == TR::aload && linkage->isAddressOfPrivateStaticSymRef(node->getSymbolReference())) &&
             ((node->getReferenceCount() > 1) || hasCommonedAncestor)) ||
            ((!node->getOpCode().isLoadConst() || constNeedsAnchor) && depth >= MAX_DEPTH_FOR_SMART_ANCHORING));
 }

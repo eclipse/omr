@@ -3380,7 +3380,7 @@ generateS390CompareAndBranchOpsHelper(TR::Node * node, TR::CodeGenerator * cg, T
             case TR::Int16:
             case TR::Int8:
                constValue32 = getIntegralValue(constNode);
-               compareOpCode = TR::InstOpCode::C;
+               compareOpCode = isUnsignedCmp ? TR::InstOpCode::CL : TR::InstOpCode::C;
                break;
             default:
                TR_ASSERT(0, "generateS390CompareOps: Unexpected Type\n");
@@ -3558,24 +3558,24 @@ generateS390CompareAndBranchOpsHelper(TR::Node * node, TR::CodeGenerator * cg, T
                   temp.genericAnalyser(node, TR::InstOpCode::getCmpRegOpCode(), TR::InstOpCode::getCmpOpCode(), TR::InstOpCode::getLoadRegOpCode(), true, branchTarget, fBranchOpCond, rBranchOpCond);
                   }
                }
-            returnInstruction = comp->getAppendInstruction();
+            returnInstruction = cg->getAppendInstruction();
             isBranchGenerated = true;
             break;
          case TR::Int32:
             TR_ASSERT( dataType == TR::Int32 || comp->useCompressedPointers(), "First child, %p, and second child, %p, data types do not match. This is an issue when compression is disabled.", firstChild, secondChild);
             temp.genericAnalyser (node, isUnsignedCmp ? TR::InstOpCode::CLR : TR::InstOpCode::CR,
                                  isUnsignedCmp ? TR::InstOpCode::CL : TR::InstOpCode::C, TR::InstOpCode::LR, true, branchTarget, fBranchOpCond, rBranchOpCond);
-            returnInstruction = comp->getAppendInstruction();
+            returnInstruction = cg->getAppendInstruction();
             isBranchGenerated = true;
             break;
          case TR::Int16:
             temp.genericAnalyser(node, isUnsignedCmp ? TR::InstOpCode::CLR : TR::InstOpCode::CR, isUnsignedCmp ? TR::InstOpCode::CL : TR::InstOpCode::CH, TR::InstOpCode::LR, true, branchTarget, fBranchOpCond, rBranchOpCond);
-            returnInstruction = comp->getAppendInstruction();
+            returnInstruction = cg->getAppendInstruction();
             isBranchGenerated = true;
             break;
          case TR::Int8:
             temp.genericAnalyser(node, isUnsignedCmp ? TR::InstOpCode::CLR : TR::InstOpCode::CR, isUnsignedCmp ? TR::InstOpCode::CL : TR::InstOpCode::C, TR::InstOpCode::LR, true, branchTarget, fBranchOpCond, rBranchOpCond);
-            returnInstruction = comp->getAppendInstruction();
+            returnInstruction = cg->getAppendInstruction();
             isBranchGenerated = true;
             break;
 
@@ -7138,7 +7138,7 @@ OMR::Z::TreeEvaluator::genNullTestForCompressedPointers(TR::Node *node,
       if (!isNonZero)
          {
 
-         TR::Instruction *current = comp->getAppendInstruction();
+         TR::Instruction *current = cg->getAppendInstruction();
          TR_ASSERT( current != NULL, "Could not get current instruction");
 
          if (!targetRegister)
@@ -10677,7 +10677,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
          TR::MemoryReference *source1MemRef = generateS390MemoryReference(source1Reg, 0, cg);
          TR::MemoryReference *source2MemRef = generateS390MemoryReference(source2Reg, 0, cg);
 
-         cursor = cg->comp()->getAppendInstruction();
+         cursor = cg->getAppendInstruction();
          cursor = generateSS1Instruction(cg, TR::InstOpCode::CLC, node, 0, source1MemRef, source2MemRef, cursor);
 
          cursor = generateEXDispatch(node, cg, lengthReg, cursor, 0, branchDeps);
@@ -12060,9 +12060,9 @@ OMR::Z::TreeEvaluator::BBEndEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    if (!nextTT || !nextTT->getNode()->getBlock()->isExtensionOfPreviousBlock())
       {
       if (cg->enableRegisterAssociations() &&
-          comp->getAppendInstruction()->getOpCodeValue() != TR::InstOpCode::ASSOCREGS)
+          cg->getAppendInstruction()->getOpCodeValue() != TR::InstOpCode::ASSOCREGS)
          {
-         cg->machine()->createRegisterAssociationDirective(comp->getAppendInstruction());
+         cg->machine()->createRegisterAssociationDirective(cg->getAppendInstruction());
          }
 
       if (node->getNumChildren() > 0)

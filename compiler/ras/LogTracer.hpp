@@ -28,20 +28,18 @@ namespace TR { class Compilation; }
 namespace TR { class Optimization; }
 
 #define heuristicTrace(r, ...) \
-   if (true) { \
-      if ((r)->heuristicLevel()) { (r)->alwaysTraceM(__VA_ARGS__); } \
-   } else \
-      (void)0
+      do { \
+         if ((r)->heuristicLevel()) { (r)->alwaysTraceM(__VA_ARGS__); } \
+      } while (0)
 
 
 #define debugTrace(r, ...) \
-      if (true) { \
+      do { \
          if ((r)->debugLevel())\
             {\
             (r)->alwaysTraceM(__VA_ARGS__);\
             }\
-      } else \
-         (void)0
+      } while (0)
 
 #define alwaysTrace(r, ...) \
       (r)->alwaysTraceM(__VA_ARGS__);

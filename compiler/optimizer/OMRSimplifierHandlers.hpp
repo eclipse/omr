@@ -271,4 +271,5 @@ TR::Node * lowerTreeSimplifier(TR::Node * node, TR::Block * block, TR::Simplifie
 TR::Node * arrayLengthSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 
 
+TR::Node * removeArithmeticsUnderIntegralCompare(TR::Node* node,TR::Simplifier * s);
 #endif

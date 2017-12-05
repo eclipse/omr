@@ -616,6 +616,13 @@ TR_YesNoMaybe TR::VPKnownObject::isJavaLangClassObject()
    return _isJavaLangClass ? TR_yes : TR_no;
    }
 
+bool TR::VPKnownObject::isArrayWithConstantElements(TR::Compilation * comp)
+   {
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   TR_ASSERT(knot, "TR::KnownObjectTable should not be null");
+   return knot->isArrayWithConstantElements(_index);
+   }
+
 TR_YesNoMaybe TR::VPClassType::isArray()
    {
    if (_sig[0] == '[')

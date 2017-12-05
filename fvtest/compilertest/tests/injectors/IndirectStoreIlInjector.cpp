@@ -20,45 +20,25 @@
  *******************************************************************************/
 
 #include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "env/FrontEnd.hpp"
 #include "compile/Method.hpp"
-#include "ilgen/TypeDictionary.hpp"
-#include "tests/FooIlInjector.hpp"
-#include "tests/FooBarTest.hpp"
+#include "tests/injectors/IndirectStoreIlInjector.hpp"
+#include "tests/OpCodesTest.hpp"
 
 namespace TestCompiler
 {
 
 bool
-FooIlInjector::injectIL()
+IndirectStoreIlInjector::injectIL()
    {
-   FooBarTest *test = static_cast<FooBarTest *>(_test);
-   createBlocks(4);
+   if (!isOpCodeSupported())
+      return false;
 
-   // 4 blocks requested start at 2 (0 is entry, 1 is exit)
-   // by default, generate to block 2
-
-   // Block 2: blocks(0)
-   // int32_t newIndex = _bar(index);
-   // if (newIndex < 0) goto Block5;
-   TR::SymbolReference *newIndexSymRef = newTemp(Int32);
-   TR::ResolvedMethod *barMethod = test->barMethod();
-   storeToTemp(newIndexSymRef, callFunction(barMethod, Int32, 1, indexParameter()));
-   ifjump(TR::ificmplt, loadTemp(newIndexSymRef), iconst(0), 3);
-
-   // Block 3: blocks(1)
-   // if (newIndex >= 100) goto Block5;
-   ifjump(TR::ificmpge, loadTemp(newIndexSymRef), iconst(test->dataArraySize()), 3);
-
-   // Block 4: blocks(2)
-   // return dataArray[newIndex];
-   returnValue(arrayLoad(staticAddress(test->dataArray()), loadTemp(newIndexSymRef), Int32));
-
-   // Block 5: blocks(3)
-   // return -1;
-   generateToBlock(3);
-   returnValue(iconst(-1));
-
+   createBlocks(1);
+   TR::SymbolReference *storeSymRef = symRefTab()->findOrCreateArrayShadowSymbolRef(_dataType, parm(1));
+   genTreeTop(TR::Node::createWithSymRef(_opCode, 2, parm(1), parm(2), 0, storeSymRef));
+   returnNoValue();
    return true;
    }
 

@@ -330,22 +330,7 @@ OMR::ResolvedMethodSymbol::getThisTempForObjectCtorIndex()
 List<TR::ParameterSymbol>&
 OMR::ResolvedMethodSymbol::getLogicalParameterList(TR::Compilation *comp)
    {
-   if (comp->getMethodSymbol() == self())
-      {
-      List<TR::ParameterSymbol>* l = comp->cg()->getLinkage()->getMainBodyLogicalParameterList();
-      if (l == NULL)
-         {
-         return self()->getParameterList();
-         }
-      else
-         {
-         return *l;
-         }
-      }
-   else
-      {
       return self()->getParameterList();
-      }
    }
 
 template <typename AllocatorType>

@@ -135,12 +135,26 @@ MODULE_LDFLAGS += $(call buildLibPathFlags,$(MODULE_LIBPATH))
 GLOBAL_LDFLAGS += $(call buildLibPathFlags,$(GLOBAL_LIBPATH))
 
 # Static Libraries
-MODULE_LDFLAGS += $(call buildLinkGroup,$(call buildStaticLibLinkFlags,$(MODULE_STATIC_LIBS)))
-GLOBAL_LDFLAGS += $(call buildLinkGroup,$(call buildStaticLibLinkFlags,$(GLOBAL_STATIC_LIBS)))
+ifeq (zos,$(OMR_HOST_OS))
+  # zOS has really strange dependencies on the order of options.  Create separate variables so they 
+  # can be added at the correct place on the link lines.
+  LD_STATIC_LIBS = $(call buildLinkGroup,$(call buildStaticLibLinkFlags,$(MODULE_STATIC_LIBS)))
+  LD_STATIC_LIBS += $(call buildLinkGroup,$(call buildStaticLibLinkFlags,$(GLOBAL_STATIC_LIBS)))
+else
+  MODULE_LDFLAGS += $(call buildLinkGroup,$(call buildStaticLibLinkFlags,$(MODULE_STATIC_LIBS)))
+  GLOBAL_LDFLAGS += $(call buildLinkGroup,$(call buildStaticLibLinkFlags,$(GLOBAL_STATIC_LIBS)))
+endif
 
 # Shared Libraries. Must be after static libraries.
-MODULE_LDFLAGS += $(call buildSharedLibLinkFlags,$(MODULE_SHARED_LIBS))
-GLOBAL_LDFLAGS += $(call buildSharedLibLinkFlags,$(GLOBAL_SHARED_LIBS))
+ifeq (zos,$(OMR_HOST_OS))
+  # zOS has really strange dependencies on the order of options.  Create separate variables so they 
+  # can be added at the correct place on the link lines.
+  LD_SHARED_LIBS = $(call buildSharedLibLinkFlags,$(MODULE_SHARED_LIBS))
+  LD_SHARED_LIBS += $(call buildSharedLibLinkFlags,$(GLOBAL_SHARED_LIBS))
+else
+  MODULE_LDFLAGS += $(call buildSharedLibLinkFlags,$(MODULE_SHARED_LIBS))
+  GLOBAL_LDFLAGS += $(call buildSharedLibLinkFlags,$(GLOBAL_SHARED_LIBS))
+endif
 
 
 ###

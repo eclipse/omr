@@ -515,12 +515,18 @@ extern J9_CFUNC BOOLEAN
 omrsysinfo_os_has_feature(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc, uint32_t feature);
 extern J9_CFUNC BOOLEAN
 omrsysinfo_os_kernel_info(struct OMRPortLibrary *portLibrary, struct OMROSKernelInfo *kernelInfo);
-extern J9_CFUNC int32_t 
-omrsysinfo_cgroup_is_limits_supported(struct OMRPortLibrary *portLibrary);
 extern J9_CFUNC BOOLEAN 
-omrsysinfo_cgroup_is_limits_enabled(struct OMRPortLibrary *portLibrary);
-extern J9_CFUNC int32_t 
-omrsysinfo_cgroup_enable_limits(struct OMRPortLibrary *portLibrary);
+omrsysinfo_cgroup_is_system_available(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC uint64_t
+omrsysinfo_cgroup_get_available_subsystems(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC uint64_t 
+omrsysinfo_cgroup_are_subsystems_available(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlags);
+extern J9_CFUNC uint64_t
+omrsysinfo_cgroup_get_enabled_subsystems(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC uint64_t
+omrsysinfo_cgroup_enable_subsystems(struct OMRPortLibrary *portLibrary, uint64_t requestedSubsystems);
+extern J9_CFUNC uint64_t
+omrsysinfo_cgroup_are_subsystems_enabled(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlags);
 extern J9_CFUNC int32_t 
 omrsysinfo_cgroup_get_memlimit(struct OMRPortLibrary *portLibrary, uint64_t *limit);
 

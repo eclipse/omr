@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include "il/DataTypes.hpp"
 #include "ast.hpp"
+#include "codegen/LinkageConventionsEnum.hpp"
 
 namespace Tril { 
 /**
@@ -71,6 +72,23 @@ static std::vector<TR::DataTypes> parseArgTypes(const ASTNode* node) {
    }
 
    return argTypes;
+}
+
+/**
+ * @brief  Convert a linkage convention name to a LinkageConvention 
+ *         appropriate for setting on a MethodSymbol. 
+ *
+ * @return the linkage convention, or TR_None if the name is not 
+ *         recognized. 
+ */
+static TR_LinkageConventions convertStringToLinkage(const char * linkageName) { 
+   std::string ln = linkageName;  
+   if (ln == "system") {
+      return TR_System;
+   }
+
+   // Not found
+   return TR_None; 
 }
 
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2986,7 +2986,7 @@ generateEXDispatch(TR::Node * node, TR::CodeGenerator *cg, TR::Register * maskRe
       TR::MemoryReference * tempMR = generateS390MemoryReference(cis, cg, litPool, node);
 
       //the memory reference should create a constant data snippet
-      cursor = generateRXInstruction(cg, TR::InstOpCode::EX, node, maskReg, tempMR, (preced != NULL ? preced : comp->getAppendInstruction()));
+      cursor = generateRXInstruction(cg, TR::InstOpCode::EX, node, maskReg, tempMR, (preced != NULL ? preced : cg->getAppendInstruction()));
       if (maskReg->getRealRegister() == NULL && maskReg->getAssignedRegister() == NULL)
          {
          conditions->addPostConditionIfNotAlreadyInserted(maskReg, TR::RealRegister::AssignAny);

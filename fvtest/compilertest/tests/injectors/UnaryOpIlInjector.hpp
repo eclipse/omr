@@ -19,22 +19,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#ifndef TEST_BINARYOPILINJECTOR_INCL
-#define TEST_BINARYOPILINJECTOR_INCL
+#ifndef TEST_UNARYOPILINJECTOR_INCL
+#define TEST_UNARYOPILINJECTOR_INCL
 
-#include "ilgen/OpIlInjector.hpp"
+#include "tests/injectors/OpIlInjector.hpp"
 
 namespace TR { class TypeDictionary; }
 
 namespace TestCompiler
 {
-class BinaryOpIlInjector : public OpIlInjector
+class UnaryOpIlInjector : public OpIlInjector
    {
    public:
-   BinaryOpIlInjector(TR::TypeDictionary *types, TestDriver *test, TR::ILOpCodes opCode)
+   UnaryOpIlInjector(TR::TypeDictionary *types, TestDriver *test, TR::ILOpCodes opCode)
       : OpIlInjector(types, test, opCode)
       {
-      initOptArgs(2);
+      initOptArgs(1);
       }
    TR_ALLOC(TR_Memory::IlGenerator)
 
@@ -43,4 +43,4 @@ class BinaryOpIlInjector : public OpIlInjector
 
 } // namespace TestCompiler
 
-#endif // !defined(TEST_BINARYOPILINJECTOR_INCL)
+#endif // !defined(UNARYOPILINJECTOR_INCL)

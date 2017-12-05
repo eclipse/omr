@@ -5476,8 +5476,7 @@ TR::Node *indirectLoadSimplifier(TR::Node * node, TR::Block * block, TR::Simplif
       return resultNode;
 
    TR::Node *firstChild = node->getFirstChild();
-   if (firstChild->getOpCodeValue() == TR::loadaddr &&
-       !s->comp()->cg()->getLinkage()->isArgumentListSymbol(firstChild->getSymbolReference()->getSymbol(), s->comp())) // argList symbol can grow later on
+   if (firstChild->getOpCodeValue() == TR::loadaddr)
        {
        bool newOType = false;
        TR::DataType loadDataType = newOType ? node->getDataType() : node->getSymbolReference()->getSymbol()->getDataType();
@@ -5601,9 +5600,7 @@ TR::Node *indirectStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simpli
       return NULL;
       }
 
-   if (
-       firstChild->getOpCodeValue() == TR::loadaddr &&
-       !s->comp()->cg()->getLinkage()->isArgumentListSymbol(firstChild->getSymbolReference()->getSymbol(), s->comp())) // argList symbol can grow later on
+   if (firstChild->getOpCodeValue() == TR::loadaddr)
        {
        bool newOType = false;
 
@@ -12804,6 +12801,196 @@ TR::Node *su2dSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    return node;
    }
 
+
+/**
+ * \brief
+ *
+ * Remove add/subtract operations under comparison nodes to save an
+ * addition or subtraction instruction during codegen. This simplification
+ * applies to:
+ *
+ * 1. Signed comparisons of byte, short, int, and long values.
+ * 2. Unsigned (in)equality of byte, short, int, and long values.
+ *
+ * \details
+ *
+ * \verbatim
+ * As an example, assume the following is the original expression
+ *        x + oldConst1 > oldConst2
+ *
+ * This expression can be simplified to
+ *        x > newConst
+ *        where newConst = oldConst2 - oldConst1
+ * The newConst calculation should not produce overflow or underflow.
+ * \endverbatim
+ *
+ * Also note that for unsigned comparison types other than equality and inequality,
+ * add/sub simplifications are not possible due to how values are interpreted
+ * in the current IL nodes. Essentially, the value of an iconst node is neither
+ * signed nor unsigned; and its parent is free to interpret its value.
+ *
+ * For example, the following transformation is incorrect:
+ *
+ * \varbatim
+ *
+ * Before:
+ *
+ * ifiucmplt --> goto ...
+ *     isub (cannotOverflow)
+ *         iload x
+ *         iconst -1
+ *     iconst 100
+ *
+ * After:
+ *
+ * ifiucmplt --> goto ...
+ *     iload x
+ *     iconst 99
+ *
+ * \endverbatim
+ *
+ * If x were -1, the first tree would evaluate to true since it's comparing if zero is less than 100.
+ * But in the second tree, ifiucmplt interprets the value of x as UINT_MAX. Thus,
+ * the second tree is comparing UINT_MAX with 99; and the whole comparison node evalutes
+ * to false.
+ *
+ * Unsigned equality and inequality comparisons are not sensitive to sign interpretation problems.
+ *
+ * \param node          the comparison node being simpilfied
+ * \param s             the simplifier object
+*/
+TR::Node* removeArithmeticsUnderIntegralCompare(TR::Node* node,
+                                                TR::Simplifier * s)
+   {
+   if (s->comp()->getOption(TR_DisableIntegerCompareSimplification) ||
+         !(node->getOpCode().isBooleanCompare()   // The node must be an integer comparison node.
+            && node->getNumChildren() > 0
+            && node->getFirstChild()->getOpCode().isInteger()))
+      return node;
+
+   TR::Node* opNode      = node->getFirstChild();
+   TR::Node* secondChild = node->getSecondChild();
+   TR::ILOpCodes op      = opNode->getOpCodeValue();
+
+   // Get recognized operation types. Unsigned IL OpCodes are deprecated and not supported here.
+   bool isAddOp = (op == TR::iadd || op == TR::ladd || op == TR::sadd || op == TR::badd);
+   bool isSubOp = (op == TR::isub || op == TR::lsub || op == TR::ssub || op == TR::bsub);
+
+   bool isUnsignedCompare = node->getOpCode().isUnsignedCompare();
+   bool isEqOrNotEqCompare = node->getOpCode().isCompareForEquality();
+
+   bool isSignednessTypeSupported = isEqOrNotEqCompare || (!isUnsignedCompare && opNode->cannotOverflow());
+
+   if ((isAddOp || isSubOp)
+         && isSignednessTypeSupported
+         && opNode->getSecondChild()->getOpCode().isLoadConst()
+         && secondChild->getOpCode().isLoadConst()
+         // Only perform the simplification on the first occurance of the add/sub node
+         && (opNode->getFutureUseCount() == opNode->getReferenceCount() - 1))
+      {
+      int64_t signedMax = 0, signedMin = 0;
+      uint64_t oldUConst1 = 0, oldUConst2 = 0, newUConst = 0;
+
+      if (opNode->getOpCode().is1Byte())
+         {
+         oldUConst1 = opNode->getSecondChild()->getUnsignedByte();
+         oldUConst2 = secondChild->getUnsignedByte();
+
+         signedMax = TR::getMaxSigned<TR::Int8>();
+         signedMin = TR::getMinSigned<TR::Int8>();
+         }
+      else if (opNode->getOpCode().is2Byte())
+         {
+         oldUConst1 = opNode->getSecondChild()->getUnsignedShortInt();
+         oldUConst2 = secondChild->getUnsignedShortInt();
+
+         signedMax = TR::getMaxSigned<TR::Int16>();
+         signedMin = TR::getMinSigned<TR::Int16>();
+         }
+      else if (opNode->getOpCode().is4Byte())
+         {
+         oldUConst1 = opNode->getSecondChild()->getUnsignedInt();
+         oldUConst2 = secondChild->getUnsignedInt();
+
+         signedMax = TR::getMaxSigned<TR::Int32>();
+         signedMin = TR::getMinSigned<TR::Int32>();
+         }
+      else if (opNode->getOpCode().is8Byte())
+         {
+         oldUConst1 = opNode->getSecondChild()->getUnsignedLongInt();
+         oldUConst2 = secondChild->getUnsignedLongInt();
+
+         signedMax = TR::getMaxSigned<TR::Int64>();
+         signedMin = TR::getMinSigned<TR::Int64>();
+         }
+      else
+         {
+         if (s->trace())
+            traceMsg(s->comp(),
+                     "\nEliminating add/sub under compare node n%dn failed due to opcode data type\n",
+                     node->getGlobalIndex());
+
+         return node;
+         }
+
+      if (!isEqOrNotEqCompare)
+         {
+         // check for signed overflow
+         // Signed integer overflow is undefined behavior in C++11; and unsigned
+         // arithmnetic operations are defined. Need to make sure that signed integer results don't overflow.
+         int64_t oldConst1 = static_cast<int64_t>(oldUConst1);
+         int64_t oldConst2 = static_cast<int64_t>(oldUConst2);
+
+         bool canTransformAdd = isAddOp
+                 && !(oldConst1 > 0 && (oldConst2 < signedMin + oldConst1))
+                 && !(oldConst1 < 0 && (oldConst2 > signedMax + oldConst1));
+
+         bool canTransformSub = isSubOp
+                     && !(oldConst1 > 0 && (oldConst2 > signedMax - oldConst1))
+                     && !(oldConst1 < 0 && (oldConst2 < signedMin - oldConst1));
+
+         if (!(canTransformAdd || canTransformSub))
+            {
+            if (s->trace())
+               traceMsg(s->comp(),
+                        "\nEliminating add/sub under order compare node n%dn failed due to overflow\n",
+                        node->getGlobalIndex());
+
+            return node;
+            }
+         }
+
+      // Calculate new constant value.
+      // For both signed and unsigned comparisons, the new values are calculated using
+      // the old unsigned values. The reason being that signed integer overflow is undefined behavior in
+      // C++, and that unsigned integer overflow is defined behavior: they shall obey the laws of
+      // arithmetic modulo 2^n and produce wrapped values
+      // The IL expects integer wrapping in case of overflow; and this matches unsigned integer behaviors in C++.
+      newUConst = isAddOp ? (oldUConst2 - oldUConst1) : (oldUConst2 + oldUConst1);
+
+      // Done checking constant values. Transform the tree.
+      if (performTransformation(s->comp(),
+                                "%sEliminating add/sub operation under integer comparison node n%dn %s\n",
+                                s->optDetailString(),
+                                node->getGlobalIndex(),
+                                node->getOpCode().getName()))
+         {
+         // It's not recommended to mutate the value of an existing constant node by
+         // calling constNode->setConstValue()
+         // Hence, creating a new node here and copy the old node's internal info.
+         TR::Node* newConstNode = TR::Node::create(secondChild, secondChild->getOpCodeValue(), 0);
+         newConstNode->setUnsignedLongInt(newUConst);
+         node->setAndIncChild(0, opNode->getFirstChild());
+         node->setAndIncChild(1, newConstNode);
+
+         secondChild->decReferenceCount();
+         opNode->recursivelyDecReferenceCount();
+         }
+      }
+
+   return node;
+   }
+
 //---------------------------------------------------------------------
 // Integer if compare equal (signed and unsigned)
 //
@@ -12916,6 +13103,7 @@ TR::Node *ificmpeqSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
 
 
    addressCompareConversion(node, s);
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
    if (s->getLastRun())
       convertToTestUnderMask(node, block, s);
@@ -13020,6 +13208,7 @@ TR::Node *ificmpneSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
 
 
    addressCompareConversion(node, s);
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
 
    return node;
@@ -13064,6 +13253,7 @@ TR::Node *ificmpltSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       }
 
 
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
    return node;
    }
@@ -13106,6 +13296,7 @@ TR::Node *ificmpleSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       unsignedIntCompareNarrower(node, s, TR::ifsucmple, TR::ifbucmple);
       }
 
+   removeArithmeticsUnderIntegralCompare(node, s);
 
    partialRedundantCompareElimination(node, block, s);
    return node;
@@ -13149,6 +13340,7 @@ TR::Node *ificmpgtSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       unsignedIntCompareNarrower(node, s, TR::ifsucmpgt, TR::ifbucmpgt);
       }
 
+   removeArithmeticsUnderIntegralCompare(node, s);
 
    partialRedundantCompareElimination(node, block, s);
    return node;
@@ -13196,6 +13388,7 @@ TR::Node *ificmpgeSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
    if (ifxcmpReducer.isReducible())
       node = ifxcmpReducer.reduce();
 
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
    return node;
    }
@@ -13234,6 +13427,7 @@ TR::Node *iflcmpeqSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       longCompareNarrower(node, s, TR::ificmpeq, TR::ifsucmpeq, TR::ifscmpeq, TR::ifbcmpeq);
       }
 
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
    return node;
    }
@@ -13271,6 +13465,7 @@ TR::Node *iflcmpneSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       longCompareNarrower(node, s, TR::ificmpne, TR::ifsucmpne, TR::ifscmpne, TR::ifbcmpne);
       }
    addressCompareConversion(node, s);
+   removeArithmeticsUnderIntegralCompare(node, s);
 
    partialRedundantCompareElimination(node, block, s);
    return node;
@@ -13308,6 +13503,7 @@ TR::Node *iflcmpltSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       if (firstChild->getOpCode().isLoadConst() && conditionalBranchFold((((uint64_t)originalFirst->getLongInt())<((uint64_t)originalSecond->getLongInt())), node, firstChild, secondChild, block, s))
          return node;
       }
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
    return node;
    }
@@ -13344,6 +13540,7 @@ TR::Node *iflcmpleSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       if (firstChild->getOpCode().isLoadConst() && conditionalBranchFold((((uint64_t)originalFirst->getLongInt())<=((uint64_t)originalSecond->getLongInt())), node, firstChild, secondChild, block, s))
          return node;
       }
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
    return node;
    }
@@ -13380,6 +13577,7 @@ TR::Node *iflcmpgtSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       if (firstChild->getOpCode().isLoadConst() && conditionalBranchFold((((uint64_t)originalFirst->getLongInt())>((uint64_t)originalSecond->getLongInt())), node, firstChild, secondChild, block, s))
          return node;
       }
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
    return node;
    }
@@ -13422,6 +13620,7 @@ TR::Node *iflcmpgeSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
    if (ifxcmpReducer.isReducible())
       node = ifxcmpReducer.reduce();
 
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
    return node;
    }
@@ -13815,6 +14014,7 @@ TR::Node *ifCmpWithEqualitySimplifier(TR::Node * node, TR::Block * block, TR::Si
          }
       }
    bitTestingOp(node, s);
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
 
    return node;
@@ -13915,6 +14115,7 @@ TR::Node *ifCmpWithoutEqualitySimplifier(TR::Node * node, TR::Block * block, TR:
          }
       }
    bitTestingOp(node, s);
+   removeArithmeticsUnderIntegralCompare(node, s);
    partialRedundantCompareElimination(node, block, s);
 
    return node;
@@ -14070,6 +14271,8 @@ TR::Node *icmpeqSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
          }
       }
 
+   removeArithmeticsUnderIntegralCompare(node, s);
+
    return node;
    }
 
@@ -14091,7 +14294,7 @@ TR::Node *icmpneSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       }
 
    orderChildren(node, firstChild, secondChild, s);
-
+   removeArithmeticsUnderIntegralCompare(node, s);
 
    return node;
    }
@@ -14114,7 +14317,7 @@ TR::Node *icmpltSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       }
 
    makeConstantTheRightChildAndSetOpcode(node, firstChild, secondChild, s);
-
+   removeArithmeticsUnderIntegralCompare(node, s);
 
    return node;
    }
@@ -14137,7 +14340,7 @@ TR::Node *icmpleSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       }
 
    makeConstantTheRightChildAndSetOpcode(node, firstChild, secondChild, s);
-
+   removeArithmeticsUnderIntegralCompare(node, s);
 
    return node;
    }
@@ -14160,7 +14363,7 @@ TR::Node *icmpgtSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       }
 
    makeConstantTheRightChildAndSetOpcode(node, firstChild, secondChild, s);
-
+   removeArithmeticsUnderIntegralCompare(node, s);
 
    return node;
    }
@@ -14183,7 +14386,7 @@ TR::Node *icmpgeSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       }
 
    makeConstantTheRightChildAndSetOpcode(node, firstChild, secondChild, s);
-
+   removeArithmeticsUnderIntegralCompare(node, s);
 
    return node;
    }
@@ -14259,6 +14462,7 @@ TR::Node *lcmpeqSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       }
 
    orderChildren(node, firstChild, secondChild, s);
+   removeArithmeticsUnderIntegralCompare(node, s);
 
    return node;
    }
@@ -14352,6 +14556,8 @@ TR::Node *lcmpneSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
          }
       }
 
+   removeArithmeticsUnderIntegralCompare(node, s);
+
    return node;
    }
 
@@ -14389,6 +14595,8 @@ TR::Node *lcmpltSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       }
 
    makeConstantTheRightChildAndSetOpcode(node, firstChild, secondChild, s);
+   removeArithmeticsUnderIntegralCompare(node, s);
+
    return node;
    }
 
@@ -14410,6 +14618,8 @@ TR::Node *lcmpleSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       }
 
    makeConstantTheRightChildAndSetOpcode(node, firstChild, secondChild, s);
+   removeArithmeticsUnderIntegralCompare(node, s);
+
    return node;
    }
 
@@ -14431,6 +14641,8 @@ TR::Node *lcmpgtSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       }
 
    makeConstantTheRightChildAndSetOpcode(node, firstChild, secondChild, s);
+   removeArithmeticsUnderIntegralCompare(node, s);
+
    return node;
    }
 
@@ -14452,6 +14664,8 @@ TR::Node *lcmpgeSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       }
 
    makeConstantTheRightChildAndSetOpcode(node, firstChild, secondChild, s);
+   removeArithmeticsUnderIntegralCompare(node, s);
+
    return node;
    }
 

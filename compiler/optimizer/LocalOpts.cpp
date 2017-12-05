@@ -1612,39 +1612,6 @@ int32_t TR_HoistBlocks::process(TR::TreeTop *startTree, TR::TreeTop *endTree)
                //
                nextEdge = next;
                continue;
-
-
-               // Check if the hoisted loop header won't have a block in
-               // middle of the loop as a successor; this situation could
-               // create improper regions, reducing effectiveness of opts that
-               // follow.
-               //
-               int32_t successorsInMidLoop = 0;
-               for (auto nextEdge = block->getSuccessors().begin(); nextEdge != block->getSuccessors().end(); ++nextEdge)
-                  {
-                  TR::Block *succBlock = toBlock((*nextEdge)->getTo());
-                  TR_Structure *succBlockStructure = succBlock->getStructureOf();
-                  while (succBlockStructure)
-                     {
-                     if (succBlockStructure == containingLoop)
-                        break;
-
-                     succBlockStructure = succBlockStructure->getParent();
-                     }
-
-                  if (succBlockStructure)
-                     {
-                     successorsInMidLoop++;
-                     if (successorsInMidLoop > 1)
-                        break;
-                     }
-                  }
-
-               if (successorsInMidLoop > 1)
-                  {
-                  nextEdge = next;
-                  continue;
-                  }
                }
 
 

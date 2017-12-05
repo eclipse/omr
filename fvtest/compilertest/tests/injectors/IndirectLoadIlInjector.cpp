@@ -19,29 +19,31 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#ifndef TEST_CMPBRANCHOPILINJECTOR_INCL
-#define TEST_CMPBRANCHOPILINJECTOR_INCL
-
-#include "ilgen/OpIlInjector.hpp"
-
-namespace TR { class TypeDictionary; }
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "env/FrontEnd.hpp"
+#include "compile/Method.hpp"
+#include "ilgen/TypeDictionary.hpp"
+#include "tests/OpCodesTest.hpp"
+#include "tests/injectors/IndirectLoadIlInjector.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
 
 namespace TestCompiler
 {
-class CmpBranchOpIlInjector : public OpIlInjector
+
+bool
+IndirectLoadIlInjector::injectIL()
    {
-   public:
-   CmpBranchOpIlInjector(TR::TypeDictionary *types, TestDriver *test, TR::ILOpCodes opCode)
-      : OpIlInjector(types, test, opCode)
-      {
-	  initOptArgs(2);
-      }
-   TR_ALLOC(TR_Memory::IlGenerator)
+   if (!isOpCodeSupported())
+      return false;
 
-   bool injectIL();
+   OpCodesTest *test = static_cast<OpCodesTest *>(_test);
+   createBlocks(1);
+   TR::SymbolReference *loadSymRef = symRefTab()->findOrCreateArrayShadowSymbolRef(_dataType, parm(1));
+   returnValue(TR::Node::createWithSymRef(_opCode, 1, 1, parm(1), loadSymRef));
 
-   };
+   return true;
+   }
 
 } // namespace TestCompiler
-
-#endif // !defined(TEST_CMPBRANCHOPILINJECTOR_INCL)

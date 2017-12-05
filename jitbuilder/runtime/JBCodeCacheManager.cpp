@@ -70,7 +70,7 @@ JitBuilder::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
    // ignore preferredStartAddress for now, since it's NULL anyway
    //   goal would be to allocate code cache segments near the JIT library address
    codeCacheSizeToAllocate = segmentSize;
-   TR::CodeCacheConfig & config = codeCacheConfig();
+   TR::CodeCacheConfig & config = self()->codeCacheConfig();
    if (segmentSize < config.codeCachePadKB() << 10)
       codeCacheSizeToAllocate = config.codeCachePadKB() << 10;
    uint8_t *memorySlab = (uint8_t *) mmap(NULL,

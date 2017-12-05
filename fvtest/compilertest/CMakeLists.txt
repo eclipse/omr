@@ -22,13 +22,6 @@
 include(OmrCompilerSupport)
 
 set(COMPILERTEST_FILES
-	ilgen/BinaryOpIlInjector.cpp
-	ilgen/ChildlessUnaryOpIlInjector.cpp
-	ilgen/CmpBranchOpIlInjector.cpp
-	ilgen/OpIlInjector.cpp
-	ilgen/StoreOpIlInjector.cpp
-	ilgen/TernaryOpIlInjector.cpp
-	ilgen/UnaryOpIlInjector.cpp
 	compile/Method.cpp
 	control/TestJit.cpp
 	env/FrontEnd.cpp
@@ -76,13 +69,8 @@ make_compiler_target(testcompiler INTERFACE COMPILER testcompiler)
 
 add_executable(compilertest
 	tests/main.cpp
-	tests/BarIlInjector.cpp
 	tests/BuilderTest.cpp
-	tests/CallIlInjector.cpp
-	tests/IndirectLoadIlInjector.cpp
-	tests/IndirectStoreIlInjector.cpp
 	tests/FooBarTest.cpp
-	tests/FooIlInjector.cpp
 	tests/LimitFileTest.cpp
 	tests/LogFileTest.cpp
 	tests/OMRTestEnv.cpp
@@ -90,12 +78,24 @@ add_executable(compilertest
 	tests/OpCodesTest.cpp
 	tests/PPCOpCodesTest.cpp
 	tests/Qux2Test.cpp
-	tests/Qux2IlInjector.cpp
 	tests/SimplifierFoldAndTest.cpp
 	tests/S390OpCodesTest.cpp
 	tests/OptTestDriver.cpp
 	tests/TestDriver.cpp
 	tests/X86OpCodesTest.cpp
+	tests/injectors/BarIlInjector.cpp
+	tests/injectors/BinaryOpIlInjector.cpp
+	tests/injectors/CallIlInjector.cpp
+	tests/injectors/ChildlessUnaryOpIlInjector.cpp
+	tests/injectors/CmpBranchOpIlInjector.cpp
+	tests/injectors/FooIlInjector.cpp
+	tests/injectors/IndirectLoadIlInjector.cpp
+	tests/injectors/IndirectStoreIlInjector.cpp
+	tests/injectors/OpIlInjector.cpp
+	tests/injectors/Qux2IlInjector.cpp
+	tests/injectors/StoreOpIlInjector.cpp
+	tests/injectors/TernaryOpIlInjector.cpp
+	tests/injectors/UnaryOpIlInjector.cpp
 )
 
 

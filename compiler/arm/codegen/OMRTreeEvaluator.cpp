@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -109,7 +109,7 @@ TR::Instruction *armLoadConstant(TR::Node *node, int32_t value, TR::Register *tr
 
      TR::Instruction *insertingInstructions = cursor;
      if (cursor == NULL)
-        cursor = comp->getAppendInstruction();
+        cursor = cg->getAppendInstruction();
 
      // The straddled cases are not caught yet ...
 
@@ -160,7 +160,7 @@ TR::Instruction *armLoadConstant(TR::Node *node, int32_t value, TR::Register *tr
         }
 
      if (!insertingInstructions)
-        comp->setAppendInstruction(cursor);
+        cg->setAppendInstruction(cursor);
 
      return(cursor);
    }
@@ -173,7 +173,7 @@ TR::Instruction *fixedSeqMemAccess(TR::CodeGenerator *cg, TR::Node *node, int32_
    TR::Compilation *comp = cg->comp();
 
    if (cursor == NULL)
-      cursor = comp->getAppendInstruction();
+      cursor = cg->getAppendInstruction();
 
    TR_ARMOperand2 *op2_3 = new (cg->trHeapMemory()) TR_ARMOperand2(localVal.getByte3(), 24);
    TR_ARMOperand2 *op2_2 = new (cg->trHeapMemory()) TR_ARMOperand2(localVal.getByte2(), 16);
@@ -189,7 +189,7 @@ TR::Instruction *fixedSeqMemAccess(TR::CodeGenerator *cg, TR::Node *node, int32_
    nibbles[4] = cursor = generateTrg1MemInstruction(cg, ARMOp_ldr, node, trgReg, memRef, cursor);
 
    if (cursorCopy == NULL)
-      comp->setAppendInstruction(cursor);
+      cg->setAppendInstruction(cursor);
 
    return cursor;
    }
@@ -211,7 +211,7 @@ TR::Instruction *loadAddressConstantFixed(TR::CodeGenerator *cg, TR::Node * node
    intParts localVal(value);
 
    if (cursor == NULL)
-      cursor = comp->getAppendInstruction();
+      cursor = cg->getAppendInstruction();
 
    TR_ARMOperand2 *op2_3 = new (cg->trHeapMemory()) TR_ARMOperand2(localVal.getByte3(), 24);
    TR_ARMOperand2 *op2_2 = new (cg->trHeapMemory()) TR_ARMOperand2(localVal.getByte2(), 16);
@@ -308,7 +308,7 @@ TR::Instruction *loadAddressConstantFixed(TR::CodeGenerator *cg, TR::Node * node
    cursor = generateTrg1Src2Instruction(cg, ARMOp_add, node, trgReg, trgReg, op2_0, cursor);
 
    if (temp == NULL)
-      comp->setAppendInstruction(cursor);
+      cg->setAppendInstruction(cursor);
 
    return(cursor);
    }
@@ -1376,7 +1376,7 @@ TR::Register *OMR::ARM::TreeEvaluator::BBEndEvaluator(TR::Node *node, TR::CodeGe
    if (NULL == block->getNextBlock())
       {
       // PR108736 If bl jitThrowException is the last instruction, jitGetExceptionTableFromPC fails to find the method.
-      TR::Instruction *lastInstruction = comp->getAppendInstruction();
+      TR::Instruction *lastInstruction = cg->getAppendInstruction();
       if (lastInstruction->getOpCodeValue() == ARMOp_bl
               && lastInstruction->getNode()->getSymbolReference()->getReferenceNumber() == TR_aThrow)
          {

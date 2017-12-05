@@ -25,42 +25,8 @@
 #include "infra/ILWalk.hpp"
 #include "ras/IlVerifier.hpp"
 #include "ras/IlVerifierHelpers.hpp"
+#include "SharedVerifiers.hpp" //for NoAndIlVerifier
 
-/**
- * Verify the optimization was correctly applied.
- * A test failure is triggered by using `EXPECT_*`, and
- * compilation is stopped by returning a non-zero return code.
- * `ADD_FAILURE` is equivalent to expecting something false.
- *
- * While anything can be done in `verify`, this test
- * is implemented by traversing the IL, and checking if
- * there are AND operations remaining. 
- */
-class SimplifierFoldAndIlVerifier : public TR::IlVerifier
-   {
-   public:
-   int32_t verifyNode(TR::Node *node)
-      {
-      if (node->getOpCode().isAnd()) 
-         {
-         ADD_FAILURE() << "Found an AND operation: " << node->getOpCodeValue();
-         return 1;
-         }
-      return 0;
-      }
-
-   int32_t verify(TR::ResolvedMethodSymbol *sym)
-      {
-      for(TR::PreorderNodeIterator iter(sym->getFirstTreeTop(), sym->comp()); iter.currentTree(); ++iter)
-         {
-         int32_t rtn = verifyNode(iter.currentNode());
-         if(rtn)
-            return rtn;
-         }
-
-      return 0;
-      }
-   };
 
 /**
  * Test Fixture for SimplifierFoldAndTest that 
@@ -92,20 +58,20 @@ class SimplifierFoldAndTest : public TRTest::JitOptTest
  * the expression should always fold to zero. 
  */
 TEST_F(SimplifierFoldAndTest, FoldHappens) {
+    auto* inputTrees = "(method return=Int64 args=[Int32]  "
+                       " (block                            "
+                       "  (lreturn                         "
+                       "   (land                           " 
+                       "    (lconst 0xFFFFFFFF00000000)    "
+                       "    (iu2l (iload parm=0))))))      "; 
 
-    auto inputTrees ="(method return=Int64 args=[Int32]  "
-                     " (block                            "
-                     "  (lreturn                         "
-                     "  (land                            " 
-                     "      (lconst 0xFFFFFFFF00000000)  "
-                     "      (iu2l (iload parm=0))))))    "; 
 
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
 
     Tril::DefaultCompiler compiler{trees};
-    SimplifierFoldAndIlVerifier verifier;  
+    NoAndIlVerifier verifier;  
 
     ASSERT_EQ(0, compiler.compileWithVerifier(&verifier)) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -117,3 +83,4 @@ TEST_F(SimplifierFoldAndTest, FoldHappens) {
     EXPECT_EQ(0ll, entry_point(-9));
     EXPECT_EQ(0ll, entry_point(2147483647));
 }
+

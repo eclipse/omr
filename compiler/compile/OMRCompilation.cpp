@@ -179,11 +179,6 @@ OMR::Compilation::getHotnessName(TR_Hotness h)
    return pHotnessNames[h];
    }
 
-bool OMR::Compilation::nodeNeeds2Regs(TR::Node*node)
-   {
-   return node->requiresRegisterPair(self());
-   }
-
 
 static TR::CodeGenerator * allocateCodeGenerator(TR::Compilation * comp)
    {
@@ -225,8 +220,6 @@ OMR::Compilation::Compilation(
    _allocatorName(NULL),
    _ilGenerator(0),
    _optimizer(0),
-   _firstInstruction(NULL),
-   _appendInstruction(NULL),
    _currentSymRefTab(NULL),
    _recompilationInfo(0),
    _optimizationPlan(optimizationPlan),
@@ -638,7 +631,7 @@ bool OMR::Compilation::isPotentialOSRPoint(TR::Node *node, TR::Node **osrPointNo
    if (self()->isOSRTransitionTarget(TR::postExecutionOSR))
       {
       if (node->getOpCodeValue() == TR::treetop || node->getOpCode().isCheck())
-         node = node->getFirstChild(); 
+         node = node->getFirstChild();
 
       if (_osrInfrastructureRemoved && !ignoreInfra)
          potentialOSRPoint = false;
@@ -771,7 +764,7 @@ OMR::Compilation::getOSRInductionOffset(TR::Node *node)
    // If no induction after the OSR point, offset must be 0
    if (!self()->isOSRTransitionTarget(TR::postExecutionOSR))
       return 0;
-   
+
    TR::Node *osrNode;
    if (!self()->isPotentialOSRPoint(node, &osrNode))
       {
@@ -985,8 +978,6 @@ int32_t OMR::Compilation::compile()
       methodInfo->setProfileInfo(NULL);
 #endif
 
-   self()->printMemStatsBefore(self()->signature());
-
    {
      if (printCodegenTime) genILTime.startTiming(self());
      _ilGenSuccess = _methodSymbol->genIL(self()->fe(), self(), self()->getSymRefTab(), _ilGenRequest);
@@ -1039,8 +1030,6 @@ int32_t OMR::Compilation::compile()
 
       self()->performOptimizations();
 
-      self()->printMemStatsAfter("optimization");
-
       if (printCodegenTime) optTime.stopTiming(self());
 
 #ifdef J9_PROJECT_SPECIFIC
@@ -1072,8 +1061,6 @@ int32_t OMR::Compilation::compile()
            codegenTime.startTiming(self());
 
         self()->cg()->generateCode();
-
-        self()->printMemStatsAfter("all codegen");
 
         if (printCodegenTime)
            codegenTime.stopTiming(self());
@@ -1206,8 +1193,6 @@ int32_t OMR::Compilation::compile()
       }
 #endif
 
-   self()->printMemStatsAfter(self()->signature());
-
    return COMPILATION_SUCCEEDED;
    }
 
@@ -1249,8 +1234,7 @@ void OMR::Compilation::performOptimizations()
    if (_optimizer)
       _optimizer->optimize();
 
-   if (!self()->getOption(TR_EnableSpecializedEpilogues) &&
-       self()->getOption(TR_DisableShrinkWrapping) &&
+   if (self()->getOption(TR_DisableShrinkWrapping) &&
        !TR::Compiler->target.cpu.isZ() && // 390 now uses UseDefs in CodeGenPrep
        !self()->getOptions()->getVerboseOption(TR_VerboseCompYieldStats))
       _optimizer = NULL;
@@ -2291,7 +2275,7 @@ OMR::Compilation::getOSRCallSiteRematSize(uint32_t callSiteIndex)
    }
 
 /*
- * Get the pending push symbol reference and the corresponding load, to later remat the pending push 
+ * Get the pending push symbol reference and the corresponding load, to later remat the pending push
  * within OSR code blocks inside the callee. To get a mapping, the call site index for the callee and
  * the caller's pending push slot should be provided.
  */
@@ -2498,18 +2482,6 @@ void
 OMR::Compilation::setStartTree(TR::TreeTop * tt)
    {
    _methodSymbol->setFirstTreeTop(tt);
-   }
-
-void OMR::Compilation::printMemStats(const char *name)
-   {
-   }
-
-void OMR::Compilation::printMemStatsBefore(const char *name)
-   {
-   }
-
-void OMR::Compilation::printMemStatsAfter(const char *name)
-   {
    }
 
 bool

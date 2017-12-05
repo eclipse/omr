@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -561,7 +561,7 @@ generic32BitAddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          targetRegister = childTargetReg;
          }
 
-      if (!findPreviousAGIDef(comp->getAppendInstruction(), delay, childTargetReg, comp))
+      if (!findPreviousAGIDef(cg->getAppendInstruction(), delay, childTargetReg, comp))
          {
          useLA = false;
          }
@@ -1371,7 +1371,7 @@ lDivRemGenericEvaluator64(TR::Node * node, TR::CodeGenerator * cg, bool isDivisi
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, skipDiv); // branch to done on <
          }
 
-   // Do divison
+   // Do division
    if (isUnsigned)
       {
       if (doConditionalRemainder)
@@ -1547,7 +1547,7 @@ iDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
    else
       generateRSInstruction(cg, TR::InstOpCode::SRDA, node, targetRegisterPair, 32);
 
-   // Do divison
+   // Do division
    if (sourceMR)
       {
       if (node->getOpCode().isUnsigned())
@@ -2467,35 +2467,38 @@ genericRotateAndInsertHelper(TR::Node * node, TR::CodeGenerator * cg)
    }
 
 TR::Register *
-genericLongAndAsRotateHelper(TR::Node * node, TR::CodeGenerator * cg)
+OMR::Z::TreeEvaluator::tryToReplaceLongAndWithRotateInstruction(TR::Node * node, TR::CodeGenerator * cg)
    {
    if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
       {
       TR::Node * firstChild = node->getFirstChild();
       TR::Node * secondChild = node->getSecondChild();
-      TR::Node * skipedConversion = NULL;
       TR::Compilation *comp = cg->comp();
 
-      // Transform land into RISBG as it may be better than discrete pair of ands
+      // Given the right case, transform land into RISBG as it may be better than discrete pair of ands
       if (node->getOpCodeValue() == TR::land && secondChild->getOpCode().isLoadConst())
          {
-         uint64_t value = secondChild->getLongInt();
+         uint64_t longConstValue = secondChild->getLongInt();
 
-         if ((firstChild->getOpCodeValue() == TR::i2l || firstChild->getOpCodeValue() == TR::iu2l)
-               && firstChild->getReferenceCount()==1 && firstChild->getRegister() == NULL && firstChild->isHighWordZero() )
-            {
-            skipedConversion = firstChild;
-            firstChild = firstChild->getFirstChild();
-            value &= 0x00000000FFFFFFFFL;
-            }
+         int32_t tZeros = trailingZeroes(longConstValue);
+         int32_t lZeros = leadingZeroes(longConstValue);
+         int32_t tOnes  = trailingZeroes(~longConstValue);
+         int32_t lOnes  = leadingZeroes(~longConstValue);
+         int32_t popCnt = populationCount(longConstValue);
+ 
+         // if the population count is 0 then the result of the AND will also be 0,
+         // because a popCnt=0 means there are no overlapping bits between the two AND
+         // operands. We cannot generate a RISBG for this case as RISBG cannot be
+         // used to zero out the contents of the entire register. The starting and ending
+         // positions are inclusive, so even if start=end, we will preserve at least one bit.
+         if (popCnt == 0)
+            return NULL;
 
-         int32_t tZeros = trailingZeroes(value);
-         int32_t lZeros = leadingZeroes(value);
-         int32_t tOnes  = trailingZeroes(~value);
-         int32_t lOnes  = leadingZeroes(~value);
-         int32_t popCnt = populationCount(value);
-         int32_t msBit = -1;
-         int32_t lsBit = -1;
+         // the minimum value for the bit positions is 0, and lsBit can equal msBit iff popCnt = 1
+         // if popCnt == 0 then we cannot generate a RISBG instruction because RISBG preserves at
+         // least one bit position
+         int32_t msBit = 0;
+         int32_t lsBit = 0;
 
          if (comp->getOption(TR_TraceCG))
             {
@@ -2503,29 +2506,73 @@ genericLongAndAsRotateHelper(TR::Node * node, TR::CodeGenerator * cg)
             traceMsg(comp,"          => rotated-and-insert: lOnes %d, tOnes %d\n", lOnes, tOnes);
             }
 
-         bool doIt = false;
+         bool doTransformation = false;
+
+         // We now try to detect if the lconst's bit pattern is such that we can use a single RISBG
+         // instead of multiple AND instructions
+
+         // The first block will catch all cases where the lConstValue is a series of contiguous ones
+         // surrounded by zeros
+         // ex: 0001111000, 011110, 111111, 001111, 11100 etc...
+         //
+         // The 'else if' block will consider all cases where we have a series of contiguous zeros
+         // surrounded by ones
+         // ex: 1110000111, 1000001
          if (popCnt == (64 - lZeros - tZeros))
             {
             msBit = lZeros;
             lsBit = 63 - tZeros;
-            if (firstChild->getReferenceCount()>1 || skipedConversion != NULL   // Better of with non-destructive RISBG as AND?
-                  || lZeros > 31 || tZeros > 31 || (lZeros > 0 && tZeros > 0))  // Better off with a single AND?
+            // The below checks make sure we are not better off using one of Z architecture's
+            // 16-bit AND immediate instructions (NILF,NILH,NILL, NIHF,NIHH, NIHL).
+            // Details for each check below:
+            //
+            // "firstChild->getReferenceCount() > 1"
+            //    If the firstChild's refCount>1, we will need to clobber evaluate this case
+            //    because we cannot destroy the value. In such a case we're better off with 
+            //    RISBG because RISBG won't clobber anything and hence can do the operation
+            //    faster.
+            //
+            // "|| lZeros > 31 || tZeros > 31"
+            //    If there are more than 31 contiguous zeros, then we must use RISBG because
+            //    no NI** instruction do zero out that many bits in a single instruction.
+            //
+            // "|| (lZeros > 0 && tZeros > 0"
+            //    NI** instructions need to explicitly specify which bit positions to zero out.
+            //    If our constant at minimum looks like 0111...110 (there are zeros in the top
+            //    half and bottom half of the register), then it's better to use RISBG.
+            //    This is because there are no NI** instructions allowing us to specify bits in
+            //    the top half and bottom half of the register to zero out.
+
+            if (firstChild->getReferenceCount() > 1 || lZeros > 31 || tZeros > 31
+                || (lZeros > 0 && tZeros > 0))
                {
-               doIt = true;
+               doTransformation = true;
                }
             }
          else if (popCnt == (lOnes + tOnes))
             {
             msBit = 64 - tOnes;
             lsBit = lOnes - 1;
-            if (firstChild->getReferenceCount()>1 || skipedConversion != NULL // Better of with non-destructive RISBG as AND?
-                  || (lOnes < 32 && tOnes < 32) )                             // Better off with a single AND?
+            // The below checks make sure we are not better off using one of Z architecture's
+            // 16-bit AND immediate instructions (NILF,NILH,NILL, NIHF,NIHH, NIHL).
+            // Details for each check below:
+            //
+            // "firstChild->getReferenceCount() > 1"
+            //    same as above
+            //
+            // "(lOnes < 32 && tOnes < 32)"
+            //    This case implies there are zeros at the high/low boundary of the register.
+            //    Example value: 11111000011111. The NI** instructions can only operate on
+            //    the top half or bottom half of a register at a time. So such a case
+            //    will require two NI** instructions. Hence we are better off using a single RISBG
+
+            if (firstChild->getReferenceCount()> 1 || (lOnes < 32 && tOnes < 32))
                {
-               doIt = true;
+               doTransformation = true;
                }
             }
 
-         if (doIt && performTransformation(comp, "O^O Use RISBG instead of 2 ANDs for %p.\n", node) )
+         if (doTransformation && performTransformation(comp, "O^O Use RISBG instead of 2 ANDs for %p.\n", node))
             {
             TR::Register * targetReg = NULL;
             TR::Register * sourceReg = cg->evaluate(firstChild);
@@ -2539,19 +2586,18 @@ genericLongAndAsRotateHelper(TR::Node * node, TR::CodeGenerator * cg)
                targetReg = sourceReg;
                }
 
-            TR::InstOpCode::Mnemonic opCode = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
+               // if possible then use the instruction that doesn't set the CC as it's faster
+               TR::InstOpCode::Mnemonic opCode = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
+ 
+               // this instruction sets the rotation factor to 0 and sets the zero bit(0x80).
+               // So it's effectively zeroing out every bit except the inclusive range of lsBit to msBit
+               // The bits in that range are preserved as is
                generateRIEInstruction(cg, opCode, node, targetReg, sourceReg, msBit, 0x80 + lsBit, 0);
 
-            if (skipedConversion)
-               {
-               skipedConversion->setRegister(targetReg);
-               cg->decReferenceCount(firstChild);
-               }
             return targetReg;
             }
          }
       }
-
    return NULL;
    }
 
@@ -3954,7 +4000,7 @@ OMR::Z::TreeEvaluator::idivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, skipDiv);
          // Label to do the division
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doDiv);
-         // Do divison by -1 (take complement)
+         // Do division by -1 (take complement)
          generateRRInstruction(cg, TR::InstOpCode::LCR, node, targetRegister, targetRegister);
          // Label to skip the division
          cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, skipDiv, dependencies);
@@ -4725,7 +4771,7 @@ OMR::Z::TreeEvaluator::landEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    if ((TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) &&
        ((targetRegister = genericRotateAndInsertHelper(node, cg))
-             || (targetRegister = genericLongAndAsRotateHelper(node, cg)))     )
+             || (targetRegister = TR::TreeEvaluator::tryToReplaceLongAndWithRotateInstruction(node, cg))))
       {
       node->setRegister(targetRegister);
 

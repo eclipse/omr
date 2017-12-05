@@ -538,6 +538,30 @@ class OMR_InlinerUtil : public TR::OptimizationUtil, public OMR_InlinerHelper
       virtual void adjustMethodByteCodeSizeThreshold(TR::ResolvedMethodSymbol *callSymbol, int &methodByteCodeSizeThreshold){ return; }
       virtual TR_PrexArgInfo *computePrexInfo(TR_CallTarget *target);
       virtual void collectCalleeMethodClassInfo(TR_ResolvedMethod *calleeMethod);
+
+      /**
+       * \brief
+       *    Check if another pass of targeted inlining is needed if the given method is inlined.
+       *
+       * \parm callee
+       *    The method symbol of the callee.
+       *
+       * \return
+       *    True if another pass of targeted inlining is needed, otherwise false.
+       *
+       * \note
+       *    Targeted inlining is meant to deal with method call chains where the receiver of current call stores the information
+       *    of the next call, which is usually the receiver or the method of the next call. Knowing the receiver of the first call
+       *    means we can devirtualize all the calls along the chain.
+       *
+       *    Each method except the last one in the chain usually contains simple code that manipulates the arguments for the next
+       *    call. The last method in the chain is usually the most important one, it does the real job and can contain arbitrary
+       *    code.
+       *
+       *    The goal of targeted inlining is to inline along the call chain to get the most important method inlined, which is the
+       *    last one in the chain. It does not care about other callsites.
+       */
+      virtual bool needTargetedInlining(TR::ResolvedMethodSymbol *callee);
    protected:
       virtual bool validateInterfaceImplementation(TR_ResolvedMethod *interfaceMethod);
       virtual void refineColdness (TR::Node* node, bool& isCold);

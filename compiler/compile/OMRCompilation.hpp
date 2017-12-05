@@ -31,7 +31,7 @@ namespace OMR { class Compilation; }
 namespace OMR { typedef OMR::Compilation CompilationConnector; }
 #endif
 
-/** 
+/**
  * \file OMRCompilation.hpp
  * \brief Header for OMR::Compilation, root of the Compilation extensible class hierarchy.
  */
@@ -158,10 +158,10 @@ enum CompilationReturnCodes
 #endif
 
 /**
- * \def performTransformation(comp, msg, ...) 
+ * \def performTransformation(comp, msg, ...)
  *
  * \brief Macro that is used to guard optional steps in compilation in order to
- *        aid debuggability  
+ *        aid debuggability
  *
  *
  * Ostensibly, the purpose of performTransformation is to allow code
@@ -169,37 +169,37 @@ enum CompilationReturnCodes
  * isolate a buggy optimization. But this description fails to capture the
  * important effect that performTransformation has on the maintainability of
  * Testarossa’s code base.
- * 
+ *
  * Calls to performTransformation can (and should) be placed around any part of
  * the code that is optional; in an optimizer, that’s a lot of code. Tons of
  * Testarossa code is there only to improve performance–not for correctness–and
  * can therefore be guarded by performTransformation.
- * 
+ *
  * A call in a hypothetical dead code elimination might look like this:
- * 
+ *
  *     if (performTransformation2c(comp(),
  *           "%sDeleting dead candidate [%p]\n", OPT_DETAILS, candidate->_node))
  *        {
- *        // Logic to delete some dead code. 
+ *        // Logic to delete some dead code.
  *        }
- * 
+ *
  * When this opt runs on a method that is being logged, all calls to
  * performTransformation will be assigned a unique number. Running the test
  * case with lastOptTransformationIndex=n will prevent subsequent
  * transformations from occurring. By adjusting n and observing when the test
  * passes and fails, it is possible to narrow down the failing transformation
  * using a binary-search approach.
- * 
+ *
  * But beyond just allowing this opt to be enabled and disabled, this idiom
  * also does the following:
- * 
+ *
  *  -  It describes what the code does without needing a comment
  *  -  It reports the transformation in the log
  *  -  It gives people unfamiliar with the opt a way to locate the code that
  *     caused a particular transformation
  *  -  Combined with countOptTransformations, it allows you to locate methods
  *     in which this opt is occurring
- * 
+ *
  * Most importantly, it identifies exactly the code that should be skipped if
  * someone wanted to prevent this opt from occurring in certain cases. Even if
  * you know nothing about an optimization, you can locate its
@@ -208,7 +208,7 @@ enum CompilationReturnCodes
  * the optimization in some undefined state. The author of the optimization
  * has identified this code as “skippable”, so you can be fairly certain that
  * skipping it will do just what you want.
- * 
+ *
  * If you are developing code that has optional parts, it is strongly
  * recommended to guard them with performTransformation. It is likely to help
  * you debug your code immediately, and will certainly help people after you to
@@ -502,14 +502,6 @@ public:
    // ==========================================================================
    // Should be in Code Generator
    //
-   TR::Instruction *getFirstInstruction() {return _firstInstruction;}
-   TR::Instruction *setFirstInstruction(TR::Instruction *fi) {return (_firstInstruction = fi);}
-
-   TR::Instruction *getAppendInstruction() {return _appendInstruction;}
-   TR::Instruction *setAppendInstruction(TR::Instruction *ai) {return (_appendInstruction = ai);}
-
-   bool nodeNeeds2Regs(TR::Node * node);
-
    // J9
    int32_t getNumReservedIPICTrampolines() const { return _numReservedIPICTrampolines; }
    void setNumReservedIPICTrampolines(int32_t n) { _numReservedIPICTrampolines = n; }
@@ -552,8 +544,6 @@ public:
    // ==========================================================================
    // Should be in Optimizer
    //
-
-   bool isPinningNeeded() { return true; }
 
    // J9
    bool getLoopWasVersionedWrtAsyncChecks() { return _loopVersionedWrtAsyncChecks; }
@@ -730,7 +720,7 @@ public:
    bool isRecompilationEnabled() { return false; }
 
    int32_t getOptLevel();
- 
+
    TR_Hotness getNextOptLevel() { return _nextOptLevel; }
    void setNextOptLevel(TR_Hotness nextOptLevel) { _nextOptLevel = nextOptLevel; }
    TR_Hotness getMethodHotness();
@@ -879,14 +869,6 @@ public:
       {
       return _flags.testAny(HasColdBlocks);
       }
-
-   void printMemStatsCS2();
-
-   void printMemStats(const char *name);
-
-   void printMemStatsBefore(const char *name);
-
-   void printMemStatsAfter(const char *name);
 
    TR::ResolvedMethodSymbol *createJittedMethodSymbol(TR_ResolvedMethod *resolvedMethod);
 
@@ -1041,8 +1023,6 @@ private:
 
    TR_IlGenerator                    *_ilGenerator;
    TR::Optimizer                      *_optimizer;
-   TR::Instruction                    *_firstInstruction;
-   TR::Instruction                    *_appendInstruction;
    TR_RegisterCandidates             *_globalRegisterCandidates;
    TR::SymbolReferenceTable          *_currentSymRefTab;
    TR::Recompilation                  *_recompilationInfo;

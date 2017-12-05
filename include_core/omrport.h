@@ -1007,6 +1007,11 @@ typedef struct OMROSKernelInfo {
 	uint32_t minorRevision;
 } OMROSKernelInfo;
 
+/* bitwise flags indicating cgroup subsystems supported by portlibrary */
+#define OMR_CGROUP_SUBSYSTEM_CPU ((uint64_t)0x1)
+#define OMR_CGROUP_SUBSYSTEM_MEMORY ((uint64_t)0x2)
+#define OMR_CGROUP_SUBSYSTEM_ALL (OMR_CGROUP_SUBSYSTEM_CPU | OMR_CGROUP_SUBSYSTEM_MEMORY)
+
 struct OMRPortLibrary;
 typedef struct J9Heap J9Heap;
 
@@ -1444,12 +1449,18 @@ typedef struct OMRPortLibrary {
 	BOOLEAN  ( *sysinfo_os_has_feature)(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc, uint32_t feature) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_os_kernel_info "omrsysinfo_os_kernel_info"*/
 	BOOLEAN  ( *sysinfo_os_kernel_info)(struct OMRPortLibrary *portLibrary, struct OMROSKernelInfo *kernelInfo) ;
-	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_is_limits_supported "omrsysinfo_cgroup_is_limits_supported"*/
-	int32_t ( *sysinfo_cgroup_is_limits_supported)(struct OMRPortLibrary *portLibrary);
-	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_is_limits_enabled "omrsysinfo_cgroup_is_limits_enabled"*/
-	BOOLEAN ( *sysinfo_cgroup_is_limits_enabled)(struct OMRPortLibrary *portLibrary);
-	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_enable_limits "omrsysinfo_cgroup_enable_limits"*/
-	int32_t ( *sysinfo_cgroup_enable_limits)(struct OMRPortLibrary *portLibrary);
+	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_is_system_available "omrsysinfo_cgroup_is_system_available"*/
+	BOOLEAN  ( *sysinfo_cgroup_is_system_available)(struct OMRPortLibrary *portLibrary);
+	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_get_available_subsystems "omrsysinfo_cgroup_get_available_subsystems"*/
+	uint64_t ( *sysinfo_cgroup_get_available_subsystems)(struct OMRPortLibrary *portLibrary);
+	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_are_subsystems_available "omrsysinfo_cgroup_are_subsystems_available"*/
+	uint64_t ( *sysinfo_cgroup_are_subsystems_available)(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlags);
+	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_get_enabled_subsystems "omrsysinfo_cgroup_get_enabled_subsystems"*/
+	uint64_t ( *sysinfo_cgroup_get_enabled_subsystems)(struct OMRPortLibrary *portLibrary);
+	/** see @ref omrsysinfo_cgroup_enable_subsystems "omrsysinfo_cgroup_enable_subsystems"*/
+	uint64_t ( *sysinfo_cgroup_enable_subsystems)(struct OMRPortLibrary *portLibrary, uint64_t requestedSubsystems);
+	/** see @ref omrsysinfo_cgroup_are_subsystems_enabled "omrsysinfo_cgroup_are_subsystems_enabled"*/
+	uint64_t ( *sysinfo_cgroup_are_subsystems_enabled)(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlags);
 	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_get_memlimit "omrsysinfo_cgroup_get_memlimit"*/
 	int32_t (*sysinfo_cgroup_get_memlimit)(struct OMRPortLibrary *portLibrary, uint64_t *limit);
 	/** see @ref omrport.c::omrport_init_library "omrport_init_library"*/
@@ -1892,9 +1903,12 @@ extern J9_CFUNC int32_t omrport_getVersion(struct OMRPortLibrary *portLibrary);
 #define omrsysinfo_get_os_description(param1) privateOmrPortLibrary->sysinfo_get_os_description(privateOmrPortLibrary, (param1))
 #define omrsysinfo_os_has_feature(param1,param2) privateOmrPortLibrary->sysinfo_os_has_feature(privateOmrPortLibrary, (param1), (param2))
 #define omrsysinfo_os_kernel_info(param1) privateOmrPortLibrary->sysinfo_os_kernel_info(privateOmrPortLibrary, (param1))
-#define omrsysinfo_cgroup_is_limits_supported() privateOmrPortLibrary->sysinfo_cgroup_is_limits_supported(privateOmrPortLibrary)
-#define omrsysinfo_cgroup_is_limits_enabled() privateOmrPortLibrary->sysinfo_cgroup_is_limits_enabled(privateOmrPortLibrary) 
-#define omrsysinfo_cgroup_enable_limits() privateOmrPortLibrary->sysinfo_cgroup_enable_limits(privateOmrPortLibrary)
+#define omrsysinfo_cgroup_is_system_available() privateOmrPortLibrary->sysinfo_cgroup_is_system_available(privateOmrPortLibrary)
+#define omrsysinfo_cgroup_get_available_subsystems() privateOmrPortLibrary->sysinfo_cgroup_get_available_subsystems(privateOmrPortLibrary)
+#define omrsysinfo_cgroup_are_subsystems_available(param1) privateOmrPortLibrary->sysinfo_cgroup_are_subsystems_available(privateOmrPortLibrary, param1)
+#define omrsysinfo_cgroup_get_enabled_subsystems() privateOmrPortLibrary->sysinfo_cgroup_get_enabled_subsystems(privateOmrPortLibrary)
+#define omrsysinfo_cgroup_enable_subsystems(param1) privateOmrPortLibrary->sysinfo_cgroup_enable_subsystems(privateOmrPortLibrary, param1)
+#define omrsysinfo_cgroup_are_subsystems_enabled(param1) privateOmrPortLibrary->sysinfo_cgroup_are_subsystems_enabled(privateOmrPortLibrary, param1)
 #define omrsysinfo_cgroup_get_memlimit(param1) privateOmrPortLibrary->sysinfo_cgroup_get_memlimit(privateOmrPortLibrary, param1)
 #define omrintrospect_startup() privateOmrPortLibrary->introspect_startup(privateOmrPortLibrary)
 #define omrintrospect_shutdown() privateOmrPortLibrary->introspect_shutdown(privateOmrPortLibrary)
