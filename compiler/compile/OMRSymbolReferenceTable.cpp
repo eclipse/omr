@@ -1814,7 +1814,7 @@ OMR::SymbolReferenceTable::createTemporary(TR::ResolvedMethodSymbol * owningMeth
    }
 
 TR::SymbolReference *
-OMR::SymbolReferenceTable::createCoDependententTemporary(TR::ResolvedMethodSymbol *owningMethodSymbol, TR::DataType type, bool isInternalPointer, size_t size, TR::Symbol *coDependent, int32_t offset)
+OMR::SymbolReferenceTable::createCoDependentTemporary(TR::ResolvedMethodSymbol *owningMethodSymbol, TR::DataType type, bool isInternalPointer, size_t size, TR::Symbol *coDependent, int32_t offset)
    {
    TR::SymbolReference *tempSymRef = findOrCreateAutoSymbol(owningMethodSymbol, offset, type, true, isInternalPointer, false, false, size);
    return tempSymRef;
