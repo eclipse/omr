@@ -1529,7 +1529,7 @@ void TR_FieldPrivatizer::privatizeElementCandidates()
             continue;
             }
 
-         tempSymRef = comp()->getSymRefTab()->createCoDependententTemporary(comp()->getMethodSymbol(),candidate.node->getDataType(),false,candidate.node->getSize(),candidate.node->getSymbol(),0);
+         tempSymRef = comp()->getSymRefTab()->createCoDependentTemporary(comp()->getMethodSymbol(),candidate.node->getDataType(),false,candidate.node->getSize(),candidate.node->getSymbol(),0);
 
          tempMap.Add(candidate.valueNum,tempSymRef);
          }
