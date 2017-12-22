@@ -349,10 +349,8 @@ bool TR_ValueNumberInfo::congruentNodes(TR::Node * node, TR::Node * entryNode)
           // In rare cases when Jsrs exist in the method, use def info could be NULL
           //
           TR_UseDefInfo::BitVector udef(comp()->allocator());
-          _useDefInfo->getUseDef(udef, udIndex);
           TR_UseDefInfo::BitVector entryudef(comp()->allocator());
-          _useDefInfo->getUseDef(entryudef, entryUdIndex);
-          if (!udef.IsZero() && !entryudef.IsZero())
+          if (_useDefInfo->getUseDef(udef, udIndex) && _useDefInfo->getUseDef(entryudef, entryUdIndex))
              {
              return (udef == entryudef);
              }
@@ -545,10 +543,8 @@ void TR_ValueNumberInfo::initializeNode(TR::Node *node, int32_t &negativeValueNu
             // In rare cases when Jsrs exist in the method, use def info could be NULL
             //
             TR_UseDefInfo::BitVector udef(comp()->allocator());
-            _useDefInfo->getUseDef(udef, udIndex);
             TR_UseDefInfo::BitVector entryudef(comp()->allocator());
-            _useDefInfo->getUseDef(entryudef, entryUdIndex);
-            if (!udef.IsZero() && !entryudef.IsZero())
+            if (_useDefInfo->getUseDef(udef, udIndex) && _useDefInfo->getUseDef(entryudef, entryUdIndex))
                {
                if (udef == entryudef)
                   {
@@ -1043,9 +1039,9 @@ TR::Node *TR_ValueNumberInfo::getValueNumberForLoad(TR::Node *node)
       return NULL;
 
    TR_UseDefInfo::BitVector definingLoads(comp()->allocator());
-   _useDefInfo->getDefiningLoads(definingLoads, node);
+   bool isNonZero = _useDefInfo->getDefiningLoads(definingLoads, node);
 
-   if (!definingLoads.IsZero() && node->getOpCode().isLoadVarDirect())
+   if (isNonZero && node->getOpCode().isLoadVarDirect())
       {
       int32_t defValue = -1;
       TR::Node *defNode = NULL;
@@ -1112,16 +1108,15 @@ TR::Node *TR_ValueNumberInfo::getValueNumberForLoad(TR::Node *node)
    if (getVN(node) >= 0)
       return NULL;
 
-   if (!definingLoads.IsZero() && node->getOpCode().isLoadVar())
+   if (isNonZero && node->getOpCode().isLoadVar())
       {
       TR_UseDefInfo::BitVector::Cursor cursor(definingLoads);
       for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
          {
          int32_t index = cursor;
          TR_UseDefInfo::BitVector usesFromDefs(comp()->allocator());
-         _useDefInfo->getUsesFromDef(usesFromDefs, index, true);
          //traceMsg(comp(), "def %d uses from defs %p\n", index, usesFromDefs);
-         if (!usesFromDefs.IsZero())
+         if (_useDefInfo->getUsesFromDef(usesFromDefs, index, true))
             {
             //traceMsg(comp(), "2looking at use node %p\n", node);
             TR_UseDefInfo::BitVector::Cursor cursor2(usesFromDefs);
@@ -1135,8 +1130,7 @@ TR::Node *TR_ValueNumberInfo::getValueNumberForLoad(TR::Node *node)
                      useNode->getOpCode().isLoadVar())
                   {
                   TR_UseDefInfo::BitVector otherUseDefiningLoads(comp()->allocator());
-                  _useDefInfo->getDefiningLoads(otherUseDefiningLoads, useNode);
-                  if (!otherUseDefiningLoads.IsZero() && (otherUseDefiningLoads == definingLoads))
+                  if (_useDefInfo->getDefiningLoads(otherUseDefiningLoads, useNode) && (otherUseDefiningLoads == definingLoads))
                      {
                      //TR_ASSERT(useNode->getOpCode().isLoadVar(), "Defining load is not a load");
                      if (_valueNumbers.ElementAt(useNode->getGlobalIndex()) != -2)
@@ -1187,22 +1181,18 @@ TR::Node *TR_ValueNumberInfo::getValueNumberForLoad(TR::Node *node)
    // the load its own value number.
    //
    TR_UseDefInfo::BitVector defsForLoad(comp()->allocator());
-   _useDefInfo->getUseDef(defsForLoad, useDefIndex);
-
-   if (trace())
-      {
-      if (!defsForLoad.IsZero())
-         {
-         traceMsg(comp(), "  Defs for load at [%p]: ",node);
-         (*comp()) << defsForLoad;
-         traceMsg(comp(), "\n");
-         }
-      }
 
    // In rare case when Jsrs exist in a method a use could exist without a def
    //
-   if (defsForLoad.IsZero())
-     return NULL;
+   if (!_useDefInfo->getUseDef(defsForLoad, useDefIndex))
+      return NULL;
+
+   if (trace())
+      {
+      traceMsg(comp(), "  Defs for load at [%p]: ",node);
+      (*comp()) << defsForLoad;
+      traceMsg(comp(), "\n");
+      }
 
    TR::SymbolReference  *loadSymRef  = node->getSymbolReference();
 

@@ -396,10 +396,8 @@ int32_t TR_IsolatedStoreElimination::perform()
                traceMsg(comp(), "correcting UseDefInfo:\n");
                }
             TR_UseDefInfo::BitVector defsOfRhs(comp()->allocator());
-            useDefInfo->getUseDef(defsOfRhs, node->getFirstChild()->getUseDefIndex());
             TR_UseDefInfo::BitVector nodeUses(comp()->allocator());
-            useDefInfo->getUsesFromDef(nodeUses, useDefIndex);
-            if (!defsOfRhs.IsZero() && !nodeUses.IsZero())
+            if (useDefInfo->getUseDef(defsOfRhs, node->getFirstChild()->getUseDefIndex()) && useDefInfo->getUsesFromDef(nodeUses, useDefIndex))
                {
                TR_UseDefInfo::BitVector::Cursor cursor1(defsOfRhs);
                for (cursor1.SetToFirstOne(); cursor1.Valid(); cursor1.SetToNextOne())
@@ -546,8 +544,7 @@ void TR_IsolatedStoreElimination::removeRedundantSpills()
             continue;
 
          TR_UseDefInfo::BitVector defs(comp()->allocator());
-         useDefInfo->getUseDef(defs, useIndex);
-         if (!defs.IsZero())
+         if (useDefInfo->getUseDef(defs, useIndex))
             {
             bool redundantStore= true;
             TR_UseDefInfo::BitVector::Cursor cursor(defs);
@@ -796,8 +793,7 @@ bool TR_IsolatedStoreElimination::groupIsolatedStores(int32_t defIndex,TR_BitVec
    //If even one of the uses is not under store node, then it imposible to remove this def, and thus return.
 
    TR_UseDefInfo::BitVector usesOfThisDef(comp()->allocator());
-   info->getUsesFromDef(usesOfThisDef, defIndex+info->getFirstDefIndex());
-   if (usesOfThisDef.IsZero())
+   if (!info->getUsesFromDef(usesOfThisDef, defIndex+info->getFirstDefIndex()))
       {
       if (trace())
          traceMsg(comp(), "groupIsolated - DEF %d has no uses - can be removed \n", defIndex);

@@ -769,8 +769,7 @@ int32_t TR_CopyPropagation::perform()
             if (useDefInfo->getSingleDefiningLoad(useNode) == fixUseNode)
                {
                TR_UseDefInfo::BitVector defsOfUseToBeFixed(comp()->allocator());
-               useDefInfo->getUseDef(defsOfUseToBeFixed, fixUseIndex);
-               if (!defsOfUseToBeFixed.IsZero())
+               if (useDefInfo->getUseDef(defsOfUseToBeFixed, fixUseIndex))
                   {
                   TR_UseDefInfo::BitVector::Cursor cursor(defsOfUseToBeFixed);
                   for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
@@ -796,9 +795,8 @@ int32_t TR_CopyPropagation::perform()
    for (int32_t i = useDefInfo->getFirstUseIndex(); i <= lastUseIndex; i++)
       {
       TR_UseDefInfo::BitVector defs(comp()->allocator());
-      useDefInfo->getUseDef(defs, i);
 
-      if (!defs.IsZero())
+      if (useDefInfo->getUseDef(defs, i))
          {
          TR::Node *useNode = useDefInfo->getNode(i);
          _useTree = NULL;
@@ -982,8 +980,7 @@ int32_t TR_CopyPropagation::perform()
             if (useDefInfo->getSingleDefiningLoad(useNode) == fixUseNode)
                {
                TR_UseDefInfo::BitVector defsOfUseToBeFixed(comp()->allocator());
-               useDefInfo->getUseDef(defsOfUseToBeFixed, fixUseIndex);
-               if (!defsOfUseToBeFixed.IsZero())
+               if (useDefInfo->getUseDef(defsOfUseToBeFixed, fixUseIndex))
                   {
                   TR_UseDefInfo::BitVector::Cursor cursor(defsOfUseToBeFixed);
                   for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
@@ -1006,8 +1003,7 @@ int32_t TR_CopyPropagation::perform()
       else if (itr->second != 0)
          {
          TR_UseDefInfo::BitVector defsOfRhs(comp()->allocator());
-         useDefInfo->getUseDef(defsOfRhs, itr->second);
-         if (!defsOfRhs.IsZero())
+         if (useDefInfo->getUseDef(defsOfRhs, itr->second))
             {
             TR_UseDefInfo::BitVector::Cursor cursor(defsOfRhs);
             for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())

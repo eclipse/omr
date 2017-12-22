@@ -3839,8 +3839,7 @@ TR::Node *TR_LoopTransformer::updateLoadUsedInLoopIncrement(TR::Node *node, int3
          return NULL;
 
       TR_UseDefInfo::BitVector defs(comp()->allocator());
-      useDefInfo->getUseDef(defs, useIndex);
-      if (!defs.IsZero() && (defs.PopulationCount() == 1))
+      if (useDefInfo->getUseDef(defs, useIndex) && (defs.PopulationCount() == 1))
          {
          TR_UseDefInfo::BitVector::Cursor cursor(defs);
          for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
