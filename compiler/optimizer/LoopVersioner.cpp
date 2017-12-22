@@ -2054,7 +2054,7 @@ TR::Node *TR_LoopVersioner::isDependentOnInvariant(TR::Node *useNode)
       return NULL;
 
    TR_UseDefInfo::BitVector defs(comp()->allocator());
-   useDefInfo->getUseDef(defs, useIndex);
+   bool isNonZero = useDefInfo->getUseDef(defs, useIndex);
    TR_UseDefInfo::BitVector::Cursor cursor(defs);
    cursor.SetToFirstOne();
 
@@ -2067,7 +2067,7 @@ TR::Node *TR_LoopVersioner::isDependentOnInvariant(TR::Node *useNode)
    if (trace())
       traceMsg(comp(),"Definition Counts for node [%p] is %d inside isDependentOnInvariant \n", useNode,defs.PopulationCount());
    TR::Node *childNode = NULL;
-   if (!defs.IsZero()) //&&
+   if (isNonZero) //&&
        //(defs.PopulationCount() == 1) &&
        //_writtenExactlyOnce.ValueAt(useNode->getSymbolReference()->getReferenceNumber()))
       {
@@ -2119,8 +2119,7 @@ TR::Node *TR_LoopVersioner::isDependentOnInductionVariable(
       return NULL;
 
    TR_UseDefInfo::BitVector defs(comp()->allocator());
-   useDefInfo->getUseDef(defs, useIndex);
-   if (!defs.IsZero() &&
+   if (useDefInfo->getUseDef(defs, useIndex) &&
        (defs.PopulationCount() == 1) &&
        _writtenExactlyOnce.ValueAt(useNode->getSymbolReference()->getReferenceNumber()))
       {
@@ -2667,8 +2666,7 @@ bool TR_LoopVersioner::isDependentOnAllocation(TR::Node *useNode, int32_t recurs
 
 
    TR_UseDefInfo::BitVector defs(comp()->allocator());
-   useDefInfo->getUseDef(defs, useIndex);
-   if (!defs.IsZero())
+   if (useDefInfo->getUseDef(defs, useIndex))
       {
       bool pointsToNew = false;
       bool pointsToNonNew = false;

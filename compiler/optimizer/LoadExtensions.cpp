@@ -543,9 +543,50 @@ void TR_LoadExtensions::flagPreferredLoadExtensions(TR::Node* parent)
 
          if (canSkipConversion && performTransformation(comp(), "%sSkipping conversion %s [%p]\n", optDetailString(), parent->getOpCode().getName(), parent))
             {
+<<<<<<< 27487cdd009544edb2cc6f028f02d9f01ed74e4e
             TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "codegen/LoadExtensions/success/unneededConversion/%s", comp()->signature()));
 
             parent->setUnneededConversion(true);
+=======
+            TR_ASSERT(optimizer() && _useDefInfo && _useDefInfo->infoIsValid() && child->getUseDefIndex() && _useDefInfo->isUseIndex(child->getUseDefIndex()),
+                           "No UseDef info available, yet override flag not set!\n");
+
+            TR_UseDefInfo::BitVector info(comp()->allocator());
+            TR_ASSERT(_useDefInfo->getUseDef(info, child->getUseDefIndex()) || !childOpcode.isLoadReg(), "Could not get UseDef info for RegLoad!");
+            TR_UseDefInfo::BitVector::Cursor cursor(info);
+            int32_t firstDefIndex = _useDefInfo->getFirstRealDefIndex();
+            int32_t firstUseIndex = _useDefInfo->getFirstUseIndex();
+            isUnneeded = true;
+            bool mustForce64All = false;
+            bool mustForce64 = true;
+            for (cursor.SetToFirstOne(); isUnneeded && cursor.Valid(); cursor.SetToNextOne())
+               {
+               int32_t defIndex = cursor;
+               if (defIndex >= firstUseIndex)
+                  break;
+
+               // Definition is the method parameter (entry)
+               if (defIndex < firstDefIndex)
+                  continue;
+
+               TR::Node *defNode = _useDefInfo->getNode(defIndex);
+               if (!defNode)
+                  continue;
+
+               TR::Node *realLoad = defNode->getFirstChild();
+               bool mustForce64Case = false;
+               isUnneeded &= detectUnneededConversionPattern(node, realLoad, mustForce64Case);
+               mustForce64All |= mustForce64Case;
+               mustForce64 &= mustForce64Case;
+               isUnneeded &= (mustForce64 == mustForce64All); //i.e. break?
+               if (trace()) traceMsg(comp(), "\t\tPeeked through %p (%s) and found %p (%s) with child %p (%s), evaluate %s%s.\n",
+                              child, child->getOpCode().getName(),
+                              defNode, defNode->getOpCode().getName(),
+                              realLoad, realLoad->getOpCode().getName(),
+                              isUnneeded ? "unneed" : "need",
+                              mustForce64 ? " mustForce64" : "");
+               }
+>>>>>>> Avoid IsZero overhead after calling getUseDef
 
             if (forceExtension)
                {
