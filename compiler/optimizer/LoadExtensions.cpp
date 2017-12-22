@@ -216,8 +216,7 @@ void TR_LoadExtensions::countLoadExtensions(TR::Node *parent, vcount_t visitCoun
                 (parent->getSize() < 8)) // On Java disable i2l, because of interferance with HRA
                {
                TR_UseDefInfo::BitVector info(comp()->allocator());
-               _useDefInfo->getUseDef(info, load->getUseDefIndex());
-               if (!info.IsZero())
+               if (_useDefInfo->getUseDef(info, load->getUseDefIndex()))
                   {
                   if (trace()) traceMsg(comp(), "\t\tPeeking through RegLoad %p for Conversion %p (%s)\n", load, parent, parent->getOpCode().getName());
                   TR_UseDefInfo::BitVector::Cursor cursor(info);
@@ -547,8 +546,7 @@ void TR_LoadExtensions::setPreferredExtension(TR::Node *node, vcount_t visitCoun
                            "No UseDef info available, yet override flag not set!\n");
 
             TR_UseDefInfo::BitVector info(comp()->allocator());
-            _useDefInfo->getUseDef(info, child->getUseDefIndex());
-            TR_ASSERT(!info.IsZero() || !childOpcode.isLoadReg(), "Could not get UseDef info for RegLoad!");
+            TR_ASSERT(_useDefInfo->getUseDef(info, child->getUseDefIndex()) || !childOpcode.isLoadReg(), "Could not get UseDef info for RegLoad!");
             TR_UseDefInfo::BitVector::Cursor cursor(info);
             int32_t firstDefIndex = _useDefInfo->getFirstRealDefIndex();
             int32_t firstUseIndex = _useDefInfo->getFirstUseIndex();

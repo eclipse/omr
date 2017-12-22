@@ -2973,8 +2973,7 @@ TR::Node *constrainWrtBar(OMR::ValuePropagation *vp, TR::Node *node)
             if (useDefInfo->isUseIndex(useIndex))
                {
                TR_UseDefInfo::BitVector defs(vp->comp()->allocator());
-               useDefInfo->getUseDef(defs, useIndex);
-               if (!defs.IsZero())
+               if (useDefInfo->getUseDef(defs, useIndex))
                   {
                   TR_UseDefInfo::BitVector::Cursor cursor(defs);
                   for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
@@ -3063,8 +3062,7 @@ TR::Node *constrainWrtBar(OMR::ValuePropagation *vp, TR::Node *node)
             if (useDefInfo->isUseIndex(useIndex))
                {
                TR_UseDefInfo::BitVector defs(vp->comp()->allocator());
-               useDefInfo->getUseDef(defs, useIndex);
-               if (!defs.IsZero())
+               if (useDefInfo->getUseDef(defs, useIndex))
                   {
                   TR_UseDefInfo::BitVector::Cursor cursor(defs);
                   for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
@@ -3096,8 +3094,7 @@ TR::Node *constrainWrtBar(OMR::ValuePropagation *vp, TR::Node *node)
                            if (useDefInfo->isUseIndex(useIndexA))
                               {
                               TR_UseDefInfo::BitVector defsA(vp->comp()->allocator());
-                              useDefInfo->getUseDef(defsA, useIndexA);
-                              if (!defsA.IsZero())
+                              if (useDefInfo->getUseDef(defsA, useIndexA))
                                  {
                                  TR_UseDefInfo::BitVector::Cursor cursorA(defsA);
                                  for (cursorA.SetToFirstOne(); cursorA.Valid(); cursorA.SetToNextOne())
@@ -3961,8 +3958,7 @@ TR::Node *constrainCheckcast(OMR::ValuePropagation *vp, TR::Node *node)
             if (useDefInfo->isUseIndex(useIndex))
                {
                TR_UseDefInfo::BitVector defs(vp->comp()->allocator());
-               useDefInfo->getUseDef(defs, useIndex);
-               if (!defs.IsZero())
+               if (useDefInfo->getUseDef(defs, useIndex))
                   {
                   TR_UseDefInfo::BitVector::Cursor cursor(defs);
                   for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
@@ -5384,8 +5380,7 @@ TR::Node *constrainCall(OMR::ValuePropagation *vp, TR::Node *node)
                if (useDefInfo->isUseIndex(useIndex))
                   {
                   TR_UseDefInfo::BitVector defs(vp->comp()->allocator());
-                  useDefInfo->getUseDef(defs, useIndex);
-                  if (!defs.IsZero())
+                  if (useDefInfo->getUseDef(defs, useIndex))
                      {
                      TR_UseDefInfo::BitVector::Cursor cursor(defs);
                      for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
@@ -5413,8 +5408,7 @@ TR::Node *constrainCall(OMR::ValuePropagation *vp, TR::Node *node)
                               if (useDefInfo->isUseIndex(useIndexC))
                                  {
                                  TR_UseDefInfo::BitVector defsC(vp->comp()->allocator());
-                                 useDefInfo->getUseDef(defsC, useIndexC);
-                                 if (!defsC.IsZero())
+                                 if (useDefInfo->getUseDef(defsC, useIndexC))
                                     {
                                     TR_UseDefInfo::BitVector::Cursor cursorC(defsC);
                                     for (cursorC.SetToFirstOne(); cursorC.Valid(); cursorC.SetToNextOne())
@@ -8416,8 +8410,7 @@ void replaceWithSmallerType(OMR::ValuePropagation *vp, TR::Node *node)
       return;
 
    TR_UseDefInfo::BitVector defs(vp->comp()->allocator());
-   useDefInfo->getUseDef(defs, useIndex);
-   if (defs.IsZero() || (defs.PopulationCount() > 1))
+   if (!useDefInfo->getUseDef(defs, useIndex) || (defs.PopulationCount() > 1))
       return;
    TR_UseDefInfo::BitVector::Cursor cursor(defs);
    cursor.SetToFirstOne();
