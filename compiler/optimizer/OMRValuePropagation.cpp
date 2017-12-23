@@ -2973,7 +2973,7 @@ void OMR::ValuePropagation::checkForInductionVariableIncrement(TR::Node *node)
    if (isInductionVariable)
       {
       TR_UseDefInfo::BitVector defs(comp()->allocator());
-      if (!_useDefInfo->getUseDef(defs, useIndex)))
+      if (!_useDefInfo->getUseDef(defs, useIndex))
          isInductionVariable = false;
       else
          {
