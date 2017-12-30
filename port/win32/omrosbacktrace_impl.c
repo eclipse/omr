@@ -254,7 +254,7 @@ omrintrospect_backtrace_thread_raw(struct OMRPortLibrary *portLibrary, J9Platfor
 	HANDLE process = NULL;
 	HANDLE thread = NULL;
 	CONTEXT threadContext = {0};
-	STACKFRAME64 stackFrame = {0};
+	STACKFRAME64 stackFrame;
 	J9PlatformStackFrame **nextFrame;
 	struct J9Win32SignalInfo *sigInfo = (struct J9Win32SignalInfo *)signalInfo;
 
@@ -299,6 +299,7 @@ omrintrospect_backtrace_thread_raw(struct OMRPortLibrary *portLibrary, J9Platfor
 		memcpy(&threadContext, threadInfo->context, sizeof(CONTEXT));
 	}
 
+	ZeroMemory(&stackFrame, sizeof(STACKFRAME64));
 	/* check that we have loaded the dbg help library functions and symbols */
 	if (0 == load_dbg_functions(portLibrary) && 0 == load_dbg_symbols(portLibrary)) {
 		/* initialize the stackframe */

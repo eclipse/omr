@@ -1210,7 +1210,6 @@ consoleCtrlHandler(DWORD dwCtrlType)
 
 	if (0 == omrthread_attach_ex(NULL, J9THREAD_ATTR_DEFAULT)) {
 		J9WinAMD64AsyncHandlerRecord *cursor;
-		uint32_t handlerCount = 0;
 
 		/* incrementing the asyncThreadCount will prevent the list from being modified while we use it */
 		omrthread_monitor_enter(asyncMonitor);

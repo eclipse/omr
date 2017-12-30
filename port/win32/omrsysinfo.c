@@ -1062,7 +1062,7 @@ copyEnvToBuffer(struct OMRPortLibrary *portLibrary, void *args)
 		} else {
 			envVars++; /* skip over single terminating null after each individual envVar */
 		}
-		storageRequired += WideCharToMultiByte(OS_ENCODING_CODE_PAGE, OS_ENCODING_WC_FLAGS, envVars, -1, cursor, 0, NULL, NULL);
+		storageRequired += WideCharToMultiByte(OS_ENCODING_CODE_PAGE, OS_ENCODING_WC_FLAGS, envVars, -1, (LPSTR)cursor, 0, NULL, NULL);
 		envVars += wcslen(envVars);
 	}
 
@@ -1096,9 +1096,9 @@ copyEnvToBuffer(struct OMRPortLibrary *portLibrary, void *args)
 		} else {
 			envVars++; /* skip over single terminating null after each individual envVar */
 		}
-		spaceForThisEntry = WideCharToMultiByte(OS_ENCODING_CODE_PAGE, OS_ENCODING_WC_FLAGS, envVars, -1, cursor, 0, NULL, NULL);
+		spaceForThisEntry = WideCharToMultiByte(OS_ENCODING_CODE_PAGE, OS_ENCODING_WC_FLAGS, envVars, -1, (LPSTR)cursor, 0, NULL, NULL);
 		if (spaceLeft >= (uintptr_t)spaceForThisEntry) {
-			WideCharToMultiByte(OS_ENCODING_CODE_PAGE, 0, envVars, -1, cursor, spaceForThisEntry, NULL, NULL);
+			WideCharToMultiByte(OS_ENCODING_CODE_PAGE, 0, envVars, -1, (LPSTR)cursor, spaceForThisEntry, NULL, NULL);
 			copyEnvToBufferArgs->numElements = copyEnvToBufferArgs->numElements + 1;
 			envVars += wcslen(envVars);
 			cursor += spaceForThisEntry;
@@ -1135,7 +1135,6 @@ omrsysinfo_env_iterator_init(struct OMRPortLibrary *portLibrary, J9SysinfoEnvIte
 {
 	int32_t rc;
 	CopyEnvToBufferArgs copyEnvToBufferArgs;
-	intptr_t length = 0;
 
 	copyEnvToBufferArgs.buffer = buffer;
 	copyEnvToBufferArgs.bufferSizeBytes = bufferSizeBytes;
@@ -1177,16 +1176,14 @@ omrsysinfo_env_iterator_hasNext(struct OMRPortLibrary *portLibrary, J9SysinfoEnv
 int32_t
 omrsysinfo_env_iterator_next(struct OMRPortLibrary *portLibrary, J9SysinfoEnvIteratorState *state, J9SysinfoEnvElement *envElement)
 {
-	int32_t rc = 0;
-
 	if (NULL == state->current) {
 		return OMRPORT_ERROR_SYSINFO_OPFAILED;
 	}
 
 	envElement->nameAndValue = state->current;
-	(char *)state->current += strlen(state->current) + 1;
+	state->current = (char *)state->current + strlen(state->current) + 1;
 
-	return rc;
+	return 0;
 }
 
 /* PDH processor object and associated counter names. */
@@ -1453,7 +1450,6 @@ intptr_t
 omrsysinfo_get_cwd(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufLen)
 {
 	DWORD pathLengthInWChars = 0;
-	uintptr_t pathLengthInBytes = 0;
 	wchar_t *unicodeBuffer = NULL; /* unicode version of CWD, size: pathLengthInWChars*sizeof(wchar_t) plus 1 for terminator and 1 for terminating slash if required */
 	int32_t portConvertRC = -1;
 	DWORD unicodeBufferSizeBytes = 0;
@@ -1512,7 +1508,6 @@ intptr_t
 omrsysinfo_get_tmp(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufLen, BOOLEAN ignoreEnvVariable)
 {
 	DWORD pathLengthInWChars = 0;
-	uintptr_t pathLengthInBytes = 0;
 	wchar_t *unicodeBuffer = NULL;
 	int32_t mutf8Size = -1;
 	DWORD unicodeBufferSizeBytes = 0;
@@ -1553,7 +1548,7 @@ omrsysinfo_get_tmp(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufL
 	}
 
 	/* convert to modified UTF-8. */
-	mutf8Size = portLibrary->str_convert(portLibrary, J9STR_CODE_WIDE, J9STR_CODE_MUTF8, (uint8_t *) unicodeBuffer, (uintptr_t) pathLengthInWChars * sizeof(wchar_t), NULL, 0);
+	mutf8Size = portLibrary->str_convert(portLibrary, J9STR_CODE_WIDE, J9STR_CODE_MUTF8, (const char *) unicodeBuffer, (uintptr_t) pathLengthInWChars * sizeof(wchar_t), NULL, 0);
 	if (mutf8Size >= 0) {
 		mutf8Size += 1; /* leave enough space to null-terminate the string */
 		/*is buflen big enough? */
@@ -1561,7 +1556,7 @@ omrsysinfo_get_tmp(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufL
 			portLibrary->mem_free_memory(portLibrary, unicodeBuffer);
 			return (intptr_t)mutf8Size;
 		} else {
-			mutf8Size = portLibrary->str_convert(portLibrary, J9STR_CODE_WIDE, J9STR_CODE_MUTF8, (uint8_t *) unicodeBuffer, (uintptr_t) pathLengthInWChars * sizeof(wchar_t), buf, bufLen);
+			mutf8Size = portLibrary->str_convert(portLibrary, J9STR_CODE_WIDE, J9STR_CODE_MUTF8, (const char *) unicodeBuffer, (uintptr_t) pathLengthInWChars * sizeof(wchar_t), buf, bufLen);
 			if (mutf8Size < 0) {
 				Trc_PRT_sysinfo_get_tmp_failed_str_covert(mutf8Size);
 			}

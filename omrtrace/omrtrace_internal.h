@@ -97,7 +97,7 @@ extern "C" {
 /* assert() and abort() are a bit useless on Windows - they
  * just print a message. Force a GPF instead.
  */
-#if defined(WIN32)
+#if defined(WIN32) && !defined(__clang__)
 
 #include <stdio.h>
 #include <stdlib.h>

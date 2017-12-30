@@ -2474,7 +2474,7 @@ convertPlatformToMutf8(struct OMRPortLibrary *portLibrary, uint32_t codePage, co
 	uintptr_t requiredBufferSize = 0;
 	encodingState = NULL;
 	/* MultiByteToWideChar is not resumable, so we need a buffer large enough to hold the entire intermediate result */
-	requiredBufferSize = WIDE_CHAR_SIZE * MultiByteToWideChar(codePage, OS_ENCODING_MB_FLAGS, inBuffer, (int) inBufferSize,
+	requiredBufferSize = WIDE_CHAR_SIZE * MultiByteToWideChar(codePage, OS_ENCODING_MB_FLAGS, (LPCSTR)inBuffer, (int) inBufferSize,
 						 NULL, 0); /* get required buffer size */
 	if (requiredBufferSize > CONVERSION_BUFFER_SIZE) {
 		wideBuffer = portLibrary->mem_allocate_memory(portLibrary, requiredBufferSize, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
@@ -3008,7 +3008,7 @@ convertPlatformToWide(struct OMRPortLibrary *portLibrary, charconvState_t encodi
 {
 	int32_t resultSize = -1;
 #if defined(WIN32)
-	int32_t mbChars = (int32_t)MultiByteToWideChar(codePage, OS_ENCODING_MB_FLAGS, *inBuffer, (int)*inBufferSize, (LPWSTR)outBuffer, (int)outBufferSize);
+	int32_t mbChars = (int32_t)MultiByteToWideChar(codePage, OS_ENCODING_MB_FLAGS, (LPCSTR)*inBuffer, (int)*inBufferSize, (LPWSTR)outBuffer, (int)outBufferSize);
 	if ((outBufferSize > 0) && (0 == mbChars)) {
 		resultSize = OMRPORT_ERROR_STRING_BUFFER_TOO_SMALL; /* should not happen: caller should have allocated a sufficiently large buffer */
 	} else {
@@ -3060,9 +3060,9 @@ static int32_t
 convertWideToPlatform(struct OMRPortLibrary *portLibrary, charconvState_t encodingState, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize)
 {
 	int32_t resultSize = -1;
+#if defined(J9STR_USE_ICONV)
 	uint8_t *platformCursor = (0 == outBufferSize)? NULL : outBuffer;
 	uintptr_t platformLimit = outBufferSize;
-#if defined(J9STR_USE_ICONV)
 	uintptr_t wideRemaining = *inBufferSize;
 
 	if (0 == outBufferSize) { /* get the required buffer size */

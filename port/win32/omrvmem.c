@@ -1190,7 +1190,6 @@ touchOnNumaNode(struct OMRPortLibrary *portLibrary, uintptr_t pageSizeInBytes, v
 				PROCESSOR_NUMBER newProc;
 				KAFFINITY groupAffinity = processorMask.Mask;
 				BOOLEAN didBind = FALSE;
-				BYTE proc = 0;
 				BYTE index = 0;
 
 				memcpy(&newProc, &originalProc, sizeof(newProc));

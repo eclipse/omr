@@ -57,8 +57,6 @@ nls_determine_locale(struct OMRPortLibrary *portLibrary)
 	char country[8];
 	J9NLSDataCache *nls = &portLibrary->portGlobals->nls_data;
 
-	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
-
 	/* Get the language */
 	infoType = LOCALE_SISO639LANGNAME;
 

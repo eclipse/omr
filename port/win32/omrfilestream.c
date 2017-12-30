@@ -332,7 +332,6 @@ omrfilestream_fdopen(OMRPortLibrary *portLibrary, intptr_t fd, int32_t flags)
 	OMRFileStream *fileStream = NULL;
 	HANDLE handle = 0;
 	int fileDescriptor = 0;
-	intptr_t rc = 0;
 
 	Trc_PRT_filestream_fdopen_Entry(fd, flags);
 
