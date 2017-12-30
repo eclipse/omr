@@ -40,7 +40,6 @@ set(JITBUILDER_OBJECTS
 if(OMR_ARCH_X86)
 	list(APPEND JITBUILDER_OBJECTS
 		x/codegen/Evaluator.cpp
-		x/runtime/AsmUtil64.asm
 	)
 elseif(OMR_ARCH_S390)
 	list(APPEND JITBUILDER_OBJECTS

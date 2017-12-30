@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1637,8 +1637,8 @@ OMR::X86::Machine::createRegisterAssociationDirective(TR::Instruction *cursor)
    associations->stopAddingPostConditions();
 
    new (self()->cg()->trHeapMemory()) TR::Instruction(associations, ASSOCREGS, cursor, self()->cg());
-   if (cursor == comp->getAppendInstruction())
-      comp->setAppendInstruction(cursor->getNext());
+   if (cursor == self()->cg()->getAppendInstruction())
+      self()->cg()->setAppendInstruction(cursor->getNext());
 
    // There's no need to have a virtual appear in more than one ASSOCREGS after
    // its live range has ended.  One is enough.  So we clear out all the dead

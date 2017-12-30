@@ -19,31 +19,31 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include "compile/Compilation.hpp"
-#include "compile/SymbolReferenceTable.hpp"
-#include "env/FrontEnd.hpp"
-#include "compile/Method.hpp"
-#include "ilgen/TypeDictionary.hpp"
-#include "tests/IndirectLoadIlInjector.hpp"
-#include "tests/OpCodesTest.hpp"
-#include "il/Node.hpp"
-#include "il/Node_inlines.hpp"
+#ifndef TEST_STORE_OP_IL_INJECTOR_HPP
+#define TEST_STORE_OP_IL_INJECTOR_HPP 
+
+#include "tests/injectors/OpIlInjector.hpp"
+
+namespace TR { class TypeDictionary; }
 
 namespace TestCompiler
 {
-
-bool
-IndirectLoadIlInjector::injectIL()
+class StoreOpIlInjector : public OpIlInjector
    {
-   if (!isOpCodeSupported())
-      return false;
+   public:
+   StoreOpIlInjector(TR::TypeDictionary *types, TestDriver *test, TR::ILOpCodes opCode)
+      : OpIlInjector(types, test, opCode)
+      {
+      initOptArgs(1);
+      }
+   TR_ALLOC(TR_Memory::IlGenerator)
 
-   OpCodesTest *test = static_cast<OpCodesTest *>(_test);
-   createBlocks(1);
-   TR::SymbolReference *loadSymRef = symRefTab()->findOrCreateArrayShadowSymbolRef(_dataType, parm(1));
-   returnValue(TR::Node::createWithSymRef(_opCode, 1, 1, parm(1), loadSymRef));
+   bool injectIL();
 
-   return true;
-   }
+//   protected:
+//   TR::Node *parameter1() { return parameter(0, _dataType); }
+   };
 
 } // namespace TestCompiler
+
+#endif

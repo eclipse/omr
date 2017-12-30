@@ -104,6 +104,8 @@ endif
 # option, it is silently ignored.
 GLOBAL_ASFLAGS+=-noexecstack
 
+ARM_ARCH_FLAGS=-march=armv6 -marm -mfpu=vfp -mfloat-abi=hard
+
 ifeq (ppc,$(OMR_HOST_ARCH))
     ifeq (gcc,$(OMR_TOOLCHAIN))
         ifeq (1,$(OMR_ENV_DATA64))
@@ -139,7 +141,7 @@ else
             endif
         else
             ifeq (arm,$(OMR_HOST_ARCH))
-                GLOBAL_ASFLAGS+=-march=armv6 -mfpu=vfp -mfloat-abi=hard
+                GLOBAL_ASFLAGS+=$(ARM_ARCH_FLAGS)
             else
                 # Nothing
             endif
@@ -190,7 +192,8 @@ ifeq (x86,$(OMR_HOST_ARCH))
 
 else
     ifeq (arm,$(OMR_HOST_ARCH))
-        GLOBAL_CPPFLAGS+=-DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED
+        GLOBAL_CFLAGS+=$(ARM_ARCH_FLAGS) -Wno-unused-but-set-variable
+        GLOBAL_CPPFLAGS+=-DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED $(ARM_ARCH_FLAGS) -Wno-unused-but-set-variable
     else
         ifeq (ppc,$(OMR_HOST_ARCH))
             GLOBAL_CPPFLAGS+=-DLINUXPPC
@@ -361,7 +364,7 @@ ifeq ($(OMR_OPTIMIZE),1)
         endif
     else
         ifeq (arm,$(OMR_HOST_ARCH))
-            OPTIMIZATION_FLAGS+=-O3 -fno-strict-aliasing -march=armv6 -mfpu=vfp -mfloat-abi=hard -Wno-unused-but-set-variable
+            OPTIMIZATION_FLAGS+=-O3 -fno-strict-aliasing
         else
             ifeq (ppc,$(OMR_HOST_ARCH))
                 OPTIMIZATION_FLAGS+=-O3
@@ -428,4 +431,3 @@ show_deps:
 ifneq ($(DEPS),)
 -include $(DEPS)
 endif
-

@@ -108,6 +108,16 @@ Cross compiling OMR is done in two steps:
    cmake --build .
    ```
 
+## Extra Feature Flags
+
+*  OMR_SANITIZER={address,thread,undefined} turns on one: [Address Sanitizer
+   (ASan)][asan], [Undefined Behaviour Sanitizer (UBSan)][ubsan] or [Thread
+   Sanitizer (TSan)][tsan]. This only has an effect with GCC or Clang. 
+
+[ubsan]: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+[asan]: https://github.com/google/sanitizers/wiki/AddressSanitizer
+[tsan]: https://clang.llvm.org/docs/ThreadSanitizer.html 
+
 ## What's next?
 
 The work here is ongoing. We are tracking development with github issue

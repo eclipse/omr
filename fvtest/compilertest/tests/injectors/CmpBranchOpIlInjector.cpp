@@ -22,7 +22,7 @@
 #include "compile/Compilation.hpp"
 #include "env/FrontEnd.hpp"
 #include "compile/Method.hpp"
-#include "ilgen/CmpBranchOpIlInjector.hpp"
+#include "tests/injectors/CmpBranchOpIlInjector.hpp"
 
 namespace TestCompiler
 {

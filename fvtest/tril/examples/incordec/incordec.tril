@@ -27,9 +27,14 @@
 ; An equivalent C implementation:
 ;
 ; int incordec(int* parm0) {
-;    if (*value < 0) return *parm - 1;
-;    else return *parm + 1;
+;    if (*parm0 < 0) {
+;     return *parm0 - (int)1.0;
+;    } else { 
+;      int x = 1;
+;      return *parm0 + x;
+;    }
 ; }
+
 
 (method name="incordec" return="Int32" args=["Address"]
    (block fallthrough="sub" name="start"     ; start:

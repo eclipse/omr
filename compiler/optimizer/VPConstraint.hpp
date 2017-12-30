@@ -958,6 +958,7 @@ class VPKnownObject : public TR::VPFixedClass
    virtual TR::VPConstraint *intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp);
 
    virtual TR_YesNoMaybe isJavaLangClassObject();
+   virtual bool isArrayWithConstantElements(TR::Compilation * comp);
 
    virtual bool mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp);
    virtual bool mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp);

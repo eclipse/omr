@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -358,7 +358,6 @@ enum TR_DispatchType
 
 // Definitions from TR::Linkage
    virtual void createPrologue(TR::Instruction * cursor) = 0;
-   void analyzePrologue();
    virtual void createEpilogue(TR::Instruction * cursor) = 0;
    virtual void mapStack(TR::ResolvedMethodSymbol * symbol) = 0;
    virtual void mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t & stackIndex) = 0;
@@ -539,7 +538,7 @@ enum TR_DispatchType
    virtual void setNumSpecialArgumentRegisters(uint8_t n) { _numSpecialArgumentRegisters = n; }
 
    void markPreservedRegsInBlock(int32_t);
-   void markPreservedRegsInDep(TR::RegisterDependencyConditions *, int32_t);
+   void markPreservedRegsInDep(TR::RegisterDependencyConditions *);
 
 
   // set the indexth integer argument register
@@ -724,11 +723,6 @@ enum TR_DispatchType
    TR::Instruction * getFirstPrologueInstruction(){ return _firstPrologueInstr; }
    void setLastPrologueInstruction(TR::Instruction * cursor){ _lastPrologueInstr = cursor; }
    void setFirstPrologueInstruction(TR::Instruction * cursor){ _firstPrologueInstr = cursor; }
-   uint8_t getRestoreBump(TR::RealRegister::RegNum,
-                               TR::RealRegister::RegNum, int32_t, bool backwards = false);
-   int8_t getNumRegsToRestore(TR::RealRegister::RegNum,
-                               TR::RealRegister::RegNum, int32_t);
-   bool restoreRegister(TR::RealRegister::RegNum, int32_t);
    TR::Instruction * restorePreservedRegs(TR::RealRegister::RegNum,
                                TR::RealRegister::RegNum, int32_t,
                                TR::Instruction *, TR::Node *, TR::RealRegister *, TR::MemoryReference *,

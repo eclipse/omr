@@ -560,11 +560,8 @@ void TR_LoopUnroller::modifyBranchTree(TR_RegionStructure *loop,
       if (getIndexType().isAddress())
          {
          tempSym = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, true);
-         if (comp()->isPinningNeeded())
-            {
-            tempSym->getSymbol()->castToInternalPointerAutoSymbol()->setPinningArrayPointer
-               (_piv->getSymRef()->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
-            }
+         tempSym->getSymbol()->castToInternalPointerAutoSymbol()->setPinningArrayPointer
+             (_piv->getSymRef()->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
          }
       else
          tempSym = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), getTestChildType().getDataType());
@@ -598,11 +595,8 @@ void TR_LoopUnroller::modifyBranchTree(TR_RegionStructure *loop,
 
          if (getIndexType().isAddress())
             {
-            if (comp()->isPinningNeeded())
-               {
-               tempValue->setPinningArrayPointer
-                  (_piv->getSymRef()->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
-               }
+            tempValue->setPinningArrayPointer
+                (_piv->getSymRef()->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
             tempValue->setIsInternalPointer(true);
             }
 

@@ -22,23 +22,38 @@
 #include "compile/Compilation.hpp"
 #include "env/FrontEnd.hpp"
 #include "compile/Method.hpp"
-#include "tests/Qux2IlInjector.hpp"
+#include "tests/FooBarTest.hpp"
+#include "tests/injectors/BarIlInjector.hpp"
 
 namespace TestCompiler
 {
 
 bool
-Qux2IlInjector::injectIL()
+BarIlInjector::injectIL()
    {
-   createBlocks(1);
-   // Block 2: blocks(0)
-   // int32_t i = parameter;
-   // i = i * 2;
-   // return i;
-   TR::SymbolReference *newIndexSymRef = newTemp(Int32);
-   storeToTemp(newIndexSymRef, intParameter());
-   storeToTemp(newIndexSymRef, createWithoutSymRef(TR::imul, 2, loadTemp(newIndexSymRef), iconst(2)));
-   returnValue(loadTemp(newIndexSymRef));
+   FooBarTest *test = static_cast<FooBarTest *>(_test);
+   createBlocks(4);
+
+
+   // 4 blocks requested start at 2 (0 is entry, 1 is exit)
+   // by default, generate to block 2
+
+   // Block2: blocks(0)
+   // if (index < 0) goto Block5;
+   ifjump(TR::ificmplt, indexParameter(), iconst(0), 3);
+
+   // Block3: blocks(1)
+   // if (index >= 100) goto Block5;
+   ifjump(TR::ificmpge, indexParameter(), iconst(test->dataArraySize()), 3);
+
+   // Block4: blocks(2)
+   // return dataArray[index];
+   returnValue(arrayLoad(staticAddress(test->dataArray()), indexParameter(), Int32));
+
+   // Block5: blocks(3)
+   // return -1;
+   generateToBlock(3);
+   returnValue(iconst(-1));
 
    return true;
    }

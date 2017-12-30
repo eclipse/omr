@@ -202,6 +202,57 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *cushrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *iandEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *landEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   /** \brief
+    *     This is a helper function that will try to use a rotate instruction
+    *     to perform an 'land' (Long AND) operation. It will handle cases
+    *     where the second child of the Long AND is a lconst node, and the 
+    *     lconst value is a sequence of contiguous 1's surrounded by 0's or vice versa.
+    *     For example, the lconst value can be:
+    *     00011111111000, 1111000000011111, 0100000  
+    *
+    *     For example, consider the following tree:
+    *
+    *     land
+    *        i2l
+    *           iload parm=0
+    *        lconst 0x0000FFFFFFFF0000
+    *
+    *     We can either materialize the constant in a register or use the NIHF+NILF instructions 
+    *     to AND the most and least significant 32 bit portions in the first operand. These 
+    *     are both more expensive than generating a RISBG instruction.
+    *
+    *     This is because in the above case we can perform the AND operation with the 
+    *     following single RISBG instruction:
+    *
+    *     RISBG R2,R1,33,175,0 //R1 holds parm 0
+    *
+    *     In the above instruction the value of 175 comes from
+    *     the sum of 128 and 47. 47 represents the ending position
+    *     of the bit range to preserve, and 128 is there to set the 
+    *     zero bit. The instruction is saying to take the value in R1 and
+    *     do the following:
+    *        -preserve the bits from 33 - 47 (inclusive)
+    *        -zero the remaining bits
+    *        -rotate the preserved bits by a factor of 0(hence no rotation)
+    *        -store the result in R2
+    * 
+    *     Note: RISBG is non-destructive (unlike the AND immediate instructions). 
+    *     So the original value in R1 is preserved.
+    *
+    *   \param node
+    *      The land node
+    *
+    *   \param cg
+    *      The code generator used to generate the instructions
+    *
+    *   \return
+    *      The target register for the instruction, or NULL if generating a 
+    *      RISBG instruction is not suitable
+    *
+    */
+   static TR::Register *tryToReplaceLongAndWithRotateInstruction(TR::Node * node, TR::CodeGenerator * cg);
+
    static TR::Register *bandEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *sandEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *candEvaluator(TR::Node *node, TR::CodeGenerator *cg);

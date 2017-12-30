@@ -22,7 +22,7 @@
 #ifndef TEST_CALLILINJECTOR_INCL
 #define TEST_CALLILINJECTOR_INCL
 
-#include "ilgen/UnaryOpIlInjector.hpp"
+#include "tests/injectors/UnaryOpIlInjector.hpp"
 
 namespace TR { class TypeDictionary; }
 

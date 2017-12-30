@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,7 +60,7 @@ TestCompiler::FrontEnd::generateBinaryEncodingPrologue(
    TR::Compilation* comp = cg->comp();
    TR_S390BinaryEncodingData *data = (TR_S390BinaryEncodingData *)beData;
 
-   data->cursorInstruction = comp->getFirstInstruction();
+   data->cursorInstruction = cg->getFirstInstruction();
    data->estimate = 0;
    data->preProcInstruction = data->cursorInstruction;
    data->jitTojitStart = data->cursorInstruction;
@@ -72,7 +72,7 @@ TestCompiler::FrontEnd::generateBinaryEncodingPrologue(
 
    TR::Instruction * oldFirstInstruction = data->cursorInstruction;
 
-   data->cursorInstruction = comp->getFirstInstruction();
+   data->cursorInstruction = cg->getFirstInstruction();
 
    static char *disableAlignJITEP = feGetEnv("TR_DisableAlignJITEP");
 
@@ -89,5 +89,4 @@ TestCompiler::FrontEnd::generateBinaryEncodingPrologue(
       }
 
    cg->getLinkage()->createPrologue(data->cursorInstruction);
-   //cg->getLinkage()->analyzePrologue();
    }

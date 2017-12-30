@@ -301,7 +301,7 @@ void TR_ShrinkWrap::findJumpInstructionsInCodeRegion (TR::Instruction *firstInst
 
 void TR_ShrinkWrap::analyzeInstructions()
    {
-   TR::Instruction *instr = comp()->getFirstInstruction();
+   TR::Instruction *instr = comp()->cg()->getFirstInstruction();
 
    int32_t blockNum = comp()->getStartTree()->getEnclosingBlock()->getNumber(); // entry block
    if (_traceSW)

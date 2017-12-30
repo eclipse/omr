@@ -133,23 +133,6 @@ OMR::Power::CodeGenerator::CodeGenerator() :
 
    _linkageProperties = &self()->getLinkage()->getProperties();
 
-   _specializedEpilogues = self()->comp()->getOption(TR_EnableSpecializedEpilogues) && self()->comp()->getOptLevel() >= hot;
-   // disable specialized epilogues when shrinkwrapping
-   // is enabled
-   if (!self()->comp()->getOption(TR_DisableShrinkWrapping))
-      _specializedEpilogues = false;
-
-   if (_specializedEpilogues)
-      {
-      _blocksThatModifyRegister = (TR_BitVector **)self()->trMemory()->allocateHeapMemory(TR::RealRegister::NumRegisters*sizeof(TR_BitVector *), TR_Memory::CodeGenerator);
-
-      int reg;
-      for (reg = 0; reg < TR::RealRegister::NumRegisters; reg++)
-         {
-         _blocksThatModifyRegister[reg] = new (self()->trHeapMemory()) TR_BitVector(self()->comp()->getFlowGraph()->getNextNodeNumber(), self()->trMemory(), heapAlloc, growable);
-         }
-      }
-
    // Set up to collect items for later TOC mapping
    if (TR::Compiler->target.is64Bit())
       {
@@ -563,7 +546,7 @@ void OMR::Power::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAss
 
    self()->setAssignmentDirection(Backward);
 
-   TR::Instruction *instructionCursor = self()->comp()->getAppendInstruction();
+   TR::Instruction *instructionCursor = self()->getAppendInstruction();
 
    TR::Block *currBlock = NULL;
    TR::Instruction * currBBEndInstr = instructionCursor;
@@ -1548,7 +1531,7 @@ void OMR::Power::CodeGenerator::doPeephole()
    if (self()->comp()->getOptLevel() == noOpt)
       return;
 
-   TR::Instruction *instructionCursor = self()->comp()->getFirstInstruction();
+   TR::Instruction *instructionCursor = self()->getFirstInstruction();
 
    while (instructionCursor)
       {
@@ -1977,7 +1960,7 @@ void OMR::Power::CodeGenerator::generateBinaryEncodingPrologue(
    {
    TR::Compilation *comp = self()->comp();
    data->recomp = NULL;
-   data->cursorInstruction = comp->getFirstInstruction();
+   data->cursorInstruction = self()->getFirstInstruction();
    data->preProcInstruction = data->cursorInstruction;
 
    data->jitTojitStart = data->cursorInstruction;
@@ -1985,7 +1968,7 @@ void OMR::Power::CodeGenerator::generateBinaryEncodingPrologue(
 
    self()->getLinkage()->loadUpArguments(data->cursorInstruction);
 
-   data->cursorInstruction = comp->getFirstInstruction();
+   data->cursorInstruction = self()->getFirstInstruction();
 
    while (data->cursorInstruction && data->cursorInstruction->getOpCodeValue() != TR::InstOpCode::proc)
       {
@@ -2010,32 +1993,6 @@ void OMR::Power::CodeGenerator::doBinaryEncoding()
    data.estimate = 0;
 
    self()->generateBinaryEncodingPrologue(&data);
-
-   if (!(TR::Optimizer *)self()->comp()->getOptimizer())
-      _specializedEpilogues = false;
-
-   if (_specializedEpilogues)
-      {
-      TR_ASSERT((TR::Optimizer *)self()->comp()->getOptimizer(), "No optimizer\n");
-
-      if (!self()->comp()->getFlowGraph()->getStructure())
-         ((TR::Optimizer *)self()->comp()->getOptimizer())->doStructuralAnalysis();
-
-      _reachingBlocks = new (self()->comp()->allocator()) TR_ReachingBlocks(self()->comp(), (TR::Optimizer *)self()->comp()->getOptimizer());
-      _reachingBlocks->perform();
-
-      TR::Instruction *instr = self()->comp()->getFirstInstruction();
-      while (instr)
-         {
-         TR::RealRegister *reg = (TR::RealRegister *)instr->getTrg1Register();
-         if (reg)
-            {
-            TR_ASSERT(instr->getBlockIndex(), "Instruction %p without block index\n", instr);
-            self()->getBlocksThatModifyRegister(reg->getRegisterNumber())->set(instr->getBlockIndex());
-            }
-         instr = instr->getNext();
-         }
-      }
 
    bool skipOneReturn = false;
    while (data.cursorInstruction)
@@ -2067,7 +2024,7 @@ void OMR::Power::CodeGenerator::doBinaryEncoding()
 
    self()->setEstimatedCodeLength(data.estimate);
 
-   data.cursorInstruction = self()->comp()->getFirstInstruction();
+   data.cursorInstruction = self()->getFirstInstruction();
    uint8_t *coldCode = NULL;
    uint8_t *temp = self()->allocateCodeMemory(self()->getEstimatedCodeLength(), 0, &coldCode);
 
@@ -2232,7 +2189,7 @@ TR::Register *OMR::Power::CodeGenerator::gprClobberEvaluate(TR::Node *node)
 static int32_t identifyFarConditionalBranches(int32_t estimate, TR::CodeGenerator *cg)
    {
    TR_Array<TR::PPCConditionalBranchInstruction *> candidateBranches(cg->trMemory(), 256);
-   TR::Instruction *cursorInstruction = cg->comp()->getFirstInstruction();
+   TR::Instruction *cursorInstruction = cg->getFirstInstruction();
 
    while (cursorInstruction)
       {
@@ -2932,7 +2889,7 @@ j2Prof_startInterval(int32_t *preambLen, int32_t *ipAssistLen, int32_t *prologue
    int32_t  *sizePtr = (int32_t *)(cg->getBinaryBufferStart()+prePrologue-4);
    *ipAssistLen = ((*sizePtr)>>16) & 0x0000ffff;
 
-   currentIntervalStart = comp->getFirstInstruction();
+   currentIntervalStart = cg->getFirstInstruction();
    while (currentIntervalStart->getOpCodeValue() != TR::InstOpCode::proc)
       currentIntervalStart = currentIntervalStart->getNext();
    intervalBinaryStart = currentIntervalStart->getBinaryEncoding();
@@ -3409,11 +3366,6 @@ bool OMR::Power::CodeGenerator::supportsSinglePrecisionSQRT()
    return TR::Compiler->target.cpu.getSupportsHardwareSQRT();
    }
 
-bool OMR::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
-   {
-   return self()->isMethodInAtomicLongGroup(method);
-   }
-
 
 int32_t
 OMR::Power::CodeGenerator::getPreferredLoopUnrollFactor()
@@ -3681,7 +3633,7 @@ OMR::Power::CodeGenerator::loadAddressConstantFixed(
    TR::Instruction *firstInstruction;
 
    if (cursor == NULL)
-      cursor = comp->getAppendInstruction();
+      cursor = self()->getAppendInstruction();
 
    if (tempReg == NULL)
       {
@@ -3718,7 +3670,7 @@ OMR::Power::CodeGenerator::loadAddressConstantFixed(
       }
 
    if (temp == NULL)
-      comp->setAppendInstruction(cursor);
+      self()->setAppendInstruction(cursor);
 
    return(cursor);
    }
@@ -3780,7 +3732,7 @@ OMR::Power::CodeGenerator::loadIntConstantFixed(
 
    if (cursor == NULL)
       {
-      cursor = comp->getAppendInstruction();
+      cursor = self()->getAppendInstruction();
       }
 
    cursor = firstInstruction = generateTrg1ImmInstruction(self(), TR::InstOpCode::lis, node, trgReg, value>>16, cursor);
@@ -3790,7 +3742,7 @@ OMR::Power::CodeGenerator::loadIntConstantFixed(
 
    if (temp == NULL)
       {
-      comp->setAppendInstruction(cursor);
+      self()->setAppendInstruction(cursor);
       }
 
    return(cursor);

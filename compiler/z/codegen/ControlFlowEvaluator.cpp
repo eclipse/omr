@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1278,7 +1278,7 @@ static inline void generateMergedHCRGuardCodeIfNeeded(TR::Node *node, TR::CodeGe
       if (virtualGuard && virtualGuard->mergedWithHCRGuard())
          {
          TR::RegisterDependencyConditions  *mergedHCRDeps = NULL;
-         TR::Instruction *instr = comp->getAppendInstruction();
+         TR::Instruction *instr = cg->getAppendInstruction();
          if (instr && instr->getNode() == node && instr->getDependencyConditions())
             mergedHCRDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(instr->getDependencyConditions(), 1, 0, cg);
 
@@ -1296,7 +1296,7 @@ static inline void generateMergedHCRGuardCodeIfNeeded(TR::Node *node, TR::CodeGe
             deps = cg->addVMThreadDependencies(deps, NULL);
             TR::Instruction *vgnopInstr = generateVirtualGuardNOPInstruction(cg, node, site, deps, fallThroughLabel, instr ? instr->getPrev() : NULL);
             vgnopInstr->setNext(instr);
-            comp->setAppendInstruction(instr);
+            cg->setAppendInstruction(instr);
             generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fallThroughLabel, mergedHCRDeps);
             }
          else
@@ -1305,7 +1305,7 @@ static inline void generateMergedHCRGuardCodeIfNeeded(TR::Node *node, TR::CodeGe
 
             TR::Instruction *vgnopInstr = generateVirtualGuardNOPInstruction(cg, node, site, mergedHCRDeps, label, instr ? instr->getPrev() : NULL);
             vgnopInstr->setNext(instr);
-            comp->setAppendInstruction(instr);
+            cg->setAppendInstruction(instr);
             }
          traceMsg(comp, "generateMergedHCRGuardCodeIfNeeded for %s %s\n",
                   comp->getDebug()?comp->getDebug()->getVirtualGuardKindName(virtualGuard->getKind()):"???Guard" , virtualGuard->mergedWithHCRGuard()?"merged with HCRGuard":"");
@@ -2818,7 +2818,7 @@ TR::Register *OMR::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node
          reference->incReferenceCount(); // will be decremented again later
          needLateEvaluation = false;
          cg->evaluate(reference);
-         appendTo = comp->getAppendInstruction();
+         appendTo = cg->getAppendInstruction();
          cg->evaluate(firstChild);
 
          if (cg->getImplicitExceptionPoint() &&
@@ -2859,7 +2859,7 @@ TR::Register *OMR::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node
             {
             targetRegister = cg->evaluate(reference);
 
-            appendTo = comp->getAppendInstruction();
+            appendTo = cg->getAppendInstruction();
 
             if (appendTo->getOpCodeValue() == TR::InstOpCode::LLGF)
                {

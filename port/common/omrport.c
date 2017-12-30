@@ -255,9 +255,12 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrsysinfo_get_os_description, /* sysinfo_get_os_description */
 	omrsysinfo_os_has_feature, /* sysinfo_os_has_feature */
 	omrsysinfo_os_kernel_info, /* sysinfo_os_kernel_info */
-	omrsysinfo_cgroup_is_limits_supported, /* sysinfo_cgroup_is_limits_supported */
-	omrsysinfo_cgroup_is_limits_enabled, /* sysinfo_cgroup_is_limits_enabled */
-	omrsysinfo_cgroup_enable_limits, /* sysinfo_cgroup_enable_limits */
+	omrsysinfo_cgroup_is_system_available, /* sysinfo_cgroup_is_system_available */
+	omrsysinfo_cgroup_get_available_subsystems, /* sysinfo_cgroup_get_available_subsystems */
+	omrsysinfo_cgroup_are_subsystems_available, /* sysinfo_cgroup_are_subsystems_available */
+	omrsysinfo_cgroup_get_enabled_subsystems, /* sysinfo_cgroup_get_enabled_subsystems */
+	omrsysinfo_cgroup_enable_subsystems, /* sysinfo_cgroup_enable_subsystems */
+	omrsysinfo_cgroup_are_subsystems_enabled, /* sysinfo_cgroup_are_subsystems_enabled */
 	omrsysinfo_cgroup_get_memlimit, /* sysinfo_cgroup_get_memlimit */	
 	omrport_init_library, /* port_init_library */
 	omrport_startup_library, /* port_startup_library */

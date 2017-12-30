@@ -111,8 +111,6 @@ namespace TR { class TreeTop; }
 
 typedef TR::SparseBitVector SharedSparseBitVector;
 
-extern int32_t bitCount32(uint32_t w);
-
 enum TR_SpillKinds // For register pressure simulation
    {
    // Mandatory spill kinds are certain to cause a spill to memory
@@ -233,47 +231,8 @@ class TR_ClobberEvalData
 
    };
 
-enum MonitorInBlock
-   {
-   NoMonitor = 0,
-   MonitorEnter,
-   MonitorExit
-   };
-
-
-class TR_SetMonitorStateOnBlockEntry
-   {
-public:
-   typedef TR::typed_allocator<std::pair<int32_t const, TR_Stack<TR::SymbolReference *>*>, TR::Region&> LiveMonitorStacksAllocator;
-   typedef std::less<int32_t> LiveMonitorStacksComparator;
-   typedef std::map<int32_t, TR_Stack<TR::SymbolReference *>*, LiveMonitorStacksComparator, LiveMonitorStacksAllocator> LiveMonitorStacks;
-   TR_SetMonitorStateOnBlockEntry(TR::Compilation * c, LiveMonitorStacks *liveMonitorStacks)
-      : _blocksToVisit(c->trMemory(), 8, false, stackAlloc)
-      {
-      _comp = c;
-      _visitCount = c->incVisitCount();
-      _liveMonitorStacks = liveMonitorStacks;
-      }
-
-   void set(bool& lmmdFailed, bool traceIt = false);
-
-private:
-   int32_t addSuccessors(TR::CFGNode * cfgNode, TR_Stack<TR::SymbolReference *> *, bool traceIt, bool dontPropagateMonitor = false, MonitorInBlock monitorType = NoMonitor, int32_t callerIndex = -1, bool walkOnlyExceptionSuccs = false);
-   bool isMonitorStateConsistentForBlock(TR::Block *block, TR_Stack<TR::SymbolReference *> *newMonitorStack, bool popMonitor);
-
-   TR_Memory *        trMemory()  { return comp()->trMemory(); }
-   TR_HeapMemory   trHeapMemory() { return trMemory(); }
-
-   TR::Compilation * comp() { return _comp; }
-
-   TR::Compilation *     _comp;
-   vcount_t             _visitCount;
-   TR_Stack<TR::Block *> _blocksToVisit;
-   LiveMonitorStacks *_liveMonitorStacks;
-   };
 
 TR::Node* generatePoisonNode(TR::Compilation *comp, TR::Block *currentBlock, TR::SymbolReference *liveAutoSymRef);
-
 
 
 
@@ -368,7 +327,7 @@ class OMR_EXTENSIBLE CodeGenerator
     *
     * @return The first instruction in this method; NULL if not yet set.
     */
-   TR::Instruction *getFirstInstruction();
+   TR::Instruction *getFirstInstruction() {return _firstInstruction;}
 
    /**
     * @brief Sets the first TR::Instruction in the stream of instructions for
@@ -376,7 +335,7 @@ class OMR_EXTENSIBLE CodeGenerator
     *
     * @return The instruction being set.
     */
-   TR::Instruction *setFirstInstruction(TR::Instruction *fi);
+   TR::Instruction *setFirstInstruction(TR::Instruction *fi) {return (_firstInstruction = fi);}
 
    /**
     * @brief Returns the last TR::Instruction in the stream of instructions for
@@ -384,7 +343,7 @@ class OMR_EXTENSIBLE CodeGenerator
     *
     * @return The last instruction in this method; NULL if not yet set.
     */
-   TR::Instruction *getAppendInstruction();
+   TR::Instruction *getAppendInstruction() {return _appendInstruction;}
 
    /**
     * @brief Sets the last TR::Instruction in the stream of instructions for
@@ -392,7 +351,7 @@ class OMR_EXTENSIBLE CodeGenerator
     *
     * @return The instruction being set.
     */
-   TR::Instruction *setAppendInstruction(TR::Instruction *ai);
+   TR::Instruction *setAppendInstruction(TR::Instruction *ai) {return (_appendInstruction = ai);}
 
    TR::TreeTop *getCurrentEvaluationTreeTop() {return _currentEvaluationTreeTop;}
    TR::TreeTop *setCurrentEvaluationTreeTop(TR::TreeTop *tt) {return (_currentEvaluationTreeTop = tt);}
@@ -610,8 +569,14 @@ class OMR_EXTENSIBLE CodeGenerator
    // Optimizer, code generator capabilities
    //
    int32_t getPreferredLoopUnrollFactor() {return -1;} // no virt, default
-   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method) {return false;} // no virt, default
-   bool isMethodInAtomicLongGroup (TR::RecognizedMethod rm);
+
+   /**
+    * @brief Answers whether the provided recognized method should be inlined by an
+    *        inliner optimization.
+    * @param method : the recognized method to consider
+    * @return true if inlining should be suppressed; false otherwise
+    */
+   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method) {return false;}
 
    // --------------------------------------------------------------------------
    // Optimizer, not code generator
@@ -625,10 +590,6 @@ class OMR_EXTENSIBLE CodeGenerator
    bool supportsPassThroughCopyToNewVirtualRegister() { return false; } // no virt, default
 
    uint8_t getSizeOfCombinedBuffer() {return 0;} // no virt, default
-
-   // The number of nodes we want between a monexit and the next monent before transforming a monitored region with
-   // transactional lock elision.
-   int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 15; } // no virt, default
 
    bool doRematerialization() {return false;} // no virt, default
 
@@ -1248,9 +1209,6 @@ class OMR_EXTENSIBLE CodeGenerator
    TR_BitVector *getLiveButMaybeUnreferencedLocals() {return _liveButMaybeUnreferencedLocals;}
    TR_BitVector *setLiveButMaybeUnreferencedLocals(TR_BitVector *v) {return (_liveButMaybeUnreferencedLocals = v);}
 
-   TR_BitVector *getLiveMonitors() {return _liveMonitors;}
-   TR_BitVector *setLiveMonitors(TR_BitVector *v) {return (_liveMonitors = v);}
-
    TR::AheadOfTimeCompile *getAheadOfTimeCompile() {return _aheadOfTimeCompile;}
    TR::AheadOfTimeCompile *setAheadOfTimeCompile(TR::AheadOfTimeCompile *p) {return (_aheadOfTimeCompile = p);}
 
@@ -1329,7 +1287,6 @@ class OMR_EXTENSIBLE CodeGenerator
    bool supportsOnDemandLiteralPool() { return false; } // no virt, cast
    bool supportsDirectIntegralLoadStoresFromLiteralPool() { return false; } // no virt
    bool supportsHighWordFacility() { return false; } // no virt, default, cast
-   bool doInlineAllocate(TR::Node *node) { TR_ASSERT(0, "unexpected call to OMR::CodeGenerator::doInlineAllocate"); return false; } // no virt, default
 
    bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg) { return false; }
 
@@ -1587,9 +1544,6 @@ class OMR_EXTENSIBLE CodeGenerator
    void setSupportsInlinedAtomicLongVolatiles() {_flags1.set(SupportsInlinedAtomicLongVolatiles);}
    bool getInlinedGetCurrentThreadMethod() {return _flags3.testAny(InlinedGetCurrentThreadMethod);}
    void setInlinedGetCurrentThreadMethod() {_flags3.set(InlinedGetCurrentThreadMethod);}
-
-   bool disableCommoningOfVolatiles() {return false; }
-   bool allowDSEOfVolatiles() {return true; }
 
    bool considerAllAutosAsTacticalGlobalRegisterCandidates()    {return _flags1.testAny(ConsiderAllAutosAsTacticalGlobalRegisterCandidates);}
    void setConsiderAllAutosAsTacticalGlobalRegisterCandidates() {_flags1.set(ConsiderAllAutosAsTacticalGlobalRegisterCandidates);}
@@ -1885,12 +1839,10 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::SparseBitVector _extendedToInt64GlobalRegisters;
 
    TR_BitVector *_liveButMaybeUnreferencedLocals;
-   TR_BitVector *_liveMonitors;
    bool _lmmdFailed;
    TR_BitVector *_signExtensionFlags;
    TR_BitVector *_assignedGlobalRegisters;
 
-   TR::list<TR::Node*> *_liveRestrictValues[16];
    TR_LiveRegisters *_liveRegisters[NumRegisterKinds];
    TR::AheadOfTimeCompile *_aheadOfTimeCompile;
    uint32_t *_globalRegisterTable;
@@ -1956,6 +1908,9 @@ class OMR_EXTENSIBLE CodeGenerator
    int32_t _outOfLineColdPathNestedDepth;
 
    TR::CodeGenPhase _codeGenPhase;
+
+   TR::Instruction *_firstInstruction;
+   TR::Instruction *_appendInstruction;
 
    TR_RegisterMask _liveRealRegisters[NumRegisterKinds];
    TR_GlobalRegisterNumber _lastGlobalGPR;

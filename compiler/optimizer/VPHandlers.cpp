@@ -355,8 +355,22 @@ static bool tryFoldCompileTimeLoad(
       TR::KnownObjectTable *knot = vp->comp()->getKnownObjectTable();
       TR::Node *baseExpression = NULL;
       TR::KnownObjectTable::Index baseKnownObject = TR::KnownObjectTable::UNKNOWN;
-      for (TR::Node *curNode = node->getFirstChild(); !baseExpression; curNode = curNode->getFirstChild())
+      TR::Node *curNode = node;
+
+      for (; !baseExpression; )
          {
+         // Track last curNode because its symref might be improved to ImmutableArrayShadow
+         TR::Node* prevNode = curNode;
+
+         // Look pass aladd/aiadd to get the array object for array shadows
+         if (curNode->getSymbol()->isArrayShadowSymbol()
+             && curNode->getFirstChild()->getOpCode().isArrayRef()
+             && curNode->getFirstChild()->getSecondChild()->getOpCode().isLoadConst())
+            {
+            curNode = curNode->getFirstChild()->getFirstChild();
+            }
+         else curNode = curNode->getFirstChild();
+
          bool curIsGlobal;
          TR::VPConstraint *constraint = vp->getConstraint(curNode, curIsGlobal);
          if (!curIsGlobal)
@@ -375,6 +389,31 @@ static bool tryFoldCompileTimeLoad(
             }
          else if (constraint->getKnownObject())
             {
+            TR::Symbol* prevNodeSym = prevNode->getSymbol();
+            // Improve regular array shadows from arrays with immutable content
+            if (prevNodeSym->isArrayShadowSymbol() &&
+                // UnsafeShadow responds true to above question, but the type of the array element might not match the type of the symbol,
+                // it needs to be derived from the array
+                !prevNodeSym->isUnsafeShadowSymbol() &&
+                !vp->comp()->getSymRefTab()->isImmutableArrayShadow(prevNode->getSymbolReference()))
+               {
+               if (constraint->getKnownObject()->isArrayWithConstantElements(vp->comp()))
+                  {
+                  // Use the DataType of the symbol because it represents the element type of the array
+                  TR::SymbolReference* improvedSymRef = vp->comp()->getSymRefTab()->findOrCreateImmutableArrayShadowSymbolRef(prevNodeSym->getDataType());
+                  if (vp->trace())
+                     traceMsg(vp->comp(), "Found arrayShadow load %p from array with constant elements %p\n", prevNode, curNode);
+                  if (performTransformation(vp->comp(), "%sUsing ImmutableArrayShadow symref #%d for node %p\n", OPT_DETAILS, improvedSymRef->getReferenceNumber(), prevNode))
+                     prevNode->setSymbolReference(improvedSymRef);
+
+                  // Alias info of calls are computed in createAliasInfo, which is only called if alias info is not available or is invalid.
+                  // Invalidate alias info so that it can be recomputed in the next optimization that needs it
+                  vp->optimizer()->setAliasSetsAreValid(false);
+                  }
+               else
+                  break;
+               }
+
             baseExpression  = curNode;
             baseKnownObject = constraint->getKnownObject()->getIndex();
             if (vp->trace())
@@ -549,7 +588,7 @@ static bool findConstant(OMR::ValuePropagation *vp, TR::Node *node)
                      {
                      TR::KnownObjectTable *knot = vp->comp()->getKnownObjectTable();
                      TR_ASSERT(knot, "Can't have a known-object constraint without a known-object table");
-                     TR::SymbolReference *improvedSymRef = vp->comp()->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), knot->getPointerLocation(knownObject->getIndex()));
+                     TR::SymbolReference *improvedSymRef = vp->comp()->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), knownObject->getIndex());
                      if (improvedSymRef->hasKnownObjectIndex())
                         {
                         if (performTransformation(vp->comp(), "%sUsing known-object specific symref #%d for obj%d at [%p]\n", OPT_DETAILS, improvedSymRef->getReferenceNumber(), knownObject->getIndex(), node))
@@ -1770,7 +1809,7 @@ TR::Node *constrainAload(OMR::ValuePropagation *vp, TR::Node *node)
                   vp->addGlobalConstraint(node, constraint);
                   }
                }
-            else if (vp->comp()->isOptServer())
+            else
                {
                TR_ResolvedMethod *method = node->getSymbolReference()->getOwningMethod(vp->comp());
                constraint = TR::VPUnresolvedClass::create(vp, sig, len, method);
@@ -2084,6 +2123,7 @@ TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
 
       const static char *needInitializedCheck = feGetEnv("TR_needInitializedCheck");
       TR::VPConstraint *base = vp->getConstraint(node->getFirstChild(), isGlobal);
+
       if (base && node->getOpCode().hasSymbolReference() &&
           (node->getSymbolReference() == vp->comp()->getSymRefTab()->findVftSymbolRef()))
          {
@@ -9362,7 +9402,7 @@ static TR::Node *constrainIfcmpeqne(OMR::ValuePropagation *vp, TR::Node *node, b
       }
 
 #ifdef J9_PROJECT_SPECIFIC
-   if (!vp->comp()->compileRelocatableCode() && vp->comp()->isOptServer() &&
+   if (!vp->comp()->compileRelocatableCode() &&
        vp->lastTimeThrough() &&
        vp->comp()->performVirtualGuardNOPing() &&
        !vp->_curBlock->isCold() &&
@@ -9442,7 +9482,8 @@ static TR::Node *constrainIfcmpeqne(OMR::ValuePropagation *vp, TR::Node *node, b
 
                if (clazzToBeInitialized &&
                    (((clazzNameLen == 35) && !strncmp(clazzToBeInitialized, "Lcom/ibm/ejs/ras/TraceEnabledToken;", clazzNameLen)) ||
-                    ((clazzNameLen == 41) && !strncmp(clazzToBeInitialized, "Lcom/ibm/websphere/ras/TraceEnabledToken;", clazzNameLen))) &&
+                    ((clazzNameLen == 41) && !strncmp(clazzToBeInitialized, "Lcom/ibm/websphere/ras/TraceEnabledToken;", clazzNameLen)) ||
+                    ((clazzNameLen == 40) && !strncmp(clazzToBeInitialized, "Ljava/lang/String$StringCompressionFlag;", clazzNameLen))) &&
                    performTransformation(vp->comp(), "%sUsing side-effect guard to fold away condition on a load from an uninitializec class  %s [%p]\n", OPT_DETAILS, clazzToBeInitialized, node))
                   {
                   char *clazzToBeInitializedCopy = (char *)vp->trMemory()->allocateMemory(clazzNameLen+1, heapAlloc);

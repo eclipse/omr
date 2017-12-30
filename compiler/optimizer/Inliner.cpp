@@ -3107,10 +3107,6 @@ TR_HandleInjectedBasicBlock::createTemps(bool replaceAllReferences)
          {
          ref->_isConst = true;
          }
-      else if (opcode.getOpCodeValue() == TR::aload && comp()->cg()->getLinkage()->isAddressOfPrivateStaticSymRef(ref->_node->getSymbolReference()))
-         {
-         ref->_isConst = true;
-         }
       else
          {
          TR::SymbolReference * symRef = 0;
@@ -5426,17 +5422,11 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
    updateCallersFlags(callerSymbol, calleeSymbol, _optimizer);
 
 
-   if (calleeSymbol->getMethod()->isArchetypeSpecimen() || calleeSymbol->hasMethodHandleInvokes())
+   if (getUtil()->needTargetedInlining(calleeSymbol))
       {
-      // Trees from archetype specimens may not match the archetype method's bytecodes,
-      // so there may be some calls things that inliner missed.
-      //
-      // Tactically, we also inline again based on hasMethodHandleInvokes because EstimateCodeSize
-      // doesn't yet cope with invokeHandle, invokeHandleGeneric, and invokeDynamic (but it should).
-      //
       _optimizer->setRequestOptimization(OMR::methodHandleInvokeInliningGroup);
       if (comp()->trace(OMR::inlining))
-         heuristicTrace(tracer(),"Requesting another pass of MethodHandle invoke inlining due to %s\n", tracer()->traceSignature(calleeSymbol));
+         heuristicTrace(tracer(),"Requesting another pass of targeted inlining due to %s\n", tracer()->traceSignature(calleeSymbol));
       }
 
    // Append the callee's catch block to the end of the caller
@@ -6378,6 +6368,12 @@ TR_PrexArgInfo *
 OMR_InlinerUtil::computePrexInfo(TR_CallTarget *target)
    {
    return NULL;
+   }
+
+bool
+OMR_InlinerUtil::needTargetedInlining(TR::ResolvedMethodSymbol *callee)
+   {
+   return false;
    }
 
 void

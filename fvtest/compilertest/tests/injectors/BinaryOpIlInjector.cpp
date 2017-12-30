@@ -19,14 +19,26 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-// TODO:AMD64: We should obtain the actual boundary, but 8 is conservatively safe
-//
-#define INSTRUCTION_PATCH_ALIGNMENT_BOUNDARY (8)
+#include "compile/Compilation.hpp"
+#include "env/FrontEnd.hpp"
+#include "compile/Method.hpp"
+#include "tests/injectors/BinaryOpIlInjector.hpp"
 
-#include "codegen/FrontEnd.hpp"
+namespace TestCompiler
+{
 
-#if defined(TR_TARGET_64BIT)
+bool
+BinaryOpIlInjector::injectIL()
+   {
+   if (!isOpCodeSupported())
+      return false;
 
-#include "codegen/CodeGenerator.hpp"
+   createBlocks(1);
+   // Block 2: blocks(0)
+   // return parameter1 op parameter2;
+   returnValue(createWithoutSymRef(_opCode, 2, parm(1), parm(2)));
 
-#endif
+   return true;
+   }
+
+} // namespace TestCompiler

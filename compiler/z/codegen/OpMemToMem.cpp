@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -271,7 +271,7 @@ MemToMemConstLenMacroOp::generateLoop()
    TR::Compilation *comp = _cg->comp();
 
    int64_t largeCopies = (len == 0) ? 0 : (len - 1) / 256;
-   TR::Instruction * cursor = (_cursor == NULL ? comp->getAppendInstruction() : _cursor);
+   TR::Instruction * cursor = (_cursor == NULL ? _cg->getAppendInstruction() : _cursor);
 
    // if the length is small, just generate one instruction
    if (len <= (uint64_t)256)
@@ -289,13 +289,13 @@ MemToMemConstLenMacroOp::generateLoop()
       if (!_srcMR && !_srcReg)
          {
          _srcMR = generateS390MemoryReference(_cg, _rootNode, _srcNode, 0, true);
-         cursor = comp->getAppendInstruction();
+         cursor = _cg->getAppendInstruction();
          }
 
       if (!_dstMR && !_dstReg)
          {
           _dstMR = generateS390MemoryReference(_cg, _rootNode, _dstNode, 0, true);
-         cursor = comp->getAppendInstruction();
+         cursor = _cg->getAppendInstruction();
          }
 
       int32_t srcMROffset = _srcMR ? _srcMR->getOffset() : 0;
@@ -467,7 +467,7 @@ MemToMemConstLenMacroOp::generateRemainder()
    {
    TR::Compilation *comp = _cg->comp();
    uint64_t len = (uint64_t)_length;
-   TR::Instruction * cursor = (_cursor == NULL ? comp->getAppendInstruction() : _cursor);
+   TR::Instruction * cursor = (_cursor == NULL ? _cg->getAppendInstruction() : _cursor);
 
    if ((len >= (uint64_t)(_cg->getS390Linkage())->getLengthStartForSSInstruction()) && len > 0)
       {
@@ -500,7 +500,7 @@ MemInitConstLenMacroOp::generateLoop()
       _dstMR= generateS390MemoryReference(_cg, _rootNode, _dstNode , _offset, true);
       }
 
-   TR::Instruction * cursor =  comp->getAppendInstruction();
+   TR::Instruction * cursor =  _cg->getAppendInstruction();
 
    if(len >= (uint64_t)1)
       {
@@ -593,7 +593,7 @@ MemInitConstLenMacroOp::generateRemainder()
    {
    TR::Compilation *comp = _cg->comp();
    uint64_t len = (uint64_t)_length;
-   TR::Instruction * cursor = (_cursor == NULL ? comp->getAppendInstruction() : _cursor);
+   TR::Instruction * cursor = (_cursor == NULL ? _cg->getAppendInstruction() : _cursor);
 
    if ((len >= (uint64_t)(_cg->getS390Linkage())->getLengthStartForSSInstruction()) && len > 0)
       {
@@ -1206,7 +1206,7 @@ TR::Instruction *
 MemInitConstLenMacroOp::generateInstruction(int32_t offset, int64_t length, TR::Instruction * cursor1)
    {
    TR::Compilation *comp = _cg->comp();
-   TR::Instruction * cursor=comp->getAppendInstruction();
+   TR::Instruction * cursor = _cg->getAppendInstruction();
    if (length == 0)
       {
       return cursor;
@@ -1227,7 +1227,7 @@ MemInitConstLenMacroOp::generateInstruction(int32_t offset, int64_t length, TR::
 
    _dstMR=generateS390MemoryReference(*_dstMR, offset+1, _cg);
 
-   cursor = comp->getAppendInstruction();
+   cursor = _cg->getAppendInstruction();
 
    if (length==1 && !_useByteVal)
       {
@@ -1251,7 +1251,7 @@ MemClearConstLenMacroOp::generateInstruction(int32_t offset, int64_t length, TR:
    TR::MemoryReference * srcMR = _srcMR;
    TR::Compilation *comp = _cg->comp();
    TR::MemoryReference * dstMR = _dstMR;
-   TR::Instruction * cursor = comp->getAppendInstruction();
+   TR::Instruction * cursor = _cg->getAppendInstruction();
    bool isAppend = (cursor == cursor1);
 
    if (srcMR == NULL)
@@ -1273,7 +1273,7 @@ MemClearConstLenMacroOp::generateInstruction(int32_t offset, int64_t length, TR:
    if (_dstNode == _srcNode)
       {
       // instruction could be generated during generate memory reference
-      cursor = comp->getAppendInstruction();
+      cursor = _cg->getAppendInstruction();
       cursor = (cursor1 == NULL ? cursor : (isAppend ? cursor : cursor1));
 
       TR_ASSERT(_srcMR == _dstMR, "memrefs must match if nodes match on node %p\n", _dstNode);
@@ -1320,7 +1320,7 @@ MemClearConstLenMacroOp::generateInstruction(int32_t offset, int64_t length, TR:
       }
 
    // instruction could be generated during generate memory reference
-   cursor = comp->getAppendInstruction();
+   cursor = _cg->getAppendInstruction();
    cursor = (cursor1 == NULL ? cursor : (isAppend ? cursor : cursor1));
 
    cursor = generateSS1Instruction(_cg, TR::InstOpCode::XC, _rootNode, length - 1, dstMR, srcMR, cursor);
@@ -1363,7 +1363,7 @@ MemToMemConstLenMacroOp::generateInstruction(int32_t offset, int64_t length, TR:
       dstMR = reuseS390MemoryReference(dstMR, offset, _rootNode, _cg, true); // enforceSSLimits=true
       }
 
-   cursor = comp->getAppendInstruction();
+   cursor = _cg->getAppendInstruction();
 
    cursor = generateSS1Instruction(_cg, _opcode, _rootNode, length - 1, dstMR, srcMR, cursor);
 
@@ -1396,7 +1396,7 @@ MemCmpConstLenMacroOp::generateInstruction(int32_t offset, int64_t length, TR::I
       dstMR= generateS390MemoryReference(_cg, _rootNode, _dstNode, offset, true);
       }
 
-   cursor = comp->getAppendInstruction();
+   cursor = _cg->getAppendInstruction();
    cursor = generateSS1Instruction(_cg, TR::InstOpCode::CLC, _rootNode, length - 1, dstMR, srcMR, cursor);
 
    if (!inRemainder())
@@ -1411,7 +1411,7 @@ TR::Instruction *
 MemInitVarLenMacroOp::generateInstruction(int32_t offset, int64_t length)
    {
    TR::Compilation *comp = _cg->comp();
-   TR::Instruction * cursor = comp->getAppendInstruction();
+   TR::Instruction * cursor = _cg->getAppendInstruction();
    if (length == 0)
       {
       return cursor;
@@ -1443,7 +1443,7 @@ MemClearVarLenMacroOp::generateInstruction(int32_t offset, int64_t length)
    TR::Compilation *comp = _cg->comp();
    TR::MemoryReference * srcMR = NULL;
    TR::MemoryReference * dstMR = NULL;
-   TR::Instruction * cursor = comp->getAppendInstruction();
+   TR::Instruction * cursor = _cg->getAppendInstruction();
 
    if (_srcReg != NULL)
       {
@@ -1467,7 +1467,7 @@ MemClearVarLenMacroOp::generateInstruction(int32_t offset, int64_t length)
       }
 
    // instruction could be generated during generate memory reference
-   cursor = comp->getAppendInstruction();
+   cursor = _cg->getAppendInstruction();
 
    cursor = generateSS1Instruction(_cg, TR::InstOpCode::XC, _rootNode, length - 1, dstMR, srcMR, cursor);
 
@@ -1483,7 +1483,7 @@ MemCpyVarLenMacroOp::generateInstruction(int32_t offset, int64_t length)
    generateSrcMemRef(offset);
    generateDstMemRef(offset);
 
-   cursor = comp->getAppendInstruction();
+   cursor = _cg->getAppendInstruction();
    cursor = generateSS1Instruction(_cg, TR::InstOpCode::MVC, _rootNode, length - 1, _dstMR, _srcMR, cursor);
 
    return cursor;
@@ -1498,7 +1498,7 @@ BitOpMemVarLenMacroOp::generateInstruction(int32_t offset, int64_t length)
    generateSrcMemRef(offset);
    generateDstMemRef(offset);
 
-   cursor = comp->getAppendInstruction();
+   cursor = _cg->getAppendInstruction();
    cursor = generateSS1Instruction(_cg, _opcode, _rootNode, length - 1, _dstMR, _srcMR, cursor);
 
    return cursor;
@@ -1515,7 +1515,7 @@ MemCmpVarLenMacroOp::generateInstruction(int32_t offset, int64_t length)
    generateDstMemRef(offset);
    TR::Compilation *comp = _cg->comp();
 
-   cursor = comp->getAppendInstruction();
+   cursor = _cg->getAppendInstruction();
    cursor = generateSS1Instruction(_cg, TR::InstOpCode::CLC, _rootNode, length - 1, _dstMR, _srcMR, cursor);
 
    if (!useEXForRemainder() || !inRemainder())
@@ -1554,7 +1554,7 @@ MemCmpVarLenMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, TR::Re
    _litReg = NULL;
    TR::Compilation *comp = _cg->comp();
 
-   if(cursorBefore == NULL) cursorBefore = comp->getAppendInstruction();
+   if(cursorBefore == NULL) cursorBefore = _cg->getAppendInstruction();
    generateLoop();
    setInRemainder(true);
    generateRemainder();
@@ -1590,7 +1590,7 @@ MemCmpConstLenMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, TR::
    TR::Compilation *comp = _cg->comp();
 
 
-   if(cursorBefore == NULL) cursorBefore = comp->getAppendInstruction();
+   if(cursorBefore == NULL) cursorBefore = _cg->getAppendInstruction();
    generateLoop();
    setInRemainder(true);
    generateRemainder();
@@ -1680,7 +1680,7 @@ MemCmpVarLenSignMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, TR
    _cursor = cursor;
    _litReg = NULL;
 
-   if(cursorBefore == NULL) cursorBefore = comp->getAppendInstruction();
+   if(cursorBefore == NULL) cursorBefore = _cg->getAppendInstruction();
    generateLoop();
    setInRemainder(true);
    generateRemainder();
@@ -1724,7 +1724,7 @@ MemCmpConstLenSignMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, 
    _litReg = NULL;
    TR::Compilation *comp = _cg->comp();
 
-   if(cursorBefore == NULL) cursorBefore = comp->getAppendInstruction();
+   if(cursorBefore == NULL) cursorBefore = _cg->getAppendInstruction();
    generateLoop();
    setInRemainder(true);
    generateRemainder();

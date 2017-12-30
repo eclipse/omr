@@ -2167,8 +2167,7 @@ refCanBeKilled(TR::Node *node, TR::Compilation *comp)
       }
 
    if (node->getOpCodeValue() == TR::aload &&
-       (comp->cg()->getLinkage()->isAddressOfStaticSymRef(node->getSymbolReference()) ||
-        comp->cg()->getLinkage()->isAddressOfPrivateStaticSymRef(node->getSymbolReference())))
+       comp->cg()->getLinkage()->isAddressOfStaticSymRef(node->getSymbolReference()))
       {
       return false;
       }

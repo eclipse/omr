@@ -475,6 +475,8 @@ class TR_RegionStructure : public TR_Structure
    virtual void collectCFGEdgesTo(int32_t, List<TR::CFGEdge> *);
    void replaceExitPart(int32_t fromNumber, int32_t toNumber);
 
+   static void extractUnconditionalExits(TR::Compilation * const comp, const TR::list<TR::Block*, TR::Region&> &blocks);
+
    // Collapse this region into its parent
    //
    void collapseIntoParent();
@@ -643,6 +645,17 @@ class TR_RegionStructure : public TR_Structure
 
    void checkForInternalCycles();
    void removeEdge(TR::CFGEdge *edge, bool isExitEdge);
+   void removeEdgeWithoutCleanup(TR::CFGEdge *edge, bool isExitEdge);
+   void removeSubNodeWithoutCleanup(TR_StructureSubGraphNode *subNode);
+
+   // Find a subnode with the given structure. As a precondition, such a node
+   // must exist. This method returns non-null.
+   TR_StructureSubGraphNode *subNodeFromStructure(TR_Structure*);
+
+
+   // Implementation of extractUnconditionalExits(). Class definition is private
+   // to Structure.cpp
+   class ExitExtraction;
 
    TR_StructureSubGraphNode         *_entryNode;
    TR_BitVector                     *_invariantSymbols;

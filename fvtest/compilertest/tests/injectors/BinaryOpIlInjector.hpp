@@ -19,43 +19,28 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include "compile/Compilation.hpp"
-#include "env/FrontEnd.hpp"
-#include "compile/Method.hpp"
-#include "tests/BarIlInjector.hpp"
-#include "tests/FooBarTest.hpp"
+#ifndef TEST_BINARYOPILINJECTOR_INCL
+#define TEST_BINARYOPILINJECTOR_INCL
+
+#include "tests/injectors/OpIlInjector.hpp"
+
+namespace TR { class TypeDictionary; }
 
 namespace TestCompiler
 {
-
-bool
-BarIlInjector::injectIL()
+class BinaryOpIlInjector : public OpIlInjector
    {
-   FooBarTest *test = static_cast<FooBarTest *>(_test);
-   createBlocks(4);
+   public:
+   BinaryOpIlInjector(TR::TypeDictionary *types, TestDriver *test, TR::ILOpCodes opCode)
+      : OpIlInjector(types, test, opCode)
+      {
+      initOptArgs(2);
+      }
+   TR_ALLOC(TR_Memory::IlGenerator)
 
-
-   // 4 blocks requested start at 2 (0 is entry, 1 is exit)
-   // by default, generate to block 2
-
-   // Block2: blocks(0)
-   // if (index < 0) goto Block5;
-   ifjump(TR::ificmplt, indexParameter(), iconst(0), 3);
-
-   // Block3: blocks(1)
-   // if (index >= 100) goto Block5;
-   ifjump(TR::ificmpge, indexParameter(), iconst(test->dataArraySize()), 3);
-
-   // Block4: blocks(2)
-   // return dataArray[index];
-   returnValue(arrayLoad(staticAddress(test->dataArray()), indexParameter(), Int32));
-
-   // Block5: blocks(3)
-   // return -1;
-   generateToBlock(3);
-   returnValue(iconst(-1));
-
-   return true;
-   }
+   bool injectIL();
+   };
 
 } // namespace TestCompiler
+
+#endif // !defined(TEST_BINARYOPILINJECTOR_INCL)

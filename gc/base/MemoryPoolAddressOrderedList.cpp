@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,8 +90,10 @@ MM_MemoryPoolAddressOrderedList::initialize(MM_EnvironmentBase *env)
 	_referenceHeapFreeList = &_heapFreeList;
 
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
+	/* this memoryPool can be used by scavenger, maximum tlh size should be max(_extensions->tlhMaximumSize, _extensions->scavengerScanCacheMaximumSize) */
+	uintptr_t tlhMaximumSize = OMR_MAX(_extensions->tlhMaximumSize, _extensions->scavengerScanCacheMaximumSize);
 	_largeObjectAllocateStats = MM_LargeObjectAllocateStats::newInstance(env, (uint16_t)ext->largeObjectAllocationProfilingTopK, ext->largeObjectAllocationProfilingThreshold, ext->largeObjectAllocationProfilingVeryLargeObjectThreshold, (float)ext->largeObjectAllocationProfilingSizeClassRatio / (float)100.0,
-			_extensions->heap->getMaximumMemorySize(), _extensions->tlhMaximumSize + _minimumFreeEntrySize, _extensions->tlhMinimumSize);
+			_extensions->heap->getMaximumMemorySize(), tlhMaximumSize + _minimumFreeEntrySize, _extensions->tlhMinimumSize);
 #else
 	_largeObjectAllocateStats = MM_LargeObjectAllocateStats::newInstance(env, (uint16_t)ext->largeObjectAllocationProfilingTopK, ext->largeObjectAllocationProfilingThreshold, ext->largeObjectAllocationProfilingVeryLargeObjectThreshold, (float)ext->largeObjectAllocationProfilingSizeClassRatio / (float)100.0,
 			_extensions->heap->getMaximumMemorySize(), 0, 0);
@@ -706,6 +708,7 @@ MM_MemoryPoolAddressOrderedList::reset(Cause cause)
 	clearHints();
 	_heapFreeList = (MM_HeapLinkedFreeHeader *)NULL;
 
+	_lastFreeEntry = NULL;
 	resetFreeEntryAllocateStats(_largeObjectAllocateStats);
 	resetLargeObjectAllocateStats();
 }

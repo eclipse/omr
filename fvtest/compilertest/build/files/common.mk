@@ -187,7 +187,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/codegen/OMRLinkage.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/LiveRegister.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/OutOfLineCodeSection.cpp \
-    $(JIT_OMR_DIRTY_DIR)/codegen/OMRRegisterDependency.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/Relocation.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/ScratchRegisterManager.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/StorageInfo.cpp \
@@ -210,20 +209,21 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
 
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    $(JIT_PRODUCT_DIR)/ilgen/BinaryOpIlInjector.cpp \
-    $(JIT_PRODUCT_DIR)/ilgen/ChildlessUnaryOpIlInjector.cpp \
-    $(JIT_PRODUCT_DIR)/ilgen/CmpBranchOpIlInjector.cpp \
-    $(JIT_PRODUCT_DIR)/ilgen/OpIlInjector.cpp \
-    $(JIT_PRODUCT_DIR)/ilgen/StoreOpIlInjector.cpp \
-    $(JIT_PRODUCT_DIR)/ilgen/TernaryOpIlInjector.cpp \
-    $(JIT_PRODUCT_DIR)/ilgen/UnaryOpIlInjector.cpp \
-    $(JIT_PRODUCT_DIR)/tests/BarIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/BinaryOpIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/ChildlessUnaryOpIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/CmpBranchOpIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/OpIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/StoreOpIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/TernaryOpIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/UnaryOpIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/BarIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/CallIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/IndirectLoadIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/IndirectStoreIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/FooIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/Qux2IlInjector.cpp \
     $(JIT_PRODUCT_DIR)/tests/BuilderTest.cpp \
-    $(JIT_PRODUCT_DIR)/tests/CallIlInjector.cpp \
-    $(JIT_PRODUCT_DIR)/tests/IndirectLoadIlInjector.cpp \
-    $(JIT_PRODUCT_DIR)/tests/IndirectStoreIlInjector.cpp \
     $(JIT_PRODUCT_DIR)/tests/FooBarTest.cpp \
-    $(JIT_PRODUCT_DIR)/tests/FooIlInjector.cpp \
     $(JIT_PRODUCT_DIR)/tests/LimitFileTest.cpp \
     $(JIT_PRODUCT_DIR)/tests/LogFileTest.cpp \
     $(JIT_PRODUCT_DIR)/tests/OMRTestEnv.cpp \
@@ -231,7 +231,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     $(JIT_PRODUCT_DIR)/tests/OpCodesTest.cpp \
     $(JIT_PRODUCT_DIR)/tests/PPCOpCodesTest.cpp \
     $(JIT_PRODUCT_DIR)/tests/Qux2Test.cpp \
-    $(JIT_PRODUCT_DIR)/tests/Qux2IlInjector.cpp \
     $(JIT_PRODUCT_DIR)/tests/SimplifierFoldAndTest.cpp \
     $(JIT_PRODUCT_DIR)/tests/S390OpCodesTest.cpp \
     $(JIT_PRODUCT_DIR)/tests/OptTestDriver.cpp \

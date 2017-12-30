@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1852,10 +1852,6 @@ static void registerExchange(TR::Instruction     *precedingInstruction,
 bool OMR::Power::Machine::setLinkRegisterKilled(bool b)
    {
    TR_ASSERT(_cg->getCurrentEvaluationBlock(), "No current block info\n");
-
-   if (_cg->specializedEpilogues())
-      _cg->getBlocksThatModifyRegister(TR::RealRegister::lr)->set(_cg->getCurrentBlockIndex());
-
    return _registerFile[TR::RealRegister::lr]->setHasBeenAssignedInMethod(b);
    }
 

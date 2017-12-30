@@ -43,6 +43,27 @@ struct BinaryOpParamStruct {
         Ret (*oracle)(Left, Right);
 };
 
+// C++11 upgrade (Issue #1916).
+template <typename Ret, typename T>
+struct UnaryOpParamStruct {
+        T value;
+        std::string opcode;
+        Ret (*oracle)(T);
+};
+
+
+/**
+ * @brief Given an instance of UnaryOpParamType, returns an equivalent instance
+ *    of UnaryOpParamStruct
+ */
+template <typename Ret, typename T>
+UnaryOpParamStruct<Ret, T> to_struct(std::tuple<T , std::tuple<std::string, Ret (*)(T)>> param) {
+    UnaryOpParamStruct<Ret, T> s;
+    s.value  = std::get<0>(param);
+    s.opcode = std::get<0>(std::get<1>(param));
+    s.oracle = std::get<1>(std::get<1>(param));
+    return s;
+}
 /**
  * @brief Given an instance of BinaryOpParamType, returns an equivalent instance
  *    of BinaryOpParamStruct
@@ -64,6 +85,10 @@ class OpCodeTest : public JitTest, public ::testing::WithParamInterface< std::tu
 
 template <typename T>
 class BinaryOpTest : public JitTest, public ::testing::WithParamInterface< std::tuple< std::tuple<T,T>, std::tuple<std::string, T (*)(T,T)>> > {};
+
+template <typename T>
+class UnaryOpTest : public JitTest, public ::testing::WithParamInterface< std::tuple< T , std::tuple<std::string, T (*)(T)>> > {};
+
 
 } // namespace CompTest
 

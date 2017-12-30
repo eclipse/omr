@@ -398,17 +398,3 @@ TR_FrontEnd::indexedTrampolineLookup(int32_t helperIndex, void * callSite)
    notImplemented("indexedTrampolineLookup");
    return 0;
    }
-
-bool
-TR_FrontEnd::needsMethodTrampolines()
-   {
-   notImplemented("needsMethodTrampolines");
-   return 0;
-   }
-
-
-void
-TR_FrontEnd::reserveNTrampolines(TR::Compilation *, int32_t n, bool inBinaryEncoding)
-   {
-   notImplemented("reserveNTrampolines");
-   }

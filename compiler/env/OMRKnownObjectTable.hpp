@@ -36,6 +36,7 @@ namespace OMR { typedef OMR::KnownObjectTable KnownObjectTableConnector; }
 #include "env/FilePointerDecl.hpp"  // for FILE
 #include "env/jittypes.h"           // for uintptrj_t
 #include "infra/Annotations.hpp"    // for OMR_EXTENSIBLE
+#include "infra/BitVector.hpp"                 // for TR_BitVector
 
 class TR_FrontEnd;
 namespace TR { class Compilation; }
@@ -58,6 +59,7 @@ protected:
 
    KnownObjectTable(TR::Compilation *comp);
    TR::Compilation *_comp;
+   TR_BitVector* _arrayWithConstantElements;
 
 public:
 
@@ -74,6 +76,7 @@ public:
 
    virtual Index getEndIndex();                      // Highest index assigned so far + 1
    virtual Index getIndex(uintptrj_t objectPointer); // Must hold vm access for this
+   Index getIndex(uintptrj_t objectPointer, bool isArrayWithConstantElements); // Must hold vm access for this
    virtual uintptrj_t *getPointerLocation(Index index);
    virtual bool isNull(Index index);
 
@@ -81,11 +84,18 @@ public:
 
    // Handy wrappers
 
+   // API for checking if an known object is an array with immutable elements
+   bool isArrayWithConstantElements(Index index);
+
    Index getIndexAt(uintptrj_t *objectReferenceLocation);
+   Index getIndexAt(uintptrj_t *objectReferenceLocation, bool isArrayWithConstantElements);
    Index getExistingIndexAt(uintptrj_t *objectReferenceLocation);
 
    uintptrj_t getPointer(Index index);
    uintptrj_t *getfPointerLocationAt(uintptrj_t *objectReferenceLocation);
+
+protected:
+   void addArrayWithConstantElements(Index index);
 
    };
 }

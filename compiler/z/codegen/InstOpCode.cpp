@@ -63,8 +63,6 @@ OMR::Z::InstOpCode::isAdmin()
            _mnemonic == PROC ||
            _mnemonic == DC ||
            _mnemonic == DC2 ||
-           _mnemonic == LOCK ||
-           _mnemonic == UNLOCK ||
            _mnemonic == ASM ||
            _mnemonic == DS ||
            _mnemonic == DCB);

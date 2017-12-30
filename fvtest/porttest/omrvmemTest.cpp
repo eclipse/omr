@@ -1884,6 +1884,8 @@ TEST(PortVmemTest, vmem_test_reserveExecutableMemory)
 #if defined(AIXPPC)
 
 			*((unsigned int *)memPtr) = (unsigned int)0x4e800020; /* blr instruction (equivalent to RET on x86)*/
+			__lwsync();
+			__isync();
 
 			struct fDesc {
 				uintptr_t func_addr;

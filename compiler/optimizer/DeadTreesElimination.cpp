@@ -199,43 +199,27 @@ bool collectSymbolReferencesInNode(TR::Node *node,
    return true;
    }
 
-// TODO: Path retrieval is not implemented, but is trivial, making this O(N)
-static int32_t getLongestPathOfDAG(TR::Node *entry, TR::Compilation *cm)
+typedef std::pair<TR::Node* const, int32_t> LPEntry;
+typedef TR::typed_allocator<LPEntry, TR::Region&> LPAlloc;
+typedef std::map<TR::Node*, int32_t, std::less<TR::Node*>, LPAlloc> LongestPathMap;
+
+static int32_t getLongestPathOfDAG(TR::Node *node, LongestPathMap &memo)
    {
-   TR::StackMemoryRegion stackMemoryRegion(*cm->trMemory());
-   TR::deque<TR::Node *, TR::Region&> queue(stackMemoryRegion);
-   typedef TR::typed_allocator<std::pair<TR::Node * const, int32_t>, TR::Region&> LongestPathAllocator;
-   typedef std::less<TR::Node *> LongestPathComparator;
-   typedef std::map<TR::Node *, int32_t, LongestPathComparator, LongestPathAllocator> LongestPathMap;
-   LongestPathMap longestPathLens((LongestPathComparator()), stackMemoryRegion);
-   longestPathLens[entry] = 0;
-   queue.push_back(entry);
+   if (node->getNumChildren() == 0)
+      return 0;
+
+   auto ins = memo.insert(std::make_pair(node, 0));
+   int32_t &value = ins.first->second;
+   bool fresh = ins.second;
+   if (!fresh)
+      return value;
+
    int32_t maxLen = 0;
-   while (!queue.empty())
-      {
-      TR::Node *node = queue.front();
-      queue.pop_front();
-      auto prevLongestPathLen = longestPathLens[node];
-      if (node->getNumChildren() == 0)
-         {
-         if (prevLongestPathLen > maxLen)
-            maxLen = prevLongestPathLen;
-         }
-      for (int i = 0; i < node->getNumChildren(); ++i)
-         {
-         TR::Node *child = node->getChild(i);
-         if (longestPathLens.find(child) == longestPathLens.end())
-            longestPathLens[child] = 0;
-         
-         // if new longest path is found, update and push child
-         if (prevLongestPathLen + 1 > longestPathLens[child])
-            {
-            longestPathLens[child] = prevLongestPathLen + 1;
-            queue.push_back(child);
-            }
-         }
-      }
-   return maxLen;
+   for (int i = 0; i < node->getNumChildren(); i++)
+      maxLen = std::max(maxLen, getLongestPathOfDAG(node->getChild(i), memo));
+
+   value = maxLen + 1;
+   return value;
    }
 
 static bool containsNode(TR::Node *containerNode, TR::Node *node, vcount_t visitCount, TR::Compilation *comp, int32_t *height, int32_t *maxHeight, bool &canMoveIfVolatile)
@@ -268,7 +252,8 @@ static bool containsNode(TR::Node *containerNode, TR::Node *node, vcount_t visit
 #define MAX_ALLOWED_HEIGHT 50
 
 static bool isSafeToReplaceNode(TR::Node *currentNode, TR::TreeTop *curTreeTop, bool *seenConditionalBranch,
-      vcount_t visitCount, TR::Compilation *comp, List<OMR::TreeInfo> *targetTrees, bool &cannotBeEliminated)
+      vcount_t visitCount, TR::Compilation *comp, List<OMR::TreeInfo> *targetTrees, bool &cannotBeEliminated,
+      LongestPathMap &longestPaths)
    {
    LexicalTimer tx("safeToReplace", comp->phaseTimer());
 
@@ -282,7 +267,7 @@ static bool isSafeToReplaceNode(TR::Node *currentNode, TR::TreeTop *curTreeTop, 
    bool cantMoveUnderBranch = false;
    bool seenInternalPointer = false;
    bool seenArraylet = false;
-   int32_t curMaxHeight = getLongestPathOfDAG(currentNode, comp);
+   int32_t curMaxHeight = getLongestPathOfDAG(currentNode, longestPaths);
    collectSymbolReferencesInNode(currentNode, symbolReferencesInNode, &numDeadSubNodes, visitCount, comp,
          &seenInternalPointer, &seenArraylet, &cantMoveUnderBranch);
 
@@ -608,6 +593,9 @@ void TR::DeadTreesElimination::prePerformOnBlocks()
 
 int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *endTree)
    {
+   TR::StackMemoryRegion stackRegion(*comp()->trMemory());
+   LongestPathMap longestPaths(std::less<TR::Node*>(), stackRegion);
+
    vcount_t visitCount = comp()->incOrResetVisitCount();
    TR::TreeTop *treeTop;
    for (treeTop = startTree; (treeTop != endTree); treeTop = treeTop->getNextTreeTop())
@@ -623,7 +611,11 @@ int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *e
       TR::Node *node = iter.currentTree()->getNode();
 
       if (node->getOpCodeValue() == TR::BBStart)
+         {
          block = node->getBlock();
+         if (!block->isExtensionOfPreviousBlock())
+            longestPaths.clear();
+         }
 
       int vcountLimit = MAX_VCOUNT - 3;
       if (comp()->getVisitCount() > vcountLimit)
@@ -723,7 +715,17 @@ int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *e
                   treeTopCanBeEliminated = true;
                }
             else if (!_cannotBeEliminated)
-               safeToReplaceNode = isSafeToReplaceNode(child, iter.currentTree(), &seenConditionalBranch, visitCount, comp(), &_targetTrees, _cannotBeEliminated);
+               {
+               safeToReplaceNode = isSafeToReplaceNode(
+                  child,
+                  iter.currentTree(),
+                  &seenConditionalBranch,
+                  visitCount,
+                  comp(),
+                  &_targetTrees,
+                  _cannotBeEliminated,
+                  longestPaths);
+               }
 
             if (safeToReplaceNode)
                {

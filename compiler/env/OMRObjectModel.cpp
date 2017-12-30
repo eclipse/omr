@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,6 +76,48 @@ int64_t
 OMR::ObjectModel::maxArraySizeInElements(int32_t knownMinElementSize, TR::Compilation *comp)
    {
    return LONG_MAX;
+   }
+
+bool
+OMR::ObjectModel::isDiscontiguousArray(TR::Compilation* comp, uintptrj_t objectPointer)
+   {
+   notImplemented("isDiscontiguousArray");
+   return false;
+   }
+
+intptrj_t
+OMR::ObjectModel::getArrayLengthInElements(TR::Compilation* comp, uintptrj_t objectPointer)
+   {
+   notImplemented("getArrayLengthInElements");
+   return 0;
+   }
+
+uintptrj_t
+OMR::ObjectModel::getArrayLengthInBytes(TR::Compilation* comp, uintptrj_t objectPointer)
+   {
+   notImplemented("getArrayLengthInBytes");
+   return 0;
+   }
+
+uintptrj_t
+OMR::ObjectModel::getArrayElementWidthInBytes(TR::DataType type)
+   {
+   notImplemented("getArrayElementWidthInBytes");
+   return 0;
+   }
+
+uintptrj_t
+OMR::ObjectModel::getArrayElementWidthInBytes(TR::Compilation* comp, uintptrj_t objectPointer)
+   {
+   notImplemented("getArrayElementWidthInBytes");
+   return 0;
+   }
+
+uintptrj_t
+OMR::ObjectModel::decompressReference(TR::Compilation* comp, uintptrj_t compressedReference)
+   {
+   notImplemented("decompressReference");
+   return 0;
    }
 
 int32_t

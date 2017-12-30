@@ -31,7 +31,6 @@ compiler_library(codegen
 	${CMAKE_CURRENT_SOURCE_DIR}/OMRLinkage.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/LiveRegister.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/OutOfLineCodeSection.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/OMRRegisterDependency.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Relocation.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ScratchRegisterManager.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/StorageInfo.cpp

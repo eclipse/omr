@@ -413,6 +413,51 @@ OMR::SymbolReferenceTable::findOrCreateArrayShadowSymbolRef(TR::DataType type, T
 
    }
 
+bool OMR::SymbolReferenceTable::isImmutableArrayShadow(TR::SymbolReference *symRef)
+   {
+   int32_t index = symRef->getReferenceNumber();
+   return aliasBuilder.immutableArrayElementSymRefs().isSet(index);
+   }
+
+/**
+ * \brief
+ *    Find or create a SymbolReference for access to array with given element type
+ * \parm
+ *    elementType The element type of the array
+ *
+ * \return
+ *    A symbol reference for the ImmutableArrayShadow
+ */
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateImmutableArrayShadowSymbolRef(TR::DataType elementType)
+   {
+   TR_BitVectorIterator bvi(aliasBuilder.immutableArrayElementSymRefs());
+   while (bvi.hasMoreElements())
+      {
+      TR::SymbolReference *symRef = getSymRef(bvi.getNextElement());
+      // A immutable array shadow with known object index is for array shadow from a known array,
+      // and thus cannot be shared with other array shadows
+      if (symRef->getSymbol()->getDataType() == elementType && !symRef->hasKnownObjectIndex())
+         return symRef;
+      }
+
+   // Instead of creating a regular array shadow and waiting for VP to improve it to ImmutableArrayShadow,
+   // there are occassions we want to create one directly, e.g. when we're generating array shadow for a
+   // constant array with constant element. In this case, a regular array shadow might not exist
+   TR::SymbolReference * symRef = findOrCreateArrayShadowSymbolRef(elementType);
+   symRef->setReallySharesSymbol();
+
+   TR::SymbolReference *newRef = new (trHeapMemory()) TR::SymbolReference(self(), (TR::Symbol *) symRef->getSymbol());
+   newRef->setReallySharesSymbol();
+   newRef->setCPIndex(-1);
+
+   int32_t index = newRef->getReferenceNumber();
+   aliasBuilder.arrayElementSymRefs().set(index); // this ensures the newly created shadow can still be aliased to all other array shadows
+   aliasBuilder.immutableArrayElementSymRefs().set(index);
+
+   return newRef;
+   }
+
 bool OMR::SymbolReferenceTable::isRefinedArrayShadow(TR::SymbolReference *symRef)
    {
    int32_t index = symRef->getReferenceNumber();
@@ -925,11 +970,17 @@ OMR::SymbolReferenceTable::methodSymRefFromName(TR::ResolvedMethodSymbol * ownin
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, uintptrj_t *referenceLocation)
    {
+   return findOrCreateSymRefWithKnownObject(original, referenceLocation, false);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, uintptrj_t *referenceLocation, bool isArrayWithConstantElements)
+   {
    TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
    if (!knot)
       return original;
 
-   TR::KnownObjectTable::Index objectIndex = knot->getIndexAt(referenceLocation);
+   TR::KnownObjectTable::Index objectIndex = knot->getIndexAt(referenceLocation, isArrayWithConstantElements);
    return findOrCreateSymRefWithKnownObject(original, objectIndex);
    }
 
@@ -938,7 +989,10 @@ OMR::SymbolReferenceTable::findOrCreateSymRefWithKnownObject(TR::SymbolReference
    {
    TR_BitVector *bucket = _knownObjectSymrefsByObjectIndex[objectIndex];
    if (!bucket)
+      {
       bucket = new (trHeapMemory()) TR_BitVector(baseArray.size(), trMemory(), heapAlloc, growable, TR_MemoryBase::SymbolReference);
+      _knownObjectSymrefsByObjectIndex[objectIndex] = bucket;
+      }
 
    TR_BitVectorIterator bvi(*bucket);
    while (bvi.hasMoreElements())
@@ -951,6 +1005,17 @@ OMR::SymbolReferenceTable::findOrCreateSymRefWithKnownObject(TR::SymbolReference
    // Need a new one
    TR::SymbolReference *result = new (trHeapMemory()) TR::SymbolReference(self(), *original, 0, objectIndex);
    bucket->set(result->getReferenceNumber());
+
+   // If the known object symref is created for an immutable array shadow, it should be aliased to other array shadows as well
+   // Put the symRef in arrayElementSymRefs so that its alias set can be built correctly
+   if (isImmutableArrayShadow(original))
+      {
+      result->setReallySharesSymbol();
+      int32_t index = result->getReferenceNumber();
+      aliasBuilder.arrayElementSymRefs().set(index);
+      aliasBuilder.immutableArrayElementSymRefs().set(index);
+      }
+
    return result;
    }
 
