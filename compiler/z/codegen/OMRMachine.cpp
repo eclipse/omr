@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -7389,9 +7389,9 @@ OMR::Z::Machine::createRegisterAssociationDirective(TR::Instruction * cursor)
 
    TR::Instruction *cursor1 = new (_cg->trHeapMemory(), TR_MemoryBase::S390Instruction) TR::Instruction(cursor, TR::InstOpCode::ASSOCREGS, associations, self()->cg());
 
-   if (cursor == comp->getAppendInstruction())
+   if (cursor == _cg->getAppendInstruction())
       {
-      comp->setAppendInstruction(cursor->getNext());
+      _cg->setAppendInstruction(cursor->getNext());
       }
    }
 

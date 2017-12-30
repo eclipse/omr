@@ -1287,7 +1287,7 @@ TR_Debug::printWithFixedPrefix(TR::FILE *pOutFile, TR::Node * node, uint32_t ind
 #endif
          //  trfprintf(pOutFile, " at n%d", node->getGlobalIndex());
          }
-      if (_comp->getAppendInstruction() != NULL && node->getDataType() != TR::NoType && node->getRegister() != NULL)
+      if (_comp->cg()->getAppendInstruction() != NULL && node->getDataType() != TR::NoType && node->getRegister() != NULL)
          {
          output.append(" (in %s)", getName(node->getRegister()));
          _comp->incrNodeOpCodeLength( output.getLength() );
@@ -1312,7 +1312,7 @@ TR_Debug::printWithFixedPrefix(TR::FILE *pOutFile, TR::Node * node, uint32_t ind
    int32_t i;
 
    printNodeInfo(pOutFile, node);
-   if (_comp->getAppendInstruction() != NULL && node->getDataType() != TR::NoType && node->getRegister() != NULL)
+   if (_comp->cg()->getAppendInstruction() != NULL && node->getDataType() != TR::NoType && node->getRegister() != NULL)
       {
       output.append(" (in %s)", getName(node->getRegister()));
       _comp->incrNodeOpCodeLength( output.getLength() );

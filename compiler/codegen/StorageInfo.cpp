@@ -134,11 +134,6 @@ TR_StorageInfo::populateAddress(TR::Node *address)
             // the base address of the static area has been cached in _symRef and is being loaded here with an aload
             _class = TR_StaticBaseAddress;
             }
-         else if (comp()->cg()->getLinkage()->isAddressOfPrivateStaticSymRef(_symRef))
-            {
-            // the base address of the private static area has been cached in _symRef and is being loaded here with an aload
-            _class = TR_PrivateStaticBaseAddress;
-            }
          }
       }
    }

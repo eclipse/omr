@@ -444,6 +444,9 @@ int32_t TR_CopyPropagation::perform()
          }
       }
 
+   // Pre-compute and cache usedef information for compile time performance
+   useDefInfo->buildDefUseInfo();
+
    // Required beyond the scope of the stack memory region
    bool donePropagation = false;
 

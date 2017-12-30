@@ -547,8 +547,7 @@ OMR::Z::CodeGenerator::CodeGenerator()
      _ccInstruction(NULL),
      _previouslyAssignedTo(self()->comp()->allocator("LocalRA")),
      _bucketPlusIndexRegisters(self()->comp()->allocator()),
-     _currentDEPEND(NULL),
-     _outgoingArgLevelDuringTreeEvaluation(0)
+     _currentDEPEND(NULL)
    {
    TR::Compilation *comp = self()->comp();
    _cgFlags = 0;
@@ -851,24 +850,6 @@ OMR::Z::CodeGenerator::getGlobalGPRFromHPR (TR_GlobalRegisterNumber n)
    TR::RealRegister *gpr = hpr->getLowWordRegister();
    //traceMsg(comp(), "gpr = %s\n", getDebug()->getName(gpr));
    return self()->machine()->getGlobalReg(gpr->getRegisterNumber());
-   }
-
-void
-OMR::Z::CodeGenerator::setupSpecializedEpilogues()
-   {
-
-   if (self()->specializedEpilogues())
-      {
-      int32_t numRegs = TR::RealRegister::NumRegisters;
-
-      _blocksThatModifyRegister = (TR_BitVector **)self()->trMemory()->allocateHeapMemory(numRegs*sizeof(TR_BitVector *), TR_Memory::CodeGenerator);
-
-      int32_t reg;
-      TR_ASSERT(self()->comp()->getFlowGraph(),"TR::CodeGenerator - %s needs a flow graph\n", self()->comp()->signature());
-      for (reg = 0; reg < numRegs; reg++)
-         _blocksThatModifyRegister[reg] = new (self()->trHeapMemory()) TR_BitVector(self()->comp()->getFlowGraph()->getNextNodeNumber(), self()->trMemory(), heapAlloc, growable);
-
-      }
    }
 
 bool OMR::Z::CodeGenerator::isStackBased(TR::MemoryReference *mr)
@@ -1473,18 +1454,11 @@ OMR::Z::CodeGenerator::endInstructionSelection()
 void
 OMR::Z::CodeGenerator::doInstructionSelection()
    {
-
-   _outgoingArgLevelDuringTreeEvaluation = self()->getLinkage()->getNumberOfAllocatedOutgoingArgumentAreas();
-
-   self()->setDoingInstructionSelection(true);
    OMR::CodeGenerator::doInstructionSelection();
-   self()->setDoingInstructionSelection(false);
-
    if (_returnTypeInfoInstruction != NULL)
       {
       _returnTypeInfoInstruction->setSourceImmediate(static_cast<uint32_t>(self()->comp()->getReturnInfo()));
       }
-
    }
 
 bool
@@ -2684,7 +2658,7 @@ OMR::Z::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
    // assign GPRs and FGPRs in backwards direction
    self()->setAssignmentDirection(Backward);
 
-   TR::Instruction * instructionCursor = self()->comp()->getAppendInstruction();
+   TR::Instruction * instructionCursor = self()->getAppendInstruction();
    int32_t instCount = 0;
    TR::Block *currBlock = NULL;
    TR::Instruction * currBBEndInstr = instructionCursor;
@@ -3004,6 +2978,14 @@ TR::Instruction* realInstructionWithLabelsAndRET(TR::Instruction* inst, bool for
       }
 
    return inst;
+   }
+
+TR_S390Peephole::TR_S390Peephole(TR::Compilation* comp, TR::CodeGenerator *cg)
+   : _fe(comp->fe()),
+     _outFile(comp->getOutFile()),
+     _cursor(cg->getFirstInstruction()),
+     _cg(cg)
+   {
    }
 
 bool
@@ -5288,10 +5270,8 @@ TR_S390Peephole::attemptZ7distinctOperants()
 
 void
 TR_S390Peephole::markBlockThatModifiesRegister(TR::Instruction * cursor,
-                                               TR::Register * targetReg, int32_t blockNum)
+                                               TR::Register * targetReg)
    {
-   bool specializedEpilogues = _cg->specializedEpilogues();
-
    // some stores use targetReg as part of source
    if (targetReg && !cursor->isStore() && !cursor->isCompare())
       {
@@ -5309,17 +5289,8 @@ TR_S390Peephole::markBlockThatModifiesRegister(TR::Instruction * cursor,
                for (uint8_t i=highReg->getRegisterNumber()+1; i++; i<= numRegs)
                   {
                   _cg->getS390Linkage()->getS390RealRegister(REGNUM(i))->setModified(true);
-                  if (specializedEpilogues)
-                     {
-                     _cg->markBlockThatModifiesRegister(REGNUM(i), blockNum);
-                     }
                   }
                }
-            }
-         if (specializedEpilogues)
-            {
-            _cg->markBlockThatModifiesRegister(lowReg->getRegisterNumber(), blockNum);
-            _cg->markBlockThatModifiesRegister(highReg->getRegisterNumber(), blockNum);
             }
          }
       else
@@ -5327,10 +5298,6 @@ TR_S390Peephole::markBlockThatModifiesRegister(TR::Instruction * cursor,
          // some stores use targetReg as part of source
          TR::RealRegister * rReg = toRealRegister(targetReg);
          rReg->setModified(true);
-         if (specializedEpilogues)
-            {
-            _cg->markBlockThatModifiesRegister(rReg->getRegisterNumber(), blockNum);
-            }
          }
       }
    }
@@ -5355,31 +5322,6 @@ TR_S390Peephole::reloadLiteralPoolRegisterForCatchBlock()
          TR::S390RILInstruction * inst = (TR::S390RILInstruction *) generateRILInstruction(_cg, TR::InstOpCode::LARL, _cursor->getNode(), _cg->getLitPoolRealRegister(), reinterpret_cast<void*>(0xBABE), _cursor);
          inst->setIsLiteralPoolAddress();
          }
-      }
-   }
-
-void TR_S390Peephole::setupSpecializedEpilogues()
-   {
-   _cg->setSpecializedEpilogues(comp()->getOption(TR_EnableSpecializedEpilogues) &&
-                                  comp()->getMethodHotness() > noOpt);
-
-   if (!(TR::Optimizer *)comp()->getOptimizer())
-      _cg->setSpecializedEpilogues(false);
-
-   // disable specialized epilogues when shrinkwrapping
-   // is enabled
-   if (!comp()->getOption(TR_DisableShrinkWrapping))
-      _cg->setSpecializedEpilogues(false);
-
-   if (_cg->specializedEpilogues())
-      {
-      TR_ASSERT((TR::Optimizer *)comp()->getOptimizer(), "No optimizer\n");
-      _cg->setupSpecializedEpilogues();
-
-      if (!comp()->getFlowGraph()->getStructure())
-         ((TR::Optimizer *)comp()->getOptimizer())->doStructuralAnalysis();
-
-      _cg->performReachingBlocks();
       }
    }
 
@@ -5442,13 +5384,6 @@ TR_S390Peephole::perform()
    if (comp()->getOption(TR_TraceCG))
       printInfo("\nPost Peephole Optimization Instructions:\n");
 
-   // following vars for specialized epilog analysis
-   int32_t curBlockNum = -1;
-   bool    catchBlock  = false;
-
-   setupSpecializedEpilogues();
-   bool processedCatchBlock = false;
-   bool specializedEpilogues = _cg->specializedEpilogues();
    bool moveInstr;
 
    if (_cg->getCurrentlyRestrictedRegisters()) _cg->getCurrentlyRestrictedRegisters()->empty();
@@ -5463,46 +5398,7 @@ TR_S390Peephole::perform()
             reloadLiteralPoolRegisterForCatchBlock();
          }
 
-      bool deferMarkingRegsUntilAfterTailCall = false;
-      if (specializedEpilogues)
-         {
-         // curBlockNum = _cursor->getBlockIndex();
-         curBlockNum = comp()->getCurrentBlock()->getNumber();
-         if (_cursor->getNode()->getOpCodeValue() == TR::BBStart)
-            {
-            if (_cursor->getNode()->getBlock()->isCatchBlock())
-               {
-               catchBlock = true;
-               processedCatchBlock = false;
-               }
-            else
-               {
-               catchBlock = false;
-               }
-            }
-         else if (_cursor->getNode()->getOpCodeValue() == TR::BBEnd)
-            {
-            catchBlock = false; //reset for next block
-            }
-
-         TR_ASSERT(curBlockNum > 0, "Instruction %p without valid block index\n", _cursor);
-
-         // prepare block indices for epilogue in linkage code
-         if (_cursor->getOpCodeValue() == TR::InstOpCode::RET)
-            {
-            _cursor->setBlockIndex(curBlockNum);
-            }
-
-         if (comp()->getOption(TR_EnableTailCallOpt) &&
-             !catchBlock &&
-             (_cursor->getOpCodeValue() == TR::InstOpCode::BRASL ||
-              _cursor->getOpCodeValue() == TR::InstOpCode::BRAS ||
-              _cursor->getOpCodeValue() == TR::InstOpCode::BASR))
-            deferMarkingRegsUntilAfterTailCall = true;
-         }
-
-      if (!deferMarkingRegsUntilAfterTailCall &&
-          _cursor->getOpCodeValue() != TR::InstOpCode::FENCE &&
+      if (_cursor->getOpCodeValue() != TR::InstOpCode::FENCE &&
           _cursor->getOpCodeValue() != TR::InstOpCode::ASSOCREGS &&
           _cursor->getOpCodeValue() != TR::InstOpCode::DEPEND)
          {
@@ -5510,17 +5406,12 @@ TR_S390Peephole::perform()
          bool depCase = (_cursor->isBranchOp() || _cursor->isLabel()) && deps;
          if (depCase)
             {
-            _cg->getS390Linkage()->markPreservedRegsInDep(deps, curBlockNum);
-            }
-         if (catchBlock && !processedCatchBlock)
-            {
-            _cg->getS390Linkage()->markPreservedRegsInBlock(curBlockNum);
-            processedCatchBlock = true;
+            _cg->getS390Linkage()->markPreservedRegsInDep(deps);
             }
 
          //handle all other regs
          TR::Register *reg = _cursor->getRegisterOperand(1);
-         markBlockThatModifiesRegister(_cursor, reg, curBlockNum);
+         markBlockThatModifiesRegister(_cursor, reg);
          }
 
       // this code is used to handle all compare instruction which sets the compare flag
@@ -5541,18 +5432,6 @@ TR_S390Peephole::perform()
       moveInstr = true;
       switch (_cursor->getOpCodeValue())
          {
-         case TR::InstOpCode::LOCK:
-            {
-            int32_t regNum = ((TR::S390PseudoInstruction *)_cursor)->getLockedRegisterNumber();
-            if (_cg->getCurrentlyRestrictedRegisters()) _cg->getCurrentlyRestrictedRegisters()->set(regNum);
-            break;
-            }
-         case TR::InstOpCode::UNLOCK:
-            {
-            int32_t regNum = ((TR::S390PseudoInstruction *)_cursor)->getLockedRegisterNumber();
-            if (_cg->getCurrentlyRestrictedRegisters()) _cg->getCurrentlyRestrictedRegisters()->reset(regNum);
-            break;
-            }
          case TR::InstOpCode::AP:
          case TR::InstOpCode::SP:
          case TR::InstOpCode::MP:
@@ -5977,9 +5856,9 @@ OMR::Z::CodeGenerator::deleteInst(TR::Instruction* old)
       }
 
    // Update the append instruction if we are deleting the last instruction in the stream
-   if (self()->comp()->getAppendInstruction() == old)
+   if (self()->getAppendInstruction() == old)
       {
-      self()->comp()->setAppendInstruction(prv);
+      self()->setAppendInstruction(prv);
       }
    }
 
@@ -6098,37 +5977,10 @@ OMR::Z::CodeGenerator::getPICsListForInterfaceSnippet(TR::S390ConstantDataSnippe
 
    }
 
-void
-OMR::Z::CodeGenerator::markBlockThatModifiesRegister(TR::RealRegister::RegNum reg, int32_t blockNum)
-   {
-   self()->getBlocksThatModifyRegister(reg)->set(blockNum);
-   }
 
 ////////////////////////////////////////////////////////////////////////////////
 // OMR::Z::CodeGenerator::doBinaryEncoding
 ////////////////////////////////////////////////////////////////////////////////
-bool
-OMR::Z::CodeGenerator::restoreRegister(TR::RealRegister::RegNum reg, int32_t blockNumber)
-   {
-   bool test1 = _reachingBlocks->_blockAnalysisInfo[blockNumber]->intersects(*_blocksThatModifyRegister[reg]);
-   bool test2 = _blocksThatModifyRegister[reg]->get(blockNumber);
-   // traceMsg(comp(), "&&& Reaching BBs block=%d reg=%d\n", blockNumber, reg);
-   // _reachingBlocks->_blockAnalysisInfo[blockNumber]->print(comp());
-   // traceMsg(comp(), "\n&&& Modify BBs block=%d reg=%d\n", blockNumber, reg);
-   // _blocksThatModifyRegister[reg]->print(comp());
-   // traceMsg(comp(), "\n&&& specialized=%d test1=%d test2=%d\n", specializedEpilogues(), test1, test2);
-   if (self()->specializedEpilogues())
-      return test1 || test2;
-   else
-      return true;
-   }
-
-void
-OMR::Z::CodeGenerator::performReachingBlocks()
-   {
-   _reachingBlocks = new (self()->comp()->allocator()) TR_ReachingBlocks(self()->comp(), (TR::Optimizer *)self()->comp()->getOptimizer());
-   _reachingBlocks->perform();
-   }
 
 /**
  * Step through the list of snippets looking for any that are not data constants
@@ -6221,7 +6073,7 @@ OMR::Z::CodeGenerator::doBinaryEncoding()
    TR::Recompilation * recomp = self()->comp()->getRecompilationInfo();
    bool isPrivateLinkage = (self()->comp()->getJittedMethodSymbol()->getLinkageConvention() == TR_Private);
 
-   TR::Instruction *instr = self()->comp()->getFirstInstruction();
+   TR::Instruction *instr = self()->getFirstInstruction();
 
    while (instr)
       {
@@ -6324,7 +6176,7 @@ OMR::Z::CodeGenerator::doBinaryEncoding()
 
    self()->setEstimatedCodeLength(data.estimate);
 
-   data.cursorInstruction = self()->comp()->getFirstInstruction();
+   data.cursorInstruction = self()->getFirstInstruction();
 
    uint8_t *coldCode = NULL;
    uint8_t *temp = self()->allocateCodeMemory(self()->getEstimatedCodeLength(), 0, &coldCode);
@@ -6498,7 +6350,7 @@ OMR::Z::CodeGenerator::doBinaryEncoding()
       TR::SimpleRegex * regex =  self()->comp()->getOptions()->getTraceForCodeMining();
       if (regex && TR::SimpleRegex::match(regex, "BBN"))
          {
-         data.cursorInstruction = self()->comp()->getFirstInstruction();
+         data.cursorInstruction = self()->getFirstInstruction();
          int32_t currentBlock = -1;
          int32_t currentBlockFreq = 0;
          while (data.cursorInstruction)
@@ -10744,9 +10596,6 @@ bool OMR::Z::CodeGenerator::nodeMayCauseException(TR::Node *node)
    {
    TR::ILOpCode op = node->getOpCode();
 
-   if (!node->cannotOverflow() && self()->fixedPointOverflowExceptionEnabled())
-      return true;
-
 #ifdef J9_PROJECT_SPECIFIC
    if (op.isBinaryCodedDecimalOp())
       {
@@ -11032,94 +10881,6 @@ OMR::Z::CodeGenerator::opCodeIsNoOpOnThisPlatform(TR::ILOpCode &opCode)
        !self()->comp()->useCompressedPointers())
       return true;
 
-   return false;
-   }
-
-bool
-OMR::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
-   {
-   if (self()->isMethodInAtomicLongGroup(method))
-      return true;
-
-#ifdef J9_PROJECT_SPECIFIC
-   if (!self()->comp()->compileRelocatableCode() && !self()->comp()->getOption(TR_DisableDFP) && TR::Compiler->target.cpu.getS390SupportsDFP())
-      {
-      if (method == TR::java_math_BigDecimal_DFPIntConstructor ||
-          method == TR::java_math_BigDecimal_DFPLongConstructor ||
-          method == TR::java_math_BigDecimal_DFPLongExpConstructor ||
-          method == TR::java_math_BigDecimal_DFPAdd ||
-          method == TR::java_math_BigDecimal_DFPSubtract ||
-          method == TR::java_math_BigDecimal_DFPMultiply ||
-          method == TR::java_math_BigDecimal_DFPDivide ||
-          method == TR::java_math_BigDecimal_DFPScaledAdd ||
-          method == TR::java_math_BigDecimal_DFPScaledSubtract ||
-          method == TR::java_math_BigDecimal_DFPScaledMultiply ||
-          method == TR::java_math_BigDecimal_DFPScaledDivide ||
-          method == TR::java_math_BigDecimal_DFPRound ||
-          method == TR::java_math_BigDecimal_DFPSetScale ||
-          method == TR::java_math_BigDecimal_DFPCompareTo ||
-          method == TR::java_math_BigDecimal_DFPSignificance ||
-          method == TR::java_math_BigDecimal_DFPExponent ||
-          method == TR::java_math_BigDecimal_DFPBCDDigits ||
-          method == TR::java_math_BigDecimal_DFPUnscaledValue ||
-          method == TR::java_math_BigDecimal_DFPConvertPackedToDFP ||
-          method == TR::java_math_BigDecimal_DFPConvertDFPToPacked)
-         {
-         return true;
-         }
-
-      if (method == TR::com_ibm_dataaccess_DecimalData_DFPConvertPackedToDFP ||
-          method == TR::com_ibm_dataaccess_DecimalData_DFPConvertDFPToPacked)
-         {
-         return true;
-         }
-      }
-
-   if (method == TR::java_lang_Integer_highestOneBit ||
-       method == TR::java_lang_Integer_numberOfLeadingZeros ||
-       method == TR::java_lang_Integer_numberOfTrailingZeros ||
-       method == TR::java_lang_Long_highestOneBit ||
-       method == TR::java_lang_Long_numberOfLeadingZeros ||
-       method == TR::java_lang_Long_numberOfTrailingZeros)
-      {
-      return true;
-      }
-
-   if (method == TR::java_lang_Long_reverseBytes  ||
-       method == TR::java_lang_Integer_reverseBytes  ||
-       method == TR::java_lang_Short_reverseBytes ||
-       method == TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet ||
-       method == TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd ||
-       method == TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement ||
-       method == TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement ||
-       method == TR::java_util_concurrent_atomic_AtomicInteger_getAndSet ||
-       method == TR::java_util_concurrent_atomic_AtomicInteger_addAndGet ||
-       method == TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet ||
-       method == TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet ||
-       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_incrementAndGet ||
-       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_decrementAndGet ||
-       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet ||
-       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndIncrement ||
-       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement ||
-       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndAdd)
-      {
-      return true;
-      }
-
-   // Transactional Memory
-   if (self()->getSupportsTM())
-      {
-      if (method == TR::java_util_concurrent_ConcurrentHashMap_tmEnabled ||
-          method == TR::java_util_concurrent_ConcurrentHashMap_tmPut ||
-          method == TR::java_util_concurrent_ConcurrentHashMap_tmRemove ||
-          method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer ||
-          method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll ||
-          method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled)
-          {
-          return true;
-          }
-      }
-#endif
    return false;
    }
 

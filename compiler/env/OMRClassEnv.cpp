@@ -26,6 +26,7 @@
 #include "env/jittypes.h"             // for uintptrj_t, intptrj_t
 #include "infra/Assert.hpp"           // for TR_ASSERT
 
+#define notImplemented(A) TR_ASSERT(0, "OMR::ClassEnv::%s is undefined", (A) )
 
 char *
 OMR::ClassEnv::classNameChars(TR::Compilation *comp, TR::SymbolReference *symRef, int32_t & len)
@@ -33,4 +34,11 @@ OMR::ClassEnv::classNameChars(TR::Compilation *comp, TR::SymbolReference *symRef
    char *name = "<no class name>";
    len = strlen(name);
    return name;
+   }
+
+uintptrj_t
+OMR::ClassEnv::getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassBlock* arrayClass)
+   {
+   notImplemented("getArrayElementWidthInBytes");
+   return 0;
    }

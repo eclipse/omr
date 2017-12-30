@@ -136,7 +136,7 @@ void OMR::Z::MemoryReference::addToTemporaryNegativeOffset(TR::Node *node, int32
 void OMR::Z::MemoryReference::setupCheckForLongDispFlag(TR::CodeGenerator *cg)
    {
    // Enable a check for the long disp slot in generateBin phase
-   if (cg->getDoingInstructionSelection())
+   if (cg->getCodeGeneratorPhase() == TR::CodeGenPhase::InstructionSelectionPhase)
       {
       self()->setCheckForLongDispSlot();
       }

@@ -725,7 +725,7 @@
    dexp,     // double exponent
 
 
-   branch,     // generic branch --> first child is a constant indicating the mask
+   branch,     // generic branch --> DEPRECATED use TR::case instead
    igoto,      // indirect goto, branches to the address specified by a child
 
    bexp,     // signed byte exponent  (raise signed byte to power)

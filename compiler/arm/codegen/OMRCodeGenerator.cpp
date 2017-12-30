@@ -388,7 +388,7 @@ void OMR::ARM::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssig
    // gprs, fprs, and ccrs are all assigned in backward direction
    self()->setAssignmentDirection(Backward);
 
-   TR::Instruction *instructionCursor = comp->getAppendInstruction();
+   TR::Instruction *instructionCursor = self()->getAppendInstruction();
    if (!comp->getOption(TR_DisableOOL))
       {
       TR::list<TR::Register*> *spilledRegisterList = new (self()->trHeapMemory()) TR::list<TR::Register*>(getTypedAllocator<TR::Register*>(comp->allocator()));
@@ -453,7 +453,7 @@ void OMR::ARM::CodeGenerator::doBinaryEncoding()
    {
    TR::Compilation *comp = self()->comp();
    int32_t estimate = 0;
-   TR::Instruction *cursorInstruction = comp->getFirstInstruction();
+   TR::Instruction *cursorInstruction = self()->getFirstInstruction();
 
    self()->getLinkage()->createPrologue(cursorInstruction);
 
@@ -487,7 +487,7 @@ void OMR::ARM::CodeGenerator::doBinaryEncoding()
 
    self()->setEstimatedCodeLength(estimate);
 
-   cursorInstruction = comp->getFirstInstruction();
+   cursorInstruction = self()->getFirstInstruction();
    uint8_t *coldCode = NULL;
    uint8_t *temp = self()->allocateCodeMemory(self()->getEstimatedCodeLength(), 0, &coldCode);
 
@@ -571,7 +571,7 @@ TR::Register *OMR::ARM::CodeGenerator::gprClobberEvaluate(TR::Node *node)
 static int32_t identifyFarConditionalBranches(int32_t estimate, TR::CodeGenerator *cg)
    {
    TR_Array<TR::ARMConditionalBranchInstruction *> candidateBranches(cg->trMemory(), 256);
-   TR::Instruction *cursorInstruction = cg->comp()->getFirstInstruction();
+   TR::Instruction *cursorInstruction = cg->getFirstInstruction();
 
    while (cursorInstruction)
       {

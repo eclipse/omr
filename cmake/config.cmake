@@ -141,3 +141,5 @@ set(OMR_ENV_GCC OFF CACHE BOOL "TODO: Document")
 
 
 set(OMR_OPT_CUDA OFF CACHE BOOL "TODO: Document")
+
+set(OMR_SANITIZE OFF CACHE STRING "Sanitizer selection. Only has an effect on GNU or Clang") 

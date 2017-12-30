@@ -41,7 +41,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OutlinedInstructions.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/RegisterRematerialization.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/SubtractAnalyser.cpp \
-    $(JIT_OMR_DIRTY_DIR)/x/codegen/Trampoline.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRTreeEvaluator.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/UnaryEvaluator.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/X86BinaryEncoding.cpp \

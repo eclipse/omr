@@ -114,15 +114,6 @@ bool OMR::LocalCSE::shouldCopyPropagateNode(TR::Node *parent, TR::Node *node, in
 
 bool OMR::LocalCSE::shouldCommonNode(TR::Node *parent, TR::Node *node)
    {
-   if (cg()->disableCommoningOfVolatiles())
-      {
-      TR::Node * nodeToCheck = node;
-      while (nodeToCheck->getOpCode().isConversion())
-         nodeToCheck = nodeToCheck->getFirstChild();
-      if (nodeToCheck->mightHaveVolatileSymbolReference())
-         return false;
-      }
-
    if (!isTreetopSafeToCommon())
       return false;
 

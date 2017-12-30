@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,14 +88,13 @@ TR_OutOfLineCodeSection::TR_OutOfLineCodeSection(TR::LabelSymbol *entryLabel, TR
 void TR_OutOfLineCodeSection::swapInstructionListsWithCompilation()
    {
    TR::Instruction *temp;
-   TR::Compilation *comp = _cg->comp();
 
-   temp = comp->getFirstInstruction();
-   comp->setFirstInstruction(_firstInstruction);
+   temp = _cg->getFirstInstruction();
+   _cg->setFirstInstruction(_firstInstruction);
    _firstInstruction = temp;
 
-   temp = comp->getAppendInstruction();
-   comp->setAppendInstruction(_appendInstruction);
+   temp = _cg->getAppendInstruction();
+   _cg->setAppendInstruction(_appendInstruction);
    _appendInstruction = temp;
    _cg->toggleIsInOOLSection();
    }

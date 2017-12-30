@@ -944,19 +944,16 @@ int32_t TR_LoopStrider::detectCanonicalizedPredictableLoops(TR_Structure *loopSt
                      TR::Node::create(byteCodeInfoNode, TR::iconst, 0, hdrSize));
             arrayRefNode->setIsInternalPointer(true);
 
-            if (comp()->isPinningNeeded())
-               {
-               if (!origAuto->getSymbol()->isInternalPointer())
-                  {
-                  arrayRefNode->setPinningArrayPointer(reassociatedAuto->getSymbol()-> \
-                        castToInternalPointerAutoSymbol()->getPinningArrayPointer());
-                  reassociatedAuto->getSymbol()->castToInternalPointerAutoSymbol()-> \
-                        getPinningArrayPointer()->setPinningArrayPointer();
-                  }
-               else
-                  arrayRefNode->setPinningArrayPointer(origAuto->getSymbol()-> \
-                        castToInternalPointerAutoSymbol()->getPinningArrayPointer());
-               }
+            if (!origAuto->getSymbol()->isInternalPointer())
+                {
+                arrayRefNode->setPinningArrayPointer(reassociatedAuto->getSymbol()-> \
+                    castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+                reassociatedAuto->getSymbol()->castToInternalPointerAutoSymbol()-> \
+                    getPinningArrayPointer()->setPinningArrayPointer();
+                }
+            else
+                arrayRefNode->setPinningArrayPointer(origAuto->getSymbol()-> \
+                    castToInternalPointerAutoSymbol()->getPinningArrayPointer());
 
             TR::Node *newStore = TR::Node::createWithSymRef(TR::astore, 1, 1, arrayRefNode, reassociatedAuto);
             newStore->setLocalIndex(~0);
@@ -1015,17 +1012,13 @@ int32_t TR_LoopStrider::detectCanonicalizedPredictableLoops(TR_Structure *loopSt
 
                arrayRefNode->setIsInternalPointer(true);
 
-               if (comp()->isPinningNeeded())
+               if (!origAuto->getSymbol()->isInternalPointer())
                   {
-                  if (!origAuto->getSymbol()->isInternalPointer())
-                     {
-                     symRefPair->_derivedSymRef->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer()->setPinningArrayPointer();
-
-                     arrayRefNode->setPinningArrayPointer(symRefPair->_derivedSymRef->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
-                     }
-                  else
-                     arrayRefNode->setPinningArrayPointer(origAuto->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+                  symRefPair->_derivedSymRef->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer()->setPinningArrayPointer();
+                  arrayRefNode->setPinningArrayPointer(symRefPair->_derivedSymRef->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
                   }
+                else
+                    arrayRefNode->setPinningArrayPointer(origAuto->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
 
                TR::Node *newStore = TR::Node::createWithSymRef(TR::astore, 1, 1, arrayRefNode, symRefPair->_derivedSymRef);
                newStore->setLocalIndex(~0);
@@ -1316,16 +1309,13 @@ void TR_LoopStrider::changeLoopCondition(TR_BlockStructure *loopInvariantBlock, 
          addNode = TR::Node::create(TR::aiadd, 2, newAload, addNode);
       addNode->setIsInternalPointer(true);
 
-      if (comp()->isPinningNeeded())
-         {
-         if (!newAload->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer())
-            {
-            addNode->setPinningArrayPointer(newAload->getSymbolReference()->getSymbol()->castToAutoSymbol());
-            newAload->getSymbolReference()->getSymbol()->setPinningArrayPointer();
-            }
-         else
-            addNode->setPinningArrayPointer(newAload->getSymbolReference()->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
-         }
+      if (!newAload->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer())
+          {
+          addNode->setPinningArrayPointer(newAload->getSymbolReference()->getSymbol()->castToAutoSymbol());
+          newAload->getSymbolReference()->getSymbol()->setPinningArrayPointer();
+          }
+      else
+          addNode->setPinningArrayPointer(newAload->getSymbolReference()->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
 
       addNode->setLocalIndex(~0);
       addNode->getSecondChild()->setLocalIndex(~0);
@@ -1334,19 +1324,16 @@ void TR_LoopStrider::changeLoopCondition(TR_BlockStructure *loopInvariantBlock, 
       _numInternalPointers++;
       TR::Symbol *symbol = newSymbolReference->getSymbol();
 
-      if (comp()->isPinningNeeded())
+      TR::AutomaticSymbol *pinningArrayPointer = newAload->getSymbolReference()->getSymbol()->castToAutoSymbol();
+      if (!pinningArrayPointer->isInternalPointer())
          {
-         TR::AutomaticSymbol *pinningArrayPointer = newAload->getSymbolReference()->getSymbol()->castToAutoSymbol();
-         if (!pinningArrayPointer->isInternalPointer())
-            {
-            symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer);
-            pinningArrayPointer->setPinningArrayPointer();
-            }
-         else
-            symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+         symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer);
+         pinningArrayPointer->setPinningArrayPointer();
          }
-      newStore = TR::Node::createWithSymRef(TR::astore, 1, 1, addNode, newSymbolReference);
+      else
+         symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
 
+      newStore = TR::Node::createWithSymRef(TR::astore, 1, 1, addNode, newSymbolReference);
       }
       else
          {
@@ -1833,16 +1820,14 @@ void TR_LoopStrider::examineOpCodesForInductionVariableUse(TR::Node* node, TR::N
       if (node->getOpCodeValue() == TR::aiadd || node->getOpCodeValue() == TR::aladd)
          {
          node->setIsInternalPointer(true);
-         if (comp()->isPinningNeeded())
+
+         if (!pinningArrayPointer->isInternalPointer())
             {
-            if (!pinningArrayPointer->isInternalPointer())
-               {
-               node->setPinningArrayPointer(pinningArrayPointer);
-               pinningArrayPointer->setPinningArrayPointer();
-               }
-            else
-               node->setPinningArrayPointer(pinningArrayPointer->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+            node->setPinningArrayPointer(pinningArrayPointer);
+            pinningArrayPointer->setPinningArrayPointer();
             }
+         else
+            node->setPinningArrayPointer(pinningArrayPointer->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
          }
 
       node->setNumChildren(2);
@@ -2034,8 +2019,7 @@ bool TR_LoopStrider::examineTreeForInductionVariableUse(TR::Block *loopInvariant
                   TR_ASSERT(dataType, "dataType cannot be NoType\n");
 
                   *newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), dataType, isInternalPointer);
-                  if (isInternalPointer &&
-                      !pinningArrayPointer && comp()->isPinningNeeded())
+                  if (isInternalPointer && !pinningArrayPointer)
                      {
                      TR::SymbolReference *newPinningArray = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, false);
                      pinningArrayPointer = newPinningArray->getSymbol()->castToAutoSymbol();
@@ -2160,8 +2144,7 @@ bool TR_LoopStrider::examineTreeForInductionVariableUse(TR::Block *loopInvariant
             TR_ASSERT(dataType, "dataType cannot be TR::NoType\n");
 
             *newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), dataType, isInternalPointer);
-            if (isInternalPointer &&
-               !pinningArrayPointer && comp()->isPinningNeeded())
+            if (isInternalPointer && !pinningArrayPointer)
                {
                TR::SymbolReference *newPinningArray = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, false);
                pinningArrayPointer = newPinningArray->getSymbol()->castToAutoSymbol();
@@ -2301,7 +2284,6 @@ void TR_LoopStrider::populateLinearEquation(TR::Node *node, int32_t loopDrivingI
 void TR_LoopStrider::setInternalPointer(TR::Symbol *symbol, TR::AutomaticSymbol *pinningArrayPointer)
    {
    _numInternalPointers++;
-   if (!comp()->isPinningNeeded()) return;
 
    if (!pinningArrayPointer->isInternalPointer())
       {
@@ -2473,16 +2455,13 @@ TR::Node *TR_LoopStrider::placeInitializationTreeInLoopInvariantBlock(TR_BlockSt
                    TR::Node::create(TR::aiadd, 2, newAload, addNode);
       addNode->setIsInternalPointer(true);
 
-      if (comp()->isPinningNeeded())
+      if (!newAload->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer())
          {
-         if (!newAload->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer())
-            {
-            addNode->setPinningArrayPointer(newAload->getSymbolReference()->getSymbol()->castToAutoSymbol());
-            newAload->getSymbolReference()->getSymbol()->setPinningArrayPointer();
-            }
-         else
-            addNode->setPinningArrayPointer(newAload->getSymbolReference()->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+         addNode->setPinningArrayPointer(newAload->getSymbolReference()->getSymbol()->castToAutoSymbol());
+         newAload->getSymbolReference()->getSymbol()->setPinningArrayPointer();
          }
+      else
+         addNode->setPinningArrayPointer(newAload->getSymbolReference()->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
 
       addNode->setLocalIndex(~0);
       addNode->getSecondChild()->setLocalIndex(~0);
@@ -2737,17 +2716,15 @@ TR::Node *TR_LoopStrider::placeNewInductionVariableIncrementTree(TR_BlockStructu
                               TR::Node::create(TR::aiadd, 2, newIvLoad, newMulNode);
          loopIncrementer->setIsInternalPointer(true);
 
-         if (comp()->isPinningNeeded())
+         TR::AutomaticSymbol *autoSym = symRefTab->getSymRef((int32_t)_linearEquations[k][4])->getSymbol()->castToAutoSymbol();
+         if (!autoSym->isInternalPointer())
             {
-            TR::AutomaticSymbol *autoSym = symRefTab->getSymRef((int32_t)_linearEquations[k][4])->getSymbol()->castToAutoSymbol();
-            if (!autoSym->isInternalPointer())
-               {
-               loopIncrementer->setPinningArrayPointer(autoSym);
-               autoSym->setPinningArrayPointer();
-               }
-            else
-               loopIncrementer->setPinningArrayPointer(autoSym->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+            loopIncrementer->setPinningArrayPointer(autoSym);
+            autoSym->setPinningArrayPointer();
             }
+         else
+            loopIncrementer->setPinningArrayPointer(autoSym->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+
          }
       else
          {
@@ -2804,18 +2781,15 @@ TR::Node *TR_LoopStrider::placeNewInductionVariableIncrementTree(TR_BlockStructu
                               TR::Node::create(TR::aiadd, 2, newIvLoad, newMulNode);
          loopIncrementer->setIsInternalPointer(true);
 
-
-         if (comp()->isPinningNeeded())
+         TR::AutomaticSymbol *autoSym = symRefTab->getSymRef((int32_t)_linearEquations[k][4])->getSymbol()->castToAutoSymbol();
+         if (!autoSym->isInternalPointer())
             {
-            TR::AutomaticSymbol *autoSym = symRefTab->getSymRef((int32_t)_linearEquations[k][4])->getSymbol()->castToAutoSymbol();
-            if (!autoSym->isInternalPointer())
-               {
-               loopIncrementer->setPinningArrayPointer(autoSym);
-               autoSym->setPinningArrayPointer();
-               }
-            else
-               loopIncrementer->setPinningArrayPointer(autoSym->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+            loopIncrementer->setPinningArrayPointer(autoSym);
+            autoSym->setPinningArrayPointer();
             }
+         else
+            loopIncrementer->setPinningArrayPointer(autoSym->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+
          }
       else
          {
@@ -3507,8 +3481,7 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
          if (!internalPointerSymRef)
             {
             TR::SymbolReference *newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, isInternalPointer);
-            if (isInternalPointer &&
-                !pinningArrayPointer && comp()->isPinningNeeded())
+            if (isInternalPointer && !pinningArrayPointer)
                {
                TR::SymbolReference *newPinningArray = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, false);
                pinningArrayPointer = newPinningArray->getSymbol()->castToAutoSymbol();
@@ -3536,16 +3509,14 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
                _newNonAddressTempsCreated = true;
 
             TR::Symbol *symbol = newSymbolReference->getSymbol();
-            if (comp()->isPinningNeeded())
+
+            if (!pinningArrayPointer->isInternalPointer())
                {
-               if (!pinningArrayPointer->isInternalPointer())
-                  {
-                  symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer);
-                  pinningArrayPointer->setPinningArrayPointer();
-                  }
-               else
-                  symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+               symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer);
+               pinningArrayPointer->setPinningArrayPointer();
                }
+            else
+               symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
 
             SymRefPair *pair = (SymRefPair *) trMemory()->allocateStackMemory(sizeof(SymRefPair));
             if (isConst)
@@ -3611,8 +3582,7 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
             if (_reassociatedAutos->find(originalInternalPointerSymbol) == _reassociatedAutos->end())
                {
                TR::SymbolReference *newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, isInternalPointer);
-               if (isInternalPointer &&
-                   !pinningArrayPointer && comp()->isPinningNeeded())
+               if (isInternalPointer && !pinningArrayPointer)
                   {
                   TR::SymbolReference *newPinningArray = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, false);
                   pinningArrayPointer = newPinningArray->getSymbol()->castToAutoSymbol();
@@ -3639,16 +3609,15 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
                   _newNonAddressTempsCreated = true;
 
                TR::Symbol *symbol = newSymbolReference->getSymbol();
-               if (comp()->isPinningNeeded())
+
+               if (!pinningArrayPointer->isInternalPointer())
                   {
-                  if (!pinningArrayPointer->isInternalPointer())
-                     {
-                     symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer);
-                     pinningArrayPointer->setPinningArrayPointer();
-                     }
-                  else
-                     symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+                  symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer);
+                  pinningArrayPointer->setPinningArrayPointer();
                   }
+               else
+                  symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+
                (*_reassociatedAutos)[originalInternalPointerSymbol] = newSymbolReference;
                dumpOptDetails(comp(), "reass num %d newsymref %d\n", internalPointerSymbol, newSymbolReference->getReferenceNumber());
                }

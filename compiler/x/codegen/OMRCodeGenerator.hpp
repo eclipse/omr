@@ -361,6 +361,15 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    int32_t branchDisplacementToHelperOrTrampoline(uint8_t *nextInstructionAddress, TR::SymbolReference *helper);
 
+   /*
+    * \brief Reserve space in the code cache for a specified number of trampolines.
+    *
+    * \param[in] numTrampolines : number of trampolines to reserve
+    *
+    * \return : none
+    */
+   void reserveNTrampolines(int32_t numTrampolines) { return; }
+
    // Note: This leaves the code aligned in the specified manner.
    TR::Instruction *generateSwitchToInterpreterPrePrologue(TR::Instruction *prev, uint8_t alignment, uint8_t alignmentMargin);
 
@@ -452,7 +461,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    uint8_t getSizeOfCombinedBuffer();
 
-   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod);
    bool supportsInliningOfIsInstance();
 
    bool supportsPassThroughCopyToNewVirtualRegister() { return true; }

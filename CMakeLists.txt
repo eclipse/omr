@@ -35,6 +35,7 @@ include(OmrFindFiles)
 include(OmrHookgen)
 include(OmrPlatform)
 include(OmrTracegen)
+include(OmrSanitizerSupport)
 
 ###
 ### Set up the global platform configuration

@@ -22,21 +22,21 @@
 #include "compile/Compilation.hpp"
 #include "env/FrontEnd.hpp"
 #include "compile/Method.hpp"
-#include "ilgen/ChildlessUnaryOpIlInjector.hpp"
+#include "tests/injectors/TernaryOpIlInjector.hpp"
 
 namespace TestCompiler
 {
-
 bool
-ChildlessUnaryOpIlInjector::injectIL()
+TernaryOpIlInjector::injectIL()
    {
    if (!isOpCodeSupported())
+      {
       return false;
-
+      }
    createBlocks(1);
-   returnValue(parm(1));
-
+   // Block 2: blocks(0)
+   returnValue(createWithoutSymRef(_opCode, 3, parm(1), parm(2), parm(3)));
    return true;
    }
 
-} // namespace TestCompiler
+} /* namespace TestCompiler */

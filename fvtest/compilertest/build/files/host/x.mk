@@ -19,5 +19,4 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 ###############################################################################
 
-JIT_PRODUCT_SOURCE_FILES+=\
-    $(JIT_PRODUCT_DIR)/x/runtime/AsmUtil64.asm
+#JIT_PRODUCT_SOURCE_FILES += 

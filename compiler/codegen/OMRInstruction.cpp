@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ Instruction::Instruction(
       TR::Node *node) :
    _opcode(op),
    _next(0),
-   _prev(cg->comp()->getAppendInstruction()),
+   _prev(cg->getAppendInstruction()),
    _node(node),
    _binaryEncodingBuffer(0),
    _binaryLength(0),
@@ -57,14 +57,14 @@ Instruction::Instruction(
    if (self()->getPrev())
       {
       _prev->setNext(self());
-      comp->setAppendInstruction(self());
+      cg->setAppendInstruction(self());
       _index = (_prev->getIndex()+INSTRUCTION_INDEX_INCREMENT) & ~FlagsMask;
       }
    else
       {
-      self()->setNext(comp->getFirstInstruction());
+      self()->setNext(cg->getFirstInstruction());
       self()->setPrev(0);
-      TR::Instruction *first = comp->getFirstInstruction();
+      TR::Instruction *first = cg->getFirstInstruction();
 
       if (first)
          {
@@ -84,11 +84,11 @@ Instruction::Instruction(
             }
          }
 
-      comp->setFirstInstruction(self());
+      cg->setFirstInstruction(self());
 
-      if (comp->getAppendInstruction() == 0)
+      if (cg->getAppendInstruction() == 0)
          {
-         comp->setAppendInstruction(self());
+         cg->setAppendInstruction(self());
          }
       }
 
@@ -134,7 +134,7 @@ Instruction::Instruction(
       else
          {
          _index = (precedingInstruction->getIndex() + INSTRUCTION_INDEX_INCREMENT) & ~FlagsMask;
-         comp->setAppendInstruction(self());
+         cg->setAppendInstruction(self());
          }
 
       precedingInstruction->setNext(self());
@@ -146,9 +146,9 @@ Instruction::Instruction(
       }
    else
       {
-      self()->setNext(comp->getFirstInstruction());
+      self()->setNext(cg->getFirstInstruction());
       self()->setPrev(0);
-      TR::Instruction *first = comp->getFirstInstruction();
+      TR::Instruction *first = cg->getFirstInstruction();
 
       if (first)
          {
@@ -168,11 +168,11 @@ Instruction::Instruction(
             }
          }
 
-      comp->setFirstInstruction(self());
+      cg->setFirstInstruction(self());
 
-      if (comp->getAppendInstruction() == 0)
+      if (cg->getAppendInstruction() == 0)
          {
-         comp->setAppendInstruction(self());
+         cg->setAppendInstruction(self());
          }
       }
 
@@ -202,12 +202,12 @@ Instruction::move(TR::Instruction *newLocation)
 
    newLocation->setNext(self());
 
-   TR::Compilation *comp = self()->cg()->comp();
+   TR::CodeGenerator *cg = self()->cg();
 
    // Update the append instruction if we are moving this instruction to the current append instruction
-   if (comp->getAppendInstruction() == newLocation)
+   if (cg->getAppendInstruction() == newLocation)
       {
-      comp->setAppendInstruction(self());
+      cg->setAppendInstruction(self());
       }
 
    // TODO: Updating this instruction's index might be worth while
@@ -230,12 +230,12 @@ Instruction::remove()
       next->setPrev(prev);
       }
 
-   TR::Compilation *comp = self()->cg()->comp();
+   TR::CodeGenerator *cg = self()->cg();
 
    // Update the append instruction if we are removing the current instruction
-   if (comp->getAppendInstruction() == self())
+   if (cg->getAppendInstruction() == self())
       {
-      comp->setAppendInstruction(prev);
+      cg->setAppendInstruction(prev);
       }
    }
 

@@ -104,7 +104,6 @@ TR_ValueNumberInfo::TR_ValueNumberInfo(TR::Compilation *comp, TR::Optimizer *opt
                delete _useDefInfo;
                _useDefInfo = NULL;
                }
-            comp->printMemStatsAfter("use defs (value numbers - I)");
             }
          }
 
@@ -1555,7 +1554,6 @@ TR_HashValueNumberInfo::TR_HashValueNumberInfo(TR::Compilation *comp, TR::Optimi
                delete _useDefInfo;
                _useDefInfo = NULL;
                }
-            comp->printMemStatsAfter("use defs (value numbers - II)");
             }
          }
 

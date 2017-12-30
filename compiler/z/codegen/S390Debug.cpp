@@ -949,11 +949,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390PseudoInstruction * instr)
    printPrefix(pOutFile, instr);
    trfprintf(pOutFile, "%-*s", OPCODE_SPACING, getOpCodeName(&instr->getOpCode()));
 
-
-   if ((instr->getOpCodeValue() == TR::InstOpCode::LOCK) ||
-       (instr->getOpCodeValue() == TR::InstOpCode::UNLOCK))
-    trfprintf(pOutFile, "Reg %d",  instr->getLockedRegisterNumber());
-
    if (instr->getOpCodeValue() == TR::InstOpCode::DCB)
       {
       

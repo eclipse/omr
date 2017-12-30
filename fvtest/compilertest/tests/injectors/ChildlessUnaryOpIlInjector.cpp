@@ -22,24 +22,19 @@
 #include "compile/Compilation.hpp"
 #include "env/FrontEnd.hpp"
 #include "compile/Method.hpp"
-#include "ilgen/TypeDictionary.hpp"
-#include "tests/CallIlInjector.hpp"
-#include "tests/OpCodesTest.hpp"
+#include "tests/injectors/ChildlessUnaryOpIlInjector.hpp"
 
 namespace TestCompiler
 {
 
 bool
-CallIlInjector::injectIL()
+ChildlessUnaryOpIlInjector::injectIL()
    {
    if (!isOpCodeSupported())
       return false;
-   OpCodesTest *test = static_cast<OpCodesTest *>(_test);
+
    createBlocks(1);
-   // Block 2: blocks(0)
-   // return function()
-   TR::ResolvedMethod *resolvedCompilee = test->resolvedMethod(_dataType);
-   returnValue(callFunction(resolvedCompilee, _types->PrimitiveType(_dataType), 1, parm(1)));
+   returnValue(parm(1));
 
    return true;
    }

@@ -22,6 +22,8 @@
 #include "optimizer/Structure.hpp"
 
 #include <algorithm>                                // for std::find, etc
+#include <set>                                      // for std::set
+#include <vector>                                   // for std::vector
 #include <limits.h>                                 // for INT_MAX
 #include <string.h>                                 // for memcpy
 #include "compile/Compilation.hpp"                  // for Compilation
@@ -184,7 +186,788 @@ void TR_RegionStructure::cleanupAfterEdgeRemoval(TR::CFGNode *node)
       }
    }
 
+// Implementation of TR_RegionStructure::extractUnconditionalExits() below
+class TR_RegionStructure::ExitExtraction
+   {
+   public:
+   ExitExtraction(TR::Compilation * const comp, TR::Region &memRegion)
+      : _comp(comp)
+      , _cfg(_comp->getFlowGraph())
+      , _trace(_comp->getOption(TR_TraceExitExtraction))
+      , _memRegion(memRegion)
+      , _structureRegion(_cfg->structureRegion())
+      , _workStack(_memRegion)
+      , _queued(std::less<TR_Structure*>(), _memRegion)
+      , _regionContents(RcCmp(), _memRegion)
+      , _allPreds(_memRegion)
+      , _succs(_memRegion)
+      , _excSuccs(_memRegion)
+      { }
 
+   void extractUnconditionalExits(const TR::list<TR::Block*, TR::Region&> &blocks);
+
+   private:
+   typedef TR::typed_allocator<TR_Structure*, TR::Region&> StructureAlloc;
+   typedef std::vector<TR_Structure*, StructureAlloc> StructureVec;
+   typedef std::set<TR_Structure*, std::less<TR_Structure*>, StructureAlloc> StructureSet;
+
+   typedef TR::typed_allocator<TR::CFGEdge*, TR::Region&> EdgeVecAlloc;
+   typedef std::vector<TR::CFGEdge*, EdgeVecAlloc> EdgeVec;
+
+   typedef std::pair<TR_RegionStructure* const, TR_BitVector> RcEntry;
+   typedef TR::typed_allocator<RcEntry, TR::Region&> RcAlloc;
+   typedef std::less<TR_RegionStructure*> RcCmp;
+   typedef std::map<TR_RegionStructure*, TR_BitVector, RcCmp, RcAlloc> RegionContents;
+
+   void enqueue(TR_Structure*);
+   void collectWork(const TR::list<TR::Block*, TR::Region&> &blocks);
+   void collectWorkFromRegion(TR_RegionStructure *region, const StructureSet &relevant);
+   void extractStructure(TR_Structure*);
+   TR_BitVector &regionContents(TR_RegionStructure *loop);
+   void removeContentsFromRegion(TR_Structure *removed, TR_RegionStructure *region);
+   void traceBitVector(TR_BitVector &bv);
+   void moveNodeIntoParent(TR_StructureSubGraphNode *node, TR_RegionStructure *region, TR_RegionStructure *parent);
+   void moveOutgoingEdgeToParent(TR_RegionStructure *region, TR_RegionStructure *parent, TR_StructureSubGraphNode *node, TR::CFGEdge *edge, bool isExceptionEdge);
+
+   TR::Compilation * const _comp;
+   TR::CFG * const _cfg;
+   const bool _trace;
+
+   TR::Region &_memRegion;
+   TR::Region &_structureRegion;
+   StructureVec _workStack;
+   StructureSet _queued;
+   RegionContents _regionContents;
+
+   // Reuse these vectors to avoid allocating three new vectors on each
+   // iteration of extractStructure().
+   EdgeVec _allPreds;
+   EdgeVec _succs;
+   EdgeVec _excSuccs;
+   };
+
+/**
+ * Identify and extract subgraph nodes that no longer belong within loops.
+ *
+ * After deleting edges from the control flow graph, there may be blocks, or
+ * structure subgraph nodes more generally, from which execution is guaranteed
+ * to exit a containing loop. A fresh structural analysis would consider such
+ * nodes to be outside the loop, which is preferable for the sake of later loop
+ * optimizations.
+ *
+ * Given a list of blocks from which outgoing edges have been deleted, try to
+ * find these unconditionally exiting nodes, and extract them from as many
+ * containing loops as possible.
+ *
+ * Nodes are extracted one at a time, and a given node is moved to its
+ * outermost position before continuing on. When a node is moved out of a
+ * region, its (ex-)predecessors might now directly exit the same region, so
+ * they will also be considered.
+ *
+ * For example, suppose that an edge from \c block_7 to \c block_4 was removed,
+ * leaving the following structure:
+ *
+   \verbatim
+               0
+               |
+               v
+               2
+               |
+               v
+       +----(loop 3)------+
+       |       v          |
+       |  +--->3--+       |
+       |  |    |  |       |
+       |  |    |  |       |
+       |  |    v  v       |
+       |  +----4  5--->6  |
+       |          |    |  |
+       |          v    |  |
+       |          7<---+  |
+       |          |       |
+       +----------|-------+
+                  |
+                  v
+                  8
+                  |
+                  v
+                  1
+   \endverbatim
+ *
+ * First, 7 would be removed from the loop region:
+ *
+   \verbatim
+               0
+               |
+               v
+               2
+               |
+               v
+       +----(loop 3)------+
+       |       v          |
+       |  +--->3--+       |
+       |  |    |  |       |
+       |  |    |  |       |
+       |  |    v  v       |
+       |  +----4  5--->6  |
+       |          |    |  |
+       +----------|----|--+
+                  |    |
+                  v    |
+                  7<---+
+                  |
+                  v
+                  8
+                  |
+                  v
+                  1
+   \endverbatim
+ *
+ * Then 6 would follow 7:
+ *
+   \verbatim
+               0
+               |
+               v
+               2
+               |
+               v
+       +----(loop 3)------+
+       |       v          |
+       |  +--->3--+       |
+       |  |    |  |       |
+       |  |    |  |       |
+       |  |    v  v       |
+       |  +----4  5----+  |
+       |          |    |  |
+       +----------|----|--+
+                  |    |
+                  v    v
+                  7<---6
+                  |
+                  v
+                  8
+                  |
+                  v
+                  1
+   \endverbatim
+ *
+ * Finally, 5 would follow as well, leaving just 3 and 4 in the loop:
+ *
+   \verbatim
+               0
+               |
+               v
+               2
+               |
+               v
+       +-(loop 3)-+
+       |       v  |
+       |  +--->3------>5--->6
+       |  |    |  |    |    |
+       |  |    |  |    v    |
+       |  |    v  |    7<---+
+       |  +----4  |    |
+       |          |    v
+       +----------+    8
+                       |
+                       v
+                       1
+   \endverbatim
+ *
+ * This extraction is not automatic as part of structure maintenance because it
+ * would sometimes be triggered unexpectedly by intermediate states of the CFG.
+ * Instead it must be requested explicitly by calling this method.
+ *
+ * JIT options:
+ * - \c disableExitExtraction to disable
+ * - \c traceExitExtraction to trace
+ * - \c checkStructureDuringExitExtraction to \c checkStructure() in non-debug builds
+ * - \c extractExitsByInvalidatingStructure for invalidation instead of repair
+ *
+ * \param comp    the compilation in progress
+ * \param blocks  the blocks from which outgoing edges have been deleted
+ *
+ * Note that an unconditionally exiting node will only be discovered if it (or
+ * a block it contains) is listed in \p blocks. If \c block_7 were absent from
+ * \p blocks in the example above, the structure would be left unchanged.
+ */
+/* static */ void TR_RegionStructure::extractUnconditionalExits(
+   TR::Compilation * const comp,
+   const TR::list<TR::Block*, TR::Region&> &blocks)
+   {
+   if (blocks.empty())
+      return;
+
+   if (comp->getOption(TR_DisableExitExtraction))
+      return;
+
+   if (comp->getFlowGraph()->getStructure() == NULL)
+      return;
+
+   ExitExtraction xform(comp, comp->trMemory()->currentStackRegion());
+   xform.extractUnconditionalExits(blocks);
+   }
+
+void TR_RegionStructure::ExitExtraction::extractUnconditionalExits(
+   const TR::list<TR::Block*, TR::Region&> &blocks)
+   {
+   collectWork(blocks);
+   if (_workStack.size() == 0)
+      return;
+
+   if (_trace)
+      _comp->dumpMethodTrees("Trees before unconditional exit extraction");
+
+   while (_workStack.size() > 0)
+      {
+      if (_trace)
+         {
+         traceMsg(_comp, "work stack:");
+         for (auto s = _workStack.begin(); s != _workStack.end(); ++s)
+            traceMsg(_comp, " %d:%p", (*s)->getNumber(), *s);
+
+         traceMsg(_comp, "\n");
+         }
+
+      TR_Structure * const s = _workStack.back();
+      _workStack.pop_back();
+      _queued.erase(s);
+
+      if (_trace)
+         traceMsg(_comp, "attempting to extract %d:%p\n", s->getNumber(), s);
+
+      extractStructure(s);
+
+      if (_cfg->getStructure() == NULL)
+         return;
+      }
+   }
+
+void TR_RegionStructure::ExitExtraction::enqueue(TR_Structure * const s)
+   {
+   if (_trace)
+      traceMsg(_comp, "enqueueing %d:%p\n", s->getNumber(), s);
+
+   if (_queued.find(s) == _queued.end())
+      {
+      _workStack.push_back(s);
+      _queued.insert(s);
+      }
+   }
+
+void TR_RegionStructure::ExitExtraction::collectWork(
+   const TR::list<TR::Block*, TR::Region&> &blocks)
+   {
+   StructureSet relevant(std::less<TR_Structure*>(), _memRegion);
+
+   for (auto b = blocks.begin(); b != blocks.end(); ++b)
+      {
+      TR_Structure *s = (*b)->getStructureOf();
+      while (s != NULL && relevant.find(s) == relevant.end())
+         {
+         TR_Structure * const parent = s->getParent();
+         if (_trace)
+            {
+            traceMsg(_comp,
+               "found relevant structure %d:%p, parent %d:%p\n",
+               s->getNumber(),
+               s,
+               parent == NULL ? -1 : parent->getNumber(),
+               parent);
+            }
+
+         relevant.insert(s);
+         s = parent;
+         }
+      }
+
+   auto * const root = _cfg->getStructure()->asRegion();
+   if (root != NULL) // in case the root might sometimes be a block structure
+      collectWorkFromRegion(root, relevant);
+   }
+
+// Get the structures to process in post-order. Since the pending work is
+// treated as a stack, that means that regions will be processed before their
+// contents. That's a good order because moving a node out of a region never
+// makes that region movable, but it might make it immovable.
+void TR_RegionStructure::ExitExtraction::collectWorkFromRegion(
+   TR_RegionStructure *region,
+   const StructureSet &relevant)
+   {
+   TR_RegionStructure::Cursor it(*region);
+   for (auto node = it.getFirst(); node != NULL; node = it.getNext())
+      {
+      TR_Structure * const s = node->getStructure();
+      if (relevant.find(s) == relevant.end())
+         continue;
+
+      if (s->asRegion() != NULL)
+         collectWorkFromRegion(s->asRegion(), relevant);
+      else
+         enqueue(s);
+      }
+
+   enqueue(region);
+   }
+
+void TR_RegionStructure::ExitExtraction::extractStructure(
+   TR_Structure * const initialStructure)
+   {
+   TR_RegionStructure *region = initialStructure->getParent();
+   if (region == NULL)
+      return; // ignore initialStructure because it has been detached
+
+   TR_RegionStructure *loop = initialStructure->getContainingLoop();
+   if (loop == NULL)
+      return;
+
+   TR_StructureSubGraphNode *node = region->subNodeFromStructure(initialStructure);
+   for (;;)
+      {
+      TR_ASSERT_FATAL(
+         node->getStructure()->getParent() == region,
+         "removeUnconditionalExit: node %p not (directly) in region %p\n",
+         node,
+         region);
+
+      if (!region->isNaturalLoop() && !region->isAcyclic())
+         return;
+
+      TR_RegionStructure * const parent = region->getParent();
+      if (parent == NULL)
+         return;
+
+      // Try to find a remaining successor of node in this region.
+      TR_SuccessorIterator sit(node);
+      for (auto e = sit.getFirst(); e != NULL; e = sit.getNext())
+         {
+         if (!region->isExitEdge(e))
+            return;
+         }
+
+      // None of this node's remaining successors are in this region, so it
+      // unconditionally exits, and we can move it into the parent region.
+      // However, we'd like to do so only if all of the remaining successors
+      // are outside the innermost containing loop. Otherwise we'll spend time
+      // dissolving acyclic regions, or worse, invalidate structure, for no
+      // useful purpose.
+      //
+      // This test is delayed until we know that all outgoing edges are exit
+      // edges in the hope that it will be unnecessary to build the set of node
+      // numbers contained in the loop.
+      //
+      // Note that if (region == loop), then we already know that all
+      // successors are outside loop, because they're outside region.
+      if (region != loop)
+         {
+         TR_BitVector &loopBlocks = regionContents(loop);
+         for (auto e = sit.getFirst(); e != NULL; e = sit.getNext())
+            {
+            if (loopBlocks.isSet(e->getTo()->getNumber()))
+               return;
+            }
+         }
+
+      // This node doesn't belong in the loop!
+      if (!performTransformation(_comp,
+            "%sMoving unconditional exit node %d "
+            "from region %d:%p into parent %d:%p\n",
+            OPT_DETAILS,
+            node->getNumber(),
+            region->getNumber(),
+            region,
+            parent->getNumber(),
+            parent))
+         return;
+
+      if (_comp->getOption(TR_ExtractExitsByInvalidatingStructure))
+         {
+         // There is a node that would be extracted; just kill structure instead
+         if (_trace)
+            traceMsg(_comp, "invalidating structure instead of fixing it\n");
+
+         // FIXME this should call invalidateStructure(), but doing so does not
+         // clear out blocks' getStructureOf(), and not everything that looks
+         // at getStructureOf() checks beforehand that structure is valid. So
+         // at the moment, invalidateStructure() can cause subsequent
+         // optimizations to dereference dangling pointers.
+         _cfg->setStructure(NULL);
+         return;
+         }
+
+      moveNodeIntoParent(node, region, parent);
+      removeContentsFromRegion(initialStructure, region);
+
+      if (_trace && _comp->getOutFile() != NULL)
+         {
+         traceMsg(_comp, "Structure after moving node into parent:\n<structure>\n");
+         _comp->getDebug()->print(_comp->getOutFile(), _cfg->getStructure(), 0);
+         traceMsg(_comp, "</structure>\n");
+         }
+
+#ifdef DEBUG
+      const bool checkStructure = true;
+#else
+      const bool checkStructure =
+         _comp->getOption(TR_CheckStructureDuringExitExtraction);
+#endif
+      if (checkStructure)
+         {
+         auto * const mem = _comp->trMemory();
+         TR::StackMemoryRegion stackMemoryRegion(*mem);
+         TR_BitVector blocks(_cfg->getNextNodeNumber(), mem, stackAlloc);
+         _cfg->getStructure()->checkStructure(&blocks);
+         }
+
+      if (region == loop)
+         {
+         loop = loop->getContainingLoop();
+         if (loop == NULL)
+            return; // no more containing loops
+         }
+
+      region = parent;
+      }
+   }
+
+TR_BitVector &TR_RegionStructure::ExitExtraction::regionContents(
+   TR_RegionStructure * const region)
+   {
+   auto existing = _regionContents.find(region);
+   if (existing != _regionContents.end())
+      return existing->second;
+
+   // Insert an empty bitvector into the map to avoid extra copying. It is
+   // populated in-place below.
+   auto new_entry = std::make_pair(region, TR_BitVector(_memRegion));
+   TR_BitVector &contents = _regionContents.insert(new_entry).first->second;
+
+   TR_RegionStructure::Cursor it(*region);
+   for (auto node = it.getFirst(); node != NULL; node = it.getNext())
+      {
+      TR_Structure * const s = node->getStructure();
+      if (s->asBlock() != NULL)
+         contents.set(s->getNumber());
+      else
+         contents |= regionContents(s->asRegion());
+      }
+
+   if (_trace)
+      {
+      traceMsg(_comp, "contents of region %d:%p:", region->getNumber(), region);
+      traceBitVector(contents);
+      }
+
+   return contents;
+   }
+
+void TR_RegionStructure::ExitExtraction::removeContentsFromRegion(
+   TR_Structure * const removed,
+   TR_RegionStructure * const region)
+   {
+   auto entry = _regionContents.find(region);
+   if (entry == _regionContents.end())
+      return;
+
+   TR_BitVector &blocks = entry->second;
+   if (removed->asBlock() != NULL)
+      {
+      blocks.reset(removed->getNumber());
+      }
+   else
+      {
+      auto subregionEntry = _regionContents.find(removed->asRegion());
+      TR_ASSERT_FATAL(
+         subregionEntry != _regionContents.end(),
+         "region %d:%p has contents, "
+         "but (previously) contained subregion %d:%p does not\n",
+         region->getNumber(),
+         region,
+         removed->getNumber(),
+         removed);
+
+      blocks -= subregionEntry->second;
+      }
+
+   if (_trace)
+      {
+      traceMsg(_comp,
+         "adjusted contents of region %d:%p:",
+         region->getNumber(),
+         region);
+
+      traceBitVector(blocks);
+      }
+   }
+
+void TR_RegionStructure::ExitExtraction::traceBitVector(TR_BitVector &bv)
+   {
+   TR_BitVectorIterator bvi(bv);
+   while (bvi.hasMoreElements())
+      traceMsg(_comp, " %d", bvi.getNextElement());
+
+   traceMsg(_comp, "\n");
+   }
+
+void TR_RegionStructure::ExitExtraction::moveNodeIntoParent(
+   TR_StructureSubGraphNode * const node,
+   TR_RegionStructure * const region,
+   TR_RegionStructure * const parent)
+   {
+   if (node == region->getEntry())
+      {
+      // Replace this entire region in the parent, since entry can't be removed
+      TR_ASSERT_FATAL(
+         region->numSubNodes() == 1,
+         "removeUnconditionalExit: all successors of region %p entry are "
+         "outside region, but there are additional sub-nodes\n",
+         region);
+
+      parent->replacePart(region, node->getStructure());
+      return;
+      }
+
+   // Copy the original predecessors and successors
+   _allPreds.clear();
+      {
+      TR_PredecessorIterator pit(node);
+      for (auto e = pit.getFirst(); e != NULL; e = pit.getNext())
+         _allPreds.push_back(e);
+      }
+
+   _succs.clear();
+      {
+      TR::CFGEdgeList &l = node->getSuccessors();
+      _succs.insert(_succs.end(), l.begin(), l.end());
+      }
+
+   _excSuccs.clear();
+      {
+      TR::CFGEdgeList &l = node->getExceptionSuccessors();
+      _excSuccs.insert(_excSuccs.end(), l.begin(), l.end());
+      }
+
+   // Remove all incoming edges
+   for (auto e = _allPreds.begin(); e != _allPreds.end(); ++e)
+      {
+      region->removeEdgeWithoutCleanup(*e, false);
+      if (_trace)
+         {
+         traceMsg(_comp,
+            "removed edge (%d->%d):%p from region %d:%p\n",
+            (*e)->getFrom()->getNumber(),
+            (*e)->getTo()->getNumber(),
+            *e,
+            region->getNumber(),
+            region);
+         }
+      }
+
+   // Move node into parent
+   region->removeSubNodeWithoutCleanup(node);
+   parent->addSubNode(node);
+   if (_trace)
+      traceMsg(_comp, "moved node into parent\n");
+
+   // For each edge that was incoming, region has an exit edge
+   const bool nodeIsHandler =
+      node->getStructure()->getEntryBlock()->isCatchBlock();
+
+   for (auto e = _allPreds.begin(); e != _allPreds.end(); ++e)
+      {
+      auto * const src = toStructureSubGraphNode((*e)->getFrom());
+      region->addExitEdge(src, node->getNumber(), nodeIsHandler);
+      if (_trace)
+         {
+         traceMsg(_comp,
+            "added exit edge (%d->%d) to region %d:%p\n",
+            src->getNumber(),
+            node->getNumber(),
+            region->getNumber(),
+            region);
+         }
+      }
+
+   // Parent needs an edge from region to node
+   auto * const regionNode = parent->subNodeFromStructure(region);
+   if (nodeIsHandler)
+      TR::CFGEdge::createExceptionEdge(regionNode, node, _structureRegion);
+   else
+      TR::CFGEdge::createEdge(regionNode, node, _structureRegion);
+
+   if (_trace)
+      {
+      traceMsg(_comp,
+         "added %sedge (%d->%d) to region %d:%p\n",
+         nodeIsHandler ? "exception " : "",
+         regionNode->getNumber(),
+         node->getNumber(),
+         parent->getNumber(),
+         parent);
+      }
+
+   // Replace all outgoing (exit) edges with edges originating in parent
+   for (auto e = _succs.begin(); e != _succs.end(); ++e)
+      moveOutgoingEdgeToParent(region, parent, node, *e, false);
+
+   for (auto e = _excSuccs.begin(); e != _excSuccs.end(); ++e)
+      moveOutgoingEdgeToParent(region, parent, node, *e, true);
+
+   region->cleanupAfterNodeRemoval();
+
+   // Cleanup may have eliminated the current region.
+   if (region->getParent() == NULL)
+      {
+      if (_trace)
+         {
+         traceMsg(_comp,
+            "region %d:%p was eliminated by cleanupAfterNodeRemoval\n",
+            region->getNumber(),
+            region);
+         }
+
+      return;
+      }
+
+   TR_ASSERT_FATAL(
+      region->getParent() == parent,
+      "removeUnconditionalExit: region %p parent changed unexpectedly "
+      "from %p to %p\n",
+      region,
+      parent,
+      region->getParent());
+
+   // Each of the predecessors had edges removed within the subgraph.
+   // They've been replaced by exit edges, but these nodes may now
+   // themselves be unconditional exits from the region, so enqueue them.
+   for (auto e = _allPreds.begin(); e != _allPreds.end(); ++e)
+      {
+      auto * const src = toStructureSubGraphNode((*e)->getFrom());
+      region->cleanupAfterEdgeRemoval(src);
+      enqueue(src->getStructure());
+      }
+   }
+
+void TR_RegionStructure::ExitExtraction::moveOutgoingEdgeToParent(
+   TR_RegionStructure * const region,
+   TR_RegionStructure * const parent,
+   TR_StructureSubGraphNode * const node,
+   TR::CFGEdge * const edge,
+   bool isExceptionEdge)
+   {
+   TR_ASSERT_FATAL(
+      region->isExitEdge(edge),
+      "moveOutgoingEdgeToParent: unconditional exit %p node has "
+      "non-exit edge %p outgoing\n",
+      node,
+      edge);
+
+   TR_ASSERT_FATAL(
+      toStructureSubGraphNode(edge->getFrom()) == node,
+      "moveOutgoingEdgeToParent: expected edge %p to originate from node %p\n",
+      edge,
+      node);
+
+   auto * const exitTgt = toStructureSubGraphNode(edge->getTo());
+   const int32_t tgtNum = exitTgt->getNumber();
+
+   region->removeEdgeWithoutCleanup(edge, /* isExitEdge = */ true);
+   if (_trace)
+      {
+      traceMsg(_comp,
+         "removed exit edge (%d->%d):%p from region %d:%p\n",
+         edge->getFrom()->getNumber(),
+         edge->getTo()->getNumber(),
+         edge,
+         region->getNumber(),
+         region);
+      }
+
+   // Determine whether region still exits to tgtNum
+   bool regionStillHasThisExit = false;
+   ListIterator<TR::CFGEdge> rExits(&region->getExitEdges());
+   for (auto exit = rExits.getFirst(); exit != NULL; exit = rExits.getNext())
+      {
+      if (exit->getTo()->getNumber() == tgtNum)
+         {
+         regionStillHasThisExit = true;
+         break;
+         }
+      }
+
+   // In case region no longer exits to tgtNum, we have to remove the
+   // corresponding edge in parent (which may itself be an exit from parent)
+   if (!regionStillHasThisExit)
+      {
+      // Find the edge in parent outgoing from region that corresponds to this
+      // (now stale) exit from region.
+      auto * const regionNode = parent->subNodeFromStructure(region);
+      TR::CFGEdge *staleEdge = NULL;
+      TR_SuccessorIterator sit(regionNode);
+      for (auto e = sit.getFirst(); e != NULL; e = sit.getNext())
+         {
+         if (e->getTo()->getNumber() == tgtNum)
+            {
+            staleEdge = e;
+            break;
+            }
+         }
+
+      TR_ASSERT_FATAL(
+         staleEdge != NULL,
+         "moveOutgoingEdgeToParent: unable to find parent %p edge for "
+         "stale exit from region %p to %d\n",
+         parent,
+         region,
+         tgtNum);
+
+      // Remove the stale edge. NOTE: If this edge is an exit from parent, it
+      // may seem appropriate to check whether it too was the last such exit,
+      // and if so, continue removing edges in the parent of parent, and so
+      // forth toward the root. However, in that case parent will definitely
+      // have an exit edge from node to tgtNum, to be created below.
+      parent->removeEdgeWithoutCleanup(staleEdge, parent->isExitEdge(staleEdge));
+      if (_trace)
+         {
+         traceMsg(_comp,
+            "original region %d:%p no longer exits to %d - "
+            "removed corresponding exit from parent\n",
+            region->getNumber(),
+            region,
+            tgtNum);
+         }
+      }
+
+   auto * const redirect = parent->findSubNodeInRegion(tgtNum);
+   if (redirect == NULL)
+      {
+      // This is also an exit from parent.
+      parent->addExitEdge(node, tgtNum, isExceptionEdge);
+      if (_trace)
+         {
+         traceMsg(_comp,
+            "successor %d does not exist in parent - created new exit %sedge\n",
+            tgtNum,
+            isExceptionEdge ? "exception " : "");
+         }
+      }
+   else
+      {
+      if (isExceptionEdge)
+         TR::CFGEdge::createExceptionEdge(node, redirect, _structureRegion);
+      else
+         TR::CFGEdge::createEdge(node, redirect, _structureRegion);
+
+      if (_trace)
+         {
+         traceMsg(_comp,
+            "parent region contains %d - created internal %sedge\n",
+            tgtNum,
+            isExceptionEdge ? "exception " : "");
+         }
+      }
+   }
 
 void TR_RegionStructure::cleanupAfterNodeRemoval()
    {
@@ -205,9 +988,7 @@ void TR_RegionStructure::cleanupAfterNodeRemoval()
       }
    }
 
-
-
-void TR_RegionStructure::removeSubNode(TR_StructureSubGraphNode *node)
+void TR_RegionStructure::removeSubNodeWithoutCleanup(TR_StructureSubGraphNode *node)
    {
    for (auto itr = _subNodes.begin(), end = _subNodes.end(); itr != end; ++itr)
       {
@@ -218,6 +999,11 @@ void TR_RegionStructure::removeSubNode(TR_StructureSubGraphNode *node)
          }
       }
    node->getStructure()->setParent(NULL);
+   }
+
+void TR_RegionStructure::removeSubNode(TR_StructureSubGraphNode *node)
+   {
+   removeSubNodeWithoutCleanup(node);
    cleanupAfterNodeRemoval();
    }
 
@@ -228,6 +1014,23 @@ TR_StructureSubGraphNode *TR_RegionStructure::findSubNodeInRegion(int32_t num)
       if (node->getNumber() == num)
          return node;
    return 0;
+   }
+
+TR_StructureSubGraphNode *TR_RegionStructure::subNodeFromStructure(
+   TR_Structure * const structure)
+   {
+   const int32_t num = structure->getNumber();
+   TR_StructureSubGraphNode * const node = findSubNodeInRegion(num);
+   TR_ASSERT_FATAL(
+      node != NULL && node->getStructure() == structure,
+      "subNodeFromStructure: in region %p, "
+      "expected node %d to have structure %p, but found %p\n",
+      this,
+      num,
+      structure,
+      node->getStructure());
+
+   return node;
    }
 
 void TR_RegionStructure::replacePart(TR_Structure *from, TR_Structure *to)
@@ -246,6 +1049,7 @@ void TR_RegionStructure::replacePart(TR_Structure *from, TR_Structure *to)
    TR_ASSERT(node != getEntry() || _nodeIndex == to->getNumber(), "cannot replace the entry node in %d with node %d", _nodeIndex, to->getNumber());
    node->setStructure(to);
    to->setParent(this);
+   from->setParent(NULL); // The replaced structure is now detached
 
    // If the node number has changed, replace the exit part in all predecessors
    // that are themselves regions.
@@ -435,7 +1239,7 @@ void TR_BlockStructure::removeEdge(TR_Structure *from, TR_Structure *to)
       parent->removeEdge(from, to);
    }
 
-void TR_RegionStructure::removeEdge(TR::CFGEdge *edge, bool isExitEdge)
+void TR_RegionStructure::removeEdgeWithoutCleanup(TR::CFGEdge *edge, bool isExitEdge)
    {
    // Remove this edge from the region's subgraph
    //
@@ -458,18 +1262,24 @@ void TR_RegionStructure::removeEdge(TR::CFGEdge *edge, bool isExitEdge)
       toNode->getExceptionPredecessors().remove(edge);
       }
 
-   bool cleanupAlreadyDone = false;
    if (isExitEdge)
       _exitEdges.remove(edge);
-   else
+   }
+
+void TR_RegionStructure::removeEdge(TR::CFGEdge *edge, bool isExitEdge)
+   {
+   removeEdgeWithoutCleanup(edge, isExitEdge);
+
+   bool cleanupAlreadyDone = false;
+   if (!isExitEdge)
       {
-      cleanupAfterEdgeRemoval(toNode);
-      if (toNode == fromNode)
+      cleanupAfterEdgeRemoval(edge->getTo());
+      if (edge->getTo() == edge->getFrom())
          cleanupAlreadyDone = true;
       }
 
    if (!cleanupAlreadyDone)
-      cleanupAfterEdgeRemoval(fromNode);
+      cleanupAfterEdgeRemoval(edge->getFrom());
    }
 
 void TR_RegionStructure::removeEdge(TR_Structure *from, TR_Structure *to)
@@ -1399,8 +2209,8 @@ TR_StructureSubGraphNode *TR_StructureSubGraphNode::asStructureSubGraphNode() {r
 
 void TR_BlockStructure::checkStructure(TR_BitVector *_blockNumbers)
    {
-   TR_ASSERT(this->getNumber()==_block->getNumber(), "Number of BlockStructure is NOT the same as that of the block");
-   TR_ASSERT(_blockNumbers->get(this->getNumber())==0, "Structure, Two blocks with the same number");
+   TR_ASSERT_FATAL(this->getNumber()==_block->getNumber(), "Number of BlockStructure is NOT the same as that of the block");
+   TR_ASSERT_FATAL(_blockNumbers->get(this->getNumber())==0, "Structure, Two blocks with the same number");
    //set the value of the bit representing this block number
    //
    _blockNumbers->set(this->getNumber());
@@ -1409,12 +2219,12 @@ void TR_BlockStructure::checkStructure(TR_BitVector *_blockNumbers)
 void TR_RegionStructure::checkStructure(TR_BitVector* _blockNumbers)
    {
    TR_StructureSubGraphNode *node;
-   TR_ASSERT(this->getNumber()==getEntry()->getStructure()->getNumber(), "Entry node does not have same number as this RegionStructure");
+   TR_ASSERT_FATAL(this->getNumber()==getEntry()->getStructure()->getNumber(), "Entry node does not have same number as this RegionStructure");
    TR_RegionStructure::Cursor si(*this);
    for (node = si.getCurrent(); node != NULL; node = si.getNext())
       {
-      TR_ASSERT(this==node->getStructure()->getParent(), "subGraphNode does not have this RegionStructure as its parent");
-      TR_ASSERT(node->getNumber()==node->getStructure()->getNumber(), "subGraphNode does not have the same node number as its structure");
+      TR_ASSERT_FATAL(this==node->getStructure()->getParent(), "subGraphNode does not have this RegionStructure as its parent");
+      TR_ASSERT_FATAL(node->getNumber()==node->getStructure()->getNumber(), "subGraphNode does not have the same node number as its structure");
       TR_StructureSubGraphNode *pred, *succ;
       bool isConsistent;
       for (auto edge = node->getPredecessors().begin(); edge != node->getPredecessors().end(); ++edge)
@@ -1429,7 +2239,7 @@ void TR_RegionStructure::checkStructure(TR_BitVector* _blockNumbers)
                break;
                }
             }
-         TR_ASSERT(isConsistent, "predecessor of this subGraph node not not contain this node in its successors");
+         TR_ASSERT_FATAL(isConsistent, "predecessor of this subGraph node not not contain this node in its successors");
          }
       for (auto edge = node->getExceptionPredecessors().begin(); edge != node->getExceptionPredecessors().end(); ++edge)
          {
@@ -1443,7 +2253,7 @@ void TR_RegionStructure::checkStructure(TR_BitVector* _blockNumbers)
                break;
                }
             }
-         TR_ASSERT(isConsistent, "exception predecessor of this subGraph node not not contain this node in its exception successors");
+         TR_ASSERT_FATAL(isConsistent, "exception predecessor of this subGraph node not not contain this node in its exception successors");
          }
 
       for (auto edge = node->getSuccessors().begin(); edge != node->getSuccessors().end(); ++edge)
@@ -1458,7 +2268,7 @@ void TR_RegionStructure::checkStructure(TR_BitVector* _blockNumbers)
                break;
                }
             }
-         TR_ASSERT(isConsistent, "successor of this subGraph node not not contain this node in its predecessors");
+         TR_ASSERT_FATAL(isConsistent, "successor of this subGraph node not not contain this node in its predecessors");
          }
       for (auto edge = node->getExceptionSuccessors().begin(); edge != node->getExceptionSuccessors().end(); ++edge)
          {
@@ -1473,9 +2283,116 @@ void TR_RegionStructure::checkStructure(TR_BitVector* _blockNumbers)
                break;
                }
             }
-         TR_ASSERT(isConsistent, "exception successor of this subGraph node not not contain this node in its exception predecessors");
+         TR_ASSERT_FATAL(isConsistent, "exception successor of this subGraph node not not contain this node in its exception predecessors");
          }
       node->getStructure()->checkStructure(_blockNumbers);
+
+      if (node->getStructure()->asRegion() != NULL)
+         {
+         // Check that node's outgoing edges correspond to the subregion's exits
+         TR_RegionStructure * const subregion = node->getStructure()->asRegion();
+
+         // All normal successors of node must have corresponding normal exits
+         auto &succs = node->getSuccessors();
+         for (auto edge = succs.begin(); edge != succs.end(); ++edge)
+            {
+            const int32_t num = (*edge)->getTo()->getNumber();
+            TR::CFGEdge *exit = NULL;
+            ListIterator<TR::CFGEdge> exits(&subregion->getExitEdges());
+            for (exit = exits.getFirst(); exit != NULL; exit = exits.getNext())
+               {
+               if (exit->getTo()->getNumber() == num)
+                  break;
+               }
+
+            TR_ASSERT_FATAL(
+               exit != NULL,
+               "subnode %d:%p edge to %d has no corresponding exit edge from "
+               "subregion %p\n",
+               node->getNumber(),
+               node,
+               num,
+               subregion);
+
+            auto * const exitNode = toStructureSubGraphNode(exit->getTo());
+            auto &preds = exitNode->getPredecessors();
+            TR_ASSERT_FATAL(
+               std::find(preds.begin(), preds.end(), exit) != preds.end(),
+               "exit in subregion %p corresponding to subnode %d:%p edge to %d "
+               "not found in normal predecessors of exit node %p\n",
+               subregion,
+               node->getNumber(),
+               node,
+               num,
+               exitNode);
+            }
+
+         // All exception successors of node must have corresponding exception exits
+         auto &excSuccs = node->getExceptionSuccessors();
+         for (auto edge = excSuccs.begin(); edge != excSuccs.end(); ++edge)
+            {
+            const int32_t num = (*edge)->getTo()->getNumber();
+            TR::CFGEdge *exit = NULL;
+            ListIterator<TR::CFGEdge> exits(&subregion->getExitEdges());
+            for (exit = exits.getFirst(); exit != NULL; exit = exits.getNext())
+               {
+               if (exit->getTo()->getNumber() == num)
+                  break;
+               }
+
+            TR_ASSERT_FATAL(
+               exit != NULL,
+               "subnode %d:%p edge to %d has no corresponding exit edge from "
+               "subregion %p\n",
+               node->getNumber(),
+               node,
+               num,
+               subregion);
+
+            auto * const exitNode = toStructureSubGraphNode(exit->getTo());
+            auto &excPreds = exitNode->getExceptionPredecessors();
+            TR_ASSERT_FATAL(
+               std::find(excPreds.begin(), excPreds.end(), exit) != excPreds.end(),
+               "exit in subregion %p corresponding to subnode %d:%p edge to %d "
+               "not found in exception predecessors of exit node %p\n",
+               subregion,
+               node->getNumber(),
+               node,
+               num,
+               exitNode);
+            }
+
+         // For each exit node must have a corresponding successor of the
+         // appropriate type
+         ListIterator<TR::CFGEdge> exits(&subregion->getExitEdges());
+         for (auto exit = exits.getFirst(); exit != NULL; exit = exits.getNext())
+            {
+            auto * const exitNode = toStructureSubGraphNode(exit->getTo());
+            const int32_t num = exitNode->getNumber();
+            auto &excPreds = exitNode->getExceptionPredecessors();
+            const bool isExc =
+               std::find(excPreds.begin(), excPreds.end(), exit) != excPreds.end();
+
+            TR::CFGEdgeList &succs =
+               isExc ? node->getExceptionSuccessors() : node->getSuccessors();
+
+            auto found = succs.begin();
+            for (; found != succs.end(); ++found)
+               {
+               if ((*found)->getTo()->getNumber() == num)
+                  break;
+               }
+
+            TR_ASSERT_FATAL(
+               found != succs.end(),
+               "exit from subregion %p to %d has no corresponding edge in "
+               "parent region outgoing from subnode %d:%p\n",
+               subregion,
+               num,
+               node->getNumber(),
+               node);
+            }
+         }
       }
 
    TR_ScratchList<TR_StructureSubGraphNode> exitNodes(trMemory());
@@ -1491,7 +2408,7 @@ void TR_RegionStructure::checkStructure(TR_BitVector* _blockNumbers)
          {
          if ((seenNode->getNumber() == toNode->getNumber()) &&
              (seenNode != toNode))
-            TR_ASSERT(0, "Exit edges to the same node number %d in region %p must have a unique structure subgraph node (node1 %p node2 %p)\n", seenNode->getNumber(), this, seenNode, toNode);
+            TR_ASSERT_FATAL(0, "Exit edges to the same node number %d in region %p must have a unique structure subgraph node (node1 %p node2 %p)\n", seenNode->getNumber(), this, seenNode, toNode);
          }
       if (!exitNodes.find(toNode))
          exitNodes.add(toNode);

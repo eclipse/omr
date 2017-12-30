@@ -80,18 +80,15 @@ performAnalysis(TR_Structure *rootStructure,
    {
    LexicalTimer tlex("basicDFSetAnalysis_pA", comp()->phaseTimer());
    //traceMsg(comp(), "DJS perform analysis %d, nodes = %d, bits = %d\n", this->getKind(), comp()->getFlowGraph()->getNextNodeNumber(), getNumberOfBits());
-   //comp()->printMemStatsBefore("DJS - Before DFA");
    // Table of bit vectors to be used during the analysis.
    rootStructure->resetAnalysisInfo();
    rootStructure->resetAnalyzedStatus();
    initializeDFSetAnalysis();
-   //comp()->printMemStatsAfter("DJS - After initialize DFA");
    if (!postInitializationProcessing())
       return false;
    doAnalysis(rootStructure, checkForChanges);
    //rootStructure->resetAnalysisInfo();
    //rootStructure->resetAnalyzedStatus();
-   //comp()->printMemStatsAfter("DJS - After DFA");
    return true;
    }
 

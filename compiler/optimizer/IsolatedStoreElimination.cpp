@@ -509,7 +509,7 @@ bool TR_IsolatedStoreElimination::canRemoveStoreNode(TR::Node *node)
    // operation that we do not want to remove.
    //
 
-   if (!comp()->cg()->allowDSEOfVolatiles() && node->getSymbolReference()->getSymbol()->isVolatile())
+   if (node->getSymbolReference()->getSymbol()->isVolatile())
       return false;
 
    if (node->dontEliminateStores())

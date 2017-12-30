@@ -24,6 +24,7 @@
 #define TR_CODECACHEMANAGER_INCL
 
 #include "runtime/JBCodeCacheManager.hpp"
+#include "infra/Annotations.hpp"
 
 /*
  * These #ifndef's and classes must appear before including the OMR version of this file
@@ -31,7 +32,7 @@
 namespace TR
 {
 
-   class CodeCacheManager : public JitBuilder::CodeCacheManager
+   class OMR_EXTENSIBLE CodeCacheManager : public JitBuilder::CodeCacheManager
       {
       public:
       CodeCacheManager(TR::RawAllocator rawAllocator) : JitBuilder::CodeCacheManager(rawAllocator) { }

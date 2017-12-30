@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,7 @@ namespace OMR { typedef OMR::ObjectModel ObjectModelConnector; }
 
 #include <stdint.h>        // for int32_t, int64_t, uint32_t
 #include "env/jittypes.h"  // for uintptrj_t, intptrj_t
+#include "il/DataTypes.hpp"
 
 class TR_OpaqueClassBlock;
 namespace OMR { class ObjectModel; }
@@ -72,6 +73,12 @@ class ObjectModel
 
    bool isDiscontiguousArray(int32_t sizeInBytes) { return false; }
    bool isDiscontiguousArray(int32_t sizeInElements, int32_t elementSize) { return false; }
+   bool isDiscontiguousArray(TR::Compilation* comp, uintptrj_t objectPointer);
+   intptrj_t getArrayLengthInElements(TR::Compilation* comp, uintptrj_t objectPointer);
+   uintptrj_t getArrayLengthInBytes(TR::Compilation* comp, uintptrj_t objectPointer);
+   uintptrj_t getArrayElementWidthInBytes(TR::DataType type);
+   uintptrj_t getArrayElementWidthInBytes(TR::Compilation* comp, uintptrj_t objectPointer);
+   uintptrj_t decompressReference(TR::Compilation* comp, uintptrj_t compressedReference);
 
 
    int32_t compressedReferenceShiftOffset();

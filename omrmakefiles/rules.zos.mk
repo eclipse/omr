@@ -36,7 +36,6 @@ endif
 
 # Enable Debugging Symbols
 ifeq ($(OMR_DEBUG),1)
-  GLOBAL_FLAGS+=-Wc,g9
 endif
 
 # Enable Optimizations
@@ -70,9 +69,7 @@ GLOBAL_CPPFLAGS+=-DJ9ZOS390 -DLONGLONG -DJ9VM_TIERED_CODE_CACHE -D_ALL_SOURCE -D
 # a,goff   Assemble into GOFF object files
 # NOANSIALIAS Do not generate ALIAS binder control statements
 # TARGET   Generate code for the target operating system
-# list     Generate assembly listing
-# offset   In assembly listing, show addresses as offsets of function entry points
-GLOBAL_FLAGS+=-Wc,xplink,convlit\(ISO8859-1\),rostring,FLOAT\(IEEE,FOLD,AFP\),enum\(4\) -Wa,goff -Wc,NOANSIALIAS -Wc,TARGET\(zOSV1R13\) -W "c,list,offset"
+GLOBAL_FLAGS+=-Wc,xplink,convlit\(ISO8859-1\),rostring,FLOAT\(IEEE,FOLD,AFP\),enum\(4\) -Wa,goff -Wc,NOANSIALIAS -Wc,TARGET\(zOSV1R13\)
 
 ifeq (1,$(OMR_ENV_DATA64))
   GLOBAL_CPPFLAGS+=-DJ9ZOS39064
@@ -115,17 +112,6 @@ ifeq (1,$(DO_LINK))
   endif
 endif
 
-
-# compilation for C files.
-define COMPILE_C_COMMAND
-$(CC) $(CPPFLAGS) $(MODULE_CPPFLAGS) $(GLOBAL_CPPFLAGS) $(GLOBAL_CFLAGS) $(MODULE_CFLAGS) $(CFLAGS) -c $< -o $@ > $*.asmlist
-endef
-
-# compilation for C++ files.
-define COMPILE_CXX_COMMAND
-$(CXX) $(CPPFLAGS) $(MODULE_CPPFLAGS) $(GLOBAL_CPPFLAGS) $(GLOBAL_CXXFLAGS) $(MODULE_CXXFLAGS) $(CXXFLAGS) -c $< -o $@ > $*.asmlist
-endef
-
 # compilation for metal-C files.
 ifeq (1,$(OMR_ENV_DATA64))
   MCFLAGS=-q64
@@ -144,8 +130,8 @@ endef
 
 define LINK_CXX_EXE_COMMAND
 $(CXXLINKEXE) $(OMR_MK_CXXLINKFLAGS) -o $@ \
-  $(OBJECTS) \
-  $(LDFLAGS) $(MODULE_LDFLAGS) $(GLOBAL_LDFLAGS)
+  $(LDFLAGS) $(MODULE_LDFLAGS) $(GLOBAL_LDFLAGS) \
+  $(LD_SHARED_LIBS) $(OBJECTS) $(LD_STATIC_LIBS)
 endef
 
 # Do not create an export file
@@ -153,15 +139,15 @@ $(MODULE_NAME)_LINKER_EXPORT_SCRIPT:=
 
 define LINK_C_SHARED_COMMAND
 $(CCLINKSHARED) -o $($(MODULE_NAME)_shared) \
-  $(OBJECTS) \
-  $(LDFLAGS) $(MODULE_LDFLAGS) $(GLOBAL_LDFLAGS)
+  $(LDFLAGS) $(MODULE_LDFLAGS) $(GLOBAL_LDFLAGS) \
+  $(LD_SHARED_LIBS) $(OBJECTS) $(LD_STATIC_LIBS)
 mv $(LIBPREFIX)$(MODULE_NAME).x $(lib_output_dir)
 endef
 
 define LINK_CXX_SHARED_COMMAND
 $(CXXLINKSHARED) $(OMR_MK_CXXLINKFLAGS) -o $($(MODULE_NAME)_shared) \
-  $(OBJECTS) \
-  $(LDFLAGS) $(MODULE_LDFLAGS) $(GLOBAL_LDFLAGS)
+  $(LDFLAGS) $(MODULE_LDFLAGS) $(GLOBAL_LDFLAGS) \
+  $(LD_SHARED_LIBS) $(OBJECTS) $(LD_STATIC_LIBS)
 mv $(LIBPREFIX)$(MODULE_NAME).x $(lib_output_dir)
 endef
 

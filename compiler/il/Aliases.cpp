@@ -647,6 +647,22 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
             aliases->set(symRefTab->getArrayShadowIndex(_symbol->getDataType().scalarToVector()));
             }
 
+         if (_symbol->isArrayShadowSymbol() &&
+             !symRefTab->aliasBuilder.immutableArrayElementSymRefs().isEmpty())
+            {
+            if (!aliases)
+               aliases = new (aliasRegion) TR_BitVector(bvInitialSize, aliasRegion, growability);
+
+            TR::DataType type = _symbol->getDataType();
+            TR_BitVectorIterator bvi(symRefTab->aliasBuilder.arrayElementSymRefs());
+            int32_t symRefNum;
+            while (bvi.hasMoreElements())
+               {
+               symRefNum = bvi.getNextElement();
+               if (symRefTab->getSymRef(symRefNum)->getSymbol()->getDataType() == type)
+                  aliases->set(symRefNum);
+               }
+            }
 
          if (_symbol->isArrayShadowSymbol() &&
              supportArrayRefinement &&

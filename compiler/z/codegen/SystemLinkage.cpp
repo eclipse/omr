@@ -1868,7 +1868,7 @@ TR::S390zLinuxSystemLinkage::checkLeafRoutine(int32_t stackFrameSize, TR::Instru
    //
 
    #define ZLINUX_SYSTEMLINK_LEAF_INSTRUCTION_CHECK_THRESHOLD 150
-   TR::Instruction *cursor = comp()->getFirstInstruction();
+   TR::Instruction *cursor = comp()->cg()->getFirstInstruction();
    int32_t numToCheck = ZLINUX_SYSTEMLINK_LEAF_INSTRUCTION_CHECK_THRESHOLD;
    bool regs[TR::RealRegister::NumRegisters] = { };
 
@@ -2189,7 +2189,6 @@ TR::S390SystemLinkage::restoreGPRsInEpilogue(TR::Instruction *cursor)
    int32_t i;
    bool findStartReg = true;
 
-   bool specializedEpilogues = cg()->specializedEpilogues() && TR::Compiler->target.isLinux();
    int32_t blockNumber = cursor->getNext()->getBlockIndex();
 
    for( i = lastReg = firstReg = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; ++i )
@@ -2206,12 +2205,9 @@ TR::S390SystemLinkage::restoreGPRsInEpilogue(TR::Instruction *cursor)
 
          if ((getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
             {
-            if ((!specializedEpilogues) || restoreRegister(getS390RealRegister(REGNUM(i))->getRegisterNumber(), blockNumber))
-               {
-               if (comp()->getOption(TR_TraceCG))
-                  traceMsg(comp(), "\tand Assigned. ");
-               findStartReg = false;
-               }
+            if (comp()->getOption(TR_TraceCG))
+               traceMsg(comp(), "\tand Assigned. ");
+            findStartReg = false;
             }
 
          if (!findStartReg && ( !(getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod() || (i == TR::RealRegister::LastGPR && firstReg != TR::RealRegister::LastGPR)) )

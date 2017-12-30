@@ -264,6 +264,7 @@ const char * objectName[] =
    "TR_IPCCNode",
    "IPHashedCallSite",
    "Assumptions",
+   "PatchSites",
 
    "TR_ZHWProfiler",
    "TR_PPCHWProfiler",

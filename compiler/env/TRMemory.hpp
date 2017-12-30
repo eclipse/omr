@@ -412,6 +412,7 @@ public:
       IPCCNode,
       IPHashedCallSite,
       Assumption,
+      PatchSites,
 
       ZHWProfiler,
       PPCHWProfiler,

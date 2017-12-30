@@ -1116,9 +1116,6 @@ void OMR::Optimizer::optimize()
       self()->switchToProfiling(2, 30);
       }
 
-   if (comp()->isOutermostMethod())
-      comp()->printMemStatsBefore("optimization");
-
    const OptimizationStrategy *opt = _strategy;
    while (opt->_num != endOpts)
       {
@@ -1794,7 +1791,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
                                    manager->getCannotOmitTrivialDefs(),
                                    false, // conversionRegsOnly
                                    true); // doCompletion
-            comp()->printMemStatsAfter("computeUseDefInfo");
 
 #ifdef OPT_TIMING
             if (doTiming)
@@ -1841,7 +1837,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
                                                manager->getCannotOmitTrivialDefs(),
                                                false, // conversionRegsOnly
                                                true); // doCompletion
-            comp()->printMemStatsAfter("computeUseDefInfoGL");
 
 #ifdef OPT_TIMING
             if (doTiming)
@@ -2125,9 +2120,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
 
    #endif
 
-   if (comp()->isOutermostMethod())
-      comp()->printMemStatsAfter(manager->name());
-
    if ((optIndex >= _firstDumpOptPhaseTrees && optIndex <= _lastDumpOptPhaseTrees) &&
        comp()->isOutermostMethod())
       {
@@ -2253,7 +2245,6 @@ int32_t OMR::Optimizer::doStructuralAnalysis()
       LexicalTimer t("StructuralAnalysis", comp()->phaseTimer());
       rootStructure = TR_RegionAnalysis::getRegions(comp());
       comp()->getFlowGraph()->setStructure(rootStructure);
-      comp()->printMemStatsAfter("StructuralAnalysis");
 
       if (debug("dumpStructure"))
          {

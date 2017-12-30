@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,28 +19,33 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#ifndef TEST_INDIRECTLOADIILINJECTOR_INCL
-#define TEST_INDIRECTLOADIILINJECTOR_INCL
 
-#include "ilgen/UnaryOpIlInjector.hpp"
-
-namespace TR { class TypeDictionary; }
-
-namespace TestCompiler
-{
-class IndirectLoadIlInjector : public UnaryOpIlInjector
+/**
+ * This Verifier checks if an AND operation exists. 
+ *
+ * Compilation is stopped by returning a non-zero return code.
+ */
+class NoAndIlVerifier : public TR::IlVerifier
    {
    public:
-   IndirectLoadIlInjector(TR::TypeDictionary *types, TestDriver *test, TR::ILOpCodes opCode)
-   : UnaryOpIlInjector(types, test, opCode)
-   {
-   }
+   int32_t verifyNode(TR::Node *node)
+      {
+      if (node->getOpCode().isAnd()) 
+         {
+         return 1;
+         }
+      return 0;
+      }
 
-   TR_ALLOC(TR_Memory::IlGenerator)
-   bool injectIL();
+   int32_t verify(TR::ResolvedMethodSymbol *sym)
+      {
+      for(TR::PreorderNodeIterator iter(sym->getFirstTreeTop(), sym->comp()); iter.currentTree(); ++iter)
+         {
+         int32_t rtn = verifyNode(iter.currentNode());
+         if(rtn)
+            return rtn;
+         }
 
+      return 0;
+      }
    };
-
-} // namespace TestCompiler
-
-#endif // !defined(TEST_INDIRECTLOADIILINJECTOR_INCL)

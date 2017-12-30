@@ -27,9 +27,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_compile_options(-pthread)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fno-rtti -fno-threadsafe-statics -Wno-deprecated -Wno-enum-compare -Wno-invalid-offsetof -Wno-write-strings -O3 -fomit-frame-pointer -fasynchronous-unwind-tables -Wreturn-type -fno-dollars-in-identifiers -m64 -fno-strict-aliasing")
 
 add_executable(comptest
 	main.cpp
@@ -41,6 +38,10 @@ add_executable(comptest
 	IfxcmpgeReductionTest.cpp
 	VectorTest.cpp
 	CallTest.cpp
+	LongAndAsRotateTest.cpp
+	MockStrategyTest.cpp
+	LogicalTest.cpp
+	LinkageTest.cpp
 )
 
 target_link_libraries(comptest

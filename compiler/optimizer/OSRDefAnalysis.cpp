@@ -105,7 +105,6 @@ void TR_OSRDefInfo::performFurtherAnalysis(AuxiliaryData &aux)
             optimizer()->getMethodSymbol()->signature(comp()->trMemory()));
       comp()->failCompilation<TR::ILGenFailure>("compilation failed because osr def analysis failed");
       }
-   comp()->printMemStatsAfter("computeOSRDefInfo");
 
    // Iterate through OSR reaching definitions bit vectors and save it in method symbol's data structure.
    TR::SymbolReferenceTable *symRefTab   = comp()->getSymRefTab();
@@ -1305,7 +1304,9 @@ void TR_OSRLiveRangeAnalysis::maintainLiveness(TR::Node *node,
 
    if (node->getOpCode().isStoreDirect())
       {
-      TR::AutomaticSymbol *local = node->getSymbolReference()->getSymbol()->getAutoSymbol();
+      TR::RegisterMappedSymbol *local = node->getSymbolReference()->getSymbol()->getAutoSymbol();
+      if (!local)
+         local = node->getSymbolReference()->getSymbol()->getParmSymbol();
       if (local && !local->isLiveLocalIndexUninitialized())
          {
          int32_t localIndex = local->getLiveLocalIndex();
@@ -1326,7 +1327,10 @@ void TR_OSRLiveRangeAnalysis::maintainLiveness(TR::Node *node,
       }
    else if (node->getOpCode().isLoadVarDirect() || node->getOpCodeValue() == TR::loadaddr)
       {
-      TR::AutomaticSymbol *local = node->getSymbolReference()->getSymbol()->getAutoSymbol();
+      TR::RegisterMappedSymbol *local = node->getSymbolReference()->getSymbol()->getAutoSymbol();
+      if (!local)
+         local = node->getSymbolReference()->getSymbol()->getParmSymbol();
+ 
       if (local && !local->isLiveLocalIndexUninitialized())
          {
          int32_t localIndex = local->getLiveLocalIndex();

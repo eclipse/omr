@@ -626,6 +626,7 @@ OMR_BUILD_DATASIZE
 OMR_BUILD_TOOLCHAIN
 OMR_BUILD_ARCH
 OMR_BUILD_OS
+OMR_ENV_DATA64
 EGREP
 GREP
 CPP
@@ -2116,22 +2117,23 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+
 ###############################################################################
 # Copyright (c) 2015, 2016 IBM Corp. and others
-#   
+#
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
 # distribution and is available at https://www.eclipse.org/legal/epl-2.0/
 # or the Apache License, Version 2.0 which accompanies this distribution and
 # is available at https://www.apache.org/licenses/LICENSE-2.0.
-# 
+#
 # This Source Code may also be made available under the following
 # Secondary Licenses when the conditions for such availability set
 # forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
 # General Public License, version 2 with the GNU Classpath
 # Exception [1] and GNU General Public License, version 2 with the
 # OpenJDK Assembly Exception [2].
-# 
+#
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
@@ -3777,6 +3779,16 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OMR_BUILD_DATASIZE" >&5
 $as_echo "$OMR_BUILD_DATASIZE" >&6; }
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking OMR_ENV_DATA64" >&5
+$as_echo_n "checking OMR_ENV_DATA64... " >&6; }
+if test "$OMR_BUILD_DATASIZE" = 64; then :
+  OMR_ENV_DATA64=1
+else
+  OMR_ENV_DATA64=0
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $OMR_ENV_DATA64" >&5
+$as_echo "$OMR_ENV_DATA64" >&6; }
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking OMR_BUILD_TOOLCHAIN" >&5
 $as_echo_n "checking OMR_BUILD_TOOLCHAIN... " >&6; }
 ac_ext=c
@@ -3839,6 +3851,7 @@ $as_echo "$OMR_BUILD_TOOLCHAIN" >&6; }
 ###
 ### Variable Substitution
 ###
+
 
 
 

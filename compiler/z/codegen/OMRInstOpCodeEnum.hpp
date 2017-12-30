@@ -1112,8 +1112,6 @@
    VGNOP,               // ValueGuardNOP
    NOP,                 // No-Op (for Labels)
    ASM,                 // ASM WCode Support
-   LOCK,                // lock registers
-   UNLOCK,              // unlock registers
    LABEL,               // Destination of a jump
    TAILCALL,            // Tail Call
    DCB,                 // Debug Counter Bump

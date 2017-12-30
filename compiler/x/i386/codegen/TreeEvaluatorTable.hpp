@@ -729,15 +729,15 @@
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::loadAutoOffset
 
 
-   TR::TreeEvaluator::minmaxEvaluator,                  // TR::imax
+   TR::TreeEvaluator::minmaxEvaluator,                     // TR::imax
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::iumax
-   TR::TreeEvaluator::minmaxEvaluator,                  // TR::lmax
+   TR::TreeEvaluator::integerPairMinMaxEvaluator,          // TR::lmax
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::lumax
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::fmax
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::dmax
-   TR::TreeEvaluator::minmaxEvaluator,                  // TR::imin
+   TR::TreeEvaluator::minmaxEvaluator,                     // TR::imin
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::iumin
-   TR::TreeEvaluator::minmaxEvaluator,                  // TR::lmin
+   TR::TreeEvaluator::integerPairMinMaxEvaluator,          // TR::lmin
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::lumin
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::fmin
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::dmin
@@ -754,4 +754,4 @@
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::lnotz (J9)
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::lpopcnt (J9)
    TR::TreeEvaluator::ibyteswapEvaluator,                  // TR::ibyteswap
-   TR::TreeEvaluator::PrefetchEvaluator,                // TR::Prefetch
+   TR::TreeEvaluator::PrefetchEvaluator,                   // TR::Prefetch

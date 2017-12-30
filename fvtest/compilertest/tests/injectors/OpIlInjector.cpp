@@ -24,7 +24,7 @@
 #include "env/FrontEnd.hpp"
 #include "compile/Method.hpp"
 #include "ilgen/TypeDictionary.hpp"
-#include "ilgen/OpIlInjector.hpp"
+#include "tests/injectors/OpIlInjector.hpp"
 
 namespace TestCompiler
 {

@@ -40,7 +40,6 @@ compiler_library(x
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/OutlinedInstructions.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/RegisterRematerialization.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/SubtractAnalyser.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/codegen/Trampoline.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/OMRTreeEvaluator.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/UnaryEvaluator.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/codegen/X86BinaryEncoding.cpp

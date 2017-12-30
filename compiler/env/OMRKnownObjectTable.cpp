@@ -33,7 +33,8 @@
 
 OMR::KnownObjectTable::KnownObjectTable(TR::Compilation *comp) :
       _comp(comp),
-      _fe(comp->fe())
+      _fe(comp->fe()),
+      _arrayWithConstantElements(NULL)
    {}
 
 
@@ -55,6 +56,37 @@ OMR::KnownObjectTable::getIndex(uintptrj_t objectPointer)
    {
    notImplemented("OMR::KnownObjectTable::getIndex");
    return -1;
+   }
+
+TR::KnownObjectTable::Index
+OMR::KnownObjectTable::getIndex(uintptrj_t objectPointer, bool isArrayWithConstantElements)
+   {
+   TR_ASSERT(TR::Compiler->vm.hasAccess(self()->comp()), "Getting KnownObjectTable index requires VM access");
+   TR::KnownObjectTable::Index index = self()->getIndex(objectPointer);
+   if (isArrayWithConstantElements)
+      {
+      self()->addArrayWithConstantElements(index);
+      }
+   return index;
+   }
+
+void
+OMR::KnownObjectTable::addArrayWithConstantElements(Index index)
+   {
+   TR_ASSERT(index != UNKNOWN && !self()->isNull(index), "Calling addArrayWithConstantElements for unknown object or null!");
+   if (!_arrayWithConstantElements)
+      _arrayWithConstantElements = new (self()->comp()->trHeapMemory()) TR_BitVector(self()->getEndIndex(), self()->comp()->trMemory(), heapAlloc, growable);
+   _arrayWithConstantElements->set(index);
+   }
+
+bool
+OMR::KnownObjectTable::isArrayWithConstantElements(Index index)
+   {
+   TR_ASSERT(index != UNKNOWN && 0 <= index && index < self()->getEndIndex(), "isArrayWithConstantElements(%d): index must be in range 0..%d", index, self()->getEndIndex());
+   if (_arrayWithConstantElements
+       && _arrayWithConstantElements->isSet(index))
+      return true;
+   return false;
    }
 
 uintptrj_t *
@@ -85,6 +117,15 @@ OMR::KnownObjectTable::getIndexAt(uintptrj_t *objectReferenceLocation)
 #endif
    uintptrj_t objectPointer = *objectReferenceLocation; // Note: object references held as uintptrj_t must never be compressed refs
    Index result = self()->getIndex(objectPointer);
+   return result;
+   }
+
+TR::KnownObjectTable::Index
+OMR::KnownObjectTable::getIndexAt(uintptrj_t *objectReferenceLocation, bool isArrayWithConstantElements)
+   {
+   Index result = self()->getIndexAt(objectReferenceLocation);
+   if (isArrayWithConstantElements)
+      self()->addArrayWithConstantElements(result);
    return result;
    }
 

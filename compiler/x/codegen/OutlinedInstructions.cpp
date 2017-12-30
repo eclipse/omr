@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,12 +153,12 @@ void TR_OutlinedInstructions::swapInstructionListsWithCompilation()
    {
    TR::Instruction *temp;
 
-   temp = comp()->getFirstInstruction();
-   comp()->setFirstInstruction(_firstInstruction);
+   temp = cg()->getFirstInstruction();
+   cg()->setFirstInstruction(_firstInstruction);
    _firstInstruction = temp;
 
-   temp = comp()->getAppendInstruction();
-   comp()->setAppendInstruction(_appendInstruction);
+   temp = cg()->getAppendInstruction();
+   cg()->setAppendInstruction(_appendInstruction);
    _appendInstruction = temp;
    }
 
@@ -167,10 +167,10 @@ void TR_OutlinedInstructions::generateOutlinedInstructionsDispatch()
    // Switch to cold helper instruction stream.
    //
    TR::Register    *vmThreadReg = _cg->getMethodMetaDataRegister();
-   TR::Instruction *savedFirstInstruction = comp()->getFirstInstruction();
-   TR::Instruction *savedAppendInstruction = comp()->getAppendInstruction();
-   comp()->setFirstInstruction(NULL);
-   comp()->setAppendInstruction(NULL);
+   TR::Instruction *savedFirstInstruction = cg()->getFirstInstruction();
+   TR::Instruction *savedAppendInstruction = cg()->getAppendInstruction();
+   cg()->setFirstInstruction(NULL);
+   cg()->setAppendInstruction(NULL);
 
    new (_cg->trHeapMemory()) TR::X86LabelInstruction(NULL, LABEL, _entryLabel, _cg);
 
@@ -233,10 +233,10 @@ void TR_OutlinedInstructions::generateOutlinedInstructionsDispatch()
 
    // Switch from cold helper instruction stream.
    //
-   _firstInstruction = comp()->getFirstInstruction();
-   _appendInstruction = comp()->getAppendInstruction();
-   comp()->setFirstInstruction(savedFirstInstruction);
-   comp()->setAppendInstruction(savedAppendInstruction);
+   _firstInstruction = cg()->getFirstInstruction();
+   _appendInstruction = cg()->getAppendInstruction();
+   cg()->setFirstInstruction(savedFirstInstruction);
+   cg()->setAppendInstruction(savedAppendInstruction);
    }
 
 
@@ -340,13 +340,13 @@ void TR_OutlinedInstructions::assignRegisters(TR_RegisterKinds kindsToBeAssigned
 
    // Ensure correct VFP state at the start of the outlined instruction sequence.
    //
-   generateVFPRestoreInstruction(comp()->getAppendInstruction(), vfpSaveInstruction, _cg);
+   generateVFPRestoreInstruction(cg()->getAppendInstruction(), vfpSaveInstruction, _cg);
    // Link in the helper stream into the mainline code.
    //
-   TR::Instruction *appendInstruction = comp()->getAppendInstruction();
+   TR::Instruction *appendInstruction = cg()->getAppendInstruction();
    appendInstruction->setNext(_firstInstruction);
    _firstInstruction->setPrev(appendInstruction);
-   comp()->setAppendInstruction(_appendInstruction);
+   cg()->setAppendInstruction(_appendInstruction);
 
    // Register assign the helper dispatch instructions.
    //
@@ -375,14 +375,14 @@ void TR_OutlinedInstructions::assignRegistersOnOutlinedPath(TR_RegisterKinds kin
 
    // Ensure correct VFP state at the start of the outlined instruction sequence.
    //
-   generateVFPRestoreInstruction(comp()->getAppendInstruction(), vfpSaveInstruction, _cg);
+   generateVFPRestoreInstruction(cg()->getAppendInstruction(), vfpSaveInstruction, _cg);
 
    // Link in the helper stream into the mainline code.
    //
-   TR::Instruction *appendInstruction = comp()->getAppendInstruction();
+   TR::Instruction *appendInstruction = cg()->getAppendInstruction();
    appendInstruction->setNext(_firstInstruction);
    _firstInstruction->setPrev(appendInstruction);
-   comp()->setAppendInstruction(_appendInstruction);
+   cg()->setAppendInstruction(_appendInstruction);
 
    setHasBeenRegisterAssigned(true);
    }

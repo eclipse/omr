@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,12 +42,33 @@ struct CodeCacheError : public virtual std::bad_alloc
 /**
  * Recoverable Code Cache Allocation Failure exception type.
  *
- * Thrown on an Code Cache Allocation Failure condition which the
- * compiler can recover from by allowing a recompilation to occur.
+ * Thrown on a Code Cache Allocation Failure condition which the
+ * compiler can recover from, allowing compilation to proceed.
  */
 struct RecoverableCodeCacheError : public virtual std::bad_alloc
    {
    virtual const char* what() const throw() { return "Recoverable Code Cache Error"; }
+   };
+
+/**
+ * TrampolineError exception type.
+ *
+ * Thrown for an unrecoverable trampoline reservation or allocation error.
+ */
+struct TrampolineError : public virtual std::bad_alloc
+   {
+   virtual const char* what() const throw() { return "Trampoline Error"; }
+   };
+
+/**
+ * RecoverableTrampolineError exception type.
+ *
+ * Thrown for any trampoline error situations that the compiler can
+ * recover from, allowing compilation to proceed.
+ */
+struct RecoverableTrampolineError : public virtual std::bad_alloc
+   {
+   virtual const char* what() const throw() { return "Recoverable Trampoline Error"; }
    };
 
 }
