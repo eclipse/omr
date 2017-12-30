@@ -115,9 +115,15 @@ macro(omr_detect_system_information)
 		elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 			set(_OMR_TOOLCONFIG "msvc")
 		elseif(CMAKE_C_COMPILER_ID MATCHES "^(Apple)?Clang$")
-			#TODO we dont actually have a clang config.
-			# Just use GNU config
-			set(_OMR_TOOLCONFIG "gnu")
+			if("x${CMAKE_C_SIMULATE_ID}" STREQUAL "xMSVC"
+				    OR "x${CMAKE_CXX_SIMULATE_ID}" STREQUAL "xMSVC")
+				# clang on Windows mimics MSVC
+				set(_OMR_TOOLCONFIG "msvc")
+			else()
+				#TODO we dont actually have a clang config.
+				# Just use GNU config
+				set(_OMR_TOOLCONFIG "gnu")
+			endif()
 		elseif(CMAKE_C_COMPILER_ID STREQUAL "XL")
 			set(_OMR_TOOLCONFIG "xlc")
 		else()

@@ -27,7 +27,15 @@
  */
 
 /* Turn off FPO optimisation on Windows 32-bit to improve native stack traces (CMVC 199392) */
-#pragma optimize("y",off)
+#if defined(_MSC_VER)
+  #ifdef __clang__ 
+    #pragma clang optimize off
+  #else
+    #pragma optimize("y",off)
+  #endif /* __clang__ */
+#elif defined(__MINGW32__)
+  #pragma GCC optimize ("O0")
+#endif /* _MSC_VER */
 
 #include <windows.h>
 #include <winnt.h>
@@ -164,7 +172,7 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 	args.errorCode = 0;
 
 	/* call createCrashDumpFile on a different thread so we can walk the stack back to our code */
-	hThread = (HANDLE)_beginthread(writeDumpFile, 0, &args);
+	hThread = (HANDLE)_beginthread((void(*)(void*))writeDumpFile, 0, &args);
 
 	/* exception thread waits while crash dump is printed on other thread */
 	if ((HANDLE)-1 == hThread) {
@@ -316,7 +324,7 @@ openFileFromReg(const char *keyName, const char *valName, char *fileNameBuff, ui
 	HANDLE hFile;
 	HKEY hKey;
 	LONG lRet;
-	uint32_t buffUsed = fileNameBuffSize;
+	DWORD buffUsed = fileNameBuffSize;
 
 	lRet = RegOpenKeyEx(
 			   HKEY_LOCAL_MACHINE,

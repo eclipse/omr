@@ -74,7 +74,7 @@ const char *UT_H_FILE_HEADER_TEMPLATE =
 "extern \"C\" {\n"
 "#endif\n"
 "\n"
-"#ifdef __clang__\n"
+"#if (defined (__clang__) && !defined(_MSC_VER))\n"
 "#include <unistd.h>\n"
 "#define Trace_Unreachable() _exit(-1)\n"
 "#else\n"

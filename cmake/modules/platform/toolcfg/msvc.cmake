@@ -83,6 +83,12 @@ macro(omr_toolconfig_global_setup)
 	# Strip out exception handling flags (added by default by cmake)
 	omr_remove_flags(CMAKE_CXX_FLAGS /EHsc /GR)
 
+	# FIXME: disable several warnings while compiling with CLang.
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+		omr_append_flags(CMAKE_C_FLAGS -Wno-error=unused-command-line-argument -Wno-error=comment -Wno-error=deprecated)
+		omr_append_flags(CMAKE_CXX_FLAGS -Wno-error=unused-command-line-argument -Wno-error=comment -Wno-error=deprecated)
+	endif()
+
 	# Hack up output dir to fix dll dependency issues on windows
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 endmacro(omr_toolconfig_global_setup)

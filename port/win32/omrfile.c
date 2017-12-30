@@ -683,15 +683,13 @@ omrfile_read(struct OMRPortLibrary *portLibrary, intptr_t fd, void *buf, intptr_
 int64_t
 omrfile_seek(struct OMRPortLibrary *portLibrary, intptr_t fd, int64_t offset, int32_t whence)
 {
-	DWORD moveMethod, moveResult;
-	DWORD lowerOffset, upperOffset;
+	DWORD moveMethod;
+	LARGE_INTEGER liOffset;
 	int64_t result;
 	int32_t error;
 
 	Trc_PRT_file_seek_Entry(fd, offset, whence);
-
-	lowerOffset = (DWORD)(offset & 0xFFFFFFFF);
-	upperOffset = (DWORD)(offset >> 32);
+	liOffset.QuadPart = offset;
 
 	if ((whence < EsSeekSet) || (whence > EsSeekEnd)) {
 		Trc_PRT_file_seek_Exit(-1);
@@ -706,8 +704,8 @@ omrfile_seek(struct OMRPortLibrary *portLibrary, intptr_t fd, int64_t offset, in
 	if (whence == EsSeekCur) {
 		moveMethod = FILE_CURRENT;
 	}
-	moveResult = SetFilePointer((HANDLE)fd, lowerOffset, &upperOffset, moveMethod);
-	if (INVALID_SET_FILE_POINTER == moveResult) {
+	liOffset.LowPart = SetFilePointer((HANDLE)fd, liOffset.LowPart, &liOffset.HighPart, moveMethod);
+	if (INVALID_SET_FILE_POINTER == liOffset.LowPart) {
 		error = GetLastError();
 		if (error != NO_ERROR) {
 			portLibrary->error_set_last_error(portLibrary, error, findError(error));
@@ -716,8 +714,7 @@ omrfile_seek(struct OMRPortLibrary *portLibrary, intptr_t fd, int64_t offset, in
 		}
 	}
 
-	result = (int64_t)upperOffset << 32;
-	result |= moveResult;
+	result = (int64_t)liOffset.QuadPart;
 
 	Trc_PRT_file_seek_Exit(result);
 
@@ -868,7 +865,7 @@ omrfile_vprintf(struct OMRPortLibrary *portLibrary, intptr_t fd, const char *for
 }
 
 intptr_t
-omrfile_write(struct OMRPortLibrary *portLibrary, intptr_t fd, void *buf, intptr_t nbytes)
+omrfile_write(struct OMRPortLibrary *portLibrary, intptr_t fd, const void *buf, intptr_t nbytes)
 {
 	DWORD	nCharsWritten;
 	intptr_t toWrite, offset = 0;
