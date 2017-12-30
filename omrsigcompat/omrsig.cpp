@@ -200,8 +200,8 @@ omrsig_primary_signal(int signum, sighandler_t handler)
 	struct sigaction act;
 	struct sigaction oldact;
 
-	memset(&act, 0, sizeof(sigaction));
-	memset(&oldact, 0, sizeof(sigaction));
+	memset(&act, 0, sizeof(struct sigaction));
+	memset(&oldact, 0, sizeof(struct sigaction));
 
 	act.sa_handler = handler;
 #if defined(POSIX_SIGNAL)
@@ -257,8 +257,8 @@ omrsig_signal_internal(int signum, sighandler_t handler)
 	struct sigaction act;
 	struct sigaction oldact;
 
-	memset(&act, 0, sizeof(sigaction));
-	memset(&oldact, 0, sizeof(sigaction));
+	memset(&act, 0, sizeof(struct sigaction));
+	memset(&oldact, 0, sizeof(struct sigaction));
 
 	oldact.sa_handler = SIG_DFL;
 	act.sa_handler = handler;
