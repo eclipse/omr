@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,12 +19,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include <stdint.h>
-#include "ilgen/IlInjector.hpp"
-#include "ilgen/IlValueImpl.hpp"
+#include "ilgen/VirtualMachineRegister.hpp"
+#include "ilgen/IlBuilder.hpp"
+#include "ilgen/IlType.hpp"
+#include "ilgen/IlTypeImpl.hpp"  // must move out
 
-TR::IlValueImpl *
-OMR::IlValue::impl()
+OMR::VirtualMachineRegister::VirtualMachineRegister(TR::IlBuilder *b,
+                                                    const char * const localName,
+                                                    TR::IlType * pointerToRegisterType,
+                                                    uint32_t adjustByStep,
+                                                    TR::IlValue * addressOfRegister)
+   : OMR::VirtualMachineState(),
+   _localName(localName),
+   _addressOfRegister(addressOfRegister),
+   _pointerToRegisterType(pointerToRegisterType),
+   _elementType(pointerToRegisterType->impl()->baseType()->baseType()),
+   _adjustByStep(adjustByStep)
    {
-   return static_cast<TR::IlValueImpl *>(this);
+   Reload(b);
    }

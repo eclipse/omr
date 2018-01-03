@@ -22,66 +22,28 @@
 #ifndef OMR_TYPEDICTIONARY_INCL
 #define OMR_TYPEDICTIONARY_INCL
 
-
-#ifndef TR_ILTYPE_DEFINED
-#define TR_ILTYPE_DEFINED
-#define PUT_OMR_ILTYPE_INTO_TR
-#endif
-
 #ifndef TR_TYPEDICTIONARY_DEFINED
 #define TR_TYPEDICTIONARY_DEFINED
 #define PUT_OMR_TYPEDICTIONARY_INTO_TR
 #endif
 
-
 #include "map"
-#include "ilgen/IlBuilder.hpp"
 #include "env/TypedAllocator.hpp"
+#include "il/DataTypes.hpp"
 
 class TR_Memory;
 
-namespace OMR { class StructType; }
-namespace OMR { class UnionType; }
-namespace TR  { class SegmentProvider; }
-namespace TR  { class Region; }
-namespace TR  { typedef TR::SymbolReference IlReference; }
+namespace TR  { class IlType; }
+namespace TR  { class TypeDictionaryImpl; }
 
+namespace OMR { class BytecodeBuilder; }
+namespace OMR { class IlBuilder; }
+namespace OMR { class IlInjector; }
+namespace OMR { class MethodBuilder; }
+namespace OMR { class ThunkBuilder; }
 
 namespace OMR
 {
-
-class IlType
-   {
-public:
-   TR_ALLOC(TR_Memory::IlGenerator)
-
-   IlType(const char *name) :
-      _name(name)
-      { }
-   IlType() :
-      _name(0)
-      { }
-   virtual ~IlType()
-      { }
-
-   const char *getName() { return _name; }
-   virtual char *getSignatureName();
-
-   virtual TR::DataType getPrimitiveType() { return TR::NoType; }
-
-   virtual bool isArray() { return false; }
-   virtual bool isPointer() { return false; }
-   virtual TR::IlType *baseType() { return NULL; }
-
-   virtual bool isStruct() {return false; }
-   virtual bool isUnion() { return false; }
-
-   virtual size_t getSize();
-
-protected:
-   const char *_name;
-   };
-
 
 /**
  * @brief Convenience API for defining JitBuilder structs from C/C++ structs (PODs)
@@ -130,64 +92,29 @@ protected:
    CloseStruct(#structName, sizeof(structName))
 
 
+/*
+ * TypeDictionary Client API
+ * TODO: put class documentation here
+ * Constructors/Destructors at the top, other API grouped in categories, alphabetical in each category
+ * All implementations, with the exception of constructors, are simply
+ * delegations to the TypeDictionaryImpl object stored in _impl . There
+ * is a 1-1 relationship between TypeDictionary and its TypeDictionaryImpl object.
+ */
+
+
 class TypeDictionary
    {
-public:
-   TR_ALLOC(TR_Memory::IlGenerator)
+   friend class OMR::BytecodeBuilder;
+   friend class OMR::IlBuilder;
+   friend class OMR::IlInjector;
+   friend class OMR::MethodBuilder;
+   friend class OMR::ThunkBuilder;
 
+public:
    TypeDictionary();
    TypeDictionary(const TypeDictionary &src) = delete;
-   ~TypeDictionary() throw();
-
-   TR::IlType * LookupStruct(const char *structName);
-   TR::IlType * LookupUnion(const char *unionName);
-
-   /**
-    * @brief Begin definition of a new structure type
-    * @param structName the name of the new type
-    * @return pointer to IlType instance of the new type being defined
-    * 
-    * The name of the new type will have to be used when specifying
-    * fields of the type. This method must be invoked once before any
-    * calls to `DefineField()` and `CloseStruct()`.
-    */
-   TR::IlType * DefineStruct(const char *structName);
-
-   /**
-    * @brief Define a member of a new structure type
-    * @param structName the name of the struct type on which to define the field
-    * @param fieldName the name of the field
-    * @param type the IlType instance representing the type of the field
-    * @param offset the offset of the field within the structure (in bytes)
-    * 
-    * Fields defined using this method must be defined in offset order.
-    * Specifically, the `offset` on any call to this method must be greater
-    * than or equal to the size of the new struct at the time of the call
-    * (`getSize() <= offset`). Failure to meet this condition will result
-    * in a runtime failure. This was done as an initial attempt to prevent
-    * struct fields from overlapping in memory.
-    * 
-    * This method can only be called after a call to `DefineStruct` and
-    * before a call to `CloseStruct` with the same `structName`.
-    */
-   void DefineField(const char *structName, const char *fieldName, TR::IlType *type, size_t offset);
-
-   /**
-    * @brief Define a member of a new structure type
-    * @param structName the name of the struct type on which to define the field
-    * @param fieldName the name of the field
-    * @param type the IlType instance representing the type of the field
-    * 
-    * This is an overloaded method. Since no offset for the new struct field is
-    * specified, it will be added to the end of the struct using alignment rules
-    * internally defined by JitBuilder. These are not guaranteed match the rules
-    * used by a C/C++ compiler as alignment rules are compiler specific. However,
-    * the alignment should be the same in most cases.
-    * 
-    * This method can only be called after a call to `DefineStruct` and
-    * before a call to `CloseStruct` with the same `structName`.
-    */
-   void DefineField(const char *structName, const char *fieldName, TR::IlType *type);
+   virtual ~TypeDictionary()
+      { }
 
    /**
     * @brief End definition of a new structure type
@@ -213,7 +140,61 @@ public:
     */
    void CloseStruct(const char *structName);
 
-   TR::IlType * GetFieldType(const char *structName, const char *fieldName);
+   void CloseUnion(const char *unionName);
+
+   /**
+    * @brief Define a member of a new structure type
+    * @param structName the name of the struct type on which to define the field
+    * @param fieldName the name of the field
+    * @param type the IlType instance representing the type of the field
+    * 
+    * This is an overloaded method. Since no offset for the new struct field is
+    * specified, it will be added to the end of the struct using alignment rules
+    * internally defined by JitBuilder. These are not guaranteed match the rules
+    * used by a C/C++ compiler as alignment rules are compiler specific. However,
+    * the alignment should be the same in most cases.
+    * 
+    * This method can only be called after a call to `DefineStruct` and
+    * before a call to `CloseStruct` with the same `structName`.
+    */
+   void DefineField(const char *structName, const char *fieldName, TR::IlType *type);
+
+   /**
+    * @brief Define a member of a new structure type
+    * @param structName the name of the struct type on which to define the field
+    * @param fieldName the name of the field
+    * @param type the IlType instance representing the type of the field
+    * @param offset the offset of the field within the structure (in bytes)
+    * 
+    * Fields defined using this method must be defined in offset order.
+    * Specifically, the `offset` on any call to this method must be greater
+    * than or equal to the size of the new struct at the time of the call
+    * (`getSize() <= offset`). Failure to meet this condition will result
+    * in a runtime failure. This was done as an initial attempt to prevent
+    * struct fields from overlapping in memory.
+    * 
+    * This method can only be called after a call to `DefineStruct` and
+    * before a call to `CloseStruct` with the same `structName`.
+    */
+   void DefineField(const char *structName, const char *fieldName, TR::IlType *type, size_t offset);
+
+   /**
+    * @brief Begin definition of a new structure type
+    * @param structName the name of the new type
+    * @return pointer to IlType instance of the new type being defined
+    * 
+    * The name of the new type will have to be used when specifying
+    * fields of the type. This method must be invoked once before any
+    * calls to `DefineField()` and `CloseStruct()`.
+    */
+   TR::IlType * DefineStruct(const char *structName);
+
+   TR::IlType * DefineUnion(const char *unionName);
+
+   TR::IlType * GetFieldType(const char *structName, const char *fieldName); // TODO: rename to StructFieldType
+
+   TR::IlType * LookupStruct(const char *structName);
+   TR::IlType * LookupUnion(const char *unionName);
 
    /**
     * @brief Returns the offset of a field in a struct
@@ -223,26 +204,19 @@ public:
     */
    size_t OffsetOf(const char *structName, const char *fieldName);
 
-   TR::IlType * DefineUnion(const char *unionName);
-   void UnionField(const char *unionName, const char *fieldName, TR::IlType *type);
-   void CloseUnion(const char *unionName);
-   TR::IlType * UnionFieldType(const char *unionName, const char *fieldName);
-
-   TR::IlType *PrimitiveType(TR::DataType primitiveType)
-      {
-      return _primitiveType[primitiveType];
-      }
-
-   //TR::IlType *ArrayOf(TR::IlType *baseType);
-
    TR::IlType *PointerTo(TR::IlType *baseType);
+
    TR::IlType *PointerTo(const char *structName);
-   TR::IlType *PointerTo(TR::DataType baseType)  { return PointerTo(_primitiveType[baseType]); }
 
-   TR::IlReference *FieldReference(const char *typeName, const char *fieldName);
-   TR_Memory *trMemory() { return _trMemory; }
+   // TODO: eliminate this function
+   TR::IlType *PointerTo(TR::DataType baseType);
 
-   //TR::IlReference *ArrayReference(TR::IlType *arrayType);
+   // TODO: eliminate this function
+   TR::IlType *PrimitiveType(TR::DataType primitiveType);
+
+   void UnionField(const char *unionName, const char *fieldName, TR::IlType *type);
+
+   TR::IlType * UnionFieldType(const char *unionName, const char *fieldName);
 
    /**
     * @brief A template class for checking whether a particular type is supported by `toIlType<>()`
@@ -272,15 +246,17 @@ public:
     * - `is_supported<void>::value == true` because JitBuilder directly provides the corresponding `NoType`
     */
    template <typename T>
-   struct is_supported {
+   struct is_supported
+      {
       static const bool value =  std::is_arithmetic<T>::value // note: is_arithmetic = is_integral || is_floating_point
                               || std::is_void<T>::value;
-   };
+      };
    template <typename T>
-   struct is_supported<T*> {
+   struct is_supported<T*>
+      {
       // a pointer type is supported iff the type being pointed to is supported
       static const bool value =  is_supported<T>::value;
-   };
+      };
 
    /** @fn template <typename T> TR::IlType* toIlType()
     * @brief Given a C/C++ type, returns a corresponding TR::IlType, if available
@@ -390,107 +366,79 @@ public:
 
    // integral
    template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 1)>::type* = 0) { return Int8; }
+   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 1)>::type* = 0)
+      { return Int8; }
    template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 2)>::type* = 0) { return Int16; }
+   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 2)>::type* = 0)
+      { return Int16; }
    template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 4)>::type* = 0) { return Int32; }
+   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 4)>::type* = 0)
+      { return Int32; }
    template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 8)>::type* = 0) { return Int64; }
+   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 8)>::type* = 0)
+      { return Int64; }
 
    // floating point
    template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_floating_point<T>::value && (sizeof(T) == 4)>::type* = 0) { return Float; }
+   TR::IlType* toIlType(typename std::enable_if<std::is_floating_point<T>::value && (sizeof(T) == 4)>::type* = 0)
+      { return Float; }
    template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_floating_point<T>::value && (sizeof(T) == 8)>::type* = 0) { return Double; }
+   TR::IlType* toIlType(typename std::enable_if<std::is_floating_point<T>::value && (sizeof(T) == 8)>::type* = 0)
+      { return Double; }
 
    // void
    template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_void<T>::value>::type* = 0) { return NoType; }
+   TR::IlType* toIlType(typename std::enable_if<std::is_void<T>::value>::type* = 0)
+      { return NoType; }
 
    // pointer
    template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_pointer<T>::value && is_supported<typename std::remove_pointer<T>::type>::value>::type* = 0) {
-      return PointerTo(toIlType<typename std::remove_pointer<T>::type>());
-   }
+   TR::IlType* toIlType(typename std::enable_if<std::is_pointer<T>::value && is_supported<typename std::remove_pointer<T>::type>::value>::type* = 0)
+      { return PointerTo(toIlType<typename std::remove_pointer<T>::type>()); }
 
-   /*
-    * @brief advise that compilation is complete so compilation-specific objects like symbol references can be cleared from caches
-    */
-   void NotifyCompilationDone();
+   // convenience for primitive types, TODO: should make all these const
+   TR::IlType * NoType;
+   TR::IlType * Int8;
+   TR::IlType * Int16;
+   TR::IlType * Int32;
+   TR::IlType * Int64;
+   TR::IlType * Word;
+   TR::IlType * Float;
+   TR::IlType * Double;
+   TR::IlType * Address;
+   TR::IlType * VectorInt8;
+   TR::IlType * VectorInt16;
+   TR::IlType * VectorInt32;
+   TR::IlType * VectorInt64;
+   TR::IlType * VectorFloat;
+   TR::IlType * VectorDouble;
+
+   // convenience for pointer to primitive types, TODO: should make all these const
+   TR::IlType * pNoType;
+   TR::IlType * pInt8;
+   TR::IlType * pInt16;
+   TR::IlType * pInt32;
+   TR::IlType * pInt64;
+   TR::IlType * pWord;
+   TR::IlType * pFloat;
+   TR::IlType * pDouble;
+   TR::IlType * pAddress;
+   TR::IlType * pVectorInt8;
+   TR::IlType * pVectorInt16;
+   TR::IlType * pVectorInt32;
+   TR::IlType * pVectorInt64;
+   TR::IlType * pVectorFloat;
+   TR::IlType * pVectorDouble;
 
 protected:
-   TR::SegmentProvider *_segmentProvider;
-   TR::Region *_memoryRegion;
-   TR_Memory *_trMemory;
+   TR::TypeDictionaryImpl *impl()
+      { return _impl; }
 
-   typedef bool (*StrComparator)(const char *, const char *);
-
-   typedef TR::typed_allocator<std::pair<const char * const, OMR::StructType *>, TR::Region &> StructMapAllocator;
-   typedef std::map<const char *, OMR::StructType *, StrComparator, StructMapAllocator> StructMap;
-   StructMap          _structsByName;
-
-   typedef TR::typed_allocator<std::pair<const char * const, OMR::UnionType *>, TR::Region &> UnionMapAllocator;
-   typedef std::map<const char *, OMR::UnionType *, StrComparator, UnionMapAllocator> UnionMap;
-   UnionMap           _unionsByName;
-
-   // convenience for primitive types
-   TR::IlType       * _primitiveType[TR::NumOMRTypes];
-   TR::IlType       * NoType;
-   TR::IlType       * Int8;
-   TR::IlType       * Int16;
-   TR::IlType       * Int32;
-   TR::IlType       * Int64;
-   TR::IlType       * Word;
-   TR::IlType       * Float;
-   TR::IlType       * Double;
-   TR::IlType       * Address;
-   TR::IlType       * VectorInt8;
-   TR::IlType       * VectorInt16;
-   TR::IlType       * VectorInt32;
-   TR::IlType       * VectorInt64;
-   TR::IlType       * VectorFloat;
-   TR::IlType       * VectorDouble;
-
-   TR::IlType       * _pointerToPrimitiveType[TR::NumOMRTypes];
-   TR::IlType       * pNoType;
-   TR::IlType       * pInt8;
-   TR::IlType       * pInt16;
-   TR::IlType       * pInt32;
-   TR::IlType       * pInt64;
-   TR::IlType       * pWord;
-   TR::IlType       * pFloat;
-   TR::IlType       * pDouble;
-   TR::IlType       * pAddress;
-   TR::IlType       * pVectorInt8;
-   TR::IlType       * pVectorInt16;
-   TR::IlType       * pVectorInt32;
-   TR::IlType       * pVectorInt64;
-   TR::IlType       * pVectorFloat;
-   TR::IlType       * pVectorDouble;
-
-   OMR::StructType * getStruct(const char *structName);
-   OMR::UnionType  * getUnion(const char *unionName);
+private:
+   TR::TypeDictionaryImpl *_impl;
    };
 
 } // namespace OMR
-
-
-#if defined(PUT_OMR_ILTYPE_INTO_TR)
-namespace TR
-{
-class IlType : public OMR::IlType
-   {
-   public:
-      IlType(const char *name)
-         : OMR::IlType(name)
-         { }
-      IlType()
-         : OMR::IlType()
-         { }
-   };
-} // namespace TR
-#endif // defined(PUT_OMR_ILTYPE_INTO_TR)
 
 
 #if defined(PUT_OMR_TYPEDICTIONARY_INTO_TR)

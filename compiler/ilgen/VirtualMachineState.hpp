@@ -24,10 +24,6 @@
 
 
 namespace TR { class IlBuilder; }
-class TR_Memory;
-
-template <class T> class List;
-template <class T> class ListAppender;
 
 namespace OMR
 {

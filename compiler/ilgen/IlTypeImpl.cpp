@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2016 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,12 +19,41 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include <stdint.h>
-#include "ilgen/IlInjector.hpp"
-#include "ilgen/IlValueImpl.hpp"
+#include <stdlib.h>
 
-TR::IlValueImpl *
-OMR::IlValue::impl()
+#include "env/Region.hpp"
+#include "env/SystemSegmentProvider.hpp"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "ilgen/IlTypeImpl.hpp"
+
+
+
+const char *OMR::IlTypeImpl::_signatureNameForType[] =
    {
-   return static_cast<TR::IlValueImpl *>(this);
+   "V",  // NoType
+   "B",  // Int8
+   "C",  // Int16
+   "I",  // Int32
+   "J",  // Int64
+   "F",  // Float
+   "D",  // Double
+   "L",  // Address
+   // TODO: vector types!
+   };
+
+char *
+OMR::IlTypeImpl::getSignatureName()
+   {
+   TR::DataType dt = getRealPrimitiveType();
+   if (dt == TR::Address)
+      return (char *)_name;
+   return (char *) _signatureNameForType[dt];
+   }
+
+size_t
+OMR::IlTypeImpl::getSize()
+   {
+   TR_ASSERT(0, "The input type does not have a defined size\n");
+   return 0;
    }

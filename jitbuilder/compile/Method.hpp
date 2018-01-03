@@ -34,7 +34,7 @@
 #include "compile/ResolvedMethod.hpp"
 
 namespace TR { class IlGeneratorMethodDetails; }
-namespace TR { class IlType; }
+namespace TR { class IlTypeImpl; }
 namespace TR { class TypeDictionary; }
 namespace TR { class IlInjector; }
 namespace TR { class MethodBuilder; }
@@ -112,8 +112,8 @@ class ResolvedMethod : public ResolvedMethodBase, public Method
                   const char      * lineNumber,
                   char            * name,
                   int32_t           numParms,
-                  TR::IlType     ** parmTypes,
-                  TR::IlType      * returnType,
+                  TR::IlTypeImpl ** parmTypes,
+                  TR::IlTypeImpl  * returnType,
                   void            * entryPoint,
                   TR::IlInjector  * ilInjector)
       : _fileName(fileName),
@@ -143,7 +143,7 @@ class ResolvedMethod : public ResolvedMethodBase, public Method
    virtual void                * resolvedMethodAddress()                    { return (void *)_ilInjector; }
 
    virtual uint16_t              numberOfParameterSlots()                   { return _numParms; }
-   virtual TR::DataType         parmType(uint32_t slot);
+   virtual TR::DataType          parmType(uint32_t slot);
    virtual uint16_t              numberOfTemps()                            { return 0; }
 
    virtual void                * startAddressForJittedMethod()              { return (getEntryPoint()); }
@@ -156,8 +156,8 @@ class ResolvedMethod : public ResolvedMethodBase, public Method
 
    const char                  * getLineNumber()                            { return _lineNumber;}
    char                        * getSignature()                             { return _signature;}
-   TR::DataType                 returnType();
-   TR::IlType                  * returnIlType()                             { return _returnType; }
+   TR::DataType                  returnType();
+   TR::IlTypeImpl              * returnIlType()                             { return _returnType; }
    int32_t                       getNumArgs()                               { return _numParms;}
    void                          setEntryPoint(void *ep)                    { _entryPoint = ep; }
    void                        * getEntryPoint()                            { return _entryPoint; }
@@ -171,20 +171,22 @@ class ResolvedMethod : public ResolvedMethodBase, public Method
                                TR::FrontEnd *fe,
                                TR::SymbolReferenceTable *symRefTab);
 
+   void compilationDone();
+
    protected:
-   const char *_fileName;
-   const char *_lineNumber;
+   const char      * _fileName;
+   const char      * _lineNumber;
 
-   char *_name;
-   char *_signature;
-   char  _signatureChars[64];
-   char *_externalName;
+   char            * _name;
+   char            * _signature;
+   char              _signatureChars[64];
+   char            * _externalName;
 
-   int32_t          _numParms;
-   TR::IlType    ** _parmTypes;
-   TR::IlType     * _returnType;
-   void           * _entryPoint;
-   TR::IlInjector * _ilInjector;
+   int32_t           _numParms;
+   TR::IlTypeImpl ** _parmTypes;
+   TR::IlTypeImpl  * _returnType;
+   void            * _entryPoint;
+   TR::IlInjector  * _ilInjector;
    };
 
 
@@ -205,8 +207,8 @@ namespace TR
                         char            * lineNumber,
                         char            * name,
                         int32_t           numArgs,
-                        TR::IlType     ** parmTypes,
-                        TR::IlType      * returnType,
+                        TR::IlTypeImpl ** parmTypes,
+                        TR::IlTypeImpl  * returnType,
                         void            * entryPoint,
                         TR::IlInjector  * ilInjector)
             : JitBuilder::ResolvedMethod(fileName, lineNumber, name, numArgs,

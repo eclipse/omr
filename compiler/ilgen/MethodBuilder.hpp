@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,133 +22,87 @@
 #ifndef OMR_METHODBUILDER_INCL
 #define OMR_METHODBUILDER_INCL
 
-
 #ifndef TR_METHODBUILDER_DEFINED
 #define TR_METHODBUILDER_DEFINED
 #define PUT_OMR_METHODBUILDER_INTO_TR
 #endif
 
-
-#include <map>
-#include <set>
-#include <fstream>
+#include <vector>
 #include "ilgen/IlBuilder.hpp"
-#include "env/TypedAllocator.hpp"
 
-// Maximum length of _definingLine string (including null terminator)
-#define MAX_LINE_NUM_LEN 7
-
-class TR_BitVector;
-namespace TR { class BytecodeBuilder; }
-namespace TR { class ResolvedMethod; }
-namespace TR { class SymbolReference; }
+namespace TR  { class BytecodeBuilder; }
+namespace TR  { class TypeDictionary; }
+namespace OMR { class BytecodeBuilder; }
+namespace OMR { class IlBuilderImpl; }
+namespace OMR { class IlValueImpl; }
 namespace OMR { class VirtualMachineState; }
 
-namespace TR { class SegmentProvider; }
-namespace TR { class Region; }
-class TR_Memory;
+// TR::MethodBuilderImpl is an opaque class by design in this header
+namespace TR  { class MethodBuilderImpl; }
+namespace JitBuilder { class ResolvedMethod; }
 
 namespace OMR
 {
 
+/*
+ * MethodBuilder Client API
+ * TODO: put class documentation here
+ * Constructors/Destructors at the top, all other API in alphabetical order
+ * All implementations, with the exception of constructors, are simply
+ * delegations to the MethodBuilderImpl object stored in _impl (inherited
+ * from IlBuilder) . There is a 1-1 relationship between MethodBuilder and
+ * MethodBuilderImpl objects. When the MethodBuilder object is destroyed,
+ * the associated MethodBuilderImpl object will also be destroyed.
+ */
 class MethodBuilder : public TR::IlBuilder
    {
    public:
-   TR_ALLOC(TR_Memory::IlGenerator)
-
-   MethodBuilder(TR::TypeDictionary *types, OMR::VirtualMachineState *vmState = NULL);
-   MethodBuilder(const MethodBuilder &src);
-   virtual ~MethodBuilder();
-
-   virtual void setupForBuildIL();
-
-   virtual bool injectIL();
-
-   int32_t getNextValueID()                                  { return _nextValueID++; }
-
-   bool usesBytecodeBuilders()                               { return _useBytecodeBuilders; }
-   void setUseBytecodeBuilders()                             { _useBytecodeBuilders = true; }
-
-   void addToAllBytecodeBuildersList(TR::BytecodeBuilder *bcBuilder);
-   void addToTreeConnectingWorklist(TR::BytecodeBuilder *builder);
-   void addToBlockCountingWorklist(TR::BytecodeBuilder *builder);
-
-   OMR::VirtualMachineState *vmState()                       { return _vmState; }
-   void setVMState(OMR::VirtualMachineState *vmState)        { _vmState = vmState; }
-
-   virtual bool isMethodBuilder()                            { return true; }
-   virtual TR::MethodBuilder *asMethodBuilder();
-
-   TR::TypeDictionary *typeDictionary()                      { return _types; }
-
-   const char *getDefiningFile()                             { return _definingFile; }
-   const char *getDefiningLine()                             { return _definingLine; }
-
-   const char *getMethodName()                               { return _methodName; }
-   void AllLocalsHaveBeenDefined()                           { _newSymbolsAreTemps = true; }
-
-   TR::IlType *getReturnType()                               { return _returnType; }
-   int32_t getNumParameters()                                { return _numParameters; }
-   const char *getSymbolName(int32_t slot);
-
-   TR::IlType **getParameterTypes();
-   char *getSignature(int32_t numParams, TR::IlType **paramTypeArray);
-   char *getSignature(TR::IlType **paramTypeArray)
-      {
-      return getSignature(_numParameters, paramTypeArray);
-      }
-
-   TR::SymbolReference *lookupSymbol(const char *name);
-   void defineSymbol(const char *name, TR::SymbolReference *v);
-   bool symbolDefined(const char *name);
-   bool isSymbolAnArray(const char * name);
-
-   TR::ResolvedMethod *lookupFunction(const char *name);
-
-   TR::BytecodeBuilder *OrphanBytecodeBuilder(int32_t bcIndex=0, char *name=NULL);
-
-   void AppendBuilder(TR::BytecodeBuilder *bb);
-   void AppendBuilder(TR::IlBuilder *b)    { this->OMR::IlBuilder::AppendBuilder(b); }
-
-   void DefineFile(const char *file)                         { _definingFile = file; }
-
-   void DefineLine(const char *line)
-      {
-      snprintf(_definingLine, MAX_LINE_NUM_LEN * sizeof(char), "%s", line);
-      }
-   void DefineLine(int line)
-      {
-      snprintf(_definingLine, MAX_LINE_NUM_LEN * sizeof(char), "%d", line);
-      }
-
-   void DefineName(const char *name);
-   void DefineParameter(const char *name, TR::IlType *type);
-   void DefineArrayParameter(const char *name, TR::IlType *dt);
-   void DefineReturnType(TR::IlType *dt);
-   void DefineLocal(const char *name, TR::IlType *dt);
-   void DefineMemory(const char *name, TR::IlType *dt, void *location);
-   void DefineFunction(const char* const name,
-                       const char* const fileName,
-                       const char* const lineNumber,
-                       void           * entryPoint,
-                       TR::IlType     * returnType,
-                       int32_t          numParms,
-                       ...);
-   void DefineFunction(const char* const name,
-                       const char* const fileName,
-                       const char* const lineNumber,
-                       void           * entryPoint,
-                       TR::IlType     * returnType,
-                       int32_t          numParms,
-                       TR::IlType     ** parmTypes);
+   friend class OMR::IlBuilder;
+   friend class OMR::IlValueImpl;
+   friend class OMR::BytecodeBuilder;
+   friend class JitBuilder::ResolvedMethod;
 
    /**
-    * @brief will be called if a Call is issued to a function that has not yet been defined, provides a
-    *        mechanism for MethodBuilder subclasses to provide method lookup on demand rather than all up
-    *        front via the constructor.
-    * @returns true if the function was found and DefineFunction has been called for it, otherwise false
+    *  @brief constructor for use by clients
     */
-   virtual bool RequestFunction(const char *name) { return false; }
+   MethodBuilder(TR::TypeDictionary *types, OMR::VirtualMachineState *vmState);
+
+   /**
+    * @brief constructor for use by other JitBuilder classes (e.g. ThunkBuilder)
+    */
+   MethodBuilder(TR::IlBuilderImpl *impl, TR::TypeDictionary *types, OMR::VirtualMachineState *vmState);
+
+   /**
+    * @brief destructor also takes care of destructing the underlying implementation object
+    */
+   virtual ~MethodBuilder();
+
+   /**
+    * @brief to be implemented by subclass to build IL for a method
+    */
+   virtual bool buildIL() { return false; }
+
+   /**
+    * @brief tell compiler that all user-visible local variables have been defined;
+    *        any other locals are temporaries that do not need to be visible.
+    *        Sometimes permits more optimization opportunities with temporary
+    *        results, but currently only has an effect for floating point values.
+    */
+   void AllLocalsHaveBeenDefined();
+
+   /**
+    * @brief append a BytecodeBuilder object to the current MethodBuilder: control
+    *        from earlier code will fall through to the given object
+    * @param bb the BytecodeBuilder object to append
+    */
+   void AppendBuilder(TR::BytecodeBuilder *bb);
+
+   /**
+    * @brief append an IlBuilder object to the current MethodBuilder: control from
+    *        earlier code will fall through to the given object
+    * @param b the IlBuilder object to append
+    */
+   void AppendBuilder(TR::IlBuilder *b);
 
    /**
     * @brief append the first bytecode builder object to this method
@@ -159,90 +113,177 @@ class MethodBuilder : public TR::IlBuilder
    void AppendBytecodeBuilder(TR::BytecodeBuilder *builder);
 
    /**
-    * @brief add a bytecode builder to the worklist
-    * @param bcBuilder is the bytecode builder whose bytecode index will be added to the worklist
+    * @brief adds a parameter that is an array of the given type; order of calls
+    *        to this function and DefineParameter defines the expected order of
+    *        parameters
+    * @param name the name of the array parameter
+    * @param dt the type of each element of the array parameter
     */
-   void addBytecodeBuilderToWorklist(TR::BytecodeBuilder* bcBuilder);
+   void DefineArrayParameter(const char *name, TR::IlType *dt);
+
+   /**
+    * @brief define the source file name defining this method, useful for logging
+    * @param fileName the file name
+    */
+   void DefineFile(const char *fileName);
+
+   /**
+    * @brief define a native function (variadic form) that can be later called by
+    *        name via Call passing arguments
+    * @param name the name that can be given to Call to later call this function
+    * @param fileName the name of the file where this function is defined (used
+    *        for logging)
+    * @param lineNumber the line number in the file where this function is defined
+    *        (used for logging)
+    * @param entryPoint the target address of this function
+    * @param returnType the type of the value returned by the function (NoType if
+    *        void)
+    * @param numParms the number of parameters taken by the function
+    * @param ... list of types describing the parameter types in order, expected
+    *        to be numParms types
+    */
+   void DefineFunction(const char* const name,
+                       const char* const fileName,
+                       const char* const lineNumber,
+                       void            * entryPoint,
+                       TR::IlType      * returnType,
+                       int32_t           numParms,
+                       ...);
+
+   /**
+    * @brief define a native function that can be later called by name via Call
+    *        passing arguments
+    * @param name the name that can be given to Call to later call this function
+    * @param fileName the name of the file where this function is defined (used
+    *        for logging)
+    * @param lineNumber the line number in the file where this function is defined
+    *        (used for logging)
+    * @param entryPoint the target address of this function
+    * @param returnType the type of the value returned by the function (NoType if
+    *        void)
+    * @param numParms the number of parameters taken by the function
+    * @param parms array of types describing the parameter types in order
+    */
+   void DefineFunction(const char* const name,
+                       const char* const fileName,
+                       const char* const lineNumber,
+                       void            * entryPoint,
+                       TR::IlType      * returnType,
+                       int32_t           numParms,
+                       TR::IlType     ** parmTypes);
+
+   /**
+    * @brief define the line number (as string) of the source file that defines
+    *        this method, useful for logging
+    * @param line the line number
+    */
+   void DefineLine(const char *line);
+
+   /**
+    * @brief define the line number (as integer) of the source file that defines
+    *        this method, useful for logging
+    * @param line the line number
+    */
+   void DefineLine(int line);
+
+   /**
+    * @brief define a new local variable (slot in the method's stack frame)
+    * @param name the name of the local variable
+    * @param dt the type of the local variable: only values of this type can be
+    *        stored in the variable
+    */
+   void DefineLocal(const char *name, TR::IlType *dt);
+
+   /**
+    * @brief define a memory location by name and type
+    * @param name the name of the memory location (could be used to build a
+    *        relocation)
+    * @param dt the type of the value stored at the memory location
+    * @param location the actual location of the value
+    */
+   void DefineMemory(const char *name, TR::IlType *dt, void *location);
+
+   /**
+    * @brief define the name of this method; used primarily for logging
+    * @param name the desired name
+    */
+   void DefineName(const char *name);
+
+   /**
+    * @brief adds another parameter of the given type; order of calls to this
+    *        function and DefineArrayParameter defines expected order of parameters
+    * @param name the name of the array parameter
+    * @param dt the type of each element of the array parameter
+    */
+   void DefineParameter(const char *name, TR::IlType *type);
+
+   /**
+    * @brief define the return type of this method
+    * @param dt the type that will be returned
+    */
+   void DefineReturnType(TR::IlType *dt);
 
    /**
     * @brief get lowest index bytecode from the worklist
     * @returns lowest bytecode index or -1 if worklist is empty
-    * It is important to use the worklist because it guarantees no bytecode will be
-    * processed before at least one predecessor bytecode has been processed, which
-    * means there should be a non-NULL VirtualMachineState object on the associated
-    * BytecodeBuilder object.
+    * It is important to use the worklist when working with BytecodeBuilders because
+    * the worklist guarantees no bytecode will be processed before at least one
+    * predecessor bytecode has been processed, which means there should be a non-NULL
+    * VirtualMachineState object on the associated BytecodeBuilder object.
     */
    int32_t GetNextBytecodeFromWorklist();
-   
+
+   /**
+    * @brief allocate a new BytecodeBuilder object using memory tracked by the compiler
+    *        if possible
+    * @param bcIndex (optional) the bytecode index to use for the new object (otherwise
+    *        will be zero). To use the worklist (recommended), meaningful bytecode indices
+    *        must be assigned.
+    * @param name (optional) a name to use for the new object (useful for logging,
+    *        otherwise will be NULL)
+    * @returns the newly allocated object
+    */
+   TR::BytecodeBuilder *OrphanBytecodeBuilder(int32_t bcIndex=0, char *name=NULL);
+
+   /**
+    * @brief callback to be optionally implemented by subclasses: will be called when
+    *        a Call is issued to a function that has not yet been defined. Provides a
+    *        mechanism for MethodBuilder subclasses to provide method lookup on demand
+    *        rather than all up front via the constructor.
+    @ @param name the name of the method requested to be defined
+    * @returns true if the function was found and DefineFunction has been called for it,
+    *          otherwise false
+    */
+   virtual bool RequestFunction(const char *name) { return false; }
+
+   /**
+    * @brief initialize the VirtualMachineState to use in this MethodBuilder. Once set,
+    *        this VirtualMachineState will be automatically updated and appropriately
+    *        merged on all flow transitions between BytecodeBuilders.
+    * @param vmState the virtual machine state object to use
+    * TODO capitalize to SetVMState for consistency
+    */
+   void setVMState(OMR::VirtualMachineState *vmState);
+
+   TR::TypeDictionary *typeDictionary()
+      { return _types; }
+
    protected:
-   virtual uint32_t countBlocks();
-   virtual bool connectTrees();
+   /**
+    * @brief used for delegating work to the underlying implementation class for MethodBuilder
+    * @returns TR::MethodBuilderImpl pointer corresponding to this MethodBuilder object
+    */
+   TR::MethodBuilderImpl *impl();
 
    private:
-   TR::SegmentProvider *_segmentProvider;
-   TR::Region *_memoryRegion;
-   TR_Memory *_trMemory;
+   void newBuilder(TR::IlBuilder *b);
 
-   // These values are typically defined outside of a compilation
-   const char                * _methodName;
-   TR::IlType                * _returnType;
-   int32_t                     _numParameters;
+   TR::TypeDictionary         * _types;
 
-   typedef bool (*StrComparator)(const char *, const char*);
-
-   typedef TR::typed_allocator<std::pair<const char * const, TR::SymbolReference *>, TR::Region &> SymbolMapAllocator;
-   typedef std::map<const char *, TR::SymbolReference *, StrComparator, SymbolMapAllocator> SymbolMap;
-
-   // This map should only be accessed inside a compilation via lookupSymbol
-   SymbolMap                   _symbols;
-
-   typedef TR::typed_allocator<std::pair<const char * const, int32_t>, TR::Region &> ParameterMapAllocator;
-   typedef std::map<const char *, int32_t, StrComparator, ParameterMapAllocator> ParameterMap;
-   ParameterMap                _parameterSlot;
-
-   typedef TR::typed_allocator<std::pair<const char * const, TR::IlType *>, TR::Region &> SymbolTypeMapAllocator;
-   typedef std::map<const char *, TR::IlType *, StrComparator, SymbolTypeMapAllocator> SymbolTypeMap;
-   SymbolTypeMap               _symbolTypes;
-
-   typedef TR::typed_allocator<std::pair<int32_t const, const char *>, TR::Region &> SlotToSymNameMapAllocator;
-   typedef std::map<int32_t, const char *, std::less<int32_t>, SlotToSymNameMapAllocator> SlotToSymNameMap;
-   SlotToSymNameMap            _symbolNameFromSlot;
-   
-   typedef TR::typed_allocator<const char *, TR::Region &> StringSetAllocator;
-   typedef std::set<const char *, StrComparator, StringSetAllocator> ArrayIdentifierSet;
-
-   // This set acts as an identifier for symbols which correspond to arrays
-   ArrayIdentifierSet          _symbolIsArray;
-
-   typedef TR::typed_allocator<std::pair<const char * const, void *>, TR::Region &> MemoryLocationMapAllocator;
-   typedef std::map<const char *, void *, StrComparator, MemoryLocationMapAllocator> MemoryLocationMap;
-   MemoryLocationMap           _memoryLocations;
-
-   typedef TR::typed_allocator<std::pair<const char * const, TR::ResolvedMethod *>, TR::Region &> FunctionMapAllocator;
-   typedef std::map<const char *, TR::ResolvedMethod *, StrComparator, FunctionMapAllocator> FunctionMap;
-   FunctionMap                 _functions;
-
-   TR::IlType                ** _cachedParameterTypes;
-   const char                * _definingFile;
-   char                        _definingLine[MAX_LINE_NUM_LEN];
-   TR::IlType                * _cachedParameterTypesArray[10];
-
-   bool                        _newSymbolsAreTemps;
-   int32_t                     _nextValueID;
-
-   bool                        _useBytecodeBuilders;
-   uint32_t                    _numBlocksBeforeWorklist;
-   List<TR::BytecodeBuilder> * _countBlocksWorklist;
-   List<TR::BytecodeBuilder> * _connectTreesWorklist;
-   List<TR::BytecodeBuilder> * _allBytecodeBuilders;
-   OMR::VirtualMachineState  * _vmState;
-
-   TR_BitVector              * _bytecodeWorklist;
-   TR_BitVector              * _bytecodeHasBeenInWorklist;
+   std::vector<TR::IlBuilder *> _ownedBuilderObjects;
    };
 
 } // namespace OMR
-
 
 #if defined(PUT_OMR_METHODBUILDER_INTO_TR)
 
@@ -251,11 +292,11 @@ namespace TR
    class MethodBuilder : public OMR::MethodBuilder
       {
       public:
-         MethodBuilder(TR::TypeDictionary *types)
-            : OMR::MethodBuilder(types)
-            { }
-         MethodBuilder(TR::TypeDictionary *types, OMR::VirtualMachineState *vmState)
+         MethodBuilder(TR::TypeDictionary *types, OMR::VirtualMachineState *vmState=NULL)
             : OMR::MethodBuilder(types, vmState)
+            { }
+         MethodBuilder(TR::IlBuilderImpl *impl, TR::TypeDictionary *types, OMR::VirtualMachineState *vmState=NULL)
+            : OMR::MethodBuilder(impl, types, vmState)
             { }
       };
 

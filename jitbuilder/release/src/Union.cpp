@@ -24,8 +24,9 @@
 #include <assert.h>
 
 #include "Jit.hpp"
-#include "ilgen/TypeDictionary.hpp"
+#include "ilgen/IlType.hpp"
 #include "ilgen/MethodBuilder.hpp"
+#include "ilgen/TypeDictionary.hpp"
 #include "Union.hpp"
 
 SetUnionByteBuilder::SetUnionByteBuilder(TR::TypeDictionary *d)

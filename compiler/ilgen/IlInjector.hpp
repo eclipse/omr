@@ -30,11 +30,12 @@
 
 #include <stdint.h>
 #include "env/jittypes.h"
+#include "env/TRMemory.hpp"
 #include "il/ILOpCodes.hpp"
 #include "ilgen/IlGen.hpp"
 
-#define TOSTR(x)     #x
-#define LINETOSTR(x) TOSTR(x)
+#define TraceEnabled    (comp()->getOption(TR_TraceILGen))
+#define TraceIL(m, ...) {if (TraceEnabled) {traceMsg(comp(), m, ##__VA_ARGS__);}}
 
 namespace TR { class Block; }
 namespace TR { class CFG; }
@@ -43,18 +44,14 @@ namespace TR { class FrontEnd; }
 namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class IlInjector; }
 namespace TR { class MethodBuilder; }
+namespace TR { class MethodBuilderImpl; }
 namespace TR { class Node; }
 namespace TR { class ResolvedMethodSymbol; }
 namespace TR { class SymbolReference; }
 namespace TR { class SymbolReferenceTable; }
 namespace TR { class TreeTop; }
-namespace TR { class IlType; }
-namespace TR { class TypeDictionary; }
-
-// This macro reduces dependencies for this header file to be used with libjit.a
-#ifndef TR_ALLOC
-#define TR_ALLOC(x)
-#endif
+namespace TR { class IlTypeImpl; }
+namespace TR { class TypeDictionaryImpl; }
 
 namespace OMR
 {
@@ -64,7 +61,7 @@ class IlInjector : public TR_IlGenerator
 public:
    TR_ALLOC(TR_Memory::IlGenerator)
 
-   IlInjector(TR::TypeDictionary *types);
+   IlInjector(TR::TypeDictionaryImpl *types);
    IlInjector(TR::IlInjector *source);
    virtual ~IlInjector() { };
 
@@ -83,14 +80,14 @@ public:
    virtual bool                   injectIL() = 0;
 
    virtual bool                   isMethodBuilder() { return false; }
-   virtual TR::MethodBuilder    * asMethodBuilder() { return NULL; }
+   virtual TR::MethodBuilderImpl* asMethodBuilder() { return NULL; }
 
    TR::Compilation              * comp()             const { return _comp; }
    TR::IlGeneratorMethodDetails * details()          const { return _details; }
    TR::FrontEnd                 * fe()               const { return _fe; }
    TR::SymbolReferenceTable     * symRefTab()              { return _symRefTab; }
    TR::CFG                      * cfg();
-   TR::TypeDictionary           * typeDictionary()         { return _types; }
+   TR::TypeDictionaryImpl       * typeDictionary()         { return _types; }
 
    TR::Block                   ** blocks()           const { return _blocks; }
    int32_t                        numBlocks()        const { return _numBlocks; }
@@ -100,8 +97,8 @@ public:
    void                           allocateBlocks(int32_t num);
    TR::Block                    * newBlock();
    void                           createBlocks(int32_t num);
-   TR::Node                     * parameter(int32_t slot, TR::IlType *dt);
-   TR::SymbolReference          * newTemp(TR::IlType *dt);
+   TR::Node                     * parameter(int32_t slot, TR::IlTypeImpl *dt);
+   TR::SymbolReference          * newTemp(TR::IlTypeImpl *dt);
    TR::Node                     * iconst(int32_t value);
    TR::Node                     * lconst(int64_t value);
    TR::Node                     * bconst(int8_t value);
@@ -119,7 +116,7 @@ public:
    void                           ifjump(TR::ILOpCodes op, TR::Node *first, TR::Node *second, int32_t targetBlockNumber);
    TR::Node                     * shiftLeftBy(TR::Node *value, int32_t shift);
    TR::Node                     * multiplyBy(TR::Node *value, int64_t factor);
-   TR::Node                     * arrayLoad(TR::Node *base, TR::Node *index, TR::IlType *dt);
+   TR::Node                     * arrayLoad(TR::Node *base, TR::Node *index, TR::IlTypeImpl *dt);
    void                           returnValue(TR::Node *value);
    void                           returnNoValue();
 
@@ -128,7 +125,7 @@ public:
    void                           gotoBlock(TR::Block *block);
    void                           branchToBlock(int32_t num) { gotoBlock(_blocks[num]); }
    void                           generateFallThrough();
-   TR::Node                     * createWithoutSymRef(TR::ILOpCodes opCode, uint16_t numArgs, ...);
+   TR::Node                     * createWithoutSymRef(TR::ILOpCodes opCode, uint32_t numArgs, ...);
 
 private:
    void                           validateTargetBlock();
@@ -138,7 +135,7 @@ private:
 protected:
    // data
    //
-   TR::TypeDictionary           * _types;
+   TR::TypeDictionaryImpl       * _types;
    TR::Compilation              * _comp;
    TR::FrontEnd                 * _fe;
    TR::SymbolReferenceTable     * _symRefTab;
@@ -153,21 +150,21 @@ protected:
    TR::Block                   ** _blocks;
    bool                           _blocksAllocatedUpFront;
 
-   TR::IlType                   * NoType;
-   TR::IlType                   * Int8;
-   TR::IlType                   * Int16;
-   TR::IlType                   * Int32;
-   TR::IlType                   * Int64;
-   TR::IlType                   * Word;
-   TR::IlType                   * Float;
-   TR::IlType                   * Double;
-   TR::IlType                   * Address;
-   TR::IlType                   * VectorInt8;
-   TR::IlType                   * VectorInt16;
-   TR::IlType                   * VectorInt32;
-   TR::IlType                   * VectorInt64;
-   TR::IlType                   * VectorFloat;
-   TR::IlType                   * VectorDouble;
+   TR::IlTypeImpl               * NoType;
+   TR::IlTypeImpl               * Int8;
+   TR::IlTypeImpl               * Int16;
+   TR::IlTypeImpl               * Int32;
+   TR::IlTypeImpl               * Int64;
+   TR::IlTypeImpl               * Word;
+   TR::IlTypeImpl               * Float;
+   TR::IlTypeImpl               * Double;
+   TR::IlTypeImpl               * Address;
+   TR::IlTypeImpl               * VectorInt8;
+   TR::IlTypeImpl               * VectorInt16;
+   TR::IlTypeImpl               * VectorInt32;
+   TR::IlTypeImpl               * VectorInt64;
+   TR::IlTypeImpl               * VectorFloat;
+   TR::IlTypeImpl               * VectorDouble;
    };
 
 } // namespace OMR
@@ -180,7 +177,7 @@ namespace TR
    class IlInjector : public OMR::IlInjector
       {
       public:
-         IlInjector(TR::TypeDictionary *types)
+         IlInjector(TR::TypeDictionaryImpl *types)
             : OMR::IlInjector(types)
             { }
 

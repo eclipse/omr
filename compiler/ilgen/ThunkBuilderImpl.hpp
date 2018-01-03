@@ -19,19 +19,18 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#ifndef OMR_THUNKBUILDER_INCL
-#define OMR_THUNKBUILDER_INCL
+#ifndef OMR_THUNKBUILDER_IMPL_INCL
+#define OMR_THUNKBUILDER_IMPL_INCL
 
 
-#ifndef TR_THUNKBUILDER_DEFINED
-#define TR_THUNKBUILDER_DEFINED
-#define PUT_OMR_THUNKBUILDER_INTO_TR
+#ifndef TR_THUNKBUILDER_IMPL_DEFINED
+#define TR_THUNKBUILDER_IMPL_DEFINED
+#define PUT_OMR_THUNKBUILDER_IMPL_INTO_TR
 #endif
 
 
-#include "ilgen/MethodBuilder.hpp"
+#include "ilgen/MethodBuilderImpl.hpp"
 
-namespace TR { class ThunkBuilderImpl; }
 
 namespace OMR
 {
@@ -56,44 +55,53 @@ namespace OMR
  * calls the given function, and will return the return value as expected.
  */
 
-class ThunkBuilder : public TR::MethodBuilder
+class ThunkBuilderImpl : public TR::MethodBuilderImpl
    {
-   public:
+   friend OMR::ThunkBuilder;
+
+   protected:
+   TR_ALLOC(TR_Memory::IlGenerator)
 
    /**
-    * @brief construct a ThunkBuilder for a particular signature
-    * @param types TypeDictionary object that will be used by the ThunkBuilder object
-    * @param name primarily used for debug purposes and will appear in the compilation log
-    * @param returnType return type for the thunk's signature
+    * @brief construct a ThunkBuilderImpl for a particular signature
+    * @param client ThunkBUilder client object corresponding to this ThunkBuilderImpl object
     * @param numCalleeParams number of parameters in the thunk's signature
     * @param calleeParamTypes array of parameter types in the thunk's signature, must have numCalleeParams elements
     */
-   ThunkBuilder(TR::TypeDictionary *types, const char *name, TR::IlType *returnType,
-                uint32_t numCalleeParams, TR::IlType **calleeParamTypes);
-   virtual ~ThunkBuilder();
+   ThunkBuilderImpl(TR::ThunkBuilder *client, TR::TypeDictionaryImpl *types, uint32_t numCalleeParams, TR::IlTypeImpl **calleeParamTypes);
+   virtual ~ThunkBuilderImpl();
 
-   protected:
-   TR::ThunkBuilderImpl *impl();
+   virtual bool buildIL();
+
+   private:
+   TR::ThunkBuilder *client();
+
+   static TR::ThunkBuilderImpl *allocate(TR::ThunkBuilder *client, TR::TypeDictionaryImpl *types, uint32_t numCalleeParams, TR::IlTypeImpl **calleeParamTypes);
+
+   uint32_t          _numCalleeParams;
+   TR::IlTypeImpl ** _calleeParamTypes;
    };
 
 } // namespace OMR
 
 
-#if defined(PUT_OMR_THUNKBUILDER_INTO_TR)
+#if defined(PUT_OMR_THUNKBUILDER_IMPL_INTO_TR)
 
 namespace TR
 {
-   class ThunkBuilder : public OMR::ThunkBuilder
+   class ThunkBuilderImpl : public OMR::ThunkBuilderImpl
       {
       public:
-         ThunkBuilder(TR::TypeDictionary *types, const char *name, TR::IlType *returnType,
-                      uint32_t numCalleeParams, TR::IlType **calleeParamTypes)
-            : OMR::ThunkBuilder(types, name, returnType, numCalleeParams, calleeParamTypes)
+         ThunkBuilderImpl(TR::ThunkBuilder *client,
+                          TR::TypeDictionaryImpl *types,
+                          uint32_t numCalleeParams,
+                          TR::IlTypeImpl **calleeParamTypes)
+            : OMR::ThunkBuilderImpl(client, types, numCalleeParams, calleeParamTypes)
             { }
       };
 
 } // namespace TR
 
-#endif // defined(PUT_OMR_THUNKBUILDER_INTO_TR)
+#endif // defined(PUT_OMR_THUNKBUILDER_IMPL_INTO_TR)
 
-#endif // !defined(OMR_THUNKBUILDER_INCL)
+#endif // !defined(OMR_THUNKBUILDER_IMPL_INCL)

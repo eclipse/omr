@@ -76,6 +76,11 @@ class VirtualMachineOperandArray : public VirtualMachineState
    VirtualMachineOperandArray(VirtualMachineOperandArray *other);
 
    /**
+    * @brief destructor
+    */
+   ~VirtualMachineOperandArray();
+
+   /**
     * @brief write the simulated operand array to the virtual machine
     * @param b the builder where the operations will be placed to recreate the virtual machine operand array
     */

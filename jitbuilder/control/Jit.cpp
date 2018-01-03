@@ -196,7 +196,7 @@ compileMethodBuilder(TR::MethodBuilder *m, uint8_t **entry)
 
    int32_t rc=0;
    *entry = compileMethodFromDetails(NULL, details, warm, rc);
-   m->typeDictionary()->NotifyCompilationDone();
+   resolvedMethod.compilationDone();
    return rc;
    }
 

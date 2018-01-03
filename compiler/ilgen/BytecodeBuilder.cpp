@@ -19,124 +19,48 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include "compile/Compilation.hpp"
-#include "compile/Method.hpp"
-#include "env/FrontEnd.hpp"
-#include "infra/List.hpp"
-#include "il/Block.hpp"
 #include "ilgen/VirtualMachineState.hpp"
 #include "ilgen/IlBuilder.hpp"
 #include "ilgen/MethodBuilder.hpp"
+#include "ilgen/MethodBuilderImpl.hpp"
 #include "ilgen/BytecodeBuilder.hpp"
+#include "ilgen/BytecodeBuilderImpl.hpp"
 #include "ilgen/TypeDictionary.hpp"
-
-// should really move into IlInjector.hpp
-#define TraceEnabled    (comp()->getOption(TR_TraceILGen))
-#define TraceIL(m, ...) {if (TraceEnabled) {traceMsg(comp(), m, ##__VA_ARGS__);}}
+#include "ilgen/TypeDictionaryImpl.hpp"
 
 
-OMR::BytecodeBuilder::BytecodeBuilder(TR::MethodBuilder *methodBuilder,
-                                      int32_t bcIndex,
-                                      char *name)
-   : TR::IlBuilder(methodBuilder, methodBuilder->typeDictionary()),
-   _fallThroughBuilder(0),
-   _bcIndex(bcIndex),
-   _name(name),
-   _initialVMState(0),
-   _vmState(0)
+OMR::BytecodeBuilder::BytecodeBuilder(TR::BytecodeBuilderImpl *impl, TR::MethodBuilder *mb, TR::TypeDictionary *types)
+   : TR::IlBuilder(impl, mb, types)
+   { }
+
+TR::BytecodeBuilderImpl *
+OMR::BytecodeBuilder::impl()
    {
-   _successorBuilders = new (PERSISTENT_NEW) List<TR::BytecodeBuilder>(_types->trMemory());
-   initialize(methodBuilder->details(), methodBuilder->methodSymbol(),
-              methodBuilder->fe(), methodBuilder->symRefTab());
-   initSequence();
+   return static_cast<TR::BytecodeBuilderImpl *>(_impl);
    }
 
-/**
- * Call this function at the top of your bytecode iteration loop so that all services called
- * while this bytecode builder is being translated will mark their IL nodes as having this
- * BytecodeBuilder's _bcIndex (very handy when looking at compiler logs).
- * Note: *all* generated nodes will be marked with this builder's _bcIndex until another
- *       BytecodeBuilder's SetCurrentIlGenerator() is called.
- */
-void
-OMR::BytecodeBuilder::SetCurrentIlGenerator()
+int32_t
+OMR::BytecodeBuilder::bcIndex()
    {
-   comp()->setCurrentIlGenerator((TR_IlGenerator *)this);
+   return impl()->bcIndex();
    }
 
-void
-TR::BytecodeBuilder::initialize(TR::IlGeneratorMethodDetails * details,
-                                TR::ResolvedMethodSymbol     * methodSymbol,
-                                TR::FrontEnd                 * fe,
-                                TR::SymbolReferenceTable     * symRefTab)
-    {
-    this->OMR::IlInjector::initialize(details, methodSymbol, fe, symRefTab);
-
-    //addBytecodeBuilderToList relies on _comp and it won't be ready until now
-    _methodBuilder->addToAllBytecodeBuildersList(this);
-    }
-
-void
-OMR::BytecodeBuilder::appendBlock(TR::Block *block, bool addEdge)
+OMR::VirtualMachineState *
+OMR::BytecodeBuilder::initialVMState()
    {
-   if (block == NULL)
-      {
-      block = emptyBlock();
-      }
-
-   block->setByteCodeIndex(_bcIndex, _comp);
-   return TR::IlBuilder::appendBlock(block, addEdge);
+   return impl()->initialVMState();
    }
 
-uint32_t
-OMR::BytecodeBuilder::countBlocks()
+char *
+OMR::BytecodeBuilder::name()
    {
-   // only count each block once
-   if (_count > -1)
-      return _count;
-
-   TraceIL("[ %p ] TR::BytecodeBuilder::countBlocks 0\n", this);
-
-   _count = TR::IlBuilder::countBlocks();
-
-   if (NULL != _fallThroughBuilder)
-      _methodBuilder->addToBlockCountingWorklist(_fallThroughBuilder);
-
-   ListIterator<TR::BytecodeBuilder> iter(_successorBuilders);
-   for (TR::BytecodeBuilder *builder = iter.getFirst(); !iter.atEnd(); builder = iter.getNext())
-      if (builder->_count < 0)
-         _methodBuilder->addToBlockCountingWorklist(builder);
-
-   TraceIL("[ %p ] TR::BytecodeBuilder::countBlocks %d\n", this, _count);
-
-   return _count;
+   return impl()->name();
    }
 
-bool
-OMR::BytecodeBuilder::connectTrees()
+OMR::VirtualMachineState *
+OMR::BytecodeBuilder::vmState()
    {
-   if (!_connectedTrees)
-      {
-      TraceIL("[ %p ] TR::BytecodeBuilder::connectTrees\n", this);
-      bool rc = TR::IlBuilder::connectTrees();
-      addAllSuccessorBuildersToWorklist();
-      return rc;
-      }
-
-   return true;
-   }
-
-
-void
-OMR::BytecodeBuilder::addAllSuccessorBuildersToWorklist()
-   {
-   if (NULL != _fallThroughBuilder)
-      _methodBuilder->addToTreeConnectingWorklist(_fallThroughBuilder);
-
-   // iterate over _successorBuilders
-   ListIterator<TR::BytecodeBuilder> iter(_successorBuilders);
-   for (TR::BytecodeBuilder *builder = iter.getFirst(); !iter.atEnd(); builder = iter.getNext())
-      _methodBuilder->addToTreeConnectingWorklist(builder);
+   return impl()->vmState();
    }
 
 // Must be called *after* all code has been added to the bytecode builder
@@ -144,21 +68,7 @@ OMR::BytecodeBuilder::addAllSuccessorBuildersToWorklist()
 void
 OMR::BytecodeBuilder::AddFallThroughBuilder(TR::BytecodeBuilder *ftb)
    {
-   TR_ASSERT(comesBack(), "builder does not appear to have a fall through path");
-
-   TraceIL("IlBuilder[ %p ]:: fallThrough successor [ %p ]\n", this, ftb);
-
-   TR::BytecodeBuilder *b = ftb;
-   transferVMState(&b);    // may change what b points at!
-
-   if (b != ftb)
-      TraceIL("IlBuilder[ %p ]:: fallThrough successor changed to [ %p ]\n", this, b);
-   _fallThroughBuilder = b;
-    _methodBuilder->addBytecodeBuilderToWorklist(ftb);
-
-   // add explicit goto and register the actual fall-through block
-   TR::IlBuilder *tgtb = b;
-   TR::IlBuilder::Goto(&tgtb);
+   impl()->AddFallThroughBuilder(ftb->impl());
    }
 
 // AddSuccessorBuilders() should be called with a list of TR::BytecodeBuilder ** pointers.
@@ -176,69 +86,18 @@ OMR::BytecodeBuilder::AddSuccessorBuilders(uint32_t numExits, ...)
    for (int32_t e=0;e < numExits;e++)
       {
       TR::BytecodeBuilder **builder = (TR::BytecodeBuilder **) va_arg(exits, TR::BytecodeBuilder **);
-      if ((*builder)->_bcIndex < _bcIndex) //If the successor has a bcIndex < than the current bcIndex this may be a loop
-         _methodSymbol->setMayHaveLoops(true);
-      transferVMState(builder);            // may change what builder points at!
-      _successorBuilders->add(*builder);   // must be the bytecode builder that comes back from transferVMState()
-      _methodBuilder->addBytecodeBuilderToWorklist(*builder);
-      TraceIL("IlBuilder[ %p ]:: successor [ %p ]\n", this, *builder);
+      TR::BytecodeBuilderImpl *bbi = (*builder)->impl();
+      impl()->AddSuccessorBuilder(&bbi);
+      *builder = bbi->client();
       }
    va_end(exits);
-   }
-
-void
-OMR::BytecodeBuilder::setHandlerInfo(uint32_t catchType)
-   {
-   TR::Block *catchBlock = getEntry();
-   catchBlock->setIsCold();
-   catchBlock->setHandlerInfo(catchType, comp()->getInlineDepth(), -1, _methodSymbol->getResolvedMethod(), comp());
-   }
-
-void
-OMR::BytecodeBuilder::propagateVMState(OMR::VirtualMachineState *fromVMState)
-   {
-   _initialVMState = (OMR::VirtualMachineState *) fromVMState->MakeCopy();
-   _vmState = (OMR::VirtualMachineState *) fromVMState->MakeCopy();
-   }
-
-// transferVMState needs to be called before the actual transfer operation (Goto, IfCmp,
-// etc.) is created because we may need to insert a builder object along that control
-// flow edge to synchronize the vm state at the target (in the case of a merge point).
-// On return, the object pointed at by the "b" parameter may have changed. The caller
-// should direct control for this edge to whatever the parameter passed to "b" is
-// pointing at on return
-void
-OMR::BytecodeBuilder::transferVMState(TR::BytecodeBuilder **b)
-   {
-   TR_ASSERT(_vmState != NULL, "asked to transfer a NULL vmState from builder %p [ bci %d ]", this, _bcIndex);
-   if ((*b)->initialVMState())
-      {
-      // there is already a vm state at the target builder
-      // so we need to synchronize this builder's vm state with the target builder's vm state
-      // for example, the local variables holding the elements on the operand stack may not match
-      // create an intermediate builder object to do that work
-      TR::BytecodeBuilder *intermediateBuilder = _methodBuilder->OrphanBytecodeBuilder((*b)->_bcIndex, (*b)->_name);
-
-      _vmState->MergeInto((*b)->initialVMState(), intermediateBuilder);
-      TraceIL("IlBuilder[ %p ]:: transferVMState merged vm state on way to [ %p ] using [ %p ]\n", this, *b, intermediateBuilder);
-
-      TR::IlBuilder *tgtb = *b;
-      intermediateBuilder->IlBuilder::Goto(&tgtb);
-      intermediateBuilder->_fallThroughBuilder = *b;
-      TraceIL("IlBuilder[ %p ]:: fallThrough successor [ %p ]\n", intermediateBuilder, *b);
-      *b = intermediateBuilder; // branches should direct towards intermediateBuilder not original *b
-      }
-   else
-      {
-      (*b)->propagateVMState(_vmState);
-      }
    }
 
 void
 OMR::BytecodeBuilder::Goto(TR::BytecodeBuilder **dest)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    Goto(*dest);
    }
 
@@ -246,21 +105,20 @@ void
 OMR::BytecodeBuilder::Goto(TR::BytecodeBuilder *dest)
    {
    AddSuccessorBuilder(&dest);
-   OMR::IlBuilder::Goto(dest);
+   this->OMR::IlBuilder::Goto(dest);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpEqual(*dest, v1, v2);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpEqual(dest, v1, v2);
    }
@@ -269,14 +127,13 @@ void
 OMR::BytecodeBuilder::IfCmpEqualZero(TR::BytecodeBuilder **dest, TR::IlValue *c)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpEqualZero(*dest, c);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpEqualZero(TR::BytecodeBuilder *dest, TR::IlValue *c)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpEqualZero(dest, c);
    }
@@ -285,14 +142,13 @@ void
 OMR::BytecodeBuilder::IfCmpNotEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpNotEqual(*dest, v1, v2);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpNotEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpNotEqual(dest, v1, v2);
    }
@@ -301,14 +157,13 @@ void
 OMR::BytecodeBuilder::IfCmpNotEqualZero(TR::BytecodeBuilder **dest, TR::IlValue *c)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpNotEqualZero(*dest, c);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpNotEqualZero(TR::BytecodeBuilder *dest, TR::IlValue *c)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpNotEqualZero(dest, c);
    }
@@ -317,14 +172,13 @@ void
 OMR::BytecodeBuilder::IfCmpLessThan(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpLessThan(*dest, v1, v2);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpLessThan(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpLessThan(dest, v1, v2);
    }
@@ -333,14 +187,13 @@ void
 OMR::BytecodeBuilder::IfCmpUnsignedLessThan(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpUnsignedLessThan(*dest, v1, v2);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpUnsignedLessThan(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpUnsignedLessThan(dest, v1, v2);
    }
@@ -349,14 +202,13 @@ void
 OMR::BytecodeBuilder::IfCmpLessOrEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpLessOrEqual(*dest, v1, v2);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpLessOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpLessOrEqual(dest, v1, v2);
    }
@@ -365,14 +217,13 @@ void
 OMR::BytecodeBuilder::IfCmpUnsignedLessOrEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpUnsignedLessOrEqual(*dest, v1, v2);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpUnsignedLessOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpUnsignedLessOrEqual(dest, v1, v2);
    }
@@ -381,14 +232,13 @@ void
 OMR::BytecodeBuilder::IfCmpGreaterThan(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpGreaterThan(*dest, v1, v2);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpGreaterThan(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpGreaterThan(dest, v1, v2);
    }
@@ -397,14 +247,13 @@ void
 OMR::BytecodeBuilder::IfCmpUnsignedGreaterThan(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpUnsignedGreaterThan(*dest, v1, v2);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpUnsignedGreaterThan(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpUnsignedGreaterThan(dest, v1, v2);
    }
@@ -413,14 +262,13 @@ void
 OMR::BytecodeBuilder::IfCmpGreaterOrEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpGreaterOrEqual(*dest, v1, v2);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpGreaterOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpGreaterOrEqual(dest, v1, v2);
    }
@@ -428,14 +276,13 @@ void
 OMR::BytecodeBuilder::IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2)
    {
    if (*dest == NULL)
-      *dest = _methodBuilder->OrphanBytecodeBuilder(_bcIndex, _name);
+      *dest = methodBuilder()->OrphanBytecodeBuilder(impl()->bcIndex(), impl()->name());
    IfCmpUnsignedGreaterOrEqual(*dest, v1, v2);
    }
 
 void
 OMR::BytecodeBuilder::IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpUnsignedGreaterOrEqual(dest, v1, v2);
    }

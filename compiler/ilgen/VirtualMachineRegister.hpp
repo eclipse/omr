@@ -25,6 +25,7 @@
 
 #include "ilgen/VirtualMachineState.hpp"
 #include "ilgen/IlBuilder.hpp"
+#include "ilgen/IlType.hpp"
 #include "ilgen/TypeDictionary.hpp"
 
 namespace TR { class IlBuilder; }
@@ -84,17 +85,7 @@ class VirtualMachineRegister : public OMR::VirtualMachineState
                           const char * const localName,
                           TR::IlType * pointerToRegisterType,
                           uint32_t adjustByStep,
-                          TR::IlValue * addressOfRegister)
-      : OMR::VirtualMachineState(),
-      _localName(localName),
-      _addressOfRegister(addressOfRegister),
-      _pointerToRegisterType(pointerToRegisterType),
-      _elementType(pointerToRegisterType->baseType()->baseType()),
-      _adjustByStep(adjustByStep)
-      {
-      Reload(b);
-      }
-
+                          TR::IlValue * addressOfRegister);
   
    /**
     * @brief write the simulated register value to the virtual machine
@@ -114,7 +105,7 @@ class VirtualMachineRegister : public OMR::VirtualMachineState
    virtual void Reload(TR::IlBuilder *b)
       {
       b->Store(_localName,
-      b->   LoadAt((TR::IlType *)_pointerToRegisterType,
+      b->   LoadAt(_pointerToRegisterType,
                _addressOfRegister));
       }
 

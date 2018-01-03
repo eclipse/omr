@@ -25,6 +25,7 @@
 #include <cassert>
 
 #include "Jit.hpp"
+#include "ilgen/IlType.hpp"
 #include "ilgen/TypeDictionary.hpp"
 
 // types for use in test cases
@@ -43,16 +44,16 @@ int main()
    TR::TypeDictionary d;
 
    std::cout << "Step 3: test signed integral types\n";
-   assert(TR::Int8 == d.toIlType<int8_t>()->getPrimitiveType());
-   assert(TR::Int16 == d.toIlType<int16_t>()->getPrimitiveType());
-   assert(TR::Int32 == d.toIlType<int32_t>()->getPrimitiveType());
-   assert(TR::Int64 == d.toIlType<int64_t>()->getPrimitiveType());
+   assert(d.Int8 == d.toIlType<int8_t>()->getPrimitiveType());
+   assert(d.Int16 == d.toIlType<int16_t>()->getPrimitiveType());
+   assert(d.Int32 == d.toIlType<int32_t>()->getPrimitiveType());
+   assert(d.Int64 == d.toIlType<int64_t>()->getPrimitiveType());
 
    std::cout << "Step 4: test unsigned integral types\n";
-   assert(TR::Int8 == d.toIlType<uint8_t>()->getPrimitiveType());
-   assert(TR::Int16 == d.toIlType<uint16_t>()->getPrimitiveType());
-   assert(TR::Int32 == d.toIlType<uint32_t>()->getPrimitiveType());
-   assert(TR::Int64 == d.toIlType<uint64_t>()->getPrimitiveType());
+   assert(d.Int8 == d.toIlType<uint8_t>()->getPrimitiveType());
+   assert(d.Int16 == d.toIlType<uint16_t>()->getPrimitiveType());
+   assert(d.Int32 == d.toIlType<uint32_t>()->getPrimitiveType());
+   assert(d.Int64 == d.toIlType<uint64_t>()->getPrimitiveType());
 
    std::cout << "Step 5: test language primitive signed integral types\n";
    assert(sizeof(char) == d.toIlType<char>()->getSize());
@@ -69,52 +70,52 @@ int main()
    assert(sizeof(unsigned long long) == d.toIlType<unsigned long long>()->getSize());
 
    std::cout << "Step 7: test floating point types\n";
-   assert(TR::Float == d.toIlType<float>()->getPrimitiveType());
-   assert(TR::Double == d.toIlType<double>()->getPrimitiveType());
+   assert(d.Float == d.toIlType<float>()->getPrimitiveType());
+   assert(d.Double == d.toIlType<double>()->getPrimitiveType());
 
    std::cout << "Step 8: test cv qualified types\n";
-   assert(TR::Int8 == d.toIlType<const int8_t>()->getPrimitiveType());
-   assert(TR::Int16 == d.toIlType<volatile uint16_t>()->getPrimitiveType());
-   assert(TR::Int32 == d.toIlType<const volatile int32_t>()->getPrimitiveType());
+   assert(d.Int8 == d.toIlType<const int8_t>()->getPrimitiveType());
+   assert(d.Int16 == d.toIlType<volatile uint16_t>()->getPrimitiveType());
+   assert(d.Int32 == d.toIlType<const volatile int32_t>()->getPrimitiveType());
 
    std::cout << "Step 9: test void type\n";
-   assert(TR::NoType == d.toIlType<void>()->getPrimitiveType());
+   assert(d.NoType == d.toIlType<void>()->getPrimitiveType());
 
    std::cout << "Step 10: test pointer to primitive types\n";
    auto pInt32_type = d.toIlType<int32_t*>();
    assert(true == pInt32_type->isPointer());
-   assert(TR::Int32 == pInt32_type->baseType()->getPrimitiveType());
+   assert(d.Int32 == pInt32_type->baseType()->getPrimitiveType());
 
    auto pDouble_type = d.toIlType<double*>();
    assert(true == pDouble_type->isPointer());
-   assert(TR::Double == pDouble_type->baseType()->getPrimitiveType());
+   assert(d.Double == pDouble_type->baseType()->getPrimitiveType());
 
    auto pVoid_type = d.toIlType<void*>();
    assert(true == pVoid_type->isPointer());
-   assert(TR::NoType == pVoid_type->baseType()->getPrimitiveType());
+   assert(d.NoType == pVoid_type->baseType()->getPrimitiveType());
 
    std::cout << "Step 11: test pointer to pointer to primitive types\n";
    auto ppInt32_type = d.toIlType<int32_t**>();
    assert(true == ppInt32_type->isPointer());
    assert(true == ppInt32_type->baseType()->isPointer());
-   assert(TR::Int32 == ppInt32_type->baseType()->baseType()->getPrimitiveType());
+   assert(d.Int32 == ppInt32_type->baseType()->baseType()->getPrimitiveType());
 
    auto ppDouble_type = d.toIlType<double**>();
    assert(true == ppDouble_type->isPointer());
    assert(true == ppDouble_type->baseType()->isPointer());
-   assert(TR::Double == ppDouble_type->baseType()->baseType()->getPrimitiveType());
+   assert(d.Double == ppDouble_type->baseType()->baseType()->getPrimitiveType());
 
    auto ppVoid_type = d.toIlType<void**>();
    assert(true == ppVoid_type->isPointer());
    assert(true == ppVoid_type->baseType()->isPointer());
-   assert(TR::NoType == ppVoid_type->baseType()->baseType()->getPrimitiveType());
+   assert(d.NoType == ppVoid_type->baseType()->baseType()->getPrimitiveType());
 
 #ifdef EXPECTED_FAIL
    /* Note: If enabled, the following tests should result in compilation errors. */
 
    // test enum types
-   assert(TR::Int8 == d.toIlType<Int8Enum>()->getPrimitiveType());
-   assert(TR::Int64 == d.toIlType<Int64Enum>()->getPrimitiveType());
+   assert(d.Int8 == d.toIlType<Int8Enum>()->getPrimitiveType());
+   assert(d.Int64 == d.toIlType<Int64Enum>()->getPrimitiveType());
 
    // test array type
    d.toIlType<int[10]>();

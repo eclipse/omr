@@ -34,14 +34,16 @@
 #include "il/TreeTop_inlines.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "ilgen/IlInjector.hpp"
+#include "ilgen/IlTypeImpl.hpp"
 #include "ilgen/TypeDictionary.hpp"
+#include "ilgen/TypeDictionaryImpl.hpp"
 #include "infra/Cfg.hpp"
 #include "ras/ILValidationStrategies.hpp"
 #include "ras/ILValidator.hpp"
 
 #define OPT_DETAILS "O^O ILGEN: "
 
-OMR::IlInjector::IlInjector(TR::TypeDictionary *types)
+OMR::IlInjector::IlInjector(TR::TypeDictionaryImpl *types)
    : TR_IlGenerator(),
    _types(types),
    _comp(NULL),
@@ -198,15 +200,15 @@ OMR::IlInjector::genTreeTop(TR::Node *n)
 
 
 TR::SymbolReference *
-OMR::IlInjector::newTemp(TR::IlType *dt)
+OMR::IlInjector::newTemp(TR::IlTypeImpl *dt)
    {
-   return symRefTab()->createTemporary(_methodSymbol, dt->getPrimitiveType());
+   return symRefTab()->createTemporary(_methodSymbol, dt->getRealPrimitiveType());
    }
 
 TR::Node *
-OMR::IlInjector::parameter(int32_t slot, TR::IlType *dt)
+OMR::IlInjector::parameter(int32_t slot, TR::IlTypeImpl *dt)
    {
-   return TR::Node::createLoad(symRefTab()->findOrCreateAutoSymbol(_methodSymbol, slot, dt->getPrimitiveType(), true, false, true));
+   return TR::Node::createLoad(symRefTab()->findOrCreateAutoSymbol(_methodSymbol, slot, dt->getRealPrimitiveType(), true, false, true));
    }
 
 TR::Node *
@@ -340,23 +342,23 @@ OMR::IlInjector::multiplyBy(TR::Node *value, int64_t factor)
    }
 
 TR::Node *
-OMR::IlInjector::arrayLoad(TR::Node *base, TR::Node *index, TR::IlType *dt)
+OMR::IlInjector::arrayLoad(TR::Node *base, TR::Node *index, TR::IlTypeImpl *dt)
    {
    TR::Node *scaledIndex;
    TR::Node *element;
    if (index->getDataType() == TR::Int32)
       {
-      scaledIndex = createWithoutSymRef(TR::imul, 2, index, iconst((int64_t) TR::DataType::getSize(dt->getPrimitiveType())));
+      scaledIndex = createWithoutSymRef(TR::imul, 2, index, iconst((int64_t) TR::DataType::getSize(dt->getRealPrimitiveType())));
       element = TR::Node::create(TR::aiadd, 2, base, scaledIndex);
       }
    else
       {
       TR_ASSERT(index->getDataType() == TR::Int64, "expecting Int32 or Int64 for arrayLoad index expression");
-      scaledIndex = createWithoutSymRef(TR::lmul, 2, index, lconst((int64_t) TR::DataType::getSize(dt->getPrimitiveType())));
+      scaledIndex = createWithoutSymRef(TR::lmul, 2, index, lconst((int64_t) TR::DataType::getSize(dt->getRealPrimitiveType())));
       element = TR::Node::create(TR::aladd, 2, base, scaledIndex);
       }
-   TR::SymbolReference * symRef = symRefTab()->findOrCreateArrayShadowSymbolRef(dt->getPrimitiveType(), base);
-   TR::Node *load = TR::Node::createWithSymRef(TR::ILOpCode::indirectLoadOpCode(dt->getPrimitiveType()), 1, element, 0, symRef);
+   TR::SymbolReference * symRef = symRefTab()->findOrCreateArrayShadowSymbolRef(dt->getRealPrimitiveType(), base);
+   TR::Node *load = TR::Node::createWithSymRef(TR::ILOpCode::indirectLoadOpCode(dt->getRealPrimitiveType()), 1, element, 0, symRef);
    return load;
    }
 
@@ -407,7 +409,7 @@ OMR::IlInjector::generateFallThrough()
  * OMR::Node::createWithoutSymRef() instead once it is available publicly.
  * */
 TR::Node *
-OMR::IlInjector::createWithoutSymRef(TR::ILOpCodes opCode, uint16_t numArgs, ...)
+OMR::IlInjector::createWithoutSymRef(TR::ILOpCodes opCode, uint32_t numArgs, ...)
    {
    TR_ASSERT(numArgs > 0, "Must be called with at least one child, but numChildArgs = %d", numArgs);
    va_list args;

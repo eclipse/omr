@@ -28,8 +28,9 @@
 #include <errno.h>
 
 #include "Jit.hpp"
-#include "ilgen/TypeDictionary.hpp"
+#include "ilgen/IlType.hpp"
 #include "ilgen/MethodBuilder.hpp"
+#include "ilgen/TypeDictionary.hpp"
 #include "StructArray.hpp"
 
 

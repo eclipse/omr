@@ -20,52 +20,68 @@
  *******************************************************************************/
 
 #include "ilgen/VirtualMachineOperandArray.hpp"
-#include "compile/Compilation.hpp"
-#include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
 #include "ilgen/BytecodeBuilder.hpp"
 #include "ilgen/MethodBuilder.hpp"
+#include "ilgen/IlType.hpp"
+#include "ilgen/IlValue.hpp"
 #include "ilgen/TypeDictionary.hpp"
 
+// TraceIL historically injected some useful comments into the compile log; need to decide a mechanism
+// for how this works independently of a compilation. For now, just #define TraceIL to nothing so the
+// messages can still live in the code.
+
+#if 0
 #define TraceEnabled    (TR::comp()->getOption(TR_TraceILGen))
 #define TraceIL(m, ...) {if (TraceEnabled) {traceMsg(TR::comp(), m, ##__VA_ARGS__);}}
+#else
+#define TraceIL(m, ...)
+#endif
 
-namespace OMR
-{
-VirtualMachineOperandArray::VirtualMachineOperandArray(TR::MethodBuilder *mb, int32_t numOfElements, TR::IlType *elementType, VirtualMachineRegister *arrayBaseRegister)
+// Also historically worked very well during a compilation, but need a long-term solution here when
+// JitBuilder is used outside of a compilation. For now, just use assert to check the same condition
+// and rely on consumer to be able to look up file and line number to see helpful message
+#ifndef TR_ASSERT
+#include <assert.h>
+#define TR_ASSERT(c, m) assert(c)
+#endif
+
+
+OMR::VirtualMachineOperandArray::VirtualMachineOperandArray(TR::MethodBuilder *mb, int32_t numOfElements, TR::IlType *elementType, VirtualMachineRegister *arrayBaseRegister)
    : VirtualMachineState(),
    _mb(mb),
    _numberOfElements(numOfElements),
    _elementType(elementType),
    _arrayBaseRegister(arrayBaseRegister)
    {
-   int32_t numBytes = _numberOfElements * sizeof(TR::IlValue *);
-   _values = (TR::IlValue **) TR::comp()->trMemory()->allocateHeapMemory(numBytes);
-   memset(_values, 0, numBytes);
+   _values = new TR::IlValue * [_numberOfElements];
+   memset(_values, 0, _numberOfElements * sizeof(TR::IlValue *));
 
    // store current operand stack pointer base address so we can use it whenever we need
    // to recreate the stack as the interpreter would have
    mb->Store("OperandArray_base", arrayBaseRegister->Load(mb));
    }
 
-VirtualMachineOperandArray::VirtualMachineOperandArray(OMR::VirtualMachineOperandArray *other)
+OMR::VirtualMachineOperandArray::VirtualMachineOperandArray(OMR::VirtualMachineOperandArray *other)
    : VirtualMachineState(),
    _mb(other->_mb),
    _numberOfElements(other->_numberOfElements),
    _elementType(other->_elementType),
    _arrayBaseRegister(other->_arrayBaseRegister)
    {
-   int32_t numBytes = _numberOfElements * sizeof(TR::IlValue *);
-   _values = (TR::IlValue **) TR::comp()->trMemory()->allocateHeapMemory(numBytes);
-   memcpy(_values, other->_values, numBytes);
+   _values = new TR::IlValue * [_numberOfElements];
+   memcpy(_values, other->_values, _numberOfElements*sizeof(TR::IlValue *));
    }
 
+OMR::VirtualMachineOperandArray::~VirtualMachineOperandArray()
+   {
+   delete[] _values;
+   }
 
 // commits the simulated operand array of values to the virtual machine state
 // the given builder object is where the operations to commit the state will be inserted
 // into the array which is assumed to be managed independently, most likely
 void
-VirtualMachineOperandArray::Commit(TR::IlBuilder *b)
+OMR::VirtualMachineOperandArray::Commit(TR::IlBuilder *b)
    {
    TR::IlType *Element = _elementType;
    TR::IlType *pElement = _mb->typeDictionary()->PointerTo(Element);
@@ -87,7 +103,7 @@ VirtualMachineOperandArray::Commit(TR::IlBuilder *b)
    }
 
 void
-VirtualMachineOperandArray::Reload(TR::IlBuilder* b)
+OMR::VirtualMachineOperandArray::Reload(TR::IlBuilder* b)
    {
    TR::IlType* Element = _elementType;
    TR::IlType* pElement = _mb->typeDictionary()->PointerTo(Element);
@@ -103,7 +119,7 @@ VirtualMachineOperandArray::Reload(TR::IlBuilder* b)
    }
 
 void
-VirtualMachineOperandArray::MergeInto(OMR::VirtualMachineState *o, TR::IlBuilder *b)
+OMR::VirtualMachineOperandArray::MergeInto(OMR::VirtualMachineState *o, TR::IlBuilder *b)
    {
    VirtualMachineOperandArray *other = (VirtualMachineOperandArray *)o;
    TR_ASSERT(_numberOfElements == other->_numberOfElements, "array are not same size");
@@ -115,8 +131,6 @@ VirtualMachineOperandArray::MergeInto(OMR::VirtualMachineState *o, TR::IlBuilder
          }
       else if (other->_values[i]->getID() != _values[i]->getID())
          {
-         // Types have to match!!!
-         TR_ASSERT(_values[i]->getDataType() == other->_values[i]->getDataType(), "invalid array merge: primitive type mismatch at same index");
          TraceIL("VirtualMachineOperandArray[ %p ]::MergeInto builder %p index %d storeOver %p(%d) with %p(%d)\n", this, b, i, other->_values[i], other->_values[i]->getID(), _values[i], _values[i]->getID());
          b->StoreOver(other->_values[i], _values[i]);
          }
@@ -126,24 +140,23 @@ VirtualMachineOperandArray::MergeInto(OMR::VirtualMachineState *o, TR::IlBuilder
 // Update the OperandArray_base after the Virtual Machine moves the array.
 // This call will normally be followed by a call to Reload if any of the array values changed in the move
 void
-VirtualMachineOperandArray::UpdateArray(TR::IlBuilder *b, TR::IlValue *array)
+OMR::VirtualMachineOperandArray::UpdateArray(TR::IlBuilder *b, TR::IlValue *array)
    {
    b->Store("OperandArray_base", array);
    }
 
 // Allocate a new operand array and copy everything in this state
 // If VirtualMachineOperandArray is subclassed, this function *must* also be implemented in the subclass!
-VirtualMachineState *
-VirtualMachineOperandArray::MakeCopy()
+OMR::VirtualMachineState *
+OMR::VirtualMachineOperandArray::MakeCopy()
    {
-   VirtualMachineOperandArray *copy = (VirtualMachineOperandArray *) TR::comp()->trMemory()->allocateHeapMemory(sizeof(VirtualMachineOperandArray));
-   new (copy) VirtualMachineOperandArray(this);
+   VirtualMachineOperandArray *copy = new VirtualMachineOperandArray(this);
 
    return copy;
    }
 
 TR::IlValue *
-VirtualMachineOperandArray::Get(int32_t index)
+OMR::VirtualMachineOperandArray::Get(int32_t index)
    {
    TR_ASSERT(index < _numberOfElements, "index has to be less than the number of elements");
    TR_ASSERT(index >= 0, "index can not be negative");
@@ -151,7 +164,7 @@ VirtualMachineOperandArray::Get(int32_t index)
    }
 
 void
-VirtualMachineOperandArray::Set(int32_t index, TR::IlValue *value)
+OMR::VirtualMachineOperandArray::Set(int32_t index, TR::IlValue *value)
    {
    TR_ASSERT(index < _numberOfElements, "index has to be less than the number of elements");
    TR_ASSERT(index >= 0, "index can not be negative");
@@ -170,7 +183,7 @@ VirtualMachineOperandArray::Set(int32_t index, TR::IlValue *value)
 
 
 void
-VirtualMachineOperandArray::Move(TR::IlBuilder *b, int32_t dstIndex, int32_t srcIndex)
+OMR::VirtualMachineOperandArray::Move(TR::IlBuilder *b, int32_t dstIndex, int32_t srcIndex)
    {
    TR_ASSERT(dstIndex < _numberOfElements, "dstIndex has to be less than the number of elements");
    TR_ASSERT(dstIndex >= 0, "dstIndex can not be negative");
@@ -180,5 +193,3 @@ VirtualMachineOperandArray::Move(TR::IlBuilder *b, int32_t dstIndex, int32_t src
    _values[dstIndex] = b->Copy(_values[srcIndex]);
    TraceIL("VirtualMachineOperandArray[ %p ]::Move builder %p move srcIndex %d %p(%d) to dstIndex %d %p(%d)\n", this, b, srcIndex, _values[srcIndex], _values[srcIndex]->getID(), dstIndex, _values[dstIndex], _values[dstIndex]->getID());
    }
-
-} // namespace OMR

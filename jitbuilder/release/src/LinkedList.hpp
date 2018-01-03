@@ -39,11 +39,6 @@ typedef int32_t (LinkedListFunctionType)(Element *, int16_t);
 
 class LinkedListMethod : public TR::MethodBuilder
    {
-   private:
-   TR::IlReference *_keyRef;
-   TR::IlReference *_valRef;
-   TR::IlReference *_nextRef;
-
    public:
    LinkedListMethod(TR::TypeDictionary *);
    virtual bool buildIL();

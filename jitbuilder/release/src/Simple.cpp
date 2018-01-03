@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 SimpleMethod::SimpleMethod(TR::TypeDictionary *d)
    : MethodBuilder(d)
    {
-   DefineLine(LINETOSTR(__LINE__));
+   DefineLine(__LINE__);
    DefineFile(__FILE__);
 
    DefineName("increment");

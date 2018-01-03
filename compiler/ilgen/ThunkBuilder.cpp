@@ -21,14 +21,25 @@
 
 #include <stdint.h>
 #include "compile/Compilation.hpp"
-#include "ilgen/IlBuilder.hpp"
+#include "ilgen/IlBuilderImpl.hpp"
+#include "ilgen/IlInjector.hpp"
 #include "ilgen/ThunkBuilder.hpp"
 #include "ilgen/TypeDictionary.hpp"
 
 #define OPT_DETAILS "O^O THUNKBUILDER: "
 
-#define TraceEnabled    (comp()->getOption(TR_TraceILGen))
-#define TraceIL(m, ...) {if (TraceEnabled) {traceMsg(comp(), m, ##__VA_ARGS__);}}
+#include "ilgen/IlType.hpp"
+#include "ilgen/ThunkBuilder.hpp"
+#include "ilgen/ThunkBuilderImpl.hpp"
+#include "ilgen/TypeDictionary.hpp"
+
+
+TR::ThunkBuilderImpl *
+OMR::ThunkBuilder::impl()
+   {
+   return static_cast<TR::ThunkBuilderImpl *>(_impl);
+   }
+
 
 /**
  * ThunkBuilder is a MethodBuilder object representing a thunk for
@@ -41,15 +52,21 @@
  * different method signatures.
  */
 
-namespace OMR
-{
-
-ThunkBuilder::ThunkBuilder(TR::TypeDictionary *types, const char *name, TR::IlType *returnType,
-                           uint32_t numCalleeParams, TR::IlType **calleeParamTypes)
-   : TR::MethodBuilder(types),
-   _numCalleeParams(numCalleeParams),
-   _calleeParamTypes(calleeParamTypes)
+OMR::ThunkBuilder::ThunkBuilder(TR::TypeDictionary *types, const char *name, TR::IlType *returnType,
+                                uint32_t numCalleeParams, TR::IlType **calleeParamTypes)
+   : TR::MethodBuilder(types)
    {
+   // NOTE: responsibility for deleting this array rests with the ThunkBuilderImpl object the array will be passed to
+   TR::IlTypeImpl **paramImplTypes = new TR::IlTypeImpl*[numCalleeParams];
+   for (uint32_t p=0;p < numCalleeParams;p++)
+      {
+      paramImplTypes[p] = calleeParamTypes[p]->impl();
+      }
+   _impl = TR::ThunkBuilderImpl::allocate(static_cast<TR::ThunkBuilder *>(this),
+                                          types->impl(),
+                                          numCalleeParams,
+                                          paramImplTypes);
+
    DefineLine(__FILE__);
    DefineFile(LINETOSTR(__LINE__));
    DefineName(name);
@@ -57,7 +74,7 @@ ThunkBuilder::ThunkBuilder(TR::TypeDictionary *types, const char *name, TR::IlTy
    DefineParameter("target", Address); // target
    DefineParameter("args", types->PointerTo(Word));     // array of arguments
 
-   DefineFunction("thunkCallee",
+   DefineFunction("thunkTarget",
                   __FILE__,
                   LINETOSTR(__LINE__),
                   0, // entry will be a computed value
@@ -66,36 +83,11 @@ ThunkBuilder::ThunkBuilder(TR::TypeDictionary *types, const char *name, TR::IlTy
                   calleeParamTypes);
    }
 
-bool
-ThunkBuilder::buildIL()
+OMR::ThunkBuilder::~ThunkBuilder()
    {
-   TR::IlType *pWord = typeDictionary()->PointerTo(Word);
-
-   uint32_t numArgs = _numCalleeParams+1;
-   TR::IlValue **args = (TR::IlValue **) comp()->trMemory()->allocateHeapMemory(numArgs * sizeof(TR::IlValue *));
-
-   // first argument is the target address
-   args[0] = Load("target");
-
-   // followed by the actual arguments
-   for (uint32_t p=0; p < _numCalleeParams; p++)
+   if (_impl)
       {
-      uint32_t a=p+1;
-      args[a] = ConvertTo(_calleeParamTypes[p],
-                   LoadAt(pWord,
-                      IndexAt(pWord,
-                         Load("args"),
-                         ConstInt32(p))));
+      //delete impl();
+      _impl = NULL; // ensure superclasses do not also delete _impl
       }
-
-   TR::IlValue *retValue = ComputedCall("thunkCallee", numArgs, args);
-
-   if (getReturnType() != NoType)
-      Return(retValue);
-
-   Return();
-
-   return true;
    }
-
-} // namespace OMR

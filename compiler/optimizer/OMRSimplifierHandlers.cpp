@@ -5368,6 +5368,22 @@ class IfxcmpgeToIfxcmpeqReducer
          case TR::iflucmpge:
             result =  isReducibleSpecific<uint64_t>();
             break;
+
+         case TR::ifbcmple:
+         case TR::ifbucmple:
+         case TR::ifscmple:
+         case TR::ifsucmple:
+         case TR::ificmple:
+         case TR::ifiucmple:
+         case TR::iflcmple:
+         case TR::iflucmple:
+            // earlier xforms to reverse children may bring these opcodes here
+            // just return false
+            break;
+
+         default:
+            TR_ASSERT(0, "unexpected opcode provided to isReducible()");
+            break;
          }
 
          return result;

@@ -22,11 +22,19 @@
 compiler_library(ilgen
 	${CMAKE_CURRENT_SOURCE_DIR}/IlGenRequest.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/IlBuilder.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/IlTypeImpl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/IlValue.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/IlValueImpl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/IlInjector.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/MethodBuilder.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/MethodBuilderImpl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/BytecodeBuilder.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/BytecodeBuilderImpl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/TypeDictionary.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/TypeDictionaryImpl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ThunkBuilder.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ThunkBuilderImpl.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/VirtualMachineOperandArray.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/VirtualMachineOperandStack.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/VirtualMachineRegister.cpp
 )

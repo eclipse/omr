@@ -562,7 +562,7 @@ OperandStackTestMethod::testStack(TR::BytecodeBuilder *b, bool useEqual)
 bool
 OperandStackTestMethod::buildIL()
    {
-   TR::IlType *pElementType = _types->PointerTo(_types->PointerTo(STACKVALUEILTYPE));
+   TR::IlType *pElementType = typeDictionary()->PointerTo(typeDictionary()->PointerTo(STACKVALUEILTYPE));
 
    Call("createStack", 0);
 

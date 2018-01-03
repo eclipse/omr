@@ -24,10 +24,12 @@
 #include "compile/Compilation.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
-#include "ilgen/TypeDictionary.hpp"
 #include "ilgen/IlInjector.hpp"
 #include "ilgen/IlBuilder.hpp"
+#include "ilgen/IlTypeImpl.hpp"
 #include "ilgen/MethodBuilder.hpp"
+#include "ilgen/MethodBuilderImpl.hpp"
+#include "ilgen/TypeDictionaryImpl.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
 // needs major overhaul
@@ -50,16 +52,16 @@ JitBuilder::ResolvedMethod::ResolvedMethod(TR_OpaqueMethodBlock *method)
    }
 
 JitBuilder::ResolvedMethod::ResolvedMethod(TR::MethodBuilder *m)
-   : _fileName(m->getDefiningFile()),
-     _lineNumber(m->getDefiningLine()),
-     _name((char *)m->getMethodName()), // sad cast
-     _numParms(m->getNumParameters()),
-     _parmTypes(m->getParameterTypes()),
-     _returnType(m->getReturnType()),
+   : _fileName(m->impl()->getDefiningFile()),
+     _lineNumber(m->impl()->getDefiningLine()),
+     _name((char *)m->impl()->getMethodName()), // sad cast
+     _numParms(m->impl()->getNumParameters()),
+     _parmTypes(m->impl()->getParameterTypes()),
+     _returnType(m->impl()->getReturnType()),
      _entryPoint(0),
      _signature(0),
      _externalName(0),
-     _ilInjector(static_cast<TR::IlInjector *>(m))
+     _ilInjector(static_cast<TR::IlInjector *>(m->impl()))
    {
    computeSignatureChars();
    }
@@ -105,7 +107,7 @@ TR::DataType
 JitBuilder::ResolvedMethod::parmType(uint32_t slot)
    {
    TR_ASSERT((slot < _numParms), "Invalid slot provided for Parameter Type");
-   return _parmTypes[slot]->getPrimitiveType();
+   return _parmTypes[slot]->getRealPrimitiveType();
    }
 
 void
@@ -115,10 +117,10 @@ JitBuilder::ResolvedMethod::computeSignatureChars()
    uint32_t len=3;
    for (int32_t p=0;p < _numParms;p++)
       {
-      TR::IlType *type = _parmTypes[p];
+      TR::IlTypeImpl *type = _parmTypes[p];
       len += strlen(type->getSignatureName());
       }
-   len += strlen(_returnType->getSignatureName());
+   len += strlen(_returnType->impl()->getSignatureName());
    TR_ASSERT(len < 64, "signature array may not be large enough"); // TODO: robustness
 
    int32_t s = 0;
@@ -131,7 +133,7 @@ JitBuilder::ResolvedMethod::computeSignatureChars()
       s += len;
       }
    _signatureChars[s++] = ')';
-   name = _returnType->getSignatureName();
+   name = _returnType->impl()->getSignatureName();
    len = strlen(name);
    strncpy(_signatureChars+s, name, len);
    s += len;
@@ -149,11 +151,11 @@ JitBuilder::ResolvedMethod::makeParameterList(TR::ResolvedMethodSymbol *methodSy
    uint32_t parmSlots = numberOfParameterSlots();
    for (int32_t parmIndex = 0; parmIndex < parmSlots; ++parmIndex)
       {
-      TR::IlType *type = _parmTypes[parmIndex];
-      TR::DataType dt = type->getPrimitiveType();
+      TR::IlTypeImpl *type = _parmTypes[parmIndex];
+      TR::DataType dt = type->getRealPrimitiveType();
       int32_t size = methodSym->convertTypeToSize(dt);
 
-      parmSymbol = methodSym->comp()->getSymRefTab()->createParameterSymbol(methodSym, slot, type->getPrimitiveType(), false);
+      parmSymbol = methodSym->comp()->getSymRefTab()->createParameterSymbol(methodSym, slot, type->getRealPrimitiveType(), false);
       parmSymbol->setOrdinal(ordinal++);
 
       char *s = type->getSignatureName();
@@ -179,7 +181,7 @@ JitBuilder::ResolvedMethod::localName(uint32_t slot,
    char *name=NULL;
    if (_ilInjector != NULL && _ilInjector->isMethodBuilder())
       {
-      TR::MethodBuilder *bldr = _ilInjector->asMethodBuilder();
+      TR::MethodBuilderImpl *bldr = _ilInjector->asMethodBuilder();
       name = (char *) bldr->getSymbolName(slot);
       if (name == NULL)
          {
@@ -209,5 +211,11 @@ JitBuilder::ResolvedMethod::getInjector (TR::IlGeneratorMethodDetails * details,
 TR::DataType
 JitBuilder::ResolvedMethod::returnType()
    {
-   return _returnType->getPrimitiveType();
+   return _returnType->impl()->getRealPrimitiveType();
+   }
+
+void
+JitBuilder::ResolvedMethod::compilationDone()
+   {
+   _ilInjector->typeDictionary()->notifyCompilationDone();
    }

@@ -202,29 +202,29 @@ main(int argc, char *argv[])
 
    total=0; pass=0;
 
-   L=0, U=10000; x=50;        total++; if (compare(x, L, U) != 0) pass++;
-   L=0, U=10000; x=L;         total++; if (compare(x, L, U) != 0) pass++;
-   L=0, U=10000; x=L-1;       total++; if (compare(x, L, U) != 0) pass++;
-   L=0, U=10000; x=-50000;    total++; if (compare(x, L, U) != 0) pass++;
-   L=0, U=10000; x=U-1;       total++; if (compare(x, L, U) != 0) pass++;
-   L=0, U=10000; x=U;         total++; if (compare(x, L, U) != 0) pass++;
-   L=0, U=10000; x=50000;     total++; if (compare(x, L, U) != 0) pass++;
+   L=0, U=10000; x=50;        total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=0, U=10000; x=L;         total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=0, U=10000; x=L-1;       total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=0, U=10000; x=-50000;    total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=0, U=10000; x=U-1;       total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=0, U=10000; x=U;         total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=0, U=10000; x=50000;     total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
 
-   L=-25, U=25; x=0;          total++; if (compare(x, L, U) != 0) pass++;
-   L=-25, U=25; x=L;          total++; if (compare(x, L, U) != 0) pass++;
-   L=-25, U=25; x=L-1;        total++; if (compare(x, L, U) != 0) pass++;
-   L=-25, U=25; x=-100;       total++; if (compare(x, L, U) != 0) pass++;
-   L=-25, U=25; x=U-1;        total++; if (compare(x, L, U) != 0) pass++;
-   L=-25, U=25; x=U;          total++; if (compare(x, L, U) != 0) pass++;
-   L=-25, U=25; x=100;        total++; if (compare(x, L, U) != 0) pass++;
+   L=-25, U=25; x=0;          total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-25, U=25; x=L;          total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-25, U=25; x=L-1;        total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-25, U=25; x=-100;       total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-25, U=25; x=U-1;        total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-25, U=25; x=U;          total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-25, U=25; x=100;        total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
 
-   L=-1000, U=-900; x=-950;   total++; if (compare(x, L, U) != 0) pass++;
-   L=-1000, U=-900; x=L;      total++; if (compare(x, L, U) != 0) pass++;
-   L=-1000, U=-900; x=L-1;    total++; if (compare(x, L, U) != 0) pass++;
-   L=-1000, U=-900; x=-10000; total++; if (compare(x, L, U) != 0) pass++;
-   L=-1000, U=-900; x=U-1;    total++; if (compare(x, L, U) != 0) pass++;
-   L=-1000, U=-900; x=U;      total++; if (compare(x, L, U) != 0) pass++;
-   L=-1000, U=-900; x=-500;   total++; if (compare(x, L, U) != 0) pass++;
+   L=-1000, U=-900; x=-950;   total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-1000, U=-900; x=L;      total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-1000, U=-900; x=L-1;    total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-1000, U=-900; x=-10000; total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-1000, U=-900; x=U-1;    total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-1000, U=-900; x=U;      total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
+   L=-1000, U=-900; x=-500;   total++; if (compare(x, L, U) != 0) pass++; else printf("Fail L=%d, U=%d, x=%d\n", L, U, x);
 
    cout << "Step 5: shutdown JIT\n";
    shutdownJit();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2016 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,12 +19,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include <stdint.h>
-#include "ilgen/IlInjector.hpp"
-#include "ilgen/IlValueImpl.hpp"
+#include "il/DataTypes.hpp"
+#include "env/Region.hpp"
+#include "env/SystemSegmentProvider.hpp"
+#include "env/TRMemory.hpp"
+#include "ilgen/IlTypeImpl.hpp"
+#include "ilgen/TypeDictionary.hpp"
 
-TR::IlValueImpl *
-OMR::IlValue::impl()
+
+TR::IlTypeImpl *
+OMR::IlType::impl()
    {
-   return static_cast<TR::IlValueImpl *>(this);
+   return static_cast<TR::IlTypeImpl *>(this);
+   }
+
+TR::IlType *
+OMR::IlType::getPrimitiveType()
+   {
+   return _dict->NoType;
    }
