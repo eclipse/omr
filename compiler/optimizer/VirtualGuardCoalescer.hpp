@@ -120,9 +120,6 @@ class TR_VirtualGuardTailSplitter : public TR::Optimization
 
    void initializeDataStructures();
    void splitLinear(TR::Block *start, TR::Block *end);
-   void splitGlobal();
-
-   void eliminateColdVirtualGuards(TR::TreeTop *treetop);
 
    void remergeGuard(TR_BlockCloner&, VGInfo *);
 
@@ -135,10 +132,6 @@ class TR_VirtualGuardTailSplitter : public TR::Optimization
 
    bool isKill(TR::Block *);
    bool isKill(TR::Node  *);
-
-   int32_t rematerializeThis();
-   bool isLegalToClone(TR::Node *node, vcount_t visitCount);
-   void canonicalizeTree(TR::Node *, List<TR_SymNodePair> &, vcount_t);
 
    TR::Node *getFirstCallNode(TR::Block *block);
 

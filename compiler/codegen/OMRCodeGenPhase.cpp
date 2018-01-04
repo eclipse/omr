@@ -71,6 +71,7 @@
 #include "optimizer/StructuralAnalysis.hpp"
 #include "ras/Debug.hpp"                              // for TR_DebugBase, etc
 #include "runtime/Runtime.hpp"                        // for setDllSlip
+#include "env/RegionProfiler.hpp"
 
 #include <map>
 #include <utility>
@@ -127,6 +128,8 @@ OMR::CodeGenPhase::performAll()
    for(; i < TR::CodeGenPhase::getListSize(); i++)
       {
       PhaseValue phaseToDo = PhaseList[i];
+      TR::RegionProfiler rp(_cg->comp()->trMemory()->heapMemoryRegion(), *_cg->comp(), "codegen/%s/%s",
+         _cg->comp()->getHotnessName(_cg->comp()->getMethodHotness()), self()->getName(phaseToDo));
       _phaseToFunctionTable[phaseToDo](_cg, self());
       }
    }

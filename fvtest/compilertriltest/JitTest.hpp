@@ -56,7 +56,7 @@ class JitTest : public ::testing::Test
 
    JitTest()
       {
-      auto initSuccess = initializeJitWithOptions((char*)"-Xjit:acceptHugeMethods,enableBasicBlockHoisting,omitFramePointer,useIlValidator,paranoidoptcheck");
+      auto initSuccess = initializeJitWithOptions((char*)"-Xjit:acceptHugeMethods,enableBasicBlockHoisting,omitFramePointer,useILValidator,paranoidoptcheck");
       if (!initSuccess) 
          throw std::runtime_error("Failed to initialize jit");
       }

@@ -44,8 +44,8 @@
 #include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
 #include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
 #include "infra/Cfg.hpp"                       // for CFG, etc
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizer.hpp"             // for Optimizer
 #include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc

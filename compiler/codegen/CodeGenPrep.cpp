@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,8 +84,8 @@
 #include "infra/InterferenceGraph.hpp"         // for TR_InterferenceGraph
 #include "infra/Link.hpp"                      // for TR_Pair
 #include "infra/List.hpp"                      // for List, ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc
 #include "ras/Debug.hpp"                       // for TR_Debug
 #include "ras/DebugCounter.hpp"                // for TR::DebugCounter, etc

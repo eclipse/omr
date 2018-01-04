@@ -63,8 +63,8 @@
 #include "infra/Flags.hpp"                      // for flags32_t
 #include "infra/List.hpp"                       // for List, etc
 #include "infra/Random.hpp"
-#include "infra/TRCfgEdge.hpp"                  // for CFGEdge
-#include "infra/TRCfgNode.hpp"                  // for CFGNode
+#include "infra/CfgEdge.hpp"                    // for CFGEdge
+#include "infra/CfgNode.hpp"                    // for CFGNode
 #include "optimizer/Optimizer.hpp"              // for Optimizer
 #include "ras/Debug.hpp"                        // for TR_Debug
 #include "runtime/Runtime.hpp"
@@ -536,7 +536,7 @@ OMR::ResolvedMethodSymbol::genInduceOSRCallNode(TR::TreeTop* insertionPoint,
    TR_Array<int32_t> *stashedArgs = osrMethodData->getArgInfo(refNode->getByteCodeIndex());
    int32_t firstArgIndex = 0;
    if (stashedArgs)
-      numChildren = stashedArgs->size(); 
+      numChildren = stashedArgs->size();
    else if ((refNode->getNumChildren() > 0) &&
        refNode->getFirstChild()->getOpCode().isCall())
       {
@@ -1251,7 +1251,7 @@ OMR::ResolvedMethodSymbol::genIL(TR_FrontEnd * fe, TR::Compilation * comp, TR::S
 
    TR::Optimizer *optimizer = NULL;
    TR::Optimizer *previousOptimizer = NULL;
-   try 
+   try
       {
       if (!_firstTreeTop || !comp->isPeekingMethod())
          {
@@ -1605,11 +1605,11 @@ OMR::ResolvedMethodSymbol::cannotAttemptOSRDuring(int32_t callSite, TR::Compilat
          break;
       }
 
-   // Store the result against the call site now that it is known 
+   // Store the result against the call site now that it is known
    //
    if (origCallSite > -1 && !comp->cannotAttemptOSRDuring(origCallSite) && cannotAttemptOSR)
       comp->setCannotAttemptOSRDuring(origCallSite, cannotAttemptOSR);
-   return cannotAttemptOSR; 
+   return cannotAttemptOSR;
    }
 
 /*
@@ -1757,7 +1757,7 @@ OMR::ResolvedMethodSymbol::insertRematableStoresFromCallSites(TR::Compilation *c
          storeTree->join(next);
          prev = storeTree;
          }
-      
+
       siteIndex = comp->getInlinedCallSite(siteIndex)._byteCodeInfo.getCallerIndex();
       }
    }
@@ -1779,7 +1779,7 @@ OMR::ResolvedMethodSymbol::getOSRByteCodeInfo(TR::Node *node)
  * Checks the provided node is pending push store or load expected to be
  * around an OSR point.
  *
- * Pending push stores are used to ensure the stack can be reconstructed 
+ * Pending push stores are used to ensure the stack can be reconstructed
  * after the transition, whilst anchored loads are also related as they
  * may be used to avoid the side effects of the prior mentioned stores.
  * As these anchored loads can be placed before the stores, they may
@@ -1931,7 +1931,7 @@ OMR::ResolvedMethodSymbol::insertStoresForDeadStackSlots(TR::Compilation *comp, 
  * \endverbatim
  * This function adds the dead stores for the current BCI.
  * It does not have to concern itself with dead stores for any outer call sites, as they are located in the OSRCodeBlocks for
- * each frame, as demonstrated in the above example. This is safe as all OSR transitions in a callee will have the same liveness 
+ * each frame, as demonstrated in the above example. This is safe as all OSR transitions in a callee will have the same liveness
  * in the caller's frame.
  *
  * \param byteCodeInfo BCI the OSR transition targets, used to look up dead symrefs in OSRLiveRangeAnalysis results.

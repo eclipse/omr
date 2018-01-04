@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,8 +68,8 @@
 #include "infra/Flags.hpp"                     // for flags32_t
 #include "infra/Link.hpp"                      // for TR_LinkHead
 #include "infra/List.hpp"                      // for List, etc
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/RegisterCandidate.hpp"
 #include "optimizer/Structure.hpp"

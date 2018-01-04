@@ -41,8 +41,8 @@
 #include "infra/BitVector.hpp"                   // for TR_BitVector, etc
 #include "infra/Cfg.hpp"                         // for CFG
 #include "infra/List.hpp"                        // for ListIterator, List, etc
-#include "infra/TRCfgEdge.hpp"                   // for CFGEdge
-#include "infra/TRCfgNode.hpp"                   // for CFGNode
+#include "infra/CfgEdge.hpp"                     // for CFGEdge
+#include "infra/CfgNode.hpp"                     // for CFGNode
 #include "optimizer/Dominators.hpp"              // for TR_PostDominators
 #include "optimizer/LocalAnalysis.hpp"           // for TR_LocalAnalysis
 #include "optimizer/Optimization.hpp"            // for Optimization

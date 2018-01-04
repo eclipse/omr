@@ -65,7 +65,7 @@
 #include "infra/Assert.hpp"                        // for TR_ASSERT
 #include "infra/Bit.hpp"                           // for isOdd
 #include "infra/List.hpp"                          // for List, etc
-#include "infra/TRCfgEdge.hpp"                     // for CFGEdge
+#include "infra/CfgEdge.hpp"                       // for CFGEdge
 #include "optimizer/Structure.hpp"
 #include "ras/Debug.hpp"                           // for TR_DebugBase
 #include "runtime/Runtime.hpp"
@@ -1266,11 +1266,11 @@ TR::S390PseudoInstruction::estimateBinaryLength(int32_t currentEstimate)
  * The valid opcode is TR::InstOpCode::DCB
  *
  * Either 2 or 4 instructions are encoded matching the following conditions:
- * 
+ *
  * If a free register was saved:                      Otherwise if a spill is required:
  *                                                    STG     Rscrtch,   offToLongDispSlot(,GPR5)
- * LGRL    Rscrtch,   counterRelocation               LGRL    Rscrtch,   counterRelocation       
- * AGSI 0(Rscrtch),   delta                           AGSI 0(Rscrtch),   delta                   
+ * LGRL    Rscrtch,   counterRelocation               LGRL    Rscrtch,   counterRelocation
+ * AGSI 0(Rscrtch),   delta                           AGSI 0(Rscrtch),   delta
  *                                                    LG      Rscrtch,   offToLongDispSlot(,GPR5)
  *
  * If the platform is 32-bit, ASI replaces AGSI
@@ -1301,7 +1301,7 @@ TR::S390DebugCounterBumpInstruction::generateBinaryEncoding()
    TR_ASSERT(scratchReg!=NULL, "TR_S390DebugCounterBumpInstruction::generateBinaryEncoding -- A scratch reg should always be found.");
 
    traceMsg(comp, "[%p] DCB using %s as scratch reg with spill=%s\n", this, cg()->getDebug()->getName(scratchReg), spillNeeded ? "true" : "false");
-   
+
    if (spillNeeded)
       {
       *(int32_t *) cursor  = boi(0xE3005000 | (offsetToLongDispSlot&0xFFF));              // STG Rscrtch,offToLongDispSlot(,GPR5)
@@ -2013,7 +2013,7 @@ TR::S390RILInstruction::adjustCallOffsetWithTrampoline(int32_t offset, uint8_t *
 
    // Check to make sure that we can reach our target!  Otherwise, we need to look up appropriate
    // trampoline and branch through the trampoline.
-   
+
    if (cg()->comp()->getOption(TR_StressTrampolines) || (!CHECK_32BIT_TRAMPOLINE_RANGE(getTargetPtr(), (uintptrj_t)currentInst)))
       {
       intptrj_t targetAddr;
@@ -2516,7 +2516,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
                {
                i2 = (int32_t)(((uintptrj_t)(callSymbol->getMethodAddress()) - (uintptrj_t)cursor) / 2);
                }
-#if defined(TR_TARGET_64BIT) 
+#if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
             if (comp->getOption(TR_EnableRMODE64))
 #endif
@@ -5810,7 +5810,7 @@ TR::S390VirtualGuardNOPInstruction::generateBinaryEncoding()
    // in) if the patching occurs during GC pause times.  The patching of up to 6-bytes is potentially
    // not atomic.
 
-   bool performEmptyPatch = cg()->isStopTheWorldGuard(getNode()) || getNode()->isProfiledGuard();
+   bool performEmptyPatch = getNode()->isStopTheWorldGuard() || getNode()->isProfiledGuard();
 
    // Stop the world guards that are merged with profiled guards never need to generate NOPs for patching because
    // the profiled guard will generate the NOP branch to the same location the stop the world guard needs to branch

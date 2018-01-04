@@ -112,6 +112,11 @@ class ObjectModel
    */
    bool shouldGenerateReadBarriersForFieldLoads() { return false; };
 
+   /**
+   * @brief: Returns true if option for software read barriers is enabled in the VM's GC
+   */
+   bool shouldReplaceGuardedLoadWithSoftwareReadBarrier() { return false; };
+
    };
 }
 

@@ -55,8 +55,8 @@
 #include "infra/Cfg.hpp"                            // for CFG
 #include "infra/Link.hpp"                           // for TR_LinkHead
 #include "infra/List.hpp"                           // for ListElement, etc
-#include "infra/TRCfgEdge.hpp"                      // for CFGEdge
-#include "infra/TRCfgNode.hpp"                      // for CFGNode
+#include "infra/CfgEdge.hpp"                        // for CFGEdge
+#include "infra/CfgNode.hpp"                        // for CFGNode
 #include "optimizer/DataFlowAnalysis.hpp"
 #include "optimizer/InductionVariable.hpp"          // for TR_PrimaryInductionVariable
 #include "optimizer/LocalAnalysis.hpp"
@@ -227,7 +227,7 @@ int32_t TR_PartialRedundancy::perform()
    // PRE is too expensive when profiling with HCR on, due to the number
    // of blocks and temps this configuration creates. Disabling it
    // won't affect performance if there are no profilings allowed.
-   if (comp()->isProfilingCompilation() && comp()->getHCRMode() != TR::none && _numProfilingsAllowed == 0)
+   if (comp()->getProfilingMode() == JitProfiling && comp()->getHCRMode() != TR::none && _numProfilingsAllowed == 0)
       return 0;
 
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
@@ -2005,11 +2005,9 @@ bool TR_PartialRedundancy::eliminateRedundantSupportedNodes(TR::Node *parent, TR
                    currentOpCode.isJumpWithMultipleTargets() ||
                    currentOpCode.isReturn() ||
                    currentOpCode.getOpCodeValue() == TR::athrow)
-                  valueProfiler->addProfilingTrees(node, prevTree, NULL, true);
-         //valueProfiler->addProfilingTrees(node, prevTree);
+                  valueProfiler->addProfilingTrees(node, prevTree);
                else
-                  valueProfiler->addProfilingTrees(node, currentTree, NULL, true);
-         //valueProfiler->addProfilingTrees(node, currentTree);
+                  valueProfiler->addProfilingTrees(node, currentTree);
 
                if (trace())
                   traceMsg(comp(), "Added profiling instrumentation for %p(%d)\n", node, node->getByteCodeIndex());

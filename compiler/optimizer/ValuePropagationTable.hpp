@@ -944,6 +944,11 @@ const ValuePropagationPtr constraintHandlers[] =
 
    constrainChildren,           // TR::ibyteswap
 
+   constrainChildren,           // TR::bbitpermute
+   constrainChildren,           // TR::sbitpermute
+   constrainChildren,           // TR::ibitpermute
+   constrainChildren,           // TR::lbitpermute
+
    constrainChildren,        // TR::Prefetch
 
 #ifdef J9_PROJECT_SPECIFIC

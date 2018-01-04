@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@
 #include "infra/Assert.hpp"                    // for TR_ASSERT
 #include "infra/BitVector.hpp"                 // for TR_BitVector
 #include "infra/List.hpp"                      // for ListIterator, List
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
 
 #define OPT_DETAILS "O^O PRE-INSTRUCTION SELECTION: "
 

@@ -100,6 +100,8 @@ target_compile_options(sltestlib
 		${OMR_PLATFORM_SHARED_COMPILE_OPTIONS}
 )
 
+set_target_properties(omrporttest sltestlib PROPERTIES FOLDER fvtest)
+
 add_test(NAME porttest COMMAND omrporttest)
 
 if(OMR_OPT_CUDA)

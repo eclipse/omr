@@ -183,6 +183,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
                                TR::Options::setStaticNumeric, (intptrj_t)&OMR::Options::_compThreadCPUEntitlement, 0, "F%d", NOT_IN_SUBSET },
    {"concurrentLPQ", "M\tCompilations from low priority queue can go in parallel with compilations from main queue", SET_OPTION_BIT(TR_ConcurrentLPQ), "F", NOT_IN_SUBSET },
    {"conservativeCompilation","O\tmore conservative decisions regarding compilations", SET_OPTION_BIT(TR_ConservativeCompilation), "F"},
+   {"continueAfterILValidationError", "O\tDo not abort compilation upon encountering an ILValidation failure.", SET_OPTION_BIT(TR_ContinueAfterILValidationError), "F"},
    {"count=",             "O<nnn>\tnumber of invocations before compiling methods without loops",
         TR::Options::setCount, offsetof(OMR::Options,_initialCount), 0, " %d"},
 
@@ -388,6 +389,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableIVTT",                        "O\tdisable IV Type transformation",                 TR::Options::disableOptimization, IVTypeTransformation, 0, "P"},
    {"disableJavaEightStartupHeuristics", "M\t", SET_OPTION_BIT(TR_DisableJava8StartupHeuristics), "F", NOT_IN_SUBSET },
    {"disableJProfiling",                  "O\tdisable JProfiling", RESET_OPTION_BIT(TR_EnableJProfiling), "F"},
+   {"disableJProfilingThread",            "O\tdisable separate thread for JProfiling", SET_OPTION_BIT(TR_DisableJProfilerThread), "F", NOT_IN_SUBSET},
    {"disableKnownObjectTable",            "O\tdisable support for including heap object info in symbol references", SET_OPTION_BIT(TR_DisableKnownObjectTable), "F"},
    {"disableLastITableCache",             "C\tdisable using class lastITable cache for interface dispatches",  SET_OPTION_BIT(TR_DisableLastITableCache), "F"},
    {"disableLateEdgeSplitting",           "C\tconservatively add regdeps for the vmthread on any edge that might need it",  SET_OPTION_BIT(TR_DisableLateEdgeSplitting), "F"},
@@ -488,6 +490,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableProloguePushes",              "O\tuse stores instead of pushes in x86 prologues",  SET_OPTION_BIT(TR_DisableProloguePushes), "P"},
    {"disableRampupImprovements",          "M\tDisable various changes that improve rampup",    SET_OPTION_BIT(TR_DisableRampupImprovements), "F", NOT_IN_SUBSET},
    {"disableReadMonitors",                 "O\tdisable read monitors",                         SET_OPTION_BIT(TR_DisableReadMonitors), "F"},
+   {"disableRecognizedCallTransformer",    "O\tdisable recognized call transformer",           TR::Options::disableOptimization, recognizedCallTransformer, 0, "P"},
    {"disableRecognizedMethods",            "O\tdisable recognized methods",                    SET_OPTION_BIT(TR_DisableRecognizedMethods), "F"},
    {"disableReducedPriorityForCustomMethodHandleThunks",  "R\tcompile custom MethodHandle invoke exact thunks at the same priority as normal java methods", SET_OPTION_BIT(TR_DisableReducedPriorityForCustomMethodHandleThunks), "F", NOT_IN_SUBSET},
    {"disableRedundantAsyncCheckRemoval",  "O\tdisable redundant async check removal",          TR::Options::disableOptimization, redundantAsyncCheckRemoval, 0, "P"},
@@ -691,6 +694,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"enableJITHelpershashCodeImpl",       "O\tenalbe java version of object hashCode()", SET_OPTION_BIT(TR_EnableJITHelpershashCodeImpl), "F"},
    {"enableJITHelpersoptimizedClone",     "O\tenalbe java version of object clone()", SET_OPTION_BIT(TR_EnableJITHelpersoptimizedClone), "F"},
    {"enableJProfiling",                   "O\tenable JProfiling", SET_OPTION_BIT(TR_EnableJProfiling), "F"},
+   {"enableJProfilingInProfilingCompilations","O\tuse jprofiling instrumentation in profiling compilations", SET_OPTION_BIT(TR_EnableJProfilingInProfilingCompilations), "F"},
    {"enableJVMPILineNumbers",            "M\tenable output of line numbers via JVMPI",       SET_OPTION_BIT(TR_EnableJVMPILineNumbers), "F"},
    {"enableLabelTargetNOPs",             "O\tenable inserting NOPs before label targets", SET_OPTION_BIT(TR_EnableLabelTargetNOPs),  "F"},
    {"enableLargeCodePages",              "C\tenable large code pages",  SET_OPTION_BIT(TR_EnableLargeCodePages), "F"},
@@ -1023,6 +1027,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"printErrorInfoOnCompFailure",        "O\tPrint compilation error info to stderr", SET_OPTION_BIT(TR_PrintErrorInfoOnCompFailure), "F", NOT_IN_SUBSET},
    {"privatizeOverlaps",  "O\tif BCD storageRefs are going to overlap then do the move through a temp", SET_OPTION_BIT(TR_PrivatizeOverlaps), "F"},
    {"profile",            "O\tcompile a profiling method body", SET_OPTION_BIT(TR_Profile), "F"},
+   {"profileCompileTime",   "I\tgenerate a perf report for a specific compilation", SET_OPTION_BIT(TR_CompileTimeProfiler), "F" },
    {"profileMemoryRegions", "I\tenable the collection of scratch memory profiling data", SET_OPTION_BIT(TR_ProfileMemoryRegions), "F" },
    {"profilingCompNodecountThreshold=", "M<nnn>\tthreshold for doubling the method to do a profiling compile is considered expensive",
         TR::Options::setStaticNumeric, (intptrj_t)&OMR::Options::_profilingCompNodecountThreshold, 0, "F%d", NOT_IN_SUBSET},
@@ -1162,6 +1167,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"traceILDeadCode=",                 "L{regex}\tlist of additional traces to enable: basic, listing, details, live, progress",
         TR::Options::setBitsFromStringSet, offsetof(OMR::Options, _traceILDeadCode), 0, "P"},
    {"traceILGen",                       "L\ttrace IL generator",                           SET_OPTION_BIT(TR_TraceILGen), "F"},
+   {"traceILValidator",                 "L\ttrace validation over intermediate language constructs",SET_OPTION_BIT(TR_TraceILValidator), "F" },
    {"traceILWalk",                      "L\tsynonym for traceILWalks",                              SET_OPTION_BIT(TR_TraceILWalks), "P" },
    {"traceILWalks",                     "L\ttrace iteration over intermediate language constructs", SET_OPTION_BIT(TR_TraceILWalks), "P" },
    {"traceInductionVariableAnalysis",   "L\ttrace Induction Variable Analysis",            TR::Options::traceOptimization, inductionVariableAnalysis,       0, "P"},
@@ -1224,6 +1230,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"traceRA=",                         "L{regex}\tlist of additional register assignment traces to enable: deps, details, preRA, states",
         TR::Options::setBitsFromStringSet, offsetof(OMR::Options, _raTrace), 0, "F"},
    {"traceReachability",                "L\ttrace all analyses based on the reachability engine",     SET_OPTION_BIT(TR_TraceReachability), "P"},
+   {"traceRecognizedCallTransformer",   "L\ttrace recognized call transformer",            TR::Options::traceOptimization, recognizedCallTransformer, 0, "P"},
    {"traceRedundantAsyncCheckRemoval",  "L\ttrace redundant async check removal",          TR::Options::traceOptimization, redundantAsyncCheckRemoval, 0, "P"},
    {"traceRedundantGotoElimination",    "L\ttrace redundant goto elimination",             TR::Options::traceOptimization, redundantGotoElimination, 0, "P"},
    {"traceRedundantMonitorElimination", "L\ttrace redundant monitor elimination",          TR::Options::traceOptimization, redundantMonitorElimination, 0, "P"},
@@ -1295,7 +1302,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"useHigherMethodCounts", "M\tuse the default high counts for methods even for AOT", SET_OPTION_BIT(TR_UseHigherMethodCounts), "F" },
    {"useHigherMethodCountsAfterStartup", "M\tuse the default high counts for methods after startup in AOT mode", SET_OPTION_BIT(TR_UseHigherMethodCountsAfterStartup), "F", NOT_IN_SUBSET },
    {"useIdleTime", "M\tuse cpu idle time to compile more aggressively", SET_OPTION_BIT(TR_UseIdleTime), "F", NOT_IN_SUBSET },
-   {"useIlValidator", "O\tuse the new ILValidator to check IL instead of the old TreeVerifier", SET_OPTION_BIT(TR_UseILValidator), "F"},
+   {"useILValidator", "O\tuse the new ILValidator to check IL instead of the old TreeVerifier", SET_OPTION_BIT(TR_UseILValidator), "F"},
    {"useLowerMethodCounts",          "M\tuse the original initial counts for methods", SET_OPTION_BIT(TR_UseLowerMethodCounts), "F"},
    {"useLowPriorityQueueDuringCLP",  "O\tplace cold compilations due to classLoadPhase "
                                      "in the low priority queue to be compiled later",
@@ -3732,7 +3739,8 @@ OMR::Options::requiresLogFile()
        self()->getAnyOption(TR_TraceNodeFlags) ||
        self()->getAnyOption(TR_TraceValueNumbers) ||
        self()->getAnyOption(TR_TraceLiveness) ||
-       self()->getAnyOption(TR_TraceILGen))
+       self()->getAnyOption(TR_TraceILGen) ||
+       self()->getAnyOption(TR_TraceILValidator))
       return true;
 
    if (self()->tracingOptimization() || self()->getAnyTraceCGOption())
@@ -4794,6 +4802,7 @@ char *OMR::Options::_verboseOptionNames[TR_NumVerboseOptions] =
    "hookDetailsClassLoading",
    "hookDetailsClassUnloading",
    "sampleDensity",
+   "profiling"
    };
 
 

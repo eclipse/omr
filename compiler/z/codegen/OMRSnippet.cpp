@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -134,7 +134,7 @@ OMR::Z::Snippet::generatePICBinary(TR::CodeGenerator * cg, uint8_t * cursor, TR:
       //     necessary.
       intptrj_t destAddr = (intptrj_t)(glueRef->getSymbol()->castToMethodSymbol()->getMethodAddress());
 
-#if defined(TR_TARGET_64BIT) 
+#if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
       if (cg->comp()->getOption(TR_EnableRMODE64))
 #endif
@@ -299,8 +299,6 @@ TR_Debug::printz(TR::FILE *pOutFile, TR::Snippet * snippet)
       case TR::Snippet::IsConstantData:
       case TR::Snippet::IsWritableData:
       case TR::Snippet::IsEyeCatcherData:
-      case TR::Snippet::IsDeclTramp:
-      case TR::Snippet::IsSortJumpTramp:
          print(pOutFile, (TR::S390ConstantDataSnippet *) snippet);
          break;
       case TR::Snippet::IsTargetAddress:

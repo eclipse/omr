@@ -34,3 +34,5 @@ add_executable(incordec
 target_link_libraries(incordec
 	tril
 )
+
+set_property(TARGET incordec PROPERTY FOLDER fvtest/tril/examples)

@@ -48,8 +48,8 @@
 #include "infra/Link.hpp"                      // for TR_LinkHead1
 #include "infra/List.hpp"                      // for ListIterator, List
 #include "infra/Stack.hpp"                     // for TR_Stack
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "optimizer/Optimizer.hpp"             // for Optimizer
 #include "optimizer/Structure.hpp"             // for TR_StructureSubGraphNode, etc
 #include "optimizer/StructuralAnalysis.hpp"

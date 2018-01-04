@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,7 @@
 #include "infra/BitVector.hpp"                   // for TR_BitVector
 #include "infra/Cfg.hpp"                         // for CFG
 #include "infra/List.hpp"                        // for ListIterator, List
-#include "infra/TRCfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgEdge.hpp"                     // for CFGEdge
 #include "optimizer/Optimizer.hpp"               // for Optimizer
 #include "ras/Debug.hpp"                         // for TR_DebugBase
 
@@ -717,7 +717,7 @@ bool TR_LocalAnalysisInfo::isCallLike(TR::Node *node) {
 
    if (node->getOpCode().hasSymbolReference())
       {
-      if (node->getSymbolReference()->getSymbol()->isVolatile() || 
+      if (node->getSymbolReference()->getSymbol()->isVolatile() ||
           (node->getSymbolReference()->getSymbol()->isMethodMetaData() &&
            !node->getSymbolReference()->getSymbol()->isImmutableField()))
          return true;

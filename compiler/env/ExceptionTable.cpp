@@ -32,7 +32,7 @@
 #include "infra/Array.hpp"          // for TR_Array
 #include "infra/Assert.hpp"         // for TR_ASSERT
 #include "infra/List.hpp"           // for List, ListIterator
-#include "infra/TRCfgEdge.hpp"      // for CFGEdge
+#include "infra/CfgEdge.hpp"        // for CFGEdge
 
 class TR_ResolvedMethod;
 

@@ -35,7 +35,7 @@ class IfxcmpgeReductionTest : public ::testing::TestWithParam<std::tuple<ValType
       // Disable global value propagation and local common subexpression elimination.
       // Otherwise, the trees are optimized into nothing.
       const char *options = "-Xjit:acceptHugeMethods,enableBasicBlockHoisting,omitFramePointer,"
-         "useIlValidator,paranoidoptcheck,disableGlobalVP,disableLocalCSE";
+         "useILValidator,paranoidoptcheck,disableGlobalVP,disableLocalCSE";
 
       auto initSuccess = initializeJitWithOptions(const_cast<char*>(options));
 

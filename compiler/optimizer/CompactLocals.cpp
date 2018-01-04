@@ -55,7 +55,7 @@
 #include "infra/IGNode.hpp"                         // for IGNodeDegree
 #include "infra/InterferenceGraph.hpp"
 #include "infra/List.hpp"                           // for ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                      // for CFGEdge
+#include "infra/CfgEdge.hpp"                        // for CFGEdge
 #include "optimizer/Optimization.hpp"               // for Optimization
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"           // for TR_Liveness

@@ -38,8 +38,8 @@
 #include "infra/BitVector.hpp"                 // for TR_BitVector
 #include "infra/Cfg.hpp"                       // for CFG, MAX_COLD_BLOCK_COUNT
 #include "infra/Stack.hpp"                     // for TR_Stack
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizer.hpp"             // for Optimizer
 #include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc
@@ -86,7 +86,7 @@ int32_t TR_LoopReplicator::perform()
        optimizer()->optsThatCanCreateLoopsDisabled())
       return 0;
 
-   if (comp()->isProfilingCompilation())
+   if (comp()->getProfilingMode() == JitProfiling)
       return 0;
 
    _cfg = comp()->getFlowGraph();

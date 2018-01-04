@@ -66,6 +66,7 @@ namespace OMR { typedef OMR::Compilation CompilationConnector; }
 #include "optimizer/Optimizations.hpp"        // for Optimizations, etc
 #include "ras/Debug.hpp"                      // for TR_DebugBase
 #include "ras/DebugCounter.hpp"               // for TR_DebugCounter, etc
+#include "ras/ILValidationStrategies.hpp"
 
 
 #include "omr.h"
@@ -96,6 +97,7 @@ namespace TR { class CodeGenerator; }
 namespace TR { class Compilation; }
 namespace TR { class IlGenRequest; }
 namespace TR { class IlVerifier; }
+namespace TR { class ILValidator; }
 namespace TR { class Instruction; }
 namespace TR { class KnownObjectTable; }
 namespace TR { class LabelSymbol; }
@@ -129,6 +131,13 @@ enum CompilationReturnCodes
    COMPILATION_UNIMPL_OPCODE,
    // Keep this the last one
    COMPILATION_FAILED
+   };
+
+enum ProfilingMode
+   {
+   DisabledProfiling,
+   JitProfiling,
+   JProfiling
    };
 
 #if defined(DEBUG)
@@ -656,6 +665,10 @@ public:
 
    bool getAddressEnumerationOption(TR_CompilationOptions o) {return _options->getAddressEnumerationOption(o);}
 
+   TR::ILValidator *getILValidator() { return _ilValidator; }
+   void setILValidator(TR::ILValidator *ilValidator) { _ilValidator = ilValidator; }
+   void validateIL(TR::ILValidationContext ilValidationContext);
+
    void verifyTrees(TR::ResolvedMethodSymbol *s = 0);
    void verifyBlocks(TR::ResolvedMethodSymbol *s = 0);
    void verifyCFG(TR::ResolvedMethodSymbol *s = 0);
@@ -738,6 +751,7 @@ public:
    TR_OptimizationPlan * getOptimizationPlan() {return _optimizationPlan;}
 
    bool isProfilingCompilation();
+   ProfilingMode getProfilingMode();
    bool isJProfilingCompilation();
 
    TR::Recompilation *getRecompilationInfo() { return _recompilationInfo; }
@@ -939,7 +953,15 @@ public:
    // To TransformUtil
    void setStartTree(TR::TreeTop * tt);
 
-
+   /**
+    * \brief
+    *    Answers whether the fact that a method has not been executed yet implies
+    *    that the method is cold.
+    *
+    * \return
+    *    true if the fact that a method has not been executed implies it is cold;
+    *    false otherwise
+    */
    bool notYetRunMeansCold();
 
    TR::Region &aliasRegion();
@@ -1022,6 +1044,7 @@ private:
 
 
    TR_IlGenerator                    *_ilGenerator;
+   TR::ILValidator                    *_ilValidator;
    TR::Optimizer                      *_optimizer;
    TR_RegisterCandidates             *_globalRegisterCandidates;
    TR::SymbolReferenceTable          *_currentSymRefTab;

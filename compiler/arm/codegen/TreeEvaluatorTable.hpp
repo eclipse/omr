@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -332,10 +332,10 @@
 #endif
    TR::TreeEvaluator::icmpeqEvaluator,       // TR::acmpeq
    TR::TreeEvaluator::icmpneEvaluator,       // TR::acmpne
-   TR::TreeEvaluator::unImpOpEvaluator,      // TR::acmplt
-   TR::TreeEvaluator::unImpOpEvaluator,      // TR::acmpge
-   TR::TreeEvaluator::unImpOpEvaluator,      // TR::acmpgt
-   TR::TreeEvaluator::unImpOpEvaluator,      // TR::acmple
+   TR::TreeEvaluator::iucmpltEvaluator,      // TR::acmplt
+   TR::TreeEvaluator::iucmpgeEvaluator,      // TR::acmpge
+   TR::TreeEvaluator::iucmpgtEvaluator,      // TR::acmpgt
+   TR::TreeEvaluator::iucmpleEvaluator,      // TR::acmple
 
    TR::TreeEvaluator::unImpOpEvaluator,      // TR::bcmpeq
    TR::TreeEvaluator::unImpOpEvaluator,      // TR::bcmpne
@@ -922,5 +922,10 @@
 	TR::TreeEvaluator::longBitCount,
 
    TR::TreeEvaluator::unImpOpEvaluator,                 // TR::ibyteswap
+
+   TR::TreeEvaluator::unImpOpEvaluator,                 // TR::bbitpermute
+   TR::TreeEvaluator::unImpOpEvaluator,                 // TR::sbitpermute
+   TR::TreeEvaluator::unImpOpEvaluator,                 // TR::ibitpermute
+   TR::TreeEvaluator::unImpOpEvaluator,                 // TR::lbitpermute
 
    TR::TreeEvaluator::NOPEvaluator,         // Temporarily using for TR::Prefetch

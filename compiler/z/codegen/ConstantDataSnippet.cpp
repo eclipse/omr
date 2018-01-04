@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1186,28 +1186,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390ConstantDataSnippet * snippet)
          }
       return;
       }
-   else if (snippet->getKind() == TR::Snippet::IsDeclTramp)
-      {
-      printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Declarative Trampoline Snippet");
-      trfprintf(pOutFile, "\n");
-      TR::S390DeclTrampSnippet *declTrampSnippet = (TR::S390DeclTrampSnippet *) snippet;
-      TR::LabelSymbol *label = declTrampSnippet->getLabel();
-      trfprintf(pOutFile, "[");
-      print(pOutFile, label);
-      trfprintf(pOutFile, "] ");
-      return;
-      }
-   else if (snippet->getKind() == TR::Snippet::IsSortJumpTramp)
-      {
-      printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Sort Jump Trampoline Snippet");
-      trfprintf(pOutFile, "\n");
-      TR::S390SortJumpTrampSnippet *sortJumpTrampSnippet = (TR::S390SortJumpTrampSnippet *) snippet;
-      TR::LabelSymbol *label = sortJumpTrampSnippet->getLabel();
-      trfprintf(pOutFile, "[");
-      print(pOutFile, label);
-      trfprintf(pOutFile, "] ");
-      return;
-      }
    else
       {
       printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Constant Data Snippet");
@@ -1373,62 +1351,4 @@ uint32_t
 TR::S390LabelTableSnippet::getLength(int32_t estimatedSnippetStart)
    {
    return _size * 4;
-   }
-
-TR::S390DeclTrampSnippet::S390DeclTrampSnippet(TR::CodeGenerator *cg, TR::LabelSymbol *label)
-   : TR::S390ConstantDataSnippet(cg, NULL, NULL, 0), _label(label)
-   {
-   TR_ASSERT(TR::Compiler->target.is32Bit(), "only 31bit mode supported for TR::S390DeclTrampSnippet\n");
-   setLength(16);
-   }
-
-uint8_t *
-TR::S390DeclTrampSnippet::emitSnippetBody()
-   {
-   uint8_t * snip = cg()->getBinaryBufferCursor();
-   getSnippetLabel()->setCodeLocation(snip);
-   uint8_t * cursor = snip;
-
-   TR_ASSERT(0, "BinOpt only from folding of getBinOptGPRSlotOffset");
-
-   // Assume GPR10 on entry to declarative trampoline is that expected by method
-   // ST   R13,r13Slot(R10)   # 4 bytes
-   // BRCL 15,declarativeBB # 6 bytes
-   *(uint32_t *) cursor = 0x50d0a000;
-   cursor += 4;
-   *(uint16_t *) cursor = 0xc0f4;
-   cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelRelative32BitRelocation(cursor, _label));
-   cursor += 6;
-   *(uint32_t *) cursor = 0xdead;
-   cursor += 2;
-   return cursor;
-   }
-
-TR::S390SortJumpTrampSnippet::S390SortJumpTrampSnippet(TR::CodeGenerator *cg, TR::LabelSymbol *label)
-   : TR::S390ConstantDataSnippet(cg, NULL, NULL, 0), _label(label)
-   {
-   TR_ASSERT(TR::Compiler->target.is32Bit(), "only 31bit mode supported for TR::S390SortJumpTrampSnippet\n");
-   setLength(16);
-   }
-
-uint8_t *
-TR::S390SortJumpTrampSnippet::emitSnippetBody()
-   {
-   uint8_t * snip = cg()->getBinaryBufferCursor();
-   getSnippetLabel()->setCodeLocation(snip);
-   uint8_t * cursor = snip;
-
-   TR_ASSERT(0, "BinOpt only from folding of getBinOptGPRSlotOffset");
-
-   // Assume GPR10 on entry to sort jump trampoline is that expected by method
-   // ST R13,r13Slot(R10)   # 4 bytes
-   // BRCL 15,declarativeBB # 6 bytes
-   *(uint32_t *) cursor = 0x50d0a000;
-   cursor += 4;
-   *(uint16_t *) cursor = 0xc0f4;
-   cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelRelative32BitRelocation(cursor, _label));
-   cursor += 6;
-   *(uint32_t *) cursor = 0xdead;
-   cursor += 2;
-   return cursor;
    }

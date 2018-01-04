@@ -38,8 +38,8 @@
 #include "infra/Assert.hpp"                    // for TR_ASSERT
 #include "infra/Cfg.hpp"                       // for CFG, MAX_COLD_BLOCK_COUNT
 #include "infra/List.hpp"                      // for ListElement, List
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "optimizer/Optimization.hpp"          // for Optimization
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizer.hpp"             // for Optimizer

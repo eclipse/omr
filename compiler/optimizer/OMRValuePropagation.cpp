@@ -65,8 +65,8 @@
 #include "infra/Cfg.hpp"                        // for CFG, etc
 #include "infra/Link.hpp"                       // for TR_LinkHead, TR_Pair
 #include "infra/List.hpp"                       // for ListIterator, List, etc
-#include "infra/TRCfgEdge.hpp"                  // for CFGEdge
-#include "infra/TRCfgNode.hpp"                  // for CFGNode
+#include "infra/CfgEdge.hpp"                    // for CFGEdge
+#include "infra/CfgNode.hpp"                    // for CFGNode
 #include "optimizer/Inliner.hpp"                // for TR_InlineCall, etc
 #include "optimizer/Optimization.hpp"           // for Optimization
 #include "optimizer/Optimization_inlines.hpp"
@@ -1700,7 +1700,7 @@ void OMR::ValuePropagation::checkTypeRelationship(TR::VPConstraint *lhs, TR::VPC
 
 #ifdef J9_PROJECT_SPECIFIC
    jlKlass = comp()->getClassClassPointer();
-#endif   
+#endif
 
    if (lhs->asClass() && rhs->asClass())
       {
@@ -5415,7 +5415,7 @@ int64_t TR::ArraycopyTransformation::arraycopyHighFrequencySpecificLength(TR::No
       {
       if (TR::Compiler->target.is64Bit())
          {
-         TR_LongValueInfo *valueInfo = (TR_LongValueInfo *)TR_ValueProfiler::getProfiledValueInfo(arrayCopyNode, comp());
+         TR_LongValueInfo *valueInfo = static_cast<TR_LongValueInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(arrayCopyNode, comp(), LongValueInfo));
          if (valueInfo && valueInfo->getTopProbability() > MIN_ARRAYCOPY_FREQ_FOR_SPECIALIZATION)
             {
             return ((int64_t) valueInfo->getTopValue());
@@ -5423,7 +5423,7 @@ int64_t TR::ArraycopyTransformation::arraycopyHighFrequencySpecificLength(TR::No
          }
       else
          {
-         TR_ValueInfo *valueInfo = (TR_ValueInfo *)TR_ValueProfiler::getProfiledValueInfo(arrayCopyNode, comp());
+         TR_ValueInfo *valueInfo = static_cast<TR_ValueInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(arrayCopyNode, comp(), ValueInfo));
          if (valueInfo && valueInfo->getTopProbability() > MIN_ARRAYCOPY_FREQ_FOR_SPECIALIZATION)
             {
             return ((int64_t) valueInfo->getTopValue());

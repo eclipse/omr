@@ -35,3 +35,5 @@ install(TARGETS hookgen
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	COMPONENT tooling
 )
+
+set_property(TARGET hookgen PROPERTY FOLDER tools)

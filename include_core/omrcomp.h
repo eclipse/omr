@@ -26,12 +26,14 @@
 #include <stddef.h>
 
 #if defined(__MINGW32__) || defined(__MINGW64__)
-/* mingw is used in compilation on some windows platforms. The version used
- * does not support __thiscall, used in stdint.h on windows. Defining it to
+/* mingw is used in compilation on some windows platforms. Earlier versions
+ * do not support __thiscall, used in stdint.h on windows. Defining it to
  * nothing allows compilation and therefore allows us to use the types
  * defined within stdint.h.
  */
+#ifndef __thiscall
 #define __thiscall
+#endif /* __thiscall */
 #endif /* __MINGW32__ || __MINGW64__ */
 
 #include <stdint.h>

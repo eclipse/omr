@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,1144 +25,1143 @@
  */
 
 
-   {0x00, 0x00, PSEUDO},   // BAD
-   {0x5A, 0x00, RX_FORMAT},   // A
-   {0xED, 0x1A, RXE_FORMAT},  // ADB
-   {0xB3, 0x1A, RRE_FORMAT},  // ADBR
-   {0xB3, 0xD2, RRF_FORMAT},  // ADTR
-   {0xED, 0x0A, RXE_FORMAT},  // AEB
-   {0xB3, 0x0A, RRE_FORMAT},  // AEBR
-   {0xC2, 0x09, RIL_FORMAT},  // AFI
-   {0xE3, 0x08, RXY_FORMAT},  // AG
-   {0xE3, 0x18, RXY_FORMAT},  // AGF
-   {0xC2, 0x08, RIL_FORMAT},  // AGFI
-   {0xB9, 0x18, RRE_FORMAT},  // AGFR
-   {0xA7, 0x0B, RI_FORMAT},   // AGHI
-   {0xEC, 0xD9, RIE_FORMAT},  // AGHIK
-   {0xB9, 0x08, RRE_FORMAT},  // AGR
-   {0xB9, 0xE8, RRR_FORMAT},  // AGRK
-   {0x4A, 0x00, RX_FORMAT},   // AH
-   {0xB9, 0xC8, RRR_FORMAT},  // AHHHR
-   {0xB9, 0xD8, RRR_FORMAT},  // AHHLR
-   {0xA7, 0x0A, RI_FORMAT},   // AHI
-   {0xEC, 0xD8, RIE_FORMAT},  // AHIK
-   {0xE3, 0x7A, RXY_FORMAT},  // AHY
-   {0xCC, 0x08, RIL_FORMAT},  // AIH
-   {0x5E, 0x00, RX_FORMAT},   // AL
-   {0xE3, 0x98, RXY_FORMAT},  // ALC
-   {0xE3, 0x88, RXY_FORMAT},  // ALCG
-   {0xB9, 0x88, RRE_FORMAT},  // ALCGR
-   {0xB9, 0x98, RRE_FORMAT},  // ALCR
-   {0xC2, 0x0B, RIL_FORMAT},  // ALFI
-   {0xE3, 0x0A, RXY_FORMAT},  // ALG
-   {0xE3, 0x1A, RXY_FORMAT},  // ALGF
-   {0xC2, 0x0A, RIL_FORMAT},  // ALGFI
-   {0xB9, 0x1A, RRE_FORMAT},  // ALGFR
-   {0xEC, 0xDB, RIE_FORMAT},  // ALGHSIK
-   {0xB9, 0x0A, RRE_FORMAT},  // ALGR
-   {0xB9, 0xEA, RRR_FORMAT},  // ALGRK
-   {0xB9, 0xCA, RRR_FORMAT},  // ALHHHR
-   {0xB9, 0xDA, RRR_FORMAT},  // ALHHLR
-   {0xEC, 0xDA, RIE_FORMAT},  // ALHSIK
-   {0x1E, 0x00, RR_FORMAT},   // ALR
-   {0xB9, 0xFA, RRR_FORMAT},  // ALRK
-   {0xCC, 0x0A, RIL_FORMAT},  // ALSIH
-   {0xCC, 0x0B, RIL_FORMAT},  // ALSIHN
-   {0xE3, 0x5E, RXY_FORMAT},  // ALY
-   {0x1A, 0x00, RR_FORMAT},   // AR
-   {0xB9, 0xF8, RRR_FORMAT},  // ARK
-   {0xB3, 0xDA, RRR_FORMAT},  // AXTR
-   {0xE3, 0x5A, RXY_FORMAT},  // AY
-   {0x45, 0x00, RX_FORMAT},   // BAL
-   {0x05, 0x00, RR_FORMAT},   // BALR
-   {0x4D, 0x00, RX_FORMAT},   // BAS
-   {0x0D, 0x00, RR_FORMAT},   // BASR
-   {0x47, 0x00, RX_FORMAT},   // BC
-   {0x07, 0x00, RR_FORMAT},   // BCR
-   {0x46, 0x00, RX_FORMAT},   // BCT
-   {0xE3, 0x46, RXY_FORMAT},  // BCTG
-   {0xB9, 0x46, RRE_FORMAT},  // BCTGR
-   {0x06, 0x00, RR_FORMAT},   // BCTR
-   {0xC7, 0x00, SMI_FORMAT},  // BPP
-   {0xC5, 0x00, MII_FORMAT},  // BPRP
-   {0xA7, 0x05, RI_FORMAT},   // BRAS
-   {0xC0, 0x05, RIL_FORMAT},  // BRASL
-   {0xA7, 0x04, RI_FORMAT},   // BRC
-   {0xC0, 0x04, RIL_FORMAT},  // BRCL
-   {0xA7, 0x06, RI_FORMAT},   // BRCT
-   {0xA7, 0x07, RI_FORMAT},   // BRCTG
-   {0xCC, 0x06, RIL_FORMAT},  // BRCTH
-   {0x84, 0x00, RSI_FORMAT},  // BRXH
-   {0xEC, 0x44, RIE_FORMAT},  // BRXHG
-   {0x85, 0x00, RSI_FORMAT},  // BRXLE
-   {0xEC, 0x45, RIE_FORMAT},  // BRXLG
-   {0x86, 0x00, RS_FORMAT},   // BXH
-   {0xEB, 0x44, RSY_FORMAT},  // BXHG
-   {0x87, 0x00, RS_FORMAT},   // BXLE
-   {0xEB, 0x45, RSY_FORMAT},  // BXLEG
-   {0x59, 0x00, RX_FORMAT},   // C
-   {0xED, 0x19, RXE_FORMAT},  // CDB
-   {0xB3, 0x19, RRE_FORMAT},  // CDBR
-   {0xB3, 0x95, RRE_FORMAT},  // CDFBR
-   {0xB3, 0xA5, RRE_FORMAT},  // CDGBR
-   {0xB3, 0xF1, RRE_FORMAT},  // CDGTR
-   {0xB3, 0x91, RRF2_FORMAT}, // CDLFBR
-   {0xB3, 0xA1, RRF2_FORMAT}, // CDLGBR
-   {0xB3, 0xE4, RRE_FORMAT},  // CDTR
-   {0xB3, 0xF3, RRE_FORMAT},  // CDSTR
-   {0xB3, 0xF2, RRE_FORMAT},  // CDUTR
-   {0xED, 0x09, RXE_FORMAT},  // CEB
-   {0xB3, 0x09, RRE_FORMAT},  // CEBR
-   {0xB3, 0x94, RRE_FORMAT},  // CEFBR
-   {0xB3, 0xA4, RRE_FORMAT},  // CEGBR
-   {0xB3, 0xF4, RRE_FORMAT},  // CEDTR
-   {0xB3, 0x90, RRF2_FORMAT}, // CELFBR
-   {0xB3, 0xA0, RRF2_FORMAT}, // CELGBR
-   {0xB3, 0xFC, RRE_FORMAT},  // CEXTR
-   {0xB3, 0x99, RRF2_FORMAT}, // CFDBR
-   {0xB3, 0x98, RRF2_FORMAT}, // CFEBR
-   {0xC2, 0x0D, RIL_FORMAT},  // CFI
-   {0xE3, 0x20, RXY_FORMAT},  // CG
-   {0xB3, 0xA9, RRF2_FORMAT}, // CGDBR
-   {0xB3, 0xE1, RRF2_FORMAT}, // CGDTR
-   {0xB3, 0xA8, RRF2_FORMAT}, // CGEBR
-   {0xE3, 0x30, RXY_FORMAT},  // CGF
-   {0xC2, 0x0C, RIL_FORMAT},  // CGFI
-   {0xB9, 0x30, RRE_FORMAT},  // CGFR
-   {0xEC, 0xF4, RRS_FORMAT},  // CGFRB
-   {0xEC, 0x74, RIE_FORMAT},  // CGFRJ
-   {0xB9, 0x70, RRF2_FORMAT}, // CGFRT
-   {0xA7, 0x0F, RI_FORMAT},   // CGHI
-   {0xEC, 0xFC, RIS_FORMAT},  // CGIB
-   {0xEC, 0x7C, RIE_FORMAT},  // CGIJ
-   {0xEC, 0x70, RIE_FORMAT},  // CGIT
-   {0xB9, 0x20, RRE_FORMAT},  // CGR
-   {0xEC, 0xE4, RRS_FORMAT},  // CGRB
-   {0xEC, 0x64, RIE_FORMAT},  // CGRJ
-   {0xB9, 0x60, RRF2_FORMAT}, // CGRT
-   {0xB3, 0xE9, RRF2_FORMAT}, // CGXTR
-   {0x49, 0x00, RX_FORMAT},   // CH
-   {0xE3, 0xCD, RXY_FORMAT},  // CHF
-   {0xB9, 0xCD, RRE_FORMAT},  // CHHR
-   {0xA7, 0x0E, RI_FORMAT},   // CHI
-   {0xB9, 0xDD, RRE_FORMAT},  // CHLR
-   {0xE3, 0x79, RXY_FORMAT},  // CHY
-   {0xEC, 0xFE, RIS_FORMAT},  // CIB
-   {0xCC, 0x0D, RIL_FORMAT},  // CIH
-   {0xEC, 0x7E, RIE_FORMAT},  // CIJ
-   {0xEC, 0x72, RIE_FORMAT},  // CIT
-   {0x55, 0x00, RX_FORMAT},   // CL
-   {0xD5, 0x00, SS1_FORMAT},  // CLC
-   {0x0F, 0x00, RR_FORMAT},   // CLCL
-   {0xA9, 0x00, RS_FORMAT},   // CLCLE
-   {0xEB, 0x8F, RSY_FORMAT},  // CLCLU
-   {0xB3, 0x9D, RRF2_FORMAT}, // CLFDBR
-   {0xB3, 0x9C, RRF2_FORMAT}, // CLFEBR
-   {0xC2, 0x0F, RIL_FORMAT},  // CLFI
-   {0xEC, 0x73, RIE_FORMAT},  // CLFIT
-   {0xE3, 0x21, RXY_FORMAT},  // CLG
-   {0xB3, 0xAD, RRF2_FORMAT}, // CLGDBR
-   {0xB3, 0xAC, RRF2_FORMAT}, // CLGEBR
-   {0xE3, 0x31, RXY_FORMAT},  // CLGF
-   {0xC2, 0x0E, RIL_FORMAT},  // CLGFI
-   {0xB9, 0x31, RRE_FORMAT},  // CLGFR
-   {0xEC, 0xF5, RRS_FORMAT},  // CLGFRB
-   {0xEC, 0x75, RIE_FORMAT},  // CLGFRJ
-   {0xB9, 0x71, RRF2_FORMAT}, // CLGFRT
-   {0xEC, 0xFD, RIS_FORMAT},  // CLGIB
-   {0xEC, 0x7D, RIE_FORMAT},  // CLGIJ
-   {0xEC, 0x71, RIE_FORMAT},  // CLGIT
-   {0xB9, 0x21, RRE_FORMAT},  // CLGR
-   {0xEC, 0xE5, RRS_FORMAT},  // CLGRB
-   {0xEC, 0x65, RIE_FORMAT},  // CLGRJ
-   {0xB9, 0x61, RRF2_FORMAT}, // CLGRT
-   {0xEB, 0x2B, RSY_FORMAT},  // CLGT
-   {0xE3, 0xCF, RXY_FORMAT},  // CLHF
-   {0xB9, 0xCF, RRE_FORMAT},  // CLHHR
-   {0xB9, 0xDF, RRE_FORMAT},  // CLHLR
-   {0xEB, 0x55, SIY_FORMAT},  // CLIY
-   {0x95, 0x00, SI_FORMAT},   // CLI
-   {0xEC, 0xFF, RIS_FORMAT},  // CLIB
-   {0xCC, 0x0F, RIL_FORMAT},  // CLIH
-   {0xEC, 0x7F, RIE_FORMAT},  // CLIJ
-   {0xBD, 0x00, RS_FORMAT},   // CLM
-   {0xEB, 0x20, RSY_FORMAT},  // CLMH
-   {0xEB, 0x21, RSY_FORMAT},  // CLMY
-   {0x15, 0x00, RR_FORMAT},   // CLR
-   {0xEC, 0xF7, RRS_FORMAT},  // CLRB
-   {0xEC, 0x77, RIE_FORMAT},  // CLRJ
-   {0xB9, 0x73, RRF2_FORMAT}, // CLRT
-   {0xEB, 0x23, RSY_FORMAT},  // CLT
-   {0xE3, 0x55, RXY_FORMAT},  // CLY
-   {0xB2, 0x4D, RRE_FORMAT},  // CPYA
-   {0x19, 0x00, RR_FORMAT},   // CR
-   {0xEC, 0xF6, RRS_FORMAT},  // CRB
-   {0xEC, 0x76, RIE_FORMAT},  // CRJ
-   {0xB9, 0x72, RRF2_FORMAT}, // CRT
-   {0xBA, 0x00, RS_FORMAT},   // CS
-   {0xEB, 0x14, RSY_FORMAT},  // CSY
-   {0xEB, 0x30, RSY_FORMAT},  // CSG
-   {0xB3, 0xE3, RRF_FORMAT},  // CSDTR
-   {0xB3, 0xEB, RRF_FORMAT},  // CSXTR
-   {0xB3, 0xE2, RRE_FORMAT},  // CUDTR
-   {0xB3, 0xEA, RRE_FORMAT},  // CUXTR
-   {0x4E, 0x00, RX_FORMAT},   // CVD
-   {0xE3, 0x26, RXY_FORMAT},  // CVDY
-   {0xE3, 0x2E, RXY_FORMAT},  // CVDG
-   {0xB3, 0xF9, RRE_FORMAT},  // CXGTR
-   {0xB3, 0xFB, RRE_FORMAT},  // CXSTR
-   {0xB3, 0xEC, RRE_FORMAT},  // CXTR
-   {0xB3, 0xFA, RRE_FORMAT},  // CXUTR
-   {0xE3, 0x59, RXY_FORMAT},  // CY
-   {0x5D, 0x00, RX_FORMAT},   // D
-   {0x00, 0x00, RS_FORMAT},   // DIAG
-   {0xED, 0x1D, RXE_FORMAT},  // DDB
-   {0xB3, 0x1D, RRE_FORMAT},  // DDBR
-   {0xB3, 0xD1, RRF_FORMAT},  // DDTR
-   {0xED, 0x0D, RXE_FORMAT},  // DEB
-   {0xB3, 0x0D, RRE_FORMAT},  // DEBR
-   {0xB4, 0xC6, RRF3_FORMAT}, // DIDTR
-   {0xB3, 0x5B, RRF3_FORMAT}, // DIDBR
-   {0xB3, 0x53, RRF3_FORMAT}, // DIEBR
-   {0xE3, 0x97, RXY_FORMAT},  // DL
-   {0xB9, 0x87, RRE_FORMAT},  // DLGR
-   {0xB9, 0x97, RRE_FORMAT},  // DLR
-   {0x1D, 0x00, RR_FORMAT},   // DR
-   {0xE3, 0x0D, RXY_FORMAT},  // DSG
-   {0xE3, 0x1D, RXY_FORMAT},  // DSGF
-   {0xB9, 0x1D, RRE_FORMAT},  // DSGFR
-   {0xB9, 0x0D, RRE_FORMAT},  // DSGR
-   {0xB3, 0xD9, RRR_FORMAT},  // DXTR
-   {0xB2, 0x4F, RRE_FORMAT},  // EAR
-   {0xEB, 0x4C, RSY_FORMAT},  // ECAG
-   {0xB3, 0xE5, RRE_FORMAT},  // EEDTR
-   {0xB3, 0xED, RRE_FORMAT},  // EEXTR
-   {0xB3, 0x8C, RRE_FORMAT},  // EFPC
-   {0xB9, 0x8D, RRE_FORMAT},  // EPSW
-   {0xB3, 0xE7, RRE_FORMAT},  // ESDTR
-   {0xB3, 0xEF, RRE_FORMAT},  // ESXTR
-   {0xB2, 0xEC, RRE_FORMAT},  // ETND
-   {0x44, 0x00, RX_FORMAT},   // EX
-   {0xC6, 0x00, RIL_FORMAT},  // EXRL
-   {0xB3, 0x5F, RRF2_FORMAT}, // FIDBR
-   {0xB3, 0xD7, RRF2_FORMAT}, // FIDTR
-   {0xB3, 0x57, RRF2_FORMAT}, // FIEBR
-   {0xB3, 0xDF, RRF2_FORMAT}, // FIXTR
-   {0xB9, 0x83, RRE_FORMAT},  // FLOGR
-   {0x43, 0x00, RX_FORMAT},   // IC
-   {0xBF, 0x00, RS_FORMAT},   // ICM
-   {0xEB, 0x80, RSY_FORMAT},  // ICMH
-   {0xEB, 0x81, RSY_FORMAT},  // ICMY
-   {0xE3, 0x73, RXY_FORMAT},  // ICY
-   {0xB3, 0xF6, RRF3_FORMAT}, // IEDTR
-   {0xB3, 0xFE, RRF3_FORMAT}, // IEXTR
-   {0xA5, 0x00, RI_FORMAT},   // IIHH
-   {0xA5, 0x01, RI_FORMAT},   // IIHL
-   {0xC0, 0x08, RIL_FORMAT},  // IIHF
-   {0xC0, 0x09, RIL_FORMAT},  // IILF
-   {0xA5, 0x02, RI_FORMAT},   // IILH
-   {0xA5, 0x03, RI_FORMAT},   // IILL
-   {0xB2, 0x22, RRE_FORMAT},  // IPM
-   {0xB3, 0xE0, RRE_FORMAT},  // KDTR
-   {0xB9, 0x3E, RRE_FORMAT},  // KIMD
-   {0xB9, 0x3F, RRE_FORMAT},  // KLMD
-   {0xB9, 0x2E, RRE_FORMAT},  // KM
-   {0xB9, 0x1E, RRE_FORMAT},  // KMAC
-   {0xB9, 0x2F, RRE_FORMAT},  // KMC
-   {0xB9, 0x2D, RRF_FORMAT},  // KMCTR
-   {0xB9, 0x2A, RRE_FORMAT},  // KMF
-   {0xB9, 0x2B, RRE_FORMAT},  // KMO
-   {0xB3, 0xE8, RRE_FORMAT},  // KXTR
-   {0x58, 0x00, RX_FORMAT},   // L
-   {0x41, 0x00, RX_FORMAT},   // LA
-   {0xEB, 0xF8, RSY_FORMAT},  // LAA
-   {0xEB, 0xE8, RSY_FORMAT},  // LAAG
-   {0xEB, 0xFA, RSY_FORMAT},  // LAAL
-   {0xEB, 0xEA, RSY_FORMAT},  // LAALG
-   {0x9A, 0x00, RS_FORMAT},   // LAM
-   {0xEB, 0x9A, RSY_FORMAT},  // LAMY
-   {0xEB, 0xF4, RSY_FORMAT},  // LAN
-   {0xEB, 0xE4, RSY_FORMAT},  // LANG
-   {0xEB, 0xF6, RSY_FORMAT},  // LAO
-   {0xEB, 0xE6, RSY_FORMAT},  // LAOG
-   {0xC0, 0x00, RIL_FORMAT},  // LARL
-   {0xE3, 0x9F, RXY_FORMAT},  // LAT
-   {0xEB, 0xF7, RSY_FORMAT},  // LAX
-   {0xEB, 0xE7, RSY_FORMAT},  // LAXG
-   {0xE3, 0x71, RXY_FORMAT},  // LAY
-   {0xE3, 0x76, RXY_FORMAT},  // LB
-   {0xE3, 0xC0, RXY_FORMAT},  // LBH
-   {0xB9, 0x26, RRE_FORMAT},  // LBR
-   {0xB3, 0x13, RRE_FORMAT},  // LCDBR
-   {0xB3, 0x73, RRE_FORMAT},  // LCDFR
-   {0xB3, 0x03, RRE_FORMAT},  // LCEBR
-   {0xB9, 0x13, RRE_FORMAT},  // LCGFR
-   {0xB9, 0x03, RRE_FORMAT},  // LCGR
-   {0x13, 0x00, RR_FORMAT},   // LCR
-   {0x68, 0x00, RX_FORMAT},   // LD
-   {0xED, 0x04, RXE_FORMAT},  // LDEB
-   {0xB3, 0x04, RRE_FORMAT},  // LDEBR
-   {0xB3, 0xD4, RRF_FORMAT},  // LDETR
-   {0xB3, 0xDD, RRF_FORMAT},  // LDXTR
-   {0xB3, 0xC1, RRE_FORMAT},  // LDGR
-   {0x28, 0x00, RR_FORMAT},   // LDR
-   {0xED, 0x65, RXY_FORMAT},  // LDY
-   {0x78, 0x00, RX_FORMAT},   // LE
-   {0xB3, 0x44, RRE_FORMAT},  // LEDBR
-   {0xB3, 0xD5, RRF_FORMAT},  // LEDTR
-   {0x38, 0x00, RR_FORMAT},   // LER
-   {0xED, 0x64, RXY_FORMAT},  // LEY
-   {0xE3, 0xCA, RXY_FORMAT},  // LFH
-   {0xE3, 0xC8, RXY_FORMAT},  // LFHAT
-   {0xE3, 0x04, RXY_FORMAT},  // LG
-   {0xE3, 0x85, RXY_FORMAT},  // LGAT
-   {0xE3, 0x77, RXY_FORMAT},  // LGB
-   {0xB9, 0x06, RRE_FORMAT},  // LGBR
-   {0xB3, 0xCD, RRE_FORMAT},  // LGDR
-   {0xE3, 0x14, RXY_FORMAT},  // LGF
-   {0xC0, 0x01, RIL_FORMAT},  // LGFI
-   {0xB9, 0x14, RRE_FORMAT},  // LGFR
-   {0xE3, 0x15, RXY_FORMAT},  // LGH
-   {0xA7, 0x09, RI_FORMAT},   // LGHI
-   {0xB9, 0x07, RRE_FORMAT},  // LGHR
-   {0xB9, 0x04, RRE_FORMAT},  // LGR
-   {0xC4, 0x08, RIL_FORMAT},  // LGRL
-   {0xC4, 0x0C, RIL_FORMAT},  // LGFRL
-   {0xC4, 0x0E, RIL_FORMAT},  // LLGFRL
-   {0x48, 0x00, RX_FORMAT},   // LH
-   {0xE3, 0xC4, RXY_FORMAT},  // LHH
-   {0xA7, 0x08, RI_FORMAT},   // LHI
-   {0xB9, 0x27, RRE_FORMAT},  // LHR
-   {0xE3, 0x78, RXY_FORMAT},  // LHY
-   {0xE3, 0x94, RXY_FORMAT},  // LLC
-   {0xE3, 0xC2, RXY_FORMAT},  // LLCH
-   {0xB9, 0x94, RRE_FORMAT},  // LLCR
-   {0xE3, 0x90, RXY_FORMAT},  // LLGC
-   {0xB9, 0x84, RRE_FORMAT},  // LLGCR
-   {0xE3, 0x16, RXY_FORMAT},  // LLGF
-   {0xE3, 0x9D, RXY_FORMAT},  // LLGFAT
-   {0xB9, 0x16, RRE_FORMAT},  // LLGFR
-   {0xE3, 0x91, RXY_FORMAT},  // LLGH
-   {0xB9, 0x85, RRE_FORMAT},  // LLGHR
-   {0xE3, 0x17, RXY_FORMAT},  // LLGT
-   {0xE3, 0x9C, RXY_FORMAT},  // LLGTAT
-   {0xB9, 0x17, RRE_FORMAT},  // LLGTR
-   {0xE3, 0x95, RXY_FORMAT},  // LLH
-   {0xE3, 0xC6, RXY_FORMAT},  // LLHH
-   {0xB9, 0x95, RRE_FORMAT},  // LLHR
-   {0xA5, 0x0C, RI_FORMAT},   // LLIHH
-   {0xA5, 0x0D, RI_FORMAT},   // LLIHL
-   {0xC0, 0x0E, RIL_FORMAT},  // LLIHF
-   {0xC0, 0x0F, RIL_FORMAT},  // LLILF
-   {0xA5, 0x0E, RI_FORMAT},   // LLILH
-   {0xA5, 0x0F, RI_FORMAT},   // LLILL
-   {0xE3, 0x3A, RXY_FORMAT},  // LLZRGF
-   {0x98, 0x00, RS_FORMAT},   // LM
-   {0xEB, 0x04, RSY_FORMAT},  // LMG
-   {0xEB, 0x98, RSY_FORMAT},  // LMY
-   {0xB3, 0x11, RRE_FORMAT},  // LNDBR
-   {0xB3, 0x71, RRE_FORMAT},  // LNDFR
-   {0xB3, 0x01, RRE_FORMAT},  // LNEBR
-   {0xB9, 0x01, RRE_FORMAT},  // LNGR
-   {0x11, 0x00, RR_FORMAT},   // LNR
-   {0xEB, 0xF2, RSY_FORMAT},  // LOC
-   {0xEB, 0xE0, RSY_FORMAT},  // LOCFH
-   {0xB9, 0xE0, RRF_FORMAT},  // LOCFHR
-   {0xEB, 0xE2, RSY_FORMAT},  // LOCG
-   {0xEC, 0x46, RIE_FORMAT},  // LOCGHI
-   {0xB9, 0xE2, RRF_FORMAT},  // LOCGR
-   {0xEC, 0x4E, RIE_FORMAT},  // LOCHHI
-   {0xEC, 0x42, RIE_FORMAT},  // LOCHI
-   {0xB9, 0xF2, RRF2_FORMAT}, // LOCR
-   {0xC8, 0x04, SSF_FORMAT},  // LPD
-   {0xB3, 0x10, RRE_FORMAT},  // LPDBR
-   {0xB3, 0x70, RRE_FORMAT},  // LPDFR
-   {0xC8, 0x05, SSF_FORMAT},  // LPDG
-   {0xB3, 0x00, RRE_FORMAT},  // LPEBR
-   {0xB9, 0x10, RRE_FORMAT},  // LPGFR
-   {0xB9, 0x00, RRE_FORMAT},  // LPGR
-   {0xE3, 0x8F, RXY_FORMAT},  // LPQ
-   {0x10, 0x00, RR_FORMAT},   // LPR
-   {0x18, 0x00, RR_FORMAT},   // LR
-   {0xEB, 0x60, RSY_FORMAT},  // LRIC
-   {0xC4, 0x0D, RIL_FORMAT},  // LRL
-   {0xE3, 0x1E, RXY_FORMAT},  // LRV
-   {0xE3, 0x0F, RXY_FORMAT},  // LRVG
-   {0xB9, 0x0F, RRE_FORMAT},  // LRVGR
-   {0xE3, 0x1F, RXY_FORMAT},  // LRVH
-   {0xB9, 0x1F, RRE_FORMAT},  // LRVR
-   {0xE3, 0x12, RXY_FORMAT},  // LT
-   {0xB3, 0x12, RRE_FORMAT},  // LTDBR
-   {0xB3, 0xD6, RRE_FORMAT},  // LTDTR
-   {0xB3, 0x02, RRE_FORMAT},  // LTEBR
-   {0xE3, 0x02, RXY_FORMAT},  // LTG
-   {0xE3, 0x32, RXY_FORMAT},  // LTGF
-   {0xB9, 0x12, RRE_FORMAT},  // LTGFR
-   {0xB9, 0x02, RRE_FORMAT},  // LTGR
-   {0x12, 0x00, RR_FORMAT},   // LTR
-   {0xB3, 0xDE, RRE_FORMAT},  // LTXTR
-   {0xB3, 0xDC, RRF_FORMAT},  // LXDTR
-   {0xE3, 0x58, RXY_FORMAT},  // LY
-   {0xB3, 0x75, RRE_FORMAT},  // LZDR
-   {0xB3, 0x74, RRE_FORMAT},  // LZER
-   {0xE3, 0x3B, RXY_FORMAT},  // LZRF
-   {0xE3, 0x2A, RXY_FORMAT},  // LZRG
-   {0x5C, 0x00, RX_FORMAT},   // M
-   {0xE3, 0x5C, RXY_FORMAT},   // MFY
-   {0xED, 0x1E, RXF_FORMAT},  // MADB
-   {0xB3, 0x1E, RRF_FORMAT},  // MADBR
-   {0xED, 0x0E, RXF_FORMAT},  // MAEB
-   {0xB3, 0x0E, RRF_FORMAT},  // MAEBR
-   {0xED, 0x1C, RXE_FORMAT},  // MDB
-   {0xB3, 0x1C, RRE_FORMAT},  // MDBR
-   {0xB3, 0xD0, RRF_FORMAT},  // MDTR
-   {0xED, 0x17, RXE_FORMAT},  // MEEB
-   {0xB3, 0x17, RRE_FORMAT},  // MEEBR
-   {0xA7, 0x0D, RI_FORMAT},   // MGHI
-   {0x4C, 0x00, RX_FORMAT},   // MH
-   {0xE3, 0x7C, RXY_FORMAT},  // MHY
-   {0xA7, 0x0C, RI_FORMAT},   // MHI
-   {0xE3, 0x86, RXY_FORMAT},  // MLG
-   {0xB9, 0x86, RRE_FORMAT},  // MLGR
-   {0xB9, 0x96, RRE_FORMAT},  // MLR
-   {0x1C, 0x00, RR_FORMAT},   // MR
-   {0xEB, 0x62, RSY_FORMAT},  // MRIC
-   {0x71, 0x00, RX_FORMAT},   // MS
-   {0xE3, 0x51, RXY_FORMAT},  // MSY
-   {0xED, 0x1F, RXF_FORMAT},  // MSDB
-   {0xB3, 0x1F, RRF_FORMAT},  // MSDBR
-   {0xED, 0x0F, RXF_FORMAT},  // MSEB
-   {0xB3, 0x0F, RRF_FORMAT},  // MSEBR
-   {0xE3, 0x0C, RXY_FORMAT},  // MSG
-   {0xE3, 0x1C, RXY_FORMAT},  // MSGF
-   {0xB9, 0x1C, RRE_FORMAT},  // MSGFR
-   {0xB9, 0x0C, RRE_FORMAT},  // MSGR
-   {0xB2, 0x52, RRE_FORMAT},  // MSR
-   {0xD2, 0x00, SS1_FORMAT},  // MVC
-   {0x0E, 0x00, RR_FORMAT},   // MVCL
-   {0xE5, 0x48, SIL_FORMAT},  // MVGHI
-   {0xE5, 0x44, SIL_FORMAT},  // MVHHI
-   {0xE5, 0x4C, SIL_FORMAT},  // MVHI
-   {0x92, 0x00, SI_FORMAT},   // MVI
-   {0xEB, 0x52, SIY_FORMAT},  // MVIY
-   {0xB3, 0xD8, RRR_FORMAT},  // MXTR
-   {0x54, 0x00, RX_FORMAT},   // N
-   {0xD4, 0x00, SS1_FORMAT},  // NC
-   {0xE3, 0x80, RXY_FORMAT},  // NG
-   {0xB9, 0x80, RRE_FORMAT},  // NGR
-   {0xB9, 0xE4, RRR_FORMAT},  // NGRK
-   {0x94, 0x00, SI_FORMAT},   // NI
-   {0xB2, 0xFA, IE_FORMAT},   // NIAI
-   {0xC0, 0x0A, RIL_FORMAT},  // NIHF
-   {0xA5, 0x04, RI_FORMAT},   // NIHH
-   {0xA5, 0x05, RI_FORMAT},   // NIHL
-   {0xC0, 0x0B, RIL_FORMAT},  // NILF
-   {0xA5, 0x06, RI_FORMAT},   // NILH
-   {0xA5, 0x07, RI_FORMAT},   // NILL
-   {0xEB, 0x54, SIY_FORMAT},  // NIY
-   {0x14, 0x00, RR_FORMAT},   // NR
-   {0xB9, 0xF4, RRR_FORMAT},  // NRK
-   {0xE3, 0x25, RXY_FORMAT},  // NTSTG
-   {0xE3, 0x54, RXY_FORMAT},  // NY
-   {0x56, 0x00, RX_FORMAT},   // O
-   {0xD6, 0x00, SS1_FORMAT},  // OC
-   {0xE3, 0x81, RXY_FORMAT},  // OG
-   {0xB9, 0x81, RRE_FORMAT},  // OGR
-   {0xB9, 0xE6, RRR_FORMAT},  // OGRK
-   {0x96, 0x00, SI_FORMAT},   // OI
-   {0xC0, 0x0C, RIL_FORMAT},  // OIHF
-   {0xA5, 0x08, RI_FORMAT},   // OIHH
-   {0xA5, 0x09, RI_FORMAT},   // OIHL
-   {0xC0, 0x0D, RIL_FORMAT},  // OILF
-   {0xA5, 0x0A, RI_FORMAT},   // OILH
-   {0xA5, 0x0B, RI_FORMAT},   // OILL
-   {0xEB, 0x56, SIY_FORMAT},  // OIY
-   {0x16, 0x00, RR_FORMAT},   // OR
-   {0xB9, 0xF6, RRR_FORMAT},  // ORK
-   {0xE3, 0x56, RXY_FORMAT},  // OY
-   {0xE3, 0x36, RXY_FORMAT},  // PFD
-   {0x01, 0x0A, E_FORMAT}, // PFPO
-   {0xB9, 0xE1, RRE_FORMAT},  // POPCNT
-   {0xB2, 0xE8, RRF_FORMAT},  // PPA
-   {0xB3, 0xF5, RRF3_FORMAT}, // QADTR
-   {0xB3, 0xFD, RRF3_FORMAT}, // QAXTR
-   {0xEC, 0x55, RIE_FORMAT},  // RISBG
-   {0xEC, 0x59, RIE_FORMAT},  // RISBGN
-   {0xEC, 0x5D, RIE_FORMAT},  // RISBHG
-   {0xEC, 0x51, RIE_FORMAT},  // RISBLG
-   {0xEB, 0x1D, RSY_FORMAT},  // RLL
-   {0xEB, 0x1C, RSY_FORMAT},  // RLLG
-   {0xEC, 0x54, RIE_FORMAT},  // RNSBG
-   {0xEC, 0x56, RIE_FORMAT},  // ROSBG
-   {0xB3, 0xF7, RRF3_FORMAT}, // RRDTR
-   {0xB3, 0xFF, RRF3_FORMAT}, // RRXTR
-   {0xEC, 0x57, RIE_FORMAT},  // RXSBG
-   {0x5B, 0x00, RX_FORMAT},   // S
-   {0xB2, 0x4E, RRE_FORMAT},  // SAR
-   {0xED, 0x1B, RXE_FORMAT},  // SDB
-   {0xB3, 0x1B, RRE_FORMAT},  // SDBR
-   {0xB3, 0xD3, RRF_FORMAT},  // SDTR
-   {0xED, 0x0B, RXE_FORMAT},  // SEB
-   {0xB3, 0x0B, RRE_FORMAT},  // SEBR
-   {0xB3, 0x85, RRE_FORMAT},  // SFASR
-   {0xB3, 0x84, RRE_FORMAT},  // SFPC
-   {0xE3, 0x09, RXY_FORMAT},  // SG
-   {0xE3, 0x19, RXY_FORMAT},  // SGF
-   {0xB9, 0x19, RRE_FORMAT},  // SGFR
-   {0xB9, 0x09, RRE_FORMAT},  // SGR
-   {0xB9, 0xE9, RRR_FORMAT},  // SGRK
-   {0x4B, 0x00, RX_FORMAT},   // SH
-   {0xB9, 0xC9, RRR_FORMAT},  // SHHHR
-   {0xB9, 0xD9, RRR_FORMAT},  // SHHLR
-   {0xE3, 0x7B, RXY_FORMAT},  // SHY
-   {0x5F, 0x00, RX_FORMAT},   // SL
-   {0x8B, 0x00, RS_FORMAT},   // SLA
-   {0xEB, 0x0B, RSY_FORMAT},  // SLAG
-   {0xEB, 0xDD, RSY_FORMAT},  // SLAK
-   {0xE3, 0x99, RXY_FORMAT},  // SLB
-   {0xE3, 0x89, RXY_FORMAT},  // SLBG
-   {0xB9, 0x89, RRE_FORMAT},  // SLBGR
-   {0xB9, 0x99, RRE_FORMAT},  // SLBR
-   {0x8F, 0x00, RS_FORMAT},   // SLDA
-   {0x8D, 0x00, RS_FORMAT},   // SLDL
-   {0xED, 0x40, RXF_FORMAT},  // SLDT
-   {0xED, 0x48, RXF_FORMAT},  // SLXT
-   {0xC2, 0x05, RIL_FORMAT},  // SLFI
-   {0xE3, 0x0B, RXY_FORMAT},  // SLG
-   {0xE3, 0x1B, RXY_FORMAT},  // SLGF
-   {0xC2, 0x04, RIL_FORMAT},  // SLGFI
-   {0xB9, 0x1B, RRE_FORMAT},  // SLGFR
-   {0xB9, 0x0B, RRE_FORMAT},  // SLGR
-   {0xB9, 0xEB, RRR_FORMAT},  // SLGRK
-   {0xB9, 0xCB, RRR_FORMAT},  // SLHHHR
-   {0xB9, 0xDB, RRR_FORMAT},  // SLHHLR
-   {0x89, 0x00, RS_FORMAT},   // SLL
-   {0xEB, 0x0D, RSY_FORMAT},  // SLLG
-   {0xEB, 0xDF, RSY_FORMAT},  // SLLK
-   {0x1F, 0x00, RR_FORMAT},   // SLR
-   {0xB9, 0xFB, RRR_FORMAT},  // SLRK
-   {0xE3, 0x5F, RXY_FORMAT},  // SLY
-   {0xED, 0x15, RXE_FORMAT},  // SQDB
-   {0xB3, 0x15, RRE_FORMAT},  // SQDBR
-   {0xED, 0x14, RXE_FORMAT},  // SQEB
-   {0xB3, 0x14, RRE_FORMAT},  // SQEBR
-   {0x1B, 0x00, RR_FORMAT},   // SR
-   {0x8A, 0x00, RS_FORMAT},   // SRA
-   {0xEB, 0x0A, RSY_FORMAT},  // SRAG
-   {0xEB, 0xDC, RSY_FORMAT},  // SRAK
-   {0x8E, 0x00, RS_FORMAT},   // SRDA
-   {0x8C, 0x00, RS_FORMAT},   // SRDL
-   {0xED, 0x41, RXF_FORMAT},  // SRDT
-   {0xED, 0x49, RXF_FORMAT},  // SRXT
-   {0x88, 0x00, RS_FORMAT},   // SRL
-   {0xEB, 0x0C, RSY_FORMAT},  // SRLG
-   {0xEB, 0xDE, RSY_FORMAT},  // SRLK
-   {0xB9, 0xF9, RRR_FORMAT},  // SRK
-   {0xB2, 0x5E, RRE_FORMAT},  // SRST
-   {0xB9, 0xBE, RRE_FORMAT},  // SRSTU
-   {0xB2, 0xB9, S_FORMAT}, // SRNMT
-   {0x50, 0x00, RX_FORMAT},   // ST
-   {0x9B, 0x00, RS_FORMAT},   // STAM
-   {0xEB, 0x9B, RSY_FORMAT},  // STAMY
-   {0x42, 0x00, RX_FORMAT},   // STC
-   {0xE3, 0xC3, RXY_FORMAT},  // STCH
-   {0xB2, 0x05, S_FORMAT}, // STCK
-   {0xB2, 0x05, S_FORMAT}, // STCKE
-   {0xB2, 0x7C, S_FORMAT}, // STCKF
-   {0xBE, 0x00, RS_FORMAT},   // STCM
-   {0xEB, 0x2C, RSY_FORMAT},  // STCMH
-   {0xEB, 0x2D, RSY_FORMAT},  // STCMY
-   {0xE3, 0x72, RXY_FORMAT},  // STCY
-   {0x60, 0x00, RX_FORMAT},   // STD
-   {0xED, 0x67, RXY_FORMAT},  // STDY
-   {0x70, 0x00, RX_FORMAT},   // STE
-   {0xED, 0x66, RXY_FORMAT},  // STEY
-   {0xE3, 0xCB, RXY_FORMAT},  // STFH
-   {0xE3, 0x24, RXY_FORMAT},  // STG
-   {0xC4, 0x0B, RIL_FORMAT},  // STGRL
-   {0x40, 0x00, RX_FORMAT},   // STH
-   {0xE3, 0xC7, RXY_FORMAT},  // STHH
-   {0xE3, 0x70, RXY_FORMAT},  // STHY
-   {0x90, 0x00, RS_FORMAT},   // STM
-   {0xEB, 0x24, RSY_FORMAT},  // STMG
-   {0xEB, 0x90, RSY_FORMAT},  // STMY
-   {0xEB, 0xF3, RSY_FORMAT},  // STOC
-   {0xEB, 0xE1, RSY_FORMAT},  // STOCFH
-   {0xEB, 0xE3, RSY_FORMAT},  // STOCG
-   {0xE3, 0x8E, RXY_FORMAT},  // STPQ
-   {0xEB, 0x61, RSY_FORMAT},  // STRIC
-   {0xC4, 0x0F, RIL_FORMAT},  // STRL
-   {0xE3, 0x3E, RXY_FORMAT},  // STRV
-   {0xE3, 0x2F, RXY_FORMAT},  // STRVG
-   {0xE3, 0x3F, RXY_FORMAT},  // STRVH
-   {0xE3, 0x50, RXY_FORMAT},  // STY
-   {0xB3, 0xDB, RRR_FORMAT},  // SXTR
-   {0xE3, 0x5B, RXY_FORMAT},  // SY
-   {0xB2, 0xFC, S_FORMAT}, // TABORT
-   {0xE5, 0x60, SIL_FORMAT},  // TBEGIN
-   {0xE5, 0x61, SIL_FORMAT},  // TBEGINC
-   {0xED, 0x11, RXE_FORMAT},  // TCDB
-   {0xED, 0x54, RXE_FORMAT},  // TCDT
-   {0xED, 0x54, RXE_FORMAT},  // TDCDT
-   {0xED, 0x10, RXE_FORMAT},  // TCEB
-   {0xED, 0x50, RXE_FORMAT},  // TDCET
-   {0xED, 0x58, RXE_FORMAT},  // TDCXT
-   {0xED, 0x55, RXE_FORMAT},  // TDGDT
-   {0xED, 0x51, RXE_FORMAT},  // TDGET
-   {0xED, 0x59, RXE_FORMAT},  // TDGXT
-   {0xB2, 0xF8, S_FORMAT}, // TEND
-   {0x91, 0x00, SI_FORMAT},   // TM
-   {0xA7, 0x01, RI_FORMAT},   // TMLL
-   {0xA7, 0x00, RI_FORMAT},   // TMLH
-   {0xA7, 0x03, RI_FORMAT},   // TMHL
-   {0xA7, 0x02, RI_FORMAT},   // TMHH
-   {0xEB, 0x51, SIY_FORMAT},  // TMY
-   {0xDC, 0x00, SS1_FORMAT},  // TR
-   {0xB2, 0xA5, RRE_FORMAT},  // TRE
-   {0xAA, 0x02, RI_FORMAT},   // TRIC
-   {0xB9, 0x93, RRE_FORMAT},  // TROO
-   {0xB9, 0x92, RRE_FORMAT},  // TROT
-   {0xDD, 0x00, SS1_FORMAT},  // TRT
-   {0xB9, 0x91, RRE_FORMAT},  // TRTO
-   {0xB9, 0x90, RRE_FORMAT},  // TRTT
-   {0xB9, 0xBF, RRF_FORMAT},  // TRTE
-   {0xB9, 0xBD, RRF_FORMAT},  // TRTRE
-   {0x93, 0x00, S_FORMAT}, // TS
-   {0x57, 0x00, RX_FORMAT},   // X
-   {0xD7, 0x00, SS1_FORMAT},  // XC
-   {0xE3, 0x82, RXY_FORMAT},  // XG
-   {0xB9, 0x82, RRE_FORMAT},  // XGR
-   {0xB9, 0xE7, RRR_FORMAT},  // XGRK
-   {0x97, 0x00, SI_FORMAT},   // XI
-   {0xC0, 0x06, RIL_FORMAT},  // XIHF
-   {0xC0, 0x07, RIL_FORMAT},  // XILF
-   {0xEB, 0x57, SIY_FORMAT},  // XIY
-   {0x17, 0x00, RR_FORMAT},   // XR
-   {0xB9, 0xF7, RRR_FORMAT},  // XRK
-   {0xE3, 0x57, RXY_FORMAT},  // XY
-   {0xEB, 0x6a, SIY_FORMAT},  // ASI
-   {0xEB, 0x7a, SIY_FORMAT},  // AGSI
-   {0xEB, 0x6E, SIY_FORMAT},  // ALSI
-   {0xEB, 0x7E, SIY_FORMAT},  // ALGSI
-   {0xC6, 0x0D, RIL_FORMAT},  // CRL
-   {0xC6, 0x08, RIL_FORMAT},  // CGRL
-   {0xC6, 0x0C, RIL_FORMAT},  // CGFRL
-   {0xE5, 0x54, SIL_FORMAT},  // CHHSI
-   {0xE5, 0x5C, SIL_FORMAT},  // CHSI
-   {0xE5, 0x58, SIL_FORMAT},  // CGHSI
-   {0xC6, 0x01, RIL_FORMAT},  // CHHRL
-   {0xC6, 0x05, RIL_FORMAT},  // CHRL
-   {0xC6, 0x04, RIL_FORMAT},  // CGHRL
-   {0xE5, 0x55, SIL_FORMAT},  // CLHHSI
-   {0xE5, 0x5D, SIL_FORMAT},  // CLFHSI
-   {0xE5, 0x59, SIL_FORMAT},  // CLGHSI
-   {0xC6, 0x0F, RIL_FORMAT},  // CLRL
-   {0xC6, 0x0A, RIL_FORMAT},  // CLGRL
-   {0xC6, 0x0E, RIL_FORMAT},  // CLGFRL
-   {0xC6, 0x03, RIL_FORMAT},  // CLHHRL
-   {0xC6, 0x07, RIL_FORMAT},  // CLHRL
-   {0xC6, 0x06, RIL_FORMAT},  // CLGHRL
-   {0xC2, 0x01, RIL_FORMAT},  // MSFI
-   {0xC2, 0x00, RIL_FORMAT},  // MSGFI
-   {0xFA, 0x00, SS_FORMAT},   // AP
-   {0x0C, 0x00, RR_FORMAT},   // BASSM
-   {0xB2, 0x40, RRE_FORMAT},  // BAKR
-   {0x0B, 0x00, RR_FORMAT},   // BSM
-   {0xBB, 0x00, RS_FORMAT},   // CDS
-   {0xEB, 0x31, RSY_FORMAT},  // CDSY
-   {0xEB, 0x3E, RSY_FORMAT},  // CDSG
-   {0xB2, 0x1A, S_FORMAT}, // CFC
-   {0xB2, 0x5D, RRE_FORMAT},  // CLST
-   {0xB2, 0x41, RRE_FORMAT},  // CKSM
-   {0xF9, 0x00, SS_FORMAT},   // CP
-   {0xB3, 0x72, RRF_FORMAT},  // CPSDR
-   {0xB2, 0x30, S_FORMAT}, // CSCH
-   {0xB2, 0xA6, RRE_FORMAT},  // CUUTF
-   {0xB2, 0xA7, RRE_FORMAT},  // CUTFU
-   {0xB9, 0xB0, RRE_FORMAT},  // CU14
-   {0xB9, 0xB1, RRE_FORMAT},  // CU24
-   {0xB9, 0xB2, RRE_FORMAT},  // CU41
-   {0xB9, 0xB3, RRE_FORMAT},  // CU42
-   {0xB2, 0x57, RRE_FORMAT},  // CUSE
-   {0x4F, 0x00, RX_FORMAT},   // CVB
-   {0xE3, 0x06, RXY_FORMAT},  // CVBY
-   {0xE3, 0x0E, RXY_FORMAT},  // CVBG
-   {0xFD, 0x00, SS_FORMAT},   // DP
-   {0xDE, 0x00, SS_FORMAT},   // ED
-   {0xDF, 0x00, SS_FORMAT},   // EDMK
-   {0xB2, 0x27, RRE_FORMAT},  // ESAR
-   {0xB2, 0x26, RRE_FORMAT},  // EPAR
-   {0xB2, 0x49, RRE_FORMAT},  // EREG
-   {0xB9, 0x0E, RRE_FORMAT},  // EREGG
-   {0xB2, 0x4A, RRE_FORMAT},  // ESTA
-   {0xB9, 0x9D, RRE_FORMAT},  // ESEA
-   {0xB2, 0x31, S_FORMAT}, // HSCH
-   {0xB2, 0x24, RRE_FORMAT},  // IAC
-   {0xB2, 0x0B, S_FORMAT}, // IPK
-   {0xB2, 0x23, RRE_FORMAT},  // IVSK
-   {0xB2, 0x29, RRE_FORMAT},  // ISKE
-   {0x51, 0x00, RX_FORMAT},   // LAE
-   {0xE3, 0x75, RXY_FORMAT},  // LAEY
-   {0xE7, 0x27, RXE_FORMAT},  // LCBB
-   {0xB7, 0x00, RS_FORMAT},   // LCTL
-   {0xEB, 0x2F, RSY_FORMAT},  // LCTLG
-   {0xB2, 0x9D, S_FORMAT}, // LFPC
-   {0xEB, 0x96, RSY_FORMAT},  // LMH
-   {0xB9, 0x11, RRE_FORMAT},  // LNGFR
-   {0x82, 0x00, S_FORMAT}, // LPSW
-   {0xB2, 0xB2, S_FORMAT}, // LPSWE
-   {0xB1, 0x00, RX_FORMAT},   // LRA
-   {0xE3, 0x03, RXY_FORMAT},  // LRAG
-   {0xE3, 0x13, RXY_FORMAT},  // LRAY
-   {0xB2, 0x4B, RRE_FORMAT},  // LURA
-   {0xB9, 0x05, RRE_FORMAT},  // LURAG
-   {0xAF, 0x00, SI_FORMAT},   // MC
-   {0xFC, 0x00, SS_FORMAT},   // MP
-   {0xB2, 0x32, S_FORMAT}, // MSCH
-   {0xB2, 0x47, RRE_FORMAT},  // MSTA
-   {0xE5, 0x0F, SSE_FORMAT},  // MVCDK
-   {0xE5, 0x0E, SSE_FORMAT},  // MVCSK
-   {0xD9, 0x00, SS_FORMAT},   // MVCK
-   {0xEB, 0x8E, RSY_FORMAT},  // MVCLU
-   {0xA8, 0x00, RS_FORMAT},   // MVCLE
-   {0xDA, 0x00, SS_FORMAT},   // MVCP
-   {0xDB, 0x00, SS_FORMAT},   // MVCS
-   {0xD1, 0x00, SS_FORMAT},   // MVN
-   {0xF1, 0x00, SS_FORMAT},   // MVO
-   {0xD3, 0x00, SS_FORMAT},   // MVZ
-   {0xB2, 0x55, RRE_FORMAT},  // MVST
-   {0xF2, 0x00, SS_FORMAT},   // PACK
-   {0xB2, 0x48, RRE_FORMAT},  // PALB
-   {0xB2, 0x18, S_FORMAT}, // PC
-   {0xEE, 0x00, SS_FORMAT},   // PLO
-   {0xE9, 0x00, SS_FORMAT},   // PKA
-   {0xE1, 0x00, SS_FORMAT},   // PKU
-   {0x01, 0x01, E_FORMAT}, // PR
-   {0xB2, 0x28, RRE_FORMAT},  // PT
-   {0xC6, 0x00, RIL_FORMAT},  // PFDRL
-   {0xB2, 0x3B, S_FORMAT}, // RCHP
-   {0xB2, 0x38, S_FORMAT}, // RSCH
-   {0xB2, 0x19, S_FORMAT}, // SAC
-   {0xB2, 0x37, S_FORMAT}, // SAL
-   {0xB2, 0x3C, S_FORMAT}, // SCHM
-   {0xB2, 0x04, S_FORMAT}, // SCK
-   {0xB2, 0x06, S_FORMAT}, // SCKC
-   {0xAE, 0x00, RS_FORMAT},   // SIGP
-   {0xFB, 0x00, SS_FORMAT},   // SP
-   {0xB2, 0x0A, S_FORMAT}, // SPKA
-   {0x04, 0x00, RR_FORMAT},   // SPM
-   {0xB2, 0x08, S_FORMAT}, // SPT
-   {0xB2, 0x10, S_FORMAT}, // SPX
-   {0xF0, 0x00, SS_FORMAT},   // SRP
-   {0xB2, 0x99, S_FORMAT}, // SRNM
-   {0xB2, 0x25, RRE_FORMAT},  // SSAR
-   {0xB2, 0x33, S_FORMAT}, // SSCH
-   {0xB2, 0x2B, RRF_FORMAT},  // SSKE
-   {0x80, 0x00, S_FORMAT}, // SSM
-   {0xB2, 0x12, S_FORMAT}, // STAP
-   {0xB2, 0x07, S_FORMAT}, // STCKC
-   {0xB2, 0x3A, S_FORMAT}, // STCPS
-   {0xB2, 0x39, S_FORMAT}, // STCRW
-   {0xB6, 0x00, RS_FORMAT},   // STCTL
-   {0xEB, 0x25, RSY_FORMAT},  // STCTG
-   {0xB2, 0x9C, S_FORMAT}, // STFPC
-   {0xB2, 0x02, S_FORMAT}, // STIDP
-   {0xEB, 0x26, RSY_FORMAT},  // STMH
-   {0xAC, 0x00, SI_FORMAT},   // STNSM
-   {0xAD, 0x00, SI_FORMAT},   // STOSM
-   {0xB2, 0x09, S_FORMAT}, // STPT
-   {0xB2, 0x11, S_FORMAT}, // STPX
-   {0xE5, 0x02, SSE_FORMAT},  // STRAG
-   {0xB2, 0x34, S_FORMAT}, // STSCH
-   {0xB2, 0x46, RRE_FORMAT},  // STURA
-   {0xB9, 0x25, RRE_FORMAT},  // STURG
-   {0x0A, 0x00, I_FORMAT}, // SVC
-   {0xB2, 0x4C, RRE_FORMAT},  // TAR
-   {0xA7, 0x01, RI_FORMAT},   // TML
-   {0xA7, 0x00, RI_FORMAT},   // TMH
-   {0xEB, 0xC0, RSL_FORMAT},  // TP
-   {0xB2, 0x36, S_FORMAT}, // TPI
-   {0xD0, 0x00, SS_FORMAT},   // TRTR
-   {0xE5, 0x01, SSE_FORMAT},  // TPROT
-   {0xB2, 0x35, S_FORMAT}, // TSCH
-   {0xF3, 0x00, SS_FORMAT},   // UNPK
-   {0xEA, 0x00, SS_FORMAT},   // UNPKA
-   {0xE2, 0x00, SS_FORMAT},   // UNPKU
-   {0x01, 0x02, E_FORMAT}, // UPT
-   {0xF8, 0x00, SS_FORMAT},   // ZAP
-   {0xB3, 0x4A, RRE_FORMAT},  // AXBR
-   {0xB3, 0x9A, RRF2_FORMAT}, // CFXBR
-   {0xB3, 0xAA, RRF2_FORMAT}, // CGXBR
-   {0xB3, 0x9E, RRF2_FORMAT}, // CLFXBR
-   {0xB3, 0xAE, RRF2_FORMAT}, // CLGXBR
-   {0xB3, 0x49, RRE_FORMAT},  // CXBR
-   {0xB3, 0x96, RRE_FORMAT},  // CXFBR
-   {0xB3, 0xA6, RRE_FORMAT},  // CXGBR
-   {0xB3, 0x92, RRF2_FORMAT}, // CXLFBR
-   {0xB3, 0xA2, RRF2_FORMAT}, // CXLGBR
-   {0xB3, 0x4D, RRE_FORMAT},  // DXBR
-   {0xB3, 0x47, RRF2_FORMAT}, // FIXBR
-   {0xB3, 0x42, RRE_FORMAT},  // LTXBR
-   {0xB3, 0x43, RRE_FORMAT},  // LCXBR
-   {0xB3, 0x45, RRE_FORMAT},  // LDXBR
-   {0xB3, 0x46, RRE_FORMAT},  // LEXBR
-   {0xB3, 0x41, RRE_FORMAT},  // LNXBR
-   {0xB3, 0x40, RRE_FORMAT},  // LPXBR
-   {0xED, 0x05, RXE_FORMAT},  // LXDB
-   {0xB3, 0x05, RRE_FORMAT},  // LXDBR
-   {0xED, 0x06, RXE_FORMAT},  // LXEB
-   {0xB3, 0x06, RRE_FORMAT},  // LXEBR
-   {0xB3, 0x65, RRE_FORMAT},  // LXR
-   {0xB3, 0x76, RRE_FORMAT},  // LZXR
-   {0xB3, 0x4C, RRE_FORMAT},  // MXBR
-   {0xB3, 0x16, RRE_FORMAT},  // SQXBR
-   {0xB3, 0x4B, RRE_FORMAT},  // SXBR
-   {0xED, 0x12, RXE_FORMAT},  // TCXB
-   {0x36, 0x00, RR_FORMAT},   // AXR
-   {0x2A, 0x00, RR_FORMAT},   // ADR
-   {0x6A, 0x00, RX_FORMAT},   // AD
-   {0x3A, 0x00, RR_FORMAT},   // AER
-   {0x7A, 0x00, RX_FORMAT},   // AE
-   {0x2E, 0x00, RR_FORMAT},   // AWR
-   {0x6E, 0x00, RX_FORMAT},   // AW
-   {0x3E, 0x00, RR_FORMAT},   // AUR
-   {0x7E, 0x00, RX_FORMAT},   // AU
-   {0xB3, 0x69, RRE_FORMAT},  // CXR
-   {0x29, 0x00, RR_FORMAT},   // CDR
-   {0x69, 0x00, RX_FORMAT},   // CD
-   {0x39, 0x00, RR_FORMAT},   // CER
-   {0x79, 0x00, RX_FORMAT},   // CE
-   {0xB3, 0xB4, RRE_FORMAT},  // CEFR
-   {0xB3, 0xB5, RRE_FORMAT},  // CDFR
-   {0xB3, 0xB6, RRE_FORMAT},  // CXFR
-   {0xB3, 0xC4, RRE_FORMAT},  // CEGR
-   {0xB3, 0xC5, RRE_FORMAT},  // CDGR
-   {0xB3, 0xC6, RRE_FORMAT},  // CXGR
-   {0xB3, 0xB8, RRF_FORMAT},  // CFER
-   {0xB3, 0xB9, RRF_FORMAT},  // CFDR
-   {0xB3, 0xBA, RRF_FORMAT},  // CFXR
-   {0xB3, 0xC8, RRF_FORMAT},  // CGER
-   {0xB3, 0xC9, RRF_FORMAT},  // CGDR
-   {0xB3, 0xCA, RRF_FORMAT},  // CGXR
-   {0x2D, 0x00, RR_FORMAT},   // DDR
-   {0x6D, 0x00, RX_FORMAT},   // DD
-   {0x3D, 0x00, RR_FORMAT},   // DER
-   {0x7D, 0x00, RX_FORMAT},   // DE
-   {0xB2, 0x2D, RRE_FORMAT},  // DXR
-   {0xB3, 0x77, RRE_FORMAT},  // FIER
-   {0xB3, 0x7F, RRE_FORMAT},  // FIDR
-   {0xB3, 0x67, RRE_FORMAT},  // FIXR
-   {0x24, 0x00, RR_FORMAT},   // HDR
-   {0x34, 0x00, RR_FORMAT},   // HER
-   {0x22, 0x00, RR_FORMAT},   // LTDR
-   {0x32, 0x00, RR_FORMAT},   // LTER
-   {0xB3, 0x62, RRE_FORMAT},  // LTXR
-   {0x23, 0x00, RR_FORMAT},   // LCDR
-   {0x33, 0x00, RR_FORMAT},   // LCER
-   {0xB3, 0x63, RRE_FORMAT},  // LCXR
-   {0x21, 0x00, RR_FORMAT},   // LNDR
-   {0x31, 0x00, RR_FORMAT},   // LNER
-   {0xB3, 0x61, RRE_FORMAT},  // LNXR
-   {0x20, 0x00, RR_FORMAT},   // LPDR
-   {0x30, 0x00, RR_FORMAT},   // LPER
-   {0xB3, 0x60, RRE_FORMAT},  // LPXR
-   {0x35, 0x00, RR_FORMAT},   // LEDR
-   {0x25, 0x00, RR_FORMAT},   // LDXR
-   {0xB3, 0x66, RRE_FORMAT},  // LEXR
-   {0xB3, 0x24, RRE_FORMAT},  // LDER
-   {0xB3, 0x25, RRE_FORMAT},  // LXDR
-   {0xB3, 0x26, RRE_FORMAT},  // LXER
-   {0xED, 0x24, RXE_FORMAT},  // LDE
-   {0xED, 0x25, RXE_FORMAT},  // LXD
-   {0xED, 0x26, RXE_FORMAT},  // LXE
-   {0xB3, 0x37, RRE_FORMAT},  // MEER
-   {0xED, 0x37, RXE_FORMAT},  // MEE
-   {0x26, 0x00, RR_FORMAT},   // MXR
-   {0x2C, 0x00, RR_FORMAT},   // MDR
-   {0x6C, 0x00, RX_FORMAT},   // MD
-   {0x27, 0x00, RR_FORMAT},   // MXDR
-   {0x67, 0x00, RX_FORMAT},   // MXD
-   {0x3C, 0x00, RR_FORMAT},   // MDER
-   {0x7C, 0x00, RX_FORMAT},   // MDE
-   {0xB3, 0x2E, RRF_FORMAT},  // MAER
-   {0xB3, 0x3E, RRF_FORMAT},  // MADR
-   {0xED, 0x2E, RXF_FORMAT},  // MAE
-   {0xED, 0x3E, RXF_FORMAT},  // MAD
-   {0xB3, 0x2F, RRF_FORMAT},  // MSER
-   {0xB3, 0x3F, RRF_FORMAT},  // MSDR
-   {0xED, 0x2F, RXF_FORMAT},  // MSE
-   {0xED, 0x3F, RXF_FORMAT},  // MSD
-   {0xB3, 0x3A, RRF_FORMAT},  // MAYR
-   {0xB3, 0x3C, RRF_FORMAT},  // MAYHR
-   {0xB3, 0x38, RRF_FORMAT},  // MAYLR
-   {0xED, 0x3A, RXF_FORMAT},  // MAY
-   {0xED, 0x3C, RRF_FORMAT},  // MAYH
-   {0xED, 0x38, RRF_FORMAT},  // MAYL
-   {0xB3, 0x3B, RRF_FORMAT},  // MYR
-   {0xB3, 0x3D, RRF_FORMAT},  // MYHR
-   {0xB3, 0x39, RRF_FORMAT},  // MYLR
-   {0xED, 0x3B, RXF_FORMAT},  // MY
-   {0xED, 0x3D, RXF_FORMAT},  // MYH
-   {0xED, 0x39, RXF_FORMAT},  // MYL
-   {0xB2, 0x45, RRE_FORMAT},  // SQER
-   {0xB2, 0x44, RRE_FORMAT},  // SQDR
-   {0xB3, 0x36, RRE_FORMAT},  // SQXR
-   {0xED, 0x34, RXE_FORMAT},  // SQE
-   {0xED, 0x35, RXE_FORMAT},  // SQD
-   {0x37, 0x00, RR_FORMAT},   // SXR
-   {0x2B, 0x00, RR_FORMAT},   // SDR
-   {0x3B, 0x00, RR_FORMAT},   // SER
-   {0x6B, 0x00, RX_FORMAT},   // SD
-   {0x7B, 0x00, RX_FORMAT},   // SE
-   {0x2F, 0x00, RR_FORMAT},   // SWR
-   {0x6F, 0x00, RX_FORMAT},   // SW
-   {0x3F, 0x00, RR_FORMAT},   // SUR
-   {0x7F, 0x00, RX_FORMAT},   // SU
-   {0xB3, 0x51, RRF_FORMAT},  // TBDR
-   {0xB3, 0x50, RRF_FORMAT},  // TBEDR
-   {0xB3, 0x58, RR_FORMAT},   // THDER
-   {0xB3, 0x59, RR_FORMAT},   // THDR
-   {0x01, 0x0C, E_FORMAT}, // SAM24
-   {0x01, 0x0D, E_FORMAT}, // SAM31
-   {0x01, 0x0E, E_FORMAT}, // SAM64
-   {0x01, 0x0B, E_FORMAT}, // TAM
-   {0xED, 0xAA, RSL_FORMAT},  // CDZT
-   {0xED, 0xAB, RSL_FORMAT},  // CXZT
-   {0xED, 0xA8, RSL_FORMAT},  // CZDT
-   {0xED, 0xA9, RSL_FORMAT},  // CZXT
-   {0xED, 0xAE, RSL_FORMAT},  // CDPT
-   {0xED, 0xAF, RSL_FORMAT},  // CXPT
-   {0xED, 0xAC, RSL_FORMAT},  // CPDT
-   {0xED, 0xAD, RSL_FORMAT},  // CPXT
-   {0x00, 0x00, PSEUDO},   // LHHR
-   {0x00, 0x00, PSEUDO},   // LHLR
-   {0x00, 0x00, PSEUDO},   // LLHFR
-   {0x00, 0x00, PSEUDO},   // LLHHHR
-   {0x00, 0x00, PSEUDO},   // LLHHLR
-   {0x00, 0x00, PSEUDO},   // LLHLHR
-   {0x00, 0x00, PSEUDO},   // LLCHHR
-   {0x00, 0x00, PSEUDO},   // LLCHLR
-   {0x00, 0x00, PSEUDO},   // LLCLHR
-   {0x00, 0x00, PSEUDO},   // SLLHH
-   {0x00, 0x00, PSEUDO},   // SLLLH
-   {0x00, 0x00, PSEUDO},   // SRLHH
-   {0x00, 0x00, PSEUDO},   // SRLLH
-   {0x00, 0x00, PSEUDO},   // NHHR
-   {0x00, 0x00, PSEUDO},   // NHLR
-   {0x00, 0x00, PSEUDO},   // NLHR
-   {0x00, 0x00, PSEUDO},   // XHHR
-   {0x00, 0x00, PSEUDO},   // XHLR
-   {0x00, 0x00, PSEUDO},   // XLHR
-   {0x00, 0x00, PSEUDO},   // OHHR
-   {0x00, 0x00, PSEUDO},   // OHLR
-   {0x00, 0x00, PSEUDO},   // OLHR
-   {0xE7, 0x13, VRV_FORMAT},  // VGEF
-   {0xE7, 0x12, VRV_FORMAT},  // VGEG
-   {0xE7, 0x44, VRIa_FORMAT}, // VGBM
-   {0xE7, 0x46, VRIb_FORMAT}, // VGM
-   {0xE7, 0x06, VRX_FORMAT},  // VL
-   {0xE7, 0x56, VRRa_FORMAT}, // VLR
-   {0xE7, 0x05, VRX_FORMAT},  // VLREP
-   {0xE7, 0x00, VRX_FORMAT},  // VLEB
-   {0xE7, 0x01, VRX_FORMAT},  // VLEH
-   {0xE7, 0x03, VRX_FORMAT},  // VLEF
-   {0xE7, 0x02, VRX_FORMAT},  // VLEG
-   {0xE7, 0x40, VRIa_FORMAT}, // VLEIB
-   {0xE7, 0x41, VRIa_FORMAT}, // VLEIH
-   {0xE7, 0x43, VRIa_FORMAT}, // VLEIF
-   {0xE7, 0x42, VRIa_FORMAT}, // VLEIG
-   {0xE7, 0x21, VRSc_FORMAT}, // VLGV
-   {0xE7, 0x04, VRX_FORMAT},  // VLLEZ
-   {0xE7, 0x36, VRSa_FORMAT}, // VLM
-   {0xE7, 0x07, VRX_FORMAT},  // VLBB
-   {0xE7, 0x22, VRSb_FORMAT}, // VLVG
-   {0xE7, 0x62, VRRf_FORMAT}, // VLVGP
-   {0xE7, 0x37, VRSb_FORMAT}, // VLL
-   {0xE7, 0x61, VRRc_FORMAT}, // VMRH
-   {0xE7, 0x60, VRRc_FORMAT}, // VMRL
-   {0xE7, 0x94, VRRc_FORMAT}, // VPK
-   {0xE7, 0x97, VRRb_FORMAT}, // VPKS
-   {0xE7, 0x95, VRRb_FORMAT}, // VPKLS
-   {0xE7, 0x8C, VRRe_FORMAT}, // VPERM
-   {0xE7, 0x84, VRRc_FORMAT}, // VPDI
-   {0xE7, 0x4D, VRIc_FORMAT}, // VREP
-   {0xE7, 0x45, VRIa_FORMAT}, // VREPI
-   {0xE7, 0x1B, VRV_FORMAT},  // VSCEF
-   {0xE7, 0x1A, VRV_FORMAT},  // VSCEG
-   {0xE7, 0x8D, VRRe_FORMAT}, // VSEL
-   {0xE7, 0x5F, VRRa_FORMAT}, // VSEG
-   {0xE7, 0x0E, VRX_FORMAT},  // VST
-   {0xE7, 0x08, VRX_FORMAT},  // VSTEB
-   {0xE7, 0x09, VRX_FORMAT},  // VSTEH
-   {0xE7, 0x0B, VRX_FORMAT},  // VSTEF
-   {0xE7, 0x0A, VRX_FORMAT},  // VSTEG
-   {0xE7, 0x3E, VRSa_FORMAT}, // VSTM
-   {0xE7, 0x3F, VRSb_FORMAT}, // VSTL
-   {0xE7, 0xD7, VRRa_FORMAT}, // VUPH
-   {0xE7, 0xD5, VRRa_FORMAT}, // VUPLH
-   {0xE7, 0xD6, VRRa_FORMAT}, // VUPL
-   {0xE7, 0xD4, VRRa_FORMAT}, // VUPLL
-   {0xE7, 0xF3, VRRc_FORMAT}, // VA
-   {0xE7, 0xF1, VRRc_FORMAT}, // VACC
-   {0xE7, 0xBB, VRRd_FORMAT}, // VAC
-   {0xE7, 0xB9, VRRd_FORMAT}, // VACCC
-   {0xE7, 0x68, VRRc_FORMAT}, // VN
-   {0xE7, 0x69, VRRc_FORMAT}, // VNC
-   {0xE7, 0xF2, VRRc_FORMAT}, // VAVG
-   {0xE7, 0xF0, VRRc_FORMAT}, // VAVGL
-   {0xE7, 0x66, VRRc_FORMAT}, // VCKSM
-   {0xE7, 0xDB, VRRa_FORMAT}, // VEC
-   {0xE7, 0xD9, VRRa_FORMAT}, // VECL
-   {0xE7, 0xF8, VRRb_FORMAT}, // VCEQ
-   {0xE7, 0xFB, VRRb_FORMAT}, // VCH
-   {0xE7, 0xF9, VRRb_FORMAT}, // VCHL
-   {0xE7, 0x53, VRRa_FORMAT}, // VCLZ
-   {0xE7, 0x52, VRRa_FORMAT}, // VCTZ
-   {0xE7, 0x6D, VRRc_FORMAT}, // VX
-   {0xE7, 0xB4, VRRc_FORMAT}, // VGFM
-   {0xE7, 0xBC, VRRd_FORMAT}, // VGFMA
-   {0xE7, 0xDE, VRRa_FORMAT}, // VLC
-   {0xE7, 0xDF, VRRa_FORMAT}, // VLP
-   {0xE7, 0xFF, VRRc_FORMAT}, // VMX
-   {0xE7, 0xFD, VRRc_FORMAT}, // VMXL
-   {0xE7, 0xFE, VRRc_FORMAT}, // VMN
-   {0xE7, 0xFC, VRRc_FORMAT}, // VMNL
-   {0xE7, 0xAA, VRRd_FORMAT}, // VMAL
-   {0xE7, 0xAB, VRRd_FORMAT}, // VMAH
-   {0xE7, 0xA9, VRRd_FORMAT}, // VMALH
-   {0xE7, 0xAE, VRRd_FORMAT}, // VMAE
-   {0xE7, 0xAC, VRRd_FORMAT}, // VMALE
-   {0xE7, 0xAF, VRRd_FORMAT}, // VMAO
-   {0xE7, 0xAD, VRRd_FORMAT}, // VMALO
-   {0xE7, 0xA3, VRRc_FORMAT}, // VMH
-   {0xE7, 0xA1, VRRc_FORMAT}, // VMLH
-   {0xE7, 0xA2, VRRc_FORMAT}, // VML
-   {0xE7, 0xA6, VRRc_FORMAT}, // VME
-   {0xE7, 0xA4, VRRc_FORMAT}, // VMLE
-   {0xE7, 0xA7, VRRc_FORMAT}, // VMO
-   {0xE7, 0xA5, VRRc_FORMAT}, // VMLO
-   {0xE7, 0x6B, VRRc_FORMAT}, // VNO
-   {0xE7, 0x6A, VRRc_FORMAT}, // VO
-   {0xE7, 0x50, VRRa_FORMAT}, // VPOPCT
-   {0xE7, 0x73, VRRc_FORMAT}, // VERLLV
-   {0xE7, 0x33, VRSa_FORMAT}, // VERLL
-   {0xE7, 0x72, VRId_FORMAT}, // VERIM
-   {0xE7, 0x70, VRRc_FORMAT}, // VESLV
-   {0xE7, 0x30, VRSa_FORMAT}, // VESL
-   {0xE7, 0x7A, VRRc_FORMAT}, // VESRAV
-   {0xE7, 0x3A, VRSa_FORMAT}, // VESRA
-   {0xE7, 0x78, VRRc_FORMAT}, // VESRLV
-   {0xE7, 0x38, VRSa_FORMAT}, // VESRL
-   {0xE7, 0x74, VRRc_FORMAT}, // VSL
-   {0xE7, 0x75, VRRc_FORMAT}, // VSLB
-   {0xE7, 0x77, VRId_FORMAT}, // VSLDB
-   {0xE7, 0x7E, VRRc_FORMAT}, // VSRA
-   {0xE7, 0x7F, VRRc_FORMAT}, // VSRAB
-   {0xE7, 0x7C, VRRc_FORMAT}, // VSRL
-   {0xE7, 0x7D, VRRc_FORMAT}, // VSRLB
-   {0xE7, 0xF7, VRRc_FORMAT}, // VS
-   {0xE7, 0xF5, VRRc_FORMAT}, // VSCBI
-   {0xE7, 0xBF, VRRd_FORMAT}, // VSBI
-   {0xE7, 0xBD, VRRd_FORMAT}, // VSBCBI
-   {0xE7, 0x65, VRRc_FORMAT}, // VSUMG
-   {0xE7, 0x67, VRRc_FORMAT}, // VSUMQ
-   {0xE7, 0x64, VRRc_FORMAT}, // VSUM
-   {0xE7, 0xD8, VRRa_FORMAT}, // VTM
-   {0xE7, 0x82, VRRb_FORMAT}, // VFAE
-   {0xE7, 0x80, VRRb_FORMAT}, // VFEE
-   {0xE7, 0x81, VRRb_FORMAT}, // VFENE
-   {0xE7, 0x5C, VRRa_FORMAT}, // VISTR
-   {0xE7, 0x8A, VRRd_FORMAT}, // VSTRC
-   {0xE7, 0xE3, VRRc_FORMAT}, // VFA
-   {0xE7, 0xCB, VRRa_FORMAT}, // WFC
-   {0xE7, 0xCA, VRRa_FORMAT}, // WFK
-   {0xE7, 0xE8, VRRc_FORMAT}, // VFCE
-   {0xE7, 0xEB, VRRc_FORMAT}, // VFCH
-   {0xE7, 0xEA, VRRc_FORMAT}, // VFCHE
-   {0xE7, 0xC3, VRRa_FORMAT}, // VCDG
-   {0xE7, 0xC1, VRRa_FORMAT}, // VCDLG
-   {0xE7, 0xC2, VRRa_FORMAT}, // VCGD
-   {0xE7, 0xC0, VRRa_FORMAT}, // VCLGD
-   {0xE7, 0xE5, VRRc_FORMAT}, // VFD
-   {0xE7, 0xC7, VRRa_FORMAT}, // VFI
-   {0xE7, 0xC4, VRRa_FORMAT}, // VLDE
-   {0xE7, 0xC5, VRRa_FORMAT}, // VLED
-   {0xE7, 0xE7, VRRc_FORMAT}, // VFM
-   {0xE7, 0x8F, VRRe_FORMAT}, // VFMA
-   {0xE7, 0x8E, VRRe_FORMAT}, // VFMS
-   {0xE7, 0xCC, VRRa_FORMAT}, // VFPSO
-   {0xE7, 0xCE, VRRa_FORMAT}, // VFSQ
-   {0xE7, 0xE2, VRRc_FORMAT}, // VFS
-   {0xE7, 0x4A, VRIe_FORMAT}, // VFTCI
-   {0xAA, 0x04, RI_FORMAT},   // RIEMIT
-   {0xAA, 0x03, RI_FORMAT},   // RIOFF
-   {0xAA, 0x01, RI_FORMAT},   // RION
-   {0xAA, 0x00, RI_FORMAT},   // RINEXT
-   {0x00, 0x00, PSEUDO},   // ASSOCREGS
-   {0x00, 0x00, PSEUDO},   // DEPEND
-   {0x00, 0x00, PSEUDO},   // DS
-   {0x00, 0x00, PSEUDO},   // FENCE
-   {0x00, 0x00, PSEUDO},   // SCHEDFENCE
-   {0x00, 0x00, PSEUDO},   // PROC
-   {0x00, 0x00, PSEUDO},   // RET
-   {0x00, 0x00, PSEUDO},   // DIRECTIVE
-   {0x00, 0x00, PSEUDO},   // WRTBAR
-   {0x00, 0x00, PSEUDO},   // XPCALLDESC
-   {0x00, 0x00, DC_FORMAT}, // DC
-   {0x00, 0x00, DC_FORMAT}, // DC2
-   {0xA7, 0x04, PSEUDO},   // VGNOP
-   {0x07, 0x00, PSEUDO},   // NOP
-   {0x00, 0x00, PSEUDO},   // ASM
-   {0x00, 0x00, PSEUDO},   // LABEL
-   {0x00, 0x00, PSEUDO},   // TAILCALL
-   {0x00, 0x00, PSEUDO},   // DCB
-
-   {0xE6, 0x37, VRSd_FORMAT}, // VLRLR
-   {0xE6, 0x35, VSI_FORMAT},  // VLRL
-   {0xE6, 0x3F, VRSd_FORMAT}, // VSTRLR
-   {0xE6, 0x3D, VSI_FORMAT},  // VSTRL
-   {0xE6, 0x71, VRIf_FORMAT}, // VAP
-   {0xE6, 0x77, VRRh_FORMAT}, // VCP
-   {0xE6, 0x50, VRRi_FORMAT}, // VCVB
-   {0xE6, 0x52, VRRi_FORMAT}, // VCVBG
-   {0xE6, 0x58, VRIi_FORMAT}, // VCVD
-   {0xE6, 0x5A, VRIi_FORMAT}, // VCVDG
-   {0xE6, 0x7A, VRIf_FORMAT}, // VDP
-   {0xE6, 0x49, VRIh_FORMAT}, // VLIP
-   {0xE6, 0x78, VRIf_FORMAT}, // VMP
-   {0xE6, 0x79, VRIf_FORMAT}, // VMSP
-   {0xE6, 0x34, VSI_FORMAT},  // VPKZ
-   {0xE6, 0x5B, VRIg_FORMAT}, // VPSOP
-   {0xE6, 0x7B, VRIf_FORMAT}, // VRP
-   {0xE6, 0x7E, VRIf_FORMAT}, // VSDP
-   {0xE6, 0x59, VRIg_FORMAT}, // VSRP
-   {0xE6, 0x73, VRIf_FORMAT}, // VSP
-   {0xE6, 0x5F, VRRg_FORMAT}, // VTP
-   {0xE6, 0x3C, VSI_FORMAT},  // VUPKZ
-   {0xE7, 0x85, VRRc_FORMAT}, // VBPERM
-   {0xE7, 0x6C, VRRc_FORMAT}, // VNX
-   {0xE7, 0xB8, VRRd_FORMAT}, // VMSL
-   {0xE7, 0x6E, VRRc_FORMAT}, // VNN
-   {0xE7, 0x6F, VRRc_FORMAT}, // VOC
-   {0xE7, 0xC4, VRRa_FORMAT}, // VFLL
-   {0xE7, 0xC5, VRRa_FORMAT}, // VFLR
-   {0xE7, 0xEF, VRRc_FORMAT}, // VFMAX
-   {0xE7, 0xEE, VRRc_FORMAT}, // VFMIN
-   {0xE7, 0x9F, VRRe_FORMAT}, // VFNMA
-   {0xE7, 0x9E, VRRe_FORMAT}, // VFNMS
-   {0xB9, 0x29, RRF_FORMAT},  // KMGCM
-   {0xB9, 0x3C, RRE_FORMAT},  // PPNO
-   {0xE3, 0x4C, RXY_FORMAT},  // LGG
-   {0xE3, 0x48, RXY_FORMAT},  // LLGFSG
-   {0xE3, 0x4D, RXY_FORMAT},  // LGSC
-   {0xE3, 0x49, RXY_FORMAT},  // STGSC
-   {0xE3, 0x38, RXY_FORMAT},  // AGH
-   {0xE3, 0x47, RXY_FORMAT},  // BIC
-   {0xE3, 0x84, RXY_FORMAT},  // MG
-   {0xE9, 0xEC, RRF_FORMAT},  // MGRK
-   {0xE3, 0x3C, RXY_FORMAT},  // MGH
-   {0xE3, 0x53, RXY_FORMAT},  // MSC
-   {0xB9, 0xFD, RRF_FORMAT},  // MSRKC
-   {0xE3, 0x83, RXY_FORMAT},  // MSGC
-   {0xB9, 0xED, RRF_FORMAT},  // MSGRKC
-   {0xE3, 0x39, RXY_FORMAT},  // SGH
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // BAD
+   {0x5A, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // A
+   {0xED, 0x1A, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ADB
+   {0xB3, 0x1A, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ADBR
+   {0xB3, 0xD2, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // ADTR
+   {0xED, 0x0A, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AEB
+   {0xB3, 0x0A, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AEBR
+   {0xC2, 0x09, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // AFI
+   {0xE3, 0x08, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // AG
+   {0xE3, 0x18, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // AGF
+   {0xC2, 0x08, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // AGFI
+   {0xB9, 0x18, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AGFR
+   {0xA7, 0x0B, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AGHI
+   {0xEC, 0xD9, RIE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // AGHIK
+   {0xB9, 0x08, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AGR
+   {0xB9, 0xE8, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // AGRK
+   {0x4A, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AH
+   {0xB9, 0xC8, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // AHHHR
+   {0xB9, 0xD8, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // AHHLR
+   {0xA7, 0x0A, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AHI
+   {0xEC, 0xD8, RIE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // AHIK
+   {0xE3, 0x7A, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // AHY
+   {0xCC, 0x08, RIL_FORMAT, TR_S390ProcessorInfo::TR_z196}, // AIH
+   {0x5E, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AL
+   {0xE3, 0x98, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // ALC
+   {0xE3, 0x88, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // ALCG
+   {0xB9, 0x88, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ALCGR
+   {0xB9, 0x98, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ALCR
+   {0xC2, 0x0B, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // ALFI
+   {0xE3, 0x0A, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // ALG
+   {0xE3, 0x1A, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // ALGF
+   {0xC2, 0x0A, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // ALGFI
+   {0xB9, 0x1A, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ALGFR
+   {0xEC, 0xDB, RIE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // ALGHSIK
+   {0xB9, 0x0A, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ALGR
+   {0xB9, 0xEA, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // ALGRK
+   {0xB9, 0xCA, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // ALHHHR
+   {0xB9, 0xDA, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // ALHHLR
+   {0xEC, 0xDA, RIE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // ALHSIK
+   {0x1E, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ALR
+   {0xB9, 0xFA, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // ALRK
+   {0xCC, 0x0A, RIL_FORMAT, TR_S390ProcessorInfo::TR_z196}, // ALSIH
+   {0xCC, 0x0B, RIL_FORMAT, TR_S390ProcessorInfo::TR_z196}, // ALSIHN
+   {0xE3, 0x5E, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // ALY
+   {0x1A, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AR
+   {0xB9, 0xF8, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // ARK
+   {0xB3, 0xDA, RRR_FORMAT, TR_S390ProcessorInfo::TR_z9}, // AXTR
+   {0xE3, 0x5A, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // AY
+   {0x45, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BAL
+   {0x05, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BALR
+   {0x4D, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BAS
+   {0x0D, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BASR
+   {0x47, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BC
+   {0x07, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BCR
+   {0x46, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BCT
+   {0xE3, 0x46, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // BCTG
+   {0xB9, 0x46, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BCTGR
+   {0x06, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BCTR
+   {0xC7, 0x00, SMI_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // BPP
+   {0xC5, 0x00, MII_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // BPRP
+   {0xA7, 0x05, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BRAS
+   {0xC0, 0x05, RIL_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BRASL
+   {0xA7, 0x04, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BRC
+   {0xC0, 0x04, RIL_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BRCL
+   {0xA7, 0x06, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BRCT
+   {0xA7, 0x07, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BRCTG
+   {0xCC, 0x06, RIL_FORMAT, TR_S390ProcessorInfo::TR_z196}, // BRCTH
+   {0x84, 0x00, RSI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BRXH
+   {0xEC, 0x44, RIE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BRXHG
+   {0x85, 0x00, RSI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BRXLE
+   {0xEC, 0x45, RIE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BRXLG
+   {0x86, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BXH
+   {0xEB, 0x44, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // BXHG
+   {0x87, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BXLE
+   {0xEB, 0x45, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // BXLEG
+   {0x59, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // C
+   {0xED, 0x19, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CDB
+   {0xB3, 0x19, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CDBR
+   {0xB3, 0x95, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CDFBR
+   {0xB3, 0xA5, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CDGBR
+   {0xB3, 0xF1, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CDGTR
+   {0xB3, 0x91, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CDLFBR
+   {0xB3, 0xA1, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CDLGBR
+   {0xB3, 0xE4, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CDTR
+   {0xB3, 0xF3, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CDSTR
+   {0xB3, 0xF2, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CDUTR
+   {0xED, 0x09, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CEB
+   {0xB3, 0x09, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CEBR
+   {0xB3, 0x94, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CEFBR
+   {0xB3, 0xA4, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CEGBR
+   {0xB3, 0xF4, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CEDTR
+   {0xB3, 0x90, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CELFBR
+   {0xB3, 0xA0, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CELGBR
+   {0xB3, 0xFC, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CEXTR
+   {0xB3, 0x99, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CFDBR
+   {0xB3, 0x98, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CFEBR
+   {0xC2, 0x0D, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CFI
+   {0xE3, 0x20, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CG
+   {0xB3, 0xA9, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CGDBR
+   {0xB3, 0xE1, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CGDTR
+   {0xB3, 0xA8, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CGEBR
+   {0xE3, 0x30, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CGF
+   {0xC2, 0x0C, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CGFI
+   {0xB9, 0x30, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CGFR
+   {0xEC, 0xF4, RRS_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // CGFRB
+   {0xEC, 0x74, RIE_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // CGFRJ
+   {0xB9, 0x70, RRF2_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // CGFRT
+   {0xA7, 0x0F, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CGHI
+   {0xEC, 0xFC, RIS_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CGIB
+   {0xEC, 0x7C, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CGIJ
+   {0xEC, 0x70, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CGIT
+   {0xB9, 0x20, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CGR
+   {0xEC, 0xE4, RRS_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CGRB
+   {0xEC, 0x64, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CGRJ
+   {0xB9, 0x60, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CGRT
+   {0xB3, 0xE9, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CGXTR
+   {0x49, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CH
+   {0xE3, 0xCD, RXY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CHF
+   {0xB9, 0xCD, RRE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CHHR
+   {0xA7, 0x0E, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CHI
+   {0xB9, 0xDD, RRE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CHLR
+   {0xE3, 0x79, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CHY
+   {0xEC, 0xFE, RIS_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CIB
+   {0xCC, 0x0D, RIL_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CIH
+   {0xEC, 0x7E, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CIJ
+   {0xEC, 0x72, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CIT
+   {0x55, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CL
+   {0xD5, 0x00, SS1_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CLC
+   {0x0F, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CLCL
+   {0xA9, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CLCLE
+   {0xEB, 0x8F, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CLCLU
+   {0xB3, 0x9D, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CLFDBR
+   {0xB3, 0x9C, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CLFEBR
+   {0xC2, 0x0F, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CLFI
+   {0xEC, 0x73, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLFIT
+   {0xE3, 0x21, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CLG
+   {0xB3, 0xAD, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CLGDBR
+   {0xB3, 0xAC, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CLGEBR
+   {0xE3, 0x31, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CLGF
+   {0xC2, 0x0E, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CLGFI
+   {0xB9, 0x31, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CLGFR
+   {0xEC, 0xF5, RRS_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // CLGFRB
+   {0xEC, 0x75, RIE_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // CLGFRJ
+   {0xB9, 0x71, RRF2_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // CLGFRT
+   {0xEC, 0xFD, RIS_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLGIB
+   {0xEC, 0x7D, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLGIJ
+   {0xEC, 0x71, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLGIT
+   {0xB9, 0x21, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CLGR
+   {0xEC, 0xE5, RRS_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLGRB
+   {0xEC, 0x65, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLGRJ
+   {0xB9, 0x61, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLGRT
+   {0xEB, 0x2B, RSY_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // CLGT
+   {0xE3, 0xCF, RXY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CLHF
+   {0xB9, 0xCF, RRE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CLHHR
+   {0xB9, 0xDF, RRE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CLHLR
+   {0xEB, 0x55, SIY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CLIY
+   {0x95, 0x00, SI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CLI
+   {0xEC, 0xFF, RIS_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLIB
+   {0xCC, 0x0F, RIL_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CLIH
+   {0xEC, 0x7F, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLIJ
+   {0xBD, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CLM
+   {0xEB, 0x20, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CLMH
+   {0xEB, 0x21, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CLMY
+   {0x15, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CLR
+   {0xEC, 0xF7, RRS_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLRB
+   {0xEC, 0x77, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLRJ
+   {0xB9, 0x73, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLRT
+   {0xEB, 0x23, RSY_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // CLT
+   {0xE3, 0x55, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CLY
+   {0xB2, 0x4D, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CPYA
+   {0x19, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CR
+   {0xEC, 0xF6, RRS_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CRB
+   {0xEC, 0x76, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CRJ
+   {0xB9, 0x72, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CRT
+   {0xBA, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CS
+   {0xEB, 0x14, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CSY
+   {0xEB, 0x30, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CSG
+   {0xB3, 0xE3, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CSDTR
+   {0xB3, 0xEB, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CSXTR
+   {0xB3, 0xE2, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CUDTR
+   {0xB3, 0xEA, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CUXTR
+   {0x4E, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CVD
+   {0xE3, 0x26, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CVDY
+   {0xE3, 0x2E, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CVDG
+   {0xB3, 0xF9, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CXGTR
+   {0xB3, 0xFB, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CXSTR
+   {0xB3, 0xEC, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CXTR
+   {0xB3, 0xFA, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CXUTR
+   {0xE3, 0x59, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CY
+   {0x5D, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // D
+   {0x00, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DIAG
+   {0xED, 0x1D, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DDB
+   {0xB3, 0x1D, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DDBR
+   {0xB3, 0xD1, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // DDTR
+   {0xED, 0x0D, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DEB
+   {0xB3, 0x0D, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DEBR
+   {0xB4, 0xC6, RRF3_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // DIDTR
+   {0xB3, 0x5B, RRF3_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DIDBR
+   {0xB3, 0x53, RRF3_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DIEBR
+   {0xE3, 0x97, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // DL
+   {0xB9, 0x87, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DLGR
+   {0xB9, 0x97, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DLR
+   {0x1D, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DR
+   {0xE3, 0x0D, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // DSG
+   {0xE3, 0x1D, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // DSGF
+   {0xB9, 0x1D, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DSGFR
+   {0xB9, 0x0D, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DSGR
+   {0xB3, 0xD9, RRR_FORMAT, TR_S390ProcessorInfo::TR_z9}, // DXTR
+   {0xB2, 0x4F, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // EAR
+   {0xEB, 0x4C, RSY_FORMAT, TR_S390ProcessorInfo::TR_z10}, // ECAG
+   {0xB3, 0xE5, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // EEDTR
+   {0xB3, 0xED, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // EEXTR
+   {0xB3, 0x8C, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // EFPC
+   {0xB9, 0x8D, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // EPSW
+   {0xB3, 0xE7, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // ESDTR
+   {0xB3, 0xEF, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // ESXTR
+   {0xB2, 0xEC, RRE_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // ETND
+   {0x44, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // EX
+   {0xC6, 0x00, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // EXRL
+   {0xB3, 0x5F, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z900}, // FIDBR
+   {0xB3, 0xD7, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z9}, // FIDTR
+   {0xB3, 0x57, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z900}, // FIEBR
+   {0xB3, 0xDF, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z9}, // FIXTR
+   {0xB9, 0x83, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // FLOGR
+   {0x43, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // IC
+   {0xBF, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ICM
+   {0xEB, 0x80, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // ICMH
+   {0xEB, 0x81, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // ICMY
+   {0xE3, 0x73, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // ICY
+   {0xB3, 0xF6, RRF3_FORMAT, TR_S390ProcessorInfo::TR_z9}, // IEDTR
+   {0xB3, 0xFE, RRF3_FORMAT, TR_S390ProcessorInfo::TR_z9}, // IEXTR
+   {0xA5, 0x00, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // IIHH
+   {0xA5, 0x01, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // IIHL
+   {0xC0, 0x08, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // IIHF
+   {0xC0, 0x09, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // IILF
+   {0xA5, 0x02, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // IILH
+   {0xA5, 0x03, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // IILL
+   {0xB2, 0x22, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // IPM
+   {0xB3, 0xE0, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // KDTR
+   {0xB9, 0x3E, RRE_FORMAT, TR_S390ProcessorInfo::TR_z990}, // KIMD
+   {0xB9, 0x3F, RRE_FORMAT, TR_S390ProcessorInfo::TR_z990}, // KLMD
+   {0xB9, 0x2E, RRE_FORMAT, TR_S390ProcessorInfo::TR_z990}, // KM
+   {0xB9, 0x1E, RRE_FORMAT, TR_S390ProcessorInfo::TR_z990}, // KMAC
+   {0xB9, 0x2F, RRE_FORMAT, TR_S390ProcessorInfo::TR_z990}, // KMC
+   {0xB9, 0x2D, RRF_FORMAT, TR_S390ProcessorInfo::TR_z196}, // KMCTR
+   {0xB9, 0x2A, RRE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // KMF
+   {0xB9, 0x2B, RRE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // KMO
+   {0xB3, 0xE8, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // KXTR
+   {0x58, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // L
+   {0x41, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LA
+   {0xEB, 0xF8, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LAA
+   {0xEB, 0xE8, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LAAG
+   {0xEB, 0xFA, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LAAL
+   {0xEB, 0xEA, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LAALG
+   {0x9A, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LAM
+   {0xEB, 0x9A, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LAMY
+   {0xEB, 0xF4, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LAN
+   {0xEB, 0xE4, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LANG
+   {0xEB, 0xF6, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LAO
+   {0xEB, 0xE6, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LAOG
+   {0xC0, 0x00, RIL_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LARL
+   {0xE3, 0x9F, RXY_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // LAT
+   {0xEB, 0xF7, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LAX
+   {0xEB, 0xE7, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LAXG
+   {0xE3, 0x71, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LAY
+   {0xE3, 0x76, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LB
+   {0xE3, 0xC0, RXY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LBH
+   {0xB9, 0x26, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LBR
+   {0xB3, 0x13, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LCDBR
+   {0xB3, 0x73, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LCDFR
+   {0xB3, 0x03, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LCEBR
+   {0xB9, 0x13, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LCGFR
+   {0xB9, 0x03, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LCGR
+   {0x13, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LCR
+   {0x68, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LD
+   {0xED, 0x04, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LDEB
+   {0xB3, 0x04, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LDEBR
+   {0xB3, 0xD4, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LDETR
+   {0xB3, 0xDD, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LDXTR
+   {0xB3, 0xC1, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LDGR
+   {0x28, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LDR
+   {0xED, 0x65, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LDY
+   {0x78, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LE
+   {0xB3, 0x44, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LEDBR
+   {0xB3, 0xD5, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LEDTR
+   {0x38, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LER
+   {0xED, 0x64, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LEY
+   {0xE3, 0xCA, RXY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LFH
+   {0xE3, 0xC8, RXY_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // LFHAT
+   {0xE3, 0x04, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LG
+   {0xE3, 0x85, RXY_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // LGAT
+   {0xE3, 0x77, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LGB
+   {0xB9, 0x06, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LGBR
+   {0xB3, 0xCD, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LGDR
+   {0xE3, 0x14, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LGF
+   {0xC0, 0x01, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LGFI
+   {0xB9, 0x14, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LGFR
+   {0xE3, 0x15, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LGH
+   {0xA7, 0x09, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LGHI
+   {0xB9, 0x07, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LGHR
+   {0xB9, 0x04, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LGR
+   {0xC4, 0x08, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // LGRL
+   {0xC4, 0x0C, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // LGFRL
+   {0xC4, 0x0E, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // LLGFRL
+   {0x48, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LH
+   {0xE3, 0xC4, RXY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LHH
+   {0xA7, 0x08, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LHI
+   {0xB9, 0x27, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LHR
+   {0xE3, 0x78, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LHY
+   {0xE3, 0x94, RXY_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LLC
+   {0xE3, 0xC2, RXY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LLCH
+   {0xB9, 0x94, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LLCR
+   {0xE3, 0x90, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LLGC
+   {0xB9, 0x84, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LLGCR
+   {0xE3, 0x16, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LLGF
+   {0xE3, 0x9D, RXY_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // LLGFAT
+   {0xB9, 0x16, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LLGFR
+   {0xE3, 0x91, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LLGH
+   {0xB9, 0x85, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LLGHR
+   {0xE3, 0x17, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LLGT
+   {0xE3, 0x9C, RXY_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // LLGTAT
+   {0xB9, 0x17, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LLGTR
+   {0xE3, 0x95, RXY_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LLH
+   {0xE3, 0xC6, RXY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LLHH
+   {0xB9, 0x95, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LLHR
+   {0xA5, 0x0C, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LLIHH
+   {0xA5, 0x0D, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LLIHL
+   {0xC0, 0x0E, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LLIHF
+   {0xC0, 0x0F, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LLILF
+   {0xA5, 0x0E, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LLILH
+   {0xA5, 0x0F, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LLILL
+   {0xE3, 0x3A, RXY_FORMAT, TR_S390ProcessorInfo::TR_z13}, // LLZRGF
+   {0x98, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LM
+   {0xEB, 0x04, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LMG
+   {0xEB, 0x98, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LMY
+   {0xB3, 0x11, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LNDBR
+   {0xB3, 0x71, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LNDFR
+   {0xB3, 0x01, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LNEBR
+   {0xB9, 0x01, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LNGR
+   {0x11, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LNR
+   {0xEB, 0xF2, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LOC
+   {0xEB, 0xE0, RSY_FORMAT, TR_S390ProcessorInfo::TR_z13}, // LOCFH
+   {0xB9, 0xE0, RRF_FORMAT, TR_S390ProcessorInfo::TR_z13}, // LOCFHR
+   {0xEB, 0xE2, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LOCG
+   {0xEC, 0x46, RIE_FORMAT, TR_S390ProcessorInfo::TR_z13}, // LOCGHI
+   {0xB9, 0xE2, RRF_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LOCGR
+   {0xEC, 0x4E, RIE_FORMAT, TR_S390ProcessorInfo::TR_z13}, // LOCHHI
+   {0xEC, 0x42, RIE_FORMAT, TR_S390ProcessorInfo::TR_z13}, // LOCHI
+   {0xB9, 0xF2, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LOCR
+   {0xC8, 0x04, SSF_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LPD
+   {0xB3, 0x10, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPDBR
+   {0xB3, 0x70, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LPDFR
+   {0xC8, 0x05, SSF_FORMAT, TR_S390ProcessorInfo::TR_z196}, // LPDG
+   {0xB3, 0x00, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPEBR
+   {0xB9, 0x10, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPGFR
+   {0xB9, 0x00, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPGR
+   {0xE3, 0x8F, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LPQ
+   {0x10, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPR
+   {0x18, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LR
+   {0xEB, 0x60, RSY_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LRIC
+   {0xC4, 0x0D, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // LRL
+   {0xE3, 0x1E, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LRV
+   {0xE3, 0x0F, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LRVG
+   {0xB9, 0x0F, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LRVGR
+   {0xE3, 0x1F, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LRVH
+   {0xB9, 0x1F, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LRVR
+   {0xE3, 0x12, RXY_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LT
+   {0xB3, 0x12, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LTDBR
+   {0xB3, 0xD6, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LTDTR
+   {0xB3, 0x02, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LTEBR
+   {0xE3, 0x02, RXY_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LTG
+   {0xE3, 0x32, RXY_FORMAT, TR_S390ProcessorInfo::TR_z10}, // LTGF
+   {0xB9, 0x12, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LTGFR
+   {0xB9, 0x02, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LTGR
+   {0x12, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LTR
+   {0xB3, 0xDE, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LTXTR
+   {0xB3, 0xDC, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // LXDTR
+   {0xE3, 0x58, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LY
+   {0xB3, 0x75, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LZDR
+   {0xB3, 0x74, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LZER
+   {0xE3, 0x3B, RXY_FORMAT, TR_S390ProcessorInfo::TR_z13}, // LZRF
+   {0xE3, 0x2A, RXY_FORMAT, TR_S390ProcessorInfo::TR_z13}, // LZRG
+   {0x5C, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // M
+   {0xE3, 0x5C, RXY_FORMAT, TR_S390ProcessorInfo::TR_z10}, // MFY
+   {0xED, 0x1E, RXF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MADB
+   {0xB3, 0x1E, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MADBR
+   {0xED, 0x0E, RXF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MAEB
+   {0xB3, 0x0E, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MAEBR
+   {0xED, 0x1C, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MDB
+   {0xB3, 0x1C, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MDBR
+   {0xB3, 0xD0, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MDTR
+   {0xED, 0x17, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MEEB
+   {0xB3, 0x17, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MEEBR
+   {0xA7, 0x0D, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MGHI
+   {0x4C, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MH
+   {0xE3, 0x7C, RXY_FORMAT, TR_S390ProcessorInfo::TR_z10}, // MHY
+   {0xA7, 0x0C, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MHI
+   {0xE3, 0x86, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MLG
+   {0xB9, 0x86, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MLGR
+   {0xB9, 0x96, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MLR
+   {0x1C, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MR
+   {0xEB, 0x62, RSY_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // MRIC
+   {0x71, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MS
+   {0xE3, 0x51, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MSY
+   {0xED, 0x1F, RXF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MSDB
+   {0xB3, 0x1F, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MSDBR
+   {0xED, 0x0F, RXF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MSEB
+   {0xB3, 0x0F, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MSEBR
+   {0xE3, 0x0C, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MSG
+   {0xE3, 0x1C, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MSGF
+   {0xB9, 0x1C, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MSGFR
+   {0xB9, 0x0C, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MSGR
+   {0xB2, 0x52, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MSR
+   {0xD2, 0x00, SS1_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVC
+   {0x0E, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVCL
+   {0xE5, 0x48, SIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // MVGHI
+   {0xE5, 0x44, SIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // MVHHI
+   {0xE5, 0x4C, SIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // MVHI
+   {0x92, 0x00, SI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVI
+   {0xEB, 0x52, SIY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MVIY
+   {0xB3, 0xD8, RRR_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MXTR
+   {0x54, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // N
+   {0xD4, 0x00, SS1_FORMAT, TR_S390ProcessorInfo::TR_z900}, // NC
+   {0xE3, 0x80, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // NG
+   {0xB9, 0x80, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // NGR
+   {0xB9, 0xE4, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // NGRK
+   {0x94, 0x00, SI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // NI
+   {0xB2, 0xFA, IE_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // NIAI
+   {0xC0, 0x0A, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // NIHF
+   {0xA5, 0x04, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // NIHH
+   {0xA5, 0x05, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // NIHL
+   {0xC0, 0x0B, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // NILF
+   {0xA5, 0x06, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // NILH
+   {0xA5, 0x07, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // NILL
+   {0xEB, 0x54, SIY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // NIY
+   {0x14, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // NR
+   {0xB9, 0xF4, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // NRK
+   {0xE3, 0x25, RXY_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // NTSTG
+   {0xE3, 0x54, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // NY
+   {0x56, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // O
+   {0xD6, 0x00, SS1_FORMAT, TR_S390ProcessorInfo::TR_z900}, // OC
+   {0xE3, 0x81, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // OG
+   {0xB9, 0x81, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // OGR
+   {0xB9, 0xE6, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // OGRK
+   {0x96, 0x00, SI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // OI
+   {0xC0, 0x0C, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // OIHF
+   {0xA5, 0x08, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // OIHH
+   {0xA5, 0x09, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // OIHL
+   {0xC0, 0x0D, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // OILF
+   {0xA5, 0x0A, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // OILH
+   {0xA5, 0x0B, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // OILL
+   {0xEB, 0x56, SIY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // OIY
+   {0x16, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // OR
+   {0xB9, 0xF6, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // ORK
+   {0xE3, 0x56, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // OY
+   {0xE3, 0x36, RXY_FORMAT, TR_S390ProcessorInfo::TR_z10}, // PFD
+   {0x01, 0x0A, E_FORMAT, TR_S390ProcessorInfo::TR_z9}, // PFPO
+   {0xB9, 0xE1, RRE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // POPCNT
+   {0xB2, 0xE8, RRF_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // PPA
+   {0xB3, 0xF5, RRF3_FORMAT, TR_S390ProcessorInfo::TR_z9}, // QADTR
+   {0xB3, 0xFD, RRF3_FORMAT, TR_S390ProcessorInfo::TR_z9}, // QAXTR
+   {0xEC, 0x55, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // RISBG
+   {0xEC, 0x59, RIE_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // RISBGN
+   {0xEC, 0x5D, RIE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // RISBHG
+   {0xEC, 0x51, RIE_FORMAT, TR_S390ProcessorInfo::TR_z196}, // RISBLG
+   {0xEB, 0x1D, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // RLL
+   {0xEB, 0x1C, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // RLLG
+   {0xEC, 0x54, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // RNSBG
+   {0xEC, 0x56, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // ROSBG
+   {0xB3, 0xF7, RRF3_FORMAT, TR_S390ProcessorInfo::TR_z9}, // RRDTR
+   {0xB3, 0xFF, RRF3_FORMAT, TR_S390ProcessorInfo::TR_z9}, // RRXTR
+   {0xEC, 0x57, RIE_FORMAT, TR_S390ProcessorInfo::TR_z10}, // RXSBG
+   {0x5B, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // S
+   {0xB2, 0x4E, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SAR
+   {0xED, 0x1B, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SDB
+   {0xB3, 0x1B, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SDBR
+   {0xB3, 0xD3, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SDTR
+   {0xED, 0x0B, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SEB
+   {0xB3, 0x0B, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SEBR
+   {0xB3, 0x85, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SFASR
+   {0xB3, 0x84, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SFPC
+   {0xE3, 0x09, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SG
+   {0xE3, 0x19, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SGF
+   {0xB9, 0x19, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SGFR
+   {0xB9, 0x09, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SGR
+   {0xB9, 0xE9, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SGRK
+   {0x4B, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SH
+   {0xB9, 0xC9, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SHHHR
+   {0xB9, 0xD9, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SHHLR
+   {0xE3, 0x7B, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SHY
+   {0x5F, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SL
+   {0x8B, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SLA
+   {0xEB, 0x0B, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SLAG
+   {0xEB, 0xDD, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SLAK
+   {0xE3, 0x99, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SLB
+   {0xE3, 0x89, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SLBG
+   {0xB9, 0x89, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SLBGR
+   {0xB9, 0x99, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SLBR
+   {0x8F, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SLDA
+   {0x8D, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SLDL
+   {0xED, 0x40, RXF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SLDT
+   {0xED, 0x48, RXF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SLXT
+   {0xC2, 0x05, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SLFI
+   {0xE3, 0x0B, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SLG
+   {0xE3, 0x1B, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SLGF
+   {0xC2, 0x04, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SLGFI
+   {0xB9, 0x1B, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SLGFR
+   {0xB9, 0x0B, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SLGR
+   {0xB9, 0xEB, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SLGRK
+   {0xB9, 0xCB, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SLHHHR
+   {0xB9, 0xDB, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SLHHLR
+   {0x89, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SLL
+   {0xEB, 0x0D, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SLLG
+   {0xEB, 0xDF, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SLLK
+   {0x1F, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SLR
+   {0xB9, 0xFB, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SLRK
+   {0xE3, 0x5F, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SLY
+   {0xED, 0x15, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SQDB
+   {0xB3, 0x15, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SQDBR
+   {0xED, 0x14, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SQEB
+   {0xB3, 0x14, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SQEBR
+   {0x1B, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SR
+   {0x8A, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SRA
+   {0xEB, 0x0A, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SRAG
+   {0xEB, 0xDC, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SRAK
+   {0x8E, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SRDA
+   {0x8C, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SRDL
+   {0xED, 0x41, RXF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SRDT
+   {0xED, 0x49, RXF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SRXT
+   {0x88, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SRL
+   {0xEB, 0x0C, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SRLG
+   {0xEB, 0xDE, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SRLK
+   {0xB9, 0xF9, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // SRK
+   {0xB2, 0x5E, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SRST
+   {0xB9, 0xBE, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SRSTU
+   {0xB2, 0xB9, S_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SRNMT
+   {0x50, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ST
+   {0x9B, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STAM
+   {0xEB, 0x9B, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STAMY
+   {0x42, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STC
+   {0xE3, 0xC3, RXY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // STCH
+   {0xB2, 0x05, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STCK
+   {0xB2, 0x05, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STCKE
+   {0xB2, 0x7C, S_FORMAT, TR_S390ProcessorInfo::TR_z9}, // STCKF
+   {0xBE, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STCM
+   {0xEB, 0x2C, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STCMH
+   {0xEB, 0x2D, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STCMY
+   {0xE3, 0x72, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STCY
+   {0x60, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STD
+   {0xED, 0x67, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STDY
+   {0x70, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STE
+   {0xED, 0x66, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STEY
+   {0xE3, 0xCB, RXY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // STFH
+   {0xE3, 0x24, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STG
+   {0xC4, 0x0B, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // STGRL
+   {0x40, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STH
+   {0xE3, 0xC7, RXY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // STHH
+   {0xE3, 0x70, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STHY
+   {0x90, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STM
+   {0xEB, 0x24, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STMG
+   {0xEB, 0x90, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STMY
+   {0xEB, 0xF3, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // STOC
+   {0xEB, 0xE1, RSY_FORMAT, TR_S390ProcessorInfo::TR_z13}, // STOCFH
+   {0xEB, 0xE3, RSY_FORMAT, TR_S390ProcessorInfo::TR_z196}, // STOCG
+   {0xE3, 0x8E, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STPQ
+   {0xEB, 0x61, RSY_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // STRIC
+   {0xC4, 0x0F, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // STRL
+   {0xE3, 0x3E, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STRV
+   {0xE3, 0x2F, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STRVG
+   {0xE3, 0x3F, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STRVH
+   {0xE3, 0x50, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STY
+   {0xB3, 0xDB, RRR_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SXTR
+   {0xE3, 0x5B, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // SY
+   {0xB2, 0xFC, S_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // TABORT
+   {0xE5, 0x60, SIL_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // TBEGIN
+   {0xE5, 0x61, SIL_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // TBEGINC
+   {0xED, 0x11, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TCDB
+   {0xED, 0x54, RXE_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // TCDT
+   {0xED, 0x54, RXE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TDCDT
+   {0xED, 0x10, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TCEB
+   {0xED, 0x50, RXE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TDCET
+   {0xED, 0x58, RXE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TDCXT
+   {0xED, 0x55, RXE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TDGDT
+   {0xED, 0x51, RXE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TDGET
+   {0xED, 0x59, RXE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TDGXT
+   {0xB2, 0xF8, S_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // TEND
+   {0x91, 0x00, SI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TM
+   {0xA7, 0x01, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TMLL
+   {0xA7, 0x00, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TMLH
+   {0xA7, 0x03, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TMHL
+   {0xA7, 0x02, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TMHH
+   {0xEB, 0x51, SIY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // TMY
+   {0xDC, 0x00, SS1_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TR
+   {0xB2, 0xA5, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TRE
+   {0xAA, 0x02, RI_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // TRIC
+   {0xB9, 0x93, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TROO
+   {0xB9, 0x92, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TROT
+   {0xDD, 0x00, SS1_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TRT
+   {0xB9, 0x91, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TRTO
+   {0xB9, 0x90, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TRTT
+   {0xB9, 0xBF, RRF_FORMAT, TR_S390ProcessorInfo::TR_z10}, // TRTE
+   {0xB9, 0xBD, RRF_FORMAT, TR_S390ProcessorInfo::TR_z10}, // TRTRE
+   {0x93, 0x00, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TS
+   {0x57, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // X
+   {0xD7, 0x00, SS1_FORMAT, TR_S390ProcessorInfo::TR_z900}, // XC
+   {0xE3, 0x82, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // XG
+   {0xB9, 0x82, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // XGR
+   {0xB9, 0xE7, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // XGRK
+   {0x97, 0x00, SI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // XI
+   {0xC0, 0x06, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // XIHF
+   {0xC0, 0x07, RIL_FORMAT, TR_S390ProcessorInfo::TR_z9}, // XILF
+   {0xEB, 0x57, SIY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // XIY
+   {0x17, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // XR
+   {0xB9, 0xF7, RRR_FORMAT, TR_S390ProcessorInfo::TR_z196}, // XRK
+   {0xE3, 0x57, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // XY
+   {0xEB, 0x6a, SIY_FORMAT, TR_S390ProcessorInfo::TR_z10}, // ASI
+   {0xEB, 0x7a, SIY_FORMAT, TR_S390ProcessorInfo::TR_z10}, // AGSI
+   {0xEB, 0x6E, SIY_FORMAT, TR_S390ProcessorInfo::TR_z10}, // ALSI
+   {0xEB, 0x7E, SIY_FORMAT, TR_S390ProcessorInfo::TR_z10}, // ALGSI
+   {0xC6, 0x0D, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CRL
+   {0xC6, 0x08, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CGRL
+   {0xC6, 0x0C, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CGFRL
+   {0xE5, 0x54, SIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CHHSI
+   {0xE5, 0x5C, SIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CHSI
+   {0xE5, 0x58, SIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CGHSI
+   {0xC6, 0x01, RIL_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // CHHRL
+   {0xC6, 0x05, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CHRL
+   {0xC6, 0x04, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CGHRL
+   {0xE5, 0x55, SIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLHHSI
+   {0xE5, 0x5D, SIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLFHSI
+   {0xE5, 0x59, SIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLGHSI
+   {0xC6, 0x0F, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLRL
+   {0xC6, 0x0A, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLGRL
+   {0xC6, 0x0E, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLGFRL
+   {0xC6, 0x03, RIL_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // CLHHRL
+   {0xC6, 0x07, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLHRL
+   {0xC6, 0x06, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // CLGHRL
+   {0xC2, 0x01, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // MSFI
+   {0xC2, 0x00, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // MSGFI
+   {0xFA, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AP
+   {0x0C, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BASSM
+   {0xB2, 0x40, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BAKR
+   {0x0B, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // BSM
+   {0xBB, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CDS
+   {0xEB, 0x31, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CDSY
+   {0xEB, 0x3E, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CDSG
+   {0xB2, 0x1A, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CFC
+   {0xB2, 0x5D, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CLST
+   {0xB2, 0x41, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CKSM
+   {0xF9, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CP
+   {0xB3, 0x72, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CPSDR
+   {0xB2, 0x30, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CSCH
+   {0xB2, 0xA6, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CUUTF
+   {0xB2, 0xA7, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CUTFU
+   {0xB9, 0xB0, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CU14
+   {0xB9, 0xB1, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CU24
+   {0xB9, 0xB2, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CU41
+   {0xB9, 0xB3, RRE_FORMAT, TR_S390ProcessorInfo::TR_z9}, // CU42
+   {0xB2, 0x57, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CUSE
+   {0x4F, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CVB
+   {0xE3, 0x06, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CVBY
+   {0xE3, 0x0E, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // CVBG
+   {0xFD, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DP
+   {0xDE, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ED
+   {0xDF, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // EDMK
+   {0xB2, 0x27, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ESAR
+   {0xB2, 0x26, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // EPAR
+   {0xB2, 0x49, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // EREG
+   {0xB9, 0x0E, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // EREGG
+   {0xB2, 0x4A, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ESTA
+   {0xB9, 0x9D, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ESEA
+   {0xB2, 0x31, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // HSCH
+   {0xB2, 0x24, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // IAC
+   {0xB2, 0x0B, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // IPK
+   {0xB2, 0x23, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // IVSK
+   {0xB2, 0x29, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ISKE
+   {0x51, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LAE
+   {0xE3, 0x75, RXY_FORMAT, TR_S390ProcessorInfo::TR_z10}, // LAEY
+   {0xE7, 0x27, RXE_FORMAT, TR_S390ProcessorInfo::TR_z13}, // LCBB
+   {0xB7, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LCTL
+   {0xEB, 0x2F, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LCTLG
+   {0xB2, 0x9D, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LFPC
+   {0xEB, 0x96, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LMH
+   {0xB9, 0x11, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LNGFR
+   {0x82, 0x00, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPSW
+   {0xB2, 0xB2, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPSWE
+   {0xB1, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LRA
+   {0xE3, 0x03, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LRAG
+   {0xE3, 0x13, RXY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // LRAY
+   {0xB2, 0x4B, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LURA
+   {0xB9, 0x05, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LURAG
+   {0xAF, 0x00, SI_FORMAT, TR_S390ProcessorInfo::TR_z10}, // MC
+   {0xFC, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MP
+   {0xB2, 0x32, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MSCH
+   {0xB2, 0x47, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MSTA
+   {0xE5, 0x0F, SSE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVCDK
+   {0xE5, 0x0E, SSE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVCSK
+   {0xD9, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVCK
+   {0xEB, 0x8E, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MVCLU
+   {0xA8, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVCLE
+   {0xDA, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVCP
+   {0xDB, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVCS
+   {0xD1, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVN
+   {0xF1, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVO
+   {0xD3, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVZ
+   {0xB2, 0x55, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MVST
+   {0xF2, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // PACK
+   {0xB2, 0x48, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // PALB
+   {0xB2, 0x18, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // PC
+   {0xEE, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // PLO
+   {0xE9, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // PKA
+   {0xE1, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // PKU
+   {0x01, 0x01, E_FORMAT, TR_S390ProcessorInfo::TR_z900}, // PR
+   {0xB2, 0x28, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // PT
+   {0xC6, 0x00, RIL_FORMAT, TR_S390ProcessorInfo::TR_z10}, // PFDRL
+   {0xB2, 0x3B, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // RCHP
+   {0xB2, 0x38, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // RSCH
+   {0xB2, 0x19, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SAC
+   {0xB2, 0x37, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SAL
+   {0xB2, 0x3C, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SCHM
+   {0xB2, 0x04, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SCK
+   {0xB2, 0x06, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SCKC
+   {0xAE, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SIGP
+   {0xFB, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SP
+   {0xB2, 0x0A, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SPKA
+   {0x04, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SPM
+   {0xB2, 0x08, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SPT
+   {0xB2, 0x10, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SPX
+   {0xF0, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SRP
+   {0xB2, 0x99, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SRNM
+   {0xB2, 0x25, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SSAR
+   {0xB2, 0x33, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SSCH
+   {0xB2, 0x2B, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // SSKE
+   {0x80, 0x00, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SSM
+   {0xB2, 0x12, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STAP
+   {0xB2, 0x07, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STCKC
+   {0xB2, 0x3A, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STCPS
+   {0xB2, 0x39, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STCRW
+   {0xB6, 0x00, RS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STCTL
+   {0xEB, 0x25, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STCTG
+   {0xB2, 0x9C, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STFPC
+   {0xB2, 0x02, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STIDP
+   {0xEB, 0x26, RSY_FORMAT, TR_S390ProcessorInfo::TR_z990}, // STMH
+   {0xAC, 0x00, SI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STNSM
+   {0xAD, 0x00, SI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STOSM
+   {0xB2, 0x09, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STPT
+   {0xB2, 0x11, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STPX
+   {0xE5, 0x02, SSE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STRAG
+   {0xB2, 0x34, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STSCH
+   {0xB2, 0x46, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STURA
+   {0xB9, 0x25, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // STURG
+   {0x0A, 0x00, I_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SVC
+   {0xB2, 0x4C, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TAR
+   {0xA7, 0x01, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TML
+   {0xA7, 0x00, RI_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TMH
+   {0xEB, 0xC0, RSL_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TP
+   {0xB2, 0x36, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TPI
+   {0xD0, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z9}, // TRTR
+   {0xE5, 0x01, SSE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TPROT
+   {0xB2, 0x35, S_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TSCH
+   {0xF3, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // UNPK
+   {0xEA, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // UNPKA
+   {0xE2, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // UNPKU
+   {0x01, 0x02, E_FORMAT, TR_S390ProcessorInfo::TR_z900}, // UPT
+   {0xF8, 0x00, SS_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ZAP
+   {0xB3, 0x4A, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AXBR
+   {0xB3, 0x9A, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CFXBR
+   {0xB3, 0xAA, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CGXBR
+   {0xB3, 0x9E, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CLFXBR
+   {0xB3, 0xAE, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CLGXBR
+   {0xB3, 0x49, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CXBR
+   {0xB3, 0x96, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CXFBR
+   {0xB3, 0xA6, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CXGBR
+   {0xB3, 0x92, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CXLFBR
+   {0xB3, 0xA2, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z196}, // CXLGBR
+   {0xB3, 0x4D, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DXBR
+   {0xB3, 0x47, RRF2_FORMAT, TR_S390ProcessorInfo::TR_z900}, // FIXBR
+   {0xB3, 0x42, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LTXBR
+   {0xB3, 0x43, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LCXBR
+   {0xB3, 0x45, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LDXBR
+   {0xB3, 0x46, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LEXBR
+   {0xB3, 0x41, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LNXBR
+   {0xB3, 0x40, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPXBR
+   {0xED, 0x05, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LXDB
+   {0xB3, 0x05, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LXDBR
+   {0xED, 0x06, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LXEB
+   {0xB3, 0x06, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LXEBR
+   {0xB3, 0x65, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LXR
+   {0xB3, 0x76, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LZXR
+   {0xB3, 0x4C, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MXBR
+   {0xB3, 0x16, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SQXBR
+   {0xB3, 0x4B, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SXBR
+   {0xED, 0x12, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TCXB
+   {0x36, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AXR
+   {0x2A, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // ADR
+   {0x6A, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AD
+   {0x3A, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AER
+   {0x7A, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AE
+   {0x2E, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AWR
+   {0x6E, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AW
+   {0x3E, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AUR
+   {0x7E, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // AU
+   {0xB3, 0x69, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CXR
+   {0x29, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CDR
+   {0x69, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CD
+   {0x39, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CER
+   {0x79, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CE
+   {0xB3, 0xB4, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CEFR
+   {0xB3, 0xB5, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CDFR
+   {0xB3, 0xB6, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CXFR
+   {0xB3, 0xC4, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CEGR
+   {0xB3, 0xC5, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CDGR
+   {0xB3, 0xC6, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CXGR
+   {0xB3, 0xB8, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CFER
+   {0xB3, 0xB9, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CFDR
+   {0xB3, 0xBA, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CFXR
+   {0xB3, 0xC8, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CGER
+   {0xB3, 0xC9, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CGDR
+   {0xB3, 0xCA, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // CGXR
+   {0x2D, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DDR
+   {0x6D, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DD
+   {0x3D, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DER
+   {0x7D, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DE
+   {0xB2, 0x2D, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // DXR
+   {0xB3, 0x77, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // FIER
+   {0xB3, 0x7F, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // FIDR
+   {0xB3, 0x67, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // FIXR
+   {0x24, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // HDR
+   {0x34, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // HER
+   {0x22, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LTDR
+   {0x32, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LTER
+   {0xB3, 0x62, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LTXR
+   {0x23, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LCDR
+   {0x33, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LCER
+   {0xB3, 0x63, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LCXR
+   {0x21, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LNDR
+   {0x31, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LNER
+   {0xB3, 0x61, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LNXR
+   {0x20, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPDR
+   {0x30, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPER
+   {0xB3, 0x60, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LPXR
+   {0x35, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LEDR
+   {0x25, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LDXR
+   {0xB3, 0x66, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LEXR
+   {0xB3, 0x24, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LDER
+   {0xB3, 0x25, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LXDR
+   {0xB3, 0x26, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LXER
+   {0xED, 0x24, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LDE
+   {0xED, 0x25, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LXD
+   {0xED, 0x26, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // LXE
+   {0xB3, 0x37, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MEER
+   {0xED, 0x37, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MEE
+   {0x26, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MXR
+   {0x2C, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MDR
+   {0x6C, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MD
+   {0x27, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MXDR
+   {0x67, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MXD
+   {0x3C, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MDER
+   {0x7C, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // MDE
+   {0xB3, 0x2E, RRF_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MAER
+   {0xB3, 0x3E, RRF_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MADR
+   {0xED, 0x2E, RXF_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MAE
+   {0xED, 0x3E, RXF_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MAD
+   {0xB3, 0x2F, RRF_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MSER
+   {0xB3, 0x3F, RRF_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MSDR
+   {0xED, 0x2F, RXF_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MSE
+   {0xED, 0x3F, RXF_FORMAT, TR_S390ProcessorInfo::TR_z990}, // MSD
+   {0xB3, 0x3A, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MAYR
+   {0xB3, 0x3C, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MAYHR
+   {0xB3, 0x38, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MAYLR
+   {0xED, 0x3A, RXF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MAY
+   {0xED, 0x3C, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MAYH
+   {0xED, 0x38, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MAYL
+   {0xB3, 0x3B, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MYR
+   {0xB3, 0x3D, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MYHR
+   {0xB3, 0x39, RRF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MYLR
+   {0xED, 0x3B, RXF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MY
+   {0xED, 0x3D, RXF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MYH
+   {0xED, 0x39, RXF_FORMAT, TR_S390ProcessorInfo::TR_z9}, // MYL
+   {0xB2, 0x45, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SQER
+   {0xB2, 0x44, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SQDR
+   {0xB3, 0x36, RRE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SQXR
+   {0xED, 0x34, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SQE
+   {0xED, 0x35, RXE_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SQD
+   {0x37, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SXR
+   {0x2B, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SDR
+   {0x3B, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SER
+   {0x6B, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SD
+   {0x7B, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SE
+   {0x2F, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SWR
+   {0x6F, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SW
+   {0x3F, 0x00, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SUR
+   {0x7F, 0x00, RX_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SU
+   {0xB3, 0x51, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TBDR
+   {0xB3, 0x50, RRF_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TBEDR
+   {0xB3, 0x58, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // THDER
+   {0xB3, 0x59, RR_FORMAT, TR_S390ProcessorInfo::TR_z900}, // THDR
+   {0x01, 0x0C, E_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SAM24
+   {0x01, 0x0D, E_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SAM31
+   {0x01, 0x0E, E_FORMAT, TR_S390ProcessorInfo::TR_z900}, // SAM64
+   {0x01, 0x0B, E_FORMAT, TR_S390ProcessorInfo::TR_z900}, // TAM
+   {0xED, 0xAA, RSL_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // CDZT
+   {0xED, 0xAB, RSL_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // CXZT
+   {0xED, 0xA8, RSL_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // CZDT
+   {0xED, 0xA9, RSL_FORMAT, TR_S390ProcessorInfo::TR_zEC12}, // CZXT
+   {0xED, 0xAE, RSL_FORMAT, TR_S390ProcessorInfo::TR_z13}, // CDPT
+   {0xED, 0xAF, RSL_FORMAT, TR_S390ProcessorInfo::TR_z13}, // CXPT
+   {0xED, 0xAC, RSL_FORMAT, TR_S390ProcessorInfo::TR_z13}, // CPDT
+   {0xED, 0xAD, RSL_FORMAT, TR_S390ProcessorInfo::TR_z13}, // CPXT
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LHHR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LHLR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LLHFR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LLHHHR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LLHHLR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LLHLHR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LLCHHR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LLCHLR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LLCLHR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // SLLHH
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // SLLLH
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // SRLHH
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // SRLLH
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // NHHR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // NHLR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // NLHR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // XHHR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // XHLR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // XLHR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // OHHR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // OHLR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // OLHR
+   {0xE7, 0x13, VRV_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VGEF
+   {0xE7, 0x12, VRV_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VGEG
+   {0xE7, 0x44, VRIa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VGBM
+   {0xE7, 0x46, VRIb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VGM
+   {0xE7, 0x06, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VL
+   {0xE7, 0x56, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLR
+   {0xE7, 0x05, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLREP
+   {0xE7, 0x00, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLEB
+   {0xE7, 0x01, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLEH
+   {0xE7, 0x03, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLEF
+   {0xE7, 0x02, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLEG
+   {0xE7, 0x40, VRIa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLEIB
+   {0xE7, 0x41, VRIa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLEIH
+   {0xE7, 0x43, VRIa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLEIF
+   {0xE7, 0x42, VRIa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLEIG
+   {0xE7, 0x21, VRSc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLGV
+   {0xE7, 0x04, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLLEZ
+   {0xE7, 0x36, VRSa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLM
+   {0xE7, 0x07, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLBB
+   {0xE7, 0x22, VRSb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLVG
+   {0xE7, 0x62, VRRf_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLVGP
+   {0xE7, 0x37, VRSb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLL
+   {0xE7, 0x61, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMRH
+   {0xE7, 0x60, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMRL
+   {0xE7, 0x94, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VPK
+   {0xE7, 0x97, VRRb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VPKS
+   {0xE7, 0x95, VRRb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VPKLS
+   {0xE7, 0x8C, VRRe_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VPERM
+   {0xE7, 0x84, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VPDI
+   {0xE7, 0x4D, VRIc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VREP
+   {0xE7, 0x45, VRIa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VREPI
+   {0xE7, 0x1B, VRV_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSCEF
+   {0xE7, 0x1A, VRV_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSCEG
+   {0xE7, 0x8D, VRRe_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSEL
+   {0xE7, 0x5F, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSEG
+   {0xE7, 0x0E, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VST
+   {0xE7, 0x08, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSTEB
+   {0xE7, 0x09, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSTEH
+   {0xE7, 0x0B, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSTEF
+   {0xE7, 0x0A, VRX_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSTEG
+   {0xE7, 0x3E, VRSa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSTM
+   {0xE7, 0x3F, VRSb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSTL
+   {0xE7, 0xD7, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VUPH
+   {0xE7, 0xD5, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VUPLH
+   {0xE7, 0xD6, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VUPL
+   {0xE7, 0xD4, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VUPLL
+   {0xE7, 0xF3, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VA
+   {0xE7, 0xF1, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VACC
+   {0xE7, 0xBB, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VAC
+   {0xE7, 0xB9, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VACCC
+   {0xE7, 0x68, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VN
+   {0xE7, 0x69, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VNC
+   {0xE7, 0xF2, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VAVG
+   {0xE7, 0xF0, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VAVGL
+   {0xE7, 0x66, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VCKSM
+   {0xE7, 0xDB, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VEC
+   {0xE7, 0xD9, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VECL
+   {0xE7, 0xF8, VRRb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VCEQ
+   {0xE7, 0xFB, VRRb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VCH
+   {0xE7, 0xF9, VRRb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VCHL
+   {0xE7, 0x53, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VCLZ
+   {0xE7, 0x52, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VCTZ
+   {0xE7, 0x6D, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VX
+   {0xE7, 0xB4, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VGFM
+   {0xE7, 0xBC, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VGFMA
+   {0xE7, 0xDE, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLC
+   {0xE7, 0xDF, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLP
+   {0xE7, 0xFF, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMX
+   {0xE7, 0xFD, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMXL
+   {0xE7, 0xFE, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMN
+   {0xE7, 0xFC, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMNL
+   {0xE7, 0xAA, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMAL
+   {0xE7, 0xAB, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMAH
+   {0xE7, 0xA9, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMALH
+   {0xE7, 0xAE, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMAE
+   {0xE7, 0xAC, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMALE
+   {0xE7, 0xAF, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMAO
+   {0xE7, 0xAD, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMALO
+   {0xE7, 0xA3, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMH
+   {0xE7, 0xA1, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMLH
+   {0xE7, 0xA2, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VML
+   {0xE7, 0xA6, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VME
+   {0xE7, 0xA4, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMLE
+   {0xE7, 0xA7, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMO
+   {0xE7, 0xA5, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VMLO
+   {0xE7, 0x6B, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VNO
+   {0xE7, 0x6A, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VO
+   {0xE7, 0x50, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VPOPCT
+   {0xE7, 0x73, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VERLLV
+   {0xE7, 0x33, VRSa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VERLL
+   {0xE7, 0x72, VRId_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VERIM
+   {0xE7, 0x70, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VESLV
+   {0xE7, 0x30, VRSa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VESL
+   {0xE7, 0x7A, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VESRAV
+   {0xE7, 0x3A, VRSa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VESRA
+   {0xE7, 0x78, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VESRLV
+   {0xE7, 0x38, VRSa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VESRL
+   {0xE7, 0x74, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSL
+   {0xE7, 0x75, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSLB
+   {0xE7, 0x77, VRId_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSLDB
+   {0xE7, 0x7E, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSRA
+   {0xE7, 0x7F, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSRAB
+   {0xE7, 0x7C, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSRL
+   {0xE7, 0x7D, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSRLB
+   {0xE7, 0xF7, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VS
+   {0xE7, 0xF5, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSCBI
+   {0xE7, 0xBF, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSBI
+   {0xE7, 0xBD, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSBCBI
+   {0xE7, 0x65, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSUMG
+   {0xE7, 0x67, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSUMQ
+   {0xE7, 0x64, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSUM
+   {0xE7, 0xD8, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VTM
+   {0xE7, 0x82, VRRb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFAE
+   {0xE7, 0x80, VRRb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFEE
+   {0xE7, 0x81, VRRb_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFENE
+   {0xE7, 0x5C, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VISTR
+   {0xE7, 0x8A, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VSTRC
+   {0xE7, 0xE3, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFA
+   {0xE7, 0xCB, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // WFC
+   {0xE7, 0xCA, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // WFK
+   {0xE7, 0xE8, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFCE
+   {0xE7, 0xEB, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFCH
+   {0xE7, 0xEA, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFCHE
+   {0xE7, 0xC3, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VCDG
+   {0xE7, 0xC1, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VCDLG
+   {0xE7, 0xC2, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VCGD
+   {0xE7, 0xC0, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VCLGD
+   {0xE7, 0xE5, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFD
+   {0xE7, 0xC7, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFI
+   {0xE7, 0xC4, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLDE
+   {0xE7, 0xC5, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VLED
+   {0xE7, 0xE7, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFM
+   {0xE7, 0x8F, VRRe_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFMA
+   {0xE7, 0x8E, VRRe_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFMS
+   {0xE7, 0xCC, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFPSO
+   {0xE7, 0xCE, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFSQ
+   {0xE7, 0xE2, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFS
+   {0xE7, 0x4A, VRIe_FORMAT, TR_S390ProcessorInfo::TR_z13}, // VFTCI
+   {0xAA, 0x04, RI_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // RIEMIT
+   {0xAA, 0x03, RI_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // RIOFF
+   {0xAA, 0x01, RI_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // RION
+   {0xAA, 0x00, RI_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // RINEXT
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // ASSOCREGS
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // DEPEND
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // DS
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // FENCE
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // SCHEDFENCE
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // PROC
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // RET
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // DIRECTIVE
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // WRTBAR
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // XPCALLDESC
+   {0x00, 0x00, DC_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // DC
+   {0x00, 0x00, DC_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // DC2
+   {0xA7, 0x04, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // VGNOP
+   {0x07, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_z900}, // NOP
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // ASM
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // LABEL
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // TAILCALL
+   {0x00, 0x00, PSEUDO, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // DCB
+   {0xE6, 0x37, VRSd_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VLRLR
+   {0xE6, 0x35, VSI_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VLRL
+   {0xE6, 0x3F, VRSd_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VSTRLR
+   {0xE6, 0x3D, VSI_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VSTRL
+   {0xE6, 0x71, VRIf_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VAP
+   {0xE6, 0x77, VRRh_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VCP
+   {0xE6, 0x50, VRRi_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VCVB
+   {0xE6, 0x52, VRRi_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VCVBG
+   {0xE6, 0x58, VRIi_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VCVD
+   {0xE6, 0x5A, VRIi_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VCVDG
+   {0xE6, 0x7A, VRIf_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VDP
+   {0xE6, 0x49, VRIh_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VLIP
+   {0xE6, 0x78, VRIf_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VMP
+   {0xE6, 0x79, VRIf_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VMSP
+   {0xE6, 0x34, VSI_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VPKZ
+   {0xE6, 0x5B, VRIg_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VPSOP
+   {0xE6, 0x7B, VRIf_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VRP
+   {0xE6, 0x7E, VRIf_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VSDP
+   {0xE6, 0x59, VRIg_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VSRP
+   {0xE6, 0x73, VRIf_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VSP
+   {0xE6, 0x5F, VRRg_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VTP
+   {0xE6, 0x3C, VSI_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VUPKZ
+   {0xE7, 0x85, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VBPERM
+   {0xE7, 0x6C, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VNX
+   {0xE7, 0xB8, VRRd_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VMSL
+   {0xE7, 0x6E, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VNN
+   {0xE7, 0x6F, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VOC
+   {0xE7, 0xC4, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VFLL
+   {0xE7, 0xC5, VRRa_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VFLR
+   {0xE7, 0xEF, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VFMAX
+   {0xE7, 0xEE, VRRc_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VFMIN
+   {0xE7, 0x9F, VRRe_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VFNMA
+   {0xE7, 0x9E, VRRe_FORMAT, TR_S390ProcessorInfo::TR_z14}, // VFNMS
+   {0xB9, 0x29, RRF_FORMAT, TR_S390ProcessorInfo::TR_UnknownArchitecture}, // KMGCM
+   {0xB9, 0x3C, RRE_FORMAT, TR_S390ProcessorInfo::TR_z13}, // PPNO
+   {0xE3, 0x4C, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // LGG
+   {0xE3, 0x48, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // LLGFSG
+   {0xE3, 0x4D, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // LGSC
+   {0xE3, 0x49, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // STGSC
+   {0xE3, 0x38, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // AGH
+   {0xE3, 0x47, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // BIC
+   {0xE3, 0x84, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // MG
+   {0xE9, 0xEC, RRF_FORMAT, TR_S390ProcessorInfo::TR_z14}, // MGRK
+   {0xE3, 0x3C, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // MGH
+   {0xE3, 0x53, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // MSC
+   {0xB9, 0xFD, RRF_FORMAT, TR_S390ProcessorInfo::TR_z14}, // MSRKC
+   {0xE3, 0x83, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // MSGC
+   {0xB9, 0xED, RRF_FORMAT, TR_S390ProcessorInfo::TR_z14}, // MSGRKC
+   {0xE3, 0x39, RXY_FORMAT, TR_S390ProcessorInfo::TR_z14}, // SGH

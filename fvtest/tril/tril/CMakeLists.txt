@@ -71,3 +71,5 @@ target_link_libraries(tril_compiler tril)
 #install(FILES ast.h ilgen.hpp DESTINATION include)
 #install(TARGETS tril EXPORT tril-targets ARCHIVE DESTINATION lib)
 #install(EXPORT tril-targets FILE tril-config.cmake DESTINATION lib/cmake/tril)
+
+set_target_properties(tril tril_dumper tril_compiler PROPERTIES FOLDER fvtest/tril)

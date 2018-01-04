@@ -34,8 +34,8 @@
 #include "infra/Assert.hpp"                    // for TR_ASSERT
 #include "infra/Cfg.hpp"                       // for CFG, etc
 #include "infra/List.hpp"                      // for ListElement, List
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "ras/Debug.hpp"                       // for TR_DebugBase
 
 TR_Dominators::TR_Dominators(TR::Compilation *c, bool post) :

@@ -420,6 +420,7 @@ public:
 	bool scavengerEnabled;
 	bool scavengerRsoScanUnsafe;
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	bool softwareEvacuateReadBarrier; /**< enable software read barrier instead of hardware guarded loads when running with CS */
 	bool concurrentScavenger; /**< CS enabled/disabled flag */
 	bool concurrentScavengerForced; /**< set to true if CS is requested (by cmdline option), but there are more checks to do before deciding whether the request is to be obeyed */
 	uintptr_t concurrentScavengerBackgroundThreads; /**< number of background GC threads during concurrent phase of Scavenge */
@@ -812,6 +813,16 @@ public:
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 	}
 	
+   MMINLINE bool
+   isSoftwareEvacuateReadBarrierEnabled()
+   {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+      return softwareEvacuateReadBarrier;
+#else
+      return false;
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   }
+
 	bool isConcurrentScavengerInProgress();
 	
 	MMINLINE bool
@@ -1339,6 +1350,7 @@ public:
 		, scvTenureStrategyHistory(true)
 		, scavengerEnabled(false)
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		, softwareEvacuateReadBarrier(false)
 		, concurrentScavenger(false)
 		, concurrentScavengerForced(false)
 		, concurrentScavengerBackgroundThreads(1)

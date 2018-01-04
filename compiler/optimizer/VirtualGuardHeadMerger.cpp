@@ -19,8 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include "VirtualGuardHeadMerger.hpp"
-
 #include <stddef.h>                            // for NULL
 #include "codegen/FrontEnd.hpp"                // for feGetEnv
 #include "compile/Compilation.hpp"             // for Compilation
@@ -35,10 +33,11 @@
 #include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
 #include "infra/Cfg.hpp"                       // for CFG
 #include "infra/List.hpp"                      // for List, ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizer.hpp"             // for Optimizer
 #include "optimizer/TransformUtil.hpp"         // for TransformUtil
+#include "optimizer/VirtualGuardHeadMerger.hpp"
 #include "ras/DebugCounter.hpp"
 #include "infra/Checklist.hpp"
 
@@ -126,7 +125,7 @@ static TR::Block* splitRuntimeGuardBlock(TR::Compilation *comp, TR::Block* block
          {
          if (firstPrivArg == NULL)
             {
-            firstPrivArg = tt; 
+            firstPrivArg = tt;
             privThenMonitor = (firstMonitor == NULL);
             }
          }
@@ -144,7 +143,7 @@ static TR::Block* splitRuntimeGuardBlock(TR::Compilation *comp, TR::Block* block
       firstMonitor->getPrevTreeTop()->join(firstPrivArg);
       guard->getPrevTreeTop()->join(firstMonitor);
       monitorEnd->join(guard);
-      } 
+      }
 
    // If there were temps created or privargs in the block, perform a split
    TR::TreeTop *split = NULL;

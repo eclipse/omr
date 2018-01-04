@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1494,8 +1494,6 @@ OMR::Z::MemoryReference::populateShiftLeftTree(TR::Node * subTree, TR::CodeGener
       {
       TR::Node *firstChild=subTree->getFirstChild();
       TR::Register *firstRegister = firstChild->getRegister();
-      if(firstRegister == NULL && firstChild->getOpCode().hasSymbolReference() && firstChild->getSymbolReference()->getSymbol()->isRegisterSymbol())
-        firstRegister = cg->evaluate(firstChild);
       if (firstRegister && !_baseRegister && !_indexRegister)
          {
          strengthReducedShift = true;
@@ -1643,8 +1641,6 @@ bool OMR::Z::MemoryReference::tryBaseIndexDispl(TR::CodeGenerator* cg, TR::Node*
    if (!loadStore->getOpCode().isLoadVar() &&
        !loadStore->getOpCode().isStore())
       return false;
-   if (topAdd->getRegister() == NULL && topAdd->getOpCode().hasSymbolReference() && topAdd->getSymbolReference()->getSymbol()->isRegisterSymbol())
-     cg->evaluate(topAdd);
    if (topAdd->getRegister() != NULL) return false;
    if (integerChild->getOpCode().isLoadConst()) return false;
 
@@ -1694,12 +1690,8 @@ bool OMR::Z::MemoryReference::tryBaseIndexDispl(TR::CodeGenerator* cg, TR::Node*
 
    if (!cg->isDispInRange(offset)) return false;
    breg = base->getRegister();
-   if (breg == NULL && base->getOpCode().hasSymbolReference() && base->getSymbolReference()->getSymbol()->isRegisterSymbol())
-     breg = cg->evaluate(base);
    if (breg == NULL && base->getReferenceCount() <= 1) return false;
    ireg = index->getRegister();
-   if (ireg == NULL && index->getOpCode().hasSymbolReference() && index->getSymbolReference()->getSymbol()->isRegisterSymbol())
-     ireg = cg->evaluate(index);
    if (ireg == NULL && index->getReferenceCount() <= 1) return false;
    if (breg == NULL)
       breg = cg->evaluate(base);
@@ -3554,7 +3546,6 @@ OMR::Z::MemoryReference::generateBinaryEncodingTouchUpForLongDisp(uint8_t *curso
             nbytes += currInstr->getOpCode().getInstructionLength();
             }
          currInstr->setNext(nextInstr);
-         //May need to copy some attributes of instr into currInstr e.g. lastWarm etc.
          }
       else if (TR::Compiler->target.is64Bit())
          {

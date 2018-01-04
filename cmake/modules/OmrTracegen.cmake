@@ -25,6 +25,7 @@ endif()
 set(OMR_TRACEGEN_ 1)
 
 add_custom_target(run_tracegen)
+set_property(TARGET run_tracegen PROPERTY FOLDER tracegen)
 
 # Setup a default trace root if one has not alreay been set
 if(NOT DEFINED OMR_TRACE_ROOT)
@@ -70,6 +71,7 @@ function(omr_add_tracegen input)
 	)
 	add_custom_target("trc_${base_name}" DEPENDS "${generated_filename}.c")
 	add_dependencies(run_tracegen "trc_${base_name}")
+	set_property(TARGET "trc_${base_name}" PROPERTY FOLDER tracegen)
 endfunction(omr_add_tracegen)
 
 macro(add_tracegen)
@@ -88,3 +90,4 @@ add_custom_command(OUTPUT tracemerge.stamp
 add_custom_target(run_tracemerge
 	DEPENDS tracemerge.stamp
 )
+set_property(TARGET run_tracemerge PROPERTY FOLDER tracegen)

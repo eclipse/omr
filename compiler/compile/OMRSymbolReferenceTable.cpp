@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,8 +76,8 @@
 #include "infra/HashTab.hpp"                   // for TR_HashTab, TR_HashId
 #include "infra/Link.hpp"                      // for TR_LinkHead, TR_Pair
 #include "infra/List.hpp"                      // for List, ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "ras/Debug.hpp"                       // for TR_DebugBase
 #include "runtime/Runtime.hpp"                 // for TR_RuntimeHelper, etc
 
@@ -120,7 +120,6 @@ OMR::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation
      _hasUserField(false),
      _aggregateShadowSymbolMap(8, comp->allocator("SymRefTab")),
      _aggregateShadowSymbolReferenceMap(8, comp->allocator("SymRefTab")),
-     _registerSymbolRefs(NULL),
      _sharedAliasMap(NULL)
    {
    _numHelperSymbols = TR_numRuntimeHelpers + 1;;
@@ -1269,88 +1268,6 @@ OMR::SymbolReferenceTable::findOrCreateCounterAddressSymbolRef()
    return element(counterAddressSymbol);
    }
 
-void OMR::SymbolReferenceTable::initRegisterSymbols(TR::ResolvedMethodSymbol *owningMethodSymbol)
-  {
-  int32_t i,nr;
-  TR::Machine *machine = comp()->cg()->machine();
-
-  // Create lists for each register kind
-  // and initialize with real hardware registers for each register kind
-  nr = machine->getLastRealRegisterGlobalRegisterNumber()+1;
-  _registerSymbolRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory());
-  for(i=0;i<nr;i++)
-    {
-    TR::SymbolReference *symRef = createRegisterSymbol(owningMethodSymbol,machine->getRealRegister(i)->getKind(),TR::NoType,i);
-    TR::AutomaticSymbol *sym = symRef->getSymbol()->castToRegisterSymbol();
-    sym->setRealRegister();
-    _registerSymbolRefs->operator[](i) = symRef; //FIXME: Why doesn't this just use the operator directly?
-    }
-
-#if defined(TR_TARGET_S390)
-  // Let machine/OS specific setup happen on all these real register symbols we just created
-  comp()->cg()->registerSymbolSetup();
-#endif
-  }
-
-TR::SymbolReference * OMR::SymbolReferenceTable::createRegisterSymbol(TR::ResolvedMethodSymbol *owningMethodSymbol, TR_RegisterKinds regKind, TR::DataType dataType, TR_GlobalRegisterNumber grn)
-  {
-  TR::DataType dt(dataType);
-  int32_t size;
-
-  switch (regKind)
-    {
-    case TR_GPR:
-      if (TR::Compiler->target.is64Bit())
-        {
-        dt = TR::Int64;
-        size = 8;
-        }
-      else
-        {
-        dt = TR::Int32;
-        size = 4;
-        }
-      break;
-    case TR_FPR:
-      dt = TR::Double;
-      size = 8;
-      break;
-    case TR_AR:
-      dt = TR::Int32;
-      size = 4;
-      break;
-    case TR_VRF:
-       dt = TR::VectorDouble;
-       size = 16;
-       break;
-    default:
-      TR_ASSERT(0, "Only GPR, FPR, VRF and ARs exist for now");
-      break;
-    }
-
-   if (!_registerSymbolRefs)
-     {
-     initRegisterSymbols(owningMethodSymbol);
-     }
-
-   mcount_t noMethod;
-   mcount_t owningMethodIndex = owningMethodSymbol!=NULL ? owningMethodSymbol->getResolvedMethodIndex() : noMethod;
-   if(dataType != TR::NoType)
-     dt = dataType;
-   TR::Symbol * sym = TR::AutomaticSymbol::createRegisterSymbol(trHeapMemory(), regKind, grn, dt, size, fe());
-   TR::SymbolReference *symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodIndex, 0 /* slot */);
-
-   return symRef;
-
-  }
-
-TR::SymbolReference * OMR::SymbolReferenceTable::getRegisterSymbol(TR_GlobalRegisterNumber grn)
-  {
-  if(!_registerSymbolRefs) initRegisterSymbols(comp()->getMethodSymbol());
-  return _registerSymbolRefs->element(grn);
-  }
-
-
 
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findStaticSymbol(TR_ResolvedMethod * owningMethod, int32_t cpIndex, TR::DataType type)
@@ -1773,14 +1690,6 @@ OMR::SymbolReferenceTable::makeAutoAvailableForIlGen(TR::SymbolReference * a)
       _availableAutos.add(a);
    }
 
-static bool parmSlotCameFromExpandingAnArchetypeArgPlaceholder(int32_t slot, TR::ResolvedMethodSymbol *sym, TR_Memory *mem)
-   {
-   TR_ResolvedMethod *meth = sym->getResolvedMethod();
-   if (meth->convertToMethod()->isArchetypeSpecimen())
-      return slot >= meth->archetypeArgPlaceholderSlot(mem);
-   else
-      return false;
-   }
 
 TR::ParameterSymbol *
 OMR::SymbolReferenceTable::createParameterSymbol(
@@ -1788,16 +1697,9 @@ OMR::SymbolReferenceTable::createParameterSymbol(
    {
    TR::ParameterSymbol * sym = TR::ParameterSymbol::create(trHeapMemory(),type,isUnsigned,slot);
 
-   if (comp()->getOption(TR_MimicInterpreterFrameShape))
-      {
-      int32_t parameterSlots = owningMethodSymbol->getNumParameterSlots();
-      sym->setGCMapIndex(-slot + parameterSlots - sym->getNumberOfSlots());
-      }
-
    TR::SymbolReference *symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), slot);
    owningMethodSymbol->setParmSymRef(slot, symRef);
-   if (!parmSlotCameFromExpandingAnArchetypeArgPlaceholder(slot, owningMethodSymbol, trMemory()))
-      owningMethodSymbol->getAutoSymRefs(slot).add(symRef);
+   owningMethodSymbol->getAutoSymRefs(slot).add(symRef);
 
    return sym;
    }
@@ -1814,7 +1716,7 @@ OMR::SymbolReferenceTable::createTemporary(TR::ResolvedMethodSymbol * owningMeth
    }
 
 TR::SymbolReference *
-OMR::SymbolReferenceTable::createCoDependententTemporary(TR::ResolvedMethodSymbol *owningMethodSymbol, TR::DataType type, bool isInternalPointer, size_t size, TR::Symbol *coDependent, int32_t offset)
+OMR::SymbolReferenceTable::createCoDependentTemporary(TR::ResolvedMethodSymbol *owningMethodSymbol, TR::DataType type, bool isInternalPointer, size_t size, TR::Symbol *coDependent, int32_t offset)
    {
    TR::SymbolReference *tempSymRef = findOrCreateAutoSymbol(owningMethodSymbol, offset, type, true, isInternalPointer, false, false, size);
    return tempSymRef;
@@ -1999,7 +1901,7 @@ void OMR::SymbolReferenceTable::makeSharedAliases(TR::SymbolReference *sr1, TR::
        aliases1->empty();
        _sharedAliasMap->insert(std::make_pair(symRefNum1, aliases1));
        }
- 
+
     if (aliases2 == NULL)
        {
        aliases2 = new (comp()->trHeapMemory()) TR_BitVector(self()->getNumSymRefs(), comp()->trMemory(), heapAlloc);

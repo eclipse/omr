@@ -55,10 +55,14 @@ extern void masterSynchSignalHandler(int nbr, siginfo_t *siginfo,
 #define    KEY0(a)    do { cinfc(CINFC_WRITE, CINFC_CMMJDB); } while(0)
 #define    UNKEY(a) do { keyrc(); } while(0)
 
-char javaPgmsToDump[][5] = { "DJBV", "DJHK", "DJNC", "DJVB", "DJCK", "DJHS",
+char javaPgmsToDump[][5] = { /* clean programs */ "DJHK", "DJNC", "DJVB", "DJCK", "DJHS",
 		"DJPR", "DJVM", "DJDD", "DJHT", "DJRD", "DJZL", "DJDP", "DJHV", "DJSG",
 		"D9VM", "DJDY", "DJHY", "DJSH", "DJ7B", "DJGC", "DJIT", "DJTH", "DJAR",
-		"DJGK", "DJMT", "DJTR" };
+		"DJGK", "DJMT", "DJTR", "DJFF", "DJXT", "DJOR", /* dirty programs */ "DJVA",
+		"DJRM", "DJNM", "DJAT", "DJAW", "DJAH", "DJDB", "DJDC", "DJDS", "DJFM",
+		"DJHP", "DJIN", "DJAV", "DJCD", "DJJW", "DJWP", "DJLI", "DJPG", "DJSD",
+		"DJSN", "DJKC", "DJLC", "DJMN", "DJML", "DJNT", "DJIO", "DJPT", "DJTK",
+		"DJUN", "DJVR", "DJWR", "DJZP"};
 
 /**
  * The ELF program header permission bits for read, write, and execute combined
@@ -424,10 +428,7 @@ ztpfBuildCoreFile(void *argv_block)
 	sprintf((char *)workSpace(arg), "core.%lX.%d", dibPtr->dstckf,
 			dumpSiginfo(arg)->si_pid);
 	{
-		int pathLen = strlen(pathName);
-		char ebcdicPath[pathLen + 1];
-		a2e_len(pathName, ebcdicPath, strlen(pathName));
-		int fsystype = pathconf(ebcdicPath, _TPF_PC_FS_TYPE);
+		int fsystype = pathconf(pathName, _TPF_PC_FS_TYPE);
 		if (fsystype == MOUNT_TFS) {
 			errMsg(arg, (uint8_t *)"Cannot use the tfs for java dumps: path used='%s'\n",
 					(uint8_t *)pathName);
@@ -851,7 +852,7 @@ buildELFNoteArea(Elf64_Nhdr *buffer, DIB *dibPtr)
 	 * fractional. Does it really matter? Nah. But if you're gonna do it, you might
 	 * as well do it right ....
 	 */
-	prstat->stime.tv_usec = ecbptr()->ce1istim / 4098; /* Used CPU time    */
+	prstat->stime.tv_usec = *((unsigned long long *)(tpf_get_ecb_field(CE1ISTIM_FIELD)))/4098;
 	wDest = (uint8_t *) &(prstat->reg); /* Point at offset +0 of reg fld    */
 	/*
 	 *     The PGM/O PSW is followed by a 16-wide array of ULONGs which

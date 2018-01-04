@@ -34,8 +34,8 @@
 #include "infra/Cfg.hpp"                            // for CFG
 #include "infra/Link.hpp"                           // for TR_LinkHead
 #include "infra/List.hpp"
-#include "infra/TRCfgEdge.hpp"                      // for CFGEdge
-#include "infra/TRCfgNode.hpp"                      // for CFGNode
+#include "infra/CfgEdge.hpp"                        // for CFGEdge
+#include "infra/CfgNode.hpp"                        // for CFGNode
 #include "optimizer/Structure.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,8 +41,8 @@
 #include "infra/BitVector.hpp"                 // for TR_BitVector, etc
 #include "infra/Cfg.hpp"                       // for CFG
 #include "infra/List.hpp"                      // for ListIterator, List, etc
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "ras/Debug.hpp"                       // for TR_Debug, etc
 
 void

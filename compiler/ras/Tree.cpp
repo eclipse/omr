@@ -59,8 +59,8 @@
 #include "infra/Flags.hpp"                            // for flags32_t
 #include "infra/List.hpp"                             // for ListIterator, etc
 #include "infra/SimpleRegex.hpp"
-#include "infra/TRCfgEdge.hpp"                        // for CFGEdge
-#include "infra/TRCfgNode.hpp"                        // for CFGNode
+#include "infra/CfgEdge.hpp"                          // for CFGEdge
+#include "infra/CfgNode.hpp"                          // for CFGNode
 #include "optimizer/Optimizations.hpp"                // for Optimizations
 #include "optimizer/Optimizer.hpp"                    // for Optimizer
 #include "optimizer/Structure.hpp"

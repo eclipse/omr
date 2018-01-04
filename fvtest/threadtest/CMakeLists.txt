@@ -93,6 +93,8 @@ if(OMR_HOST_OS STREQUAL "zos")
 	target_link_libraries(omrthreadtest j9a2e)
 endif()
 
+set_property(TARGET omrthreadtest PROPERTY FOLDER fvtest)
+
 add_test(NAME threadtest COMMAND omrthreadtest)
 add_test(NAME threadSetAttrThreadWeightTest COMMAND omrthreadtest --gtest_also_run_disabled_tests --gtest_filter=ThreadCreateTest.DISABLED_SetAttrThreadWeight)
 if(OMR_HOST_OS STREQUAL "linux")

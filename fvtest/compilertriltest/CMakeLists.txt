@@ -42,12 +42,15 @@ add_executable(comptest
 	MockStrategyTest.cpp
 	LogicalTest.cpp
 	LinkageTest.cpp
+	BitPermuteTest.cpp
 )
 
 target_link_libraries(comptest
 	omrGtestGlue
 	tril
 )
+
+set_property(TARGET comptest PROPERTY FOLDER fvtest)
 
 add_test(
 	NAME comptest

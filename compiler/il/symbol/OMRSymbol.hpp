@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -147,7 +147,6 @@ public:
    inline TR::AutomaticSymbol                        *getVariableSizeSymbol();
    inline TR::StaticSymbol                           *getCallSiteTableEntrySymbol();
    inline TR::StaticSymbol                           *getMethodTypeTableEntrySymbol();
-   inline TR::AutomaticSymbol                        *getRegisterSymbol();
 
    // These methods perform an explicit (debug) assume that the symbol is a correct type
    // and then return the symbol explicitly cast to the type.
@@ -165,7 +164,6 @@ public:
    inline TR::RegisterMappedSymbol            *castToMethodMetaDataSymbol();
    inline TR::LabelSymbol                     *castToLabelSymbol();
    inline TR::ResolvedMethodSymbol            *castToJittedMethodSymbol();
-   inline TR::AutomaticSymbol                 *castToRegisterSymbol();
 
    inline TR::StaticSymbol                    *castToStaticSymbol();
    inline TR::StaticSymbol                    *castToNamedStaticSymbol();
@@ -290,9 +288,6 @@ public:
 
    inline void setPinningArrayPointer();
    inline bool isPinningArrayPointer();
-
-   inline bool isRegisterSymbol();
-   inline void setIsRegisterSymbol();
 
    inline void setAutoAddressTaken();
    inline bool isAutoAddressTaken();
@@ -492,7 +487,7 @@ public:
                                               ///< to behave as regular locals to
                                               ///< preserve floating point semantics
       PinningArrayPointer       = 0x10000000,
-      RegisterAuto              = 0x00020000, ///< Symbol to be translated to register at instruction selection
+      // Available              = 0x00020000,
       AutoAddressTaken          = 0x04000000, ///< a loadaddr of this auto exists
       SpillTempLoaded           = 0x04000000, ///< share bit with loadaddr because spill temps will never have their address taken. Used to remove store to spill if never loaded
       AutoMarkerSymbol          = 0x02000000, ///< dummy symbol marking some auto boundary
@@ -562,7 +557,7 @@ public:
       HasAddrTaken              = 0x00000010, // used to denote that we have a loadaddr of this symbol
       MethodTypeTableEntry      = 0x00000020, // JSR292
       NotDataAddress            = 0x00000040, // isStatic only: AOT
-      RealRegister              = 0x00000080, // RegisterSymbol is machine real register
+      // Available              = 0x00000080,
       UnsafeShadow              = 0x00000100,
       NamedShadow               = 0x00000200,
       ImmutableField            = 0x00000400,

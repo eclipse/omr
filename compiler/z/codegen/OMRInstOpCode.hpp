@@ -33,16 +33,108 @@ namespace OMR { typedef OMR::Z::InstOpCode InstOpCodeConnector; }
 #error OMR::Z::InstOpCode expected to be a primary connector, but a OMR connector is already defined
 #endif
 
+#include <stdint.h>
 #include "compiler/codegen/OMRInstOpCode.hpp"
-
+#include "env/Processors.hpp"
 #include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Node; }
 
+class TR_S390ProcessorInfo
+   {
+   public:
+
+   enum TR_S390ProcessorArchitectures
+      {
+      TR_UnknownArchitecture = 0,
+      TR_ESA390 = 1,
+      TR_z900 = 2,
+      TR_z990 = 3,
+      TR_z9 = 4,
+      TR_z10 = 5,
+      TR_z196 = 6,
+      TR_zEC12 = 7,
+      TR_z13 = 8,
+      TR_z14 = 9,
+      TR_zNext = 10,
+
+      TR_LatestArchitecture = TR_zNext
+      };
+
+   bool crossCompile() { return _crossCompile; }
+
+   bool supportsArch(TR_S390ProcessorArchitectures arch)
+      {
+      TR_ASSERT(arch >= TR_UnknownArchitecture && arch <= TR_LatestArchitecture, "Invalid Processor Architecture.");
+      return _processorArchitecture >= arch;
+      }
+
+   void disableArch(TR_S390ProcessorArchitectures arch)
+      {
+      TR_ASSERT(arch > TR_UnknownArchitecture && arch <= TR_LatestArchitecture, "Invalid Processor Architecture.");
+      _processorArchitecture = _processorArchitecture < arch ? _processorArchitecture : (TR_S390ProcessorArchitectures)((uint32_t)arch - 1);
+      }
+
+   void enableArch(TR_S390ProcessorArchitectures arch)
+      {
+      TR_ASSERT(arch >= TR_UnknownArchitecture && arch <= TR_LatestArchitecture, "Invalid Processor Architecture.");
+      _processorArchitecture = _processorArchitecture > arch ? _processorArchitecture : arch;
+      }
+
+   TR_Processor getProcessor();
+
+   TR_S390ProcessorArchitectures _processorArchitecture;
+
+   bool _crossCompile;
+
+   TR_S390ProcessorInfo()
+      :
+      _processorArchitecture(TR_UnknownArchitecture),
+      _crossCompile(false)
+      {
+#ifndef TR_HOST_S390
+      _crossCompile = true;
+#endif
+      initialize();
+      }
+
+   bool checkz900();
+   bool checkz10();
+   bool checkz990();
+   bool checkz9();
+   bool checkz196();
+   bool checkzEC12();
+   bool checkZ13();
+   bool checkZ14();
+   bool checkZNext();
+
+   void initialize()
+      {
+      if (checkZNext())
+         _processorArchitecture = TR_zNext;
+      else if (checkZ14())
+         _processorArchitecture = TR_z14;
+      else if (checkZ13())
+         _processorArchitecture = TR_z13;
+      else if (checkzEC12())
+         _processorArchitecture = TR_zEC12;
+      else if (checkz196())
+         _processorArchitecture = TR_z196;
+      else if (checkz10())
+         _processorArchitecture = TR_z10;
+      else if (checkz9())
+         _processorArchitecture = TR_z9;
+      else if (checkz990())
+         _processorArchitecture = TR_z990;
+      else if (checkz900())
+         _processorArchitecture = TR_z900;
+      }
+   };
+
 namespace OMR
 {
-
 namespace Z
 {
 
@@ -308,19 +400,20 @@ namespace Z
 #define   VSI_FORMAT    59
 
 /* Instruction Properties (One hot encoding) */
+#define S390OpProp_None                   static_cast<uint64_t>(0x0000000000000000ull)
 #define S390OpProp_UsesTarget             static_cast<uint64_t>(0x0000000000000001ull)
 #define S390OpProp_SingleFP               static_cast<uint64_t>(0x0000000000000002ull)
 #define S390OpProp_DoubleFP               static_cast<uint64_t>(0x0000000000000004ull)
 #define S390OpProp_SetsZeroFlag           static_cast<uint64_t>(0x0000000000000008ull)
 #define S390OpProp_SetsSignFlag           static_cast<uint64_t>(0x0000000000000010ull)
-#define S390OpProp_SetsCarryFlag          static_cast<uint64_t>(0x0000000000000020ull)
+// Available                              static_cast<uint64_t>(0x0000000000000020ull)
 #define S390OpProp_SetsOverflowFlag       static_cast<uint64_t>(0x0000000000000040ull)
 #define S390OpProp_BranchOp               static_cast<uint64_t>(0x0000000000000080ull)
 #define S390OpProp_IsLoad                 static_cast<uint64_t>(0x0000000000000100ull)
 #define S390OpProp_IsStore                static_cast<uint64_t>(0x0000000000000200ull)
-#define S390OpProp_IsSync                 static_cast<uint64_t>(0x0000000000000400ull)
-#define S390OpProp_ReadsMultipleRegs      static_cast<uint64_t>(0x0000000000000800ull)
-#define S390OpProp_SetsMultipleRegs       static_cast<uint64_t>(0x0000000000001000ull)
+// Available                              static_cast<uint64_t>(0x0000000000000400ull)
+// Available                              static_cast<uint64_t>(0x0000000000000800ull)
+// Available                              static_cast<uint64_t>(0x0000000000001000ull)
 #define S390OpProp_Is64Bit                static_cast<uint64_t>(0x0000000000002000ull)
 #define S390OpProp_Is32Bit                static_cast<uint64_t>(0x0000000000004000ull)
 #define S390OpProp_Is32To64Bit            static_cast<uint64_t>(0x0000000000008000ull)
@@ -335,11 +428,11 @@ namespace Z
 #define S390OpProp_UsesRegRangeForTarget  static_cast<uint64_t>(0x0000000001000000ull)
 #define S390OpProp_IsRegCopy              static_cast<uint64_t>(0x0000000002000000ull)
 #define S390OpProp_Trap                   static_cast<uint64_t>(0x0000000004000000ull)
-#define S390OpProp_ReadsDFPRoundingMode   static_cast<uint64_t>(0x0000000008000000ull)
-#define S390OpProp_SetsDFPRoundingMode    static_cast<uint64_t>(0x0000000010000000ull)
+// Available                              static_cast<uint64_t>(0x0000000008000000ull)
+// Available                              static_cast<uint64_t>(0x0000000010000000ull)
 #define S390OpProp_ReadsFPC               static_cast<uint64_t>(0x0000000020000000ull)
 #define S390OpProp_SetsFPC                static_cast<uint64_t>(0x0000000040000000ull)
-#define S390OpProp_UsesImplicitRegisters  static_cast<uint64_t>(0x0000000080000000ull)
+// Available                              static_cast<uint64_t>(0x0000000080000000ull)
 #define S390OpProp_TargetHW               static_cast<uint64_t>(0x0000000100000000ull)
 #define S390OpProp_TargetLW               static_cast<uint64_t>(0x0000000200000000ull)
 #define S390OpProp_SrcHW                  static_cast<uint64_t>(0x0000000400000000ull)
@@ -354,16 +447,16 @@ namespace Z
 #define S390OpProp_ImplicitlySetsGPR1     static_cast<uint64_t>(0x0000080000000000ull)
 #define S390OpProp_ImplicitlySetsGPR2     static_cast<uint64_t>(0x0000100000000000ull)
 #define S390OpProp_IsCompare              static_cast<uint64_t>(0x0000200000000000ull)
-#define S390OpProp_MayUseRegPairForTarget static_cast<uint64_t>(0x0000400000000000ull)
-#define S390OpProp_IsYForm                static_cast<uint64_t>(0x0000800000000000ull)
-#define S390OpProp_IsImplicitLoad         static_cast<uint64_t>(0x0001000000000000ull)
-#define S390OpProp_IsImplicitStore        static_cast<uint64_t>(0x0002000000000000ull)
-#define S390OpProp_MemRefOneIsStore       static_cast<uint64_t>(0x0004000000000000ull)
-#define S390OpProp_MemRefOneIsLoad        static_cast<uint64_t>(0x0008000000000000ull)
-#define S390OpProp_MemRefTwoIsStore       static_cast<uint64_t>(0x0010000000000000ull)
-#define S390OpProp_MemRefTwoIsLoad        static_cast<uint64_t>(0x0020000000000000ull)
-#define S390OpProp_SSSchedulingCandidate  static_cast<uint64_t>(0x0040000000000000ull)
-#define S390OpProp_IsExecutionHint        static_cast<uint64_t>(0x0080000000000000ull)
+// Available                              static_cast<uint64_t>(0x0000400000000000ull)
+// Available                              static_cast<uint64_t>(0x0000800000000000ull)
+// Available                              static_cast<uint64_t>(0x0001000000000000ull)
+// Available                              static_cast<uint64_t>(0x0002000000000000ull)
+// Available                              static_cast<uint64_t>(0x0004000000000000ull)
+// Available                              static_cast<uint64_t>(0x0008000000000000ull)
+// Available                              static_cast<uint64_t>(0x0010000000000000ull)
+// Available                              static_cast<uint64_t>(0x0020000000000000ull)
+// Available                              static_cast<uint64_t>(0x0040000000000000ull)
+// Available                              static_cast<uint64_t>(0x0080000000000000ull)
 #define S390OpProp_SetsOperand1           static_cast<uint64_t>(0x0100000000000000ull)
 #define S390OpProp_SetsOperand2           static_cast<uint64_t>(0x0200000000000000ull)
 #define S390OpProp_SetsOperand3           static_cast<uint64_t>(0x0400000000000000ull)
@@ -371,7 +464,7 @@ namespace Z
 #define S390OpProp_ImplicitlySetsGPR3     static_cast<uint64_t>(0x1000000000000000ull)
 #define S390OpProp_ImplicitlySetsGPR4     static_cast<uint64_t>(0x2000000000000000ull)
 #define S390OpProp_ImplicitlySetsGPR5     static_cast<uint64_t>(0x4000000000000000ull)
-#define S390OpProp_IsSignedImmediate      static_cast<uint64_t>(0x8000000000000000ull)
+// Available                              static_cast<uint64_t>(0x8000000000000000ull)
 
 /* Instruction Properties 2 (One hot encoding) */
 #define S390OpProp2_UsesM3                static_cast<uint64_t>(0x0000000000000001ull)
@@ -471,11 +564,17 @@ class InstOpCode: public OMR::InstOpCode
       S390NumBranchConditions = lastBranchCondition +1
       };
 
-   typedef struct
-         {
-         uint8_t bytes[2];
-         uint8_t instructionFormat;
-         } OpCodeBinaryEntry;
+   struct OpCodeBinaryEntry
+      {
+      uint8_t bytes[2];
+      uint8_t instructionFormat;
+
+      /**
+       *  \brief
+       *      The minimum architecture level set (ALS) which introduced this instruction.
+       */
+      TR_S390ProcessorInfo::TR_S390ProcessorArchitectures minimumALS;
+      };
 
 
    /* Static tables(array) that uses the OpCode as the index */
@@ -488,6 +587,17 @@ class InstOpCode: public OMR::InstOpCode
    uint8_t getFirstByte(){return binaryEncodings[_mnemonic].bytes[0];}
    uint8_t getSecondByte() {return binaryEncodings[_mnemonic].bytes[1];}
 
+   /**
+    * \brief
+    *    Gets the minimum architecture level set (ALS) which introduced this instruction.
+    *
+    * \return
+    *    The minimum ALS of this instruction.
+    */
+   TR_S390ProcessorInfo::TR_S390ProcessorArchitectures getMinimumALS() const
+      {
+      return binaryEncodings[_mnemonic].minimumALS;
+      }
 
    /* Queries for instruction properties */
    uint32_t hasBypass();
@@ -509,7 +619,6 @@ class InstOpCode: public OMR::InstOpCode
    uint64_t isCall() {return properties[_mnemonic] & S390OpProp_IsCall;}
    uint64_t isCompare() {return properties[_mnemonic] & S390OpProp_IsCompare;}
    uint64_t isExtendedImmediate() {return properties[_mnemonic] & S390OpProp_IsExtendedImmediate;}
-   uint64_t isSignedImmediate() {return properties[_mnemonic] & S390OpProp_IsSignedImmediate;}
    uint64_t isTargetHW() {return properties[_mnemonic] & S390OpProp_TargetHW;}
    uint64_t isTargetLW() {return properties[_mnemonic] & S390OpProp_TargetLW;}
    uint64_t isSrcHW() {return properties[_mnemonic] & S390OpProp_SrcHW;}
@@ -522,13 +631,11 @@ class InstOpCode: public OMR::InstOpCode
    uint64_t is32bit() {return properties[_mnemonic] & S390OpProp_Is32Bit;}
    uint64_t is32to64bit() {return properties[_mnemonic] & S390OpProp_Is32To64Bit;}
 
-   uint64_t usesImplicitRegisters() { return properties[_mnemonic] & S390OpProp_UsesImplicitRegisters;}
    uint64_t hasLongDispSupport() {return properties[_mnemonic] & S390OpProp_LongDispSupported;}
    uint64_t usesRegPairForTarget() {return properties[_mnemonic] & S390OpProp_UsesRegPairForTarget; }
-   uint64_t mayUseRegPairForTarget() { return properties[_mnemonic] & S390OpProp_MayUseRegPairForTarget; }
    uint64_t usesRegPairForSource() {return properties[_mnemonic] & S390OpProp_UsesRegPairForSource; }
    uint64_t usesRegRangeForTarget(){return properties[_mnemonic] & S390OpProp_UsesRegRangeForTarget; }
-   uint64_t canUseRegPairForTarget() {return usesRegPairForTarget() || usesRegRangeForTarget() || mayUseRegPairForTarget(); }
+   uint64_t canUseRegPairForTarget() {return usesRegPairForTarget() || usesRegRangeForTarget(); }
    uint64_t shouldUseRegPairForTarget() {return usesRegPairForTarget(); }
 
    uint64_t implicitlyUsesGPR0() { return properties[_mnemonic] & S390OpProp_ImplicitlyUsesGPR0; }
@@ -550,32 +657,17 @@ class InstOpCode: public OMR::InstOpCode
    uint64_t setsCC() {return (setsZeroFlag() || setsSignFlag() || setsOverflowFlag() || setsCompareFlag() || setsCarryFlag() || (properties[_mnemonic] & S390OpProp_SetsCC));}
    uint64_t readsCC() {return properties[_mnemonic] & S390OpProp_ReadsCC;}
 
-   uint64_t readsMultipleRegs() {return properties[_mnemonic] & S390OpProp_ReadsMultipleRegs;}
-   uint64_t setsMultipleRegs() {return properties[_mnemonic] & S390OpProp_SetsMultipleRegs;}
    uint64_t setsZeroFlag() {return properties[_mnemonic] & S390OpProp_SetsZeroFlag;}
    uint64_t setsSignFlag() {return properties[_mnemonic] & S390OpProp_SetsSignFlag;}
-   uint64_t setsCarryFlag() {return properties[_mnemonic] & S390OpProp_SetsCarryFlag;}
    uint64_t setsOverflowFlag() {return properties[_mnemonic] & S390OpProp_SetsOverflowFlag;}
    uint64_t setsCompareFlag() {return properties[_mnemonic] & S390OpProp_SetsCompareFlag;}
+   uint64_t setsCarryFlag() { return setsZeroFlag(); }
 
    uint64_t isRegCopy() {return properties[_mnemonic] & S390OpProp_IsRegCopy; }
    uint64_t hasTwoMemoryReferences() {return properties[_mnemonic] & S390OpProp_HasTwoMemoryReferences;}
 
-   uint64_t readsDFPRoundingMode() {return properties[_mnemonic] & S390OpProp_ReadsDFPRoundingMode; }
-   uint64_t setsDFPRoundingMode() {return properties[_mnemonic] & S390OpProp_SetsDFPRoundingMode; }
-
    uint64_t readsFPC() {return properties[_mnemonic] & S390OpProp_ReadsFPC; }
    uint64_t setsFPC() {return properties[_mnemonic] & S390OpProp_SetsFPC; }
-
-   uint64_t mr1IsStore()   {return properties[_mnemonic] & S390OpProp_MemRefOneIsStore;}
-   uint64_t mr1IsLoad()    {return properties[_mnemonic] & S390OpProp_MemRefOneIsLoad;}
-   uint64_t mr2IsStore()   {return properties[_mnemonic] & S390OpProp_MemRefTwoIsStore;}
-   uint64_t mr2IsLoad()    {return properties[_mnemonic] & S390OpProp_MemRefTwoIsLoad;}
-
-   uint64_t isSSSchedulingCandidate()  {return properties[_mnemonic] & S390OpProp_SSSchedulingCandidate;}
-   uint64_t isYForm() {return properties[_mnemonic] & S390OpProp_IsYForm; }
-   uint64_t isImplicitLoad()  {return properties[_mnemonic] & S390OpProp_IsImplicitLoad; }   // like CLCL R1,R2
-   uint64_t isImplicitStore() {return properties[_mnemonic] & S390OpProp_IsImplicitStore; }  // like MVCL R1,R2
 
    uint64_t isLabel() {return _mnemonic == LABEL;}
    uint64_t isBeginBlock() {return _mnemonic == LABEL;}
@@ -609,104 +701,61 @@ class InstOpCode: public OMR::InstOpCode
    static Mnemonic getLoadAddressOpCode();
    static Mnemonic getLoadOpCode();
    static Mnemonic getLoadAndMaskOpCode();
-   static Mnemonic getLoadOpCodeFromNode(TR::Node *node);
    static Mnemonic getExtendedLoadOpCode();
-   static Mnemonic getExtendedLoadOpCodeFromNode(TR::Node *node);
    static Mnemonic getLoadRegOpCode();
    static Mnemonic getLoadRegOpCodeFromNode(TR::CodeGenerator *cg, TR::Node *node);
    static Mnemonic getLoadTestRegOpCode();
-   static Mnemonic getLoadTestRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getLoadComplementOpCode();
-   static Mnemonic getLoadComplementOpCodeFromNode(TR::Node *node);
    static Mnemonic getLoadHalfWordOpCode();
-   static Mnemonic getLoadHalfWordOpCodeFromNode(TR::Node *node);
    static Mnemonic getLoadHalfWordImmOpCode();
-   static Mnemonic getLoadHalfWordImmOpCodeFromNode(TR::Node *node);
    static Mnemonic getLoadPositiveOpCode();
-   static Mnemonic getLoadPositiveOpCodeFromNode(TR::Node *node);
    static Mnemonic getLoadMultipleOpCode();
    static Mnemonic getLoadNegativeOpCode();
-   static Mnemonic getLoadNegativeOpCodeFromNode(TR::Node *node);
    static Mnemonic getLoadAndTrapOpCode();
    static Mnemonic getExtendedStoreOpCode();
-   static Mnemonic getExtendedStoreOpCodeFromNode(TR::Node *node);
    static Mnemonic getStoreOpCode();
-   static Mnemonic getStoreOpCodeFromNode(TR::Node *node);
    static Mnemonic getStoreMultipleOpCode();
    static Mnemonic getCmpHalfWordImmOpCode();
-   static Mnemonic getCmpHalfWordImmOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpHalfWordImmToMemOpCode();
-   static Mnemonic getCmpHalfWordImmToMemOpCodeFromNode(TR::Node *node);
    static Mnemonic getAndRegOpCode();
-   static Mnemonic getAndRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getAndOpCode();
-   static Mnemonic getAndOpCodeFromNode(TR::Node *node);
    static Mnemonic getBranchOnCountOpCode();
-   static Mnemonic getBranchOnCountOpCodeFromNode(TR::Node *node);
    static Mnemonic getAddOpCode();
-   static Mnemonic getAddOpCodeFromNode(TR::Node *node);
    static Mnemonic getAddRegOpCode();
-   static Mnemonic getAddRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getAddThreeRegOpCode();
    static Mnemonic getAddLogicalThreeRegOpCode();
    static Mnemonic getAddLogicalRegRegImmediateOpCode();
    static Mnemonic getSubstractOpCode();
-   static Mnemonic getSubstractOpCodeFromNode(TR::Node *node);
    static Mnemonic getSubstractRegOpCode();
-   static Mnemonic getSubstractRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getSubtractThreeRegOpCode();
-   static Mnemonic getSubtractThreeRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getSubtractLogicalImmOpCode();
-   static Mnemonic getSubtractLogicalImmOpCodeFromNode(TR::Node *node);
    static Mnemonic getSubtractLogicalThreeRegOpCode();
    static Mnemonic getMultiplySingleOpCode();
-   static Mnemonic getMultiplySingleOpCodeFromNode(TR::Node *node);
    static Mnemonic getMultiplySingleRegOpCode();
-   static Mnemonic getMultiplySingleRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getOrOpCode();
-   static Mnemonic getOrOpCodeFromNode(TR::Node *node);
    static Mnemonic getOrRegOpCode();
-   static Mnemonic getOrRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getOrThreeRegOpCode();
    static Mnemonic getXOROpCode();
-   static Mnemonic getXOROpCodeFromNode(TR::Node *node);
    static Mnemonic getXORRegOpCode();
-   static Mnemonic getXORRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getXORThreeRegOpCode();
    static Mnemonic getCmpTrapOpCode();
-   static Mnemonic getCmpTrapOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpWidenTrapOpCode();
-   static Mnemonic getCmpWidenTrapOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpImmOpCode();
    static Mnemonic getCmpImmTrapOpCode();
-   static Mnemonic getCmpImmTrapOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpLogicalTrapOpCode();
-   static Mnemonic getCmpLogicalTrapOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpLogicalWidenTrapOpCode();
-   static Mnemonic getCmpLogicalWidenTrapOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpLogicalImmTrapOpCode();
-   static Mnemonic getCmpLogicalImmTrapOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpOpCode();
-   static Mnemonic getCmpOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpRegOpCode();
-   static Mnemonic getCmpRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpLogicalOpCode();
-   static Mnemonic getCmpLogicalOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpLogicalRegOpCode();
-   static Mnemonic getCmpLogicalRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpAndSwapOpCode();
-   static Mnemonic getCmpAndSwapOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpLogicalImmOpCode();
-   static Mnemonic getCmpLogicalImmOpCodeFromNode(TR::Node *node);
    static Mnemonic getShiftLeftLogicalSingleOpCode();
    static Mnemonic getShiftRightLogicalSingleOpCode();
-   static Mnemonic getShiftLeftLogicalSingleOpCodeFromNode(TR::Node *node);
    static Mnemonic getAddHalfWordImmOpCode();
-   static Mnemonic getAddHalfWordImmOpCodeFromNode(TR::Node *node);
    static Mnemonic getAddLogicalOpCode();
-   static Mnemonic getAddLogicalOpCodeFromNode(TR::Node *node);
    static Mnemonic getAddLogicalRegOpCode();
-   static Mnemonic getAddLogicalRegOpCodeFromNode(TR::Node *node);
    static Mnemonic getBranchOnIndexHighOpCode();
    static Mnemonic getBranchOnIndexEqOrLowOpCode();
    static Mnemonic getBranchRelIndexHighOpCode();
@@ -725,13 +774,9 @@ class InstOpCode: public OMR::InstOpCode
    static Mnemonic getSubstractWidenOpCode();
    static Mnemonic getSubStractRegWidenOpCode();
    static Mnemonic getCmpWidenOpCode();
-   static Mnemonic getCmpWidenOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpRegWidenOpCode();
-   static Mnemonic getCmpRegWidenOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpLogicalWidenOpCode();
-   static Mnemonic getCmpLogicalWidenOpCodeFromNode(TR::Node *node);
    static Mnemonic getCmpLogicalRegWidenOpCode();
-   static Mnemonic getCmpLogicalRegWidenOpCodeFromNode(TR::Node *node);
    static Mnemonic getLoadComplementRegWidenOpCode();
    static Mnemonic getLoadPositiveRegWidenOpCode();
    static Mnemonic getSubtractWithBorrowOpCode();
@@ -743,13 +788,7 @@ class InstOpCode: public OMR::InstOpCode
    static Mnemonic getStoreRelativeLongOpCode();
    static Mnemonic getLoadRelativeLongOpCode();
    static Mnemonic getMoveHalfWordImmOpCode();
-
-
    };
-
 }
-
 }
-
-
-#endif /* OMR_S390_ARCH_INSTRUCTION_OPCODE_BASE_INCL */
+#endif /* OMR_Z_INSTOPCODE_INCL */

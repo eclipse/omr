@@ -5368,6 +5368,23 @@ class IfxcmpgeToIfxcmpeqReducer
          case TR::iflucmpge:
             result =  isReducibleSpecific<uint64_t>();
             break;
+
+         case TR::ifbcmple:
+         case TR::ifbucmple:
+         case TR::ifscmple:
+         case TR::ifsucmple:
+         case TR::ificmple:
+         case TR::ifiucmple:
+         case TR::iflcmple:
+         case TR::iflucmple:
+            // earlier xforms to reverse children may bring these opcodes here
+            // do not reduce in this case
+            result = false;
+            break;
+
+         default:
+            TR_ASSERT(0, "unexpected opcode provided to isReducible()");
+            break;
          }
 
          return result;
@@ -15249,7 +15266,7 @@ TR::Node *endBlockSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
       node->getBlock()->getNumber(),
       block->getNumber());
 
-   if (s->comp()->isProfilingCompilation())
+   if (s->comp()->getProfilingMode() == JitProfiling)
       return node;
 
    // See if this block has a single successor by looking at the CFG

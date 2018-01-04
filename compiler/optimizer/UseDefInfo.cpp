@@ -55,7 +55,7 @@
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"                                 // for CFG
 #include "infra/List.hpp"
-#include "infra/TRCfgNode.hpp"                           // for CFGNode
+#include "infra/CfgNode.hpp"                             // for CFGNode
 #include "optimizer/CallInfo.hpp"
 #include "optimizer/Optimizer.hpp"                       // for Optimizer
 #include "optimizer/DataFlowAnalysis.hpp"
@@ -288,7 +288,7 @@ void TR_UseDefInfo::prepareUseDefInfo(bool requiresGlobals, bool prefersGlobals,
 
    //  traceMsg(comp(), "Growing useDefInfo to %d\n",getNumUseNodes());
    _useDefInfo.resize(getNumUseNodes(), TR_UseDefInfo::BitVector(comp()->allocator(allocatorName)));
-   //   for (i = getNumUseNodes()-1; i >= 0; --i)        
+   //   for (i = getNumUseNodes()-1; i >= 0; --i)
    //      _useDefInfo[i].GrowTo(getNumDefNodes());
    _isUseDefInfoValid = true;
 
@@ -723,8 +723,7 @@ bool TR_UseDefInfo::isValidAutoOrParm(TR::SymbolReference *symRef)
    symRef->getUseonlyAliases().getAliases(useOnlyAliases);
 
    return  (useDefAliases.PopulationCount() == 1 &&
-            useOnlyAliases.PopulationCount() == 1 &&
-            !comp()->cg()->getLinkage()->isAddressOfStaticSymRef(symRef));
+            useOnlyAliases.PopulationCount() == 1);
    }
 
 bool TR_UseDefInfo::excludedGlobals(TR::Symbol *sym)

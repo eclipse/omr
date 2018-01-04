@@ -49,6 +49,7 @@
 #include "cs2/allocator.h"                     // for heap_allocator
 #include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
+#include "env/CompileTimeProfiler.hpp"         // for TR::CompileTimeProfiler
 #include "env/IO.hpp"                  // for IO (trfflush)
 #include "env/ObjectModel.hpp"                 // for ObjectModel
 #include "env/KnownObjectTable.hpp"            // for KnownObjectTable
@@ -82,9 +83,9 @@
 #include "infra/List.hpp"                      // for List, ListIterator, etc
 #include "infra/Random.hpp"                    // for TR_RandomGenerator
 #include "infra/Stack.hpp"                     // for TR_Stack
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
 #include "infra/Timer.hpp"                     // for TR_SingleTimer
-#include "infra/ThreadLocal.h"         // for tlsDefine
+#include "infra/ThreadLocal.h"                 // for tlsDefine
 #include "optimizer/DebuggingCounters.hpp"     // for TR_DebuggingCounters
 #include "optimizer/Optimizations.hpp"         // for Optimizations, etc
 #include "optimizer/Optimizer.hpp"             // for Optimizer
@@ -93,11 +94,13 @@
 #include "optimizer/TransformUtil.hpp"
 #include "ras/Debug.hpp"                       // for TR_DebugBase
 #include "ras/DebugCounter.hpp"                // for TR_DebugCounterGroup, etc
+#include "ras/ILValidationStrategies.hpp"
+#include "ras/ILValidator.hpp"
 #include "ras/IlVerifier.hpp"                  // for TR::IlVerifier
 #include "control/Recompilation.hpp"           // for TR_Recompilation, etc
 #include "runtime/CodeCacheExceptions.hpp"
 #include "ilgen/IlGen.hpp"                     // for TR_IlGenerator
-
+#include "env/RegionProfiler.hpp"              // for TR::RegionProfiler
 // this ratio defines how full the alias memory region is allowed to become before
 // it is recreated after an optimization finishes
 #define ALIAS_REGION_LOAD_FACTOR 0.75
@@ -219,6 +222,7 @@ OMR::Compilation::Compilation(
    _aliasRegion(heapMemoryRegion),
    _allocatorName(NULL),
    _ilGenerator(0),
+   _ilValidator(NULL),
    _optimizer(0),
    _currentSymRefTab(NULL),
    _recompilationInfo(0),
@@ -852,10 +856,28 @@ OMR::Compilation::pendingPushLivenessDuringIlgen()
    return false;
    }
 
+/**
+ * A profiling compilation will include instrumentation to collect information
+ * on block and value frequencies. isProfilingCompilation() should return true for
+ * such a compilation and getProfilingMode() can distinguish between the profiling
+ * implementations.
+ */
 bool
 OMR::Compilation::isProfilingCompilation()
    {
    return _recompilationInfo ? _recompilationInfo->isProfilingCompilation() : false;
+   }
+
+ProfilingMode
+OMR::Compilation::getProfilingMode()
+   {
+   if (!self()->isProfilingCompilation())
+      return DisabledProfiling;
+
+   if (self()->getOption(TR_EnableJProfiling) || self()->getOption(TR_EnableJProfilingInProfilingCompilations))
+      return JProfiling;
+
+   return JitProfiling;
    }
 
 bool
@@ -971,14 +993,11 @@ int32_t OMR::Compilation::compile()
    if (_recompilationInfo)
       _recompilationInfo->startOfCompilation();
 
-#ifdef J9_PROJECT_SPECIFIC
-   TR_PersistentMethodInfo * methodInfo = TR_PersistentMethodInfo::get(self()->getCurrentMethod());
-   if (methodInfo &&
-       self()->isProfilingCompilation())
-      methodInfo->setProfileInfo(NULL);
-#endif
+   // Create the compile time profiler
+   TR::CompileTimeProfiler perf(self(), "compileTimePerf");
 
    {
+     TR::RegionProfiler rpIlgen(self()->trMemory()->heapMemoryRegion(), *self(), "comp/ilgen");
      if (printCodegenTime) genILTime.startTiming(self());
      _ilGenSuccess = _methodSymbol->genIL(self()->fe(), self(), self()->getSymRefTab(), _ilGenRequest);
      if (printCodegenTime) genILTime.stopTiming(self());
@@ -1008,9 +1027,16 @@ int32_t OMR::Compilation::compile()
          self()->dumpMethodTrees("Initial Trees");
          self()->getDebug()->print(self()->getOutFile(), self()->getSymRefTab());
          }
-#ifndef DISABLE_CFG_CHECK
-      self()->verifyTrees (_methodSymbol);
-      self()->verifyBlocks(_methodSymbol);
+#if !defined(DISABLE_CFG_CHECK)
+      if (self()->getOption(TR_UseILValidator))
+         {
+         self()->validateIL(TR::postILgenValidation);
+         }
+      else
+         {
+         self()->verifyTrees (_methodSymbol);
+         self()->verifyBlocks(_methodSymbol);
+         }
 #endif
 
       if (_recompilationInfo)
@@ -1028,7 +1054,10 @@ int32_t OMR::Compilation::compile()
       TR_DebuggingCounters::initializeCompilation();
       if (printCodegenTime) optTime.startTiming(self());
 
-      self()->performOptimizations();
+         {
+         TR::RegionProfiler rpOpt(self()->trMemory()->heapMemoryRegion(), *self(), "comp/opt");
+         self()->performOptimizations();
+         }
 
       if (printCodegenTime) optTime.stopTiming(self());
 
@@ -1039,6 +1068,13 @@ int32_t OMR::Compilation::compile()
             dumpOptDetails(self(), "successfully verified compressedRefs anchors\n");
          else
             dumpOptDetails(self(), "failed while verifying compressedRefs anchors\n");
+         }
+#endif
+
+#if !defined(DISABLE_CFG_CHECK)
+      if (self()->getOption(TR_UseILValidator))
+         {
+         self()->validateIL(TR::preCodegenValidation);
          }
 #endif
 
@@ -1057,6 +1093,8 @@ int32_t OMR::Compilation::compile()
          _recompilationInfo->beforeCodeGen();
 
         {
+        TR::RegionProfiler rpCodegen(self()->trMemory()->heapMemoryRegion(), *self(), "comp/codegen");
+
         if (printCodegenTime)
            codegenTime.startTiming(self());
 
@@ -1971,6 +2009,12 @@ void OMR::Compilation::switchCodeCache(TR::CodeCache *newCodeCache)
       }
    }
 
+void OMR::Compilation::validateIL(TR::ILValidationContext ilValidationContext)
+   {
+   TR_ASSERT_FATAL(_ilValidator != NULL, "Attempting to validate the IL without the ILValidator being initialized");
+   _ilValidator->validate(TR::omrValidationStrategies[ilValidationContext]);
+   }
+
 void OMR::Compilation::verifyTrees(TR::ResolvedMethodSymbol *methodSymbol)
    {
    if (self()->getDebug() && !self()->getOptions()->getOption(TR_DisableVerification) && !self()->isPeekingMethod())
@@ -2081,62 +2125,10 @@ void OMR::Compilation::registerResolvedMethodSymbolReference(TR::SymbolReference
    }
 
 
-bool OMR::Compilation::notYetRunMeansCold()
+bool
+OMR::Compilation::notYetRunMeansCold()
    {
-   if (_optimizer && !((TR::Optimizer*)_optimizer)->isIlGenOpt())
-      return false;
-
-   TR_ResolvedMethod *currentMethod = self()->getJittedMethodSymbol()->getResolvedMethod();
-
-   intptrj_t initialCount = currentMethod->hasBackwardBranches() ?
-                             self()->getOptions()->getInitialBCount() :
-                             self()->getOptions()->getInitialCount();
-
-   if (currentMethod->convertToMethod()->isBigDecimalMethod() ||
-       currentMethod->convertToMethod()->isBigDecimalConvertersMethod())
-       initialCount = 0;
-
-#ifdef J9_PROJECT_SPECIFIC
-    switch (currentMethod->getRecognizedMethod())
-      {
-      case TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble:
-      case TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat:
-         initialCount = 0;
-         break;
-      default:
-      	break;
-      }
-
-    if (currentMethod->containingClass() == self()->getStringClassPointer())
-       {
-       if (currentMethod->isConstructor())
-          {
-          char *sig = currentMethod->signatureChars();
-          if (!strncmp(sig, "([CIIII)", 8) ||
-              !strncmp(sig, "([CIICII)", 9) ||
-              !strncmp(sig, "(II[C)", 6))
-             initialCount = 0;
-          }
-       else
-          {
-          char *sig = "isRepeatedCharCacheHit";
-          if (strncmp(currentMethod->nameChars(), sig, strlen(sig)) == 0)
-             initialCount = 0;
-          }
-       }
-#endif
-
-   if (
-      self()->isDLT()
-      || (initialCount < TR_UNRESOLVED_IMPLIES_COLD_COUNT)
-      || ((self()->getOption(TR_UnresolvedAreNotColdAtCold) && self()->getMethodHotness() == cold) || self()->getMethodHotness() < cold)
-      || currentMethod->convertToMethod()->isArchetypeSpecimen()
-      || (  self()->getCurrentMethod()
-         && self()->getCurrentMethod()->convertToMethod()->isArchetypeSpecimen())
-      )
-      return false;
-   else
-      return true;
+   return false;
    }
 
 

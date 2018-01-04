@@ -502,24 +502,6 @@ class TR_ReachingDefinitions : public TR_UnionBitVectorAnalysis
    bool           _traceRD;
    };
 
-class TR_ReachingBlocks : public TR_UnionBitVectorAnalysis
-   {
-   public:
-
-   TR_ReachingBlocks(TR::Compilation *comp, TR::Optimizer *optimizer, bool trace = false);
-
-   virtual int32_t perform();
-   virtual Kind getKind();
-   virtual int32_t getNumberOfBits();
-   virtual void analyzeBlockZeroStructure(TR_BlockStructure *);
-   virtual bool supportsGenAndKillSets();
-   virtual void initializeGenAndKillSetInfo();
-
-   private:
-
-   int32_t _numberOfBlocks;
-   };
-
 // The root of the Backward bit vector analysis hierarchy. Extended
 // by Union and Intersection versions. Contains methods that actually
 // define the bit vector analysis rules for each kind of structure.

@@ -267,4 +267,17 @@ Instruction::useRegister(TR::Register *reg)
    if (self()->cg()->getIsInOOLSection())
       reg->incOutOfLineUseCount();
    }
+
+bool
+Instruction::requiresAtomicPatching()
+   {
+   return !(self()->getNode() && self()->getNode()->isStopTheWorldGuard());
+   }
+
+bool
+Instruction::isMergeableGuard()
+   {
+   static char *mergeOnlyHCRGuards = feGetEnv("TR_MergeOnlyHCRGuards");
+   return mergeOnlyHCRGuards ? self()->getNode()->isStopTheWorldGuard() : self()->getNode()->isNopableInlineGuard();
+   }
 }

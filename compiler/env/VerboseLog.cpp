@@ -60,6 +60,7 @@ const char * TR_VerboseLog::_vlogTable[] =
    "#PATCH : ",
    "#DISPATCH: ",
    "#RECLAMATION: ",
+   "#PROFILING: ",
    };
 
 void TR_VerboseLog::writeLine(TR_VlogTag tag, const char *format, ...)

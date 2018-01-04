@@ -54,8 +54,8 @@
 #include "infra/Cfg.hpp"                            // for CFG
 #include "infra/HashTab.hpp"                        // for TR_HashTab, etc
 #include "infra/List.hpp"                           // for List, etc
-#include "infra/TRCfgEdge.hpp"                      // for CFGEdge
-#include "infra/TRCfgNode.hpp"                      // for CFGNode
+#include "infra/CfgEdge.hpp"                        // for CFGEdge
+#include "infra/CfgNode.hpp"                        // for CFGNode
 #include "optimizer/DataFlowAnalysis.hpp"           // for TR_Liveness, etc
 #include "optimizer/Optimization.hpp"               // for Optimization
 #include "optimizer/Optimization_inlines.hpp"

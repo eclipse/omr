@@ -39,7 +39,13 @@ TEST_F(VectorTest, VDoubleAdd) {
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
-
+    //TODO: Re-enable this test on S390 after issue #1843 is resolved. 
+    //
+    // This test is currently disabled on Z platforms because not all Z platforms
+    // have vector support. Determining whether a specific platform has the support
+    // at runtime is currently not possible in tril. So the test is being disabled altogether
+    // on Z for now.
+#ifndef TR_TARGET_S390
     Tril::DefaultCompiler compiler{trees};
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -55,5 +61,5 @@ TEST_F(VectorTest, VDoubleAdd) {
     entry_point(output,inputA,inputB); 
     EXPECT_DOUBLE_EQ(inputA[0] + inputB[0], output[0]); // Epsilon = 4ULP -- is this necessary? 
     EXPECT_DOUBLE_EQ(inputA[1] + inputB[1], output[1]); // Epsilon = 4ULP -- is this necessary? 
-
+#endif
 }

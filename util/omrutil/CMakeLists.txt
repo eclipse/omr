@@ -158,3 +158,5 @@ target_link_libraries(omrutil PUBLIC
 	j9hashtable
 	${OMR_UTIL_GLUE_TARGET}
 )
+
+set_target_properties(omrutil_obj omrutil PROPERTIES FOLDER util)

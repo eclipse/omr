@@ -67,7 +67,7 @@
 #include "infra/List.hpp"                          // for List, ListElement, etc
 #include "infra/Stack.hpp"                         // for TR_Stack
 #include "infra/Statistics.hpp"                    // for TR_Stats
-#include "infra/TRCfgEdge.hpp"                     // for CFGEdge
+#include "infra/CfgEdge.hpp"                       // for CFGEdge
 #include "infra/Timer.hpp"                         // for TR_SingleTimer
 #include "optimizer/Inliner.hpp"                   // for TR_InlineCall
 #include "optimizer/Optimization.hpp"              // for Optimization
@@ -3784,7 +3784,7 @@ void OMR::ValuePropagation::transformConverterCall(TR::TreeTop *callTree)
    dupCallTree->insertAfter(TR::TreeTop::create(comp(), storeCall, NULL, NULL));
 
    //The async check is inserted because the converter call might have been the only
-   //yield point in a loop due to asyn check removel. 
+   //yield point in a loop due to asyn check removel.
    if (comp()->getOSRMode() != TR::involuntaryOSR && comp()->getHCRMode() != TR::osr)
       {
       TR::TreeTop *actt = TR::TreeTop::create(comp(), TR::Node::createWithSymRef(callNode, TR::asynccheck, 0,

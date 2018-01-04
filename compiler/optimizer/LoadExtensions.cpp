@@ -54,7 +54,7 @@
 
 TR_LoadExtensions::TR_LoadExtensions(TR::OptimizationManager *manager)
    : TR::Optimization(manager),
-     _counts(0), _seenLoads(0), _useDefInfo(NULL)
+     _counts(0), _seenLoads(0), _useDefInfo(NULL), _excludedNodes(comp()->allocator())
    {
    setTrace(comp()->getOptions()->getOptsToTrace() && TR::SimpleRegex::match(comp()->getOptions()->getOptsToTrace(), "traceLoadExtensions"));
    vcount_t visitCount = comp()->incVisitCount();
@@ -73,6 +73,8 @@ TR_LoadExtensions::TR_LoadExtensions(TR::OptimizationManager *manager)
 
    TR::SparseBitVector extendedToInt64GlobalRegisters = cg()->getExtendedToInt64GlobalRegisters();
    extendedToInt64GlobalRegisters.Clear();
+
+   _excludedNodes.Clear();
    }
 
 //#define REUSE_USEDEFS
@@ -209,7 +211,7 @@ void TR_LoadExtensions::countLoadExtensions(TR::Node *parent, vcount_t visitCoun
           supportedType(load) &&
           parent->getSize() != load->getSize())
          {
-         if (load->getOpCode().isLoadReg() || (load->getOpCode().isLoadVar() && load->getSymbol()->isRegisterSymbol()))
+         if (load->getOpCode().isLoadReg())
             {
             if (optimizer() && _useDefInfo && _useDefInfo->infoIsValid() &&
                 load->getUseDefIndex() && _useDefInfo->isUseIndex(load->getUseDefIndex()) &&
@@ -241,9 +243,9 @@ void TR_LoadExtensions::countLoadExtensions(TR::Node *parent, vcount_t visitCoun
                         continue;
 
                      TR::Node *realLoad = NULL;
-                     if ((defNode->getOpCode().isStoreReg() || (defNode->getOpCode().isStore() && defNode->getSymbol() && defNode->getSymbol()->isRegisterSymbol()) ) &&
+                     if (defNode->getOpCode().isStoreReg() &&
                            NULL!= (realLoad = defNode->getFirstChild()) &&
-                           ((realLoad->getOpCode().isLoadVar() && !realLoad->getSymbol()->isRegisterSymbol()) || (realLoad->getOpCode().isLoadConst() && supportedConstLoad(realLoad, comp()))) &&
+                           (realLoad->getOpCode().isLoadVar() || (realLoad->getOpCode().isLoadConst() && supportedConstLoad(realLoad, comp()))) &&
                            supportedType(realLoad))
                         {
                         if (trace()) traceMsg(comp(), "\t\tPeeked through %p (%s) and found %p (%s) with child %p (%s), Counting.\n",
@@ -291,7 +293,7 @@ void TR_LoadExtensions::countLoadExtensions(TR::Node *parent, vcount_t visitCoun
       // (Do counting for all conversions. Whether it is a narrowing conversion is verified at the flag-setting stage)
       if (child->getOpCode().isConversion())
          {
-         if (opcode.isStoreReg() || (opcode.isStore() && parent->getSymbol() && parent->getSymbol()->isRegisterSymbol()))
+         if (opcode.isStoreReg())
             {
             // TODO: traverse all the defs linked to parent, see all can be ignored
             setOverrideOpt(child, narrowOverride);
@@ -311,6 +313,18 @@ void TR_LoadExtensions::countLoadExtensions(TR::Node *parent, vcount_t visitCoun
          {
          //traceMsg(comp, "\t\t\tSigned %p\n", child);
          //_counts[child->getGlobalIndex()] |= 0x0001 setOverrideOpt(child, loadOverride);;
+         }
+
+      // Exclude all loads which feed into global register stores which require sign extensions. This must be done 
+      // because Load Extensions is a local optimization and it must respect global sign extension decisions made
+      // by GRA. Excluding such loads prevents a situation where GRA decided that a particular global register
+      // should be sign extended at its definitions however Load Extensions has determined that the same load
+      // should be zero extended. If local RA were to pick the same register for the gloabl register as well as
+      // the load then we have a conflicting decision which will result in a conversion to be skipped when it is
+      // not supposted to be.
+      if (opcode.isStoreReg() && parent->needsSignExtension() && child->getOpCode().isLoadVar())
+         {
+         _excludedNodes[child->getGlobalIndex()] = true;
          }
 
       countLoadExtensions(child, visitCount);
@@ -354,7 +368,7 @@ bool TR_LoadExtensions::detectReverseNeededConversionPattern(TR::Node* parent, T
             (conversion->getOpCode().isZeroExtension() &&  (constant->get64bitIntegralValue() == andMask))))
          return false;
       }
-   else if (opcode.isConversion() || (opcode.isStore() && !opcode.isStoreReg() && !(parent->getSymbol() && parent->getSymbol()->isRegisterSymbol())))
+   else if (opcode.isConversion() || (opcode.isStore() && !opcode.isStoreReg()))
       return false;
 
    return true;
@@ -375,7 +389,7 @@ bool TR_LoadExtensions::detectUnneededConversionPattern(TR::Node* conversion, TR
    int64_t andMask = 8*conversion->getSize();
    andMask  = (1ll<<andMask) - 1;
    int64_t andMask2 = andMask>>1ll;
-   if (supportedType(child))
+   if (!_excludedNodes[child->getGlobalIndex()] && supportedType(child))
       {
       bool loadIsSigned = countIsSigned(child);
       /*
@@ -393,7 +407,7 @@ bool TR_LoadExtensions::detectUnneededConversionPattern(TR::Node* conversion, TR
        *         load <Load-and-test>
        */
 
-      if (((childOpcode.isLoadVar() && !(child->getSymbol()->isRegisterSymbol())) || (childOpcode.isLoadConst() && supportedConstLoad(child, comp()))) &&
+      if ((childOpcode.isLoadVar() || (childOpcode.isLoadConst() && supportedConstLoad(child, comp()))) &&
             isConvWide &&
             (conversion->getSize() != 8 || (TR::Compiler->target.is64Bit() || comp()->cg()->use64BitRegsOn32Bit())) &&
             ((loadIsSigned && (loadIsSigned == opcode.isSignExtension())) || (!loadIsSigned && ((!loadIsSigned) == conversion->isZeroExtension())) )&&
@@ -539,7 +553,7 @@ void TR_LoadExtensions::setPreferredExtension(TR::Node *node, vcount_t visitCoun
                   }
                }
             }
-         else if ((childOpcode.isLoadReg() || (childOpcode.isLoadVar() && child->getSymbol()->isRegisterSymbol()))
+         else if (childOpcode.isLoadReg()
                   && !(node->getSize() > 4 && TR::Compiler->target.is32Bit())
                   && !isOverriden(node, regLoadOverride) && supportedType(child))
             {
@@ -673,7 +687,7 @@ ncount_t TR_LoadExtensions::indexNodesForCodegen(TR::Node *parent, ncount_t node
       _seenLoads |= 1;
       }
 
-   if (opcode.isLoadReg() || (opcode.isLoadVar() && parent->getSymbol()->isRegisterSymbol()))
+   if (opcode.isLoadReg())
       _seenLoads |= 2;
 
       // The following line should not be needed, especially in case somebody really wants to mark conversion nodes as unneeded earlier

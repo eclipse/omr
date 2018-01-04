@@ -61,9 +61,9 @@
 #include "infra/Cfg.hpp"                       // for CFG, TR_SuccessorIterator
 #include "infra/Link.hpp"                      // for TR_LinkHead
 #include "infra/List.hpp"                      // for ListIterator, List, etc
-#include "infra/Checklist.hpp"             // for NodeChecklist
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/Checklist.hpp"                 // for NodeChecklist
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimizer.hpp"             // for Optimizer
 #include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc
@@ -592,7 +592,7 @@ TR_RegisterCandidate::setWeight(TR::Block * * blocks, int32_t *blockStructureWei
 
       TR_ASSERT(blockNumber == b->getNumber(),"blocks[x]->getNumber() != x");
       TR_ASSERT((blockNumber < cfg->getNextNodeNumber()) && (blocks[blockNumber] == b),"blockNumber is wrong");
-      
+
       int32_t blockWeight = _blocks.getNumberOfLoadsAndStores(blockNumber);
       bool firstBlock = firstBlocks.isSet(blockNumber);
       if ((firstBlock && isAllBlocks() && cg->getSupportsGlRegDepOnFirstBlock()) ||

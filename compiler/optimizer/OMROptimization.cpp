@@ -40,7 +40,7 @@
 #include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
 #include "infra/Assert.hpp"                    // for TR_ASSERT
 #include "infra/Cfg.hpp"                       // for CFG, TR_SuccessorIterator
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
 #include "optimizer/OptimizationManager.hpp"   // for OptimizationManager
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimization_inlines.hpp"  // for Optimization::self
@@ -576,7 +576,6 @@ OMR::Optimization::nodeIsOrderDependent(TR::Node *node, uint32_t depth, bool has
    // should only be used as a heuristic for optimizations.
    bool constNeedsAnchor = node->getOpCode().isLoadConst() && node->anchorConstChildren();
    return ((node->getOpCode().isLoad() && node->getOpCode().hasSymbolReference() &&
-            !(cachedStaticReg && node->getOpCodeValue() == TR::aload && linkage->isAddressOfStaticSymRef(node->getSymbolReference())) &&
             ((node->getReferenceCount() > 1) || hasCommonedAncestor)) ||
            ((!node->getOpCode().isLoadConst() || constNeedsAnchor) && depth >= MAX_DEPTH_FOR_SMART_ANCHORING));
 }

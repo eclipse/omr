@@ -76,13 +76,12 @@
 #include "infra/BitVector.hpp"                 // for TR_BitVector, etc
 #include "infra/Cfg.hpp"                       // for CFG, etc
 #include "infra/ILWalk.hpp"
-#include "ras/ILValidator.hpp"                 // for TR::ILValidator
 #include "infra/Link.hpp"                      // for TR_LinkHeadAndTail, etc
 #include "infra/List.hpp"                      // for List, TR_ScratchList, etc
 #include "optimizer/Inliner.hpp"               // for TR_InlineCall, etc
 #include "infra/Stack.hpp"                     // for TR_Stack
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "optimizer/Optimization.hpp"          // for Optimization
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"   // for OptimizationManager
@@ -95,6 +94,8 @@
 #include "optimizer/UseDefInfo.hpp"            // for TR_UseDefInfo
 #include "ras/Debug.hpp"                       // for TR_DebugBase
 #include "ras/DebugCounter.hpp"                // for TR::DebugCounter, etc
+#include "ras/ILValidator.hpp"
+#include "ras/ILValidationStrategies.hpp"
 #include "runtime/Runtime.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
@@ -3322,7 +3323,7 @@ int32_t TR_EliminateRedundantGotos::process(TR::TreeTop *startTree, TR::TreeTop 
    if (cfg == NULL)
       return false;
 
-   if (comp()->isProfilingCompilation())
+   if (comp()->getProfilingMode() == JitProfiling)
       return 0;
 
    bool gotosWereEliminated = false;
@@ -3731,7 +3732,7 @@ void TR_CleanseTrees::prePerformOnBlocks()
 
 int32_t TR_CleanseTrees::process(TR::TreeTop *startTree, TR::TreeTop *endTreeTop)
    {
-   if (comp()->isProfilingCompilation())
+   if (comp()->getProfilingMode() == JitProfiling)
       return 0;
 
    TR_Structure *rootStructure = comp()->getFlowGraph()->getStructure();
@@ -3924,7 +3925,7 @@ int32_t TR_ProfiledNodeVersioning::perform()
                   continue;
 
                TR_ByteCodeInfo originalBcInfo = TR_ProfiledNodeVersioning::temporarilySetProfilingBcInfoOnNewArrayLengthChild(node, comp());
-               TR_ValueInfo *numElementsInfo = (TR_ValueInfo*)TR_ValueProfiler::getProfiledValueInfo(numElementsNode, comp());
+               TR_ValueInfo *numElementsInfo = static_cast<TR_ValueInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(numElementsNode, comp(), ValueInfo));
                numElementsNode->setByteCodeInfo(originalBcInfo);
 
                if (numElementsInfo)
@@ -3940,15 +3941,14 @@ int32_t TR_ProfiledNodeVersioning::perform()
                      static char *versionNewarrayForMultipleSizes = feGetEnv("TR_versionNewarrayForMultipleSizes");
                      if (trace())
                         traceMsg(comp(), "Node %s has %d profiled values:\n", getDebug()->getName(node), totalFrequency);
-                     TR_ScratchList<TR_ExtraAbstractInfo> valuesSortedByFrequency(trMemory());
-                     numElementsInfo->getSortedList(comp(), (List<TR_ExtraAbstractInfo> *) &valuesSortedByFrequency);
-                     ListIterator<TR_ExtraAbstractInfo> i((List<TR_ExtraAbstractInfo> *) &valuesSortedByFrequency);
-                     for (TR_ExtraAbstractInfo *profiledInfo = i.getFirst(); profiledInfo != NULL; profiledInfo = i.getNext())
+                     TR_ScratchList<TR_ExtraValueInfo> valuesSortedByFrequency(trMemory());
+                     numElementsInfo->getSortedList(comp(), &valuesSortedByFrequency);
+                     ListIterator<TR_ExtraValueInfo> i(&valuesSortedByFrequency);
+                     for (TR_ExtraValueInfo *profiledInfo = i.getFirst(); profiledInfo != NULL; profiledInfo = i.getNext())
                         {
-                        TR_ExtraValueInfo *someValue = (TR_ExtraValueInfo*)profiledInfo;
-                        float probability = (float)someValue->_frequency / totalFrequency;
+                        float probability = (float)profiledInfo->_frequency / totalFrequency;
                         if (trace())
-                           traceMsg(comp(), "%8d %5.1f%%\n", someValue->_value, 100.0 * probability);
+                           traceMsg(comp(), "%8d %5.1f%%\n", profiledInfo->_value, 100.0 * probability);
 
                         // The heuristic: accumulate values until we hit the
                         // threshold where it's worth versioning.  After that
@@ -3957,14 +3957,14 @@ int32_t TR_ProfiledNodeVersioning::perform()
                         // the case, the more we're willing to grow the size to
                         // catch it.
                         //
-                        if (!doProfiling || (someValue->_value < (uint32_t)(profiledSize * (1.0+probability))))
+                        if (!doProfiling || (profiledInfo->_value < (uint32_t)(profiledSize * (1.0+probability))))
                            {
                            if (numDifferentSizes == 1 && !versionNewarrayForMultipleSizes)
                               break;
 
                            numDifferentSizes++;
-                           profiledSize    = std::max(profiledSize, someValue->_value);
-                           minProfiledSize = std::min(minProfiledSize, someValue->_value);
+                           profiledSize    = std::max(profiledSize, profiledInfo->_value);
+                           minProfiledSize = std::min(minProfiledSize, profiledInfo->_value);
 
                            combinedProbability += probability;
                            if (combinedProbability > MIN_PROFILED_FREQUENCY)
@@ -6840,7 +6840,7 @@ bool TR_BlockSplitter::isExitEdge(TR::Block *mergeNode, TR::Block *successor)
 bool TR_BlockSplitter::hasIVUpdate(TR::Block *block)
    {
    TR_RegionStructure *parent = getParentStructure(block);
-   if (getLastRun() || comp()->isProfilingCompilation() || !parent || !parent->isNaturalLoop())
+   if (getLastRun() || comp()->getProfilingMode() == JitProfiling || !parent || !parent->isNaturalLoop())
       return false;
 
    if (trace())
@@ -6872,7 +6872,7 @@ bool TR_BlockSplitter::hasIVUpdate(TR::Block *block)
 bool TR_BlockSplitter::hasLoopAsyncCheck(TR::Block *block)
    {
    TR_RegionStructure *parent = getParentStructure(block);
-   if (getLastRun() || comp()->isProfilingCompilation() || !parent || !parent->isNaturalLoop())
+   if (getLastRun() || comp()->getProfilingMode() == JitProfiling || !parent || !parent->isNaturalLoop())
       return false;
 
    if (trace())
@@ -8175,10 +8175,10 @@ int32_t
 TR_ColdBlockMarker::perform()
    {
    static char *validate = feGetEnv("TR_validateBeforeColdBlockMarker");
-   if (validate)
+   /* The ILValidator is only created if the useILValidator Compiler Option is set */
+   if (validate && comp()->getOption(TR_UseILValidator))
       {
-      TR::ILValidator validator(comp());
-      validator.treesAreValid(comp()->getStartTree());
+      comp()->validateIL(TR::postILgenValidation);
       }
 
    identifyColdBlocks();

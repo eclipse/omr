@@ -23,11 +23,14 @@
 #define OSRDATA_INCL
 
 #include <stdint.h>                         // for int32_t, uint32_t, etc
+#include <map>
 #include "cs2/hashtab.h"                    // for HashTable
 #include "env/TRMemory.hpp"                 // for TR_Memory, etc
 #include "env/jittypes.h"                   // for TR_ByteCodeInfo
 #include "infra/Array.hpp"                  // for TR_Array
 #include "infra/deque.hpp"                  // for TR_Array
+#include "infra/Checklist.hpp"              // for TR::NodeCheckList
+#include "infra/vector.hpp"                 // for TR::vector
 
 class TR_BitVector;
 class TR_OSRMethodData;
@@ -38,6 +41,7 @@ namespace TR { class Instruction; }
 namespace TR { class Node; }
 namespace TR { class ResolvedMethodSymbol; }
 namespace TR { class SymbolReference; }
+namespace TR { class TreeTop; }
 template <class T> class List;
 
 namespace TR
@@ -86,6 +90,12 @@ namespace TR
       involuntaryOSR
       };
    }
+
+typedef TR::typed_allocator<std::pair<int32_t , TR_BitVector*>, TR::Region&> DefiningMapAllocator;
+typedef std::less<int32_t> DefiningMapComparator;
+typedef std::map<int32_t, TR_BitVector*, DefiningMapComparator, DefiningMapAllocator> DefiningMap;
+
+typedef TR::vector<DefiningMap *, TR::Region&> DefiningMaps;
 
 /**
  * \page OSR On Stack Replacement (OSR)
@@ -186,6 +196,14 @@ class TR_OSRCompilationData
    void buildSymRefOrderMap();
    int32_t getSymRefOrder(int32_t symRefNumber);
 
+   void buildDefiningMap();
+   void buildFinalMap(int32_t callerIndex,
+                      DefiningMap *finalMap,
+                      DefiningMap *workingCatchBlockMap,
+                      DefiningMaps &definingSymRefsMapAtOSRCodeBlocks, 
+                      DefiningMaps &symRefNumberMapForPrepareForOSRCalls
+                      );
+
    class TR_ScratchBufferInfo
       {
       public:
@@ -278,6 +296,7 @@ class TR_OSRMethodData
    void addSlotSharingInfo(int32_t byteCodeIndex,
                            int32_t slot, int32_t symRefNum, int32_t symRefOrder, int32_t symSize, bool takesTwoSlots);
    void ensureSlotSharingInfoAt(int32_t byteCodeIndex);
+   bool hasSlotSharingOrDeadSlotsInfo();
    void addInstruction(int32_t instructionPC, int32_t byteCodeIndex);
 
    int32_t getHeaderSize() const;
@@ -304,6 +323,14 @@ class TR_OSRMethodData
    bool linkedToCaller() { return _linkedToCaller; }
    void setLinkedToCaller(bool b) { _linkedToCaller = b; }
 
+   void buildDefiningMap(TR::Block *block, DefiningMap *blockDefiningMap, DefiningMap *prepareForOSRCallMap = NULL);
+   void buildDefiningMapForBlock(TR::Block *block, DefiningMap *blockMap);
+   void buildDefiningMapForOSRCodeBlockAndPrepareForOSRCall(TR::Block *block, DefiningMap *osrCodeBlockMap, DefiningMap *prepareForOSRCallMap);
+   DefiningMap* getDefiningMap();
+   void collectSubTreeSymRefs(TR::Node *node, TR_BitVector *subTreeSymRefs, TR::NodeChecklist &checklist);
+   void setSymRefs(TR_BitVector *symRefs) { _symRefs = symRefs; }
+   TR_BitVector *getSymRefs() { return _symRefs; }
+
    friend TR::Compilation& operator<< (TR::Compilation& out, const TR_OSRMethodData& osrMethodData);
 
    private:
@@ -328,6 +355,8 @@ class TR_OSRMethodData
 
    TR_BCLiveRangeInfoHashTable  bcLiveRangeInfoHashTab;
    TR_BCLiveRangeInfoHashTable  bcPendingPushLivenessInfoHashTab;
+   DefiningMap                  *_symRefDefiningMap; 
+   TR_BitVector                 *_symRefs;
 
    TR_ArgInfoHashTable argInfoHashTab;
 

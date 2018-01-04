@@ -32,3 +32,5 @@ if(OMR_ENHANCED_WARNINGS)
 endif()
 
 target_include_directories(omrtestutil PUBLIC .)
+
+set_property(TARGET omrtestutil PROPERTY FOLDER fvtest)

@@ -55,3 +55,5 @@ target_link_libraries(j9hashtable
 		j9pool
 		omrutil
 )
+
+set_property(TARGET j9hashtable PROPERTY FOLDER util)

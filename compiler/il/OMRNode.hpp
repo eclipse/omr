@@ -1249,6 +1249,8 @@ public:
    void setIsMaxLoopIterationGuard(bool v);
    const char * printIsMaxLoopIterationGuard();
 
+   bool isStopTheWorldGuard();
+
    bool isProfiledGuard();
    void setIsProfiledGuard();
    const char * printIsProfiledGuard();

@@ -43,6 +43,8 @@ target_link_libraries(triltest
 	omrGtest
 )
 
+set_property(TARGET triltest PROPERTY FOLDER fvtest/tril)
+
 add_test(
 	NAME triltest
 	COMMAND triltest

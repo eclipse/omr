@@ -48,3 +48,5 @@ if(NOT OMR_HOST_OS STREQUAL "win")
 	endif()
 endif()
 #target_link_libraries(omrGtest INTERFACE omrGtestGlue)
+
+set_property(TARGET omrGtest PROPERTY FOLDER fvtest)

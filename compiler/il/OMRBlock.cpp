@@ -60,8 +60,8 @@
 #include "infra/Flags.hpp"                     // for flags32_t
 #include "infra/Link.hpp"                      // for TR_LinkHeadAndTail, etc
 #include "infra/List.hpp"                      // for ListIterator, List, etc
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "optimizer/Inliner.hpp"
 #include "optimizer/Optimizer.hpp"             // for Optimizer
 #include "optimizer/RegisterCandidate.hpp"     // for TR_GlobalRegister

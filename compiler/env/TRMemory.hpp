@@ -385,7 +385,7 @@ public:
       TwoListIterator,
       ValueProfileInfo,
       ValueProfileInfoManager,
-      MethodValueProfileInfo,
+      ExternalValueProfileInfo,
       MethodBranchProfileInfo,
       BranchProfileInfoManager,
       VirtualGuardSiteInfo,

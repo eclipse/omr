@@ -52,8 +52,8 @@
 #include "infra/Cfg.hpp"                         // for CFG, etc
 #include "infra/ILWalk.hpp"                      // for PostorderNodeIterator
 #include "infra/List.hpp"                        // for ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                   // for CFGEdge
-#include "infra/TRCfgNode.hpp"                   // for CFGNode
+#include "infra/CfgEdge.hpp"                     // for CFGEdge
+#include "infra/CfgNode.hpp"                     // for CFGNode
 #include "infra/Checklist.hpp"                   // for NodeChecklist
 #include "optimizer/InductionVariable.hpp"
 #include "optimizer/Optimization_inlines.hpp"
@@ -3452,7 +3452,7 @@ void TR_LoopTransformer::updateInfo(TR::Node *node, vcount_t visitCount, updateI
    if (node->getOpCode().hasSymbolReference())
       {
       refNo = node->getSymbolReference()->getReferenceNumber();
-      _allSymRefs[refNo] = true; 
+      _allSymRefs[refNo] = true;
       }
 
 //   traceMsg(comp(), "bf _allKilledSymRefs = ");

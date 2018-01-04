@@ -1849,7 +1849,7 @@ OMR::Node::isUnsafeToDuplicateAndExecuteAgain(int32_t *nodeVisitBudget)
          // Unresolved symrefs need to be evaluated in their original location,
          // under the ResolveCHK.
          //
-         return false;
+         return true;
          }
       else if (self()->getOpCodeValue() == TR::loadaddr)
          {
@@ -2162,12 +2162,6 @@ static bool
 refCanBeKilled(TR::Node *node, TR::Compilation *comp)
    {
    if (node->getOpCodeValue() == TR::loadaddr)
-      {
-      return false;
-      }
-
-   if (node->getOpCodeValue() == TR::aload &&
-       comp->cg()->getLinkage()->isAddressOfStaticSymRef(node->getSymbolReference()))
       {
       return false;
       }
@@ -4755,7 +4749,7 @@ OMR::Node::setArrayComponentClassInNode(TR_OpaqueClassBlock *c)
 TR::ILOpCodes
 OMR::Node::setOverflowCheckOperation(TR::ILOpCodes op)
    {
-   TR_ASSERT(self()->getOpCode().isOverflowCheck(), 
+   TR_ASSERT(self()->getOpCode().isOverflowCheck(),
              "set OverflowCHK operation info for no OverflowCHK node");
    return _unionBase._extension.getExtensionPtr()->setElem<TR::ILOpCodes>(3, op);
    }
@@ -4763,7 +4757,7 @@ OMR::Node::setOverflowCheckOperation(TR::ILOpCodes op)
 TR::ILOpCodes
 OMR::Node::getOverflowCheckOperation()
    {
-   TR_ASSERT(self()->getOpCode().isOverflowCheck(), 
+   TR_ASSERT(self()->getOpCode().isOverflowCheck(),
    	     "get OverflowCHK operation info for no OverflowCHK node");
    return _unionBase._extension.getExtensionPtr()->getElem<TR::ILOpCodes>(3);
    }
@@ -7312,7 +7306,11 @@ OMR::Node::printIsMaxLoopIterationGuard()
    return self()->isMaxLoopIterationGuard() ? "maxLoopIternGuard " : "";
    }
 
-
+bool
+OMR::Node::isStopTheWorldGuard()
+   {
+   return self()->isHCRGuard() || self()->isOSRGuard() || self()->isBreakpointGuard();
+   }
 
 bool
 OMR::Node::isProfiledGuard()
@@ -7517,7 +7515,7 @@ bool
 OMR::Node::isNopableInlineGuard()
    {
    TR::Compilation * c = TR::comp();
-   return self()->isTheVirtualGuardForAGuardedInlinedCall() && !self()->isProfiledGuard() && 
+   return self()->isTheVirtualGuardForAGuardedInlinedCall() && !self()->isProfiledGuard() &&
       !(self()->isBreakpointGuard() && c->getOption(TR_DisableNopBreakpointGuard));
    }
 

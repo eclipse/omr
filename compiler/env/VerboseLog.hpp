@@ -68,6 +68,7 @@ enum TR_VlogTag
    TR_Vlog_PATCH,
    TR_Vlog_DISPATCH,
    TR_Vlog_RECLAMATION,
+   TR_Vlog_PROFILING,
    TR_Vlog_numTags
    };
 

@@ -306,3 +306,5 @@ target_link_libraries(omrgc
 		${OMR_TRACE_LIB}
 		${OMR_THREAD_LIB}
 )
+
+set_target_properties(omrgc omrgc_hookgen omrgc_tracegen PROPERTIES FOLDER gc)

@@ -36,6 +36,7 @@
 #include "ilgen/IlInjector.hpp"
 #include "ilgen/TypeDictionary.hpp"
 #include "infra/Cfg.hpp"
+#include "ras/ILValidationStrategies.hpp"
 #include "ras/ILValidator.hpp"
 
 #define OPT_DETAILS "O^O ILGEN: "
@@ -134,11 +135,13 @@ OMR::IlInjector::genIL()
    bool success = injectIL();
    _comp->setCurrentIlGenerator(0);
 
-   if (success)
+#if !defined(DISABLE_CFG_CHECK)
+   if (success && _comp->getOption(TR_UseILValidator))
       {
-      TR::ILValidator validator(_comp);
-      success = validator.treesAreValid(_methodSymbol->getFirstTreeTop());
+      /* Setup the ILValidator for the current Compilation Thread. */
+      _comp->setILValidator(createILValidatorObject(_comp));
       }
+#endif
 
    return success;
    }

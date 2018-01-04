@@ -194,8 +194,6 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
 
    virtual bool isLoad()              { return _opcode.isLoad() > 0; }
    virtual bool isStore()             { return _opcode.isStore() > 0; }
-   virtual bool isImplicitLoad()      { return _opcode.isImplicitLoad() > 0; }
-   virtual bool isImplicitStore()     { return _opcode.isImplicitStore() > 0; }
    virtual bool isBranchOp()          { return _opcode.isBranchOp() > 0; }
    virtual bool isTrap()              { return _opcode.isTrap() > 0; }
    virtual bool isLabel()             { return _opcode.isLabel() > 0; }
@@ -216,12 +214,6 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
    virtual bool implicitlySetsGPR0() { return _opcode.implicitlySetsGPR0() > 0; }
    virtual bool implicitlySetsGPR1() { return _opcode.implicitlySetsGPR1() > 0; }
    virtual bool implicitlySetsGPR2() { return _opcode.implicitlySetsGPR2() > 0; }
-
-   bool mr1IsStore() { return _opcode.mr1IsStore() > 0; }
-   bool mr2IsStore() { return _opcode.mr2IsStore() > 0; }
-
-   bool mr1IsLoad() { return _opcode.mr1IsLoad() > 0; }
-   bool mr2IsLoad() { return _opcode.mr2IsLoad() > 0; }
 
    bool isCompare() { return _opcode.isCompare() > 0; }
    bool fprOp()     { return _opcode.fprOp() > 0; }

@@ -30,8 +30,8 @@
 #include "infra/Assert.hpp"                         // for TR_ASSERT
 #include "infra/Link.hpp"                           // for TR_LinkHead
 #include "infra/List.hpp"                           // for List, etc
-#include "infra/TRCfgEdge.hpp"                      // for CFGEdge
-#include "infra/TRCfgNode.hpp"                      // for CFGNode
+#include "infra/CfgEdge.hpp"                        // for CFGEdge
+#include "infra/CfgNode.hpp"                        // for CFGNode
 #include "optimizer/Structure.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"
 

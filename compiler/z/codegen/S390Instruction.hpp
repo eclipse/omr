@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2296,7 +2296,7 @@ class S390RILInstruction : public TR::Instruction
       : TR::Instruction(op, n, precedingInstruction, cg), _targetPtr(targetPtr), _targetSnippet(NULL), _targetSymbol(NULL), _flagsRIL(0), _mask(mask), _targetLabel(NULL), _symbolReference(NULL), _sourceImmediate(0)
       {
       }
-     
+
    /** For TR::InstOpCode::BRASL */
    S390RILInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register  *treg,
                          TR::Snippet                      *ts,
@@ -3145,9 +3145,6 @@ class S390RIEInstruction : public TR::S390RegInstruction
     */
    TR::LabelSymbol * _branchDestination;
 
-   /** Warm to Cold Trampoline Snippet */
-   TR::Snippet * _warmToColdTrampolineSnippet;
-
    Kind _kind;
 
    public:
@@ -3174,8 +3171,7 @@ class S390RIEInstruction : public TR::S390RegInstruction
              _kind(IsRIE),
              _instructionFormat(RIE_RR),
              _branchDestination(branchDestination),
-             _branchCondition(branchCondition),
-             _warmToColdTrampolineSnippet(NULL)
+             _branchCondition(branchCondition)
       {
       // note that _targetRegister is registered for use via the
       // S390RegInstruction constructor call
@@ -3195,8 +3191,7 @@ class S390RIEInstruction : public TR::S390RegInstruction
              _kind(IsRIE),
              _instructionFormat(RIE_RR),
              _branchDestination(branchDestination),
-             _branchCondition(branchCondition),
-             _warmToColdTrampolineSnippet(NULL)
+             _branchCondition(branchCondition)
       {
       // note that _targetRegister is registered for use via the
       // S390RegInstruction constructor call
@@ -3216,8 +3211,7 @@ class S390RIEInstruction : public TR::S390RegInstruction
              _instructionFormat(RIE_RI8),
              _branchDestination(branchDestination),
              _branchCondition(branchCondition),
-             _sourceImmediate8(sourceImmediate),
-             _warmToColdTrampolineSnippet(NULL)
+             _sourceImmediate8(sourceImmediate)
       {
       // note that _targetRegister is registered for use via the
       // S390RegInstruction constructor call
@@ -3238,8 +3232,7 @@ class S390RIEInstruction : public TR::S390RegInstruction
               _instructionFormat(RIE_RI8),
              _branchDestination(branchDestination),
              _branchCondition(branchCondition),
-             _sourceImmediate8(sourceImmediate),
-             _warmToColdTrampolineSnippet(NULL)
+             _sourceImmediate8(sourceImmediate)
       {
       // note that _targetRegister is registered for use via the
       // S390RegInstruction constructor call
@@ -3262,8 +3255,7 @@ class S390RIEInstruction : public TR::S390RegInstruction
              _branchCondition(TR::InstOpCode::COND_NOPR),
              _sourceImmediate8(sourceImmediate),
              _sourceImmediate8One(sourceImmediateOne),
-             _sourceImmediate8Two(sourceImmediateTwo),
-             _warmToColdTrampolineSnippet(NULL)
+             _sourceImmediate8Two(sourceImmediateTwo)
       {
       useSourceRegister(sourceRegister);
       // note that _targetRegister is registered for use via the
@@ -3300,8 +3292,7 @@ class S390RIEInstruction : public TR::S390RegInstruction
              _branchCondition(TR::InstOpCode::COND_NOPR),
              _sourceImmediate8(sourceImmediate),
              _sourceImmediate8One(sourceImmediateOne),
-             _sourceImmediate8Two(sourceImmediateTwo),
-             _warmToColdTrampolineSnippet(NULL)
+             _sourceImmediate8Two(sourceImmediateTwo)
       {
       // note that _targetRegister is registered for use via the
       // S390RegInstruction constructor call
@@ -3326,8 +3317,7 @@ class S390RIEInstruction : public TR::S390RegInstruction
               _instructionFormat(RIE_RI16A),
              _branchDestination(0),
              _branchCondition(branchCondition),
-             _sourceImmediate16(sourceImmediate),
-             _warmToColdTrampolineSnippet(NULL)
+             _sourceImmediate16(sourceImmediate)
       {
       // Note that _targetRegister is registered for use via the S390RegInstruction constructor call
       if (op == TR::InstOpCode::LOCGHI || op == TR::InstOpCode::LOCHI || op == TR::InstOpCode::LOCHHI)
@@ -3347,8 +3337,7 @@ class S390RIEInstruction : public TR::S390RegInstruction
               _instructionFormat(RIE_RI16A),
              _branchDestination(0),
              _branchCondition(branchCondition),
-             _sourceImmediate16(sourceImmediate),
-             _warmToColdTrampolineSnippet(NULL)
+             _sourceImmediate16(sourceImmediate)
       {
       if (isTrap())
          TR_ASSERT((sourceImmediate >> 8) != 0x00B9, "ASSERTION FAILURE: should not generate RIE trap instruction with imm field = B9XX!\n");
@@ -3373,8 +3362,7 @@ class S390RIEInstruction : public TR::S390RegInstruction
         _branchDestination(0),
         _branchCondition(TR::InstOpCode::COND_NOPR),
         _sourceImmediate8(0),
-        _sourceImmediate16(sourceImmediate),
-        _warmToColdTrampolineSnippet(NULL)
+        _sourceImmediate16(sourceImmediate)
       {
       // note that _targetRegister is registered for use via the
       // S390RegInstruction constructor call
@@ -3395,8 +3383,7 @@ class S390RIEInstruction : public TR::S390RegInstruction
         _branchDestination(0),
         _branchCondition(TR::InstOpCode::COND_NOPR),
         _sourceImmediate8(0),
-        _sourceImmediate16(sourceImmediate),
-        _warmToColdTrampolineSnippet(NULL)
+        _sourceImmediate16(sourceImmediate)
       {
       // note that _targetRegister is registered for use via the
       // S390RegInstruction constructor call

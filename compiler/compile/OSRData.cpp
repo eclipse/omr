@@ -38,6 +38,7 @@
 #include "env/CompilerEnv.hpp"
 #include "il/Block.hpp"                        // for Block
 #include "il/Node.hpp"                         // for Node
+#include "il/Node_inlines.hpp"                 // for getInt
 #include "il/Symbol.hpp"                       // for Symbol
 #include "il/SymbolReference.hpp"              // for SymbolReference
 #include "il/TreeTop.hpp"                      // for TreeTop
@@ -513,6 +514,391 @@ uint32_t TR_OSRCompilationData::getOSRStackFrameSize(uint32_t methodIndex)
    }
 
 
+static void printMap(DefiningMap *map, TR::Compilation *comp)
+   {
+   for (auto it = map->begin(); it != map->end(); ++it)
+      {
+      traceMsg(comp, "# %d:", it->first);
+      it->second->print(comp);
+      traceMsg(comp, "\n");
+      }
+   }
+
+/*
+ * \brief This is the top level function to start building defining maps for the symbol references
+ * under prepareForOSRCall for each method
+ *
+ * DefiningMap maps each symRef to the set of symRefs that define it in one block or several 
+ * contiguous blocks. 
+ *
+ * There are 4 DefiningMaps for each methods and their ranges are different:
+ *    - osrCatchBlock: starts from the osrCatchBlock and stops before the osrCodeBlock of THIS caller
+ *    - osrCodeBlock: starts from the osrCodeBlock and stops before the osrCodeBlock of the NEXT caller
+ *    - prepareForOSR: starts from the osrCodeBlock and stops at prepareForOSR call
+ *    - FinalMap: this one maps all the symbol references under each prepareForOSR call from the current
+ *      caller up until the top most caller and the is the only map published to the OSRMethodMetaData
+ *
+ * Combining the FinalMap with liveness info from OSRLiveRangeAnalysis, we are able to find which 
+ * symbols should be kept alive at each osrPoints.
+ */
+
+void TR_OSRCompilationData::buildDefiningMap()
+   {
+   const TR_Array<TR_OSRMethodData *>& methodDataArray = getOSRMethodDataArray();
+   int numOfMethods = methodDataArray.size();
+
+   TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
+
+   DefiningMaps definingMapAtOSRCatchBlocks(numOfMethods, static_cast<DefiningMap*>(NULL), comp->trMemory()->currentStackRegion());
+   DefiningMaps definingMapAtOSRCodeBlocks(numOfMethods, static_cast<DefiningMap*>(NULL), comp->trMemory()->currentStackRegion());
+   DefiningMaps definingMapAtPrepareForOSRCalls(numOfMethods, static_cast<DefiningMap*>(NULL), comp->trMemory()->currentStackRegion());
+
+   for (intptrj_t i = 0; i < methodDataArray.size(); ++i)
+      {
+      TR_OSRMethodData *osrMethodData = methodDataArray[i];
+      if (!osrMethodData)
+         continue;
+
+      //Those 2 bool variables are necessary for identifying the cases where the OSRCode/CatchBlock is already 
+      //removed by the optimizer but osrMethodData still points to the block that's no longer in the CFG
+      bool osrCatchBlockRemoved = false;
+      bool osrCodeBlockRemoved = false;
+
+      TR::Block *osrCatchBlock = osrMethodData->getOSRCatchBlock();
+      if (osrCatchBlock && osrCatchBlock->getExceptionPredecessors().size() > 0)
+         {
+         definingMapAtOSRCatchBlocks[i] = new DefiningMap(DefiningMapComparator(), DefiningMapAllocator(comp->trMemory()->currentStackRegion()));
+         osrMethodData->buildDefiningMapForBlock(osrCatchBlock, definingMapAtOSRCatchBlocks[i]);
+         }
+      else osrCatchBlockRemoved = true;
+
+      TR::Block *osrCodeBlock = osrMethodData->getOSRCodeBlock();
+      if (osrCodeBlock && osrCodeBlock->getPredecessors().size() > 0)
+         {
+         definingMapAtOSRCodeBlocks[i] = new DefiningMap(DefiningMapComparator(), DefiningMapAllocator(comp->trMemory()->currentStackRegion()));
+         definingMapAtPrepareForOSRCalls[i] = new DefiningMap(DefiningMapComparator(), DefiningMapAllocator(comp->trMemory()->currentStackRegion()));
+         osrMethodData->buildDefiningMapForOSRCodeBlockAndPrepareForOSRCall(osrCodeBlock, definingMapAtOSRCodeBlocks[i], definingMapAtPrepareForOSRCalls[i]);
+         }
+      else osrCodeBlockRemoved = true;
+   
+      if (!osrCatchBlockRemoved && !osrCodeBlockRemoved )
+         buildFinalMap(i-1, osrMethodData->getDefiningMap(), definingMapAtOSRCatchBlocks[i], definingMapAtOSRCodeBlocks, definingMapAtPrepareForOSRCalls);
+      }
+
+   if (comp->getOption(TR_TraceOSR))
+      {
+      for (intptrj_t i = 0; i < methodDataArray.size(); ++i)
+         {
+         TR_OSRMethodData *osrMethodData = methodDataArray[i];
+         if (!osrMethodData)
+            continue;
+         DefiningMap *definingMap = osrMethodData->getDefiningMap();
+         if (osrMethodData->getOSRCatchBlock())
+            {
+            traceMsg(comp, "final map for OSRCatchBlock(block_%d): \n", osrMethodData->getOSRCatchBlock()->getNumber());
+            printMap(definingMap, comp);
+            }
+         }
+      }
+   }
+
+/* 
+ * \brief This function replace the symbols in \p subTreeSymRefs with the symbols defining them according to the \p DefiningMap
+ *
+ * @param subTreeSymRefs original symbols
+ * @param DefiningMap maps each symbol to the group of symbols it depends on
+ * @param resultSymRefs updated symbols with original symbols replaced with its defining symbols
+ */
+static void updateDefiningSymRefs(TR_BitVector *subTreeSymRefs, DefiningMap *definingMap, TR_BitVector *resultSymRefs)
+   {
+   TR_BitVectorIterator cursor(*subTreeSymRefs);
+   while (cursor.hasMoreElements())
+      {
+      int32_t j = cursor.getNextElement();
+      if ( definingMap->find(j) == definingMap->end() || 
+           (*definingMap)[j]->isEmpty())   
+         resultSymRefs->set(j);
+      else
+         *resultSymRefs |= *(*definingMap)[j];
+      } 
+   }
+
+/*
+ * \brief merge the 2 DefiningMaps
+ *
+ * This is a helper function that update the defs in the `firstMap` with the defs in the `secondMap`. 
+ * For each entry in the `secondMap`, there are 2 steps:
+ *    step 1: overwrite the entry with the same key in the `firstMap`
+ *    setp 2: update the defining symbols of that entry according to the `firstMap`
+ * Here is an example:
+ *    firstMap:
+ *       ------------------
+ *       | a0 -> {a1}     |
+ *       | a2 -> {a3, a4} |
+ *       ------------------
+ *    secondMap:
+ *       ------------------
+ *       | a2 -> {a0}     |
+ *       ------------------
+ *
+ * after step 1, the firstMap looks like:
+ *       ------------------
+ *       | a0 -> {a1}     |
+ *       | a2 -> {a0}     |
+ *       ------------------
+ * after step 2, the firstMap looks like:
+ *       ------------------
+ *       | a0 -> {a1}     |
+ *       | a2 -> {a1}     |
+ *       ------------------
+ */
+static void mergeDefiningMaps(DefiningMap *firstMap, DefiningMap *secondMap, TR::Compilation *comp)
+   {
+   if (comp->getOption(TR_TraceOSR))
+      {
+      traceMsg(comp, "mergeDefiningMaps: firstMap before\n"); 
+      printMap(firstMap, comp);
+      traceMsg(comp, "mergeDefiningMaps: secondMap before\n"); 
+      printMap(secondMap, comp);
+      }
+
+   for (auto it = secondMap->begin(); it != secondMap->end(); ++it)   
+      {
+      int32_t symRefNumber = it->first;
+      TR_BitVector *definingSymRefs = NULL;
+      if (firstMap->find(symRefNumber) == firstMap->end())
+         definingSymRefs = new (comp->trStackMemory()) TR_BitVector(comp->trMemory()->currentStackRegion());
+      else 
+         {
+         definingSymRefs = (*firstMap)[symRefNumber];
+         definingSymRefs->empty();
+         }
+      updateDefiningSymRefs(it->second, firstMap, definingSymRefs);
+      (*firstMap)[symRefNumber] = definingSymRefs;
+      }
+
+   if (comp->getOption(TR_TraceOSR))
+      {
+      traceMsg(comp, "mergeDefiningMaps: firstMap after\n"); 
+      printMap(firstMap, comp);
+      }
+   }
+
+/*
+ * \brief Solve and publish the final defining map which maps all the symbols under the prepareForOSR calls
+ *        to their defining symbols
+ * 
+ * @param finalMap the map that will be published to OSRMethodMetaData
+ * @param workingCatchBlockMap this map maintains all the defining relationsships while iterates through all the blocks 
+ * @param definingMapAtOSRCodeBlocks the OSRCodeBlock map for each method which needed in building the maps for all the callees
+ * @param definingMapAtPrepareForOSRCalls the prepareForOSRCall map needed in building maps for all the callees
+ *
+ * This function does the following 2 things:
+ *    - put the symbols under current prepareForOSRCall into the finalMap
+ *    - merge the workingCatchBlockMap with the OSRCodeBlockMap 
+ *
+ * This is a recursive function walking up the call chain and stops at the top most method. The walking path is the same as
+ * the execution path of an OSR transition.
+ */
+void 
+TR_OSRCompilationData::buildFinalMap (int32_t callerIndex,
+                                      DefiningMap *finalMap,
+                                      DefiningMap *workingCatchBlockMap,
+                                      DefiningMaps &definingMapAtOSRCodeBlocks, 
+                                      DefiningMaps &definingMapAtPrepareForOSRCalls
+                                      )
+   {
+   if (comp->getOption(TR_TraceOSR))
+      traceMsg(comp, "buildFinalMap callerIndex %d\n", callerIndex);
+   TR_OSRMethodData *osrMethodData = getOSRMethodDataArray()[callerIndex+1];
+   DefiningMap *codeBlockMap = definingMapAtOSRCodeBlocks[callerIndex+1];
+   DefiningMap *prepareForOSRCallMap = definingMapAtPrepareForOSRCalls[callerIndex+1];
+   for (auto entry = prepareForOSRCallMap->begin(); entry != prepareForOSRCallMap->end(); ++entry )
+      {
+      int32_t symRefNum = entry->first;
+      TR_BitVector *definingSymbols = entry->second;
+      TR_BitVector *result = new (comp->trHeapMemory()) TR_BitVector(0, comp->trMemory(), heapAlloc);
+      updateDefiningSymRefs(definingSymbols, workingCatchBlockMap, result);
+      TR_ASSERT(finalMap->find(symRefNum) == finalMap->end(), "same symbol reference shouldn't be written twice under different prepareForOSRCall");
+      if (comp->getOption(TR_TraceOSR))
+         {
+         traceMsg(comp, "adding symRef #%d and its defining symbols to finalMap\n", symRefNum);
+         result->print(comp);
+         traceMsg(comp, "\n");
+         }
+      (*finalMap)[symRefNum] = result;
+      }
+
+   if (callerIndex == -1)   
+      return;
+   mergeDefiningMaps(workingCatchBlockMap, codeBlockMap, comp);
+   TR::Block *osrCodeBlock = osrMethodData->getOSRCodeBlock();
+   TR::Block *nextBlock = toBlock(osrCodeBlock->getSuccessors().front()->getTo());
+   while (!nextBlock->isOSRCodeBlock())
+      {
+      TR_ASSERT(nextBlock->getSuccessors().size() == 1, "blocks between osrCodeBlock can only have one successor (block_%d)", nextBlock->getNumber());
+      nextBlock = toBlock(nextBlock->getSuccessors().front()->getTo());
+      }
+
+   int32_t nextCallerIndex = nextBlock->getEntry()->getNode()->getByteCodeInfo().getCallerIndex();
+   buildFinalMap (nextCallerIndex, finalMap, workingCatchBlockMap, definingMapAtOSRCodeBlocks, definingMapAtPrepareForOSRCalls);
+   }
+
+/*
+ * This function build the OSRCodeBlock map and the prepareForOSRCall map 
+ */
+void
+TR_OSRMethodData::buildDefiningMapForOSRCodeBlockAndPrepareForOSRCall(TR::Block *block, DefiningMap *osrCodeBlockMap, DefiningMap *prepareForOSRCallMap)
+   {
+   TR_ASSERT(block->getSuccessors().size() == 1, "OSRCodeBlock should have one successor but block_%d has %d", block->getNumber(), block->getSuccessors().size());
+   if (comp()->getOption(TR_TraceOSR))
+      traceMsg(comp(), "buildDefiningMapForOSRCodeBlockAndPrepareForOSRCall block_%d\n", block->getNumber()); 
+   buildDefiningMap(block, osrCodeBlockMap, prepareForOSRCallMap);
+   if (block->getEntry()->getNode()->getByteCodeInfo().getCallerIndex() == -1)
+      return;
+   TR::Block *nextBlock = toBlock(block->getSuccessors().front()->getTo()); 
+   // Keep processing all blocks one after another until reaching the next OSRCodeBlock
+   if (!nextBlock->isOSRCodeBlock())
+      buildDefiningMapForBlock(nextBlock, osrCodeBlockMap);
+   }
+
+/*
+ * \brief This function builds the defining map for the given block and all the blocks after
+ * until reaching the `next OSRCodeBlock`. 
+ *
+ * If called from `buildDefiningMapForOSRCodeBlockAndPrepareForOSRCall`, the map is for
+ * an OSRCodeBlock and `next OSRCodeBlock` belongs to the next caller in the call chain of this 
+ * method. Note that it's possible that the immediate next caller doesn't have an OSRCodeBlock
+ * and the `next OSRCodeBlock` would belong to the caller's caller.
+ *
+ * If called from `buildDefiningMap`, the map is for the OSRCatchBlock, and the `next OSRCodeBlock`
+ * belongs to the same method as the OSRCatchBlock.
+ */
+void
+TR_OSRMethodData::buildDefiningMapForBlock(TR::Block *block, DefiningMap *blockMap)
+   {
+   TR_ASSERT(block->getSuccessors().size() == 1, "OSRCatchBlock should have one successor but block_%d has %d", block->getNumber(), block->getSuccessors().size());
+   if (comp()->getOption(TR_TraceOSR))
+      traceMsg(comp(), "buildDefiningMapForBlock block_%d\n", block->getNumber()); 
+   buildDefiningMap(block, blockMap);
+   TR::Block *nextBlock = toBlock(block->getSuccessors().front()->getTo()); 
+   if (!nextBlock->isOSRCodeBlock())
+      buildDefiningMapForBlock(nextBlock, blockMap);
+   }
+
+/*
+ * \brief This is the most basic function iterating through all store nodes and add entries to the DefiningMap to
+ * map each symbol to the group of symbols defining it
+ */
+void
+TR_OSRMethodData::buildDefiningMap(TR::Block *block, DefiningMap *blockMap, DefiningMap *prepareForOSRCallMap)
+   {
+   for (TR::TreeTop *tt = block->getEntry(); tt != block->getExit(); tt = tt->getNextRealTreeTop())
+      {
+      TR::SymbolReference * symRef = NULL;
+      TR::Node *node = tt->getNode();
+
+      if (comp()->getOption(TR_TraceOSR))
+         traceMsg(comp(), "buildDefiningMap node n%dn\n", node->getGlobalIndex());
+
+      if (node->getOpCode().isStoreDirect())
+         symRef = node->getSymbolReference();
+      else if (node->getOpCode().isStoreReg())
+         symRef = node->getRegLoadStoreSymbolReference();
+
+      if (symRef)
+         {
+         if (symRef->getSymbol()->isAutoOrParm())
+            {
+            TR_BitVector subTreeSymRefs(comp()->trMemory()->currentStackRegion());
+            TR::NodeChecklist checklist(comp());
+            collectSubTreeSymRefs(node->getFirstChild(), &subTreeSymRefs, checklist);
+
+            if (comp()->getOption(TR_TraceOSR))
+               {
+               traceMsg(comp(), "buildDefiningMap: node n%dn: defining symbol #%d: ", node->getGlobalIndex(), symRef->getReferenceNumber());
+               subTreeSymRefs.print(comp());
+               traceMsg(comp(), "\n");
+               }
+
+            TR_BitVector *symRefs = NULL;
+            if (blockMap->find(symRef->getReferenceNumber()) != blockMap->end())
+               {
+               symRefs = (*blockMap)[symRef->getReferenceNumber()];
+               symRefs->empty(); // the current store kills previous defs
+               }
+
+            if (!subTreeSymRefs.isEmpty())
+               {
+               if (!symRefs)
+                  {
+                  symRefs = new (comp()->trStackMemory()) TR_BitVector(comp()->trMemory()->currentStackRegion());
+                  (*blockMap)[symRef->getReferenceNumber()] = symRefs;
+                  }
+               updateDefiningSymRefs(&subTreeSymRefs, blockMap, symRefs);
+               }
+            }
+         }
+      else if (node->getFirstChild() &&
+               node->getFirstChild()->getOpCode().isCall() &&
+               node->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR)
+         {
+         TR::Node *callNode = node->getFirstChild();
+         const int firstSymChildIndex = 2;
+         for (int32_t child = firstSymChildIndex; child+2 < callNode->getNumChildren(); child += 3)
+            {
+            TR::Node* loadNode = callNode->getChild(child);
+            int32_t symRefNumber = callNode->getChild(child+1)->getInt();
+            TR::SymbolReference* symRef = comp()->getSymRefTab()->getSymRef(symRefNumber);
+            //GC map for Monitored object temps are handled specially by lmmd
+            if (symRef->getSymbol()->holdsMonitoredObject() 
+               || symRef->getSymbol()->isThisTempForObjectCtor())
+               continue;
+            TR_BitVector subTreeSymRefs(comp()->trMemory()->currentStackRegion());
+            TR::NodeChecklist checklist(comp());
+            collectSubTreeSymRefs(loadNode, &subTreeSymRefs, checklist);
+            if (comp()->getOption(TR_TraceOSR))
+               {
+               traceMsg(comp(), "collect subTreeSymRefs of loadNode n%dn for original symRef #%d\n", loadNode->getGlobalIndex(), symRefNumber);
+               subTreeSymRefs.print(comp());
+               traceMsg(comp(), "\n");
+               }
+
+            if (!subTreeSymRefs.isEmpty())
+               {
+               TR_BitVector *symRefs = new (comp()->trStackMemory()) TR_BitVector(comp()->trMemory()->currentStackRegion());
+               updateDefiningSymRefs(&subTreeSymRefs, blockMap, symRefs);
+               (*prepareForOSRCallMap)[symRefNumber] = symRefs;
+               }
+            }
+         }
+      }
+   }
+
+/*
+ * find all the symbols on the right hand side of the store node
+ */
+void 
+TR_OSRMethodData::collectSubTreeSymRefs(TR::Node *node, TR_BitVector *subTreeSymRefs, TR::NodeChecklist &checklist)
+   {
+   if (checklist.contains(node))
+      return;
+   else checklist.add(node);
+   if (node->getOpCode().hasSymbolReference() && node->getSymbolReference()->getSymbol()->isAutoOrParm())
+      {
+      subTreeSymRefs->set(node->getSymbolReference()->getReferenceNumber());
+      }
+   else if (node->getRegLoadStoreSymbolReference())
+      {
+      subTreeSymRefs->set(node->getRegLoadStoreSymbolReference()->getReferenceNumber());
+      }
+   if (node->getNumChildren() > 0)
+      {
+      for (int i=0; i < node->getNumChildren(); i++)
+         collectSubTreeSymRefs(node->getChild(i), subTreeSymRefs, checklist);
+      }
+   }
+
 void TR_OSRCompilationData::buildSymRefOrderMap()
    {
    for (int i = 0; i < getOSRMethodDataArray().size(); i++)
@@ -622,7 +1008,9 @@ TR_OSRMethodData::TR_OSRMethodData(int32_t _inlinedSiteIndex, TR::ResolvedMethod
         bcInfoHashTab(comp()->allocator()),
         bcLiveRangeInfoHashTab(comp()->allocator()),
         bcPendingPushLivenessInfoHashTab(comp()->allocator()),
-        argInfoHashTab(comp()->allocator())
+        argInfoHashTab(comp()->allocator()),
+        _symRefDefiningMap(NULL),
+        _symRefs(NULL)
    {}
 
 TR::Block *
@@ -777,6 +1165,13 @@ TR_OSRMethodData::getArgInfo(int32_t byteCodeIndex)
       args = argInfoHashTab.DataAt(hashIndex);
       }
    return args;
+   }
+
+
+bool
+TR_OSRMethodData::hasSlotSharingOrDeadSlotsInfo()
+   {
+   return !bcInfoHashTab.IsEmpty();
    }
 
 /*
@@ -965,6 +1360,13 @@ TR_OSRMethodData::setNumOfSymsThatShareSlot(int32_t newValue)
    osrCompilationData->updateNumOfSymsThatShareSlot(newValue);
    }
 
+DefiningMap *
+TR_OSRMethodData::getDefiningMap()
+   { 
+   if (_symRefDefiningMap == NULL)
+      _symRefDefiningMap = new DefiningMap(DefiningMapComparator(), DefiningMapAllocator(comp()->trMemory()->heapMemoryRegion()));
+   return _symRefDefiningMap; 
+   }
 
 TR::Compilation& operator<< (TR::Compilation& out, const TR_OSRMethodData& osrMethodData)
    {

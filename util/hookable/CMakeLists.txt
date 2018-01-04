@@ -58,3 +58,5 @@ target_link_libraries(j9hookstatic PUBLIC
 	omrport
 )
 add_tracegen(j9hook.tdf)
+
+set_target_properties(j9hook_obj j9hookstatic PROPERTIES FOLDER util)

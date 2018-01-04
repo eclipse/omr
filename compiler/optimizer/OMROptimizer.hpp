@@ -97,6 +97,7 @@ enum
    IfNoLoops,
    IfProfiling,
    IfNotProfiling,
+   IfNotJitProfiling,
    IfNews,
    IfEnabledAndOptServer,
    IfOptServer,
@@ -107,6 +108,7 @@ enum
    IfNoLoopsOREnabledAndLoops, // ie. do this opt if no loops; if loops, it must be enabled
    IfEnabledAndProfiling,
    IfEnabledAndNotProfiling,
+   IfEnabledAndNotJitProfiling,
    IfLoopsAndNotProfiling,
    MustBeDone,
    IfEnabled,

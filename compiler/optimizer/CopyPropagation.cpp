@@ -50,7 +50,7 @@
 #include "infra/Assert.hpp"                    // for TR_ASSERT
 #include "infra/Cfg.hpp"                       // for CFG
 #include "infra/List.hpp"                      // for ListIterator, List, etc
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
 #include "optimizer/Optimization.hpp"          // for Optimization
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimization_inlines.hpp"
@@ -587,7 +587,7 @@ int32_t TR_CopyPropagation::perform()
                   {
                   if (trace())
                      traceMsg(comp(), "000setting i %d to j %d\n", i, j);
-                  
+
                   if (equivalentDefLookup == equivalentDefs.end())
                      {
                      if (i != j)

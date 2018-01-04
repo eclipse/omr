@@ -1,6 +1,6 @@
 Product: OMR
 
-Copyright (c) 1991, 2016 IBM Corp. and others
+Copyright (c) 1991, 2017 IBM Corp. and others
 
 This program and the accompanying materials are made available under the terms of the Eclipse Public License 2
 which accompanies this distribution and is available at https://www.eclipse.org/legal/epl-2.0/ or the Apache 
@@ -19,8 +19,7 @@ Subject to the following notices:
 
 1.	Google Test is provided under the Google Test license below.
 2.	Pugixml is provided under the pugixml license below.
-3.	Libauxv is provided under the libauxv license below.
-4.	config.sub and config.guess are provided under the GPL v3.0 with the
+3.	config.sub and config.guess are provided under the GPL v3.0 with the
 	Autoconf exception (see below).
 
 You may distribute this program and materials under either the
@@ -543,32 +542,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-E.	libauxv
-Redistribution and use in source and binary forms, with or without
-     modification, are permitted provided that the following conditions are met:
-	 * Redistributions of source code must retain the above copyright
-	   notice, this list of conditions and the following disclaimer.
-	 * Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	 * Neither the name of the IBM Corporation nor the names of its
-	   contributors may be used to endorse or promote products derived from
-	   this software without specific prior written permission.
-
-     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-     AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-     IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-     ARE DISCLAIMED. IN NO EVENT SHALL IBM CORPORATION BE LIABLE FOR ANY
-     DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-     (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-     SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-     CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-     OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-     DAMAGE.
-
-
-F.	config.sub and config.guess
+E.	config.sub and config.guess
 
 This file is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by

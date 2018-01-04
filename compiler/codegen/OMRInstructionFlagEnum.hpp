@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,11 +23,6 @@
  * This file will be included within an enum.  Only comments and enumerator
  * definitions are permitted.
  */
-
-// Instruction flag delimiting the last instruction in the warm area of
-// a method.
-//
-LastWarmInstruction,
 
 // Instruction requires a GC map
 //

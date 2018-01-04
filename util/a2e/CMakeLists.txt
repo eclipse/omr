@@ -49,3 +49,5 @@ add_custom_command(TARGET j9a2e
 	COMMAND mv j9a2e.x ${CMAKE_BINARY_DIR}/j9a2e.x
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+set_property(TARGET j9a2e PROPERTY FOLDER util)

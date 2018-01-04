@@ -326,7 +326,8 @@ static uint16_t getPhysicalMemory();
 #endif /* !defined(RS6000) && !defined(J9ZOS390) && !defined(OSX) && !defined(OMRZTPF) */
 
 #if defined(OMRZTPF)
-	uintptr_t getIstreamCount();
+	uintptr_t get_IPL_IstreamCount();
+	uintptr_t get_Dispatch_IstreamCount();
 #endif /* defined(OMRZTPF) */
 
 #if defined(LINUX) && !defined(OMRZTPF)
@@ -1072,13 +1073,9 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 
 	Trc_PRT_sysinfo_get_number_CPUs_by_type_Entered();
 
-#if defined(OMRZTPF)
-	toReturn = getIstreamCount();
-#else /* defined(OMRZTPF) */
-
 	switch (type) {
 	case OMRPORT_CPU_PHYSICAL:
-#if defined(LINUX) || defined(AIXPPC) || defined(OSX)
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX)
 		toReturn = sysconf(_SC_NPROCESSORS_CONF);
 
 		if (0 == toReturn) {
@@ -1091,6 +1088,11 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 		if (0 == toReturn) {
 			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedPhysical("(no errno) ", 0);
 		}
+#elif defined(OMRZTPF)
+		toReturn = get_IPL_IstreamCount();
+		if (0 == toReturn) {
+                        Trc_PRT_sysinfo_get_number_CPUs_by_type_failedPhysical("(no errno) ", 0);
+                }
 #else
 		if (0 == toReturn) {
 			Trc_PRT_sysinfo_get_number_CPUs_by_type_platformNotSupported();
@@ -1105,12 +1107,19 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 		if (0 == toReturn) {
 			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedOnline("(no errno) ", 0);
 		}
-#elif defined(LINUX) || defined(OSX)
+#elif (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX)
 		/* returns number of online(_SC_NPROCESSORS_ONLN) processors, number configured(_SC_NPROCESSORS_CONF) may  be more than online */
 		toReturn = sysconf(_SC_NPROCESSORS_ONLN);
 
 		if (0 >= toReturn) {
 			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedOnline("errno: ", errno);
+		}
+#elif defined(OMRZTPF)
+		/* USE PHYSICAL for ONLINE on z/TPF */
+		toReturn = portLibrary->sysinfo_get_number_CPUs_by_type(portLibrary, OMRPORT_CPU_PHYSICAL);
+
+		if (0 == toReturn) {
+			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedOnline("(no errno) ", 0);
 		}
 #elif defined(J9ZOS390)
 		toReturn = Get_Number_Of_CPUs();
@@ -1168,6 +1177,11 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 		if (0 == toReturn) {
 			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedBound("errno: ", errno);
 		}
+#elif defined(OMRZTPF)
+		toReturn = get_Dispatch_IstreamCount();
+		if (0 == toReturn) {
+			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedBound("(no errno) ", 0);
+		}
 #elif defined(OSX)
 		/* OS X does not export interfaces that identify processors or control thread
 		 * placement--explicit thread to processor binding is not supported. Thus, this
@@ -1191,7 +1205,11 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 		break;
 	}
 	case OMRPORT_CPU_ENTITLED:
+#if !defined(OMRZTPF)
 		toReturn = portLibrary->portGlobals->entitledCPUs;
+#else
+		toReturn = get_Dispatch_IstreamCount();
+#endif
 		break;
 
 	case OMRPORT_CPU_TARGET: {
@@ -1200,6 +1218,8 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 		if (0 == toReturn) {
 			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedOnline("(no errno) ", 0);
 		}
+#elif defined(OMRZTPF)
+		toReturn = get_Dispatch_IstreamCount();
 #else /* defined(J9OS_I5) */
 		uintptr_t entitled = portLibrary->portGlobals->entitledCPUs;
 		uintptr_t bound = omrsysinfo_get_number_CPUs_by_type(portLibrary, OMRPORT_CPU_BOUND);
@@ -1216,8 +1236,6 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 		Trc_PRT_sysinfo_get_number_CPUs_by_type_invalidType();
 		break;
 	}
-
-#endif /* defined(OMRZTPF) */
 
 	Trc_PRT_sysinfo_get_number_CPUs_by_type_Exit(type, toReturn);
 
@@ -1835,19 +1853,19 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 		/* FALLTHROUGH */
 	case OMRPORT_RESOURCE_CORE_FILE: {
 #if !defined(OMRZTPF)
-		if (0 == getrlimit(resource, &lim)) {
-			*limit = (uint64_t)(hardLimitRequested ? lim.rlim_max : lim.rlim_cur);
-			if (RLIM_INFINITY == *limit) {
-				rc = OMRPORT_LIMIT_UNLIMITED;
-			} else {
-				rc = OMRPORT_LIMIT_LIMITED;
-			}
+	if (0 == getrlimit(resource, &lim)) {
+		*limit = (uint64_t)(hardLimitRequested ? lim.rlim_max : lim.rlim_cur);
+		if (RLIM_INFINITY == *limit) {
+			rc = OMRPORT_LIMIT_UNLIMITED;
 		} else {
-			*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-			Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
-			rc = OMRPORT_LIMIT_UNKNOWN;
+			rc = OMRPORT_LIMIT_LIMITED;
 		}
+	} else {
+		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
+		portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+		Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
+		rc = OMRPORT_LIMIT_UNKNOWN;
+	}
 #endif /* !defined(OMRZTPF) */
 	}
 	break;
@@ -2002,7 +2020,7 @@ omrsysinfo_set_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 static uint32_t
 getLimitSharedMemory(struct OMRPortLibrary *portLibrary, uint64_t *limit)
 {
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
 	int fd = 0;
 	int64_t shmmax = -1;
 	int bytesRead = 0;
@@ -2042,11 +2060,11 @@ errorReturn:
 	Trc_PRT_sysinfo_getLimitSharedMemory_ErrorExit(OMRPORT_LIMIT_UNKNOWN, OMRPORT_LIMIT_UNKNOWN_VALUE);
 	*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
 	return OMRPORT_LIMIT_UNKNOWN;
-#else /* defined(LINUX) */
+#else /* defined(LINUX) && !defined(OMRZTPF) */
 	Trc_PRT_sysinfo_getLimitSharedMemory_notImplemented(OMRPORT_LIMIT_UNKNOWN);
 	*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
 	return OMRPORT_LIMIT_UNKNOWN;
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 }
 
 
@@ -2084,7 +2102,7 @@ intptr_t
 omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9SysinfoCPUTime *cpuTime)
 {
 	intptr_t status = OMRPORT_ERROR_SYSINFO_OPFAILED;
-#if defined(LINUX) || defined(AIXPPC) || defined(OSX)
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX)
 	/* omrtime_nano_time() gives monotonically increasing times as against omrtime_hires_clock() that
 	 * returns times that can (and does) decrease. Use this to compute timestamps.
 	 */
@@ -2102,11 +2120,7 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	 * ~70.  Allocate 128 bytes to give lots of margin.
 	 */
 	char buf[128];
-#if !defined(OMRZTPF)
 	const uintptr_t NS_PER_HZ = 1000000000 / USER_HZ;
-#else /* !defined(OMRZTPF) */
-	const uintptr_t NS_PER_HZ = 1;
-#endif /* !defined(OMRZTPF) */
 	intptr_t fd = portLibrary->file_open(portLibrary, "/proc/stat", EsOpenRead, 0);
 	if (-1 == fd) {
 		int32_t portableError = portLibrary->error_last_error_number(portLibrary);
@@ -2186,7 +2200,7 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	/* Use the average of the timestamps before and after reading processor times to reduce bias. */
 	cpuTime->timestamp = (preTimestamp + postTimestamp) / 2;
 	return status;
-#else /* defined(LINUX) || defined(AIXPPC) || defined(OSX) */
+#else /* (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) */
 	/* Support on z/OS being temporarily removed to avoid wrong CPU stats being passed. */
 	return OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED;
 #endif
@@ -3738,10 +3752,22 @@ _end:
 #if defined(OMRZTPF)
 /*
  *	Return the number of I-streams ("processors", as called by other
- *	systems) in an unsigned integer.
+ *	systems) in an unsigned integer as detected at IPL time.
  */
 uintptr_t
-getIstreamCount( void ) {
+get_IPL_IstreamCount( void ) {
+	struct dctist *ist;
+	ist = (struct dctist *)cinfc_fast(CINFC_CMMIST);
+	int numberOfIStreams = ist->istactis;
+	return (uintptr_t)numberOfIStreams;
+}
+
+ /*
+ *      Return the number of I-streams ("processors", as called by other
+ *      systems) in an unsigned integer as detect at Process Dispatch time.
+ */
+uintptr_t
+get_Dispatch_IstreamCount( void ) {
 	struct dctist *ist;
 	ist = (struct dctist *)cinfc_fast(CINFC_CMMIST);
 	int numberOfIStreams = ist->istuseis;

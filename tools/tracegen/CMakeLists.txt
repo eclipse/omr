@@ -53,6 +53,8 @@ if(OMR_HOST_OS STREQUAL "zos")
 	target_link_libraries(trace j9a2e)
 endif()
 
+set_target_properties(trace tracegen PROPERTIES FOLDER tools)
+
 install(TARGETS tracegen
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	COMPONENT tooling

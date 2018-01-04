@@ -113,4 +113,6 @@ target_link_libraries(compilertest
 	${CMAKE_DL_LIBS}
 )
 
+set_property(TARGET compilertest PROPERTY FOLDER fvtest)
+
 add_test(NAME CompilerTest COMMAND compilertest)

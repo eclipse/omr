@@ -863,7 +863,7 @@ class ValuePropagation : public TR::Optimization
    void invalidateUseDefInfo()       {_invalidateUseDefInfo = true;}
    void invalidateValueNumberInfo()  {_invalidateValueNumberInfo = true;}
    void setCurrentParent(TR::Node *n) {_currentParent = n;}
-   void getParmValues();
+   virtual void getParmValues();
    bool isParmInvariant(TR::Symbol *sym);
    bool computeDivRangeWhenDivisorCanBeZero(TR::Node *node)
       {

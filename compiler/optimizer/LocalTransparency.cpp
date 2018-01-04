@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@
 #include "il/symbol/MethodSymbol.hpp"            // for MethodSymbol
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"                         // for CFG
-#include "infra/TRCfgNode.hpp"                   // for CFGNode
+#include "infra/CfgNode.hpp"                     // for CFGNode
 #include "optimizer/LocalAnalysis.hpp"
 
 TR_LocalTransparency::TR_LocalTransparency(TR_LocalAnalysisInfo &info, bool t)

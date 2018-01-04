@@ -47,8 +47,8 @@
 #include "infra/Cfg.hpp"                         // for CFG
 #include "infra/Link.hpp"                        // for TR_Pair
 #include "infra/List.hpp"                        // for ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                   // for CFGEdge
-#include "infra/TRCfgNode.hpp"                   // for CFGNode
+#include "infra/CfgEdge.hpp"                     // for CFGEdge
+#include "infra/CfgNode.hpp"                     // for CFGNode
 #include "optimizer/InductionVariable.hpp"
 #include "optimizer/LoopCanonicalizer.hpp"       // for TR_LoopTransformer
 #include "optimizer/Optimization_inlines.hpp"

@@ -369,6 +369,13 @@ typedef struct J9PortVmemParams {
 	 *  		- enabled for Linux only,
 	 *  		- If not set, search memory in linear scan method
 	 *  		- If set, scan memory in a quick way, using memory information in file /proc/self/maps. (still use linear search if failed)
+	 * \arg OMRPORT_VMEM_ADDRESS_HINT
+	 *		- enabled for Linux and default page allocations only (has no effect on large page allocations)
+	 *		- If not set, search memory in linear scan method
+	 *		- If set, return whatever mmap gives us (only one allocation attempt)
+	 *		- this option is based on the observation that mmap would take the given address as a hint about where to place the mapping
+	 *		- this option does not apply to large page allocations as the allocation is done with shmat instead of mmap
+	 *
 	 */
 	uintptr_t options;
 
@@ -399,6 +406,7 @@ typedef enum J9VMemMemoryQuery {
 #define OMRPORT_VMEM_ZOS_USE2TO32G_AREA 16
 #define OMRPORT_VMEM_ALLOC_QUICK 		32
 #define OMRPORT_VMEM_ZTPF_USE_31BIT_MALLOC 64
+#define OMRPORT_VMEM_ADDRESS_HINT 128
 
 /**
  * @name Virtual Memory Address

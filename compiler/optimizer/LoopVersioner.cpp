@@ -66,8 +66,8 @@
 #include "infra/Cfg.hpp"                           // for CFG, etc
 #include "infra/Link.hpp"                          // for TR_LinkHead, etc
 #include "infra/List.hpp"                          // for List, ListElement, etc
-#include "infra/TRCfgEdge.hpp"                     // for CFGEdge
-#include "infra/TRCfgNode.hpp"                     // for CFGNode
+#include "infra/CfgEdge.hpp"                       // for CFGEdge
+#include "infra/CfgNode.hpp"                       // for CFGNode
 #include "optimizer/Dominators.hpp"                // for TR_PostDominators
 #include "optimizer/LocalAnalysis.hpp"             // for TR_LocalAnalysis
 #include "optimizer/LoopCanonicalizer.hpp"
@@ -229,7 +229,7 @@ bool TR_LoopVersioner::loopIsWorthVersioning(TR_RegionStructure *naturalLoop)
 
       int32_t lvBlockFreqCutoff;
       static const char * b = feGetEnv("TR_LoopVersionerFreqCutoff");
-      if (b) 
+      if (b)
          {
          lvBlockFreqCutoff = atoi(b);
          }
@@ -572,9 +572,9 @@ int32_t TR_LoopVersioner::performWithoutDominators()
             if (trace()) traceMsg(comp(), "aggressiveLoopVersioning: raising hotnessThreshold for conditionalsWillBeEliminated\n");
             hotnessThreshold = maxHotness; // threshold which can't be matched by the > operator
             }
-         
-         if (( (debug("nullCheckVersion") || 
-                comp()->cg()->performsChecksExplicitly() || 
+
+         if (( (debug("nullCheckVersion") ||
+                comp()->cg()->performsChecksExplicitly() ||
                 (comp()->getMethodHotness() > hotnessThreshold)
                ) && nullChecksWillBeEliminated
              ) ||
@@ -713,7 +713,7 @@ int32_t TR_LoopVersioner::performWithoutDominators()
    if (!_virtualGuardInfo.isEmpty())
       {
       bool disableLT = TR::Options::getCmdLineOptions()->getOption(TR_DisableLoopTransfer);
-      if (!disableLT) 
+      if (!disableLT)
          performLoopTransfer();
       }
 
@@ -3111,11 +3111,7 @@ bool TR_LoopVersioner::isBranchSuitableToVersion(TR_ScratchList<TR::Block> *loop
           }
        else if (comp->getInlinedCallerSymRef(node->getByteCodeInfo().getCallerIndex()))
           {
-          TR_ValueProfileInfoManager *profileManager = TR_ValueProfileInfoManager::get(comp);
-          TR_AddressInfo *  valueInfo = (TR_AddressInfo *)profileManager->getValueInfo(ics._byteCodeInfo,
-                                                               comp,
-                                                               TR_ValueProfileInfoManager::allProfileInfoKinds,
-                                                               NotBigDecimalOrString);
+          TR_AddressInfo *valueInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(ics._byteCodeInfo, comp, AddressInfo));
 
           if (valueInfo)
              {
@@ -3607,11 +3603,11 @@ void TR_LoopVersioner::updateDefinitionsAndCollectProfiledExprs(TR::Node *parent
                (profileLongParms /* && (valueInfo->getTopValue() == 0) */)))
              {
 #ifdef J9_PROJECT_SPECIFIC
-             TR_ValueInfo *valueInfo = (TR_ValueInfo *)TR_ValueProfiler::getProfiledValueInfo(node, comp());
+             TR_ValueInfo *valueInfo = static_cast<TR_ValueInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(node, comp(), ValueInfo));
              if (valueInfo)
                 {
                 if ((valueInfo->getTopProbability() > MIN_PROFILED_FREQUENCY) &&
-                    (valueInfo->_totalFrequency > 0) &&
+                    (valueInfo->getTotalFrequency() > 0) &&
                     !_containsCall &&
                     !node->getByteCodeInfo().doNotProfile() && !node->isNodeCreatedByPRE() &&
                     // Only collect nodes from unspecialized blocks to avoid specializing the same nodes twice
@@ -3627,7 +3623,7 @@ void TR_LoopVersioner::updateDefinitionsAndCollectProfiledExprs(TR::Node *parent
                      if (comp()->requiresSpineChecks() && node->getOpCodeValue() == TR::contigarraylength && valueInfo->getTopValue() == 0)
                         {
                         dumpOptDetails(comp(), "From value profiling, NOT USING inconclusive contigarraylength node %p with value 0 freq %d total freq %d\n",
-                           node, ((int32_t) (valueInfo->getTopProbability()*((float) valueInfo->_totalFrequency))), valueInfo->_totalFrequency);
+                           node, ((int32_t) (valueInfo->getTopProbability()*((float) valueInfo->getTotalFrequency()))), valueInfo->getTotalFrequency());
                         }
                      else
                         {
@@ -3635,7 +3631,7 @@ void TR_LoopVersioner::updateDefinitionsAndCollectProfiledExprs(TR::Node *parent
                         // it can be changed to an int (high int value == 0)
                         //
                         /////if (debug("traceLVE"))
-                        dumpOptDetails(comp(), "From value profiling, node %p has value %d freq %d total freq %d\n", node, valueInfo->getTopValue(), ((int32_t) (valueInfo->getTopProbability()*((float) valueInfo->_totalFrequency))), valueInfo->_totalFrequency);
+                        dumpOptDetails(comp(), "From value profiling, node %p has value %d freq %d total freq %d\n", node, valueInfo->getTopValue(), ((int32_t) (valueInfo->getTopProbability()*((float) valueInfo->getTotalFrequency()))), valueInfo->getTotalFrequency());
                         profiledNodes->add(node);
                         }
 
@@ -4132,7 +4128,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
          !loopLimit->getByteCodeInfo().doNotProfile())
          {
 #ifdef J9_PROJECT_SPECIFIC
-         TR_ValueInfo *valueInfo = (TR_ValueInfo *)TR_ValueProfiler::getProfiledValueInfo(loopLimit, comp());
+         TR_ValueInfo *valueInfo = static_cast<TR_ValueInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(loopLimit, comp(), ValueInfo));
          if (valueInfo)
             {
             if ( valueInfo->getTotalFrequency() )
@@ -4146,19 +4142,18 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
                   // the static limit, do not version based on async
                   // checks--leave them in, so we can still run the
                   // version without bounds checks
-                  TR_ScratchList<TR_ExtraAbstractInfo> valuesSortedByFrequency(trMemory());
-                  valueInfo->getSortedList(comp(), (List<TR_ExtraAbstractInfo> *) &valuesSortedByFrequency);
-                  ListIterator<TR_ExtraAbstractInfo> sortedValuesIt((List<TR_ExtraAbstractInfo> *) &valuesSortedByFrequency);
+                  TR_ScratchList<TR_ExtraValueInfo> valuesSortedByFrequency(trMemory());
+                  valueInfo->getSortedList(comp(), &valuesSortedByFrequency);
+                  ListIterator<TR_ExtraValueInfo> sortedValuesIt(&valuesSortedByFrequency);
 
                   float totalFreq = (float) valueInfo->getTotalFrequency();
                   float valuedFreq = 0;
 
-                  for (TR_ExtraAbstractInfo *profiledInfo = sortedValuesIt.getFirst(); profiledInfo != NULL; profiledInfo = sortedValuesIt.getNext())
+                  for (TR_ExtraValueInfo *profiledInfo = sortedValuesIt.getFirst(); profiledInfo != NULL; profiledInfo = sortedValuesIt.getNext())
                      {
-                     TR_ExtraValueInfo *extraInfo = (TR_ExtraValueInfo *) profiledInfo;
 
-                     if ( extraInfo->_value < profiledLoopLimit )
-                        valuedFreq += (float) extraInfo->_value;
+                     if ( profiledInfo->_value < profiledLoopLimit )
+                        valuedFreq += (float) profiledInfo->_value;
 
                      }
 
@@ -4218,7 +4213,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
             _canPredictIters = false;
          }
 
-      if (!refineAliases() && _canPredictIters && !comp()->isProfilingCompilation() &&
+      if (!refineAliases() && _canPredictIters && comp()->getProfilingMode() != JitProfiling &&
           performTransformation(comp(), "%s Creating test outside loop for deciding if async check is required\n", OPT_DETAILS_LOOP_VERSIONER))
          {
          TR::Node *lowerBound = _loopTestTree->getNode()->getFirstChild()->duplicateTreeForCodeMotion();
@@ -4255,7 +4250,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
 
    // Construct the tests for invariant expressions that need
    // to be null checked.
-   
+
    // default hotness threshold
    TR_Hotness hotnessThreshold = hot;
 
@@ -4266,7 +4261,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
       hotnessThreshold = maxHotness; // threshold which can't be matched by the > operator
       }
 
-   if (comp()->cg()->performsChecksExplicitly() || 
+   if (comp()->cg()->performsChecksExplicitly() ||
        (comp()->getMethodHotness() > hotnessThreshold))
       {
       if (!nullCheckTrees->isEmpty() &&
@@ -4448,7 +4443,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
       dumpOptDetails(comp(), "The node %p has been created for testing if virtual guard is required\n", nextComparisonNode);
       }
 
-   // If all yield points have been removed from the loop but OSR guards remain, 
+   // If all yield points have been removed from the loop but OSR guards remain,
    // they can be versioned out. Currently, this code assumes all OSR guards
    // will be patched by the same runtime assumptions, so only one OSR guard is added
    // to branch to the slow loop.
@@ -5638,7 +5633,7 @@ bool TR_LoopVersioner::buildSpecializationTree(List<TR::TreeTop> *nullCheckTrees
          if (!duplicateNode)
             duplicateNode = specializedNode->duplicateTreeForCodeMotion();
 
-         TR_ValueInfo *valueInfo = (TR_ValueInfo *)TR_ValueProfiler::getProfiledValueInfo(specializedNode, comp());
+         TR_ValueInfo *valueInfo = static_cast<TR_ValueInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(specializedNode, comp(), ValueInfo));
          int32_t value = valueInfo->getTopValue();
 
          TR::Node *comparisonNode = NULL;

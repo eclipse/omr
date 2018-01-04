@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corp. and others
+ * Copyright (c) 2014, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -177,6 +177,7 @@ typedef struct wait_testdata_t {
 	omrthread_monitor_t exitSync;
 	omrthread_monitor_t waitSync;
 	volatile int waiting;
+	volatile int aborted;
 	volatile intptr_t rc;
 } wait_testdata_t;
 
@@ -188,6 +189,7 @@ TEST(ThreadAbortTest, Waiting)
 	omrthread_monitor_init(&testdata.exitSync, 0);
 	omrthread_monitor_init(&testdata.waitSync, 0);
 	testdata.waiting = 0;
+	testdata.aborted = 0;
 
 	omrthread_monitor_enter(testdata.exitSync);
 
@@ -195,7 +197,7 @@ TEST(ThreadAbortTest, Waiting)
 	while (1) {
 		omrthread_sleep(START_DELAY);
 		omrthread_monitor_enter(testdata.waitSync);
-		if (testdata.waiting == 1) {
+		if (1 == testdata.waiting) {
 			omrthread_monitor_exit(testdata.waitSync);
 			break;
 		}
@@ -204,15 +206,17 @@ TEST(ThreadAbortTest, Waiting)
 
 	omrthread_abort(t);
 
-	omrthread_monitor_wait(testdata.exitSync);
+	if (0 == testdata.aborted) {
+		omrthread_monitor_wait(testdata.exitSync);
+	}
 	omrthread_monitor_exit(testdata.exitSync);
 
 	{
 		J9ThreadAbstractMonitor *mon = (J9ThreadAbstractMonitor *)testdata.waitSync;
-		assert(mon->waiting == NULL);
-		assert(mon->blocking == NULL);
-		assert(mon->count == 0);
-		assert(mon->owner == NULL);
+		EXPECT_TRUE(NULL == mon->waiting);
+		EXPECT_TRUE(NULL == mon->blocking);
+		EXPECT_TRUE(0 == mon->count);
+		EXPECT_TRUE(NULL == mon->owner);
 	}
 
 	omrthread_monitor_destroy(testdata.exitSync);
@@ -239,18 +243,19 @@ waitingMain(void *arg)
 		assert(!(self->flags & J9THREAD_FLAG_PRIORITY_INTERRUPTED));
 		assert(!(self->flags & J9THREAD_FLAG_BLOCKED));
 		assert(!(self->flags & J9THREAD_FLAG_WAITING));
-		assert(self->monitor == NULL);
+		EXPECT_TRUE(NULL == self->monitor);
 
-		assert(mon->waiting == NULL);
+		EXPECT_TRUE(NULL == mon->waiting);
 		/*assert((J9AbstractThread *)mon->owner == self);*/
-		assert(mon->blocking == NULL);
+		EXPECT_TRUE(NULL == mon->blocking);
 		/*assert(mon->count == 1);*/
 	} else {
 		omrthread_monitor_exit(testdata->waitSync);
 	}
 
-	omrthread_monitor_enter(testdata->exitSync);
-	omrthread_monitor_notify(testdata->exitSync);
+	EXPECT_EQ(0, omrthread_monitor_enter(testdata->exitSync));
+	testdata->aborted = 1;
+	EXPECT_EQ(0, omrthread_monitor_notify(testdata->exitSync));
 	omrthread_monitor_exit(testdata->exitSync);
 
 	return 0;

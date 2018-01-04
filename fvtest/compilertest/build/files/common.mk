@@ -35,6 +35,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/infra/IGBase.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/IGNode.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/ILWalk.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ras/ILValidationRules.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ras/ILValidationUtils.cpp \
     $(JIT_OMR_DIRTY_DIR)/ras/ILValidator.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/InterferenceGraph.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/OMRMonitor.cpp \
@@ -148,9 +150,9 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/optimizer/PartialRedundancy.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/PreExistence.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/PrefetchInsertion.cpp \
-    $(JIT_OMR_DIRTY_DIR)/optimizer/ReachingBlocks.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/Reachability.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/ReachingDefinitions.cpp \
+    $(JIT_OMR_DIRTY_DIR)/optimizer/OMRRecognizedCallTransformer.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/RedundantAsyncCheckRemoval.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/RegisterAnticipatability.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/RegisterAvailability.cpp \

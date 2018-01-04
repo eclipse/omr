@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,13 +81,6 @@ class OMR_EXTENSIBLE Instruction
    virtual bool isVirtualGuardNOPInstruction() { return false; }
 
    virtual TR::LabelSymbol *getLabelSymbol() { return NULL; }
-
-   /*
-    * Instruction properties.
-    */
-   bool isLastWarmInstruction() { return (_index & TO_MASK(LastWarmInstruction)) != 0; }
-   void setLastWarmInstruction(bool v) { v ? _index |= TO_MASK(LastWarmInstruction) : _index &= ~TO_MASK(LastWarmInstruction); }
-
 
    typedef uint32_t TIndex;
    TR_ALLOC(TR_Memory::Instruction)
@@ -228,7 +221,11 @@ class OMR_EXTENSIBLE Instruction
    int32_t getRegisterSaveDescription() { return _registerSaveDescription; }
    int32_t setRegisterSaveDescription(int32_t v) { return (_registerSaveDescription = v); }
 
+   bool    requiresAtomicPatching();
 
+   int32_t getMaxPatchableInstructionLength() { return 0; } // no virt
+
+   bool isMergeableGuard();
 
    protected:
 
@@ -279,7 +276,7 @@ class OMR_EXTENSIBLE Instruction
    TR::Node *_node;
    TR::CodeGenerator *_cg;
 
-   protected: 
+   protected:
    TR_BitVector *_liveLocals;
    TR_BitVector *_liveMonitors;
    int32_t _registerSaveDescription;
@@ -290,9 +287,9 @@ class OMR_EXTENSIBLE Instruction
       TR_GCStackMap *_GCMap;
       TR_GCInfo()
          {
-         _GCRegisterMask = 0; 
+         _GCRegisterMask = 0;
          _GCMap = 0;
-         } 
+         }
       } _gc;
 
 

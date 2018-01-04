@@ -34,3 +34,5 @@ add_executable(mandelbrot
 target_link_libraries(mandelbrot
 	tril
 )
+
+set_property(TARGET mandelbrot PROPERTY FOLDER fvtest/tril/examples)

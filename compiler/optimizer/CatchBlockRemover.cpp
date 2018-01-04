@@ -33,8 +33,8 @@
 #include "il/TreeTop_inlines.hpp"                // for TreeTop::getNode, etc
 #include "infra/Cfg.hpp"                         // for CFG
 #include "infra/List.hpp"                        // for List, ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                   // for CFGEdge
-#include "infra/TRCfgNode.hpp"                   // for CFGNode
+#include "infra/CfgEdge.hpp"                     // for CFGEdge
+#include "infra/CfgNode.hpp"                     // for CFGNode
 #include "optimizer/Optimization.hpp"            // for Optimization
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimization_inlines.hpp"

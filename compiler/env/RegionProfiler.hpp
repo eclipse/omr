@@ -48,13 +48,21 @@ namespace TR {
 class RegionProfiler
    {
 public:
-   RegionProfiler(TR::Region &region, TR::Compilation &compilation, const char *identifier) :
+   RegionProfiler(TR::Region &region, TR::Compilation &compilation, const char *format, ...) :
       _region(region),
       _initialRegionSize(_region.bytesAllocated()),
       _initialSegmentProviderSize(_region._segmentProvider.bytesAllocated()),
-      _compilation(compilation),
-      _identifier(identifier ? identifier : "[ANONYMOUS]")
+      _compilation(compilation)
       {
+      if (_compilation.getOption(TR_ProfileMemoryRegions))
+         {
+         va_list args;
+         va_start(args, format);
+         int len = vsnprintf(_identifier, sizeof(_identifier), format, args);
+         TR_ASSERT(len < sizeof(_identifier), "Region profiler identifier truncated as it exceeded max length %d", sizeof(_identifier));
+         _identifier[sizeof(_identifier) - 1] = '\0';
+         va_end(args);
+         }
       }
 
    ~RegionProfiler()
@@ -65,9 +73,8 @@ public:
             &_compilation,
             TR::DebugCounter::debugCounterName(
                &_compilation,
-               "kbytesAllocated.details/%s/%s",
-               _identifier,
-               _compilation.getHotnessName(_compilation.getMethodHotness())
+               "kbytesAllocated.details/%s",
+               _identifier
                ),
             (_region.bytesAllocated() - _initialRegionSize) / 1024
             );
@@ -75,9 +82,8 @@ public:
             &_compilation,
             TR::DebugCounter::debugCounterName(
                &_compilation,
-               "segmentAllocation.details/%s/%s",
-                _identifier,
-                _compilation.getHotnessName(_compilation.getMethodHotness())
+               "segmentAllocation.details/%s",
+                _identifier
                 ),
             (_region._segmentProvider.bytesAllocated() - _initialSegmentProviderSize) / 1024
             );
@@ -89,7 +95,7 @@ private:
    size_t const _initialRegionSize;
    size_t const _initialSegmentProviderSize;
    TR::Compilation &_compilation;
-   const char * const _identifier;
+   char _identifier[256];
    };
 
 }

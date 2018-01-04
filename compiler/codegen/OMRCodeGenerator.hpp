@@ -255,8 +255,7 @@ class OMR_EXTENSIBLE CodeGenerator
    uint32_t _prePrologueSize;
 
    TR::Instruction *_implicitExceptionPoint;
-   bool mergeableGuard(TR::Instruction *guard);
-   bool mergeableGuards(TR::Instruction *earlierGuard, TR::Instruction *laterGuard);
+   bool areMergeableGuards(TR::Instruction *earlierGuard, TR::Instruction *laterGuard);
 
    protected:
 
@@ -1171,7 +1170,6 @@ class OMR_EXTENSIBLE CodeGenerator
    // Code patching
    //
    // Used to find out whether there is an appropriate instruction space as vgdnop space
-   bool    requiresAtomicPatching(TR::Instruction *vgdnop);
    int32_t sizeOfInstructionToBePatched(TR::Instruction *vgdnop);
    int32_t sizeOfInstructionToBePatchedHCRGuard(TR::Instruction *vgdnop);
    // Used to find which instruction is an appropriate instruction space as vgdnop space
@@ -1179,8 +1177,6 @@ class OMR_EXTENSIBLE CodeGenerator
    // Used to find the guard instruction where a given guard will actually patch
    // currently can only return a value other than vgdnop for HCR guards
    TR::Instruction* getVirtualGuardForPatching(TR::Instruction *vgdnop);
-
-   bool isStopTheWorldGuard(TR::Node *node);
 
    void jitAddPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched) {}
    void jitAdd32BitPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched) {}
@@ -1360,8 +1356,6 @@ class OMR_EXTENSIBLE CodeGenerator
    int32_t getVMThreadGlobalRegisterNumber() {return -1;} // no virt
    int32_t arrayInitMinimumNumberOfBytes() {return 8;} // no virt
 
-   int32_t getMaxPatchableInstructionLength() { return 0; } // no virt
-
    TR::Instruction *saveOrRestoreRegisters(TR_BitVector *regs, TR::Instruction *cursor, bool doSaves);
 
    void addCountersToEdges(TR::Block *block);
@@ -1503,6 +1497,8 @@ class OMR_EXTENSIBLE CodeGenerator
    virtual bool getSupportsTLE();
 
    virtual bool getSupportsIbyteswap();
+
+   virtual bool getSupportsBitPermute();
 
    bool getSupportsAutoSIMD() { return _flags4.testAny(SupportsAutoSIMD);}
    void setSupportsAutoSIMD() { _flags4.set(SupportsAutoSIMD);}

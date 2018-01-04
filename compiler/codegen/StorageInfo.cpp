@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,14 +125,6 @@ TR_StorageInfo::populateAddress(TR::Node *address)
             {
             _class = TR_DirectMappedStatic;
             _offset += _symRef->getOffset();
-            }
-         }
-      else if (_address->getOpCodeValue() == TR::aload && _symRef->getOffset() == 0)
-         {
-         if (comp()->cg()->getLinkage()->isAddressOfStaticSymRef(_symRef))
-            {
-            // the base address of the static area has been cached in _symRef and is being loaded here with an aload
-            _class = TR_StaticBaseAddress;
             }
          }
       }

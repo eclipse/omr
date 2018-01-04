@@ -1809,7 +1809,7 @@ MemToMemTypedVarLenMacroOp::generateLoop()
 
    // Skip the loop if length is zero.
    TR::LabelSymbol * doneLoop = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
-   startControlFlow = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCodeFromNode(_lenNode), _dstNode, _lenReg, (int32_t)0, TR::InstOpCode::COND_BNH, doneLoop, false, false);
+   startControlFlow = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCode(), _dstNode, _lenReg, (int32_t)0, TR::InstOpCode::COND_BNH, doneLoop, false, false);
 
    if (_isForward)
       {
@@ -2439,7 +2439,7 @@ MemCpyAtomicMacroOp::generateLoop()
    TR::LabelSymbol * oolStartLabel6 = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
 
    // If length <= 0, skip to doneArrayCopyLabel
-   startControlFlow = cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCodeFromNode(_lenNode), _dstNode, _lenReg, (int32_t) 0, TR::InstOpCode::COND_BNH, doneArrayCopyLabel, false, false);
+   startControlFlow = cursor = generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::getCmpOpCode(), _dstNode, _lenReg, (int32_t) 0, TR::InstOpCode::COND_BNH, doneArrayCopyLabel, false, false);
 
    // backwards array copy
    // update end reg and start reg to be added with length

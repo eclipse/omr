@@ -33,7 +33,7 @@ namespace OMR { typedef OMR::Block BlockConnector; }
 
 #define MIN_PROFILED_FREQUENCY (.75f)
 
-#include "infra/TRCfgNode.hpp"      // for CFGNode
+#include "infra/CfgNode.hpp"        // for CFGNode
 
 #include <limits.h>                 // for UINT_MAX
 #include <stddef.h>                 // for NULL
@@ -388,9 +388,6 @@ class OMR_EXTENSIBLE Block : public TR::CFGNode
    void setIsSuperCold(bool v = true);
    bool isSuperCold();
 
-   void setIsLastWarmBlock(bool b = true)             { _flags.set(_isLastWarmBlock, b); }
-   bool isLastWarmBlock()                             { return _flags.testAny(_isLastWarmBlock); }
-
    void setDoNotProfile()                             { _flags.set(_doNotProfile); }
    bool doNotProfile()                                { return _flags.testAny(_doNotProfile); }
 
@@ -509,7 +506,7 @@ class OMR_EXTENSIBLE Block : public TR::CFGNode
       _isExtensionOfPreviousBlock           = 0x00000001,
       _isCold                               = 0x00000002,
       _isSuperCold                          = 0x00040000,  // User specified cold/hotness by pragma or @ASSERT for PLX
-      _isLastWarmBlock                      = 0x00000080,
+      // AVAILABLE                          = 0x00000080,
       _doNotProfile                         = 0x00000004,
       _specializedDesyncCatchBlock          = 0x00000008,
       _firstBlockInLoop                     = 0x00000020,

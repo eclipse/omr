@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,38 +112,6 @@ public:
    template <typename AllocatorType>
    static TR::AutomaticSymbol * createMarker(AllocatorType m, const char * name);
 
-/** @} */
-
-public:
-/**
- * The class formerly known as TR_RegisterSymbol
- *
- * The following is to be used by register allocation. We have Hardware and
- * Symbolic register auto temps.
- *
- *  - A Hardware register auto means that a load/store from this register auto
- *  maps directly to the register it describes.
- *  - A symbolic register auto is left open and instruction level register
- *  allocation is free to choose any register for it as well as it can choose
- *  to map this register auto to a spill location.
- *
- * \todo Verify the above comment is correct, or at least remap the terms to something recognizable.
- *
- *
- */
-   template <typename AllocatorType>
-   static TR::AutomaticSymbol * createRegisterSymbol(AllocatorType m, TR_RegisterKinds regKind, uint32_t globalRegNum, TR::DataType d, uint32_t s, TR_FrontEnd * fe);
-
-   TR_RegisterKinds  getRegisterKind() const                { return _regKind;                        }
-   void              setGlobalRegisterNumber(uint32_t grn)  { _globalRegisterNumber = grn;            }
-   uint32_t          getGlobalRegisterNumber() const        { return _globalRegisterNumber;           }
-   void              setRealRegister()                      { return (_flags2.set(RealRegister));     }
-   bool              isRealRegister()                       { return (_flags2.testAny(RealRegister)); }
-
-private:
-
-   TR_RegisterKinds _regKind;
-   int32_t _globalRegisterNumber;
 /** @} */
 
 /**

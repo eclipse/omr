@@ -11687,6 +11687,93 @@
    /* .ifCompareOpCode      = */ TR::BadILOp,
    },
 
+    /*!
+    * \brief bit permute
+    *
+    * An op-code that takes three children:
+    * value   Integer
+    * address Address
+    * length  Integer
+    *
+    * Address points to a byte array, of size length.
+    * These bytes are used as bit indices, specifying the bit from value
+    * to use in the result. These bits are placed in the result's lowest
+    * bits, based on their index in the byte array. Higher unspecified
+    * bits are zeroed. This can be expressed as:
+    *
+    * result = 0
+    * for (x = 0; x < length; ++x)
+    *   result |= ((value >> address[x]) & 1) << x
+    *
+    * This mirrors shift's unspecified behaviour when specifying a shift amount
+    * greater than the width of the value. This goes for both an specified index
+    * that is not within the value and a length that exceeds the size of
+    * the result.
+    */
+   {
+   /* .opcode               = */ TR::bbitpermute,
+   /* .name                 = */ "bbitpermute",
+   /* .properties1          = */ 0,
+   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE,
+   /* .properties3          = */ ILProp3::LikeUse,
+   /* .properties4          = */ 0,
+   /* .dataType             = */ TR::Int8,
+   /* .typeProperties       = */ ILTypeProp::Size_1 | ILTypeProp::Integer,
+   /* .childProperties      = */ THREE_CHILD(TR::Int8, TR::Address, TR::Int32),
+   /* .swapChildrenOpCode   = */ TR::BadILOp,
+   /* .reverseBranchOpCode  = */ TR::BadILOp,
+   /* .booleanCompareOpCode = */ TR::BadILOp,
+   /* .ifCompareOpCode      = */ TR::BadILOp,
+   },
+
+   {
+   /* .opcode               = */ TR::sbitpermute,
+   /* .name                 = */ "sbitpermute",
+   /* .properties1          = */ 0,
+   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE,
+   /* .properties3          = */ ILProp3::LikeUse,
+   /* .properties4          = */ 0,
+   /* .dataType             = */ TR::Int16,
+   /* .typeProperties       = */ ILTypeProp::Size_2 | ILTypeProp::Integer,
+   /* .childProperties      = */ THREE_CHILD(TR::Int16, TR::Address, TR::Int32),
+   /* .swapChildrenOpCode   = */ TR::BadILOp,
+   /* .reverseBranchOpCode  = */ TR::BadILOp,
+   /* .booleanCompareOpCode = */ TR::BadILOp,
+   /* .ifCompareOpCode      = */ TR::BadILOp,
+   },
+
+   {
+   /* .opcode               = */ TR::ibitpermute,
+   /* .name                 = */ "ibitpermute",
+   /* .properties1          = */ 0,
+   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE,
+   /* .properties3          = */ ILProp3::LikeUse,
+   /* .properties4          = */ 0,
+   /* .dataType             = */ TR::Int32,
+   /* .typeProperties       = */ ILTypeProp::Size_4 | ILTypeProp::Integer,
+   /* .childProperties      = */ THREE_CHILD(TR::Int32, TR::Address, TR::Int32),
+   /* .swapChildrenOpCode   = */ TR::BadILOp,
+   /* .reverseBranchOpCode  = */ TR::BadILOp,
+   /* .booleanCompareOpCode = */ TR::BadILOp,
+   /* .ifCompareOpCode      = */ TR::BadILOp,
+   },
+
+   {
+   /* .opcode               = */ TR::lbitpermute,
+   /* .name                 = */ "lbitpermute",
+   /* .properties1          = */ 0,
+   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE,
+   /* .properties3          = */ ILProp3::LikeUse,
+   /* .properties4          = */ 0,
+   /* .dataType             = */ TR::Int64,
+   /* .typeProperties       = */ ILTypeProp::Size_8 | ILTypeProp::Integer,
+   /* .childProperties      = */ THREE_CHILD(TR::Int64, TR::Address, TR::Int32),
+   /* .swapChildrenOpCode   = */ TR::BadILOp,
+   /* .reverseBranchOpCode  = */ TR::BadILOp,
+   /* .booleanCompareOpCode = */ TR::BadILOp,
+   /* .ifCompareOpCode      = */ TR::BadILOp,
+   },
+
    {
    /* .opcode               = */ TR::Prefetch,
    /* .name                 = */ "Prefetch",

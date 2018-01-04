@@ -37,8 +37,8 @@
 #include "infra/Flags.hpp"          // for flags8_t
 #include "infra/Link.hpp"           // for TR_LinkHead, TR_Link
 #include "infra/List.hpp"           // for List
-#include "infra/TRCfgEdge.hpp"      // for CFGEdge
-#include "infra/TRCfgNode.hpp"      // for CFGNode
+#include "infra/CfgEdge.hpp"        // for CFGEdge
+#include "infra/CfgNode.hpp"        // for CFGNode
 #include "infra/vector.hpp"         // for TR::vector
 
 #include "optimizer/VPConstraint.hpp"

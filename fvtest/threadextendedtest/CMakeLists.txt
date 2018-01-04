@@ -43,4 +43,6 @@ if(OMR_HOST_OS STREQUAL "zos")
 	target_link_libraries(omrthreadextendedtest j9a2e)
 endif()
 
+set_property(TARGET omrthreadextendedtest PROPERTY FOLDER fvtest)
+
 add_test(NAME threadextendedtest COMMAND omrthreadextendedtest)

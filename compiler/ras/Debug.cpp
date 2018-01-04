@@ -87,7 +87,7 @@
 #include "infra/BitVector.hpp"                        // for TR_BitVector, etc
 #include "infra/List.hpp"                             // for ListIterator, etc
 #include "infra/SimpleRegex.hpp"
-#include "infra/TRCfgNode.hpp"                        // for CFGNode
+#include "infra/CfgNode.hpp"                          // for CFGNode
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimizer.hpp"                    // for Optimizer
 #include "optimizer/PreExistence.hpp"
@@ -1786,16 +1786,7 @@ TR_Debug::getAutoName(TR::SymbolReference * symRef)
 
    name[0]=0;  //initialize to empty string
 
-
-   if (symRef->getSymbol()->isRegisterSymbol())
-     {
-     TR::AutomaticSymbol *symReg=symRef->getSymbol()->castToRegisterSymbol();
-     if(symReg->isRealRegister())
-       sprintf(name,"<GlobalReg%d %s>",symReg->getGlobalRegisterNumber(),getGlobalRegisterName(symReg->getGlobalRegisterNumber()));
-     else
-       sprintf(name,"<GlobalReg%d>",symReg->getGlobalRegisterNumber());
-     }
-   else if (symRef->getSymbol()->isSpillTempAuto())
+   if (symRef->getSymbol()->isSpillTempAuto())
       {
       char * symName = (char *)_comp->trMemory()->allocateHeapMemory(20);
       if (symRef->getSymbol()->getDataType() == TR::Float || symRef->getSymbol()->getDataType() == TR::Double)
@@ -3858,9 +3849,9 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case RubyHelper_vm_setconstant:         return "vm_setconstant";
          case RubyHelper_rb_vm_env_write:        return "rb_vm_env_write";
          case RubyHelper_vm_jit_stack_check:     return "vm_jit_stack_check";
-         case RubyHelper_rb_str_freeze:          return "rb_str_freeze"; 
-         case RubyHelper_rb_ivar_set:            return "rb_ivar_set"; 
-         case RubyHelper_vm_compute_case_dest:   return "vm_compute_case_dest"; 
+         case RubyHelper_rb_str_freeze:          return "rb_str_freeze";
+         case RubyHelper_rb_ivar_set:            return "rb_ivar_set";
+         case RubyHelper_vm_compute_case_dest:   return "vm_compute_case_dest";
          case RubyHelper_vm_getinstancevariable: return "vm_getinstancevariable";
          case RubyHelper_vm_setinstancevariable: return "vm_setinstancevariable";
          }
@@ -3974,7 +3965,8 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_jitProfileLongValue:       return "jitProfileLongValue";
          case TR_jitProfileAddress:         return "jitProfileAddress";
          case TR_jitProfileWarmCompilePICAddress: return "jitProfileAddress for mainline code PIC's";
-         case TR_jitProfileParseBuffer:     return "jitProfileParseBuffer";
+         case TR_jProfile32BitValue:        return "jProfile32BitValue";
+         case TR_jProfile64BitValue:        return "jProfile64BitValue";
          case TR_prepareForOSR:             return "prepareForOSR";
 
          case TR_jitRetranslateCaller:      return "jitRetranslateCaller";

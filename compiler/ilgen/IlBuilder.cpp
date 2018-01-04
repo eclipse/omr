@@ -154,21 +154,6 @@ IlBuilder::setupForBuildIL()
    _exitBlock = emptyBlock();
    }
 
-
-#if 0
-char *
-IlBuilder::getName()
-   {
-   if (!_haveReplayName)
-      {
-      sprintf(_replayName, "B_%p", this);
-      _haveReplayName = true;
-      }
-   return _replayName;
-   }
-#endif
-
-
 void
 IlBuilder::print(const char *title, bool recurse)
    {
@@ -1779,49 +1764,6 @@ IlBuilder::genCall(TR::SymbolReference *methodSymRef, int32_t numArgs, TR::IlVal
    return NULL;
    }
 
-/** \brief
- *     The service is used to atomically increase memory location [\p baseAddress + \p offset] by amount of \p value. 
- *
- *  \param value
- *     The amount to increase for the memory location.
- * 
- *  \note
- *	   This service currently only supports Int32/Int64.
- *
- *  \return
- *     The old value at the location [\p baseAddress + \p offset].
- */
-TR::IlValue *
-IlBuilder::AtomicAddWithOffset(TR::IlValue * baseAddress, TR::IlValue * offset, TR::IlValue * value)
-   {
-   TR_ASSERT(comp()->cg()->supportsAtomicAdd(), "this platform doesn't support AtomicAdd() yet");
-   TR_ASSERT(baseAddress->getDataType() == TR::Address, "baseAddress must be TR::Address");
-   TR_ASSERT(offset == NULL || offset->getDataType() == TR::Int32 || offset->getDataType() == TR::Int64, "offset must be TR::Int32/64 or NULL");
-
-   //Determine the implementation type and returnType by detecting "value"'s type
-   TR::DataType returnType = value->getDataType();
-   TR_ASSERT(returnType == TR::Int32 || (returnType == TR::Int64 && TR::Compiler->target.is64Bit()), "AtomicAdd currently only supports Int32/64 values");
-   TraceIL("IlBuilder[ %p ]::AtomicAddWithOffset (%d, %d, %d)\n", this, baseAddress->getID(), offset == NULL ? 0 : offset->getID(), value->getID());
-
-   OMR::SymbolReferenceTable::CommonNonhelperSymbol atomicBitSymbol = returnType == TR::Int32 ? TR::SymbolReferenceTable::atomicAdd32BitSymbol : TR::SymbolReferenceTable::atomicAdd64BitSymbol;//lock add
-   TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateCodeGenInlinedHelper(atomicBitSymbol); 
-   TR::Node *callNode;
-   //Evaluator will handle if it's (baseAddress+offset) or baseAddress based on the number of children the call node have 
-   callNode = TR::Node::createWithSymRef(TR::ILOpCode::getDirectCall(returnType), offset == NULL ? 2 : 3, methodSymRef);
-   callNode->setAndIncChild(0, loadValue(baseAddress));
-   if (offset == NULL)
-      {
-      callNode->setAndIncChild(1, loadValue(value));
-      }
-   else
-      {
-      callNode->setAndIncChild(1, loadValue(offset));
-      callNode->setAndIncChild(2, loadValue(value));
-      }
-
-   TR::IlValue *returnValue = newValue(callNode->getDataType(), callNode);
-   return returnValue; 
-   }
 
 /** \brief
  *     The service is used to atomically increase memory location \p baseAddress by amount of \p value. 
@@ -1838,7 +1780,23 @@ IlBuilder::AtomicAddWithOffset(TR::IlValue * baseAddress, TR::IlValue * offset, 
 TR::IlValue *
 IlBuilder::AtomicAdd(TR::IlValue * baseAddress, TR::IlValue * value)
    {
-   return AtomicAddWithOffset(baseAddress, NULL, value);    
+   TR_ASSERT(comp()->cg()->supportsAtomicAdd(), "this platform doesn't support AtomicAdd() yet");
+   TR_ASSERT(baseAddress->getDataType() == TR::Address, "baseAddress must be TR::Address");
+
+   //Determine the implementation type and returnType by detecting "value"'s type
+   TR::DataType returnType = value->getDataType();
+   TR_ASSERT(returnType == TR::Int32 || (returnType == TR::Int64 && TR::Compiler->target.is64Bit()), "AtomicAdd currently only supports Int32/64 values");
+   TraceIL("IlBuilder[ %p ]::AtomicAdd(%d, %d)\n", this, baseAddress->getID(), value->getID());
+
+   OMR::SymbolReferenceTable::CommonNonhelperSymbol atomicBitSymbol = returnType == TR::Int32 ? TR::SymbolReferenceTable::atomicAdd32BitSymbol : TR::SymbolReferenceTable::atomicAdd64BitSymbol;//lock add
+   TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateCodeGenInlinedHelper(atomicBitSymbol); 
+   TR::Node *callNode;
+   callNode = TR::Node::createWithSymRef(TR::ILOpCode::getDirectCall(returnType), 2, methodSymRef);
+   callNode->setAndIncChild(0, loadValue(baseAddress));
+   callNode->setAndIncChild(1, loadValue(value));
+
+   TR::IlValue *returnValue = newValue(callNode->getDataType(), callNode);
+   return returnValue; 
    }
 
 

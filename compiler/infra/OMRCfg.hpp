@@ -41,8 +41,8 @@ namespace OMR { typedef OMR::CFG CFGConnector; }
 #include "infra/Assert.hpp"         // for TR_ASSERT
 #include "infra/List.hpp"           // for TR_TwoListIterator, List
 #include "infra/Link.hpp"           // for TR_LinkHead1
-#include "infra/TRCfgEdge.hpp"
-#include "infra/TRCfgNode.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 
 class TR_RegionStructure;
 class TR_Structure;

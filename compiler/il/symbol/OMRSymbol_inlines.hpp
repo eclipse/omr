@@ -134,12 +134,6 @@ TR::StaticSymbol *OMR::Symbol::castToMethodTypeTableEntrySymbol()
    }
 
 
-TR::AutomaticSymbol *OMR::Symbol::castToRegisterSymbol()
-   {
-   TR_ASSERT(self()->isRegisterSymbol(), "OMR::Symbol::castToRegisterSymbol expected a register symbol");
-   return (TR::AutomaticSymbol*)this;
-   }
-
 TR::AutomaticSymbol * OMR::Symbol::castToAutoMarkerSymbol()
    {
    TR_ASSERT(self()->isAutoMarkerSymbol(), "OMR::Symbol::castToAutoMarkerSymbol, symbol is not a auto marker symbol");
@@ -224,18 +218,6 @@ bool
 OMR::Symbol::isPinningArrayPointer()
    {
    return self()->isAuto() && _flags.testAny(PinningArrayPointer);
-   }
-
-bool
-OMR::Symbol::isRegisterSymbol()
-   {
-   return self()->isAuto() && _flags.testAny(RegisterAuto);
-   }
-
-void
-OMR::Symbol::setIsRegisterSymbol()
-   {
-   _flags.set(RegisterAuto);
    }
 
 void
@@ -888,12 +870,6 @@ TR::Symbol *
 OMR::Symbol::getNamedShadowSymbol()
    {
    return self()->isNamedShadowSymbol() ? (TR::Symbol *)this : 0;
-   }
-
-TR::AutomaticSymbol *
-OMR::Symbol::getRegisterSymbol()
-   {
-   return self()->isRegisterSymbol() ? (TR::AutomaticSymbol *)this : 0;
    }
 
 TR::StaticSymbol *

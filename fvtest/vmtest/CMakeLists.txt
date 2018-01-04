@@ -42,4 +42,6 @@ target_link_libraries(omrvmtest
 
 )
 
+set_property(TARGET omrvmtest PROPERTY FOLDER fvtest)
+
 add_test(NAME vmtest COMMAND omrvmtest)

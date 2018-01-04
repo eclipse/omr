@@ -50,8 +50,8 @@
 #include "infra/BitVector.hpp"                 // for TR_BitVector, etc
 #include "infra/Cfg.hpp"                       // for CFG
 #include "infra/List.hpp"                      // for List, ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
 #include "optimizer/Optimization.hpp"          // for Optimization
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizations.hpp"
@@ -1668,7 +1668,7 @@ TR_IsolatedStoreElimination::markNodesAndLocateSideEffectIn(TR::Node *node, vcou
       {
       toReturn = true;
       }
-   else if (node->getUseDefIndex()) 
+   else if (node->getUseDefIndex())
       {
       nodesSeen->set(node->getUseDefIndex());
       }

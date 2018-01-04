@@ -297,7 +297,7 @@ enum TR_CompilationOptions
    TR_DisableNopBreakpointGuard           = 0x00010000 + 6,
    TR_DisableAggressiveRecompilations     = 0x00020000 + 6,
    TR_DisableVariablePrecisionDAA         = 0x00040000 + 6,
-   // Available                           =0x00080000 + 6,
+   TR_ContinueAfterILValidationError      = 0x00080000 + 6,
    TR_DisableScorchingSampleThresholdScalingBasedOnNumProc = 0x00100000 + 6,
    TR_CummTiming                          = 0x00200000 + 6,
    TR_ReserveAllLocks                     = 0x00400000 + 6,
@@ -377,7 +377,7 @@ enum TR_CompilationOptions
    // Available                           = 0x00000020 + 9,
    TR_DisableHysteresis                   = 0x00000040 + 9, // DFP
    TR_DisableTLHPrefetch                  = 0x00000080 + 9,
-   // Available                           = 0x00000100 + 9,
+   TR_DisableJProfilerThread              = 0x00000100 + 9,
    TR_DisableIProfilerThread              = 0x00000200 + 9,
    TR_DisableGuardedCountingRecompilations = 0x00000400 + 9,
    TR_EnableCompYieldStats                = 0x00000800 + 9,
@@ -737,7 +737,7 @@ enum TR_CompilationOptions
    TR_EnableScratchMemoryDebugging                    = 0x00400000 + 21,
    TR_ProfileMemoryRegions                            = 0x00800000 + 21,
    TR_DisableConverterReducer                         = 0x01000000 + 21,
-   // Available                                       = 0x02000000 + 21,
+   TR_CompileTimeProfiler                             = 0x02000000 + 21,
    // Available                                       = 0x04000000 + 21,
    // Available                                       = 0x08000000 + 21,
    // Available                                       = 0x10000000 + 21,
@@ -964,7 +964,7 @@ enum TR_CompilationOptions
    TR_DontDowngradeWhenRIIsTemporarilyOff             = 0x10000000 + 29,
    TR_DontRIUpgradeAOTWarmMethods                     = 0x20000000 + 29,
    TR_UseRIOnlyForLargeQSZ                            = 0x20000000 + 29,
-   // Available                                       = 0x40000000 + 29,
+   TR_EnableAggressiveLiveness                        = 0x40000000 + 29,
    // Available                                       = 0x80000000 + 29,
 
 
@@ -979,15 +979,14 @@ enum TR_CompilationOptions
    TR_EnableNewCheckCastInstanceOf                    = 0x00001000 + 30,
    TR_DisableHardwareProfilerReducedWarm              = 0x00002000 + 30,
    TR_RestrictStaticFieldFolding                      = 0x00004000 + 30,
-   // Available                                       = 0x00008000 + 30,
-   // Available                                       = 0x00010000 + 30,
+   TR_TraceILValidator                                = 0x00008000 + 30,
+   TR_EnableJProfilingInProfilingCompilations         = 0x00010000 + 30,
    TR_EnableJProfiling                                = 0x00020000 + 30,
    TR_DisableForcedEXInlining                         = 0x00040000 + 30,
    TR_EnableOnsiteCacheForSuperClassTest              = 0x00080000 + 30,
    TR_DisableVMCSProfiling                            = 0x00100000 + 30,
    TR_EnableHardwareProfileIndirectDispatch           = 0x00200000 + 30,
    TR_DisableCompareAndBranchInstruction              = 0x00400000 + 30,
-   TR_EnableAggressiveLiveness                        = 0x00010000 + 30,
    TR_EnableMetadataBytecodePCToIAMap                 = 0x00800000 + 30,
    TR_DisableHardwareProfilerReducedWarmUpgrades      = 0x01000000 + 30,
    TR_DontAddHWPDataToIProfiler                       = 0x02000000 + 30,
@@ -1151,6 +1150,8 @@ enum TR_VerboseFlags
    TR_VerboseHookDetailsClassLoading,
    TR_VerboseHookDetailsClassUnloading,
    TR_VerboseSampleDensity,
+
+   TR_VerboseProfiling,
 
    //If adding new options add an entry to _verboseOptionNames as well
    TR_NumVerboseOptions        // Must be the last one;

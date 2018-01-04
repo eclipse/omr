@@ -85,4 +85,6 @@ endif()
 	#MODULE_SHARED_LIBS += ws2_32 shell32 Iphlpapi psapi pdh
 #endif
 
+set_property(TARGET omrsigtest PROPERTY FOLDER fvtest)
+
 add_test(NAME sigtest COMMAND omrsigtest)

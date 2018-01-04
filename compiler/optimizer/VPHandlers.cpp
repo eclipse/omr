@@ -67,7 +67,7 @@
 #include "infra/Link.hpp"                       // for TR_LinkHead, TR_Pair
 #include "infra/List.hpp"                       // for ListIterator, etc
 #include "infra/SimpleRegex.hpp"
-#include "infra/TRCfgEdge.hpp"                  // for CFGEdge
+#include "infra/CfgEdge.hpp"                    // for CFGEdge
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"    // for OptimizationManager
 #include "optimizer/Optimizations.hpp"
@@ -11899,7 +11899,7 @@ TR::Node *constrainOverflowChk(OMR::ValuePropagation *vp, TR::Node *node)
 TR::Node *constrainUnsignedOverflowChk(OMR::ValuePropagation *vp, TR::Node *node)
    {
    constrainChildren(vp,node);
-   return node; 
+   return node;
    }
 
 TR::Node *constrainDivChk(OMR::ValuePropagation *vp, TR::Node *node)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -139,7 +139,6 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
          {
          if (secondChild->getReferenceCount() == 1 &&
             secondChild->getRegister() == NULL &&
-             !(secondChild->getOpCode().hasSymbolReference() && secondChild->getSymbolReference()->getSymbol()->isRegisterSymbol()) &&
             (secondChild->getOpCodeValue() == TR::lload || (secondChild->getOpCodeValue() == TR::iload && secondIU2L)))
             {
             lowSecondMR = generateS390MemoryReference(secondChild, _cg);
@@ -159,7 +158,6 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
          {
          if (firstChild->getReferenceCount() == 1 &&
             firstChild->getRegister() == NULL &&
-             !(firstChild->getOpCode().hasSymbolReference() && firstChild->getSymbolReference()->getSymbol()->isRegisterSymbol()) &&
             (firstChild->getOpCodeValue() == TR::lload || (firstChild->getOpCodeValue() == TR::iload && firstIU2L)))
             {
             lowFirstMR = generateS390MemoryReference(firstChild, _cg);

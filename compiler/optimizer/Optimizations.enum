@@ -80,6 +80,7 @@
    OPTIMIZATION(compactLocals)
    OPTIMIZATION(varHandleTransformer)
    OPTIMIZATION(unsafeFastPath)
+   OPTIMIZATION(recognizedCallTransformer)
    OPTIMIZATION(coldBlockMarker)
    OPTIMIZATION(coldBlockOutlining)
    OPTIMIZATION(basicBlockPeepHole)

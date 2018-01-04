@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -275,7 +275,7 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateAutoSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType, bool isReference = true,
          bool isInternalPointer = false, bool reuseAuto = true, bool isAdjunct = false, size_t size = 0);
    TR::SymbolReference * createTemporary(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::DataType, bool isInternalPointer = false, size_t size = 0);
-   TR::SymbolReference * createCoDependententTemporary(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::DataType, bool isInternalPointer, size_t size,
+   TR::SymbolReference * createCoDependentTemporary(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::DataType, bool isInternalPointer, size_t size,
          TR::Symbol *coDependent, int32_t offset);
    TR::SymbolReference * findStaticSymbol(TR_ResolvedMethod * owningMethod, int32_t cpIndex, TR::DataType);
 
@@ -427,16 +427,6 @@ class SymbolReferenceTable
    bool                 isRefinedArrayShadow(TR::SymbolReference *symRef);
    bool                 isImmutableArrayShadow(TR::SymbolReference *symRef);
 
-
-   // A RegisterSymbol is a pseudo memory location that represents some machine
-   // register or a value we would like the register allocator to map to a register.
-   // Such a RegisterSymbol belongs to a method as its conceptual life span is the
-   // life of a procedure. A set of hardware registers is pre-created for each method.
-   //
-   void initRegisterSymbols(TR::ResolvedMethodSymbol *);
-   TR::SymbolReference * createRegisterSymbol(TR::ResolvedMethodSymbol *, TR_RegisterKinds, TR::DataType, TR_GlobalRegisterNumber grn);
-   TR::SymbolReference * getRegisterSymbol(TR_GlobalRegisterNumber grn);
-
    /*
     * --------------------------------------------------------------------------
     */
@@ -450,7 +440,7 @@ class SymbolReferenceTable
     * For union type support
     */
 
-   // Mark two symbol references as shared aliases of each other 
+   // Mark two symbol references as shared aliases of each other
    void makeSharedAliases(TR::SymbolReference *sr1, TR::SymbolReference *sr2);
    // Retrieve shared aliases bitvector for a given symbol reference
    TR_BitVector *getSharedAliases(TR::SymbolReference *sr);
@@ -486,7 +476,6 @@ class SymbolReferenceTable
    List<TR::SymbolReference>            _currentThreadDebugEventDataSymbolRefs;
 
    uint32_t                            _nextRegShadowIndex;
-   TR_Array<TR::SymbolReference *>      *_registerSymbolRefs;
 
    CS2::HashTable<uint32_t, TR::Symbol *, TR::Allocator> _aggregateShadowSymbolMap;
    CS2::HashTable<TR::SparseBitVector *, TR::SymbolReference *, TR::Allocator> _aggregateShadowSymbolReferenceMap;

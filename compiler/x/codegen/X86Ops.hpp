@@ -55,6 +55,7 @@ inline TR_X86OpCodes SizeParameterizedOpCode(bool is64Bit =
 #define BSFRegReg      SizeParameterizedOpCode<BSF8RegReg      , BSF4RegReg      >
 #define BSWAPReg       SizeParameterizedOpCode<BSWAP8Reg       , BSWAP4Reg       >
 #define BSRRegReg      SizeParameterizedOpCode<BSR8RegReg      , BSR4RegReg      >
+#define BTRegReg       SizeParameterizedOpCode<BT8RegReg       , BT4RegReg       >
 #define CMOVBRegReg    SizeParameterizedOpCode<CMOVB8RegReg    , CMOVB4RegReg    >
 #define CMOVARegMem    SizeParameterizedOpCode<CMOVA8RegMem    , CMOVA4RegMem    >
 #define CMOVERegMem    SizeParameterizedOpCode<CMOVE8RegMem    , CMOVE4RegMem    >

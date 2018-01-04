@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -344,32 +344,6 @@ class S390LabelTableSnippet : public TR::S390ConstantDataSnippet
    private:
    int32_t _size;
    TR::LabelSymbol **_labelTable;
-   };
-
-class S390DeclTrampSnippet : public TR::S390ConstantDataSnippet
-   {
-   public:
-   S390DeclTrampSnippet(TR::CodeGenerator *cg, TR::LabelSymbol *label);
-   virtual Kind getKind() { return IsDeclTramp; }
-   virtual uint8_t *emitSnippetBody();
-   TR::LabelSymbol *getLabel() { return _label; }
-   TR::LabelSymbol *setLabel(TR::LabelSymbol *label) { return _label = label; }
-
-   private:
-   TR::LabelSymbol *_label;
-   };
-
-class S390SortJumpTrampSnippet : public TR::S390ConstantDataSnippet
-   {
-   public:
-   S390SortJumpTrampSnippet(TR::CodeGenerator *cg, TR::LabelSymbol *label);
-   virtual Kind getKind() { return IsSortJumpTramp; }
-   virtual uint8_t *emitSnippetBody();
-   TR::LabelSymbol *getLabel() { return _label; }
-   TR::LabelSymbol *setLabel(TR::LabelSymbol *label) { return _label = label; }
-
-   private:
-   TR::LabelSymbol *_label;
    };
 
 }

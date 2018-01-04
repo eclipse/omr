@@ -37,3 +37,5 @@ endif()
 if(OMR_ENHANCED_WARNINGS)
 	target_compile_options(j9pool PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
+
+set_property(TARGET j9pool PROPERTY FOLDER util)

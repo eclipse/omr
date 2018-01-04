@@ -45,6 +45,11 @@ private:
    TR_BitVector *_signExtensionFlags;
    TR_UseDefInfo *_useDefInfo;
 
+   /* \brief
+    *    Keeps track of all nodes which should be excluded from consideration in this optimization.
+    */
+   TR::SparseBitVector _excludedNodes;
+
    enum overrideFlags
       {
       narrowOverride  = 0x01,

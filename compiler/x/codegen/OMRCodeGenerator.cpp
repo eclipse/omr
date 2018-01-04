@@ -1080,6 +1080,12 @@ OMR::X86::CodeGenerator::getSupportsIbyteswap()
    }
 
 bool
+OMR::X86::CodeGenerator::getSupportsBitPermute()
+   {
+   return true;
+   }
+
+bool
 OMR::X86::CodeGenerator::supportsMergingGuards()
    {
    return self()->getSupportsVirtualGuardNOPing() &&

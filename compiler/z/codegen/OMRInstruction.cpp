@@ -80,26 +80,25 @@
 	   _sourceUsedInMemoryReference(NULL), _flags(0), _longDispSpillReg1(NULL), _longDispSpillReg2(NULL), _binFreeRegs(0), \
    _targetRegSize(0), _sourceRegSize(0), _sourceMemSize(0), _targetMemSize(0), _sourceStart(-1), _targetStart(-1)
 
-OMR::Z::Instruction::Instruction(TR::CodeGenerator *cg,
-                   TR::InstOpCode::Mnemonic    op,
-                   TR::Node          *n)
- : OMR::Instruction(cg, op, n),
+OMR::Z::Instruction::Instruction(TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic op, TR::Node* node)
+   : 
+   OMR::Instruction(cg, op, node),
    CTOR_INITIALIZER_LIST
-  {
-  self()->initialize();
-  }
+   {
+   TR_ASSERT(cg->getS390ProcessorInfo()->supportsArch(_opcode.getMinimumALS()), "Processor detected does not support instruction %s\n", cg->getDebug()? cg->getDebug()->getOpCodeName(&_opcode) : "(unknown)");
 
-OMR::Z::Instruction::Instruction(TR::CodeGenerator *cg,
-                   TR::Instruction *precedingInstruction,
-                   TR::InstOpCode::Mnemonic op,
-                   TR::Node * n)
- : OMR::Instruction(cg, precedingInstruction, op, n),
+   self()->initialize();
+   }
+
+OMR::Z::Instruction::Instruction(TR::CodeGenerator*cg, TR::Instruction* precedingInstruction, TR::InstOpCode::Mnemonic op, TR::Node* node)
+   : 
+   OMR::Instruction(cg, precedingInstruction, op, node),
    CTOR_INITIALIZER_LIST
-  {
-  self()->initialize(precedingInstruction, true);
-  }
+   {
+   TR_ASSERT(cg->getS390ProcessorInfo()->supportsArch(_opcode.getMinimumALS()), "Processor detected does not support instruction %s\n", cg->getDebug()? cg->getDebug()->getOpCodeName(&_opcode) : "(unknown)");
 
-
+   self()->initialize(precedingInstruction, true);
+   }
 
 TR::RegisterDependencyConditions *
 OMR::Z::Instruction::setDependencyConditionsNoBookKeeping(TR::RegisterDependencyConditions *cond)

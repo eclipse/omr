@@ -58,8 +58,8 @@
 #include "infra/Checklist.hpp"                   // for {Node,Block}Checklist
 #include "infra/ILWalk.hpp"                      // for PostorderNodeIterator
 #include "infra/List.hpp"                        // for List, ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                   // for CFGEdge
-#include "infra/TRCfgNode.hpp"                   // for CFGNode
+#include "infra/CfgEdge.hpp"                     // for CFGEdge
+#include "infra/CfgNode.hpp"                     // for CFGNode
 #include "optimizer/Optimization.hpp"            // for Optimization
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizations.hpp"
@@ -112,7 +112,7 @@ int32_t TR_LoopStrider::perform()
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
    _hoistedAutos = new (stackMemoryRegion) SymRefPairMap((SymRefPairMapComparator()), SymRefPairMapAllocator(stackMemoryRegion));
-   _reassociatedAutos = new (stackMemoryRegion) SymRefMap((SymRefMapComparator()), SymRefMapAllocator(stackMemoryRegion)); 
+   _reassociatedAutos = new (stackMemoryRegion) SymRefMap((SymRefMapComparator()), SymRefMapAllocator(stackMemoryRegion));
    _count = 0;
    _newTempsCreated = false;
    _newNonAddressTempsCreated = false;
@@ -295,7 +295,7 @@ int32_t TR_LoopStrider::detectCanonicalizedPredictableLoops(TR_Structure *loopSt
       if (_storeTreesList == NULL)
          _storeTreesList = &_storeTreesSingleton;
       _storeTreesList->clear();
-         
+
       //_storeTreesList = (List<TR_StoreTreeInfo> **)trMemory()->allocateStackMemory(symRefCount*sizeof(List<TR_StoreTreeInfo> *));
       //_loadUsedInNewLoopIncrementList = (List<TR::Node> **)trMemory()->allocateStackMemory(symRefCount*sizeof(List<TR::Node> *));
       //memset(_storeTreesList, 0, symRefCount*sizeof(List<TR::TreeTop> *));
@@ -488,7 +488,7 @@ int32_t TR_LoopStrider::detectCanonicalizedPredictableLoops(TR_Structure *loopSt
                         {
                         auto lookup = _storeTreesList->find(nextInductionVariableNumber);
                         if (lookup != _storeTreesList->end())
-                           {   
+                           {
                            List<TR_StoreTreeInfo> *storeTreesList = lookup->second;
                            ListIterator<TR_StoreTreeInfo> si(storeTreesList);
                            TR_StoreTreeInfo *storeTree;
@@ -1102,7 +1102,7 @@ void TR_LoopStrider::findOrCreateStoreInfo(TR::TreeTop *tree, int32_t i)
          if (storeTree->_tt == tree)
             return;
          }
-   
+
       lookup->second->add(new (trStackMemory()) TR_StoreTreeInfo(tree, NULL, NULL, NULL, NULL, false, NULL, false));
       }
    else
@@ -4251,8 +4251,8 @@ void TR_LoopStrider::detectLoopsForIndVarConversion(
          return;
 
       //bail out if there is any exception edges to OSRCatchBlock because there is no
-      //safe way to split those edges. Also, there is no need to check if the OSRCatchBlock is 
-      //within the loop because loop strider already skips any loop that contains a 
+      //safe way to split those edges. Also, there is no need to check if the OSRCatchBlock is
+      //within the loop because loop strider already skips any loop that contains a
       //catch block
       if (nextBlock->hasExceptionSuccessors())
          {

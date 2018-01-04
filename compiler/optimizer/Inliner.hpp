@@ -72,7 +72,6 @@ const float SECOND_BEST_MIN_CALL_FREQUENCY = .2275f; //65% of 35%
 
 class TR_BitVector;
 class TR_CallStack;
-class TR_ExtraAddressInfo;
 class TR_FrontEnd;
 class TR_HashTabInt;
 class TR_InlineBlocks;

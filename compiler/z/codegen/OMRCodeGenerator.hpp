@@ -39,7 +39,7 @@ namespace OMR { typedef OMR::Z::CodeGenerator CodeGeneratorConnector; }
 #include <stdint.h>                                 // for int32_t, etc
 #include <string.h>                                 // for memcmp
 #include "codegen/FrontEnd.hpp"
-#include "codegen/InstOpCode.hpp"                   // for InstOpCode, etc
+#include "codegen/InstOpCode.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/Machine.hpp"                      // for Machine, etc
 #include "codegen/RealRegister.hpp"                 // for RealRegister, etc
@@ -93,7 +93,6 @@ class TR_PseudoRegister;
 class TR_RegisterCandidate;
 namespace TR { class S390ConstantDataSnippet; }
 namespace TR { class S390ConstantInstructionSnippet; }
-namespace TR { class S390DeclTrampSnippet; }
 namespace TR { class S390EyeCatcherDataSnippet; }
 namespace TR { class S390ImmInstruction; }
 namespace TR { class S390LabelTableSnippet; }
@@ -101,7 +100,6 @@ namespace TR { class S390LookupSwitchSnippet; }
 class TR_S390OutOfLineCodeSection;
 namespace TR { class S390PrivateLinkage; }
 class TR_S390ScratchRegisterManager;
-namespace TR { class S390SortJumpTrampSnippet; }
 namespace TR { class S390TargetAddressSnippet; }
 namespace TR { class S390WritableDataSnippet; }
 class TR_StorageReference;
@@ -190,99 +188,6 @@ enum TR_MemCpyPadTypes
 
 #define TR_INVALID_REGISTER -1
 
-class TR_S390ProcessorInfo
-   {
-   public:
-   enum TR_S390ProcessorArchitectures
-      {
-      TR_UnknownArchitecture          = 0,
-      TR_ESA390                       = 1,
-      TR_z900                         = 2,
-      TR_z990                         = 3,
-      TR_z9                           = 4, ///< arch7
-      TR_z10                          = 5, ///< arch8
-      TR_z196                         = 6, ///< arch9
-      TR_zEC12                        = 7, ///< arch10
-      TR_z13                          = 8, ///< arch11
-      TR_z14                          = 9, ///< arch12
-      TR_zNext                        = 10, ///< arch13
-
-      TR_LatestArchitecture           = TR_zNext
-      };
-
-   bool crossCompile()                   {return _crossCompile; }
-
-   bool supportsArch(TR_S390ProcessorArchitectures arch)
-      {
-      TR_ASSERT(arch >= TR_UnknownArchitecture && arch <= TR_LatestArchitecture, "Invalid Processor Architecture.");
-      return _processorArchitecture >= arch;
-      }
-
-   void disableArch(TR_S390ProcessorArchitectures arch)
-      {
-      TR_ASSERT(arch > TR_UnknownArchitecture && arch <= TR_LatestArchitecture, "Invalid Processor Architecture.");
-      _processorArchitecture = _processorArchitecture < arch ? _processorArchitecture : (TR_S390ProcessorArchitectures)((uint32_t)arch - 1);
-      }
-
-   void enableArch(TR_S390ProcessorArchitectures arch)
-      {
-      TR_ASSERT(arch >= TR_UnknownArchitecture && arch <= TR_LatestArchitecture, "Invalid Processor Architecture.");
-      _processorArchitecture = _processorArchitecture > arch ? _processorArchitecture : arch;
-      }
-
-   TR_Processor getProcessor();
-
-   private:
-   TR_S390ProcessorArchitectures _processorArchitecture;
-
-   bool _crossCompile;
-
-   friend class OMR::Z::CodeGenerator;
-
-   TR_S390ProcessorInfo()
-      :
-        _processorArchitecture(TR_UnknownArchitecture),
-        _crossCompile(false)
-      {
-#ifndef TR_HOST_S390
-      _crossCompile = true;
-#endif
-      initialize();
-      }
-
-   bool checkz900();
-   bool checkz10();
-   bool checkz990();
-   bool checkz9();
-   bool checkz196();
-   bool checkzEC12();
-   bool checkZ13();
-   bool checkZ14();
-   bool checkZNext();
-
-   void initialize()
-      {
-      if(checkZNext())
-         _processorArchitecture = TR_zNext;
-      else if (checkZ14())
-         _processorArchitecture = TR_z14;
-      else if (checkZ13())
-         _processorArchitecture = TR_z13;
-      else if (checkzEC12())
-         _processorArchitecture = TR_zEC12;
-      else if (checkz196())
-         _processorArchitecture = TR_z196;
-      else if (checkz10())
-         _processorArchitecture = TR_z10;
-      else if (checkz9())
-         _processorArchitecture = TR_z9;
-      else if (checkz990())
-         _processorArchitecture = TR_z990;
-      else if (checkz900())
-         _processorArchitecture = TR_z900;
-      }
-   };
-
 
 struct TR_S390BinaryEncodingData : public TR_BinaryEncodingData
    {
@@ -296,10 +201,8 @@ struct TR_S390BinaryEncodingData : public TR_BinaryEncodingData
 
 namespace OMR
 {
-
 namespace Z
 {
-
 class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    {
 
@@ -362,7 +265,6 @@ public:
    void setNodeAddressOfCachedStaticTree(TR::Node *n) { _nodeAddressOfCachedStatic=n; }
    TR::Node *getNodeAddressOfCachedStatic() { return _nodeAddressOfCachedStatic; }
 
-   bool supportsNamedVirtualRegisters(); // no virt, default
    TR::SparseBitVector & getBucketPlusIndexRegisters()  { return _bucketPlusIndexRegisters; }
 
    // For hanging multiple loads from register symbols onto one common DEPEND
@@ -692,7 +594,6 @@ public:
    void setRealRegisterAssociation(TR::Register     *reg,
                                    TR::RealRegister::RegNum realNum);
    bool isGlobalRegisterAvailable(TR_GlobalRegisterNumber i, TR::DataType dt);
-   void registerSymbolSetup();
 
    // Used to model register liveness without Future Use Count.
    virtual bool isInternalControlFlowReg(TR::Register *reg);
@@ -767,7 +668,6 @@ public:
    void ensure64BitRegister(TR::Register *reg);
 
    virtual bool isAddMemoryUpdate(TR::Node * node, TR::Node * valueChild);
-   bool inlinePackedLongConversion();
 
    bool globalAccessRegistersSupported();
 
@@ -1262,6 +1162,7 @@ private:
    bool LGFRReduction();
    bool AGIReduction();
    bool ICMReduction();
+   bool replaceGuardedLoadWithSoftwareReadBarrier();
    bool LAReduction();
    bool NILHReduction();
    bool duplicateNILHReduction();

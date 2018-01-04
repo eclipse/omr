@@ -318,4 +318,4 @@ test_calls.o : call
 
 
 clean:
-	@rm -f $(ALL_TESTS) useIncrement useCall replay *.o
+	@rm -f $(ALL_TESTS) useIncrement useCall *.o

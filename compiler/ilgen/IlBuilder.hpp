@@ -154,7 +154,6 @@ public:
    TR::IlValue *ConstDouble(double value);
    TR::IlValue *ConstAddress(const void * const value);
    TR::IlValue *ConstString(const char * const value);
-   TR::IlValue *ConstzeroValueForValue(TR::IlValue *v);
 
    TR::IlValue *Const(int8_t value)             { return ConstInt8(value); }
    TR::IlValue *Const(int16_t value)            { return ConstInt16(value); }
@@ -209,7 +208,6 @@ public:
    TR::IlValue *LoadIndirect(const char *type, const char *field, TR::IlValue *object);
    void StoreIndirect(const char *type, const char *field, TR::IlValue *object, TR::IlValue *value);
    TR::IlValue *IndexAt(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index);
-   TR::IlValue *AtomicAddWithOffset(TR::IlValue *baseAddress, TR::IlValue *offset, TR::IlValue *value);
    TR::IlValue *AtomicAdd(TR::IlValue *baseAddress, TR::IlValue * value);
    void Transaction(TR::IlBuilder **persistentFailureBuilder, TR::IlBuilder **transientFailureBuilder, TR::IlBuilder **fallThroughBuilder);
    void TransactionAbort();

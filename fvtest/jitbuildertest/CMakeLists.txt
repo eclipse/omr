@@ -40,4 +40,6 @@ target_link_libraries(jitbuildertest
 	${CMAKE_DL_LIBS}
 )
 
+set_property(TARGET jitbuildertest PROPERTY FOLDER fvtest)
+
 add_test(NAME JitBuilderTest COMMAND jitbuildertest)

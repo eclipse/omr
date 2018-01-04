@@ -87,8 +87,8 @@
 #include "infra/Random.hpp"
 #include "infra/SimpleRegex.hpp"
 #include "infra/Stack.hpp"                                // for TR_Stack
-#include "infra/TRCfgEdge.hpp"                            // for CFGEdge
-#include "infra/TRCfgNode.hpp"                            // for CFGNode
+#include "infra/CfgEdge.hpp"                              // for CFGEdge
+#include "infra/CfgNode.hpp"                              // for CFGNode
 #include "optimizer/CallInfo.hpp"                         // for TR_CallTarget, etc
 #include "optimizer/InlinerFailureReason.hpp"
 #include "optimizer/Optimization.hpp"                     // for Optimization
@@ -1590,7 +1590,7 @@ void TR_InlinerBase::rematerializeCallArguments(TR_TransformInlinedFunction & ti
    block1 = block1->startOfExtendedBlock();
    static char *disableProfiledGuardRemat = feGetEnv("TR_DisableProfiledGuardRemat");
 
-   bool suitableForRemat = !comp()->getOption(TR_DisableGuardedCallArgumentRemat) && !comp()->isProfilingCompilation();
+   bool suitableForRemat = !comp()->getOption(TR_DisableGuardedCallArgumentRemat) && comp()->getProfilingMode() != JitProfiling;
    if (suitableForRemat)
       {
       if (guard->_kind == TR_NoGuard)
@@ -1653,8 +1653,8 @@ void TR_InlinerBase::rematerializeCallArguments(TR_TransformInlinedFunction & ti
       // makes these for us
       if (failedArgs.size() > 0)
          {
-         RematTools::walkTreeTopsCalculatingRematFailureAlternatives(comp(), 
-            block1->getFirstRealTreeTop(), 
+         RematTools::walkTreeTopsCalculatingRematFailureAlternatives(comp(),
+            block1->getFirstRealTreeTop(),
             tif.getParameterMapper().firstTempTreeTop()->getNextTreeTop(),
             failedArgs, scanTargets, argSafetyInfo, tracer()->debugLevel());
 
@@ -1678,8 +1678,8 @@ void TR_InlinerBase::rematerializeCallArguments(TR_TransformInlinedFunction & ti
       TR::SparseBitVector unsafeSymRefs(comp()->allocator());
       if (!scanTargets.IsZero())
          {
-         RematTools::walkTreesCalculatingRematSafety(comp(), block1->getFirstRealTreeTop(), 
-            tif.getParameterMapper().lastTempTreeTop()->getNextTreeTop(), 
+         RematTools::walkTreesCalculatingRematSafety(comp(), block1->getFirstRealTreeTop(),
+            tif.getParameterMapper().lastTempTreeTop()->getNextTreeTop(),
             scanTargets, unsafeSymRefs, tracer()->debugLevel());
          }
 
@@ -2043,7 +2043,12 @@ TR_InlinerBase::addGuardForVirtual(
            createdHCRGuard ||
            (osrForNonHCRGuards && shouldAttemptOSR)))
          {
-         TR::TreeTop *induceTree = callerSymbol->genInduceOSRCall(guardedCallNodeTreeTop, callNode->getByteCodeInfo().getCallerIndex(), (callNode->getNumChildren() - callNode->getFirstArgumentIndex()), false, false, callerSymbol->getFlowGraph());
+         // Late inlining may result in callerSymbol not being the resolved method that actually calls the inlined method
+         // This is problematic for linking OSR blocks
+         TR::ResolvedMethodSymbol *callingMethod = callNode->getByteCodeInfo().getCallerIndex() == -1 ?
+            comp()->getMethodSymbol() : comp()->getInlinedResolvedMethodSymbol(callNode->getByteCodeInfo().getCallerIndex());
+
+         TR::TreeTop *induceTree = callingMethod->genInduceOSRCall(guardedCallNodeTreeTop, callNode->getByteCodeInfo().getCallerIndex(), (callNode->getNumChildren() - callNode->getFirstArgumentIndex()), false, false, callerSymbol->getFlowGraph());
          if (induceOSRCallTree)
             *induceOSRCallTree = induceTree;
          }
@@ -3103,10 +3108,6 @@ TR_HandleInjectedBasicBlock::createTemps(bool replaceAllReferences)
          {
          ref->_isConst = true;
          }
-      else if (opcode.getOpCodeValue() == TR::aload && comp()->cg()->getLinkage()->isAddressOfStaticSymRef(ref->_node->getSymbolReference()))
-         {
-         ref->_isConst = true;
-         }
       else
          {
          TR::SymbolReference * symRef = 0;
@@ -3138,7 +3139,7 @@ TR_HandleInjectedBasicBlock::createTemps(bool replaceAllReferences)
             if (tt->getNode()->getOpCode().isBranch() || tt->getNode()->getOpCode().isSwitch())
                tt = tt->getPrevTreeTop();
 
-            // If this treetop is an OSR point, a store cannot be placed between it and the 
+            // If this treetop is an OSR point, a store cannot be placed between it and the
             // transition treetop in postExecutionOSR
             if (comp()->isPotentialOSRPoint(tt->getNode()))
                tt = comp()->getMethodSymbol()->getOSRTransitionTreeTop(tt);
@@ -5124,7 +5125,7 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
        && (tif->resultNode() == NULL || tif->resultNode()->getReferenceCount() == 0))
       {
       /**
-       * In OSR, we need to split block even for cases without virtual guard. This is 
+       * In OSR, we need to split block even for cases without virtual guard. This is
        * because in OSR a block with OSR point must have an exception edge to the osrCatchBlock
        * of correct callerIndex. Split the block here so that the OSR points from callee
        * and from caller are separated.

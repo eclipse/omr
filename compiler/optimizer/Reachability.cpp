@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #include "infra/BitVector.hpp"          // for TR_BitVector
 #include "infra/Cfg.hpp"                // for CFG, TR_PredecessorIterator, etc
 #include "infra/List.hpp"               // for ListIterator, List
-#include "infra/TRCfgEdge.hpp"          // for CFGEdge
+#include "infra/CfgEdge.hpp"            // for CFGEdge
 
 TR_ReachabilityAnalysis::TR_ReachabilityAnalysis(TR::Compilation *comp):_comp(comp){}
 

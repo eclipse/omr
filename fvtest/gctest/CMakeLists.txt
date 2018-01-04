@@ -59,6 +59,7 @@ if(OMR_HOST_OS STREQUAL "zos")
 	target_link_libraries(omrgctest j9a2e)
 endif()
 
+set_property(TARGET omrgctest PROPERTY FOLDER fvtest)
 
 add_test(NAME gctest
 	COMMAND omrgctest "--gtest_filter=gcFunctionalTest*"

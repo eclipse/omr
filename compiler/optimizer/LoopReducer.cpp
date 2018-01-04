@@ -50,8 +50,8 @@
 #include "infra/Assert.hpp"                      // for TR_ASSERT
 #include "infra/Cfg.hpp"                         // for CFG, etc
 #include "infra/List.hpp"                        // for TR_ScratchList, etc
-#include "infra/TRCfgEdge.hpp"                   // for CFGEdge
-#include "infra/TRCfgNode.hpp"                   // for CFGNode
+#include "infra/CfgEdge.hpp"                     // for CFGEdge
+#include "infra/CfgNode.hpp"                     // for CFGNode
 #include "infra/TreeServices.hpp"                // for TR_AddressTree
 #include "optimizer/LoopCanonicalizer.hpp"       // for TR_LoopTransformer, etc
 #include "optimizer/Optimization_inlines.hpp"

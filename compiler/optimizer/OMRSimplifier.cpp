@@ -68,9 +68,9 @@
 #include "infra/Cfg.hpp"                       // for CFG
 #include "infra/Link.hpp"                      // for TR_LinkHead1
 #include "infra/List.hpp"                      // for List, ListElement, etc
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
-#include "compiler/il/ILOpCodes.hpp"                // for ILOpCodes
+#include "infra/CfgEdge.hpp"                   // for CFGEdge
+#include "infra/CfgNode.hpp"                   // for CFGNode
+#include "compiler/il/ILOpCodes.hpp"           // for ILOpCodes
 #include "optimizer/Optimization.hpp"          // for Optimization
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"   // for OptimizationManager

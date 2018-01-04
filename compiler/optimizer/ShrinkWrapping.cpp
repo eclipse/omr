@@ -48,8 +48,8 @@
 #include "infra/Cfg.hpp"                            // for CFG, etc
 #include "infra/Link.hpp"                           // for TR_LinkHead
 #include "infra/List.hpp"                           // for ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                      // for CFGEdge
-#include "infra/TRCfgNode.hpp"                      // for CFGNode
+#include "infra/CfgEdge.hpp"                        // for CFGEdge
+#include "infra/CfgNode.hpp"                        // for CFGNode
 #include "optimizer/Optimization.hpp"               // for Optimization
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Structure.hpp"
@@ -82,11 +82,6 @@ int32_t TR_ShrinkWrap::perform()
    //
    if (_traceSW)
       traceMsg(comp(), "Going to start shrink wrapping of registers\n");
-
-   // dont bother with profiling compiles
-   //
-   if (0 && comp()->isProfilingCompilation())
-      return 0;
 
    // no shrink wrapping on CFG with internal cycles, as the
    // analysis is going to be conservative anyway

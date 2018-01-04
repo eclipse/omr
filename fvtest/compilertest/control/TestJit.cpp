@@ -190,7 +190,7 @@ extern "C"
 bool
 initializeJit()
    {
-   return initializeTestJit(0, 0, 0, (char *)"-Xjit:useIlValidator");
+   return initializeTestJit(0, 0, 0, (char *)"-Xjit:useILValidator");
    }
 
 extern "C"

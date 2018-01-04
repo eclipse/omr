@@ -1467,7 +1467,6 @@ iDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
       }
    else if ( secondChild->getRegister()==NULL && secondChild->getReferenceCount()==1 &&
              secondChild->getOpCode().isMemoryReference() &&
-             !secondChild->getSymbolReference()->getSymbol()->isRegisterSymbol() &&
              !needCheck)
       {
       sourceMR = generateS390MemoryReference(secondChild, cg);
@@ -1648,15 +1647,15 @@ genericLongShiftSingle(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::
                {
                srcReg = cg->evaluate(firstChild->getFirstChild());
                auto mnemonic = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
-               
+
                generateRIEInstruction(cg, mnemonic, node, trgReg, srcReg, (int8_t)(32-value), (int8_t)((63-value)|0x80), (int8_t)value);
-               
+
                node->setRegister(trgReg);
-               
+
                cg->decReferenceCount(firstChild->getFirstChild());
                cg->decReferenceCount(firstChild);
                cg->decReferenceCount(secondChild);
-               
+
                return trgReg;
                }
             }
@@ -2485,7 +2484,7 @@ OMR::Z::TreeEvaluator::tryToReplaceLongAndWithRotateInstruction(TR::Node * node,
          int32_t tOnes  = trailingZeroes(~longConstValue);
          int32_t lOnes  = leadingZeroes(~longConstValue);
          int32_t popCnt = populationCount(longConstValue);
- 
+
          // if the population count is 0 then the result of the AND will also be 0,
          // because a popCnt=0 means there are no overlapping bits between the two AND
          // operands. We cannot generate a RISBG for this case as RISBG cannot be
@@ -2528,7 +2527,7 @@ OMR::Z::TreeEvaluator::tryToReplaceLongAndWithRotateInstruction(TR::Node * node,
             //
             // "firstChild->getReferenceCount() > 1"
             //    If the firstChild's refCount>1, we will need to clobber evaluate this case
-            //    because we cannot destroy the value. In such a case we're better off with 
+            //    because we cannot destroy the value. In such a case we're better off with
             //    RISBG because RISBG won't clobber anything and hence can do the operation
             //    faster.
             //
@@ -2588,7 +2587,7 @@ OMR::Z::TreeEvaluator::tryToReplaceLongAndWithRotateInstruction(TR::Node * node,
 
                // if possible then use the instruction that doesn't set the CC as it's faster
                TR::InstOpCode::Mnemonic opCode = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
- 
+
                // this instruction sets the rotation factor to 0 and sets the zero bit(0x80).
                // So it's effectively zeroing out every bit except the inclusive range of lsBit to msBit
                // The bits in that range are preserved as is
@@ -3736,7 +3735,7 @@ OMR::Z::TreeEvaluator::mulhEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool isUnsigned = (node->getOpCodeValue() == TR::iumulh);
    PRINT_ME("imulh", node, cg);
    TR::Node * firstChild = node->getFirstChild();
-   TR::Node * secondChild = node->getSecondChild();   
+   TR::Node * secondChild = node->getSecondChild();
    TR::Register * firstRegister = cg->gprClobberEvaluate(firstChild);
    TR::Register * targetRegister = cg->allocateRegister();
    TR::Instruction * cursor = NULL;

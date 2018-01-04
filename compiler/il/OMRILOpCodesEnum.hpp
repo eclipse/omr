@@ -827,6 +827,11 @@
 
    ibyteswap,// swap bytes in an integer
 
+   bbitpermute,
+   sbitpermute,
+   ibitpermute,
+   lbitpermute,
+
    Prefetch, // Prefetch
 
 

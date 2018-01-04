@@ -105,7 +105,7 @@
 #include "infra/Random.hpp"
 #include "infra/SimpleRegex.hpp"
 #include "infra/Stack.hpp"                          // for TR_Stack
-#include "infra/TRCfgEdge.hpp"                      // for CFGEdge
+#include "infra/CfgEdge.hpp"                        // for CFGEdge
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimizer.hpp"                  // for Optimizer
@@ -509,7 +509,7 @@ TR_S390ProcessorInfo::getProcessor()
       {
       result = TR_s370gp8;
       }
-      
+
    return result;
    }
 
@@ -560,12 +560,12 @@ OMR::Z::CodeGenerator::CodeGenerator()
       {
       _processorInfo.disableArch(TR_S390ProcessorInfo::TR_z10);
       }
-      
+
    if (comp->getOption(TR_DisableZ196))
       {
       _processorInfo.disableArch(TR_S390ProcessorInfo::TR_z196);
       }
-      
+
    if (comp->getOption(TR_DisableZHelix))
       {
       _processorInfo.disableArch(TR_S390ProcessorInfo::TR_zEC12);
@@ -1315,12 +1315,6 @@ OMR::Z::CodeGenerator::isAddMemoryUpdate(TR::Node * node, TR::Node * valueChild)
       }
 
    return false;
-   }
-
-bool
-OMR::Z::CodeGenerator::inlinePackedLongConversion()
-   {
-   return !self()->comp()->getOptions()->getOption(TR_DisablePackedLongConversion);
    }
 
 bool
@@ -2509,8 +2503,6 @@ bool OMR::Z::CodeGenerator::shouldValueBeInACommonedNode(int64_t value)
    return ((value >= smallestPos) || (value <= largestNeg));
    }
 
-bool OMR::Z::CodeGenerator::supportsNamedVirtualRegisters() { return false; } // TODO : Identitiy needs folding
-
 // This method it mostly for safely moving register spills outside of loops
 // Within a loop after each instruction we must keep track of what happened to registers
 // so that we know if it is safe to move a spill out of the loop
@@ -2674,7 +2666,7 @@ OMR::Z::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
          self()->setSpilledRegisterList(spilledRegisterList);
          }
       }
-      
+
    if (!self()->isOutOfLineColdPath())
       {
       if (self()->getDebug())
@@ -2746,7 +2738,7 @@ OMR::Z::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
       else if(instructionCursor->getOpCodeValue() == TR::InstOpCode::DCB)
          {
          TR::S390DebugCounterBumpInstruction *dcbInstr = static_cast<TR::S390DebugCounterBumpInstruction*>(instructionCursor);
-            
+
          int32_t first = TR::RealRegister::FirstGPR + 1;  // skip GPR0
          int32_t last  = TR::RealRegister::LastAssignableGPR;
 
@@ -2763,7 +2755,7 @@ OMR::Z::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
                break;
                }
             }
-            
+
             self()->traceRegisterAssignment("BEST FREE REG for DCB is %R", dcbInstr->getAssignableReg());
          }
 
@@ -3211,6 +3203,101 @@ TR_S390Peephole::AGIReduction()
 
    return performed;
    }
+
+/**
+ * \brief Swaps guarded storage loads with regular loads and a software read barrier
+ *
+ * \details
+ * This function swaps LGG/LLGFSG with regular loads and software read barrier sequence
+ * for runs with -Xgc:concurrentScavenge on hardware that doesn't support guarded storage facility.
+ * The sequence first checks if concurrent scavange is in progress and if the current object pointer is
+ * in the evacuate space then calls the GC helper to update the object pointer.
+ */
+
+bool
+TR_S390Peephole::replaceGuardedLoadWithSoftwareReadBarrier()
+   {
+   if (!TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
+      {
+      return false;
+      }
+
+   auto* concurrentScavangeNotActiveLabel = generateLabelSymbol(_cg);
+   TR::S390RXInstruction *load = static_cast<TR::S390RXInstruction*> (_cursor);
+   TR::MemoryReference *loadMemRef = generateS390MemoryReference(*load->getMemoryReference(), 0, _cg);
+   TR::Register *loadTargetReg = _cursor->getRegisterOperand(1);
+   TR::Register *vmReg = _cg->getLinkage()->getMethodMetaDataRealRegister();
+   TR::Register *raReg = _cg->machine()->getS390RealRegister(_cg->getReturnAddressRegister());
+   TR::Instruction* prev = load->getPrev();
+
+   // If guarded load target and mem ref registers are the same,
+   // preserve the register before overwriting it, since we need to repeat the load after calling the GC helper.
+   bool shouldPreserveLoadReg = (loadMemRef->getBaseRegister() == loadTargetReg);
+   if (shouldPreserveLoadReg) {
+      TR::MemoryReference *gsIntermediateAddrMemRef = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetGSIntermediateResultOffset(comp()), _cg);
+      _cursor = generateRXInstruction(_cg, TR::InstOpCode::STG, load->getNode(), loadTargetReg, gsIntermediateAddrMemRef, prev);
+      prev = _cursor;
+   }
+
+   if (load->getOpCodeValue() == TR::InstOpCode::LGG)
+      {
+      _cursor = generateRXInstruction(_cg, TR::InstOpCode::LG, load->getNode(), loadTargetReg, loadMemRef, prev);
+      }
+   else
+      {
+      _cursor = generateRXInstruction(_cg, TR::InstOpCode::LLGF, load->getNode(), loadTargetReg, loadMemRef, prev);
+      _cursor = generateRSInstruction(_cg, TR::InstOpCode::SLLG, load->getNode(), loadTargetReg, loadTargetReg, TR::Compiler->om.compressedReferenceShift(), _cursor);
+      }
+
+   // Check if concurrent scavange is in progress and if object pointer is in the evacuate space
+   TR::MemoryReference *privFlagMR = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetConcurrentScavengeActiveByteAddressOffset(comp()), _cg);
+   _cursor = generateSIInstruction(_cg, TR::InstOpCode::TM, load->getNode(), privFlagMR, 0x00000002, _cursor);
+   _cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
+
+   _cursor = generateRXInstruction(_cg, TR::InstOpCode::CG, load->getNode(), loadTargetReg,
+   		generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateBaseAddressOffset(comp()), _cg), _cursor);
+   _cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
+
+   _cursor = generateRXInstruction(_cg, TR::InstOpCode::CG, load->getNode(), loadTargetReg,
+   		generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateTopAddressOffset(comp()), _cg), _cursor);
+   _cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
+
+   // Save result of LA to gsParameters.operandAddr as invokeJ9ReadBarrier helper expects it to be set
+   TR::MemoryReference *loadAddrMemRef = generateS390MemoryReference(*load->getMemoryReference(), 0, _cg);
+   _cursor = generateRXInstruction(_cg, TR::InstOpCode::LA, load->getNode(), loadTargetReg, loadAddrMemRef, _cursor);
+   TR::MemoryReference *gsOperandAddrMemRef = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetGSOperandAddressOffset(comp()), _cg);
+   _cursor = generateRXInstruction(_cg, TR::InstOpCode::STG, load->getNode(), loadTargetReg, gsOperandAddrMemRef, _cursor);
+
+   // Use raReg to call handleReadBarrier helper, preserve raReg before the call in the load reg
+   _cursor = generateRRInstruction(_cg, TR::InstOpCode::LGR, load->getNode(), loadTargetReg, raReg, _cursor);
+   TR::MemoryReference *gsHelperAddrMemRef = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetGSHandlerAddressOffset(comp()), _cg);
+   _cursor = generateRXYInstruction(_cg, TR::InstOpCode::LG, load->getNode(), raReg, gsHelperAddrMemRef, _cursor);
+   _cursor = new (_cg->trHeapMemory()) TR::S390RRInstruction(TR::InstOpCode::BASR, load->getNode(), raReg, raReg, _cursor, _cg);
+   _cursor = generateRRInstruction(_cg, TR::InstOpCode::LGR, load->getNode(), raReg, loadTargetReg, _cursor);
+
+   if (shouldPreserveLoadReg) {
+      TR::MemoryReference * restoreBaseRegAddrMemRef = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetGSIntermediateResultOffset(comp()), _cg);
+      _cursor = generateRXInstruction(_cg, TR::InstOpCode::LG, load->getNode(), loadTargetReg, restoreBaseRegAddrMemRef, _cursor);
+   }
+   // Repeat load as the object pointer got updated by GC after calling handleReadBarrier helper
+   TR::MemoryReference *updateLoadMemRef = generateS390MemoryReference(*load->getMemoryReference(), 0, _cg);
+   if (load->getOpCodeValue() == TR::InstOpCode::LGG)
+      {
+      _cursor = generateRXInstruction(_cg, TR::InstOpCode::LG, load->getNode(), loadTargetReg, updateLoadMemRef,_cursor);
+      }
+   else
+      {
+      _cursor = generateRXInstruction(_cg, TR::InstOpCode::LLGF, load->getNode(), loadTargetReg, updateLoadMemRef, _cursor);
+      _cursor = generateRSInstruction(_cg, TR::InstOpCode::SLLG, load->getNode(), loadTargetReg, loadTargetReg, TR::Compiler->om.compressedReferenceShift(), _cursor);
+      }
+
+   _cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
+
+   _cg->deleteInst(load);
+
+   return true;
+   }
+
 ///////////////////////////////////////////////////////////////////////////////
 bool
 TR_S390Peephole::ICMReduction()
@@ -5798,6 +5885,17 @@ TR_S390Peephole::perform()
             }
             break;
 
+         case TR::InstOpCode::LGG:
+         case TR::InstOpCode::LLGFSG:
+            {
+            replaceGuardedLoadWithSoftwareReadBarrier();
+
+            if (comp()->getOption(TR_TraceCG))
+               printInst();
+
+            break;
+            }
+
          default:
             {
             if (comp()->getOption(TR_TraceCG))
@@ -6975,46 +7073,6 @@ OMR::Z::CodeGenerator::isGlobalRegisterAvailable(TR_GlobalRegisterNumber i, TR::
      return false;
    }
 
-void
-OMR::Z::CodeGenerator::registerSymbolSetup()
-  {
-  TR_GlobalRegisterNumber grn,lastGrn;
-  TR::Linkage *linkage = self()->getS390Linkage();
-  TR::SparseBitVector volatileRegs(self()->comp()->allocator());
-  TR::SymbolReferenceTable *symRefTab = self()->comp()->getSymRefTab();
-
-  // Enumerate all volatile global register symbols
-  lastGrn = self()->machine()->getLastRealRegisterGlobalRegisterNumber();
-  for (grn = 0; grn <= lastGrn; grn++)
-     {
-     TR::RealRegister *rr=(TR::RealRegister *)self()->machine()->getRealRegister(grn);
-     if (!linkage->getPreserved(rr->getRegisterNumber()))
-        {
-        TR::SymbolReference *symRef=symRefTab->getRegisterSymbol(grn);
-        if (symRef)
-           {
-           volatileRegs[symRef->getReferenceNumber()] = 1;
-           }
-        }
-     }
-
-  //  traceMsg(comp(),"Volatile Register symbol references:\n");
-  //  (*comp()) << volatileRegs;
-  //  traceMsg(comp(),"\n");
-
-  // Now visit all function symbol references and add the volatile register symbols as aliases
-  int32_t i,n;
-  n = symRefTab->getNumSymRefs();
-  for (i=symRefTab->getIndexOfFirstSymRef();i<n;i++)
-     {
-     TR::SymbolReference *symRef=symRefTab->getSymRef(i);
-     if (symRef && symRef->getSymbol()->isMethod())
-        {
-        symRef->getUseDefAliases().addAliases(volatileRegs);
-        //      traceMsg(comp(),"Aliasing volatile regs with SymRef #%d\n",symRef->getReferenceNumber());
-        }
-     }
-  }
 
 bool OMR::Z::CodeGenerator::isInternalControlFlowReg(TR::Register *reg)
   {
@@ -11378,10 +11436,6 @@ OMR::Z::CodeGenerator::checkSimpleLoadStore(TR::Node *loadNode, TR::Node *storeN
       {
       return false;
       }
-   else if(loadNode->getOpCode().hasSymbolReference() && loadNode->getSymbolReference()->getSymbol()->isRegisterSymbol())
-     {
-     return false;
-     }
    else if (loadNode->getSize() != storeNode->getSize())
       {
       return false;

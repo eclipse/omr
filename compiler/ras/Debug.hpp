@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@
 #include "infra/TRlist.hpp"
 #include "optimizer/Optimizations.hpp"      // for Optimizations
 #include "runtime/Runtime.hpp"              // for TR_CCPreLoadedCode
-#include "infra/TRCfgNode.hpp"              // for TR::CFGEdgeList
+#include "infra/CfgNode.hpp"              // for TR::CFGEdgeList
 
 #include "codegen/RegisterRematerializationInfo.hpp"
 

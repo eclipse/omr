@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -316,12 +316,12 @@ generateExtendedFloatConstantReg(TR::Node *node, TR::CodeGenerator *cg, int64_t 
       mrHi->stopUsingMemRefRegister(cg);
       mrLo->stopUsingMemRefRegister(cg);
       }
-      
+
    if (cg->isLiteralPoolOnDemandOn())
       {
       cg->stopUsingRegister(litBase);
       }
-      
+
    return trgReg;
    }
 
@@ -755,7 +755,7 @@ commonLong2FloatEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          if (two_pow_64_lo)
             two_pow_64_lo->stopUsingMemRefRegister(cg);
          }
-         
+
       if (cg->isLiteralPoolOnDemandOn())
          {
          cg->stopUsingRegister(litBase);
@@ -885,41 +885,26 @@ OMR::Z::TreeEvaluator::dconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::floadEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-
-   //traceMsg(comp,"In fload evaluator for Node %p. isRegisterSymbol = %d\n",node,node->getSymbolReference()->getSymbol()->isRegisterSymbol());
-
-   if (node->getSymbolReference()->getSymbol()->isRegisterSymbol())
-     return TR::TreeEvaluator::fRegLoadEvaluator(node, cg);
-   else
-     return floadHelper(node, cg, NULL);
+   return floadHelper(node, cg, NULL);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::dloadEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   if (node->getSymbolReference()->getSymbol()->isRegisterSymbol())
-     return TR::TreeEvaluator::dRegLoadEvaluator(node, cg);
-   else
-     return dloadHelper(node, cg, NULL);
+   return dloadHelper(node, cg, NULL);
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::fstoreEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   if (node->getSymbolReference()->getSymbol()->isRegisterSymbol())
-     TR::TreeEvaluator::fRegStoreEvaluator(node, cg);
-   else
-     fstoreHelper(node, cg);
+   fstoreHelper(node, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::Z::TreeEvaluator::dstoreEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   if (node->getSymbolReference()->getSymbol()->isRegisterSymbol())
-     TR::TreeEvaluator::dRegStoreEvaluator(node, cg);
-   else
-     dstoreHelper(node, cg);
+   dstoreHelper(node, cg);
    return NULL;
    }
 
@@ -1062,7 +1047,7 @@ OMR::Z::TreeEvaluator::ddivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
 /** \brief Generates code for a % b for both float and double values
  *  \details
- *  The code uses divide-to-integer instructions DIxBR to get remainder of two double/float values. 
+ *  The code uses divide-to-integer instructions DIxBR to get remainder of two double/float values.
  *  In rare cases when result of DIxBR is not exact it calls out to double/float remainder helper which
  *  calls fmod to get remainder and uses System linkage.
  */
@@ -1125,7 +1110,7 @@ OMR::Z::TreeEvaluator::floatRemHelper(TR::Node * node, TR::CodeGenerator * cg)
    TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(labelNotExact,labelOK,cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
    outlinedSlowPath->swapInstructionListsWithCompilation();
-   
+
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelNotExact);
    callNode->setChild(0, node->getFirstChild());
    callNode->setChild(1, node->getSecondChild());
@@ -1133,14 +1118,14 @@ OMR::Z::TreeEvaluator::floatRemHelper(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register *helperReturnRegister = linkage->buildSystemLinkageDispatch(callNode);
    generateRRInstruction(cg, node->getDataType() == TR::Float ? TR::InstOpCode::LER : TR::InstOpCode::LDR, node,  targetRegister, helperReturnRegister);
 
-   // buildSystemLinkageDispatch sets a helperReturnRegister to callNode. 
-   // Artificially setting reference count of callNode to 1 and decreasing it makes sure that this register is no longer live in the method. 
+   // buildSystemLinkageDispatch sets a helperReturnRegister to callNode.
+   // Artificially setting reference count of callNode to 1 and decreasing it makes sure that this register is no longer live in the method.
    callNode->setReferenceCount(1);
    cg->decReferenceCount(callNode);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelOK);
    outlinedSlowPath->swapInstructionListsWithCompilation();
 
-   TR::RegisterDependencyConditions * postDeps = generateRegisterDependencyConditions(0, 4, cg);   
+   TR::RegisterDependencyConditions * postDeps = generateRegisterDependencyConditions(0, 4, cg);
    postDeps->addPostCondition(targetRegister, TR::RealRegister::AssignAny);
    postDeps->addPostCondition(firstRegister, TR::RealRegister::AssignAny);
    postDeps->addPostCondition(secondRegister, TR::RealRegister::AssignAny);
@@ -1293,12 +1278,12 @@ OMR::Z::TreeEvaluator::fbits2iEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    cg->decReferenceCount(node->getFirstChild());
    if (node->getNumChildren() == 2)
       cg->decReferenceCount(node->getSecondChild());
-      
+
    if (cg->isLiteralPoolOnDemandOn())
       {
       cg->stopUsingRegister(litBase);
       }
-      
+
    return targetReg;
    }
 
@@ -1543,12 +1528,12 @@ OMR::Z::TreeEvaluator::dbits2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          }
       cg->decReferenceCount(firstChild);
       }
-      
+
    if (cg->isLiteralPoolOnDemandOn())
       {
       cg->stopUsingRegister(litBase);
       }
-      
+
    return targetReg;
    }
 
@@ -2313,13 +2298,7 @@ OMR::Z::TreeEvaluator::fRegLoadEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    if(globalReg == NULL)
      {
-      if (node->getOpCode().hasSymbolReference() && node->getSymbolReference()->getSymbol()->isRegisterSymbol())
-        {
-        TR::AutomaticSymbol *regSym=node->getSymbolReference()->getSymbol()->castToRegisterSymbol();
-        globalRegNum = regSym->getGlobalRegisterNumber();
-        }
-      else
-        globalRegNum = node->getGlobalRegisterNumber();
+     globalRegNum = node->getGlobalRegisterNumber();
      }
 
    if (globalReg == NULL)
@@ -2339,13 +2318,7 @@ OMR::Z::TreeEvaluator::dRegLoadEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    if(globalReg == NULL)
      {
-      if (node->getOpCode().hasSymbolReference() && node->getSymbolReference()->getSymbol()->isRegisterSymbol())
-        {
-        TR::AutomaticSymbol *regSym=node->getSymbolReference()->getSymbol()->castToRegisterSymbol();
-        globalRegNum = regSym->getGlobalRegisterNumber();
-        }
-      else
-        globalRegNum = node->getGlobalRegisterNumber();
+     globalRegNum = node->getGlobalRegisterNumber();
      }
 
    if (globalReg == NULL)
@@ -2363,14 +2336,7 @@ OMR::Z::TreeEvaluator::fRegStoreEvaluator(TR::Node * node, TR::CodeGenerator * c
    TR::Node * child = node->getFirstChild();
 
    TR::Register * globalReg=NULL;
-   TR_GlobalRegisterNumber globalRegNum;
-   if (node->getOpCode().hasSymbolReference() && node->getSymbolReference()->getSymbol()->isRegisterSymbol())
-     {
-     TR::AutomaticSymbol *regSym=node->getSymbolReference()->getSymbol()->castToRegisterSymbol();
-     globalRegNum = regSym->getGlobalRegisterNumber();
-     }
-   else
-     globalRegNum = node->getGlobalRegisterNumber();
+   TR_GlobalRegisterNumber globalRegNum = node->getGlobalRegisterNumber();
 
    globalReg = cg->evaluate(child);
 
@@ -2384,14 +2350,7 @@ OMR::Z::TreeEvaluator::dRegStoreEvaluator(TR::Node * node, TR::CodeGenerator * c
    TR::Node * child = node->getFirstChild();
 
    TR::Register * globalReg=NULL;
-   TR_GlobalRegisterNumber globalRegNum;
-   if (node->getOpCode().hasSymbolReference() && node->getSymbolReference()->getSymbol()->isRegisterSymbol())
-     {
-     TR::AutomaticSymbol *regSym=node->getSymbolReference()->getSymbol()->castToRegisterSymbol();
-     globalRegNum = regSym->getGlobalRegisterNumber();
-     }
-   else
-     globalRegNum = node->getGlobalRegisterNumber();
+   TR_GlobalRegisterNumber globalRegNum = node->getGlobalRegisterNumber();
 
    globalReg = cg->evaluate(child);
 

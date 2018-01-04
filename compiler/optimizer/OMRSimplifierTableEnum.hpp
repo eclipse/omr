@@ -804,6 +804,11 @@
 
    dftSimplifier,            // TR::ibyteswap
 
+   dftSimplifier,            // TR::bbitpermute
+   dftSimplifier,            // TR::sbitpermute
+   dftSimplifier,            // TR::ibitpermute
+   dftSimplifier,            // TR::lbitpermute
+
    dftSimplifier,           // TR::Prefetch
 
 #endif

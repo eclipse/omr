@@ -41,3 +41,5 @@ target_include_directories(j9avl
 	PUBLIC
 		.
 )
+
+set_property(TARGET j9avl PROPERTY FOLDER util)

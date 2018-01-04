@@ -2486,7 +2486,7 @@ static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
 
    // Guards patched when the threads are stopped have no issues with multithreaded patching. 
    // therefore alignment is not required
-   if (TR::Compiler->target.isSMP() && !cg->isStopTheWorldGuard(node))
+   if (TR::Compiler->target.isSMP() && !node->isStopTheWorldGuard())
       {
       // the compiler is now capable of generating a train of vgnops all looking to patch the
       // same point with different constraints. alignment is required before the delegated patch
