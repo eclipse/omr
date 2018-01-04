@@ -93,7 +93,7 @@ omrfile_blockingasync_read(struct OMRPortLibrary *portLibrary, intptr_t fd, void
 
 	memset(&overlapped, '\0', sizeof(OVERLAPPED));
 	overlapped.hEvent = overlappedHandle;
-	overlapped.Offset = SetFilePointer(fileHandle, 0, &highOffset, FILE_CURRENT);
+	overlapped.Offset = SetFilePointer(fileHandle, 0, (PLONG)&highOffset, FILE_CURRENT);
 	overlapped.OffsetHigh = highOffset;
 
 	/* ReadFile limits the buffer to DWORD size and returns the number of bytes read,
@@ -139,7 +139,7 @@ error:
 
 
 intptr_t
-omrfile_blockingasync_write(struct OMRPortLibrary *portLibrary, intptr_t fd, void *buf, intptr_t nbytes)
+omrfile_blockingasync_write(struct OMRPortLibrary *portLibrary, intptr_t fd, const void *buf, intptr_t nbytes)
 {
 	DWORD bytesWritten;
 	intptr_t toWrite = 0;
@@ -163,7 +163,7 @@ omrfile_blockingasync_write(struct OMRPortLibrary *portLibrary, intptr_t fd, voi
 
 	memset(&overlapped, '\0', sizeof(OVERLAPPED));
 	overlapped.hEvent = overlappedHandle;
-	overlapped.Offset = SetFilePointer(fileHandle, 0, &highOffset, FILE_CURRENT);
+	overlapped.Offset = SetFilePointer(fileHandle, 0, (PLONG)&highOffset, FILE_CURRENT);
 	overlapped.OffsetHigh = highOffset;
 	filePtr = (DWORDLONG)overlapped.Offset | ((DWORDLONG)overlapped.OffsetHigh << 32);
 

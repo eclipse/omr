@@ -197,8 +197,12 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 sighandler_t
 omrsig_primary_signal(int signum, sighandler_t handler)
 {
-	struct sigaction act = {{0}};
-	struct sigaction oldact = {{0}};
+	struct sigaction act;
+	struct sigaction oldact;
+
+	memset(&act, 0, sizeof(struct sigaction));
+	memset(&oldact, 0, sizeof(struct sigaction));
+
 	act.sa_handler = handler;
 #if defined(POSIX_SIGNAL)
 	/* Add necessary flags to emulate signal() behavior using sigaction(). */
@@ -223,8 +227,13 @@ omrsig_primary_sigaction(int signum, const struct sigaction *act, struct sigacti
 #endif /* defined(POSIX_SIGNAL) */
 
 #if defined(WIN32)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-dllimport"
+#else
 #pragma warning(push)
 #pragma warning(disable : 4273)
+#endif /* defined (__clang__) */
 void (__cdecl * __cdecl
 signal(_In_ int signum, _In_opt_ void (__cdecl * handler)(int)))(int)
 #else /* defined(WIN32) */
@@ -235,14 +244,22 @@ signal(int signum, sighandler_t handler) __THROW
 	return omrsig_signal_internal(signum, handler);
 }
 #if defined(WIN32)
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#else
 #pragma warning(pop)
+#endif /* defined (__clang__) */
 #endif /* defined(WIN32) */
 
 static sighandler_t
 omrsig_signal_internal(int signum, sighandler_t handler)
 {
-	struct sigaction act = {{0}};
-	struct sigaction oldact = {{0}};
+	struct sigaction act;
+	struct sigaction oldact;
+
+	memset(&act, 0, sizeof(struct sigaction));
+	memset(&oldact, 0, sizeof(struct sigaction));
+
 	oldact.sa_handler = SIG_DFL;
 	act.sa_handler = handler;
 #if defined(POSIX_SIGNAL)

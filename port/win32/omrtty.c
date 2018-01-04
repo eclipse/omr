@@ -247,7 +247,6 @@ omrtty_available(struct OMRPortLibrary *portLibrary)
 
 			if (PeekConsoleInput(PPG_tty_consoleInputHd, (INPUT_RECORD *)PPG_tty_consoleEventBuffer, EVENTS_TO_CAPTURE, &available)) {
 				int x = 0;
-				int count = 0;
 				INPUT_RECORD *inputRecordPointer = (INPUT_RECORD *)PPG_tty_consoleEventBuffer;	/* provided to avoid some casting */
 				BOOL bytesCanBeRead = FALSE;
 

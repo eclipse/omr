@@ -37,11 +37,14 @@ target_include_directories(j9hook_obj
 add_library(j9hookstatic STATIC
 	$<TARGET_OBJECTS:j9hook_obj>
 )
+
 if(OMR_WARNINGS_AS_ERRORS)
+	target_compile_options(j9hook_obj PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
 	target_compile_options(j9hookstatic PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
 endif()
 
 if(OMR_ENHANCED_WARNINGS)
+	target_compile_options(j9hook_obj PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 	target_compile_options(j9hookstatic PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 

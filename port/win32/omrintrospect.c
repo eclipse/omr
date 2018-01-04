@@ -111,6 +111,7 @@ resume_all_preempted(struct PlatformWalkData *data)
  * of our threads barring the one executing the function. It then takes a new snapshot to determine
  * if new threads were created during the suspension. This is repeated until the thread count matches
  * between the two snapshots.
+ * Use GetLastError() to get error details if any.
  */
 int
 suspend_all_preemptive(struct PlatformWalkData *data)
@@ -118,7 +119,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 	int a_count = 0;
 	int b_count = 0;
 	char passA = 1;
-	int result;
+	DWORD result;
 	DWORD current_thread_id = GetCurrentThreadId();
 	DWORD current_pid = GetCurrentProcessId();
 
@@ -135,8 +136,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 		}
 
 		if (!Thread32First(data->snapshot, &data->thread32)) {
-			result = GetLastError();
-			goto error_return;
+			return -1;
 		}
 
 		do {
@@ -146,7 +146,6 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 			if (data->thread32.th32OwnerProcessID != current_pid || thread_id == current_thread_id) {
 				continue;
 			}
-
 
 			if (passA) {
 				a_count++;
@@ -176,12 +175,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 		passA = !passA;
 	} while (a_count != b_count);
 
-	if (a_count != b_count) {
-		goto error_return;
-	}
-
 	return a_count;
-
 
 error_return:
 	/* we don't close the snapshot so that it's still available to resume any threads we suspended */
@@ -234,7 +228,7 @@ freeThread(J9ThreadWalkState *state, J9PlatformThread *thread)
 void
 cleanup(J9ThreadWalkState *state)
 {
-	uint8_t result = 0;
+	BOOL resumedOK = TRUE;
 	struct PlatformWalkData *data;
 
 	if (state) {
@@ -242,10 +236,10 @@ cleanup(J9ThreadWalkState *state)
 		if (data) {
 			if (data->snapshot && data->snapshot != INVALID_HANDLE_VALUE) {
 				if (resume_all_preempted(data) == -1) {
-					result = -1;
+					resumedOK = FALSE;
 				}
 
-				if (result != -1 || GetLastError() != ERROR_INVALID_HANDLE) {
+				if (!resumedOK || GetLastError() != ERROR_INVALID_HANDLE) {
 					/* it seems this can raise an exception if the handle has become invalid */
 					CloseHandle(data->snapshot);
 				}
@@ -458,7 +452,7 @@ omrintrospect_threads_startDo_with_signal(struct OMRPortLibrary *portLibrary, J9
 		goto cleanup;
 	}
 
-	if (result = setup_native_thread(state, signalContext) != 0) {
+	if ((result = setup_native_thread(state, signalContext)) != 0) {
 		RECORD_ERROR(state, COLLECTION_FAILURE, result);
 		goto cleanup;
 	}
@@ -493,10 +487,7 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 {
 	int result = 0;
 	struct PlatformWalkData *data = state->platform_data;
-	J9PlatformThread *nativeThread = NULL;
-	int rc = 0;
 	DWORD processId = GetCurrentProcessId();
-	DWORD currentThreadId = GetCurrentThreadId();
 
 	if (data == NULL) {
 		/* state is invalid */
@@ -527,7 +518,7 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 		}
 	}
 
-	if (result = setup_native_thread(state, NULL) != 0) {
+	if ((result = setup_native_thread(state, NULL)) != 0) {
 		RECORD_ERROR(state, COLLECTION_FAILURE, result);
 		goto cleanup;
 	}
@@ -539,7 +530,7 @@ cleanup:
 		result = GetLastError();
 		if (result == ERROR_NO_MORE_FILES) {
 			/* this is a ligitimate end of thread list error value */
-			result = 0;
+			result = ERROR_SUCCESS;
 		} else {
 			RECORD_ERROR(state, COLLECTION_FAILURE, result);
 		}
