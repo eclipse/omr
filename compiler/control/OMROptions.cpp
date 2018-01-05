@@ -4015,7 +4015,7 @@ OMR::Options::setOptLevel(int32_t o)
    _optLevel = o;
    }
 
-static int32_t    count[numHotnessLevels] = {-2};
+static int32_t    _count[numHotnessLevels] = {-2};
 static int32_t   bcount[numHotnessLevels] = {-2};
 static int32_t milcount[numHotnessLevels] = {-2};
 
@@ -4157,7 +4157,7 @@ OMR::Options::setCounts()
       int32_t initialMILCount = -1;
       bool allowRecompilation = false;
 
-      count[0] = 0;
+      _count[0] = 0;
 
       const char *s = _countString;
       if (s[0] == '"') ++s; // eat the leading quote
@@ -4168,27 +4168,27 @@ OMR::Options::setCounts()
             ++s;
          if (isdigit(s[0]))
             {
-            count[i] = atoi(s);
+            _count[i] = atoi(s);
             while(isdigit(s[0]))
                ++s;
             if (initialCount >= 0)
                {
                allowRecompilation = true;
-               if (count[i] == 0)
-                  count[i] = -1;
+               if (_count[i] == 0)
+                  _count[i] = -1;
                }
             else
                {
-               initialCount = count[i];
+               initialCount = _count[i];
                }
             }
          else if (s[0] == '-')
             {
-            count[i] = -1;
+            _count[i] = -1;
             ++s;
             }
          else
-            count[i] = -1;
+            _count[i] = -1;
          while (s[0] == ' ')
             ++s;
          if (isdigit(s[0]))
@@ -4274,7 +4274,7 @@ OMR::Options::setCounts()
 TR_Hotness
 OMR::Options::getNextHotnessLevel(bool methodHasLoops, TR_Hotness current)
    {
-   int32_t *values = methodHasLoops ? bcount : count;
+   int32_t *values = methodHasLoops ? bcount : _count;
    int32_t level;
    int32_t nextCount = -1;
    for (level = current+1; level <= maxHotness; ++level)
@@ -4295,14 +4295,14 @@ OMR::Options::getCountValue(bool methodHasLoops, TR_Hotness hotness)
    if (hotness < minHotness && hotness >= maxHotness)
       return -1;
    else
-      return methodHasLoops ? bcount[hotness] : count[hotness];
+      return methodHasLoops ? bcount[hotness] : _count[hotness];
    }
 
 
 TR_Hotness
 OMR::Options::getInitialHotnessLevel(bool methodHasLoops)
    {
-   int32_t *values = methodHasLoops ? bcount : count;
+   int32_t *values = methodHasLoops ? bcount : _count;
    int32_t level;
 
    for (level = minHotness ; level <= maxHotness; ++level)
