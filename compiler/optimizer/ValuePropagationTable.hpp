@@ -105,6 +105,7 @@ TR::Node *constrainLongConst(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainLongStore(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainLor(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainLrem(OMR::ValuePropagation *vp, TR::Node *node);
+TR::Node *constrainLurem(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainLshl(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainLshr(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainLushr(OMR::ValuePropagation *vp, TR::Node *node);
@@ -250,6 +251,7 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,        // TR::brem
    constrainChildren,        // TR::srem
    constrainIrem,            // TR::iurem
+   constrainLurem,            // TR::lurem
    constrainIneg,            // TR::ineg
    constrainLneg,            // TR::lneg
    constrainChildren,        // TR::fneg

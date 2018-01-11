@@ -135,6 +135,7 @@
    brem,     // remainder of 2 bytes                   (child1 % child2)
    srem,     // remainder of 2 short integers          (child1 % child2)
    iurem,    // remainder of 2 unsigned integers       (child1 % child2)
+   lurem,    // remainder of 2 unsigned long integers  (child1 % child2)
    ineg,     // negate an integer
    lneg,     // negate a long integer
    fneg,     // negate a float

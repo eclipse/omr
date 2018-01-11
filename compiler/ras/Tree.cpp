@@ -2389,6 +2389,7 @@ int32_t childTypes[] =
    TR::Int8,                      // TR::brem
    TR::Int16,                     // TR::srem
    TR::Int32,                     // TR::iurem
+   TR::Int64,                     // TR::lurem
    TR::Int32,                     // TR::ineg
    TR::Int64,                     // TR::lneg
    TR::Float,                      // TR::fneg

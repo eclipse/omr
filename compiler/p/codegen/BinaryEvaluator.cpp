@@ -2372,6 +2372,8 @@ TR::Register *lrem64Evaluator(TR::Node *node, TR::CodeGenerator *cg)
    int64_t divisor = 0;
    TR::Compilation * comp = cg->comp();
 
+   TR_ASSERT(node->getOpCodeValue() != TR::lurem, "TR::ludiv is not impelemented yet for 64-bit target\n");
+
    if (secondChild->getOpCode().isLoadConst())
       divisor =  secondChild->getLongInt();
    else if ( firstChild->getOpCode().isLoadConst())
@@ -2457,6 +2459,7 @@ TR::Register *lrem64Evaluator(TR::Node *node, TR::CodeGenerator *cg)
    return trgReg;
    }
 
+// also handles lurem
 TR::Register *OMR::Power::TreeEvaluator::lremEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    if (TR::Compiler->target.is64Bit())

@@ -924,6 +924,7 @@ public:
          case TR::lmul:   return TR::imul;
          case TR::ldiv:   return TR::idiv;
          case TR::lrem:   return TR::irem;
+         case TR::lurem:  return TR::iurem;
          case TR::labs:   return TR::iabs;
          case TR::lneg:   return TR::ineg;
          case TR::luneg:  return TR::iuneg;
