@@ -1906,8 +1906,7 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
       }
 
    TR_UseDefInfo::BitVector defs(comp()->allocator());
-   _useDefInfo->getUseDef(defs, useDefIndex);
-   if (defs.IsZero())
+   if (!_useDefInfo->getUseDef(defs, useDefIndex))
       return NULL;
 
    int32_t baseValueNumber = -1;
@@ -2132,8 +2131,7 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
                                  avoidMerge = true;
 
                               TR_UseDefInfo::BitVector thisDefs(comp()->allocator());
-                              _useDefInfo->getUseDef(thisDefs, thisUseDefIndex);
-                              if (thisDefs.IsZero() || (!(thisDefs == defs)))
+                              if (!_useDefInfo->getUseDef(thisDefs, thisUseDefIndex) || (!(thisDefs == defs)))
                                  avoidMerge = true;
                               }
 
@@ -2417,8 +2415,7 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
                                     avoidMerge = true;
 
                                  TR_UseDefInfo::BitVector thisDefs(comp()->allocator());
-                                 _useDefInfo->getUseDef(thisDefs, thisUseDefIndex);
-                                 if (thisDefs.IsZero() || (!(thisDefs == defs)))
+                                 if (!_useDefInfo->getUseDef(thisDefs, thisUseDefIndex) || (!(thisDefs == defs)))
                                     avoidMerge = true;
                                  }
 
@@ -2976,8 +2973,7 @@ void OMR::ValuePropagation::checkForInductionVariableIncrement(TR::Node *node)
    if (isInductionVariable)
       {
       TR_UseDefInfo::BitVector defs(comp()->allocator());
-      _useDefInfo->getUseDef(defs, useIndex);
-      if (defs.IsZero())
+      if (!_useDefInfo->getUseDef(defs, useIndex))
          isInductionVariable = false;
       else
          {

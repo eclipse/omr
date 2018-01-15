@@ -240,7 +240,6 @@ void TR_LoadExtensions::findPreferredLoadExtensions(TR::Node* parent)
             if (useDefInfo != NULL && useDefInfo->infoIsValid() && useRegLoad->getUseDefIndex() != 0 && useDefInfo->isUseIndex(useRegLoad->getUseDefIndex() != 0))
                {
                TR_UseDefInfo::BitVector info(comp()->allocator());
-
                if (useDefInfo->getUseDef(info, useRegLoad->getUseDefIndex()))
                   {
                   if (trace())

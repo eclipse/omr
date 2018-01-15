@@ -3848,8 +3848,7 @@ bool TR_GlobalRegisterAllocator::isDependentStore(TR::Node *node, const TR_UseDe
          *seenLoad = true;
          int32_t useIndex = node->getUseDefIndex();
          TR_UseDefInfo::BitVector childDefs(comp()->allocator());
-         optimizer()->getUseDefInfo()->getUseDef(childDefs, useIndex);
-         if (!childDefs.IsZero())
+         if (optimizer()->getUseDefInfo()->getUseDef(childDefs, useIndex))
             {
             TR_UseDefInfo::BitVector temp(comp()->allocator());
             temp = childDefs;
@@ -4155,8 +4154,7 @@ TR_GlobalRegisterAllocator::markAutosUsedIn(
 
             int32_t useIndex = node->getUseDefIndex();
             TR_UseDefInfo::BitVector defs(comp()->allocator());
-            info->getUseDef(defs, useIndex);
-            if (!defs.IsZero())
+            if (info->getUseDef(defs, useIndex))
                {
                TR_UseDefInfo::BitVector::Cursor cursor(defs);
                for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
@@ -4232,8 +4230,7 @@ TR_GlobalRegisterAllocator::markAutosUsedIn(
          //printf("Skip sign extension at node %p in %s\n", node, comp->getCurrentMethod()->signature());
          int32_t useIndex = node->getUseDefIndex();
          TR_UseDefInfo::BitVector defs(comp()->allocator());
-         info->getUseDef(defs, useIndex);
-         if (!defs.IsZero())
+         if (info->getUseDef(defs, useIndex))
             {
             TR_UseDefInfo::BitVector::Cursor cursor(defs);
             for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
@@ -4444,8 +4441,7 @@ void TR_GlobalRegisterAllocator::signExtendAllDefNodes(TR::Node *defNode, List<T
 
       TR_UseDefInfo *info = optimizer()->getUseDefInfo();
       TR_UseDefInfo::BitVector defs(comp()->allocator());
-      info->getUseDef(defs, useIndex);
-      if (!defs.IsZero())
+      if (info->getUseDef(defs, useIndex))
          {
          TR_UseDefInfo::BitVector::Cursor cursor(defs);
          for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
