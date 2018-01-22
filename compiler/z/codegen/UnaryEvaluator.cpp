@@ -77,7 +77,7 @@ extern void PRINT_ME(char * string, TR::Node * node, TR::CodeGenerator * cg);
 TR::Register *
 lconstHelper(TR::Node * node, TR::CodeGenerator * cg)
    {
-   TR_ASSERT( TR::Compiler->target.is32Bit() || cg->evaluateNodeInRegPair(node), "lconstHelper() is for 32bit only!");
+   TR_ASSERT(TR::Compiler->target.is32Bit(), "lconstHelper() is for 32bit only!");
    TR::Register * lowRegister = cg->allocateRegister();
    TR::Register * highRegister = cg->allocateRegister();
 
@@ -154,7 +154,7 @@ OMR::Z::TreeEvaluator::lconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    PRINT_ME("lconst", node, cg);
    TR::Register * longRegister;
-   if ((TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) && !cg->evaluateNodeInRegPair(node))
+   if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
       return lconstHelper64(node, cg);
       }

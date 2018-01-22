@@ -600,32 +600,6 @@ public:
    virtual void startInternalControlFlow(TR::Instruction *instr);
    virtual void endInternalControlFlow(TR::Instruction *instr) { _internalControlFlowRegisters.clear(); }
 
-   void setEvaluateNodeInRegPair(TR::Node * node, bool b = true)
-   {
-   if( !(node->getOpCodeValue()== TR::lload || node->getOpCodeValue() == TR::lloadi || node->getOpCodeValue() == TR::lconst))
-      return;
-
-   CS2::HashIndex hashIndex = 0;
-   if (_nodesToBeEvaluatedInRegPairs.Locate(node->getGlobalIndex(), hashIndex))
-      {
-      _nodesToBeEvaluatedInRegPairs.SetDataAt(hashIndex,b);
-      }
-   else
-      {
-
-      _nodesToBeEvaluatedInRegPairs.Add(node->getGlobalIndex(), b);
-      }
-   }
-
-   bool evaluateNodeInRegPair(TR::Node * node)
-   {
-   CS2::HashIndex hashIndex = 0;
-   if (!_nodesToBeEvaluatedInRegPairs.Locate(node->getGlobalIndex(), hashIndex))
-      return false;
-   else
-      return _nodesToBeEvaluatedInRegPairs.DataAt(hashIndex);
-   }
-
    bool doRematerialization() {return true;}
 
    void dumpDataSnippets(TR::FILE *outFile);
