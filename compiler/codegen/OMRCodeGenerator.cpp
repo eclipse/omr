@@ -230,7 +230,6 @@ OMR::CodeGenerator::CodeGenerator() :
      _simulatedNodeStates(NULL),
      _availableSpillTemps(getTypedAllocator<TR::SymbolReference*>(TR::comp()->allocator())),
      _counterBlocks(getTypedAllocator<TR::Block*>(TR::comp()->allocator())),
-     _compressedRefs(getTypedAllocator<TR::Node*>(TR::comp()->allocator())),
      _liveReferenceList(getTypedAllocator<TR_LiveReference*>(TR::comp()->allocator())),
      _snippetList(getTypedAllocator<TR::Snippet*>(TR::comp()->allocator())),
      _registerArray(self()->comp()->trMemory()),
