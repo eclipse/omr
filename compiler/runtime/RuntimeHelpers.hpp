@@ -16,21 +16,32 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include "runtime/Runtime.hpp"
+#include <stdint.h>
 
-TR_RuntimeHelperTable runtimeHelpers;
+#ifndef RUNTIMEHELPERS_INCL
+#define RUNTIMEHELPERS_INCL
 
-void*
-TR_RuntimeHelperTable::translateAddress(void * a)
-   {
-   return a;
-   }
+#if defined(TR_HOST_X86) && defined(TR_HOST_32BIT)
+   #ifdef WINDOWS
+      #define RUNTIMEHELPER __fastcall
+   #else
+      #define RUNTIMEHELPER __attribute__((fastcall,sseregparm)) 
+   #endif
+#else
+   #define RUNTIMEHELPER
+#endif
 
-void
-initializeJitRuntimeHelperTable(char isSMP)
-   {
-   runtimeHelpers.initialize();
-   }
+namespace OMR
+{
+namespace Runtime
+{
+
+uint32_t RUNTIMEHELPER CRC32(uint32_t iv, void* buf, uint32_t size);
+
+}
+}
+
+#endif

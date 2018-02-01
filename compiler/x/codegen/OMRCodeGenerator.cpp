@@ -51,6 +51,7 @@
 #else
 #include "x/i386/codegen/IA32SystemLinkage.hpp"
 #endif
+#include "x/codegen/X86FastCallLinkage.hpp"
 #include "compile/Compilation.hpp"                     // for Compilation, etc
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
@@ -507,6 +508,9 @@ OMR::X86::CodeGenerator::createLinkage(TR_LinkageConventions lc)
 
    switch (lc)
       {
+      case TR_FastCall:
+         linkage = new (self()->trHeapMemory()) TR::X86FastCallLinkage(self());
+         break;
       case TR_Private:
          // HACK HACK HACK "intentional" fall through to system linkage
       case TR_Helper:

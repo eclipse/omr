@@ -21,6 +21,7 @@
 
 compiler_library(runtime
 	${CMAKE_CURRENT_SOURCE_DIR}/Runtime.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/RuntimeHelpers.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Trampoline.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Alignment.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/CodeCacheTypes.cpp
