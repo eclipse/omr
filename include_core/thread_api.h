@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1438,6 +1438,88 @@ omrthread_monitor_pin(omrthread_monitor_t monitor, omrthread_t self);
 */
 void
 omrthread_monitor_unpin(omrthread_monitor_t monitor, omrthread_t self);
+
+/**
+ * @brief Allocate and initialize an OMRMutex. The OMRMutex
+ * needs to be destroyed and freed after usage via
+ * omrthread_mutex_destroy.
+ * @param void
+ * @return pointer to OMRMutex or NULL on failure
+ */
+omrmutex_t
+omrthread_mutex_create(void);
+
+/**
+ * @brief Destroy and free memory related to an OMRMutex.
+ * @param mutex pointer to an OMRMutex
+ * @return void
+ */
+void
+omrthread_mutex_destroy(omrmutex_t mutex);
+
+/**
+ * @brief Allocate and initialize an OMRCondVar. The
+ * OMRCondVar needs to be destroyed and freed after usage via
+ * omrthread_condvar_destroy.
+ * @param void
+ * @return pointer to OMRCondVar or NULL on failure
+ */
+omrcondvar_t
+omrthread_condvar_create(void);
+
+/**
+ * @brief Destroy and free memory related to an OMRCondVar.
+ * @param condVar pointer to an OMRCondVar
+ * @return void
+ */
+void
+omrthread_condvar_destroy(omrcondvar_t condVar);
+
+/**
+ * @brief Acquire an OMRMutex.
+ * @param mutex pointer to an OMRMutex
+ * @return void
+ */
+void
+omrthread_mutex_enter(omrmutex_t mutex);
+
+/**
+ * @brief Release an OMRMutex.
+ * @param mutex pointer to an OMRMutex
+ * @return void
+ */
+void
+omrthread_mutex_exit(omrmutex_t mutex);
+
+/**
+ * @brief Send a signal to a blocked thread. The associated
+ * OMRMutex needs to be acquired before invoking this function.
+ * After invocation, the associated OMRMutex needs to be released.
+ * @param condVar pointer to an OMRCondVar
+ * @return void
+ */
+void
+omrthread_condvar_notify(omrcondvar_t condVar);
+
+/**
+ * @brief Send a signal to all the blocked threads. The associated
+ * OMRMutex needs to be acquired before invoking this function. After
+ * invocation, the associated OMRMutex needs to be released.
+ * @param condVar pointer to an OMRCondVar
+ * @return void
+ */
+void
+omrthread_condvar_notify_all(omrcondvar_t condVar);
+
+/**
+ * @brief Wait on an OMRCondVar. The associated OMRMutex
+ * needs to be acquired before invoking this function. After
+ * invocation, the associated OMRMutex needs to be released.
+ * @param condVar pointer to an OMRCondVar
+ * @return void
+ */
+void
+omrthread_condvar_wait(omrcondvar_t condVar, omrmutex_t mutex);
 
 /* forward struct definition */
 struct J9ThreadLibrary;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,14 @@
 #include "omrthreadattr.h"
 #include "omrutilbase.h"
 #include "ut_j9thr.h"
+
+typedef struct OMRMutex {
+	J9OSMutex mutex;
+} OMRMutex;
+
+typedef struct OMRCondVar {
+	J9OSCond condition;
+} OMRCondVar;
 
 void omrthread_init(omrthread_library_t lib);
 void omrthread_shutdown(void);
@@ -5594,9 +5602,110 @@ j9thread_self(void)
 {
 	return omrthread_self();
 }
+
 void *
 j9thread_tls_get(omrthread_t thread, omrthread_tls_key_t key)
 {
 	return omrthread_tls_get(thread, key);
 }
 
+omrmutex_t
+omrthread_mutex_create(void)
+{
+	omrthread_t self = MACRO_SELF();
+	omrthread_library_t lib = self->library;
+	omrmutex_t mutex = NULL;
+
+	ASSERT(self);
+	ASSERT(lib);
+
+	mutex = (omrmutex_t)omrthread_allocate_memory(lib, sizeof(*mutex), OMRMEM_CATEGORY_THREADS);
+	if (NULL != mutex) {
+		memset(mutex, 0, sizeof(*mutex));
+		if (!OMROSMUTEX_INIT(mutex->mutex)) {
+			omrthread_free_memory(lib, mutex);
+			mutex = NULL;
+		}
+	}
+
+	return mutex;
+}
+
+void
+omrthread_mutex_destroy(omrmutex_t mutex)
+{
+	omrthread_t self = MACRO_SELF();
+	omrthread_library_t lib = self->library;
+
+	ASSERT(self);
+	ASSERT(lib);
+
+	OMROSMUTEX_DESTROY(mutex->mutex);
+	omrthread_free_memory(lib, mutex);
+}
+
+omrcondvar_t
+omrthread_condvar_create(void)
+{
+	omrthread_t self = MACRO_SELF();
+	omrthread_library_t lib = self->library;
+	omrcondvar_t condVar = NULL;
+
+	ASSERT(self);
+	ASSERT(lib);
+
+	condVar = (omrcondvar_t)omrthread_allocate_memory(lib, sizeof(*condVar), OMRMEM_CATEGORY_THREADS);
+	if (NULL != condVar) {
+		memset(condVar, 0, sizeof(*condVar));
+		if (!OMROSCOND_INIT(condVar->condition)) {
+			omrthread_free_memory(lib, condVar);
+			condVar = NULL;
+		}
+	}
+
+	return condVar;
+}
+
+void
+omrthread_condvar_destroy(omrcondvar_t condVar)
+{
+	omrthread_t self = MACRO_SELF();
+	omrthread_library_t lib = self->library;
+
+	ASSERT(self);
+	ASSERT(lib);
+
+	OMROSCOND_DESTROY(condVar->condition);
+	omrthread_free_memory(lib, condVar);
+}
+
+void
+omrthread_mutex_enter(omrmutex_t mutex) {
+	OMROSMUTEX_ENTER(mutex->mutex);
+}
+
+void
+omrthread_mutex_exit(omrmutex_t mutex) {
+	OMROSMUTEX_EXIT(mutex->mutex);
+}
+
+void
+omrthread_condvar_notify(omrcondvar_t condVar) {
+#if defined(WIN32)
+	OMROSCOND_NOTIFY_ALL(condVar->condition);
+#else /* defined(WIN32) */
+	OMROSCOND_NOTIFY(condVar->condition);
+#endif
+}
+
+void
+omrthread_condvar_notify_all(omrcondvar_t condVar) {
+	OMROSCOND_NOTIFY_ALL(condVar->condition);
+}
+
+void
+omrthread_condvar_wait(omrcondvar_t condVar, omrmutex_t mutex) {
+	OMROSCOND_WAIT(condVar->condition, mutex->mutex);
+		break;
+	OMROSCOND_WAIT_LOOP();
+}

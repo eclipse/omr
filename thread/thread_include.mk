@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2016 IBM Corp. and others
+# Copyright (c) 2015, 2018 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -264,6 +264,16 @@ define WRITE_COMMON_THREAD_EXPORTS
 @echo omrthread_get_jvm_cpu_usage_info_error_recovery >>$@
 @echo omrthread_get_category >>$@
 @echo omrthread_set_category >>$@
+
+@echo omrthread_mutex_create >>$@
+@echo omrthread_mutex_destroy >>$@
+@echo omrthread_condvar_create >>$@
+@echo omrthread_condvar_destroy >>$@
+@echo omrthread_mutex_enter >>$@
+@echo omrthread_mutex_exit >>$@
+@echo omrthread_condvar_notify >>$@
+@echo omrthread_condvar_notify_all >>$@
+@echo omrthread_condvar_wait >>$@
 
 @# temp for the JIT
 @echo j9thread_self >>$@

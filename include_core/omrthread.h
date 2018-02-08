@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,6 +47,9 @@ typedef intptr_t omrthread_os_errno_t;
 typedef struct J9Thread *omrthread_t;
 typedef struct J9ThreadMonitor *omrthread_monitor_t;
 typedef struct J9Semaphore *j9sem_t;
+
+typedef struct OMRMutex *omrmutex_t;
+typedef struct OMRCondVar *omrcondvar_t;
 
 #include "omrthread_generated.h"
 
