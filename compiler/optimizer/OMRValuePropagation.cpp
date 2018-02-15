@@ -7260,8 +7260,7 @@ void OMR::ValuePropagation::doDelayedTransformations()
    for (converterCallTree = convIt.getFirst();
 		   converterCallTree; converterCallTree = convIt.getNext())
       {
-
-      transformConverterCall(converterCallTree);
+      static_cast<TR::ValuePropagation *>(this)->transformConverterCall(converterCallTree);
       }
    _converterCalls.deleteAll();
 
@@ -7272,7 +7271,7 @@ void OMR::ValuePropagation::doDelayedTransformations()
       ObjCloneInfo *cloneInfo = objCloneTypeIt.getFirst();
       while (callTree && cloneInfo)
          {
-         transformObjectCloneCall(callTree, cloneInfo);
+         static_cast<TR::ValuePropagation *>(this)->transformObjectCloneCall(callTree, cloneInfo);
          callTree = objCloneIt.getNext();
          cloneInfo = objCloneTypeIt.getNext();
          }
@@ -7287,7 +7286,7 @@ void OMR::ValuePropagation::doDelayedTransformations()
       TR_OpaqueClassBlock *clazz = arrayCloneTypeIt.getFirst();
       while (callTree && clazz)
          {
-         transformArrayCloneCall(callTree, clazz);
+         static_cast<TR::ValuePropagation *>(this)->transformArrayCloneCall(callTree, clazz);
          callTree = arrayCloneIt.getNext();
          clazz = arrayCloneTypeIt.getNext();
          }
@@ -7328,7 +7327,7 @@ void OMR::ValuePropagation::doDelayedTransformations()
       tt.set(&_needMultiLeafArrayCopy);
       for (rtArrayCopyTree = tt.getFirst(); rtArrayCopyTree; rtArrayCopyTree = tt.getNext())
          {
-         transformRTMultiLeafArrayCopy(rtArrayCopyTree);
+         static_cast<TR::ValuePropagation *>(this)->transformRTMultiLeafArrayCopy(rtArrayCopyTree);
          }
       _needMultiLeafArrayCopy.deleteAll();
       }
