@@ -29,3 +29,4 @@
    TR_System,
    TR_Helper,
    TR_J9JNILinkage,
+   TR_FastCall,

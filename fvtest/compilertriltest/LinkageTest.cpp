@@ -450,3 +450,86 @@ TEST_F(LinkageWithMixedTypesTest, SystemLinkageParameterPassingFiveArgWithMixedT
         EXPECT_DOUBLE_EQ(*i, entry_point(0.0,0,0.0,0, *i))  << "Input Trees: " << inputTrees;
     }
 }
+
+TYPED_TEST(LinkageTest, FastCallLinkageParameterPassingSingleArg) {
+    char inputTrees[200] = {0};
+    const auto format_string = "(method return=%s args=[%s] (block (%sreturn (%scall address=%p args=[%s] linkage=fastcall (%sload parm=0)) )  ))";
+    std::snprintf(inputTrees, 200, format_string, TypeToString<TypeParam>::type, // Return
+                                                  TypeToString<TypeParam>::type, //Args
+                                                  TypeToString<TypeParam>::prefix, //return
+                                                  TypeToString<TypeParam>::prefix, //call
+                                                  static_cast<TypeParam (*)(TypeParam)>(passThrough<TypeParam>),//address
+                                                  TypeToString<TypeParam>::type, //args
+                                                  TypeToString<TypeParam>::prefix //load
+                                                  );
+
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
+
+    // Execution of this test is disabled on non-X86 platforms, as we
+    // do not have trampoline support, and so this call may be out of
+    // range for some architectures. X86-32 Windows currently does not
+    // support fastcall linkage
+#ifdef TR_TARGET_X86
+#if defined(TR_TARGET_64BIT) || !defined(WINDOWS)
+    Tril::DefaultCompiler compiler{trees};
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+
+    auto entry_point = compiler.getEntryPoint<TypeParam (*)(TypeParam)>();
+
+    EXPECT_EQ(static_cast<TypeParam>(0), entry_point( static_cast<TypeParam>(0)))  << "Input Trees: " << inputTrees;
+    EXPECT_EQ(static_cast<TypeParam>(1), entry_point( static_cast<TypeParam>(1)))  << "Input Trees: " << inputTrees;
+    EXPECT_EQ(static_cast<TypeParam>(-1), entry_point(static_cast<TypeParam>(-1))) << "Input Trees: " << inputTrees;
+#endif
+#endif
+}
+
+TYPED_TEST(LinkageTest, FastCallLinkageParameterPassingFourArg) {
+    char inputTrees[400] = { 0 };
+    const auto format_string = "(method return=%s args=[%s,%s,%s,%s] (block (%sreturn (%scall address=%p args=[%s,%s,%s,%s] linkage=fastcall"
+        " (%sload parm=0)"
+        " (%sload parm=1)"
+        " (%sload parm=2)"
+        " (%sload parm=3)"
+        ") )  ))";
+    std::snprintf(inputTrees, 400, format_string, TypeToString<TypeParam>::type,   // Return
+        TypeToString<TypeParam>::type,   // Args
+        TypeToString<TypeParam>::type,   // Args
+        TypeToString<TypeParam>::type,   // Args
+        TypeToString<TypeParam>::type,   // Args
+        TypeToString<TypeParam>::prefix, // return
+        TypeToString<TypeParam>::prefix, // call
+        static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam)>(fourthArg<TypeParam>),// address
+        TypeToString<TypeParam>::type,   // args
+        TypeToString<TypeParam>::type,   // args
+        TypeToString<TypeParam>::type,   // args
+        TypeToString<TypeParam>::type,   // args
+        TypeToString<TypeParam>::prefix, // load
+        TypeToString<TypeParam>::prefix, // load
+        TypeToString<TypeParam>::prefix, // load
+        TypeToString<TypeParam>::prefix  // load
+    );
+
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
+
+    // Execution of this test is disabled on non-X86 platforms, as we
+    // do not have trampoline support, and so this call may be out of
+    // range for some architectures.
+#ifdef TR_TARGET_X86
+#if defined(TR_TARGET_64BIT) || !defined(WINDOWS)
+    Tril::DefaultCompiler compiler{ trees };
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+
+    auto entry_point = compiler.getEntryPoint<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam)>();
+
+    EXPECT_EQ(static_cast<TypeParam>(1024), entry_point(0, 0, 0, static_cast<TypeParam>(1024))) << "Input Trees: " << inputTrees;
+    EXPECT_EQ(static_cast<TypeParam>(-1), entry_point(0, 0, 0, static_cast<TypeParam>(-1))) << "Input Trees: " << inputTrees;
+    EXPECT_EQ(static_cast<TypeParam>(0xf0f0f), entry_point(0, 0, 0, static_cast<TypeParam>(0xf0f0f))) << "Input Trees: " << inputTrees;
+#endif
+#endif
+}
