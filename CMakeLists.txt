@@ -132,6 +132,7 @@ add_subdirectory(omrtrace)
 add_subdirectory(omr)
 add_subdirectory(third_party)
 add_subdirectory(omrsigcompat)
+add_subdirectory(omr_static_lib)
 
 if(OMR_GC)
 	add_subdirectory(gc)
