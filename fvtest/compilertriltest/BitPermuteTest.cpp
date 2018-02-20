@@ -556,7 +556,7 @@ TEST_P(bBitPermuteTest, NoConstTest)
       entry_point(param.variableValue, maskedIndices, param.arrayLength));
    }
 
-#ifdef TR_TARGET_X86
+#if defined (TR_TARGET_X86) || defined (TR_TARGET_S390)
 INSTANTIATE_TEST_CASE_P(lBitPermute, lBitPermuteTest,
               ::testing::Combine(
                  ::testing::ValuesIn(longValues),

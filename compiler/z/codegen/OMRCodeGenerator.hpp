@@ -506,6 +506,7 @@ public:
    bool needs64bitPrecision(TR::Node *node);
 
    virtual bool isUsing32BitEvaluator(TR::Node *node);
+   virtual bool getSupportsBitPermute();
    int32_t getEstimatedExtentOfLitLoop()  {return _extentOfLitPool;}
 
    int64_t setAvailableHPRSpillMask(int64_t i)  {return _availableHPRSpillMask = i;}

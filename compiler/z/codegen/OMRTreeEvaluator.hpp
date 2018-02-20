@@ -474,7 +474,9 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *inlineVectorBinaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op);
    static TR::Register *inlineVectorTernaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op);
    static TR::Register *inlineVectorSetElementHelper(TR::Node *node, TR::CodeGenerator *cg, int8_t size, bool isPromote);
-
+   
+   static TR::Register *bitpermuteEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   
    static TR::Register *tryToReuseInputVectorRegs(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Node* DAAAddressPointer (TR::Node* callNode, TR::CodeGenerator* cg);

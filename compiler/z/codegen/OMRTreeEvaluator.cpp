@@ -14117,6 +14117,168 @@ bool isSettingOp(uint8_t byteValue, TR::InstOpCode::Mnemonic SI_opcode)
    }
 
 
+
+TR::Register *
+OMR::Z::TreeEvaluator::bitpermuteEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+
+   TR_ASSERT(node->getNumChildren() == 3, "Wrong number of children in bitpermuteEvaluator");
+   TR::Node *value = node->getChild(0);
+   TR::Node *addr = node->getChild(1);
+   TR::Node *length = node->getChild(2);
+
+   bool nodeIs64Bit = node->getSize() == 8;
+   auto valueReg = cg->evaluate(value); // this will either be a constant or a load
+   auto addrReg = cg->evaluate(addr);   // this will either be a constant or a load
+
+   TR::Register *tmpReg = cg->allocateRegister(TR_GPR);
+
+   //Zero result reg
+   TR::Register *resultReg = cg->allocateRegister(TR_GPR);
+   generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, resultReg, resultReg);
+
+   if (length->getOpCode().isLoadConst())
+      {
+      // Manage the constant length case
+      uintptrj_t arrayLen = length->getIntegerNodeValue<uintptrj_t>();
+      for (uintptrj_t x = 0; x < arrayLen; ++x)
+         {
+         // zero tmpReg
+         generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, tmpReg, tmpReg);
+
+         //load the shift amount into tmpReg
+         //TODO: Check to see if we need sourceMR->stopUsingMemRefRegister(cg)
+         TR::MemoryReference *sourceMR = generateS390MemoryReference(addrReg, x, cg, NULL);
+         generateRXYInstruction(cg, TR::InstOpCode::LB, node, tmpReg, sourceMR);
+
+         if (!(node->getDataType() == TR::Int32 || node->getDataType() == TR::Int16 || node->getDataType() == TR::Int8 || node->getDataType() == TR::Int64))
+            {
+            TR_ASSERT(0, " Unsupported DataType for bitPermute op");
+            }
+         if (node->getDataType() != TR::Int64)
+            {
+            // Java Spec defines the shift amount for integer shifts to be masked with
+            // 0x1f (0-31). For long shifts, the shift instruction will only consider
+            // the first 6 bits of the operand as the shift amount. So no mask is required in that case
+            generateRIInstruction(cg, TR::InstOpCode::NILL, node, tmpReg, 0x1f);   
+            //TODO: There should be two of these
+            }
+         //create memory reference using tmpReg (shift amount), then shift valueReg by by shift amount
+         // TODO: Should another register be used here instead of tmpReg?
+         TR::MemoryReference * tempMR = generateS390MemoryReference(tmpReg, 0, cg);
+         generateRSInstruction(cg, TR::InstOpCode::getShiftRightLogicalSingleOpCode(), node, tmpReg, valueReg, tempMR); 
+         tempMR->stopUsingMemRefRegister(cg); 
+
+         if (node->getDataType() != TR::Int64)
+            {
+            // now and the value in tmpReg by 1 to get your relevant bit
+            generateRILInstruction(cg, TR::InstOpCode::NILF, node,tmpReg,0x1);
+            }
+         else
+            {
+            // This is equivalent to doing a `tmpReg & 0x1` (There should be a helper for this to check processor info)
+            TR::InstOpCode::Mnemonic opCode = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
+            generateRIEInstruction(cg, opCode, node, tmpReg, tmpReg, 63, 191, 0);
+            }
+         //now left shift by x to get to the position u want
+         if (x > 0)
+            generateRSInstruction(cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, tmpReg, tmpReg, x);
+
+         // now OR the result into the resultReg
+         generateRRInstruction(cg, TR::InstOpCode::getOrRegOpCode(), node, resultReg, tmpReg);
+         }
+      }
+   else
+      {
+      auto lengthReg = cg->evaluate(length);
+      auto indexReg = cg->allocateRegister(TR_GPR);
+
+      TR::RegisterDependencyConditions* deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)4, cg);
+      deps->addPostCondition(addrReg, TR::RealRegister::AssignAny);
+      deps->addPostCondition(indexReg, TR::RealRegister::AssignAny);
+      deps->addPostCondition(valueReg, TR::RealRegister::AssignAny);
+      deps->addPostCondition(tmpReg, TR::RealRegister::AssignAny);
+
+      TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+      startLabel->setStartInternalControlFlow();
+      endLabel->setEndInternalControlFlow();
+
+      // Load array length into index and test to see if it's already zero
+      // cc=0 if register value is 0, cc=1 if value < 1, cc=2 if value>0
+      generateRRInstruction(cg, TR::InstOpCode::LTGR, node, indexReg, lengthReg); 
+      
+      //start of internal control flow 
+      generateS390LabelInstruction(cg,TR::InstOpCode::LABEL, node, startLabel);
+
+      // now subtract 1 from indexReg 
+      generateRILInstruction(cg, node->getDataType() == TR::Int64 ? TR::InstOpCode::AGFI : TR::InstOpCode::AFI, node, indexReg, -1);
+
+      // conditionally jump to end of control flow if index is less than 0.  
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, endLabel);
+      
+      // zero tmpReg
+      generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, tmpReg, tmpReg);
+
+      //load the bit index into tmpReg
+      TR::MemoryReference *sourceMR = generateS390MemoryReference(addrReg, indexReg,0, cg);
+      generateRXYInstruction(cg, TR::InstOpCode::LB, node, tmpReg, sourceMR);
+
+      if (!(node->getDataType() == TR::Int32 || node->getDataType() == TR::Int16 || node->getDataType() == TR::Int8 || node->getDataType() == TR::Int64))
+         {
+         TR_ASSERT(0, " Unsupported DataType for bitPermute op");
+         }
+
+      if (node->getDataType() != TR::Int64)
+         {
+         // integer shifts are masked so only the first 5 bits are considered 
+         // for the shift amount
+         generateRIInstruction(cg, TR::InstOpCode::NILL, node, tmpReg, 0x1f);
+         }
+      //Shift value reg by location in tempMR and store in tmpReg 
+      //TODO: is tmpReg the right register to use here? And is stopUsingMemRefRegister needed here?
+      TR::MemoryReference * tempMR = generateS390MemoryReference(tmpReg, 0, cg);
+      generateRSInstruction(cg, TR::InstOpCode::getShiftRightLogicalSingleOpCode(), node, tmpReg, valueReg, tempMR); 
+      tempMR->stopUsingMemRefRegister(cg);
+
+      if (!(node->getDataType() == TR::Int64))
+         {
+         // now AND the value in tmpReg by 1 to get the relevant bit
+         generateRILInstruction(cg, TR::InstOpCode::NILF, node,tmpReg,0x1);
+         }
+      else
+         {
+         // This is equivalent to doing a `tmpReg & 0x1`.. (but this is faster on 64-bit)
+         TR::InstOpCode::Mnemonic opCode = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
+         generateRIEInstruction(cg, opCode, node, tmpReg, tmpReg, 63, 191, 0);
+         }
+      // now shift your bit to the appropriate position beforing ORing it to the result register
+      tempMR = generateS390MemoryReference(indexReg, 0, cg);
+      generateRSInstruction(cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, tmpReg,tmpReg,tempMR);
+      tempMR->stopUsingMemRefRegister(cg);
+
+      // now OR the result into the resultReg
+      generateRRInstruction(cg, TR::InstOpCode::getOrRegOpCode(), node, resultReg, tmpReg);
+
+      // now jump back to the top of control flow if cc is not 2
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK15, node, startLabel);
+      //generate endLabel Instruction here:
+
+      generateS390LabelInstruction(cg,TR::InstOpCode::LABEL, node, endLabel, deps);
+
+      cg->stopUsingRegister(indexReg);
+      }
+
+   cg->stopUsingRegister(tmpReg);
+
+   node->setRegister(resultReg);
+   cg->decReferenceCount(value);
+   cg->decReferenceCount(addr);
+   cg->decReferenceCount(length);
+
+   return resultReg;
+   }
+
 /**
  * bitOpMemEvaluator - bit operations (OR, AND, XOR) for memory to memory
  *
