@@ -64,6 +64,9 @@
 #include "optimizer/SinkStores.hpp"
 #include "optimizer/ShrinkWrapping.hpp"
 #include "optimizer/TrivialDeadBlockRemover.hpp"
+#include "optimizer/GlobalValuePropagation.hpp"
+#include "optimizer/LocalValuePropagation.hpp"
+#include "optimizer/Inliner.hpp"
 
 
 static const OptimizationStrategy tacticalGlobalRegisterAllocatorOpts[] =
@@ -149,22 +152,61 @@ Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymb
       const OptimizationStrategy *strategy, uint16_t VNType)
    : OMR::Optimizer(comp, methodSymbol, isIlGen, strategy, VNType)
    {
+   // Initialize individual optimizations
    _opts[OMR::isolatedStoreElimination] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_IsolatedStoreElimination::create, OMR::isolatedStoreElimination);
    _opts[OMR::trivialStoreSinking] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialSinkStores::create, OMR::trivialStoreSinking);
    _opts[OMR::trivialDeadBlockRemover] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialDeadBlockRemover::create, OMR::trivialDeadBlockRemover);
-   // NOTE: Please add new IBM optimizations here!
+   _opts[OMR::deadTreesElimination] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::DeadTreesElimination::create, OMR::deadTreesElimination);
+   _opts[OMR::treeSimplification] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::Simplifier::create, OMR::treeSimplification);
+   _opts[OMR::localCSE] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::LocalCSE::create, OMR::localCSE);
+   _opts[OMR::basicBlockOrdering] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_OrderBlocks::create, OMR::basicBlockOrdering);
+   _opts[OMR::globalCopyPropagation] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_CopyPropagation::create, OMR::globalCopyPropagation);
+   _opts[OMR::globalDeadStoreElimination] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_DeadStoreElimination::create, OMR::globalDeadStoreElimination);
+   _opts[OMR::basicBlockHoisting] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_HoistBlocks::create, OMR::basicBlockHoisting);
+   _opts[OMR::globalValuePropagation] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::GlobalValuePropagation::create, OMR::globalValuePropagation);
+   _opts[OMR::localValuePropagation] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::LocalValuePropagation::create, OMR::localValuePropagation);
+   _opts[OMR::trivialDeadTreeRemoval] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialDeadTreeRemoval::create, OMR::trivialDeadTreeRemoval);
+   _opts[OMR::generalLoopUnroller] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_GeneralLoopUnroller::create, OMR::generalLoopUnroller);
+   _opts[OMR::basicBlockExtension] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_ExtendBasicBlocks::create, OMR::basicBlockExtension);
+   _opts[OMR::redundantGotoElimination] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_EliminateRedundantGotos::create, OMR::redundantGotoElimination);
+   _opts[OMR::rematerialization] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_Rematerialization::create, OMR::rematerialization);
+   _opts[OMR::loopCanonicalization] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_LoopCanonicalizer::create, OMR::loopCanonicalization);
+   _opts[OMR::inductionVariableAnalysis] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_InductionVariableAnalysis::create, OMR::inductionVariableAnalysis);
+   _opts[OMR::liveRangeSplitter] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_LiveRangeSplitter::create, OMR::liveRangeSplitter);
+   _opts[OMR::tacticalGlobalRegisterAllocator] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_GlobalRegisterAllocator::create, OMR::tacticalGlobalRegisterAllocator);
+   _opts[OMR::regDepCopyRemoval] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::RegDepCopyRemoval::create, OMR::regDepCopyRemoval);
+   _opts[OMR::inlining] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialInliner::create, OMR::inlining);
 
-   // initialize additional IBM optimization groups
-
-   _opts[OMR::isolatedStoreGroup] =
-      new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::isolatedStoreGroup, isolatedStoreOpts);
+   // Initialize optimization groups
+//   _opts[OMR::isolatedStoreGroup] =
+//      new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::isolatedStoreGroup, isolatedStoreOpts);
    _opts[OMR::cheapTacticalGlobalRegisterAllocatorGroup] =
       new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::cheapTacticalGlobalRegisterAllocatorGroup, cheapTacticalGlobalRegisterAllocatorOpts);
-
-   // NOTE: Please add new IBM optimization groups here!
+   _opts[OMR::globalDeadStoreGroup] =
+      new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::globalDeadStoreGroup, globalDeadStoreOpts);
 
    // turn requested on for optimizations/groups
    self()->setRequestOptimization(OMR::cheapTacticalGlobalRegisterAllocatorGroup, true);
