@@ -732,6 +732,13 @@ OMR::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *metho
    // zero opts table
    memset(_opts, 0, sizeof(_opts));
 
+/*
+ * Allow downstream projects to disable the default initializaiton of optimizations
+ * and allow them to take full control over this process.  This can be an advantage
+ * if they don't use all of the optimizations initialized here as they can avoid
+ * getting linked in to the binary in their entirety.
+ */
+#if !defined(TR_OVERRIDE_OPTIMIZATION_INITIALIZATION)
    // initialize OMR optimizations
 
    _opts[OMR::andSimplification] =
@@ -915,6 +922,7 @@ OMR::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *metho
       new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::finalGlobalGroup, finalGlobalOpts);
 
    // NOTE: Please add new OMR optimization groups here!
+#endif
 
 }
 
@@ -2815,7 +2823,8 @@ void OMR::Optimizer::doStructureChecks()
 
 bool OMR::Optimizer::getLastRun(OMR::Optimizations opt)
    {
-   TR_ASSERT(_opts[opt], "Optimization manager for %d should be initialized first", opt);
+   if (!_opts[opt])
+      return false;
    return _opts[opt]->getLastRun();
    }
 

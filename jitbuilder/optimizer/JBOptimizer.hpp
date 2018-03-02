@@ -32,6 +32,8 @@ namespace JitBuilder { class Optimizer; }
 namespace JitBuilder { typedef JitBuilder::Optimizer OptimizerConnector; }
 #endif
 
+#define TR_OVERRIDE_OPTIMIZATION_INITIALIZATION 1
+
 #include "optimizer/OMROptimizer.hpp"
 
 #include <stddef.h>                    // for NULL
