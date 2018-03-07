@@ -19,9 +19,9 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-set(OMR_DDR ON CACHE BOOL "Enable DDR")
+set(OMR_DDR OFF CACHE BOOL "Enable DDR")
 set(OMR_EXAMPLE ON CACHE BOOL "")
-set(OMR_JIT  ON CACHE BOOL "")
+set(OMR_JIT ON CACHE BOOL "")
 # TODO: JitBuilder built through CMake isn't quite ready for windows yet.
 set(OMR_JITBUILDER OFF CACHE BOOL "")
 set(OMR_GC ON CACHE BOOL "")
