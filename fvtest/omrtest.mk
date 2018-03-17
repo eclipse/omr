@@ -31,6 +31,10 @@ ifneq (,$(findstring linux_390,$(SPEC)))
 endif
 endif
 
+ifeq (,$(findstring linux,$(SPEC)))
+OUTPUT_FILE="--gtest_output=xml:test_output/$@.xml"
+endif
+
 ifeq ($(EXPORT_LIB),true)
 LIB_PATH:=$(SITE_PATH_STREAMROOT)/../../javatest/lib/googletest/lib/$(SPEC):$(LD_LIBRARY_PATH)
 export LD_LIBRARY_PATH=$(LIB_PATH)
@@ -42,14 +46,14 @@ endif
 all: test
 
 omr_algotest:
-	./omralgotest --gtest_output=xml:test_output/omralgotest.xml -avltest:fvtest/algotest/avltest.lst
+	./omralgotest $(OUTPUT_FILE) -avltest:fvtest/algotest/avltest.lst
 
 omr_ddrtest:
 	bash $(top_srcdir)/ddr/tools/getmacros tools/ddrgen/test
 	./ddrgen ddrgentest --macrolist test/macroList
 
 omr_gctest:
-	./omrgctest --gtest_output=xml:test_output/omrgctest.xml --gtest_filter="gcFunctionalTest*"
+	./omrgctest $(OUTPUT_FILE) --gtest_filter="gcFunctionalTest*"
 
 # jitbuilder can run different sets of tests on linux_x86 and osx than on other platforms
 # until we common this up, run "testall" on linux_x86 and osx but run "test" everywhere else
@@ -65,46 +69,46 @@ endif
 endif
 
 omr_jitbuildertest:
-	./omrjitbuildertest --gtest_output=xml:test_output/omrjitbuildertest.xml
+	./omrjitbuildertest $(OUTPUT_FILE)
 
 omr_jittest:
-	./testjit --gtest_output=xml:test_output/testjit.xml
+	./testjit $(OUTPUT_FILE)
 	
 omr_porttest:
-	./omrporttest --gtest_output=xml:test_output/omrporttest.xml
+	./omrporttest $(OUTPUT_FILE) 
 ifneq (,$(findstring cuda,$(SPEC)))
-	./omrporttest --gtest_filter="Cuda*" -earlyExit
+	./omrporttest $(OUTPUT_FILE) --gtest_filter="Cuda*" -earlyExit
 endif
 	@echo ALL $@ PASSED
 
 omr_rastest:
-	./omrrastest --gtest_output=xml:test_output/omrrastest.xml
+	./omrrastest $(OUTPUT_FILE) 
 	./omrsubscribertest --gtest_output=xml:test_output/omrsubscribertest.xml --gtest_filter=-RASSubscriberForkTest.*
 	./omrtraceoptiontest --gtest_output=xml:test_output/omrtraceoptiontest.xml
 	@echo ALL $@ PASSED
 	
 omr_subscriberforktest:
-	./omrsubscribertest --gtest_output=xml:test_output/omrsubscriberforktest.xml --gtest_filter=RASSubscriberForkTest.*
+	./omrsubscribertest $(OUTPUT_FILE) --gtest_filter=RASSubscriberForkTest.*
 	
 omr_sigtest:
-	./omrsigtest --gtest_output=xml:test_output/omrsigtest.xml
+	./omrsigtest $(OUTPUT_FILE)
 
 omr_threadextendedtest:
-	./omrthreadextendedtest --gtest_output=xml:test_output/omrthreadextendedtest.xml
+	./omrthreadextendedtest $(OUTPUT_FILE) 
 
 omr_threadtest:
-	./omrthreadtest --gtest_output=xml:test_output/omrthreadtest.xml
+	./omrthreadtest $(OUTPUT_FILE) 
 	./omrthreadtest --gtest_also_run_disabled_tests --gtest_filter=ThreadCreateTest.DISABLED_SetAttrThreadWeight
 ifneq (,$(findstring linux,$(SPEC)))
-	./omrthreadtest --gtest_output=xml:test_output/omrthreadtest.xml --gtest_filter=ThreadCreateTest.*:$(GTEST_FILTER) -realtime
+	./omrthreadtest $(OUTPUT_FILE) --gtest_filter=ThreadCreateTest.*:$(GTEST_FILTER) -realtime
 endif
 	@echo ALL $@ PASSED
 
 omr_utiltest:
-	./omrutiltest --gtest_output=xml:test_output/omrutiltest.xml
+	./omrutiltest $(OUTPUT_FILE) 
 	
 omr_vmtest:
-	./omrvmtest --gtest_output=xml:test_output/omrvmtest.xml
+	./omrvmtest $(OUTPUT_FILE) 
 
 .NOTPARALLEL:
 test: omr_algotest omr_utiltest
