@@ -42,14 +42,14 @@ endif
 all: test
 
 omr_algotest:
-	./omralgotest -avltest:fvtest/algotest/avltest.lst
+	./omralgotest --gtest_output=xml:test_output/omralgotest.xml -avltest:fvtest/algotest/avltest.lst
 
 omr_ddrtest:
 	bash $(top_srcdir)/ddr/tools/getmacros tools/ddrgen/test
 	./ddrgen ddrgentest --macrolist test/macroList
 
 omr_gctest:
-	./omrgctest --gtest_filter="gcFunctionalTest*"
+	./omrgctest --gtest_output=xml:test_output/omrgctest.xml --gtest_filter="gcFunctionalTest*"
 
 # jitbuilder can run different sets of tests on linux_x86 and osx than on other platforms
 # until we common this up, run "testall" on linux_x86 and osx but run "test" everywhere else
@@ -65,46 +65,46 @@ endif
 endif
 
 omr_jitbuildertest:
-	./omrjitbuildertest
+	./omrjitbuildertest --gtest_output=xml:test_output/omrjitbuildertest.xml
 
 omr_jittest:
-	./testjit
+	./testjit --gtest_output=xml:test_output/testjit.xml
 	
 omr_porttest:
-	./omrporttest
+	./omrporttest --gtest_output=xml:test_output/omrporttest.xml
 ifneq (,$(findstring cuda,$(SPEC)))
 	./omrporttest --gtest_filter="Cuda*" -earlyExit
 endif
 	@echo ALL $@ PASSED
 
 omr_rastest:
-	./omrrastest
-	./omrsubscribertest --gtest_filter=-RASSubscriberForkTest.*
-	./omrtraceoptiontest
+	./omrrastest --gtest_output=xml:test_output/omrrastest.xml
+	./omrsubscribertest --gtest_output=xml:test_output/omrsubscribertest.xml --gtest_filter=-RASSubscriberForkTest.*
+	./omrtraceoptiontest --gtest_output=xml:test_output/omrtraceoptiontest.xml
 	@echo ALL $@ PASSED
 	
 omr_subscriberforktest:
-	./omrsubscribertest --gtest_filter=RASSubscriberForkTest.*
+	./omrsubscribertest --gtest_output=xml:test_output/omrsubscriberforktest.xml --gtest_filter=RASSubscriberForkTest.*
 	
 omr_sigtest:
-	./omrsigtest
+	./omrsigtest --gtest_output=xml:test_output/omrsigtest.xml
 
 omr_threadextendedtest:
-	./omrthreadextendedtest
+	./omrthreadextendedtest --gtest_output=xml:test_output/omrthreadextendedtest.xml
 
 omr_threadtest:
-	./omrthreadtest
+	./omrthreadtest --gtest_output=xml:test_output/omrthreadtest.xml
 	./omrthreadtest --gtest_also_run_disabled_tests --gtest_filter=ThreadCreateTest.DISABLED_SetAttrThreadWeight
 ifneq (,$(findstring linux,$(SPEC)))
-	./omrthreadtest --gtest_filter=ThreadCreateTest.*:$(GTEST_FILTER) -realtime
+	./omrthreadtest --gtest_output=xml:test_output/omrthreadtest.xml --gtest_filter=ThreadCreateTest.*:$(GTEST_FILTER) -realtime
 endif
 	@echo ALL $@ PASSED
 
 omr_utiltest:
-	./omrutiltest
+	./omrutiltest --gtest_output=xml:test_output/omrutiltest.xml
 	
 omr_vmtest:
-	./omrvmtest
+	./omrvmtest --gtest_output=xml:test_output/omrvmtest.xml
 
 .NOTPARALLEL:
 test: omr_algotest omr_utiltest
