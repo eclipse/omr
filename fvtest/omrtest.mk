@@ -33,6 +33,8 @@ endif
 
 ifeq (,$(findstring linux,$(SPEC)))
 OUTPUT_FILE="--gtest_output=xml:test_output/$@.xml"
+OUTPUT_FILE1="--gtest_output=xml:test_output/$@_1.xml"
+OUTPUT_FILE2="--gtest_output=xml:test_output/$@_2.xml"
 endif
 
 ifeq ($(EXPORT_LIB),true)
@@ -83,8 +85,8 @@ endif
 
 omr_rastest:
 	./omrrastest $(OUTPUT_FILE) 
-	./omrsubscribertest --gtest_output=xml:test_output/omrsubscribertest.xml --gtest_filter=-RASSubscriberForkTest.*
-	./omrtraceoptiontest --gtest_output=xml:test_output/omrtraceoptiontest.xml
+	./omrsubscribertest $(OUTPUT_FILE1) --gtest_filter=-RASSubscriberForkTest.*
+	./omrtraceoptiontest $(OUTPUT_FILE2)
 	@echo ALL $@ PASSED
 	
 omr_subscriberforktest:
