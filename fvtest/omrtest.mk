@@ -31,7 +31,7 @@ ifneq (,$(findstring linux_390,$(SPEC)))
 endif
 endif
 
-ifeq (,$(findstring linux,$(SPEC)))
+ifeq ($(GEN_GTEST_OUTPUT), true)
 OUTPUT_FILE="--gtest_output=xml:test_output/$@.xml"
 OUTPUT_FILE1="--gtest_output=xml:test_output/$@_1.xml"
 OUTPUT_FILE2="--gtest_output=xml:test_output/$@_2.xml"
