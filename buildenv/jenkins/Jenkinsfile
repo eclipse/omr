@@ -2,6 +2,8 @@
 pipeline {
     agent {label "${params.MACHINE_LABEL}"}
     parameters {
+        string (defaultValue: 'https://github.com/eclipse/omr.git', description: 'URL for the repo to use', name: 'REPO_URL')
+        string (defaultValue: 'master', description: 'Branch name to use', name: 'BRANCH_NAME')
         string (defaultValue: '', description: 'Machine label expression for jenkins node, like Linux&&390 or aix&&ppc, etc', name: 'MACHINE_LABEL')
         choice (choices: 'linux_x86-64\nosx_x86-64\nlinux_ppc-64\nlinux_ppc-64_le_gcc\nlinux_armmak\nlinux_390-64\naix_ppc-64', description: 'SPEC?', name: 'SPEC')
     }
@@ -14,8 +16,8 @@ pipeline {
             steps {
                 timestamps {
                     checkout([
-				        $class: 'GitSCM', branches: [[name: "*/test_output"]],
-			        	userRemoteConfigs: [[url: "https://github.com/smlambert/omr.git"]]
+				        $class: 'GitSCM', branches: [[name: "*/${params.BRANCH_NAME}"]],
+			        	userRemoteConfigs: [[url: "${params.REPO_URL}"]]
 			        ])
                 }
             }
@@ -24,7 +26,6 @@ pipeline {
             steps {
                 timestamps {
                     echo 'Configure...'
-                    sh '''pwd'''
                     sh "cd $WORKSPACE/omr"
                     sh'''make -f run_configure.mk OMRGLUE=./example/glue SPEC=linux_x86-64'''
                    
@@ -39,20 +40,16 @@ pipeline {
                 timestamps {
                     echo "Sanity Test..."
                     sh '''make test'''
-                    sh '''ls'''
                 }
             }
         }
     }
     post {
-        unstable {
-            archiveArtifacts artifacts: '**/test_output/**', fingerprint: true, allowEmptyArchive: true
-        }
         always {
             step([$class: 'XUnitBuilder',
                 thresholds: [[$class: 'FailedThreshold', unstableThreshold: '1']],
                 tools: [[$class: 'GoogleTestType', skipNoTestFiles: true, pattern: '**/test_output/**']]])
-
+            archiveArtifacts artifacts: '**/test_output/**', fingerprint: true, allowEmptyArchive: true
             echo 'Cleanup workspace'
             deleteDir()
         }
