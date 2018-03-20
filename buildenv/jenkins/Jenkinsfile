@@ -15,6 +15,7 @@ pipeline {
             steps {
                 timestamps {
                     echo 'Configure...'
+                    sh'''cd omr'''
                     sh'''make -f run_configure.mk OMRGLUE=./example/glue SPEC=linux_x86-64'''
                    
                     echo 'Compile...'
