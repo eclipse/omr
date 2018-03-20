@@ -335,6 +335,19 @@ MM_ParallelGlobalGC::cleanupAfterGC(MM_EnvironmentBase *env, MM_AllocateDescript
 
 	/* Heap size now fixed for next cycle so reset heap statistics */
 	_extensions->heap->resetHeapStatistics(true);
+
+	GC_OMRVMThreadListIterator threadIterator(_extensions->getOmrVM());
+	OMR_VMThread *walkThread = NULL;
+
+	/* Null tenure TLH (Copy Cache) references for all GC slave and Mutator (for concurrent scavenger) threads as the memory will be invalidated on sweep cycle*/
+	while((walkThread = threadIterator.nextOMRVMThread()) != NULL) {
+		MM_EnvironmentStandard *threadEnvironment = MM_EnvironmentStandard::getEnvironment(walkThread);
+		threadEnvironment->_tenureTLHRemainderBase = NULL;
+		threadEnvironment->_tenureTLHRemainderTop = NULL;
+	}
+
+	_extensions->_masterThreadTenureTLHRemainderTop = NULL;
+	_extensions->_masterThreadTenureTLHRemainderBase = NULL;
 }
 
 void
