@@ -10,16 +10,7 @@ pipeline {
         GEN_GTEST_OUTPUT = true
     }
     stages {
-        stage('Get Sources') {
-            steps {
-                timestamps {
-                    checkout([
-				        $class: 'GitSCM', branches: [[name: "*/test_output"]],
-			        	userRemoteConfigs: [[url: "https://github.com/smlambert/omr.git"]]
-			        ])
-                }
-            }
-        }
+
         stage('Build') {
             steps {
                 timestamps {
