@@ -145,6 +145,8 @@ public:
 	 * Function members
 	 */
 private:
+	void saveTenureTLHRemainders(MM_EnvironmentStandard *env);
+	void restoreTenureTLHRemainders(MM_EnvironmentStandard *env);
 	void setBackOutFlag(MM_EnvironmentBase *env, BackOutState value);
 	MMINLINE bool isBackOutFlagRaised() { return _extensions->isScavengerBackOutFlagRaised(); }
 	MMINLINE bool shouldAbortScanLoop() {
@@ -359,9 +361,8 @@ public:
 	/**
 	 * Called (typically at the end of GC) to explicitly abandon the TLH remainders (for the calling thread)
 	 */
-	void abandonTLHRemainders(MM_EnvironmentStandard *env);
 	void abandonSurvivorTLHRemainder(MM_EnvironmentStandard *env);
-	void abandonTenureTLHRemainder(MM_EnvironmentStandard *env);
+	void abandonTenureTLHRemainder(MM_EnvironmentStandard *env, bool preserveRemainders = false);
 
 	void reportGCStart(MM_EnvironmentStandard *env);
 	void reportGCEnd(MM_EnvironmentStandard *env);

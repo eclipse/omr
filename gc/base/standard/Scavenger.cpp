@@ -355,6 +355,8 @@ MM_Scavenger::masterSetupForGC(MM_EnvironmentStandard *env)
 
 	_doneIndex = 0;
 
+	restoreTenureTLHRemainders(env);
+
 	/* Reinitialize the copy scan caches */
 	Assert_MM_true(_scavengeCacheFreeList.areAllCachesReturned());
 	Assert_MM_true(0 == _cachedEntryCount);
@@ -439,8 +441,6 @@ MM_Scavenger::workerSetupForGC(MM_EnvironmentStandard *env)
 	Assert_MM_true(NULL == env->_scanCache);
 	Assert_MM_true(NULL == env->_deferredScanCache);
 	Assert_MM_true(NULL == env->_deferredCopyCache);
-	Assert_MM_true(NULL == env->_tenureTLHRemainderBase);
-	Assert_MM_true(NULL == env->_tenureTLHRemainderTop);
 	Assert_MM_false(env->_loaAllocation);
 	Assert_MM_true(NULL == env->_survivorTLHRemainderBase);
 	Assert_MM_true(NULL == env->_survivorTLHRemainderTop);
@@ -2141,7 +2141,8 @@ MM_Scavenger::workThreadGarbageCollect(MM_EnvironmentStandard *env)
 	rootScanner.flush(env);
 
 	addCopyCachesToFreeList(env);
-	abandonTLHRemainders(env);
+	abandonSurvivorTLHRemainder(env);
+	abandonTenureTLHRemainder(env, true);
 
 	/* If -Xgc:fvtest=forceScavengerBackout has been specified, set backout flag every 3rd scavenge */
 	if(_extensions->fvtest_forceScavengerBackout) {
@@ -3072,23 +3073,25 @@ MM_Scavenger::abandonSurvivorTLHRemainder(MM_EnvironmentStandard *env)
 }
 
 void
-MM_Scavenger::abandonTenureTLHRemainder(MM_EnvironmentStandard *env)
+MM_Scavenger::abandonTenureTLHRemainder(MM_EnvironmentStandard *env, bool preserveRemainders)
 {
 	if (NULL != env->_tenureTLHRemainderBase) {
 		Assert_MM_true(NULL != env->_tenureTLHRemainderTop);
-		env->_scavengerStats._tenureDiscardBytes += (uintptr_t)env->_tenureTLHRemainderTop - (uintptr_t)env->_tenureTLHRemainderBase;
 		_tenureMemorySubSpace->abandonHeapChunk(env->_tenureTLHRemainderBase, env->_tenureTLHRemainderTop);
-		env->_tenureTLHRemainderBase = NULL;
-		env->_tenureTLHRemainderTop = NULL;
+
+		if (!preserveRemainders){
+			env->_scavengerStats._tenureDiscardBytes += (uintptr_t)env->_tenureTLHRemainderTop - (uintptr_t)env->_tenureTLHRemainderBase;
+			env->_tenureTLHRemainderBase = NULL;
+			env->_tenureTLHRemainderTop = NULL;
+		}
+		/* In case of Mutator threads (for concurrent scavenger) isMasterThread() is not sufficient, we must also make a thread check with getThreadType()*/
+		else if ((env->isMasterThread()) && (GC_MASTER_THREAD == env->getThreadType())){
+			saveTenureTLHRemainders(env);
+			env->_tenureTLHRemainderBase = NULL;
+			env->_tenureTLHRemainderTop = NULL;
+		}
 		env->_loaAllocation = false;
 	}
-}
-
-void
-MM_Scavenger::abandonTLHRemainders(MM_EnvironmentStandard *env)
-{
-	abandonSurvivorTLHRemainder(env);
-	abandonTenureTLHRemainder(env);
 }
 
 void
@@ -3214,6 +3217,33 @@ bool
 MM_Scavenger::scavengeCompletedSuccessfully(MM_EnvironmentStandard *env)
 {
 	return !isBackOutFlagRaised();
+}
+
+/**
+ * Save the thread environment remainder references to extensions, this is required for
+ * the master thread as it is an implicit thread and in general changes from cycle to cycle.
+ * This is done at the end of the GC cycle (or end of each phase for concurrent scavenger).
+ */
+void
+MM_Scavenger::saveTenureTLHRemainders(MM_EnvironmentStandard *env)
+{
+	_extensions->_masterThreadTenureTLHRemainderTop = env->_tenureTLHRemainderTop;
+	_extensions->_masterThreadTenureTLHRemainderBase = env->_tenureTLHRemainderBase;
+}
+
+/**
+ * Restore master thread TLH remainder boundaries that have been preserved from the end of the previous cycle.
+ * This is done to minimze the number of bytes discarded by reusing memory from the previously allocated TLH.
+ */
+void
+MM_Scavenger::restoreTenureTLHRemainders(MM_EnvironmentStandard *env)
+{
+	if ((NULL != _extensions->_masterThreadTenureTLHRemainderTop) && (NULL != _extensions->_masterThreadTenureTLHRemainderBase)){
+		env->_tenureTLHRemainderBase = _extensions->_masterThreadTenureTLHRemainderBase;
+		env->_tenureTLHRemainderTop = _extensions->_masterThreadTenureTLHRemainderTop;
+		_extensions->_masterThreadTenureTLHRemainderTop = NULL;
+		_extensions->_masterThreadTenureTLHRemainderBase = NULL;
+	}
 }
 
 /****************************************
@@ -4647,11 +4677,30 @@ MM_Scavenger::scavengeRoots(MM_EnvironmentBase *env)
 }
 
 bool
-MM_Scavenger::scavengeScan(MM_EnvironmentBase *env)
+MM_Scavenger::scavengeScan(MM_EnvironmentBase *envBase)
 {
 	Assert_MM_true(concurrent_state_scan == _concurrentState);
 
+	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(envBase);
+
+	restoreTenureTLHRemainders(env);
+
 	MM_ConcurrentScavengeTask scavengeTask(env, _dispatcher, this, MM_ConcurrentScavengeTask::SCAVENGE_SCAN, U_64_MAX, NULL, env->_cycleState);
+	_dispatcher->run(env, &scavengeTask);
+
+	return false;
+}
+
+bool
+MM_Scavenger::scavengeComplete(MM_EnvironmentBase *envBase)
+{
+	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(envBase);
+
+	Assert_MM_true(concurrent_state_complete == _concurrentState);
+
+	restoreTenureTLHRemainders(env);
+
+	MM_ConcurrentScavengeTask scavengeTask(env, _dispatcher, this, MM_ConcurrentScavengeTask::SCAVENGE_COMPLETE, U_64_MAX, NULL, env->_cycleState);
 	_dispatcher->run(env, &scavengeTask);
 
 	return false;
@@ -4669,8 +4718,6 @@ MM_Scavenger::mutatorSetupForGC(MM_EnvironmentBase *envBase)
 		Assert_MM_true(NULL == env->_scanCache);
 		Assert_MM_true(NULL == env->_deferredScanCache);
 		Assert_MM_true(NULL == env->_deferredCopyCache);
-		Assert_MM_true(NULL == env->_tenureTLHRemainderBase);
-		Assert_MM_true(NULL == env->_tenureTLHRemainderTop);
 		Assert_MM_false(env->_loaAllocation);
 		Assert_MM_true(NULL == env->_survivorTLHRemainderBase);
 		Assert_MM_true(NULL == env->_survivorTLHRemainderTop);
@@ -4688,31 +4735,8 @@ MM_Scavenger::threadFinalReleaseCopyCaches(MM_EnvironmentBase *envBase, MM_Envir
 		 * In a case of thread teardown or flushing caches for walk, caller ensures that own environment is used.
 		 */
 
-		// todo: try to simplify. perhaps even we can use threadEnvironment directly?
-
-		/* take a snapshot of all copy cache relevant variables */
-		if (envBase != threadEnvironmentBase) {
-			Assert_MM_true(NULL == env->_tenureTLHRemainderBase);
-			Assert_MM_true(NULL == env->_tenureTLHRemainderTop);
-			Assert_MM_false(env->_loaAllocation);
-			Assert_MM_true(NULL == env->_survivorTLHRemainderBase);
-			Assert_MM_true(NULL == env->_survivorTLHRemainderTop);
-
-			env->_tenureTLHRemainderBase = threadEnvironment->_tenureTLHRemainderBase;
-			env->_tenureTLHRemainderTop = threadEnvironment->_tenureTLHRemainderTop;
-			env->_loaAllocation = threadEnvironment->_loaAllocation;
-			env->_survivorTLHRemainderBase = threadEnvironment->_survivorTLHRemainderBase;
-			env->_survivorTLHRemainderTop = threadEnvironment->_survivorTLHRemainderTop;
-
-			threadEnvironment->_tenureTLHRemainderBase = NULL;
-			threadEnvironment->_tenureTLHRemainderTop = NULL;
-			threadEnvironment->_loaAllocation = false;
-			threadEnvironment->_survivorTLHRemainderBase = NULL;
-			threadEnvironment->_survivorTLHRemainderTop = NULL;
-
-			Assert_MM_true(NULL == threadEnvironment->_deferredScanCache);
-			Assert_MM_true(NULL == threadEnvironment->_scanCache);
-		}
+		Assert_MM_true(NULL == threadEnvironment->_deferredScanCache);
+		Assert_MM_true(NULL == threadEnvironment->_scanCache);
 
 		if (threadEnvironment->_survivorCopyScanCache) {
 			Assert_MM_true(threadEnvironment->_survivorCopyScanCache->flags & OMR_SCAVENGER_CACHE_TYPE_COPY);
@@ -4744,32 +4768,10 @@ MM_Scavenger::threadFinalReleaseCopyCaches(MM_EnvironmentBase *envBase, MM_Envir
 			addCacheEntryToScanListAndNotify(env, threadEnvironment->_tenureCopyScanCache);
 			threadEnvironment->_tenureCopyScanCache = NULL;
 		}
-		abandonTLHRemainders(env);
+
+		abandonSurvivorTLHRemainder(threadEnvironment);
+		abandonTenureTLHRemainder(threadEnvironment, true);
 	}
-}
-
-bool
-MM_Scavenger::scavengeComplete(MM_EnvironmentBase *envBase)
-{
-	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(envBase);
-
-	Assert_MM_true(concurrent_state_complete == _concurrentState);
-
-	GC_OMRVMThreadListIterator threadIterator(_extensions->getOmrVM());
-	OMR_VMThread *walkThread = NULL;
-
-	while((walkThread = threadIterator.nextOMRVMThread()) != NULL) {
-		MM_EnvironmentStandard *threadEnvironment = MM_EnvironmentStandard::getEnvironment(walkThread);
-		if (MUTATOR_THREAD == threadEnvironment->getThreadType()) {
-			threadFinalReleaseCopyCaches(env, threadEnvironment);
-			threadEnvironment->_scavengerStats.clear(false);
-		}
-	}
-
-	MM_ConcurrentScavengeTask scavengeTask(env, _dispatcher, this, MM_ConcurrentScavengeTask::SCAVENGE_COMPLETE, U_64_MAX, NULL, env->_cycleState);
-	_dispatcher->run(env, &scavengeTask);
-
-	return false;
 }
 
 bool
@@ -4893,7 +4895,8 @@ MM_Scavenger::workThreadScan(MM_EnvironmentStandard *env)
 	// we probably have to clear all things for master since it'll be doing final release/clear on behalf of mutator threads
 	// but is it really needed for slaves as well?
 	addCopyCachesToFreeList(env);
-	abandonTLHRemainders(env);
+	abandonSurvivorTLHRemainder(env);
+	abandonTenureTLHRemainder(env, true);
 
 	mergeThreadGCStats(env);
 }
@@ -4919,7 +4922,8 @@ MM_Scavenger::workThreadComplete(MM_EnvironmentStandard *env)
 	rootScanner.flush(env);
 
 	addCopyCachesToFreeList(env);
-	abandonTLHRemainders(env);
+	abandonSurvivorTLHRemainder(env);
+	abandonTenureTLHRemainder(env, true);
 
 	/* If -Xgc:fvtest=forceScavengerBackout has been specified, set backout flag every 3rd scavenge */
 	if(_extensions->fvtest_forceScavengerBackout) {
