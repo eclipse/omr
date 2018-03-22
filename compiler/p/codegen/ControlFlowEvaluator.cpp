@@ -800,6 +800,29 @@ TR::Register *OMR::Power::TreeEvaluator::gotoEvaluator(TR::Node *node, TR::CodeG
    return NULL;
    }
 
+/**
+ * (breturn TR::Int8) ≡ (ireturn (b2i (TR::Int8)))
+ */
+TR::Register *OMR::Power::TreeEvaluator::breturnEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR::Node *child  = node->getFirstChild();
+   TR::Register *returnRegister = cg->evaluate(child);
+   /**
+    * Extend the signed eight-bit value to form a 32 bit word, copying the data in place.
+    */
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, returnRegister, returnRegister);
+   const TR::PPCLinkageProperties &linkageProperties = cg->getProperties();
+   TR::RealRegister::RegNum machineReturnRegister =
+                linkageProperties.getIntegerReturnRegister();
+   TR::RegisterDependencyConditions *dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 0, cg->trMemory());
+   dependencies->addPreCondition(returnRegister, machineReturnRegister);
+   generateAdminInstruction(cg, TR::InstOpCode::ret, node);
+   generateDepInstruction(cg, TR::InstOpCode::blr, node, dependencies);
+   cg->decReferenceCount(child);
+   return NULL;
+   }
+
 // also handles areturn, iureturn
 TR::Register *OMR::Power::TreeEvaluator::ireturnEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {

@@ -61,6 +61,7 @@
    indirectStoreSimplifier, // TR::sstorei
    indirectStoreSimplifier, // TR::istorei
    gotoSimplifier,          // TR::Goto
+   dftSimplifier,           // TR::breturn
    dftSimplifier,           // TR::ireturn
    dftSimplifier,           // TR::lreturn
    dftSimplifier,           // TR::freturn

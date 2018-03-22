@@ -86,6 +86,7 @@
    sstorei,  // store indirect short integer          (child1 a, child2 s)
    istorei,  // store indirect integer                (child1 a, child2 i)
    Goto,     // goto label address
+   breturn,  // return a byte
    ireturn,  // return an integer
    lreturn,  // return a long integer
    freturn,  // return a float

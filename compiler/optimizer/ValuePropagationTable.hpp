@@ -201,6 +201,7 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainStore,           // TR::sstorei
    constrainStore,           // TR::istorei
    constrainGoto,            // TR::Goto
+   constrainReturn,          // TR::breturn
    constrainReturn,          // TR::ireturn
    constrainReturn,          // TR::lreturn
    constrainReturn,          // TR::freturn

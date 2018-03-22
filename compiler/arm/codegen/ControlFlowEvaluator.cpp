@@ -72,7 +72,7 @@ TR::Register *OMR::ARM::TreeEvaluator::gotoEvaluator(TR::Node *node, TR::CodeGen
    return NULL;
    }
 
-// also handles areturn
+/* Also handles areturn and breturn. */
 TR::Register *OMR::ARM::TreeEvaluator::ireturnEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Register *returnRegister = cg->evaluate(node->getFirstChild());
@@ -81,7 +81,17 @@ TR::Register *OMR::ARM::TreeEvaluator::ireturnEvaluator(TR::Node *node, TR::Code
    addDependency(deps, returnRegister, cg->getProperties().getIntegerReturnRegister(), TR_GPR, cg);
 
    generateAdminInstruction(cg, ARMOp_ret, node, deps);
-   cg->comp()->setReturnInfo(TR_IntReturn);
+   switch (node->getDataType())
+     {
+     case TR::Int8:
+       cg->comp()->setReturnInfo(TR_ByteReturn);
+       break;
+     case TR::Int64:
+       cg->comp()->setReturnInfo(TR_IntReturn);
+       break;
+     default:
+       TR_ASSERT(false, "The ireturnEvaluator in arm should only be used when the data being returned is of type TR::Int8 || TR::Int32");
+     }
    return NULL;
    }
 
@@ -100,7 +110,7 @@ TR::Register *OMR::ARM::TreeEvaluator::lreturnEvaluator(TR::Node *node, TR::Code
    return NULL;
    }
 
-// areturn handled by ireturnEvaluator
+// breturn and areturn handled by ireturnEvaluator
 
 TR::Register *OMR::ARM::TreeEvaluator::returnEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {

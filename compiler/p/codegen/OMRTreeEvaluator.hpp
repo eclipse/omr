@@ -85,6 +85,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *ilstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *astoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);  // ibm@59591
    static TR::Register *gotoEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *breturnEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ireturnEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lreturnEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *freturnEvaluator(TR::Node *node, TR::CodeGenerator *cg);

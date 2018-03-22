@@ -649,6 +649,22 @@
    },
 
    {
+   /* .opcode               = */ TR::breturn,
+   /* .name                 = */ "breturn",
+   /* .properties1          = */ ILProp1::Return | ILProp1::TreeTop,
+   /* .properties2          = */ ILProp2::MayUseSystemStack,
+   /* .properties3          = */ 0,
+   /* .properties4          = */ 0,
+   /* .dataType             = */ TR::Int8,
+   /* .typeProperties       = */ ILTypeProp::Size_1 | ILTypeProp::Integer,
+   /* .childProperties      = */ ONE_CHILD(TR::Int8),
+   /* .swapChildrenOpCode   = */ TR::BadILOp,
+   /* .reverseBranchOpCode  = */ TR::BadILOp,
+   /* .booleanCompareOpCode = */ TR::BadILOp,
+   /* .ifCompareOpCode      = */ TR::BadILOp,
+   },
+
+   {
    /* .opcode               = */ TR::ireturn,
    /* .name                 = */ "ireturn",
    /* .properties1          = */ ILProp1::Return | ILProp1::TreeTop,
@@ -657,7 +673,7 @@
    /* .properties4          = */ 0,
    /* .dataType             = */ TR::Int32,
    /* .typeProperties       = */ ILTypeProp::Size_4 | ILTypeProp::Integer,
-   /* .childProperties      = */ ONE_CHILD(ILChildProp::UnspecifiedChildType), // ireturn is used to return all types smaller than Int32
+   /* .childProperties      = */ ONE_CHILD(ILChildProp::UnspecifiedChildType), // ireturn is used to return both TR::Int16 and TR::Int32
    /* .swapChildrenOpCode   = */ TR::BadILOp,
    /* .reverseBranchOpCode  = */ TR::BadILOp,
    /* .booleanCompareOpCode = */ TR::BadILOp,

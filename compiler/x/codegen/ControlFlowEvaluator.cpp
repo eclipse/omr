@@ -1214,6 +1214,9 @@ TR::Register *OMR::X86::TreeEvaluator::integerReturnEvaluator(TR::Node *node, TR
             default:
                TR_ASSERT(0, "Unrecognized return type");
                // fall through
+            case TR::Int8:
+               returnInfo = TR_ByteReturn;
+               break;
             case TR::Int32:
                returnInfo = TR_IntReturn;
                break;
@@ -1228,7 +1231,18 @@ TR::Register *OMR::X86::TreeEvaluator::integerReturnEvaluator(TR::Node *node, TR
          }
       else
          {
-         comp->setReturnInfo(TR_IntReturn);
+         switch (node->getDataType())
+            {
+            default:
+              TR_ASSERT(0, "On non-64bit target platforms, the only supported return types are TR::Int8 and TR::Int32");
+              // fall through
+            case TR::Int8:
+              comp->setReturnInfo(TR_ByteReturn);
+              break;
+            case TR::Int32:
+              comp->setReturnInfo(TR_IntReturn);
+              break;
+            }
          }
       }
 

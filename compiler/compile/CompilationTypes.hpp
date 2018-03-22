@@ -81,21 +81,22 @@ enum TR_CallingContext {
 
 
 
-// function return type flags for word preceding the entry point in any
+// function return types for word preceding the entry point in any
 // linkage that needs to be callable from interpreted.  Also used in pic
 // for use when dispatching methods that are interpreted in megamorphic send
 // case
 enum TR_ReturnInfo
    {
-   TR_VoidReturn        = 0,
-   TR_IntReturn         = 1,
-   TR_LongReturn        = 2,
-   TR_FloatReturn       = 3,
-   TR_DoubleReturn      = 4,
-   TR_ObjectReturn      = 5, // Currently 64-bit platforms only
-   TR_FloatXMMReturn    = 6, // IA32 and AMD64 only
-   TR_DoubleXMMReturn   = 7, // IA32 and AMD64 only
-   TR_ConstructorReturn = 8  // Return from constructor
+   TR_VoidReturn,
+   TR_ByteReturn,
+   TR_IntReturn,
+   TR_LongReturn,
+   TR_FloatReturn,
+   TR_DoubleReturn,
+   TR_ObjectReturn,     // Currently 64-bit platforms only
+   TR_FloatXMMReturn,   // IA32 and AMD64 only
+   TR_DoubleXMMReturn,  // IA32 and AMD64 only
+   TR_ConstructorReturn // Return from constructor
    };
 
 

@@ -3150,8 +3150,9 @@ OMR::Node::getReturnCode(bool isReason)
       return NULL;
 
    // just return code
-   else if (self()->getOpCodeValue() == TR::ireturn &&
-            self()->getNumChildren() == 1)
+   else if (self()->getNumChildren() == 1 &&
+            (self()->getOpCodeValue() == TR::ireturn ||
+             self()->getOpCodeValue() == TR::breturn))
       codeChild = self()->getChild(0);
 
    // return code and return reason

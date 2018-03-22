@@ -1077,7 +1077,7 @@ OMR::Z::TreeEvaluator::igotoEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
 /**
  * Handles all types of return opcodes
- * (return, areturn, ireturn, lreturn, freturn, dreturn, iureturn, lureturn, oreturn)
+ * (return, areturn, breturn, ireturn, lreturn, freturn, dreturn, iureturn, lureturn, oreturn)
  */
 TR::Register *
 OMR::Z::TreeEvaluator::returnEvaluator(TR::Node * node, TR::CodeGenerator * cg)
@@ -1148,6 +1148,24 @@ OMR::Z::TreeEvaluator::returnEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       case TR::areturn:
          comp->setReturnInfo(TR_ObjectReturn);
          dependencies->addPostCondition(returnValRegister, linkage->getIntegerReturnRegister());
+         break;
+      case TR::breturn:
+         dependencies->addPostCondition(returnValRegister, linkage->getIntegerReturnRegister());
+         comp->setReturnInfo(TR_ByteReturn);
+         if (linkage->isNeedsWidening())
+            {
+            /* LGBR equiv to {Operands R_1,R_2 : Load Byte (64<-8)} */
+            new (cg->trHeapMemory()) TR::S390RRInstruction(TR::InstOpCode::LGBR,
+                                                           node, returnValRegister,
+                                                           returnValRegister, cg);
+            }
+         else
+            {
+            /* LBR equiv to {Operands R_1, R_2 : Load Byte (32<-8)} */
+            new (cg->trHeapMemory()) TR::S390RRInstruction(TR::InstOpCode::LBR,
+                                                           node, returnValRegister,
+                                                           returnValRegister, cg);
+            }
          break;
       case TR::ireturn:
          dependencies->addPostCondition(returnValRegister, linkage->getIntegerReturnRegister());

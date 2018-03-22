@@ -2340,6 +2340,7 @@ int32_t childTypes[] =
    TR::Int16 | (TR::Address<<8),   // TR::sstorei
    TR::Int32 | (TR::Address<<8),   // TR::istorei
    TR::NoType,                     // TR::Goto
+   TR::Int8,                      // TR::breturn
    TR::Int32,                     // TR::ireturn
    TR::Int64,                     // TR::lreturn
    TR::Float,                      // TR::freturn

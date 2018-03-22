@@ -1191,7 +1191,7 @@ public:
       {
       switch(type)
          {
-         case TR::Int8:     return TR::ireturn;
+         case TR::Int8:     return TR::breturn;
          case TR::Int16:    return TR::ireturn;
          case TR::Int32:    return TR::ireturn;
          case TR::Int64:    return TR::lreturn;

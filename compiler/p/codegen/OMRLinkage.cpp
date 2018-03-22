@@ -792,6 +792,7 @@ TR_ReturnInfo OMR::Power::Linkage::getReturnInfoFromReturnType(TR::DataType retu
       case TR::NoType:
          return TR_VoidReturn;
       case TR::Int8:
+         return TR_ByteReturn;
       case TR::Int16:
       case TR::Int32:
          return TR_IntReturn;

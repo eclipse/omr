@@ -63,6 +63,7 @@
    TR::TreeEvaluator::sstoreEvaluator,      // TR::sstorei
    TR::TreeEvaluator::istoreEvaluator,      // TR::istorei
    TR::TreeEvaluator::gotoEvaluator,        // TR::Goto
+   TR::TreeEvaluator::returnEvaluator,      // TR::breturn
    TR::TreeEvaluator::returnEvaluator,      // TR::ireturn
    TR::TreeEvaluator::returnEvaluator,      // TR::lreturn
    TR::TreeEvaluator::returnEvaluator,      // TR::freturn

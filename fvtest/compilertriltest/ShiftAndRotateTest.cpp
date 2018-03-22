@@ -180,7 +180,7 @@ TEST_P(Int8ShiftAndRotate, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int8 (block (ireturn (b2i (%s (bconst %d) (iconst %d)) ))))", param.opcode.c_str(), param.lhs, param.rhs);
+    std::snprintf(inputTrees, 120, "(method return=Int8 (block (breturn (%s (bconst %d) (iconst %d)) )))", param.opcode.c_str(), param.lhs, param.rhs);
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
@@ -197,7 +197,7 @@ TEST_P(Int8ShiftAndRotate, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int8 args=[Int8, Int32] (block (ireturn (b2i (%s (bload parm=0) (iload parm=1)) ))))", param.opcode.c_str());
+    std::snprintf(inputTrees, 120, "(method return=Int8 args=[Int8, Int32] (block (breturn (%s (bload parm=0) (iload parm=1)) )))", param.opcode.c_str());
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
