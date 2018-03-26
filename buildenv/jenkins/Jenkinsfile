@@ -67,7 +67,7 @@ pipeline {
                 timestamps {
                     dir('build') {
                         echo "Sanity Test..."
-                        sh'''ctest -V'''
+                        sh '''ctest -V'''
                     }
                 }
             }
