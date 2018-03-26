@@ -3651,7 +3651,7 @@ TR::Register* OMR::X86::TreeEvaluator::performSimpleAtomicMemoryUpdate(TR::Node*
    TR::Register* result  = cg->allocateRegister();
 
    generateRegRegInstruction(MOVRegReg(), node, result, value, cg);
-   generateMemRegInstruction(op, node, generateX86MemoryReference(address, 0, cg), result, cg);
+   generateMemRegInstruction(op, node, generateX86MemoryReference(address, 0, cg), value, cg);
 
    node->setRegister(result);
    cg->decReferenceCount(node->getChild(0));

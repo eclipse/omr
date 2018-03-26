@@ -1411,7 +1411,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390RSInstruction * instr)
    printPrefix(pOutFile, instr);
    trfprintf(pOutFile, "%-*s", OPCODE_SPACING, getOpCodeName(&instr->getOpCode()));
 
-   if (instr->hasSourceImmediate())
+   if (instr->getSourceImmediate())
       {
       if (instr->getRegisterOperand(1)->getRegisterPair())
          {
@@ -1429,7 +1429,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390RSInstruction * instr)
 
       trfprintf(pOutFile, ",%d", instr->getSourceImmediate());
       }
-   else if (instr->hasMaskImmediate())
+   else if (instr->getMaskImmediate())
       {
       print(pOutFile, instr->getFirstRegister());
       trfprintf(pOutFile, ",0x%1x,", instr->getMaskImmediate());

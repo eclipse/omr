@@ -79,13 +79,3 @@ set(PASM_FLAGS -x assembler-with-cpp -E -P)
 
 set(SPP_CMD ${CMAKE_C_COMPILER})
 set(SPP_FLAGS -x assembler-with-cpp -E -P)
-
-# Configure the platform dependent library for multithreading
-# We dont actually have a clang config and use gnu on non-Windows,
-# so we have to detect Apple Clang here.
-# see ../../OmrDetectSystemInformation.cmake
-if(CMAKE_C_COMPILER_ID MATCHES "^(Apple)?Clang$")
-	set(OMR_PLATFORM_THREAD_LIBRARY pthread)
-else()
-	set(OMR_PLATFORM_THREAD_LIBRARY -pthread)
-endif()

@@ -315,4 +315,14 @@ target_link_libraries(j9thrstatic
 	omrutil
 )
 
-target_link_libraries(j9thrstatic ${OMR_PLATFORM_THREAD_LIBRARY})
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+	target_link_libraries(j9thrstatic -pthread)
+elseif(CMAKE_C_COMPILER_ID MATCHES "^(Apple)?Clang$")
+	target_link_libraries(j9thrstatic pthread)
+elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+	target_link_libraries(j9thrstatic Ws2_32.lib)
+elseif(CMAKE_C_COMPILER_ID STREQUAL "XL")
+	target_link_libraries(j9thrstatic -lpthread)
+else()
+	message(FATAL_ERROR "OMR: Unknown compiler ID: '${CMAKE_C_COMPILER_ID}'")
+endif()
