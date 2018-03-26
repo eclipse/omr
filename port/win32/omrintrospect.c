@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2016 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -301,7 +301,52 @@ setup_native_thread(J9ThreadWalkState *state, CONTEXT *sigContext)
 		memcpy(&tmpContext, sigContext, sizeof(CONTEXT));
 	} else if (state->current_thread->thread_id == GetCurrentThreadId()) {
 		/* return context for current thread */
+
+		/*
+		 * NOTE: According to MSDN this call to GetThreadContext() should not work for the
+		 * current thread. It seems to work, however, if we populate the EIP and EBP context
+		 * data manually (which is what the assembler does below).
+		 */
+#ifdef WIN64
 		RtlCaptureContext(&tmpContext);
+#else
+		if (GetThreadContext(GetCurrentThread(), &tmpContext) == FALSE) {
+			return -3;
+		}
+		/* Manually obtain the EIP & EBP registers. We do this because the
+		 * Windows GetThreadContext() function used above often fails to correctly
+		 * identify the current location in the code. Together, these two registers
+		 * indicate where we are. EIP is the instruction pointer and EBP is the
+		 * stack frame.
+		 *
+		 * Explanation of what the assembler does:
+		 *
+		 * Create an assembler routine called 'getCtx' and call it. The call will
+		 * push the current instruction pointer onto the stack.
+		 *
+		 * Function 'getCtx' then pops the top value from the stack into register
+		 * eax. This will be the instruction pointer as at the point of the
+		 * 'call' instruction.
+		 *
+		 * We can assume the stack frame (held in register ebp) will not change
+		 * during this function.
+		 *
+		 * We now have (roughly) the correct instruction pointer in register eax
+		 * and the correct stack frame in register ebp.
+		 */
+		__asm {
+			/* Invoke the routine 'getCtx' */
+			call getCtx;
+			/* Define a routine called 'getCtx' */
+			getCtx:
+			/* Retrieve the previous instruction pointer from the stack and copy into register eax */
+			pop eax;
+			/* Copy the contents of eax into the instruction and ebp into  */
+			mov tmpContext.Eip, eax;
+			/* Copy the contents of ebp into the stack frame part of the context */
+			mov tmpContext.Ebp, ebp;
+		}
+#endif
 	} else {
 		/* generate context for target thread */
 		HANDLE thread_handle = OpenThread(THREAD_GET_CONTEXT|THREAD_QUERY_INFORMATION, FALSE, (DWORD)state->current_thread->thread_id);

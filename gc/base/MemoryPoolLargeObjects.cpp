@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -378,7 +378,7 @@ MM_MemoryPoolLargeObjects::calculateTargetLOARatio(MM_EnvironmentBase* env, uint
 	/*
 	 * shift elements to make room for current loa free Ratio
 	 */
-	for (int i = _extensions->loaFreeHistorySize - 1; i > 0 ; i--){
+	for (int i = _extensions->loaFreeHistorySize; i > 0 ; i--){
 		_loaFreeRatioHistory[i] = _loaFreeRatioHistory[i-1];
 	}
 	if (0 == _loaSize) {

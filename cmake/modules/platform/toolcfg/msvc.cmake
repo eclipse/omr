@@ -69,9 +69,6 @@ elseif(OMR_ENV_DATA32)
 	)
 endif(OMR_ENV_DATA64)
 
-# Configure the platform dependent library for multithreading
-set(OMR_PLATFORM_THREAD_LIBRARY Ws2_32.lib)
-
 macro(omr_toolconfig_global_setup)
 	# Make sure we are building without incremental linking
 	omr_remove_flags(CMAKE_EXE_LINKER_FLAGS    /INCREMENTAL)

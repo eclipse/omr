@@ -2550,12 +2550,7 @@ class S390RSInstruction : public TR::S390RegInstruction
 
    int16_t                 _sourceImmediate;
    int8_t                  _maskImmediate;
-   /// Set to true if a mask value was specified during the construction of this object, indicating an RS instruction of RS-b format 
-   /// where the third operand is a mask
-   bool                    _hasMaskImmediate;
-   /// Set to true if a mask value was specified during the construction of this object, indicating an RS instruction of RS-b format 
-   /// where the third operand is a mask
-   bool                    _hasSourceImmediate;
+   bool                    _hasMask;
    int8_t                  _idx;
    Kind                    _kind;
 
@@ -2572,7 +2567,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::Register      *treg,
                         uint32_t          imm,
                         TR::CodeGenerator *cg)
-           : S390RegInstruction(op, n, treg, cg), _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(true), _kind(IsRS)
+           : S390RegInstruction(op, n, treg, cg), _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
       {
       // 1 Register is specified - If it is not a register pair, make sure instruction doesn't take a range (i.e. STM).
       TR_ASSERT(treg->getRegisterPair() || !getOpCode().usesRegRangeForTarget(),
@@ -2587,7 +2582,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::Instruction   *precedingInstruction,
                         TR::CodeGenerator *cg)
            : S390RegInstruction(op, n, treg, precedingInstruction, cg), _kind(IsRS),
-             _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(true)
+             _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMask(false)
       {
       // 1 Register is specified - If it is not a register pair, make sure instruction doesn't take a range (i.e. STM).
       TR_ASSERT(treg->getRegisterPair() || !getOpCode().usesRegRangeForTarget(),
@@ -2601,7 +2596,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         uint32_t          imm,
                         TR::RegisterDependencyConditions *_conditions,
                         TR::CodeGenerator *cg)
-           : S390RegInstruction(op, n, treg, _conditions, cg), _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(true), _kind(IsRS)
+           : S390RegInstruction(op, n, treg, _conditions, cg), _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
 
       {
       // 1 Register is specified - If it is not a register pair, make sure instruction doesn't take a range (i.e. STM).
@@ -2618,7 +2613,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::Instruction   *precedingInstruction,
                         TR::CodeGenerator *cg)
            : S390RegInstruction(op, n, treg, _conditions, precedingInstruction, cg), _kind(IsRS),
-             _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(true)
+             _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMask(false)
       {
       // 1 Register is specified - If it is not a register pair, make sure instruction doesn't take a range (i.e. STM).
       TR_ASSERT(treg->getRegisterPair() || !getOpCode().usesRegRangeForTarget(),
@@ -2632,7 +2627,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::Register             *treg,
                         TR::MemoryReference  *mf,
                         TR::CodeGenerator        *cg)
-           : S390RegInstruction(op, n, treg, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(false), _kind(IsRS)
+           : S390RegInstruction(op, n, treg, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
       {
       useSourceMemoryReference(mf);
       setupThrowsImplicitNullPointerException(n,mf);
@@ -2652,7 +2647,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::Instruction          *precedingInstruction,
                         TR::CodeGenerator        *cg)
            : S390RegInstruction(op, n, treg, precedingInstruction, cg),
-             _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(false), _kind(IsRS)
+             _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
       {
       useSourceMemoryReference(mf);
       setupThrowsImplicitNullPointerException(n,mf);
@@ -2674,7 +2669,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::Instruction          *precedingInstruction,
                         TR::CodeGenerator        *cg)
            : S390RegInstruction(op, n, treg, precedingInstruction, cg),
-             _sourceImmediate(0), _maskImmediate(mask), _idx(-1), _hasMaskImmediate(true), _hasSourceImmediate(false), _kind(IsRS)
+             _sourceImmediate(0), _maskImmediate(mask), _idx(-1), _hasMask(true), _kind(IsRS)
       {
       useSourceMemoryReference(mf);
       setupThrowsImplicitNullPointerException(n,mf);
@@ -2695,7 +2690,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::MemoryReference      *mf,
                         TR::CodeGenerator        *cg)
            : S390RegInstruction(op, n, treg, cg),
-             _sourceImmediate(0), _maskImmediate(mask), _idx(-1), _hasMaskImmediate(true), _hasSourceImmediate(false), _kind(IsRS)
+             _sourceImmediate(0), _maskImmediate(mask), _idx(-1), _hasMask(true), _kind(IsRS)
       {
       useSourceMemoryReference(mf);
       setupThrowsImplicitNullPointerException(n,mf);
@@ -2714,7 +2709,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::Register             *lreg,
                         TR::MemoryReference      *mf,
                         TR::CodeGenerator        *cg)
-           : S390RegInstruction(op, n, freg, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(false), _kind(IsRS)
+           : S390RegInstruction(op, n, freg, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
       {
       if (getOpCode().setsOperand2())
          useTargetRegister(lreg);
@@ -2734,7 +2729,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::MemoryReference      *mf,
                         TR::Instruction          *precedingInstruction,
                         TR::CodeGenerator        *cg)
-           : S390RegInstruction(op, n, freg, precedingInstruction, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(false), _kind(IsRS)
+           : S390RegInstruction(op, n, freg, precedingInstruction, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
       {
 
       if (getOpCode().setsOperand2())
@@ -2755,7 +2750,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::RegisterPair         *regp,
                         TR::MemoryReference      *mf,
                         TR::CodeGenerator        *cg)
-           : S390RegInstruction(op, n, regp, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(false), _kind(IsRS)
+           : S390RegInstruction(op, n, regp, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
      {
      useSourceMemoryReference(mf);
      setupThrowsImplicitNullPointerException(n,mf);
@@ -2769,7 +2764,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::MemoryReference      *mf,
                         TR::Instruction          *precedingInstruction,
                         TR::CodeGenerator        *cg)
-           : S390RegInstruction(op, n, regp, precedingInstruction, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(false), _kind(IsRS)
+           : S390RegInstruction(op, n, regp, precedingInstruction, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
       {
       useSourceMemoryReference(mf);
       setupThrowsImplicitNullPointerException(n,mf);
@@ -2784,7 +2779,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::RegisterPair         *regp2,
                         TR::MemoryReference      *mf,
                         TR::CodeGenerator        *cg)
-           : S390RegInstruction(op, n, regp, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(false), _kind(IsRS)
+           : S390RegInstruction(op, n, regp, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
 
      {
      if (getOpCode().setsOperand2())
@@ -2804,7 +2799,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::MemoryReference      *mf,
                         TR::Instruction          *precedingInstruction,
                         TR::CodeGenerator        *cg)
-           : S390RegInstruction(op, n, regp, precedingInstruction, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(false), _kind(IsRS)
+           : S390RegInstruction(op, n, regp, precedingInstruction, cg), _sourceImmediate(0), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
       {
       if (getOpCode().setsOperand2())
          useTargetRegister(regp2);
@@ -2823,7 +2818,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::Register      *sreg,
                         uint32_t          imm,
                         TR::CodeGenerator *cg)
-           : S390RegInstruction(op, n, treg, cg), _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(true), _kind(IsRS)
+           : S390RegInstruction(op, n, treg, cg), _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
         {
         if (getOpCode().setsOperand2())
            useTargetRegister(sreg);
@@ -2839,7 +2834,7 @@ class S390RSInstruction : public TR::S390RegInstruction
                         TR::Instruction   *precedingInstruction,
                         TR::CodeGenerator *cg)
            : S390RegInstruction(op, n, treg, precedingInstruction, cg),
-             _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMaskImmediate(false), _hasSourceImmediate(true), _kind(IsRS)
+             _sourceImmediate(imm), _maskImmediate(0), _idx(-1), _hasMask(false), _kind(IsRS)
         {
         if (getOpCode().setsOperand2())
            useTargetRegister(sreg);
@@ -2854,12 +2849,7 @@ class S390RSInstruction : public TR::S390RegInstruction
    uint32_t setSourceImmediate(uint32_t si) {return _sourceImmediate = si;}
    uint32_t getMaskImmediate()              {return _maskImmediate;}
    uint32_t setMaskImmediate(uint32_t mi)   {return _maskImmediate = mi;}
-   /// Determines whether a mask value was specified during the construction of this object, indicating an RS instruction of RS-b format 
-   /// where the third operand is a mask
-   bool     hasMaskImmediate()              {return _hasMaskImmediate;}
-   /// Determines whether a mask value was specified during the construction of this object, indicating an RS instruction of RS-b format 
-   /// where the third operand is a mask
-   bool     hasSourceImmediate()            {return _hasSourceImmediate;}
+   bool     hasMask()                       {return _hasMask;}
 
    TR::Register* getFirstRegister() { return isTargetPair()? S390RegInstruction::getFirstRegister() : getRegisterOperand(1); }
    TR::Register* getLastRegister()  { return isTargetPair()? S390RegInstruction::getLastRegister()  : getRegisterOperand(2); }

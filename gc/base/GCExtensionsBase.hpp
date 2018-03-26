@@ -222,6 +222,8 @@ public:
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	MM_Scavenger *scavenger;
+	void *_masterThreadTenureTLHRemainderBase;  /**< base and top pointers of the last unused tenure TLH copy cache, that will be loaded to thread env during master setup */
+	void *_masterThreadTenureTLHRemainderTop;
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
 	J9Pool* environments;
@@ -1219,6 +1221,8 @@ public:
 		, _tenureSize(0)
 #if defined(OMR_GC_MODRON_SCAVENGER)
 		, scavenger(NULL)
+		, _masterThreadTenureTLHRemainderBase(NULL)
+		, _masterThreadTenureTLHRemainderTop(NULL)
 #endif /* OMR_GC_MODRON_SCAVENGER */
 		, environments(NULL)
 #if defined(OMR_GC_CONCURRENT_SWEEP)

@@ -593,7 +593,7 @@ enum TR_CompilationOptions
    TR_DisableSynchronizedFieldLoad                    = 0x00040000 + 16,
    TR_QuickProfile                                    = 0x00080000 + 16,
    TR_DisableVerification                             = 0x00100000 + 16,
-   TR_DisableZEC12                                    = 0x00200000 + 16,
+   TR_DisableZHelix                                   = 0x00200000 + 16,
    TR_BreakOnJ2IThunk                                 = 0x00400000 + 16,
    TR_DisableGlobalStaticBaseRegister                 = 0x00800000 + 16,
    TR_DisableMethodHandleThunks                       = 0x01000000 + 16,
