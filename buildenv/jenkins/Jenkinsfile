@@ -1,50 +1,83 @@
+def setBuildStatus(String message, String state, String sha, String platform) {
+    context = "continuous-integration/eclipse-omr/branch/$platform"
+    step([
+        $class: "GitHubCommitStatusSetter",
+        reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/eclipse/omr"],
+        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
+        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+        commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
+        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: "${BUILD_URL}flowGraphTable/"],
+        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+    ]);
+}
 
 pipeline {
-    agent {label "${params.MACHINE_LABEL}"}
+    agent{label "${params.MACHINE_LABEL}"} 
     parameters {
-        string (defaultValue: 'https://github.com/eclipse/omr.git', description: 'URL for the repo to use', name: 'REPO_URL')
+        string (defaultValue: '', description: 'SHA?', name: 'MERGE_COMMIT')
+        string (defaultValue: 'https://github.com/eclipse/omr.git', description: 'URL for the repo to use', name: 'CLONE_URL')
         string (defaultValue: 'master', description: 'Branch name to use', name: 'BRANCH_NAME')
         string (defaultValue: '', description: 'Machine label expression for jenkins node, like Linux&&390 or aix&&ppc, etc', name: 'MACHINE_LABEL')
         choice (choices: 'linux_x86-64\nosx_x86-64\nlinux_ppc-64\nlinux_ppc-64_le_gcc\nlinux_armmak\nlinux_390-64\naix_ppc-64', description: 'SPEC?', name: 'SPEC')
+        string (defaultValue: '/usr/lib/ccache', description: 'PATH to use', name: 'PATH')
+        string (defaultValue: "", description: "If SPEC=aix_ppc-64, set to -DCMAKE_XL_CreateExportList='/usr/vac/bin/CreateExportList -X64' -DOMR_JIT=OFF -DOMR_JITBUILDER=OFF -DOMR_TEST_COMPILER=OFF -DOMR_DDR=OFF , otherwise blank.", name: "AIX_OPTS")
+        string (defaultValue: '-j4', description: "If SPEC=aix_ppc-64, use -j8, otherwise use default", name: "MK_OPT")
     }
     environment {
-        PATH = "/usr/lib/ccache/:$PATH"
+        PATH = "${params.PATH}:$PATH"
         GEN_GTEST_OUTPUT = true
     }
     stages {
+        stage('Init') {
+            steps {
+                timestamps {
+                    setBuildStatus("In Progress","PENDING","${MERGE_COMMIT}", "${params.SPEC}")
+                }
+            }
+        }
         stage('Get Sources') {
             steps {
                 timestamps {
-                    checkout([
-				        $class: 'GitSCM', branches: [[name: "*/${params.BRANCH_NAME}"]],
-			        	userRemoteConfigs: [[url: "${params.REPO_URL}"]]
-			        ])
+                    checkout([$class: 'GitSCM', branches: [[name: '${MERGE_COMMIT}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: "${params.CLONE_URL}"]]])
                 }
             }
         }
         stage('Build') {
             steps {
                 timestamps {
-                    echo 'Configure...'
-                    sh "cd $WORKSPACE/omr"
-                    sh'''make -f run_configure.mk OMRGLUE=./example/glue SPEC=linux_x86-64'''
-                   
-                    echo 'Compile...'
-                    sh '''make -j8'''
-
+                    echo 'Output CCACHE stats before running and clear them'
+                    sh '''ccache -s -z'''
+                    
+                    dir('build') {
+                        echo 'Configure...'
+                        sh """cmake -Wdev ${params.AIX_OPTS} -C../cmake/caches/Travis.cmake ..""" 
+                        echo 'Compile...'
+                        sh """make ${params.MK_OPT}"""
+                    }
+                    
+                    echo 'Output CCACHE stats after running'
+                    sh '''ccache -s'''
                 }
             }
         }
         stage('Test') {
             steps {
                 timestamps {
-                    echo "Sanity Test..."
-                    sh '''make test'''
+                    dir('build') {
+                        echo "Sanity Test..."
+                        sh'''ctest -V'''
+                    }
                 }
             }
         }
     }
     post {
+        success {
+            setBuildStatus("Complete","SUCCESS","${MERGE_COMMIT}", "${params.SPEC}")
+        }
+        failure {
+            setBuildStatus("Complete","FAILURE","${MERGE_COMMIT}", "${params.SPEC}")
+        }
         always {
             step([$class: 'XUnitBuilder',
                 thresholds: [[$class: 'FailedThreshold', unstableThreshold: '1']],
