@@ -19,12 +19,14 @@ pipeline {
         string (defaultValue: 'master', description: 'Branch name to use', name: 'BRANCH_NAME')
         string (defaultValue: '', description: 'Machine label expression for jenkins node, like Linux&&390 or aix&&ppc, etc', name: 'MACHINE_LABEL')
         choice (choices: 'linux_x86-64\nosx_x86-64\nlinux_ppc-64\nlinux_ppc-64_le_gcc\nlinux_armmak\nlinux_390-64\naix_ppc-64', description: 'SPEC?', name: 'SPEC')
-        string (defaultValue: '/usr/lib/ccache', description: 'PATH to use', name: 'PATH')
+        string (defaultValue: '/usr/lib/ccache', description: 'If SPEC=aix_ppc-64, PATH=/home/u0020236/tools, otherwise use default', name: 'PATH')
         string (defaultValue: "", description: "If SPEC=aix_ppc-64, set to -DCMAKE_XL_CreateExportList='/usr/vac/bin/CreateExportList -X64' -DOMR_JIT=OFF -DOMR_JITBUILDER=OFF -DOMR_TEST_COMPILER=OFF -DOMR_DDR=OFF , otherwise blank.", name: "AIX_OPTS")
         string (defaultValue: '-j4', description: "If SPEC=aix_ppc-64, use -j8, otherwise use default", name: "MK_OPT")
     }
     environment {
         PATH = "${params.PATH}:$PATH"
+        LIBPATH="."
+        CCACHE_CPP2="1"
         GEN_GTEST_OUTPUT = true
     }
     stages {
@@ -50,9 +52,9 @@ pipeline {
                     
                     dir('build') {
                         echo 'Configure...'
-                        sh """cmake -Wdev ${params.AIX_OPTS} -C../cmake/caches/Travis.cmake ..""" 
+                        sh "cmake -Wdev ${params.AIX_OPTS} -C../cmake/caches/Travis.cmake .."
                         echo 'Compile...'
-                        sh """make ${params.MK_OPT}"""
+                        sh "make ${params.MK_OPT}"
                     }
                     
                     echo 'Output CCACHE stats after running'
