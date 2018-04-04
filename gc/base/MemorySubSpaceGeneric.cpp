@@ -791,3 +791,16 @@ MM_MemorySubSpaceGeneric::releaseFreeMemoryPages(MM_EnvironmentBase* env)
 	return _memoryPool->releaseFreeMemoryPages(env);
 }
 #endif
+
+
+void
+MM_MemorySubSpaceGeneric::acquireResizingLock()
+{
+	_parent->acquireResizingLock();
+}
+
+void
+MM_MemorySubSpaceGeneric::releaseResizingLock()
+{
+	_parent->releaseResizingLock();
+}

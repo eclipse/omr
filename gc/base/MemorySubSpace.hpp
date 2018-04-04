@@ -440,6 +440,14 @@ public:
 
 	virtual void registerRegion(MM_HeapRegionDescriptor *region);
 	virtual void unregisterRegion(MM_HeapRegionDescriptor *region);
+
+	/**
+	 * Resizing lock operations - introduced to ensure GC operations that require a consistent state of heap structures don't run 
+	 * during heap resizing. Introduced to fix issues with card cleaning during heap expansion.
+	 */
+	virtual void acquireResizingLock() { Assert_MM_unreachable(); }
+	virtual void releaseResizingLock() { Assert_MM_unreachable(); }
+	
 	void lockRegionList();
 	void unlockRegionList();
 	bool wasContractedThisGC(uintptr_t gcCount);
