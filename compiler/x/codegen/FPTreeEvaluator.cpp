@@ -510,8 +510,11 @@ TR::Register *OMR::X86::TreeEvaluator::fpReturnEvaluator(TR::Node *node, TR::Cod
    TR_ASSERT(returnRegister, "Return node's child should evaluate to a register");
    TR::Compilation *comp = cg->comp();
 
+   const TR::X86LinkageProperties &linkageProperties = cg->getProperties();
+   auto machineReturnRegister = (returnRegister->isSinglePrecision())? linkageProperties.getFloatReturnRegister() : linkageProperties.getDoubleReturnRegister();
+
    if (TR::Compiler->target.is32Bit() &&
-       !cg->useSSEForDoublePrecision() &&
+       machineReturnRegister < TR::RealRegister::FirstXMMR &&
        returnRegister->getKind() == TR_FPR)
       {
       // TODO: Modify linkage to allow the returned value to remain in an XMMR.
@@ -529,10 +532,6 @@ TR::Register *OMR::X86::TreeEvaluator::fpReturnEvaluator(TR::Node *node, TR::Cod
       TR::IA32ConstantDataSnippet *cds = cg->findOrCreate2ByteConstant(node, DOUBLE_PRECISION_ROUND_TO_NEAREST);
       generateMemInstruction(LDCWMem, node, generateX86MemoryReference(cds, cg), cg);
       }
-
-   const TR::X86LinkageProperties &linkageProperties = cg->getProperties();
-   TR::RealRegister::RegNum machineReturnRegister =
-      (returnRegister->isSinglePrecision())? linkageProperties.getFloatReturnRegister() : linkageProperties.getDoubleReturnRegister();
 
    TR::RegisterDependencyConditions *dependencies = NULL;
    if (machineReturnRegister != TR::RealRegister::NoReg)
@@ -1146,7 +1145,11 @@ TR::Register *OMR::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::Symbo
    TR::Node *child = node->getFirstChild();
 
    // TODO: Perform f2l using SSE.
+#ifdef J9_PROJECT_SPECIFIC
    if (child->getOpCode().isDouble() && cg->useSSEForDoublePrecision())
+#else
+   if (false)
+#endif
       {
       TR::RegisterDependencyConditions  *deps;
 
