@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -823,7 +823,7 @@ TR::Register *TR_X86BinaryCommutativeAnalyser::integerAddAnalyserImpl(TR::Node  
    // maybe a register that did not exist before has just been created,
    // and this new register contains a collected reference
    // arraylets: aiadd is technically internal pointer into spine object, but isn't marked as internal pointer
-   if (root->isInternalPointer() || (comp->generateArraylets() && root->getOpCodeValue() == TR::aiadd))
+   if (root->isInternalPointer() || (comp->generateArraylets() && (root->getOpCodeValue() == TR::aiadd || root->getOpCodeValue() == TR::aladd)))
       {
       // check whether a newly created register contains collected reference
       if ((getEvalChild1() && ((!firstRegister->containsInternalPointer()) || (firstRegister->getPinningArrayPointer() != root->getPinningArrayPointer()))) ||
@@ -842,6 +842,18 @@ TR::Register *TR_X86BinaryCommutativeAnalyser::integerAddAnalyserImpl(TR::Node  
                secondRegister = _cg->evaluate(secondChild);
             }
          }
+      }
+
+   // Ignore high register of a register pair; should only occur on X86-32 with TR::aladd
+   if (firstRegister && firstRegister->getRegisterPair())
+      {
+      TR_ASSERT(TR::Compiler->target.is32Bit() && root->getOpCodeValue() == TR::aladd, "Must be TR::aladd on X86-32");
+      firstRegister = firstRegister->getLowOrder();
+      }
+   if (secondRegister && secondRegister->getRegisterPair())
+      {
+      TR_ASSERT(TR::Compiler->target.is32Bit() && root->getOpCodeValue() == TR::aladd, "Must be TR::aladd on X86-32");
+      secondRegister = secondRegister->getLowOrder();
       }
 
    if (carry != 0)
@@ -875,7 +887,7 @@ TR::Register *TR_X86BinaryCommutativeAnalyser::integerAddAnalyserImpl(TR::Node  
                tempReg->setPinningArrayPointer(root->getPinningArrayPointer());
                }
             }
-         else if (comp->generateArraylets() && root->getOpCodeValue() == TR::aiadd)
+         else if (comp->generateArraylets() && (root->getOpCodeValue() == TR::aiadd || root->getOpCodeValue() == TR::aladd))
             // arraylets: aiadd is technically internal pointer into spine object, but isn't marked as internal pointer
             tempReg = _cg->allocateRegister();
          else
