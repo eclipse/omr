@@ -285,12 +285,6 @@ public:
 
    void lowerTreesPropagateBlockToNode(TR::Node *node);
 
-   typedef enum
-      {
-      Backward = 0,
-      Forward  = 1
-      } RegisterAssignmentDirection;
-
    CodeGenerator();
    TR::Linkage *createLinkage(TR_LinkageConventions lc);
 
@@ -358,12 +352,6 @@ public:
    TR::Register *evaluateLengthMinusOneForMemoryOps(TR::Node *,  bool , bool &lenMinusOne);
 
    virtual TR_GlobalRegisterNumber getGlobalRegisterNumber(uint32_t realRegNum);
-
-   RegisterAssignmentDirection getAssignmentDirection() {return assignmentDirection;}
-   RegisterAssignmentDirection setAssignmentDirection(RegisterAssignmentDirection d)
-      {
-      return assignmentDirection = d;
-      }
 
    TR::RegisterPair* allocateArGprPair(TR::Register* lowRegister, TR::Register* highRegister);
    void splitBaseRegisterPairsForRRMemoryInstructions(TR::Node *node, TR::RegisterPair * sourceReg, TR::RegisterPair * targetReg);
@@ -950,7 +938,6 @@ public:
    TR_BitVector _globalFPRsPreservedAcrossCalls;
 
    TR::S390ImmInstruction          *_returnTypeInfoInstruction;
-   RegisterAssignmentDirection     assignmentDirection;
    int32_t                        _extentOfLitPool;  // excludes snippets
    uint64_t                       _availableHPRSpillMask;
 

@@ -118,7 +118,6 @@ OMR::Power::CodeGenerator::CodeGenerator() :
      _stackPtrRegister(NULL),
      _constantData(NULL),
      _blockCallInfo(NULL),
-     _assignmentDirection(Backward),
      _transientLongRegisters(self()->trMemory()),
      conversionBuffer(NULL),
      _outOfLineCodeSectionList(getTypedAllocator<TR_PPCOutOfLineCodeSection*>(self()->comp()->allocator()))
@@ -542,8 +541,6 @@ void OMR::Power::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAss
    TR::Instruction *prevInstruction;
 
    // gprs, fprs, and ccrs are all assigned in backward direction
-
-   self()->setAssignmentDirection(Backward);
 
    TR::Instruction *instructionCursor = self()->getAppendInstruction();
 
@@ -1225,7 +1222,7 @@ static void lhsPeephole(TR::CodeGenerator *cg, TR::Instruction *storeInstruction
    //   mr rY, rX
    // and then the mr peephole should run on the resulting mr
    if (loadInstruction->getOpCodeValue() == TR::InstOpCode::lwz)
-      { 
+      {
       if (performTransformation(comp, "O^O PPC PEEPHOLE: Replace redundant load " POINTER_PRINTF_FORMAT " after store " POINTER_PRINTF_FORMAT " with rlwinm.\n", loadInstruction, storeInstruction))
          {
          generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, loadInstruction->getNode(), trgReg, srcReg, 0, 0xffffffff, storeInstruction);

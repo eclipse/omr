@@ -2644,9 +2644,6 @@ OMR::Z::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
    bool dumpPostGP = (debug("dumpGPRA") || debug("dumpGPRA1")) && self()->comp()->getOutFile() != NULL;
 #endif
 
-   // assign GPRs and FGPRs in backwards direction
-   self()->setAssignmentDirection(Backward);
-
    TR::Instruction * instructionCursor = self()->getAppendInstruction();
    int32_t instCount = 0;
    TR::Block *currBlock = NULL;

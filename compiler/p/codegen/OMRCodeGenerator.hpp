@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -157,12 +157,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    public:
 
-   typedef enum
-      {
-      Backward = 0,
-      Forward  = 1
-      } RegisterAssignmentDirection;
-
    List<TR_BackingStore> * conversionBuffer;
    ListIterator<TR_BackingStore> * conversionBufferIt;
    TR_BackingStore * allocateStackSlot();
@@ -217,12 +211,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR::Register *gprClobberEvaluate(TR::Node *node);
 
    const TR::PPCLinkageProperties &getProperties() { return *_linkageProperties; }
-
-   RegisterAssignmentDirection getAssignmentDirection() {return _assignmentDirection;}
-   RegisterAssignmentDirection setAssignmentDirection(RegisterAssignmentDirection d)
-      {
-      return (_assignmentDirection = d);
-      }
 
    using OMR::CodeGenerator::apply16BitLabelRelativeRelocation;
    void apply16BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol *);
@@ -554,7 +542,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR_Array<TR::Register *>          _transientLongRegisters;
    TR::list<TR_PPCOutOfLineCodeSection*> _outOfLineCodeSectionList;
    flags32_t                        _flags;
-   RegisterAssignmentDirection      _assignmentDirection;
 
    uint32_t                         _numGPR;
    uint32_t                         _firstGPR;
