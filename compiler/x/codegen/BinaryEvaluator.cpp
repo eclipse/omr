@@ -886,7 +886,12 @@ TR::Register *OMR::X86::TreeEvaluator::integerAddEvaluator(TR::Node *node, TR::C
          }
       else if (isMemOp)
          {
-         instr = generateMemRegInstruction(AddMemReg(nodeIs64Bit, isWithCarry), node, tempMR, cg->evaluate(secondChild), cg);
+         TR::Register *reg = cg->evaluate(secondChild);
+         if (reg->getRegisterPair())
+            {
+            reg = reg->getLowOrder();
+            }
+         instr = generateMemRegInstruction(AddMemReg(nodeIs64Bit, isWithCarry), node, tempMR, reg, cg);
          if (debug("traceMemOp"))
             diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] inc by var", node);
          }
