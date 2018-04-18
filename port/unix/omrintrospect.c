@@ -293,7 +293,9 @@ barrier_release_r(barrier_r *barrier, uintptr_t seconds)
 		 * converts this to a busy wait
 		 */
 		barrier->released = 1;
-		write(barrier->descriptor_pair[1], &byte, 1);
+		if (write(barrier->descriptor_pair[1], &byte, 1) != 1) {
+			/* Silence warning: needs a redesign to do better */
+		}
 	}
 
 	/* wait until all entrants have arrived */
@@ -304,7 +306,9 @@ barrier_release_r(barrier_r *barrier, uintptr_t seconds)
 		}
 	}
 
-	write(barrier->descriptor_pair[1], &byte, 1);
+	if (write(barrier->descriptor_pair[1], &byte, 1) != 1) {
+		/* Silence warning: needs a redesign to do better */
+	}
 #if !defined(J9ZOS390) && !defined(AIXPPC)
 	/* On AIX it is not legal to call fdatasync() inside a signal handler */
 	fdatasync(barrier->descriptor_pair[1]);
@@ -336,7 +340,9 @@ barrier_enter_r(barrier_r *barrier, uintptr_t deadline)
 
 	if (old_value == 1 && (compareAndSwapUDATA((uintptr_t *)&barrier->released, 0, 0))) {
 		/* we're the last through the barrier so wake everyone up */
-		write(barrier->descriptor_pair[1], &byte, 1);
+		if (write(barrier->descriptor_pair[1], &byte, 1) != 1) {
+			/* Silence warning: needs a redesign to do better */
+		}
 	}
 
 	/* if we're entering a barrier with a negative count then count us out but we don't need to do anything */
@@ -417,7 +423,9 @@ barrier_destroy_r(barrier_r *barrier, int block)
 	char byte = 1;
 
 	/* clean up and wait for all waiters to exit */
-	write(barrier->descriptor_pair[1], &byte, 1);
+	if (write(barrier->descriptor_pair[1], &byte, 1) != 1) {
+		/* Silence warning: needs a redesign to do better */
+	}
 #if !defined(J9ZOS390) && !defined(AIXPPC)
 	/* On AIX it is not legal to call fdatasync() inside a signal handler */
 	fdatasync(barrier->descriptor_pair[1]);
