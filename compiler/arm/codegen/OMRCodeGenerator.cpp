@@ -77,7 +77,6 @@ OMR::ARM::CodeGenerator::CodeGenerator()
    : OMR::CodeGenerator(),
      _frameRegister(NULL),
      _constantData(NULL),
-     _assignmentDirection(Backward),
      _outOfLineCodeSectionList(self()->trMemory()),
      _internalControlFlowNestingDepth(0),
      _internalControlFlowSafeNestingDepth(0)
@@ -385,9 +384,6 @@ void OMR::ARM::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssig
 
    if (comp->getOption(TR_TraceCG))
       diagnostic("\nPerforming Register Assignment:\n");
-
-   // gprs, fprs, and ccrs are all assigned in backward direction
-   self()->setAssignmentDirection(Backward);
 
    TR::Instruction *instructionCursor = self()->getAppendInstruction();
    if (!comp->getOption(TR_DisableOOL))

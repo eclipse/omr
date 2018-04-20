@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,12 +114,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    public:
 
-   typedef enum
-      {
-      Backward = 0,
-      Forward  = 1
-      } RegisterAssignmentDirection;
-
    CodeGenerator(); /* @@ */
    CodeGenerator(TR::Compilation * comp);
    TR::Linkage *createLinkage(TR_LinkageConventions lc);
@@ -148,12 +142,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR::Register *gprClobberEvaluate(TR::Node *node);
 
    const TR::ARMLinkageProperties &getProperties() { return *_linkageProperties; }
-
-   RegisterAssignmentDirection getAssignmentDirection() {return _assignmentDirection;}
-   RegisterAssignmentDirection setAssignmentDirection(RegisterAssignmentDirection d)
-      {
-      return (_assignmentDirection = d);
-      }
 
    TR::RealRegister *getFrameRegister()                       {return _frameRegister;}
    TR::RealRegister *setFrameRegister(TR::RealRegister *r) {return (_frameRegister = r);}
@@ -230,7 +218,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    static TR_Processor            _processor;
    flags32_t                      _flags;
-   RegisterAssignmentDirection    _assignmentDirection;
    uint32_t                         _numGPR;
    uint32_t                         _numFPR;
    TR::RealRegister            *_frameRegister;
