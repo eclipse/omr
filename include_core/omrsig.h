@@ -40,6 +40,11 @@ extern "C" {
 typedef __sighandler_t sighandler_t;
 #elif defined(LINUX) || defined(OSX)
 typedef void (*sighandler_t)(int sig);
+/* Linux distros which does not based on glibc toolchain like Alpine */
+#if !defined(__GLIBC__)
+#define __THROW
+typedef sighandler_t __sighandler_t;
+#endif
 #elif defined(J9ZOS390) || defined(AIXPPC)
 typedef void (*sighandler_t)(int sig);
 #define __THROW

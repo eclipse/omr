@@ -30,7 +30,9 @@
 
 #if defined(LINUX) && !defined(OMRZTPF)
 #include <sys/prctl.h>
+#if defined(__GLIBC__)
 #include <linux/prctl.h>
+#endif
 #endif /* defined(LINUX) */
 
 #if defined(OMRZTPF)

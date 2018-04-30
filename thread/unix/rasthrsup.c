@@ -26,16 +26,16 @@
 /* this #include defines the buildspec flags */
 #include "omrthread.h"
 
-#if defined(LINUX)
+#if defined(LINUX) && defined(__GLIBC__)
 #if __GLIBC_PREREQ(2,4)
 #include <sys/syscall.h>
 #endif /* __GLIBC_PREREQ(2,4) */
 #elif defined(OSX)
 #include <pthread.h>
 #include <sys/syscall.h>
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && defined(__GLIBC__) */
 
-#if defined(LINUX)
+#if defined(LINUX) && defined(__GLIBC__)
 /**
  * This is required to pick up correct thread IDs on Linux
  */
@@ -53,14 +53,14 @@
 /* this line is needed to build the syscall macro which is called (as gettid) within the function */
 _syscall0(pid_t, gettid);
 #endif /* !__GLIBC_PREREQ(2,4) && !defined(OMRZTPF) */
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && defined(__GLIBC__) */
 
 uintptr_t
 omrthread_get_ras_tid(void)
 {
 	uintptr_t threadID = 0;
 
-#if defined(LINUX) && !defined(OMRZTPF)
+#if defined(LINUX) && !defined(OMRZTPF) && defined(__GLIBC__)
 #if __GLIBC_PREREQ(2,4)
 	/* Want thread id that shows up in /proc etc.  gettid() does not cut it */
 	threadID = syscall(SYS_gettid);
@@ -89,7 +89,7 @@ omrthread_get_ras_tid(void)
 	} else {
 		threadID = 0;
 	}
-#endif /* defined(LINUX) && !defined(OMRZTPF) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) && defined(__GLIBC__) */
 	return threadID;
 }
 

@@ -49,6 +49,10 @@
 #include <dlfcn.h>
 #include <sys/utsname.h>
 #include <inttypes.h>
+/* typedef for sigval does not exist on musl toolchain based platforms */
+#if !defined(__GLIBC__)
+typedef union sigval sigval_t;
+#endif
 #elif defined(AIXPPC)
 #include <sys/ldr.h>
 #include <sys/debug.h>
@@ -1406,7 +1410,9 @@ setup_native_thread(J9ThreadWalkState *state, thread_context *sigContext, int he
 			memcpy(state->current_thread->context, ((OMRUnixSignalInfo *)sigContext)->platformSignalInfo.context, size);
 		} else if (state->current_thread->thread_id == omrthread_get_ras_tid()) {
 			/* return context for current thread */
+#if defined(__GLIBC__)
 			getcontext((ucontext_t *)state->current_thread->context);
+#endif
 		} else {
 			memcpy(state->current_thread->context, (void *)data->thread->context, size);
 		}

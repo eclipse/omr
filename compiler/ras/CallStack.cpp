@@ -172,6 +172,7 @@ const char *TR_PPCCallStackIterator::getProcedureName()
    }
 
 #elif defined(LINUX)
+#if defined(__GLIBC__)
 #include <execinfo.h>
 #include <cxxabi.h> // for abi::__cxa_demangle
 
@@ -229,6 +230,11 @@ void TR_LinuxCallStackIterator::printStackBacktrace(TR::Compilation *comp)
       }
    free(symbols);
    }
+#else
+void TR_LinuxCallStackIterator::printStackBacktrace(TR::Compilation *comp)
+	{
+	}
+#endif /* defined(__GLIBC__) */
 
 #elif defined(J9ZOS390)
 

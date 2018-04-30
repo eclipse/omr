@@ -317,7 +317,7 @@ omrthread_get_stack_range(omrthread_t thread, void **stackStart, void **stackEnd
 	}
 
 	/* Retrieve base stack address and stack size from pthread_attr_t */
-#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600)
+#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600 || !defined(__GIBC__))
 	if ((rc = pthread_attr_getstack(&attr, stackStart, &stackSize)) != 0) {
 		thread->os_errno = rc;
 		return (J9THREAD_ERR_GETSTACK | J9THREAD_ERR_OS_ERRNO_SET);

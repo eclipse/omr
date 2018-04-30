@@ -33,7 +33,9 @@
 #include "omrsignal_context.h"
 
 #include <dlfcn.h>
+#if defined(__GLIBC__)
 #include <execinfo.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 
@@ -48,6 +50,7 @@ struct frameData {
 };
 
 
+#if defined(__GLIBC__)
 /*
  * NULL handler. We only care about preventing the signal from propagating up the call stack, no need to do
  * anything in the handler.
@@ -67,7 +70,6 @@ protectedBacktrace(struct OMRPortLibrary *port, void *arg)
 	struct frameData *addresses = (struct frameData *)arg;
 	return backtrace(addresses->address_array, addresses->capacity);
 }
-
 /*
  * Provides signal protection for the libc backtrace call. If the stack walk causes a segfault then we check the output
  * array to see if we got any frames as we may be able to provide a partial backtrace. We also record that the stack walk
@@ -96,6 +98,18 @@ backtrace_sigprotect(struct OMRPortLibrary *portLibrary, J9PlatformThread *threa
 		return backtrace(address_array, capacity);
 	}
 }
+#else
+uintptr_t
+protectedBacktrace(struct OMRPortLibrary *port, void *arg)
+{
+	return 0;
+}
+uintptr_t
+backtrace_sigprotect(struct OMRPortLibrary *portLibrary, J9PlatformThread *threadInfo, void **address_array, int capacity)
+{
+	return 0;
+}
+#endif /* defined(__GLIBC__) */
 
 
 

@@ -33,7 +33,9 @@
 #include <sys/stat.h>
 #if defined(LINUX)
 #include <sys/prctl.h>
+#if defined(__GLIBC__)
 #include <linux/prctl.h>
+#endif
 #include <sys/resource.h>
 #endif
 #include <elf.h>

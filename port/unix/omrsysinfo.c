@@ -63,7 +63,12 @@
 #include <nl_types.h>
 #include <langinfo.h>
 #if !defined(USER_HZ) && !defined(OMRZTPF)
+#if defined(LINUX) && defined(__GLIBC__)
 #define USER_HZ HZ
+#else
+#include <sys/acct.h>
+#define USER_HZ AHZ
+#endif
 #endif /* !defined(USER_HZ) && !defined(OMRZTPF) */
 
 #if defined(J9ZOS390)
@@ -128,7 +133,15 @@
 #endif
 
 #if defined(LINUX) && !defined(OMRZTPF)
+#if defined(__GLIBC__)
 #include <linux/magic.h>
+#else
+/* TMPFS_MAGIC is one of the filesystem type which is returned by statfs system call.
+ * glibc has defined these filesystem type values as macros in magic.h which is not
+ * available on musl. Hence we define the macro here as per the man page of statfs. 
+ */
+#define TMPFS_MAGIC 0x01021994
+#endif
 #include <sys/sysinfo.h>
 #include <sys/vfs.h>
 #include <sched.h>
