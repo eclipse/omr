@@ -1979,6 +1979,39 @@ static TR::SymbolReference *getUniqueSymRef(TR::Node *node, bool &isLegal , TR::
    return savedSymRef;
    }
 
+static TR::TreeTop *forwardThroughGoto(TR::TreeTop *origTarget)
+   {
+   // Don't skip GlRegDeps
+   if (origTarget->getNode()->getNumChildren() > 0)
+      return origTarget;
+
+   // Don't skip loop preheaders
+   TR::Block *origBlock = origTarget->getNode()->getBlock();
+   if (origBlock->isLoopInvariantBlock())
+      return origTarget;
+
+   // Don't skip region entry blocks (notably, loop headers)
+   TR::CFG *cfg = TR::comp()->getFlowGraph();
+   if (cfg->getStructure() != NULL)
+      {
+      TR_RegionStructure *region = origBlock->getParentStructureIfExists(cfg);
+      if (region != NULL && origBlock->getNumber() == region->getNumber())
+         return origTarget;
+      }
+
+   TR::Node *next = origTarget->getNextTreeTop()->getNode();
+   if (next->getOpCodeValue() != TR::Goto)
+      return origTarget;
+
+   TR::TreeTop *newTarget = next->getBranchDestination();
+
+   // Don't skip GlRegDeps
+   if (newTarget->getNode()->getNumChildren() > 0)
+      return origTarget;
+
+   return newTarget;
+   }
+
 // We handle two kind of cases here:
 // 1. an ifcmp is comparing with a const (or variable a), it is the first real instruction in the block
 //    the other operand is defined in another blocks, at least one of the def is const (or a),
@@ -2038,6 +2071,13 @@ static void partialRedundantCompareElimination(TR::Node * node, TR::Block * bloc
 
       if (!onlyOnePred)
          {
+         TR::TreeTop *forwardedTarget = forwardThroughGoto(fallThroughTT);
+         if (forwardedTarget != fallThroughTT)
+            {
+            fallThroughTT = forwardedTarget;
+            fallThroughBB = fallThroughTT->getNode()->getBlock();
+            }
+
          //Is there store of const at the end of predecessor
          for (auto predEdge = predecessors.begin(); predEdge != predecessors.end();)
             {
