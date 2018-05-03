@@ -310,7 +310,26 @@ MM_MemorySubSpaceFlat::initialize(MM_EnvironmentBase* env)
 	}
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
 
+#if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(OMR_GC_MODRON_CONCURRENT_MARK)
+	MM_GCExtensionsBase *ext = env->getExtensions();
+
+	if (!_resizingLock.initialize(env, &ext->lnrlOptions, "MM_MemorySubSpaceFlat:_resizingLock")) {
+		return false;
+	}
+#endif
+
 	return true;
+}
+
+void
+MM_MemorySubSpaceFlat::tearDown(MM_EnvironmentBase* env)
+{
+
+#if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(OMR_GC_MODRON_CONCURRENT_MARK)
+	_resizingLock.tearDown();
+#endif
+
+	MM_MemorySubSpace::tearDown(env);
 }
 
 /**
@@ -433,6 +452,19 @@ MM_MemorySubSpaceFlat::collectorExpand(MM_EnvironmentBase* env, MM_Collector* re
 
 	Trc_MM_MemorySubSpaceFlat_collectorExpand_Exit3(env->getLanguageVMThread(), expansionAmount);
 	return expansionAmount;
+}
+
+
+void MM_MemorySubSpaceFlat::acquireResizingLock(){
+#if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(OMR_GC_MODRON_CONCURRENT_MARK)
+	_resizingLock.acquire();
+#endif
+}
+
+void MM_MemorySubSpaceFlat::releaseResizingLock(){
+#if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(OMR_GC_MODRON_CONCURRENT_MARK)
+	_resizingLock.release();
+#endif
 }
 
 #if defined(OMR_GC_IDLE_HEAP_MANAGER)

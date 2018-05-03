@@ -202,6 +202,13 @@ MM_PhysicalSubArenaVirtualMemoryFlat::expandNoCheck(MM_EnvironmentBase *env, uin
 	if (_highAddress != highExpandAddress) {
 		/* the area has been expanded.  Update internal values */
 		_highAddress = highExpandAddress;
+
+		/* Lock to ensure that card cleaning doesn't run during expansion. If card cleaning is done in the
+		 * middle of an expansion then we are left in an inconsistent state for determining cleaning ranges.*/
+		if(env->getExtensions()->isConcurrentScavengerEnabled()){
+			_subSpace->acquireResizingLock();
+		}
+
 		/* Reconstruct the region at its new size */
 		getHeapRegionManager()->resizeAuxillaryRegion(env, _region, _lowAddress, _highAddress);
 		Assert_MM_true(NULL != _region);
@@ -209,6 +216,10 @@ MM_PhysicalSubArenaVirtualMemoryFlat::expandNoCheck(MM_EnvironmentBase *env, uin
 		/* Update the owning subspace */
 		_subSpace->expanded(env, this, expandSize, lowExpandAddress, highExpandAddress, true);
 		_subSpace->heapReconfigured(env);
+
+		if(env->getExtensions()->isConcurrentScavengerEnabled()){
+			_subSpace->releaseResizingLock();
+		}
 	}
 
 	Assert_MM_true(_lowAddress == _region->getLowAddress());

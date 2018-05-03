@@ -1542,8 +1542,20 @@ MM_ConcurrentCardTable::determineCleaningRanges(MM_EnvironmentBase *env)
 
 				/* If there is space in cleaningRanges array so add it... */
 				if (numRanges <= _maxCleaningRanges) {
+					/* Acquire the resizing lock to ensure that we are not in the middle of an expansion.
+					 * This is required to avoid adding a cleaning range for which the table memory is not yet committed.
+					 * This will occur when the heap has been expanded and the region manger has been updated while the corresponding table memory has not been committed*/
+					if (_extensions->isConcurrentScavengerEnabled()){
+						subspace->acquireResizingLock();
+					}
+
 					nextRange->baseCard = heapAddrToCardAddr(env, region->getLowAddress());
 					nextRange->topCard = heapAddrToCardAddr(env, region->getHighAddress());
+
+					if(_extensions->isConcurrentScavengerEnabled()){
+						subspace->releaseResizingLock();
+					}
+
 					nextRange->nextCard = nextRange->baseCard;
 					nextRange->numCards = (uintptr_t)(nextRange->topCard - nextRange->baseCard);
 					_cardTableStats.totalCards += nextRange->numCards;
