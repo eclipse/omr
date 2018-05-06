@@ -1,0 +1,15 @@
+#if !defined OMR_OM_CONFIG_HPP_
+#define OMR_OM_CONFIG_HPP_
+
+#include <omrcfg.h>
+
+/// Debug: Poison reclaimed memory.
+#cmakedefine OMR_OM_POISON_RECLAIMED_MEMORY
+
+/// Debug: Do a full System collect on every allocation. Very slow, but useful for debugging roots.
+#cmakedefine OMR_OM_COLLECT_ON_ALLOCATE
+
+/// Debug: Verbose tracing prints to stderr
+#cmakedefine OMR_OM_TRACE
+
+#endif  // OMR_OM_CONFIG_HPP_

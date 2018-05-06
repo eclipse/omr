@@ -121,9 +121,13 @@ endif()
 
 # Each application provides it's own glue, so must be included before subdirectories.
 # The example and om are not yet compatible.
-if (OMR_EXAMPLE)
+if(OMR_EXAMPLE)
 	add_subdirectory(example)
-endif (OMR_EXAMPLE)
+endif(OMR_EXAMPLE)
+
+if(OMR_OM)
+	add_subdirectory(om)
+endif(OMR_OM)
 
 ###
 ### Core OMR components
@@ -150,7 +154,7 @@ endif(OMR_DDR)
 
 if(OMR_JIT)
 	add_subdirectory(compiler)
-endif()
+endif(OMR_JIT)
 
 if(OMR_JITBUILDER)
 	add_subdirectory(jitbuilder)
