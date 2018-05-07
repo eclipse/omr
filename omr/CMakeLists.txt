@@ -63,17 +63,19 @@ target_include_directories(omrcore
 		.
 )
 
+
+target_link_libraries(omrcore
+	# NOTE: Don't link any other libraries to omrcore
+	# Doing so will almost certainly create a circular dependency in OpenJ9
+	PRIVATE
+		${OMR_CORE_GLUE_TARGET}
+)
+
+
 if(OMR_GC)
 	add_dependencies(omrcore
 		omrgc_tracegen
 		omrgc_hookgen
-	)
-
-	target_link_libraries(omrcore
-		PUBLIC
-			omrgc
-		PRIVATE
-			${OMR_CORE_GLUE_TARGET}
 	)
 
 	target_include_directories(omrcore
