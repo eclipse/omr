@@ -1100,6 +1100,29 @@ TEST(PortSysinfoTest, sysinfo_testMemoryInfo)
 }
 
 /**
+ * Test for omrsysinfo_get_available_memory() port library API.
+ */
+TEST(PortSysinfoTest, sysinfo_testAvailableMemory)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+	const char *testName = "omrsysinfo_testAvailableMemory";
+	uint64_t freeMemory = OMRPORT_MEMINFO_NOT_AVAILABLE;
+
+	reportTestEntry(OMRPORTLIB, testName);
+	portTestEnv->changeIndent(1);
+
+	freeMemory = omrsysinfo_get_available_memory();
+	if (OMRPORT_MEMINFO_NOT_AVAILABLE == freeMemory) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "Free memory stat is not available.\n");
+	} else {
+		portTestEnv->log("Free memory: %llu bytes\n", freeMemory);
+	}
+
+	portTestEnv->changeIndent(-1);
+	reportTestExit(OMRPORTLIB, testName);
+}
+
+/**
  * @internal
  * Internal function: Counts up the number of processors that are online as per the
  * records delivered by the port library routine omrsysinfo_get_processor_info().

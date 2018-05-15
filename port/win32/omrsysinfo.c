@@ -806,6 +806,33 @@ omrsysinfo_get_physical_memory(struct OMRPortLibrary *portLibrary)
 	return (uint64_t) aMemStatusEx.ullTotalPhys;
 }
 
+uint64_t
+omrsysinfo_get_available_memory(struct OMRPortLibrary *portLibrary)
+{
+	J9MemoryInfo memInfo = {0};
+	uint64_t freeMemory = OMRPORT_MEMINFO_NOT_AVAILABLE;
+	int32_t rc = 0;
+
+	rc = portLibrary->sysinfo_get_memory_info(memInfo);
+
+	if (0 != rc) {
+		goto _end;
+	}
+
+	if (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.availPhysical) {
+		freeMemory = memInfo.availPhysical;
+		if (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.cached) {
+			freeMemory += memInfo.cached;
+		}
+		if (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.buffered) {
+			freeMemory += memInfo.buffered;
+		}
+	}
+
+_end:
+	return freeMemory;
+}
+
 /**
  * PortLibrary shutdown.
  *

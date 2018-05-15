@@ -1634,6 +1634,87 @@ omrsysinfo_get_physical_memory(struct OMRPortLibrary *portLibrary)
 	return result;
 }
 
+uint64_t
+omrsysinfo_get_available_memory(struct OMRPortLibrary *portLibrary)
+{
+	J9MemoryInfo memInfo = {0};
+	OMRCgroupMemoryInfo cgroupMemInfo = {0};
+	uint64_t freeMemory = OMRPORT_MEMINFO_NOT_AVAILABLE;
+	int32_t rc = 0;
+
+#if defined(LINUX)
+	rc = retrieveLinuxMemoryStatsFromProcFS(portLibrary, &memInfo);
+#else /* defined(LINUX) */
+	rc = portLibrary->sysinfo_get_memory_info(&memInfo);
+#endif /* defined(LINUX) */
+
+	if (0 != rc) {
+		goto _end;
+	}
+
+	if (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.availPhysical) {
+		freeMemory = memInfo.availPhysical;
+		if (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.cached) {
+			freeMemory += memInfo.cached;
+		}
+		if (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.buffered) {
+			freeMemory += memInfo.buffered;
+		}
+	}
+
+#if defined(LINUX) && !defined(OMRZTPF)
+
+	/* If we fail to get free memory from host, then returning free memory just based on cgroup is risky,
+	 * as the free memory may actually be less than that returned by cgroup, so just return OMRPORT_MEMINFO_NOT_AVAILABLE.
+	 */
+	if (OMRPORT_MEMINFO_NOT_AVAILABLE == freeMemory) {
+		goto _end;
+	}
+
+	if (portLibrary->sysinfo_cgroup_are_subsystems_enabled(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY)) {
+		uint64_t freeMemoryInCgroup = 0;
+
+		/* cgroup memory subsystem is enabled, but if host's total physical memory
+		 * is not known, then we cannot determine if cgroup imposes any memory limit or not.
+		 * In that case, just return OMRPORT_MEMINFO_NOT_AVAILABLE.
+		 */
+		if (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.totalPhysical) {
+			freeMemory = OMRPORT_MEMINFO_NOT_AVAILABLE;
+			goto _end;
+		}
+		rc = retrieveLinuxCgroupMemoryStats(portLibrary, &cgroupMemInfo);
+		if (0 != rc) {
+			freeMemory = OMRPORT_MEMINFO_NOT_AVAILABLE;
+			goto _end;
+		}
+		if (cgroupMemInfo.memoryLimit > memInfo.totalPhysical) {
+			/* cgroup memory limit is not set; use free memory value obtained from the host */
+			goto _end;
+		}
+
+		/* Memory usage cannot exceed memory limit.
+		 * If we find memory usage > memory limit, then it probably means either memory usage is not available,
+		 * or there is some issue in getting memory usage correctly.
+		 * In such cases we cannot determine free memory, so just return OMRPORT_MEMINFO_NOT_AVAILABLE.
+		 */
+		if (cgroupMemInfo.memoryUsage > cgroupMemInfo.memoryLimit) {
+			freeMemory = OMRPORT_MEMINFO_NOT_AVAILABLE;
+		}
+
+		freeMemoryInCgroup = cgroupMemInfo.memoryLimit - cgroupMemInfo.memoryUsage;
+
+		if (OMRPORT_MEMINFO_NOT_AVAILABLE != cgroupMemInfo.cached) {
+			freeMemoryInCgroup += cgroupMemInfo.cached;
+		}
+		freeMemory = OMR_MIN(freeMemory, freeMemoryInCgroup);
+	}
+
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
+
+_end:
+	return freeMemory;
+}
+
 #if !defined(RS6000) && !defined(J9ZOS390) && !defined(OSX) && !defined(OMRZTPF)
 
 /**

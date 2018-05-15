@@ -1099,6 +1099,8 @@ typedef struct OMRPortLibrary {
 	uint64_t (*sysinfo_get_addressable_physical_memory)(struct OMRPortLibrary *portLibrary) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_get_physical_memory "omrsysinfo_get_physical_memory"*/
 	uint64_t (*sysinfo_get_physical_memory)(struct OMRPortLibrary *portLibrary) ;
+	/** see @ref omrsysinfo.c::omrsysinfo_get_available_memory "omrsysinfo_get_available_memory"*/
+	uint64_t (*sysinfo_get_available_memory)(struct OMRPortLibrary *portLibrary) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_get_OS_version "omrsysinfo_get_OS_version"*/
 	const char  *(*sysinfo_get_OS_version)(struct OMRPortLibrary *portLibrary) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_get_env "omrsysinfo_get_env"*/
@@ -1745,6 +1747,7 @@ extern J9_CFUNC int32_t omrport_getVersion(struct OMRPortLibrary *portLibrary);
 #define omrsysinfo_destroy_processor_info(param1) privateOmrPortLibrary->sysinfo_destroy_processor_info(privateOmrPortLibrary, (param1))
 #define omrsysinfo_get_addressable_physical_memory() privateOmrPortLibrary->sysinfo_get_addressable_physical_memory(privateOmrPortLibrary)
 #define omrsysinfo_get_physical_memory() privateOmrPortLibrary->sysinfo_get_physical_memory(privateOmrPortLibrary)
+#define omrsysinfo_get_available_memory() privateOmrPortLibrary->sysinfo_get_available_memory(privateOmrPortLibrary)
 #define omrsysinfo_get_OS_version() privateOmrPortLibrary->sysinfo_get_OS_version(privateOmrPortLibrary)
 #define omrsysinfo_get_env(param1,param2,param3) privateOmrPortLibrary->sysinfo_get_env(privateOmrPortLibrary, (param1), (param2), (param3))
 #define omrsysinfo_get_CPU_architecture() privateOmrPortLibrary->sysinfo_get_CPU_architecture(privateOmrPortLibrary)

@@ -463,6 +463,8 @@ extern J9_CFUNC uint64_t
 omrsysinfo_get_addressable_physical_memory(struct OMRPortLibrary *portLibrary);
 extern J9_CFUNC uint64_t
 omrsysinfo_get_physical_memory(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC uint64_t
+omrsysinfo_get_available_memory(struct OMRPortLibrary *portLibrary);
 extern J9_CFUNC uint32_t
 omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, uint64_t *limit);
 extern J9_CFUNC uint32_t
