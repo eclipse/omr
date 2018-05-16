@@ -3,15 +3,17 @@
 
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/TransitionSet.hpp>
+#include <OMR/Om/MemArrayOperations.hpp>
 
 namespace OMR
 {
 namespace Om
 {
+
 inline bool
-TransitionSet::construct(Context& cx, MemHandle<TransitionSet> self)
+constructTransitionSet(Context& cx, MemHandle<TransitionSet> self)
 {
-	return MemArray<Entry>::construct(
+	return constructMemArray<Entry>(
 		cx, MemHandle<MemArray<Entry>>(self, &TransitionSet::table_), 32);
 }
 

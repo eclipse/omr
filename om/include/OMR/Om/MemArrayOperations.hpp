@@ -8,12 +8,14 @@
 namespace OMR {
 namespace Om {
 
+template <typename T>
 inline bool constructMemArray(Context& cx, const MemHandle<MemArray<T>> self, std::size_t size)
 {
 	self->buffer_ = allocateArray(cx, size * sizeof(T));
 	return self->buffer_ != nullptr;
 }
 
+template <typename T>
 inline bool resizeMemArray(Context& cx, const MemHandle<MemArray<T>> self, std::size_t size)
 {
 	auto newBuffer = allocateArray(cx, size * sizeof(T));

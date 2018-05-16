@@ -29,13 +29,13 @@ struct ShapeInitializer : public Initializer
 };
 
 /// Allocate an object shape that describes one slot.
-inline Shape *allocateShape(Context &cx, Handle<Shape> parent, Infra::Span<const SlotAttr> attributes)
+inline Shape *allocateObjectLayout(Context &cx, Handle<Shape> parentLayout, Infra::Span<const SlotAttr> attributes)
 {
 	ShapeInitializer init;
 	init.parent = parent;
 	init.attributes = attributes;
 
-	std::size_t size = calculateAllocSize(attributes.length());
+	std::size_t size = Shape::calculateAllocSize(attributes.length());
 	Shape *result = BaseAllocator::allocate<Shape>(cx, init, size);
 
 	RootRef<Shape> root(cx, result);
@@ -55,28 +55,41 @@ inline Shape *allocateShape(Context &cx, Handle<Shape> parent, Infra::Span<const
 /// An Intializer for a Shape that lays out other Shape objects.
 struct ShapeLayoutInitializer : public Intializer
 {
-	virtual Cell *operator()(Context &cx, Cell *cell) noexcept override;
+	virtual Cell *operator()(Context &cx, Cell *cell) noexcept override {
+		Shape* shape = reinterpret_cast<Shape*>(cell);
+		shape->instanceKind(CellKind::Shape);
+		shape->layout(shape);
+		return reinterpret_cast<Cell*>(shape);
+	}
 }
 
 /// Allocate a Shape that lays out: A shape with no slots.
 inline Shape *
 allocateShapeLayout(Context &cx)
 {
-	ShapeInitializer init;
-	init.parent = parent;
-	init.attributes = Infra::Span(nullptr, 0);
+	ShapeLayoutInitializer init;
+	std::size_t cellSize = Shape::calculateAllocSize(0); // no slot descriptors
+	BaseAllocator::allocate<Shape>(cx, init, size);
+}
 
-	Shape::cellSize(attributes.length());
-
-	BaseAllocator::allocate<Shape>(cx, init, size)
+/// An Intializer for a Shape that lays out other Shape objects.
+struct ArrayLayoutInitializer : public Intializer
+{
+	virtual Cell *operator()(Context &cx, Cell *cell) noexcept override {
+		Shape* shape = reinterpret_cast<Shape*>(cell);
+		shape->instanceKind(CellKind::Array);
+		shape->layout(cx.globals().metaShape());
+		return reinterpret_cast<Cell*>(shape);
+	}
 }
 
 /// Allocate a Shape that lays out: An Array with no slots.
 inline Shape *
 allocateArrayLayout(Context &cx)
 {
-	ShapeInitializer init;
-	init.parent = nullptr;
+	ArrayLayoutInitializer init;
+	std::size_t cellSize = Shape::calculateAllocSize(0); // no slot descriptors
+	BaseAllocator::allocate<Shape>(cx, init, size);
 }
 
 /// Allocate an object shape that describes no slots
