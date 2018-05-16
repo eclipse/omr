@@ -21,15 +21,13 @@
 
 #include "MarkingDelegate.hpp"
 
-#include <OMR/Om/ArrayBuffer.hpp>
+#include <OMR/Om/Array.hpp>
 #include <OMR/Om/Context.inl.hpp>
-#include <OMR/Om/MarkingVisitor.hpp>
-#include <OMR/Om/MemoryManager.inl.hpp>
-#include <OMR/Om/Object.inl.hpp>
-#include <OMR/Om/ObjectMap.inl.hpp>
-#include <OMR/Om/RootRef.inl.hpp>
-#include <OMR/Om/TransitionSet.inl.hpp>
-#include <OMR/Om/Traverse.hpp>
+#include <OMR/Om/MemoryManager.hpp>
+#include <OMR/Om/Object.hpp>
+#include <OMR/Om/Shape.hpp>
+#include <OMR/Om/RootRef.hpp>
+#include <OMR/Om/TransitionSet.hpp>
 
 #include "EnvironmentBase.hpp"
 #include "MarkingScheme.hpp"
@@ -47,35 +45,21 @@ MarkingDelegate::scanRoots(MM_EnvironmentBase* env)
 {
 	auto& cx      = getContext(env);
 	auto& manager = cx.manager();
-	MarkingVisitor marker(*env, *env->getMarkingEnvironment());
+	MM_MarkingScheme::MarkingVisitor marker(env, _markingScheme);
 	manager.visit(marker);
 
-#if 0
-	OMR_VMThread* walkThread;
-	GC_OMRVMThreadListIterator threadListIterator(env->getOmrVM());
-
-	while ((walkThread = threadListIterator.nextOMRVMThread()) != NULL) {
-		if (NULL != walkThread->_savedObject1) {
-			env->getMarkingEnci
-				->markObject(env, (omrobjectptr_t)walkThread->_savedObject1, true);
-		}
-		if (NULL != walkThread->_savedObject2) {
-			_markingScheme
-				->markObject(env, (omrobjectptr_t)walkThread->_savedObject2, true);
-		}
-	}
-#endif
-
-	const auto& roots = cx.stackRoots();
-
-	for (const auto& p : roots) {
-		std::cout << "NATIVE_STACK: " << p << std::endl;
-		env->getMarkingEnvironment()->markObject(env, p);
+	for (ConstRootListIterator it = cx.stackRoots().cbegin(); it != cx.stackRoots().cend(); ++it) {
+		// std::cout << "NATIVE_STACK: " << p << std::endl;
+		_markingScheme->markObject(env, (Cell*)(*it).ref);
 	}
 
+/*
+	/// TODO: Reimplement user marking callbacks.
 	for (auto& fn : cx.userRoots()) {
 		fn(marker);
 	}
+*/
+	assert(0);
 }
 
 void

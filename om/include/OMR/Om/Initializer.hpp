@@ -6,7 +6,7 @@ namespace OMR
 namespace Om
 {
 class Context;
-struct Cell;
+class Cell;
 
 /// Preliminary initialization functor. As an object is allocated, the mutator
 /// may perform some concurrent GC work, "paying the GC tax". To do this work,

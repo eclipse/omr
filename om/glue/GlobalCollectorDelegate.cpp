@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include <OMR/Om/RootRef.inl.hpp>
+#include <OMR/Om/RootRef.hpp>
 
 #include "GlobalCollectorDelegate.hpp"
 #include "Heap.hpp"
@@ -38,10 +38,10 @@ MM_GlobalCollectorDelegate::poisonUnmarkedObjectsInRegion(GC_ObjectHeapIterator&
 	while (NULL != (omrobjptr = objectIterator.nextObject())) {
 		uintptr_t objsize =
 			_extensions->objectModel.getConsumedSizeInBytesWithHeader(omrobjptr);
-		bool ismarked = _markingScheme->getMarkingExtensions()->isMarked(omrobjptr);
+		bool ismarked = _markingScheme->isMarked(omrobjptr);
 
-		std::cerr << ">POISON @" << omrobjptr << "[" << objsize << "]"
-			  << "=" << ismarked << std::endl;
+		// std::cerr << ">POISON @" << omrobjptr << "[" << objsize << "]"
+		// 	  << "=" << ismarked << std::endl;
 
 		if (!ismarked) {
 			/* object will be collected. We write the full contents of the object

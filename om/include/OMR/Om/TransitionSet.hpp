@@ -2,11 +2,9 @@
 #define OMR_OM_MEMTRANSITIONSET_HPP_
 
 #include <OMR/Infra/Span.hpp>
-#include <OMR/Om/ArrayBuffer.hpp>
 #include <OMR/Om/Id.hpp>
 #include <OMR/Om/MemHandle.hpp>
-#include <OMR/Om/MemVector.hpp>
-#include <OMR/Om/ObjectMap.hpp>
+#include <OMR/Om/MemArray.hpp>
 #include <OMR/Om/SlotAttr.hpp>
 
 #include <cstddef>
@@ -16,21 +14,22 @@ namespace OMR
 {
 namespace Om
 {
-struct ObjectMap;
+
+class Shape;
 class Context;
 
 /// The TransitionSet is a collection of Maps for the purpose of tracking known
 /// object transitions. As objects grow slots, a chain of maps is built up. The
-/// transition table tells us the existing derivations of a given map. When an
+/// transition table tells us the existing derivations of a given shape. When an
 /// object grows a slot, we look to see if this layout transition has been done
-/// before, so we can reuse the map. The Transition set is embedded in other
+/// before, so we can reuse the shape. The Transition set is embedded in other
 /// native objects.
 class TransitionSet
 {
 public:
 	struct Entry
 	{
-		ObjectMap* map;
+		Shape* shape;
 	};
 
 	static bool construct(Context& cx, MemHandle<TransitionSet> self);
@@ -39,10 +38,10 @@ public:
 
 	std::size_t size() const { return table_.size(); }
 
-	ObjectMap* lookup(Infra::Span<const SlotAttr> desc, std::size_t hash) const;
+	Shape* lookup(Infra::Span<const SlotAttr> desc, std::size_t hash) const;
 
 	// try to store object in the table. if the table is full, fail.
-	bool tryStore(ObjectMap* map, std::size_t hash);
+	bool tryStore(Shape* shape, std::size_t hash);
 
 	template <typename VisitorT>
 	void visit(VisitorT& visitor);

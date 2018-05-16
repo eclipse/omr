@@ -32,6 +32,7 @@
 #include <cassert>
 
 class MM_EnvironmentBase;
+class MM_MarkingScheme;
 
 namespace OMR
 {
@@ -48,6 +49,7 @@ class MarkingDelegate
 private:
 protected:
 	GC_ObjectModel* _objectModel;
+	MM_MarkingScheme* _markingScheme;
 
 public:
 	/*
@@ -63,9 +65,11 @@ public:
 	 * @param markingScheme the MM_MarkingScheme that the delegate is bound to
 	 * @return true if delegate initialized successfully
 	 */
-	MMINLINE bool initialize(MM_EnvironmentBase* env)
+	MMINLINE bool
+	initialize(MM_EnvironmentBase *env, MM_MarkingScheme *markingScheme)
 	{
-		_objectModel   = &(env->getExtensions()->objectModel);
+		_objectModel = &(env->getExtensions()->objectModel);
+		_markingScheme = markingScheme;
 		return true;
 	}
 

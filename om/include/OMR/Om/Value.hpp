@@ -13,11 +13,11 @@ namespace OMR
 namespace Om
 {
 
-struct Cell;
+class Cell;
 
 /// Type Tags
 /// These types are used to disambiguate Value's constructors.
-/// @{
+
 struct AsRaw
 {
 };
@@ -74,14 +74,18 @@ using RawValue = std::uint64_t;
 
 static_assert(sizeof(RawValue) == sizeof(double), "A RawValue should be wide enough to store a double.");
 
-struct Cell;
+union ValueData {
 
-union ValueData
-{
+	ValueData() {}
+
+	constexpr ValueData(RawValue value) : asRawValue(value) {}
+
 	RawValue asRawValue;
 	double asDouble;
-	void* asPointer;
-	Cell* asCellPointer;
+	void *asPtr;
+	void *asRef;
+	std::uint64_t asUint48;
+	std::int64_t asInt48;
 };
 
 static_assert(sizeof(ValueData) == sizeof(RawValue), "RawValue is used to store doubles.");
@@ -92,7 +96,7 @@ static_assert(sizeof(ValueData) == sizeof(RawValue), "RawValue is used to store 
 /// NaN boxed value.
 class Value
 {
-public:
+  public:
 	enum class Kind
 	{
 		DOUBLE,
@@ -108,11 +112,8 @@ public:
 	/// must be canonicalized before being stored.
 	///
 	/// The Tags in this namespace indicate that a RawValue is a boxed immediate.
-	struct Box
-	{
-		static constexpr RawValue VALUE = Infra::Double::SPECIAL_TAG;
-		static constexpr RawValue MASK  = Infra::Double::SPECIAL_TAG | Infra::Double::NAN_QUIET_TAG;
-	};
+	static constexpr RawValue NAN_TAG = Infra::Double::SPECIAL_TAG;
+	static constexpr RawValue NAN_MASK = Infra::Double::SPECIAL_TAG | Infra::Double::NAN_QUIET_TAG;
 
 	/// The complete tag of a NaN-boxed value.
 	/// The Tag is the NaN box plus a type tag. The type tag is stored in the top
@@ -126,14 +127,14 @@ public:
 	struct Tag
 	{
 		static constexpr std::size_t SHIFT = 48;
-		static constexpr RawValue MASK     = Box::MASK | (RawValue(0x7) << SHIFT);
-		static constexpr RawValue INT32    = Box::VALUE | (RawValue(0x1) << SHIFT);
-		static constexpr RawValue UINT48   = Box::VALUE | (RawValue(0x2) << SHIFT);
-		static constexpr RawValue PTR      = Box::VALUE | (RawValue(0x3) << SHIFT);
-		static constexpr RawValue REF      = Box::VALUE | (RawValue(0x4) << SHIFT);
-		static constexpr RawValue UNUSED0  = Box::VALUE | (RawValue(0x5) << SHIFT);
-		static constexpr RawValue UNUSED1  = Box::VALUE | (RawValue(0x6) << SHIFT);
-		static constexpr RawValue UNUSED2  = Box::VALUE | (RawValue(0x7) << SHIFT);
+		static constexpr RawValue MASK = NAN_MASK | (RawValue(0x7) << SHIFT);
+		static constexpr RawValue INT48 = NAN_TAG | (RawValue(0x1) << SHIFT);
+		static constexpr RawValue UINT48 = NAN_TAG | (RawValue(0x2) << SHIFT);
+		static constexpr RawValue PTR = NAN_TAG | (RawValue(0x3) << SHIFT);
+		static constexpr RawValue REF = NAN_TAG | (RawValue(0x4) << SHIFT);
+		static constexpr RawValue UNUSED0 = NAN_TAG | (RawValue(0x5) << SHIFT);
+		static constexpr RawValue UNUSED1 = NAN_TAG | (RawValue(0x6) << SHIFT);
+		static constexpr RawValue UNUSED2 = NAN_TAG | (RawValue(0x7) << SHIFT);
 	};
 
 	static constexpr RawValue PAYLOAD_MASK = ~Tag::MASK;
@@ -146,56 +147,60 @@ public:
 		Infra::Double::SPECIAL_TAG | Infra::Double::NAN_QUIET_TAG | Infra::Double::NAN_EXTRA_BITS_MASK;
 
 	/// if value is a NaN, return the canonical NaN.
-	static constexpr RawValue canonicalizeNaN(RawValue value)
+	static RawValue canonicalizeNaN(RawValue value)
 	{
-		if (Infra::Double::isNaN(value)) {
+		if (Infra::Double::isNaN(value))
+		{
 			return CANONICAL_NAN;
 		}
 		return value;
 	}
 
-	static constexpr double canonicalizeNaN(double value)
+	static double canonicalizeNaN(double value)
 	{
 		return Infra::Double::fromRaw(canonicalizeNaN(Infra::Double::toRaw(value)));
 	}
 
 	Value() = default;
 
-	constexpr Value(const Value&) = default;
+	constexpr Value(const Value &) = default;
 
-	constexpr Value(Value&&) = default;
+	constexpr Value(Value &&) = default;
 
 	constexpr Value(AsRaw, RawValue value) : data_(value)
-	{}
+	{
+	}
 
-	constexpr Value(AsDouble, double value)
+	Value(AsDouble, double value)
 	{
 		setDouble(value);
 	}
 
 	constexpr Value(AsInt48, std::int64_t value) : data_(Tag::INT48 | (RawValue(value) & PAYLOAD_MASK))
-	{}
+	{
+	}
 
 	constexpr Value(AsUint48, std::uint64_t value) : data_(Tag::UINT48 | (RawValue(value) & PAYLOAD_MASK))
-	{}
+	{
+	}
 
 	template <typename T>
-	explicit Value(AsPtr, T* value) : data_{Tag::PTR | (reinterpret_cast<RawValue>(value) & PAYLOAD_MASK)}
+	explicit Value(AsPtr, T *value) : data_{Tag::PTR | (reinterpret_cast<RawValue>(value) & PAYLOAD_MASK)}
 	{
 		assert((reinterpret_cast<RawValue>(value) & ~PAYLOAD_MASK) == 0);
 	}
 
 	template <typename T>
-	explicit Value(AsRef, T* value) : data_{Tag::REF | (reinterpret_cast<RawValue>(value) & PAYLOAD_MASK)}
+	explicit Value(AsRef, T *value) : data_{Tag::REF | (reinterpret_cast<RawValue>(value) & PAYLOAD_MASK)}
 	{
-		assert((reinterpret_cast<RawValue>(p) & ~PAYLOAD_MASK) == 0);
+		assert((reinterpret_cast<RawValue>(value) & ~PAYLOAD_MASK) == 0);
 	}
 
 	/// Get the underlying raw storage.
 	constexpr RawValue raw() const noexcept { return data_.asRawValue; }
 
 	/// Set the underlying raw storage.
-	Value& raw(RawValue raw) noexcept
+	Value &raw(RawValue raw) noexcept
 	{
 		data_.asRawValue = raw;
 		return *this;
@@ -205,10 +210,10 @@ public:
 
 	constexpr bool isDouble() const noexcept { return !isBoxedValue(); }
 
-	Value& setDouble(double d) noexcept { return setDoubleUnsafe(canonicalizeNaN(d)); }
+	Value &setDouble(double d) noexcept { return setDoubleUnsafe(canonicalizeNaN(d)); }
 
 	/// Store a double into this Value. The double may not be a NaN.
-	Value& setDoubleUnsafe(double d) noexcept
+	Value &setDoubleUnsafe(double d) noexcept
 	{
 		data_.asDouble = d;
 		return *this;
@@ -223,14 +228,14 @@ public:
 	bool isRef() const noexcept { return (raw() & Tag::MASK) == Tag::REF; }
 
 	template <typename T = void>
-	T* getRef() const noexcept
+	T *getRef() const noexcept
 	{
 		assert(isRef());
-		return (T*)(raw() & PAYLOAD_MASK);
+		return (T *)(raw() & PAYLOAD_MASK);
 	}
 
 	template <typename T>
-	Value& setRef(T* ref) noexcept
+	Value &setRef(T *ref) noexcept
 	{
 		assert(Infra::areNoBitsSet(RawValue(ref), ~PAYLOAD_MASK));
 		return raw(Tag::REF | (RawValue(ref) & PAYLOAD_MASK));
@@ -239,14 +244,14 @@ public:
 	bool isPtr() const noexcept { return (raw() & Tag::MASK) == Tag::PTR; }
 
 	template <typename T = void>
-	T* getPtr() const noexcept
+	T *getPtr() const noexcept
 	{
 		assert(isPtr());
-		return (T*)(raw() & PAYLOAD_MASK);
+		return (T *)(raw() & PAYLOAD_MASK);
 	}
 
 	template <typename T>
-	Value& setPtr(T* ptr) noexcept
+	Value &setPtr(T *ptr) noexcept
 	{
 		assert(Infra::areNoBitsSet(RawValue(ptr), ~PAYLOAD_MASK));
 		return raw(Tag::PTR | (RawValue(ptr) & PAYLOAD_MASK));
@@ -260,7 +265,7 @@ public:
 		return std::uint64_t(raw() & PAYLOAD_MASK);
 	}
 
-	Value& setUint48(std::uint64_t value) noexcept { return raw(Tag::UINT48 | (RawValue(value) & PAYLOAD_MASK)); }
+	Value &setUint48(std::uint64_t value) noexcept { return raw(Tag::UINT48 | (RawValue(value) & PAYLOAD_MASK)); }
 
 	bool isInt48() const noexcept { return (raw() & Tag::MASK) == Tag::INT48; }
 
@@ -268,41 +273,49 @@ public:
 	{
 		assert(isInt48());
 		std::int64_t result = raw() & PAYLOAD_MASK;
-		if ((result & (1 << 47)) != 0) {
+		if ((result & (RawValue(1) << 47)) != 0)
+		{
 			result |= ~PAYLOAD_MASK;
 		}
 		return result;
 	}
 
-	Value& setInt48(std::int64_t value) noexcept { return raw(Tag::INT48 | (RawValue(value) & PAYLOAD_MASK)); }
+	Value &setInt48(std::int64_t value) noexcept { return raw(Tag::INT48 | (RawValue(value) & PAYLOAD_MASK)); }
 
 	/// Get the tag bits from the Value.
 	constexpr std::uint64_t tag() const noexcept { return raw() & Tag::MASK; }
 
-	constexpr Kind kind() const noexcept
+	inline Kind kind() const noexcept
 	{
-		if (isDouble()) {
+		if (isDouble())
+		{
 			return Kind::DOUBLE;
-		} else {
-			switch (tag()) {
-			case Tag::INT32: return Kind::INT32;
-			case Tag::UINT48: return Kind::UINT48;
-			case Tag::PTR: return Kind::PTR;
-			case Tag::REF: return Kind::REF;
-			default: assert(0);
-			}
+		}
+
+		switch (tag())
+		{
+		case Tag::INT48:
+			return Kind::INT48;
+		case Tag::UINT48:
+			return Kind::UINT48;
+		case Tag::PTR:
+			return Kind::PTR;
+		case Tag::REF:
+			return Kind::REF;
+		default:
+			assert(0);
 		}
 	}
 
 	explicit operator RawValue() const noexcept { return data_.asRawValue; }
 
-	Value& operator=(const Value& rhs) noexcept { return raw(rhs.raw()); }
+	Value &operator=(const Value &rhs) noexcept { return raw(rhs.raw()); }
 
-	constexpr bool operator==(const Value& rhs) const noexcept { return raw() == rhs.raw(); }
+	constexpr bool operator==(const Value &rhs) const noexcept { return raw() == rhs.raw(); }
 
-	constexpr bool operator!=(const Value& rhs) const noexcept { return raw() != rhs.raw(); }
+	constexpr bool operator!=(const Value &rhs) const noexcept { return raw() != rhs.raw(); }
 
-private:
+  private:
 	ValueData data_;
 };
 
@@ -311,20 +324,8 @@ static_assert(
 
 static_assert(std::is_standard_layout<Value>::value, "A value must be simple.");
 
-class ValueSlotHandle
-{
-public:
-	void writeReference(Cell* ref) const { return slot_->setRef(ref); }
 
-	void atomicWriteReference(Cell* ref) const { assert(0); }
+} // namespace Om
+} // namespace OMR
 
-	Cell* readReference() const { return slot_->getRef(); }
-
-private:
-	Value* slot_;
-};
-
-}  // namespace Om
-}  // namespace Om
-
-#endif  // OMR_OM_VALUE_HPP_
+#endif // OMR_OM_VALUE_HPP_

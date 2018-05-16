@@ -64,45 +64,15 @@ public:
 
 	Marker marker(_markingScheme);
 
-	switch (cell->map()->kind()) {
-	case Shape::Kind::META_SHAPE: doScanMap(cx, marker, reinterpret_cast<Shape*>(cell)); break;
-	case Shape::Kind::OBJECT_MAP: doScanObject(cx, marker, reinterpret_cast<Object*>(cell)); break;
-	case Shape::Kind::ARRAY_BUFFER_MAP:
-		doScanArrayBuffer(cx, marker, reinterpret_cast<ArrayBuffer*>(cell));
-		break;
-	default: assert(0); break;
+	switch (cell->shape()->kind()) {
+		switch cellKind(cell) {
+		case CellKind::OBJECT: reinterpret_cast<Object*>(cell)->visit(cx, marker);
+		case CellKind::SHAPE: reinterpret_cast<Shape*>(cell)->visit(cx, marker);
+		case CellKind::ARRAY: reinterpret_cast<Array*>(cell)->visit(cx, marker);
+		default: assert(0); break;
 	}
 
 	return 0;
-};
-
-private:
-
-	inline void
-	doScanMap(Context& cx, Marker& marker, Shape* map)
-	{
-		switch (map->kind()) {
-		case Shape::Kind::OBJECT_MAP: reinterpret_cast<ObjectMap*>(map)->visit(cx, marker); break;
-		case Shape::Kind::META_SHAPE: reinterpret_cast<MetaShape*>(map)->visit(cx, marker); break;
-		case Shape::Kind::ARRAY_BUFFER_MAP:
-			reinterpret_cast<ArrayBufferShape*>(map)->visit(cx, marker);
-			break;
-		default: assert(0); break;
-		}
-	}
-
-	inline void
-	doScanObject(Context& cx, Marker& marker, Object* object)
-	{
-		object->visit(cx, marker);
-	}
-
-	inline void
-	doScanArrayBuffer(Context& cx, Marker& marker, ArrayBuffer* array)
-	{
-		array->visit(cx, marker);
-	}
-
 };
 
 }  // namespace Om

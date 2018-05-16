@@ -3,56 +3,24 @@
 
 #include <OMR/Om/Cell.hpp>
 #include <OMR/Om/MarkingFn.hpp>
-#include <OMR/Om/MetaShape.hpp>
-#include <OMR/Om/RootRef.hpp>
 #include <OMR/Om/Runtime.hpp>
+#include <OMR/Om/Globals.hpp>
+#include <OMR/Om/StartupError.hpp>
 
 #include <set>
-#include <stdexcept>
 
 namespace OMR
 {
 namespace Om
 {
-struct Cell;
-struct MetaShape;
-struct ArrayBufferShape;
+class Cell;
+class Shape;
 
 class Visitor;
 class Context;
 class RunContext;
 class StartupContext;
 
-class StartupError : public ::std::runtime_error
-{
-	using runtime_error::runtime_error;
-};
-
-/// A collection of singleton GC cells. The collection is initialized at startup
-class Globals
-{
-public:
-	MetaShape* metaShape() const noexcept { return metaMap_; }
-
-	ArrayBufferShape* arrayBufferShape() const noexcept { return arrayBufferMap_; }
-
-	template <typename VisitorT>
-	void visit(VisitorT& visitor)
-	{
-		visitor.rootEdge(this, (Cell*)metaMap_);
-		visitor.rootEdge(this, (Cell*)arrayBufferMap_);
-	}
-
-protected:
-	friend class MemoryManager;
-
-	/// Allocate the globals. Throws StartupError if any allocation fails.
-	void init(StartupContext& cx);
-
-private:
-	MetaShape* metaMap_               = nullptr;
-	ArrayBufferShape* arrayBufferMap_ = nullptr;
-};
 
 using ContextSet = ::std::set<Context*>;
 
@@ -81,9 +49,11 @@ public:
 	void visit(VisitorT& visitor)
 	{
 		globals_.visit(visitor);
-		for (auto& fn : userRoots()) {
-			fn(visitor);
-		}
+		assert(0);
+		/// TODO: Reimplement user root callback function.
+		// for (auto& fn : userRoots()) {
+		// 	fn(visitor);
+		// }
 	}
 
 	const ContextSet& contexts() const { return contexts_; }

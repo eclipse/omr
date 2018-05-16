@@ -1,18 +1,21 @@
-#if !defined(OMR_OM_MEMBERREF_HPP_)
-#define OMR_OM_MEMBERREF_HPP_
+#if !defined(OMR_OM_REF_HPP_)
+#define OMR_OM_REF_HPP_
 
 #include <type_traits>
+#include <cstdint>
 
 namespace OMR
 {
 namespace Om
 {
-/// A pointer to managed memory. It is GC-Unsafe. This is a very simple
-/// pointer-wrapper.
+
+using Ref = std::uintptr_t;
+
+#if 0 /////////////////////////////////////////////////////////
+
 template <typename T>
-class Ref
-{
-public:
+struct RefTypes {
+
 	using ElementType = std::remove_extent<T>;
 
 	using DifferenceType = std::ptrdiff_t;
@@ -21,8 +24,16 @@ public:
 	using Rebind = Ref<U>;
 
 	using ConstType = Rebind<const T>;
+};
 
-	constexpr Ref() : value(nullptr) {}
+/// A pointer to managed memory. It is GC-Unsafe. This is a very simple
+/// pointer-wrapper.
+template <typename T = void>
+class Ref : public RefTypes<T>
+{
+public:
+
+	constexpr Ref() = default;
 
 	constexpr Ref(std::nullptr_t) : value(nullptr) {}
 
@@ -74,7 +85,15 @@ private:
 	T* value_;
 };
 
+template <>
+class Ref<void>
+{
+
+};
+
+#endif /////////////////////////////////////////////////////////
+
 }  // namespace Om
 }  // namespace OMR
 
-#endif  // OMR_OM_MEMBERREF_HPP_
+#endif  // OMR_OM_REF_HPP_

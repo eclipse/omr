@@ -3,7 +3,7 @@
 
 #include <OMR/Om/MarkingFn.hpp>
 #include <OMR/Om/MemoryManager.hpp>
-#include <OMR/Om/RootRef.hpp>
+#include <OMR/Om/RootList.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -17,14 +17,11 @@ namespace OMR
 {
 namespace Om
 {
-struct Cell;
-struct Shape;
-struct MetaShape;
-struct ObjectMap;
-struct Object;
 
+class Cell;
+class Shape;
+class Object;
 class Globals;
-class RefSeq;
 
 /// TODO: Protect the Context constructor, force applications to use RunContext.
 
@@ -48,7 +45,7 @@ public:
 
 	MM_EnvironmentBase* omrGcThread() const noexcept;
 
-	RootRefSeq& stackRoots() noexcept { return stackRoots_; }
+	RootList& stackRoots() noexcept { return stackRoots_; }
 
 	MarkingFnVector& userRoots() noexcept { return userRoots_; }
 
@@ -57,7 +54,7 @@ public:
 private:
 	MemoryManager* manager_;
 	OMR_VMThread* omrVmThread_;
-	RootRefSeq stackRoots_;
+	RootList stackRoots_;
 	MarkingFnVector userRoots_;
 };
 

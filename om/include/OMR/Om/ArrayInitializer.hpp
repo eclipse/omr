@@ -1,25 +1,26 @@
 #if !defined(OMR_OM_ARRAYBUFFERINITIALIZER_HPP_)
 #define OMR_OM_ARRAYBUFFERINITIALIZER_HPP_
 
-#include <OMR/Om/ArrayBuffer.hpp>
+#include <OMR/Om/Array.hpp>
 #include <OMR/Om/Context.hpp>
+#include <OMR/Om/Initializer.hpp>
 
 namespace OMR
 {
 namespace Om
 {
 
-class ArrayBufferInitializer : public Initializer
+class ArrayInitializer : public Initializer
 {
 public:
-	explicit ArrayBufferInitializer(std::size_t size) : size_(size) {}
+	explicit ArrayInitializer(std::size_t size) : size_(size) {}
 
 	virtual Cell* operator()(Context& cx, Cell* cell) override
 	{
-		auto buffer = reinterpret_cast<ArrayBuffer*>(cell);
-		auto map    = cx.globals().arrayBufferShape();
-		new (buffer) ArrayBuffer(map, size_);
-		return &buffer->baseCell();
+		auto array = reinterpret_cast<Array*>(cell);
+		Shape* layout = cx.globals().arrayBufferShape();
+		new (array) Array(layout, size_);
+		return reinterpret_cast<Cell*>(array);
 	}
 
 private:

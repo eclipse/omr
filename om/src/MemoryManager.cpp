@@ -1,11 +1,10 @@
-#include <OMR/Om/MemoryManager.inl.hpp>
+#include <OMR/Om/MemoryManager.hpp>
 
-#include <OMR/Om/Allocator.inl.hpp>
-#include <OMR/Om/ArrayBufferShape.inl.hpp>
-#include <OMR/Om/Context.inl.hpp>
-#include <OMR/Om/MetaShape.inl.hpp>
-#include <OMR/Om/RootRef.inl.hpp>
-#include <OMR/Om/Traverse.hpp>
+#include <OMR/Om/Allocator.hpp>
+#include <OMR/Om/Context.hpp>
+#include <OMR/Om/Shape.hpp>
+#include <OMR/Om/RootRef.hpp>
+#include <OMR/Om/ShapeOperations.hpp>
 
 namespace OMR
 {
@@ -15,14 +14,14 @@ void
 Globals::init(StartupContext& cx)
 {
 	// The order of allocation matters. The MetaShape must be allocated before any
-	// other map.
-	metaMap_ = MetaShape::allocate(cx);
+	// other shape.
+	metaShape_ = allocateShapeLayout(cx);
 
-	// Tricky note: The object map's transition table is backed by an array
+	// Tricky note: The object shape's transition table is backed by an array
 	// buffer. If the ArrayBufferShape isn't brought up first, than the first
-	// empty object map allocated will not be able to allocate it's transition
+	// empty object shape allocated will not be able to allocate it's transition
 	// table.
-	arrayBufferMap_ = ArrayBufferShape::allocate(cx);
+	arrayBufferShape_ = allocateArrayLayout(cx);
 }
 
 MemoryManager::MemoryManager(ProcessRuntime& runtime) : runtime_(runtime)

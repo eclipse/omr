@@ -3,119 +3,13 @@
 
 #include <OMR/Om/Cell.hpp>
 #include <OMR/Om/Handle.hpp>
+#include <OMR/Om/RootList.hpp>
+#include <OMR/Om/Context.hpp>
 
 namespace OMR
 {
 namespace Om
 {
-
-class Context;
-class RootRefListIterator;
-class RootList;
-class RootListIterator;
-class ConstRootListIterator;
-
-class RootRefIterator
-{
-public:
-	Iterator(const Iterator& other) : current_(other.current_) {}
-
-	T& operator*() const { return current_->first; }
-
-	T* operator->() const { return &current_->first; }
-
-	Iterator& operator++()
-	{
-		current_ = current_->second;
-		return *this;
-	}
-
-	Iterator operator++(int)
-	{
-		Iterator tmp(*this);
-		current_ = current_->second;
-		return tmp;
-	}
-
-	bool operator==(const Iterator& rhs) const { return current_ == rhs.current_; }
-
-	bool operator!=(const Iterator& rhs) const { return current_ != rhs.current_; }
-
-protected:
-	friend class RootRefList;
-
-	Iterator() : current_(nullptr) {}
-
-	Iterator(RootRef) : current_(head) {}
-
-private:
-	RootRef* current_;
-};
-
-class ConstRootRefListIterator
-{
-public:
-	ConstRootListIterator() : current_(nullptr) {}
-
-	ConstRootListIterator(const Cons<T>* head) : current_(head) {}
-
-	ConstRootListIterator(const Iterator& other) : current_(other.current_) {}
-
-	const T& operator*() const { return current_->first; }
-
-	const T* operator->() const { return &current_->first; }
-
-	ConstRootListIterator& operator++()
-	{
-		current_ = current_->second;
-		return *this;
-	}
-
-	ConstRootListIterator operator++(int)
-	{
-		Iterator tmp(*this);
-		current_ = current_->second;
-		return tmp;
-	}
-
-	bool operator==(const ConstRootListIterator& rhs) const { return current_ == rhs.current_; }
-
-	bool operator!=(const ConstRootListIterator& rhs) const { return current_ != rhs.current_; }
-
-private:
-	const Cons<T>* current_;
-};
-
-/// The RefSeq is a sequence of consed GC References. The cons are unowned data,
-/// they must be manually allocated and freed.
-class RootRefList
-{
-public:
-	RefSeq() : head_(nullptr) {}
-
-	Iterator begin() { return head_->begin(); }
-
-	Iterator end() { return head_->end(); }
-
-	ConstRootListIterator begin() const noexcept { return cbegin(); }
-
-	ConstRootListIterator end() const noexcept { return cend(); }
-
-	ConstIterator cbegin() const noexcept { return head_->cbegin(); }
-
-	ConstIterator cend() const noexcept { return head_->cend(); }
-
-	Node* head() const noexcept { return head_; }
-
-	RefSeq& head(Node* h)
-	{
-		head_ = h;
-		return *this;
-	}
-
-private:
-	RootRef* head_;
-};
 
 /// A rooted GC pointer. T must be a managed allocation. This class must be
 /// stack allocated. RootRefs push themselves onto the linked list of stack
@@ -123,83 +17,143 @@ private:
 /// walked, the referants marked, and the references fixed up. RootRefs have a
 /// strict LIFO lifetime, when a RootRef is destroyed, it must be the head of
 /// the list.
+///
+/// For users of Om: this is your primary mechanism for rooting references across
+/// GC boundaries.
 template <typename T>
 class RootRef
 {
-public:
-	inline RootRef(Context& cx, T* ptr = nullptr) noexcept;
+  public:
+	/// RootRefs must be stack allocated, so the new operator is explicitly removed.
+	void *operator new(std::size_t) = delete;
 
-	inline RootRef(RootRefSeq& seq, T* ptr = nullptr) noexcept;
+	RootRef(RootList &list, T *ref) noexcept
+		: list_(list), node_(ref, list.head())
+	{
+		list_.head(&node_);
+	}
 
-	/// Copy from other root ref. The resulting rootref is pushed onto the head of
-	/// the sequence.
+	/// Attach a new RootRef to the context's stackRoots.
+	explicit RootRef(Context &cx, T *ref = nullptr) noexcept : RootRef(cx.stackRoots(), ref)
+	{
+	}
+
+	/// Create a new RootRef that refers to the same object as an existing RootRef. The new RootRef is attached to the head of the list.
 	template <typename U>
-	inline RootRef(const RootRef<U>& other) noexcept;
+	explicit RootRef(const RootRef<U> &other) noexcept
+		: RootRef(other.list(), other.ref())
+	{
+	}
 
-	/// Move from other root ref. The RootRef we are moving from must be the head
-	/// of the RefSeq. The moved-from RootRef is invalidated and cleared.
+	/// Move from other RootRef. The RootRef we are moving from must be the head
+	/// of the List. The moved-from RootRef is invalidated and cleared. This new RootRef replaces the old RootRef in the RootList.
 	template <typename U>
-	inline RootRef(RootRef<U>&& other) noexcept;
+	explicit RootRef(RootRef<U> &&other) noexcept
+		: list_(other.list()), node_(other.node())
+	{
+		other.clear();
+	}
 
-	// RootRefs must be stack allocated.
-	void* operator new(std::size_t) = delete;
-
-	inline ~RootRef() noexcept;
+	~RootRef() noexcept
+	{
+		assert(isHead());
+		list_.head(node_.tail);
+	}
 
 	/// Obtain the underlying pointer.
 	template <typename U = T>
-	U* get() const noexcept
+	U *get() const noexcept
 	{
-		return reinterpret_cast<U*>(node_.first);
+		return reinterpret_cast<U *>(node_.ref);
 	}
 
-	T* operator->() const noexcept { return get(); }
-
-	T& operator*() const noexcept { return *get(); }
-
-	RootRef& operator=(T* p) noexcept
+	T *operator->() const noexcept
 	{
-		node_.first = p;
+		return get();
+	}
+
+	T &operator*() const noexcept
+	{
+		return *get();
+	}
+
+	RootRef &operator=(T *p) noexcept
+	{
+		node_.ref = p;
 		return *this;
 	}
 
-	bool operator==(const RootRef& rhs) const noexcept { return get() == rhs.get(); }
-
-	bool operator==(T* ptr) const noexcept { return get() == ptr; }
-
-	template <typename U = T>
-	U** address() noexcept
+	bool operator==(const RootRef &rhs) const noexcept
 	{
-		return reinterpret_cast<U**>(&node_.first);
+		return get() == rhs.get();
+	}
+
+	bool operator==(T *ptr) const noexcept
+	{
+		return get() == ptr;
+	}
+
+	/// The address of the reference slot in this RootRef.
+	template <typename U = T>
+	U **address() noexcept
+	{
+		return reinterpret_cast<U **>(&node_.ref);
 	}
 
 	template <typename U = T>
-	U* const* address() const noexcept
+	U *const *address() const noexcept
 	{
-		return reinterpret_cast<U* const*>(&node_.first);
+		return reinterpret_cast<U *const *>(&node_.ref);
 	}
 
-	bool isHead() const noexcept { return seq_.head() == &node_; }
+	bool isHead() const noexcept
+	{
+		return list_.head() == &node_;
+	}
 
-	RefSeq& seq() const noexcept { return seq_; }
+	RootList& list() const noexcept
+	{
+		return list_;
+	}
 
-	RefSeq::Node* tail() const noexcept { return next_; }
+	RootListNode &node() noexcept
+	{
+		return node_;
+	}
 
-	operator Handle<T>() const { return Handle<T>(address()); }
+	const RootListNode &node() const noexcept
+	{
+		return node_;
+	}
 
-private:
-	RefSeq& seq_;
-	RootRef& tail_;
+	RootListNode *tail() const noexcept
+	{
+		return node_.tail;
+	}
+
+	/// The RootRef freely degrades into a Handle.
+	operator Handle<T>() const
+	{
+		return Handle<T>(address());
+	}
+
+  private:
+	void clear() noexcept
+	{
+		node_.clear();
+	}
+
+	RootList &list_;
+	RootListNode node_;
 };
 
 template <typename T, typename U>
-T
-get(RootRef<U>& root)
+T get(RootRef<U> &root)
 {
 	return root.template get<T>();
 }
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
-#endif  // OMR_OM_ROOTREF_HPP_
+#endif // OMR_OM_ROOTREF_HPP_

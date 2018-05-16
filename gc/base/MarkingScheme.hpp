@@ -38,6 +38,8 @@
 #include "ObjectScannerState.hpp"
 #include "WorkStack.hpp"
 
+#include "VisitObject.hpp"
+
 /**
  * @todo Provide class documentation
  */
@@ -87,6 +89,20 @@ protected:
 	virtual void tearDown(MM_EnvironmentBase *env);
 
 public:
+
+	struct MarkingVisitor {
+		MarkingVisitor(MM_EnvironmentBase* env, MM_MarkingScheme* markingScheme) :
+			env(env), markingScheme(markingScheme) {}
+		
+		MM_EnvironmentBase* env;
+		MM_MarkingScheme* markingScheme;
+
+		template <class SlotHandleT>
+		void edge(void* referee, SlotHandleT slot) {
+			markingScheme->inlineMarkObjectNoCheck(env, slot.readReference());
+		}
+	};
+
 	static MM_MarkingScheme *newInstance(MM_EnvironmentBase *env);
 	virtual void kill(MM_EnvironmentBase *env);
 	
@@ -220,6 +236,8 @@ public:
 	 */
 	void completeScan(MM_EnvironmentBase *env);
 	
+
+
 	/**
 	 * Public object scanning method. Called from external context, eg concurrent GC. Scans object slots
 	 * and marks objects referenfced from specified object.
@@ -235,32 +253,8 @@ public:
 	MMINLINE uintptr_t
 	scanObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t sizeToDo = UDATA_MAX)
 	{
-		GC_ObjectScannerState objectScannerState;
-		GC_ObjectScanner *objectScanner = _delegate.getObjectScanner(env, objectPtr, &objectScannerState, reason, &sizeToDo);
-		if (NULL != objectScanner) {
-			bool isLeafSlot = false;
-			GC_SlotObject *slotObject;
-#if defined(OMR_GC_LEAF_BITS)
-			while (NULL != (slotObject = objectScanner->getNextSlot(isLeafSlot))) {
-#else /* OMR_GC_LEAF_BITS */
-			while (NULL != (slotObject = objectScanner->getNextSlot())) {
-#endif /* OMR_GC_LEAF_BITS */
-				fixupForwardedSlot(slotObject);
-
-				/* with concurrentMark mutator may NULL the slot so must fetch and check here */
-				inlineMarkObject(env, slotObject->readReferenceFromSlot(), isLeafSlot);
-			}
-		}
-
-		/* Due to concurrent marking and packet overflow _bytesScanned may be much larger than the total live set
-		 * because objects may be scanned multiple times.
-		 */
-		env->_markStats._bytesScanned += sizeToDo;
-		if (SCAN_REASON_PACKET == reason) {
-			env->_markStats._objectsScanned += 1;
-		}
-
-		return sizeToDo;
+		OMRApp::VisitObject<MarkingVisitor>()(objectPtr, MarkingVisitor(env, this));
+		return 0;
 	}
 
 	MM_MarkingDelegate *getMarkingDelegate() { return &_delegate; }

@@ -22,10 +22,10 @@
 #ifndef OMR_OM_OBJECTMODELDELEGATE_HPP_
 #define OMR_OM_OBJECTMODELDELEGATE_HPP_
 
-#include <OMR/Om/ArrayBuffer.hpp>
+#include <OMR/Om/Array.hpp>
 #include <OMR/Om/Shape.hpp>
 #include <OMR/Om/Object.hpp>
-#include <OMR/Om/ObjectMap.hpp>
+#include <OMR/Om/CellOperations.hpp>
 
 #include "ForwardedHeader.hpp"
 #include "objectdescription.h"
@@ -87,15 +87,6 @@ public:
 			getObjectHeaderSizeInBytes(objectPtr);
 	}
 
-	MMINLINE uintptr_t getMapSizeInBytes(const Shape* map)
-	{
-		switch (map->kind()) {
-		case Shape::Kind::OBJECT_MAP: return ((const ObjectMap*)map)->allocSize();
-		case Shape::Kind::META_SHAPE: return sizeof(MetaShape);
-		case Shape::Kind::ARRAY_BUFFER_MAP: return sizeof(ArrayBufferShape);
-		default: throw std::runtime_error("Unrecognized map kind");
-		}
-	}
 	/**
 	 * Get the exact size of the object, in bytes, including the object header and
 	 * data. This should not include any padding bytes added for alignment. If the
@@ -105,13 +96,15 @@ public:
 	 * @param[in] objectPtr points to the object to determine size for
 	 * @return the exact size of an object, in bytes, excluding padding bytes
 	 */
-	MMINLINE uintptr_t getObjectSizeInBytesWithHeader(Cell* cell)
+	MMINLINE uintptr_t getObjectSizeInBytesWithHeader(const Cell* cell)
 	{
-		switch (cell->map()->kind()) {
-		case Shape::Kind::META_SHAPE: return getMapSizeInBytes(reinterpret_cast<Shape*>(cell));
-		case Shape::Kind::OBJECT_MAP: return sizeof(Object);
-		case Shape::Kind::ARRAY_BUFFER_MAP:
-			return reinterpret_cast<const ArrayBuffer*>(cell)->allocSize();
+		switch (cellKind(cell)) {
+		case CellKind::OBJECT:
+			return reinterpret_cast<const Object*>(cell)->allocSize();
+		case CellKind::SHAPE:
+			return reinterpret_cast<const Shape*>(cell)->allocSize();
+		case CellKind::ARRAY:
+			return reinterpret_cast<const Array*>(cell)->allocSize();
 		default: throw std::runtime_error("Unrecognized cell type");
 		}
 	}
@@ -191,7 +184,8 @@ public:
 	 */
 	MMINLINE uintptr_t getForwardedObjectSizeInBytes(MM_ForwardedHeader* forwardedHeader)
 	{
-		return getTotalFootprintInBytes(forwardedHeader->getPreservedSlot());
+		/// TODO: Why is this giving us an fomrobject_t, and not a real pointer?
+		return getTotalFootprintInBytes((reinterpret_cast<Cell*>(forwardedHeader->getPreservedSlot())));
 	}
 
 	/**

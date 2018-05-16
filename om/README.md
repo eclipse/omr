@@ -44,7 +44,7 @@ both untyped and typed slots, of variable widths.
 Om takes a hybrid approach to object classes, where objects can freely
 transition between layouts, but Maps (a kind of class) are able to describe a
 range of slots in the objects. At each layout transition, the object takes on
-a new map. Maps are created and derived on demand.
+a new shape. Maps are created and derived on demand.
 
 ## How is this different from the OMR Garbage Collector?
 

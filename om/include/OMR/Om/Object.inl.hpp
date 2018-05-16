@@ -4,41 +4,18 @@
 #include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Object.hpp>
 
-// #include <StandardWriteBarrier.hpp>
-
 namespace OMR
 {
 namespace Om
 {
-#if 0  //////////////////////////////////////////
-
-inline Object* Object::allocate(Context& cx, Handle<ObjectMap> map) {
-  RootRef<Object> object = nullptr; // TODO: implement allocation
-  construct(cx, object.reinterpret<Cell>(), map);
-  return object.ptr();
-}
-
-inline void Object::construct(Context& cx, Handle<Object> self,
-                              Handle<ObjectMap> map) {
-  Cell::construct(cx, self, map);
-  self->fixedSlots = fixedSlots;
-  memset(slots_, 0, MAX_SLOTS * sizeof(Value));
-  MemVector<Value>::construct(cx, {self, &Object::dynamicSlots}, 0);
-}
-
-inline void Object::clone(Context& xc, Handle<Object> base) {
-  allocate(cx, base->map);
-}
-
-#endif  ////////////////////////////////////////////
 
 /// TODO: Now that we support multiple CoreTypes, the result is not always the
 /// same type. We should be returning the type of slot as well.
 inline bool
 Object::lookup(Context& cx, const Object* self, Id id, SlotDescriptor& result)
 {
-	for (const ObjectMap& map : self->mapHierarchy()) {
-		for (const SlotDescriptor descriptor : map.slotDescriptors()) {
+	for (const Shape& shape : self->layoutTree()) {
+		for (const SlotDescriptor descriptor : shape.slotDescriptors()) {
 			if (descriptor.attr().id() == id) {
 				result = descriptor;
 				return true;
@@ -62,10 +39,10 @@ Object::setValue(Context& cx, Object* self, SlotIndex index, Value value) noexce
 	*pointer       = value;
 }
 
-inline ObjectMap*
+inline Shape*
 Object::lookUpTransition(Context& cx, Infra::Span<const SlotAttr> attributes, std::size_t hash)
 {
-	return map()->lookUpTransition(cx, attributes, hash);
+	return shape()->lookUpTransition(cx, attributes, hash);
 }
 
 #if 0
@@ -75,13 +52,13 @@ inline bool Object::takeExistingTransition(Context& cx, const ObjectDescription&
 }
 #endif
 
-inline ObjectMap*
+inline Shape*
 Object::takeExistingTransition(
 	Context& cx, Infra::Span<const SlotAttr> attributes, std::size_t hash)
 {
-	ObjectMap* derivation = lookUpTransition(cx, attributes, hash);
+	Shape* derivation = lookUpTransition(cx, attributes, hash);
 	if (derivation != nullptr) {
-		map(derivation);
+		shape(derivation);
 		// TODO: Write barrier here?
 	}
 	return derivation;
@@ -94,37 +71,37 @@ inline Index Object::takeNewTransistion(Context& cx, Handle<Object> self, const 
 }
 #endif
 
-inline ObjectMap*
+inline Shape*
 Object::takeNewTransition(
 	Context& cx, Handle<Object> object, Infra::Span<const SlotAttr> attributes,
 	std::size_t hash)
 {
-	RootRef<ObjectMap> base(cx, object->map());
-	ObjectMap* derivation = ObjectMap::derive(cx, base, attributes, hash);
-	object->map(derivation);
+	RootRef<Shape> base(cx, object->shape());
+	Shape* derivation = Shape::derive(cx, base, attributes, hash);
+	object->shape(derivation);
 	return derivation;
 	// TODO: Write barrier on objects taking a new transition
 }
 
-inline ObjectMap*
+inline Shape*
 Object::transition(Context& cx, Handle<Object> object, std::initializer_list<SlotAttr> list)
 {
 	return transition(cx, object, {list.begin(), list.size()});
 }
 
-inline ObjectMap*
+inline Shape*
 Object::transition(Context& cx, Handle<Object> object, Infra::Span<const SlotAttr> attributes)
 {
 	std::size_t hash = Om::hash(attributes);
 	return transition(cx, object, attributes, hash);
 }
 
-inline ObjectMap*
+inline Shape*
 Object::transition(
 	Context& cx, Handle<Object> object, Infra::Span<const SlotAttr> attributes,
 	std::size_t hash)
 {
-	ObjectMap* derivation = object->takeExistingTransition(cx, attributes, hash);
+	Shape* derivation = object->takeExistingTransition(cx, attributes, hash);
 	if (derivation == nullptr) {
 		derivation = takeNewTransition(cx, object, attributes, hash);
 	}
@@ -137,28 +114,28 @@ struct ObjectInitializer : public Initializer
 	virtual Cell* operator()(Context& cx, Cell* cell) override
 	{
 		auto o = reinterpret_cast<Object*>(cell);
-		o->map(map_);
+		o->shape(map_);
 		o->fixedSlotCount_ = 32;
 		return &o->baseCell();
 	}
 
-	Handle<ObjectMap> map_;
+	Handle<Shape> map_;
 };
 
-/// Allocate object with corresponding slot map;
+/// Allocate object with corresponding slot shape;
 inline Object*
-Object::allocate(Context& cx, Handle<ObjectMap> map)
+Object::allocate(Context& cx, Handle<Shape> shape)
 {
 	ObjectInitializer init;
-	init.map_ = map.reinterpret<ObjectMap>();
+	init.map_ = shape.reinterpret<Shape>();
 	return BaseAllocator::allocate<Object>(cx, init);
 }
 
 inline Object*
 Object::allocate(Context& cx)
 {
-	RootRef<ObjectMap> map(cx, ObjectMap::allocate(cx));
-	return allocate(cx, map);
+	RootRef<Shape> shape(cx, Shape::allocate(cx));
+	return allocate(cx, shape);
 }
 
 }  // namespace Om

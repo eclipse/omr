@@ -22,7 +22,7 @@
 #include "OMR/Om/Allocation.hpp"
 #include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Context.inl.hpp>
-#include <OMR/Om/RootRef.inl.hpp>
+#include <OMR/Om/RootRef.hpp>
 
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"

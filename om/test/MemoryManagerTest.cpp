@@ -2,15 +2,15 @@
 
 #include <OMR/Infra/Span.hpp>
 #include <OMR/Om/Allocation.hpp>
-#include <OMR/Om/Allocator.inl.hpp>
-#include <OMR/Om/ArrayBuffer.inl.hpp>
-#include <OMR/Om/ArrayBufferShape.inl.hpp>
+#include <OMR/Om/Allocator.hpp>
+#include <OMR/Om/Array.hpp>
+#include <OMR/Om/ArrayBufferShape.hpp>
 #include <OMR/Om/Context.hpp>
-#include <OMR/Om/Shape.inl.hpp>
-#include <OMR/Om/MemoryManager.inl.hpp>
-#include <OMR/Om/Object.inl.hpp>
-#include <OMR/Om/ObjectMap.inl.hpp>
-#include <OMR/Om/RootRef.inl.hpp>
+#include <OMR/Om/Shape.hpp>
+#include <OMR/Om/MemoryManager.hpp>
+#include <OMR/Om/Object.hpp>
+#include <OMR/Om/Shape.hpp>
+#include <OMR/Om/RootRef.hpp>
 #include <OMR/Om/Runtime.hpp>
 
 #include <omrgc.h>
@@ -40,25 +40,17 @@ TEST(MemoryManagerTest, StartUpAContext)
 	EXPECT_NE(cx.globals().arrayBufferShape(), nullptr);
 }
 
-TEST(MemoryManagerTest, AllocateAMetaMap)
-{
-	MemoryManager manager(runtime);
-	Context cx(manager);
-	MetaShape* metaShape = MetaShape::allocate(cx);
-	EXPECT_EQ(metaShape, metaShape->map());
-}
-
 TEST(MemoryManagerTest, loseAnObjects)
 {
 	MemoryManager manager(runtime);
 	Context cx(manager);
 
-	RootRef<ObjectMap> map(cx, ObjectMap::allocate(cx));
-	Object* object = Object::allocate(cx, map);
+	RootRef<Shape> shape(cx, Shape::allocate(cx));
+	Object* object = Object::allocate(cx, shape);
 
-	EXPECT_NE(object->map(), nullptr);
+	EXPECT_NE(object->shape(), nullptr);
 	OMR_GC_SystemCollect(cx.omrVmThread(), 0);
-	// EXPECT_EQ(object->map(), (Shape*)0x5e5e5e5e5e5e5e5eul);
+	// EXPECT_EQ(object->shape(), (Shape*)0x5e5e5e5e5e5e5e5eul);
 }
 
 TEST(MemoryManagerTest, keepAnObject)
@@ -66,11 +58,11 @@ TEST(MemoryManagerTest, keepAnObject)
 	MemoryManager manager(runtime);
 	Context cx(manager);
 
-	RootRef<ObjectMap> map(cx, ObjectMap::allocate(cx));
-	RootRef<Object> object(cx, Object::allocate(cx, map));
-	EXPECT_EQ(object->map(), map.get());
+	RootRef<Shape> shape(cx, Shape::allocate(cx));
+	RootRef<Object> object(cx, Object::allocate(cx, shape));
+	EXPECT_EQ(object->shape(), shape.get());
 	OMR_GC_SystemCollect(cx.omrVmThread(), 0);
-	EXPECT_EQ(object->map(), map.get());
+	EXPECT_EQ(object->shape(), shape.get());
 }
 
 TEST(MemoryManagerTest, objectTransition)
@@ -78,7 +70,7 @@ TEST(MemoryManagerTest, objectTransition)
 	MemoryManager manager(runtime);
 	Context cx(manager);
 
-	RootRef<ObjectMap> emptyObjectMap(cx, ObjectMap::allocate(cx));
+	RootRef<Shape> emptyObjectMap(cx, Shape::allocate(cx));
 	RootRef<Object> obj1(cx, Object::allocate(cx, emptyObjectMap));
 
 	const std::array<const SlotAttr, 1> attributes{
@@ -89,8 +81,8 @@ TEST(MemoryManagerTest, objectTransition)
 
 	// check
 	{
-		auto m = obj1->map();
-		EXPECT_EQ(m->baseCell().map(), &cx.globals().metaShape()->baseShape());
+		auto m = obj1->shape();
+		EXPECT_EQ(m->baseCell().shape(), &cx.globals().metaShape()->baseShape());
 		EXPECT_EQ(m->slotAttrs(), span);
 		EXPECT_EQ(m->slotCount(), 1);
 		EXPECT_EQ(m->parent()->slotOffset(), 0);
@@ -101,8 +93,8 @@ TEST(MemoryManagerTest, objectTransition)
 		RootRef<Object> obj2(cx, Object::allocate(cx, emptyObjectMap));
 		auto m = obj2->takeExistingTransition(cx, attributes, Om::hash(attributes));
 		EXPECT_NE(m, nullptr);
-		EXPECT_EQ(m, obj1->map());
-		EXPECT_EQ(m, obj2->map());
+		EXPECT_EQ(m, obj1->shape());
+		EXPECT_EQ(m, obj2->shape());
 	}
 }
 

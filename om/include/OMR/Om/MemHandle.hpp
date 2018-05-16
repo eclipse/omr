@@ -8,7 +8,7 @@ namespace OMR
 {
 namespace Om
 {
-struct Cell;
+class Cell;
 
 /// A Member Handle. A handle to a field inside a cell. A MemHandle has two
 /// parts: a handle to the cell, and an offset into that cell. This class acts

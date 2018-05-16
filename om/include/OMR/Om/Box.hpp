@@ -12,7 +12,7 @@ namespace Om
 /// GC facilities. Note that, as a DataCell, there is no way to safetly store
 /// GC references inside a BoxCell.
 template <typename T>
-class Box : public ArrayBuffer
+class Box : public Array
 {
 public:
 	template <typename... Args>

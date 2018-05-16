@@ -68,7 +68,7 @@ protected:
 
 		intptr_t slotCount = _endPtr - _scanPtr;
 
-		/* Initialize the slot map assuming all slots are reference slots or NULL */
+		/* Initialize the slot shape assuming all slots are reference slots or NULL */
 		if (slotCount < _bitsPerScanMap) {
 			_scanMap = (((uintptr_t)1) << slotCount) - 1;
 			setNoMoreSlots();
@@ -115,7 +115,7 @@ public:
 	{
 		intptr_t slotCount = _endPtr - _scanPtr;
 
-		/* Initialize the slot map assuming all slots are reference slots or NULL */
+		/* Initialize the slot shape assuming all slots are reference slots or NULL */
 		if (slotCount < _bitsPerScanMap) {
 			slotMap        = (((uintptr_t)1) << slotCount) - 1;
 			hasNextSlotMap = false;
