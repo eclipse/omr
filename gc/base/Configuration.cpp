@@ -53,17 +53,6 @@
 void
 MM_Configuration::kill(MM_EnvironmentBase* env)
 {
-	MM_GCExtensionsBase *ext = env->getExtensions();
-
-	/* DefaultMemorySpace needs to be killed before
-	 * ext->heap is freed in MM_Configuration::tearDown. */
-	if (NULL != ext->heap) {
-		MM_MemorySpace *modronMemorySpace = ext->heap->getDefaultMemorySpace();
-		if  (NULL != modronMemorySpace) {
-			modronMemorySpace->kill(env);
-		}
-		ext->heap->setDefaultMemorySpace(NULL);
-	}
 	tearDown(env);
 	env->getForge()->free(this);
 }
@@ -96,6 +85,16 @@ void
 MM_Configuration::tearDown(MM_EnvironmentBase* env)
 {
 	MM_GCExtensionsBase* extensions = env->getExtensions();
+
+	/* DefaultMemorySpace needs to be killed before
+	 * ext->heap is freed in MM_Configuration::tearDown. */
+	if (NULL != extensions->heap) {
+		MM_MemorySpace *modronMemorySpace = extensions->heap->getDefaultMemorySpace();
+		if  (NULL != modronMemorySpace) {
+			modronMemorySpace->kill(env);
+		}
+		extensions->heap->setDefaultMemorySpace(NULL);
+	}
 
 	/* referenceChainWalkerMarkMap must be destroyed before Memory Manager is killed */
 	if (NULL != extensions->referenceChainWalkerMarkMap) {

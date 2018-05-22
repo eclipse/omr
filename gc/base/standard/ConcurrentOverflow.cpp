@@ -206,7 +206,7 @@ MM_ConcurrentOverflow::clearCardsForNewSpace(MM_EnvironmentStandard *env, MM_Con
 	/* If scavenger is enabled, we are within a global collect, and we have not already done so,
 	 * then we need to clear cards for new space so we can resolve overflow by dirtying cards
 	*/
-    if(_extensions->scavengerEnabled && collector->isGlobalCollectionInProgress()) {
+    if(_extensions->scavengerEnabled && collector->isStwCollectionInProgress()) {
     	/*
     	 *	Should be the only one thread cleaning cards for NEW space
     	 *	If any other thread handling an WP Overflow came here while cleaning is in progress it should wait

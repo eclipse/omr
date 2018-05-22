@@ -253,7 +253,11 @@ bool
 MM_GCExtensionsBase::isConcurrentScavengerInProgress()
 {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	return scavenger->isConcurrentInProgress();
+	if (NULL != scavenger) {
+		return scavenger->isConcurrentInProgress();
+	} else {
+		return false;
+	}
 #else
 	return false;
 #endif

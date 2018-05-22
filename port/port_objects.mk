@@ -188,6 +188,11 @@ ifeq (ppc,$(OMR_HOST_ARCH))
     OBJECTS += auxv
   endif
 endif
+ifeq (s390,$(OMR_HOST_ARCH))
+  ifeq (linux,$(OMR_HOST_OS))
+    OBJECTS += auxv
+  endif
+endif
 ifeq (1,$(OMR_OPT_CUDA))
   OBJECTS += omrcuda
 endif

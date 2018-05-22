@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2013 IBM Corp. and others
+ * Copyright (c) 2013, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,9 +31,7 @@
 #include <elf.h>
 #include <link.h>
 #include <pthread.h>
-#include <asm/elf.h>
 #include <auxv.h>
-
 #include <errno.h>
 #define __set_errno(the_errno)	*__errno_location() = the_errno
 

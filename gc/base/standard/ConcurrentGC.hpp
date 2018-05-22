@@ -200,7 +200,8 @@ private:
 	MM_ConcurrentCardTable *_cardTable;	/**< pointer to Cards Table */
 	void *_heapBase; 
 	void *_heapAlloc;
-	bool _rebuildInitWork;
+	bool _rebuildInitWorkForAdd; /**< set if heap expansion triggered _initRanges table update */
+	bool _rebuildInitWorkForRemove; /**< set if heap contraction triggered _initRanges table update */
 	bool _retuneAfterHeapResize;
 #if defined(OMR_GC_LARGE_OBJECT_AREA)	
 	MeteringHistory *_meteringHistory;
@@ -215,7 +216,7 @@ private:
 	omrthread_monitor_t _conHelpersActivationMonitor;
 	ConHelperRequest _conHelpersRequest;
 	
-	bool _globalCollectionInProgress;
+	bool _stwCollectionInProgress;  /**< if set, the final STW phase is in progress (mutators not running) */
 	bool _initializeMarkMap;
 	omrthread_monitor_t _initWorkMonitor;
 	omrthread_monitor_t _initWorkCompleteMonitor;
@@ -467,11 +468,11 @@ public:
 	}
 
 	/*
-	 * Return value of _globalCollectionInProgress flag
+	 * Return value of _stwCollectionInProgress flag
 	 */
-	MMINLINE bool isGlobalCollectionInProgress()
+	MMINLINE bool isStwCollectionInProgress()
 	{
-		return _globalCollectionInProgress;
+		return _stwCollectionInProgress;
 	}
 
 	/**
@@ -491,7 +492,8 @@ public:
 		,_cardTable(NULL)
 		,_heapBase(NULL)
 		,_heapAlloc(NULL)
-		,_rebuildInitWork(false)
+		,_rebuildInitWorkForAdd(false)
+		,_rebuildInitWorkForRemove(false)
 		,_retuneAfterHeapResize(false)
 #if defined(OMR_GC_LARGE_OBJECT_AREA)		
 		,_meteringHistory(NULL)
@@ -504,7 +506,7 @@ public:
 		,_conHelpersShutdownCount(0)
 		,_conHelpersActivationMonitor(NULL)
 		,_conHelpersRequest(CONCURRENT_HELPER_WAIT)
-		,_globalCollectionInProgress(false)
+		,_stwCollectionInProgress(false)
 		,_initializeMarkMap(false)
 		,_initWorkMonitor(NULL)
 		,_initWorkCompleteMonitor(NULL)

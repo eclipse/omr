@@ -819,7 +819,6 @@ void
 MM_ConcurrentGC::determineInitWork(MM_EnvironmentBase *env)
 {
 	bool initDone= false;
-	uintptr_t initWork;
 
 	Trc_MM_ConcurrentGC_determineInitWork_Entry(env->getLanguageVMThread());
 	
@@ -901,7 +900,7 @@ MM_ConcurrentGC::determineInitWork(MM_EnvironmentBase *env)
 	}
 
 	/* Now count total initailization work we have to do */
-	initWork = 0;
+	uintptr_t initWork = 0;
 	for (uint32_t i = 0; i < _numInitRanges; i++) {
 		if (_initRanges[i].base != NULL) {
 			initWork += _initRanges[i].initBytes;
@@ -909,7 +908,8 @@ MM_ConcurrentGC::determineInitWork(MM_EnvironmentBase *env)
 	}
 
 	_stats.setInitWorkRequired(initWork);
-	_rebuildInitWork = false;
+	_rebuildInitWorkForAdd = false;
+	_rebuildInitWorkForRemove = false;
 
 	Trc_MM_ConcurrentGC_determineInitWork_Exit(env->getLanguageVMThread());
 }
@@ -1339,7 +1339,7 @@ MM_ConcurrentGC::tuneToHeap(MM_EnvironmentBase *env)
 	 */
 	if(0 == heapSize) {
 		Trc_MM_ConcurrentGC_tuneToHeap_Exit1(env->getLanguageVMThread());
-		assume0(!_globalCollectionInProgress);
+		assume0(!_stwCollectionInProgress);
 		return;
 	}
 
@@ -1360,7 +1360,7 @@ MM_ConcurrentGC::tuneToHeap(MM_EnvironmentBase *env)
 	    _retuneAfterHeapResize = false; /* just in case we have a resize before first concurrent cycle */
 	} else {
 		/* Re-tune based on actual amount traced if we completed tracing on last cycle */
-		if ((NULL == env->_cycleState) || env->_cycleState->_gcCode.isExplicitGC() || !_globalCollectionInProgress) {
+		if ((NULL == env->_cycleState) || env->_cycleState->_gcCode.isExplicitGC() || !_stwCollectionInProgress) {
 			/* Nothing to do - we can't update statistics on a system GC or when no cycle is running */
 		} else if (CONCURRENT_EXHAUSTED <= _stats.getExecutionModeAtGC()) {
 
@@ -1426,8 +1426,30 @@ MM_ConcurrentGC::tuneToHeap(MM_EnvironmentBase *env)
 	/* If heap has changed we need to recalculate the initialization work for
 	 * the next cycle now so we get most accurate estimate for trace size target
 	 */
-	if (_rebuildInitWork) {
-		determineInitWork(env);
+	if (_rebuildInitWorkForAdd || _rebuildInitWorkForRemove) {
+		if (_extensions->isConcurrentScavengerInProgress()) {
+			/* This should really occur in a middle of concurrent phase of Scavenger, 
+			 * when expanding tenure due to failed tenuring */
+			Assert_MM_true(_rebuildInitWorkForAdd);
+			/* Hold _initWorkMonitor to prevent any thread from starting/joining/leaving init work,
+			 * since we are about to change the _initRange table (that initializer threads consume) */
+			omrthread_monitor_enter(_initWorkMonitor);
+
+			/* If there are no active initializers, we are safe to proceed and modify _initRagne table,
+			 * otherwise skip it (rebuild flag will remain set, and the table will be reconfigurated
+			 * at a later, safe point (like beginning of STW phase).
+			 * Even if happens to be 0 initializers, but we are still doing the init, skip it.
+			 * It is safe for heap expansion (caller of this method already did initialization 
+			 * for that  part of the memory), and more importantly it will not trigger unncessary
+			 * redo of the init work, if we were to reset the able in a middle of init phase. */
+			if ((0 == _initializers) && (_stats.getExecutionMode() != CONCURRENT_INIT_RUNNING)) {
+				determineInitWork(env);
+			}
+			omrthread_monitor_exit(_initWorkMonitor);
+		} else {
+			Assert_MM_true(0 == _initializers);
+			determineInitWork(env);
+		}
 	} else {
 		/* ..else just reset for next cycle */
 		resetInitRangesForConcurrentKO();
@@ -1438,7 +1460,7 @@ MM_ConcurrentGC::tuneToHeap(MM_EnvironmentBase *env)
 
 	/*
 	 * Trace target is simply a sum of all work we predict we need to complete marking.
-	 * Initialiization work is accounted for seperately
+	 * Initialization work is accounted for separately
 	 */
 	_traceTargetPass1 = _bytesToTracePass1 + _bytesToCleanPass1;
 	_traceTargetPass2 = _bytesToTracePass2 + _bytesToCleanPass2;
@@ -1456,7 +1478,7 @@ MM_ConcurrentGC::tuneToHeap(MM_EnvironmentBase *env)
 	cardCleaningThreshold = ((uintptr_t)((float)kickoffThreshold / _cardCleaningThresholdFactor));
 
 	/* We need to ensure that we complete tracing just before we run out of
-	 * storage otherwise we will more than likley get an AF whilst last few allocates
+	 * storage otherwise we will more than likely get an AF whilst last few allocates
 	 * are paying finishing off the last bit of tracing. So we create a buffer zone
 	 * by bringing forward the KO threshold. We remember by how much so we can
 	 * make the necessary adjustments to calculations in calculateTraceSize().
@@ -2403,16 +2425,13 @@ MM_ConcurrentGC::doConcurrentInitialization(MM_EnvironmentBase *env, uintptr_t i
 	bool concurrentCollectable;
 
 	omrthread_monitor_enter(_initWorkMonitor);
-
-	/* If the execution state has changed then return */
-	if(_stats.getExecutionMode() != CONCURRENT_INIT_RUNNING) {
+	if (_stats.getExecutionMode() != CONCURRENT_INIT_RUNNING) {
 		omrthread_monitor_exit(_initWorkMonitor);
 		return initDone;
 	}
 
 	if (!allInitRangesProcessed()){ /* We just act as an general helper */
 		_initializers += 1;
-
 		if (!_initSetupDone ) {
 			_markingScheme->getWorkPackets()->reset(env);
 			_markingScheme->workerSetupForGC(env);
@@ -2924,10 +2943,10 @@ MM_ConcurrentGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *
 	/* Ensure caller acquired exclusive VM access before calling */
 	Assert_MM_mustHaveExclusiveVMAccess(env->getOmrVMThread());
 
-	/* Set flag to show global collector is active; some operations need to know if they
+	/* Set flag to show STW collector is active; some operations need to know if they
 	 * are called during a global collect or not, eg heapAddRange
 	 */
-	_globalCollectionInProgress = true;
+	_stwCollectionInProgress = true;
 
 	/* Assume for now we will need to initialize the mark map. If we subsequenly find
 	 * we got far enough through the concurrent mark cycle then we will reset this flag
@@ -3015,7 +3034,7 @@ MM_ConcurrentGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *
 			 * concurrent we need to determine the new ranges of
 			 * NEW bits which need clearing
 			 */
-			if (_rebuildInitWork) {
+			if (_rebuildInitWorkForAdd || _rebuildInitWorkForRemove) {
 				determineInitWork(env);
 			}
 			resetInitRangesForSTW();
@@ -3137,7 +3156,7 @@ MM_ConcurrentGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace 
 	}
 
 	/* Collection is complete so reset flags */
-	_globalCollectionInProgress = false;
+	_stwCollectionInProgress = false;
 	_forcedKickoff  = false;
 	_stats.clearKickoffReason();
 
@@ -3244,7 +3263,7 @@ MM_ConcurrentGC::heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspa
 
 	Trc_MM_ConcurrentGC_heapAddRange_Entry(env->getLanguageVMThread(), subspace, size, lowAddress, highAddress);
 
-	_rebuildInitWork = true;
+	_rebuildInitWorkForAdd = true;
 	if (subspace->isConcurrentCollectable()) {
 		_retuneAfterHeapResize = true;
 	}
@@ -3303,7 +3322,7 @@ MM_ConcurrentGC::heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *sub
 {
 	Trc_MM_ConcurrentGC_heapRemoveRange_Entry(env->getLanguageVMThread(), subspace, size, lowAddress, highAddress, lowValidAddress, highValidAddress);
 
-	_rebuildInitWork = true;
+	_rebuildInitWorkForRemove = true;
 	if (subspace->isConcurrentCollectable()) {
 		_retuneAfterHeapResize = true;
 	}
@@ -3326,10 +3345,9 @@ MM_ConcurrentGC::heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *sub
 void
 MM_ConcurrentGC::heapReconfigured(MM_EnvironmentBase *env)
 {
-
 	/* If called outside a global collection for a heap expand/contract..
 	 */
-	if( !_globalCollectionInProgress && _rebuildInitWork) {
+	if (!_stwCollectionInProgress && (_rebuildInitWorkForAdd || _rebuildInitWorkForRemove)) {
 		/* ... and a concurrent cycle has not yet started then we
 		 *  tune to heap here to reflect new heap size
 		 *  Note: CMVC 153167 : Under gencon, there is a timing hole where
