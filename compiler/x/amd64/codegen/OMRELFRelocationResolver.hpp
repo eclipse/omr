@@ -43,7 +43,7 @@ namespace AMD64 {
 /**
  * @brief The ELFRelocationResolver class translates between a TR::StaticRelocation and the ELF relocation type required for the platform.
  */
-class OMR_EXTENSIBLE ELFRelocationResolver : public ::OMR::ELFRelocationResolver
+class /*OMR_EXTENSIBLE*/ ELFRelocationResolver : public ::OMR::ELFRelocationResolver
    {
 public:
 
