@@ -23,7 +23,7 @@
 #include "omrTest.h"
 
 extern "C" int
-testMain(int argc, char** argv, char** envp)
+omr_main_entry(int argc, char** argv, char** envp)
 {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

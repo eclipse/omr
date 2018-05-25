@@ -12,6 +12,7 @@
 #include <OMR/Om/Runtime.hpp>
 #include <OMR/Om/TransitionSet.hpp>
 #include <OMR/Om/Object.inl.hpp>
+#include <OMR/Om/Context.inl.hpp>
 
 #include <gtest/gtest.h>
 

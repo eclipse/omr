@@ -22,13 +22,9 @@
 #include "omrTest.h"
 #include "rasTestHelpers.hpp"
 
-extern "C" {
-int omr_main_entry(int argc, char **argv, char **envp);
-}
-
 PortEnvironment *rasTestEnv;
 
-int
+extern "C" int
 omr_main_entry(int argc, char **argv, char **envp)
 {
 	::testing::InitGoogleTest(&argc, argv);

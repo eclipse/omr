@@ -29,6 +29,8 @@ omr_assert(FATAL_ERROR
 	MESSAGE "The OMR example code is temporarily incompatible with Om"
 )
 
+set(CMAKE_CXX_STANDARD 11 PARENT_SCOPE)
+
 # Om Debug Options
 
 set(OMR_OM_POISON_RECLAIMED_MEMORY OFF CACHE BOOL "Debug: Posion reclaimed memory")
@@ -63,6 +65,7 @@ target_compile_definitions(omr_om_base
 		-DUT_DIRECT_TRACE_REGISTRATION
 )
 
+
 # GC glue
 
 set(OMR_GC_GLUE_TARGET "omr_om_gc_glue" CACHE INTERNAL "Om's GC glue")
@@ -84,6 +87,7 @@ target_sources(omr_om_gc_glue
 		${CMAKE_CURRENT_SOURCE_DIR}/glue/StartupManagerImpl.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/glue/VerboseManagerImpl.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/MemoryManager.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/src/Value.cpp
 )
 
 target_link_libraries(omr_om_gc_glue
@@ -115,10 +119,25 @@ add_library(omr_om_core_glue INTERFACE)
 target_sources(omr_om_core_glue
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}/glue/LanguageVMGlue.c
-		${CMAKE_CURRENT_SOURCE_DIR}/glue/Profiling.c
 )
 
 target_link_libraries(omr_om_core_glue
+	INTERFACE
+		omr_om_base
+)
+
+# RAS glue
+
+set(OMR_RAS_GLUE_TARGET "omr_om_ras_glue" CACHE INTERNAL "Om's RAS glue")
+
+add_library(omr_om_ras_glue INTERFACE)
+
+target_sources(omr_om_ras_glue
+	INTERFACE
+	${CMAKE_CURRENT_SOURCE_DIR}/glue/Profiling.c
+)
+
+target_link_libraries(omr_om_ras_glue
 	INTERFACE
 		omr_om_base
 )
@@ -128,3 +147,10 @@ target_link_libraries(omr_om_core_glue
 if(OMR_OM_TEST)
 	add_subdirectory(test)
 endif()
+
+# Installation
+
+install(
+	DIRECTORY include
+	DESTINATION usr/include
+)

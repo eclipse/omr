@@ -3,6 +3,7 @@
 
 #include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Object.hpp>
+#include <OMR/Om/ShapeOperations.hpp>
 
 namespace OMR
 {
@@ -15,7 +16,7 @@ inline bool
 Object::lookup(Context& cx, const Object* self, Id id, SlotDescriptor& result)
 {
 	for (const Shape& shape : self->layoutTree()) {
-		for (const SlotDescriptor descriptor : shape.instanceSlotDescriptors()) {
+		for (const SlotDescriptor descriptor : shape.instanceSlotDescriptorRange()) {
 			if (descriptor.attr().id() == id) {
 				result = descriptor;
 				return true;
@@ -42,15 +43,8 @@ Object::setValue(Context& cx, Object* self, SlotIndex index, Value value) noexce
 inline Shape*
 Object::lookUpTransition(Context& cx, Infra::Span<const SlotAttr> attributes, std::size_t hash)
 {
-	return shape()->lookUpTransition(cx, attributes, hash);
+	return Om::lookUpTransition(cx, layout(), attributes, hash);
 }
-
-#if 0
-inline bool Object::takeExistingTransition(Context& cx, const ObjectDescription& desc, Index& result) {
-  auto hash = desc.hash();
-  return takeExistingTransition(desc, hash, result);
-}
-#endif
 
 inline Shape*
 Object::takeExistingTransition(
@@ -58,8 +52,7 @@ Object::takeExistingTransition(
 {
 	Shape* derivation = lookUpTransition(cx, attributes, hash);
 	if (derivation != nullptr) {
-		shape(derivation);
-		// TODO: Write barrier here?
+		layout(derivation);
 	}
 	return derivation;
 }
@@ -76,9 +69,9 @@ Object::takeNewTransition(
 	Context& cx, Handle<Object> object, Infra::Span<const SlotAttr> attributes,
 	std::size_t hash)
 {
-	RootRef<Shape> base(cx, object->shape());
-	Shape* derivation = Shape::derive(cx, base, attributes, hash);
-	object->shape(derivation);
+	RootRef<Shape> base(cx, object->layout());
+	Shape* derivation = deriveObjectLayout(cx, base, attributes, hash);
+	object->layout(derivation);
 	return derivation;
 	// TODO: Write barrier on objects taking a new transition
 }
@@ -114,28 +107,38 @@ struct ObjectInitializer : public Initializer
 	virtual Cell* operator()(Context& cx, Cell* cell) override
 	{
 		auto o = reinterpret_cast<Object*>(cell);
-		o->shape(map_);
+		o->layout(layout);
 		o->fixedSlotCount_ = 32;
-		return &o->baseCell();
+		return reinterpret_cast<Cell*>(o);
 	}
 
-	Handle<Shape> map_;
+	Handle<Shape> layout;
 };
 
 /// Allocate object with corresponding slot shape;
 inline Object*
-Object::allocate(Context& cx, Handle<Shape> shape)
+Object::allocate(Context& cx, Handle<Shape> layout)
 {
 	ObjectInitializer init;
-	init.map_ = shape.reinterpret<Shape>();
+	init.layout = layout;
 	return BaseAllocator::allocate<Object>(cx, init);
+}
+
+inline Object*
+allocateObject(Context& cx, Handle<Shape> layout) {
+	return Object::allocate(cx, layout);
 }
 
 inline Object*
 Object::allocate(Context& cx)
 {
-	RootRef<Shape> shape(cx, Shape::allocate(cx));
+	RootRef<Shape> shape(cx, allocateRootObjectLayout(cx, {}));
 	return allocate(cx, shape);
+}
+
+inline Object*
+allocateEmptyObject(Context& cx) {
+	return Object::allocate(cx);
 }
 
 }  // namespace Om

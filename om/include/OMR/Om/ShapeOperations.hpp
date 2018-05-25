@@ -49,7 +49,7 @@ struct RootObjectLayoutInitializer : public Initializer
 };
 
 /// Allocate a shape that lays out an empty object. Starts a new ShapeTree.
-Shape *
+inline Shape *
 allocateRootObjectLayout(Context& cx, Infra::Span<const SlotAttr> attrs)
 {
 	RootObjectLayoutInitializer init;

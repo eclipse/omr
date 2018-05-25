@@ -23,7 +23,8 @@
 #include "omrvm.h"
 
 omr_error_t
-OMR_Glue_BindCurrentThread(OMR_VM *omrVM, const char *threadName, OMR_VMThread **omrVMThread)
+
+(OMR_VM *omrVM, const char *threadName, OMR_VMThread **omrVMThread)
 {
 	omr_error_t rc = OMR_ERROR_NONE;
 

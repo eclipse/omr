@@ -36,10 +36,10 @@ add_dependencies(omrvmstartup
 	trc_omrti
 )
 
-
 target_link_libraries(omrvmstartup
 	PRIVATE
 		omrcore
+		${OMR_CORE_GLUE_TARGET}
 		${OMR_HOOK_LIB}
 		${OMR_TRACE_LIB}
 )

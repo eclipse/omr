@@ -4,12 +4,11 @@
 #include <OMR/Om/Allocation.hpp>
 #include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Array.hpp>
-#include <OMR/Om/ArrayBufferShape.hpp>
-#include <OMR/Om/Context.hpp>
+#include <OMR/Om/Context.inl.hpp>
 #include <OMR/Om/Shape.hpp>
 #include <OMR/Om/MemoryManager.hpp>
-#include <OMR/Om/Object.hpp>
-#include <OMR/Om/Shape.hpp>
+#include <OMR/Om/Object.inl.hpp>
+#include <OMR/Om/ShapeOperations.hpp>
 #include <OMR/Om/RootRef.hpp>
 #include <OMR/Om/Runtime.hpp>
 
@@ -45,12 +44,13 @@ TEST(MemoryManagerTest, loseAnObjects)
 	MemoryManager manager(runtime);
 	Context cx(manager);
 
-	RootRef<Shape> shape(cx, Shape::allocate(cx));
-	Object* object = Object::allocate(cx, shape);
+	RootRef<Shape> shape(cx, allocateRootObjectLayout(cx, {}));
+	Object* object = allocateObject(cx, shape);
 
-	EXPECT_NE(object->shape(), nullptr);
+	EXPECT_NE(object->layout(), nullptr);
+	// EXPECT_EQ(object->layout(), shape);
 	OMR_GC_SystemCollect(cx.omrVmThread(), 0);
-	// EXPECT_EQ(object->shape(), (Shape*)0x5e5e5e5e5e5e5e5eul);
+	// EXPECT_EQ(object->layout(), (Shape*)0x5e5e5e5e5e5e5e5eul);
 }
 
 TEST(MemoryManagerTest, keepAnObject)
@@ -58,11 +58,11 @@ TEST(MemoryManagerTest, keepAnObject)
 	MemoryManager manager(runtime);
 	Context cx(manager);
 
-	RootRef<Shape> shape(cx, Shape::allocate(cx));
-	RootRef<Object> object(cx, Object::allocate(cx, shape));
-	EXPECT_EQ(object->shape(), shape.get());
+	RootRef<Shape> shape(cx, allocateRootObjectLayout(cx, {}));
+	RootRef<Object> object(cx, allocateObject(cx, shape));
+	EXPECT_EQ(object->layout(), shape.get());
 	OMR_GC_SystemCollect(cx.omrVmThread(), 0);
-	EXPECT_EQ(object->shape(), shape.get());
+	EXPECT_EQ(object->layout(), shape.get());
 }
 
 TEST(MemoryManagerTest, objectTransition)
@@ -70,8 +70,8 @@ TEST(MemoryManagerTest, objectTransition)
 	MemoryManager manager(runtime);
 	Context cx(manager);
 
-	RootRef<Shape> emptyObjectMap(cx, Shape::allocate(cx));
-	RootRef<Object> obj1(cx, Object::allocate(cx, emptyObjectMap));
+	RootRef<Shape> emptyObjectMap(cx, allocateRootObjectLayout(cx, {}));
+	RootRef<Object> obj1(cx, allocateObject(cx, emptyObjectMap));
 
 	const std::array<const SlotAttr, 1> attributes{
 		{SlotAttr(SlotType(Id(0), CoreType::VALUE), Id(0))}};
@@ -81,20 +81,20 @@ TEST(MemoryManagerTest, objectTransition)
 
 	// check
 	{
-		auto m = obj1->shape();
-		EXPECT_EQ(m->baseCell().shape(), &cx.globals().metaShape()->baseShape());
-		EXPECT_EQ(m->slotAttrs(), span);
-		EXPECT_EQ(m->slotCount(), 1);
-		EXPECT_EQ(m->parent()->slotOffset(), 0);
+		auto m = obj1->layout();
+		EXPECT_EQ(m->layout(), cx.globals().metaShape());
+		EXPECT_EQ(m->instanceSlotAttrs(), span);
+		EXPECT_EQ(m->instanceSlotCount(), 1);
+		EXPECT_EQ(m->parentLayout()->instanceSlotOffset(), 0);
 	}
 
 	// second object
 	{
-		RootRef<Object> obj2(cx, Object::allocate(cx, emptyObjectMap));
+		RootRef<Object> obj2(cx, allocateObject(cx, emptyObjectMap));
 		auto m = obj2->takeExistingTransition(cx, attributes, Om::hash(attributes));
 		EXPECT_NE(m, nullptr);
-		EXPECT_EQ(m, obj1->shape());
-		EXPECT_EQ(m, obj2->shape());
+		EXPECT_EQ(m, obj1->layout());
+		EXPECT_EQ(m, obj2->layout());
 	}
 }
 

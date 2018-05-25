@@ -167,6 +167,9 @@ add_library(omrgc STATIC
 	stats/ScavengerStats.cpp # TODO only compile if scavenger or VLHGC. Is this actually used by VLHGC?
 	stats/SweepStats.cpp
 
+	stats/ConcurrentGCStats.cpp
+	stats/CompactStats.cpp
+
 	structs/ForwardedHeader.cpp
 	structs/HashTableIterator.cpp
 	structs/OMRVMThreadListIterator.cpp
@@ -223,8 +226,6 @@ if(OMR_GC_MODRON_STANDARD)
 				base/standard/CompactFixHeapForWalkTask.cpp
 				base/standard/CompactScheme.cpp
 				base/standard/ParallelCompactTask.cpp
-				
-				stats/CompactStats.cpp
 		)
 	endif()
 	if(OMR_GC_MODRON_CONCURRENT_MARK)
@@ -240,8 +241,6 @@ if(OMR_GC_MODRON_STANDARD)
 				base/standard/ConcurrentPrepareCardTableTask.cpp
 				base/standard/ConcurrentSafepointCallback.cpp
 				base/standard/WorkPacketsConcurrent.cpp
-				
-				stats/ConcurrentGCStats.cpp
 		)
 		if(OMR_GC_MODRON_SCAVENGER)
 			target_sources(omrgc

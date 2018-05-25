@@ -31,6 +31,7 @@
 OMR_VMThread*
 MM_EnvironmentDelegate::attachVMThread(OMR_VM* omrVM, const char* threadName, uintptr_t reason)
 {
+#if 0
 	OMR_VMThread* omrVMThread = NULL;
 	omr_error_t rc            = OMR_ERROR_NONE;
 
@@ -39,14 +40,18 @@ MM_EnvironmentDelegate::attachVMThread(OMR_VM* omrVM, const char* threadName, ui
 		return NULL;
 	}
 	return omrVMThread;
+#endif
+  return nullptr;
 }
 
 void
 MM_EnvironmentDelegate::detachVMThread(OMR_VM* omrVM, OMR_VMThread* omrVMThread, uintptr_t reason)
 {
+#if 0
 	if (NULL != omrVMThread) {
 		OMR_Glue_UnbindCurrentThread(omrVMThread);
 	}
+#endif
 }
 
 void

@@ -1,17 +1,22 @@
 # Om: Meditations on Objects
 
-A dynamic object model for Eclipse OMR.
+A distribution of the Eclipse OMR GC providing a dynamic object model.
 
 ## Super Quick Start
 
 ### Building Om
 
 ```sh
-git clone https://github.com/b9org/om
-cd om
+git clone https://github.com/eclipse/omr
+cd omr
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Debug -GNinja
+cmake ..   -GNinja \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DOMR_OM=ON \
+  -DOMR_EXAMPLE=OFF \
+  -DOMR_GC=ON \
+  -DOMR_JITBUILDER=ON
 ninja
 ninja test
 ```
@@ -19,24 +24,51 @@ ninja test
 ### Basic API usage
 
 ```c++
+
+#include <OMR/Om/ObjectOperations.hpp>
+#include <OMR/Om/MemoryManager.hpp>
+#include <OMR/Om/ProcessRuntime.hpp>
+#include <OMR/Om/Context.hpp>
+#include <OMR/Om/collect.hpp>
+
 using Om = OMR::Om;
 
 int main(int argc, char** argv) {
 	// The runtime handles process-wide initalization.
-	Om::ProcessRuntime runtime;
+	OMR::Om::ProcessRuntime runtime;
+	runtime.initialize();
 
 	// The manager has it's own isolated heap.
-	Om::MemoryManager manager(runtime);
+	OMR::Om::MemoryManager manager(runtime);
+	manager.initialize();
 
 	// The Context is per-thread, and provides shared heap access.
-	Om::RunContext cx(manager);
+	OMR::Om::RunContext cx(manager);
+	cx.initialize();
 
-	// Allocate an object and root it.
-	Om::RootRef<Object> root(cx, Om::Object::allocate(cx));
+	// Allocate an object
+	OMR::Om::Object* object = OMR::Om::allocateObject(cx);
+
+	// Root the object
+	OMR::Om::RootRef<OMR::Om::Object> root(cx, object);
+
+	// Run a complete system collection
+	OMR::Om::systemCollect(cx);
+
+	return 0;
 }
 ```
 
+and link with:
+
+```sh
+gcc ./om-example.cpp -o om-example -lomrgc
+```
+
 ## The Object Model
+
+Objects provide a mix of strongly typed and untyped slots. Object layouts can
+be modified during execution.
 
 Objects are untyped, and grow slots dynamically during execution. Om supports
 both untyped and typed slots, of variable widths.
