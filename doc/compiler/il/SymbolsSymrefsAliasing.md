@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2017 IBM Corp. and others
+Copyright (c) 2016, 2018 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,12 +20,12 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-# Symbols, Symbol References, and Aliasing in Testarossa
+# Symbols, Symbol References, and Aliasing in OMR compiler
 
 ## Introduction
 
 This document explains and documents the concepts and implementation of symbols,
-symbol references, and aliasing in Testarossa.
+symbol references, and aliasing in OMR compiler.
 
 ## Symbols and Symbol References
 
@@ -103,10 +103,19 @@ each bit specifies whether a corresponding symref is a member of the set or not.
 ### Basic concept
 
 Aliasing information is associated with symrefs. However, the structural definition of
-aliasing used in Testarossa differs from the classical definition of aliasing. Specifically,
-it also is used as an indicator of side-effects, rather than to mean that multiple names are
+aliasing used in OMR compiler differs from the classical definition of aliasing. Specifically,
+it is also used as an indicator of side-effects, rather than to mean that multiple names are
 used to access the same memory. For example, a method symref may alias a static symref,
 signifying that a call to the method kills the value of the static.
+
+At a high level, aliasing information is created by calling 
+`TR::AliasBuilder::createAliasInfo`. The optimizer infrastructure invokes `createAliasInfo` 
+if alias sets have not been built yet or alias sets have been invalidated by a previous 
+optimization pass. An optimization pass will invalidate alias sets if it is creating a 
+symbol reference, i.e. inliner, PRE, EA, etc. Generally, alias information is not maintained 
+by each optimization, and is meant to be rebuilt before a subsequent optimization that 
+needs it. An optimization will make queries on the alias sets and decide whether a specific 
+transformation should be performed during its pass.
 
 ### Asymmetric aliasing
 
@@ -131,6 +140,14 @@ Mostly, these queries have to do with the kind of symbol wrapped by the symref. 
 associated bit vectors themselves are stored in the `TR::AliasBuilder` class. For a
 given symref, each query is successively performed. Every time a query returns a
 positive result, the associated bit vector is "ORed" into the final alias bit vector.
+
+In particular, if `TR::SymbolReference::getUseDefAliasesBV()` is invoked on a shadow 
+or static symref, it is likely that the program is doing a resolved access store so 
+aliasing information is required. In other words, if it is storing into a shadow or 
+static symef, the question is what other symbol references are potentially overwritten 
+by the store. Please note that any unresolved accesses (loads or stores) can have 
+non-zero alias sets because the resolution process may load a class and call clinit, 
+which means the load or store is treated as a method call.
 
 ### TR::AliasBuilder
 
@@ -191,3 +208,61 @@ aliasing could apply to instances of `TR::Node` as well as symrefs. However, sin
 is no longer the case, the class is only used as a shortcut to access the aliases of the
 contained symref.
 
+### Aliasing Bit Vectors
+
+Because most of the bit vectors present in the `TR::AliasBuilder` class were originally 
+created for Java, discussion in this section will mostly be in the context of Java.
+
+In Java, a callee cannot overwrite an auto or parameter, so aliasing is fairly trivial 
+for autos and parameters. Since Java provides type guarantees, for instance integers 
+cannot be aliased to floats, we group alias bit vectors by their types. In addition, 
+we group them by what kind of symbol references they point to, i.e. statics vs. shadows. 
+Therefore, the alias bit vectors can be grouped by the type categories and by the 
+storage categories. Within each grouping, the alias bit vectors will never intersect. 
+We will discuss a few specific kinds of alias bit vectors below.
+
+#### Generic int shadow bit vector
+
+Generic int shadow bit vector is a relatively simple concept. It is for accessing a field 
+of an object but no symbol reference has been made for it. Some optimizations such as 
+escape analysis and new initialization operate under this scenario. This alias bit vector 
+calculation is very conservative, i.e. aliasing to everything. Because generic int shadow 
+is not desirable but needed, we created **generic int array and nonarray shadow bit 
+vectors** to distinguish between array and nonarray if we know enough about the base 
+class. These two bit vectors are mutually exclusive, i.e. if a symbol reference is in 
+the generic int array shadow bit vector, it will not be in the generic int nonarray 
+shadow bit vector, but will be included in the generic int shadow bit vector. Generic 
+int shadow bit vector will include both generic int array and nonarray shadow bit vectors.
+
+#### Unsafe bit vector
+
+Unsafe bit vector is created for sun.misc.unsafe APIs to fast pass random memory 
+accesses and accesses to a field off an object given the base address of the object. 
+The unsafe bit vector calculation is fairly conservative, it aliases everything that 
+is a shadow or static.
+
+#### gcSafePoint bit vector
+
+gcSafePoint bit vector is created to handle balanced GC mode or real-time mode. During 
+these modes, we have pointers to arraylets (with no headers). Marking these pointers as 
+collected or not collected won’t work, i.e. collected will cause a crash in GC with no 
+header information and not collected means we might get garbage after GC. The 
+gcSafePoint bit vector is conservative and holds symbol references that need to be 
+killed at GC points, for instance at async checks, or allocations, or calls. 
+This results in less commoning across GC points.
+
+#### Immutable bit vector
+
+Java has immutable types, i.e. integer, short, byte, long, float, double and string. 
+To change their values, you will have to create new ones except in their constructor 
+methods. We don’t want to include these symbol references across calls such as 
+StringBuilder.append(), allowing commoning across the call in this case. We can look 
+ahead in other classes and see if they are immutable under higher opt level.
+
+#### catchLocalUse bit vector
+
+catchLocalUse bit vector contains use-only aliases related to exceptions in general. 
+It does a reachability analysis from all catch blocks and mark all local variable 
+symbol references that can be used. If there is a store before a load for the same 
+symbol reference, it will not mark the symbol reference for the load. Shadows and 
+statics are not considered in the catchLocalUse bit vector calculation.
