@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -428,11 +428,11 @@ protected:
 
    typedef TR::typed_allocator<std::pair<const char * const, OMR::StructType *>, TR::Region &> StructMapAllocator;
    typedef std::map<const char *, OMR::StructType *, StrComparator, StructMapAllocator> StructMap;
-   StructMap          _structsByName;
+   StructMap        * _structsByName;
 
    typedef TR::typed_allocator<std::pair<const char * const, OMR::UnionType *>, TR::Region &> UnionMapAllocator;
    typedef std::map<const char *, OMR::UnionType *, StrComparator, UnionMapAllocator> UnionMap;
-   UnionMap           _unionsByName;
+   UnionMap         * _unionsByName;
 
    // convenience for primitive types
    TR::IlType       * _primitiveType[TR::NumOMRTypes];
