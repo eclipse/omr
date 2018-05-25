@@ -3,6 +3,7 @@
 
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/MemHandle.hpp>
+#include <OMR/Om/BasicSlotHandle.hpp>
 
 #include <cstdint>
 
@@ -13,6 +14,7 @@ namespace Om
 /// A simple array API backed by a heap-allocated Array.
 /// The array understands it's size, but has no notion of capacity, or unfilled
 /// slots. MemArrays can be resized.
+/// @see-also: MemArrayOps
 template <typename T>
 class MemArray
 {
@@ -44,10 +46,9 @@ public:
 	void visit(VisitorT visitor)
 	{
 		if (buffer_ != nullptr)
-			visitor.edge(nullptr, (Cell*)buffer_);
+			visitor.edge(this, BasicSlotHandle(&buffer_));
 	}
 
-private:
 	Array* buffer_;
 };
 

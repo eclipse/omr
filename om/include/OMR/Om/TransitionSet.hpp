@@ -6,6 +6,7 @@
 #include <OMR/Om/MemHandle.hpp>
 #include <OMR/Om/MemArray.hpp>
 #include <OMR/Om/SlotAttr.hpp>
+#include <OMR/Om/BasicSlotHandle.hpp>
 
 #include <cstddef>
 #include <type_traits>
@@ -18,6 +19,11 @@ namespace Om
 class Shape;
 class Context;
 
+struct TransitionSetEntry
+{
+	Shape *shape;
+};
+
 /// The TransitionSet is a collection of Maps for the purpose of tracking known
 /// object transitions. As objects grow slots, a chain of maps is built up. The
 /// transition table tells us the existing derivations of a given shape. When an
@@ -26,28 +32,42 @@ class Context;
 /// native objects.
 class TransitionSet
 {
-public:
-	struct Entry
-	{
-		Shape* shape;
-	};
-
-	static bool construct(Context& cx, MemHandle<TransitionSet> self);
-
+  public:
 	TransitionSet() = default;
 
-	std::size_t size() const { return table_.size(); }
+	std::size_t size() const { return table.size(); }
 
-	Shape* lookup(Infra::Span<const SlotAttr> desc, std::size_t hash) const;
+	Shape *lookup(Infra::Span<const SlotAttr> desc, std::size_t hash) const;
 
 	// try to store object in the table. if the table is full, fail.
-	bool tryStore(Shape* shape, std::size_t hash);
+	bool tryStore(Shape *shape, std::size_t hash);
+
+	bool initialized() const noexcept {
+		return table.initialized();
+	}
 
 	template <typename VisitorT>
-	void visit(VisitorT& visitor);
+	void visit(VisitorT &visitor)
+	{
+		if (!initialized())
+		{
+			return;
+		}
 
-private:
-	MemArray<Entry> table_;
+		// note that this visit will not walk the contents, just the buffer itself.
+		table.visit(visitor);
+
+		for (std::size_t i = 0; i < size(); i++)
+		{
+			TransitionSetEntry &e = table[i];
+			if (e.shape != nullptr)
+			{
+				visitor.edge(this, BasicSlotHandle(&e.shape));
+			}
+		}
+	}
+
+	MemArray<TransitionSetEntry> table;
 };
 
 static_assert(
@@ -55,10 +75,10 @@ static_assert(
 	"TransitionSet must be a StandardLayoutType.");
 
 static_assert(
-	std::is_standard_layout<TransitionSet::Entry>::value,
+	std::is_standard_layout<TransitionSetEntry>::value,
 	"TransitionSet must be a StandardLayoutType.");
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
-#endif  // OMR_OM_MEMTRANSITIONSET_HPP_
+#endif // OMR_OM_MEMTRANSITIONSET_HPP_

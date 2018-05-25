@@ -20,7 +20,7 @@
 ###############################################################################
 
 omr_assert(FATAL_ERROR
-	TEST OMR_GC AND OMR_JITBUILDER
+	TEST OMR_GC # AND OMR_JITBUILDER
 	MESSAGE "Om requires the OMR_GC and OMR_JITBUILDER to be enabled"
 )
 
@@ -34,6 +34,7 @@ omr_assert(FATAL_ERROR
 set(OMR_OM_POISON_RECLAIMED_MEMORY OFF CACHE BOOL "Debug: Posion reclaimed memory")
 set(OMR_OM_COLLECT_ON_ALLOCATE OFF CACHE BOOL "Debug: do a full system collect on every allocation")
 set(OMR_OM_TRACE OFF CACHE BOOL "Debug: Verbose tracing prints to stderr")
+set(OMR_OM_TEST ON CACHE BOOL "Enable the Om tests")
 
 # Om configuration
 
@@ -121,3 +122,9 @@ target_link_libraries(omr_om_core_glue
 	INTERFACE
 		omr_om_base
 )
+
+# Testing
+
+if(OMR_OM_TEST)
+	add_subdirectory(test)
+endif()

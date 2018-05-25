@@ -5,7 +5,7 @@
 #include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Context.hpp>
 #include <OMR/Om/Shape.hpp>
-#include <OMR/Om/TransitionSet.inl.hpp>
+#include <OMR/Om/TransitionSetOperations.hpp>
 #include <OMR/Om/Initializer.hpp>
 #include <OMR/Om/Handle.hpp>
 
@@ -14,131 +14,157 @@ namespace OMR
 namespace Om
 {
 
-/// A functor that performs basic initialization of an Shape.
-struct ShapeInitializer : public Initializer
+/// A helper to copy a span of slot attributes into a shape.
+/// Also calculates the total width of the slot attributes.
+inline void assignSlotAttrIntoShape(Shape *shape, Infra::Span<const SlotAttr> attributes)
+{
+	assert(shape->instanceSlotCount() == attributes.length());
+	std::size_t instanceSlotWidth = 0;
+	for (std::size_t i = 0; i < attributes.length(); i++)
+	{
+		shape->instanceSlotAttrs()[i] = attributes[i];
+		instanceSlotWidth += attributes[i].type().width();
+	}
+	shape->instanceSlotWidth_ = instanceSlotWidth;
+	shape->instanceSlotCount_ = attributes.length();
+}
+
+/// Initialize a root object layout shape.
+struct RootObjectLayoutInitializer : public Initializer
 {
 	virtual Cell *operator()(Context &cx, Cell *cell) noexcept override
 	{
-		auto meta = cx.globals().metaShape();
-		new (cell) Shape(meta, parent, attributes);
-		return cell;
+		Shape *shape = reinterpret_cast<Shape *>(cell);
+		shape->layout(cx.globals().metaShape()); // TODO: Remove the MetaShape global
+		shape->parentLayout_ = nullptr;
+		shape->instanceSlotOffset_ = 0;
+		shape->instanceSlotWidth_ = 0;
+		shape->instanceSlotCount_ = attrs.length();
+		shape->shapeTreeData_.instanceKind = CellKind::OBJECT;
+		assignSlotAttrIntoShape(shape, attrs);
+		return reinterpret_cast<Cell *>(shape);
+	}
+
+	Infra::Span<const SlotAttr> attrs;
+};
+
+/// Allocate a shape that lays out an empty object. Starts a new ShapeTree.
+Shape *
+allocateRootObjectLayout(Context& cx, Infra::Span<const SlotAttr> attrs)
+{
+	RootObjectLayoutInitializer init;
+	init.attrs = attrs;
+	std::size_t size = Shape::calculateCellSize(attrs.length());
+	Shape *result = BaseAllocator::allocate<Shape>(cx, init, size);
+	return result;
+}
+
+/// A functor that performs basic initialization of an Shape that lays out an object.
+struct ObjectLayoutInitializer : public Initializer
+{
+	virtual Cell *operator()(Context &cx, Cell *cell) noexcept override
+	{
+		Shape *shape = reinterpret_cast<Shape *>(cell);
+		shape->layout(cx.globals().metaShape());
+		shape->parentLayout_ = parentLayout.get();
+		shape->instanceSlotOffset_ = parentLayout->instanceSlotOffset_ + parentLayout->instanceSlotWidth_;
+		shape->shapeTreeData_.instanceKind = CellKind::OBJECT;
+		assignSlotAttrIntoShape(shape, attributes);
+		return reinterpret_cast<Cell *>(shape);
 	}
 
 	Handle<Shape> parentLayout;
 	Infra::Span<const SlotAttr> attributes;
 };
 
-/// Allocate an object shape that describes one slot.
+/// Allocate a shape that lays out zero or more slots in an Object.
 inline Shape *allocateObjectLayout(Context &cx, Handle<Shape> parentLayout, Infra::Span<const SlotAttr> attributes)
 {
-	ShapeInitializer init;
-	init.parent = parent;
+	ObjectLayoutInitializer init;
+	init.parentLayout = parentLayout;
 	init.attributes = attributes;
 
-	std::size_t size = Shape::calculateAllocSize(attributes.length());
+	std::size_t size = Shape::calculateCellSize(attributes.length());
 	Shape *result = BaseAllocator::allocate<Shape>(cx, init, size);
-
-	RootRef<Shape> root(cx, result);
-	bool ok = construct(cx, root);
-	if (!ok)
-	{
-		return result = nullptr;
-	}
-	else
-	{
-		result = root.get();
-	}
-
 	return result;
 }
 
 /// An Intializer for a Shape that lays out other Shape objects.
-struct ShapeLayoutInitializer : public Intializer
+struct ShapeLayoutInitializer : public Initializer
 {
-	virtual Cell *operator()(Context &cx, Cell *cell) noexcept override {
-		Shape* shape = reinterpret_cast<Shape*>(cell);
-		shape->instanceKind(CellKind::Shape);
+	virtual Cell *operator()(Context &cx, Cell *cell) noexcept override
+	{
+		Shape *shape = reinterpret_cast<Shape *>(cell);
+		shape->instanceKind(CellKind::SHAPE);
 		shape->layout(shape);
-		return reinterpret_cast<Cell*>(shape);
+		shape->parentLayout_ = nullptr;
+		shape->instanceSlotOffset_ = 0;
+		shape->instanceSlotCount_ = 0;
+		shape->instanceSlotWidth_ = 0;
+		return reinterpret_cast<Cell *>(shape);
 	}
-}
+};
 
-/// Allocate a Shape that lays out: A shape with no slots.
+/// Allocate a Shape that lays out: a Shape with no slots. The resulting Shape is it's own layout.
 inline Shape *
 allocateShapeLayout(Context &cx)
 {
 	ShapeLayoutInitializer init;
-	std::size_t cellSize = Shape::calculateAllocSize(0); // no slot descriptors
-	BaseAllocator::allocate<Shape>(cx, init, size);
+	std::size_t cellSize = Shape::calculateCellSize(0); // no slot descriptors
+	return BaseAllocator::allocate<Shape>(cx, init, cellSize);
 }
 
 /// An Intializer for a Shape that lays out other Shape objects.
-struct ArrayLayoutInitializer : public Intializer
+struct ArrayLayoutInitializer : public Initializer
 {
-	virtual Cell *operator()(Context &cx, Cell *cell) noexcept override {
-		Shape* shape = reinterpret_cast<Shape*>(cell);
-		shape->instanceKind(CellKind::Array);
+	virtual Cell *operator()(Context &cx, Cell *cell) noexcept override
+	{
+		Shape *shape = reinterpret_cast<Shape *>(cell);
+		shape->instanceKind(CellKind::ARRAY);
 		shape->layout(cx.globals().metaShape());
-		return reinterpret_cast<Cell*>(shape);
+		return reinterpret_cast<Cell *>(shape);
 	}
-}
+};
 
 /// Allocate a Shape that lays out: An Array with no slots.
 inline Shape *
 allocateArrayLayout(Context &cx)
 {
 	ArrayLayoutInitializer init;
-	std::size_t cellSize = Shape::calculateAllocSize(0); // no slot descriptors
-	BaseAllocator::allocate<Shape>(cx, init, size);
-}
-
-/// Allocate an object shape that describes no slots
-inline Shape *allocateEmptyShape(Context &cx)
-{
-	// TODO: Don't construct a bogus handle here, find a clearer way to do this.
-	Shape *parent = nullptr;
-	return allocate(cx, Handle<Shape>(parent), Infra::Span<const SlotAttr>(nullptr, 0));
-}
-
-/// Part two of initialization. @see-also ShapeInitializer
-inline bool constructShape(Context &cx, Handle<Shape> self)
-{
-	return TransitionSet::construct(cx, {self, &Shape::transitions_});
-}
-
-inline bool constructShape(
-	Shape *meta, Shape *parent, const Infra::Span<const SlotAttr> &attributes)
-	: baseMap_(meta, Shape::Kind::OBJECT_MAP), parent_(parent), transitions_(),
-	  // TODO: Find a clearer way to construct a shape without a parent.
-	  slotOffset_(parent ? (parent->slotOffset() + parent->slotWidth()) : 0), slotWidth_(0), slotCount_(attributes.length())
-{
-	for (std::size_t i = 0; i < slotCount_; i++)
-	{
-		attributes_[i] = attributes[i];
-		slotWidth_ += attributes[i].type().width();
-	}
+	std::size_t cellSize = Shape::calculateCellSize(0); // no slot descriptors
+	return BaseAllocator::allocate<Shape>(cx, init, cellSize);
 }
 
 /// Create a slot shape that derives base. Add the new slot shape to the set of
 /// known transistions from base.
 inline Shape *
-deriveShape(Context &cx, Handle<Shape> base, const Infra::Span<const SlotAttr> &attr,
+deriveObjectLayout(Context &cx, Handle<Shape> base, const Infra::Span<const SlotAttr> &attr,
 			std::size_t hash)
 {
-	Shape *derivation = Shape::allocate(cx, base, attributes);
-	base->transitions_.tryStore(derivation, hash);
-	// TODO: Write barrier? the object shape
+	if (base->transitions_.initialized()) {
+		initializeTransitionSet(cx, {base, &Shape::transitions_});
+	}
+	Shape *derivation = allocateObjectLayout(cx, base, attr);
+	tryStoreTransition(base->transitions_, TransitionSetEntry{derivation}, hash);
 	return derivation;
 }
 
-} // namespace Om
-
 /// Look up a transition to a derived shape.
 inline Shape *
-lookUpTransition(Context &cx, Shape *shape, const Infra::Span<const SlotAttr> &attr, std::size_t hash)
+lookUpTransition(Context &cx, Shape *shape, const Infra::Span<const SlotAttr> &attrs, std::size_t hash)
 {
-	return shape->transitions_.lookup(attributes, hash);
+	return lookUpTransition(shape->transitions_, attrs, hash);
 }
+
+#if 0
+
+inline bool
+tryStoreTransition(Shape* shape, Shape* transitionTarget, std::size_t hash)
+{
+	return tryStoreTransition(shape->transitionSet, entry, hash);
+}
+
+
 
 inline ArrayBufferShape::ArrayBufferShape(MetaShape *meta) : base_{{meta, Shape::Kind::ARRAY_BUFFER_MAP}} {}
 
@@ -158,6 +184,7 @@ ArrayBufferShape::allocate(Context &cx)
 	ArrayBufferMapInitializer init;
 	return BaseAllocator::allocate<ArrayBufferShape>(cx, init);
 }
+#endif // 0
 
 } // namespace OMR
 } // namespace OMR

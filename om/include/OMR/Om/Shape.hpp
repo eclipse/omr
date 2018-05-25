@@ -18,7 +18,7 @@ namespace OMR
 namespace Om
 {
 
-/// Common properties shared by all Shapes in a Shape tree. Particularly, invariant facts about the instance are stored here.ß
+/// Common properties shared by all Shapes in a Shape tree. Particularly, invariant facts about the instance are stored here.
 struct ShapeTreeData
 {
 	/// Total amount of space available for inline / fixed slots.
@@ -36,9 +36,9 @@ class Shape
 {
 public:
 	/// Calculate the allocation size
-	static constexpr std::size_t calculateAllocSize(std::size_t slotCount)
+	static constexpr std::size_t calculateCellSize(std::size_t slotCount)
 	{
-		return sizeof(Shape) + sizeof(SlotAttr) * slotCount;
+		return sizeof(Shape) + (sizeof(SlotAttr) * slotCount);
 	}
 
 	/// Convert this object to a cell.
@@ -61,13 +61,27 @@ public:
 
 	CellKind instanceKind() const
 	{
-		return shapeTreeData_->instanceKind;
+		return shapeTreeData_.instanceKind;
+	}
+
+	void instanceKind(CellKind k) {
+		shapeTreeData_.instanceKind = k;
 	}
 
 	/// Get the Span of `SlotAttr` described by this shape.
 	Infra::Span<SlotAttr> instanceSlotAttrs() noexcept { return {instanceSlotAttrs_, instanceSlotCount_}; }
 
 	Infra::Span<const SlotAttr> instanceSlotAttrs() const noexcept { return {instanceSlotAttrs_, instanceSlotCount_}; }
+
+#if 0
+	/// TODO: Implement assignSlotAttrs with iterators
+	template <typename IteratorT>
+	void assignSlotAttrs(IteratorT begin, IteratorT end) {
+		for (; begin != end; ++begin) {
+
+		}
+	}
+#endif
 
 	/// Get the SlotDescriptors described by this shape.
 	SlotDescriptorRange instanceSlotDescriptorRange() const noexcept
@@ -93,7 +107,9 @@ public:
 	Shape *parentLayout() const noexcept { return parentLayout_; }
 
 	/// Common properties shared by all shapes in the shape-tree.
-	ShapeTreeData *shapeTreeData() const noexcept { return shapeTreeData_; }
+	ShapeTreeData *shapeTreeData() noexcept { return &shapeTreeData_; }
+
+	const ShapeTreeData *constShapeTreeData() const noexcept { return &shapeTreeData_; }
 
 	/// @}
 
@@ -107,28 +123,27 @@ public:
 		visitHeader(header(), visitor);
 		visitor.edge(this, BasicSlotHandle(&parentLayout_));
 		transitions_.visit(visitor);
-		visitor.edge(this, BasicSlotHandle(&shapeTreeData_));
+		// visitor.edge(this, BasicSlotHandle(&shapeTreeData_));
 	}
 
 	/// Size of this GC cell.
-	std::size_t allocSize() const { return calculateAllocSize(instanceSlotCount()); }
+	std::size_t allocSize() const { return calculateCellSize(instanceSlotCount()); }
 
 	/// @}
 
-  protected:
 	CellHeader header_;
 	Shape *parentLayout_;
 	TransitionSet transitions_;
 	std::size_t instanceSlotOffset_;
 	std::size_t instanceSlotWidth_;
 	std::size_t instanceSlotCount_;
-	ShapeTreeData *shapeTreeData_;
+	ShapeTreeData shapeTreeData_; // TODO: Move to seperate allocation for sharing.
 	SlotAttr instanceSlotAttrs_[0];
 };
 
 static_assert(std::is_standard_layout<Shape>::value, "Shape must be a StandardLayoutType.");
 
-/// An offset table for the jit compilers.
+/// An offset table for compilers.
 struct ShapeOffsets
 {
 };

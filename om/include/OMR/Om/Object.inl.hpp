@@ -15,7 +15,7 @@ inline bool
 Object::lookup(Context& cx, const Object* self, Id id, SlotDescriptor& result)
 {
 	for (const Shape& shape : self->layoutTree()) {
-		for (const SlotDescriptor descriptor : shape.slotDescriptors()) {
+		for (const SlotDescriptor descriptor : shape.instanceSlotDescriptors()) {
 			if (descriptor.attr().id() == id) {
 				result = descriptor;
 				return true;

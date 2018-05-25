@@ -11,6 +11,7 @@
 #include <OMR/Om/RootRef.hpp>
 #include <OMR/Om/Runtime.hpp>
 #include <OMR/Om/TransitionSet.hpp>
+#include <OMR/Om/Object.inl.hpp>
 
 #include <gtest/gtest.h>
 
@@ -26,7 +27,7 @@ TEST(RootTest, basic)
 {
 	MemoryManager manager(runtime);
 	Context cx(manager);
-	RootRef<Object> root(cx, Object::allocate(cx));
+	RootRef<Object> root(cx, allocateEmptyObject(cx));
 	Handle<Object> handle(root);
 	// MemHandle<Object::Base> member(handle, &Object::base);
 }

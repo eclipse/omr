@@ -20,23 +20,23 @@ namespace Om
 namespace Test
 {
 // clang-format off
-std::vector<std::int32_t> integers = {
-  0, 1, -1, 42, -42,
+std::vector<std::int64_t> integers = {
+  0l, 1l, -1l, 42l, -42l, 1l << 47
   std::numeric_limits<std::int32_t>::max(),
-  std::numeric_limits<std::int32_t>::min()
+  std::numeric_limits<std::int32_t>::min(),
 };
 // clang-format on
 
 TEST(ValueTest, integerConstructorRoundTrip)
 {
 	for (auto i : integers) {
-		Value value(i);
+		Value value(AS_INT48, i);
 
 		EXPECT_TRUE(value.isBoxedValue());
-		EXPECT_TRUE(value.isInteger());
+		EXPECT_TRUE(value.isInt48());
 		EXPECT_FALSE(value.isDouble());
 
-		auto i2 = value.getInteger();
+		auto i2 = value.getInt48();
 		EXPECT_EQ(i, i2);
 	}
 }
@@ -73,12 +73,11 @@ TEST(ValueTest, doubleRoundTrip)
 
 	for (auto d : doubles) {
 		for (auto sign : {+1.0, -1.0}) {
-			d *= sign;
-			Value value;
-			value.setDouble(d);
+			Value value(AS_DOUBLE, d * sign)
 			EXPECT_EQ(d, value.getDouble());
 			EXPECT_FALSE(value.isBoxedValue());
 			EXPECT_TRUE(value.isDouble());
+			EXPECT_FALSE(value.isInt48());
 		}
 	}
 }
@@ -106,8 +105,7 @@ TEST(ValueTest, quietNanDouble)
 TEST(ValueTest, pointerRoundTrip)
 {
 	for (void* p : {(void*)0, (void*)1, (void*)(-1 & VALUE_MASK)}) {
-		Value value;
-		value.setPtr(p);
+		Value value(AS_PTR, p);
 		EXPECT_EQ(p, value.getPtr());
 		EXPECT_TRUE(value.isBoxedValue());
 		EXPECT_TRUE(value.isPtr());

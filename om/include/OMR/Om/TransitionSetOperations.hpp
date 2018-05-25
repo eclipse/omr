@@ -4,71 +4,76 @@
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/TransitionSet.hpp>
 #include <OMR/Om/MemArrayOperations.hpp>
+#include <OMR/Om/Shape.hpp>
+#include <OMR/Om/Context.hpp>
 
 namespace OMR
 {
 namespace Om
 {
 
+/// TODO: Write barrier?
 inline bool
-constructTransitionSet(Context& cx, MemHandle<TransitionSet> self)
+initializeTransitionSet(Context &cx, MemHandle<TransitionSet> self)
 {
-	return constructMemArray<Entry>(
-		cx, MemHandle<MemArray<Entry>>(self, &TransitionSet::table_), 32);
+	
+	return initializeMemArray(cx,
+							  MemHandle<MemArray<TransitionSetEntry>>(self, &TransitionSet::table),
+							  32);
 }
 
-inline Shape*
-TransitionSet::lookup(Infra::Span<const SlotAttr> attributes, std::size_t hash) const
-{
-	std::size_t sz = size();
-	for (std::size_t i = 0; i < sz; i++) {
-		std::size_t idx = (hash + i) % sz;
-		auto shape        = table_.at(idx).shape;
-		if (shape == nullptr) {
-			return nullptr;
-		}
-		if (attributes == shape->slotAttrs()) {
-			return shape;
-		}
-	}
-	return nullptr;
-}
-
+/// Store a transition entry into the transition set. Can fail if the transition set is full.
+/// TODO: Make updates to table atomic
+/// TODO: Do we want a write barrier on the transition stores
+/// TODO: Make transition table resizable
 inline bool
-TransitionSet::tryStore(Shape* shape, std::size_t hash)
+tryStoreTransition(TransitionSet &set, TransitionSetEntry entry, std::size_t hash)
 {
-	std::size_t sz = size();
+	std::size_t sz = set.size();
 
-	for (std::size_t i = 0; i < sz; i++) {
+	for (std::size_t i = 0; i < sz; i++)
+	{
 		std::size_t idx = (hash + i) % sz;
-		if (table_[idx].shape == nullptr) {
-			table_[idx] = Entry{shape};
+		if (set.table[idx].shape == nullptr)
+		{
+			set.table[idx] = entry;
 			return true;
 		}
 	}
 	return false;
 }
 
-template <typename VisitorT>
-inline void
-TransitionSet::visit(VisitorT& visitor)
+/// Lookup a transition in the set, using a precalculated hash. Returns nullptr on failure.
+inline Shape *
+lookUpTransition(TransitionSet &set, Infra::Span<const SlotAttr> attributes, std::size_t hash)
 {
-	if (!table_.initialized()) {
-		return;
-	}
+	std::size_t size = set.size();
 
-	// note that this visit will not walk the contents, just the buffer itself.
-	table_.visit(visitor);
+	for (std::size_t i = 0; i < size; i++)
+	{
+		std::size_t index = (hash + i) % size;
+		Shape *shape = set.table.at(index).shape;
 
-	for (std::size_t i = 0; i < size(); i++) {
-		const Entry& e = table_[i];
-		if (e.shape != nullptr) {
-			visitor.edge((Cell*)this, (Cell*)e.shape);
+		if (shape == nullptr)
+		{
+			return nullptr;
+		}
+		if (attributes == shape->instanceSlotAttrs())
+		{
+			return shape;
 		}
 	}
+	return nullptr;
 }
 
-}  // namespace Om
-}  // namespace OMR
+/// Lookup a transition. Returns nullptr on failure.
+inline Shape *
+lookUpTransition(TransitionSet &set, Infra::Span<const SlotAttr> attributes)
+{
+	return lookUpTransition(set, attributes, hash(attributes));
+}
 
-#endif  // OMR_OM_TRANSITIONSET_INL_HPP_
+} // namespace Om
+} // namespace OMR
+
+#endif // OMR_OM_TRANSITIONSET_INL_HPP_

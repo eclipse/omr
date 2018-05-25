@@ -8,15 +8,15 @@
 namespace OMR {
 namespace Om {
 
-inline std::size_t arrayAllocationSize(std::size_t dataSize) {
+static std::size_t arrayAllocationSize(std::size_t dataSize) {
 	return sizeof(Array) + dataSize;
 }
 
 /// Allocate a new Array<T>. GC Safepoint. size is the number of
 /// elements, not the size in bytes of the buffer.
-inline Array* allocateArray(Context& cx, std::size_t nelements) {
-	ArrayBufferInitializer init(size);
-	return BaseAllocator::allocate<Array>(cx, init, Array::calcAllocSize(size));
+inline Array* allocateArray(Context& cx, std::size_t dataSize) {
+	ArrayInitializer init(dataSize);
+	return BaseAllocator::allocate<Array>(cx, init, arrayAllocationSize(dataSize));
 }
 
 } // namespace Om

@@ -7,6 +7,8 @@ namespace Om {
 /// A node in a RootList.
 struct RootListNode {
 
+	RootListNode(void* ref, RootListNode* tail) : ref(ref), tail(tail) {}
+
 	void clear() noexcept {
 		ref = nullptr;
 		tail = nullptr;

@@ -35,7 +35,7 @@ add_subdirectory(threadtest)
 add_subdirectory(utiltest)
 add_subdirectory(vmtest)
 
-if(OMR_GC)
+if(OMR_GC AND OMR_GC_TEST)
 	add_subdirectory(gctest)
 endif()
 
