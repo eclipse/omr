@@ -46,6 +46,12 @@ set(OMR_TOOLS ON CACHE BOOL "Enable the native build tools")
 set(OMR_RAS_TDF_TRACE ON CACHE BOOL "Enable trace engine")
 set(OMR_OM OFF CACHE BOOL "Enable the Om GC object library")
 
+###
+### Testing Flags
+###
+
+set(OMR_GC_TEST ${OMR_GC} CACHE BOOL "Enable the GC tests.")
+
 ## OMR_JIT is required for OMR_JITBUILDER and OMR_TEST_COMPILER
 if(OMR_JITBUILDER OR OMR_TEST_COMPILER)
 	set(OMR_JIT ON CACHE BOOL "" FORCE)
@@ -84,7 +90,6 @@ set(OMR_CORE_GLUE_TARGET "NOTFOUND" CACHE STRING "The core glue target, must be 
 
 # TODO: This is a pretty crazy list, can we move it to their subprojects?
 
-set(OMR_GC_TEST ${OMR_GC} CACHE BOOL "Enable the GC tests.")
 
 set(OMR_GC_ALLOCATION_TAX ON CACHE BOOL "TODO: Document")
 set(OMR_GC_ARRAYLETS ON CACHE BOOL "TODO: Document")

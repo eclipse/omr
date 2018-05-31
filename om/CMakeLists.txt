@@ -147,7 +147,7 @@ target_link_libraries(omr_om_ras_glue
 
 # Testing
 
-if(OMR_OM_TEST)
+if(OMR_FVTEST AND OMR_OM_TEST)
 	add_subdirectory(test)
 endif()
 

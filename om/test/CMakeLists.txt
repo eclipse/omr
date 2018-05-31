@@ -1,8 +1,7 @@
 include(OmrAssert)
 
-omr_assert(
-	TEST OMR_FVTEST AND OMR_OM_TEST
-)
+omr_assert(TEST OMR_FVTEST)
+omr_assert(TEST_OMR_OM_TEST)
 
 function(omr_add_om_test testname)
 	add_executable("${testname}"
