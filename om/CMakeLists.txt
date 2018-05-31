@@ -38,7 +38,7 @@ set(CMAKE_CXX_STANDARD 11 PARENT_SCOPE)
 set(OMR_OM_POISON_RECLAIMED_MEMORY OFF CACHE BOOL "Debug: Posion reclaimed memory")
 set(OMR_OM_COLLECT_ON_ALLOCATE OFF CACHE BOOL "Debug: do a full system collect on every allocation")
 set(OMR_OM_TRACE OFF CACHE BOOL "Debug: Verbose tracing prints to stderr")
-set(OMR_OM_TEST ON CACHE BOOL "Enable the Om tests")
+set(OMR_OM_TEST ${OMR_FVTEST} CACHE BOOL "Enable the Om tests")
 
 # Om configuration
 
@@ -58,8 +58,8 @@ target_include_directories(omr_om_base
 		include/
 		glue/
 		${CMAKE_CURRENT_BINARY_DIR}/include
-		${CMAKE_BINARY_DIR}/third_party/omr/
-		../third_party/omr/include_core/
+		${CMAKE_BINARY_DIR}
+		../include_core/
 )
 
 target_compile_definitions(omr_om_base
