@@ -4,34 +4,26 @@
 #include <OMR/Om/BasicSlotHandle.hpp>
 #include <OMR/Om/Cell.hpp>
 #include <OMR/Om/ValueSlotHandle.hpp>
+#include <OMR/Om/Value.hpp>
 
 #include <ostream>
 
 namespace OMR {
 namespace Om {
 
-/// A debug helper for printing the slots in an object.
 
-operator<<(std::ostream& out, BasicSlotHandle)
-class PrintingVisitor {
-public:
-
-	template <typename SlotHandleT>
-	void edgeSlot(void* cell, SlotHandleT slotHandle) {
-		out_ << 
+inline operator<<(std::ostream& out, Value value) {
+	switch(value.kind()) {
+	case Value::Kind::DOUBLE: return out << "(double " << value.getDouble() << ")";
+	case Value::Kind::INT48: return out << "(int48 " << value.getInt48() << ")";
+	case Value::Kind::UINT48: return out << "(uint48 " << value.getUint48() << ")";
+	case Value::Kind::PTR: return out << "(ptr " << value.getPtr() << ")";
+	case Value::Kind::REF: return out << "(ref " << value.getRef() << ")";
+	default: return out << "(unknown " << value.raw() << ")";
 	}
-
-private:
-	std::ostream& out_;
-};
-
-} // 
-
-operator<<(std::ostream& out, Cell* cell) {
-	dispatchVisit(cell, )
 }
 
-}
-}
+}  // namespace Om
+}  // namespace OMR
 
 #endif // OMR_OM_PRINTINGVISITOR_HPP_
