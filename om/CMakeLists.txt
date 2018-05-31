@@ -69,7 +69,6 @@ target_compile_definitions(omr_om_base
 		-DUT_DIRECT_TRACE_REGISTRATION
 )
 
-
 # GC glue
 
 set(OMR_GC_GLUE_TARGET "omr_om_gc_glue" CACHE INTERNAL "Om's GC glue")
