@@ -11,8 +11,7 @@
 namespace OMR {
 namespace Om {
 
-
-inline operator<<(std::ostream& out, Value value) {
+inline std::ostream& operator<<(std::ostream& out, Value value) {
 	switch(value.kind()) {
 	case Value::Kind::DOUBLE: return out << "(double " << value.getDouble() << ")";
 	case Value::Kind::INT48: return out << "(int48 " << value.getInt48() << ")";
@@ -27,3 +26,4 @@ inline operator<<(std::ostream& out, Value value) {
 }  // namespace OMR
 
 #endif // OMR_OM_PRINTINGVISITOR_HPP_
+	
