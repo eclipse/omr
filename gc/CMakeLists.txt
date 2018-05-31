@@ -341,12 +341,13 @@ target_include_directories(omrgc
 )
 
 target_link_libraries(omrgc
-	PRIVATE
+	PUBLIC
 		${OMR_GC_GLUE_TARGET}
-		omrutil
 		omrcore
 		${OMR_THREAD_LIB}
 		${OMR_PORT_LIB}
+	PRIVATE
+		omrutil
 		${OMR_HOOK_LIB}
 )
 
