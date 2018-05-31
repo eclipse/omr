@@ -1,7 +1,7 @@
 #include <OMR/Om/MemorySystem.hpp>
 
 #include <OMR/Om/Allocator.hpp>
-#include <OMR/Om/Context.hpp>
+#include <OMR/Om/Context.inl.hpp>
 #include <OMR/Om/Shape.hpp>
 #include <OMR/Om/RootRef.hpp>
 #include <OMR/Om/ShapeOperations.hpp>
