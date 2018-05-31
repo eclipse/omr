@@ -1,16 +1,14 @@
-#if !defined(OMR_OM_DISPATCHVISIT_HPP_)
-#define OMR_OM_DISPATCHVISIT_HPP_
+#if !defined(OMR_OM_CELLSLOTWALKER_HPP_)
+#define OMR_OM_CELLSLOTWALKER_HPP_
 
 #include <OMR/Om/dispatch.hpp>
-
-#include <cassert>
 
 namespace OMR {
 namespace Om {
 
 template <typename VisitorT>
-struct Visit {
-	Visit(VisitorT visitor)  : visitor(visitor) {}
+struct VisitCell {
+	VisitCell(VisitorT visitor)  : visitor(visitor) {}
 
 	template <typename T>
 	void operator()(T* thing) {
@@ -24,10 +22,18 @@ struct Visit {
 /// TODO: Implement in terms of dispatch, with a templated visit function.
 template <typename VisitorT>
 void dispatchVisit(Cell* cell, VisitorT visitor) {
-	dispatch(cell, Visit<VisitorT>(visitor));
+	dispatch(cell, VisitCell<VisitorT>(visitor));
 }
+
+class CellSlotWalker {
+public:
+	template <typename VisitorT>
+	void traverse(OMR::Om::Cell* cell, VisitorT visitor) {
+		dispatchVisit(cell, visitor);
+	}
+};
 
 }  // namespace Om
 }  // namespace OMR
 
-#endif // OMR_OM_DISPATCHVISIT_HPP_
+#endif // OMR_OM_CELLSLOTWALKER_HPP_

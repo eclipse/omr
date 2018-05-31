@@ -38,7 +38,7 @@
 #include "ObjectScannerState.hpp"
 #include "WorkStack.hpp"
 
-#include "VisitObject.hpp"
+#include "ObjectSlotWalker.hpp"
 
 /**
  * @todo Provide class documentation
@@ -253,7 +253,8 @@ public:
 	MMINLINE uintptr_t
 	scanObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t sizeToDo = UDATA_MAX)
 	{
-		OMRApp::VisitObject<MarkingVisitor>()(objectPtr, MarkingVisitor(env, this));
+		OMRApp::ObjectSlotWalker walker;
+		walker.traverse(objectPtr, MarkingVisitor(env, this));
 		return 0;
 	}
 
