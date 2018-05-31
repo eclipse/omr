@@ -14,12 +14,12 @@ namespace Om
 
 /// TODO: Write barrier?
 inline bool
-initializeTransitionSet(Context &cx, MemHandle<TransitionSet> self)
+initializeTransitionSet(Context &cx, MemHandle<TransitionSet> set, std::size_t initialSetSize = 32)
 {
-	
+	assert(!set->initialized());
 	return initializeMemArray(cx,
-							  MemHandle<MemArray<TransitionSetEntry>>(self, &TransitionSet::table),
-							  32);
+							  MemHandle<MemArray<TransitionSetEntry>>(set, &TransitionSet::table),
+							  initialSetSize);
 }
 
 /// Store a transition entry into the transition set. Can fail if the transition set is full.
@@ -29,6 +29,10 @@ initializeTransitionSet(Context &cx, MemHandle<TransitionSet> self)
 inline bool
 tryStoreTransition(TransitionSet &set, TransitionSetEntry entry, std::size_t hash)
 {
+	if (!set.table.initialized()) {
+		return false;
+	}
+
 	std::size_t sz = set.size();
 
 	for (std::size_t i = 0; i < sz; i++)
@@ -43,10 +47,22 @@ tryStoreTransition(TransitionSet &set, TransitionSetEntry entry, std::size_t has
 	return false;
 }
 
+inline bool
+storeTransition(Context& cx, MemHandle<TransitionSet> set, TransitionSetEntry entry, std::size_t hash) {
+	if (!set->initialized()) {
+		initializeTransitionSet(cx, set);
+	}
+	return tryStoreTransition(*set, entry, hash);
+}
+
 /// Lookup a transition in the set, using a precalculated hash. Returns nullptr on failure.
 inline Shape *
 lookUpTransition(TransitionSet &set, Infra::Span<const SlotAttr> attributes, std::size_t hash)
 {
+	if (!set.initialized()) {
+		return nullptr;
+	}
+
 	std::size_t size = set.size();
 
 	for (std::size_t i = 0; i < size; i++)

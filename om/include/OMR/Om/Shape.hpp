@@ -121,7 +121,9 @@ public:
 	visit(VisitorT &visitor)
 	{
 		visitHeader(header(), visitor);
-		visitor.edge(this, BasicSlotHandle(&parentLayout_));
+		if (parentLayout_ != nullptr)
+			visitor.edge(this, BasicSlotHandle(&parentLayout_));
+
 		transitions_.visit(visitor);
 		// visitor.edge(this, BasicSlotHandle(&shapeTreeData_));
 	}

@@ -28,30 +28,22 @@
 #include "GCExtensionsBase.hpp"
 #include "SublistFragment.hpp"
 
-OMR_VMThread*
-MM_EnvironmentDelegate::attachVMThread(OMR_VM* omrVM, const char* threadName, uintptr_t reason)
-{
-#if 0
-	OMR_VMThread* omrVMThread = NULL;
-	omr_error_t rc            = OMR_ERROR_NONE;
+#include <iostream>
 
-	rc = OMR_Glue_BindCurrentThread(omrVM, threadName, &omrVMThread);
-	if (OMR_ERROR_NONE != rc) {
-		return NULL;
-	}
-	return omrVMThread;
-#endif
-  return nullptr;
+OMR_VMThread*
+MM_EnvironmentDelegate::attachVMThread(OMR_VM* vm, const char* threadName, uintptr_t reason)
+{
+  std::cerr << "attach thread: " << std::endl;
+  OMR_VMThread* vmContext = NULL;
+  omr_vmthread_firstAttach(vm, &vmContext);
+  return vmContext;
 }
 
 void
-MM_EnvironmentDelegate::detachVMThread(OMR_VM* omrVM, OMR_VMThread* omrVMThread, uintptr_t reason)
+MM_EnvironmentDelegate::detachVMThread(OMR_VM* vm, OMR_VMThread* vmContext, uintptr_t reason)
 {
-#if 0
-	if (NULL != omrVMThread) {
-		OMR_Glue_UnbindCurrentThread(omrVMThread);
-	}
-#endif
+  std::cerr << "detach thread: " << vmContext << std::endl;
+  omr_vmthread_redetach(vmContext);
 }
 
 void

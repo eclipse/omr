@@ -275,7 +275,7 @@ class Value
 		std::int64_t result = raw() & PAYLOAD_MASK;
 		if ((result & (RawValue(1) << 47)) != 0)
 		{
-			result |= ~PAYLOAD_MASK;
+			result |= 0xFFFF000000000000ul;
 		}
 		return result;
 	}

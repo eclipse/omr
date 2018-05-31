@@ -21,8 +21,11 @@ public:
 	template <typename VisitorT>
 	void visit(VisitorT& visitor)
 	{
-		visitor.edge(this, BasicSlotHandle((Cell**)&metaShape_));
-		visitor.edge(this, BasicSlotHandle((Cell**)&arrayBufferShape_));
+		if (metaShape_ != nullptr)
+			visitor.edge(this, BasicSlotHandle((Cell**)&metaShape_));
+	
+		if (arrayBufferShape_ != nullptr)
+			visitor.edge(this, BasicSlotHandle((Cell**)&arrayBufferShape_));
 	}
 
 protected:

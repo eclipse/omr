@@ -22,9 +22,12 @@
 #include "omr.h"
 #include "omrvm.h"
 
+#include <assert.h>
+
 omr_error_t
 OMR_Glue_BindCurrentThread(OMR_VM* omrVM, const char* threadName, OMR_VMThread** omrVMThread)
 {
+	assert(0);
 	omr_error_t rc = OMR_ERROR_NONE;
 
 	OMR_VMThread* currentThread = omr_vmthread_getCurrent(omrVM);

@@ -41,9 +41,9 @@ public:
 
 	const Globals& globals() const noexcept { return manager().globals(); }
 
-	OMR_VMThread* omrVmThread() const noexcept { return omrVmThread_; }
+	OMR_VMThread* vmContext() const noexcept { return vmContext_; }
 
-	MM_EnvironmentBase* omrGcThread() const noexcept;
+	MM_EnvironmentBase* gcContext() const noexcept;
 
 	RootList& stackRoots() noexcept { return stackRoots_; }
 
@@ -52,8 +52,14 @@ public:
 	const MarkingFnVector& userRoots() const noexcept { return userRoots_; }
 
 private:
+
+	static void attachVmContext(OMR_VM &vm, Context &cx);
+	
+	static void detachVmContext(OMR_VM &vm, Context &cx);
+
+	Thread thread_;
 	MemoryManager* manager_;
-	OMR_VMThread* omrVmThread_;
+	OMR_VMThread* vmContext_;
 	RootList stackRoots_;
 	MarkingFnVector userRoots_;
 };
@@ -63,15 +69,15 @@ static_assert(
 	"The Om context must be a StandardLayoutType for calculating JIT offsets.");
 
 inline Context&
-getContext(OMR_VMThread& omrVmThread)
+getContext(OMR_VMThread& vmContext)
 {
-	return *(Context*)omrVmThread._language_vmthread;
+	return *(Context*)vmContext._language_vmthread;
 }
 
 inline Context&
-getContext(OMR_VMThread* omrVmThread)
+getContext(OMR_VMThread* vmContext)
 {
-	return getContext(*omrVmThread);
+	return getContext(*vmContext);
 }
 
 /// A special limited context that is only used during startup or shutdown.

@@ -24,6 +24,10 @@ class StartupContext;
 
 using ContextSet = ::std::set<Context*>;
 
+void attachVmContext(OMR_VM& vm, Context& cx);
+
+void detachVmContext(OMR_VM& vm, Context& cx);
+
 class MemoryManager
 {
 public:
@@ -33,9 +37,9 @@ public:
 
 	~MemoryManager();
 
-	OMR_VM& omrVm() { return omrVm_; }
+	OMR_VM& vm() { return omrVm_; }
 
-	const OMR_VM& omrVm() const { return omrVm_; }
+	const OMR_VM& vm() const { return omrVm_; }
 
 	ProcessRuntime& runtime() { return runtime_; }
 
@@ -49,7 +53,6 @@ public:
 	void visit(VisitorT& visitor)
 	{
 		globals_.visit(visitor);
-		assert(0);
 		/// TODO: Reimplement user root callback function.
 		// for (auto& fn : userRoots()) {
 		// 	fn(visitor);
@@ -67,6 +70,8 @@ private:
 	void initOmrVm();
 
 	void initOmrGc();
+
+	void initOmrGcSlaveThreads(StartupContext& cx);
 
 	ProcessRuntime& runtime_;
 	OMR_VM omrVm_;

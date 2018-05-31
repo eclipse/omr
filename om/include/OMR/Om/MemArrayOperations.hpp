@@ -14,15 +14,21 @@ struct MemArrayOps {
 	template <typename T>
 	static inline bool construct(Context& cx, const MemHandle<MemArray<T>> self, std::size_t size)
 	{
-		if (self->buffer_ != nullptr) {
-			self->buffer_ = allocateArray(cx, size * sizeof(T));
+		if (self->initialized()) {
+			return true;
 		}
+	
+		self->buffer_ = allocateArray(cx, size * sizeof(T));
 		return self->buffer_ != nullptr;
 	}
 
 	template <typename T>
 	static inline bool resize(Context& cx, const MemHandle<MemArray<T>> self, std::size_t size)
 	{
+		if (!self.initialized()) {
+			return construct(cx, self, size);
+		}
+
 		auto newBuffer = allocateArray(cx, size * sizeof(T));
 
 		if (newBuffer == nullptr) {

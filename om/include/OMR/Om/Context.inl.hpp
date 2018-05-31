@@ -14,39 +14,39 @@ namespace OMR
 {
 namespace Om
 {
-inline Context::Context(MemoryManager& manager) : manager_(&manager)
+
+inline Context::Context(MemoryManager &manager) : thread_(manager.runtime().platform().thread()), manager_(&manager), vmContext_(nullptr)
 {
-	// auto e = OMR_Thread_Init(&manager.omrVm(), this, &omrVmThread_, "b9::Context");
 	manager_->contexts().insert(this);
-	// if (e != 0)
-	// 	throw std::runtime_error("Failed to attach OMR thread to OMR VM");
+	attachVmContext(manager.vm(), *this);
 }
 
 inline Context::~Context() noexcept
 {
 	manager_->contexts().erase(this);
-	// OMR_Thread_Free(omrVmThread_);
+	detachVmContext(manager_->vm(), *this);
+	vmContext_ = nullptr;
 }
 
-inline MM_EnvironmentBase*
-Context::omrGcThread() const noexcept
+inline MM_EnvironmentBase *
+Context::gcContext() const noexcept
 {
-	return MM_EnvironmentBase::getEnvironment(omrVmThread());
+	return MM_EnvironmentBase::getEnvironment(vmContext());
 }
 
-inline Context&
-getContext(MM_EnvironmentBase& omrGcThread)
+inline Context &
+getContext(MM_EnvironmentBase &gcContext)
 {
-	return getContext(omrGcThread.getOmrVMThread());
+	return getContext(gcContext.getOmrVMThread());
 }
 
-inline Context&
-getContext(MM_EnvironmentBase* omrGcThread)
+inline Context &
+getContext(MM_EnvironmentBase *gcContext)
 {
-	return getContext(*omrGcThread);
+	return getContext(*gcContext);
 }
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
-#endif  // OM_CONTEXT_INL_HPP_
+#endif // OM_CONTEXT_INL_HPP_

@@ -26,12 +26,12 @@ struct BaseAllocator
 	allocate(Context &cx, InitializerT &init, std::size_t size = sizeof(ResultT))
 	{
 		Allocation allocation(cx, init, size);
-		ResultT *result = (ResultT *)allocation.allocateAndInitializeObject(cx.omrVmThread());
+		ResultT *result = (ResultT *)allocation.allocateAndInitializeObject(cx.vmContext());
 
 		if (DEBUG_SLOW)
 		{
 			RootRef<ResultT> root(cx, result);
-			OMR_GC_SystemCollect(cx.omrVmThread(), 0);
+			OMR_GC_SystemCollect(cx.vmContext(), 0);
 			result = root.get();
 		}
 

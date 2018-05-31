@@ -9,10 +9,21 @@
 #include <OMR/Om/Initializer.hpp>
 #include <OMR/Om/Handle.hpp>
 
+#include <iostream>
+
 namespace OMR
 {
 namespace Om
 {
+
+inline bool initializeTransitionSet(Context& cx, Handle<Shape> shape, std::size_t initialSetSize = 32) {
+	assert(!shape->transitions_.initialized());
+	return initializeTransitionSet(cx, {shape, &Shape::transitions_}, initialSetSize);
+}
+
+inline bool storeTransition(Context& cx, Handle<Shape> shape, TransitionSetEntry entry, std::size_t hash) {
+	return storeTransition(cx, {shape, &Shape::transitions_}, entry, hash);
+}
 
 /// A helper to copy a span of slot attributes into a shape.
 /// Also calculates the total width of the slot attributes.
@@ -69,6 +80,7 @@ struct ObjectLayoutInitializer : public Initializer
 		shape->parentLayout_ = parentLayout.get();
 		shape->instanceSlotOffset_ = parentLayout->instanceSlotOffset_ + parentLayout->instanceSlotWidth_;
 		shape->shapeTreeData_.instanceKind = CellKind::OBJECT;
+		shape->instanceSlotCount_ = attributes.length();
 		assignSlotAttrIntoShape(shape, attributes);
 		return reinterpret_cast<Cell *>(shape);
 	}
@@ -97,7 +109,7 @@ struct ShapeLayoutInitializer : public Initializer
 		Shape *shape = reinterpret_cast<Shape *>(cell);
 		shape->instanceKind(CellKind::SHAPE);
 		shape->layout(shape);
-		shape->parentLayout_ = nullptr;
+		shape->parentLayout_ = cx.globals().metaShape();
 		shape->instanceSlotOffset_ = 0;
 		shape->instanceSlotCount_ = 0;
 		shape->instanceSlotWidth_ = 0;
@@ -141,11 +153,12 @@ inline Shape *
 deriveObjectLayout(Context &cx, Handle<Shape> base, const Infra::Span<const SlotAttr> &attr,
 			std::size_t hash)
 {
-	if (base->transitions_.initialized()) {
+	if (!base->transitions_.initialized()) {
 		initializeTransitionSet(cx, {base, &Shape::transitions_});
 	}
 	Shape *derivation = allocateObjectLayout(cx, base, attr);
-	tryStoreTransition(base->transitions_, TransitionSetEntry{derivation}, hash);
+	storeTransition(cx, base, TransitionSetEntry{derivation}, hash);
+	std::cerr << "derivation: " << derivation << std::endl;
 	return derivation;
 }
 

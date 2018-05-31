@@ -19,6 +19,8 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
+omr_assert(FATAL_ERROR TEST OMR_OM)
+
 omr_assert(FATAL_ERROR
 	TEST OMR_GC # AND OMR_JITBUILDER
 	MESSAGE "Om requires the OMR_GC and OMR_JITBUILDER to be enabled"
@@ -86,8 +88,9 @@ target_sources(omr_om_gc_glue
 		${CMAKE_CURRENT_SOURCE_DIR}/glue/Profiling.c
 		${CMAKE_CURRENT_SOURCE_DIR}/glue/StartupManagerImpl.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/glue/VerboseManagerImpl.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/src/MemoryManager.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/src/MemorySystem.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/Value.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/src/Context.cpp
 )
 
 target_link_libraries(omr_om_gc_glue

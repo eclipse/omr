@@ -122,8 +122,8 @@ class ProcessRuntime
 		memset(&omrRuntime_, 0, sizeof(OMR_Runtime));
 		omrRuntime_._configuration._maximum_vm_count = 0;
 		omrRuntime_._vmCount = 0;
+		omrRuntime_._vmList = nullptr;
 		omrRuntime_._portLibrary = &platform().library();
-
 		auto e = omr_initialize_runtime(&omrRuntime_);
 		if (e != 0)
 		{

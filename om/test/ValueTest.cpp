@@ -20,30 +20,76 @@ namespace Om
 namespace Test
 {
 // clang-format off
-std::vector<std::int64_t> integers = {
-  0l, 1l, -1l, 42l, -42l, 1l << 47,
+std::vector<std::int64_t> signedIntegers = {
+  0l, 1l, -1l, 42l, -42l, 1l << 46,
   std::numeric_limits<std::int32_t>::max(),
   std::numeric_limits<std::int32_t>::min(),
 };
 // clang-format on
 
-TEST(ValueTest, integerConstructorRoundTrip)
+TEST(ValueTest, signedIntegerConstructorRoundTrip)
 {
-	for (auto i : integers) {
+	for (auto i : signedIntegers)
+	{
 		Value value(AS_INT48, i);
 		EXPECT_TRUE(value.isBoxedValue());
 		EXPECT_TRUE(value.isInt48());
+		EXPECT_FALSE(value.isUint48());
 		EXPECT_FALSE(value.isDouble());
-		auto i2 = value.getInt48();
-		EXPECT_EQ(i, i2);
+		EXPECT_EQ(value.kind(), Value::Kind::INT48);
+		EXPECT_EQ(i, value.getInt48());
 	}
 }
 
-TEST(ValueTest, setIntegerRoundTrip)
+TEST(ValueTest, setSignedIntegerRoundTrip)
 {
-	for (auto i : integers) {
-		Value value(AS_INT48, i);
+	for (auto i : signedIntegers)
+	{
+		Value value;
+		value.setInt48(i);
+		EXPECT_TRUE(value.isBoxedValue());
+		EXPECT_TRUE(value.isInt48());
+		EXPECT_FALSE(value.isUint48());
+		EXPECT_FALSE(value.isDouble());
+		EXPECT_EQ(value.kind(), Value::Kind::INT48);
 		EXPECT_EQ(i, value.getInt48());
+	}
+}
+
+// clang-format off
+std::vector<std::uint64_t> unsignedIntegers = {
+  0ul, 1ul, 42l, 42l, 0x0000FFFFFFFFFFFFul, 1l << 47,
+  std::numeric_limits<std::uint32_t>::max(),
+  std::numeric_limits<std::uint32_t>::min(),
+};
+// clang-format on
+
+TEST(ValueTest, unsignedIntegerConstructorRoundTrip)
+{
+	for (auto i : unsignedIntegers)
+	{
+		Value value(AS_UINT48, i);
+		EXPECT_TRUE(value.isBoxedValue());
+		EXPECT_TRUE(value.isUint48());
+		EXPECT_FALSE(value.isInt48());
+		EXPECT_FALSE(value.isDouble());
+		EXPECT_EQ(value.kind(), Value::Kind::UINT48);
+		EXPECT_EQ(i, value.getUint48());
+	}
+}
+
+TEST(ValueTest, setUnsignedIntegerRoundTrip)
+{
+	for (auto i : unsignedIntegers)
+	{
+		Value value;
+		value.setUint48(i);
+		EXPECT_TRUE(value.isBoxedValue());
+		EXPECT_TRUE(value.isUint48());
+		EXPECT_FALSE(value.isInt48());
+		EXPECT_FALSE(value.isDouble());
+		EXPECT_EQ(value.kind(), Value::Kind::UINT48);
+		EXPECT_EQ(i, value.getUint48());
 	}
 }
 
@@ -59,7 +105,7 @@ TEST(ValueTest, canonicalNan)
 
 TEST(ValueTest, doubleRoundTrip)
 {
-	const std::vector<double> doubles =  //
+	const std::vector<double> doubles =
 		{0.0,
 		 1.0,
 		 43.21,
@@ -67,10 +113,13 @@ TEST(ValueTest, doubleRoundTrip)
 		 std::numeric_limits<double>::max(),
 		 std::numeric_limits<double>::min()};
 
-	for (auto d : doubles) {
-		for (auto sign : {+1.0, -1.0}) {
-			Value value(AS_DOUBLE, d * sign);
-			EXPECT_EQ(d, value.getDouble());
+	for (auto d : doubles)
+	{
+		for (auto sign : {+1.0, -1.0})
+		{
+			auto x = d * sign;
+			Value value(AS_DOUBLE, x);
+			EXPECT_EQ(x, value.getDouble());
 			EXPECT_FALSE(value.isBoxedValue());
 			EXPECT_TRUE(value.isDouble());
 			EXPECT_FALSE(value.isInt48());
@@ -98,7 +147,8 @@ TEST(ValueTest, quietNanDouble)
 
 TEST(ValueTest, pointerRoundTrip)
 {
-	for (void* p : {(void*)0, (void*)1, (void*)(-1 & Value::PAYLOAD_MASK)}) {
+	for (void *p : {(void *)0, (void *)1, (void *)(-1 & Value::PAYLOAD_MASK)})
+	{
 		Value value(AS_PTR, p);
 		EXPECT_EQ(p, value.getPtr());
 		EXPECT_TRUE(value.isBoxedValue());
@@ -106,6 +156,6 @@ TEST(ValueTest, pointerRoundTrip)
 	}
 }
 
-}  // namespace Test
-}  // namespace Om
-}  // namespace OMR
+} // namespace Test
+} // namespace Om
+} // namespace OMR

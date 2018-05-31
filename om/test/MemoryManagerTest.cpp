@@ -22,6 +22,7 @@ namespace Om
 {
 namespace Test
 {
+
 ProcessRuntime runtime;
 
 TEST(MemoryManagerTest, StartUpAMemoryManager)
@@ -49,7 +50,7 @@ TEST(MemoryManagerTest, loseAnObjects)
 
 	EXPECT_NE(object->layout(), nullptr);
 	// EXPECT_EQ(object->layout(), shape);
-	OMR_GC_SystemCollect(cx.omrVmThread(), 0);
+	OMR_GC_SystemCollect(cx.vmContext(), 0);
 	// EXPECT_EQ(object->layout(), (Shape*)0x5e5e5e5e5e5e5e5eul);
 }
 
@@ -61,7 +62,7 @@ TEST(MemoryManagerTest, keepAnObject)
 	RootRef<Shape> shape(cx, allocateRootObjectLayout(cx, {}));
 	RootRef<Object> object(cx, allocateObject(cx, shape));
 	EXPECT_EQ(object->layout(), shape.get());
-	OMR_GC_SystemCollect(cx.omrVmThread(), 0);
+	OMR_GC_SystemCollect(cx.vmContext(), 0);
 	EXPECT_EQ(object->layout(), shape.get());
 }
 
@@ -71,6 +72,7 @@ TEST(MemoryManagerTest, objectTransition)
 	Context cx(manager);
 
 	RootRef<Shape> emptyObjectMap(cx, allocateRootObjectLayout(cx, {}));
+	
 	RootRef<Object> obj1(cx, allocateObject(cx, emptyObjectMap));
 
 	const std::array<const SlotAttr, 1> attributes{

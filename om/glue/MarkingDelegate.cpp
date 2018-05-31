@@ -59,7 +59,6 @@ MarkingDelegate::scanRoots(MM_EnvironmentBase* env)
 		fn(marker);
 	}
 */
-	assert(0);
 }
 
 void
