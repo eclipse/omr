@@ -15,10 +15,10 @@ namespace OMR
 namespace Om
 {
 
-inline Context::Context(MemoryManager &manager) : thread_(manager.runtime().platform().thread()), manager_(&manager), vmContext_(nullptr)
+inline Context::Context(MemorySystem &system) : thread_(system.runtime().platform().thread()), manager_(&system), vmContext_(nullptr)
 {
 	manager_->contexts().insert(this);
-	attachVmContext(manager.vm(), *this);
+	attachVmContext(system.vm(), *this);
 }
 
 inline Context::~Context() noexcept

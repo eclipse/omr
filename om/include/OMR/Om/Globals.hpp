@@ -29,7 +29,7 @@ public:
 	}
 
 protected:
-	friend class MemoryManager;
+	friend class MemorySystem;
 
 	/// Allocate the globals. Throws StartupError if any allocation fails.
 	void init(StartupContext& cx);

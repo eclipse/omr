@@ -1,4 +1,4 @@
-#include <OMR/Om/MemoryManager.hpp>
+#include <OMR/Om/MemorySystem.hpp>
 
 #include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Context.hpp>

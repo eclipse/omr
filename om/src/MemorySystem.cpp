@@ -1,4 +1,4 @@
-#include <OMR/Om/MemoryManager.hpp>
+#include <OMR/Om/MemorySystem.hpp>
 
 #include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Context.hpp>
@@ -39,7 +39,7 @@ void Globals::init(StartupContext &cx)
 	arrayBufferShape_ = allocateArrayLayout(cx);
 }
 
-MemoryManager::MemoryManager(ProcessRuntime &runtime) : runtime_(runtime)
+MemorySystem::MemorySystem(ProcessRuntime &runtime) : runtime_(runtime)
 {
 	std::cerr << __PRETTY_FUNCTION__ << std::endl;
 
@@ -52,14 +52,14 @@ MemoryManager::MemoryManager(ProcessRuntime &runtime) : runtime_(runtime)
 	globals_.init(cx);
 }
 
-MemoryManager::~MemoryManager()
+MemorySystem::~MemorySystem()
 {
 	Thread self(runtime().platform().thread());
 	// TODO: Shut down the heap (requires a thread (boo!!))
 	omr_detach_vm_from_runtime(&vm());
 }
 
-void MemoryManager::initOmrVm()
+void MemorySystem::initOmrVm()
 {
 	memset(&omrVm_, 0, sizeof(OMR_VM));
 	omrVm_._runtime = &runtime_.omrRuntime();
@@ -76,7 +76,7 @@ void MemoryManager::initOmrVm()
 	}
 }
 
-void MemoryManager::initOmrGc()
+void MemorySystem::initOmrGc()
 {
 	MM_StartupManagerImpl startupManager(&omrVm_);
 	auto e = OMR_GC_IntializeHeapAndCollector(&omrVm_, &startupManager);
@@ -86,7 +86,7 @@ void MemoryManager::initOmrGc()
 	}
 }
 
-void MemoryManager::initOmrGcSlaveThreads(StartupContext &cx)
+void MemorySystem::initOmrGcSlaveThreads(StartupContext &cx)
 {
 	auto extensions = cx.gcContext()->getExtensions();
 	assert(extensions != nullptr);

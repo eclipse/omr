@@ -2,7 +2,7 @@
 #define OMR_OM_CONTEXT_HPP_
 
 #include <OMR/Om/MarkingFn.hpp>
-#include <OMR/Om/MemoryManager.hpp>
+#include <OMR/Om/MemorySystem.hpp>
 #include <OMR/Om/RootList.hpp>
 
 #include <cstddef>
@@ -31,15 +31,15 @@ class Context
 public:
 	static constexpr const char* THREAD_NAME = "OMR::Om::Context";
 
-	Context(MemoryManager& manager);
+	Context(MemorySystem& system);
 
 	Context(const Context& other) = delete;
 
 	~Context() noexcept;
 
-	MemoryManager& manager() const noexcept { return *manager_; }
+	MemorySystem& system() const noexcept { return *manager_; }
 
-	const Globals& globals() const noexcept { return manager().globals(); }
+	const Globals& globals() const noexcept { return system().globals(); }
 
 	OMR_VMThread* vmContext() const noexcept { return vmContext_; }
 
@@ -58,7 +58,7 @@ private:
 	static void detachVmContext(OMR_VM &vm, Context &cx);
 
 	Thread thread_;
-	MemoryManager* manager_;
+	MemorySystem* manager_;
 	OMR_VMThread* vmContext_;
 	RootList stackRoots_;
 	MarkingFnVector userRoots_;
@@ -84,8 +84,8 @@ getContext(OMR_VMThread* vmContext)
 class StartupContext : public Context
 {
 protected:
-	friend class MemoryManager;
-	StartupContext(MemoryManager& manager) : Context(manager) {}
+	friend class MemorySystem;
+	StartupContext(MemorySystem& system) : Context(system) {}
 
 	StartupContext(const StartupContext& other) = delete;
 };
@@ -94,7 +94,7 @@ protected:
 class RunContext : public Context
 {
 public:
-	RunContext(MemoryManager& manager) : Context(manager) {}
+	RunContext(MemorySystem& system) : Context(system) {}
 };
 
 }  // namespace Om

@@ -109,9 +109,9 @@ MM_EnvironmentDelegate::acquireExclusiveVMAccess()
 	// std::cerr << ">AQUIRE EXCLUSIVE ACCESS" << std::endl;
 	_env->getOmrVMThread()->exclusiveCount += 1;
 #if 0
-  auto manager = getManager(env);
-  if (manager.access().
-  manager.access().lock();
+  auto system = getManager(env);
+  if (system.access().
+  system.access().lock();
 
   if (0 == _env->getOmrVMThread()->exclusiveCount) {
 

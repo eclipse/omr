@@ -23,7 +23,7 @@
 
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/Context.inl.hpp>
-#include <OMR/Om/MemoryManager.hpp>
+#include <OMR/Om/MemorySystem.hpp>
 #include <OMR/Om/Object.hpp>
 #include <OMR/Om/Shape.hpp>
 #include <OMR/Om/RootRef.hpp>
@@ -44,9 +44,9 @@ void
 MarkingDelegate::scanRoots(MM_EnvironmentBase* env)
 {
 	auto& cx      = getContext(env);
-	auto& manager = cx.manager();
+	auto& system = cx.system();
 	MM_MarkingScheme::MarkingVisitor marker(env, _markingScheme);
-	manager.visit(marker);
+	system.visit(marker);
 
 	for (ConstRootListIterator it = cx.stackRoots().cbegin(); it != cx.stackRoots().cend(); ++it) {
 		// std::cout << "NATIVE_STACK: " << p << std::endl;

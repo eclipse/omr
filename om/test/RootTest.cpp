@@ -5,7 +5,7 @@
 #include <OMR/Om/Context.hpp>
 #include <OMR/Om/Handle.hpp>
 #include <OMR/Om/MemHandle.hpp>
-#include <OMR/Om/MemoryManager.hpp>
+#include <OMR/Om/MemorySystem.hpp>
 #include <OMR/Om/Object.hpp>
 #include <OMR/Om/Shape.hpp>
 #include <OMR/Om/RootRef.hpp>
@@ -26,8 +26,8 @@ ProcessRuntime runtime;
 
 TEST(RootTest, basic)
 {
-	MemoryManager manager(runtime);
-	Context cx(manager);
+	MemorySystem system(runtime);
+	Context cx(system);
 	RootRef<Object> root(cx, allocateEmptyObject(cx));
 	Handle<Object> handle(root);
 	// MemHandle<Object::Base> member(handle, &Object::base);

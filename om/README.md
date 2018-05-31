@@ -26,7 +26,7 @@ ninja test
 ```c++
 
 #include <OMR/Om/ObjectOperations.hpp>
-#include <OMR/Om/MemoryManager.hpp>
+#include <OMR/Om/MemorySystem.hpp>
 #include <OMR/Om/ProcessRuntime.hpp>
 #include <OMR/Om/Context.hpp>
 #include <OMR/Om/collect.hpp>
@@ -38,12 +38,12 @@ int main(int argc, char** argv) {
 	OMR::Om::ProcessRuntime runtime;
 	runtime.initialize();
 
-	// The manager has it's own isolated heap.
-	OMR::Om::MemoryManager manager(runtime);
-	manager.initialize();
+	// The system has it's own isolated heap.
+	OMR::Om::MemorySystem system(runtime);
+	system.initialize();
 
 	// The Context is per-thread, and provides shared heap access.
-	OMR::Om::RunContext cx(manager);
+	OMR::Om::RunContext cx(system);
 	cx.initialize();
 
 	// Allocate an object

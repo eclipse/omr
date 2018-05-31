@@ -24,7 +24,7 @@ function(omr_add_om_test testname)
 	)
 endfunction(omr_add_om_test)
 
-omr_add_om_test(MemoryManagerTest)
+omr_add_om_test(MemorySystemTest)
 omr_add_om_test(RuntimeTest)
 omr_add_om_test(ValueTest)
 omr_add_om_test(RootTest)
