@@ -58,6 +58,8 @@ target_include_directories(omr_om_base
 		include/
 		glue/
 		${CMAKE_CURRENT_BINARY_DIR}/include
+		${CMAKE_CURRENT_BINARY_DIR}/../include_core
+		${CMAKE_CURRENT_BINARY_DIR}/..
 		${CMAKE_BINARY_DIR}
 		../include_core/
 )
