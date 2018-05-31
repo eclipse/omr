@@ -1,7 +1,6 @@
 #if !defined(OMR_OM_RUNTIME_HPP_)
 #define OMR_OM_RUNTIME_HPP_
 
-#include "OMR_VMThread.hpp"
 #include "StartupManagerImpl.hpp"
 #include "mminitcore.h"
 #include "omr.h"
