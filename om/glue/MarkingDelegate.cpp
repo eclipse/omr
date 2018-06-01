@@ -49,16 +49,12 @@ MarkingDelegate::scanRoots(MM_EnvironmentBase* env)
 	system.visit(marker);
 
 	for (ConstRootListIterator it = cx.stackRoots().cbegin(); it != cx.stackRoots().cend(); ++it) {
-		// std::cout << "NATIVE_STACK: " << p << std::endl;
 		_markingScheme->markObject(env, (Cell*)(*it).ref);
 	}
 
-/*
-	/// TODO: Reimplement user marking callbacks.
-	for (auto& fn : cx.userRoots()) {
+	for (auto& fn : cx.userMarkingFns()) {
 		fn(marker);
 	}
-*/
 }
 
 void
