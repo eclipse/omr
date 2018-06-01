@@ -5,43 +5,35 @@
 #include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/Context.inl.hpp>
-#include <OMR/Om/Shape.hpp>
 #include <OMR/Om/MemorySystem.hpp>
 #include <OMR/Om/Object.inl.hpp>
-#include <OMR/Om/ShapeOperations.hpp>
 #include <OMR/Om/RootRef.hpp>
 #include <OMR/Om/Runtime.hpp>
-
+#include <OMR/Om/Shape.hpp>
+#include <OMR/Om/ShapeOperations.hpp>
+#include <gtest/gtest.h>
 #include <omrgc.h>
 
-#include <gtest/gtest.h>
-
-namespace OMR
-{
-namespace Om
-{
-namespace Test
-{
+namespace OMR {
+namespace Om {
+namespace Test {
 
 ProcessRuntime runtime;
 
-TEST(MemorySystemTest, StartUpAMemorySystem)
-{
+TEST(MemorySystemTest, StartUpAMemorySystem) {
 	MemorySystem system(runtime);
 	EXPECT_NE(system.globals().metaShape(), nullptr);
 	EXPECT_NE(system.globals().arrayBufferShape(), nullptr);
 }
 
-TEST(MemorySystemTest, StartUpAContext)
-{
+TEST(MemorySystemTest, StartUpAContext) {
 	MemorySystem system(runtime);
 	Context cx(system);
 	EXPECT_NE(cx.globals().metaShape(), nullptr);
 	EXPECT_NE(cx.globals().arrayBufferShape(), nullptr);
 }
 
-TEST(MemorySystemTest, loseAnObjects)
-{
+TEST(MemorySystemTest, loseAnObjects) {
 	MemorySystem system(runtime);
 	Context cx(system);
 
@@ -54,8 +46,7 @@ TEST(MemorySystemTest, loseAnObjects)
 	// EXPECT_EQ(object->layout(), (Shape*)0x5e5e5e5e5e5e5e5eul);
 }
 
-TEST(MemorySystemTest, keepAnObject)
-{
+TEST(MemorySystemTest, keepAnObject) {
 	MemorySystem system(runtime);
 	Context cx(system);
 
@@ -66,17 +57,16 @@ TEST(MemorySystemTest, keepAnObject)
 	EXPECT_EQ(object->layout(), shape.get());
 }
 
-TEST(MemorySystemTest, objectTransition)
-{
+TEST(MemorySystemTest, objectTransition) {
 	MemorySystem system(runtime);
 	Context cx(system);
 
 	RootRef<Shape> emptyObjectMap(cx, allocateRootObjectLayout(cx, {}));
-	
+
 	RootRef<Object> obj1(cx, allocateObject(cx, emptyObjectMap));
 
 	const std::array<const SlotAttr, 1> attributes{
-		{SlotAttr(SlotType(Id(0), CoreType::VALUE), Id(0))}};
+	        {SlotAttr(SlotType(Id(0), CoreType::VALUE), Id(0))}};
 
 	const Infra::Span<const Om::SlotAttr> span(attributes);
 	Object::transition(cx, obj1, span, Om::hash(span));
@@ -100,12 +90,11 @@ TEST(MemorySystemTest, objectTransition)
 	}
 }
 
-TEST(MemorySystemTest, objectTransitionReuse)
-{
+TEST(MemorySystemTest, objectTransitionReuse) {
 	MemorySystem system(runtime);
 	Context cx(system);
 }
 
-}  // namespace Test
-}  // namespace Om
-}  // namespace OMR
+} // namespace Test
+} // namespace Om
+} // namespace OMR

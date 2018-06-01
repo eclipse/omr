@@ -22,14 +22,13 @@
 #ifndef COLLECTORLANGUAGEINTERFACEIMPL_HPP_
 #define COLLECTORLANGUAGEINTERFACEIMPL_HPP_
 
-#include "modronbase.h"
-#include "omr.h"
-
 #include "CollectorLanguageInterface.hpp"
 #include "GCExtensionsBase.hpp"
+#include "MarkingScheme.hpp"
 #include "ParallelSweepScheme.hpp"
 #include "WorkPackets.hpp"
-#include "MarkingScheme.hpp"
+#include "modronbase.h"
+#include "omr.h"
 
 class GC_ObjectScanner;
 class MM_CompactScheme;
@@ -41,8 +40,7 @@ class MM_MemorySubSpaceSemiSpace;
  * Class representing a collector language interface.  This implements the API
  * between the OMR functionality and the language being implemented.
  */
-class MM_CollectorLanguageInterfaceImpl : public MM_CollectorLanguageInterface
-{
+class MM_CollectorLanguageInterfaceImpl : public MM_CollectorLanguageInterface {
 private:
 protected:
 	OMR_VM* _omrVM;
@@ -55,10 +53,9 @@ protected:
 	void tearDown(OMR_VM* omrVM);
 
 	MM_CollectorLanguageInterfaceImpl(OMR_VM* omrVM)
-		: MM_CollectorLanguageInterface()
-		, _omrVM(omrVM)
-		, _extensions(MM_GCExtensionsBase::getExtensions(omrVM))
-	{
+	        : MM_CollectorLanguageInterface(),
+	          _omrVM(omrVM),
+	          _extensions(MM_GCExtensionsBase::getExtensions(omrVM)) {
 		_typeId = __FUNCTION__;
 	}
 
@@ -76,25 +73,28 @@ public:
 	scavenger_masterThreadGarbageCollect_scavengeComplete(MM_EnvironmentBase* envBase);
 	virtual void
 	scavenger_masterThreadGarbageCollect_scavengeSuccess(MM_EnvironmentBase* envBase);
-	virtual bool scavenger_internalGarbageCollect_shouldPercolateGarbageCollect(
-		MM_EnvironmentBase* envBase, PercolateReason* reason, uint32_t* gcCode);
-	virtual GC_ObjectScanner* scavenger_getObjectScanner(
-		MM_EnvironmentStandard* env, omrobjectptr_t objectPtr, void* allocSpace,
-		uintptr_t flags);
+	virtual bool
+	scavenger_internalGarbageCollect_shouldPercolateGarbageCollect(MM_EnvironmentBase* envBase,
+	                                                               PercolateReason* reason,
+	                                                               uint32_t* gcCode);
+	virtual GC_ObjectScanner* scavenger_getObjectScanner(MM_EnvironmentStandard* env,
+	                                                     omrobjectptr_t objectPtr,
+	                                                     void* allocSpace,
+	                                                     uintptr_t flags);
 	virtual void scavenger_flushReferenceObjects(MM_EnvironmentStandard* env);
-	virtual bool scavenger_hasIndirectReferentsInNewSpace(
-		MM_EnvironmentStandard* env, omrobjectptr_t objectPtr);
-	virtual bool scavenger_scavengeIndirectObjectSlots(
-		MM_EnvironmentStandard* env, omrobjectptr_t objectPtr);
+	virtual bool scavenger_hasIndirectReferentsInNewSpace(MM_EnvironmentStandard* env,
+	                                                      omrobjectptr_t objectPtr);
+	virtual bool scavenger_scavengeIndirectObjectSlots(MM_EnvironmentStandard* env,
+	                                                   omrobjectptr_t objectPtr);
 	virtual void
 	scavenger_backOutIndirectObjectSlots(MM_EnvironmentStandard* env, omrobjectptr_t objectPtr);
 	virtual void scavenger_backOutIndirectObjects(MM_EnvironmentStandard* env);
-	virtual void scavenger_reverseForwardedObject(
-		MM_EnvironmentBase* env, MM_ForwardedHeader* forwardedHeader);
+	virtual void scavenger_reverseForwardedObject(MM_EnvironmentBase* env,
+	                                              MM_ForwardedHeader* forwardedHeader);
 #if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
-	virtual void scavenger_fixupDestroyedSlot(
-		MM_EnvironmentBase* env, MM_ForwardedHeader* forwardedHeader,
-		MM_MemorySubSpaceSemiSpace* subSpaceNew);
+	virtual void scavenger_fixupDestroyedSlot(MM_EnvironmentBase* env,
+	                                          MM_ForwardedHeader* forwardedHeader,
+	                                          MM_MemorySubSpaceSemiSpace* subSpaceNew);
 #endif /* OMR_INTERP_COMPRESSED_OBJECT_HEADER */
 #endif /* OMR_GC_MODRON_SCAVENGER */
 };

@@ -2,22 +2,18 @@
 #define OMR_OM_MEMARRAY_HPP_
 
 #include <OMR/Om/Array.hpp>
-#include <OMR/Om/MemHandle.hpp>
 #include <OMR/Om/BasicSlotHandle.hpp>
-
+#include <OMR/Om/MemHandle.hpp>
 #include <cstdint>
 
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 /// A simple array API backed by a heap-allocated Array.
 /// The array understands it's size, but has no notion of capacity, or unfilled
 /// slots. MemArrays can be resized.
 /// @see-also: MemArrayOps
-template <typename T>
-class MemArray
-{
+template<typename T>
+class MemArray {
 public:
 	static_assert(std::is_trivial<T>::value, "The MemArray only supports simple type storage.");
 
@@ -42,9 +38,8 @@ public:
 
 	const T& operator[](std::size_t index) const noexcept { return at(index); }
 
-	template <typename VisitorT>
-	void visit(VisitorT visitor)
-	{
+	template<typename VisitorT>
+	void visit(VisitorT visitor) {
 		if (buffer_ != nullptr)
 			visitor.edge(this, BasicSlotHandle(&buffer_));
 	}
@@ -52,10 +47,10 @@ public:
 	Array* buffer_;
 };
 
-static_assert(
-	std::is_standard_layout<MemArray<int>>::value, "MemArray must be a StandardLayoutType.");
+static_assert(std::is_standard_layout<MemArray<int>>::value,
+              "MemArray must be a StandardLayoutType.");
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
-#endif  // OMR_OM_MEMARRAY_HPP_
+#endif // OMR_OM_MEMARRAY_HPP_

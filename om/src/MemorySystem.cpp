@@ -1,33 +1,27 @@
-#include <OMR/Om/MemorySystem.hpp>
-
-#include <OMR/Om/Allocator.hpp>
-#include <OMR/Om/Context.inl.hpp>
-#include <OMR/Om/Shape.hpp>
-#include <OMR/Om/RootRef.hpp>
-#include <OMR/Om/ShapeOperations.hpp>
-
-#include <ParallelDispatcher.hpp>
-#include "omrport.h"
-#include "mminitcore.h"
-#include "omr.h"
-#include "omrvm.h"
-#include "thread_api.h"
-#include "omrutil.h"
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
-#include "omrgcstartup.hpp"
-#include "StartupManagerImpl.hpp"
 #include "OMR_VMThread.hpp"
-
+#include "StartupManagerImpl.hpp"
+#include "mminitcore.h"
+#include "omr.h"
+#include "omrgcstartup.hpp"
+#include "omrport.h"
+#include "omrutil.h"
+#include "omrvm.h"
+#include "thread_api.h"
+#include <OMR/Om/Allocator.hpp>
+#include <OMR/Om/Context.inl.hpp>
+#include <OMR/Om/MemorySystem.hpp>
+#include <OMR/Om/RootRef.hpp>
+#include <OMR/Om/Shape.hpp>
+#include <OMR/Om/ShapeOperations.hpp>
+#include <ParallelDispatcher.hpp>
 #include <iostream>
 
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 
-void Globals::init(StartupContext &cx)
-{
+void Globals::init(StartupContext& cx) {
 	// The order of allocation matters. The MetaShape must be allocated before any
 	// other shape.
 	metaShape_ = allocateShapeLayout(cx);
@@ -39,8 +33,7 @@ void Globals::init(StartupContext &cx)
 	arrayBufferShape_ = allocateArrayLayout(cx);
 }
 
-MemorySystem::MemorySystem(ProcessRuntime &runtime) : runtime_(runtime)
-{
+MemorySystem::MemorySystem(ProcessRuntime& runtime) : runtime_(runtime) {
 	std::cerr << __PRETTY_FUNCTION__ << std::endl;
 
 	Thread self(runtime.platform().thread());
@@ -52,15 +45,13 @@ MemorySystem::MemorySystem(ProcessRuntime &runtime) : runtime_(runtime)
 	globals_.init(cx);
 }
 
-MemorySystem::~MemorySystem()
-{
+MemorySystem::~MemorySystem() {
 	Thread self(runtime().platform().thread());
 	// TODO: Shut down the heap (requires a thread (boo!!))
 	omr_detach_vm_from_runtime(&vm());
 }
 
-void MemorySystem::initOmrVm()
-{
+void MemorySystem::initOmrVm() {
 	memset(&omrVm_, 0, sizeof(OMR_VM));
 	omrVm_._runtime = &runtime_.omrRuntime();
 	omrVm_._language_vm = this;
@@ -70,29 +61,24 @@ void MemorySystem::initOmrVm()
 
 	auto e = omr_attach_vm_to_runtime(&omrVm_);
 
-	if (e != 0)
-	{
+	if (e != 0) {
 		throw PlatformError(e);
 	}
 }
 
-void MemorySystem::initOmrGc()
-{
+void MemorySystem::initOmrGc() {
 	MM_StartupManagerImpl startupManager(&omrVm_);
 	auto e = OMR_GC_IntializeHeapAndCollector(&omrVm_, &startupManager);
-	if (e != 0)
-	{
+	if (e != 0) {
 		throw PlatformError(e);
 	}
 }
 
-void MemorySystem::initOmrGcSlaveThreads(StartupContext &cx)
-{
+void MemorySystem::initOmrGcSlaveThreads(StartupContext& cx) {
 	auto extensions = cx.gcContext()->getExtensions();
 	assert(extensions != nullptr);
 	auto ok = extensions->dispatcher->startUpThreads();
-	if (!ok)
-	{
+	if (!ok) {
 		extensions->dispatcher->shutDownThreads();
 		throw PlatformError(0);
 	}

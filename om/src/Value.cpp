@@ -5,5 +5,5 @@ namespace Om {
 
 const RawValue Value::CANONICAL_NAN;
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR

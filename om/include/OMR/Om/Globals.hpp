@@ -11,19 +11,17 @@ class StartupContext;
 class Cell;
 
 /// A collection of singleton GC cells. The collection is initialized at startup.
-class Globals
-{
+class Globals {
 public:
 	Shape* metaShape() const noexcept { return metaShape_; }
 
 	Shape* arrayBufferShape() const noexcept { return arrayBufferShape_; }
 
-	template <typename VisitorT>
-	void visit(VisitorT& visitor)
-	{
+	template<typename VisitorT>
+	void visit(VisitorT& visitor) {
 		if (metaShape_ != nullptr)
 			visitor.edge(this, BasicSlotHandle((Cell**)&metaShape_));
-	
+
 		if (arrayBufferShape_ != nullptr)
 			visitor.edge(this, BasicSlotHandle((Cell**)&arrayBufferShape_));
 	}
@@ -35,11 +33,11 @@ protected:
 	void init(StartupContext& cx);
 
 private:
-	Shape* metaShape_        = nullptr;
+	Shape* metaShape_ = nullptr;
 	Shape* arrayBufferShape_ = nullptr;
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 #endif // OMR_OM_GLOBALS_HPP_

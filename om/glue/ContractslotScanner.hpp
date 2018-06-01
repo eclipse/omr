@@ -29,8 +29,7 @@
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 
-class MM_ContractSlotScanner : public MM_Base
-{
+class MM_ContractSlotScanner : public MM_Base {
 private:
 	void* _srcBase;
 	void* _srcTop;
@@ -42,19 +41,16 @@ private:
 protected:
 public:
 	MM_ContractSlotScanner(MM_EnvironmentBase* env, void* srcBase, void* srcTop, void* dstBase)
-		: MM_Base(), _srcBase(srcBase), _srcTop(srcTop), _dstBase(dstBase)
-	{
-	}
+	        : MM_Base(), _srcBase(srcBase), _srcTop(srcTop), _dstBase(dstBase) {}
 
-	virtual void doSlot(omrobjectptr_t* slotPtr)
-	{
+	virtual void doSlot(omrobjectptr_t* slotPtr) {
 		omrobjectptr_t objectPtr = *slotPtr;
 		if (NULL != objectPtr) {
-			if ((objectPtr >= (omrobjectptr_t)_srcBase) &&
-			    (objectPtr < (omrobjectptr_t)_srcTop)) {
+			if ((objectPtr >= (omrobjectptr_t)_srcBase)
+			    && (objectPtr < (omrobjectptr_t)_srcTop)) {
 				objectPtr = (omrobjectptr_t)(
-					(((uintptr_t)objectPtr) - ((uintptr_t)_srcBase)) +
-					((uintptr_t)_dstBase));
+				        (((uintptr_t)objectPtr) - ((uintptr_t)_srcBase))
+				        + ((uintptr_t)_dstBase));
 				*slotPtr = objectPtr;
 			}
 		}
@@ -63,9 +59,8 @@ public:
 	void scanAllSlots(MM_EnvironmentBase* env) { Assert_MM_unimplemented(); }
 
 	/* TODO remove this function as it is Java specific */
-	void setIncludeStackFrameClassReferences(bool includeStackFrameClassReferences)
-	{
-		/* do nothing */
+	void setIncludeStackFrameClassReferences(
+	        bool includeStackFrameClassReferences) { /* do nothing */
 	}
 };
 

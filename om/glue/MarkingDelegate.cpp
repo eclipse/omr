@@ -21,34 +21,30 @@
 
 #include "MarkingDelegate.hpp"
 
-#include <OMR/Om/Array.hpp>
-#include <OMR/Om/Context.inl.hpp>
-#include <OMR/Om/MemorySystem.hpp>
-#include <OMR/Om/Object.hpp>
-#include <OMR/Om/Shape.hpp>
-#include <OMR/Om/RootRef.hpp>
-#include <OMR/Om/TransitionSet.hpp>
-
 #include "EnvironmentBase.hpp"
 #include "MarkingScheme.hpp"
 #include "OMRVMThreadListIterator.hpp"
 #include "omr.h"
 #include "omrhashtable.h"
+#include <OMR/Om/Array.hpp>
+#include <OMR/Om/Context.inl.hpp>
+#include <OMR/Om/MemorySystem.hpp>
+#include <OMR/Om/Object.hpp>
+#include <OMR/Om/RootRef.hpp>
+#include <OMR/Om/Shape.hpp>
+#include <OMR/Om/TransitionSet.hpp>
 
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 
-void
-MarkingDelegate::scanRoots(MM_EnvironmentBase* env)
-{
-	auto& cx      = getContext(env);
+void MarkingDelegate::scanRoots(MM_EnvironmentBase* env) {
+	auto& cx = getContext(env);
 	auto& system = cx.system();
 	MM_MarkingScheme::MarkingVisitor marker(env, _markingScheme);
 	system.visit(marker);
 
-	for (ConstRootListIterator it = cx.stackRoots().cbegin(); it != cx.stackRoots().cend(); ++it) {
+	for (ConstRootListIterator it = cx.stackRoots().cbegin(); it != cx.stackRoots().cend();
+	     ++it) {
 		_markingScheme->markObject(env, (Cell*)(*it).ref);
 	}
 
@@ -57,10 +53,7 @@ MarkingDelegate::scanRoots(MM_EnvironmentBase* env)
 	}
 }
 
-void
-MarkingDelegate::masterCleanupAfterGC(MM_EnvironmentBase* env)
-{
-}
+void MarkingDelegate::masterCleanupAfterGC(MM_EnvironmentBase* env) {}
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR

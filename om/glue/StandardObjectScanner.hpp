@@ -26,7 +26,7 @@
 			GC_SlotObject *slotObject;
 #if defined(OMR_GC_LEAF_BITS)
 			while (NULL != (slotObject = objectScanner->getNextSlot(isLeafSlot))) {
-#else /* OMR_GC_LEAF_BITS */
+#else  /* OMR_GC_LEAF_BITS */
 			while (NULL != (slotObject = objectScanner->getNextSlot())) {
 #endif /* OMR_GC_LEAF_BITS */
 				fixupForwardedSlot(slotObject);
@@ -53,29 +53,31 @@ namespace Om {
 
 class StandardObjectScanner {
 public:
-
-	MMINLINE uintptr_t scanObject(MM_EnvironmentBase* env, omrobjectptr_t object)
-	{
+	MMINLINE uintptr_t scanObject(MM_EnvironmentBase* env, omrobjectptr_t object) {
 #ifdef OMR_OM_TRACE
-	std::cerr << "Scanning: " << cell << std::endl;
+		std::cerr << "Scanning: " << cell << std::endl;
 #endif
 
-	Context& cx = getContext(env->getOmrVMThread());
+		Context& cx = getContext(env->getOmrVMThread());
 
-	Marker marker(_markingScheme);
+		Marker marker(_markingScheme);
 
-	switch (cell->shape()->kind()) {
-		switch cellKind(cell) {
-		case CellKind::OBJECT: reinterpret_cast<Object*>(cell)->visit(cx, marker);
-		case CellKind::SHAPE: reinterpret_cast<Shape*>(cell)->visit(cx, marker);
-		case CellKind::ARRAY: reinterpret_cast<Array*>(cell)->visit(cx, marker);
-		default: assert(0); break;
-	}
+		switch (cell->shape()->kind()) {
+			switch
+				cellKind(cell) {
+				case CellKind::OBJECT:
+					reinterpret_cast<Object*>(cell)->visit(cx, marker);
+				case CellKind::SHAPE:
+					reinterpret_cast<Shape*>(cell)->visit(cx, marker);
+				case CellKind::ARRAY:
+					reinterpret_cast<Array*>(cell)->visit(cx, marker);
+				default: assert(0); break;
+				}
 
-	return 0;
-};
+			return 0;
+		};
 
-}  // namespace Om
-}  // namespace OMR
+	} // namespace Om
+} // namespace OMR
 
 #endif // OMR_OM_STANDARDOBJECTSCANNER_HPP_

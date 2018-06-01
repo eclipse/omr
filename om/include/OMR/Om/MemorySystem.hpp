@@ -2,17 +2,14 @@
 #define OMR_OM_MEMORYMANAGER_HPP_
 
 #include <OMR/Om/Cell.hpp>
+#include <OMR/Om/Globals.hpp>
 #include <OMR/Om/MarkingFn.hpp>
 #include <OMR/Om/Runtime.hpp>
-#include <OMR/Om/Globals.hpp>
 #include <OMR/Om/StartupError.hpp>
-
 #include <set>
 
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 class Cell;
 class Shape;
 
@@ -21,15 +18,13 @@ class Context;
 class RunContext;
 class StartupContext;
 
-
 using ContextSet = ::std::set<Context*>;
 
 void attachVmContext(OMR_VM& vm, Context& cx);
 
 void detachVmContext(OMR_VM& vm, Context& cx);
 
-class MemorySystem
-{
+class MemorySystem {
 public:
 	explicit MemorySystem(ProcessRuntime& runtime);
 
@@ -49,9 +44,8 @@ public:
 
 	const MarkingFnVector userRoots() const noexcept { return userRoots_; }
 
-	template <typename VisitorT>
-	void visit(VisitorT& visitor)
-	{
+	template<typename VisitorT>
+	void visit(VisitorT& visitor) {
 		globals_.visit(visitor);
 		/// TODO: Reimplement user root callback function.
 		// for (auto& fn : userRoots()) {
@@ -80,7 +74,7 @@ private:
 	ContextSet contexts_;
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
-#endif  // OMR_OM_MEMORYMANAGER_HPP_
+#endif // OMR_OM_MEMORYMANAGER_HPP_

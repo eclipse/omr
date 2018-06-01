@@ -13,8 +13,7 @@ using Index = std::size_t;
 /// that you know the type of the slot.
 ///
 /// TODO: Make SlotIndex only constructible by ObjectMaps and their iterators.
-class SlotIndex
-{
+class SlotIndex {
 public:
 	SlotIndex() noexcept = default;
 
@@ -27,9 +26,13 @@ public:
 		return *this;
 	}
 
-	constexpr bool operator==(const SlotIndex& rhs) const noexcept { return offset_ == rhs.offset_; }
+	constexpr bool operator==(const SlotIndex& rhs) const noexcept {
+		return offset_ == rhs.offset_;
+	}
 
-	constexpr bool operator!=(const SlotIndex& rhs) const noexcept { return offset_ != rhs.offset_; }
+	constexpr bool operator!=(const SlotIndex& rhs) const noexcept {
+		return offset_ != rhs.offset_;
+	}
 
 	/// Convert the SlotIndex into a raw offset into an object.
 	std::size_t offset() const noexcept { return offset_; }

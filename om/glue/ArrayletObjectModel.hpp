@@ -30,8 +30,7 @@
 class MM_GCExtensionsBase;
 class MM_MemorySubSpace;
 
-class GC_ArrayletObjectModel
-{
+class GC_ArrayletObjectModel {
 	/*
 	 * Function members
 	 */
@@ -42,15 +41,14 @@ public:
 
 	void tearDown(MM_GCExtensionsBase* extensions) {}
 
-	MMINLINE fomrobject_t* getArrayoidPointer(omrarrayptr_t arrayPtr)
-	{
+	MMINLINE fomrobject_t* getArrayoidPointer(omrarrayptr_t arrayPtr) {
 		return (fomrobject_t*)NULL;
 	}
 
-	MMINLINE void expandArrayletSubSpaceRange(
-		MM_MemorySubSpace* subSpace, void* rangeBase, void* rangeTop,
-		uintptr_t largestDesirableArraySpineSize)
-	{
+	MMINLINE void expandArrayletSubSpaceRange(MM_MemorySubSpace* subSpace,
+	                                          void* rangeBase,
+	                                          void* rangeTop,
+	                                          uintptr_t largestDesirableArraySpineSize) {
 		/* No-op */
 	}
 
@@ -59,8 +57,7 @@ public:
 	 * @param arrayPtr Pointer to the indexable object whose size is required
 	 * @return Size of object in bytes including the header
 	 */
-	MMINLINE uintptr_t getSizeInBytesWithHeader(omrarrayptr_t arrayPtr)
-	{
+	MMINLINE uintptr_t getSizeInBytesWithHeader(omrarrayptr_t arrayPtr) {
 		Assert_MM_unimplemented();
 		return 0;
 	}

@@ -4,15 +4,9 @@
 namespace OMR {
 namespace Om {
 
-enum class CellKind
-{
-	UNINITIALIZED = 0,
-	OBJECT = 1,
-	SHAPE,
-	ARRAY
-};
+enum class CellKind { UNINITIALIZED = 0, OBJECT = 1, SHAPE, ARRAY };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 #endif // OMR_OM_CELLKIND_HPP_

@@ -24,35 +24,29 @@
 #if !defined(OMR_OM_ALLOCATION_HPP_)
 #define OMR_OM_ALLOCATION_HPP_
 
+#include <AllocateInitialization.hpp>
 #include <OMR/Om/Cell.hpp>
 #include <OMR/Om/Context.hpp>
 #include <OMR/Om/Initializer.hpp>
-
-#include <AllocateInitialization.hpp>
 
 ///@file
 /// These classes implement basic initialization of objects.
 /// Just enough to pay GC tax and walk the objects.
 
-namespace OMR
-{
-namespace Om
-{
-class Allocation : public MM_AllocateInitialization
-{
+namespace OMR {
+namespace Om {
+class Allocation : public MM_AllocateInitialization {
 public:
 	Cell* initializeObject(Context& cx, Cell* p) { return init_(cx, p); }
 
 	Allocation(Context& cx, Initializer& init, std::size_t size, uintptr_t flags = 0)
-		: MM_AllocateInitialization(cx.gcContext(), 0, size, flags), init_(init)
-	{
-	}
+	        : MM_AllocateInitialization(cx.gcContext(), 0, size, flags), init_(init) {}
 
 private:
 	Initializer& init_;
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 #endif /* OMR_OM_ALLOCATION_HPP_ */

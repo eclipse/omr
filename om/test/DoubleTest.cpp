@@ -1,29 +1,22 @@
 #include <OMR/Infra/BitUtilities.hpp>
 #include <OMR/Infra/Double.hpp>
-
 #include <gtest/gtest.h>
 
-namespace OMR
-{
-namespace Infra
-{
-namespace Test
-{
-TEST(DoubleTest, signBit)
-{
+namespace OMR {
+namespace Infra {
+namespace Test {
+TEST(DoubleTest, signBit) {
 	EXPECT_TRUE(std::signbit(Double::fromRaw(Double::SIGN_MASK)));
 	EXPECT_TRUE(std::signbit(Double::fromRaw(Double::toRaw(-0.1) & Double::SIGN_MASK)));
 	EXPECT_FALSE(std::signbit(Double::fromRaw(Double::toRaw(0.45) & Double::SIGN_MASK)));
 }
 
-TEST(DoubleTest, Raw)
-{
+TEST(DoubleTest, Raw) {
 	double d = 0.1;
 	EXPECT_TRUE(Double::fromRaw(Double::toRaw(d)) == d);
 }
 
-TEST(DoubleTest, NaN)
-{
+TEST(DoubleTest, NaN) {
 	// not NaN
 	double d = 0.1;
 	EXPECT_FALSE(Double::isNaN(Double::toRaw(d)));
@@ -53,6 +46,6 @@ TEST(DoubleTest, NaN)
 	EXPECT_FALSE(Double::isQNaN(Double::toRaw(inf)));
 }
 
-}  // namespace Test
-}  // namespace Infra
-}  // namespace OMR
+} // namespace Test
+} // namespace Infra
+} // namespace OMR

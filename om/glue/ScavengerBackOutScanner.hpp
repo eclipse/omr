@@ -22,19 +22,17 @@
 #ifndef SCAVENGERBACKOUTSCANNER_HPP_
 #define SCAVENGERBACKOUTSCANNER_HPP_
 
+#include "Base.hpp"
+#include "EnvironmentStandard.hpp"
+#include "Scavenger.hpp"
 #include "omr.h"
 #include "omrExampleVM.hpp"
 #include "omrcfg.h"
 #include "omrhashtable.h"
 
-#include "Base.hpp"
-#include "EnvironmentStandard.hpp"
-#include "Scavenger.hpp"
-
 #if defined(OMR_GC_MODRON_SCAVENGER)
 
-class MM_ScavengerBackOutScanner : public MM_Base
-{
+class MM_ScavengerBackOutScanner : public MM_Base {
 	/*
 	 * Member data and types
 	 */
@@ -49,26 +47,26 @@ public:
 private:
 protected:
 public:
-	MM_ScavengerBackOutScanner(
-		MM_EnvironmentBase* env, bool singleThread, MM_Scavenger* scavenger)
-		: MM_Base(), _scavenger(scavenger){};
+	MM_ScavengerBackOutScanner(MM_EnvironmentBase* env,
+	                           bool singleThread,
+	                           MM_Scavenger* scavenger)
+	        : MM_Base(), _scavenger(scavenger){};
 
-	void scanAllSlots(MM_EnvironmentBase* env)
-	{
+	void scanAllSlots(MM_EnvironmentBase* env) {
 		J9HashTableState state;
 		OMR_VM_Example* omrVM = (OMR_VM_Example*)env->getOmrVM()->_language_vm;
-		RootEntry* rootEntry  = (RootEntry*)hashTableStartDo(omrVM->rootTable, &state);
+		RootEntry* rootEntry = (RootEntry*)hashTableStartDo(omrVM->rootTable, &state);
 		while (rootEntry != NULL) {
 			_scavenger->backOutFixSlotWithoutCompression(
-				(volatile omrobjectptr_t*)&rootEntry->rootPtr);
+			        (volatile omrobjectptr_t*)&rootEntry->rootPtr);
 			rootEntry = (RootEntry*)hashTableNextDo(&state);
 		}
 		ObjectEntry* objectEntry =
-			(ObjectEntry*)hashTableStartDo(omrVM->objectTable, &state);
+		        (ObjectEntry*)hashTableStartDo(omrVM->objectTable, &state);
 		while (NULL != objectEntry) {
 			if (NULL != objectEntry->objPtr) {
 				_scavenger->backOutFixSlotWithoutCompression(
-					(volatile omrobjectptr_t*)&objectEntry->objPtr);
+				        (volatile omrobjectptr_t*)&objectEntry->objPtr);
 			}
 			objectEntry = (ObjectEntry*)hashTableNextDo(&state);
 		}
@@ -77,11 +75,11 @@ public:
 		while ((walkThread = threadListIterator.nextOMRVMThread()) != NULL) {
 			if (NULL != walkThread->_savedObject1) {
 				_scavenger->backOutFixSlotWithoutCompression(
-					(volatile omrobjectptr_t*)&walkThread->_savedObject1);
+				        (volatile omrobjectptr_t*)&walkThread->_savedObject1);
 			}
 			if (NULL != walkThread->_savedObject2) {
 				_scavenger->backOutFixSlotWithoutCompression(
-					(volatile omrobjectptr_t*)&walkThread->_savedObject2);
+				        (volatile omrobjectptr_t*)&walkThread->_savedObject2);
 			}
 		}
 	}

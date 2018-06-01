@@ -3,14 +3,12 @@
 
 #include <OMR/Om/CoreType.hpp>
 #include <OMR/Om/Id.hpp>
-
 #include <cstdlib>
 
 namespace OMR {
 namespace Om {
 
-class SlotType
-{
+class SlotType {
 public:
 	constexpr SlotType(const SlotType&) = default;
 
@@ -20,14 +18,12 @@ public:
 
 	constexpr Id id() const noexcept { return id_; }
 
-	SlotType& id(Id id) noexcept
-	{
+	SlotType& id(Id id) noexcept {
 		id_ = id;
 		return *this;
 	}
 
-	constexpr std::size_t hash() const noexcept
-	{
+	constexpr std::size_t hash() const noexcept {
 		return Infra::Hash::mix(id_.hash(), std::size_t(coreType()));
 	}
 
@@ -42,7 +38,7 @@ private:
 	CoreType coreType_;
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 #endif // OMR_OM_SLOTTYPE_HPP_

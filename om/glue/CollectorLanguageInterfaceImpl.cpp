@@ -54,15 +54,15 @@
  * Initialization
  */
 MM_CollectorLanguageInterfaceImpl*
-MM_CollectorLanguageInterfaceImpl::newInstance(MM_EnvironmentBase* env)
-{
+MM_CollectorLanguageInterfaceImpl::newInstance(MM_EnvironmentBase* env) {
 	MM_CollectorLanguageInterfaceImpl* cli = NULL;
-	OMR_VM* omrVM                          = env->getOmrVM();
-	MM_GCExtensionsBase* extensions        = MM_GCExtensionsBase::getExtensions(omrVM);
+	OMR_VM* omrVM = env->getOmrVM();
+	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(omrVM);
 
 	cli = (MM_CollectorLanguageInterfaceImpl*)extensions->getForge()->allocate(
-		sizeof(MM_CollectorLanguageInterfaceImpl), OMR::GC::AllocationCategory::FIXED,
-		OMR_GET_CALLSITE());
+	        sizeof(MM_CollectorLanguageInterfaceImpl),
+	        OMR::GC::AllocationCategory::FIXED,
+	        OMR_GET_CALLSITE());
 	if (NULL != cli) {
 		new (cli) MM_CollectorLanguageInterfaceImpl(omrVM);
 		if (!cli->initialize(omrVM)) {
@@ -74,97 +74,75 @@ MM_CollectorLanguageInterfaceImpl::newInstance(MM_EnvironmentBase* env)
 	return cli;
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::kill(MM_EnvironmentBase* env)
-{
+void MM_CollectorLanguageInterfaceImpl::kill(MM_EnvironmentBase* env) {
 	OMR_VM* omrVM = env->getOmrVM();
 	tearDown(omrVM);
 	MM_GCExtensionsBase::getExtensions(omrVM)->getForge()->free(this);
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::tearDown(OMR_VM* omrVM)
-{
-}
+void MM_CollectorLanguageInterfaceImpl::tearDown(OMR_VM* omrVM) {}
 
-bool
-MM_CollectorLanguageInterfaceImpl::initialize(OMR_VM* omrVM)
-{
-	return true;
-}
+bool MM_CollectorLanguageInterfaceImpl::initialize(OMR_VM* omrVM) { return true; }
 #if defined(OMR_GC_MODRON_SCAVENGER)
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_masterSetupForGC(MM_EnvironmentBase* env)
-{
+void MM_CollectorLanguageInterfaceImpl::scavenger_masterSetupForGC(
+        MM_EnvironmentBase* env) { /* Do nothing for now */
+}
+
+void MM_CollectorLanguageInterfaceImpl::scavenger_workerSetupForGC_clearEnvironmentLangStats(
+        MM_EnvironmentBase* env) {
 	/* Do nothing for now */
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_workerSetupForGC_clearEnvironmentLangStats(
-	MM_EnvironmentBase* env)
-{
+void MM_CollectorLanguageInterfaceImpl::scavenger_reportScavengeEnd(MM_EnvironmentBase* envBase,
+                                                                    bool scavengeSuccessful) {
 	/* Do nothing for now */
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_reportScavengeEnd(
-	MM_EnvironmentBase* envBase, bool scavengeSuccessful)
-{
+void MM_CollectorLanguageInterfaceImpl::scavenger_mergeGCStats_mergeLangStats(
+        MM_EnvironmentBase* envBase) {
 	/* Do nothing for now */
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_mergeGCStats_mergeLangStats(
-	MM_EnvironmentBase* envBase)
-{
+void MM_CollectorLanguageInterfaceImpl::scavenger_masterThreadGarbageCollect_scavengeComplete(
+        MM_EnvironmentBase* envBase) {
 	/* Do nothing for now */
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_masterThreadGarbageCollect_scavengeComplete(
-	MM_EnvironmentBase* envBase)
-{
+void MM_CollectorLanguageInterfaceImpl::scavenger_masterThreadGarbageCollect_scavengeSuccess(
+        MM_EnvironmentBase* envBase) {
 	/* Do nothing for now */
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_masterThreadGarbageCollect_scavengeSuccess(
-	MM_EnvironmentBase* envBase)
-{
-	/* Do nothing for now */
-}
-
-bool
-MM_CollectorLanguageInterfaceImpl::scavenger_internalGarbageCollect_shouldPercolateGarbageCollect(
-	MM_EnvironmentBase* envBase, PercolateReason* reason, uint32_t* gcCode)
-{
+bool MM_CollectorLanguageInterfaceImpl::
+        scavenger_internalGarbageCollect_shouldPercolateGarbageCollect(MM_EnvironmentBase* envBase,
+                                                                       PercolateReason* reason,
+                                                                       uint32_t* gcCode) {
 	/* Do nothing for now */
 	return false;
 }
 
 GC_ObjectScanner*
-MM_CollectorLanguageInterfaceImpl::scavenger_getObjectScanner(
-	MM_EnvironmentStandard* env, omrobjectptr_t objectPtr, void* allocSpace, uintptr_t flags)
-{
+MM_CollectorLanguageInterfaceImpl::scavenger_getObjectScanner(MM_EnvironmentStandard* env,
+                                                              omrobjectptr_t objectPtr,
+                                                              void* allocSpace,
+                                                              uintptr_t flags) {
 #if defined(OMR_GC_MODRON_SCAVENGER_STRICT)
-	Assert_MM_true(
-		(GC_ObjectScanner::scanHeap == flags) ^ (GC_ObjectScanner::scanRoots == flags));
+	Assert_MM_true((GC_ObjectScanner::scanHeap == flags)
+	               ^ (GC_ObjectScanner::scanRoots == flags));
 #endif /* defined(OMR_GC_MODRON_SCAVENGER_STRICT) */
 	GC_ObjectScanner* objectScanner = NULL;
 	objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
 	return objectScanner;
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_flushReferenceObjects(MM_EnvironmentStandard* env)
-{
+void MM_CollectorLanguageInterfaceImpl::scavenger_flushReferenceObjects(
+        MM_EnvironmentStandard* env) {
 	/* Do nothing for now */
 }
 
-bool
-MM_CollectorLanguageInterfaceImpl::scavenger_hasIndirectReferentsInNewSpace(
-	MM_EnvironmentStandard* env, omrobjectptr_t objectPtr)
-{
+bool MM_CollectorLanguageInterfaceImpl::scavenger_hasIndirectReferentsInNewSpace(
+        MM_EnvironmentStandard* env,
+        omrobjectptr_t objectPtr) {
 	/* This method must be implemented and return true an object may hold any
 	 * object references that are live but not reachable by traversing the
 	 * reference graph from the root set or remembered set. Otherwise this default
@@ -173,10 +151,9 @@ MM_CollectorLanguageInterfaceImpl::scavenger_hasIndirectReferentsInNewSpace(
 	return false;
 }
 
-bool
-MM_CollectorLanguageInterfaceImpl::scavenger_scavengeIndirectObjectSlots(
-	MM_EnvironmentStandard* env, omrobjectptr_t objectPtr)
-{
+bool MM_CollectorLanguageInterfaceImpl::scavenger_scavengeIndirectObjectSlots(
+        MM_EnvironmentStandard* env,
+        omrobjectptr_t objectPtr) {
 	/* This method must be implemented if an object may hold any object references
 	 * that are live but not reachable by traversing the reference graph from the
 	 * root set or remembered set. In that case, this method should call
@@ -187,10 +164,9 @@ MM_CollectorLanguageInterfaceImpl::scavenger_scavengeIndirectObjectSlots(
 	return false;
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_backOutIndirectObjectSlots(
-	MM_EnvironmentStandard* env, omrobjectptr_t objectPtr)
-{
+void MM_CollectorLanguageInterfaceImpl::scavenger_backOutIndirectObjectSlots(
+        MM_EnvironmentStandard* env,
+        omrobjectptr_t objectPtr) {
 	/* This method must be implemented if an object may hold any object references
 	 * that are live but not reachable by traversing the reference graph from the
 	 * root set or remembered set. In that case, this method should call
@@ -200,9 +176,8 @@ MM_CollectorLanguageInterfaceImpl::scavenger_backOutIndirectObjectSlots(
 	 */
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_backOutIndirectObjects(MM_EnvironmentStandard* env)
-{
+void MM_CollectorLanguageInterfaceImpl::scavenger_backOutIndirectObjects(
+        MM_EnvironmentStandard* env) {
 	/* This method must be implemented if an object may hold any object references
 	 * that are live but not reachable by traversing the reference graph from the
 	 * root set or remembered set. In that case, this method should locate all
@@ -215,20 +190,19 @@ MM_CollectorLanguageInterfaceImpl::scavenger_backOutIndirectObjects(MM_Environme
 	 */
 }
 
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_reverseForwardedObject(
-	MM_EnvironmentBase* env, MM_ForwardedHeader* forwardedHeader)
-{
+void MM_CollectorLanguageInterfaceImpl::scavenger_reverseForwardedObject(
+        MM_EnvironmentBase* env,
+        MM_ForwardedHeader* forwardedHeader) {
 	if (forwardedHeader->isForwardedPointer()) {
-		omrobjectptr_t originalObject  = forwardedHeader->getObject();
+		omrobjectptr_t originalObject = forwardedHeader->getObject();
 		omrobjectptr_t forwardedObject = forwardedHeader->getForwardedObject();
 
 		/* Restore the original object header from the forwarded object */
 		GC_ObjectModel* objectModel = &(env->getExtensions()->objectModel);
 		objectModel->setObjectSizeAndFlags(
-			originalObject,
-			objectModel->getConsumedSizeInBytesWithHeader(forwardedObject),
-			objectModel->getObjectFlags(forwardedObject));
+		        originalObject,
+		        objectModel->getConsumedSizeInBytesWithHeader(forwardedObject),
+		        objectModel->getObjectFlags(forwardedObject));
 
 #if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
 		/* Restore destroyed overlapped slot in the original object. This slot might
@@ -241,11 +215,10 @@ MM_CollectorLanguageInterfaceImpl::scavenger_reverseForwardedObject(
 }
 
 #if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
-void
-MM_CollectorLanguageInterfaceImpl::scavenger_fixupDestroyedSlot(
-	MM_EnvironmentBase* env, MM_ForwardedHeader* forwardedHeader,
-	MM_MemorySubSpaceSemiSpace* subSpaceNew)
-{
+void MM_CollectorLanguageInterfaceImpl::scavenger_fixupDestroyedSlot(
+        MM_EnvironmentBase* env,
+        MM_ForwardedHeader* forwardedHeader,
+        MM_MemorySubSpaceSemiSpace* subSpaceNew) {
 	/* This method must be implemented if (and only if) the object header is
 	 * stored in a compressed slot. in that case the other half of the full
 	 * (omrobjectptr_t sized) slot may hold a compressed object reference that
@@ -253,24 +226,24 @@ MM_CollectorLanguageInterfaceImpl::scavenger_fixupDestroyedSlot(
 	 */
 	/* This assumes that all slots are object slots, including the slot adjacent
 	 * to the header slot */
-	if ((0 != forwardedHeader->getPreservedOverlap()) &&
-	    !_extensions->objectModel.isIndexable(forwardedHeader)) {
+	if ((0 != forwardedHeader->getPreservedOverlap())
+	    && !_extensions->objectModel.isIndexable(forwardedHeader)) {
 		MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 		/* Get the uncompressed reference from the slot */
 		fomrobject_t preservedOverlap =
-			(fomrobject_t)forwardedHeader->getPreservedOverlap();
+		        (fomrobject_t)forwardedHeader->getPreservedOverlap();
 		GC_SlotObject preservedSlotObject(_omrVM, &preservedOverlap);
 		omrobjectptr_t survivingCopyAddress = preservedSlotObject.readReferenceFromSlot();
 		/* Check if the address we want to read is aligned (since mis-aligned reads
 		 * may still be less than a top address but extend beyond it) */
-		if (0 ==
-		    ((uintptr_t)survivingCopyAddress &
-		     (extensions->getObjectAlignmentInBytes() - 1))) {
+		if (0
+		    == ((uintptr_t)survivingCopyAddress
+		        & (extensions->getObjectAlignmentInBytes() - 1))) {
 			/* Ensure that the address we want to read is within part of the heap
 			 * which could contain copied objects (tenure or survivor) */
 			void* topOfObject = (void*)((uintptr_t*)survivingCopyAddress + 1);
-			if (subSpaceNew->isObjectInNewSpace(survivingCopyAddress, topOfObject) ||
-			    extensions->isOld(survivingCopyAddress, topOfObject)) {
+			if (subSpaceNew->isObjectInNewSpace(survivingCopyAddress, topOfObject)
+			    || extensions->isOld(survivingCopyAddress, topOfObject)) {
 				/* if the slot points to a reverse-forwarded object, restore the
 				 * original location (in evacuate space) */
 				MM_ForwardedHeader reverseForwardedHeader(survivingCopyAddress);
@@ -279,10 +252,10 @@ MM_CollectorLanguageInterfaceImpl::scavenger_fixupDestroyedSlot(
 					fomrobject_t fixupSlot = 0;
 					GC_SlotObject fixupSlotObject(_omrVM, &fixupSlot);
 					fixupSlotObject.writeReferenceToSlot(
-						reverseForwardedHeader
-							.getReverseForwardedPointer());
+					        reverseForwardedHeader
+					                .getReverseForwardedPointer());
 					forwardedHeader->restoreDestroyedOverlap(
-						(uint32_t)fixupSlot);
+					        (uint32_t)fixupSlot);
 				}
 			}
 		}

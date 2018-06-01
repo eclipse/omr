@@ -1,16 +1,14 @@
 #if !defined(OMR_OM_ARRAYOPERATIONS_HPP_)
 #define OMR_OM_ARRAYOPERATIONS_HPP_
 
+#include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/ArrayInitializer.hpp>
-#include <OMR/Om/Allocator.hpp>
 
 namespace OMR {
 namespace Om {
 
-static std::size_t arrayAllocationSize(std::size_t dataSize) {
-	return sizeof(Array) + dataSize;
-}
+static std::size_t arrayAllocationSize(std::size_t dataSize) { return sizeof(Array) + dataSize; }
 
 /// Allocate a new Array<T>. GC Safepoint. size is the number of
 /// elements, not the size in bytes of the buffer.

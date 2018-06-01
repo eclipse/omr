@@ -3,17 +3,13 @@
 
 #include <OMR/Om/Array.hpp>
 
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 
 /// A typed array reference. Experimental.
-template <typename T>
-class ArrayRef
-{
+template<typename T>
+class ArrayRef {
 public:
-
 	ArrayRef(Array* buffer) { buffer_ = buffer }
 
 	const T& at(std::size_t index) const { return data()[index]; }
@@ -26,19 +22,17 @@ public:
 
 	T* data() { return reinterpret_cast<T*>(buffer_->data()); }
 
-	template <typename Visitor>
-	visit(Context& cx, Visitor& visitor)
-	{
+	template<typename Visitor>
+	visit(Context& cx, Visitor& visitor) {
 		buffer_->visit(cx, visitor);
 	}
 
-	template <typename Visitor>
+	template<typename Visitor>
 
-private:
-	Array* buffer_;
+	private : Array* buffer_;
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
-#endif  // OMR_OM_ARRAYREF_HPP_
+#endif // OMR_OM_ARRAYREF_HPP_

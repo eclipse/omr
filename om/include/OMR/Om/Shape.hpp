@@ -1,26 +1,22 @@
 #ifndef OMR_OM_SHAPE_HPP_
 #define OMR_OM_SHAPE_HPP_
 
+#include <OMR/Infra/Span.hpp>
+#include <OMR/Om/BasicSlotHandle.hpp>
 #include <OMR/Om/CellHeader.hpp>
 #include <OMR/Om/CellKind.hpp>
-#include <OMR/Om/TransitionSet.hpp>
-#include <OMR/Om/Initializer.hpp>
-#include <OMR/Infra/Span.hpp>
 #include <OMR/Om/Initializer.hpp>
 #include <OMR/Om/SlotAttr.hpp>
-#include <OMR/Om/TransitionSet.hpp>
 #include <OMR/Om/SlotDescriptorRange.hpp>
-#include <OMR/Om/BasicSlotHandle.hpp>
+#include <OMR/Om/TransitionSet.hpp>
 #include <OMR/Om/ValueSlotHandle.hpp>
 
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 
-/// Common properties shared by all Shapes in a Shape tree. Particularly, invariant facts about the instance are stored here.
-struct ShapeTreeData
-{
+/// Common properties shared by all Shapes in a Shape tree. Particularly, invariant facts about the
+/// instance are stored here.
+struct ShapeTreeData {
 	/// Total amount of space available for inline / fixed slots.
 	std::size_t instanceSlotSize;
 	/// The CellKind this ShapeTree describes. Are the instances Shapes, Objects, or Arrays?
@@ -32,26 +28,23 @@ struct ShapeTreeData
 /// cell is.
 ///
 /// Since Shapes are Cell's, they too have a Shape describing their layout.
-class Shape
-{
+class Shape {
 public:
 	/// Calculate the allocation size
-	static constexpr std::size_t calculateCellSize(std::size_t slotCount)
-	{
+	static constexpr std::size_t calculateCellSize(std::size_t slotCount) {
 		return sizeof(Shape) + (sizeof(SlotAttr) * slotCount);
 	}
 
 	/// Convert this object to a cell.
-	CellHeader &header() { return header_; }
+	CellHeader& header() { return header_; }
 
-	const CellHeader &header() const { return header_; }
+	const CellHeader& header() const { return header_; }
 
 	/// Return the shape that describes _this_ Shape.
-	Shape *layout() const { return header().layout(); }
+	Shape* layout() const { return header().layout(); }
 
 	/// Set the layout of _this_ Shape.
-	Shape &layout(Shape *shape)
-	{
+	Shape& layout(Shape* shape) {
 		header().layout(shape);
 		return *this;
 	}
@@ -59,19 +52,18 @@ public:
 	/// @group Instance information
 	/// @{
 
-	CellKind instanceKind() const
-	{
-		return shapeTreeData_.instanceKind;
-	}
+	CellKind instanceKind() const { return shapeTreeData_.instanceKind; }
 
-	void instanceKind(CellKind k) {
-		shapeTreeData_.instanceKind = k;
-	}
+	void instanceKind(CellKind k) { shapeTreeData_.instanceKind = k; }
 
 	/// Get the Span of `SlotAttr` described by this shape.
-	Infra::Span<SlotAttr> instanceSlotAttrs() noexcept { return {instanceSlotAttrs_, instanceSlotCount_}; }
+	Infra::Span<SlotAttr> instanceSlotAttrs() noexcept {
+		return {instanceSlotAttrs_, instanceSlotCount_};
+	}
 
-	Infra::Span<const SlotAttr> instanceSlotAttrs() const noexcept { return {instanceSlotAttrs_, instanceSlotCount_}; }
+	Infra::Span<const SlotAttr> instanceSlotAttrs() const noexcept {
+		return {instanceSlotAttrs_, instanceSlotCount_};
+	}
 
 #if 0
 	/// TODO: Implement assignSlotAttrs with iterators
@@ -84,9 +76,9 @@ public:
 #endif
 
 	/// Get the SlotDescriptors described by this shape.
-	SlotDescriptorRange instanceSlotDescriptorRange() const noexcept
-	{
-		return SlotDescriptorRange(instanceSlotAttrs(), instanceSlotOffset(), instanceSlotWidth());
+	SlotDescriptorRange instanceSlotDescriptorRange() const noexcept {
+		return SlotDescriptorRange(
+		        instanceSlotAttrs(), instanceSlotOffset(), instanceSlotWidth());
 	}
 
 	/// Number of slots described by this shape.
@@ -104,22 +96,20 @@ public:
 	/// The parent object shape describes the slots immediately preceding
 	/// If this `Shape` has no parent, this function returns `nullptr`.
 	/// Having no parent implies the `slotOffset` is zero.
-	Shape *parentLayout() const noexcept { return parentLayout_; }
+	Shape* parentLayout() const noexcept { return parentLayout_; }
 
 	/// Common properties shared by all shapes in the shape-tree.
-	ShapeTreeData *shapeTreeData() noexcept { return &shapeTreeData_; }
+	ShapeTreeData* shapeTreeData() noexcept { return &shapeTreeData_; }
 
-	const ShapeTreeData *constShapeTreeData() const noexcept { return &shapeTreeData_; }
+	const ShapeTreeData* constShapeTreeData() const noexcept { return &shapeTreeData_; }
 
 	/// @}
 
 	/// @group GC support
 	/// @{
 
-	template <typename VisitorT>
-	inline void
-	visit(VisitorT &visitor)
-	{
+	template<typename VisitorT>
+	inline void visit(VisitorT& visitor) {
 		visitHeader(header(), visitor);
 		if (parentLayout_ != nullptr)
 			visitor.edge(this, BasicSlotHandle(&parentLayout_));
@@ -134,7 +124,7 @@ public:
 	/// @}
 
 	CellHeader header_;
-	Shape *parentLayout_;
+	Shape* parentLayout_;
 	TransitionSet transitions_;
 	std::size_t instanceSlotOffset_;
 	std::size_t instanceSlotWidth_;
@@ -146,9 +136,7 @@ public:
 static_assert(std::is_standard_layout<Shape>::value, "Shape must be a StandardLayoutType.");
 
 /// An offset table for compilers.
-struct ShapeOffsets
-{
-};
+struct ShapeOffsets {};
 
 } // namespace Om
 } // namespace OMR

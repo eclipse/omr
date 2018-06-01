@@ -19,36 +19,30 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include "ModronAssertions.h"
-#include "omr.h"
+#include "EnvironmentDelegate.hpp"
 
 #include "AtomicOperations.hpp"
-#include "EnvironmentDelegate.hpp"
 #include "EnvironmentStandard.hpp"
 #include "GCExtensionsBase.hpp"
+#include "ModronAssertions.h"
 #include "SublistFragment.hpp"
-
+#include "omr.h"
 #include <iostream>
 
 OMR_VMThread*
-MM_EnvironmentDelegate::attachVMThread(OMR_VM* vm, const char* threadName, uintptr_t reason)
-{
-  std::cerr << "attach thread: " << std::endl;
-  OMR_VMThread* vmContext = NULL;
-  omr_vmthread_firstAttach(vm, &vmContext);
-  return vmContext;
+MM_EnvironmentDelegate::attachVMThread(OMR_VM* vm, const char* threadName, uintptr_t reason) {
+	std::cerr << "attach thread: " << std::endl;
+	OMR_VMThread* vmContext = NULL;
+	omr_vmthread_firstAttach(vm, &vmContext);
+	return vmContext;
 }
 
-void
-MM_EnvironmentDelegate::detachVMThread(OMR_VM* vm, OMR_VMThread* vmContext, uintptr_t reason)
-{
-  std::cerr << "detach thread: " << vmContext << std::endl;
-  omr_vmthread_redetach(vmContext);
+void MM_EnvironmentDelegate::detachVMThread(OMR_VM* vm, OMR_VMThread* vmContext, uintptr_t reason) {
+	std::cerr << "detach thread: " << vmContext << std::endl;
+	omr_vmthread_redetach(vmContext);
 }
 
-void
-MM_EnvironmentDelegate::acquireVMAccess()
-{
+void MM_EnvironmentDelegate::acquireVMAccess() {
 	// std::cerr << ">ACQUIRE ACCESS" << std::endl;
 #if 0
   OMR_VM_Example *exampleVM = (OMR_VM_Example *)_env->getOmrVM()->_language_vm;
@@ -59,9 +53,7 @@ MM_EnvironmentDelegate::acquireVMAccess()
 /**
  * Release shared VM acccess.
  */
-void
-MM_EnvironmentDelegate::releaseVMAccess()
-{
+void MM_EnvironmentDelegate::releaseVMAccess() {
 	// std::cerr << ">RELEASE ACCESS" << std::endl;
 #if 0
   OMR_VM_Example *exampleVM = (OMR_VM_Example *)_env->getOmrVM()->_language_vm;
@@ -80,9 +72,7 @@ MM_EnvironmentDelegate::releaseVMAccess()
 
  * @return true if another thread is waiting to acquire exclusive VM access
  */
-bool
-MM_EnvironmentDelegate::isExclusiveAccessRequestWaiting()
-{
+bool MM_EnvironmentDelegate::isExclusiveAccessRequestWaiting() {
 	assert(0);
 #if 0
   OMR_VM_Example *exampleVM = (OMR_VM_Example *)_env->getOmrVM()->_language_vm;
@@ -103,9 +93,7 @@ MM_EnvironmentDelegate::isExclusiveAccessRequestWaiting()
  * Calling thread will be blocked until all other threads holding shared VM
  * access have release VM access.
  */
-void
-MM_EnvironmentDelegate::acquireExclusiveVMAccess()
-{
+void MM_EnvironmentDelegate::acquireExclusiveVMAccess() {
 	// std::cerr << ">AQUIRE EXCLUSIVE ACCESS" << std::endl;
 	_env->getOmrVMThread()->exclusiveCount += 1;
 #if 0
@@ -135,9 +123,7 @@ MM_EnvironmentDelegate::acquireExclusiveVMAccess()
  * access this method will notify all threads waiting for shared VM access to
  * continue and acquire shared VM access.
  */
-void
-MM_EnvironmentDelegate::releaseExclusiveVMAccess()
-{
+void MM_EnvironmentDelegate::releaseExclusiveVMAccess() {
 	// std::cerr << ">RELEASE EXCLUSIVE ACCESS" << std::endl;
 	_env->getOmrVMThread()->exclusiveCount -= 1;
 #if 0
@@ -152,7 +138,7 @@ MM_EnvironmentDelegate::releaseExclusiveVMAccess()
   } else if (1 < _env->getOmrVMThread()->exclusiveCount) {
     _env->getOmrVMThread()->exclusiveCount -= 1;
   }
-#endif  // 0
+#endif // 0
 }
 
 /**
@@ -165,16 +151,14 @@ MM_EnvironmentDelegate::releaseExclusiveVMAccess()
  * @return the exclusive count of the current thread before relinquishing
  * @see assumeExclusiveVMAccess(uintptr_t)
  */
-uintptr_t
-MM_EnvironmentDelegate::relinquishExclusiveVMAccess(bool* deferredVMAccessRelease)
-{
+uintptr_t MM_EnvironmentDelegate::relinquishExclusiveVMAccess(bool* deferredVMAccessRelease) {
 	assert(false);
 	return 0;
 #if 0
   uintptr_t relinquishedExclusiveCount = _env->getOmrVMThread()->exclusiveCount;
   _env->getOmrVMThread()->exclusiveCount = 0;
   return relinquishedExclusiveCount;
-#endif  // 0
+#endif // 0
 }
 
 /**
@@ -184,11 +168,9 @@ MM_EnvironmentDelegate::relinquishExclusiveVMAccess(bool* deferredVMAccessReleas
  * @param exclusiveCount the exclusive count to be restored
  * @see relinquishExclusiveVMAccess()
  */
-void
-MM_EnvironmentDelegate::assumeExclusiveVMAccess(uintptr_t exclusiveCount)
-{
+void MM_EnvironmentDelegate::assumeExclusiveVMAccess(uintptr_t exclusiveCount) {
 	assert(false);
 #if 0
   _env->getOmrVMThread()->exclusiveCount = exclusiveCount;
-#endif  // 0
+#endif // 0
 }

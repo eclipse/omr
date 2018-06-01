@@ -22,16 +22,14 @@
 #if !defined(VERBOSEMANAGEREXAMPLE_HPP_)
 #define VERBOSEMANAGEREXAMPLE_HPP_
 
-#include "mmhook_common.h"
-
 #include "VerboseManager.hpp"
 #include "VerboseWriter.hpp"
+#include "mmhook_common.h"
 
 class MM_EnvironmentBase;
 class MM_VerboseHandlerOutputStandardRuby;
 
-class MM_VerboseManagerImpl : public MM_VerboseManager
-{
+class MM_VerboseManagerImpl : public MM_VerboseManager {
 	/*
 	 * Data members
 	 */
@@ -61,9 +59,7 @@ public:
 	static MM_VerboseManagerImpl* newInstance(MM_EnvironmentBase* env, OMR_VM* vm);
 
 	MM_VerboseManagerImpl(OMR_VM* omrVM)
-		: MM_VerboseManager(omrVM), filename(NULL), fileCount(1), iterations(0)
-	{
-	}
+	        : MM_VerboseManager(omrVM), filename(NULL), fileCount(1), iterations(0) {}
 };
 
 #endif /* VERBOSEMANAGEREXAMPLE_HPP_ */

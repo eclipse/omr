@@ -6,12 +6,11 @@
 namespace OMR {
 namespace Om {
 
-class StartupError : public ::std::runtime_error
-{
+class StartupError : public ::std::runtime_error {
 	using runtime_error::runtime_error;
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 #endif // OMR_OM_STARTUPERROR_HPP_

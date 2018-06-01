@@ -19,6 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include "omrcfg.h"
-
 #include "ObjectIterator.hpp"
+
+#include "omrcfg.h"

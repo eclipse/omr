@@ -22,21 +22,19 @@
 #ifndef SCAVENGERROOTSCANNER_HPP_
 #define SCAVENGERROOTSCANNER_HPP_
 
-#include "omr.h"
-#include "omrExampleVM.hpp"
-#include "omrcfg.h"
-#include "omrhashtable.h"
-
 #include "Base.hpp"
 #include "EnvironmentStandard.hpp"
 #include "ForwardedHeader.hpp"
 #include "Scavenger.hpp"
 #include "SublistFragment.hpp"
+#include "omr.h"
+#include "omrExampleVM.hpp"
+#include "omrcfg.h"
+#include "omrhashtable.h"
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 
-class MM_ScavengerRootScanner : public MM_Base
-{
+class MM_ScavengerRootScanner : public MM_Base {
 	/*
 	 * Member data and types
 	 */
@@ -52,35 +50,32 @@ private:
 protected:
 public:
 	MM_ScavengerRootScanner(MM_EnvironmentBase* env, MM_Scavenger* scavenger)
-		: MM_Base(), _scavenger(scavenger){};
+	        : MM_Base(), _scavenger(scavenger){};
 
-	void scavengeRememberedSet(MM_EnvironmentStandard* env)
-	{
+	void scavengeRememberedSet(MM_EnvironmentStandard* env) {
 		MM_SublistFragment::flush((J9VMGC_SublistFragment*)&env->_scavengerRememberedSet);
 		_scavenger->scavengeRememberedSet(env);
 	}
 
-	void pruneRememberedSet(MM_EnvironmentStandard* env)
-	{
+	void pruneRememberedSet(MM_EnvironmentStandard* env) {
 		_scavenger->pruneRememberedSet(env);
 	}
 
-	void scanRoots(MM_EnvironmentBase* env)
-	{
+	void scanRoots(MM_EnvironmentBase* env) {
 		OMR_VM_Example* omrVM = (OMR_VM_Example*)env->getOmrVM()->_language_vm;
 		if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
 			J9HashTableState state;
 			MM_EnvironmentStandard* envStd =
-				MM_EnvironmentStandard::getEnvironment(env);
+			        MM_EnvironmentStandard::getEnvironment(env);
 			if (NULL != omrVM->rootTable) {
 				RootEntry* rootEntry =
-					(RootEntry*)hashTableStartDo(omrVM->rootTable, &state);
+				        (RootEntry*)hashTableStartDo(omrVM->rootTable, &state);
 				while (NULL != rootEntry) {
 					if (NULL != rootEntry->rootPtr) {
 						_scavenger->copyObjectSlot(
-							envStd,
-							(volatile omrobjectptr_t*)&rootEntry
-								->rootPtr);
+						        envStd,
+						        (volatile omrobjectptr_t*)&rootEntry
+						                ->rootPtr);
 					}
 					rootEntry = (RootEntry*)hashTableNextDo(&state);
 				}
@@ -90,15 +85,15 @@ public:
 			while ((walkThread = threadListIterator.nextOMRVMThread()) != NULL) {
 				if (NULL != walkThread->_savedObject1) {
 					_scavenger->copyObjectSlot(
-						envStd,
-						(volatile omrobjectptr_t*)&walkThread
-							->_savedObject1);
+					        envStd,
+					        (volatile omrobjectptr_t*)&walkThread
+					                ->_savedObject1);
 				}
 				if (NULL != walkThread->_savedObject2) {
 					_scavenger->copyObjectSlot(
-						envStd,
-						(volatile omrobjectptr_t*)&walkThread
-							->_savedObject2);
+					        envStd,
+					        (volatile omrobjectptr_t*)&walkThread
+					                ->_savedObject2);
 				}
 			}
 			env->_currentTask->releaseSynchronizedGCThreads(env);
@@ -107,26 +102,25 @@ public:
 
 	void rescanThreadSlots(MM_EnvironmentStandard* env) {}
 
-	void scanClearable(MM_EnvironmentBase* env)
-	{
+	void scanClearable(MM_EnvironmentBase* env) {
 		OMRPORT_ACCESS_FROM_OMRVM(env->getOmrVM());
 		OMR_VM_Example* omrVM = (OMR_VM_Example*)env->getOmrVM()->_language_vm;
 		if (NULL != omrVM->objectTable) {
-			if (env->_currentTask
-				    ->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
+			if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(
+			            env, UNIQUE_ID)) {
 				J9HashTableState state;
 				ObjectEntry* objectEntry =
-					(ObjectEntry*)hashTableStartDo(omrVM->objectTable, &state);
+				        (ObjectEntry*)hashTableStartDo(omrVM->objectTable, &state);
 				while (NULL != objectEntry) {
 					if (_scavenger->isObjectInEvacuateMemory(
-						    objectEntry->objPtr)) {
+					            objectEntry->objPtr)) {
 						MM_ForwardedHeader fwdHeader(objectEntry->objPtr);
 						if (fwdHeader.isForwardedPointer()) {
 							objectEntry->objPtr =
-								fwdHeader.getForwardedObject();
+							        fwdHeader.getForwardedObject();
 						} else {
 							omrmem_free_memory(
-								(void*)objectEntry->name);
+							        (void*)objectEntry->name);
 							objectEntry->name = NULL;
 							hashTableDoRemove(&state);
 						}

@@ -32,8 +32,7 @@ class MM_EnvironmentBase;
  * thread, for example, local buffers or caches that are maintained on a per
  * thread basis.
  */
-class GC_Environment
-{
+class GC_Environment {
 	/* Data members */
 private:
 protected:
@@ -74,8 +73,7 @@ public:
  * releasing it.
  */
 
-class MM_EnvironmentDelegate
-{
+class MM_EnvironmentDelegate {
 	/* Data members */
 private:
 	MM_EnvironmentBase* _env;
@@ -112,8 +110,7 @@ public:
 	 * Initialize the delegate's internal structures and values.
 	 * @return true if initialization completed, false otherwise
 	 */
-	bool initialize(MM_EnvironmentBase* env)
-	{
+	bool initialize(MM_EnvironmentBase* env) {
 		_env = env;
 		return true;
 	}

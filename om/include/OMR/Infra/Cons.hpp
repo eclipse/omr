@@ -3,21 +3,15 @@
 
 #include <utility>
 
-namespace OMR
-{
-namespace Infra
-{
+namespace OMR {
+namespace Infra {
 /// Linked list element. A specialization of std::pair that supports forward
 /// iteration. cons.first is an instance of T. cons.second is a pointer to the
 /// next.
-template <typename T>
-class Cons : public std::pair<T, Cons<T>*>
-{
+template<typename T>
+class Cons : public std::pair<T, Cons<T>*> {
 public:
-
-
-	class ConstIterator
-	{
+	class ConstIterator {
 	public:
 		ConstIterator() : current_(nullptr) {}
 
@@ -29,14 +23,12 @@ public:
 
 		const T* operator->() const { return &current_->first; }
 
-		ConstIterator& operator++()
-		{
+		ConstIterator& operator++() {
 			current_ = current_->second;
 			return *this;
 		}
 
-		ConstIterator operator++(int)
-		{
+		ConstIterator operator++(int) {
 			Iterator tmp(*this);
 			current_ = current_->second;
 			return tmp;
@@ -65,7 +57,7 @@ public:
 	ConstIterator cend() const noexcept { return ConstIterator(); }
 };
 
-}  // namespace Infra
-}  // namespace OMR
+} // namespace Infra
+} // namespace OMR
 
-#endif  // OMR_INFRA_CONS_HPP_
+#endif // OMR_INFRA_CONS_HPP_

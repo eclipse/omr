@@ -62,13 +62,10 @@
  *
  * Trivial example below admits 15 allocation sizes up to 2k.
  */
-#define SMALL_SIZECLASSES                                                                          \
-	{                                                                                          \
-		0, 16, 32, 64, 96, 160, 240, 352, 456, 592, 760, 968, 1200, 1520, 1760, 2048       \
-	}
+#define SMALL_SIZECLASSES \
+	{ 0, 16, 32, 64, 96, 160, 240, 352, 456, 592, 760, 968, 1200, 1520, 1760, 2048 }
 
-typedef struct OMR_SizeClasses
-{
+typedef struct OMR_SizeClasses {
 	uintptr_t smallCellSizes[OMR_SIZECLASSES_MAX_SMALL + 1];
 	uintptr_t smallNumCells[OMR_SIZECLASSES_MAX_SMALL + 1];
 	uintptr_t sizeClassIndex[OMR_SIZECLASSES_MAX_SMALL_SIZE_BYTES >> 2];

@@ -21,21 +21,19 @@
 
 #include "omrcfg.h"
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-#include "objectdescription.h"
-#include "omrgcconsts.h"
-#include "omrport.h"
-
 #include "ConcurrentSafepointCallback.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
+#include "objectdescription.h"
+#include "omrgcconsts.h"
+#include "omrport.h"
 
 class MM_ConcurrentGC;
 
 /**
  * Provides language-specific support for marking.
  */
-class MM_ConcurrentMarkingDelegate
-{
+class MM_ConcurrentMarkingDelegate {
 	/*
 	 * Data members
 	 */
@@ -62,10 +60,7 @@ public:
 	 * @see MM_ConcurrentMarkingDelegate::collectRoots(MM_EnvironmentBase *,
 	 * uintptr_t, bool *, bool *)
 	 */
-	enum
-	{
-		CONCURRENT_ROOT_TRACING1 = CONCURRENT_ROOT_TRACING + 1
-	};
+	enum { CONCURRENT_ROOT_TRACING1 = CONCURRENT_ROOT_TRACING + 1 };
 
 	/*
 	 * Function members
@@ -92,8 +87,7 @@ public:
 	 * signal all mutator threads and cause them to synchronize at a safe point
 	 * @see MM_ConcurrentSafepointCallback
 	 */
-	MMINLINE MM_ConcurrentSafepointCallback* createSafepointCallback(MM_EnvironmentBase* env)
-	{
+	MMINLINE MM_ConcurrentSafepointCallback* createSafepointCallback(MM_EnvironmentBase* env) {
 		return MM_ConcurrentSafepointCallback::newInstance(env);
 	}
 
@@ -108,8 +102,7 @@ public:
 	 * @return a pointer to the signal handler function (or NULL if no signal
 	 * handler)
 	 */
-	MMINLINE omrsig_handler_fn getProtectedSignalHandler(void** signalHandlerArg)
-	{
+	MMINLINE omrsig_handler_fn getProtectedSignalHandler(void** signalHandlerArg) {
 		*signalHandlerArg = NULL;
 		return NULL;
 	}
@@ -131,9 +124,9 @@ public:
 	 * @see J9MMCONSTANT_* (j9nonbuilderr.h) for gcCode values
 	 * @return true if Kickoff can be forced
 	 */
-	MMINLINE bool canForceConcurrentKickoff(
-		MM_EnvironmentBase* env, uintptr_t gcCode, uintptr_t* languageKickoffReason)
-	{
+	MMINLINE bool canForceConcurrentKickoff(MM_EnvironmentBase* env,
+	                                        uintptr_t gcCode,
+	                                        uintptr_t* languageKickoffReason) {
 		if (NULL != languageKickoffReason) {
 			*languageKickoffReason = NO_LANGUAGE_KICKOFF_REASON;
 		}
@@ -156,8 +149,7 @@ public:
 	 * @see MM_ConcurrentMarkingDelegate::collectRoots(MM_EnvironmentBase *,
 	 * uintptr_t, bool *, bool *)
 	 */
-	MMINLINE uintptr_t getNextTracingMode(uintptr_t executionMode)
-	{
+	MMINLINE uintptr_t getNextTracingMode(uintptr_t executionMode) {
 		uintptr_t nextExecutionMode = CONCURRENT_TRACE_ONLY;
 		switch (executionMode) {
 		case CONCURRENT_ROOT_TRACING: nextExecutionMode = CONCURRENT_ROOT_TRACING1; break;
@@ -180,9 +172,10 @@ public:
 	 * @param[out] taxPaid set this to true if any roots were collected
 	 * @see MM_ConcurrentMarkingDelegate::getNextTracingMode(uintptr_t)
 	 */
-	uintptr_t collectRoots(
-		MM_EnvironmentBase* env, uintptr_t concurrentStatus, bool* collectedRoots,
-		bool* paidTax);
+	uintptr_t collectRoots(MM_EnvironmentBase* env,
+	                       uintptr_t concurrentStatus,
+	                       bool* collectedRoots,
+	                       bool* paidTax);
 
 	/**
 	 * Informative. This method will be called when concurrent initialization is
@@ -259,10 +252,10 @@ public:
 	/**
 	 * Deprecated. Use this default implementation unless otherwise required.
 	 */
-	MMINLINE bool startConcurrentScanning(
-		MM_EnvironmentBase* env, uintptr_t* bytesTraced, bool* collectedRoots)
-	{
-		*bytesTraced    = 0;
+	MMINLINE bool startConcurrentScanning(MM_EnvironmentBase* env,
+	                                      uintptr_t* bytesTraced,
+	                                      bool* collectedRoots) {
+		*bytesTraced = 0;
 		*collectedRoots = false;
 		return false;
 	}

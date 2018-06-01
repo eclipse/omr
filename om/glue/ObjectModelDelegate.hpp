@@ -22,13 +22,12 @@
 #ifndef OMR_OM_OBJECTMODELDELEGATE_HPP_
 #define OMR_OM_OBJECTMODELDELEGATE_HPP_
 
-#include <OMR/Om/Array.hpp>
-#include <OMR/Om/Shape.hpp>
-#include <OMR/Om/Object.hpp>
-#include <OMR/Om/CellOperations.hpp>
-
 #include "ForwardedHeader.hpp"
 #include "objectdescription.h"
+#include <OMR/Om/Array.hpp>
+#include <OMR/Om/CellOperations.hpp>
+#include <OMR/Om/Object.hpp>
+#include <OMR/Om/Shape.hpp>
 
 class MM_GCExtensionsBase;
 class MM_AllocateInitialization;
@@ -36,13 +35,10 @@ class MM_EnvironmentBase;
 
 using CLI_THREAD_TYPE = ::OMR::Om::Context;
 
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 
-class ObjectModelDelegate
-{
+class ObjectModelDelegate {
 public:
 	/**
 	 * If the received object holds an indirect reference (ie a reference to an
@@ -81,10 +77,9 @@ public:
 	 * @return the exact size of an object, in bytes, excluding padding bytes and
 	 * header bytes
 	 */
-	MMINLINE uintptr_t getObjectSizeInBytesWithoutHeader(Cell* objectPtr)
-	{
-		return getObjectSizeInBytesWithHeader(objectPtr) -
-			getObjectHeaderSizeInBytes(objectPtr);
+	MMINLINE uintptr_t getObjectSizeInBytesWithoutHeader(Cell* objectPtr) {
+		return getObjectSizeInBytesWithHeader(objectPtr)
+		       - getObjectHeaderSizeInBytes(objectPtr);
 	}
 
 	/**
@@ -96,15 +91,11 @@ public:
 	 * @param[in] objectPtr points to the object to determine size for
 	 * @return the exact size of an object, in bytes, excluding padding bytes
 	 */
-	MMINLINE uintptr_t getObjectSizeInBytesWithHeader(const Cell* cell)
-	{
+	MMINLINE uintptr_t getObjectSizeInBytesWithHeader(const Cell* cell) {
 		switch (cellKind(cell)) {
-		case CellKind::OBJECT:
-			return reinterpret_cast<const Object*>(cell)->allocSize();
-		case CellKind::SHAPE:
-			return reinterpret_cast<const Shape*>(cell)->allocSize();
-		case CellKind::ARRAY:
-			return reinterpret_cast<const Array*>(cell)->allocSize();
+		case CellKind::OBJECT: return reinterpret_cast<const Object*>(cell)->allocSize();
+		case CellKind::SHAPE: return reinterpret_cast<const Shape*>(cell)->allocSize();
+		case CellKind::ARRAY: return reinterpret_cast<const Array*>(cell)->allocSize();
 		default: throw std::runtime_error("Unrecognized cell type");
 		}
 	}
@@ -123,8 +114,7 @@ public:
 	 * @return the total size of an object, in bytes, including discontiguous
 	 * parts
 	 */
-	MMINLINE uintptr_t getTotalFootprintInBytes(omrobjectptr_t objectPtr)
-	{
+	MMINLINE uintptr_t getTotalFootprintInBytes(omrobjectptr_t objectPtr) {
 		Assert_MM_false(isIndexable(objectPtr));
 		return getObjectSizeInBytesWithHeader(objectPtr);
 	}
@@ -142,8 +132,9 @@ public:
 	 * @return pointer to the initialized object, or NULL if initialization
 	 * fails
 	 */
-	omrobjectptr_t initializeAllocation(
-		MM_EnvironmentBase* env, void* allocatedBytes, MM_AllocateInitialization* init);
+	omrobjectptr_t initializeAllocation(MM_EnvironmentBase* env,
+	                                    void* allocatedBytes,
+	                                    MM_AllocateInitialization* init);
 
 	/**
 	 * Returns TRUE if an object is indexable, FALSE otherwise. Languages that
@@ -182,10 +173,10 @@ public:
 	 * encapsulating the object
 	 * @return The instance size (total) of the forwarded object
 	 */
-	MMINLINE uintptr_t getForwardedObjectSizeInBytes(MM_ForwardedHeader* forwardedHeader)
-	{
+	MMINLINE uintptr_t getForwardedObjectSizeInBytes(MM_ForwardedHeader* forwardedHeader) {
 		/// TODO: Why is this giving us an fomrobject_t, and not a real pointer?
-		return getTotalFootprintInBytes((reinterpret_cast<Cell*>(forwardedHeader->getPreservedSlot())));
+		return getTotalFootprintInBytes(
+		        (reinterpret_cast<Cell*>(forwardedHeader->getPreservedSlot())));
 	}
 
 	/**
@@ -199,8 +190,8 @@ public:
 	 * @param objectPtr points to an object
 	 * @return true if object holds indirect references to heap objects
 	 */
-	MMINLINE bool hasIndirectObjectReferents(CLI_THREAD_TYPE* thread, omrobjectptr_t objectPtr)
-	{
+	MMINLINE bool
+	hasIndirectObjectReferents(CLI_THREAD_TYPE* thread, omrobjectptr_t objectPtr) {
 		return false;
 	}
 
@@ -217,10 +208,11 @@ public:
 	 * @param[out] hotFieldAlignmentDescriptor pointer to hot field alignment
 	 * descriptor for class (or NULL)
 	 */
-	void calculateObjectDetailsForCopy(
-		MM_EnvironmentBase* env, MM_ForwardedHeader* forwardedHeader,
-		uintptr_t* objectCopySizeInBytes, uintptr_t* objectReserveSizeInBytes,
-		uintptr_t* hotFieldAlignmentDescriptor);
+	void calculateObjectDetailsForCopy(MM_EnvironmentBase* env,
+	                                   MM_ForwardedHeader* forwardedHeader,
+	                                   uintptr_t* objectCopySizeInBytes,
+	                                   uintptr_t* objectReserveSizeInBytes,
+	                                   uintptr_t* hotFieldAlignmentDescriptor);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
 	/**
@@ -230,8 +222,8 @@ public:
 	constexpr ObjectModelDelegate(fomrobject_t omrHeaderSlotFlagsMask) {}
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 using GC_ObjectModelDelegate = OMR::Om::ObjectModelDelegate;
 

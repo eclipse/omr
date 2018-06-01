@@ -22,27 +22,22 @@
 #if !defined(OMR_OM_MARKINGDELEGATE_HPP_)
 #define OMR_OM_MARKINGDELEGATE_HPP_
 
-#include "objectdescription.h"
-#include "omrgcconsts.h"
-
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "Task.hpp"
-
+#include "objectdescription.h"
+#include "omrgcconsts.h"
 #include <cassert>
 
 class MM_EnvironmentBase;
 class MM_MarkingScheme;
 
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 /**
  * Provides language-specific support for marking.
  */
-class MarkingDelegate
-{
+class MarkingDelegate {
 	/*
 	 * Data members
 	 */
@@ -65,9 +60,7 @@ public:
 	 * @param markingScheme the MM_MarkingScheme that the delegate is bound to
 	 * @return true if delegate initialized successfully
 	 */
-	MMINLINE bool
-	initialize(MM_EnvironmentBase *env, MM_MarkingScheme *markingScheme)
-	{
+	MMINLINE bool initialize(MM_EnvironmentBase* env, MM_MarkingScheme* markingScheme) {
 		_objectModel = &(env->getExtensions()->objectModel);
 		_markingScheme = markingScheme;
 		return true;
@@ -128,8 +121,7 @@ public:
 	 *
 	 * @param env The environment for the calling thread
 	 */
-	MMINLINE void workerCompleteGC(MM_EnvironmentBase* env)
-	{
+	MMINLINE void workerCompleteGC(MM_EnvironmentBase* env) {
 		/* All threads flush buffers before this point, and complete any remaining
 		 * language-specific marking tasks */
 		if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
@@ -173,8 +165,7 @@ public:
 	 * @param env The environment for the calling thread
 	 */
 	MMINLINE void
-	handleWorkPacketOverflowItem(MM_EnvironmentBase* env, omrobjectptr_t objectPtr)
-	{
+	handleWorkPacketOverflowItem(MM_EnvironmentBase* env, omrobjectptr_t objectPtr) {
 		assert(0);
 	}
 
@@ -199,8 +190,8 @@ public:
 	MMINLINE MarkingDelegate() : _objectModel(NULL) {}
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 using MM_MarkingDelegate = OMR::Om::MarkingDelegate;
 

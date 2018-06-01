@@ -23,7 +23,6 @@
 #define OMR_OM_OBJECTITERATOR_HPP_
 
 #include "SlotObject.hpp"
-
 #include <cassert>
 
 namespace OMR {
@@ -38,13 +37,11 @@ public:
 
 	void restore(int32_t index) { assert(0); }
 
-	DummyObjectIterator(OMR_VM* omrVM, omrobjectptr_t objectPtr) {
-		assert(0);
-	}
+	DummyObjectIterator(OMR_VM* omrVM, omrobjectptr_t objectPtr) { assert(0); }
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 using GC_ObjectIterator = OMR::Om::DummyObjectIterator;
 

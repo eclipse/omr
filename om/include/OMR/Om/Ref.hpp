@@ -1,13 +1,11 @@
 #if !defined(OMR_OM_REF_HPP_)
 #define OMR_OM_REF_HPP_
 
-#include <type_traits>
 #include <cstdint>
+#include <type_traits>
 
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 
 using Ref = std::uintptr_t;
 
@@ -93,7 +91,7 @@ class Ref<void>
 
 #endif /////////////////////////////////////////////////////////
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
-#endif  // OMR_OM_REF_HPP_
+#endif // OMR_OM_REF_HPP_

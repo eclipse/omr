@@ -19,25 +19,24 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include <OMR/Om/RootRef.hpp>
-
 #include "GlobalCollectorDelegate.hpp"
+
 #include "Heap.hpp"
 #include "HeapRegionIterator.hpp"
 #include "MarkingScheme.hpp"
 #include "ObjectHeapIterator.hpp"
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
+#include <OMR/Om/RootRef.hpp>
 
 #if defined(OMR_GC_PAINT_HEAP)
 
-void
-MM_GlobalCollectorDelegate::poisonUnmarkedObjectsInRegion(GC_ObjectHeapIterator& objectIterator)
-{
+void MM_GlobalCollectorDelegate::poisonUnmarkedObjectsInRegion(
+        GC_ObjectHeapIterator& objectIterator) {
 	omrobjectptr_t omrobjptr = NULL;
 
 	while (NULL != (omrobjptr = objectIterator.nextObject())) {
 		uintptr_t objsize =
-			_extensions->objectModel.getConsumedSizeInBytesWithHeader(omrobjptr);
+		        _extensions->objectModel.getConsumedSizeInBytesWithHeader(omrobjptr);
 		bool ismarked = _markingScheme->isMarked(omrobjptr);
 
 		// std::cerr << ">POISON @" << omrobjptr << "[" << objsize << "]"
@@ -52,9 +51,7 @@ MM_GlobalCollectorDelegate::poisonUnmarkedObjectsInRegion(GC_ObjectHeapIterator&
 	}
 }
 
-void
-MM_GlobalCollectorDelegate::poisonUnmarkedObjects(MM_EnvironmentBase* env)
-{
+void MM_GlobalCollectorDelegate::poisonUnmarkedObjects(MM_EnvironmentBase* env) {
 	/* this puts the heap into the state required to walk it */
 	// flushCachesForGC(env);
 
@@ -68,11 +65,9 @@ MM_GlobalCollectorDelegate::poisonUnmarkedObjects(MM_EnvironmentBase* env)
 	}
 }
 
-#endif  // OMR_GC_PAINT_HEAP
+#endif // OMR_GC_PAINT_HEAP
 
-void
-MM_GlobalCollectorDelegate::postMarkProcessing(MM_EnvironmentBase* env)
-{
+void MM_GlobalCollectorDelegate::postMarkProcessing(MM_EnvironmentBase* env) {
 #if defined(OMR_GC_PAINT_HEAP)
 	poisonUnmarkedObjects(env);
 #endif

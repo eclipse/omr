@@ -29,8 +29,7 @@ class MM_VerboseManagerBase;
 
 struct OMR_VM;
 
-class MM_StartupManagerImpl : public MM_StartupManager
-{
+class MM_StartupManagerImpl : public MM_StartupManager {
 	/*
 	 * Data members
 	 */
@@ -59,9 +58,10 @@ public:
 	virtual MM_VerboseManagerBase* createVerboseManager(MM_EnvironmentBase* env);
 
 	MM_StartupManagerImpl(OMR_VM* omrVM)
-		: MM_StartupManager(omrVM, defaultMinimumHeapSize, defaultMaximumHeapSize)
+	        : MM_StartupManager(omrVM, defaultMinimumHeapSize, defaultMaximumHeapSize)
 #if defined(OMR_GC_SEGREGATED_HEAP)
-		, _useSegregatedGC(false)
+	          ,
+	          _useSegregatedGC(false)
 #endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 	{
 	}

@@ -22,11 +22,10 @@
 #ifndef GLOBALCOLLECTORDELEGATE_HPP_
 #define GLOBALCOLLECTORDELEGATE_HPP_
 
-#include "omrcfg.h"
-#include "omrgcconsts.h"
-
 #include "EnvironmentBase.hpp"
 #include "MarkingScheme.hpp"
+#include "omrcfg.h"
+#include "omrgcconsts.h"
 
 class MM_GCExtensionsBase;
 class MM_GlobalCollector;
@@ -36,8 +35,7 @@ class GC_ObjectHeapIterator;
  * Delegate class provides implementations for methods required for gc policies
  * using OMR global collector.
  */
-class MM_GlobalCollectorDelegate
-{
+class MM_GlobalCollectorDelegate {
 	/*
 	 * Data members
 	 */
@@ -63,12 +61,11 @@ public:
 	 * bound to
 	 * @return true if delegate initialized successfully
 	 */
-	bool initialize(
-		MM_EnvironmentBase* env, MM_GlobalCollector* globalCollector,
-		MM_MarkingScheme* markingScheme)
-	{
-		_extensions      = env->getExtensions();
-		_markingScheme   = markingScheme;
+	bool initialize(MM_EnvironmentBase* env,
+	                MM_GlobalCollector* globalCollector,
+	                MM_MarkingScheme* markingScheme) {
+		_extensions = env->getExtensions();
+		_markingScheme = markingScheme;
 		_globalCollector = globalCollector;
 
 		return true;
@@ -120,7 +117,7 @@ public:
 	 * validate that they have the expected eyecatcher */
 	void poisonUnmarkedObjects(MM_EnvironmentBase* env);
 
-#endif  // OMR_GC_PAINT_HEAP
+#endif // OMR_GC_PAINT_HEAP
 
 	/**
 	 * Called on GC master thread near the end of a global collection. This is
@@ -170,10 +167,11 @@ public:
 	 *
 	 * @return true to allow heap expansion.
 	 */
-	bool heapAddRange(
-		MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, UDATA size, void* lowAddress,
-		void* highAddress)
-	{
+	bool heapAddRange(MM_EnvironmentBase* env,
+	                  MM_MemorySubSpace* subspace,
+	                  UDATA size,
+	                  void* lowAddress,
+	                  void* highAddress) {
 		return true;
 	}
 
@@ -182,10 +180,13 @@ public:
 	 *
 	 * @return true to allow heap contraction.
 	 */
-	bool heapRemoveRange(
-		MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, UDATA size, void* lowAddress,
-		void* highAddress, void* lowValidAddress, void* highValidAddress)
-	{
+	bool heapRemoveRange(MM_EnvironmentBase* env,
+	                     MM_MemorySubSpace* subspace,
+	                     UDATA size,
+	                     void* lowAddress,
+	                     void* highAddress,
+	                     void* lowValidAddress,
+	                     void* highValidAddress) {
 		return true;
 	}
 
@@ -206,15 +207,12 @@ public:
 	 *
 	 * @return true to suppress compaction for this cycle
 	 */
-	CompactPreventedReason checkIfCompactionShouldBePrevented(MM_EnvironmentBase* env)
-	{
+	CompactPreventedReason checkIfCompactionShouldBePrevented(MM_EnvironmentBase* env) {
 		return COMPACT_PREVENTED_NONE;
 	}
 #endif /* OMR_GC_MODRON_COMPACTION */
 
 	MM_GlobalCollectorDelegate()
-		: _extensions(NULL), _markingScheme(NULL), _globalCollector(NULL)
-	{
-	}
+	        : _extensions(NULL), _markingScheme(NULL), _globalCollector(NULL) {}
 };
 #endif /* GLOBALCOLLECTORDELEGATE_HPP_ */

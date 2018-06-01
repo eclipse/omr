@@ -20,32 +20,33 @@ struct RootListNode {
 
 /// A foward iterator through a RootList.
 /// @see-also: RootList::begin()
-class RootListIterator
-{
+class RootListIterator {
 public:
-
-	constexpr RootListIterator(const RootListIterator& other) noexcept : current_(other.current_) {}
+	constexpr RootListIterator(const RootListIterator& other) noexcept
+	        : current_(other.current_) {}
 
 	constexpr const RootListNode& operator*() const noexcept { return *current_; }
 
 	constexpr const RootListNode* operator->() const noexcept { return current_; }
 
-	RootListIterator& operator++() noexcept
-	{
+	RootListIterator& operator++() noexcept {
 		current_ = current_->tail;
 		return *this;
 	}
 
-	RootListIterator operator++(int) noexcept
-	{
+	RootListIterator operator++(int) noexcept {
 		RootListIterator tmp(*this);
 		current_ = current_->tail;
 		return tmp;
 	}
 
-	constexpr bool operator==(const RootListIterator& rhs) const noexcept { return current_ == rhs.current_; }
+	constexpr bool operator==(const RootListIterator& rhs) const noexcept {
+		return current_ == rhs.current_;
+	}
 
-	constexpr bool operator!=(const RootListIterator& rhs) const noexcept { return current_ != rhs.current_; }
+	constexpr bool operator!=(const RootListIterator& rhs) const noexcept {
+		return current_ != rhs.current_;
+	}
 
 	RootListIterator& operator=(const RootListIterator& rhs) noexcept {
 		current_ = rhs.current_;
@@ -66,38 +67,44 @@ private:
 
 /// A forward iterator through a const RootList.
 /// @see-also: RootList::cbegin()
-class ConstRootListIterator
-{
+class ConstRootListIterator {
 public:
+	constexpr ConstRootListIterator(const ConstRootListIterator& other) noexcept
+	        : current_(other.current_) {}
 
-	constexpr ConstRootListIterator(const ConstRootListIterator& other) noexcept : current_(other.current_) {}
-
-	constexpr ConstRootListIterator(const RootListIterator& other) noexcept : current_(other.current_) {}
+	constexpr ConstRootListIterator(const RootListIterator& other) noexcept
+	        : current_(other.current_) {}
 
 	constexpr const RootListNode& operator*() const noexcept { return *current_; }
 
 	constexpr const RootListNode* operator->() const noexcept { return current_; }
 
-	ConstRootListIterator& operator++() noexcept
-	{
+	ConstRootListIterator& operator++() noexcept {
 		current_ = current_->tail;
 		return *this;
 	}
 
-	ConstRootListIterator operator++(int) noexcept
-	{
+	ConstRootListIterator operator++(int) noexcept {
 		ConstRootListIterator tmp(*this);
 		current_ = current_->tail;
 		return tmp;
 	}
 
-	constexpr bool operator==(const ConstRootListIterator& rhs) const noexcept { return current_ == rhs.current_; }
+	constexpr bool operator==(const ConstRootListIterator& rhs) const noexcept {
+		return current_ == rhs.current_;
+	}
 
-	constexpr bool operator!=(const ConstRootListIterator& rhs) const noexcept { return current_ != rhs.current_; }
+	constexpr bool operator!=(const ConstRootListIterator& rhs) const noexcept {
+		return current_ != rhs.current_;
+	}
 
-	constexpr bool operator==(const RootListIterator& rhs) const noexcept { return current_ == rhs.current_; }
+	constexpr bool operator==(const RootListIterator& rhs) const noexcept {
+		return current_ == rhs.current_;
+	}
 
-	constexpr bool operator!=(const RootListIterator& rhs) const noexcept { return current_ != rhs.current_; }
+	constexpr bool operator!=(const RootListIterator& rhs) const noexcept {
+		return current_ != rhs.current_;
+	}
 
 	ConstRootListIterator& operator=(const ConstRootListIterator& rhs) noexcept {
 		current_ = rhs.current_;
@@ -123,9 +130,9 @@ private:
 /// The RootList is an untyped linked list of rooted, untagged pointers.
 /// Nodes are manually added and removed from the list.
 /// The RootList explicitly tracks untyped node elements.
-/// Users should not use RootList directly, instead root objects using the automatic RootRef type, or register a RootFn callback.
-class RootList
-{
+/// Users should not use RootList directly, instead root objects using the automatic RootRef type,
+/// or register a RootFn callback.
+class RootList {
 public:
 	constexpr RootList() noexcept : head_(nullptr) {}
 
@@ -143,8 +150,7 @@ public:
 
 	RootListNode* head() const noexcept { return head_; }
 
-	RootList& head(RootListNode* head) noexcept
-	{
+	RootList& head(RootListNode* head) noexcept {
 		head_ = head;
 		return *this;
 	}
@@ -159,7 +165,7 @@ private:
 	RootListNode* head_;
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 #endif // OMR_OM_ROOTLIST_HPP_

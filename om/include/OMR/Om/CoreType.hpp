@@ -1,11 +1,10 @@
 #if !defined(OMR_OM_CORETYPE_HPP_)
 #define OMR_OM_CORETYPE_HPP_
 
-#include <OMR/Om/Value.hpp>
 #include <OMR/Om/Ref.hpp>
-
-#include <cstdlib>
+#include <OMR/Om/Value.hpp>
 #include <cstdint>
+#include <cstdlib>
 
 namespace OMR {
 namespace Om {
@@ -18,8 +17,7 @@ namespace Om {
 ///   3. Non-pointer
 /// Beyond those 3 categories, we just need to know the width, so we can iterate
 /// the object.
-enum class CoreType
-{
+enum class CoreType {
 	/// Binary data slots, of various sizes.
 	INT8,
 	INT16,
@@ -27,15 +25,13 @@ enum class CoreType
 	INT64,
 	FLOAT32,
 	FLOAT64,
-	VALUE,  //< A polymorphic `Value`.
-	REF,    //< A GC pointer
+	VALUE, //< A polymorphic `Value`.
+	REF,   //< A GC pointer
 	PTR
 };
 
 /// Calculate the size of a CoreType. Fundamental types have a fixed size.
-inline std::size_t
-coreTypeWidth(CoreType t) noexcept
-{
+inline std::size_t coreTypeWidth(CoreType t) noexcept {
 	switch (t) {
 	case CoreType::INT8: return 1;
 	case CoreType::INT16: return 2;
@@ -50,7 +46,7 @@ coreTypeWidth(CoreType t) noexcept
 	return -1;
 }
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 #endif // OMR_OM_CORETYPE_HPP_

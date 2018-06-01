@@ -27,9 +27,7 @@
  * GC/RAS/OMR core modules.)
  */
 #if defined(WIN32)
-omr_error_t
-OMR_Glue_GetVMDirectoryToken(void** token)
-{
+omr_error_t OMR_Glue_GetVMDirectoryToken(void** token) {
 	/* NULL means the runtime will look in the current executable's directory */
 	*token = NULL;
 	return OMR_ERROR_NONE;
@@ -39,8 +37,4 @@ OMR_Glue_GetVMDirectoryToken(void** token)
 /**
  * Provides the thread name to be used when no name is given.
  */
-char*
-OMR_Glue_GetThreadNameForUnamedThread(OMR_VMThread* vmThread)
-{
-	return "(unnamed thread)";
-}
+char* OMR_Glue_GetThreadNameForUnamedThread(OMR_VMThread* vmThread) { return "(unnamed thread)"; }

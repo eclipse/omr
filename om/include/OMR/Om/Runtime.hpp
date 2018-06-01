@@ -15,34 +15,27 @@
 #include <omr.h>
 #include <omrgcstartup.hpp>
 #include <omrport.h>
-#include <thread_api.h>
-
 #include <stdexcept>
 #include <stdlib.h>
 #include <string.h>
+#include <thread_api.h>
 
-namespace OMR
-{
-namespace Om
-{
-class PlatformError : public std::exception
-{
-  public:
+namespace OMR {
+namespace Om {
+class PlatformError : public std::exception {
+public:
 	PlatformError(int error) : error_(error) {}
 
-  private:
+private:
 	int error_;
 };
 
 /// OMR Thread library wrapper
-class ThreadInterface
-{
-  public:
-	static void init()
-	{
+class ThreadInterface {
+public:
+	static void init() {
 		auto e = omrthread_init_library();
-		if (e != 0)
-		{
+		if (e != 0) {
 			throw PlatformError(e);
 		}
 	}
@@ -53,18 +46,15 @@ class ThreadInterface
 
 	~ThreadInterface() noexcept { tearDown(); }
 
-  private:
+private:
 };
 
 /// omrthread wrapper.
-class Thread
-{
-  public:
-	Thread(const ThreadInterface &ithread)
-	{
+class Thread {
+public:
+	Thread(const ThreadInterface& ithread) {
 		auto e = omrthread_attach_ex(&self_, J9THREAD_ATTR_DEFAULT);
-		if (e != 0)
-		{
+		if (e != 0) {
 			throw PlatformError(e);
 		}
 	}
@@ -75,70 +65,63 @@ class Thread
 
 	const omrthread_t data() const { return self_; }
 
-  private:
+private:
 	omrthread_t self_;
 };
 
 /// OMR Thread and Port Library Wrapper
-class PlatformInterface
-{
-  public:
-	PlatformInterface()
-	{
+class PlatformInterface {
+public:
+	PlatformInterface() {
 		Thread self(threadInterface_);
 
 		auto e = omrport_init_library(&library(), sizeof(OMRPortLibrary));
-		if (e != 0)
-		{
+		if (e != 0) {
 			throw PlatformError(e);
 		}
 	}
 
-	~PlatformInterface() noexcept
-	{
+	~PlatformInterface() noexcept {
 		Thread self(threadInterface_);
 		library().port_shutdown_library(&library());
 	}
 
-	OMRPortLibrary &library() noexcept { return portLibrary_; }
+	OMRPortLibrary& library() noexcept { return portLibrary_; }
 
-	const OMRPortLibrary &library() const noexcept { return portLibrary_; }
+	const OMRPortLibrary& library() const noexcept { return portLibrary_; }
 
-	const ThreadInterface &thread() const noexcept { return threadInterface_; }
+	const ThreadInterface& thread() const noexcept { return threadInterface_; }
 
-  private:
+private:
 	ThreadInterface threadInterface_;
 	OMRPortLibrary portLibrary_;
 };
 
 /// Process-wide initialization and tear down.
-class ProcessRuntime
-{
-  public:
+class ProcessRuntime {
+public:
 	/// Initialize the process runtime.
-	ProcessRuntime()
-	{
+	ProcessRuntime() {
 		memset(&omrRuntime_, 0, sizeof(OMR_Runtime));
 		omrRuntime_._configuration._maximum_vm_count = 0;
 		omrRuntime_._vmCount = 0;
 		omrRuntime_._vmList = nullptr;
 		omrRuntime_._portLibrary = &platform().library();
 		auto e = omr_initialize_runtime(&omrRuntime_);
-		if (e != 0)
-		{
+		if (e != 0) {
 			throw PlatformError(e);
 		}
 	}
 
 	~ProcessRuntime() noexcept { omr_destroy_runtime(&omrRuntime_); }
 
-	PlatformInterface &platform() { return platform_; }
+	PlatformInterface& platform() { return platform_; }
 
-	const PlatformInterface &platform() const { return platform_; }
+	const PlatformInterface& platform() const { return platform_; }
 
-	OMR_Runtime &omrRuntime() { return omrRuntime_; }
+	OMR_Runtime& omrRuntime() { return omrRuntime_; }
 
-  private:
+private:
 	PlatformInterface platform_;
 	OMR_Runtime omrRuntime_;
 };

@@ -7,11 +7,11 @@ namespace OMR {
 namespace Om {
 
 /// Functor that calls cell->visit(visitor).
-template <typename VisitorT>
+template<typename VisitorT>
 struct VisitCell {
-	VisitCell(VisitorT visitor)  : visitor(visitor) {}
+	VisitCell(VisitorT visitor) : visitor(visitor) {}
 
-	template <typename T>
+	template<typename T>
 	void operator()(T* thing) {
 		thing->visit(visitor);
 	}
@@ -21,7 +21,7 @@ struct VisitCell {
 
 /// Visit the slots in a cell, based on the layout.
 /// TODO: Implement in terms of dispatch, with a templated visit function.
-template <typename VisitorT>
+template<typename VisitorT>
 void dispatchVisit(Cell* cell, VisitorT visitor) {
 	dispatch(cell, VisitCell<VisitorT>(visitor));
 }
@@ -29,13 +29,13 @@ void dispatchVisit(Cell* cell, VisitorT visitor) {
 /// Traverse the slots in a given cell.
 class CellSlotWalker {
 public:
-	template <typename VisitorT>
+	template<typename VisitorT>
 	void traverse(OMR::Om::Cell* cell, VisitorT visitor) {
 		dispatchVisit(cell, visitor);
 	}
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
 #endif // OMR_OM_CELLSLOTWALKER_HPP_

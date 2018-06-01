@@ -22,12 +22,11 @@
 #ifndef CONFIGURATIONDELEGATE_HPP_
 #define CONFIGURATIONDELEGATE_HPP_
 
-#include "omrgcconsts.h"
-#include "sizeclasses.h"
-
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
+#include "omrgcconsts.h"
+#include "sizeclasses.h"
 
 class MM_HeapRegionDescriptor;
 
@@ -35,8 +34,7 @@ class MM_HeapRegionDescriptor;
  * Client language delegate for GC configuration must be implemented by all GC
  * clients.
  */
-class MM_ConfigurationDelegate
-{
+class MM_ConfigurationDelegate {
 	/*
 	 * Member data and types
 	 */
@@ -59,10 +57,9 @@ public:
 	 * @param allocationType The allocation type selected for the GC configuration
 	 * @return false if initialization fails
 	 */
-	bool initialize(
-		MM_EnvironmentBase* env, MM_GCWriteBarrierType writeBarrierType,
-		MM_GCAllocationType allocationType)
-	{
+	bool initialize(MM_EnvironmentBase* env,
+	                MM_GCWriteBarrierType writeBarrierType,
+	                MM_GCAllocationType allocationType) {
 		return true;
 	}
 
@@ -83,9 +80,8 @@ public:
 	 * @param region the region to attach the region extension to
 	 * @return true unless a required region extension could not be initialized
 	 */
-	bool initializeHeapRegionDescriptorExtension(
-		MM_EnvironmentBase* env, MM_HeapRegionDescriptor* region)
-	{
+	bool initializeHeapRegionDescriptorExtension(MM_EnvironmentBase* env,
+	                                             MM_HeapRegionDescriptor* region) {
 		return true;
 	}
 
@@ -100,10 +96,8 @@ public:
 	 * @param env The calling thread environment
 	 * @param region the region to deallocate the region extension from
 	 */
-	void teardownHeapRegionDescriptorExtension(
-		MM_EnvironmentBase* env, MM_HeapRegionDescriptor* region)
-	{
-	}
+	void teardownHeapRegionDescriptorExtension(MM_EnvironmentBase* env,
+	                                           MM_HeapRegionDescriptor* region) {}
 
 	/**
 	 * This method is called just after the heap has been initialized. Delegate

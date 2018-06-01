@@ -22,17 +22,16 @@
 #if !defined(OMR_OM_OBJECTDESCRIPTION_H_)
 #define OMR_OM_OBJECTDESCRIPTION_H_
 
-#include <OMR/Om/Cell.hpp>
-
 #include "omr.h"
 #include "omrcomp.h"
+#include <OMR/Om/Cell.hpp>
 
 /**
  * Object token definitions to be used by OMR components.
  */
 using languageobjectptr_t = OMR::Om::Cell*;
-using omrobjectptr_t      = languageobjectptr_t;
-using omrarrayptr_t       = languageobjectptr_t;
+using omrobjectptr_t = languageobjectptr_t;
+using omrarrayptr_t = languageobjectptr_t;
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 typedef uint32_t fomrobject_t;

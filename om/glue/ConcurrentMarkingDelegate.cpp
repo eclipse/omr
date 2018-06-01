@@ -21,23 +21,21 @@
 #include "ConcurrentGC.hpp"
 #include "MarkingScheme.hpp"
 
-bool
-MM_ConcurrentMarkingDelegate::initialize(MM_EnvironmentBase* env, MM_ConcurrentGC* collector)
-{
+bool MM_ConcurrentMarkingDelegate::initialize(MM_EnvironmentBase* env, MM_ConcurrentGC* collector) {
 	MM_GCExtensionsBase* extensions = env->getExtensions();
-	_objectModel                    = &(extensions->objectModel);
-	_markingScheme                  = collector->getMarkingScheme();
-	_collector                      = collector;
+	_objectModel = &(extensions->objectModel);
+	_markingScheme = collector->getMarkingScheme();
+	_collector = collector;
 	return true;
 }
 
-uintptr_t
-MM_ConcurrentMarkingDelegate::collectRoots(
-	MM_EnvironmentBase* env, uintptr_t concurrentStatus, bool* collectedRoots, bool* paidTax)
-{
+uintptr_t MM_ConcurrentMarkingDelegate::collectRoots(MM_EnvironmentBase* env,
+                                                     uintptr_t concurrentStatus,
+                                                     bool* collectedRoots,
+                                                     bool* paidTax) {
 	uintptr_t bytesScanned = 0;
-	*collectedRoots        = true;
-	*paidTax               = true;
+	*collectedRoots = true;
+	*paidTax = true;
 
 	switch (concurrentStatus) {
 	case CONCURRENT_ROOT_TRACING1: _markingScheme->markLiveObjectsRoots(env); break;

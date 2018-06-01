@@ -2,18 +2,14 @@
 #define OMR_OM_ID_HPP_
 
 #include <OMR/Infra/HashUtilities.hpp>
-
 #include <cstddef>
 #include <functional>
 
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 using RawId = std::uint32_t;
 
-class Id
-{
+class Id {
 public:
 	Id() = default;
 
@@ -35,15 +31,14 @@ public:
 
 private:
 	static constexpr RawId HASH_SHIFT = 0x2;
-	static constexpr RawId TAG_MASK   = 0x3;
+	static constexpr RawId TAG_MASK = 0x3;
 	static constexpr RawId FIXNUM_TAG = 0x0;
 	static constexpr RawId OBJECT_TAG = 0x1;
 
 	RawId data_;
 };
 
-class IdGenerator
-{
+class IdGenerator {
 public:
 	Id newId() { return Id(next_++); }
 
@@ -51,17 +46,15 @@ private:
 	RawId next_ = 0;
 };
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR
 
-namespace std
-{
-template <>
-struct hash<OMR::Om::Id>
-{
+namespace std {
+template<>
+struct hash<OMR::Om::Id> {
 	constexpr size_t operator()(const OMR::Om::Id& id) const noexcept { return id.raw(); }
 };
 
-}  // namespace std
+} // namespace std
 
-#endif  // OMR_OM_ID_HPP_
+#endif // OMR_OM_ID_HPP_

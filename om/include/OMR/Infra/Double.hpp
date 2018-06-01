@@ -6,19 +6,14 @@
 /// representation of doubles.
 
 #include <OMR/Infra/BitUtilities.hpp>
-
 #include <cmath>
 #include <cstdint>
 
-namespace OMR
-{
-namespace Infra
-{
+namespace OMR {
+namespace Infra {
 /// raw integer constants for working with doubles.
-struct Double
-{
-	union RawUnion
-	{
+struct Double {
+	union RawUnion {
 		constexpr RawUnion(double d) : asDouble(d) {}
 
 		constexpr RawUnion(std::uint64_t r) : asRaw(r) {}
@@ -27,13 +22,12 @@ struct Double
 		std::uint64_t asRaw;
 	};
 
-	static_assert(
-		sizeof(std::uint64_t) == sizeof(double),
-		"Decoding and encoding expects 64 bit doubles.");
+	static_assert(sizeof(std::uint64_t) == sizeof(double),
+	              "Decoding and encoding expects 64 bit doubles.");
 
 	/// Decomposition masks.
 	/// @{
-	static constexpr std::uint64_t SIGN_MASK     = 0x8000000000000000ul;
+	static constexpr std::uint64_t SIGN_MASK = 0x8000000000000000ul;
 	static constexpr std::uint64_t EXPONENT_MASK = 0x7FF0000000000000ul;
 	static constexpr std::uint64_t MANTISSA_MASK = 0x000FFFFFFFFFFFFFul;
 	/// @}
@@ -58,20 +52,17 @@ struct Double
 
 	/// True if value is any NaN. False if Inf or a valid number. A double is a
 	/// NaN if it's tagged special and has a non-zero mantissa.
-	static constexpr bool isNaN(std::uint64_t value)
-	{
+	static constexpr bool isNaN(std::uint64_t value) {
 		return areAllBitsSet(value, SPECIAL_TAG) && areAnyBitsSet(value, MANTISSA_MASK);
 	}
 
 	/// True for any quiet NaN.
-	static constexpr bool isQNaN(std::uint64_t value)
-	{
+	static constexpr bool isQNaN(std::uint64_t value) {
 		return isNaN(value) && areAllBitsSet(value, NAN_QUIET_TAG);
 	}
 
 	/// True for any signaling NaN.
-	static constexpr bool isSNaN(std::uint64_t value)
-	{
+	static constexpr bool isSNaN(std::uint64_t value) {
 		return isNaN(value) && areNoBitsSet(value, NAN_QUIET_TAG);
 	}
 
@@ -82,7 +73,7 @@ struct Double
 	static constexpr std::uint64_t toRaw(double value) { return RawUnion(value).asRaw; }
 };
 
-}  // namespace Infra
-}  // namespace OMR
+} // namespace Infra
+} // namespace OMR
 
-#endif  // OMR_INFRA_DOUBLEUTILITIES_HPP_
+#endif // OMR_INFRA_DOUBLEUTILITIES_HPP_

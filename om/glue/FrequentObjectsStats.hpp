@@ -22,10 +22,9 @@
 #if !defined(FREQUENTOBJECTSSTATS_HPP_)
 #define FREQUENTOBJECTSSTATS_HPP_
 
+#include "Base.hpp"
 #include "objectdescription.h"
 #include "spacesaving.h"
-
-#include "Base.hpp"
 
 class MM_EnvironmentBase;
 
@@ -36,8 +35,7 @@ class MM_EnvironmentBase;
  * Keeps track of the most frequent class instantiations
  */
 
-class MM_FrequentObjectsStats : public MM_Base
-{
+class MM_FrequentObjectsStats : public MM_Base {
 private:
 	/*
 	 * Estimates the space necessary to report the top k elements accurately 90%
@@ -45,8 +43,7 @@ private:
 	 * size necessary to have accurately report the top k elements was
 	 * approximately linear.
 	 */
-	uint32_t getSizeForTopKFrequent(uint32_t topKFrequent)
-	{
+	uint32_t getSizeForTopKFrequent(uint32_t topKFrequent) {
 		/* DO NOTHING */
 		return 0;
 	}
@@ -57,8 +54,7 @@ public:
 	virtual void kill(MM_EnvironmentBase* env);
 
 	/* reset the stats*/
-	void clear()
-	{
+	void clear() {
 		/* DO NOTHING */
 		return;
 	}
@@ -67,8 +63,7 @@ public:
 	 * Update stats with another class
 	 * @param clazz another clazz to record
 	 */
-	void update(MM_EnvironmentBase* env, omrobjectptr_t object)
-	{
+	void update(MM_EnvironmentBase* env, omrobjectptr_t object) {
 		/* DO NOTHING */
 		return;
 	}

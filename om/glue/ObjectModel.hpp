@@ -37,8 +37,7 @@ class MM_GCExtensionsBase;
  * code (GCConfigTest) and to illustrate some of the required facets of an OMR
  * object model.
  */
-class GC_ObjectModel : public GC_ObjectModelBase
-{
+class GC_ObjectModel : public GC_ObjectModelBase {
 	/*
 	 * Member data and types
 	 */
@@ -75,9 +74,8 @@ public:
 	 * @param flags flag bits to set
 	 */
 	MMINLINE void
-	setObjectSizeAndFlags(omrobjectptr_t objectPtr, uintptr_t size, uintptr_t flags)
-	{
-		uintptr_t sizeBits  = size << OMR_OBJECT_METADATA_FLAGS_BIT_COUNT;
+	setObjectSizeAndFlags(omrobjectptr_t objectPtr, uintptr_t size, uintptr_t flags) {
+		uintptr_t sizeBits = size << OMR_OBJECT_METADATA_FLAGS_BIT_COUNT;
 		uintptr_t flagsBits = flags & (uintptr_t)OMR_OBJECT_METADATA_FLAGS_MASK;
 		*(getObjectHeaderSlotAddress(objectPtr)) = (fomrobject_t)(sizeBits | flagsBits);
 	}
@@ -87,8 +85,7 @@ public:
 	 * @param objectPtr Pointer to an object
 	 * @param size consumed size in bytes of object
 	 */
-	MMINLINE void setObjectSize(omrobjectptr_t objectPtr, uintptr_t size)
-	{
+	MMINLINE void setObjectSize(omrobjectptr_t objectPtr, uintptr_t size) {
 		setObjectSizeAndFlags(objectPtr, size, getObjectFlags(objectPtr));
 	}
 

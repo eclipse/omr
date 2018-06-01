@@ -19,20 +19,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
+#include "EnvironmentBase.hpp"
+#include "GCExtensionsBase.hpp"
 #include "OMR/Om/Allocation.hpp"
+#include "ObjectModel.hpp"
 #include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Context.inl.hpp>
 #include <OMR/Om/RootRef.hpp>
 
-#include "EnvironmentBase.hpp"
-#include "GCExtensionsBase.hpp"
-
-#include "ObjectModel.hpp"
-
-namespace OMR
-{
-namespace Om
-{
+namespace OMR {
+namespace Om {
 #if 0
 omrobjectptr_t
 GC_ObjectModelDelegate::initializeAllocation(MM_EnvironmentBase *env, void *allocatedBytes, MM_AllocateInitialization *allocateInitialization)
@@ -48,29 +44,27 @@ GC_ObjectModelDelegate::initializeAllocation(MM_EnvironmentBase *env, void *allo
 }
 #endif
 
-omrobjectptr_t
-ObjectModelDelegate::initializeAllocation(
-	MM_EnvironmentBase* env, void* allocatedBytes, MM_AllocateInitialization* a)
-{
-	auto& cx   = getContext(env);
-	auto cell  = (Cell*)allocatedBytes;
+omrobjectptr_t ObjectModelDelegate::initializeAllocation(MM_EnvironmentBase* env,
+                                                         void* allocatedBytes,
+                                                         MM_AllocateInitialization* a) {
+	auto& cx = getContext(env);
+	auto cell = (Cell*)allocatedBytes;
 	auto alloc = (Allocation*)a;
 	return (omrobjectptr_t)alloc->initializeObject(cx, cell);
 }
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
-void
-ObjectModelDelegate::calculateObjectDetailsForCopy(
-	MM_EnvironmentBase* env, MM_ForwardedHeader* forwardedHeader,
-	uintptr_t* objectCopySizeInBytes, uintptr_t* reservedObjectSizeInBytes,
-	uintptr_t* hotFieldAlignmentDescriptor)
-{
+void ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase* env,
+                                                        MM_ForwardedHeader* forwardedHeader,
+                                                        uintptr_t* objectCopySizeInBytes,
+                                                        uintptr_t* reservedObjectSizeInBytes,
+                                                        uintptr_t* hotFieldAlignmentDescriptor) {
 	*objectCopySizeInBytes = getForwardedObjectSizeInBytes(forwardedHeader);
 	*reservedObjectSizeInBytes =
-		env->getExtensions()->objectModel.adjustSizeInBytes(*objectCopySizeInBytes);
+	        env->getExtensions()->objectModel.adjustSizeInBytes(*objectCopySizeInBytes);
 	*hotFieldAlignmentDescriptor = 0;
 }
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
-}  // namespace Om
-}  // namespace OMR
+} // namespace Om
+} // namespace OMR

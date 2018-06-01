@@ -7,20 +7,18 @@ namespace OMR {
 namespace Om {
 
 /// A pointer into a object's slot.
-class ValueSlotHandle
-{
-  public:
-
+class ValueSlotHandle {
+public:
 	constexpr ValueSlotHandle(Value* slot) : slot_(slot) {}
 
-	void writeReference(Cell *ref) const { slot_->setRef(ref); }
+	void writeReference(Cell* ref) const { slot_->setRef(ref); }
 
-	void atomicWriteReference(Cell *ref) const { assert(0); }
+	void atomicWriteReference(Cell* ref) const { assert(0); }
 
-	Cell *readReference() const { return reinterpret_cast<Cell*>(slot_->getRef()); }
+	Cell* readReference() const { return reinterpret_cast<Cell*>(slot_->getRef()); }
 
-  private:
-	Value *slot_;
+private:
+	Value* slot_;
 };
 
 } // namespace Om

@@ -22,16 +22,14 @@
 #ifndef COMPACTSCHEMEOBJECTFIXUP_HPP_
 #define COMPACTSCHEMEOBJECTFIXUP_HPP_
 
+#include "CompactScheme.hpp"
+#include "GCExtensionsBase.hpp"
 #include "objectdescription.h"
 #include "omrcfg.h"
 
-#include "CompactScheme.hpp"
-#include "GCExtensionsBase.hpp"
-
 #if defined(OMR_GC_MODRON_COMPACTION)
 
-class MM_CompactSchemeFixupObject
-{
+class MM_CompactSchemeFixupObject {
 public:
 protected:
 private:
@@ -52,11 +50,10 @@ public:
 
 	MM_CompactSchemeFixupObject(MM_EnvironmentBase* env, MM_CompactScheme* compactScheme)
 	/*	:
-			_omrVM(env->getOmrVM()),
-			_extensions(env->getExtensions()),
-			_compactScheme(compactScheme)*/
-	{
-	}
+	                _omrVM(env->getOmrVM()),
+	                _extensions(env->getExtensions()),
+	                _compactScheme(compactScheme)*/
+	{}
 
 protected:
 private:

@@ -19,20 +19,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
+#include "omr.h"
+#include "omrprofiler.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "omr.h"
-#include "omrprofiler.h"
+void ex_omr_checkSampleStack(OMR_VMThread* omrVMThread, const void* context);
+void ex_omr_insertMethodEntryInMethodDictionary(OMR_VM* omrVM, const void* method);
 
-void
-ex_omr_checkSampleStack(OMR_VMThread* omrVMThread, const void* context);
-void
-ex_omr_insertMethodEntryInMethodDictionary(OMR_VM* omrVM, const void* method);
-
-static void
-ex_omr_sampleStack(OMR_VMThread* omrVMThread, const void* context);
+static void ex_omr_sampleStack(OMR_VMThread* omrVMThread, const void* context);
 
 #define EX_OMR_SAMPLESTACK_BACKOFF_MAX 10
 #define EX_OMR_SAMPLESTACK_BACKOFF_TIMER_DECR 1
@@ -43,26 +39,18 @@ ex_omr_sampleStack(OMR_VMThread* omrVMThread, const void* context);
 
 #define EX_METHOD_PROPERTY_COUNT 3
 
-static const char* methodPropertyNames[EX_METHOD_PROPERTY_COUNT] = {"methodName", "fileName",
-								    "lineNumber"};
+static const char* methodPropertyNames[EX_METHOD_PROPERTY_COUNT] = {"methodName",
+                                                                    "fileName",
+                                                                    "lineNumber"};
 
-typedef struct EX_OMR_MethodDictionaryEntry
-{
+typedef struct EX_OMR_MethodDictionaryEntry {
 	const void* key;
 	const char* propertyValues[EX_METHOD_PROPERTY_COUNT];
 } EX_OMR_MethodDictionaryEntry;
 
-int
-OMR_Glue_GetMethodDictionaryPropertyNum(void)
-{
-	return EX_METHOD_PROPERTY_COUNT;
-}
+int OMR_Glue_GetMethodDictionaryPropertyNum(void) { return EX_METHOD_PROPERTY_COUNT; }
 
-const char* const*
-OMR_Glue_GetMethodDictionaryPropertyNames(void)
-{
-	return methodPropertyNames;
-}
+const char* const* OMR_Glue_GetMethodDictionaryPropertyNames(void) { return methodPropertyNames; }
 
 /**
  * This is an example of how the language runtime can iterate the omrVMThread's
@@ -81,9 +69,7 @@ OMR_Glue_GetMethodDictionaryPropertyNames(void)
  * This function is only an example, and may be completely customized by the
  * language runtime. It may be omitted if method profiling is not implemented.
  */
-static void
-ex_omr_sampleStack(OMR_VMThread* omrVMThread, const void* context)
-{
+static void ex_omr_sampleStack(OMR_VMThread* omrVMThread, const void* context) {
 #if 0
 	omr_ras_sampleStackTraceStart(omrVMThread, /* method key from top-most stack frame */);
 
@@ -108,9 +94,7 @@ ex_omr_sampleStack(OMR_VMThread* omrVMThread, const void* context)
  * This function is only an example, and may be completely customized by the
  * language runtime. It may be omitted if method profiling is not implemented.
  */
-void
-ex_omr_checkSampleStack(OMR_VMThread* omrVMThread, const void* context)
-{
+void ex_omr_checkSampleStack(OMR_VMThread* omrVMThread, const void* context) {
 	if (0 == omrVMThread->_sampleStackBackoff) {
 		omrVMThread->_sampleStackBackoff = EX_OMR_SAMPLESTACK_BACKOFF_MAX;
 		if (omr_ras_sampleStackEnabled()) {
@@ -137,9 +121,7 @@ ex_omr_checkSampleStack(OMR_VMThread* omrVMThread, const void* context)
  * This function is only an example, and may be completely customized by the
  * language runtime. It may be omitted if method profiling is not implemented.
  */
-void
-ex_omr_insertMethodEntryInMethodDictionary(OMR_VM* omrVM, const void* method)
-{
+void ex_omr_insertMethodEntryInMethodDictionary(OMR_VM* omrVM, const void* method) {
 	omr_error_t rc = OMR_ERROR_NONE;
 	if (NULL != omrVM->_methodDictionary) {
 		EX_OMR_MethodDictionaryEntry tempEntry;
@@ -149,7 +131,7 @@ ex_omr_insertMethodEntryInMethodDictionary(OMR_VM* omrVM, const void* method)
 		/* These properties should be extracted from the language-specific method
 		 * structure. */
 		tempEntry.propertyValues[EX_OMR_PROF_METHOD_NAME_IDX] = "exampleMethod";
-		tempEntry.propertyValues[EX_OMR_PROF_FILE_NAME_IDX]   = "exampleFile";
+		tempEntry.propertyValues[EX_OMR_PROF_FILE_NAME_IDX] = "exampleFile";
 		tempEntry.propertyValues[EX_OMR_PROF_LINE_NUMBER_IDX] = "1";
 
 		rc = omr_ras_insertMethodDictionary(omrVM, (OMR_MethodDictionaryEntry*)&tempEntry);

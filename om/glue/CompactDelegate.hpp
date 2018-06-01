@@ -32,8 +32,7 @@ class MM_MarkMap;
  * Delegate class provides implementations for methods required for Collector
  * Language Interface
  */
-class MM_CompactDelegate
-{
+class MM_CompactDelegate {
 	/*
 	 * Data members
 	 */
@@ -58,13 +57,13 @@ public:
 	 */
 	void tearDown(MM_EnvironmentBase* env) {}
 
-	bool initialize(
-		MM_EnvironmentBase* env, OMR_VM* omrVM, MM_MarkMap* markMap,
-		MM_CompactScheme* compactScheme)
-	{
-		_omrVM         = omrVM;
+	bool initialize(MM_EnvironmentBase* env,
+	                OMR_VM* omrVM,
+	                MM_MarkMap* markMap,
+	                MM_CompactScheme* compactScheme) {
+		_omrVM = omrVM;
 		_compactScheme = compactScheme;
-		_markMap       = markMap;
+		_markMap = markMap;
 		return true;
 	}
 
