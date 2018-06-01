@@ -6,6 +6,7 @@
 namespace OMR {
 namespace Om {
 
+/// Functor that calls cell->visit(visitor).
 template <typename VisitorT>
 struct VisitCell {
 	VisitCell(VisitorT visitor)  : visitor(visitor) {}
@@ -25,6 +26,7 @@ void dispatchVisit(Cell* cell, VisitorT visitor) {
 	dispatch(cell, VisitCell<VisitorT>(visitor));
 }
 
+/// Traverse the slots in a given cell.
 class CellSlotWalker {
 public:
 	template <typename VisitorT>

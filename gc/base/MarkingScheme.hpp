@@ -313,4 +313,3 @@ public:
 };
 
 #endif /* MARKINGSCHEME_HPP_ */
-
