@@ -30,7 +30,7 @@ void Context::attachVmContext(OMR_VM &vm, Context &cx)
 {
 	omrthread_t self;
 
-	assert(nullptr == omr_vmthread_getCurrent(&vm));
+	// assert(nullptr == omr_vmthread_getCurrent(&vm));
 
 	assert(omrthread_attach_ex(&self, J9THREAD_ATTR_DEFAULT) == 0);
 	omrthread_monitor_enter(vm._vmThreadListMutex);
