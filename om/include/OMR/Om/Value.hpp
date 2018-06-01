@@ -185,13 +185,13 @@ class Value
 	}
 
 	template <typename T>
-	explicit Value(AsPtr, T *value) : data_{Tag::PTR | (reinterpret_cast<RawValue>(value) & PAYLOAD_MASK)}
+	Value(AsPtr, T *value) : data_{Tag::PTR | (reinterpret_cast<RawValue>(value) & PAYLOAD_MASK)}
 	{
 		assert((reinterpret_cast<RawValue>(value) & ~PAYLOAD_MASK) == 0);
 	}
 
 	template <typename T>
-	explicit Value(AsRef, T *value) : data_{Tag::REF | (reinterpret_cast<RawValue>(value) & PAYLOAD_MASK)}
+	Value(AsRef, T *value) : data_{Tag::REF | (reinterpret_cast<RawValue>(value) & PAYLOAD_MASK)}
 	{
 		assert((reinterpret_cast<RawValue>(value) & ~PAYLOAD_MASK) == 0);
 	}
