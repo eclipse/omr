@@ -1,6 +1,8 @@
 #if !defined(OMR_OM_MARKINGFN_HPP_)
 #define OMR_OM_MARKINGFN_HPP_
 
+#include <MarkingScheme.hpp>
+
 #include <functional>
 #include <vector>
 
@@ -11,7 +13,9 @@ namespace Om
 
 class Visitor;
 
-using MarkingFn = std::function<void(Visitor&)>;
+using MarkingVisitor = MM_MarkingScheme::MarkingVisitor;
+
+using MarkingFn = std::function<void(MarkingVisitor&)>;
 
 using MarkingFnVector = std::vector<MarkingFn>;
 

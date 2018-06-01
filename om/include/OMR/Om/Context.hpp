@@ -47,9 +47,9 @@ public:
 
 	RootList& stackRoots() noexcept { return stackRoots_; }
 
-	MarkingFnVector& userRoots() noexcept { return userRoots_; }
+	MarkingFnVector& userMarkingFns() noexcept { return userMarkingFns_; }
 
-	const MarkingFnVector& userRoots() const noexcept { return userRoots_; }
+	const MarkingFnVector& userMarkingFns() const noexcept { return userMarkingFns_; }
 
 private:
 
@@ -61,7 +61,7 @@ private:
 	MemorySystem* manager_;
 	OMR_VMThread* vmContext_;
 	RootList stackRoots_;
-	MarkingFnVector userRoots_;
+	MarkingFnVector userMarkingFns_;
 };
 
 static_assert(
