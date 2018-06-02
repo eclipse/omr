@@ -1461,6 +1461,27 @@
    /* .ifCompareOpCode      = */ TR::BadILOp,
    },
 
+   /*!
+    * \brief unsigned remainder (long)
+    *
+    * See iurem
+    */
+   {
+   /* .opcode               = */ TR::lurem,
+   /* .name                 = */ "lurem",
+   /* .properties1          = */ ILProp1::Rem,
+   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE,
+   /* .properties3          = */ ILProp3::LikeUse,
+   /* .properties4          = */ 0,
+   /* .dataType             = */ TR::Int64,
+   /* .typeProperties       = */ ILTypeProp::Size_8 | ILTypeProp::Unsigned,
+   /* .childProperties      = */ TWO_SAME_CHILD(TR::Int64),
+   /* .swapChildrenOpCode   = */ TR::BadILOp,
+   /* .reverseBranchOpCode  = */ TR::BadILOp,
+   /* .booleanCompareOpCode = */ TR::BadILOp,
+   /* .ifCompareOpCode      = */ TR::BadILOp,
+   },
+
    {
    /* .opcode               = */ TR::ineg,
    /* .name                 = */ "ineg",

@@ -9436,6 +9436,7 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    // Only try to fold if the divisor is non-zero.
    // Handle the special case of dividing the maximum negative value by -1
    //
+   bool isUnsigned = node->getOpCodeValue() == TR::lurem;
    if (secondChild->getOpCode().isLoadConst())
       {
       int64_t divisor = secondChild->getLongInt();
@@ -9444,7 +9445,7 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       bool upwr2 = (udivisor & (udivisor - 1)) == 0;
       if (divisor != 0)
          {
-         if (divisor == 1 || (divisor == -1))
+         if (divisor == 1 || (!isUnsigned && (divisor == -1)))
             {
             foldLongIntConstant(node, 0, s, true /* anchorChildren */);
             return node;
@@ -9452,14 +9453,16 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          else if (firstChild->getOpCode().isLoadConst())
             {
             int64_t dividend = firstChild->getLongInt();
-            if (divisor == -1 && dividend == TR::getMinSigned<TR::Int64>())
+            if (isUnsigned)
+               foldLongIntConstant(node, (uint64_t) dividend % (uint64_t)divisor, s, false /* !anchorChildren */);
+            else if (divisor == -1 && dividend == TR::getMinSigned<TR::Int64>())
                foldLongIntConstant(node, 0, s, false /* !anchorChildren */);
             else
                foldLongIntConstant(node, dividend % divisor, s, false /* !anchorChildren */);
             return node;
             }
          // Design 1792
-         else if ((!disableILRemPwr2Opt) && ((shftAmnt = TR::TreeEvaluator::checkPositiveOrNegativePowerOfTwo(divisor)) > 0) &&
+         else if ( (!isUnsigned) && (!disableILRemPwr2Opt) && ((shftAmnt = TR::TreeEvaluator::checkPositiveOrNegativePowerOfTwo(divisor)) > 0) &&
             (secondChild->getReferenceCount()==1) && performTransformation(s->comp(), "%sPwr of 2 lrem opt node %p\n", s->optDetailString(), node) )
             {
             secondChild->decReferenceCount();
@@ -9499,7 +9502,16 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             node->getSecondChild()->incReferenceCount();
             return node;
             }
-         // Disabled pending approval of design 1055.
+         else if (isUnsigned && (!disableILRemPwr2Opt) && upwr2 &&
+                  performTransformation(s->comp(), "%sPwr of 2 lurem opt node %p\n", s->optDetailString(), node))
+            {
+            TR::Node::recreate(node, TR::land);
+            TR::Node* lconstNode = TR::Node::create(node, TR::lconst, 0, 0);
+            lconstNode->setLongInt(udivisor - 1);
+            node->getSecondChild()->decReferenceCount();
+            node->setAndIncChild(1, lconstNode);
+            }
+// Disabled pending approval of design 1055.
 #ifdef TR_DESIGN_1055
          else if (s->cg()->getSupportsLoweringConstLDiv() && !isPowerOf2(divisor) && !skipRemLowering(divisor, s))
             {
@@ -16591,7 +16603,7 @@ TR::Node *arraycopybndchkSimplifier(TR::Node * node, TR::Block * block, TR::Simp
       TR::Node * boundChild  = lhsChild;
       TR::Node * lengthChild = rhsChild->getSecondChild();
       TR::Node * indexChild  = rhsChild->getFirstChild();
-      if (lengthChild == boundChild || 
+      if (lengthChild == boundChild ||
           s->isBoundDefinitelyGELength(boundChild, lengthChild))
          {
          if (indexChild->isZero())

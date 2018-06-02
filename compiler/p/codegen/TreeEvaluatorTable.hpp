@@ -111,6 +111,7 @@
    TR::TreeEvaluator::unImpOpEvaluator,                 // TR::brem
    TR::TreeEvaluator::unImpOpEvaluator,                 // TR::srem
    TR::TreeEvaluator::iremEvaluator,                    // TR::iurem
+   TR::TreeEvaluator::lremEvaluator,                    // TR::lurem
    TR::TreeEvaluator::inegEvaluator,                    // TR::ineg
    TR::TreeEvaluator::lnegEvaluator,                    // TR::lneg
    TR::TreeEvaluator::fnegEvaluator,                    // TR::fneg

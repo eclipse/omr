@@ -127,7 +127,7 @@ TR::Node* Tril::TRLangBuilder::toTRNode(const ASTNode* const tree) {
         auto value = tree->getPositionalArg(0)->getValue();
 
         // assume the constant to be loaded is the first argument of the AST node
-        if (opcode.isIntegerOrAddress()) {
+        if (opcode.isIntegerOrAddress() || opcode.isUnsigned()) {
            auto v = value->get<int64_t>();
            node->set64bitIntegralValue(v);
            TraceIL("integral value %d\n", v);

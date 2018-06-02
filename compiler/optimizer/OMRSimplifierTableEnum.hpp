@@ -110,6 +110,7 @@
    bremSimplifier,          // TR::brem
    sremSimplifier,          // TR::srem
    iremSimplifier,          // TR::iurem
+   lremSimplifier,          // TR::lurem
    inegSimplifier,          // TR::ineg
    lnegSimplifier,          // TR::lneg
    fnegSimplifier,          // TR::fneg
