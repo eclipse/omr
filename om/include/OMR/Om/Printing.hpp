@@ -5,6 +5,7 @@
 #include <OMR/Om/Cell.hpp>
 #include <OMR/Om/Value.hpp>
 #include <OMR/Om/ValueSlotHandle.hpp>
+
 #include <ostream>
 
 namespace OMR {

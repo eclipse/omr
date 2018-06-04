@@ -6,6 +6,7 @@
 #include <OMR/Om/Object.hpp>
 #include <OMR/Om/RootRef.hpp>
 #include <OMR/Om/Runtime.hpp>
+
 #include <gtest/gtest.h>
 #include <omrgc.h>
 

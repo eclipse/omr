@@ -1,9 +1,10 @@
 #if !defined(OMR_OM_ARRAY_HPP_)
 #define OMR_OM_ARRAY_HPP_
 
-#include <OMR/Infra/HashUtilities.hpp>
 #include <OMR/Om/CellHeader.hpp>
 #include <OMR/Om/Handle.hpp>
+
+#include <OMR/Infra/HashUtilities.hpp>
 #include <cassert>
 #include <type_traits>
 

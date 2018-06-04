@@ -7,6 +7,7 @@
 #include <OMR/Om/Initializer.hpp>
 #include <OMR/Om/Shape.hpp>
 #include <OMR/Om/TransitionSetOperations.hpp>
+
 #include <iostream>
 
 namespace OMR {

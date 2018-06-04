@@ -1,11 +1,12 @@
 #if !defined(OMR_OM_SLOTATTR_HPP_)
 #define OMR_OM_SLOTATTR_HPP_
 
-#include <OMR/Infra/HashUtilities.hpp>
-#include <OMR/Infra/Span.hpp>
 #include <OMR/Om/Id.hpp>
 #include <OMR/Om/SlotType.hpp>
 #include <OMR/Om/Value.hpp>
+
+#include <OMR/Infra/HashUtilities.hpp>
+#include <OMR/Infra/Span.hpp>
 #include <cstddef>
 #include <functional>
 

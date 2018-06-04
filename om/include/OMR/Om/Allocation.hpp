@@ -24,10 +24,11 @@
 #if !defined(OMR_OM_ALLOCATION_HPP_)
 #define OMR_OM_ALLOCATION_HPP_
 
-#include <AllocateInitialization.hpp>
 #include <OMR/Om/Cell.hpp>
 #include <OMR/Om/Context.hpp>
 #include <OMR/Om/Initializer.hpp>
+
+#include <AllocateInitialization.hpp>
 
 ///@file
 /// These classes implement basic initialization of objects.

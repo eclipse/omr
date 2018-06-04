@@ -23,7 +23,66 @@
 
 set -evx
 
-function aarch64_cross_compile_setup
+### Environment Variables:
+### BUILD : one of om, jitbuilder, example, example-legacy
+### PLATFORM: one of default, x84, x86-64, p, 
+
+function main
+{
+  set_defaults
+  setup_for_platform
+  build
+}
+
+function set_defaults
+{
+  export BUILD="${BUILD:-example}"
+  export PLATFORM="${PLATFORM:-${TRAVIS}}"
+  export BUILD_JOBS=2
+  # Disable the core dump tests as container based builds don't allow setting
+  # core_pattern and don't have apport installed.  This can be removed when
+  # apport is available in apt whitelist
+  export GTEST_FILTER="-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended"
+  export CMAKE_GENERATOR="Ninja"
+}
+
+function setup_for_platform
+{
+  case "$PLATFORM" in
+  linux_x86)
+  linux_x86-64)
+  linux_p)
+  linux_z)
+  da
+  default)
+}
+
+function setup_for_spec
+{
+  case "SPEC" in
+  "linux_aarch64")
+    setup_for
+  "osx")
+    setup_for_osx
+    ;;
+  "linux_x86")
+    setup_for_linux_x86
+    ;;
+  "linux_x86-64")
+    setup_for_linux_x86-64
+    ;;
+  "*")
+    ;;
+  esac
+}
+
+function setup_for_osx
+{
+  export GTEST_FILTER="$GTEST_FILTER:*DeathTest*"
+  brew install ninja
+}
+
+function setup_for_linux_aarch64
 {
   #TODO:ARM64: Setup DDR Support for AArch64
   export EXTRA_CONFIGURE_ARGS="--disable-DDR"
@@ -39,67 +98,76 @@ function aarch64_cross_compile_setup
   export PATH="`pwd`/gcc-linaro-4.9.4-2017.01-x86_64_aarch64-linux-gnu/bin:${PATH}"
 }
 
-if test "x$TRAVIS_OS_NAME" = "xosx"; then
-  export GTEST_FILTER=-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended:*DeathTest*
-else
-  # Disable the core dump tests as container based builds don't allow setting
-  # core_pattern and don't have apport installed.  This can be removed when
-  # apport is available in apt whitelist
-  export GTEST_FILTER=-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended
-fi
+function build
+{
+  case "$BUILD" in
+  "example")
+    build_example
+    ;;
+  "example-legacy")
+    build_example_legacy
+    ;;
+  "om")
+    build_om
+    ;;
+  "jitbuilder")
+    build_jitbuilder
+    ;;
+  "lint")
+    run_linter
+    ;;
+  *)
+    echo "Unknown build type"
+    exit 1
+    ;;
+  esac
+}
 
-if test "x$BUILD_WITH_CMAKE" = "xyes"; then
-  if test "x$CMAKE_GENERATOR" = "x"; then
-    export CMAKE_GENERATOR="Ninja"
-  fi
-  
-  if test "x$TRAVIS_OS_NAME" = "xosx"; then
-    if test "x$CMAKE_GENERATOR" = "xNinja"; then
-      brew install ninja
-    fi
-  fi
+function setup_cmake_build_dir
+{
+  mkdir build
+  cd build
+  cmake .. -G"$CMAKE_GENERATOR" -DCMAKE_BUILD_TYPE=Debug "$@"
+}
 
+function build_jitbuilder
+{
+  mkdir build
+  cd build
+  time cmake .. -DCMAKE_BUILD_TYPE=Debug -DOMR_JITBUILDER=ON -DOMR_EXAMPLE=OFF -DOMR_GC=OFF
+  time cmake --build .
+  time ctest --output-on-failure
+}
+
+function build_om
+{
+  mkdir build
+  cd build
+  time cmake .. -DCMAKE_BUILD_TYPE=Debug -DOMR_OM=ON -DOMR_GC=ON -DOMR_JITBUILDER=OFF -DOMR_COMPILER=OFF -DOMR_EXAMPLE=OFF -DOMR_DDR=OFF -DOMR_OMRSIG=OFF
+  time cmake --build .
+  time ctest --output-on-failure
+}
+
+function build_example
+{
   mkdir build
   cd build
   time cmake -Wdev -G "$CMAKE_GENERATOR" $CMAKE_DEFINES -C../cmake/caches/Travis.cmake ..
-  if test "x$RUN_BUILD" != "xno"; then
-    time cmake --build . -- -j $BUILD_JOBS
-    if test "x$RUN_TESTS" != "xno"; then
-      time ctest -V
-    fi
-  fi
-else
-  # Linux 64 compressed references build and the 	Lint builds do not run in CMake
-  # Remove the Linux 64 compressed references build once the Autotool build infrastructure is retired
-  export EXTRA_CONFIGURE_ARGS="--enable-DDR"
+  time cmake --build .
+  time ctest --output-on-failure
+}
 
-  # Cross Compile Toolchain and Configuration Options for AArch64
-  if test "x$SPEC" = "xlinux_aarch64"; then
-    aarch64_cross_compile_setup
-  fi
-
+function build_example_legacy
+{
   time make -f run_configure.mk OMRGLUE=./example/glue SPEC="$SPEC" PLATFORM="$PLATFORM"
-  if test "x$RUN_BUILD" != "xno"; then
-    # Normal build system
-    time make --jobs $BUILD_JOBS
-    if test "x$RUN_TESTS" != "xno"; then
-      time make test
-    fi
-  fi
-  if test "x$RUN_LINT" = "xyes"; then
-    llvm-config --version
-    clang++ --version
+  time make --jobs $BUILD_JOBS
+  time make test
+}
 
-    # Run linter for x86 target
-    time make --jobs $BUILD_JOBS lint
+function run_linter
+{
+  time make -f run_configure.mk OMRGLUE=./example/glue SPEC="$SPEC" PLATFORM="$PLATFORM"
+  time make lint
+}
 
-    # Run linter for p and z targets
-    export TARGET_ARCH=p
-    export TARGET_BITS=64
-    time make --jobs $BUILD_JOBS lint
-
-    export TARGET_ARCH=z
-    export TARGET_BITS=64
-    time make --jobs $BUILD_JOBS lint
-  fi
-fi
+main

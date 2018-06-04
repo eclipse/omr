@@ -1,8 +1,9 @@
 #if !defined(OMR_OM_SLOTDESCRIPTORRANGE_HPP_)
 #define OMR_OM_SLOTDESCRIPTORRANGE_HPP_
 
-#include <OMR/Infra/Span.hpp>
 #include <OMR/Om/SlotDescriptor.hpp>
+
+#include <OMR/Infra/Span.hpp>
 
 namespace OMR {
 namespace Om {

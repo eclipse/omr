@@ -1,8 +1,9 @@
 #if !defined(OMR_OM_MEMREF_HPP_)
 #define OMR_OM_MEMREF_HPP_
 
-#include <OMR/Infra/PointerUtilities.hpp>
 #include <OMR/Om/Ref.hpp>
+
+#include <OMR/Infra/PointerUtilities.hpp>
 #include <cstddef>
 
 namespace OMR {

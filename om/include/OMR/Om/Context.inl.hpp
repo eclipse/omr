@@ -1,9 +1,10 @@
 #ifndef OMR_OM_CONTEXT_INL_HPP_
 #define OMR_OM_CONTEXT_INL_HPP_
 
-#include <EnvironmentBase.hpp>
 #include <OMR/Om/Context.hpp>
 #include <OMR/Om/Runtime.hpp>
+
+#include <EnvironmentBase.hpp>
 #include <OMR_VMThread.hpp>
 #include <mminitcore.h>
 #include <omrutil.h>

@@ -22,9 +22,10 @@
 #if !defined(OMR_OM_OBJECTDESCRIPTION_H_)
 #define OMR_OM_OBJECTDESCRIPTION_H_
 
+#include <OMR/Om/Cell.hpp>
+
 #include "omr.h"
 #include "omrcomp.h"
-#include <OMR/Om/Cell.hpp>
 
 /**
  * Object token definitions to be used by OMR components.

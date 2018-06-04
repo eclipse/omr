@@ -1,7 +1,6 @@
 #ifndef OMR_OM_SHAPE_HPP_
 #define OMR_OM_SHAPE_HPP_
 
-#include <OMR/Infra/Span.hpp>
 #include <OMR/Om/BasicSlotHandle.hpp>
 #include <OMR/Om/CellHeader.hpp>
 #include <OMR/Om/CellKind.hpp>
@@ -10,6 +9,8 @@
 #include <OMR/Om/SlotDescriptorRange.hpp>
 #include <OMR/Om/TransitionSet.hpp>
 #include <OMR/Om/ValueSlotHandle.hpp>
+
+#include <OMR/Infra/Span.hpp>
 
 namespace OMR {
 namespace Om {

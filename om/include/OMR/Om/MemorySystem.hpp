@@ -6,6 +6,7 @@
 #include <OMR/Om/MarkingFn.hpp>
 #include <OMR/Om/Runtime.hpp>
 #include <OMR/Om/StartupError.hpp>
+
 #include <set>
 
 namespace OMR {

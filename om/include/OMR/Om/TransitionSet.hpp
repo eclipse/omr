@@ -1,12 +1,13 @@
 #if !defined(OMR_OM_MEMTRANSITIONSET_HPP_)
 #define OMR_OM_MEMTRANSITIONSET_HPP_
 
-#include <OMR/Infra/Span.hpp>
 #include <OMR/Om/BasicSlotHandle.hpp>
 #include <OMR/Om/Id.hpp>
 #include <OMR/Om/MemArray.hpp>
 #include <OMR/Om/MemHandle.hpp>
 #include <OMR/Om/SlotAttr.hpp>
+
+#include <OMR/Infra/Span.hpp>
 #include <cstddef>
 #include <type_traits>
 

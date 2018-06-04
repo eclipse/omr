@@ -4,6 +4,7 @@
 #include <OMR/Om/MarkingFn.hpp>
 #include <OMR/Om/MemorySystem.hpp>
 #include <OMR/Om/RootList.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <new>

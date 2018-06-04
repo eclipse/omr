@@ -61,9 +61,9 @@ ForEachMacros:
   - BOOST_FOREACH
 IncludeBlocks:   Regroup
 IncludeCategories:
-  - Regex: "<OMR/Om/Config.hpp>"
+  - Regex: '<OMR/Om/Config.hpp>'
     Priority: -1
-  - Regex: "^<OMR/Om/*>$"
+  - Regex: '^<OMR/Om/.*>$'
     Priority: 1
   - Regex: '.*'
     Priority: 2

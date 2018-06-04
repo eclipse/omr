@@ -7,6 +7,7 @@
 #include <OMR/Om/CellOperations.hpp>
 #include <OMR/Om/Object.hpp>
 #include <OMR/Om/Shape.hpp>
+
 #include <cassert>
 
 namespace OMR {

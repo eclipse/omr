@@ -21,11 +21,6 @@
 
 #include "MarkingDelegate.hpp"
 
-#include "EnvironmentBase.hpp"
-#include "MarkingScheme.hpp"
-#include "OMRVMThreadListIterator.hpp"
-#include "omr.h"
-#include "omrhashtable.h"
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/Context.inl.hpp>
 #include <OMR/Om/MemorySystem.hpp>
@@ -33,6 +28,12 @@
 #include <OMR/Om/RootRef.hpp>
 #include <OMR/Om/Shape.hpp>
 #include <OMR/Om/TransitionSet.hpp>
+
+#include "EnvironmentBase.hpp"
+#include "MarkingScheme.hpp"
+#include "OMRVMThreadListIterator.hpp"
+#include "omr.h"
+#include "omrhashtable.h"
 
 namespace OMR {
 namespace Om {

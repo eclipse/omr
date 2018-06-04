@@ -3,6 +3,7 @@
 
 #include <OMR/Om/CoreType.hpp>
 #include <OMR/Om/Id.hpp>
+
 #include <cstdlib>
 
 namespace OMR {

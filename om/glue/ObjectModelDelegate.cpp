@@ -19,13 +19,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
+#include <OMR/Om/Allocator.hpp>
+#include <OMR/Om/Context.inl.hpp>
+#include <OMR/Om/RootRef.hpp>
+
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "OMR/Om/Allocation.hpp"
 #include "ObjectModel.hpp"
-#include <OMR/Om/Allocator.hpp>
-#include <OMR/Om/Context.inl.hpp>
-#include <OMR/Om/RootRef.hpp>
 
 namespace OMR {
 namespace Om {

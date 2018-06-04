@@ -1,8 +1,9 @@
 #if !defined(OMR_OM_MEMHANDLE_HPP_)
 #define OMR_OM_MEMHANDLE_HPP_
 
-#include <OMR/Infra/PointerUtilities.hpp>
 #include <OMR/Om/Handle.hpp>
+
+#include <OMR/Infra/PointerUtilities.hpp>
 
 namespace OMR {
 namespace Om {

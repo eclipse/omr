@@ -13,6 +13,7 @@
 #include <OMR/Om/Runtime.hpp>
 #include <OMR/Om/Shape.hpp>
 #include <OMR/Om/TransitionSet.hpp>
+
 #include <gtest/gtest.h>
 
 namespace OMR {

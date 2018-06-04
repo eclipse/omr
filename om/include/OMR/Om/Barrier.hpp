@@ -1,61 +1,36 @@
 #if !defined(OMR_OM_BARRIER_HPP_)
 #define OMR_OM_BARRIER_HPP_
 
+#include <OMR/Om/Context.hpp>
+
+#include <StandardWriteBarrier.hpp>
+
 namespace OMR {
 namespace Om {
-namespace Barrier {
-using WriteBarrier = ::MM_StandardWriteBarrier;
-
-class WriteBarrier {};
-
-class PreBarrier {};
-
-class PostBarrier {};
-
-template<typename T>
-struct WriteBarrier {};
-
-template<typename T>
-struct ReadBarrier {};
-
-template<typename T>
-struct Barrier {
-public:
-	T& raw() { return value_; }
-
-	T value_;
-};
-
-template<typename T>
-struct BarrierRef {};
-
-template<typename C = Cell, typename Member = Value>
-prebarrier(C* cell, Member){
-
-};
-
-template<typename Container, typename Member, typename Value>
-Value write(Context& cx, Container* cell, Member* member, Value value) {
-	prebarrier(cell, member);
-	*member = value;
-	postbarrier(cell, member);
-	return value;
-}
-
-} // namespace Barrier
 
 class Barrier {
 
-	void preBarrier(Context& cx, );
-
-	template<typename SlotHandleT>
-	static store(Context& cx, void* cell, SlotHandleT slot, void* ref) {
-		slot.writeReference(ref);
+	static void preWrite(Context& cx, void* cell, void* ref) {
+		// Nothing yet.
 	}
 
-	template<typename SlotHandleT>
-	static storeAtomic(Context& cx, void* cell, SlotHandleT slot, void* ref) {
+	static void postWrite(Context& cx, void* cell, void* ref) {
+		standardWriteBarrier(cx.vmContext(), cell, ref);
+	}
+
+	/// Store to slot with pre/post GC barriers.
+	template<typename SlotHandleT, typename T = void>
+	static writeReference(Context& cx, void* cell, SlotHandleT slot, T* ref) {
+		preWrite(cx, cell, slot.readReference());
+		slot.writeReference(ref);
+		postWrite(cx, cell, slot.readReference());
+	}
+
+	/// Store to slot atomically, with pre/post GC writebarriers.
+	template<typename SlotHandleT, typename T = void>
+	static atomicWriteReference(Context& cx, void* cell, SlotHandleT slot, T* ref) {
 		slot.atomicWriteReference(ref);
+		postWrite(cx, cell);
 	}
 };
 

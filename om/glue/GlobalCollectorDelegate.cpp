@@ -21,12 +21,13 @@
 
 #include "GlobalCollectorDelegate.hpp"
 
+#include <OMR/Om/RootRef.hpp>
+
 #include "Heap.hpp"
 #include "HeapRegionIterator.hpp"
 #include "MarkingScheme.hpp"
 #include "ObjectHeapIterator.hpp"
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
-#include <OMR/Om/RootRef.hpp>
 
 #if defined(OMR_GC_PAINT_HEAP)
 

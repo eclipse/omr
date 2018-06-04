@@ -2,6 +2,7 @@
 #define OMR_OM_CELL_HPP_
 
 #include <OMR/Om/CellHeader.hpp>
+
 #include <cstdint>
 
 namespace OMR {

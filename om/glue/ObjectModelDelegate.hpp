@@ -22,12 +22,13 @@
 #ifndef OMR_OM_OBJECTMODELDELEGATE_HPP_
 #define OMR_OM_OBJECTMODELDELEGATE_HPP_
 
-#include "ForwardedHeader.hpp"
-#include "objectdescription.h"
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/CellOperations.hpp>
 #include <OMR/Om/Object.hpp>
 #include <OMR/Om/Shape.hpp>
+
+#include "ForwardedHeader.hpp"
+#include "objectdescription.h"
 
 class MM_GCExtensionsBase;
 class MM_AllocateInitialization;

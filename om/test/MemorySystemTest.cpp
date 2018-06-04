@@ -1,6 +1,5 @@
 
 
-#include <OMR/Infra/Span.hpp>
 #include <OMR/Om/Allocation.hpp>
 #include <OMR/Om/Allocator.hpp>
 #include <OMR/Om/Array.hpp>
@@ -11,6 +10,8 @@
 #include <OMR/Om/Runtime.hpp>
 #include <OMR/Om/Shape.hpp>
 #include <OMR/Om/ShapeOperations.hpp>
+
+#include <OMR/Infra/Span.hpp>
 #include <gtest/gtest.h>
 #include <omrgc.h>
 

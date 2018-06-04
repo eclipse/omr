@@ -7,6 +7,7 @@
 #include <OMR/Om/Shape.hpp>
 #include <OMR/Om/SlotIndex.hpp>
 #include <OMR/Om/Value.hpp>
+
 #include <type_traits>
 
 namespace OMR {

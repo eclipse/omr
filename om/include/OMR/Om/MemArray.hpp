@@ -4,6 +4,7 @@
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/BasicSlotHandle.hpp>
 #include <OMR/Om/MemHandle.hpp>
+
 #include <cstdint>
 
 namespace OMR {

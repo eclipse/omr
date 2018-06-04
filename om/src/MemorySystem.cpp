@@ -1,3 +1,10 @@
+#include <OMR/Om/Allocator.hpp>
+#include <OMR/Om/Context.inl.hpp>
+#include <OMR/Om/MemorySystem.hpp>
+#include <OMR/Om/RootRef.hpp>
+#include <OMR/Om/Shape.hpp>
+#include <OMR/Om/ShapeOperations.hpp>
+
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
 #include "OMR_VMThread.hpp"
@@ -9,12 +16,6 @@
 #include "omrutil.h"
 #include "omrvm.h"
 #include "thread_api.h"
-#include <OMR/Om/Allocator.hpp>
-#include <OMR/Om/Context.inl.hpp>
-#include <OMR/Om/MemorySystem.hpp>
-#include <OMR/Om/RootRef.hpp>
-#include <OMR/Om/Shape.hpp>
-#include <OMR/Om/ShapeOperations.hpp>
 #include <ParallelDispatcher.hpp>
 #include <iostream>
 
