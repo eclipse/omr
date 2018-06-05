@@ -5,7 +5,7 @@
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/Context.inl.hpp>
 #include <OMR/Om/MemorySystem.hpp>
-#include <OMR/Om/Object.inl.hpp>
+#include <OMR/Om/ObjectOperations.hpp>
 #include <OMR/Om/RootRef.hpp>
 #include <OMR/Om/Runtime.hpp>
 #include <OMR/Om/Shape.hpp>
