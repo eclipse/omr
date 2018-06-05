@@ -93,6 +93,9 @@ public:
 	/// The RootRef freely degrades into a Handle.
 	operator Handle<T>() const { return Handle<T>(address()); }
 
+	/// The RootRef degrades into a raw pointer.
+	operator T*() const { return get(); }
+
 private:
 	void clear() noexcept { node_.clear(); }
 

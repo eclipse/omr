@@ -9,11 +9,15 @@ namespace Om {
 /// A pointer into a object's slot.
 class ValueSlotHandle {
 public:
-	constexpr ValueSlotHandle(Value* slot) : slot_(slot) {}
+	explicit constexpr ValueSlotHandle(Value* slot) : slot_(slot) {}
 
-	void writeReference(Cell* ref) const { slot_->setRef(ref); }
+	explicit constexpr ValueSlotHandle(void* slot) : slot_((Value*)slot) {}
 
-	void atomicWriteReference(Cell* ref) const { assert(0); }
+	void writeReference(void* ref) const { slot_->setRef(ref); }
+
+	void writeReference(Value ref) const { *slot_ = ref; }
+
+	void atomicWriteReference(void* ref) const { assert(0); }
 
 	Cell* readReference() const { return reinterpret_cast<Cell*>(slot_->getRef()); }
 

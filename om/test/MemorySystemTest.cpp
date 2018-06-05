@@ -70,7 +70,7 @@ TEST(MemorySystemTest, objectTransition) {
 	        {SlotAttr(SlotType(Id(0), CoreType::VALUE), Id(0))}};
 
 	const Infra::Span<const Om::SlotAttr> span(attributes);
-	Object::transition(cx, obj1, span, Om::hash(span));
+	transition(cx, obj1, span);
 
 	// check
 	{
@@ -84,7 +84,7 @@ TEST(MemorySystemTest, objectTransition) {
 	// second object
 	{
 		RootRef<Object> obj2(cx, allocateObject(cx, emptyObjectMap));
-		auto m = obj2->takeExistingTransition(cx, attributes, Om::hash(attributes));
+		auto m = takeExistingTransition(cx, obj2, attributes);
 		EXPECT_NE(m, nullptr);
 		EXPECT_EQ(m, obj1->layout());
 		EXPECT_EQ(m, obj2->layout());

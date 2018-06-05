@@ -94,9 +94,9 @@ public:
 	 */
 	MMINLINE uintptr_t getObjectSizeInBytesWithHeader(const Cell* cell) {
 		switch (cellKind(cell)) {
-		case CellKind::OBJECT: return reinterpret_cast<const Object*>(cell)->allocSize();
-		case CellKind::SHAPE: return reinterpret_cast<const Shape*>(cell)->allocSize();
-		case CellKind::ARRAY: return reinterpret_cast<const Array*>(cell)->allocSize();
+		case CellKind::OBJECT: return reinterpret_cast<const Object*>(cell)->cellSize();
+		case CellKind::SHAPE: return reinterpret_cast<const Shape*>(cell)->cellSize();
+		case CellKind::ARRAY: return reinterpret_cast<const Array*>(cell)->cellSize();
 		default: throw std::runtime_error("Unrecognized cell type");
 		}
 	}

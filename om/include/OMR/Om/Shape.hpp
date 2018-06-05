@@ -18,8 +18,8 @@ namespace Om {
 /// Common properties shared by all Shapes in a Shape tree. Particularly, invariant facts about the
 /// instance are stored here.
 struct ShapeTreeData {
-	/// Total amount of space available for inline / fixed slots.
-	std::size_t instanceSlotSize;
+	/// Total amount of space, in bytes, available for inline aka fixed slots.
+	std::size_t instanceInlineSlotsSize;
 	/// The CellKind this ShapeTree describes. Are the instances Shapes, Objects, or Arrays?
 	CellKind instanceKind;
 };
@@ -56,6 +56,8 @@ public:
 	CellKind instanceKind() const { return shapeTreeData_.instanceKind; }
 
 	void instanceKind(CellKind k) { shapeTreeData_.instanceKind = k; }
+
+	std::size_t instanceInlineSlotSize() const { return shapeTreeData_.instanceInlineSlotsSize; }
 
 	/// Get the Span of `SlotAttr` described by this shape.
 	Infra::Span<SlotAttr> instanceSlotAttrs() noexcept {
@@ -120,7 +122,7 @@ public:
 	}
 
 	/// Size of this GC cell.
-	std::size_t allocSize() const { return calculateCellSize(instanceSlotCount()); }
+	std::size_t cellSize() const { return calculateCellSize(instanceSlotCount()); }
 
 	/// @}
 

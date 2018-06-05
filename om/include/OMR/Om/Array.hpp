@@ -34,7 +34,7 @@ public:
 	}
 
 	/// The full size of this heap cell, in bytes.
-	std::size_t allocSize() const noexcept { return calcAllocSize(size_); }
+	std::size_t cellSize() const noexcept { return cellSize(size_); }
 
 	/// The raw data pointer
 	void* data() noexcept { return data_; }
@@ -56,7 +56,7 @@ protected:
 
 	/// Get the allocation size of an array buffer with storage for `dataSize`
 	/// bytes.
-	static std::size_t calcAllocSize(std::size_t dataSize) { return dataSize + sizeof(Array); }
+	static std::size_t cellSize(std::size_t dataSize) { return dataSize + sizeof(Array); }
 
 	inline Array() = default;
 

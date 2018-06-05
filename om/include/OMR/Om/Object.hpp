@@ -1,6 +1,7 @@
 #ifndef OMR_OM_OBJECT_HPP_
 #define OMR_OM_OBJECT_HPP_
 
+#include <OMR/Om/Array.hpp>
 #include <OMR/Om/CellHeader.hpp>
 #include <OMR/Om/Handle.hpp>
 #include <OMR/Om/LayoutTree.hpp>
@@ -20,52 +21,10 @@ class Object {
 public:
 	static constexpr std::size_t MAX_SLOTS = 32;
 
-	/// Allocate object with this shape;
-	static inline Object* allocate(Context& cx, Handle<Shape> shape);
-
-	/// Allocate an empty object with a new EmptyObjectMap.
-	static inline Object* allocate(Context& cx);
-
-	static Object* clone(Context& cx, Handle<Object> base);
-
-	// Take a layout/shape transition that hasn't been cached. Before taking a new
-	// transition, users should use `lookupTransition` to ensure the transition
-	// hasn't been taken before. See also `transition`, a higher level call for
-	// transitioning across object layouts.
-	static Shape* takeNewTransition(Context& cx,
-	                                Handle<Object> object,
-	                                Infra::Span<const SlotAttr> desc,
-	                                std::size_t hash);
-
-	/// Transition the object's shape by adding a set of new slots.
-	/// This function will reuse cached transitions.
-	static Shape*
-	transition(Context& cx, Handle<Object> object, std::initializer_list<SlotAttr> slots);
-
-	static Shape*
-	transition(Context& cx, Handle<Object> object, Infra::Span<const SlotAttr> slots);
-
-	/// Transition, but use a precomputer hash for the attributes.
-	static Shape* transition(Context& cx,
-	                         Handle<Object> object,
-	                         Infra::Span<const SlotAttr> slots,
-	                         std::size_t hash);
-
-	static Value getValue(const Object* self, SlotIndex index) noexcept;
-
-	/// Set the slot that corresponds to the id.
-	static void setValue(Context& cx, Object* self, SlotIndex index, Value value) noexcept;
-
-	static Cell* getRef(const Object* self, SlotIndex index) noexcept;
-
-	/// Slot lookup by Id. The result is a SlotLookup, which describes the slot's
-	/// offset and type.
-	static bool lookup(Context& cx, const Object* self, Id id, SlotDescriptor& result);
-
-	Shape* lookUpTransition(Context& cx, Infra::Span<const SlotAttr> desc, std::size_t hash);
-
-	Shape*
-	takeExistingTransition(Context& cx, Infra::Span<const SlotAttr> desc, std::size_t hash);
+	/// Calculate the allocation size of an object cell,
+	static std::size_t cellSize(std::size_t inlineSlotSize) {
+		return sizeof(Object) + inlineSlotSize;
+	}
 
 	CellHeader& header() { return header_; }
 
@@ -86,14 +45,13 @@ public:
 
 	/// Visit the slots in an object.
 	/// TODO: Implement better slot iteration + Handle creation APIs
+	/// TODO: Split into inline and outline slot walking.
 	template<typename VisitorT>
 	void visit(VisitorT& visitor) {
 		visitHeader(header(), visitor);
-
 		if (empty()) {
 			return;
 		}
-
 		for (LayoutTree::Iterator layoutIter = layoutTree().begin();
 		     layoutIter != layoutTree().end();
 		     ++layoutIter) {
@@ -103,43 +61,71 @@ public:
 			for (SlotDescriptorRange::Iterator slotIter = slots.begin();
 			     slotIter != slots.end();
 			     slotIter++) {
-				SlotDescriptor descriptor = *slotIter;
-				switch (descriptor.attr().type().coreType()) {
-				case CoreType::VALUE: {
-					Value* slot = reinterpret_cast<Value*>(
-					        fixedSlots_ + descriptor.offset());
-					if (slot->isRef()) {
-						ValueSlotHandle handle(slot);
-						visitor.edge(this, handle);
-					}
-				} break;
-				case CoreType::REF: {
-					void** slot = reinterpret_cast<void**>(
-					        fixedSlots_ + descriptor.offset());
-					visitor.edge(this, BasicSlotHandle(slot));
-				} break;
-				default: break;
-				}
+				visitSlot(*slotIter, visitor);
 			}
 		}
 	}
 
+	template<typename VisitorT>
+	void visitSlot(SlotDescriptor descriptor, VisitorT& visitor) {
+		switch (descriptor.attr().type().coreType()) {
+		case CoreType::VALUE: {
+			Value* slot = reinterpret_cast<Value*>(inlineSlots_ + descriptor.offset());
+			if (slot->isRef()) {
+				ValueSlotHandle handle(slot);
+				visitor.edge(this, handle);
+			}
+		} break;
+		case CoreType::REF: {
+			void** slot = reinterpret_cast<void**>(inlineSlots_ + descriptor.offset());
+			visitor.edge(this, BasicSlotHandle(slot));
+		} break;
+		default: break;
+		}
+	}
+
+	std::size_t inlineSlotSize() const { return layout()->instanceInlineSlotSize(); }
+
 	/// The size of this cell of memory.
-	std::size_t allocSize() const {
-		/// TODO: Update when we support a variable number of fixed slots.
-		return sizeof(Object);
+	std::size_t cellSize() const { return cellSize(inlineSlotSize()); }
+
+	std::size_t totalMemoryFootprint() const { return cellSize() + overflowSlots_->cellSize(); }
+
+	std::uint8_t* overflowSlots() {
+		return reinterpret_cast<std::uint8_t*>(overflowSlots_->data());
+	}
+
+	std::uint8_t* inlineSlots() { return inlineSlots_; }
+
+	bool isInlineSlot(SlotIndex index) { return index.offset() < inlineSlotSize(); }
+
+	std::uint8_t* getInlineSlotAddress(SlotIndex index) {
+		assert(isInlineSlot(index));
+		return inlineSlots() + index.offset();
+	}
+
+	bool isOverflowSlot(SlotIndex index) { return !isInlineSlot(index); }
+
+	std::uint8_t* getOverflowSlotAddress(SlotIndex index) {
+		assert(overflowSlots_ != nullptr);
+		assert(isOverflowSlot(index));
+		return overflowSlots() + index.offset() - inlineSlotSize();
+	}
+
+	std::uint8_t* slotAddress(SlotIndex index) {
+		if (isInlineSlot(index)) {
+			return getInlineSlotAddress(index);
+		} else {
+			return getOverflowSlotAddress(index);
+		}
 	}
 
 protected:
 	friend struct ObjectInitializer;
 
 	CellHeader header_;
-
-	// TODO: Dynamic slots in objects: MemVector<Value> dynamicSlots;
-	// TODO: Variable number of fixed slots in objects
-	std::size_t fixedSlotCount_;
-
-	char fixedSlots_[sizeof(Value) * 32];
+	Array* overflowSlots_;
+	std::uint8_t inlineSlots_[0];
 
 private:
 	static void construct(Context& cx, Handle<Object> self, Handle<Shape> shape);

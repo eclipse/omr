@@ -62,10 +62,10 @@ class CellHeaderLayoutHandle {
 public:
 	constexpr explicit CellHeaderLayoutHandle(CellHeader* header) noexcept : header_(header) {}
 
-	void writeReference(Cell* ref) const noexcept { header_->layout((Shape*)ref); }
+	void writeReference(void* ref) const noexcept { header_->layout((Shape*)ref); }
 
 	/// TODO: Implement atomics
-	void atomicWriteReference(Cell* ref) const noexcept { assert(0); }
+	void atomicWriteReference(void* ref) const noexcept { assert(0); }
 
 	Cell* readReference() const noexcept { return reinterpret_cast<Cell*>(header_->layout()); }
 

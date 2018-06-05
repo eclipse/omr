@@ -13,6 +13,10 @@
 namespace OMR {
 namespace Om {
 
+struct InstanceDescription {
+
+};
+
 inline bool
 initializeTransitionSet(Context& cx, Handle<Shape> shape, std::size_t initialSetSize = 32) {
 	assert(!shape->transitions_.initialized());
@@ -26,6 +30,7 @@ storeTransition(Context& cx, Handle<Shape> shape, TransitionSetEntry entry, std:
 
 /// A helper to copy a span of slot attributes into a shape.
 /// Also calculates the total width of the slot attributes.
+/// @internal
 inline void assignSlotAttrIntoShape(Shape* shape, Infra::Span<const SlotAttr> attributes) {
 	assert(shape->instanceSlotCount() == attributes.length());
 	std::size_t instanceSlotWidth = 0;
@@ -47,20 +52,29 @@ struct RootObjectLayoutInitializer : public Initializer {
 		shape->instanceSlotWidth_ = 0;
 		shape->instanceSlotCount_ = attrs.length();
 		shape->shapeTreeData_.instanceKind = CellKind::OBJECT;
+		shape->shapeTreeData_.instanceInlineSlotsSize = instanceInlineSlotsSize;
 		assignSlotAttrIntoShape(shape, attrs);
 		return reinterpret_cast<Cell*>(shape);
 	}
 
 	Infra::Span<const SlotAttr> attrs;
+	std::size_t instanceInlineSlotsSize = 0;
 };
 
 /// Allocate a shape that lays out an empty object. Starts a new ShapeTree.
-inline Shape* allocateRootObjectLayout(Context& cx, Infra::Span<const SlotAttr> attrs) {
+inline Shape* allocateRootObjectLayout(Context& cx,
+                                       Infra::Span<const SlotAttr> attrs,
+                                       std::size_t instanceInlineSlotsSize = 32 * sizeof(void*)) {
 	RootObjectLayoutInitializer init;
 	init.attrs = attrs;
+	init.instanceInlineSlotsSize = instanceInlineSlotsSize;
 	std::size_t size = Shape::calculateCellSize(attrs.length());
 	Shape* result = BaseAllocator::allocate<Shape>(cx, init, size);
 	return result;
+}
+
+inline Shape* allocateRootObjectLayout(Context& cx, std::size_t instanceInlineSlotsSize = 32 * sizeof(void*)) {
+	return allocateRootObjectLayout(cx, Infra::Span<const SlotAttr>(), instanceInlineSlotsSize);
 }
 
 /// A functor that performs basic initialization of an Shape that lays out an object.
@@ -162,8 +176,6 @@ tryStoreTransition(Shape* shape, Shape* transitionTarget, std::size_t hash)
 {
 	return tryStoreTransition(shape->transitionSet, entry, hash);
 }
-
-
 
 inline ArrayBufferShape::ArrayBufferShape(MetaShape *meta) : base_{{meta, Shape::Kind::ARRAY_BUFFER_MAP}} {}
 
