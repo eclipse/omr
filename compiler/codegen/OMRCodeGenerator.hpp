@@ -239,7 +239,8 @@ TR::Node* generatePoisonNode(TR::Compilation *comp, TR::Block *currentBlock, TR:
 namespace OMR
 {
 
-class OMR_EXTENSIBLE CodeGenerator
+class /*OMR_EXTENSIBLE*/ CodeGenerator
+
    {
    private:
 
@@ -280,29 +281,29 @@ class OMR_EXTENSIBLE CodeGenerator
 
    void uncommonCallConstNodes();
 
-   void preLowerTrees();
+   OMR_API virtual void preLowerTrees();
    void postLowerTrees() {}
 
    TR::TreeTop *lowerTree(TR::Node *root, TR::TreeTop *tt);
    void lowerTrees();
    void lowerTreesWalk(TR::Node * parent, TR::TreeTop * treeTop, vcount_t visitCount);
 
-   void lowerTreeIfNeeded(TR::Node *node, int32_t childNumber, TR::Node *parent, TR::TreeTop *tt);
+   OMR_API virtual void lowerTreeIfNeeded(TR::Node *node, int32_t childNumber, TR::Node *parent, TR::TreeTop *tt);
 
-   void lowerTreesPreTreeTopVisit(TR::TreeTop *tt, vcount_t visitCount);
-   void lowerTreesPostTreeTopVisit(TR::TreeTop *tt, vcount_t visitCount);
+   OMR_API virtual void lowerTreesPreTreeTopVisit(TR::TreeTop *tt, vcount_t visitCount);
+   OMR_API virtual void lowerTreesPostTreeTopVisit(TR::TreeTop *tt, vcount_t visitCount);
 
-   void lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * treeTop, vcount_t visitCount);
-   void lowerTreesPostChildrenVisit(TR::Node * parent, TR::TreeTop * treeTop, vcount_t visitCount);
+   OMR_API virtual void lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * treeTop, vcount_t visitCount);
+   OMR_API virtual void lowerTreesPostChildrenVisit(TR::Node * parent, TR::TreeTop * treeTop, vcount_t visitCount);
 
-   void lowerTreesPropagateBlockToNode(TR::Node *node);
+   OMR_API virtual void lowerTreesPropagateBlockToNode(TR::Node *node);
 
-   void setUpForInstructionSelection();
-   void doInstructionSelection();
-   void createStackAtlas();
+   OMR_API virtual void setUpForInstructionSelection();
+   OMR_API virtual void doInstructionSelection();
+   OMR_API virtual void createStackAtlas();
 
-   void beginInstructionSelection() {}
-   void endInstructionSelection() {}
+   OMR_API virtual void beginInstructionSelection() {}
+   OMR_API virtual void endInstructionSelection() {}
 
    bool use64BitRegsOn32Bit();
 
@@ -364,12 +365,12 @@ class OMR_EXTENSIBLE CodeGenerator
    void setNextAvailableBlockIndex(int32_t blockIndex) {}
    int32_t getNextAvailableBlockIndex() { return -1; }
 
-   bool supportsMethodEntryPadding() { return true; }
-   bool mustGenerateSwitchToInterpreterPrePrologue() { return false; }
-   bool buildInterpreterEntryPoint() { return false; }
-   void generateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction) { return; }
-   bool supportsUnneededLabelRemoval() { return true; }
-   bool allowSplitWarmAndColdBlocks() { return false; }
+   OMR_API virtual bool supportsMethodEntryPadding() { return true; }
+   OMR_API virtual bool mustGenerateSwitchToInterpreterPrePrologue() { return false; }
+   OMR_API virtual bool buildInterpreterEntryPoint() { return false; }
+   OMR_API virtual void generateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction) { return; }
+   OMR_API virtual bool supportsUnneededLabelRemoval() { return true; }
+   OMR_API virtual bool allowSplitWarmAndColdBlocks() { return false; }
 
    TR_HasRandomGenerator randomizer;
 
@@ -406,7 +407,7 @@ class OMR_EXTENSIBLE CodeGenerator
 
    void prepareNodeForInstructionSelection(TR::Node*node);
    void remapGCIndicesInInternalPtrFormat();
-   void processRelocations();
+   OMR_API virtual void processRelocations();
 
    void findAndFixCommonedReferences();
    void findCommonedReferences(TR::Node*node, TR::TreeTop *treeTop);
@@ -420,7 +421,7 @@ class OMR_EXTENSIBLE CodeGenerator
    // --------------------------------------------------------------------------
    // Hardware profiling
    //
-   void createHWPRecords() {}
+   OMR_API virtual void createHWPRecords() {}
 
    // --------------------------------------------------------------------------
    // Tree evaluation
@@ -452,7 +453,7 @@ class OMR_EXTENSIBLE CodeGenerator
    rcount_t recursivelyDecReferenceCount(TR::Node*node);
    void evaluateChildrenWithMultipleRefCount(TR::Node*node);
 
-   void incRefCountForOpaquePseudoRegister(TR::Node * node, TR::CodeGenerator * cg, TR::Compilation * comp) {}
+   OMR_API virtual void incRefCountForOpaquePseudoRegister(TR::Node * node, TR::CodeGenerator * cg, TR::Compilation * comp) {}
 
    void startUsingRegister(TR::Register *reg);
    void stopUsingRegister(TR::Register *reg);
@@ -480,7 +481,7 @@ class OMR_EXTENSIBLE CodeGenerator
 
 
 
-   TR::Recompilation *allocateRecompilationInfo() { return NULL; }
+   OMR_API virtual TR::Recompilation *allocateRecompilationInfo() { return NULL; }
 
    // --------------------------------------------------------------------------
    // Capabilities
@@ -555,8 +556,8 @@ class OMR_EXTENSIBLE CodeGenerator
    // Linkage
    //
    void initializeLinkage(); // no virt, default, cast
-   TR::Linkage *createLinkage(TR_LinkageConventions lc); // no virt, default, cast
-   TR::Linkage *createLinkageForCompilation();
+   OMR_API virtual TR::Linkage *createLinkage(TR_LinkageConventions lc); // no virt, default, cast
+   OMR_API virtual TR::Linkage *createLinkageForCompilation();
 
    TR::Linkage *getLinkage() {return _bodyLinkage;}
    TR::Linkage *setLinkage(TR::Linkage * l) {return (_bodyLinkage = l);}
@@ -575,7 +576,7 @@ class OMR_EXTENSIBLE CodeGenerator
     * @param method : the recognized method to consider
     * @return true if inlining should be suppressed; false otherwise
     */
-   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method) {return false;}
+   OMR_API virtual bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method) {return false;}
 
    // --------------------------------------------------------------------------
    // Optimizer, not code generator
@@ -765,7 +766,7 @@ class OMR_EXTENSIBLE CodeGenerator
    uint8_t * allocateCodeMemory(uint32_t size, bool isCold, bool isMethodHeaderNeeded=true);
    uint8_t * allocateCodeMemory(uint32_t warmSize, uint32_t coldSize, uint8_t **coldCode, bool isMethodHeaderNeeded=true);
    void  resizeCodeMemory();
-   void  registerAssumptions() {}
+   OMR_API virtual void  registerAssumptions() {}
 
    static void syncCode(uint8_t *codeStart, uint32_t codeSize);
 
@@ -1045,21 +1046,21 @@ class OMR_EXTENSIBLE CodeGenerator
    void addAOTRelocation(TR::Relocation *r, TR::RelocationDebugInfo *info);
    void addStaticRelocation(const TR::StaticRelocation &relocation);
 
-   void addProjectSpecializedRelocation(uint8_t *location,
+   OMR_API virtual void addProjectSpecializedRelocation(uint8_t *location,
                                           uint8_t *target,
                                           uint8_t *target2,
                                           TR_ExternalRelocationTargetKind kind,
                                           char *generatingFileName,
                                           uintptr_t generatingLineNumber,
                                           TR::Node *node) {}
-   void addProjectSpecializedPairRelocation(uint8_t *location1,
+   OMR_API virtual void addProjectSpecializedPairRelocation(uint8_t *location1,
                                           uint8_t *location2,
                                           uint8_t *target,
                                           TR_ExternalRelocationTargetKind kind,
                                           char *generatingFileName,
                                           uintptr_t generatingLineNumber,
                                           TR::Node *node) {}
-   void addProjectSpecializedRelocation(TR::Instruction *instr,
+   OMR_API virtual void addProjectSpecializedRelocation(TR::Instruction *instr,
                                           uint8_t *target,
                                           uint8_t *target2,
                                           TR_ExternalRelocationTargetKind kind,
@@ -1081,7 +1082,7 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::list<TR_Pair<TR_ResolvedMethod,TR::Instruction> *> &getJNICallSites() { return _jniCallSites; }  // registerAssumptions()
 
    bool needClassAndMethodPointerRelocations() { return false; }
-   bool needRelocationsForStatics() { return false; }
+   OMR_API virtual bool needRelocationsForStatics() { return false; }
 
    // --------------------------------------------------------------------------
    // Snippets
@@ -1173,13 +1174,13 @@ class OMR_EXTENSIBLE CodeGenerator
    // currently can only return a value other than vgdnop for HCR guards
    TR::Instruction* getVirtualGuardForPatching(TR::Instruction *vgdnop);
 
-   void jitAddPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched) {}
-   void jitAdd32BitPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched) {}
-   void jitAddPicToPatchOnClassRedefinition(void *classPointer, void *addressToBePatched, bool unresolved = false) {}
-   void jitAdd32BitPicToPatchOnClassRedefinition(void *classPointer, void *addressToBePatched, bool unresolved = false) {}
-   void jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinition(void *firstInstruction) {} //J9
-   bool wantToPatchClassPointer(const TR_OpaqueClassBlock *allegedClassPointer, const TR::Node *forNode) { return false; } //J9
-   bool wantToPatchClassPointer(const TR_OpaqueClassBlock *allegedClassPointer, const uint8_t *inCodeAt) { return false; } //J9
+   OMR_API virtual void jitAddPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched) {}
+   OMR_API virtual void jitAdd32BitPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched) {}
+   OMR_API virtual void jitAddPicToPatchOnClassRedefinition(void *classPointer, void *addressToBePatched, bool unresolved = false) {}
+   OMR_API virtual void jitAdd32BitPicToPatchOnClassRedefinition(void *classPointer, void *addressToBePatched, bool unresolved = false) {}
+   OMR_API virtual void jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinition(void *firstInstruction) {} //J9
+   OMR_API virtual bool wantToPatchClassPointer(const TR_OpaqueClassBlock *allegedClassPointer, const TR::Node *forNode) { return false; } //J9
+   OMR_API virtual bool wantToPatchClassPointer(const TR_OpaqueClassBlock *allegedClassPointer, const uint8_t *inCodeAt) { return false; } //J9
 
    // --------------------------------------------------------------------------
    // Unclassified
@@ -1279,7 +1280,7 @@ class OMR_EXTENSIBLE CodeGenerator
    bool supportsDirectIntegralLoadStoresFromLiteralPool() { return false; } // no virt
    bool supportsHighWordFacility() { return false; } // no virt, default, cast
 
-   bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg) { return false; }
+   OMR_API virtual bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg) { return false; }
 
    // J9 only, move to trj9
    TR_OpaqueClassBlock* getMonClass(TR::Node* monNode);
@@ -1333,7 +1334,7 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::DataType IntJ() { return TR::Compiler->target.is64Bit() ? TR::Int64 : TR::Int32; }
 
    // will a BCD left shift always leave the sign code unchanged and thus allow it to be propagated through and upwards
-   bool propagateSignThroughBCDLeftShift(TR::DataType type) { return false; } // no virt
+   OMR_API virtual bool propagateSignThroughBCDLeftShift(TR::DataType type) { return false; } // no virt
 
    bool supportsLengthMinusOneForMemoryOpts() {return false;} // no virt, cast
 

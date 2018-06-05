@@ -74,8 +74,10 @@
 // OMR_EXTENSIBLE
 #if defined(__clang__) // Only clang is checking this macro for now
 #define OMR_EXTENSIBLE __attribute__((annotate("OMR_Extensible")))
+#deine OMR_API __attribute__((annotate("OMR_API")))
 #else
 #define OMR_EXTENSIBLE
+#define OMR_API
 #endif
 
 // OMR_LIKELY and OMR_UNLIKELY

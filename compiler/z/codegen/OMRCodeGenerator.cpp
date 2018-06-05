@@ -157,7 +157,7 @@ OMR::Z::CodeGenerator::lowerTreesWalk(TR::Node * parent, TR::TreeTop * treeTop, 
 
    parent->setVisitCount(visitCount);
 
-   self()->lowerTreesPreChildrenVisit(parent, treeTop, visitCount);
+   lowerTreesPreChildrenVisit(parent, treeTop, visitCount);
 
    // Go through the subtrees and lower any nodes that need to be lowered. This
    // involves a call to the VM to replace the trees with other trees.
@@ -171,13 +171,13 @@ OMR::Z::CodeGenerator::lowerTreesWalk(TR::Node * parent, TR::TreeTop * treeTop, 
       if (child->getVisitCount() != visitCount)
          {
          self()->lowerTreesWalk(child, treeTop, visitCount);
-         self()->lowerTreeIfNeeded(child, childCount, parent, treeTop);
+         lowerTreeIfNeeded(child, childCount, parent, treeTop);
          }
 
       self()->checkIsUnneededIALoad(parent, child, treeTop);
       }
 
-   self()->lowerTreesPostChildrenVisit(parent, treeTop, visitCount);
+   lowerTreesPostChildrenVisit(parent, treeTop, visitCount);
 
    }
 
@@ -6281,7 +6281,7 @@ OMR::Z::CodeGenerator::doBinaryEncoding()
    static char *disableAlignJITEP = feGetEnv("TR_DisableAlignJITEP");
 
    // Adjust the binary buffer cursor with appropriate padding.
-   if (!disableAlignJITEP && !self()->comp()->compileRelocatableCode() && self()->allowSplitWarmAndColdBlocks())
+   if (!disableAlignJITEP && !self()->comp()->compileRelocatableCode() && allowSplitWarmAndColdBlocks())
       {
       int32_t alignedBase = 256 - self()->getPreprologueOffset();
       int32_t padBase = ( 256 + alignedBase - ((intptrj_t)temp) % 256) % 256;
@@ -11307,7 +11307,7 @@ bool OMR::Z::CodeGenerator::reliesOnAParticularSignEncoding(TR::Node *node)
       return false;
 
    // left shifts do not rely on a clean sign so the only thing to check is if a clean sign property has been propagated thru it (if not then can return false)
-   if (node->getType().isBCD() && op.isLeftShift() && !self()->propagateSignThroughBCDLeftShift(node->getType()))
+   if (node->getType().isBCD() && op.isLeftShift() && !propagateSignThroughBCDLeftShift(node->getType()))
       return false;
 
    if (node->getType().isBCD() && op.isRightShift())

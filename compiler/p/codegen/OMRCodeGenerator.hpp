@@ -152,7 +152,7 @@ namespace Power
 
 class CodeGenerator;
 
-class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
+class /*OMR_EXTENSIBLE*/ CodeGenerator : public OMR::CodeGenerator
    {
 
    public:
@@ -171,7 +171,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    bool getSupportsIbyteswap();
 
-   void generateBinaryEncodingPrologue(TR_PPCBinaryEncodingData *data);
+   OMR_API virtual void generateBinaryEncodingPrologue(TR_PPCBinaryEncodingData *data);
 
    void beginInstructionSelection();
    void endInstructionSelection();
@@ -191,7 +191,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    void emitDataSnippets();
    bool hasDataSnippets();
 
-   TR::Instruction *generateSwitchToInterpreterPrePrologue(TR::Instruction *cursor, TR::Node *node);
+   OMR_API virtual TR::Instruction *generateSwitchToInterpreterPrePrologue(TR::Instruction *cursor, TR::Node *node);
 
    int32_t setEstimatedLocationsForDataSnippetLabels(int32_t estimatedSnippetStart);
 
