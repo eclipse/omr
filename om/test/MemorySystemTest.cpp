@@ -70,7 +70,7 @@ TEST(MemorySystemTest, objectTransition) {
 	        {SlotAttr(SlotType(Id(0), CoreType::VALUE), Id(0))}};
 
 	const Infra::Span<const Om::SlotAttr> span(attributes);
-	transition(cx, obj1, span);
+	transitionLayout(cx, obj1, span);
 
 	// check
 	{

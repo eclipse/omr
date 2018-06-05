@@ -107,10 +107,10 @@ inline Shape* takeNewTransition(Context& cx,
 
 /// Transition the object's shape by adding a set of new slots
 /// This function will reuse cached transitions. Uses a precomputed hash for the attributes.
-inline Shape* transition(Context& cx,
-                         Handle<Object> object,
-                         Infra::Span<const SlotAttr> attributes,
-                         std::size_t hash) {
+inline Shape* transitionLayout(Context& cx,
+                               Handle<Object> object,
+                               Infra::Span<const SlotAttr> attributes,
+                               std::size_t hash) {
 	Shape* derivation = takeExistingTransition(cx, object, attributes, hash);
 	if (!derivation) {
 		derivation = takeNewTransition(cx, object, attributes, hash);
@@ -121,14 +121,15 @@ inline Shape* transition(Context& cx,
 /// Transition the object's shape by adding a set of new slots.
 /// This function will reuse cached transitions.
 inline Shape*
-transition(Context& cx, Handle<Object> object, Infra::Span<const SlotAttr> attributes) {
-	return transition(cx, object, attributes, hash(attributes));
+transitionLayout(Context& cx, Handle<Object> object, Infra::Span<const SlotAttr> attributes) {
+	return transitionLayout(cx, object, attributes, hash(attributes));
 }
 
 /// Transition an object to a new layout. Barriered. Can GC.
 /// TODO: allocate overflow slot storage?
-inline Shape* transition(Context& cx, Handle<Object> object, std::initializer_list<SlotAttr> list) {
-	return transition(cx, object, Infra::Span<const SlotAttr>(list.begin(), list.size()));
+inline Shape*
+transitionLayout(Context& cx, Handle<Object> object, std::initializer_list<SlotAttr> list) {
+	return transitionLayout(cx, object, Infra::Span<const SlotAttr>(list.begin(), list.size()));
 }
 
 struct ObjectInitializer : public Initializer {
