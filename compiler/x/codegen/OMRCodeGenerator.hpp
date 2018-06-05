@@ -269,7 +269,7 @@ namespace OMR
 namespace X86
 {
 
-class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
+class /*OMR_EXTENSIBLE*/ CodeGenerator : public OMR::CodeGenerator
    {
 
    public:
@@ -371,10 +371,10 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
     *
     * \return : none
     */
-   void reserveNTrampolines(int32_t numTrampolines) { return; }
+   OMR_API virtual void reserveNTrampolines(int32_t numTrampolines) { return; }
 
    // Note: This leaves the code aligned in the specified manner.
-   TR::Instruction *generateSwitchToInterpreterPrePrologue(TR::Instruction *prev, uint8_t alignment, uint8_t alignmentMargin);
+   OMR_API virtual TR::Instruction *generateSwitchToInterpreterPrePrologue(TR::Instruction *prev, uint8_t alignment, uint8_t alignmentMargin);
 
    int32_t setEstimatedLocationsForDataSnippetLabels(int32_t estimatedSnippetStart);
    void emitDataSnippets();
@@ -513,7 +513,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    bool patchableRangeNeedsAlignment(void *cursor, intptrj_t length, intptrj_t boundary, intptrj_t margin=0);
 
-   bool nopsAlsoProcessedByRelocations() { return false; }
+   OMR_API virtual bool nopsAlsoProcessedByRelocations() { return false; }
 
 #if defined(DEBUG)
    void dumpPreFPRegisterAssignment(TR::Instruction *);
@@ -658,7 +658,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    public:
 
-   bool allowGuardMerging() { return false; }
+   OMR_API virtual bool allowGuardMerging() { return false; }
 
    bool enableBetterSpillPlacements()
       {
