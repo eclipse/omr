@@ -1877,6 +1877,12 @@ OMR::Options::Options(
             this->_disabledOptimizations[invariantArgumentPreexistence] = true;
             }
          }
+
+      TR_PersistentMethodInfo methodInfo = bodyInfo->getMethodInfo();
+      if (methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition)
+         methodInfo->incrementNumberOfInlinedMethodRedefinition();
+      if (methodInfo->getNumberOfInlinedMethodRedefinition() >= 2)
+         self()->setOption(TR_DisableNextGenHCR);
       }
 #endif
 
