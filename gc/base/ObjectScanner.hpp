@@ -46,6 +46,13 @@
  * and allows scanning for most objects (<32/64 slots) to complete inline, without
  * requiring a virtual method call (getNextSlotMap()). Otherwise at least one such call
  * is required before getNextSlot() will return NULL.
+ *
+ * The effective slot object pointer points to the instance of a GC_SlotObject or subclass
+ * that will receive found reference slots. This base class provides a default GC_SlotObject
+ * instance for this purpose and presets the effective slot object pointer to point to this
+ * instance. The effective slot pointer can be reset to point to any GC_SlotObject instance
+ * by calling setSlotObject() after scanner instantiating and after resuming an interrupted
+ * object scan.
  */
 class GC_ObjectScanner : public MM_BaseVirtual
 {
@@ -61,7 +68,8 @@ protected:
 	uintptr_t _leafMap;						/**< Bit map of reference slots in object that refernce leaf objects */
 #endif /* defined(OMR_GC_LEAF_BITS) */
 	fomrobject_t *_scanPtr;					/**< Pointer to base of object slots mapped by current _scanMap */
-	GC_SlotObject _slotObject;				/**< Create own SlotObject class to provide output */
+	GC_SlotObject *_slotObjectPtr;			/**< Points to effective slot object for receiving refernce slots */
+	GC_SlotObject _slotObject;				/**< Local GC_SlotObject instance to provide default for _slotObjectPtr */
 	uintptr_t _flags;						/**< Scavenger context flags (scanRoots, scanHeap, ...) */
 	uintptr_t _hotFieldsDescriptor;			/**< Hot fields descriptor for languages that support hot field tracking */
 	
@@ -105,11 +113,14 @@ protected:
 		, _leafMap(0)
 #endif /* defined(OMR_GC_LEAF_BITS) */
 		, _scanPtr(scanPtr)
+		, _slotObjectPtr(NULL)
 		, _slotObject(env->getOmrVM(), NULL)
 		, _flags(flags | headObjectScanner)
 		, _hotFieldsDescriptor(hotFieldsDescriptor)
 	{
 		_typeId = __FUNCTION__;
+
+		_slotObjectPtr = &_slotObject;
 	}
 	
 	/**
@@ -167,14 +178,19 @@ protected:
 
 public:
 	/**
-	 * Leaf objects contain no reference slots (eg plain value object or empty array).
+	 * The default slot object is provided as a base GC_SlotObject and the effective slot
+	 * object pointer, which is used for all slot object operations, defaults to point to
+	 * this local instance. Scanner implementations can override this and provide a pointer
+	 * to any instance of GC_SlotObject or subclass. The scanner will rewrite the slot address
+	 * in the effective slot object for every reference slot returned by getNextSlot().
 	 *
-	 * @return true if the object to be scanned is a leaf object
+	 * This method must be called before getNextSlot() is called after scanner instantiation
+	 * and after resuming from an interrupted object scan. Otherwise, if this method is never
+	 * called, the effective slot object pointer will always point to the default slot object.
+	 *
+	 * @param[in] slotObjectPtr points to the slot object that will receive reference slots
 	 */
-	MMINLINE bool isLeafObject() { return (0 == _scanMap) && !hasMoreSlots(); }
-
-
-	MMINLINE uintptr_t getHotFieldsDescriptor() { return _hotFieldsDescriptor; }
+	void setSlotObject(GC_SlotObject *slotObjectPtr) { _slotObjectPtr = slotObjectPtr; }
 
 	/**
 	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
@@ -204,10 +220,10 @@ public:
 			}
 			if (0 != _scanMap) {
 				/* set up to return slot object for non-NULL slot at scan ptr and advance scan ptr */
-				_slotObject.writeAddressToSlot(_scanPtr);
+				_slotObjectPtr->writeAddressToSlot(_scanPtr);
 				_scanPtr += 1;
 				_scanMap >>= 1;
-				return &_slotObject;
+				return _slotObjectPtr;
 			}
 
 			/* slot bit map is empty -- try to refresh it */
@@ -276,12 +292,12 @@ public:
 			}
 			if (0 != _scanMap) {
 				/* set up to return slot object for non-NULL slot at scan ptr and advance scan ptr */
-				_slotObject.writeAddressToSlot(_scanPtr);
+				_slotObjectPtr->writeAddressToSlot(_scanPtr);
 				isLeafSlot = (0 != (1 & _leafMap));
 				_scanPtr += 1;
 				_scanMap >>= 1;
 				_leafMap >>= 1;
-				return &_slotObject;
+				return _slotObjectPtr;
 			}
 
 			/* slot bit map is empty -- try to refresh it */
@@ -301,6 +317,14 @@ public:
 		return NULL;
 	}
 #endif /* defined(OMR_GC_LEAF_BITS) */
+	/**
+	 * Leaf objects contain no reference slots (eg plain value object or empty array).
+	 *
+	 * @return true if the object to be scanned is a leaf object
+	 */
+	MMINLINE bool isLeafObject() { return (0 == _scanMap) && !hasMoreSlots(); }
+
+	MMINLINE uintptr_t getHotFieldsDescriptor() { return _hotFieldsDescriptor; }
 
 	/**
 	 * Informational, relating to scanning context (_flags)
