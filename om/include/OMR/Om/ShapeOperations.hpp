@@ -85,7 +85,7 @@ struct ObjectLayoutInitializer : public Initializer {
 		shape->parentLayout_ = parentLayout.get();
 		shape->instanceSlotOffset_ = parentLayout->instanceSlotOffset_
 		                             + parentLayout->instanceSlotWidth_;
-		shape->shapeTreeData_.instanceKind = CellKind::OBJECT;
+		shape->shapeTreeData_ = parentLayout->shapeTreeData_;
 		shape->instanceSlotCount_ = attributes.length();
 		assignSlotAttrIntoShape(shape, attributes);
 		return reinterpret_cast<Cell*>(shape);
