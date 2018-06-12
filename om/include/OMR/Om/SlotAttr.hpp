@@ -54,7 +54,7 @@ public:
 	constexpr CoreType coreType() const noexcept { return type_.coreType(); }
 
 	/// Width of the slot's value.
-	std::size_t width() const noexcept { return coreType().width(); }
+	std::size_t width() const noexcept { return coreTypeWidth(coreType()); }
 
 private:
 	SlotType type_;
