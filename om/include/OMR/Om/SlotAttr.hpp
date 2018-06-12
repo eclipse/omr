@@ -50,11 +50,11 @@ public:
 		return (id_ != rhs.id_) || (type_ != rhs.type_);
 	}
 
-	/// Width of the slot's value.
-	constexpr std::size_t width() const noexcept { return type_.width(); }
-
 	/// The fundamental type of the slot.
 	constexpr CoreType coreType() const noexcept { return type_.coreType(); }
+
+	/// Width of the slot's value.
+	std::size_t width() const noexcept { return coreType().width(); }
 
 private:
 	SlotType type_;
