@@ -2,6 +2,7 @@
 #define OMR_OM_CELLHEADER_HPP_
 
 #include <cassert> // for broken atomicWriteReference
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <type_traits>

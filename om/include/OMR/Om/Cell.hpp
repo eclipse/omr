@@ -3,6 +3,7 @@
 
 #include <OMR/Om/CellHeader.hpp>
 
+#include <cstddef>
 #include <cstdint>
 
 namespace OMR {
