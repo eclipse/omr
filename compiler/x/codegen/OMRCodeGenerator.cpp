@@ -224,10 +224,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    // Determine whether or not x87 or SSE should be used for floating point.
    //
 
-#if defined(TR_TARGET_X86) && !defined(J9HAMMER)
-   if (_targetProcessorInfo.supportsSSE2() && TR::Compiler->target.cpu.testOSForSSESupport(comp))
-      supportsSSE2 = true;
-#endif // defined(TR_TARGET_X86) && !defined(J9HAMMER)
+   supportsSSE2 = !feGetEnv("TR_DisableSSE");;
 
    if (_targetProcessorInfo.supportsTM() && !comp->getOption(TR_DisableTM))
       {
@@ -273,17 +270,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
          }
       }
 
-#if defined(TR_TARGET_X86) && !defined(J9HAMMER)
-   // Determine if software prefetches are supported.
-   //
-   // 32-bit platforms must check the processor and OS.
-   // 64-bit platforms unconditionally support prefetching.
-   //
-   if (_targetProcessorInfo.supportsSSE() && TR::Compiler->target.cpu.testOSForSSESupport(comp))
-#endif // defined(TR_TARGET_X86) && !defined(J9HAMMER)
-      {
-      self()->setTargetSupportsSoftwarePrefetches();
-      }
+   self()->setTargetSupportsSoftwarePrefetches();
 
    // Enable software prefetch of the TLH and configure the TLH prefetching
    // geometry.
