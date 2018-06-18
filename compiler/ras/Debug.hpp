@@ -1070,7 +1070,6 @@ public:
    uint32_t getBitRegNum (TR::RealRegister *reg);
 
    void printInstructionComment(TR::FILE *pOutFile, int32_t tabStops, TR::Instruction *instr, bool needsStartComment = false);
-   uint8_t *printLoadVMThreadInstruction(TR::FILE *pOutFile, uint8_t* cursor);
    uint8_t *printRuntimeInstrumentationOnOffInstruction(TR::FILE *pOutFile, uint8_t* cursor, bool isRION, bool isPrivateLinkage = false);
    const char *updateBranchName(const char * opCodeName, const char * brCondName);
 #endif

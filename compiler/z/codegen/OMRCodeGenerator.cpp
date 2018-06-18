@@ -5951,13 +5951,6 @@ OMR::Z::CodeGenerator::deleteInst(TR::Instruction* old)
    }
 
 
-bool
-OMR::Z::CodeGenerator::needsVMThreadDependency()
-   {
-   return false;
-   }
-
-
 void
 OMR::Z::CodeGenerator::doPeephole()
    {
@@ -10101,31 +10094,6 @@ OMR::Z::CodeGenerator::clearHighOrderBits( TR::Node * node, TR::Register * targe
       }
 
    return true;
-   }
-
-TR::RegisterDependencyConditions *
-OMR::Z::CodeGenerator::addVMThreadPreCondition(TR::RegisterDependencyConditions *deps, TR::Register *reg)
-   {
-   return deps;
-   }
-
-TR::RegisterDependencyConditions *
-OMR::Z::CodeGenerator::addVMThreadPostCondition(TR::RegisterDependencyConditions *deps, TR::Register *reg)
-   {
-   return deps;
-   }
-
-TR::RegisterDependencyConditions *
-OMR::Z::CodeGenerator::addVMThreadDependencies(TR::RegisterDependencyConditions *deps, TR::Register *reg)
-   {
-   deps = self()->addVMThreadPreCondition(deps, reg);
-   deps = self()->addVMThreadPostCondition(deps, reg);
-   return deps;
-   }
-
-void
-OMR::Z::CodeGenerator::setVMThreadRequired(bool v)
-   {
    }
 
 bool OMR::Z::CodeGenerator::ilOpCodeIsSupported(TR::ILOpCodes o)

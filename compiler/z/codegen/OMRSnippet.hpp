@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,10 +112,6 @@ class OMR_EXTENSIBLE Snippet : public OMR::Snippet
 
    uint8_t *generatePICBinary(TR::CodeGenerator *, uint8_t *, TR::SymbolReference *);
    uint32_t getPICBinaryLength(TR::CodeGenerator *);
-
-   /** Helper method to reload VM Thread into GPR13 */
-   uint8_t *generateLoadVMThreadInstruction(TR::CodeGenerator *cg, uint8_t *cursor);
-   uint32_t getLoadVMThreadInstructionLength(TR::CodeGenerator *cg);
 
    // helper methods to insert Runtime Instrumentation hooks
    uint8_t *generateRuntimeInstrumentationOnOffInstruction(TR::CodeGenerator *cg, uint8_t *cursor, TR::InstOpCode::Mnemonic op, bool isPrivateLinkage = false);

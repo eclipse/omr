@@ -874,14 +874,6 @@ public:
 
    void deleteInst(TR::Instruction* old);
 
-   /** For using VM Thread Register as assignable register */
-   bool needsVMThreadDependency();
-
-   TR::RegisterDependencyConditions *addVMThreadPreCondition(TR::RegisterDependencyConditions *deps, TR::Register *reg);
-   TR::RegisterDependencyConditions *addVMThreadPostCondition(TR::RegisterDependencyConditions *deps, TR::Register *reg);
-   TR::RegisterDependencyConditions *addVMThreadDependencies(TR::RegisterDependencyConditions *deps, TR::Register *reg);
-   virtual void setVMThreadRequired(bool v); //override TR::CodeGenerator::setVMThreadRequired
-
    bool ilOpCodeIsSupported(TR::ILOpCodes);
 
    void setUsesZeroBasePtr( bool v = true );

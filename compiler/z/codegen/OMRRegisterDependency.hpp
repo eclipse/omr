@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,6 @@ template <typename ListKind> class List;
 
 #define RefsAndDefsDependentRegister  (ReferencesDependentRegister | DefinesDependentRegister)
 
-#define NUM_VM_THREAD_REG_DEPS 1
 #define NUM_DEFAULT_DEPENDENCIES 1
 
 class TR_S390RegisterDependencyGroup
@@ -294,15 +293,12 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
 	_cg(NULL)
       {}
 
-   //VMThread work: implicitly add an extra post condition for a possible vm thread
-   //register post dependency.  Do not need for pre because they are so
-   //infrequent.
    RegisterDependencyConditions(uint16_t numPreConds, uint16_t numPostConds, TR::CodeGenerator *cg)
       : _preConditions(TR_S390RegisterDependencyGroup::create(numPreConds, cg->trMemory())),
-        _postConditions(TR_S390RegisterDependencyGroup::create(numPostConds + NUM_VM_THREAD_REG_DEPS, cg->trMemory())),
+        _postConditions(TR_S390RegisterDependencyGroup::create(numPostConds, cg->trMemory())),
         _numPreConditions(numPreConds),
         _addCursorForPre(0),
-        _numPostConditions(numPostConds + NUM_VM_THREAD_REG_DEPS),
+        _numPostConditions(numPostConds),
         _addCursorForPost(0),
         _isHint(false),
         _isUsed(false),
@@ -313,7 +309,7 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
          {
 	 _preConditions->clearDependencyInfo(i);
 	 }
-      for(int32_t j=0;j<numPostConds + NUM_VM_THREAD_REG_DEPS;j++)
+      for(int32_t j=0;j<numPostConds;j++)
          {
          _postConditions->clearDependencyInfo(j);
          }
@@ -539,7 +535,7 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
 
    bool addPostConditionIfNotAlreadyInserted(TR::Register *vr,
                                              TR::RealRegister::RegNum rr,
-				                                 uint8_t flag = ReferencesDependentRegister);                                     
+				                                 uint8_t flag = ReferencesDependentRegister);
    bool addPostConditionIfNotAlreadyInserted(TR::Register *vr,
                                              TR::RealRegister::RegDep rr,
 				                                 uint8_t flag = ReferencesDependentRegister);
