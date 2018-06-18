@@ -46,7 +46,7 @@ to use the IL directly has to include the compiler sources. This is done via som
 [CMake configuration for JitBuilder](https://github.com/eclipse/omr/blob/master/jitbuilder/CMakeLists.txt), this will
 give you an idea of how this works. 
 
-In practice it is convenient to model your project like [Tril](https://github.com/dibyendumajumdar/nj/tree/master/fvtest/tril)
+In practice it is convenient to model your project like [Tril](https://github.com/eclipse/omr/tree/master/fvtest/tril)
 which is an nice little testing library that allows IL generation [using a lisp like syntax](https://github.com/eclipse/omr/blob/master/fvtest/tril/examples/mandelbrot/mandelbrot.tril).
 Also having the JitBuilder component is convenient because you can build upon some of the scaffolding it provides.
 
