@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,9 +60,6 @@ TR::S390HelperCallSnippet::emitSnippetBody()
 
 
    uint32_t rEP = (uint32_t) cg()->getEntryPointRegister() - 1;
-
-   //load vm thread into gpr13
-   cursor = generateLoadVMThreadInstruction(cg(), cursor);
 
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
@@ -152,8 +149,6 @@ TR::S390HelperCallSnippet::getLength(int32_t)
       length += TR::S390CallSnippet::instructionCountForArguments(getNode(), cg());
       }
 
-   length += getLoadVMThreadInstructionLength(cg());
-
    length += getRuntimeInstrumentationOnOffInstructionLength(cg());
 
    return length;
@@ -171,8 +166,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390HelperCallSnippet * snippet)
 
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Helper Call Snippet", getName(helperSymRef));
-
-   bufferPos = printLoadVMThreadInstruction(pOutFile, bufferPos);
 
    bufferPos = printRuntimeInstrumentationOnOffInstruction(pOutFile, bufferPos, false); // RIOFF
 

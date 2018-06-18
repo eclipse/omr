@@ -11954,7 +11954,6 @@ OMR::Z::TreeEvaluator::BBEndEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 #endif
    TR::TreeTop * nextTT = cg->getCurrentEvaluationTreeTop()->getNextTreeTop();
    TR::RegisterDependencyConditions * deps = NULL;
-   deps = cg->addVMThreadDependencies(deps, NULL);
 
    lastInstr = generateS390PseudoInstruction(cg, TR::InstOpCode::FENCE, node, deps,
    TR::Node::createRelative32BitFenceNode(node, &block->getInstructionBoundaries()._endPC));

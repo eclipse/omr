@@ -176,22 +176,6 @@ OMR::Z::Snippet::getPICBinaryLength(TR::CodeGenerator * cg)
    }
 
 /**
- * Load the vm thread value into GPR13
- * @todo okay to assume that we can destroy previous contents of r13? is register volatile?
- */
-uint8_t *
-OMR::Z::Snippet::generateLoadVMThreadInstruction(TR::CodeGenerator *cg, uint8_t *cursor)
-   {
-   return cursor;
-   }
-
-uint32_t
-OMR::Z::Snippet::getLoadVMThreadInstructionLength(TR::CodeGenerator *cg)
-   {
-   return 0;
-   }
-
-/**
  * Helper method to insert Runtime Instrumentation Hooks RION or RIOFF in snippet
  *
  * @param cg               Code Generator Pointer

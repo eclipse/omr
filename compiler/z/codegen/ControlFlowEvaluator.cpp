@@ -200,22 +200,16 @@ virtualGuardHelper(TR::Node * node, TR::CodeGenerator * cg)
       site = comp->addSideEffectNOPSite();
       }
 
-   TR::RegisterDependencyConditions * deps;
+   TR::RegisterDependencyConditions * deps = NULL;
    if (node->getNumChildren() == 3)
       {
       TR::Node * third = node->getChild(2);
       cg->evaluate(third);
       deps = generateRegisterDependencyConditions(cg, third, 0);
       }
-   else
-      {
-      deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint16_t) 0, (uint16_t) 0, cg);
-      }
 
    if(virtualGuard->shouldGenerateChildrenCode())
       cg->evaluateChildrenWithMultipleRefCount(node);
-
-   deps = cg->addVMThreadDependencies(deps, NULL);
 
    generateVirtualGuardNOPInstruction(cg, node, site, deps, node->getBranchDestination()->getNode()->getLabel());
 
@@ -1123,8 +1117,6 @@ OMR::Z::TreeEvaluator::returnEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       dependencies= new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg);
 #endif
 
-   dependencies = cg->addVMThreadPreCondition(dependencies, NULL);
-
    int regDepChildNum = 1;
 
    switch (node->getOpCodeValue())
@@ -1275,10 +1267,7 @@ static inline void generateMergedHCRGuardCodeIfNeeded(TR::Node *node, TR::CodeGe
             {
             TR::LabelSymbol *fallThroughLabel = generateLabelSymbol(cg);
 
-            TR::RegisterDependencyConditions  *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint16_t) 0, (uint16_t) 0, cg);
-
-            deps = cg->addVMThreadDependencies(deps, NULL);
-            TR::Instruction *vgnopInstr = generateVirtualGuardNOPInstruction(cg, node, site, deps, fallThroughLabel, instr ? instr->getPrev() : NULL);
+            TR::Instruction *vgnopInstr = generateVirtualGuardNOPInstruction(cg, node, site, NULL, fallThroughLabel, instr ? instr->getPrev() : NULL);
             vgnopInstr->setNext(instr);
             cg->setAppendInstruction(instr);
             generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fallThroughLabel, mergedHCRDeps);
@@ -2391,7 +2380,6 @@ OMR::Z::TreeEvaluator::tableEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       deps->addPostCondition(selectorReg, TR::RealRegister::AssignAny);
       }
-   deps = cg->addVMThreadPostCondition(deps, NULL);
 
    // Determine if the selector register needs to be sign-extended on a 64-bit system
 
@@ -2946,7 +2934,7 @@ TR::Register *OMR::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node
                {
                targetRegister = n->getRegister();
                cg->evaluate(reference);
-               
+
                // For concurrent scavenge the source is loaded and shifted by the guarded load, thus we need to use CG
                // here for a non-zero compressedrefs shift value
                if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
@@ -3538,7 +3526,7 @@ TR::InstOpCode::S390BranchCondition OMR::Z::TreeEvaluator::mapBranchConditionToL
          }
          break;
       case TR::InstOpCode::COND_BL:
-         {   
+         {
          return TR::InstOpCode::COND_BNL;
          }
          break;
@@ -3716,9 +3704,9 @@ OMR::Z::TreeEvaluator::ternaryEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          if (trueReg->getRegisterPair() || falseReg->getRegisterPair())
             {
             TR_ASSERT(trueReg->getRegisterPair() && falseReg->getRegisterPair(), "Both (or none) false and true regs should be register pairs");
-            
+
             const bool is64BitRegister = trueReg->getKind() == TR_GPR64 || cg->use64BitRegsOn32Bit();
-            
+
             auto mnemonic = is64BitRegister ? TR::InstOpCode::LOCGR: TR::InstOpCode::LOCR;
 
             generateRRFInstruction(cg, mnemonic, node, trueReg->getHighOrder(), falseReg->getHighOrder(), getMaskForBranchCondition(TR::InstOpCode::COND_BER), true);

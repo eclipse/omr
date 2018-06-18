@@ -3060,12 +3060,6 @@ TR_Debug::getBitRegNum(TR::RealRegister * reg)
    }
 
 uint8_t *
-TR_Debug::printLoadVMThreadInstruction(TR::FILE *pOutFile, uint8_t* cursor)
-   {
-   return cursor;
-   }
-
-uint8_t *
 TR_Debug::printRuntimeInstrumentationOnOffInstruction(TR::FILE *pOutFile, uint8_t* cursor, bool isRION, bool isPrivateLinkage)
    {
    TR::CodeGenerator * cg = _comp->cg();
