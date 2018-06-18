@@ -42,15 +42,28 @@ where most of the JitBuilder classes live, along with some lower level interface
 ## Getting Started
 
 OMR compiler backend code is not available as a standalone library due to [the way OMR extensibility works](https://github.com/eclipse/omr/blob/master/doc/compiler/extensible_classes/Extensible_Classes.md). Code that wishes
-to use the IL directly has to include the compiler sources. This is done via some CMake machinery; if you look at the 
+to use the IL directly has to include the compiler sources and must provide a few required extension classes. 
+There is also some CMake machinery to help with the building of a component that requires the compiler sources; if you look at the 
 [CMake configuration for JitBuilder](https://github.com/eclipse/omr/blob/master/jitbuilder/CMakeLists.txt), this will
 give you an idea of how this works. 
 
-In practice it is convenient to model your project like [Tril](https://github.com/eclipse/omr/tree/master/fvtest/tril)
-which is an nice little testing library that allows IL generation [using a lisp like syntax](https://github.com/eclipse/omr/blob/master/fvtest/tril/examples/mandelbrot/mandelbrot.tril).
-Also having the JitBuilder component is convenient because you can build upon some of the scaffolding it provides.
+You can however build JitBuilder as a standalone library; the JitBuilder library includes the compiler
+backend obviously. Having the JitBuilder component is convenient also because you can build upon some of the scaffolding it 
+provides. Note however that you will need to include header files within the OMR project as there isn't a set of
+header files that are distributed.
 
-The CMake build instructions for OMR can be found at [omr/doc/BuildingWithCMake.md](https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md). 
+In practice it is convenient to model your project like [Tril](https://github.com/eclipse/omr/tree/master/fvtest/tril)
+which is an nice little testing library that allows IL generation [using a lisp like syntax](https://github.com/eclipse/omr/blob/master/fvtest/tril/examples/mandelbrot/mandelbrot.tril). Alternatively look
+at the [JitBuilder samples CMake configuation](https://github.com/eclipse/omr/blob/master/jitbuilder/release/CMakeLists.txt).
+
+The CMake build instructions for OMR can be found at [omr/doc/BuildingWithCMake.md](https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md). Note that by default the JitBuilder
+library is not built; to enable that you need to provide `-DOMR_JITBUILDER=ON` option to CMake. 
+
+The OMR code is written in C++; as yet there is no official C api for the IL layer. A C api for JitBuilder
+is [in the works](https://github.com/eclipse/omr/issues/2397).
+
+If it sounds like it is a bit difficult to get started if you want to work directly with OMR IL, then that is true at this 
+point in time. However the setup is a one time effort so don't let that put you off.
 
 
 
