@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -761,32 +761,6 @@ bool OMR::ValuePropagation::canTransformArrayCopyCallForSmall(TR::Node *node, in
       return false;
       }
    }
-
-
-#ifdef J9_PROJECT_SPECIFIC
-static
-TR_ResolvedMethod * findResolvedClassMethod(TR::Compilation * comp, char * className, char * methodName, char * methodSig)
-   {
-   TR_OpaqueClassBlock * classHandle = comp->fe()->getClassFromSignature(className, strlen(className), comp->getCurrentMethod());
-
-   if (classHandle)
-      {
-      TR_ScratchList<TR_ResolvedMethod> classMethods(comp->trMemory());
-      comp->fej9()->getResolvedMethods(comp->trMemory(), classHandle, &classMethods);
-
-      ListIterator<TR_ResolvedMethod> it(&classMethods);
-      TR_ResolvedMethod *method;
-      int methodNameLen = strlen(methodName);
-      int methodSigLen  = strlen(methodSig);
-      for (method = it.getCurrent(); method; method = it.getNext())
-         {
-         if (!strncmp(method->nameChars(), methodName, methodNameLen) && !strncmp(method->signatureChars(), methodSig, methodSigLen))
-            return method;
-         }
-      }
-   return NULL;
-   }
-#endif
 
 
 void OMR::ValuePropagation::removeArrayCopyNode(TR::TreeTop *arraycopyTree)
