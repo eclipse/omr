@@ -278,6 +278,16 @@ public:
     */
    void setFreeBlockList(CodeCacheFreeCacheBlock *fcb) { _freeBlockList = fcb; }
 
+   /**
+   * @brief Remember the position of warmCodeAlloc/coldCodeAlloc pointers
+   */
+   void setAllocationMark();
+
+   /**
+   * @brief Restore warmCodeAlloc/coldCodeAlloc pointers to previously memorized positions
+   */
+   void resetToAllocationMark();
+
    TR::CodeCacheManager *_manager;
 
    TR::Monitor *_mutex;
@@ -322,6 +332,8 @@ public:
 
    TR_YesNoMaybe _almostFull;
    CodeCacheMethodHeader *_lastAllocatedBlock; // used for error detection (RAS)
+   uint8_t * _warmCodeAllocMark; // used to reset the allocation pointers to previous values
+   uint8_t * _coldCodeAllocMark;
    };
 
 } // namespace OMR

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -295,6 +295,7 @@ OMR::CodeCache::initialize(TR::CodeCacheManager *manager,
    _warmCodeAlloc = _segment->segmentBase() + sizeof(this);
 
    _warmCodeAlloc = align(_warmCodeAlloc, config.codeCacheAlignment() -  1);
+   _warmCodeAllocMark = _warmCodeAlloc;
 
    if (!config.trampolineCodeSize())
       {
@@ -308,6 +309,7 @@ OMR::CodeCache::initialize(TR::CodeCacheManager *manager,
       _CCPreLoadedCodeBase = _CCPreLoadedCodeTop - config.ccPreLoadedCodeSize();
       TR_ASSERT( (((size_t)_CCPreLoadedCodeBase) & config.codeCacheHelperAlignmentMask()) == 0, "Per-code cache helper sizes do not account for alignment requirements." );
       _coldCodeAlloc = _CCPreLoadedCodeBase;
+      _coldCodeAllocMark = _coldCodeAlloc;
       _trampolineSyncList = NULL;
 
       return true;
@@ -361,6 +363,7 @@ OMR::CodeCache::initialize(TR::CodeCacheManager *manager,
    _CCPreLoadedCodeBase = _CCPreLoadedCodeTop - config.ccPreLoadedCodeSize();
    TR_ASSERT( (((size_t)_CCPreLoadedCodeBase) & config.codeCacheHelperAlignmentMask()) == 0, "Per-code cache helper sizes do not account for alignment requirements." );
    _coldCodeAlloc = _CCPreLoadedCodeBase;
+   _coldCodeAllocMark = _coldCodeAlloc;
 
    // Set helper trampoline table available
    //
@@ -1745,4 +1748,28 @@ OMR::CodeCache::allocate(TR::CodeCacheManager *manager,
       }
 
    return NULL;
+   }
+
+// The following two routines can be used for TOSS_CODE situations where we
+// allocate some space for code, but we discard it immediately after the compilation
+// Code cache must be reserved
+void
+OMR::CodeCache::setAllocationMark()
+   {
+   _warmCodeAllocMark = _warmCodeAlloc;
+   _coldCodeAllocMark = _coldCodeAlloc;
+   }
+
+void
+OMR::CodeCache::resetToAllocationMark()
+   {
+   TR_ASSERT((uintptr_t)_warmCodeAlloc >= (uintptr_t)_warmCodeAllocMark,
+      "_warmCodeAlloc=%p must be larger or equal to _warmCodeAllocMark=%p", _warmCodeAlloc, _warmCodeAllocMark);
+   TR_ASSERT((uintptr_t)_coldCodeAlloc <= (uintptr_t)_coldCodeAllocMark,
+      "_coldCodeAlloc=%p must be smaller or equal to _coldCodeAllocMark=%p", _coldCodeAlloc, _coldCodeAllocMark);
+   size_t warmSize = _warmCodeAlloc - _warmCodeAllocMark;
+   size_t coldSize = _coldCodeAllocMark - _coldCodeAlloc;
+   _manager->increaseFreeSpaceInCodeCacheRepository(warmSize + coldSize);
+   _warmCodeAlloc = _warmCodeAllocMark;
+   _coldCodeAlloc = _coldCodeAllocMark;
    }
