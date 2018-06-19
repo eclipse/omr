@@ -102,18 +102,15 @@ int64_t
 omrtime_current_time_millis(struct OMRPortLibrary *portLibrary)
 {
 #ifdef J9OS_I5
-	struct timeval tv;
-	struct timezone tz;
-
-	int ret = gettimeofday(&tv, &tz);
-	if (0 != ret) {
-		return (int64_t)__getMillis();
-	} else {
-		return (int64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
+	timebasestruct_t tb;
+	int rt = 0;
+	read_real_time(&tb, TIMEBASE_SZ);
+	rt = time_base_to_time(&tb, TIMEBASE_SZ);
+	if (0 == rt) {
+		return (int64_t)tb.tb_high * 1000 + tb.tb_low / (1000 * 1000);
 	}
-#else
+#endif /* J9OS_I5 */
 	return (int64_t)__getMillis();
-#endif /* defined(J9OS_I5) */
 }
 
 int64_t
