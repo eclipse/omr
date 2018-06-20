@@ -2334,6 +2334,216 @@ TR::Register *OMR::X86::TreeEvaluator::arraytranslateAndTestEvaluator(TR::Node *
    return NULL;
    }
 
+static TR::Register* arraytranslateWordToByte(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   auto mask = (uint16_t)node->getChild(3)->getInt();
+
+   auto src     = cg->evaluate(node->getChild(0));
+   auto dst     = cg->evaluate(node->getChild(1));
+   auto length  = cg->evaluate(node->getChild(4));
+   auto result  = cg->allocateRegister();
+   auto tmp     = cg->allocateRegister();
+   auto maskXMM = cg->allocateRegister(TR_VRF);
+   auto tmp0XMM = cg->allocateRegister(TR_VRF);
+   auto tmp1XMM = cg->allocateRegister(TR_VRF);
+
+   auto begLabel      = generateLabelSymbol(cg);
+   auto endLabel      = generateLabelSymbol(cg);
+   auto shortLabel    = generateLabelSymbol(cg);
+   auto byteLoopLabel = generateLabelSymbol(cg);
+   auto mainLoopLabel = generateLabelSymbol(cg);
+   auto reduce8Label  = generateLabelSymbol(cg);
+   auto reduce16Label = generateLabelSymbol(cg);
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   auto deps = generateRegisterDependencyConditions((uint8_t)8, (uint8_t)8, cg);
+   deps->addPostCondition(src,     TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(dst,     TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(length,  TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(result,  TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmp,     TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(maskXMM, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmp0XMM, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmp1XMM, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(src,     TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(dst,     TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(length,  TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(result,  TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(tmp,     TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(maskXMM, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(tmp0XMM, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(tmp1XMM, TR::RealRegister::NoReg, cg);
+
+   generateLabelInstruction(LABEL, node, begLabel, cg);
+   generateRegImmInstruction(CMP4RegImms, node, length, 8, cg);
+   generateLabelInstruction(JL4, node, shortLabel, cg);
+
+   static uint16_t masks[] = { mask, mask, mask, mask, mask, mask, mask, mask };
+   generateRegMemInstruction(MOVDQURegMem, node, maskXMM, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, masks), cg), cg);
+   
+   generateRegRegInstruction(MOV4RegReg, node, result, length, cg);
+   generateRegImmInstruction(AND4RegImms, node, result, 7, cg); // result %= 8
+   generateLabelInstruction(JE4, node, reduce8Label, cg);
+
+   generateRegMemInstruction(MOVDQURegMem, node, tmp0XMM, generateX86MemoryReference(src, 0, cg), cg);
+   generateRegRegInstruction(PTESTRegReg, node, tmp0XMM, maskXMM, cg);
+   generateRegMemInstruction(CMOVNE4RegMem, node, result, generateX86MemoryReference(cg->findOrCreate4ByteConstant(node, 0), cg), cg);
+   generateLabelInstruction(JNE4, node, byteLoopLabel, cg);
+   generateRegRegInstruction(PACKUSWBRegReg, node, tmp0XMM, maskXMM, cg);
+   generateMemRegInstruction(MOVQMemReg, node, generateX86MemoryReference(dst, 0, cg), tmp0XMM, cg);
+
+   generateLabelInstruction(LABEL, node, reduce8Label, cg);
+   generateRegImmInstruction(TEST1RegImm1, node, length, 8, cg); // length % 16 >= 8 ?
+   generateLabelInstruction(JE4, node, reduce16Label, cg);
+   generateRegMemInstruction(MOVDQURegMem, node, tmp0XMM, generateX86MemoryReference(src, result, 1, 0, cg), cg);
+   generateRegRegInstruction(PTESTRegReg, node, tmp0XMM, maskXMM, cg);
+   generateLabelInstruction(JNE4, node, byteLoopLabel, cg);
+   generateRegRegInstruction(PACKUSWBRegReg, node, tmp0XMM, maskXMM, cg);
+   generateMemRegInstruction(MOVQMemReg, node, generateX86MemoryReference(dst, result, 0, 0, cg), tmp0XMM, cg);
+   generateRegImmInstruction(ADD4RegImms, node, result, 8, cg);
+
+   generateLabelInstruction(LABEL, node, reduce16Label, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, length, cg);
+   generateLabelInstruction(JE4, node, endLabel, cg);
+   generateLabelInstruction(LABEL, node, mainLoopLabel, cg);
+   generateRegMemInstruction(MOVDQURegMem, node, tmp0XMM, generateX86MemoryReference(src, result, 1, 0, cg), cg);
+   generateRegMemInstruction(MOVDQURegMem, node, tmp1XMM, generateX86MemoryReference(src, result, 1, 16, cg), cg);
+   generateRegRegInstruction(PTESTRegReg, node, tmp0XMM, maskXMM, cg);
+   generateLabelInstruction(JNE4, node, byteLoopLabel, cg);
+   generateRegRegInstruction(PTESTRegReg, node, tmp1XMM, maskXMM, cg);
+   generateLabelInstruction(JNE4, node, byteLoopLabel, cg);
+   generateRegRegInstruction(PACKUSWBRegReg, node, tmp0XMM, tmp1XMM, cg);
+   generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(dst, result, 0, 0, cg), tmp0XMM, cg);
+   generateRegImmInstruction(ADD4RegImms, node, result, 16, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, length, cg);
+   generateLabelInstruction(JL4, node, mainLoopLabel, cg);
+   generateLabelInstruction(JMP4, node, endLabel, cg);
+
+   generateLabelInstruction(LABEL, node, shortLabel, cg);
+   generateRegRegInstruction(XOR4RegReg, node, result, result, cg);
+   generateRegRegInstruction(TEST4RegReg, node, length, length, cg);
+   generateLabelInstruction(JE4, node, endLabel, cg);
+
+   generateLabelInstruction(LABEL, node, byteLoopLabel, cg);
+   generateRegMemInstruction(L2RegMem, node, tmp, generateX86MemoryReference(src, result, 1, 0, cg), cg);
+   generateRegImmInstruction(TEST2RegImm2, node, tmp, mask, cg);
+   generateLabelInstruction(JNE4, node, endLabel, cg);
+   generateMemRegInstruction(S1MemReg, node, generateX86MemoryReference(dst, result, 0, 0, cg), tmp, cg);
+   generateRegImmInstruction(ADD4RegImms, node, result, 1, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, length, cg);
+   generateLabelInstruction(JL4, node, byteLoopLabel, cg);
+   generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+
+   cg->stopUsingRegister(tmp);
+   cg->stopUsingRegister(maskXMM);
+   cg->stopUsingRegister(tmp0XMM);
+   cg->stopUsingRegister(tmp1XMM);
+   return result;
+   }
+static TR::Register* arraytranslateByteToWord(TR::Node *node, TR::CodeGenerator *cg, bool checkSignBit)
+   {
+   auto src     = cg->evaluate(node->getChild(0));
+   auto dst     = cg->evaluate(node->getChild(1));
+   auto length  = cg->evaluate(node->getChild(4));
+   auto result  = cg->allocateRegister();
+   auto tmp     = cg->allocateRegister();
+   auto maskXMM = cg->allocateRegister(TR_VRF);
+   auto tmp0XMM = cg->allocateRegister(TR_VRF);
+   auto tmp1XMM = cg->allocateRegister(TR_VRF);
+
+   auto begLabel      = generateLabelSymbol(cg);
+   auto endLabel      = generateLabelSymbol(cg);
+   auto shortLabel    = generateLabelSymbol(cg);
+   auto byteLoopLabel = generateLabelSymbol(cg);
+   auto mainLoopLabel = generateLabelSymbol(cg);
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   auto deps = generateRegisterDependencyConditions((uint8_t)8, (uint8_t)8, cg);
+   deps->addPostCondition(src,     TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(dst,     TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(length,  TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(result,  TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmp,     TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(maskXMM, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmp0XMM, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmp1XMM, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(src,     TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(dst,     TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(length,  TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(result,  TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(tmp,     TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(maskXMM, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(tmp0XMM, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(tmp1XMM, TR::RealRegister::NoReg, cg);
+
+   generateLabelInstruction(LABEL, node, begLabel, cg);
+   generateRegImmInstruction(CMP4RegImms, node, length, 16, cg);
+   generateLabelInstruction(JL4, node, shortLabel, cg);
+
+   generateRegRegInstruction(PXORRegReg, node, maskXMM, maskXMM, cg);
+   generateRegRegInstruction(MOV4RegReg, node, result, length, cg);
+   generateRegImmInstruction(AND4RegImms, node, result, 15, cg); // result %= 16
+   generateLabelInstruction(JE4, node, mainLoopLabel, cg);
+
+   generateRegMemInstruction(MOVDQURegMem, node, tmp0XMM, generateX86MemoryReference(src, 0, cg), cg);
+   if (checkSignBit)
+      {
+      generateRegRegInstruction(PMOVMSKB4RegReg, node, tmp, tmp0XMM, cg);
+      generateRegRegInstruction(TEST4RegReg, node, tmp, tmp, cg);
+      generateRegMemInstruction(CMOVNE4RegMem, node, result, generateX86MemoryReference(cg->findOrCreate4ByteConstant(node, 0), cg), cg);
+      generateLabelInstruction(JNE4, node, byteLoopLabel, cg);
+      }
+   generateRegRegInstruction(MOVDQURegReg, node, tmp1XMM, tmp0XMM, cg);
+   generateRegRegInstruction(PUNPCKLBWRegReg, node, tmp0XMM, maskXMM, cg);
+   generateRegRegInstruction(PUNPCKHBWRegReg, node, tmp1XMM, maskXMM, cg);
+   generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(dst,  0, cg), tmp0XMM, cg);
+   generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(dst, 16, cg), tmp1XMM, cg);
+
+   generateLabelInstruction(LABEL, node, mainLoopLabel, cg);
+   generateRegMemInstruction(MOVDQURegMem, node, tmp0XMM, generateX86MemoryReference(src, result, 0, 0, cg), cg);
+   if (checkSignBit)
+      {
+      generateRegRegInstruction(PMOVMSKB4RegReg, node, tmp, tmp0XMM, cg);
+      generateRegRegInstruction(TEST4RegReg, node, tmp, tmp, cg);
+      generateLabelInstruction(JNE4, node, byteLoopLabel, cg);
+      }
+   generateRegRegInstruction(MOVDQURegReg, node, tmp1XMM, tmp0XMM, cg);
+   generateRegRegInstruction(PUNPCKLBWRegReg, node, tmp0XMM, maskXMM, cg);
+   generateRegRegInstruction(PUNPCKHBWRegReg, node, tmp1XMM, maskXMM, cg);
+   generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(dst, result, 1,  0, cg), tmp0XMM, cg);
+   generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(dst, result, 1, 16, cg), tmp1XMM, cg);
+   generateRegImmInstruction(ADD4RegImms, node, result, 16, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, length, cg);
+   generateLabelInstruction(JL4, node, mainLoopLabel, cg);
+   generateLabelInstruction(JMP4, node, endLabel, cg);
+
+   generateLabelInstruction(LABEL, node, shortLabel, cg);
+   generateRegRegInstruction(XOR4RegReg, node, result, result, cg);
+   generateRegRegInstruction(TEST4RegReg, node, length, length, cg);
+   generateLabelInstruction(JE4, node, endLabel, cg);
+
+   generateLabelInstruction(LABEL, node, byteLoopLabel, cg);
+   generateRegMemInstruction(MOVZXReg4Mem1, node, tmp, generateX86MemoryReference(src, result, 0, 0, cg), cg);
+   if (checkSignBit)
+      {
+      generateRegImmInstruction(TEST1RegImm1, node, tmp, 0x80, cg);
+      generateLabelInstruction(JNE4, node, endLabel, cg);
+      }
+   generateMemRegInstruction(S2MemReg, node, generateX86MemoryReference(dst, result, 1, 0, cg), tmp, cg);
+   generateRegImmInstruction(ADD4RegImms, node, result, 1, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, length, cg);
+   generateLabelInstruction(JL4, node, byteLoopLabel, cg);
+   generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+
+   cg->stopUsingRegister(tmp);
+   cg->stopUsingRegister(maskXMM);
+   cg->stopUsingRegister(tmp0XMM);
+   cg->stopUsingRegister(tmp1XMM);
+   return result;
+   }
+
 TR::Register *OMR::X86::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    //
@@ -2347,6 +2557,38 @@ TR::Register *OMR::X86::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, T
    //    stopping char (dummy for X)
    // Number of elements translated is returned
    //
+   static auto UseOldArrayTranslate = (bool)feGetEnv("TR_UseOldArrayTranslate");
+   if (!UseOldArrayTranslate)
+      {
+      TR_ASSERT(node->getChild(3)->getOpCodeValue() == TR::iconst, "Terminal Character must be a constant.");
+      TR::Register* result = NULL;
+      if (node->isSourceByteArrayTranslate())
+         {
+         if (node->getChild(3)->getInt() == 0)
+            {
+            //result = arraytranslateByteToWord(node, cg, true);
+            }
+         else
+            {
+            //result = arraytranslateByteToWord(node, cg, false);
+            }
+         }
+      else
+         {
+         result = arraytranslateWordToByte(node, cg);
+         }
+      if (result)
+      {
+          node->setRegister(result);
+          cg->decReferenceCount(node->getChild(0));
+          cg->recursivelyDecReferenceCount(node->getChild(2));
+          cg->decReferenceCount(node->getChild(1));
+          cg->recursivelyDecReferenceCount(node->getChild(3));
+          cg->decReferenceCount(node->getChild(4));
+          cg->recursivelyDecReferenceCount(node->getChild(5));
+          return result;
+      }
+      }
 
    //sourceByte == true iff the source operand is a byte array
    bool sourceByte = node->isSourceByteArrayTranslate();
