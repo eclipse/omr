@@ -1,28 +1,34 @@
 #if !defined(OMR_OM_BASICSLOTHANDLE_HPP_)
 #define OMR_OM_BASICSLOTHANDLE_HPP_
 
+#include <cassert>
+
 namespace OMR {
 namespace Om {
+
+class Cell;
 
 /// A pointer into a object's slot.
 class BasicSlotHandle {
 public:
 	template<typename T>
-	explicit BasicSlotHandle(T** slot) : slot_(reinterpret_cast<Cell**>(slot)) {
-		static_assert(sizeof(T*) == sizeof(Cell*),
+	BasicSlotHandle(T** slot) : slot_(reinterpret_cast<void**>(slot)) {
+		static_assert(sizeof(T*) == sizeof(void*),
 		              "pointers must be a universally fixed width.");
-		static_assert(sizeof(T**) == sizeof(Cell**),
+		static_assert(sizeof(T**) == sizeof(void**),
 		              "pointers must be a universally fixed width.");
 	}
 
-	void writeReference(Cell* ref) const { *slot_ = ref; }
+	template <typename T = Cell>
+	void writeReference(T* ref) const { *slot_ = reinterpret_cast<void*>(ref); }
 
-	void atomicWriteReference(Cell* ref) const { assert(0); }
+	void atomicWriteReference(void* ref) const { assert(0); }
 
-	Cell* readReference() const { return *slot_; }
+	template <typename T = Cell>
+	T* readReference() const { return *reinterpret_cast<T**>(slot_); }
 
 private:
-	Cell** slot_;
+	void** slot_;
 };
 
 } // namespace Om
