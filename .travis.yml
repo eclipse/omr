@@ -46,6 +46,7 @@ env:
     - BUILD_JOBS=2
   matrix:
     - BUILD_WITH_CMAKE=yes CMAKE_GENERATOR="Unix Makefiles"
+    - BUILD_WITH_CMAKE=yes CMAKE_CACHE=cmake/caches/Om.cmake
 matrix:
   exclude:
     - os: osx
