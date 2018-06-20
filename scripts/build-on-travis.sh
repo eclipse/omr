@@ -64,7 +64,7 @@ if test "x$BUILD_WITH_CMAKE" = "xyes"; then
 
   mkdir build
   cd build
-  time cmake -Wdev -G "$CMAKE_GENERATOR" $CMAKE_DEFINES -C../${CMAKE_CACHE}
+  time cmake -Wdev -G "$CMAKE_GENERATOR" $CMAKE_DEFINES -C../${CMAKE_CACHE} ../
   if test "x$RUN_BUILD" != "xno"; then
     time cmake --build . -- -j $BUILD_JOBS
     if test "x$RUN_TESTS" != "xno"; then
