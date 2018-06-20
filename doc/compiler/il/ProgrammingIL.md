@@ -52,7 +52,10 @@ backend obviously. Having the JitBuilder component is convenient also because yo
 provides. Note however that you will need to include header files within the OMR project as there isn't a set of
 header files that are distributed.
 
-In practice it is convenient to model your project like [Tril](https://github.com/eclipse/omr/tree/master/fvtest/tril)
+I found that if you want to create your own OMR library then the easiest option is to add your sources to the `jitbuilder`
+component so that it gets built as part of the JitBuilder library.
+
+If you are writing executable programs it is convenient to model your project like [Tril](https://github.com/eclipse/omr/tree/master/fvtest/tril)
 which is an nice little testing library that allows IL generation [using a lisp like syntax](https://github.com/eclipse/omr/blob/master/fvtest/tril/examples/mandelbrot/mandelbrot.tril). Alternatively look
 at the [JitBuilder samples CMake configuation](https://github.com/eclipse/omr/blob/master/jitbuilder/release/CMakeLists.txt).
 
@@ -65,5 +68,25 @@ is [in the works](https://github.com/eclipse/omr/issues/2397).
 If it sounds like it is a bit difficult to get started if you want to work directly with OMR IL, then that is true at this 
 point in time. However the setup is a one time effort so don't let that put you off.
 
+## Basic IL Generation Flow
 
+At a high level the flow is as follows:
+
+* You need to define the function you want to create. This is done by creating an instance of [TR_Method](https://github.com/eclipse/omr/blob/master/compiler/compile/OMRMethod.hpp). TR_Method
+  defines the function's parameters and return type, and is used to resolve any function, not just the ones you JIT compile.
+  JitBuilder provides a derived type called TR::ResolvedMethod which can also be used as the basis.
+* Next you need to create an instance of [TR_IlGenerator](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlGen.hpp).
+  The compiler backend will invoke the `genIL()` method when it wishes you to generate the IL for the function. 
+  Again it is convenient to use a derived class [TR::ILInjector](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlInjector.hpp) as a starting point for your own type. This class
+  eill give you an idea of what you need as a minimum.
+* Next you ask the backend to compile the function. For this purpose you can call [compileMethodFromDetails()](https://github.com/eclipse/omr/blob/master/compiler/control/CompileMethod.hpp). This is when the actual IL generation starts.
+The compiler backend sets up a Compiler object which is saved in a thread local variable; this is why when you call one of
+Node creation methods (to be discussed later) it knows which compiler object to hook into. During IL generation the `genIL()` method
+is called which will in turn run any code you have defined. At the end of the compilation process you are given a pointer to
+the compiled function.
+* You have to manage the pointer to compiled function somewhere as although the compiled code is saved in a Code Cache internally
+there is no api to access it directly. Typically you will want to associate the compiled function to a name, and possibly also the
+`TR_Method` instance you created.
+
+I hope to make all of above clearer through an example (yet to be written!)
 
