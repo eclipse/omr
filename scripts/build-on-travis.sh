@@ -52,19 +52,20 @@ else
 fi
 
 if test "x$BUILD_WITH_CMAKE" = "xyes"; then
-  if test "x$CMAKE_GENERATOR" = "x"; then
-    export CMAKE_GENERATOR="Ninja"
-  fi
-  
+
   if test "x$TRAVIS_OS_NAME" = "xosx"; then
     if test "x$CMAKE_GENERATOR" = "xNinja"; then
       brew install ninja
     fi
   fi
 
+  if test "x$CMAKE_GENERATOR" = "x"; then
+    export CMAKE_GENERATOR="Unix Makefiles"
+  fi
+
   mkdir build
   cd build
-  time cmake -Wdev -G "$CMAKE_GENERATOR" $CMAKE_DEFINES -C../${CMAKE_CACHE} ../
+  time cmake -Wdev -G"$CMAKE_GENERATOR" $CMAKE_DEFINES -C../${CMAKE_CACHE} ../
   if test "x$RUN_BUILD" != "xno"; then
     time cmake --build . -- -j $BUILD_JOBS
     if test "x$RUN_TESTS" != "xno"; then
