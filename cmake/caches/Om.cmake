@@ -28,7 +28,12 @@ set(OMR_GC ON CACHE BOOL "")
 set(OMR_OM ON CACHE BOOL "")
 set(OMR_PORT ON CACHE BOOL "")
 set(OMR_THREAD ON CACHE BOOL "")
+set(OMR_FVTEST ON CACHE BOOL "")
 
+# Disable incompatible GC tests
+
+set(OMR_EXAMPLE OFF CACHE BOOL "")
+set(OMR_GC_TEST OFF CACHE BOOL "")
 
 # Disable (temporarily) unsupported GC policies
 
