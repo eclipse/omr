@@ -4,6 +4,7 @@
 
 The goal of this document is to describe how to program with OMR IL. We hope to cover:
 
+* Intended Audience
 * What is IL
 * Where is it?
 * Getting started
@@ -15,6 +16,12 @@ The goal of this document is to describe how to program with OMR IL. We hope to 
 * Using data across Blocks
 * Branching and CFGs
 * Other Information Sources
+
+## Intended Audience
+
+This document is aimed at software engineers who want to use the OMR JIT technology in their front-end, in particular those who want
+to understand and work at a lower level than the JitBuilder api offers. This document is not intended to be a reference for IL, nor does it
+cover how to program using the JitBuilder api. This document is also not meant for backend engineers.
 
 ## What is IL
 
@@ -29,7 +36,7 @@ languages and multiple backend machine code generators with less effort and the 
 
 This may sound a strange question to ask, but one that I had to struggle with initially. This is because
 most of the OMR presentations and talks are about the [JitBuilder api](https://developer.ibm.com/open/2016/07/19/jitbuilder-library-and-eclipse-omr-just-in-time-compilers-made-easy/) which 
-is probably the easiest way to get started with the JIT engine. However, JitBuilder hides a lot of the details
+is probably the easiest way to get started with the OMR JIT engine. However, JitBuilder hides a lot of the details
 so you are not really working with OMR IL directly when you use JitBuilder. This document is mainly about how to
 work directly with the IL layer.
 
@@ -55,7 +62,7 @@ header files that are distributed.
 I found that if you want to create your own OMR library then the easiest option is to add your sources to the `jitbuilder`
 component so that it gets built as part of the JitBuilder library.
 
-If you are writing executable programs it is convenient to model your project like [Tril](https://github.com/eclipse/omr/tree/master/fvtest/tril)
+If you are writing executable programs it is convenient to model your project on [Tril](https://github.com/eclipse/omr/tree/master/fvtest/tril)
 which is an nice little testing library that allows IL generation [using a lisp like syntax](https://github.com/eclipse/omr/blob/master/fvtest/tril/examples/mandelbrot/mandelbrot.tril). Alternatively look
 at the [JitBuilder samples CMake configuation](https://github.com/eclipse/omr/blob/master/jitbuilder/release/CMakeLists.txt).
 
@@ -72,21 +79,22 @@ point in time. However the setup is a one time effort so don't let that put you 
 
 At a high level the flow is as follows:
 
-* You need to define the function you want to create. This is done by creating an instance of [TR_Method](https://github.com/eclipse/omr/blob/master/compiler/compile/OMRMethod.hpp). TR_Method
+* You need to define the function you want to create. This is done by creating an instance of [`TR_Method`]
+  (https://github.com/eclipse/omr/blob/master/compiler/compile/OMRMethod.hpp). `TR_Method`
   defines the function's parameters and return type, and is used to resolve any function, not just the ones you JIT compile.
-  JitBuilder provides a derived type called TR::ResolvedMethod which can also be used as the basis.
-* Next you need to create an instance of [TR_IlGenerator](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlGen.hpp).
-  The compiler backend will invoke the `genIL()` method when it wishes you to generate the IL for the function. 
-  Again it is convenient to use a derived class [TR::ILInjector](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlInjector.hpp) as a starting point for your own type. This class
-  eill give you an idea of what you need as a minimum.
-* Next you ask the backend to compile the function. For this purpose you can call [compileMethodFromDetails()](https://github.com/eclipse/omr/blob/master/compiler/control/CompileMethod.hpp). This is when the actual IL generation starts.
-The compiler backend sets up a Compiler object which is saved in a thread local variable; this is why when you call one of
-Node creation methods (to be discussed later) it knows which compiler object to hook into. During IL generation the `genIL()` method
-is called which will in turn run any code you have defined. At the end of the compilation process you are given a pointer to
-the compiled function.
+  JitBuilder provides a derived type called `TR::ResolvedMethod` which can also be used as the basis.
+* Next you need to create an instance of [`TR_IlGenerator`](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlGen.hpp).
+  The compiler backend will invoke the `TR_IlGenerator::genIL()` method when it wishes you to generate the IL for the function. 
+  Again it is convenient to use a derived class [`TR::ILInjector`](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlInjector.hpp) as a starting point for your own type. This class will give you an idea of what you need as a minimum.
+* As a next step you ask the backend to compile the function. For this purpose you can call [`compileMethodFromDetails()`]
+  (https://github.com/eclipse/omr/blob/master/compiler/control/CompileMethod.hpp). This is when the actual IL generation starts.
+  The compiler backend sets up a Compiler object which is saved in a thread local variable; this is why when you call one of
+  Node creation methods (to be discussed later) it knows which compiler object to hook into. During IL generation the `genIL()` method
+  is called which will in turn run any code you have defined. At the end of the compilation process you are given a pointer to
+  the compiled function.
 * You have to manage the pointer to compiled function somewhere as although the compiled code is saved in a Code Cache internally
-there is no api to access it directly. Typically you will want to associate the compiled function to a name, and possibly also the
-`TR_Method` instance you created.
+  there is no api to access it directly. Typically you will want to associate the compiled function to a name, and possibly also the
+  `TR_Method` instance you created.
 
 I hope to make all of above clearer through an example (yet to be written!)
 
