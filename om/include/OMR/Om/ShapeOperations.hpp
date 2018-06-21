@@ -157,7 +157,11 @@ inline Shape* deriveObjectLayout(Context& cx,
 	}
 	Shape* derivation = allocateObjectLayout(cx, base, attr);
 	storeTransition(cx, base, TransitionSetEntry{derivation}, hash);
+
+#if defined(OMR_OM_TRACE)
 	std::cerr << "derivation: " << derivation << std::endl;
+#endif
+
 	return derivation;
 }
 

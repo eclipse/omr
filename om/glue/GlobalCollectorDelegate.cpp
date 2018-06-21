@@ -40,8 +40,10 @@ void MM_GlobalCollectorDelegate::poisonUnmarkedObjectsInRegion(
 		        _extensions->objectModel.getConsumedSizeInBytesWithHeader(omrobjptr);
 		bool ismarked = _markingScheme->isMarked(omrobjptr);
 
-		// std::cerr << ">POISON @" << omrobjptr << "[" << objsize << "]"
-		// 	  << "=" << ismarked << std::endl;
+#if defined(OMR_OM_TRACE)
+		std::cerr << ">POISON @" << omrobjptr << "[" << objsize << "]"
+		          << "=" << ismarked << std::endl;
+#endif // OMR_OM_TRACE
 
 		if (!ismarked) {
 			/* object will be collected. We write the full contents of the object

@@ -31,19 +31,28 @@
 
 OMR_VMThread*
 MM_EnvironmentDelegate::attachVMThread(OMR_VM* vm, const char* threadName, uintptr_t reason) {
+#if defined(OMR_OM_TRACE)
 	std::cerr << "attach thread: " << std::endl;
+#endif // OMR_OM_TRACE
+
 	OMR_VMThread* vmContext = NULL;
 	omr_vmthread_firstAttach(vm, &vmContext);
 	return vmContext;
 }
 
 void MM_EnvironmentDelegate::detachVMThread(OMR_VM* vm, OMR_VMThread* vmContext, uintptr_t reason) {
+#if defined(OMR_OM_TRACE)
 	std::cerr << "detach thread: " << vmContext << std::endl;
+#endif // OMR_OM_TRACE
+
 	omr_vmthread_redetach(vmContext);
 }
 
 void MM_EnvironmentDelegate::acquireVMAccess() {
-	// std::cerr << ">ACQUIRE ACCESS" << std::endl;
+#if defined(OMR_OM_TRACE)
+	std::cerr << ">ACQUIRE ACCESS" << std::endl;
+#endif // OMR_OM_TRACE
+
 #if 0
   OMR_VM_Example *exampleVM = (OMR_VM_Example *)_env->getOmrVM()->_language_vm;
   omrthread_rwmutex_enter_read(exampleVM->_vmAccessMutex);
@@ -54,7 +63,10 @@ void MM_EnvironmentDelegate::acquireVMAccess() {
  * Release shared VM acccess.
  */
 void MM_EnvironmentDelegate::releaseVMAccess() {
-	// std::cerr << ">RELEASE ACCESS" << std::endl;
+#if defined(OMR_OM_TRACE)
+	std::cerr << ">RELEASE ACCESS" << std::endl;
+#endif // OMR_OM_TRACE
+
 #if 0
   OMR_VM_Example *exampleVM = (OMR_VM_Example *)_env->getOmrVM()->_language_vm;
   omrthread_rwmutex_exit_read(exampleVM->_vmAccessMutex);

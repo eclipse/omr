@@ -35,7 +35,9 @@ void Globals::init(StartupContext& cx) {
 }
 
 MemorySystem::MemorySystem(ProcessRuntime& runtime) : runtime_(runtime) {
+#if defined(OMR_OM_TRACE)
 	std::cerr << __PRETTY_FUNCTION__ << std::endl;
+#endif // OMR_OM_TRACE
 
 	Thread self(runtime.platform().thread());
 	initOmrVm();
