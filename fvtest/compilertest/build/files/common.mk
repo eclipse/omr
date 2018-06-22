@@ -234,6 +234,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     $(JIT_PRODUCT_DIR)/tests/PPCOpCodesTest.cpp \
     $(JIT_PRODUCT_DIR)/tests/Qux2Test.cpp \
     $(JIT_PRODUCT_DIR)/tests/SimplifierFoldAndTest.cpp \
+    $(JIT_PRODUCT_DIR)/tests/SingleBitContainerTest.cpp \
     $(JIT_PRODUCT_DIR)/tests/S390OpCodesTest.cpp \
     $(JIT_PRODUCT_DIR)/tests/OptTestDriver.cpp \
     $(JIT_PRODUCT_DIR)/tests/TestDriver.cpp \

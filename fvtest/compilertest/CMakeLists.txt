@@ -82,6 +82,7 @@ add_executable(compilertest
 	tests/OptTestDriver.cpp
 	tests/TestDriver.cpp
 	tests/X86OpCodesTest.cpp
+	tests/SingleBitContainerTest.cpp
 	tests/injectors/BarIlInjector.cpp
 	tests/injectors/BinaryOpIlInjector.cpp
 	tests/injectors/CallIlInjector.cpp
