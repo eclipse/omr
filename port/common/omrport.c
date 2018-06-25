@@ -65,6 +65,7 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrsysinfo_get_pid, /* sysinfo_get_pid */
 	omrsysinfo_get_ppid, /* sysinfo_get_ppid */
 	omrsysinfo_get_memory_info, /* sysinfo_get_memory_info */
+	omrsysinfo_get_cpu_info, /* sysinfo_get_cpu_info */
 	omrsysinfo_get_processor_info, /* sysinfo_get_processor_info */
 	omrsysinfo_destroy_processor_info, /* sysinfo_destroy_processor_info */
 	omrsysinfo_get_addressable_physical_memory, /* sysinfo_get_addressable_physical_memory */
@@ -269,6 +270,7 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrsysinfo_cgroup_are_subsystems_enabled, /* sysinfo_cgroup_are_subsystems_enabled */
 	omrsysinfo_cgroup_get_memlimit, /* sysinfo_cgroup_get_memlimit */
 	omrsysinfo_cgroup_is_memlimit_set, /* sysinfo_cgroup_is_memlimit_set */
+	omrsysinfo_cgroup_is_running_in_container, /* sysinfo_cgroup_is_running_in_container */
 	omrport_init_library, /* port_init_library */
 	omrport_startup_library, /* port_startup_library */
 	omrport_create_library, /* port_create_library */

@@ -240,6 +240,12 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 	return -1;
 }
 
+int32_t
+omrsysinfo_get_cpu_info(struct OMRPortLibrary *portLibrary, struct J9CpuInfo *cpuInfo, ...)
+{
+	return -2;
+}
+
 /**
  * Determine the size of the total usable physical memory in the system, in bytes.
  * It takes into account limitation on address space to compute usable physical memory.
@@ -941,4 +947,10 @@ BOOLEAN
 omrsysinfo_cgroup_is_memlimit_set(struct OMRPortLibrary *portLibrary)
 {
 	return FALSE;
+}
+
+int32_t
+omrsysinfo_cgroup_is_running_in_container(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer)
+{
+	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
 }

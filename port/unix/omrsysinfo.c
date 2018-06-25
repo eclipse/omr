@@ -308,7 +308,8 @@ struct {
 	uint64_t flag;
 } supportedSubsystems[] = {
 	{ "cpu", OMR_CGROUP_SUBSYSTEM_CPU },
-	{ "memory", OMR_CGROUP_SUBSYSTEM_MEMORY }
+	{ "memory", OMR_CGROUP_SUBSYSTEM_MEMORY },
+	{ "cpuset", OMR_CGROUP_SUBSYSTEM_CPUSET }
 };
 
 static uint32_t attachedPortLibraries;
@@ -352,6 +353,8 @@ static OMRCgroupSubsystem getCgroupSubsystemFromFlag(uint64_t subsystemFlag);
 static int32_t readCgroupSubsystemFile(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlag, const char *fileName, int32_t numItemsToRead, const char *format, ...);
 static int32_t isRunningInContainer(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer);
 static int32_t getCgroupMemoryLimit(struct OMRPortLibrary *portLibrary, uint64_t *limit);
+static int32_t getCpuSetInfo(struct OMRPortLibrary *portLibrary, int32_t *numCpusBasedOnCpuSet);
+static int32_t getCpuQuotaPeriodRatio(struct OMRPortLibrary *portLibrary, int64_t *cpuQuota, uint64_t *cpuPeriod, int32_t *numCpusQuota);
 #endif /* defined(LINUX) */
 
 
@@ -1166,29 +1169,10 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedBound("errno: ", errno);
 		}
 #elif defined(LINUX) && !defined(OMRZTPF)
-		cpu_set_t cpuSet;
-		int32_t size = sizeof(cpuSet); /* Size in bytes */
-		pid_t mainProcess = getpid();
-		int32_t error = sched_getaffinity(mainProcess, size, &cpuSet);
-
-		if (0 == error) {
-			toReturn = CPU_COUNT(&cpuSet);
-		} else {
-			toReturn = 0;
-			if (EINVAL == errno) {
-				/* Too many CPUs for the fixed cpu_set_t structure */
-				int32_t numCPUs = sysconf(_SC_NPROCESSORS_CONF);
-				cpu_set_t *allocatedCpuSet = CPU_ALLOC(numCPUs);
-				if (NULL != allocatedCpuSet) {
-					size_t size = CPU_ALLOC_SIZE(numCPUs);
-					CPU_ZERO_S(size, allocatedCpuSet);
-					error = sched_getaffinity(mainProcess, size, allocatedCpuSet);
-					if (0 == error) {
-						toReturn = CPU_COUNT_S(size, allocatedCpuSet);
-					}
-					CPU_FREE(allocatedCpuSet);
-				}
-			}
+		int32_t numCpusBasedOnCpuSet = 0;
+		int32_t rc = getCpuSetInfo(portLibrary, &numCpusBasedOnCpuSet);
+		if (0 == rc) {
+			toReturn = numCpusBasedOnCpuSet;
 		}
 
 		/* If system calls failed to retrieve info, do not check cgroup at all, and give an error */
@@ -1198,22 +1182,14 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 			int32_t rc = 0;
 			int64_t cpuQuota = 0;
 			uint64_t cpuPeriod = 0;
-			int32_t numItemsToRead = 1; /* cpu.cfs_quota_us and cpu.cfs_period_us files each contain only one integer value */
+			int32_t numCpusQuota = 0;
+			rc = getCpuQuotaPeriodRatio(portLibrary, &cpuQuota, &cpuPeriod, &numCpusQuota);
 
-			/* If either file read fails, ignore cgroup cpu quota limits and continue */
-			rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_CPU, "cpu.cfs_quota_us", numItemsToRead, "%ld", &cpuQuota);
-			if (0 == rc) {
-				rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_CPU, "cpu.cfs_period_us", numItemsToRead, "%lu", &cpuPeriod);
-				if (0 == rc) {
-					int32_t numCpusQuota = (int32_t) (((double) cpuQuota / cpuPeriod) + 0.5);
-
-					if ((cpuQuota > 0) && (numCpusQuota < toReturn)) {
-						toReturn = numCpusQuota;
-						/* If the CPU quota rounds down to 0, then just return 1 as the closest usable value */
-						if (0 == toReturn) {
-							toReturn = 1;
-						}
-					}
+			if ((0 == rc) && (cpuQuota > 0) && (numCpusQuota < toReturn)) {
+				toReturn = numCpusQuota;
+				/* If the CPU quota rounds down to 0, then just return 1 as the closest usable value */
+				if (0 == toReturn) {
+					toReturn = 1;
 				}
 			}
 		}
@@ -1447,6 +1423,54 @@ _cleanup:
 	return rc;
 }
 
+static int32_t
+getCpuQuotaPeriodRatio(struct OMRPortLibrary *portLibrary, int64_t *cpuQuota, uint64_t *cpuPeriod, int32_t *numCpusQuota)
+{
+	int32_t rc = -1;
+	int32_t numItemsToRead = 1; /* cpu.cfs_quota_us and cpu.cfs_period_us files each contain only one integer value */
+
+	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_CPU, "cpu.cfs_quota_us", numItemsToRead, "%ld", cpuQuota);
+	if (0 == rc) {
+		if(cpuQuota > 0) {
+			rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_CPU, "cpu.cfs_period_us", numItemsToRead, "%lu", cpuPeriod);
+			if (0 == rc) {
+				*numCpusQuota = (int32_t) (((double) *cpuQuota / *cpuPeriod) + 0.5);
+			}
+		}else{
+			rc = OMRPORT_ERROR_SYSINFO_CGROUP_CPUQUOTA_NOT_SET;
+		}
+	}
+	return rc;
+}
+
+static int32_t
+getCpuSetInfo(struct OMRPortLibrary *portLibrary, int32_t *numCpusBasedOnCpuSet) {
+	cpu_set_t cpuSet;
+	int32_t size = sizeof(cpuSet); /* Size in bytes */
+	pid_t mainProcess = getpid();
+	int32_t rc = sched_getaffinity(mainProcess, size, &cpuSet);
+
+	if (0 == rc) {
+		*numCpusBasedOnCpuSet = CPU_COUNT(&cpuSet);
+	} else {
+		if (EINVAL == errno) {
+			/* Too many CPUs for the fixed cpu_set_t structure */
+			int32_t numCPUs = sysconf(_SC_NPROCESSORS_CONF);
+			cpu_set_t *allocatedCpuSet = CPU_ALLOC(numCPUs);
+			if (NULL != allocatedCpuSet) {
+				size_t size = CPU_ALLOC_SIZE(numCPUs);
+				CPU_ZERO_S(size, allocatedCpuSet);
+				rc = sched_getaffinity(mainProcess, size, allocatedCpuSet);
+				if (0 == rc) {
+					*numCpusBasedOnCpuSet = CPU_COUNT_S(size, allocatedCpuSet);
+				}
+				CPU_FREE(allocatedCpuSet);
+			}
+		}
+	}
+	return rc;	
+}
+
 #elif defined(OSX)
 
 /**
@@ -1599,6 +1623,48 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 	memInfo->timestamp = (portLibrary->time_nano_time(portLibrary) / NANOSECS_PER_USEC);
 
 	Trc_PRT_sysinfo_get_memory_info_Exit(rc);
+	return rc;
+}
+
+int32_t
+omrsysinfo_get_cpu_info(struct OMRPortLibrary *portLibrary, struct J9CpuInfo *cpuInfo, ...)
+{
+	int32_t rc = -2;
+	
+	if (NULL == cpuInfo) {
+		return OMRPORT_ERROR_SYSINFO_NULL_OBJECT_RECEIVED;
+	}
+	/* Initialize to defaults. */
+	cpuInfo->cpuQuota = OMRPORT_CPUINFO_NOT_AVAILABLE;
+	cpuInfo->cpuPeriod = OMRPORT_CPUINFO_NOT_AVAILABLE;
+	cpuInfo->numCpusQuota = (int32_t) OMRPORT_CPUINFO_NOT_AVAILABLE;
+	cpuInfo->numCpusBasedOnCpuSet = (int32_t) OMRPORT_CPUINFO_NOT_AVAILABLE;
+
+#if defined(LINUX)
+	int64_t cpuQuota = 0;
+	uint64_t cpuPeriod = 0;
+	int32_t numCpusQuota = 0;
+	rc = getCpuQuotaPeriodRatio(portLibrary, &cpuQuota, &cpuPeriod, &numCpusQuota);
+	if (0 == rc) {
+		if (numCpusQuota <= 0) {
+			numCpusQuota = 1;
+		}
+		cpuInfo->cpuQuota = cpuQuota;
+		cpuInfo->cpuPeriod = cpuPeriod;
+		cpuInfo->numCpusQuota = numCpusQuota;
+	}
+	int32_t numCpusBasedOnCpuSet = 0;
+	rc = getCpuSetInfo(portLibrary, &numCpusBasedOnCpuSet);
+	if (0 == rc) {
+		cpuInfo->numCpusBasedOnCpuSet = numCpusBasedOnCpuSet;
+	}
+	int32_t numItemsToRead = 1;
+	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_CPUSET, "cpuset.cpus", numItemsToRead, "%s", cpuInfo->cpuSets);
+	
+#else
+	rc = OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
+#endif
+
 	return rc;
 }
 
@@ -3648,6 +3714,8 @@ getCgroupSubsystemFromFlag(uint64_t subsystemFlag)
 		return CPU;
 	case OMR_CGROUP_SUBSYSTEM_MEMORY:
 		return MEMORY;
+	case OMR_CGROUP_SUBSYSTEM_CPUSET:
+		return CPUSET;
 	default:
 		Trc_PRT_Assert_ShouldNeverHappen();
 	}
@@ -3992,6 +4060,19 @@ omrsysinfo_cgroup_is_memlimit_set(struct OMRPortLibrary *portLibrary)
 #else /* defined(LINUX) && !defined(OMRZTPF) */
 	return FALSE;
 #endif /* defined(LINUX) && !defined(OMRZTPF) */
+}
+
+int32_t
+omrsysinfo_cgroup_is_running_in_container(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer)
+{
+	int32_t rc = 0;
+	Assert_PRT_true(NULL != inContainer);
+	*inContainer = FALSE; 
+#if defined(LINUX) && !defined(OMRZTPF)
+	rc = isRunningInContainer(portLibrary, inContainer);
+	return rc;
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
+	return rc;
 }
 
 #if defined(OMRZTPF)

@@ -568,7 +568,23 @@ typedef struct J9MemoryInfo {
 	int64_t timestamp;			/* Sampling timestamp (in microseconds). */
 } J9MemoryInfo;
 
+/* Stores CPU usage statistics
+ * 
+ * @see omrsysinfo_get_cpu_info
+ * 
+ * If one of the these parameters is not available on a particular platform, this is set to the
+ * default OMRPORT_CPUINFO_NOT_AVAILABLE.
+ */
+typedef struct J9CpuInfo {
+	int64_t cpuQuota;
+	uint64_t cpuPeriod;
+	int32_t numCpusQuota;
+	int32_t numCpusBasedOnCpuSet;
+	char cpuSets[128];
+} J9CpuInfo;
+
 #define OMRPORT_MEMINFO_NOT_AVAILABLE ((uint64_t) -1)
+#define OMRPORT_CPUINFO_NOT_AVAILABLE ((uint64_t) -2)
 
 /**
  * Stores usage information on a per-processor basis. These parameters are the ones that generic
@@ -1023,7 +1039,8 @@ typedef struct OMROSKernelInfo {
 /* bitwise flags indicating cgroup subsystems supported by portlibrary */
 #define OMR_CGROUP_SUBSYSTEM_CPU ((uint64_t)0x1)
 #define OMR_CGROUP_SUBSYSTEM_MEMORY ((uint64_t)0x2)
-#define OMR_CGROUP_SUBSYSTEM_ALL (OMR_CGROUP_SUBSYSTEM_CPU | OMR_CGROUP_SUBSYSTEM_MEMORY)
+#define OMR_CGROUP_SUBSYSTEM_CPUSET ((uint64_t)0x4)
+#define OMR_CGROUP_SUBSYSTEM_ALL (OMR_CGROUP_SUBSYSTEM_CPU | OMR_CGROUP_SUBSYSTEM_MEMORY | OMR_CGROUP_SUBSYSTEM_CPUSET)
 
 struct OMRPortLibrary;
 typedef struct J9Heap J9Heap;
@@ -1092,6 +1109,8 @@ typedef struct OMRPortLibrary {
 	uintptr_t (*sysinfo_get_ppid)(struct OMRPortLibrary *portLibrary) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_get_memory_info "omrsysinfo_get_memory_info"*/
 	int32_t (*sysinfo_get_memory_info)(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, ...) ;
+	/** see @ref omrsysinfo.c::omrsysinfo_get_cpu_info "omrsysinfo_get_cpu_info"*/
+	int32_t (*sysinfo_get_cpu_info)(struct OMRPortLibrary *portLibrary, struct J9CpuInfo *cpuInfo, ...) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_get_processor_info "omrsysinfo_get_processor_info"*/
 	int32_t (*sysinfo_get_processor_info)(struct OMRPortLibrary *portLibrary, struct J9ProcessorInfos *procInfo) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_destroy_processor_info "omrsysinfo_destroy_processor_info"*/
@@ -1490,6 +1509,8 @@ typedef struct OMRPortLibrary {
 	int32_t (*sysinfo_cgroup_get_memlimit)(struct OMRPortLibrary *portLibrary, uint64_t *limit);
 	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_is_memlimit_set "omrsysinfo_cgroup_is_memlimit_set"*/
 	BOOLEAN (*sysinfo_cgroup_is_memlimit_set)(struct OMRPortLibrary *portLibrary);
+	/** see @ref omrsysinfo.c::omrsysinfo_cgroup_is_running_in_container "omrsysinfo_cgroup_is_running_in_container"*/
+	int32_t (*sysinfo_cgroup_is_running_in_container)(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer);
 	/** see @ref omrport.c::omrport_init_library "omrport_init_library"*/
 	int32_t (*port_init_library)(struct OMRPortLibrary *portLibrary, uintptr_t size) ;
 	/** see @ref omrport.c::omrport_startup_library "omrport_startup_library"*/
@@ -1747,6 +1768,7 @@ extern J9_CFUNC int32_t omrport_getVersion(struct OMRPortLibrary *portLibrary);
 #define omrsysinfo_get_pid() privateOmrPortLibrary->sysinfo_get_pid(privateOmrPortLibrary)
 #define omrsysinfo_get_ppid() privateOmrPortLibrary->sysinfo_get_ppid(privateOmrPortLibrary)
 #define omrsysinfo_get_memory_info(param1) privateOmrPortLibrary->sysinfo_get_memory_info(privateOmrPortLibrary, (param1))
+#define omrsysinfo_get_cpu_info(param1) privateOmrPortLibrary->sysinfo_get_cpu_info(privateOmrPortLibrary, (param1))
 #define omrsysinfo_get_memory_info_with_flags(param1,param2) privateOmrPortLibrary->sysinfo_get_memory_info(privateOmrPortLibrary, (param1), (param2))
 #define omrsysinfo_get_processor_info(param1) privateOmrPortLibrary->sysinfo_get_processor_info(privateOmrPortLibrary, (param1))
 #define omrsysinfo_destroy_processor_info(param1) privateOmrPortLibrary->sysinfo_destroy_processor_info(privateOmrPortLibrary, (param1))
@@ -1944,6 +1966,7 @@ extern J9_CFUNC int32_t omrport_getVersion(struct OMRPortLibrary *portLibrary);
 #define omrsysinfo_cgroup_are_subsystems_enabled(param1) privateOmrPortLibrary->sysinfo_cgroup_are_subsystems_enabled(privateOmrPortLibrary, param1)
 #define omrsysinfo_cgroup_get_memlimit(param1) privateOmrPortLibrary->sysinfo_cgroup_get_memlimit(privateOmrPortLibrary, param1)
 #define omrsysinfo_cgroup_is_memlimit_set() privateOmrPortLibrary->sysinfo_cgroup_is_memlimit_set(privateOmrPortLibrary)
+#define omrsysinfo_cgroup_is_running_in_container(param1) privateOmrPortLibrary->sysinfo_cgroup_is_running_in_container(privateOmrPortLibrary, param1)
 #define omrintrospect_startup() privateOmrPortLibrary->introspect_startup(privateOmrPortLibrary)
 #define omrintrospect_shutdown() privateOmrPortLibrary->introspect_shutdown(privateOmrPortLibrary)
 #define omrintrospect_set_suspend_signal_offset(param1) privateOmrPortLibrary->introspect_set_suspend_signal_offset(privateOmrPortLibrary, param1)
