@@ -10,8 +10,8 @@ namespace Infra {
 template<typename Type>
 class Span {
 public:
-	// Zeroing constructor.
-	inline constexpr Span() : value_{nullptr}, length_{0} {}
+	// uninitialized constructor.
+	inline constexpr Span() = default;
 
 	/// Full initialization.
 	inline constexpr Span(Type* value, std::size_t length) : value_{value}, length_{length} {}
