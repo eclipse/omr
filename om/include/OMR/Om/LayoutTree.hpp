@@ -17,6 +17,9 @@ class LayoutTree {
 public:
 	class Iterator {
 	public:
+
+		explicit constexpr Iterator() noexcept : current_(nullptr) {}
+
 		explicit constexpr Iterator(Shape* start) noexcept : current_(start) {}
 
 		Iterator(const Iterator&) = default;
