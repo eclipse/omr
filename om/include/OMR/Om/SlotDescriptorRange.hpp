@@ -20,6 +20,11 @@ public:
 	/// slot's type and offset.
 	class Iterator {
 	public:
+
+		Iterator() = default;
+
+		Iterator(const Iterator&) = default;
+
 		Iterator(const SlotAttr* current, std::size_t offset = 0)
 		        : current_(current), offset_(offset) {}
 
@@ -36,9 +41,9 @@ public:
 			return *this;
 		}
 
-		bool operator==(const Iterator& rhs) const { return (current_ == rhs.current_); }
+		bool operator==(const Iterator& rhs) const { return current_ == rhs.current_; }
 
-		bool operator!=(const Iterator& rhs) const { return !(*this == rhs); }
+		bool operator!=(const Iterator& rhs) const { return current_ != rhs.current_; }
 
 		SlotDescriptor operator*() const {
 			return SlotDescriptor{SlotIndex{offset_}, current_};
@@ -68,6 +73,8 @@ private:
 	std::size_t offset_;
 	std::size_t width_;
 };
+
+using SlotDescriptorRangeIterator = SlotDescriptorRange::Iterator;
 
 } // namespace Om
 } // namespace OMR
