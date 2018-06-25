@@ -6,7 +6,7 @@
 namespace OMR {
 namespace Om {
 
-/// A pointer into a object's slot.
+/// A handle to an object's slot. Slot constains a Value.
 class ValueSlotHandle {
 public:
 	explicit constexpr ValueSlotHandle(Value* slot) : slot_(slot) {}
@@ -19,10 +19,39 @@ public:
 
 	void atomicWriteReference(void* ref) const { assert(0); }
 
-	Cell* readReference() const { return reinterpret_cast<Cell*>(slot_->getRef()); }
+	template<typename T = Cell>
+	T* readReference() const {
+		return slot_->getRef<T>();
+	}
+
+	bool isReference() const { return slot_->isRef(); }
+
+	Value* slot() const { return slot_; }
 
 private:
 	Value* slot_;
+};
+
+/// A Handle to an object's slot. Slot contains an immutable Value.
+class ConstValueSlotHandle {
+public:
+	ConstValueSlotHandle(ValueSlotHandle& other) : slot_(other.slot()) {}
+
+	explicit constexpr ConstValueSlotHandle(const Value* slot) : slot_(slot) {}
+
+	explicit constexpr ConstValueSlotHandle(const void* slot) : slot_((Value*)slot) {}
+
+	template<typename T = Cell>
+	T* readReference() const {
+		return slot_->getRef<T>();
+	}
+
+	bool isReference() const { return slot_->isRef(); }
+
+	const Value* slot() const { return slot_; }
+
+private:
+	const Value* slot_;
 };
 
 } // namespace Om
