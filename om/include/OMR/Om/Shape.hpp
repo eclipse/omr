@@ -57,15 +57,17 @@ public:
 
 	void instanceKind(CellKind k) { shapeTreeData_.instanceKind = k; }
 
-	std::size_t instanceInlineSlotSize() const { return shapeTreeData_.instanceInlineSlotsSize; }
+	std::size_t instanceInlineSlotSize() const {
+		return shapeTreeData_.instanceInlineSlotsSize;
+	}
 
 	/// Get the Span of `SlotAttr` described by this shape.
 	Infra::Span<SlotAttr> instanceSlotAttrs() noexcept {
-		return {instanceSlotAttrs_, instanceSlotCount_};
+		return Infra::Span<SlotAttr>(instanceSlotAttrs_, instanceSlotCount_);
 	}
 
 	Infra::Span<const SlotAttr> instanceSlotAttrs() const noexcept {
-		return {instanceSlotAttrs_, instanceSlotCount_};
+		return Infra::Span<const SlotAttr>(instanceSlotAttrs_, instanceSlotCount_);
 	}
 
 #if 0
