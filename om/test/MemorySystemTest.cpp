@@ -2,6 +2,7 @@
 
 #include <OMR/Om/Allocation.hpp>
 #include <OMR/Om/Allocator.hpp>
+#include <OMR/Om/AnySlotWalker.hpp>
 #include <OMR/Om/Array.hpp>
 #include <OMR/Om/Context.inl.hpp>
 #include <OMR/Om/MemorySystem.hpp>
@@ -58,12 +59,49 @@ TEST(MemorySystemTest, keepAnObject) {
 	EXPECT_EQ(object->layout(), shape.get());
 }
 
+class PrintVisitor {
+public:
+	template<typename SlotHandleT>
+	bool edge(void* cell, SlotHandleT slot) const {
+		std::cerr << slot.readReference() << std::endl;
+		return true; // continue
+	}
+};
+
+TEST(MemorySystemTest, print) {
+	MemorySystem system(runtime);
+	Context cx(system);
+
+	RootRef<Shape> shape(cx, allocateRootObjectLayout(cx, {}, DEFAULT_INLINE_DATA_SIZE));
+
+	ASSERT_NE(shape->shapeTreeData()->instanceInlineSlotsSize, 0);
+
+	RootRef<Object> object(cx, allocateObject(cx, shape));
+
+	Om::Id id(1);
+	Om::SlotType type(Om::Id(0), Om::CoreType::VALUE);
+
+	auto map = Om::transitionLayout(cx, object, {{type, id}});
+	assert(map != nullptr);
+
+	Om::SlotDescriptor descriptor;
+	Om::lookupSlot(cx, object, id, descriptor);
+
+	Om::setValue(cx, object.get(), descriptor, {AS_REF, object.get()});
+
+	AnySlotWalker walker(object.get<Cell>());
+	walker.traverse(PrintVisitor());
+
+	// EXPECT_EQ(object->layout(), shape.get());
+	// OMR_GC_SystemCollect(cx.vmContext(), 0);
+	// EXPECT_EQ(object->layout(), shape.get());
+}
+
 TEST(MemorySystemTest, objectTransition) {
 	MemorySystem system(runtime);
 	Context cx(system);
 
 	RootRef<Shape> emptyObjectMap(cx, allocateRootObjectLayout(cx, {}));
-
 	RootRef<Object> obj1(cx, allocateObject(cx, emptyObjectMap));
 
 	const std::array<const SlotAttr, 1> attributes{
