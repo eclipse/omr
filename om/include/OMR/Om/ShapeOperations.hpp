@@ -9,6 +9,7 @@
 #include <OMR/Om/TransitionSetOperations.hpp>
 
 #include <iostream>
+#include <cstddef>
 
 namespace OMR {
 namespace Om {
@@ -16,6 +17,8 @@ namespace Om {
 struct InstanceDescription {
 
 };
+
+static constexpr std::size_t DEFAULT_INLINE_DATA_SIZE = 32 * sizeof(void*);
 
 inline bool
 initializeTransitionSet(Context& cx, Handle<Shape> shape, std::size_t initialSetSize = 32) {
@@ -64,7 +67,7 @@ struct RootObjectLayoutInitializer : public Initializer {
 /// Allocate a shape that lays out an empty object. Starts a new ShapeTree.
 inline Shape* allocateRootObjectLayout(Context& cx,
                                        Infra::Span<const SlotAttr> attrs,
-                                       std::size_t instanceInlineSlotsSize = 32 * sizeof(void*)) {
+                                       std::size_t instanceInlineSlotsSize) {
 	RootObjectLayoutInitializer init;
 	init.attrs = attrs;
 	init.instanceInlineSlotsSize = instanceInlineSlotsSize;
@@ -73,8 +76,12 @@ inline Shape* allocateRootObjectLayout(Context& cx,
 	return result;
 }
 
-inline Shape* allocateRootObjectLayout(Context& cx, std::size_t instanceInlineSlotsSize = 32 * sizeof(void*)) {
+inline Shape* allocateRootObjectLayout(Context& cx, std::size_t instanceInlineSlotsSize) {
 	return allocateRootObjectLayout(cx, Infra::Span<const SlotAttr>(), instanceInlineSlotsSize);
+}
+
+inline Shape* allocateRootObjectLayout(Context& cx) {
+	return allocateRootObjectLayout(cx, Infra::Span<const SlotAttr>(), DEFAULT_INLINE_DATA_SIZE);
 }
 
 /// A functor that performs basic initialization of an Shape that lays out an object.
