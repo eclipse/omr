@@ -84,6 +84,25 @@ public:
 		}
 	}
 
+	template<typename VisitorT>
+	bool visitSlotB(SlotDescriptor descriptor, VisitorT& visitor) {
+		switch (descriptor.attr().type().coreType()) {
+		case CoreType::VALUE: {
+			Value* slot = reinterpret_cast<Value*>(inlineSlots_ + descriptor.offset());
+			if (slot->isRef()) {
+				ValueSlotHandle handle(slot);
+				return visitor.edge(this, handle);
+			}
+		} break;
+		case CoreType::REF: {
+			void** slot = reinterpret_cast<void**>(inlineSlots_ + descriptor.offset());
+			return visitor.edge(this, BasicSlotHandle(slot));
+		} break;
+		default: return true;
+		}
+		return true;
+	}
+
 	std::size_t inlineSlotSize() const { return layout()->instanceInlineSlotSize(); }
 
 	/// The size of this cell of memory.
@@ -122,6 +141,7 @@ public:
 
 protected:
 	friend struct ObjectInitializer;
+	friend class ObjectSlotWalker;
 
 	CellHeader header_;
 	Array* overflowSlots_;
