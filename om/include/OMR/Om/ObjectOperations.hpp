@@ -37,7 +37,7 @@ inline Value getValue(Context& cx, Object* object, SlotIndex index) noexcept {
 inline void setValue(Context& cx, Object* object, SlotIndex index, Value value) noexcept {
 	auto slotAddr = slotAddress<Value*>(cx, object, index);
 	if (value.isRef()) {
-		Barrier::writeReference(cx, object, ValueSlotHandle(slotAddr), value.getRef());
+		Barrier<ValueSlotHandle>::writeReference(cx, object, ValueSlotHandle(slotAddr), value.getRef());
 	} else {
 		*slotAddr = value;
 	}
@@ -63,7 +63,7 @@ inline Shape* lookUpTransition(Context& cx,
 
 /// Force set the layout of an object. Barriered.
 inline void setLayout(Context& cx, Object* object, Shape* layout) noexcept {
-	Barrier::writeReference(cx, object, CellHeaderLayoutHandle(&object->header()), layout);
+	Barrier<CellHeaderLayoutHandle>::writeReference(cx, object, CellHeaderLayoutHandle(&object->header()), layout);
 }
 
 /// Take an existing transition, without allocating. Barriered.
