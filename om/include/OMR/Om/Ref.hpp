@@ -1,95 +1,113 @@
 #if !defined(OMR_OM_REF_HPP_)
 #define OMR_OM_REF_HPP_
 
+#include <OMR/Om/Address.hpp>
+
 #include <cstdint>
 #include <type_traits>
 
 namespace OMR {
 namespace Om {
 
-using Ref = std::uintptr_t;
+template<typename T = void>
+class Ref;
 
-#if 0 /////////////////////////////////////////////////////////
+/// Define accessor operations if T is not void
+template<typename T>
+class RefOperations {
+public:
+	constexpr T* operator->() const noexcept { return static_cast<const Ref<T>*>(this)->get(); }
 
-template <typename T>
-struct RefTypes {
+	constexpr T& operator*() const noexcept { return *static_cast<const Ref<T>*>(this)->get(); }
+};
 
-	using ElementType = std::remove_extent<T>;
-
-	using DifferenceType = std::ptrdiff_t;
-
-	template <typename U>
-	using Rebind = Ref<U>;
-
-	using ConstType = Rebind<const T>;
+/// Empty operation set for T
+template<>
+class RefOperations<void> {
+public:
 };
 
 /// A pointer to managed memory. It is GC-Unsafe. This is a very simple
 /// pointer-wrapper.
-template <typename T = void>
-class Ref : public RefTypes<T>
-{
+template<typename T>
+class Ref : public RefOperations<T> {
 public:
+	Ref() = default;
 
-	constexpr Ref() = default;
+	constexpr Ref(std::nullptr_t) : value_(nullptr) {}
 
-	constexpr Ref(std::nullptr_t) : value(nullptr) {}
+	template<typename U>
+	constexpr Ref(U* other) : value_(other) {}
 
-	template <typename U>
-	constexpr Ref(U* other) : value(reinterpret_cast<T*>(other))
-	{
+	template<typename U>
+	constexpr Ref(Ref<U> other) : value_(other.get()) {}
+
+	inline Ref<T> operator=(std::nullptr_t) noexcept { value_ = nullptr; }
+
+	template<typename U>
+	inline Ref<T>& operator=(U* rhs) noexcept {
+		value_ = rhs;
 	}
 
-	template <typename U>
-	constexpr Ref(const Ref<U>& other);
+	template<typename U>
+	inline Ref<T> operator=(const Ref<U>& rhs) noexcept {
+		value_ = rhs.template get<T>();
+	}
 
-	/// Access member from Ref.
-	constexpr auto operator-> () const -> T*;
-
-	/// Dereference the ref.
-	constexpr auto operator*() const -> T&;
-
-	constexpr auto toAddress() const -> void*;
-
-	inline auto operator=(std::nullptr_t rhs) -> Ref<T>&;
-
-	template <typename U>
-	inline auto operator=(U* rhs) -> Ref<T>&;
-
-	template <typename U>
-	inline auto operator=(const Ref<U>& rhs) -> Ref<T>&;
+	/// The address of the referrent.
+	Address toAddress() const { return reinterpret_cast<Address>(value_); }
 
 	/// Cast Ref<A> to Ref<B>
-	template <typename U>
-	constexpr auto to() const -> Ref<U>;
+	template<typename U>
+	constexpr Ref<U> to() const noexcept {
+		return Ref<U>(value_);
+	}
 
 	/// Obtain the raw pointer
-	constexpr auto raw() const -> T*;
+	template<typename U = T>
+	constexpr U* get() const noexcept {
+		return value_;
+	}
 
-	constexpr auto operator==(std::nullptr_t rhs) const -> bool;
+	constexpr bool operator==(std::nullptr_t) const noexcept { return value_ == nullptr; }
 
-	template <typename U>
-	constexpr auto operator==(const Ref<U>& rhs) const -> bool;
+	template<typename U>
+	constexpr bool operator==(const Ref<U>& rhs) const noexcept {
+		return value_ == rhs.get();
+	}
 
-	template <typename U>
-	constexpr auto operator==(U* rhs) const -> bool;
+	template<typename U>
+	constexpr bool operator==(U* rhs) const noexcept {
+		return value_ == rhs;
+	}
 
-	constexpr explicit operator Pith::Address() const;
+	constexpr bool operator!=(std::nullptr_t) const noexcept { return value_ != nullptr; }
 
-	template <typename U>
-	constexpr explicit operator U*() const;
+	template<typename U>
+	constexpr bool operator!=(const Ref<U>& rhs) const noexcept {
+		return value_ != rhs.get();
+	}
+
+	template<typename U>
+	constexpr bool operator!=(U* rhs) const noexcept {
+		return value_ != rhs;
+	}
+
+	template<typename U>
+	constexpr explicit operator U*() const noexcept {
+		return value_;
+	}
+
+	constexpr operator bool() const noexcept { return value_ != nullptr; }
 
 private:
 	T* value_;
 };
 
-template <>
-class Ref<void>
-{
-
+template<typename T>
+Ref<T> makeRef(T* ref) {
+	return Ref<T>(ref);
 };
-
-#endif /////////////////////////////////////////////////////////
 
 } // namespace Om
 } // namespace OMR
