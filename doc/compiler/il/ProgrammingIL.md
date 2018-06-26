@@ -25,7 +25,7 @@ cover how to program using the JitBuilder api. This document is also not meant f
 
 ## What is IL
 
-Eclipse OMR uses [DAGs](https://github.com/dibyendumajumdar/dmr_c/tree/master/omrjit-backend) to represent
+Eclipse OMR uses [DAGs](https://en.wikipedia.org/wiki/Directed_acyclic_graph) to represent
 intermediate code. I guess IL stands for Intermediate Language. In contrast LLVM uses linear SSA IR as the intermediate language.
 
 The Intermediate Language is a representation of code that is independent of the front-end programming
