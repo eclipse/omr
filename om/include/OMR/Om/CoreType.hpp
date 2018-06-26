@@ -41,7 +41,7 @@ inline std::size_t coreTypeWidth(CoreType t) noexcept {
 	case CoreType::FLOAT32: return 4;
 	case CoreType::FLOAT64: return 8;
 	case CoreType::VALUE: return sizeof(Value);
-	case CoreType::REF: return sizeof(Ref);
+	case CoreType::REF: return sizeof(Ref<void>);
 	default: break;
 	}
 	return -1;
