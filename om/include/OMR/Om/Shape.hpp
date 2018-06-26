@@ -9,7 +9,6 @@
 #include <OMR/Om/SlotDescriptorRange.hpp>
 #include <OMR/Om/TransitionSet.hpp>
 #include <OMR/Om/ValueSlotHandle.hpp>
-
 #include <OMR/Infra/Span.hpp>
 
 namespace OMR {
