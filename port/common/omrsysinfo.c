@@ -256,7 +256,8 @@ omrsysinfo_get_addressable_physical_memory(struct OMRPortLibrary *portLibrary)
 
 /**
  * Determine the size of the total physical memory in the system, in bytes.
- * Note that if cgroups limits is enabled (see omrsysinfo_cgroup_enable_limits())
+ * Note that if cgroup memory limits is enabled (using 
+ * omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_MEMORY))
  * then this function returns the memory limit imposed by the cgroup,
  * which would be same as the value returned by omrsysinfo_cgroup_get_memlimit().
  *
@@ -269,6 +270,23 @@ omrsysinfo_get_physical_memory(struct OMRPortLibrary *portLibrary)
 {
 	return 0;
 }
+
+/**
+ * Determine the size of the free physical memory in the system, in bytes.
+ * Note that if cgroups limits is enabled (using 
+ * omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_MEMORY))
+ * then this function returns min(free memory in host, free memory in cgroup).
+ *
+ * @param[in] portLibrary The port library.
+ *
+ * @return OMRPORT_MEMINFO_NOT_AVAILABLE if the information is unavailable, otherwise total physical memory in bytes.
+ */
+uint64_t
+omrsysinfo_get_available_memory(struct OMRPortLibrary *portLibrary)
+{
+	return OMRPORT_MEMINFO_NOT_AVAILABLE;
+}
+
 /**
  * Determine the process ID of the calling process.
  *
@@ -913,8 +931,9 @@ omrsysinfo_cgroup_are_subsystems_enabled(struct OMRPortLibrary *portLibrary, uin
 
 /**
  * Retrieves the memory limit imposed by the cgroup to which the current process belongs.
- * The caller should ensure port library is enabled to use cgroup limits by calling
- * omrsysinfo_cgroup_enable_limits() before calling this function.
+ * The caller should ensure port library is enabled to use cgroup memory limits by calling
+ * omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_MEMORY) with subsystems before 
+ * calling this function.
  * When the fuction returns OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM,
  * value of *limits is unspecified.
  * Note that 'limit' parameter must not be NULL.

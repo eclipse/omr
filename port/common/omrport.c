@@ -69,6 +69,7 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrsysinfo_destroy_processor_info, /* sysinfo_destroy_processor_info */
 	omrsysinfo_get_addressable_physical_memory, /* sysinfo_get_addressable_physical_memory */
 	omrsysinfo_get_physical_memory, /* sysinfo_get_physical_memory */
+	omrsysinfo_get_available_memory, /* sysinfo_get_available_memory */
 	omrsysinfo_get_OS_version, /* sysinfo_get_OS_version */
 	omrsysinfo_get_env, /* sysinfo_get_env */
 	omrsysinfo_get_CPU_architecture, /* sysinfo_get_CPU_architecture */
