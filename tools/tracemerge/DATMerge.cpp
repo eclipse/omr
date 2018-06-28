@@ -142,8 +142,11 @@ DATMerge::merge(J9TDFOptions *options, const char *fromFileName)
 	if (NULL == toFileName) {
 		goto failed;
 	}
-
+#if defined(J9ZOS390) && (__CHARSET_LIB == 1)
+	toFile = Port::fopen(toFileName, "rt");
+#else
 	toFile = Port::fopen(toFileName, "rb");
+#endif
 
 	if (toFile != NULL) {
 		if (0 != fclose(toFile)) {
@@ -157,9 +160,11 @@ DATMerge::merge(J9TDFOptions *options, const char *fromFileName)
 		if (NULL == newToFileName || NULL == buffer) {
 			goto failed;
 		}
-
+#if defined(J9ZOS390) && (__CHARSET_LIB == 1)
+		FILE *tmpFile = Port::fopen(newToFileName, "wt");
+#else
 		FILE *tmpFile = Port::fopen(newToFileName, "wb");
-
+#endif
 		/* Copy across the lines for every other component. */
 		rc = toFilereader.init(toFileName);
 		if (RC_OK != rc) {
@@ -215,15 +220,22 @@ DATMerge::merge(J9TDFOptions *options, const char *fromFileName)
 
 		Port::omrmem_free((void **)&newToFileName);
 		Port::omrmem_free((void **)&buffer);
-
+#if defined(J9ZOS390) && (__CHARSET_LIB == 1)
+		toFile = Port::fopen(toFileName, "at");
+#else
 		toFile = Port::fopen(toFileName, "ab");
+#endif
 		if (NULL == toFile) {
 			perror("fopen error");
 			goto failed;
 		}
 	} else {
 		/* Open a new file and write the header. */
+#if defined(J9ZOS390) && (__CHARSET_LIB == 1)
+		toFile = Port::fopen(toFileName, "wt");
+#else
 		toFile = Port::fopen(toFileName, "wb");
+#endif
 		if (NULL == toFile) {
 			perror("fopen error");
 			goto failed;

@@ -132,6 +132,15 @@ AC_ARG_ENABLE([tracegen],
 	[enable_tracegen=yes]
 )
 
+AC_ARG_ENABLE([enhanced-ascii],
+	AS_HELP_STRING(
+		[[--enable-enhanced-ascii]],
+		[Enable using the enhanced ascii support in compiler instead of a2e library when building on z/OS. (Default: no)]
+	),
+	[AC_SUBST([OMR_ENHANCED_ASCII], [1])],
+	[AC_SUBST([OMR_ENHANCED_ASCII], [0])]
+)
+
 ###
 ### Build environment configuration
 ###
@@ -207,6 +216,10 @@ AS_CASE([$OMR_TOOLCHAIN],
 	[AC_MSG_ERROR([An invalid value was provided for OMR_TOOLCHAIN: $OMR_TOOLCHAIN])]
 )
 AC_MSG_RESULT([$OMR_TOOLCHAIN])
+
+AS_IF([test "$OMR_HOST_OS" != "zos" && test "$OMR_ENHANCED_ASCII" == "1"],
+	[AC_MSG_WARN([--enable-enhanced-ascii is only valid on z/OS])]
+)
 
 # Default OMRGLUE to example/glue if it was not specified
 OMRGLUE=${OMRGLUE:-"./example/glue"}

@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && (__CHARSET_LIB != 1)
 #include "atoe.h"
 #endif
 
@@ -52,7 +52,7 @@ extern "C" int omr_main_entry(int argc, char **argv, char **envp);
 int
 CHARMAIN(int argc, char **argv, char **envp)
 {
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && (__CHARSET_LIB != 1)
 	/* translate argv strings to ascii */
 	iconv_init();
 	{
@@ -61,7 +61,7 @@ CHARMAIN(int argc, char **argv, char **envp)
 			argv[i] = e2a_string(argv[i]);
 		}
 	}
-#endif /* defined(J9ZOS390) */
+#endif /* defined(J9ZOS390) && (__CHARSET_LIB != 1) */
 
 	return omr_main_entry(argc, argv, envp);
 }

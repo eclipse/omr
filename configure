@@ -743,6 +743,7 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+OMR_ENHANCED_ASCII
 OMR_PRODUCT_VERSION
 OMR_PRODUCT_DESCRIPTION
 OMR_COMPANY_COPYRIGHT
@@ -818,6 +819,7 @@ enable_DDR
 enable_fvtest
 enable_fvtest_agent
 enable_tracegen
+enable_enhanced_ascii
 enable_auto_build_flag
 enable_OMR_GC
 enable_OMR_JIT
@@ -1550,6 +1552,9 @@ Optional Features:
                           because if fvtests are being built, fvtest agents
                           must also be built. (Default: no)
   --enable-tracegen       Run tracegen and tracemerge. (Default: yes)
+  --enable-enhanced-ascii Enable using the enhanced ascii support in compiler
+                          instead of a2e library when building on z/OS.
+                          (Default: no)
   --enable-auto-build-flag
                           Automatically detect the value of build flags that
                           are not explicitly enabled or disabled. (Default:
@@ -1630,6 +1635,7 @@ Optional Features:
   --enable-OMR_ARCH_POWER
   --enable-OMR_ARCH_ARM
   --enable-OMR_ARCH_AARCH64
+
   --enable-OMR_ARCH_X86
   --enable-OMR_ARCH_S390
   --enable-OMR_ENV_DATA64
@@ -2931,6 +2937,17 @@ if test "${enable_tracegen+set}" = set; then :
   enableval=$enable_tracegen;
 else
   enable_tracegen=yes
+
+fi
+
+
+# Check whether --enable-enhanced-ascii was given.
+if test "${enable_enhanced_ascii+set}" = set; then :
+  enableval=$enable_enhanced_ascii; OMR_ENHANCED_ASCII=1
+
+else
+  OMR_ENHANCED_ASCII=0
+
 
 fi
 
@@ -4367,6 +4384,12 @@ case $OMR_TOOLCHAIN in #(
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OMR_TOOLCHAIN" >&5
 $as_echo "$OMR_TOOLCHAIN" >&6; }
+
+if test "$OMR_HOST_OS" != "zos" && test "$OMR_ENHANCED_ASCII" == "1"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --enable-enhanced-ascii is only valid on z/OS" >&5
+$as_echo "$as_me: WARNING: --enable-enhanced-ascii is only valid on z/OS" >&2;}
+
+fi
 
 # Default OMRGLUE to example/glue if it was not specified
 OMRGLUE=${OMRGLUE:-"./example/glue"}

@@ -20,7 +20,15 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-GLOBAL_CPPFLAGS+=-I$(top_srcdir)/util/a2e/headers
+# if enhanced ascii support is not enabled
+# override the TARGET_ENHANCED_ASCII flag
+ifneq ($(OMR_ENHANCED_ASCII),1)
+  TARGET_ENHANCED_ASCII := 0
+endif
+
+ifneq ($(TARGET_ENHANCED_ASCII),1)
+  GLOBAL_CPPFLAGS+=-I$(top_srcdir)/util/a2e/headers
+endif
 
 # Specify the minimum arch for 64-bit programs
 GLOBAL_CFLAGS+=-Wc,ARCH\(7\)
@@ -37,6 +45,9 @@ endif
 # Enable Debugging Symbols
 ifeq ($(OMR_DEBUG),1)
 endif
+
+
+
 
 # Enable Optimizations
 ifeq ($(OMR_OPTIMIZE),1)
@@ -58,7 +69,7 @@ GLOBAL_CFLAGS+=$(COPTFLAGS)
 GLOBAL_CXXFLAGS+=$(COPTFLAGS)
 
 # Preprocessor Flags
-GLOBAL_CPPFLAGS+=-DJ9ZOS390 -DLONGLONG -DJ9VM_TIERED_CODE_CACHE -D_ALL_SOURCE -D_XOPEN_SOURCE_EXTENDED -DIBM_ATOE -D_POSIX_SOURCE 
+GLOBAL_CPPFLAGS+=-DJ9ZOS390 -DLONGLONG -DJ9VM_TIERED_CODE_CACHE -D_ALL_SOURCE -D_XOPEN_SOURCE_EXTENDED -D_POSIX_SOURCE
 
 # Global Flags
 # xplink   Link with the xplink calling convention
@@ -70,6 +81,12 @@ GLOBAL_CPPFLAGS+=-DJ9ZOS390 -DLONGLONG -DJ9VM_TIERED_CODE_CACHE -D_ALL_SOURCE -D
 # NOANSIALIAS Do not generate ALIAS binder control statements
 # TARGET   Generate code for the target operating system
 GLOBAL_FLAGS+=-Wc,xplink,convlit\(ISO8859-1\),rostring,FLOAT\(IEEE,FOLD,AFP\),enum\(4\) -Wa,goff -Wc,NOANSIALIAS -Wc,TARGET\(zOSV1R13\)
+
+ifeq ($(TARGET_ENHANCED_ASCII),1)
+  GLOBAL_FLAGS+=-Wc,ascii
+else
+  GLOBAL_CPPFLAGS+=-DIBM_ATOE
+endif
 
 ifeq (1,$(OMR_ENV_DATA64))
   GLOBAL_CPPFLAGS+=-DJ9ZOS39064
@@ -108,7 +125,9 @@ ifeq (1,$(DO_LINK))
 
   # always link a2e last, unless we are creating the a2e library
   ifneq (j9a2e,$(MODULE_NAME))
-    GLOBAL_SHARED_LIBS+=j9a2e
+    ifneq (1,$(TARGET_ENHANCED_ASCII))
+      GLOBAL_SHARED_LIBS+=j9a2e
+    endif
   endif
 endif
 

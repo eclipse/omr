@@ -52,7 +52,11 @@ CFileWriter::writeOutputFiles(J9TDFOptions *options, J9TDFFile *tdf, J9TDFGroup 
 
 	printf("Creating c file: %s\n", fileName);
 
+#if defined(J9ZOS390) && (__CHARSET_LIB == 1)
+	fd = Port::fopen(fileName, "wt");
+#else
 	fd = Port::fopen(fileName, "wb");
+#endif
 
 	if (NULL == fd) {
 		perror("Error opening file");

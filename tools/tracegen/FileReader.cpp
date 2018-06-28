@@ -35,7 +35,11 @@ FileReader::init(const char *fileName)
 	RCType rc = RC_FAILED;
 	_fileName = fileName;
 	_lineNumber = 0;
+#if defined(J9ZOS390) && (__CHARSET_LIB == 1)
+	_fd = Port::fopen(fileName, "rt");
+#else
 	_fd = Port::fopen(fileName, "rb");
+#endif
 
 	if (NULL == _fd) {
 		eprintf("Unable to open file: %s", fileName);

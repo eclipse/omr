@@ -24,7 +24,11 @@
 #include <string.h>
 
 #if defined(J9ZOS390)
+#if __CHARSET_LIB == 1
+#include <_Nascii.h>
+#else /* __CHARSET_LIB == 1 */
 #include "atoe.h"
+#endif /* __CHARSET_LIB == 1 */
 #endif /* defined(J9ZOS390) */
 #if defined(OMR_OS_WINDOWS)
 #include <windows.h>
@@ -42,6 +46,10 @@ main(int argc, char **argv, char **envp)
 {
 	RCType rc = RC_OK;
 #if defined(J9ZOS390)
+#if __CHARSET_LIB == 1
+	/* enable auto conversion */
+	__ae_autoconvert_state(_CVTSTATE_ON);
+#else
 	/* Convert EBCDIC to UTF-8 (ASCII) */
 	if (-1 != iconv_init()) {
 		/* translate argv strings to ascii */
@@ -57,7 +65,8 @@ main(int argc, char **argv, char **envp)
 		fprintf(stderr, "failed to initialize iconv\n");
 		rc = RC_FAILED;
 	}
-#endif /* defined(J9ZOS390) */
+#endif
+#endif /* defined(J9ZOS390) && (__CHARSET_LIB != 1) */
 	if (RC_OK == rc) {
 		rc = startHookGen(argc, argv);
 	}

@@ -56,7 +56,12 @@ DATFileWriter::writeOutputFiles(J9TDFOptions *options, J9TDFFile *tdf)
 
 	printf("Creating pdat file: %s\n", fileName);
 
+#if defined(J9ZOS390) && (__CHARSET_LIB == 1)
+	FILE *datFile = Port::fopen(fileName, "wt");
+#else
 	FILE *datFile = Port::fopen(fileName, "w");
+#endif
+
 	if (NULL == datFile) {
 		eprintf("Failed to open file %s", fileName);
 		goto failed;
