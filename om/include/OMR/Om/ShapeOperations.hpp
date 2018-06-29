@@ -167,8 +167,7 @@ inline Shape* deriveObjectLayout(Context& cx,
 
 #if defined(OMR_OM_TRACE)
 	std::cerr << "derivation: " << derivation << std::endl;
-#endif
-
+#endif // OMR_OM_TRACE
 	return derivation;
 }
 
