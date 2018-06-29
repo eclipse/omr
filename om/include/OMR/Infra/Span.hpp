@@ -41,35 +41,33 @@ public:
 	constexpr Type& at(std::size_t index) const { return value()[index]; }
 
 	/// Get the pointer.
-	inline constexpr auto operator()() const -> Type* { return value_; }
+	inline constexpr Type* operator()() const { return value_; }
 
 	/// Get the pointer.
 	constexpr Type* value() const noexcept { return value_; }
 
 	/// Set the pointer value.
-	inline auto value(Type* value) -> Span<Type>& {
+	inline Span<Type>& value(Type* value) {
 		value_ = value;
 		return *this;
 	}
 
 	/// Number of elements in the span.
-	inline constexpr auto length() const -> std::size_t { return length_; }
+	inline constexpr std::size_t length() const { return length_; }
 
 	/// Set the number of elements in the span.
-	inline auto length(std::size_t length) -> Span<Type>& {
+	inline Span<Type>& length(std::size_t length) {
 		length_ = length;
 		return *this;
 	}
 
 	/// The last instance of Type in this Span.
-	inline auto last() -> Type* { return value_ + (length_ - 1); }
+	inline Type* last() { return value_ + (length_ - 1); }
 
-	/// Size of the referred span. Equal to sizeof(T)*length.
-	inline constexpr auto memoryFootPrint() const -> std::size_t {
-		return length() * sizeof(Type);
-	}
+	/// Size of the referred span, in bytes.
+	inline std::size_t sizeInBytes() const { return length() * sizeof(Type); }
 
-	inline auto operator=(Span<Type>& rhs) -> Span<Type>& {
+	inline Span<Type>& operator=(Span<Type>& rhs) {
 		value_ = rhs.value();
 		length_ = rhs.length();
 		return *this;
