@@ -21,6 +21,7 @@
 
 #include "GlobalCollectorDelegate.hpp"
 
+#include <OMR/Om/CellOperations.hpp>
 #include <OMR/Om/RootRef.hpp>
 
 #include "Heap.hpp"
@@ -28,28 +29,37 @@
 #include "MarkingScheme.hpp"
 #include "ObjectHeapIterator.hpp"
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
+#include <iostream>
+
+using namespace OMR::Om;
 
 #if defined(OMR_GC_PAINT_HEAP)
 
-void MM_GlobalCollectorDelegate::poisonUnmarkedObjectsInRegion(
-        GC_ObjectHeapIterator& objectIterator) {
-	omrobjectptr_t omrobjptr = NULL;
+constexpr std::uint8_t POISON = 0x5E;
 
-	while (NULL != (omrobjptr = objectIterator.nextObject())) {
-		uintptr_t objsize =
-		        _extensions->objectModel.getConsumedSizeInBytesWithHeader(omrobjptr);
-		bool ismarked = _markingScheme->isMarked(omrobjptr);
+void poison(Cell* cell, std::size_t size) {
+#if defined(OMR_OM_TRACE) || 1
+		std::cerr << "(poison " << cell << ":size " << size << ")" << std::endl;
+#endif
+	memset(cell, POISON, size);
+	MM_HeapLinkedFreeHeader::fillWithHoles(cell, size);
+}
 
-#if defined(OMR_OM_TRACE)
-		std::cerr << ">POISON @" << omrobjptr << "[" << objsize << "]"
-		          << "=" << ismarked << std::endl;
-#endif // OMR_OM_TRACE
+void MM_GlobalCollectorDelegate::poison(Cell* cell) {
+	std::size_t size = _extensions->objectModel.getConsumedSizeInBytesWithHeader(cell);
+	::poison(cell, size);
+}
 
-		if (!ismarked) {
-			/* object will be collected. We write the full contents of the object
-			 * with a known value. */
-			memset(omrobjptr, POISON, (size_t)objsize);
-			MM_HeapLinkedFreeHeader::fillWithHoles(omrobjptr, objsize);
+void MM_GlobalCollectorDelegate::poisonUnmarkedObjectsInRegion(GC_ObjectHeapIterator& iter) {
+	for (Cell* cell = iter.nextObject(); cell != nullptr; cell = iter.nextObject()) {
+		bool marked = _markingScheme->isMarked(cell);
+		// Shapes cannot be painted. In order for the heap walk to work, we need to know
+		// object sizes, which comes from shapes.
+		if (cellKind(cell) == CellKind::SHAPE) {
+			continue;
+		}
+		if (!marked) {
+			poison(cell);
 		}
 	}
 }

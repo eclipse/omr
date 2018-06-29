@@ -27,6 +27,12 @@
 #include "omrcfg.h"
 #include "omrgcconsts.h"
 
+namespace OMR {
+namespace Om {
+class Cell;
+}
+}
+
 class MM_GCExtensionsBase;
 class MM_GlobalCollector;
 class MM_MemorySubSpace;
@@ -104,7 +110,11 @@ public:
 
 #if defined(OMR_GC_PAINT_HEAP)
 
-	const std::uint8_t POISON = 0x5E;
+
+
+	/// Corrupt the memory of a GC cell.
+	/// Note: Be careful about overwriting shapes, shape data is needed for heap walking.
+	void poison(OMR::Om::Cell* cell);
 
 	/**
 	 * Poison the unmarked objects in a particular region.
