@@ -2,6 +2,7 @@
 #define OMR_OM_OBJECT_HPP_
 
 #include <OMR/Om/Array.hpp>
+#include <OMR/Om/BasicSlotHandle.hpp>
 #include <OMR/Om/CellHeader.hpp>
 #include <OMR/Om/Handle.hpp>
 #include <OMR/Om/LayoutTree.hpp>
