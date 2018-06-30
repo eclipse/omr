@@ -2,20 +2,17 @@
 
 ## Introduction
 
-The goal of this document is to describe how to program with OMR IL. We hope to cover:
+The goal of this document is to describe how to program with OMR IL. We hope to cover following topics:
 
 * Intended Audience
 * What is IL
 * Where is it?
 * Getting started
 * Basic IL Generation Flow
-* Key OMR IL concepts
-* Blocks
-* Nodes and TreeTops
-* Stack allocated data
-* Using data across Blocks
+* IL
+* Data
 * Branching and CFGs
-* Other Information Sources
+* Examples
 
 ## Intended Audience
 
@@ -44,11 +41,23 @@ The main IL classes that you will need to use are in [compiler/il](https://githu
 sub-directory. Some of the classes there will be discussed below.
 
 The other location of interest is [compiler/ilgen](https://github.com/eclipse/omr/tree/master/compiler/ilgen) which is
-where most of the JitBuilder classes live, along with some lower level interface definitions.
+where most of the JitBuilder classes live, along with some lower level interface definitions. The following source files are
+really part of JitBuilder api - and if you want you can write code against IL without using these.
+
+* `compiler/ilgen/OMRIlBuilder.cpp`
+* `compiler/ilgen/OMRIlType.cpp`
+* `compiler/ilgen/OMRIlValue.cpp`
+* `compiler/ilgen/IlInjector.cpp`
+* `compiler/ilgen/OMRMethodBuilder.cpp`
+* `compiler/ilgen/OMRBytecodeBuilder.cpp`
+* `compiler/ilgen/OMRTypeDictionary.cpp`
+* `compiler/ilgen/OMRThunkBuilder.cpp`		
+* `compiler/ilgen/OMRVirtualMachineOperandArray.cpp`		
+* `compiler/ilgen/OMRVirtualMachineOperandStack.cpp`		
 
 ## Getting Started
 
-OMR compiler backend code is not available as a standalone library due to [the way OMR extensibility works](https://github.com/eclipse/omr/blob/master/doc/compiler/extensible_classes/Extensible_Classes.md). Code that wishes
+The OMR compiler backend code is not available as a standalone library due to [the way OMR extensibility works](https://github.com/eclipse/omr/blob/master/doc/compiler/extensible_classes/Extensible_Classes.md). Code that wishes
 to use the IL directly has to include the compiler sources and must provide a few required extension classes. 
 There is also some CMake machinery to help with the building of a component that requires the compiler sources; if you look at the 
 [CMake configuration for JitBuilder](https://github.com/eclipse/omr/blob/master/jitbuilder/CMakeLists.txt), this will
@@ -60,7 +69,7 @@ provides. Note however that you will need to include header files within the OMR
 header files that are distributed.
 
 I found that if you want to create your own OMR library then the easiest option is to add your sources to the `jitbuilder`
-component so that it gets built as part of the JitBuilder library.
+component so that it gets built as part of the JitBuilder library. 
 
 If you are writing executable programs it is convenient to model your project on [Tril](https://github.com/eclipse/omr/tree/master/fvtest/tril)
 which is an nice little testing library that allows IL generation [using a lisp like syntax](https://github.com/eclipse/omr/blob/master/fvtest/tril/examples/mandelbrot/mandelbrot.tril). Alternatively look
@@ -82,19 +91,47 @@ At a high level the flow is as follows:
 * You need to define the function you want to create. This is done by creating an instance of [`TR_Method`]
   (https://github.com/eclipse/omr/blob/master/compiler/compile/OMRMethod.hpp). `TR_Method`
   defines the function's parameters and return type, and is used to resolve any function, not just the ones you JIT compile.
-  JitBuilder provides a derived type called `TR::ResolvedMethod` which can also be used as the basis.
+  JitBuilder provides a derived type called `TR::ResolvedMethod` which can be used as the basis. You can roll out your own
+  version too if you want - but for now let's assume we are using the JitBuilder provided class.
 * Next you need to create an instance of [`TR_IlGenerator`](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlGen.hpp).
   The compiler backend will invoke the `TR_IlGenerator::genIL()` method when it wishes you to generate the IL for the function. 
-  Again it is convenient to use a derived class [`TR::ILInjector`](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlInjector.hpp) as a starting point for your own type. This class will give you an idea of what you need as a minimum.
+  It is convenient to use a derived class [`TR::ILInjector`](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlInjector.hpp) as a starting point for your own type. This class will give you an idea of what you need as a minimum.
 * As a next step you ask the backend to compile the function. For this purpose you can call [`compileMethodFromDetails()`]
   (https://github.com/eclipse/omr/blob/master/compiler/control/CompileMethod.hpp). This is when the actual IL generation starts.
   The compiler backend sets up a Compiler object which is saved in a thread local variable; this is why when you call one of
   Node creation methods (to be discussed later) it knows which compiler object to hook into. During IL generation the `genIL()` method
   is called which will in turn run any code you have defined. At the end of the compilation process you are given a pointer to
   the compiled function.
-* You have to manage the pointer to compiled function somewhere as although the compiled code is saved in a Code Cache internally
-  there is no api to access it directly. Typically you will want to associate the compiled function to a name, and possibly also the
-  `TR_Method` instance you created.
+* You have to manage the pointer to compiled function somewhere because, although the compiled code is saved in a Code Cache internally
+  there is no api AFAIK to access it directly. Typically you will want to associate the compiled function to a name, and possibly also the
+  `TR::ResolvedMethod` instance you created.
 
-I hope to make all of above clearer through an example (yet to be written!)
+I hope to make all of above clearer through examples.
 
+## IL 
+
+* Firstly the IL is represented as DAGs rather than linear IR.
+* The main unit of IL instruction is a Node. A Node is a DAG so it can have one of more children (Noes) and (tbc) one or more 
+  parents (also Nodes).
+* There is a natural relationship between Nodes due to above, but additionally TreeTops are used to anchor Nodes at certain points.
+  I think of TreeTops as equivalent to statement boundaries in a high level language. More on these later.
+* Nodes and TreeTops are grouped into Blocks which are really Basic Blocks. A Basic Block contains a sequences of TreeTops and 
+  associated Nodes and always ends with a IL Node that represents a branch or return instruction. 
+* OMR also requires that you setup a Control Flow Graph - which is a graph that is at the level of Blocks. Basically as you add
+  branching you need to also tell OMR about the edge from the source Block to destination Block.
+
+## Data
+
+In addition to IL instructions your program will need to deal with data such as local variables, parameters, etc. 
+
+* A `Symbol`/`SymbolRef` is required for any data item
+* You can roughly group symbols into:
+  - Parameters
+  - Scalar values  
+  - Aggregate values (such as C structs or arrays)
+* There are IL instructions to `load` a value from a symbol or `store` a value to a symbol.  
+* One of the rules regarding values is that you cannot access a value defined in one block from another directly, it must go
+  via a `store`/`load` operation. Since the IL is not an SSA IR you don't have phi instructions for this; but you get the same effect
+  by performing a `store` in one block and a `load` in another.
+
+  
