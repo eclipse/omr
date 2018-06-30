@@ -12,7 +12,7 @@ The goal of this document is to describe how to program with OMR IL. We hope to 
 * IL
 * Data
 * Branching and CFGs
-* Examples
+* Example
 
 ## Intended Audience
 
@@ -111,7 +111,7 @@ I hope to make all of above clearer through examples.
 ## IL 
 
 * Firstly the IL is represented as DAGs rather than linear IR.
-* The main unit of IL instruction is a Node. A Node is a DAG so it can have one of more children (Noes) and (tbc) one or more 
+* The main unit of IL instruction is a Node. A Node is a DAG so it can have one of more children (Nodes) and (tbc) one or more 
   parents (also Nodes).
 * There is a natural relationship between Nodes due to above, but additionally TreeTops are used to anchor Nodes at certain points.
   I think of TreeTops as equivalent to statement boundaries in a high level language. More on these later.
@@ -134,4 +134,17 @@ In addition to IL instructions your program will need to deal with data such as 
   via a `store`/`load` operation. Since the IL is not an SSA IR you don't have phi instructions for this; but you get the same effect
   by performing a `store` in one block and a `load` in another.
 
-  
+## Example
+
+Our goal here to demonstrate the process of using IL through a simple example. I want to pick an example that illustrates all the
+aspects of OMR IL mentioned above. We will construct this example step by step.
+
+### Setup as a JitBuilder sample project
+
+JitBuilder samples are located under [`jitbuilder/release`](https://github.com/eclipse/omr/tree/master/jitbuilder/release).
+For a simple example, we can add the source in the `src` folder and update the `CMakeLists.txt` to build our example.
+Note that although we are using the JitBuilder samples project as our home for the example, it does not need to be.
+The only reason for doing it this way is to avoid having to setup some of the extension classes we would otherwise need; 
+instead here we will just use the classes provided by JitBuilder. However when it comes to coding the IL, our aim is to
+directly use the lower level api and understand what is going on.
+
