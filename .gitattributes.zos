@@ -1,6 +1,7 @@
-# This .gitattributes file will cause all text files EXCEPT for
-# git's .gitattributes and .gitignore files to be encoded as EBCDIC
-# when cloned using git (from Rocket Software) on z/OS platform.
+# This .gitattributes file will cause all text files to be converted 
+# to ISO8859-1 including git's .gitattributes and .gitignore files, 
+# execpt for those selected files as defiend below, when cloned using 
+# git (from Rocket Software) on z/OS platform.
 #
 # Selected binary files will not be translated at all.
 #
