@@ -8,10 +8,6 @@
 # The default for text files
 * git-encoding=iso8859-1 working-tree-encoding=iso8859-1
 
-# git's files (which MUST be ASCII)
-.gitattributes git-encoding=iso8859-1 working-tree-encoding=iso8859-1
-.gitignore git-encoding=iso8859-1 working-tree-encoding=iso8859-1
-
 # omr files that need to be encoded as EBCDIC
 *.hdf git-encoding=iso8859-1 working-tree-encoding=ibm-1047
 *.tdf git-encoding=iso8859-1 working-tree-encoding=ibm-1047
