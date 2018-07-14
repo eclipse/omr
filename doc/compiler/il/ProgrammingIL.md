@@ -88,16 +88,14 @@ point in time. However the setup is a one time effort so don't let that put you 
 
 At a high level the flow is as follows:
 
-* You need to define the function you want to create. This is done by creating an instance of [`TR_Method`]
-  (https://github.com/eclipse/omr/blob/master/compiler/compile/OMRMethod.hpp). `TR_Method`
+* You need to define the function you want to create. This is done by creating an instance of [`TR_Method`](https://github.com/eclipse/omr/blob/master/compiler/compile/OMRMethod.hpp). `TR_Method`
   defines the function's parameters and return type, and is used to resolve any function, not just the ones you JIT compile.
   JitBuilder provides a derived type called `TR::ResolvedMethod` which can be used as the basis. You can roll out your own
   version too if you want - but for now let's assume we are using the JitBuilder provided class.
 * Next you need to create an instance of [`TR_IlGenerator`](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlGen.hpp).
   The compiler backend will invoke the `TR_IlGenerator::genIL()` method when it wishes you to generate the IL for the function. 
   It is convenient to use a derived class [`TR::ILInjector`](https://github.com/eclipse/omr/blob/master/compiler/ilgen/IlInjector.hpp) as a starting point for your own type. This class will give you an idea of what you need as a minimum.
-* As a next step you ask the backend to compile the function. For this purpose you can call [`compileMethodFromDetails()`]
-  (https://github.com/eclipse/omr/blob/master/compiler/control/CompileMethod.hpp). This is when the actual IL generation starts.
+* As a next step you ask the backend to compile the function. For this purpose you can call [`compileMethodFromDetails()`](https://github.com/eclipse/omr/blob/master/compiler/control/CompileMethod.hpp). This is when the actual IL generation starts.
   The compiler backend sets up a Compiler object which is saved in a thread local variable; this is why when you call one of
   Node creation methods (to be discussed later) it knows which compiler object to hook into. During IL generation the `genIL()` method
   is called which will in turn run any code you have defined. At the end of the compilation process you are given a pointer to
