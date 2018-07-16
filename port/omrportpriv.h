@@ -456,6 +456,8 @@ omrsysinfo_get_OS_type(struct OMRPortLibrary *portLibrary);
 extern J9_CFUNC int32_t
 omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, ...);
 extern J9_CFUNC int32_t
+omrsysinfo_get_cpu_info(struct OMRPortLibrary *portLibrary, struct J9CpuInfo *cpuInfo, ...);
+extern J9_CFUNC int32_t
 omrsysinfo_get_processor_info(struct OMRPortLibrary *portLibrary, J9ProcessorInfos *procInfo);
 extern J9_CFUNC void
 omrsysinfo_destroy_processor_info(struct OMRPortLibrary *portLibrary, J9ProcessorInfos *procInfos);
@@ -533,6 +535,8 @@ extern J9_CFUNC int32_t
 omrsysinfo_cgroup_get_memlimit(struct OMRPortLibrary *portLibrary, uint64_t *limit);
 extern J9_CFUNC BOOLEAN
 omrsysinfo_cgroup_is_memlimit_set(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC int32_t
+omrsysinfo_cgroup_is_running_in_container(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer);
 
 /* J9SourceJ9Signal*/
 extern J9_CFUNC int32_t
