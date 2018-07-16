@@ -63,6 +63,7 @@ protected:
 	fomrobject_t *_scanPtr;					/**< Pointer to base of object slots mapped by current _scanMap */
 	GC_SlotObject _slotObject;				/**< Create own SlotObject class to provide output */
 	uintptr_t _flags;						/**< Scavenger context flags (scanRoots, scanHeap, ...) */
+	fomrobject_t *_hotScanPtr;				/** saved value of initial _scaanPtr if there is a hot field */
 	uintptr_t _hotFieldsDescriptor;			/**< Hot fields descriptor for languages that support hot field tracking */
 	
 public:
@@ -107,6 +108,7 @@ protected:
 		, _scanPtr(scanPtr)
 		, _slotObject(env->getOmrVM(), NULL)
 		, _flags(flags | headObjectScanner)
+		, _hotScanPtr(NULL)
 		, _hotFieldsDescriptor(hotFieldsDescriptor)
 	{
 		_typeId = __FUNCTION__;
@@ -135,6 +137,17 @@ protected:
 	MMINLINE void
 	initialize(MM_EnvironmentBase *env)
 	{
+		uintptr_t hotField = (_scanMap & _hotFieldsDescriptor);
+		if (0 != hotField) {
+			uintptr_t zeros = MM_Bits::leadingZeroes(hotField);
+			_slotObject.writeAddressToSlot(&_scanPtr[zeros]);
+			_scanMap &= ~((uintptr_t)1 << zeros);
+#if defined(OMR_GC_LEAF_BITS)
+			_leafMap &= ~((uintptr_t)1 << zeros);
+#endif /* defined(OMR_GC_LEAF_BITS) */
+			_hotScanPtr = _scanPtr;
+			_scanPtr = NULL;
+		}
 	}
 
 	/**
@@ -173,9 +186,6 @@ public:
 	 */
 	MMINLINE bool isLeafObject() { return (0 == _scanMap) && !hasMoreSlots(); }
 
-
-	MMINLINE uintptr_t getHotFieldsDescriptor() { return _hotFieldsDescriptor; }
-
 	/**
 	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
 	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
@@ -198,7 +208,7 @@ public:
 	{
 		while (NULL != _scanPtr) {
 			/* while there is at least one bit-mapped slot, advance scan ptr to a non-NULL slot or end of map */
-			while ((0 != _scanMap) && ((0 == (1 & _scanMap)) || (0 == *_scanPtr))) {
+			while ((0 != _scanMap) && ((0 == ((uintptr_t)1 & _scanMap)) || (0 == *_scanPtr))) {
 				_scanPtr += 1;
 				_scanMap >>= 1;
 			}
@@ -220,6 +230,13 @@ public:
 			} else {
 				_scanPtr = NULL;
 			}
+		}
+
+		if (NULL != _hotScanPtr) {
+			/* restore the scan pointer and return hot slot found in initialize() */
+			_scanPtr = _hotScanPtr;
+			_hotScanPtr = NULL;
+			return &_slotObject;
 		}
 
 		return NULL;
@@ -277,7 +294,7 @@ public:
 			if (0 != _scanMap) {
 				/* set up to return slot object for non-NULL slot at scan ptr and advance scan ptr */
 				_slotObject.writeAddressToSlot(_scanPtr);
-				isLeafSlot = (0 != (1 & _leafMap));
+				isLeafSlot = (0 != ((uintptr_t)1 & _leafMap));
 				_scanPtr += 1;
 				_scanMap >>= 1;
 				_leafMap >>= 1;
@@ -295,6 +312,14 @@ public:
 				_scanPtr = NULL;
 				setNoMoreSlots();
 			}
+		}
+
+		if (NULL != _hotScanPtr) {
+			/* restore the scan pointer and return hot slot found in initialize() */
+			isLeafSlot = (0 != (((uintptr_t)1 << (_hotScanPtr - _scanPtr)) & _leafMap));
+			_scanPtr = _hotScanPtr;
+			_hotScanPtr = NULL;
+			return &_slotObject;
 		}
 
 		isLeafSlot = true;
