@@ -2460,6 +2460,16 @@ bool TR_SinkStores::treeIsSinkableStore(TR::Node *node, bool sinkIndirectLoads, 
             traceMsg(comp(), "         can't move store of pinning array reference or with UseOnlyAliases\n");
          return false;
          }
+#ifdef J9_PROJECT_SPECIFIC
+      if (node->getOpCode().isStore() && node->getFirstChild()->getOpCode().isBinaryCodedDecimalOp() &&
+              node->getFirstChild()->getOpCode().isConversion() &&
+             (node->getFirstChild()->getOpCode().getDataType() == TR::Int32 || node->getFirstChild()->getOpCode().getDataType() == TR::Int64))
+          {
+          if (trace())
+             traceMsg(comp(), "         can't move store of a BCD Conversion Operation\n");
+          return false;
+          }
+#endif
       }
 
    if (!comp()->cg()->getSupportsJavaFloatSemantics() &&
