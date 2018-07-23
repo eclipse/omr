@@ -31,8 +31,6 @@ omr_assert(FATAL_ERROR
 	MESSAGE "The OMR example code is temporarily incompatible with Om"
 )
 
-set(CMAKE_CXX_STANDARD 11 PARENT_SCOPE)
-
 # Om Debug Options
 
 set(OMR_OM_POISON_RECLAIMED_MEMORY OFF CACHE BOOL "Debug: Posion reclaimed memory")
@@ -51,7 +49,14 @@ configure_file(
 
 add_library(omr_om_base INTERFACE)
 
-target_compile_features(omr_om_base INTERFACE cxx_std_11)
+target_compile_features(omr_om_base
+	INTERFACE
+		cxx_alias_templates
+		cxx_constexpr
+		cxx_defaulted_functions
+		cxx_noexcept
+		cxx_nullptr
+)
 
 target_include_directories(omr_om_base
 	INTERFACE
