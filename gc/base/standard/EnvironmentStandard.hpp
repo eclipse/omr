@@ -37,14 +37,14 @@
 #include "GCExtensionsBase.hpp"
 #include "SublistFragment.hpp"
 
-class MM_CopyScanCacheStandard;
+#include "CopyScanCacheStandard.hpp"
 
 /**
  * @todo Provide class documentation
  * @ingroup GC_Modron_Env
  */
 class MM_EnvironmentStandard : public MM_EnvironmentBase
-{
+{ 
 /* Data Section */
 public:
 	MM_CopyScanCacheStandard *_survivorCopyScanCache; /**< the current copy cache for flipping */
@@ -61,6 +61,19 @@ public:
 	bool _loaAllocation;  /** true, if tenure TLH remainder is in LOA (TODO: try preventing remainder creation in LOA) */
 	void *_survivorTLHRemainderBase; /**< base and top pointers of the last unused survivor TLH copy cache, that might be reused  on next copy refresh */
 	void *_survivorTLHRemainderTop;
+	
+	/* Temp: should be moved to pool */
+	MM_CopyScanCacheStandard *_scanCacheTenure; 
+	MM_CopyScanCacheStandard *_scanCacheSurvivor;
+	MM_CopyScanCacheStandard *_scanCacheDeferredCopy;
+	MM_CopyScanCacheStandard *_scanCacheDeferredScan;
+	MM_CopyScanCacheStandard *_scanCacheEffectiveCopy;
+		
+	MM_CopyScanCacheStandard *_scanCachePtr; 
+
+	bool _init;
+	
+	int count;
 
 protected:
 
@@ -95,6 +108,10 @@ public:
 		,_loaAllocation(false)
 		,_survivorTLHRemainderBase(NULL)
 		,_survivorTLHRemainderTop(NULL)
+		,_scanCacheTenure(NULL)
+		,_scanCacheSurvivor(NULL)
+		,_init(true)
+		,count(0)
 	{
 		_typeId = __FUNCTION__;
 	}

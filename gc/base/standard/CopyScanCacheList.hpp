@@ -38,7 +38,7 @@
 #include "ModronAssertions.h"
 
 class MM_Collector;
-class MM_CopyScanCacheStandard;
+class MM_CopyScanCache;
 class MM_CopyScanCacheChunk;
 class MM_MemorySubSpace;
  
@@ -53,9 +53,9 @@ class MM_CopyScanCacheList : public MM_BaseVirtual
 	 */
 private:
 	bool _allocationInHeap;	/**< set if scan cache headers allocated in Heap */
-
+ 
 	struct CopyScanCacheSublist {
-		MM_CopyScanCacheStandard * volatile _cacheHead;  /**< Head of the list */
+		MM_CopyScanCache * volatile _cacheHead;  /**< Head of the list */
 		MM_LightweightNonReentrantLock _cacheLock;  /**< Lock for getting/putting caches */
 		uintptr_t _entryCount;	/**< number of entries in sublist */
 
@@ -162,7 +162,7 @@ public:
 	 * @param requestCollector collector issued a memory allocation request
 	 * @return pointer to first scan cache if allocation is successful
 	 */
-	MM_CopyScanCacheStandard * appendCacheEntriesInHeap(MM_EnvironmentStandard *env, MM_MemorySubSpace *memorySubSpace, MM_Collector *requestCollector);
+	MM_CopyScanCache * appendCacheEntriesInHeap(MM_EnvironmentStandard *env, MM_MemorySubSpace *memorySubSpace, MM_Collector *requestCollector);
 
 	/**
 	 * Walk all sublists and count total number of entries
@@ -185,14 +185,14 @@ public:
 	 * @param env[in] the current GC thread
 	 * @param cacheEntry[in] the cache entry to add
 	 */
-	void pushCache(MM_EnvironmentBase *env, MM_CopyScanCacheStandard *cacheEntry);
+	void pushCache(MM_EnvironmentBase *env, MM_CopyScanCache *cacheEntry);
 
 	/**
 	 * Pop a cache entry from this list.
 	 * @param env[in] the current GC thread
 	 * @return the cache entry, or NULL if the list is empty
 	 */
-	MM_CopyScanCacheStandard *popCache(MM_EnvironmentBase *env);
+	MM_CopyScanCache *popCache(MM_EnvironmentBase *env);
 
 	/**
 	 * Create a CopyScanCacheList object.

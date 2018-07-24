@@ -317,20 +317,23 @@ public:
 	 * @param top top address of cache
 	 */
 	MMINLINE void reinitCache(MM_CopyScanCacheStandard *cache, void *base, void *top);
+	MMINLINE void reinitCopyCache(MM_CopyScanCache *cache, void *base, void *top);
 
 	/**
 	 * An attempt to get a preallocated scan cache header, free list will be locked
 	 * @param env - current thread environment
 	 * @return pointer to scan cache header or NULL if attempt fail
 	 */
-	MMINLINE MM_CopyScanCacheStandard *getFreeCache(MM_EnvironmentStandard *env);
+	MMINLINE MM_CopyScanCache *getFreeCache(MM_EnvironmentStandard *env);
+	
+	MMINLINE void initThreadLocalCaches(MM_EnvironmentStandard *env);
 
 	/**
 	 * An attempt to create chunk of scan cache headers in heap
 	 * @param env - current thread environment
 	 * @return pointer to allocated chunk of scan cache headers or NULL if attempt fail
 	 */
-	MM_CopyScanCacheStandard *createCacheInHeap(MM_EnvironmentStandard *env);
+	MM_CopyScanCache *createCacheInHeap(MM_EnvironmentStandard *env);
 
 	/**
 	 * Return cache back to free list if it is not used for copy.

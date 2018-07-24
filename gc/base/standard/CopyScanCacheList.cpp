@@ -29,10 +29,11 @@
 #include "CopyScanCacheChunk.hpp"
 #include "CopyScanCacheChunkInHeap.hpp"
 #include "CopyScanCacheStandard.hpp"
+#include "CopyScanCache.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentStandard.hpp"
 #include "GCExtensionsBase.hpp"
-
+ 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 
 bool
@@ -130,15 +131,15 @@ MM_CopyScanCacheList::removeAllHeapAllocatedChunks(MM_EnvironmentStandard *env)
 		 * Walk caches list first to remove all references to heap allocated caches
 		 */
 		for (uintptr_t index = 0; index < _sublistCount; index++) {
-			MM_CopyScanCacheStandard *previousCache = NULL;
-			MM_CopyScanCacheStandard *cache = _sublists[index]._cacheHead;
+			MM_CopyScanCache *previousCache = NULL;
+			MM_CopyScanCache *cache = _sublists[index]._cacheHead;
 	
 			while(cache != NULL) {
 				if (0 != (cache->flags & OMR_SCAVENGER_CACHE_TYPE_HEAP)) {
 					/* this cache is heap allocated - remove it from list */
 					if (NULL == previousCache) {
 						/* still be a first element */
-						_sublists[index]._cacheHead = (MM_CopyScanCacheStandard *)cache->next;
+						_sublists[index]._cacheHead = (MM_CopyScanCache *)cache->next;
 					} else {
 						/* remove middle element */
 						previousCache->next = cache->next;
@@ -152,7 +153,7 @@ MM_CopyScanCacheList::removeAllHeapAllocatedChunks(MM_EnvironmentStandard *env)
 					/* not heap allocated - just skip */
 					previousCache = cache;
 				}
-				cache = (MM_CopyScanCacheStandard *)cache->next;
+				cache = (MM_CopyScanCache *)cache->next;
 			}
 		}
 
@@ -199,7 +200,7 @@ bool
 MM_CopyScanCacheList::appendCacheEntries(MM_EnvironmentBase *env, uintptr_t cacheEntryCount)
 {
 	bool result = false;
-	MM_CopyScanCacheStandard *sublistTail = NULL;
+	MM_CopyScanCache *sublistTail = NULL;
 	MM_CopyScanCacheChunk *chunk = MM_CopyScanCacheChunk::newInstance(env, cacheEntryCount, _chunkHead, &sublistTail);
 	if(NULL != chunk) {
 		uintptr_t index = getSublistIndex(env);
@@ -221,11 +222,11 @@ MM_CopyScanCacheList::appendCacheEntries(MM_EnvironmentBase *env, uintptr_t cach
 	return result;
 }
 
-MM_CopyScanCacheStandard *
+MM_CopyScanCache *
 MM_CopyScanCacheList::appendCacheEntriesInHeap(MM_EnvironmentStandard *env, MM_MemorySubSpace *memorySubSpace, MM_Collector *requestCollector)
 {
-	MM_CopyScanCacheStandard *result = NULL;
-	MM_CopyScanCacheStandard *sublistTail = NULL;
+	MM_CopyScanCache *result = NULL;
+	MM_CopyScanCache *sublistTail = NULL;
 	uintptr_t entries = 0;
 	MM_CopyScanCacheChunkInHeap *chunk = MM_CopyScanCacheChunkInHeap::newInstance(env, _chunkHead, memorySubSpace, requestCollector, &sublistTail, &entries);
 	if(NULL != chunk) {
@@ -239,7 +240,7 @@ MM_CopyScanCacheList::appendCacheEntriesInHeap(MM_EnvironmentStandard *env, MM_M
 		/* attach sublist of caches in chunk to main list */
 		sublistTail->next = _sublists[index]._cacheHead;
 		result = chunk->getBase();
-		_sublists[index]._cacheHead = (MM_CopyScanCacheStandard *)result->next;
+		_sublists[index]._cacheHead = (MM_CopyScanCache *)result->next;
 		_sublists[index]._entryCount += (entries - 1);
 		_sublists[index]._cacheLock.release();
 
@@ -299,8 +300,11 @@ MM_CopyScanCacheList::decrementCount(CopyScanCacheSublist *sublist, uintptr_t va
 }
 
 void
-MM_CopyScanCacheList::pushCache(MM_EnvironmentBase *env, MM_CopyScanCacheStandard *cacheEntry)
+MM_CopyScanCacheList::pushCache(MM_EnvironmentBase *env, MM_CopyScanCache *cacheEntry)
 {
+
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
 	MM_CopyScanCacheList::CopyScanCacheSublist *list = &_sublists[getSublistIndex(env)];
 
 	/* This is a useful assertion to find who drop the same element to list twice
@@ -316,13 +320,17 @@ MM_CopyScanCacheList::pushCache(MM_EnvironmentBase *env, MM_CopyScanCacheStandar
 	list->_cacheHead = cacheEntry;
 	incrementCount(list, 1);
 	list->_cacheLock.release();
+
+	omrtty_printf("{MM_CopyScanCacheList:pushCache.. new count  %i}\n", list->_entryCount);
 }
 
-MM_CopyScanCacheStandard *
+MM_CopyScanCache *
 MM_CopyScanCacheList::popCache(MM_EnvironmentBase *env)
 {
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
 	uintptr_t index = getSublistIndex(env);
-	MM_CopyScanCacheStandard *cache = NULL;
+	MM_CopyScanCache *cache = NULL;
 
 	for (uintptr_t i = 0; i < _sublistCount; i++) {
 		MM_CopyScanCacheList::CopyScanCacheSublist *list = &_sublists[index];
@@ -332,9 +340,9 @@ MM_CopyScanCacheList::popCache(MM_EnvironmentBase *env)
 			list->_cacheLock.acquire();
 			cache = list->_cacheHead;
 			if (NULL != cache) {
-				list->_cacheHead = (MM_CopyScanCacheStandard *)cache->next;
+				list->_cacheHead = (MM_CopyScanCache *)cache->next;
 				decrementCount(list, 1);
-
+				//omrtty_printf("{popCache  %i}\n", list->_entryCount);
 				if (NULL == list->_cacheHead) {
 					Assert_MM_true(0 == list->_entryCount);
 				}
@@ -347,6 +355,10 @@ MM_CopyScanCacheList::popCache(MM_EnvironmentBase *env)
 		}
 
 		index = (index + 1) % _sublistCount;
+	}
+
+	if (cache == NULL){
+		omrtty_printf("{popCache is returning NULL}\n");
 	}
 
 	return cache;

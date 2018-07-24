@@ -48,10 +48,10 @@ private:
 protected:
 public:
 	GC_ObjectScannerState _objectScannerState; /**< Space reserved for instantiation of object scanner for current object */
-	bool _shouldBeRemembered; /**< whether current object being scanned should be remembered */
-	uintptr_t _arraySplitIndex; /**< The index within a split array to start scanning from (meaningful if OMR_SCAVENGER_CACHE_TYPE_SPLIT_ARRAY is set) */
-	uintptr_t _arraySplitAmountToScan; /**< The amount of elements that should be scanned by split array scanning. */
-	omrobjectptr_t* _arraySplitRememberedSlot; /**< A pointer to the remembered set slot a split array came from if applicable. */
+	//bool _shouldBeRemembered; /**< whether current object being scanned should be remembered */
+	//uintptr_t _arraySplitIndex; /**< The index within a split array to start scanning from (meaningful if OMR_SCAVENGER_CACHE_TYPE_SPLIT_ARRAY is set) */
+	//uintptr_t _arraySplitAmountToScan; /**< The amount of elements that should be scanned by split array scanning. */
+	//omrobjectptr_t* _arraySplitRememberedSlot; /**< A pointer to the remembered set slot a split array came from if applicable. */
 
 	/* Members Function */
 private:
@@ -62,7 +62,7 @@ public:
 	{
 		return (GC_ObjectScanner *)(&_objectScannerState);
 	}
-
+ 
 	/**
 	 * Determine whether the receiver represents a split array.
 	 * If so, the array object may be found in scanCurrent and the index in _arraySplitIndex.
@@ -79,10 +79,6 @@ public:
 	 */	
 	MM_CopyScanCacheStandard(uintptr_t givenFlags)
 		: MM_CopyScanCache(givenFlags)
-		, _shouldBeRemembered(false)
-		, _arraySplitIndex(0)
-		, _arraySplitAmountToScan(0)
-		, _arraySplitRememberedSlot(NULL)
 	{}
 };
 

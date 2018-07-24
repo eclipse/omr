@@ -82,6 +82,12 @@ MM_MemorySubSpaceSemiSpace::allocationRequestFailed(MM_EnvironmentBase *env, MM_
 	/* The baseSubSpace in this case isn't really valid - in the event of a scavenge, the baseSubSpace changes.  The current subSpace will become the
 	 * base for any restarts
 	 */
+
+
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
+	omrtty_printf("{MM_MemorySubSpaceSemiSpace: Allocation Request Failed}\n");
+
 	void *addr = NULL;
 
 	allocateDescription->saveObjects(env);
