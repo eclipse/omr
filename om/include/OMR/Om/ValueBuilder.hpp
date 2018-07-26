@@ -9,6 +9,15 @@ namespace OMR {
 namespace Om {
 namespace ValueBuilder {
 
+inline TR::IlValue* getUint48(TR::IlBuilder* b, TR::IlValue* v) {
+	return b->And(v, b->ConstInt64(Om::Value::PAYLOAD_MASK));
+}
+
+inline TR::IlValue* fromUint48(TR::IlBuilder* b, TR::IlValue* i) {
+	return b->Or(b->And(i, b->ConstInt64(Value::PAYLOAD_MASK)),
+	             b->ConstInt64(Om::Value::Tag::UINT48));
+}
+
 inline TR::IlValue* getInt48(TR::IlBuilder* b, TR::IlValue* v) {
 	return b->And(v, b->ConstInt64(Om::Value::PAYLOAD_MASK));
 }
