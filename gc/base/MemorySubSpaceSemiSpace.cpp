@@ -84,12 +84,12 @@ MM_MemorySubSpaceSemiSpace::allocationRequestFailed(MM_EnvironmentBase *env, MM_
 	 */
 
 
-	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+//	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
-	omrtty_printf("{MM_MemorySubSpaceSemiSpace: Allocation Request Failed}\n");
+//	omrtty_printf("{MM_MemorySubSpaceSemiSpace: Allocation Request Failed}\n");
 
 	void *addr = NULL;
-
+  
 	allocateDescription->saveObjects(env);
 	if (!env->acquireExclusiveVMAccessForGC(_collector, true, true)) {
 		allocateDescription->restoreObjects(env);

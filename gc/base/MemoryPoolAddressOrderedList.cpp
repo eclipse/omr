@@ -573,14 +573,14 @@ MM_MemoryPoolAddressOrderedList::internalAllocateTLH(MM_EnvironmentBase *env, ui
 
 
 
-	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+//	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	uintptr_t freeEntrySize = 0;
 	void *topOfRecycledChunk = NULL;
 	MM_HeapLinkedFreeHeader *entryNext = NULL;
 	MM_HeapLinkedFreeHeader *freeEntry = NULL;
 	uintptr_t consumedSize = 0;
 	uintptr_t recycleEntrySize = 0;
-	
+	  
 	if (lockingRequired) {
 		_heapLock.acquire();
 	}
@@ -607,7 +607,7 @@ retry:
 #endif /* OMR_GC_CONCURRENT_SWEEP */
 
 
-	omrtty_printf("internalAllocateTLH [%p]: Start _heapFreeList %p \n", env, _heapFreeList);
+	//omrtty_printf("internalAllocateTLH [%p]: Start _heapFreeList %p \n", env, _heapFreeList);
 
 	/* Consume the bytes and set the return pointer values */
 	freeEntrySize = freeEntry->getSize();
@@ -655,8 +655,8 @@ retry:
 		_freeEntryCount -= 1;
 	}
 
-	if(_heapFreeList != NULL)
-		omrtty_printf("internalAllocateTLH [%p]: END _heapFreeList %p next:%p size: %i \n", env, _heapFreeList, _heapFreeList->getNext(), _heapFreeList->getSize());
+	//if(_heapFreeList != NULL)
+		//omrtty_printf("internalAllocateTLH [%p]: END _heapFreeList %p next:%p size: %i \n", env, _heapFreeList, _heapFreeList->getNext(), _heapFreeList->getSize());
 
 	if (lockingRequired) {
 		_heapLock.release();

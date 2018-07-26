@@ -39,6 +39,8 @@
 
 #include "CopyScanCacheStandard.hpp"
 
+
+
 /**
  * @todo Provide class documentation
  * @ingroup GC_Modron_Env
@@ -61,7 +63,7 @@ public:
 	bool _loaAllocation;  /** true, if tenure TLH remainder is in LOA (TODO: try preventing remainder creation in LOA) */
 	void *_survivorTLHRemainderBase; /**< base and top pointers of the last unused survivor TLH copy cache, that might be reused  on next copy refresh */
 	void *_survivorTLHRemainderTop;
-	
+	 
 	/* Temp: should be moved to pool */
 	MM_CopyScanCacheStandard *_scanCacheTenure; 
 	MM_CopyScanCacheStandard *_scanCacheSurvivor;
@@ -110,6 +112,9 @@ public:
 		,_survivorTLHRemainderTop(NULL)
 		,_scanCacheTenure(NULL)
 		,_scanCacheSurvivor(NULL)
+		,_scanCacheDeferredCopy(NULL)
+		,_scanCacheDeferredScan(NULL)
+		,_scanCacheEffectiveCopy(NULL)
 		,_init(true)
 		,count(0)
 	{

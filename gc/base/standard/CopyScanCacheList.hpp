@@ -29,7 +29,7 @@
 #define COPYSCANCACHELIST_HPP_
 
 #include "modronopt.h"	
-
+ 
 #include "string.h"
 
 #include "BaseVirtual.hpp"
@@ -51,7 +51,7 @@ class MM_CopyScanCacheList : public MM_BaseVirtual
 	/*
 	 * Data members
 	 */
-private:
+private:  
 	bool _allocationInHeap;	/**< set if scan cache headers allocated in Heap */
  
 	struct CopyScanCacheSublist {

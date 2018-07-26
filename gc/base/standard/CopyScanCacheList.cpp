@@ -303,7 +303,7 @@ void
 MM_CopyScanCacheList::pushCache(MM_EnvironmentBase *env, MM_CopyScanCache *cacheEntry)
 {
 
-	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+	//OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
 	MM_CopyScanCacheList::CopyScanCacheSublist *list = &_sublists[getSublistIndex(env)];
 
@@ -311,7 +311,7 @@ MM_CopyScanCacheList::pushCache(MM_EnvironmentBase *env, MM_CopyScanCache *cache
 	 * It is fatal and caused hang right away.
 	 * However it is too expensive to have this assertion here permanently
 	 */
-	/*
+	/*  
 	Assert_MM_true(newCacheEntry != _list->_cacheHead);
 	*/
 
@@ -321,13 +321,13 @@ MM_CopyScanCacheList::pushCache(MM_EnvironmentBase *env, MM_CopyScanCache *cache
 	incrementCount(list, 1);
 	list->_cacheLock.release();
 
-	omrtty_printf("{MM_CopyScanCacheList:pushCache.. new count  %i}\n", list->_entryCount);
+	//omrtty_printf("{MM_CopyScanCacheList:pushCache.. new count  %i}\n", list->_entryCount);
 }
 
 MM_CopyScanCache *
 MM_CopyScanCacheList::popCache(MM_EnvironmentBase *env)
 {
-	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+	//OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
 	uintptr_t index = getSublistIndex(env);
 	MM_CopyScanCache *cache = NULL;
@@ -357,9 +357,9 @@ MM_CopyScanCacheList::popCache(MM_EnvironmentBase *env)
 		index = (index + 1) % _sublistCount;
 	}
 
-	if (cache == NULL){
-		omrtty_printf("{popCache is returning NULL}\n");
-	}
+	//if (cache == NULL){
+	//	omrtty_printf("{popCache is returning NULL}\n");
+	//}
 
 	return cache;
 }
