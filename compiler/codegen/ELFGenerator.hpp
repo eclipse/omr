@@ -29,6 +29,7 @@
 #include "env/TypedAllocator.hpp"
 #include "env/RawAllocator.hpp"
 #include "runtime/CodeCacheManager.hpp"
+#include "runtime/CodeCacheMemorySegment.hpp"
 
 class TR_Memory;
 
@@ -45,14 +46,14 @@ public:
     /**
      * ELFGenerator constructor
      * @param[in] rawAllocator the TR::RawAllocator
+     * @param[in] codeCache the code segment to write
      * @param[in] codeStart the code segment base
      * @param[in] codeSize the size of the code segment
     */
     ELFGenerator(TR::RawAllocator rawAllocator,
-                 uint8_t const * codeStart, size_t codeSize):
+                 TR::CodeCacheMemorySegment *codeCache):
                         _rawAllocator(rawAllocator),
-                        _codeStart(codeStart),
-                        _codeSize(codeSize),
+                        _codeCache(codeCache),
                         _header(NULL),
                         _programHeader(NULL),
                         _zeroSection(NULL),
@@ -270,8 +271,7 @@ protected:
     uint32_t _totalELFSymbolNamesLength;    /**< Total length of the symbol names that would be written to file  */
     struct TR::CodeCacheSymbol *_symbols;   /**< Chain of CodeCacheSymbol structures to be written */
     uint32_t _numSymbols;                   /**< Number of symbols to be written */
-    uint8_t const * const _codeStart;       /**< base of code segment */
-    uint32_t _codeSize;                     /**< Size of the code segment */
+    TR::CodeCacheMemorySegment *_codeCache; /**< Pointer to the code cache segment we are writing */
 
     struct TR::CodeCacheRelocationInfo *_relocations; /**< Struct containing relocation info to be written */
     uint32_t _numRelocations;                         /**< Number of relocations to write to file */
@@ -289,11 +289,10 @@ public:
     /**
      * ELFExecutableGenerator constructor
      * @param[in] rawAllocator 
-     * @param[in] codeStart the codeStart is the base of the code segment
-     * @param[in] codeSize the size of the region of the code segment
+     * @param[in] codeCache the codeCache to write
     */
     ELFExecutableGenerator(TR::RawAllocator rawAllocator,
-                            uint8_t const * codeStart, size_t codeSize);
+                            TR::CodeCacheMemorySegment *codeCache);
 
     /**
      * ELFExecutableGenerator destructor
@@ -343,7 +342,7 @@ class ELFRelocatableGenerator : public ELFGenerator
 {
 public:
     ELFRelocatableGenerator(TR::RawAllocator rawAllocator,
-                            uint8_t const * codeStart, size_t codeSize);
+                            TR::CodeCacheMemorySegment *codeCache);
 
     ~ELFRelocatableGenerator() throw()
     {

@@ -1263,8 +1263,7 @@ OMR::CodeCacheManager::initializeRelocatableELFGenerator(void)
    _elfRelocatableGenerator =
       new (_rawAllocator) TR::ELFRelocatableGenerator(
          _rawAllocator,
-         _codeCacheRepositorySegment->segmentBase(),
-         _codeCacheRepositorySegment->segmentTop() - _codeCacheRepositorySegment->segmentBase());
+         _codeCacheRepositorySegment);
    }
 
 void
@@ -1274,8 +1273,7 @@ OMR::CodeCacheManager::initializeExecutableELFGenerator(void)
    _elfExecutableGenerator =
       new (_rawAllocator) TR::ELFExecutableGenerator(
          _rawAllocator,
-         _codeCacheRepositorySegment->segmentBase(),
-         _codeCacheRepositorySegment->segmentTop() - _codeCacheRepositorySegment->segmentBase()
+         _codeCacheRepositorySegment
          );
    }
 #endif // HOST_OS==OMR_LINUX

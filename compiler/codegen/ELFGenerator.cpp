@@ -32,15 +32,15 @@
 #include "runtime/CodeCacheManager.hpp"
 
 TR::ELFExecutableGenerator::ELFExecutableGenerator(TR::RawAllocator rawAllocator,
-                            uint8_t const * codeStart, size_t codeSize):
-                            ELFGenerator(rawAllocator, codeStart, codeSize)
+                            TR::CodeCacheMemorySegment *codeCache):
+                            ELFGenerator(rawAllocator, codeCache)
                             {
                                 initialize();
                             }
 
 TR::ELFRelocatableGenerator::ELFRelocatableGenerator(TR::RawAllocator rawAllocator,
-                            uint8_t const * codeStart, size_t codeSize):
-                            ELFGenerator(rawAllocator, codeStart, codeSize)
+                            TR::CodeCacheMemorySegment *codeCache):
+                            ELFGenerator(rawAllocator, codeCache)
                             {
                                 initialize();
                             }
@@ -295,7 +295,7 @@ TR::ELFGenerator::writeSectionNameToFile(::FILE *fp, char * name, uint32_t size)
 void 
 TR::ELFGenerator::writeCodeSegmentToFile(::FILE *fp)
 {
-    fwrite(static_cast<const void *>(_codeStart), sizeof(uint8_t), _codeSize, fp);
+    fwrite(_codeCache->segmentBase(), sizeof(uint8_t),_codeCache->segmentAlloc() - _codeCache->segmentBase(), fp);
 }
 
 void 
@@ -322,7 +322,7 @@ TR::ELFGenerator::writeELFSymbolsToFile(::FILE *fp)
     const uint8_t* rangeStart; //relocatable elf files need symbol offset from segment base
     if (_relaSection)
     {
-        rangeStart = _codeStart;    
+        rangeStart = _codeCache->segmentBase();
     } 
     else 
     {
@@ -366,7 +366,7 @@ TR::ELFGenerator::writeRelaEntriesToFile(::FILE *fp)
             CodeCacheSymbol info into file */
         while (reloc)
             {
-            elfRelas->r_offset = (ELFAddress)(reloc->_location - _codeStart);
+            elfRelas->r_offset = (ELFAddress)(reloc->_location - _codeCache->segmentBase());
             elfRelas->r_info = ELF_R_INFO(reloc->_symbol+1, reloc->_type);
             
             fwrite(elfRelas, sizeof(uint8_t), sizeof(ELFRela), fp);
@@ -405,9 +405,9 @@ void
 TR::ELFExecutableGenerator::initializeELFHeader(void)
 {
     _header->e_type = ET_EXEC;
-    _header->e_entry = (ELFAddress) _codeStart; //virtual address to which the system first transfers control
+    _header->e_entry = (ELFAddress) _codeCache->segmentBase(); //virtual address to which the system first transfers control
     _header->e_phoff = sizeof(ELFEHeader); //program header offset
-    _header->e_shoff = sizeof(ELFEHeader) + sizeof(ELFProgramHeader) + _codeSize; //section header offset
+    _header->e_shoff = 0; //This will be initialized at output, when we know the size of the code cache
     _header->e_phentsize = sizeof(ELFProgramHeader);
     _header->e_phnum = 1; // number of ELFProgramHeaders
     _header->e_shnum = 5; // number of sections in trailer
@@ -419,10 +419,10 @@ TR::ELFExecutableGenerator::initializePHdr(void)
 {
     _programHeader->p_type = PT_LOAD; //should be loaded in memory
     _programHeader->p_offset = sizeof(ELFEHeader); //offset of program header from the first byte of file to be loaded
-    _programHeader->p_vaddr = (ELFAddress) _codeStart; //virtual address to load into
-    _programHeader->p_paddr = (ELFAddress) _codeStart; //physical address to load into
-    _programHeader->p_filesz = _codeSize; //in-file size
-    _programHeader->p_memsz = _codeSize; //in-memory size
+    _programHeader->p_vaddr = (ELFAddress) _codeCache->segmentBase(); //virtual address to load into
+    _programHeader->p_paddr = (ELFAddress) _codeCache->segmentBase();; //physical address to load into
+    _programHeader->p_filesz = 0; //this will be set at output time when we know the size of the code cache
+    _programHeader->p_memsz = 0;  //this will be set at output time when we know the size of the code cache
     _programHeader->p_flags = PF_X | PF_R; // should add PF_W if we get around to loading patchable code
     _programHeader->p_align = 0x1000;
 }
@@ -438,7 +438,7 @@ TR::ELFExecutableGenerator::buildSectionHeaders(void)
     
     /* offset calculations */
     uint32_t trailerStartOffset = sizeof(ELFEHeader) + sizeof(ELFProgramHeader) +
-                                  _codeSize;
+                                  _codeCache->segmentAlloc() - _codeCache->segmentBase();
     uint32_t symbolsStartOffset = trailerStartOffset + 
                                   (sizeof(ELFSectionHeader) * /* #shdr */ 5) +
                                   shStrTabNameLength;
@@ -450,9 +450,9 @@ TR::ELFExecutableGenerator::buildSectionHeaders(void)
     shNameOffset += sizeof(_zeroSectionName);
 
     initializeTextSection(shNameOffset,
-                          (ELFAddress) _codeStart,
+                          (ELFAddress) _codeCache->segmentBase(),
                           sizeof(ELFEHeader) + sizeof(ELFProgramHeader), 
-                          _codeSize);
+                          _codeCache->segmentAlloc() - _codeCache->segmentBase());
     shNameOffset += sizeof(_textSectionName);
 
     initializeDynSymSection(shNameOffset,
@@ -480,7 +480,12 @@ TR::ELFExecutableGenerator::emitELF(const char * filename,
     _symbols = symbols;
     _numSymbols = numSymbols;
     _totalELFSymbolNamesLength = totalELFSymbolNamesLength;
-    
+
+    // Fixup the elf header and program header, now that we know the code size
+    _header->e_shoff = sizeof(ELFEHeader) + _codeCache->segmentAlloc() - _codeCache->segmentBase();
+    _programHeader->p_filesz = _codeCache->segmentAlloc() - _codeCache->segmentBase(); //in-file size
+    _programHeader->p_memsz = _codeCache->segmentAlloc() - _codeCache->segmentBase(); //in-memory size
+
     buildSectionHeaders();
     return emitELFFile(filename);
 }
@@ -506,7 +511,8 @@ TR::ELFRelocatableGenerator::initializeELFHeader(void)
     _header->e_type = ET_REL;           
     _header->e_entry = 0; //no associated entry point for relocatable ELF files
     _header->e_phoff = 0; //no program header for relocatable files
-    _header->e_shoff = sizeof(ELFEHeader) + _codeSize; //start of the section header table in bytes from the first byte of the ELF file
+    _header->e_shoff = 0; //this will be set at output time when we know the size of the code cache
+
     _header->e_phentsize = 0; //no program headers in relocatable elf
     _header->e_phnum = 0;
     _header->e_shnum = 6;
@@ -524,7 +530,7 @@ TR::ELFRelocatableGenerator::buildSectionHeaders(void)
                                   sizeof(_dynStrSectionName);
 
     /* offset calculations */
-    uint32_t trailerStartOffset = sizeof(ELFEHeader) + _codeSize;
+    uint32_t trailerStartOffset = sizeof(ELFEHeader) + _codeCache->segmentAlloc() - _codeCache->segmentBase();
     uint32_t symbolsStartOffset = trailerStartOffset +
                                   (sizeof(ELFSectionHeader) * /* # shdr */ 6) +
                                   shStrTabNameLength;
@@ -539,7 +545,7 @@ TR::ELFRelocatableGenerator::buildSectionHeaders(void)
     initializeTextSection(shNameOffset,
                           /*sh_addr*/ 0,
                           sizeof(ELFEHeader),
-                          _codeSize);
+                           _codeCache->segmentAlloc() - _codeCache->segmentBase());
     shNameOffset += sizeof(_textSectionName);
 
     initializeRelaSection(shNameOffset,
@@ -576,6 +582,10 @@ TR::ELFRelocatableGenerator::emitELF(const char * filename,
     _numSymbols = numSymbols;
     _numRelocations = numRelocations;
     _totalELFSymbolNamesLength = totalELFSymbolNamesLength;
+
+    // Fixup the elf header, now that we know the code size
+    printf("debug alloc=%p base =%p sz=%p\n",  _codeCache->segmentAlloc() , _codeCache->segmentBase(), _codeCache->segmentAlloc() - _codeCache->segmentBase());
+    _header->e_shoff = sizeof(ELFEHeader) + _codeCache->segmentAlloc() - _codeCache->segmentBase();
 
     buildSectionHeaders();
     
