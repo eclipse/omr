@@ -483,10 +483,7 @@ uint8_t *TR::X86LabelInstruction::generateBinaryEncoding()
             {
             // Convert long branch to short branch.
             //
-            if (!getOpCode().isShortBranchOp())
-               {
-               getOpCode().convertLongBranchToShort();
-               }
+            getOpCode().convert4ByteBranchTo1Byte();
 
             cursor = getOpCode().binary(instructionStart, self()->rexBits());
             immediateCursor = cursor;

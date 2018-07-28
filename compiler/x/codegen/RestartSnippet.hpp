@@ -79,7 +79,7 @@ class X86RestartSnippet  : public TR::Snippet
          {
          if (distance >= -128 && distance <= 127)
             {
-            opcode.convertLongBranchToShort();
+            opcode.convert4ByteBranchTo1Byte();
             bufferCursor = opcode.binary(bufferCursor);
             *bufferCursor = (int8_t)(destination - (bufferCursor + 1));
             bufferCursor++;

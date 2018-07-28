@@ -33,10 +33,38 @@ enum TR_X86OpCodes : uint32_t
 #define INSTRUCTION(name, mnemonic, binary, property0, property1) name
 #include "codegen/X86Ops.ins"
 #undef INSTRUCTION
+   // Aliases to Jcc
+   JNAE1 = JB1,
+   JNAE4 = JB4,
+   JC1   = JB1,
+   JC4   = JB4,
+   JNB1  = JAE1,
+   JNB4  = JAE4,
+   JNC1  = JAE1,
+   JNC4  = JAE4,
+   JZ1   = JE1,
+   JZ4   = JE4,
+   JNZ1  = JNE1,
+   JNZ4  = JNE4,
+   JNA1  = JBE1,
+   JNA4  = JBE4,
+   JNBE1 = JA1,
+   JNBE4 = JA4,
+   JP1   = JPE1,
+   JP4   = JPE4,
+   JNP1  = JPO1,
+   JNP4  = JPO4,
+   JNGE1 = JL1,
+   JNGE4 = JL4,
+   JNL1  = JGE1,
+   JNL4  = JGE4,
+   JNG1  = JLE1,
+   JNG4  = JLE4,
+   JNLE1 = JG1,
+   JNLE4 = JG4,
    };
 
-#define IA32LongToShortBranchConversionOffset ((int)JMP4 - (int)JMP1)
-#define IA32LengthOfShortBranch               2
+#define IA32LengthOfShortBranch 2
 
 // Size-parameterized opcodes
 //
@@ -434,10 +462,12 @@ class TR_X86OpCode
    // Instructions from Group 7 OpCode Extensions need special handling as they requires specific low 3 bits of ModR/M byte
    inline void CheckAndFinishGroup07(uint8_t* cursor) const;
 
-   TR_X86OpCodes         _opCode;
-   static const OpCode_t _binaries[];
-   static const uint32_t _properties[];
-   static const uint32_t _properties1[];
+   TR_X86OpCodes              _opCode;
+   static const OpCode_t      _binaries[];
+   static const uint32_t      _properties[];
+   static const uint32_t      _properties1[];
+   static const TR_X86OpCodes _Jcc1[16];
+   static const TR_X86OpCodes _Jcc4[16];
 
    public:
 
@@ -495,7 +525,7 @@ class TR_X86OpCode
    inline uint32_t hasSourceRegisterInModRM()      const {return _properties[_opCode] & IA32OpProp_SourceRegisterInModRM;}
    inline uint32_t hasSourceRegisterIgnored()      const {return _properties[_opCode] & IA32OpProp_SourceRegisterIgnored;}
    inline uint32_t isBranchOp()                    const {return _properties[_opCode] & IA32OpProp_BranchOp;}
-   inline uint32_t hasRelativeBranchDisplacement() const { return isBranchOp() || isCallImmOp(); }
+   inline uint32_t hasRelativeBranchDisplacement() const {return isBranchOp() || isCallImmOp();}
    inline uint32_t isShortBranchOp()               const {return isBranchOp() && hasByteImmediate();}
    inline uint32_t testsSomeFlag()                 const {return _properties[_opCode] & IA32OpProp_TestsSomeFlag;}
    inline uint32_t modifiesSomeArithmeticFlags()   const {return _properties[_opCode] & IA32OpProp_SetsSomeArithmeticFlag;}
@@ -519,38 +549,32 @@ class TR_X86OpCode
    inline uint32_t sourceRegIsImplicit()           const { return _properties1[_opCode] & IA32OpProp1_SourceRegIsImplicit;}
    inline uint32_t isFusableCompare()              const { return _properties1[_opCode] & IA32OpProp1_FusableCompare; }
 
-   inline bool isSetRegInstruction() const
+   inline bool     isCMOVcc()                      const { return info().escape == ESCAPE_0F__ && (info().opcode & 0xf0) == 0x40; }
+   inline bool     isJcc1()                        const { return info().escape == ESCAPE_____ && (info().opcode & 0xf0) == 0x70; }
+   inline bool     isJcc4()                        const { return info().escape == ESCAPE_0F__ && (info().opcode & 0xf0) == 0x80; }
+   inline bool     isJcc()                         const { return isJcc1() || isJcc4(); }
+   inline bool     isSETcc()                       const { return info().escape == ESCAPE_0F__ && (info().opcode & 0xf0) == 0x90; }
+   inline uint8_t  getConditionCode()              const { return info().opcode & 0x0f; }
+
+   inline void convert4ByteBranchTo1Byte()
       {
-      switch(_opCode)
-         {
-         case SETA1Reg:
-         case SETAE1Reg:
-         case SETB1Reg:
-         case SETBE1Reg:
-         case SETE1Reg:
-         case SETNE1Reg:
-         case SETG1Reg:
-         case SETGE1Reg:
-         case SETL1Reg:
-         case SETLE1Reg:
-         case SETS1Reg:
-         case SETNS1Reg:
-         case SETPO1Reg:
-         case SETPE1Reg:
-            return true;
-         default:
-            return false;
-         }
+      if (isJcc4())
+         _opCode = _Jcc1[getConditionCode()];
+      else if (_opCode == JMP4)
+         _opCode = JMP1;
       }
+   inline void changeBranchCondition(uint8_t cond)
+      {
+      if (isJcc1())
+         _opCode = _Jcc1[cond];
+      else if (isJcc4())
+         _opCode = _Jcc4[cond];
+      }
+   inline void reverseBranch() { changeBranchCondition(getConditionCode()^1); }
 
    inline uint8_t length(uint8_t rex = 0) const;
    inline uint8_t* binary(uint8_t* cursor, uint8_t rex = 0) const;
    inline void finalize(uint8_t* cursor) const;
-   void convertLongBranchToShort()
-      { // input must be a long branch in range JA4 - JMP4
-      if (((int)_opCode >= (int)JA4) && ((int)_opCode <= (int)JMP4))
-         _opCode = (TR_X86OpCodes)((int)_opCode - IA32LongToShortBranchConversionOffset);
-      }
 
    inline uint8_t getModifiedEFlags() const {return getModifiedEFlags(_opCode); }
    inline uint8_t getTestedEFlags()   const {return getTestedEFlags(_opCode); }

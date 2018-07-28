@@ -3259,7 +3259,7 @@ bool TR::X86FPCompareRegRegInstruction::swapOperands()
       {
       TR_X86OpCode  cursorOp = cursor->getOpCode();
 
-      if (cursorOp.isBranchOp() || cursorOp.isSetRegInstruction())
+      if (cursorOp.isBranchOp() || cursorOp.isSETcc())
          break;
 
       cursor = cursor->getNext();

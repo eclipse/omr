@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,4 +48,16 @@ const uint32_t TR_X86OpCode::_properties1[] =
 #define INSTRUCTION(name, mnemonic, binary, property0, property1) property1
 #include "codegen/X86Ops.ins"
 #undef INSTRUCTION
+   };
+
+const TR_X86OpCodes TR_X86OpCode::_Jcc1[16] =
+   {
+   // 0000  0001  0010  0011  0100  0101  0110  0111  1000  1001  1010  1011  1100  1101  1110  1111
+       JO1, JNO1,  JC1, JNC1,  JZ1, JNZ1, JNA1,  JA1,  JS1, JNS1,  JP1, JNP1,  JL1, JNL1, JNG1,  JG1
+   };
+
+const TR_X86OpCodes TR_X86OpCode::_Jcc4[16] =
+   {
+   // 0000  0001  0010  0011  0100  0101  0110  0111  1000  1001  1010  1011  1100  1101  1110  1111
+       JO4, JNO4,  JC4, JNC4,  JZ4, JNZ4, JNA4,  JA4,  JS4, JNS4,  JP4, JNP4,  JL4, JNL4, JNG4,  JG4
    };
