@@ -27,15 +27,15 @@
 
 #include "AllocateDescription.hpp"
 #include "Collector.hpp"
-#include "CopyScanCacheStandard.hpp"
+#include "CopyScanCache.hpp"
 #include "EnvironmentStandard.hpp"
 #include "GCExtensionsBase.hpp"
 #include "HeapLinkedFreeHeader.hpp"
 #include "MemorySubSpace.hpp"
-
+ 
 MM_CopyScanCacheChunkInHeap *
 MM_CopyScanCacheChunkInHeap::newInstance(MM_EnvironmentStandard *env, MM_CopyScanCacheChunk *nextChunk, MM_MemorySubSpace *memorySubSpace, MM_Collector *requestCollector,
-		MM_CopyScanCacheStandard **sublistTail, uintptr_t *entries)
+		MM_CopyScanCache **sublistTail, uintptr_t *entries)
 {
 	MM_GCExtensionsBase *extensions = env->getExtensions();
 	MM_CopyScanCacheChunkInHeap *chunk = NULL;
@@ -56,11 +56,11 @@ MM_CopyScanCacheChunkInHeap::newInstance(MM_EnvironmentStandard *env, MM_CopySca
 
 	if (sizeToAllocate < extensions->tlhMinimumSize) {
 		/* calculate number of caches to just barely exceed tlhMinimumSize */
-		numberOfCaches = ((extensions->tlhMinimumSize - sizeToAllocate) / sizeof(MM_CopyScanCacheStandard)) + 1;
+		numberOfCaches = ((extensions->tlhMinimumSize - sizeToAllocate) / sizeof(MM_CopyScanCache)) + 1;
 	}
 
 	/* total size required to allocate */
-	sizeToAllocate += numberOfCaches * sizeof(MM_CopyScanCacheStandard);
+	sizeToAllocate += numberOfCaches * sizeof(MM_CopyScanCache);
 	/* this is going to be allocated on the heap so ensure that the chunk we are allocating is adjusted for heap alignment (since object consumed sizes already have this requirement) */
 	sizeToAllocate = MM_Math::roundToCeiling(env->getObjectAlignmentInBytes(), sizeToAllocate);
 
@@ -78,7 +78,7 @@ MM_CopyScanCacheChunkInHeap::newInstance(MM_EnvironmentStandard *env, MM_CopySca
 		/* create a CopyScanCacheChunkInHeap itself */
 		chunk = (MM_CopyScanCacheChunkInHeap *)((uintptr_t)addrBase + sizeof(MM_HeapLinkedFreeHeader));
 		new(chunk) MM_CopyScanCacheChunkInHeap(addrBase, addrTop, memorySubSpace);
-		chunk->_baseCache = (MM_CopyScanCacheStandard *)(chunk + 1);
+		chunk->_baseCache = (MM_CopyScanCache *)(chunk + 1);
 		if(chunk->initialize(env, numberOfCaches, nextChunk, OMR_SCAVENGER_CACHE_TYPE_HEAP, sublistTail)) {
 			*entries = numberOfCaches;
 		} else {

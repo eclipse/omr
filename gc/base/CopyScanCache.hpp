@@ -74,7 +74,13 @@ public:
 	void* cacheTop;
 	void* cacheAlloc;
 	void* scanCurrent;
-
+	
+	/* Temp: These need to be moved out to from the Copy Cache */
+	omrobjectptr_t* _arraySplitRememberedSlot; /**< A pointer to the remembered set slot a split array came from if applicable. */
+	uintptr_t _arraySplitIndex; /**< The index within a split array to start scanning from (meaningful if OMR_SCAVENGER_CACHE_TYPE_SPLIT_ARRAY is set) */
+	uintptr_t _arraySplitAmountToScan; /**< The amount of elements that should be scanned by split array scanning. */
+	bool _shouldBeRemembered;
+	 
 	/* Members Function */
 private:
 protected:
@@ -109,7 +115,21 @@ public:
 	{
 		return scanCurrent < cacheAlloc;
 	}
-
+	
+	void copyFrom(MM_CopyScanCache *source)
+	{
+		flags = source->flags;
+		_hasPartiallyScannedObject = source->_hasPartiallyScannedObject;
+		cacheBase = source->cacheBase;
+		cacheTop = source->cacheTop;
+		cacheAlloc = source->cacheAlloc;
+		scanCurrent = source->scanCurrent;	
+		_arraySplitRememberedSlot = source->_arraySplitRememberedSlot;
+		_arraySplitIndex = source->_arraySplitIndex;
+		_arraySplitAmountToScan = source->_arraySplitAmountToScan;
+		_shouldBeRemembered = source->_shouldBeRemembered;
+	}
+	
 	/**
 	 * Create a CopyScanCache object.
 	 */
@@ -122,6 +142,10 @@ public:
 		, cacheTop(NULL)
 		, cacheAlloc(NULL)
 		, scanCurrent(NULL)
+		, _arraySplitRememberedSlot(NULL)
+		, _arraySplitIndex(0)
+		, _arraySplitAmountToScan(0)
+		, _shouldBeRemembered(false)	
 	{
 	}
 
@@ -134,6 +158,10 @@ public:
 		, cacheTop(NULL)
 		, cacheAlloc(NULL)
 		, scanCurrent(NULL)
+		, _arraySplitRememberedSlot(NULL)
+		, _arraySplitIndex(0)
+		, _arraySplitAmountToScan(0)
+		, _shouldBeRemembered(false)
 	{
 	}
 };

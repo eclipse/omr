@@ -32,7 +32,7 @@
 #include "EnvironmentStandard.hpp"
 
 class MM_Collector;
-class MM_CopyScanCacheStandard;
+class MM_CopyScanCache;
 class MM_MemorySubSpace;
 
 /**
@@ -47,7 +47,7 @@ private:
 	MM_MemorySubSpace *_memorySubSpace;	/**< subspace memory is allocated with */
 
 protected:
-
+ 
 public:
 
 private:
@@ -71,7 +71,7 @@ public:
 	 * @return pointer to allocated chunk
 	 */
 	static MM_CopyScanCacheChunkInHeap *newInstance(MM_EnvironmentStandard *env, MM_CopyScanCacheChunk *nextChunk, MM_MemorySubSpace *memorySubSpace, MM_Collector *requestCollector,
-			MM_CopyScanCacheStandard **sublistTail, uintptr_t *entries);
+			MM_CopyScanCache **sublistTail, uintptr_t *entries);
 
 	virtual void kill(MM_EnvironmentBase *env);
 

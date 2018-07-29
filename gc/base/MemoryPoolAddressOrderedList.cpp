@@ -570,13 +570,17 @@ MM_MemoryPoolAddressOrderedList::collectorAllocate(MM_EnvironmentBase *env, MM_A
 MMINLINE bool
 MM_MemoryPoolAddressOrderedList::internalAllocateTLH(MM_EnvironmentBase *env, uintptr_t maximumSizeInBytesRequired, void * &addrBase, void * &addrTop, bool lockingRequired, MM_LargeObjectAllocateStats *largeObjectAllocateStats)
 {
+
+
+
+//	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	uintptr_t freeEntrySize = 0;
 	void *topOfRecycledChunk = NULL;
 	MM_HeapLinkedFreeHeader *entryNext = NULL;
 	MM_HeapLinkedFreeHeader *freeEntry = NULL;
 	uintptr_t consumedSize = 0;
 	uintptr_t recycleEntrySize = 0;
-	
+	  
 	if (lockingRequired) {
 		_heapLock.acquire();
 	}
@@ -593,6 +597,7 @@ retry:
 		goto fail_allocate;
 	}
 #else /* OMR_GC_CONCURRENT_SWEEP */
+
 	freeEntry = _heapFreeList;
 
 	/* Check if an entry was found */
@@ -600,6 +605,9 @@ retry:
 		goto fail_allocate;
 	}
 #endif /* OMR_GC_CONCURRENT_SWEEP */
+
+
+	//omrtty_printf("internalAllocateTLH [%p]: Start _heapFreeList %p \n", env, _heapFreeList);
 
 	/* Consume the bytes and set the return pointer values */
 	freeEntrySize = freeEntry->getSize();
@@ -646,6 +654,9 @@ retry:
 		/* also update the freeEntryCount as recycleHeapChunk would do this */
 		_freeEntryCount -= 1;
 	}
+
+	//if(_heapFreeList != NULL)
+		//omrtty_printf("internalAllocateTLH [%p]: END _heapFreeList %p next:%p size: %i \n", env, _heapFreeList, _heapFreeList->getNext(), _heapFreeList->getSize());
 
 	if (lockingRequired) {
 		_heapLock.release();

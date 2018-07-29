@@ -24,21 +24,24 @@
 #include "omrport.h"
 
 #include "CopyScanCacheChunk.hpp"
+ 
 #include "CopyScanCacheStandard.hpp"
+#include "CopyScanCache.hpp"
+
 #include "EnvironmentStandard.hpp"
 #include "GCExtensionsBase.hpp"
 #include "ModronAssertions.h"
 
 
 MM_CopyScanCacheChunk *
-MM_CopyScanCacheChunk::newInstance(MM_EnvironmentBase* env, uintptr_t cacheEntryCount, MM_CopyScanCacheChunk *nextChunk, MM_CopyScanCacheStandard **sublistTail)
+MM_CopyScanCacheChunk::newInstance(MM_EnvironmentBase* env, uintptr_t cacheEntryCount, MM_CopyScanCacheChunk *nextChunk, MM_CopyScanCache **sublistTail)
 {
 	MM_CopyScanCacheChunk *chunk;
 	
-	chunk = (MM_CopyScanCacheChunk *)env->getForge()->allocate(sizeof(MM_CopyScanCacheChunk) + cacheEntryCount * sizeof(MM_CopyScanCacheStandard), OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
+	chunk = (MM_CopyScanCacheChunk *)env->getForge()->allocate(sizeof(MM_CopyScanCacheChunk) + cacheEntryCount * sizeof(MM_CopyScanCache), OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE()); // CSCS
 	if (chunk) {
 		new(chunk) MM_CopyScanCacheChunk();
-		chunk->_baseCache = (MM_CopyScanCacheStandard *)(chunk + 1);
+		chunk->_baseCache = (MM_CopyScanCache *)(chunk + 1);
 		if(!chunk->initialize(env, cacheEntryCount, nextChunk, 0, sublistTail)) {
 			chunk->kill(env);
 			return NULL;
@@ -55,17 +58,21 @@ MM_CopyScanCacheChunk::kill(MM_EnvironmentBase *env)
 }
 
 bool
-MM_CopyScanCacheChunk::initialize(MM_EnvironmentBase *env, uintptr_t cacheEntryCount, MM_CopyScanCacheChunk *nextChunk, uintptr_t flags, MM_CopyScanCacheStandard **sublistTail)
+MM_CopyScanCacheChunk::initialize(MM_EnvironmentBase *env, uintptr_t cacheEntryCount, MM_CopyScanCacheChunk *nextChunk, uintptr_t flags, MM_CopyScanCache **sublistTail)
 {
+	//OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 	_nextChunk = nextChunk;
 
 	Assert_MM_true(0 < cacheEntryCount);
 
-	MM_CopyScanCacheStandard *previousCache = NULL;
+	MM_CopyScanCache *previousCache = NULL;
 	*sublistTail = _baseCache + cacheEntryCount - 1;
 
-	for (MM_CopyScanCacheStandard *currentCache = *sublistTail; currentCache >= _baseCache; currentCache--) {
-		new(currentCache) MM_CopyScanCacheStandard(flags);
+	for (MM_CopyScanCache *currentCache = *sublistTail; currentCache >= _baseCache; currentCache--) {
+		new(currentCache) MM_CopyScanCache(flags);
+
+		//omrtty_printf("{setting currentCache->next for %p to %p}\n", currentCache, previousCache);
+
 		currentCache->next = previousCache;
 		previousCache = currentCache;
 	}

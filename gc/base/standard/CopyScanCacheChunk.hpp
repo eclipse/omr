@@ -31,7 +31,7 @@
 #include "BaseVirtual.hpp"
 #include "EnvironmentStandard.hpp" 
 
-class MM_CopyScanCacheStandard;
+class MM_CopyScanCache;
 
 /**
  * @todo Provide class documentation
@@ -40,9 +40,9 @@ class MM_CopyScanCacheStandard;
 class MM_CopyScanCacheChunk : public MM_BaseVirtual
 {
 private:
-
+ 
 protected:
-	MM_CopyScanCacheStandard *_baseCache;		/**< pointer to base cache in chunk */
+	MM_CopyScanCache *_baseCache;		/**< pointer to base cache in chunk */
 	MM_CopyScanCacheChunk *_nextChunk;	/**< pointer to next chunk in list */
 
 public:
@@ -51,14 +51,14 @@ private:
 
 protected:
 	void tearDown(MM_EnvironmentBase *env);
-	bool initialize(MM_EnvironmentBase *env, uintptr_t cacheEntryCount, MM_CopyScanCacheChunk *nextChunk, uintptr_t flags, MM_CopyScanCacheStandard **sublistTail);
+	bool initialize(MM_EnvironmentBase *env, uintptr_t cacheEntryCount, MM_CopyScanCacheChunk *nextChunk, uintptr_t flags, MM_CopyScanCache **sublistTail);
 
 public:
-	MMINLINE MM_CopyScanCacheStandard *getBase() const { return _baseCache; }
+	MMINLINE MM_CopyScanCache *getBase() const { return _baseCache; }
 	MMINLINE MM_CopyScanCacheChunk *getNext() const { return _nextChunk; }
 	MMINLINE void setNext(MM_CopyScanCacheChunk *nextChunk)  { _nextChunk = nextChunk; }
 	
-	static MM_CopyScanCacheChunk *newInstance(MM_EnvironmentBase *env, uintptr_t cacheEntryCount, MM_CopyScanCacheChunk *nextChunk, MM_CopyScanCacheStandard **sublistTail);
+	static MM_CopyScanCacheChunk *newInstance(MM_EnvironmentBase *env, uintptr_t cacheEntryCount, MM_CopyScanCacheChunk *nextChunk, MM_CopyScanCache **sublistTail);
 	virtual void kill(MM_EnvironmentBase *env);
 
 	/**
