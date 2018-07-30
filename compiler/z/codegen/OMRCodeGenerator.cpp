@@ -687,7 +687,7 @@ OMR::Z::CodeGenerator::CodeGenerator()
       self()->setSupportsBCDToDFPReduction();
       self()->setSupportsIntDFPConversions();
 
-      if (!comp->getOption(TR_DisableTraps) && TR::Compiler->vm.hasResumableTrapHandler(comp))
+      if (!comp->getOptions()->getOption(TR_DisableTraps) && TR::Compiler->vm.hasResumableTrapHandler(comp))
          {
          self()->setHasResumableTrapHandler();
          }
@@ -6162,8 +6162,8 @@ OMR::Z::CodeGenerator::getSupportsEncodeUtf16BigWithSurrogateTest()
    {
    if (self()->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
       {
-      return (!self()->comp()->getOption(TR_DisableUTF16BEEncoder) ||
-               (self()->getSupportsVectorRegisters() && !self()->comp()->getOption(TR_DisableSIMDUTF16BEEncoder)));
+      return (!self()->comp()->getOptions()->getOption(TR_DisableUTF16BEEncoder) ||
+               (self()->getSupportsVectorRegisters() && !self()->comp()->getOptions()->getOption(TR_DisableSIMDUTF16BEEncoder)));
       }
 
    return false;

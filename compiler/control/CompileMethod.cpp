@@ -405,15 +405,15 @@ compileMethodFromDetails(
             }
 
          if (
-               compiler.getOption(TR_PerfTool) 
-            || compiler.getOption(TR_EmitExecutableELFFile)
-            || compiler.getOption(TR_EmitRelocatableELFFile)
+               TR::Options::getCmdLineOptions()->getOption(TR_PerfTool) 
+            || TR::Options::getCmdLineOptions()->getOption(TR_EmitExecutableELFFile)
+            || TR::Options::getCmdLineOptions()->getOption(TR_EmitRelocatableELFFile)
             )
             {
             TR::CodeCacheManager &codeCacheManager(fe.codeCacheManager());
             TR::CodeGenerator &codeGenerator(*compiler.cg());
             codeCacheManager.registerCompiledMethod(compiler.externalName(), startPC, codeGenerator.getCodeLength());
-            if (compiler.getOption(TR_EmitRelocatableELFFile))
+            if (TR::Options::getCmdLineOptions()->getOption(TR_EmitRelocatableELFFile))
                {
                auto &relocations = codeGenerator.getStaticRelocations();
                for (auto it = relocations.begin(); it != relocations.end(); ++it)
@@ -421,7 +421,7 @@ compileMethodFromDetails(
                   codeCacheManager.registerStaticRelocation(*it);
                   }
                }
-            if (compiler.getOption(TR_PerfTool))
+            if (TR::Options::getCmdLineOptions()->getOption(TR_PerfTool))
                {
                generatePerfToolEntry(startPC, codeGenerator.getCodeEnd(), compiler.signature(), compiler.getHotnessName(compiler.getMethodHotness()));
                }

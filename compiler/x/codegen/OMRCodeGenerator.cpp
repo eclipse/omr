@@ -1043,14 +1043,14 @@ bool
 OMR::X86::CodeGenerator::getSupportsEncodeUtf16LittleWithSurrogateTest()
    {
    return TR::CodeGenerator::getX86ProcessorInfo().supportsSSE4_1() &&
-          !self()->comp()->getOption(TR_DisableSIMDUTF16LEEncoder);
+          !self()->comp()->getOptions()->getOption(TR_DisableSIMDUTF16LEEncoder);
    }
 
 bool
 OMR::X86::CodeGenerator::getSupportsEncodeUtf16BigWithSurrogateTest()
    {
    return TR::CodeGenerator::getX86ProcessorInfo().supportsSSE4_1() &&
-          !self()->comp()->getOption(TR_DisableSIMDUTF16BEEncoder);
+          !self()->comp()->getOptions()->getOption(TR_DisableSIMDUTF16BEEncoder);
    }
 
 bool
@@ -1322,7 +1322,7 @@ OMR::X86::CodeGenerator::performNonLinearRegisterAssignmentAtBranch(
       TR::Instruction *ins =
          generateLabelInstruction(oi->getFirstInstruction(), LABEL, generateLabelSymbol(self()), deps, self());
 
-      if (self()->comp()->getOption(TR_TraceNonLinearRegisterAssigner))
+      if (self()->comp()->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
          {
          traceMsg(self()->comp(), "creating LABEL instruction %p for dependencies\n", ins);
          }

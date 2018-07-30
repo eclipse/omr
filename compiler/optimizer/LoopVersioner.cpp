@@ -200,7 +200,7 @@ bool TR_LoopVersioner::loopIsWorthVersioning(TR_RegionStructure *naturalLoop)
       }
 
    // if aggressive loop versioner flag is set then run at any optlevel, otherwise only at warm or less
-   bool aggressive = comp()->getOption(TR_EnableAggressiveLoopVersioning);
+   bool aggressive = TR::Options::getCmdLineOptions()->getOption(TR_EnableAggressiveLoopVersioning);
    if (aggressive || comp()->getMethodHotness() <= warm)
       {
       if (naturalLoop->getParent())
@@ -225,7 +225,7 @@ bool TR_LoopVersioner::loopIsWorthVersioning(TR_RegionStructure *naturalLoop)
             }
          }
 
-      bool aggressive = comp()->getOption(TR_EnableAggressiveLoopVersioning);
+      bool aggressive = TR::Options::getCmdLineOptions()->getOption(TR_EnableAggressiveLoopVersioning);
 
       int32_t lvBlockFreqCutoff;
       static const char * b = feGetEnv("TR_LoopVersionerFreqCutoff");
@@ -567,7 +567,7 @@ int32_t TR_LoopVersioner::performWithoutDominators()
          {
          // default hotness threshold
          TR_Hotness hotnessThreshold = hot;
-         if (comp()->getOption(TR_EnableAggressiveLoopVersioning))
+         if (TR::Options::getCmdLineOptions()->getOption(TR_EnableAggressiveLoopVersioning))
             {
             if (trace()) traceMsg(comp(), "aggressiveLoopVersioning: raising hotnessThreshold for conditionalsWillBeEliminated\n");
             hotnessThreshold = maxHotness; // threshold which can't be matched by the > operator
@@ -712,7 +712,7 @@ int32_t TR_LoopVersioner::performWithoutDominators()
    ////if (!_virtualGuardPairs.isEmpty())
    if (!_virtualGuardInfo.isEmpty())
       {
-      bool disableLT = comp()->getOption(TR_DisableLoopTransfer);
+      bool disableLT = TR::Options::getCmdLineOptions()->getOption(TR_DisableLoopTransfer);
       if (!disableLT)
          performLoopTransfer();
       }
@@ -3204,7 +3204,7 @@ bool TR_LoopVersioner::detectChecksToBeEliminated(TR_RegionStructure *whileLoop,
 
          // If the aggressive loop versioning flag is set, only do the unimportant block test
          // at lower optlevels
-         bool aggressive = comp()->getOption(TR_EnableAggressiveLoopVersioning);
+         bool aggressive = TR::Options::getCmdLineOptions()->getOption(TR_EnableAggressiveLoopVersioning);
 
          static const bool useOuterHeader =
             feGetEnv("TR_loopVersionerUseOuterHeaderForImportance") != NULL;
@@ -3252,7 +3252,7 @@ bool TR_LoopVersioner::detectChecksToBeEliminated(TR_RegionStructure *whileLoop,
             )
             {
             isUnimportant = true;
-            if (trace() || comp()->getOption(TR_CountOptTransformations))
+            if (trace() || comp()->getOptions()->getOption(TR_CountOptTransformations))
                {
                for (TR::TreeTop *tt = entryTree; isUnimportant && tt != exitTree; tt = tt->getNextTreeTop())
                   {
@@ -3315,7 +3315,7 @@ bool TR_LoopVersioner::detectChecksToBeEliminated(TR_RegionStructure *whileLoop,
          vcount_t visitCount = comp()->incVisitCount(); //@TODO: unsafe API/use pattern
          updateDefinitionsAndCollectProfiledExprs(NULL, currentNode, visitCount, specializedInvariantNodes, invariantNodes, invariantTranslationNodesList, NULL, collectProfiledExprs, nextBlock, warmBranchCount);
 
-         bool disableLT = comp()->getOption(TR_DisableLoopTransfer);
+         bool disableLT = TR::Options::getCmdLineOptions()->getOption(TR_DisableLoopTransfer);
          if (!disableLT &&
              currentNode->isTheVirtualGuardForAGuardedInlinedCall() &&
              blocksInWhileLoop.find(currentNode->getBranchDestination()->getNode()->getBlock()))
@@ -3791,7 +3791,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
          }
 
       TR::Node *lastTree = nextBlock->getLastRealTreeTop()->getNode();
-      bool disableLT = comp()->getOption(TR_DisableLoopTransfer);
+      bool disableLT = TR::Options::getCmdLineOptions()->getOption(TR_DisableLoopTransfer);
       if (!disableLT &&
           lastTree->getOpCode().isIf() &&
           blocksInWhileLoop.find(lastTree->getBranchDestination()->getNode()->getBlock()) &&
@@ -4255,7 +4255,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
    TR_Hotness hotnessThreshold = hot;
 
    // If aggressive loop versioning is requested, don't call buildNullCheckComparisonsTree based on hotness
-   if (comp()->getOption(TR_EnableAggressiveLoopVersioning))
+   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableAggressiveLoopVersioning))
       {
       if (trace()) traceMsg(comp(), "aggressiveLoopVersioning: raising hotnessThreshold for buildNullCheckComparisonsTree\n");
       hotnessThreshold = maxHotness; // threshold which can't be matched by the > operator

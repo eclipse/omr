@@ -1910,7 +1910,7 @@ OMR::Power::CodeGenerator::isTargetSnippetOrOutOfLine(TR::Instruction *instr, TR
 
 bool OMR::Power::CodeGenerator::supportsAESInstructions()
    {
-    if ( TR::Compiler->target.cpu.getPPCSupportsAES() && !self()->comp()->getOption(TR_DisableAESInHardware))
+    if ( TR::Compiler->target.cpu.getPPCSupportsAES() && !self()->comp()->getOptions()->getOption(TR_DisableAESInHardware))
       return true;
     else
       return false;
@@ -2452,7 +2452,7 @@ TR_GlobalRegisterNumber OMR::Power::CodeGenerator::pickRegister(TR_RegisterCandi
                                                           TR_GlobalRegisterNumber           &  highRegisterNumber,
                                                           TR_LinkHead<TR_RegisterCandidate> *  candidates)
    {
-   if (!self()->comp()->getOption(TR_DisableRegisterPressureSimulation))
+   if (!self()->comp()->getOptions()->getOption(TR_DisableRegisterPressureSimulation))
       return OMR::CodeGenerator::pickRegister(regCan, barr, availRegs, highRegisterNumber, candidates);
 
 
@@ -3465,14 +3465,14 @@ bool
 OMR::Power::CodeGenerator::getSupportsEncodeUtf16LittleWithSurrogateTest()
    {
    return TR::Compiler->target.cpu.getPPCSupportsVSX() &&
-          !self()->comp()->getOption(TR_DisableSIMDUTF16LEEncoder);
+          !self()->comp()->getOptions()->getOption(TR_DisableSIMDUTF16LEEncoder);
    }
 
 bool
 OMR::Power::CodeGenerator::getSupportsEncodeUtf16BigWithSurrogateTest()
    {
    return TR::Compiler->target.cpu.getPPCSupportsVSX() &&
-          !self()->comp()->getOption(TR_DisableSIMDUTF16BEEncoder);
+          !self()->comp()->getOptions()->getOption(TR_DisableSIMDUTF16BEEncoder);
    }
 
 

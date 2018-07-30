@@ -2017,7 +2017,7 @@ TR_RegisterAssignerState::createDependenciesFromRegisterState(TR_OutlinedInstruc
 
    numDeps += _spilledRegistersList->size();
 
-   if (comp->getOption(TR_TraceNonLinearRegisterAssigner))
+   if (comp->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
       {
       traceMsg(comp, "createDependenciesFromRegisterState : %d live registers: %d assigned, %d spilled\n",
          numDeps,
@@ -2057,7 +2057,7 @@ TR_RegisterAssignerState::createDependenciesFromRegisterState(TR_OutlinedInstruc
                      {
                      virtReg->decTotalUseCount((*iter)->useCount);
 
-                     if (comp->getOption(TR_TraceNonLinearRegisterAssigner))
+                     if (comp->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
                         {
                         traceMsg(comp, "Adjusting up register use counts of reg %p (fuc=%d:tuc=%d:mergeFuc=%d) by %d\n",
                         		(*iter)->virtReg, (*iter)->virtReg->getFutureUseCount(), (*iter)->virtReg->getTotalUseCount(), (*iter)->mergeFuc, (*iter)->useCount);
@@ -2078,7 +2078,7 @@ TR_RegisterAssignerState::createDependenciesFromRegisterState(TR_OutlinedInstruc
          //
          virtReg->incFutureUseCount();
 
-         if (comp->getOption(TR_TraceNonLinearRegisterAssigner))
+         if (comp->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
             {
             traceMsg(comp, "   create ASSIGNED dependency: virtual %p -> %s\n",
                virtReg,
@@ -2102,7 +2102,7 @@ TR_RegisterAssignerState::createDependenciesFromRegisterState(TR_OutlinedInstruc
       //
       (*iter)->incFutureUseCount();
 
-      if (comp->getOption(TR_TraceNonLinearRegisterAssigner))
+      if (comp->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
          {
          traceMsg(comp, "   create SPILLED dependency: virtual %p -> backing storage %p\n",
         		 *iter,
@@ -2178,7 +2178,7 @@ void TR_RegisterAssignerState::dump()
    {
    TR::Compilation *comp = _machine->cg()->comp();
 
-   if (comp->getOption(TR_TraceNonLinearRegisterAssigner))
+   if (comp->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
       {
       traceMsg(comp, "\nREGISTER ASSIGNER STATE\n=======================\n\nAssigned Live Registers:\n");
 
@@ -2209,7 +2209,7 @@ void OMR::X86::Machine::adjustRegisterUseCountsUp(TR::list<OMR::RegisterUsage*> 
    TR::Compilation *comp = self()->cg()->comp();
    for(auto iter = rul->begin(); iter != rul->end(); ++iter)
       {
-      if (comp->getOption(TR_TraceNonLinearRegisterAssigner))
+      if (comp->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
          {
          traceMsg(comp, "Adjusting UP register use counts of reg %p (fuc=%d:tuc=%d:adjustFuture=%d) by %d -> ",
         		 (*iter)->virtReg, (*iter)->virtReg->getFutureUseCount(), (*iter)->virtReg->getTotalUseCount(), adjustFuture, (*iter)->useCount);
@@ -2220,7 +2220,7 @@ void OMR::X86::Machine::adjustRegisterUseCountsUp(TR::list<OMR::RegisterUsage*> 
       if (adjustFuture)
     	  (*iter)->virtReg->incFutureUseCount((*iter)->useCount);
 
-      if (comp->getOption(TR_TraceNonLinearRegisterAssigner))
+      if (comp->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
          {
          traceMsg(comp, "(fuc=%d:tuc=%d)\n", (*iter)->virtReg->getFutureUseCount(), (*iter)->virtReg->getTotalUseCount());
          }
@@ -2235,7 +2235,7 @@ void OMR::X86::Machine::adjustRegisterUseCountsDown(TR::list<OMR::RegisterUsage*
 
    for(auto iter = rul->begin(); iter != rul->end(); ++iter)
       {
-      if (comp->getOption(TR_TraceNonLinearRegisterAssigner))
+      if (comp->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
          {
          traceMsg(comp, "Adjusting DOWN register use counts of reg %p (fuc=%d:tuc=%d:adjustFuture=%d) by %d -> ",
         		 (*iter)->virtReg, (*iter)->virtReg->getFutureUseCount(), (*iter)->virtReg->getTotalUseCount(), adjustFuture, (*iter)->useCount);
@@ -2246,7 +2246,7 @@ void OMR::X86::Machine::adjustRegisterUseCountsDown(TR::list<OMR::RegisterUsage*
       if (adjustFuture)
     	  (*iter)->virtReg->decFutureUseCount((*iter)->useCount);
 
-      if (comp->getOption(TR_TraceNonLinearRegisterAssigner))
+      if (comp->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
          {
          traceMsg(comp, "(fuc=%d:tuc=%d)\n", (*iter)->virtReg->getFutureUseCount(), (*iter)->virtReg->getTotalUseCount());
          }

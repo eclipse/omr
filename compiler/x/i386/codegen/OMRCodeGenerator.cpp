@@ -76,7 +76,7 @@ OMR::X86::I386::CodeGenerator::CodeGenerator() :
 
    if (TR::Compiler->target.isWindows())
       {
-      if (self()->comp()->getOption(TR_DisableTraps))
+      if (self()->comp()->getOptions()->getOption(TR_DisableTraps))
          {
          _numberBytesReadInaccessible = 0;
          _numberBytesWriteInaccessible = 0;
@@ -109,7 +109,7 @@ OMR::X86::I386::CodeGenerator::CodeGenerator() :
       }
    else if (TR::Compiler->target.isLinux())
       {
-      if (self()->comp()->getOption(TR_DisableTraps))
+      if (self()->comp()->getOptions()->getOption(TR_DisableTraps))
          {
          _numberBytesReadInaccessible = 0;
          _numberBytesWriteInaccessible = 0;
@@ -168,7 +168,7 @@ OMR::X86::I386::CodeGenerator::pickRegister(
       TR_GlobalRegisterNumber &highRegisterNumber,
       TR_LinkHead<TR_RegisterCandidate> *candidates)
    {
-   if (!self()->comp()->getOption(TR_DisableRegisterPressureSimulation))
+   if (!self()->comp()->getOptions()->getOption(TR_DisableRegisterPressureSimulation))
       {
       if (self()->comp()->getOption(TR_AssignEveryGlobalRegister))
          {

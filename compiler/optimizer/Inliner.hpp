@@ -586,7 +586,7 @@ class OMR_InlinerPolicy : public TR::OptimizationPolicy, public OMR_InlinerHelpe
       virtual int32_t getInitialBytecodeSize(TR_ResolvedMethod *feMethod, TR::ResolvedMethodSymbol * methodSymbol, TR::Compilation *comp);
       virtual bool tryToInline(TR_CallTarget *, TR_CallStack *, bool);
       virtual bool inlineMethodEvenForColdBlocks(TR_ResolvedMethod *method);
-      bool aggressiveSmallAppOpts() { return comp()->getOption(TR_AggressiveOpts); }
+      bool aggressiveSmallAppOpts() { return TR::Options::getCmdLineOptions()->getOption(TR_AggressiveOpts); }
       virtual bool willBeInlinedInCodeGen(TR::RecognizedMethod method);
       virtual bool canInlineMethodWhileInstrumenting(TR_ResolvedMethod *method);
 

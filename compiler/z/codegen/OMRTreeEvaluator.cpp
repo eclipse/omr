@@ -4497,7 +4497,7 @@ checkForCandidateBlockForConditionalLoadAndStores(TR::Node* node, TR::CodeGenera
       return NULL;
 
    TR::Compilation *comp = cg->comp();
-   bool noSTOC = comp->getOption(TR_DisableStoreOnCondition);
+   bool noSTOC = comp->getOptions()->getOption(TR_DisableStoreOnCondition);
 
    // Check the nodes within the candidate block to ensure they can all be changed to conditoional loads and stores
    for (TR::TreeTop *tt = candidateBlock->getEntry(); tt != candidateBlock->getExit(); tt = tt->getNextTreeTop())
@@ -11428,7 +11428,7 @@ OMR::Z::TreeEvaluator::treetopEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          {
          case TR::aiadd:
             {
-            if (comp->getOption(TR_TraceCG))
+            if (comp->getOptions()->getOption(TR_TraceCG))
                {
                traceMsg(comp, " found %s [%p] with ref count 1 under treetop, avoiding evaluation into register.\n",
                         node->getFirstChild()->getOpCode().getName(), node->getFirstChild());
