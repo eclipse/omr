@@ -402,6 +402,7 @@ public:
 	};
 	ScavengerScanOrdering scavengerScanOrdering; /**< scan ordering in Scavenger */
 #if defined(OMR_GC_MODRON_SCAVENGER)
+	uintptr_t deferMaxDepth;
 	uintptr_t scvTenureRatioHigh;
 	uintptr_t scvTenureRatioLow;
 	uintptr_t scvTenureFixedTenureAge; /**< The tenure age to use for the Fixed scavenger tenure strategy. */
@@ -1338,6 +1339,7 @@ public:
 		, scavengerScanOrdering(OMR_GC_SCAVENGER_SCANORDERING_HIERARCHICAL)
 #endif /* OMR_GC_MODRON_SCAVENGER || OMR_GC_VLHGC */
 #if defined(OMR_GC_MODRON_SCAVENGER)
+		, deferMaxDepth(2)
 		, scvTenureRatioHigh(J9_SCV_TENURE_RATIO_HIGH)
 		, scvTenureRatioLow(J9_SCV_TENURE_RATIO_LOW)
 		, scvTenureFixedTenureAge(OBJECT_HEADER_AGE_MAX)

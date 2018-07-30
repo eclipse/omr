@@ -57,6 +57,7 @@
 #include "Base.hpp"
 #include "ObjectIteratorState.hpp"
 
+class MM_CopyScanCacheStandard;
 /**
  * @todo Provide class documentation
  * @ingroup GC_Base_Core
@@ -67,6 +68,7 @@ class MM_CopyScanCache : public MM_Base {
 private:
 protected:
 public:
+	MM_CopyScanCacheStandard* nextDefer; //Temp: TODO - look into using something for stack pointer
 	MM_CopyScanCache* next;
 	uintptr_t flags;
 	bool _hasPartiallyScannedObject; /**< whether the current object been scanned is partially scanned */

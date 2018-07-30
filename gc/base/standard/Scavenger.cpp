@@ -127,6 +127,7 @@ extern "C" {
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
 }
 
+static const bool printStatements = false;
 
 uintptr_t
 MM_Scavenger::getVMStateID()
@@ -457,7 +458,6 @@ MM_Scavenger::scavenge(MM_EnvironmentBase *envBase)
 
 	/* remove all scan caches temporary allocated in Heap */
 	_scavengeCacheFreeList.removeAllHeapAllocatedChunks(env);
-
 	Assert_MM_true(_scavengeCacheFreeList.areAllCachesReturned());
 	Assert_MM_true(0 == _cachedEntryCount);
 }
@@ -1812,8 +1812,13 @@ MM_Scavenger::getNextScanCache(MM_EnvironmentStandard *env)
 
 	cache = env->_deferredScanCache;
 	if (NULL != cache) {
+		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 		/* there is deferred scanning to do from partial depth first scanning */
-		env->_deferredScanCache = NULL;
+		env->_deferredScanCache = cache->nextDefer;
+		cache->nextDefer = NULL;
+		env->_deferredScanDepth--;
+		if(printStatements)omrtty_printf("{SCAV: POP Defer Cache [_deferredScanDepth: %i]}\n", env->_deferredScanDepth);
+		Assert_MM_true(env->_deferredScanDepth >= 0);
 		return cache;
 	}
 
@@ -1995,13 +2000,17 @@ nextCache:
 				 */
 				scanCache->flags &= ~OMR_SCAVENGER_CACHE_TYPE_SCAN;
 				if (!(scanCache->flags & OMR_SCAVENGER_CACHE_TYPE_COPY)) {
-					if (NULL == env->_deferredScanCache) {
-						env->_deferredScanCache = scanCache;
+					OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+					if (env->_deferredScanDepth < _extensions->deferMaxDepth) {
+						if(printStatements)omrtty_printf("{SCAV: env->_deferredScanDepth = %i < 2 - call deferScan}\n", env->_deferredScanDepth);
+						deferScan(env, scanCache);
 					} else {
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 						env->_scavengerStats._releaseScanListCount += 1;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 						addCacheEntryToScanListAndNotify(env, scanCache);
+						if(printStatements)omrtty_printf("{SCAV: env->_deferredScanDepth == %i - call releaseDeferCaches}\n", env->_deferredScanDepth);
+						releaseDeferCaches(env);
 					}
 				}
 				scanCache = nextScanCache;
@@ -2018,6 +2027,50 @@ nextCache:
 	scanCache->flags &= ~OMR_SCAVENGER_CACHE_TYPE_SCAN;
 	/* Done with the cache - build a free list entry in the hole, release the cache to the free list (if not used), and continue */
 	flushCache(env, scanCache);
+}
+
+void
+MM_Scavenger::deferScan(MM_EnvironmentStandard *env, MM_CopyScanCacheStandard *newDeferEntry){
+
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
+	env->_deferredScanDepth++;
+	Assert_MM_true(env->_deferredScanDepth <= _extensions->deferMaxDepth);
+
+	if(env->_deferredScanCache == NULL){
+		if(printStatements)omrtty_printf("{SCAV: Push Defer Cache [_deferredScanDepth: %i (should be 1)]}\n", env->_deferredScanDepth);
+		Assert_MM_true(env->_deferredScanDepth == 1);
+		env->_deferredScanCache = newDeferEntry;
+		Assert_MM_true(env->_deferredScanCache->nextDefer == NULL);
+	}
+	else{
+		Assert_MM_true(env->_deferredScanDepth >= 1);
+		if(printStatements)omrtty_printf("{SCAV: Push Defer Cache [_deferredScanDepth: %i]}\n", env->_deferredScanDepth);
+		newDeferEntry->nextDefer = env->_deferredScanCache;
+		env->_deferredScanCache = newDeferEntry;
+	}
+}
+
+void
+MM_Scavenger::releaseDeferCaches(MM_EnvironmentStandard *env){
+
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
+	Assert_MM_true(env->_deferredScanCache != NULL);
+
+	while(NULL != env->_deferredScanCache){
+		env->_deferredScanDepth--;
+		if(printStatements)omrtty_printf("{SCAV: releaseDeferCaches [_deferredScanDepth: %i]}\n", env->_deferredScanDepth);
+		MM_CopyScanCacheStandard *temp = env->_deferredScanCache->nextDefer;
+		env->_deferredScanCache->nextDefer = NULL;
+		addCacheEntryToScanListAndNotify(env, env->_deferredScanCache);
+		env->_deferredScanCache = temp;
+#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
+		env->_scavengerStats._releaseScanListCount += 1;
+#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
+	}
+
+	Assert_MM_true(env->_deferredScanDepth == 0);
 }
 
 bool
@@ -3149,11 +3202,7 @@ MM_Scavenger::aliasToCopyCache(MM_EnvironmentStandard *env, GC_SlotObject *scann
 		/* If there are threads waiting and this thread has a deferredScanCache push
 		 * it to the scanCache to make work for the stalled threads.
 		 */
-#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-		env->_scavengerStats._releaseScanListCount += 1;
-#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
-		addCacheEntryToScanListAndNotify(env, env->_deferredScanCache);
-		env->_deferredScanCache = NULL;
+		releaseDeferCaches(env);
 	}
 	return NULL;
 }

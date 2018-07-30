@@ -289,7 +289,9 @@ public:
 
 	void completeScanCache(MM_EnvironmentStandard *env, MM_CopyScanCacheStandard* scanCache);
 	void incrementalScanCacheBySlot(MM_EnvironmentStandard *env, MM_CopyScanCacheStandard* scanCache);
-
+	
+	MMINLINE void deferScan(MM_EnvironmentStandard *env, MM_CopyScanCacheStandard *deferEntry);
+	MMINLINE void releaseDeferCaches(MM_EnvironmentStandard *env);
 	MMINLINE MM_CopyScanCacheStandard *aliasToCopyCache(MM_EnvironmentStandard *env, GC_SlotObject *scannedSlot, MM_CopyScanCacheStandard* scanCache, MM_CopyScanCacheStandard* copyCache);
 	MMINLINE uintptr_t scanCacheDistanceMetric(MM_CopyScanCacheStandard* cache, GC_SlotObject *scanSlot);
 	MMINLINE uintptr_t copyCacheDistanceMetric(MM_CopyScanCacheStandard* cache);
