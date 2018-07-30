@@ -17267,7 +17267,7 @@ TR::Node * arraysetSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier
 TR::Node *bitOpMemSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    simplifyChildren(node, block, s);
-   if (s->comp()->getOption(TR_ScalarizeSSOps))
+   if (s->comp()->getOptions()->getOption(TR_ScalarizeSSOps))
       {
       }
    return node;

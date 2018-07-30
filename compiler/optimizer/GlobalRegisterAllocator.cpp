@@ -3687,7 +3687,7 @@ TR_GlobalRegisterAllocator::findLoopsAndCorrespondingAutos(TR_StructureSubGraphN
          TR_BitVector *symsThatShouldBeAssignedInCurrentLoop = NULL;
 
          bool excludeInvariantsEnabled = comp()->cg()->excludeInvariantsFromGRAEnabled() &&
-                                        (!comp()->getOption(TR_DisableRXusage));
+                                        (!comp()->getOptions()->getOption(TR_DisableRXusage));
 
          if (excludeInvariantsEnabled)
             {
@@ -4817,7 +4817,7 @@ TR_LiveRangeSplitter::TR_LiveRangeSplitter(TR::OptimizationManager *manager)
 
 int32_t TR_LiveRangeSplitter::perform()
    {
-   if (!comp()->getOption(TR_EnableRangeSplittingGRA))
+   if (!comp()->getOptions()->getOption(TR_EnableRangeSplittingGRA))
       return 0;
 
    if (!cg()->prepareForGRA())

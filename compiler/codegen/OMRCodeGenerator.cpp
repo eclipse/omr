@@ -277,7 +277,7 @@ OMR::CodeGenerator::CodeGenerator() :
    _machine = new (self()->trHeapMemory()) TR::Machine(self());
    _disableInternalPointers = self()->comp()->getOption(TR_MimicInterpreterFrameShape) ||
                                self()->comp()->getOptions()->realTimeGC() ||
-                               self()->comp()->getOption(TR_DisableInternalPointers);
+                               self()->comp()->getOptions()->getOption(TR_DisableInternalPointers);
 
    uintptrj_t maxSize = TR::Compiler->vm.getOverflowSafeAllocSize(self()->comp());
    int32_t i;
@@ -861,8 +861,8 @@ OMR::CodeGenerator::use64BitRegsOn32Bit()
       return false;
    else
       {
-      bool longReg = self()->comp()->getOption(TR_Enable64BitRegsOn32Bit);
-      bool longRegHeur = self()->comp()->getOption(TR_Enable64BitRegsOn32BitHeuristic);
+      bool longReg = self()->comp()->getOptions()->getOption(TR_Enable64BitRegsOn32Bit);
+      bool longRegHeur = self()->comp()->getOptions()->getOption(TR_Enable64BitRegsOn32BitHeuristic);
       bool use64BitRegs = (longReg && !longRegHeur && self()->comp()->getJittedMethodSymbol()->mayHaveLongOps()) ||
                           (longReg && longRegHeur && self()->comp()->useLongRegAllocation());
       return use64BitRegs;
@@ -1952,7 +1952,7 @@ OMR::CodeGenerator::convertMultiplyToShift(TR::Node * node)
 bool
 OMR::CodeGenerator::isMemoryUpdate(TR::Node *node)
    {
-   if (self()->comp()->getOption(TR_DisableDirectMemoryOps))
+   if (self()->comp()->getOptions()->getOption(TR_DisableDirectMemoryOps))
       return false;
 
    // See if the given store node can be represented by a direct operation on the
@@ -2933,7 +2933,7 @@ OMR::CodeGenerator::canNullChkBeImplicit(TR::Node *node)
 bool
 OMR::CodeGenerator::canNullChkBeImplicit(TR::Node *node, bool doChecks)
    {
-   if (self()->comp()->getOption(TR_DisableTraps))
+   if (self()->comp()->getOptions()->getOption(TR_DisableTraps))
       return false;
 
    if (!doChecks)

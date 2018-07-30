@@ -480,7 +480,7 @@ bool TR_OrderBlocks::candidateIsBetterSuccessorThanBest(TR::CFGEdge *candidateEd
 
    //if (!_superColdBlockOnly)
    //   {
-      if (!comp()->getOption(TR_DisableInterpreterProfiling))
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
          {
          if (candidateEdge->getFrequency() >= 0)
             {

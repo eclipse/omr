@@ -767,7 +767,7 @@ void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
                virtReg->setAssignedRegister(NULL);
                assignedReg->setState(TR::RealRegister::Free);
 
-               if (comp->getOption(TR_TraceNonLinearRegisterAssigner))
+               if (comp->getOptions()->getOption(TR_TraceNonLinearRegisterAssigner))
                   {
                   cg->traceRegisterAssignment("Generate reload of virt %s due to spillRegIndex dep at inst %p\n",comp->getDebug()->getName(virtReg),currentInstruction);
                   cg->traceRAInstruction(inst);
