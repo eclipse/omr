@@ -63,7 +63,8 @@ public:
 	void *_survivorTLHRemainderTop;
 
 	uintptr_t _deferredScanDepth;
-
+	uintptr_t _maxDeferred;
+	
 protected:
 
 private:
@@ -98,6 +99,7 @@ public:
 		,_survivorTLHRemainderBase(NULL)
 		,_survivorTLHRemainderTop(NULL)
 		,_deferredScanDepth(0)
+		,_maxDeferred(0)
 	{
 		_typeId = __FUNCTION__;
 	}

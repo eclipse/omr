@@ -1814,12 +1814,23 @@ MM_Scavenger::getNextScanCache(MM_EnvironmentStandard *env)
 	if (NULL != cache) {
 		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 		/* there is deferred scanning to do from partial depth first scanning */
+		env->_deferredScanDepth--;
+
+		if(env->_deferredScanDepth == 0)
+			Assert_MM_true(env->_deferredScanCache == getLastDeferCache(env));
+
+
+
 		env->_deferredScanCache = cache->nextDefer;
 		cache->nextDefer = NULL;
-		env->_deferredScanDepth--;
+
 		if(printStatements)omrtty_printf("{SCAV: POP Defer Cache [_deferredScanDepth: %i]}\n", env->_deferredScanDepth);
 		Assert_MM_true(env->_deferredScanDepth >= 0);
+
 		return cache;
+	}
+	else{
+		Assert_MM_true(env->_deferredScanDepth == 0 && getLastDeferCache(env) == NULL);
 	}
 
 	cache = env->_deferredCopyCache;
@@ -2005,12 +2016,18 @@ nextCache:
 						if(printStatements)omrtty_printf("{SCAV: env->_deferredScanDepth = %i < 2 - call deferScan}\n", env->_deferredScanDepth);
 						deferScan(env, scanCache);
 					} else {
+						/* Our stack is full, release the tail of the defer stack to global Q
+						 * and push the scanCache onto the Defer Cache.
+						 */
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 						env->_scavengerStats._releaseScanListCount += 1;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
-						addCacheEntryToScanListAndNotify(env, scanCache);
-						if(printStatements)omrtty_printf("{SCAV: env->_deferredScanDepth == %i - call releaseDeferCaches}\n", env->_deferredScanDepth);
-						releaseDeferCaches(env);
+						MM_CopyScanCacheStandard *temp = getLastDeferCache(env);
+						MM_CopyScanCacheStandard *lastCache = popLastDeferCache(env);
+						Assert_MM_true(lastCache == temp);
+						Assert_MM_true(lastCache != NULL);
+						addCacheEntryToScanListAndNotify(env, lastCache);
+						deferScan(env, scanCache);
 					}
 				}
 				scanCache = nextScanCache;
@@ -2029,22 +2046,79 @@ nextCache:
 	flushCache(env, scanCache);
 }
 
+MM_CopyScanCacheStandard*
+MM_Scavenger::getLastDeferCache(MM_EnvironmentStandard *env){
+
+	if(env->_deferredScanCache == NULL)
+		return NULL;
+
+	MM_CopyScanCacheStandard *temp = env->_deferredScanCache;
+
+	while(NULL != temp->nextDefer){
+		temp = temp->nextDefer;
+	}
+
+	Assert_MM_true(temp->nextDefer == NULL);
+
+	return temp;
+}
+
+MM_CopyScanCacheStandard*
+MM_Scavenger::popLastDeferCache(MM_EnvironmentStandard *env){
+
+	MM_CopyScanCacheStandard *temp = env->_deferredScanCache;
+	MM_CopyScanCacheStandard *lastDeferCache = NULL;
+
+	Assert_MM_true(env->_deferredScanDepth == _extensions->deferMaxDepth);
+
+
+	if(env->_deferredScanDepth == 1){
+		env->_deferredScanDepth--;
+		Assert_MM_true(env->_deferredScanCache->nextDefer == NULL);
+		env->_deferredScanCache = NULL;
+		return temp;
+	}
+
+	while (NULL != temp->nextDefer->nextDefer){
+		temp = temp->nextDefer;
+	}
+
+	lastDeferCache = temp->nextDefer;
+	temp->nextDefer = NULL;
+
+	env->_deferredScanDepth--;
+
+
+
+	return lastDeferCache;
+}
+
 void
 MM_Scavenger::deferScan(MM_EnvironmentStandard *env, MM_CopyScanCacheStandard *newDeferEntry){
 
 	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
 	env->_deferredScanDepth++;
+
+	if(env->_deferredScanDepth > env->_maxDeferred){
+		 env->_maxDeferred = env->_deferredScanDepth;
+		omrtty_printf("{SCAV: NEW MAX IS SET: %i}\n", env->_maxDeferred);
+	}
+
+
 	Assert_MM_true(env->_deferredScanDepth <= _extensions->deferMaxDepth);
 
 	if(env->_deferredScanCache == NULL){
 		if(printStatements)omrtty_printf("{SCAV: Push Defer Cache [_deferredScanDepth: %i (should be 1)]}\n", env->_deferredScanDepth);
 		Assert_MM_true(env->_deferredScanDepth == 1);
+		Assert_MM_true(getLastDeferCache(env) == NULL);
+		Assert_MM_true(newDeferEntry->nextDefer == NULL);
 		env->_deferredScanCache = newDeferEntry;
-		Assert_MM_true(env->_deferredScanCache->nextDefer == NULL);
 	}
 	else{
 		Assert_MM_true(env->_deferredScanDepth >= 1);
+		Assert_MM_true(getLastDeferCache(env) != NULL);
+		Assert_MM_true(newDeferEntry->nextDefer == NULL);
 		if(printStatements)omrtty_printf("{SCAV: Push Defer Cache [_deferredScanDepth: %i]}\n", env->_deferredScanDepth);
 		newDeferEntry->nextDefer = env->_deferredScanCache;
 		env->_deferredScanCache = newDeferEntry;
@@ -2069,6 +2143,8 @@ MM_Scavenger::releaseDeferCaches(MM_EnvironmentStandard *env){
 		env->_scavengerStats._releaseScanListCount += 1;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 	}
+
+	Assert_MM_true(getLastDeferCache(env) == NULL);
 
 	Assert_MM_true(env->_deferredScanDepth == 0);
 }
