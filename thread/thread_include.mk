@@ -38,6 +38,7 @@ OBJECTS :=\
   omrthreadinspect \
   omrthreadmem \
   omrthreadnuma \
+  omrthreadrtm \
   omrthreadpriority \
   omrthreadtls \
   priority \

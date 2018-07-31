@@ -59,6 +59,10 @@ omrthread_spinlock_acquire(omrthread_t self, omrthread_monitor_t monitor)
 	uintptr_t newState = J9THREAD_MONITOR_SPINLOCK_OWNED;
 	omrthread_library_t const lib = self->library;
 
+	if (TRUE == startTransaction(monitor, self)) {
+		return 1;
+	}
+
 #if defined(OMR_THR_JLM)
 	J9ThreadMonitorTracing *tracing = NULL;
 	if (OMR_ARE_ALL_BITS_SET(lib->flags, J9THREAD_LIB_FLAG_JLM_ENABLED)) {

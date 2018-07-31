@@ -151,6 +151,7 @@ typedef struct J9ThreadLibrary {
 #if defined(OSX)
 	clock_serv_t clockService;
 #endif /* defined(OSX) */
+	uintptr_t transactionRetryCount;
 } J9ThreadLibrary;
 
 /*
