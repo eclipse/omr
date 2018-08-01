@@ -4017,6 +4017,10 @@ omrthread_monitor_try_enter_using_threadId(omrthread_monitor_t monitor, omrthrea
 	lockAcquired = MONITOR_TRY_LOCK(monitor);
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
+	if (1 == lockAcquired) {
+	   return 0;
+   }
+
 	if (0 == lockAcquired) {
 		ASSERT(NULL == monitor->owner);
 		ASSERT(0 == monitor->count);
@@ -4111,6 +4115,10 @@ omrthread_monitor_exit_using_threadId(omrthread_monitor_t monitor, omrthread_t t
 static intptr_t
 monitor_exit(omrthread_t self, omrthread_monitor_t monitor)
 {
+	if (TRUE == endTransaction(monitor)) {
+		return 0;
+	}
+
 	ASSERT(monitor);
 	ASSERT(self);
 	ASSERT(0 == self->monitor);

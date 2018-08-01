@@ -1411,6 +1411,14 @@ omrthread_numa_get_node_affinity(omrthread_t thread, uintptr_t *numaNodes, uintp
 void
 omrthread_numa_set_enabled(BOOLEAN enabled);
 
+/* -------------- omrthreadrtm.c ------------------- */
+
+BOOLEAN
+startTransaction(omrthread_monitor_t monitor, omrthread_t self);
+
+BOOLEAN
+endTransaction(omrthread_monitor_t monitor);
+
 /* -------------- rasthrsup.c ------------------- */
 /**
  * @brief
