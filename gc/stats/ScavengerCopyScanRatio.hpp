@@ -102,6 +102,7 @@ public:
 		uint64_t lists;		/* number of nonempty scan lists */
 		uint64_t caches;	/* number of caches in scan queues */
 		uint64_t time;		/* timestamp of most recent sample included in this record */
+		uint64_t deferDepth;		/* timestamp of most recent sample included in this record */
 	} UpdateHistory;
 
 
@@ -225,12 +226,12 @@ public:
 	 * @param cachesQueued total number of items in scan queue lists
 	 */
 	MMINLINE void 
-	majorUpdate(MM_EnvironmentBase* env, uint64_t updateResult, uintptr_t nonEmptyScanLists, uintptr_t cachesQueued) {
+	majorUpdate(MM_EnvironmentBase* env, uint64_t updateResult, uintptr_t nonEmptyScanLists, uintptr_t cachesQueued, uintptr_t deferDepth) {
 		if (0 == (SCAVENGER_COUNTER_OVERFLOW & updateResult)) {
 			/* no overflow so latch updateResult into _accumulatedSamples and record the update */
 			MM_AtomicOperations::setU64(&_accumulatedSamples, updateResult);
 			_scalingUpdateCount += 1;
-			_threadCount = record(env, nonEmptyScanLists, cachesQueued);
+			_threadCount = record(env, nonEmptyScanLists, cachesQueued, deferDepth);
 		} else {
 			/* one or more counters overflowed so discard this update */
 			_overflowCount += 1;
@@ -386,7 +387,7 @@ private:
 
 	MMINLINE uint64_t updates(uint64_t samples) { return samples & SCAVENGER_SLOTS_UPDATE_MASK; }
 
-	uintptr_t record(MM_EnvironmentBase* env, uintptr_t nonEmptyScanLists, uintptr_t cachesQueued);
+	uintptr_t record(MM_EnvironmentBase* env, uintptr_t nonEmptyScanLists, uintptr_t cachesQueued, uintptr_t deferDepth);
 
 	void failedUpdate(MM_EnvironmentBase* env, uint64_t copied, uint64_t scanned);
 };

@@ -47,7 +47,7 @@ MM_ScavengerCopyScanRatio::reset(MM_EnvironmentBase* env, bool resetHistory)
 }
 
 uintptr_t
-MM_ScavengerCopyScanRatio::record(MM_EnvironmentBase* env, uintptr_t nonEmptyScanLists, uintptr_t cachesQueued)
+MM_ScavengerCopyScanRatio::record(MM_EnvironmentBase* env, uintptr_t nonEmptyScanLists, uintptr_t cachesQueued, uintptr_t deferDepth)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 	if (SCAVENGER_UPDATE_HISTORY_SIZE <= _historyTableIndex) {
@@ -65,6 +65,7 @@ MM_ScavengerCopyScanRatio::record(MM_EnvironmentBase* env, uintptr_t nonEmptySca
 			prev->threads += tail->threads;
 			prev->lists += tail->lists;
 			prev->caches += tail->caches;
+			prev->deferDepth += tail->deferDepth;
 			prev->time = tail->time;
 			if (prev > head) {
 				memcpy(head, prev, sizeof(UpdateHistory));
@@ -89,6 +90,7 @@ MM_ScavengerCopyScanRatio::record(MM_EnvironmentBase* env, uintptr_t nonEmptySca
 	historyRecord->threads += threadCount;
 	historyRecord->lists += nonEmptyScanLists;
 	historyRecord->caches += cachesQueued;
+	historyRecord->deferDepth += deferDepth;
 	historyRecord->time = omrtime_hires_clock();
 
 	/* advance table index if current record is maxed out */

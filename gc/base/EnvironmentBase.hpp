@@ -113,6 +113,7 @@ protected:
 #endif /* OMR_GC_SEGREGATED_HEAP */
 
 public:
+	uintptr_t _deferredScanDepth;
 	/**
 	 * Codes used to identify attached VM threads.
 	 *
@@ -612,6 +613,7 @@ public:
 		,_regionLocalFree(NULL)
 		,_regionLocalFull(NULL)
 #endif /* OMR_GC_SEGREGATED_HEAP */
+		,_deferredScanDepth(0)
 		,_objectAllocationInterface(NULL)
 		,_workStack()
 		,_threadType(MUTATOR_THREAD)
@@ -660,6 +662,7 @@ public:
 		,_regionLocalFree(NULL)
 		,_regionLocalFull(NULL)
 #endif /* OMR_GC_SEGREGATED_HEAP */
+		,_deferredScanDepth(0)
 		,_objectAllocationInterface(NULL)
 		,_workStack()
 		,_threadType(MUTATOR_THREAD)

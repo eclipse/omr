@@ -422,6 +422,7 @@ void
 MM_Scavenger::workerSetupForGC(MM_EnvironmentStandard *env)
 {
 	clearThreadGCStats(env, true);
+	env->_maxDeferred = 0;
 
 	/* Clear local language-specific stats */
 	_cli->scavenger_workerSetupForGC_clearEnvironmentLangStats(env);
@@ -1598,7 +1599,7 @@ MM_Scavenger::updateCopyScanCounts(MM_EnvironmentBase* env, uint64_t slotsScanne
 	env->_scavengerStats._slotsCopied += slotsCopied;
 	uint64_t updateResult = _extensions->copyScanRatio.update(env, &(env->_scavengerStats._slotsScanned), &(env->_scavengerStats._slotsCopied), _waitingCount);
 	if (0 != updateResult) {
-		_extensions->copyScanRatio.majorUpdate(env, updateResult, _cachedEntryCount, _scavengeCacheScanList.getApproximateEntryCount());
+		_extensions->copyScanRatio.majorUpdate(env, updateResult, _cachedEntryCount, _scavengeCacheScanList.getApproximateEntryCount(), env->_deferredScanDepth);
 	}
 }
 
