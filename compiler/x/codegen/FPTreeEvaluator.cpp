@@ -563,6 +563,224 @@ TR::Register *OMR::X86::TreeEvaluator::fpReturnEvaluator(TR::Node *node, TR::Cod
    return NULL;
    }
 
+static bool canUseNodeForFusedMultiply(TR::Node *node, TR::Compilation * comp)
+   {
+   if(node->getOpCode().isMul() && 
+      node->getRegister() == NULL &&
+      node->getReferenceCount() < 2)
+      return true;
+   else
+      return false;
+}
+
+/** Generate a fused multiply add from the tree (A * B) + C, where addNode is the + node
+ * and mulNode the * subtree.
+ */
+static bool generateFusedMultiplyAdd(TR::Node *addNode, TR_ILOpCodes opCode, TR::CodeGenerator *cg)
+   {
+   TR::Node *mulNode = addNode->getFirstChild();
+   TR::Node *addChild = addNode->getSecondChild();
+
+   if (!canUseNodeForFusedMultiply(mulNode, cg->comp()))
+      {
+      addChild = addNode->getFirstChild();
+      mulNode  = addNode->getSecondChild();
+      }
+
+   if (!(addNode->getType().isFloatingPoint() && 
+         cg->supportsFusedMultiplyAdd() &&
+         TR::Compiler->arith.permitsFusedMultiplyAdd()))
+      return false;
+   
+   if (!performTransformation(cg->comp(), "O^O Changing [%p] to fused multiply and add (FMA) operation \n", addNode))
+      return false;   
+
+   TR_ASSERT(mulNode->getReferenceCount() < 2,"Mul node 0x%p reference count %d >= 2\n",mulNode,mulNode->getReferenceCount());
+   TR_ASSERT(mulNode->getOpCode().isMul(),"Unexpected op!=mul %p\n",mulNode);
+
+   // of the form (firstChild * secondChild) + thirdChild.
+   // Appropriate form according to fmsub, etc
+   TR::Node *firstChild = mulNode->getChild(0);
+   TR::Node *secondChild = mulNode->getChild(1);
+   TR::Node *thirdChild = addChild;
+
+   int preferredChildInTargetRegister = -1;
+   int preferredChildFromMemory = -1;
+
+   TR_X86OpCodes opcodeList[6][8] = 
+     {{VFMADD132SSRegRegReg, VFMSUB132SSRegRegReg, VFNMADD132SSRegRegReg, VFNMSUB132SSRegRegReg, VFMADD132SDRegRegReg, VFMSUB132SDRegRegReg, VFNMADD132SDRegRegReg, VFNMSUB132SDRegRegReg},
+      {VFMADD132SSRegRegMem, VFMSUB132SSRegRegMem, VFNMADD132SSRegRegMem, VFNMSUB132SSRegRegMem, VFMADD132SDRegRegMem, VFMSUB132SDRegRegMem, VFNMADD132SDRegRegMem, VFNMSUB132SDRegRegMem},
+      {VFMADD213SSRegRegReg, VFMSUB213SSRegRegReg, VFNMADD213SSRegRegReg, VFNMSUB213SSRegRegReg, VFMADD213SDRegRegReg, VFMSUB213SDRegRegReg, VFNMADD213SDRegRegReg, VFNMSUB213SDRegRegReg},
+      {VFMADD213SSRegRegMem, VFMSUB213SSRegRegMem, VFNMADD213SSRegRegMem, VFNMSUB213SSRegRegMem, VFMADD213SDRegRegMem, VFMSUB213SDRegRegMem, VFNMADD213SDRegRegMem, VFNMSUB213SDRegRegMem},
+      {VFMADD231SSRegRegReg, VFMSUB231SSRegRegReg, VFNMADD231SSRegRegReg, VFNMSUB231SSRegRegReg, VFMADD231SDRegRegReg, VFMSUB231SDRegRegReg, VFNMADD231SDRegRegReg, VFNMSUB231SDRegRegReg},
+      {VFMADD231SSRegRegMem, VFMSUB231SSRegRegMem, VFNMADD231SSRegRegMem, VFNMSUB231SSRegRegMem, VFMADD231SDRegRegMem, VFMSUB231SDRegRegMem, VFNMADD231SDRegRegMem, VFNMSUB231SDRegRegMem}};
+
+   if (firstChild->getReferenceCount() == 1)
+      {
+      if (firstChild->getRegister() != NULL)
+         {
+         // firstChild => xmm1
+         preferredChildInTargetRegister = 0;
+         }
+      else if (firstChild->getOpCode().isLoadVar())
+         {
+         // firstChild => xmm3/m32/m64
+         preferredChildFromMemory = 0;
+         }
+      }
+
+   if (secondChild->getReferenceCount() == 1)
+      {
+      if (preferredChildInTargetRegister == -1 && secondChild->getRegister() != NULL)
+         {
+         // secondChild => xmm1
+         preferredChildInTargetRegister = 1;
+         }
+      else if (preferredChildFromMemory == -1 && secondChild->getOpCode().isLoadVar())
+         {
+         // secondChild => xmm3/m32/m64
+         preferredChildFromMemory = 1;
+         }
+      }
+
+   if (thirdChild->getReferenceCount() == 1)
+      {
+      if (preferredChildInTargetRegister == -1 && thirdChild->getRegister() != NULL)
+         {
+         // thirdChild => xmm1
+         preferredChildInTargetRegister = 2;
+         }
+      else if (preferredChildFromMemory == -1 && thirdChild->getOpCode().isLoadVar())
+         {
+         // thirdChild => xmm3/m32/64
+         preferredChildFromMemory = 2;
+         }
+      }
+
+   int opcodeVariant, source1Choice, source2Choice, source3Choice;
+
+   if (preferredChildFromMemory != -1 && preferredChildInTargetRegister != -1)
+      {
+      source1Choice = preferredChildInTargetRegister;
+      source2Choice = 3 - preferredChildFromMemory - preferredChildInTargetRegister;
+      source3Choice = preferredChildFromMemory;
+
+      if (preferredChildFromMemory == 2)
+         opcodeVariant = 3;
+      else if (preferredChildInTargetRegister == 2)
+         opcodeVariant = 5;
+      else
+         opcodeVariant = 1;
+      }
+   else if (preferredChildFromMemory != -1)
+      {
+      source3Choice = preferredChildFromMemory;
+
+      if (preferredChildFromMemory == 2)
+         {
+         opcodeVariant = 3;
+         source1Choice = 0;
+         source2Choice = 1;
+         }
+      else
+         {
+         opcodeVariant = 1;
+         source1Choice = 1 - preferredChildFromMemory;
+         source2Choice = 2;
+         }
+      }
+   else if (preferredChildInTargetRegister != -1)
+      {
+      source1Choice = preferredChildInTargetRegister;
+      if (preferredChildInTargetRegister == 2)
+         {
+         opcodeVariant = 4;
+         source2Choice = 0;
+         source3Choice = 1;
+         }
+      else
+         {
+         opcodeVariant = 0;
+         source2Choice = 2;
+         source3Choice = 1 - preferredChildInTargetRegister;
+         }
+      }
+   else
+      {
+      opcodeVariant = 0;
+      source1Choice = 0;
+      source2Choice = 2;
+      source3Choice = 1;
+      }
+
+   int ilVariant;
+
+   switch (opCode)
+      {
+      case TR::fmadd:
+         ilVariant = 0;
+         break;
+      case TR::fmsub:
+         ilVariant = 1;
+         break;
+      case TR::fnmadd:
+         ilVariant = 2;
+         break;
+      case TR::fnmsub:
+         ilVariant = 3;
+         break;
+      case TR::dmadd:
+         ilVariant = 4;
+         break;
+      case TR::dmsub:
+         ilVariant = 5;
+         break;
+      case TR::dnmadd:
+         ilVariant = 6;
+         break;
+      case TR::dnmsub:
+         ilVariant = 7;
+         break;
+      }
+
+   TR::Register *source1Register, *source2Register;
+
+   if (source1Choice < 2)
+      source1Register = cg->evaluate(mulNode->getChild(source1Choice));
+   else
+      source1Register = cg->evaluate(addChild);
+   
+   if (source2Choice < 2)
+      source2Register = cg->evaluate(mulNode->getChild(source2Choice));
+   else
+      source2Register = cg->evaluate(addChild);
+   
+   TR::Register *trgRegister = source1Register;
+
+   if (source3Choice < 2)
+      {
+      if (opcodeVariant % 2 == 0)
+         generateRegRegRegInstruction(opcodeList[opcodeVariant][ilVariant], addNode, trgRegister, source2Register, cg->evaluate(mulNode->getChild(source3Choice)), cg);
+      else 
+         generateRegRegMemInstruction(opcodeList[opcodeVariant][ilVariant], addNode, trgRegister, source2Register, generateX86MemoryReference(mulNode->getChild(source3Choice), cg), cg);
+      }
+   else
+      {
+      if (opcodeVariant % 2 == 0)
+         generateRegRegRegInstruction(opcodeList[opcodeVariant][ilVariant], addNode, trgRegister, source2Register, cg->evaluate(addChild), cg);
+      else 
+         generateRegRegMemInstruction(opcodeList[opcodeVariant][ilVariant], addNode, trgRegister, source2Register, generateX86MemoryReference(addChild, cg), cg);
+      }
+
+   addNode->setRegister(trgRegister);
+   cg->decReferenceCount(mulNode->getChild(0));
+   cg->decReferenceCount(mulNode->getChild(1));
+   cg->decReferenceCount(mulNode);
+   cg->decReferenceCount(addChild);
+
+   return true;
+   }
+
 TR::Register *OMR::X86::TreeEvaluator::fpBinaryArithmeticEvaluator(TR::Node          *node,
                                                               bool              isFloat,
                                                               TR::CodeGenerator *cg)
@@ -695,22 +913,82 @@ TR::Register *OMR::X86::TreeEvaluator::fpUnaryMaskEvaluator(TR::Node *node, TR::
 
 TR::Register *OMR::X86::TreeEvaluator::faddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::fpBinaryArithmeticEvaluator(node, true, cg);
+   TR::Compilation *comp = cg->comp();
+   TR::Register *result = NULL;
+   if (((canUseNodeForFusedMultiply(node->getFirstChild(), comp) && (node->getSecondChild()->getReferenceCount() == 1)) ||
+        (canUseNodeForFusedMultiply(node->getSecondChild(), comp) && (node->getFirstChild()->getReferenceCount() == 1))) &&
+         generateFusedMultiplyAdd(node, TR::fmadd, cg))
+      {
+      result = node->getRegister();
+      }
+   else
+      {
+      result = TR::TreeEvaluator::fpBinaryArithmeticEvaluator(node, true, cg);
+      }
+   return result;
    }
 
 TR::Register *OMR::X86::TreeEvaluator::daddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::fpBinaryArithmeticEvaluator(node, false, cg);
+   TR::Compilation *comp = cg->comp();
+   TR::Register *result = NULL;
+   if (((canUseNodeForFusedMultiply(node->getFirstChild(), comp) && (node->getSecondChild()->getReferenceCount() == 1)) ||
+        (canUseNodeForFusedMultiply(node->getSecondChild(), comp) && (node->getFirstChild()->getReferenceCount() == 1))) &&
+         generateFusedMultiplyAdd(node, TR::dmadd, cg))
+      {
+      result = node->getRegister();
+      }
+   else
+      {
+      result = TR::TreeEvaluator::fpBinaryArithmeticEvaluator(node, false, cg);
+      }
+   return result;
    }
 
 TR::Register *OMR::X86::TreeEvaluator::fsubEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::fpBinaryArithmeticEvaluator(node, true, cg);
+   TR::Compilation *comp = cg->comp();
+   TR::Register *result = NULL;
+   if (canUseNodeForFusedMultiply(node->getFirstChild(), comp) &&
+       node->getSecondChild()->getReferenceCount() == 1 &&
+       generateFusedMultiplyAdd(node, TR::fmsub, cg))
+      {
+      result = node->getRegister();
+      }
+   else if (canUseNodeForFusedMultiply(node->getSecondChild(), comp) &&
+            node->getFirstChild()->getReferenceCount() == 1 &&
+            generateFusedMultiplyAdd(node, TR::fnmadd, cg))
+      {
+      result = node->getRegister();
+      }
+   else
+      {
+      result = TR::TreeEvaluator::fpBinaryArithmeticEvaluator(node, true, cg);
+      }
+   return result;
    }
 
 TR::Register *OMR::X86::TreeEvaluator::dsubEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::fpBinaryArithmeticEvaluator(node, false, cg);
+   TR::Compilation *comp = cg->comp();
+   TR::Register *result = NULL;
+   if (canUseNodeForFusedMultiply(node->getFirstChild(), comp) &&
+       node->getSecondChild()->getReferenceCount() == 1 &&
+       generateFusedMultiplyAdd(node, TR::dmsub, cg))
+      {
+      result = node->getRegister();
+      }
+   else if (canUseNodeForFusedMultiply(node->getSecondChild(), comp) &&
+            node->getFirstChild()->getReferenceCount() == 1 &&
+            generateFusedMultiplyAdd(node, TR::dnmadd, cg))
+      {
+      result = node->getRegister();
+      }
+   else
+      {
+      result = TR::TreeEvaluator::fpBinaryArithmeticEvaluator(node, false, cg);
+      }
+   return result;
    }
 
 TR::Register *OMR::X86::TreeEvaluator::fmulEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -838,6 +1116,32 @@ TR::Register *OMR::X86::TreeEvaluator::commonFPRemEvaluator(TR::Node          *n
       }
 
    return dividendReg;
+   }
+
+TR::Register *OMR::X86::TreeEvaluator::fpNegEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR::Register *result = NULL;
+   TR::Node *child = node->getFirstChild();
+   if (child->getOpCodeValue() == TR::fadd &&
+       ((canUseNodeForFusedMultiply(child->getFirstChild(), comp) && (child->getSecondChild()->getReferenceCount() == 1)) ||
+       (canUseNodeForFusedMultiply(child->getSecondChild(), comp) && (child->getFirstChild()->getReferenceCount() == 1))) &&
+       generateFusedMultiplyAdd(child, TR::fnmsub, cg))
+      {
+      result = node->getRegister();
+      }
+   else if (child->getOpCodeValue() == TR::dadd &&
+            ((canUseNodeForFusedMultiply(child->getFirstChild(), comp) && (child->getSecondChild()->getReferenceCount() == 1)) ||
+            (canUseNodeForFusedMultiply(child->getSecondChild(), comp) && (child->getFirstChild()->getReferenceCount() == 1))) &&
+            generateFusedMultiplyAdd(child, TR::dnmsub, cg))
+      {
+      result = node->getRegister();
+      }
+   else
+      {
+      result = TR::TreeEvaluator::fpUnaryMaskEvaluator(node, cg);
+      }
+   return result;
    }
 
 // also handles b2f, bu2f, s2f, su2f evaluators

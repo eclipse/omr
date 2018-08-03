@@ -433,6 +433,8 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    bool internalPointerSupportImplemented() {return false;} // no virt
 
    bool supportsSinglePrecisionSQRT() {return true;}
+   bool supportsFusedMultiplyAdd() {return _targetProcessorInfo.supportsFMA() && _targetProcessorInfo.supportsAVX() && getSupportsVectorRegisters();}
+   bool supportsNegativeFusedMultiplyAdd() {return _targetProcessorInfo.supportsFMA() && _targetProcessorInfo.supportsAVX() && getSupportsVectorRegisters();}
 
    bool supportsComplexAddressing();
 

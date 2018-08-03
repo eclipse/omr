@@ -281,6 +281,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *fpUnaryMaskEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fpReturnEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fpRemEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fpNegEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    // routines for floating point values that can fit in one GPR
    static TR::Register *floatingPointStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);

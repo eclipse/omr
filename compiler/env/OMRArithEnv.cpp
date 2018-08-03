@@ -151,3 +151,9 @@ OMR::ArithEnv::longMultiplyLong(int64_t a, int64_t b)
    {
    return a * b;
    }
+
+bool
+OMR::ArithEnv::permitsFusedMultiplyAdd()
+    {
+    return true;
+    }
