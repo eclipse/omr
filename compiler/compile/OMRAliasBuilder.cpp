@@ -55,6 +55,7 @@ OMR::AliasBuilder::AliasBuilder(TR::SymbolReferenceTable *symRefTab, size_t size
      _refinedNonIntPrimitiveArrayShadows(1, c->trMemory(), heapAlloc, growable),
      _refinedAddressArrayShadows(1, c->trMemory(), heapAlloc, growable),
      _refinedIntArrayShadows(1, c->trMemory(), heapAlloc, growable),
+     _addressTakenAutos(1, c->trMemory(), heapAlloc, growable),
      _litPoolGenericIntShadowHasBeenCreated(false),
      _userFieldMethodDefAliases(c->trMemory(), _numNonUserFieldClasses),
      _conservativeGenericIntShadowAliasingRequired(false),
