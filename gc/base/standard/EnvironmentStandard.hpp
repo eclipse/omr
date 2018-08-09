@@ -63,6 +63,10 @@ public:
 	void *_survivorTLHRemainderTop;
 
 	
+	MM_CopyScanCacheStandard **_deferredStack;
+	int _stackTop;
+	int _stackBottom;
+
 	uintptr_t _maxDeferred;
 	
 protected:
@@ -98,6 +102,9 @@ public:
 		,_loaAllocation(false)
 		,_survivorTLHRemainderBase(NULL)
 		,_survivorTLHRemainderTop(NULL)
+		,_deferredStack(NULL)
+		,_stackTop(0)
+		,_stackBottom(0)
 		,_maxDeferred(0)
 	{
 		_typeId = __FUNCTION__;

@@ -1339,7 +1339,7 @@ public:
 		, scavengerScanOrdering(OMR_GC_SCAVENGER_SCANORDERING_HIERARCHICAL)
 #endif /* OMR_GC_MODRON_SCAVENGER || OMR_GC_VLHGC */
 #if defined(OMR_GC_MODRON_SCAVENGER)
-		, deferMaxDepth(2000)
+		, deferMaxDepth(12)
 		, scvTenureRatioHigh(J9_SCV_TENURE_RATIO_HIGH)
 		, scvTenureRatioLow(J9_SCV_TENURE_RATIO_LOW)
 		, scvTenureFixedTenureAge(OBJECT_HEADER_AGE_MAX)
