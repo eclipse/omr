@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -234,6 +234,76 @@ public:
    void repositoryCodeCacheCreated();
    void registerCompiledMethod(const char *sig, uint8_t *startPC, uint32_t codeSize);
    void registerStaticRelocation(const TR::StaticRelocation &relocation);
+
+   /**
+    * Code Cache Access
+    *
+    * Accessing the internals of a code cache during compilation may require
+    * special setup surrounding the manipulation of the code cache.  Two
+    * symmetric functions (`prepareToAccessCodeCache` and
+    * `prepareToEgressCodeCache`) are provided to handle any actions that must
+    * be completed prior to accessing the internals of a code cache and once
+    * access to those internals are complete.
+    *
+    * The functions are generally invoked as a pair and the actions undertaken
+    * by each are specific to a language runtime.  Any data that must be
+    * captured during `prepareToAccessCodeCache` for use during the matching
+    * egress function can be collected in a structure whose type is a
+    * project-provided subclass of `OMR::CodeCacheAccessMetaData`.  This structure
+    * is passed as a parameter to both functions.
+    *
+    * An example use case for these functions is that some language environments
+    * may need to guard access to the code cache with a monitor because of the
+    * possibility of multiple compilation threads competing for the resource.
+    * Capturing the execution state prior to accessing the code cache and then
+    * restoring it when egressed is important for consistency.
+    *
+    */
+
+   /**
+    * @brief Performs project-specific actions prior to accessing code cache internals
+    *
+    * @details
+    *   Consuming projects can override this function to provide any
+    *   functionality needed prior to accessing code cache internals.  For
+    *   example, acquiring a monitor to guard access to the code cache. A call
+    *   to this function is usually paired with a call to
+    *   `prepareToEgressCodeCache` when access is complete.
+    *
+    * @param[in] comp : TR::Compilation object for the current compilation
+    * @param[in] metaData : OMR::CodeCacheAccessMetaData or subclass that holds
+    *               any data that must be maintained prior to accessing the code
+    *               cache that may be relevant when egressing code cache
+    *               internals. For example, the existing state of a monitor
+    *               prior to accessing a code cache that must be restored upon
+    *               egressing. The use of this parameter is project-specific.
+    */
+   void prepareToAccessCodeCache(TR::Compilation *comp, OMR::CodeCacheAccessMetaData &metaData)
+      {
+      }
+
+   /**
+    * @brief Performs project-specific actions upon egressing code cache internals
+    *
+    * @details
+    *    Consuming projects can override this function to provide any
+    *    functionality needed once access to code cache internals is no longer
+    *    required.  For example, releasing a monitor to guard access to the code
+    *    cache.  A call to this function is usually paired with a prior call to
+    *    `prepareToAccessCodeCache`.
+    *
+    * @param[in] comp : TR::Compilation object for the current compilation
+    * @param[in] metaData : OMR::CodeCacheAccessMetaData or subclass that holds any
+    *               data that may have been collected prior to accessing the
+    *               code cache internals (through a call to
+    *               `prepareToAccessCodeCache`).  For example, the existing state
+    *               of a monitor prior to accessing a code cache that must be
+    *               restored upon egressing.  The use of this parameter is
+    *               project-specific.
+    */
+   void prepareToEgressCodeCache(TR::Compilation *comp, OMR::CodeCacheAccessMetaData &metaData)
+      {
+      }
 
 protected:
 

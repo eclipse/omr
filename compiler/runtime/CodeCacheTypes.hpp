@@ -171,6 +171,19 @@ struct FaintCacheBlock
 
 #define addFreeBlock2(start, end) addFreeBlock2WithCallSite((start), (end), __FILE__, __LINE__)
 
+
+/**
+ * @struct
+ * @brief Projects should optionally subclass this struct with any data they
+ *        need to maintain between acquiring access to a code cache and
+ *        releasing access to a code cache.  For example, the state of a monitor
+ *        prior to entering the code code cache that must be restored upon
+ *        completing access.
+ */
+struct CodeCacheAccessMetaData
+   {
+   };
+
 }
 
-#endif // CODECAHCETYPES_INCL
+#endif // CODECACHETYPES_INCL
