@@ -204,8 +204,6 @@ void TR_X86ProcessorInfo::initialize()
 void
 OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    {
-
-   bool supportsSSE2 = false;
    _targetProcessorInfo.initialize();
 
    // Pick a padding table
@@ -222,14 +220,6 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
       _paddingTable = &_old32BitPaddingTable; // Unknown 32-bit target
    else
       _paddingTable = &_K8PaddingTable; // Unknown 64-bit target
-
-   // Determine whether or not x87 or SSE should be used for floating point.
-   //
-
-#if defined(TR_TARGET_X86) && !defined(J9HAMMER)
-   if (_targetProcessorInfo.supportsSSE2() && TR::Compiler->target.cpu.testOSForSSESupport())
-      supportsSSE2 = true;
-#endif // defined(TR_TARGET_X86) && !defined(J9HAMMER)
 
    if (_targetProcessorInfo.supportsTM() && !comp->getOption(TR_DisableTM))
       {
@@ -248,17 +238,10 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
          }
       }
 
-   if (TR::Compiler->target.is64Bit()
-#if defined(TR_TARGET_X86) && !defined(J9HAMMER)
-       || supportsSSE2
-#endif
-      )
-      {
-      self()->setUseSSEForSinglePrecision();
-      self()->setUseSSEForDoublePrecision();
-      self()->setSupportsAutoSIMD();
-      self()->setSupportsJavaFloatSemantics();
-      }
+   self()->setUseSSEForSinglePrecision();
+   self()->setUseSSEForDoublePrecision();
+   self()->setSupportsAutoSIMD();
+   self()->setSupportsJavaFloatSemantics();
 
    // Choose the best XMM double precision load instruction for the target architecture.
    //
@@ -275,17 +258,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
          }
       }
 
-#if defined(TR_TARGET_X86) && !defined(J9HAMMER)
-   // Determine if software prefetches are supported.
-   //
-   // 32-bit platforms must check the processor and OS.
-   // 64-bit platforms unconditionally support prefetching.
-   //
-   if (_targetProcessorInfo.supportsSSE() && TR::Compiler->target.cpu.testOSForSSESupport())
-#endif // defined(TR_TARGET_X86) && !defined(J9HAMMER)
-      {
-      self()->setTargetSupportsSoftwarePrefetches();
-      }
+   self()->setTargetSupportsSoftwarePrefetches();
 
    // Enable software prefetch of the TLH and configure the TLH prefetching
    // geometry.

@@ -62,8 +62,6 @@ public:
    uint32_t getX86ProcessorFeatureFlags2();
    uint32_t getX86ProcessorFeatureFlags8();
 
-   bool testOSForSSESupport();
-
    /**
     * @brief Answers whether the distance between a target and source address
     *        is within the reachable RIP displacement range.
@@ -79,7 +77,6 @@ public:
       {
       return targetAddress == sourceAddress + (int32_t)(targetAddress - sourceAddress);
       }
-
    };
 
 }

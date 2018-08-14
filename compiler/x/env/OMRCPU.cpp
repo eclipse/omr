@@ -106,9 +106,3 @@ OMR::X86::CPU::getX86ProcessorFeatureFlags8()
    {
    return self()->queryX86TargetCPUID()->_featureFlags8;
    }
-
-bool
-OMR::X86::CPU::testOSForSSESupport()
-   {
-   return false;
-   }
