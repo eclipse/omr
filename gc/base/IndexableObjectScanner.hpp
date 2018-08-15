@@ -117,7 +117,13 @@ public:
 	/**
 	 * Get the maximal index for the array. Array indices are assumed to be zero-based.
 	 */
-	MMINLINE uintptr_t getIndexableRange() { return _limitPtr - _basePtr; }
+	MMINLINE uintptr_t getIndexableRange() { return (uintptr_t)(_limitPtr - _basePtr); }
+
+	/**
+	 * Get the number of bytes in array data. This excludes the array header and any other material contiguous with but
+	 * not overlapping array data.
+	 */
+	uintptr_t getDataSizeInBytes() { return sizeof(fomrobject_t) * getIndexableRange(); }
 
 	/**
 	 * Reset truncated end pointer to force scanning to limit pointer (scan to end of indexable object). This

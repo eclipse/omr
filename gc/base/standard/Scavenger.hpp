@@ -37,6 +37,7 @@
 #include "CopyScanCacheList.hpp"
 #include "CopyScanCacheStandard.hpp"
 #include "CycleState.hpp"
+#include "EvacuatorController.hpp"
 #include "GCExtensionsBase.hpp"
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 #include "MasterGCThread.hpp"
@@ -61,31 +62,17 @@ struct OMR_VM;
  * @todo Provide class documentation
  * @ingroup GC_Modron_Standard
  */
-class MM_Scavenger : public MM_Collector
+class MM_Scavenger : public MM_EvacuatorController
 {
 	/*
 	 * Data members
 	 */
 private:
 	MM_CollectorLanguageInterface *_cli;
-	const uintptr_t _objectAlignmentInBytes;	/**< Run-time objects alignment in bytes */
 	bool _isRememberedSetInOverflowAtTheBeginning; /**< Cached RS Overflow flag at the beginning of the scavenge */
-
-	MM_GCExtensionsBase *_extensions;
-	
-	MM_Dispatcher *_dispatcher;
 
 	volatile uintptr_t _doneIndex; /**< sequence ID of completeScan loop, which we may have a few during one GC cycle */
 
-	MM_MemorySubSpaceSemiSpace *_activeSubSpace; /**< top level new subspace subject to GC */
-	MM_MemorySubSpace *_evacuateMemorySubSpace; /**< cached pointer to evacuate subspace within active subspace */
-	MM_MemorySubSpace *_survivorMemorySubSpace; /**< cached pointer to survivor subspace within active subspace */
-	MM_MemorySubSpace *_tenureMemorySubSpace;
-
-	void *_evacuateSpaceBase, *_evacuateSpaceTop;	/**< cached base and top heap pointers within evacuate subspace */
-	void *_survivorSpaceBase, *_survivorSpaceTop;	/**< cached base and top heap pointers within survivor subspace */
-
-	uintptr_t _tenureMask; /**< A bit mask indicating which generations should be tenured on scavenge. */
 	bool _expandFailed;
 	bool _failedTenureThresholdReached;
 	uintptr_t _failedTenureLargestObject;
@@ -740,26 +727,15 @@ public:
 	virtual void heapReconfigured(MM_EnvironmentBase *env);
 
 	MM_Scavenger(MM_EnvironmentBase *env, MM_HeapRegionManager *regionManager) :
-		MM_Collector()
+		MM_EvacuatorController(env)
 		, _cli(env->getExtensions()->collectorLanguageInterface)
-		, _objectAlignmentInBytes(env->getObjectAlignmentInBytes())
 		, _isRememberedSetInOverflowAtTheBeginning(false)
-		, _extensions(env->getExtensions())
-		, _dispatcher(_extensions->dispatcher)
 		, _doneIndex(0)
-		, _activeSubSpace(NULL)
-		, _evacuateMemorySubSpace(NULL)
-		, _survivorMemorySubSpace(NULL)
-		, _tenureMemorySubSpace(NULL)
-		, _evacuateSpaceBase(NULL)
-		, _evacuateSpaceTop(NULL)
-		, _survivorSpaceBase(NULL)
-		, _survivorSpaceTop(NULL)
-		, _tenureMask(0)
 		, _expandFailed(false)
 		, _failedTenureThresholdReached(false)
 		, _countSinceForcingGlobalGC(0)
 		, _expandTenureOnFailedAllocate(true)
+		, _cachedSemiSpaceResizableFlag(true)
 		, _minTenureFailureSize(UDATA_MAX)
 		, _minSemiSpaceFailureSize(UDATA_MAX)
 		, _cycleState()

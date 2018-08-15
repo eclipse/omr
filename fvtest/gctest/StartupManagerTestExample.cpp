@@ -85,14 +85,19 @@ MM_StartupManagerTestExample::parseLanguageOptions(MM_GCExtensionsBase *extensio
 				} else if (0 == strcmp(attr.name(), "gcthreadCount")) {
 					/* TODO: support multi-thread GC*/
 				} else if (0 == strcmp(attr.name(), "GCPolicy")) {
-					if (0 == j9_cmdla_stricmp(attr.value(), "gencon")) {
+					bool isGencon = (0 == j9_cmdla_stricmp(attr.value(), "gencon"));
+					bool isEvacuator = (0 == j9_cmdla_stricmp(attr.value(), "evacuator"));
 #if defined(OMR_GC_MODRON_SCAVENGER)
-						extensions->scavengerEnabled = true;
+					extensions->scavengerEnabled = isGencon | isEvacuator;
+					extensions->evacuatorEnabled = isEvacuator;
+					extensions->scavengerAlignHotFields &= !isEvacuator;
 #else
-						gcTestEnv->log(LEVEL_ERROR, "WARNING: GCPolicy=gencon ignored, requires OMR_GC_MODRON_SCAVENGER (see configure_common.mk)\n");
+					if (isGencon || isEvacuator) {
+						gcTestEnv->log(LEVEL_ERROR, "WARNING: GCPolicy ignored, gencon and evacuator policies require OMR_GC_MODRON_SCAVENGER (see configure_common.mk)\n");
+					}
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
-					} else  if (0 != j9_cmdla_stricmp(attr.value(), "optavgpause")) {
-						gcTestEnv->log(LEVEL_ERROR, "Failed: Unrecognized GC policy (expected gencon or optavgpause): %s\n", attr.value());
+					if (!isGencon && !isEvacuator && (0 != j9_cmdla_stricmp(attr.value(), "optavgpause"))) {
+						gcTestEnv->log(LEVEL_ERROR, "Failed: Unrecognized GC policy (expected gencon or evacuator or optavgpause): %s\n", attr.value());
 						result = false;
 					}
 				} else if (0 == strcmp(attr.name(), "concurrentMark")) {

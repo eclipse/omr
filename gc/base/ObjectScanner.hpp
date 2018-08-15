@@ -46,6 +46,11 @@
  * and allows scanning for most objects (<32/64 slots) to complete inline, without
  * requiring a virtual method call (getNextSlotMap()). Otherwise at least one such call
  * is required before getNextSlot() will return NULL.
+ *
+ * Note that this is a hot object, so field organization to maximize cache localization
+ * is important. The _scanMap, _scanPtr, and _slotObject fields the most frequently used
+ * and they are frequently used together, so they are grouped together at the head of the
+ * object.
  */
 class GC_ObjectScanner : public MM_BaseVirtual
 {
@@ -55,15 +60,15 @@ private:
 protected:
 	static const intptr_t _bitsPerScanMap = sizeof(uintptr_t) << 3;
 
-	omrobjectptr_t const _parentObjectPtr;	/**< Object being scanned */
 	uintptr_t _scanMap;						/**< Bit map of reference slots in object being scanned (32/64-bit window) */
+	fomrobject_t *_scanPtr;					/**< Pointer to base of object slots mapped by current _scanMap */
+	GC_SlotObject _slotObject;				/**< Create own SlotObject class to provide output */
 #if defined(OMR_GC_LEAF_BITS)
 	uintptr_t _leafMap;						/**< Bit map of reference slots in object that refernce leaf objects */
 #endif /* defined(OMR_GC_LEAF_BITS) */
-	fomrobject_t *_scanPtr;					/**< Pointer to base of object slots mapped by current _scanMap */
-	GC_SlotObject _slotObject;				/**< Create own SlotObject class to provide output */
 	uintptr_t _flags;						/**< Scavenger context flags (scanRoots, scanHeap, ...) */
 	uintptr_t _hotFieldsDescriptor;			/**< Hot fields descriptor for languages that support hot field tracking */
+	omrobjectptr_t const _parentObjectPtr;	/**< Object being scanned */
 	
 public:
 	/**
@@ -99,15 +104,15 @@ protected:
 	 */
 	GC_ObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t parentObjectPtr, fomrobject_t *scanPtr, uintptr_t scanMap, uintptr_t flags, uintptr_t hotFieldsDescriptor = 0)
 		: MM_BaseVirtual()
-		, _parentObjectPtr(parentObjectPtr)
 		, _scanMap(scanMap)
+		, _scanPtr(scanPtr)
+		, _slotObject(env->getOmrVM(), NULL)
 #if defined(OMR_GC_LEAF_BITS)
 		, _leafMap(0)
 #endif /* defined(OMR_GC_LEAF_BITS) */
-		, _scanPtr(scanPtr)
-		, _slotObject(env->getOmrVM(), NULL)
 		, _flags(flags | headObjectScanner)
 		, _hotFieldsDescriptor(hotFieldsDescriptor)
+		, _parentObjectPtr(parentObjectPtr)
 	{
 		_typeId = __FUNCTION__;
 	}
@@ -308,6 +313,8 @@ public:
 	MMINLINE void setNoMoreSlots() { _flags |= (uintptr_t)GC_ObjectScanner::noMoreSlots; }
 
 	MMINLINE bool hasMoreSlots() { return 0 == (GC_ObjectScanner::noMoreSlots & _flags); }
+
+	MMINLINE bool isEmpty() { return (0 == _scanMap) && !hasMoreSlots(); }
 
 	MMINLINE omrobjectptr_t const getParentObject() { return _parentObjectPtr; }
 

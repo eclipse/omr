@@ -38,6 +38,7 @@
 #include "SublistFragment.hpp"
 
 class MM_CopyScanCacheStandard;
+class MM_Evacuator;
 
 /**
  * @todo Provide class documentation
@@ -65,6 +66,7 @@ public:
 protected:
 
 private:
+	MM_Evacuator *_evacuator;
 	
 /* Functionality Section */
 public:
@@ -82,6 +84,9 @@ public:
 	MMINLINE static MM_EnvironmentStandard *getEnvironment(OMR_VMThread *omrVMThread) { return static_cast<MM_EnvironmentStandard*>(omrVMThread->_gcOmrVMThreadExtensions); }
 	MMINLINE static MM_EnvironmentStandard *getEnvironment(MM_EnvironmentBase *env) { return static_cast<MM_EnvironmentStandard*>(env); }
 
+	MMINLINE void setEvacuator(MM_Evacuator *evacuator) { _evacuator = evacuator; }
+	MMINLINE MM_Evacuator *getEvacuator() { return _evacuator; }
+
 	MM_EnvironmentStandard(OMR_VMThread *omrVMThread) :
 		MM_EnvironmentBase(omrVMThread)
 		,_survivorCopyScanCache(NULL)
@@ -95,6 +100,7 @@ public:
 		,_loaAllocation(false)
 		,_survivorTLHRemainderBase(NULL)
 		,_survivorTLHRemainderTop(NULL)
+		,_evacuator(NULL)
 	{
 		_typeId = __FUNCTION__;
 	}

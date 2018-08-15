@@ -68,6 +68,10 @@ add_library(omrgc STATIC
 	base/Dispatcher.cpp
 	base/EmptyListPopulator.cpp
 	base/EnvironmentBase.cpp
+	base/Evacuator.cpp
+	base/EvacuatorBase.cpp
+	base/EvacuatorController.cpp
+	base/EvacuatorParallelTask.cpp
 	base/Forge.cpp
 	base/GCCode.cpp
 	base/GCExtensionsBase.cpp

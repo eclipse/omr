@@ -1,0 +1,65 @@
+<?xml version="1.0" ?>
+<!--
+Copyright (c) 2016, 2016 IBM Corp. and others
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at http://eclipse.org/legal/epl-2.0
+or the Apache License, Version 2.0 which accompanies this distribution
+and is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following Secondary
+Licenses when the conditions for such availability set forth in the
+Eclipse Public License, v. 2.0 are satisfied: GNU General Public License,
+version 2 with the GNU Classpath Exception [1] and GNU General Public
+License, version 2 with the OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+<gc-config>
+	<option GCPolicy="evacuator" concurrentMark="true" verboseLog="VerboseGC-evacuator_large_GC" sizeUnit="MB" 
+			initialMemorySize="11" memoryMax="11" maxSizeDefaultMemorySpace="11" 
+			minNewSpaceSize="3" newSpaceSize="3" maxNewSpaceSize="3"
+			minOldSpaceSize="8" oldSpaceSize="8" maxOldSpaceSize="8" />
+	<allocation>
+		<garbagePolicy namePrefix="GAR" percentage="30" frequency="perRootStruct" structure="tree" />
+
+		<object namePrefix="objA" type="root" numOfFields="100"/>
+
+		<object namePrefix="objB" type="root" numOfFields="200" >
+			<object namePrefix="objC" type="normal" numOfFields="100" />
+			<object namePrefix="objD" type="normal" numOfFields="100" >
+				<object namePrefix="objE" type="normal" numOfFields="100" />
+			</object>
+		</object>
+
+		<object namePrefix="objF" type="root" numOfFields="100" >
+			<object namePrefix="objG" type="normal" numOfFields="500" >
+				<object namePrefix="objH" type="normal" numOfFields="100" />
+			</object>
+		</object>
+		
+		<object namePrefix="objI" type="root" numOfFields="100" breadth="2" depth="2" />
+
+		<object namePrefix="objJ" type="root" numOfFields="200" >
+
+			<object namePrefix="objK" type="normal" numOfFields="150,300,600" breadth="1,2" depth="4" />
+			
+			<object namePrefix="objL" type="normal" numOfFields="70,140,180" breadth="1" depth="4" />
+			
+			<object namePrefix="objM" type="normal" numOfFields="150,400,700" breadth="2" depth="10" />
+		</object>
+	</allocation>
+	<operation>
+		<systemCollect gcCode="3" />
+	</operation>
+	<verification>
+		<!--  [this test will only work if only system gc is executed -- otherwise it is ambiguous]
+												check if the size of the collected garbage objects is around 30% (25% to 35%) of the size of the normal objects  -->
+		<!--verboseGC xpathNodes="/verbosegc" xquery=" ((gc-end/mem-info/@free - gc-start/mem-info/@free) div (gc-end/mem-info/@total - gc-end/mem-info/@free) > 0.25)
+												and ((gc-end/mem-info/@free - gc-start/mem-info/@free) div (gc-end/mem-info/@total - gc-end/mem-info/@free) < 0.35)" -->
+	</verification>
+</gc-config>

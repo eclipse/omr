@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -131,6 +131,8 @@ public:
 	uint64_t _leafObjectCount;
 	uint64_t _copy_distance_counts[OMR_SCAVENGER_DISTANCE_BINS];
 	uint64_t _copy_cachesize_counts[OMR_SCAVENGER_CACHESIZE_BINS];
+	uint64_t _small_object_counts[OMR_SCAVENGER_DISTANCE_BINS+1];
+	uint64_t _large_object_counts[OMR_SCAVENGER_DISTANCE_BINS+1];
 	uint64_t _copy_cachesize_sum;
 
 	uint64_t _slotsCopied; /**< The number of slots copied by the thread since _slotsScanned was last sampled and reset */
@@ -194,17 +196,12 @@ public:
 	MMINLINE void
 	countCopyDistance(uintptr_t fromAddr, uintptr_t toAddr)
 	{
-		if (0 != fromAddr && 0 != toAddr) {
-			uintptr_t delta = fromAddr ^ toAddr;
-			uintptr_t bin = MM_Math::floorLog2(delta);
-			if (delta > ((uintptr_t)1 << bin)) {
-				bin += 1;
-			}
-			if (OMR_SCAVENGER_DISTANCE_BINS <= bin) {
-				bin = OMR_SCAVENGER_DISTANCE_BINS - 1;
-			}
-			_copy_distance_counts[bin] += 1;
+		uintptr_t delta = fromAddr ^ toAddr;
+		uintptr_t bin = MM_Math::floorLog2(delta);
+		if (OMR_SCAVENGER_DISTANCE_BINS <= bin) {
+			bin = OMR_SCAVENGER_DISTANCE_BINS - 1;
 		}
+		_copy_distance_counts[bin] += 1;
 	}
 
 	MMINLINE void
@@ -217,6 +214,18 @@ public:
 		}
 		_copy_cachesize_counts[binSlot] += 1;
 		_copy_cachesize_sum += copyCacheSize;
+	}
+
+	MMINLINE void
+	countObjectSize(uintptr_t objectSize)
+	{
+		if (256 >= objectSize) {
+			_small_object_counts[(OMR_MAX(8, objectSize) >> 3) - 1] += 1;
+			_small_object_counts[OMR_SCAVENGER_DISTANCE_BINS] += objectSize;
+		} else {
+			_large_object_counts[MM_Math::floorLog2(OMR_MIN(((uintptr_t)(1 << 31)), objectSize)) - 8] += 1;
+			_large_object_counts[OMR_SCAVENGER_DISTANCE_BINS] += objectSize;
+		}
 	}
 
 	void clear(bool firstIncrement);

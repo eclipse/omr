@@ -112,12 +112,11 @@ protected:
 	
 	virtual void setThreadInitializationComplete(MM_EnvironmentBase *env);
 	
-	uintptr_t adjustThreadCount(uintptr_t maxThreadCount);
-	
 public:
 	virtual bool startUpThreads();
 	virtual void shutDownThreads();
 	
+	uintptr_t adjustThreadCount(uintptr_t maxThreadCount);
 	MMINLINE virtual uintptr_t threadCount() { return _threadCount; }
 	MMINLINE virtual uintptr_t threadCountMaximum() { return _threadCountMaximum; }
 	MMINLINE omrthread_t* getThreadTable() { return _threadTable; }

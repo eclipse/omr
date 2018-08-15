@@ -31,6 +31,7 @@ target_sources(omr_example_gc_glue INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/CompactSchemeFixupObject.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ConcurrentMarkingDelegate.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/EnvironmentDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/EvacuatorDelegate.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/FrequentObjectsStats.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/GlobalCollectorDelegate.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/MarkingDelegate.cpp

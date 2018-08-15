@@ -518,6 +518,30 @@ public:
 	 *
 	 * @return The value at memory location <b>address</b> BEFORE the AND is completed
 	 */
+	VMINLINE static uint64_t
+	bitAndU64(volatile uint64_t *address, uint64_t mask)
+	{
+		/* Stop compiler optimizing away load of oldValue */
+		volatile uint64_t *localAddr = address;
+		uint64_t oldValue;
+
+		oldValue = (uint64_t)*localAddr;
+		while ((lockCompareExchangeU64(localAddr, oldValue, oldValue & mask)) != oldValue) {
+			oldValue = (uint64_t)*localAddr;
+		}
+		return oldValue;
+	}
+
+	/**
+	 * AND a mask with the value at a specific memory location as an atomic operation.
+	 * ANDs the value <b>mask</b> with the value stored at memory location pointed
+	 * to by <b>address</b>.
+	 *
+	 * @param address The memory location to be updated
+	 * @param mask The value to be added
+	 *
+	 * @return The value at memory location <b>address</b> BEFORE the AND is completed
+	 */
 	VMINLINE static uint32_t
 	bitAndU32(volatile uint32_t *address, uint32_t mask)
 	{
@@ -552,6 +576,54 @@ public:
 		oldValue = (uintptr_t)*localAddr;
 		while ((lockCompareExchange(localAddr, oldValue, oldValue | mask)) != oldValue) {
 			oldValue = (uintptr_t)*localAddr;
+		}
+		return oldValue;
+	}
+
+	/**
+	 * OR a mask with the value at a specific memory location as an atomic operation.
+	 * ORs the value <b>mask</b> with the value stored at memory location pointed
+	 * to by <b>address</b>.
+	 *
+	 * @param address The memory location to be updated
+	 * @param mask The value to be added
+	 *
+	 * @return The value at memory location <b>address</b> BEFORE the OR is completed
+	 */
+	VMINLINE static uint64_t
+	bitOrU64(volatile uint64_t *address, uint64_t mask)
+	{
+		/* Stop compiler optimizing away load of oldValue */
+		volatile uint64_t *localAddr = address;
+		uint64_t oldValue;
+
+		oldValue = (uint64_t)*localAddr;
+		while ((lockCompareExchangeU64(localAddr, oldValue, oldValue | mask)) != oldValue) {
+			oldValue = (uint64_t)*localAddr;
+		}
+		return oldValue;
+	}
+
+	/**
+	 * OR a mask with the value at a specific memory location as an atomic operation.
+	 * ORs the value <b>mask</b> with the value stored at memory location pointed
+	 * to by <b>address</b>.
+	 *
+	 * @param address The memory location to be updated
+	 * @param mask The value to be added
+	 *
+	 * @return The value at memory location <b>address</b> BEFORE the OR is completed
+	 */
+	VMINLINE static uint32_t
+	bitOrU32(volatile uint32_t *address, uint32_t mask)
+	{
+		/* Stop compiler optimizing away load of oldValue */
+		volatile uint32_t *localAddr = address;
+		uint32_t oldValue;
+
+		oldValue = (uint32_t)*localAddr;
+		while ((lockCompareExchangeU32(localAddr, oldValue, oldValue | mask)) != oldValue) {
+			oldValue = (uint32_t)*localAddr;
 		}
 		return oldValue;
 	}
