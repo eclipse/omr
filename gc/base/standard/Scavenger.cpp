@@ -300,12 +300,12 @@ MM_Scavenger::tearDown(MM_EnvironmentBase *env)
 		_freeCacheMonitor = NULL;
 	}
 
-	MM_EnvironmentStandard *envStandard = MM_EnvironmentStandard::getEnvironment(env);
+//	MM_EnvironmentStandard *envStandard = MM_EnvironmentStandard::getEnvironment(env);
 
-	if (NULL != envStandard->_deferredStack) {
-		envStandard->getForge()->free(envStandard->_deferredStack);
-		envStandard->_deferredStack = NULL;
-	}
+//	if (NULL != envStandard->_deferredStack) {
+//		envStandard->getForge()->free(envStandard->_deferredStack);
+//		envStandard->_deferredStack = NULL;
+//	}
 
 	J9HookInterface** mmOmrHooks = J9_HOOK_INTERFACE(_extensions->omrHookInterface);
 	/* Unregister hook for global GC end. */
@@ -1833,16 +1833,16 @@ MM_Scavenger::getNextScanCache(MM_EnvironmentStandard *env)
 	cache = env->_deferredScanCache;
 	if (NULL != cache) {
 		/* there is deferred scanning to do from partial depth first scanning */
-		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+		//OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
-		Assert_MM_true(env->_deferredStack[env->_stackTop] == env->_deferredScanCache);
-		Assert_MM_true(env->_stackTop >= 0 && env->_stackBottom >= 0);
+		//Assert_MM_true(env->_deferredStack[env->_stackTop] == env->_deferredScanCache);
+		//Assert_MM_true(env->_stackTop >= 0 && env->_stackBottom >= 0);
 
-		if(env->_stackTop == env->_stackBottom)
-			Assert_MM_true(env->_deferredScanDepth == 1);
+		//if(env->_stackTop == env->_stackBottom)
+		//	Assert_MM_true(env->_deferredScanDepth == 1);
 
-		if(env->_deferredScanDepth == 1)
-			Assert_MM_true(env->_stackTop == env->_stackBottom);
+		//if(env->_deferredScanDepth == 1)
+		//	Assert_MM_true(env->_stackTop == env->_stackBottom);
 
 		env->_deferredScanDepth--;
 
@@ -1851,39 +1851,39 @@ MM_Scavenger::getNextScanCache(MM_EnvironmentStandard *env)
 			env->_stackTop = env->_stackBottom = -1;
 			env->_deferredScanCache = NULL;
 		} else{
-			bool print = false;
+		//	bool print = false;
 			env->_deferredStack[env->_stackTop] = NULL;
 
-			if(env->_stackTop == 0 && printStatements){
-				omrtty_printf("{SCAV: BEFORE stackTop is %i]}\n", env->_stackTop);
-				print = true;
-			}
+		//	if(env->_stackTop == 0 && printStatements){
+		//		omrtty_printf("{SCAV: BEFORE stackTop is %i]}\n", env->_stackTop);
+		//		print = true;
+		//	}
 
 			env->_stackTop =  env->_stackTop > 0 ? --env->_stackTop :  _extensions->deferMaxDepth - 1;
 
 
-			if(print)
-				omrtty_printf("{SCAV: AFTER stackTop is %i]}\n", env->_stackTop);
+		//	if(print)
+		//		omrtty_printf("{SCAV: AFTER stackTop is %i]}\n", env->_stackTop);
 
-			if(printStatements) omrtty_printf("{SCAV: Depth != 0 - Defer Cache [_deferredScanDepth: %i, _scanTop %i _scanBottom %i]}\n", env->_deferredScanDepth, env->_stackTop, env->_stackBottom);
+		//	if(printStatements) omrtty_printf("{SCAV: Depth != 0 - Defer Cache [_deferredScanDepth: %i, _scanTop %i _scanBottom %i]}\n", env->_deferredScanDepth, env->_stackTop, env->_stackBottom);
 
-			Assert_MM_true(env->_deferredStack[env->_stackTop] != NULL);
+		//	Assert_MM_true(env->_deferredStack[env->_stackTop] != NULL);
 			env->_deferredScanCache =  env->_deferredStack[env->_stackTop];
-			Assert_MM_true(env->_deferredScanCache != NULL);
+		//	Assert_MM_true(env->_deferredScanCache != NULL);
 		}
 
-		if(env->_deferredScanDepth == 1)
-			Assert_MM_true(env->_stackTop == env->_stackBottom);
+		//if(env->_deferredScanDepth == 1)
+		//	Assert_MM_true(env->_stackTop == env->_stackBottom);
 
-		if(printStatements)omrtty_printf("{SCAV: POP Defer Cache [_deferredScanDepth: %i, _scanTop %i _scanBottom %i]}\n", env->_deferredScanDepth, env->_stackTop, env->_stackBottom);
+		//if(printStatements)omrtty_printf("{SCAV: POP Defer Cache [_deferredScanDepth: %i, _scanTop %i _scanBottom %i]}\n", env->_deferredScanDepth, env->_stackTop, env->_stackBottom);
 
-		Assert_MM_true(env->_deferredScanDepth >= 0);
+		//Assert_MM_true(env->_deferredScanDepth >= 0);
 
 		return cache;
 	}
-	else{
-		Assert_MM_true((env->_deferredScanDepth == 0) && (env->_stackTop == -1) && (env->_stackBottom == -1));
-	}
+	//else{
+		//Assert_MM_true((env->_deferredScanDepth == 0) && (env->_stackTop == -1) && (env->_stackBottom == -1));
+	//}
 
 	cache = env->_deferredCopyCache;
 	if (NULL != cache) {
@@ -2063,9 +2063,9 @@ nextCache:
 				 */
 				scanCache->flags &= ~OMR_SCAVENGER_CACHE_TYPE_SCAN;
 				if (!(scanCache->flags & OMR_SCAVENGER_CACHE_TYPE_COPY)) {
-					OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+					//OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 					if (env->_deferredScanDepth < _extensions->deferMaxDepth) {
-						if(printStatements)omrtty_printf("{SCAV: env->_deferredScanDepth = %i < %i - call deferScan}\n", env->_deferredScanDepth, _extensions->deferMaxDepth);
+						//if(printStatements)omrtty_printf("{SCAV: env->_deferredScanDepth = %i < %i - call deferScan}\n", env->_deferredScanDepth, _extensions->deferMaxDepth);
 						deferScan(env, scanCache);
 					} else {
 						/* Our stack is full, release the tail of the defer stack to global Q
@@ -2075,7 +2075,7 @@ nextCache:
 						env->_scavengerStats._releaseScanListCount += 1;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 						MM_CopyScanCacheStandard *lastCache = popLastDeferCache(env);
-						Assert_MM_true(lastCache != NULL);
+						//Assert_MM_true(lastCache != NULL);
 						addCacheEntryToScanListAndNotify(env, lastCache);
 						deferScan(env, scanCache);
 					}
@@ -2099,13 +2099,13 @@ nextCache:
 MM_CopyScanCacheStandard*
 MM_Scavenger::popLastDeferCache(MM_EnvironmentStandard *env){
 
-	Assert_MM_true(env->_stackBottom >= 0);
+	//Assert_MM_true(env->_stackBottom >= 0);
 
-	Assert_MM_true(env->_deferredStack[env->_stackTop] != NULL);
-	Assert_MM_true(env->_deferredStack[env->_stackBottom] != NULL);
+	//Assert_MM_true(env->_deferredStack[env->_stackTop] != NULL);
+	//Assert_MM_true(env->_deferredStack[env->_stackBottom] != NULL);
 
-	if(env->_deferredScanDepth == 1)
-		Assert_MM_true(env->_deferredStack[env->_stackBottom] == env->_deferredStack[env->_stackTop]);
+	//if(env->_deferredScanDepth == 1)
+	//	Assert_MM_true(env->_deferredStack[env->_stackBottom] == env->_deferredStack[env->_stackTop]);
 
 	MM_CopyScanCacheStandard *lastDeferCache = env->_deferredStack[env->_stackBottom];
 	env->_deferredStack[env->_stackBottom] = NULL;
@@ -2114,14 +2114,14 @@ MM_Scavenger::popLastDeferCache(MM_EnvironmentStandard *env){
 
 	env->_deferredScanDepth--;
 
-	if(env->_deferredScanDepth == 1)
-		Assert_MM_true(env->_stackBottom == env->_stackTop);
+	//if(env->_deferredScanDepth == 1)
+	//	Assert_MM_true(env->_stackBottom == env->_stackTop);
 
 	if(env->_deferredScanDepth == 0){
 		env->_stackBottom  = env->_stackTop = -1;
 		env->_deferredScanCache = NULL;
-	}else
-		Assert_MM_true(env->_deferredStack[env->_stackTop] == env->_deferredScanCache);
+	}//else
+		//Assert_MM_true(env->_deferredStack[env->_stackTop] == env->_deferredScanCache);
 
 
 
@@ -2130,74 +2130,69 @@ MM_Scavenger::popLastDeferCache(MM_EnvironmentStandard *env){
 
 void
 MM_Scavenger::deferScan(MM_EnvironmentStandard *env, MM_CopyScanCacheStandard *newDeferEntry){
-	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+	//OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
-	Assert_MM_true(env->_deferredScanDepth < _extensions->deferMaxDepth);
+	//Assert_MM_true(env->_deferredScanDepth < _extensions->deferMaxDepth);
 
 	env->_deferredScanDepth++;
 
-	if(env->_deferredScanDepth > env->_maxDeferred){
-		 env->_maxDeferred = env->_deferredScanDepth;
-		 if(printStatements) omrtty_printf("{SCAV: NEW MAX IS SET: %i}\n", env->_maxDeferred);
-	}
-
-	if(env->_stackTop >= 0) Assert_MM_true(env->_deferredStack[env->_stackTop] != NULL);
+//	if(env->_stackTop >= 0) Assert_MM_true(env->_deferredStack[env->_stackTop] != NULL);
 	env->_stackTop =  ++env->_stackTop % _extensions->deferMaxDepth;
-	Assert_MM_true(env->_stackTop != env->_stackBottom);
-	Assert_MM_true(env->_deferredStack[env->_stackTop] == NULL);
+//	Assert_MM_true(env->_stackTop != env->_stackBottom);
+//	Assert_MM_true(env->_deferredStack[env->_stackTop] == NULL);
 
 	env->_deferredStack[env->_stackTop] = newDeferEntry;
 	env->_deferredScanCache = env->_deferredStack[env->_stackTop];
 
 	if(env->_stackBottom == -1){ //we're pushing the first defer scan (i.e., the stack was empty)
 		env->_stackBottom = env->_stackTop;
-		Assert_MM_true(env->_stackBottom == 0);
-		Assert_MM_true(env->_stackTop == 0);
-		Assert_MM_true(env->_deferredScanDepth == 1);
+//		Assert_MM_true(env->_stackBottom == 0);
+//		Assert_MM_true(env->_stackTop == 0);
+//		Assert_MM_true(env->_deferredScanDepth == 1);
 	}
 
-	if(env->_deferredScanDepth == 1) Assert_MM_true((env->_stackBottom == 0) && (env->_stackTop == 0));
+//	if(env->_deferredScanDepth == 1) Assert_MM_true((env->_stackBottom == 0) && (env->_stackTop == 0));
 
-	if(printStatements) omrtty_printf("{SCAV: _stackTop: %i, _stackBottom: %i}\n", env->_stackTop, env->_stackBottom);
+//	if(printStatements) omrtty_printf("{SCAV: _stackTop: %i, _stackBottom: %i}\n", env->_stackTop, env->_stackBottom);
 
 }
 
 void
 MM_Scavenger::releaseDeferCaches(MM_EnvironmentStandard *env){
 
-	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+	//OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
-	Assert_MM_true(env->_deferredScanCache != NULL);
-	Assert_MM_true(env->_deferredScanDepth > 0);
-	Assert_MM_true(env->_deferredScanCache == env->_deferredStack[env->_stackTop]);
+	//Assert_MM_true(env->_deferredScanCache != NULL);
+	//Assert_MM_true(env->_deferredScanDepth > 0);
+	//Assert_MM_true(env->_deferredScanCache == env->_deferredStack[env->_stackTop]);
 
-	if(env->_deferredScanDepth == 1)
-			Assert_MM_true(env->_stackTop == env->_stackBottom);
+	//if(env->_deferredScanDepth == 1)
+	//		Assert_MM_true(env->_stackTop == env->_stackBottom);
 
 	uintptr_t temp = env->_deferredScanDepth;
 	for (uintptr_t count = 0; count < temp; count++) {
 		env->_deferredScanDepth--;
-		if(printStatements)omrtty_printf("{SCAV: releaseDeferCaches [_deferredScanDepth: %i]}\n", env->_deferredScanDepth);
-		Assert_MM_true(env->_deferredStack[env->_stackTop] != NULL);
+		//if(printStatements)omrtty_printf("{SCAV: releaseDeferCaches [_deferredScanDepth: %i]}\n", env->_deferredScanDepth);
+		//Assert_MM_true(env->_deferredStack[env->_stackTop] != NULL);
 		addCacheEntryToScanListAndNotify(env, env->_deferredStack[env->_stackTop]);
 		env->_deferredStack[env->_stackTop] = NULL;
 
-		if(env->_deferredScanDepth == 0)
-				Assert_MM_true(env->_stackTop == env->_stackBottom);
+		//if(env->_deferredScanDepth == 0)
+		//		Assert_MM_true(env->_stackTop == env->_stackBottom);
 
-		bool print = false;
-		if(env->_stackTop == 0 && printStatements){
-			omrtty_printf("{SCAV: BEFORE stackTop is %i]}\n", env->_stackTop);
-			print = true;
-		}
+		//bool print = false;
+		//if(env->_stackTop == 0 && printStatements){
+		//	omrtty_printf("{SCAV: BEFORE stackTop is %i]}\n", env->_stackTop);
+		//	print = true;
+		//}
 
 		env->_stackTop =  env->_stackTop > 0 ? --env->_stackTop :  _extensions->deferMaxDepth - 1;
 
-		if(print)
-			omrtty_printf("{SCAV: AFTER stackTop is %i]}\n", env->_stackTop);
+		//if(print)
+		//	omrtty_printf("{SCAV: AFTER stackTop is %i]}\n", env->_stackTop);
 
-		if(env->_deferredScanDepth == 1)
-			Assert_MM_true(env->_stackTop == env->_stackBottom);
+		//if(env->_deferredScanDepth == 1)
+		//	Assert_MM_true(env->_stackTop == env->_stackBottom);
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 		env->_scavengerStats._releaseScanListCount += 1;
@@ -2207,7 +2202,7 @@ MM_Scavenger::releaseDeferCaches(MM_EnvironmentStandard *env){
 	env->_stackTop = env->_stackBottom = -1;
 	env->_deferredScanCache = NULL;
 
-	Assert_MM_true(env->_deferredScanDepth == 0);
+	//Assert_MM_true(env->_deferredScanDepth == 0);
 }
 
 bool
@@ -3307,13 +3302,39 @@ MM_Scavenger::aliasToCopyCache(MM_EnvironmentStandard *env, GC_SlotObject *scann
 	 *
 	 * @NOTE this is likely too aggressive and should be relaxed.
 	 */
+
+
+	MM_CopyScanCacheStandard *newCache = NULL;
+
 	if (0 == _waitingCount) {
 		/* Only alias if the scanCache != copyCache. IF the caches are the same there is no benefit
 		 * to aliasing. The checks afterwards will ensure that a very similar copy order will happen
 		 * if the copyCache changes from the currently aliased scan cache
 		 *
 		 * Perform this check first since these values are likely in the threads L1 cache */
+
+		// 4kB between scan pointer nad alloc pointer of the scan
 		if (scanCache == copyCache) {
+			if((uintptr_t)copyCache->cacheAlloc - (uintptr_t)copyCache->scanCurrent > 4000 ){
+				newCache = getFreeCache(env);
+
+				Assert_MM_true(newCache != NULL);
+
+				reinitCache(newCache, copyCache->cacheAlloc, copyCache->cacheTop);
+
+				copyCache->flags &= ~OMR_SCAVENGER_CACHE_TYPE_COPY;
+				copyCache->cacheTop = copyCache->cacheAlloc;
+
+				if (copyCache->flags & OMR_SCAVENGER_CACHE_TYPE_SEMISPACE) {
+					env->_survivorCopyScanCache = newCache;
+					env->_survivorCopyScanCache->flags = OMR_SCAVENGER_CACHE_TYPE_SEMISPACE | OMR_SCAVENGER_CACHE_TYPE_COPY;
+				} else if (copyCache->flags & OMR_SCAVENGER_CACHE_TYPE_TENURESPACE) {
+					env->_tenureCopyScanCache = newCache;
+					env->_tenureCopyScanCache->flags = OMR_SCAVENGER_CACHE_TYPE_TENURESPACE | OMR_SCAVENGER_CACHE_TYPE_COPY;
+				} else{
+					Assert_MM_unreachable();
+				}
+			}
 			return NULL;
 		}
 
