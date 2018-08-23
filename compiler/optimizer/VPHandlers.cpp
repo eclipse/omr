@@ -4870,6 +4870,9 @@ static void devirtualizeCall(OMR::ValuePropagation *vp, TR::Node *node)
       return;
       }
 
+   if (!vp->comp()->fe()->canDevirtualizeDispatch())
+      return;
+
    int32_t firstArgIndex = node->getFirstArgumentIndex();
    bool isGlobal;
    TR::VPConstraint *constraint = vp->getConstraint(node->getChild(firstArgIndex), isGlobal);
