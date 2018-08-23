@@ -351,6 +351,8 @@ public:
    bool compilationShouldBeInterrupted(TR_CallingContext) { return false; }
 
    void verifySymbolHasBeenValidated(void *symbol) { return; }
+   void incrementHeuristicRegion() { return; }
+   void decrementHeuristicRegion() { return; }
 
    // ..........................................................................
    // Optimizer mechanics
