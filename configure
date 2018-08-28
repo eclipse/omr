@@ -1684,7 +1684,7 @@ Optional Features:
 
   --enable-OMR_PORT_ZOS_CEEHDLRSUPPORT
 
-  --enable-OMRPORT_OMRSIG_SUPPORT
+  --disable-OMRPORT_OMRSIG_SUPPORT
 
   --enable-OMRTHREAD_LIB_AIX
 
@@ -7009,7 +7009,9 @@ else
 
 fi
 else
-  OMRPORT_OMRSIG_SUPPORT=0
+  OMRPORT_OMRSIG_SUPPORT=1
+
+   $as_echo "#define OMRPORT_OMRSIG_SUPPORT 1" >>confdefs.h
 
 
 fi
