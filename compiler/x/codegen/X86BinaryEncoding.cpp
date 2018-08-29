@@ -1127,11 +1127,23 @@ TR::X86ImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
             {
             if (cg()->needClassAndMethodPointerRelocations())
                {
-               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                (uint8_t *)getSymbolReference(),
-                                                                getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                TR_ClassAddress,
-                                                                cg()), __FILE__,__LINE__, getNode());
+               if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
+                  {
+                  cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                            (uint8_t *)getSourceImmediate(),
+                                                                                            (uint8_t *)TR::SymbolType::typeClass,
+                                                                                            TR_SymbolFromManager,
+                                                                                            cg()),
+                                                                                  __FILE__, __LINE__, getNode());
+                  }
+               else
+                  {
+                  cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                   (uint8_t *)getSymbolReference(),
+                                                                   getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                   TR_ClassAddress,
+                                                                   cg()), __FILE__,__LINE__, getNode());
+                  }
                }
             }
          else if (symbol->isMethod())
@@ -1668,14 +1680,26 @@ TR::X86RegImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
             TR_ASSERT(!(getSymbolReference()->isUnresolved() && !symbol->isClassObject()), "expecting a resolved symbol for this instruction class!\n");
 
             *(int32_t *)cursor = (int32_t)TR::Compiler->cls.persistentClassPointerFromClassPointer(cg()->comp(), (TR_OpaqueClassBlock*)(uintptr_t)getSourceImmediate());
-             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                   (uint8_t *)getSymbolReference(),
-                                                                                   getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                                   (TR_ExternalRelocationTargetKind)getReloKind(),
-                                                                                   cg()),
-                                __FILE__,
-                                __LINE__,
-                                getNode());
+            if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
+               {
+               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                         (uint8_t *)getSourceImmediate(),
+                                                                                         (uint8_t *)TR::SymbolType::typeClass,
+                                                                                         TR_SymbolFromManager,
+                                                                                         cg()),
+                                                                               __FILE__, __LINE__, getNode());
+               }
+            else
+               {
+               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                     (uint8_t *)getSymbolReference(),
+                                                                                     getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                                     (TR_ExternalRelocationTargetKind)getReloKind(),
+                                                                                     cg()),
+                                  __FILE__,
+                                  __LINE__,
+                                  getNode());
+               }
             }
          }
          break;
@@ -1951,12 +1975,25 @@ TR::X86MemImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
       if (_reloKind == TR_ClassAddress && cg()->needClassAndMethodPointerRelocations())
          {
          TR_ASSERT(getNode(), "node expected to be non-NULL here");
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                       (uint8_t *)getNode()->getSymbolReference(),
-                                                       (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex(),
-                                                       TR_ClassAddress,
-                                                       cg()),
-                        __FILE__,__LINE__, getNode());
+         if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                      (uint8_t *)getSourceImmediate(),
+                                                                                      (uint8_t *)TR::SymbolType::typeClass,
+                                                                                      TR_SymbolFromManager,
+                                                                                      cg()),
+                                                                             __FILE__, __LINE__,
+                                                                             getNode());
+            }
+         else
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                          (uint8_t *)getNode()->getSymbolReference(),
+                                                          (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex(),
+                                                          TR_ClassAddress,
+                                                          cg()),
+                           __FILE__,__LINE__, getNode());
+            }
          }
 
       }
@@ -2100,9 +2137,21 @@ TR::X86MemImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
       if (cg()->needClassAndMethodPointerRelocations())
          {
          *(int32_t *)cursor = (int32_t)TR::Compiler->cls.persistentClassPointerFromClassPointer(cg()->comp(), (TR_OpaqueClassBlock*)(uintptr_t)getSourceImmediate());
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)getSymbolReference(), getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ClassAddress, cg()),
-                                                                                      __FILE__, __LINE__, getNode());
-
+         if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                      (uint8_t *)getSourceImmediate(),
+                                                                                      (uint8_t *)TR::SymbolType::typeClass,
+                                                                                      TR_SymbolFromManager,
+                                                                                      cg()),
+                                                                             __FILE__, __LINE__,
+                                                                             getNode());
+            }
+         else
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)getSymbolReference(), getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ClassAddress, cg()),
+                                                                                         __FILE__, __LINE__, getNode());
+            }
          }
       }
    else if (symbol->isMethod())
@@ -2620,13 +2669,28 @@ TR::AMD64RegImm64Instruction::addMetaDataForCodeAddress(uint8_t *cursor)
          switch (_reloKind)
             {
             case TR_ClassAddress:
+               {
                TR_ASSERT(getNode(), "node assumed to be non-NULL here");
-               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                (uint8_t *)methodSymRef,
-                                                                (uint8_t *)getNode()->getInlinedSiteIndex(),
-                                                                TR_ClassAddress,
-                                                                cg()),
-                                 __FILE__,__LINE__, getNode());
+               if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
+                  {
+                  cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                            (uint8_t *)getSourceImmediate(),
+                                                                                            (uint8_t *)TR::SymbolType::typeClass,
+                                                                                            TR_SymbolFromManager,
+                                                                                            cg()),
+                                                                                   __FILE__, __LINE__,
+                                                                                   getNode());
+                  }
+               else
+                  {
+                  cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                   (uint8_t *)methodSymRef,
+                                                                   (uint8_t *)getNode()->getInlinedSiteIndex(),
+                                                                   TR_ClassAddress,
+                                                                   cg()),
+                                    __FILE__,__LINE__, getNode());
+                  }
+               }
                break;
 
             case TR_MethodPointer:
