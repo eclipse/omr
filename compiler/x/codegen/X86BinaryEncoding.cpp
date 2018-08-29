@@ -868,6 +868,7 @@ TR::X86ImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
 
       if (getReloKind() != -1) // TODO: need to change Body info one to use this
          {
+         TR::SymbolType symbolKind = TR::SymbolType::typeClass;
          switch (getReloKind())
             {
             case TR_StaticRamMethodConst:
@@ -883,15 +884,29 @@ TR::X86ImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
                   setReloKind(TR_RamMethod);
                // intentional fall-through
             case TR_RamMethod:
+               symbolKind = TR::SymbolType::typeMethod;
                // intentional fall-through
             case TR_ClassPointer:
-               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                           (uint8_t*)getNode(),
-                                                                           (TR_ExternalRelocationTargetKind) _reloKind,
-                                                                           cg()),
-                  __FILE__,
-                  __LINE__,
-                  getNode());
+               if (symbolKind == TR::SymbolType::typeClass && cg()->comp()->getOption(TR_UseSymbolValidationManager))
+                  {
+                  cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                            (uint8_t *)getSourceImmediate(),
+                                                                                            (uint8_t *)symbolKind,
+                                                                                            TR_SymbolFromManager,
+                                                                                            cg()),
+                                                                                   __FILE__, __LINE__,
+                                                                                   getNode());
+                  }
+               else
+                  {
+                  cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                              (uint8_t*)getNode(),
+                                                                              (TR_ExternalRelocationTargetKind) _reloKind,
+                                                                              cg()),
+                     __FILE__,
+                     __LINE__,
+                     getNode());
+                  }
                   break;
             default:
                cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, 0, (TR_ExternalRelocationTargetKind)getReloKind(), cg()),
@@ -1479,6 +1494,7 @@ TR::X86RegImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
          cg()->jitAdd32BitPicToPatchOnClassUnload(classPointer, (void *) cursor);
          }
 
+      TR::SymbolType symbolKind = TR::SymbolType::typeClass;
       switch (_reloKind)
          {
          case TR_HEAP_BASE:
@@ -1524,13 +1540,27 @@ TR::X86RegImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
                setReloKind(TR_RamMethod);
             // intentional fall-through
          case TR_RamMethod:
+            symbolKind = TR::SymbolType::typeMethod;
             // intentional fall-through
          case TR_ClassPointer:
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                              (uint8_t*)getNode(),
-                                                              (TR_ExternalRelocationTargetKind) _reloKind,
-                                                              cg()),
-                                   __FILE__, __LINE__, getNode());
+            if (symbolKind == TR::SymbolType::typeClass && cg()->comp()->getOption(TR_UseSymbolValidationManager))
+               {
+               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                         (uint8_t *)getSourceImmediate(),
+                                                                                         (uint8_t *)symbolKind,
+                                                                                         TR_SymbolFromManager,
+                                                                                         cg()),
+                                                                                __FILE__, __LINE__,
+                                                                                getNode());
+               }
+            else
+               {
+               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                 (uint8_t*)getNode(),
+                                                                 (TR_ExternalRelocationTargetKind) _reloKind,
+                                                                 cg()),
+                                      __FILE__, __LINE__, getNode());
+               }
             break;
 
          default:
@@ -1615,6 +1645,7 @@ TR::X86RegImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
 
    TR::Symbol *symbol = getSymbolReference()->getSymbol();
    TR_RelocationRecordInformation *recordInfo;
+   TR::SymbolType symbolKind = TR::SymbolType::typeClass;
    switch (getReloKind())
       {
       case TR_ConstantPool:
@@ -1665,13 +1696,27 @@ TR::X86RegImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
          if (getNode() && getNode()->getInlinedSiteIndex() == -1 &&
             (void *)(uintptr_t) getSourceImmediate() == cg()->comp()->getCurrentMethod()->resolvedMethodAddress())
             setReloKind(TR_RamMethod);
+         symbolKind = TR::SymbolType::typeMethod;
          // intentional fall-through
       case TR_ClassPointer:
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                           (uint8_t*)getNode(),
-                                                           (TR_ExternalRelocationTargetKind)getReloKind(),
-                                                           cg()),
-                                __FILE__, __LINE__, getNode());
+         if (symbolKind == TR::SymbolType::typeClass && cg()->comp()->getOption(TR_UseSymbolValidationManager))
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                      (uint8_t *)getSourceImmediate(),
+                                                                                      (uint8_t *)symbolKind,
+                                                                                      TR_SymbolFromManager,
+                                                                                      cg()),
+                                                                             __FILE__, __LINE__,
+                                                                             getNode());
+            }
+         else
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                              (uint8_t*)getNode(),
+                                                              (TR_ExternalRelocationTargetKind)getReloKind(),
+                                                              cg()),
+                                   __FILE__, __LINE__, getNode());
+            }
          break;
       case TR_DebugCounter:
          {
@@ -2571,6 +2616,7 @@ TR::AMD64RegImm64Instruction::addMetaDataForCodeAddress(uint8_t *cursor)
          }
       else
          {
+         TR::SymbolType symbolKind = TR::SymbolType::typeClass;
          switch (_reloKind)
             {
             case TR_ClassAddress:
@@ -2589,13 +2635,27 @@ TR::AMD64RegImm64Instruction::addMetaDataForCodeAddress(uint8_t *cursor)
                   setReloKind(TR_RamMethod);
                // intentional fall-through
             case TR_RamMethod:
+               symbolKind = TR::SymbolType::typeMethod;
                // intentional fall-through
             case TR_ClassPointer:
-               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                 (uint8_t*)getNode(),
-                                                                 (TR_ExternalRelocationTargetKind) _reloKind,
-                                                                 cg()),
-                                      __FILE__, __LINE__, getNode());
+               if (symbolKind == TR::SymbolType::typeClass && cg()->comp()->getOption(TR_UseSymbolValidationManager))
+                  {
+                  cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                            (uint8_t *)getSourceImmediate(),
+                                                                                            (uint8_t *)symbolKind,
+                                                                                            TR_SymbolFromManager,
+                                                                                            cg()),
+                                                                                   __FILE__, __LINE__,
+                                                                                   getNode());
+                  }
+               else
+                  {
+                  cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                    (uint8_t*)getNode(),
+                                                                    (TR_ExternalRelocationTargetKind) _reloKind,
+                                                                    cg()),
+                                         __FILE__, __LINE__, getNode());
+                  }
                break;
             case TR_JNIStaticTargetAddress:
             case TR_JNISpecialTargetAddress:
