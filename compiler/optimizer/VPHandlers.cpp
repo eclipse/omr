@@ -1599,6 +1599,7 @@ TR::Node *constrainAload(OMR::ValuePropagation *vp, TR::Node *node)
                sym->isFinal()))
             haveClassLookaheadInfo = true;
 
+         bool allowForAOT = vp->comp()->getOption(TR_UseSymbolValidationManager);
          if (haveClassLookaheadInfo)
             {
             bool foundInfo = false;
@@ -1623,13 +1624,12 @@ TR::Node *constrainAload(OMR::ValuePropagation *vp, TR::Node *node)
                   }
                bool isClassInitialized = false;
                TR_PersistentClassInfo * classInfo =
-                  vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classOfStatic, vp->comp());
+                  vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classOfStatic, vp->comp(), allowForAOT);
                if (classInfo && classInfo->isInitialized())
                   isClassInitialized = true;
 
                if (classOfStatic != vp->comp()->getSystemClassPointer() &&
                    isClassInitialized &&
-                   !vp->comp()->getOption(TR_AOT) &&
                    (type == TR::Address))
                   {
                   TR::VMAccessCriticalSection constrainAloadCriticalSection(vp->comp(),
@@ -1663,7 +1663,7 @@ TR::Node *constrainAload(OMR::ValuePropagation *vp, TR::Node *node)
             if (!foundInfo)
                {
                TR_PersistentClassInfo * classInfo =
-                  vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(symRef->getOwningMethod(vp->comp())->classOfStatic(symRef->getCPIndex()), vp->comp());
+                  vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(symRef->getOwningMethod(vp->comp())->classOfStatic(symRef->getCPIndex()), vp->comp(), allowForAOT);
                if (classInfo && classInfo->getFieldInfo())
                   {
                   TR_PersistentFieldInfo * fieldInfo = classInfo->getFieldInfo()->findFieldInfo(vp->comp(), node, false);
@@ -2366,6 +2366,7 @@ TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
               sym->isFinal()))
             haveClassLookaheadInfo = true;
 
+         bool allowForAOT = vp->comp()->getOption(TR_UseSymbolValidationManager);
          if (haveClassLookaheadInfo)
             {
             if (sym->isStatic() && sym->isFinal())
@@ -2375,13 +2376,12 @@ TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
                TR_OpaqueClassBlock * classOfStatic = symRef->getOwningMethod(vp->comp())->classOfStatic(symRef->getCPIndex());
                bool isClassInitialized = false;
                TR_PersistentClassInfo * classInfo =
-                  vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classOfStatic, vp->comp());
+                  vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classOfStatic, vp->comp(), allowForAOT);
                if (classInfo && classInfo->isInitialized())
                   isClassInitialized = true;
 
                if ((classOfStatic != vp->comp()->getSystemClassPointer() &&
                    isClassInitialized &&
-                   !vp->comp()->getOption(TR_AOT) &&
                     (type == TR::Address)))
                   {
                   TR::VMAccessCriticalSection constrainIaloadCriticalSection(vp->comp(),
@@ -9466,7 +9466,8 @@ static TR::Node *constrainIfcmpeqne(OMR::ValuePropagation *vp, TR::Node *node, b
       }
 
 #ifdef J9_PROJECT_SPECIFIC
-   if (!vp->comp()->compileRelocatableCode() &&
+
+   if ((!vp->comp()->compileRelocatableCode() || vp->comp()->getOption(TR_UseSymbolValidationManager)) &&
        vp->lastTimeThrough() &&
        vp->comp()->performVirtualGuardNOPing() &&
        !vp->_curBlock->isCold() &&
@@ -9490,12 +9491,13 @@ static TR::Node *constrainIfcmpeqne(OMR::ValuePropagation *vp, TR::Node *node, b
             if (typeConstraint)
                {
                TR::VPConstraint *resolvedTypeConstraint = typeConstraint->asResolvedClass();
+               bool allowForAOT = vp->comp()->getOption(TR_UseSymbolValidationManager);
                if (resolvedTypeConstraint)
                   {
                   TR_OpaqueClassBlock *clazz = resolvedTypeConstraint->getClass();
 
                   TR_PersistentClassInfo * classInfo =
-                     vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, vp->comp());
+                     vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, vp->comp(), allowForAOT);
 
                   if (vp->trace())
                      traceMsg(vp->comp(), "MyDebug: clazz %p classInfo %p classInfo->isInitialized() %d\n",
@@ -9528,7 +9530,7 @@ static TR::Node *constrainIfcmpeqne(OMR::ValuePropagation *vp, TR::Node *node, b
                         else
                            {
                            TR_PersistentClassInfo * classInfo =
-                              vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, vp->comp());
+                              vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, vp->comp(), allowForAOT);
 
                            if (vp->trace())
                               traceMsg(vp->comp(), "MyDebug: clazz %p classInfo %p classInfo->isInitialized() %d\n",
