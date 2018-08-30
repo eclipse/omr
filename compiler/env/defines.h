@@ -53,6 +53,9 @@
 #ifndef OMR_OSX
 #  define OMR_OSX     205
 #endif
+#ifndef OMR_FREEBSD
+#  define OMR_FREEBSD 206
+#endif
 
 /* Architectures */
 #ifndef ARCH_X86
@@ -104,6 +107,8 @@
 #  define HOST_OS OMR_ZOS
 #elif defined(__APPLE__) && defined(__MACH__)
 #  define HOST_OS OMR_OSX
+#elif defined(__FreeBSD__)
+#  define HOST_OS OMR_FREEBSD
 #else
 #  error "defines.h: unknown OS"
 #endif

@@ -45,7 +45,13 @@
 #include <sys/mount.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
-
+#elif defined(FREEBSD)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <sys/cpuset.h>
+#include <fcntl.h>
+#include <kvm.h>
+#include <paths.h>
 #endif /* defined(LINUX) && !defined(OMRZTPF) */
 
 #include <inttypes.h>
@@ -88,11 +94,11 @@
 /* Start copy from omrfiletext.c */
 /* __STDC_ISO_10646__ indicates that the platform wchar_t encoding is Unicode */
 /* but older versions of libc fail to set the flag, even though they are Unicode */
-#if defined(__STDC_ISO_10646__) || defined(LINUX) ||defined(OSX)
+#if defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) || defined(FREEBSD)
 #define J9VM_USE_MBTOWC
-#else /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) */
+#else /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 #include "omriconvhelpers.h"
-#endif /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) */
+#endif /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 
 /* a2e overrides nl_langinfo to return ASCII strings. We need the native EBCDIC string */
 #if defined(J9ZOS390) && defined (nl_langinfo)
@@ -176,6 +182,11 @@ uintptr_t Get_Number_Of_CPUs();
 #define JIFFIES			100
 #define USECS_PER_SEC	1000000
 #define TICKS_TO_USEC	((uint64_t)(USECS_PER_SEC/JIFFIES))
+
+#if defined(FREEBSD)
+#define TICKS_2_USEC(t) max(1, (uint32_t)(hz == 1000) ? \
+	  ((t) * 1000) : (((uint64_t)(t) * (uint64_t)1000000)/(uint64_t)hz))
+#endif
 
 /* For the omrsysinfo_env_iterator */
 extern char **environ;
@@ -420,6 +431,8 @@ static int32_t retrieveLinuxCgroupMemoryStats(struct OMRPortLibrary *portLibrary
 static int32_t retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
 #elif defined(OSX)
 static int32_t retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
+#elif defined(FREEBSD)
+static int32_t retrieveFreeBSDMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
 #elif defined(AIXPPC)
 static int32_t retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
 #elif defined(J9ZOS390)
@@ -828,6 +841,23 @@ find_executable_name(struct OMRPortLibrary *portLibrary, char **result)
 		rc = 0;
 	}
 	return rc;
+#elif defined(FREEBSD)
+	int proc[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+	size_t size;
+
+	/* Get the size of the path */
+	if (0 == sysctl(proc, nitems(proc), NULL, &size, NULL, 0)) {
+		*result = portLibrary->mem_allocate_memory(portLibrary, size, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+	} else {
+		return -1;
+	}
+
+	if (-1 == sysctl(proc, nitems(proc), *result, &size, NULL, 0)) {
+		*result[0] = '\0';
+		return -1;
+	}
+
+	return 0;
 #else /* defined(OSX) */
 
 	intptr_t retval = -1;
@@ -1257,7 +1287,7 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 
 	switch (type) {
 	case OMRPORT_CPU_PHYSICAL:
-#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX)
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 		toReturn = sysconf(_SC_NPROCESSORS_CONF);
 
 		if (0 == toReturn) {
@@ -1289,7 +1319,7 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 		if (0 == toReturn) {
 			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedOnline("(no errno) ", 0);
 		}
-#elif (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX)
+#elif (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(FREEBSD)
 		/* returns number of online(_SC_NPROCESSORS_ONLN) processors, number configured(_SC_NPROCESSORS_CONF) may  be more than online */
 		toReturn = sysconf(_SC_NPROCESSORS_ONLN);
 
@@ -1394,6 +1424,17 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 		 */
 		toReturn = sysconf(_SC_NPROCESSORS_CONF);
 		if (0 == toReturn) {
+			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedBound("errno: ", errno);
+		}
+#elif defined(FREEBSD)
+		cpuset_t cset;
+		int error;
+
+		error = cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, -1, sizeof(cset), &cset);
+
+		if (0 == error) {
+			toReturn = CPU_COUNT(&cset);
+		} else {
 			Trc_PRT_sysinfo_get_number_CPUs_by_type_failedBound("errno: ", errno);
 		}
 #elif defined(J9ZOS390)
@@ -1926,6 +1967,77 @@ retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
 	return 0;
 }
 
+#elif defined(FREEBSD)
+
+/**
+ * Function collects memory usage statistics on FreeBSD and returns the same.
+ *
+ * @param[in] portLibrary The port library.
+ * @param[in] memInfo A pointer to the J9MemoryInfo struct which we populate with memory usage.
+ *
+ * @return 0 on success and -1 on failure.
+ */
+static int32_t
+retrieveFreeBSDMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
+{
+	int32_t n, pageSize = getpagesize();
+	uint64_t freePages = 0, swapMaxPages;
+	size_t size;
+	struct rlimit rl;
+	struct kvm_swap swaps[1];
+	kvm_t *kd;
+
+	size = sizeof(memInfo->totalPhysical);
+	if (0 > sysctlbyname("hw.physmem", &memInfo->totalPhysical, &size, NULL, 0)) {
+		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	}
+
+	size = sizeof(freePages);
+	if (0 > sysctlbyname("vm.stats.vm.v_free_count", &freePages, &size, NULL, 0)) {
+		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	} else {
+		memInfo->availPhysical = freePages * pageSize;
+	}
+
+	if (0 == getrlimit(RLIMIT_AS, &rl)) {
+		memInfo->totalVirtual = rl.rlim_cur;
+	} else {
+		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	}
+
+	size = sizeof(swapMaxPages);
+	if (0 > sysctlbyname("vm.swap_maxpages", &swapMaxPages, &size, NULL, 0)) {
+		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	}
+	kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open");
+	if (NULL == kd) {
+		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	}
+	n = kvm_getswapinfo(kd, swaps, 1, 0);
+	kvm_close(kd);
+	if (0 > n) {
+		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	}
+	if (swaps[0].ksw_total == 0) {
+		memInfo->availSwap = 0;
+	} else if (swaps[0].ksw_total > swapMaxPages) {
+		memInfo->availSwap = swapMaxPages * pageSize;
+	} else {
+		memInfo->totalSwap = swaps[0].ksw_total * pageSize;
+		memInfo->availSwap = (swaps[0].ksw_total - swaps[0].ksw_used) * pageSize;
+	}
+
+	/* These are not meaningful on FreeBSD */
+	memInfo->cached = OMRPORT_MEMINFO_NOT_AVAILABLE;
+	memInfo->buffered = OMRPORT_MEMINFO_NOT_AVAILABLE;
+
+	memInfo->hostAvailPhysical = memInfo->availPhysical;
+	memInfo->hostCached = memInfo->cached;
+	memInfo->hostBuffered = memInfo->buffered;
+
+	return 0;
+}
+
 #endif /* end OS specific guards */
 
 int32_t
@@ -1958,6 +2070,8 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 	rc = retrieveLinuxMemoryStats(portLibrary, memInfo);
 #elif defined(OSX)
 	rc = retrieveOSXMemoryStats(portLibrary, memInfo);
+#elif defined(FREEBSD)
+	rc = retrieveFreeBSDMemoryStats(portLibrary, memInfo);
 #elif defined(AIXPPC)
 	rc = retrieveAIXMemoryStats(portLibrary, memInfo);
 #elif defined(J9ZOS390)
@@ -2336,7 +2450,7 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 	 * must match "ulimit -n".
 	 */
 	case OMRPORT_RESOURCE_FILE_DESCRIPTORS: {
-#if defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(J9ZOS390)
+#if defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(FREEBSD) || defined(J9ZOS390)
 		/* getrlimit(2) is a POSIX routine. */
 		if (0 == getrlimit(RLIMIT_NOFILE, &lim)) {
 			*limit = (uint64_t) (hardLimitRequested ? lim.rlim_max : lim.rlim_cur);
@@ -2351,11 +2465,11 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 			Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
 			rc = OMRPORT_LIMIT_UNKNOWN;
 		}
-#else /* defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(J9ZOS390) */
+#else /* defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(FREEBSD) || defined(J9ZOS390) */
 		/* unsupported on other platforms (just in case). */
 		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
 		rc = OMRPORT_LIMIT_UNKNOWN;
-#endif /* defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(J9ZOS390) */
+#endif /* defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(FREEBSD) || defined(J9ZOS390) */
 	}
 	break;
 	default:
@@ -2532,7 +2646,7 @@ errorReturn:
 intptr_t
 omrsysinfo_get_load_average(struct OMRPortLibrary *portLibrary, struct J9PortSysInfoLoadData *loadAverageData)
 {
-#if (defined(LINUX) || defined(OSX)) && !defined(OMRZTPF)
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(FREEBSD)
 	double loadavg[3];
 	int returnValue = getloadavg(loadavg, 3);
 	if (returnValue == 3) {
@@ -2563,7 +2677,7 @@ intptr_t
 omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9SysinfoCPUTime *cpuTime)
 {
 	intptr_t status = OMRPORT_ERROR_SYSINFO_OPFAILED;
-#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX)
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 	/* omrtime_nano_time() gives monotonically increasing times as against omrtime_hires_clock() that
 	 * returns times that can (and does) decrease. Use this to compute timestamps.
 	 */
@@ -2637,6 +2751,20 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	} else {
 		return OMRPORT_ERROR_FILE_OPFAILED;
 	}
+#elif defined(FREEBSD)
+	int64_t cp_time[CPUSTATES];
+	size_t cplen;
+	//const uintptr_t NS_PER_MSEC = 1000;
+
+	cpuTime->numberOfCpus = portLibrary->sysinfo_get_number_CPUs_by_type(portLibrary, OMRPORT_CPU_ONLINE);
+	cpuTime->cpuTime = 0;
+
+	if (-1 == sysctlbyname("kern.cp_time", &cp_time, &cplen, NULL, 0)) {
+		return OMRPORT_ERROR_SYSINFO_GET_STATS_FAILED;
+	}
+
+	cpuTime->cpuTime = (cp_time[CP_USER] + cp_time[CP_NICE] + cp_time[CP_SYS]); // TICKS_2_USEC() * NS_PER_MSEC;
+	status = 0;
 #elif defined(J9OS_I5)
 	/*call in PASE wrapper to retrieve needed information.*/
 	cpuTime->numberOfCpus = Xj9GetEntitledProcessorCapacity() / 100;
@@ -2666,7 +2794,7 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	/* Use the average of the timestamps before and after reading processor times to reduce bias. */
 	cpuTime->timestamp = (preTimestamp + postTimestamp) / 2;
 	return status;
-#else /* (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) */
+#else /* (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD) */
 	/* Support on z/OS being temporarily removed to avoid wrong CPU stats being passed. */
 	return OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED;
 #endif
@@ -3396,6 +3524,61 @@ retrieveAIXProcessorStats(struct OMRPortLibrary *portLibrary, struct J9Processor
 	return -1; /* not supported */
 #endif /* defined(J9OS_I5) */
 }
+#elif defined(FREEBSD)
+
+/**
+ * Function collects processor usage statistics on FreeBSD and returns the same.
+ *
+ * @param[in] portLibrary The port library.
+ * @param[in] procInfo A pointer to J9ProcessorInfos struct that we populate with processor usage.
+ *
+ * @return 0 on success and -1 on failure.
+ */
+static int32_t
+retrieveFreeBSDProcessorStats(struct OMRPortLibrary *portLibrary, struct J9ProcessorInfos *procInfo)
+{
+	int32_t cpus, maxcpu, i;
+	size_t size;
+	int64_t *cptimes;
+
+	size = sizeof(maxcpu);
+	if (0 > sysctlbyname("kern.smp.maxcpus", &maxcpu, &size, NULL, 0)) {
+		return OMRPORT_ERROR_SYSINFO_ERROR_READING_PROCESSOR_INFO;
+	}
+
+	cptimes = calloc(maxcpu * CPUSTATES, sizeof(int64_t));
+	if (NULL == cptimes) {
+		return OMRPORT_ERROR_SYSINFO_MEMORY_ALLOC_FAILED;
+	}
+
+	size = sizeof(int64_t) * maxcpu * CPUSTATES;
+	if (0 > sysctlbyname("kern.cp_times", cptimes, &size, NULL, 0)) {
+		return OMRPORT_ERROR_SYSINFO_ERROR_READING_PROCESSOR_INFO;
+	}
+
+	size = sizeof(cpus);
+	if (0 > sysctlbyname("kern.smp.cpus", &cpus, &size, NULL, 0)) {
+		return OMRPORT_ERROR_SYSINFO_ERROR_READING_PROCESSOR_INFO;
+	}
+
+	for (i = 0; i < cpus; i++) {
+		procInfo->procInfoArray[i + 1].online = OMRPORT_PROCINFO_PROC_ONLINE;
+		procInfo->procInfoArray[i + 1].userTime = cptimes[i + CP_USER]; // TICKS_2_USEC()
+		procInfo->procInfoArray[i + 1].systemTime = cptimes[i + CP_SYS]; // TICKS_2_USEC()
+		procInfo->procInfoArray[i + 1].idleTime = cptimes[i + CP_IDLE]; // TICKS_2_USEC()
+		procInfo->procInfoArray[i + 1].busyTime = procInfo->procInfoArray[i + 1].userTime +
+				procInfo->procInfoArray[i + 1].systemTime +
+				procInfo->procInfoArray[i + 1].waitTime;
+
+		procInfo->procInfoArray[0].userTime += procInfo->procInfoArray[i + 1].userTime;
+		procInfo->procInfoArray[0].systemTime += procInfo->procInfoArray[i + 1].systemTime;
+		procInfo->procInfoArray[0].idleTime += procInfo->procInfoArray[i + 1].idleTime;
+		procInfo->procInfoArray[0].busyTime += procInfo->procInfoArray[i + 1].busyTime;
+	}
+
+	return 0;
+}
+
 #endif
 
 #define SYSINFO_MAX_RETRY_COUNT 5
@@ -3470,6 +3653,8 @@ omrsysinfo_get_processor_info(struct OMRPortLibrary *portLibrary, struct J9Proce
 		rc = retrieveLinuxProcessorStats(portLibrary, procInfo);
 #elif defined(OSX)
 		rc = retrieveOSXProcessorStats(portLibrary, procInfo);
+#elif defined(FREEBSD)
+		rc = retrieveFreeBSDProcessorStats(portLibrary, procInfo);
 #elif defined(AIXPPC)
 		rc = retrieveAIXProcessorStats(portLibrary, procInfo);
 #elif defined(J9ZOS390)
@@ -3704,6 +3889,18 @@ omrsysinfo_get_open_file_count(struct OMRPortLibrary *portLibrary, uint64_t *cou
 				}
 				portLibrary->mem_free_memory(portLibrary, procFDInfo);
 			}
+		}
+#elif defined(FREEBSD)
+		size_t size = sizeof(fdCount);
+
+		if (0 > sysctlbyname("kern.proc.nfds", &fdCount, &size, NULL, 0)) {
+			int32_t rc = findError(errno);
+			portLibrary->error_set_last_error(portLibrary, errno, rc);
+			Trc_PRT_sysinfo_get_open_file_count_failedOpeningProcFS(rc);
+		} else {
+			*count = fdCount;
+			Trc_PRT_sysinfo_get_open_file_count_fileCount(fdCount);
+			ret = 0;
 		}
 #elif defined(J9ZOS390)
 		/* TODO: stub where z/OS code goes in. */

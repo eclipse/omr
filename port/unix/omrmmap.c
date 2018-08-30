@@ -306,7 +306,8 @@ omrmmap_capabilities(struct OMRPortLibrary *portLibrary)
   || (defined(LINUX) && defined(ARM)) \
   || (defined(LINUX) && defined(AARCH64)) \
   || (defined(AIXPPC)) \
-  || (defined(OSX)))
+  || (defined(OSX)) \
+  || (defined(FREEBSD)))
 			| OMRPORT_MMAP_CAPABILITY_WRITE
 			| OMRPORT_MMAP_CAPABILITY_MSYNC
 #endif
@@ -344,7 +345,7 @@ omrmmap_dont_need(struct OMRPortLibrary *portLibrary, const void *startAddress, 
 
 			Trc_PRT_mmap_dont_need_oscall(roundedStart, roundedLength);
 
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 			if (-1 == madvise((void *)roundedStart, roundedLength, MADV_DONTNEED)) {
 				Trc_PRT_mmap_dont_need_madvise_failed((void *)roundedStart, roundedLength, errno);
 			}

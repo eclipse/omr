@@ -58,6 +58,7 @@ enum MajorOperatingSystem
    os_windows,
    os_zos,
    os_osx,
+   os_freebsd,
    os_unknown
    };
 
@@ -100,6 +101,7 @@ public:
    bool isUnix() { return _majorOS == TR::os_unix; }
    bool isZOS() { return _majorOS == TR::os_zos; }
    bool isOSX() { return _majorOS == TR::os_osx; }
+   bool isFreeBSD() { return _majorOS == TR::os_freebsd; }
 
    TR::Bitness bitness() { return _bitness; }
    void setBitness(TR::Bitness b) { _bitness = b; }

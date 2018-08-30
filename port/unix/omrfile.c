@@ -33,7 +33,7 @@
 #include <sys/types.h>
 #if defined(LINUX) && !defined(OMRZTPF)
 #include <sys/vfs.h>
-#elif defined(OSX)
+#elif defined(OSX) || defined(FREEBSD)
 #include <sys/param.h>
 #include <sys/mount.h>
 #endif /*  defined(LINUX)  && !defined(OMRZTPF) */
@@ -59,21 +59,22 @@
 
 #if defined(LINUX) || defined(OSX)
 typedef struct statfs PlatformStatfs;
-#elif defined(AIXPPC)
+#elif defined(AIXPPC) || defined(FREEBSD)
 typedef struct statvfs PlatformStatfs;
 #endif /* defined(LINUX) || defined(OSX) */
 
 
 static const char *const fileFStatErrorMsgPrefix = "fstat : ";
-static const char *const fileFStatFSErrorMsgPrefix = "fstatfs : ";
-#if defined(AIXPPC) && !defined(J9OS_I5)
+#if defined(FREEBSD) || defined(AIXPPC) && !defined(J9OS_I5)
 static const char *const fileFStatVFSErrorMsgPrefix = "fstatvfs : ";
-#endif /* defined(AIXPPC) && !defined(J9OS_I5) */
+#else
+static const char *const fileFStatFSErrorMsgPrefix = "fstatfs : ";
+#endif /* defined(FREEBSD) || defined(AIXPPC) && !defined(J9OS_I5) */
 
 static int32_t EsTranslateOpenFlags(int32_t flags);
 static void setPortableError(OMRPortLibrary *portLibrary, const char *funcName, int32_t portlibErrno, int systemErrno);
 static int32_t findError(int32_t errorCode);
-#if (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || (defined(AIXPPC) && !defined(J9OS_I5))
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(FREEBSD) || (defined(AIXPPC) && !defined(J9OS_I5))
 static void updateJ9FileStat(struct OMRPortLibrary *portLibrary, J9FileStat *j9statBuf, struct stat *statBuf, PlatformStatfs *statfsBuf);
 #else /* (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || (defined(AIXPPC) && !defined(J9OS_I5)) */
 static void updateJ9FileStat(struct OMRPortLibrary *portLibrary, J9FileStat *j9statBuf, struct stat *statBuf);
@@ -212,7 +213,7 @@ findError(int32_t errorCode)
  *
  * @return void
  */
-#if (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || (defined(AIXPPC) && !defined(J9OS_I5))
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(FREEBSD) || (defined(AIXPPC) && !defined(J9OS_I5))
 static void
 updateJ9FileStat(struct OMRPortLibrary *portLibrary, J9FileStat *j9statBuf, struct stat *statBuf, PlatformStatfs *statfsBuf)
 #else /* (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || (defined(AIXPPC) && !defined(J9OS_I5)) */
@@ -1139,9 +1140,9 @@ int32_t
 omrfile_fstat(struct OMRPortLibrary *portLibrary, intptr_t fd, struct J9FileStat *buf)
 {
 	struct stat statbuf;
-#if (!defined(OMRZTPF) && defined(LINUX)) || defined(AIXPPC) || defined(OSX)
+#if (!defined(OMRZTPF) && defined(LINUX)) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 	PlatformStatfs statfsbuf;
-#endif /* (!defined(OMRZTPF) && defined(LINUX)) || defined(AIXPPC) || defined(OSX) */
+#endif /* (!defined(OMRZTPF) && defined(LINUX)) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD) */
 	int32_t rc = 0;
 	int localfd = (int)fd;
 
@@ -1168,7 +1169,7 @@ omrfile_fstat(struct OMRPortLibrary *portLibrary, intptr_t fd, struct J9FileStat
 		goto _end;
 	}
 	updateJ9FileStat(portLibrary, buf, &statbuf, &statfsbuf);
-#elif defined(AIXPPC) && !defined(J9OS_I5) /* defined(LINUX) || defined(OSX) */
+#elif defined(FREEBSD) || defined(AIXPPC) && !defined(J9OS_I5) /* defined(LINUX) || defined(OSX) */
 	if (0 != fstatvfs(localfd - FD_BIAS, &statfsbuf)) {
 		intptr_t myerror = errno;
 		Trc_PRT_file_fstat_fstatvfsFailed(myerror);
@@ -1191,9 +1192,9 @@ int32_t
 omrfile_stat(struct OMRPortLibrary *portLibrary, const char *path, uint32_t flags, struct J9FileStat *buf)
 {
 	struct stat statbuf;
-#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX)
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 	PlatformStatfs statfsbuf;
-#endif /* defined(LINUX) || defined(AIXPPC) || defined(OSX) */
+#endif /* defined(LINUX) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD) */
 
 	memset(buf, 0, sizeof(J9FileStat));
 
@@ -1207,12 +1208,12 @@ omrfile_stat(struct OMRPortLibrary *portLibrary, const char *path, uint32_t flag
 		return portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
 	}
 	updateJ9FileStat(portLibrary, buf, &statbuf, &statfsbuf);
-#elif defined(AIXPPC) && !defined(J9OS_I5) /* defined(LINUX) || defined(OSX) */
+#elif defined(FREEBSD) || defined(AIXPPC) && !defined(J9OS_I5) /* defined(LINUX) || defined(OSX) */
 	if (statvfs(path, &statfsbuf)) {
 		return portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
 	}
 	updateJ9FileStat(portLibrary, buf, &statbuf, &statfsbuf);
-#else /* defined(AIXPPC) && !defined(J9OS_I5) */
+#else /* defined(FREEBSD) || defined(AIXPPC) && !defined(J9OS_I5) */
 	updateJ9FileStat(portLibrary, buf, &statbuf);
 #endif /* defined(LINUX) || defined(OSX) */
 

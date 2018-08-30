@@ -4176,14 +4176,14 @@ TEST(PortVmemTest, vmem_testGetProcessMemorySize)
 	EXPECT_TRUE(result < 0) << "OMRPORT_VMEM_PROCESS_VIRTUAL did not fail";
 	EXPECT_EQ(0u, size) << "value updated when query invalid";
 #else
-#if !defined(OSX)
+#if !defined(OSX) && !defined(FREEBSD)
 	result = omrvmem_get_process_memory_size(OMRPORT_VMEM_PROCESS_PRIVATE, &size);
 	EXPECT_EQ(0, result) << "OMRPORT_VMEM_PROCESS_PRIVATE failed";
 	EXPECT_TRUE(size > 0) << "OMRPORT_VMEM_PROCESS_PRIVATE returned 0";
 	portTestEnv->log("OMRPORT_VMEM_PROCESS_PRIVATE = %lu.\n", size);
-#endif /* !defined(OSX) */
+#endif /* !defined(OSX) || !defined(FREEBSD) */
 
-#if defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(OSX)
+#if defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD)
 	result = omrvmem_get_process_memory_size(OMRPORT_VMEM_PROCESS_PHYSICAL, &size);
 	EXPECT_EQ(0, result) << "OMRPORT_VMEM_PROCESS_PHYSICAL failed";
 	EXPECT_TRUE(size > 0) << "OMRPORT_VMEM_PROCESS_PHYSICAL returned 0";
@@ -4202,7 +4202,7 @@ TEST(PortVmemTest, vmem_testGetProcessMemorySize)
 	result = omrvmem_get_process_memory_size(OMRPORT_VMEM_PROCESS_VIRTUAL, &size);
 	EXPECT_TRUE(result < 0) << "OMRPORT_VMEM_PROCESS_VIRTUAL did not fail";
 	EXPECT_EQ(0u, size) << "value updated when query invalid";
-#endif /* defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD) */
 #endif /* defined(J9ZOS390) */
 	size = 0;
 	result = omrvmem_get_process_memory_size(OMRPORT_VMEM_PROCESS_EnsureWideEnum, &size);

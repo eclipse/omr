@@ -34,7 +34,7 @@
 #include <malloc.h>
 #elif defined(LINUX) || defined(AIXPPC) || defined(OSX)
 #include <alloca.h>
-#elif defined(J9ZOS390)
+#elif defined(J9ZOS390) || defined(FREEBSD)
 #include <stdlib.h>
 #endif /* defined(OMR_OS_WINDOWS) */
 #include <errno.h>
@@ -43,7 +43,7 @@
 #define J9STR_DEBUG
 */
 
-#if defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX)
+#if defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) || defined(FREEBSD)
 #include <iconv.h>
 typedef iconv_t  charconvState_t;
 #define J9STR_USE_ICONV
@@ -51,9 +51,9 @@ typedef iconv_t  charconvState_t;
 #define J9_USE_ORIG_EBCDIC_LANGINFO 1
 
 #include "omriconvhelpers.h"
-#else /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) */
+#else /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) || defined(FREEBSD) */
 typedef void *charconvState_t; /*dummy type */
-#endif /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) */
+#endif /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) || defined(FREEBSD) */
 
 /* for sprintf, which is used for printing floats */
 #include <stdio.h>
@@ -2486,10 +2486,10 @@ convertPlatformToMutf8(struct OMRPortLibrary *portLibrary, uint32_t codePage, co
 	uint8_t *mutf8Cursor = outBuffer;
 	uintptr_t mutf8Limit = outBufferSize;
 	BOOLEAN firstConversion = TRUE;
+	encodingState = NULL;
 	/* set up buffers and convertors */
 #if defined(OMR_OS_WINDOWS)
 	uintptr_t requiredBufferSize = 0;
-	encodingState = NULL;
 	/* MultiByteToWideChar is not resumable, so we need a buffer large enough to hold the entire intermediate result */
 	requiredBufferSize = WIDE_CHAR_SIZE * MultiByteToWideChar(codePage, OS_ENCODING_MB_FLAGS, (LPCSTR)inBuffer, (int) inBufferSize,
 						 NULL, 0); /* get required buffer size */
@@ -2600,8 +2600,7 @@ convertMutf8ToPlatform(struct OMRPortLibrary *portLibrary, const uint8_t *inBuff
 	uint8_t *outCursor = outBuffer;
 	uintptr_t outLimit = outBufferSize;
 	int32_t resultSize = 0;
-	charconvState_t encodingState;
-
+	charconvState_t encodingState = NULL;
 	/* set up convertor state.  Note: no convertor state is required on Windows */
 #if defined(J9STR_USE_ICONV)
 	encodingState = iconv_get(portLibrary, OMRPORT_UTF16_TO_LANG_ICONV_DESCRIPTOR, nl_langinfo(CODESET), utf16);
@@ -2610,7 +2609,6 @@ convertMutf8ToPlatform(struct OMRPortLibrary *portLibrary, const uint8_t *inBuff
 		return OMRPORT_ERROR_STRING_ICONV_OPEN_FAILED;
 	}
 #elif defined(OMR_OS_WINDOWS)
-	encodingState = NULL;
 #endif /* defined(OMR_OS_WINDOWS) */
 	while (mutf8Remaining > 0) { /* translated section by section as dictated by the size of wideBuffer */
 		uint8_t wideBuffer[CONVERSION_BUFFER_SIZE];

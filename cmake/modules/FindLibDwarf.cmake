@@ -101,6 +101,7 @@ endif()
 # Find library
 
 find_library(LIBDWARF_LIBRARY dwarf)
+find_library(ZLIB_LIBRARY z)
 
 # Handle the arguments
 
@@ -123,6 +124,7 @@ if(LIBDWARF_FOUND)
 	set(LIBDWARF_LIBRARIES
 		${LIBDWARF_LIBRARY}
 		${LIBELF_LIBRARIES}
+		${ZLIB_LIBRARY}
 	)
 	set(LIBDWARF_DEFINITIONS
 		${DWARF_H_DEFINITIONS}

@@ -37,13 +37,13 @@
 #include "omrcomp.h"
 #include "omrutilbase.h"
 
-#if (defined(LINUX) || defined(OSX) || defined(MVS) || defined(J9ZOS390) || defined(OMRZTPF))
+#if (defined(LINUX) || defined(OSX) || defined(FREEBSD) || defined(MVS) || defined(J9ZOS390) || defined(OMRZTPF))
 #include <sys/time.h>
 #if defined(OSX)
 #include <mach/clock.h>
 #include <mach/mach.h>
 #endif /* defined(OSX) */
-#endif /* defined(LINUX) || defined(OSX) || defined(MVS) || defined(J9ZOS390) || defined(OMRZTPF) */
+#endif /* defined(LINUX) || defined(OSX) || defined(FREEBSD) || defined(MVS) || defined(J9ZOS390) || defined(OMRZTPF) */
 
 
 #include "omrmutex.h"
@@ -81,7 +81,6 @@ typedef struct zos_sem_t {
 } zos_sem_t;
 typedef zos_sem_t OSSEMAPHORE;
 #endif /* defined(LINUX) || defined(AIXPPC) */
-
 
 #include "thrtypes.h"
 
@@ -127,7 +126,7 @@ extern int priority_map[];
  *
  * CMVC 199234 - use CLOCK_MONOTONIC also on Linux
  */
-#if (defined(AIXPPC) && !defined(J9OS_I5)) || (defined(LINUX) && !defined(OMRZTPF))
+#if (defined(AIXPPC) && !defined(J9OS_I5)) || (defined(LINUX) && !defined(OMRZTPF)) || defined(FREEBSD)
 #define J9THREAD_USE_MONOTONIC_COND_CLOCK 1
 #else /* (defined(AIXPPC) && !defined(J9OS_I5)) || (defined(LINUX) && !defined(OMRZTPF) */
 #define J9THREAD_USE_MONOTONIC_COND_CLOCK 0
@@ -201,7 +200,7 @@ extern pthread_condattr_t *defaultCondAttr;
 
 /* THREAD_YIELD */
 
-#if (defined(LINUX) || defined(AIXPPC) || defined(OSX))
+#if (defined(LINUX) || defined(AIXPPC) || defined(OSX)) || defined(FREEBSD)
 #define THREAD_YIELD() (sched_yield())
 
 #ifdef OMR_THR_YIELD_ALG
@@ -308,11 +307,11 @@ extern pthread_condattr_t *defaultCondAttr;
 #endif
 
 /* THREAD_SET_NAME */
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 #define THREAD_SET_NAME(self, thread, name) set_pthread_name((self), (thread), (name))
 #else /* defined(LINUX) || defined(OSX) */
 #define THREAD_SET_NAME(self, thread, name) 0 /* not implemented */
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 
 /* THREAD_SET_PRIORITY */
 #define THREAD_SET_PRIORITY(thread, priority) set_pthread_priority((thread), (priority))

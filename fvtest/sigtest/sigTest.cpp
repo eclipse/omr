@@ -69,7 +69,14 @@ enum TestAction {
 #endif /* defined(OMR_OS_WINDOWS) || defined(J9ZOS390) */
 #endif
 
+#if defined(OMR_OS_WINDOWS) || defined(OMRZTPF)
+#define sigjmp_buf jmp_buf
+#endif /* defined(OMR_OS_WINDOWS) || defined(OMRZTPF) */
+
+/* Intermixing env context between *jmp types is undefined, separate them out */
 static jmp_buf env;
+static sigjmp_buf senv;
+static sigjmp_buf slenv;
 static volatile int handlerCalls;
 static void handlerPrimary(int sig);
 static void handlerPrimaryInstaller(int sig);
@@ -222,7 +229,7 @@ TEST(OmrSigTest, handlerInstallingHandlerTest)
 	omrsig_primary_signal(SIGABRT, handlerPrimaryInstaller);
 	signal(SIGABRT, handlerSecondaryInstaller);
 
-	handlerCalls = sigsetjmp(env, 1);
+	handlerCalls = sigsetjmp(senv, 1);
 	if (0 == handlerCalls) {
 		raise(SIGABRT);
 	}
@@ -244,7 +251,7 @@ signalRaisingThread(void *entryArg)
 	for (int i = 0; i < THREADING_TEST_ITERATIONS; i += 1) {
 		if (SIGABRT == signum) {
 			/* Raise signal to this thread. */
-			int newHandlerCalls = sigsetjmp(env, 1);
+			int newHandlerCalls = sigsetjmp(senv, 1);
 			if (0 == newHandlerCalls) {
 				pthread_kill(pthread_self(), signum);
 			}
@@ -770,7 +777,7 @@ performTestAndCheck(int expectedHandlerCalls, bool onStackCondition, bool testin
 	for (int i = 0; i < 2; i += 1) {
 		if ((65 > signum) && ((expectedHandlerCalls - handlerCalls > 0) || (SIGABRT != signum))) {
 			if (SIGABRT == signum) {
-				int newHandlerCalls = sigsetjmp(env, 1);
+				int newHandlerCalls = sigsetjmp(senv, 1);
 				if (0 == newHandlerCalls) {
 					raise(signum);
 				}
@@ -814,7 +821,7 @@ handlerPrimary(int sig)
 	checkSignalMask(sig, primaryMasked, true);
 #endif /* !defined(OMR_OS_WINDOWS) */
 	if ((OMRSIG_RC_SIGNAL_HANDLED != omrsig_handler(sig, NULL, NULL)) && (SIGABRT == sig)) {
-		siglongjmp(env, handlerCalls);
+		siglongjmp(slenv, handlerCalls);
 	}
 }
 
@@ -826,7 +833,7 @@ handlerSecondary(int sig)
 	checkSignalMask(sig, secondaryMasked, false);
 #endif /* !defined(OMR_OS_WINDOWS) */
 	if (SIGABRT == sig) {
-		siglongjmp(env, handlerCalls);
+		siglongjmp(slenv, handlerCalls);
 	}
 }
 
@@ -837,7 +844,7 @@ handlerPrimaryInfo(int sig, siginfo_t *siginfo, void *uc)
 	handlerCalls += 1;
 	checkSignalMask(sig, primaryMasked, true);
 	if ((OMRSIG_RC_SIGNAL_HANDLED != omrsig_handler(sig, NULL, NULL)) && (SIGABRT == sig)) {
-		siglongjmp(env, handlerCalls);
+		siglongjmp(slenv, handlerCalls);
 	}
 }
 
@@ -847,7 +854,7 @@ handlerSecondaryInfo(int sig, siginfo_t *siginfo, void *uc)
 	handlerCalls += 1;
 	checkSignalMask(sig, secondaryMasked, false);
 	if (SIGABRT == sig) {
-		siglongjmp(env, handlerCalls);
+		siglongjmp(slenv, handlerCalls);
 	}
 }
 #endif /* !defined(OMR_OS_WINDOWS) */
@@ -857,7 +864,7 @@ handlerPrimaryInstaller(int sig)
 {
 	handlerCalls += 1;
 	if ((OMRSIG_RC_SIGNAL_HANDLED != omrsig_handler(sig, NULL, NULL))) {
-		siglongjmp(env, handlerCalls);
+		siglongjmp(slenv, handlerCalls);
 	}
 }
 
@@ -867,12 +874,12 @@ handlerSecondaryInstaller(int sig)
 	handlerCalls += 1;
 	signal(sig, handlerTertiaryInstaller);
 	raise(sig);
-	siglongjmp(env, handlerCalls);
+	siglongjmp(slenv, handlerCalls);
 }
 
 static void
 handlerTertiaryInstaller(int sig)
 {
 	handlerCalls += 1;
-	siglongjmp(env, handlerCalls);
+	siglongjmp(slenv, handlerCalls);
 }

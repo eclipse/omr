@@ -33,6 +33,10 @@
 #include <sys/prctl.h>
 #endif /* defined(LINUX) */
 
+#if defined(FREEBSD)
+#include <pthread_np.h>
+#endif /* defined(FREEBSD) */
+
 #if defined(OMRZTPF)
 #include <tpf/c_eb0eb.h>
 #include <tpf/sysapi.h>
@@ -86,11 +90,11 @@ call_omrthread_init(void)
 {
 	omrthread_library_t lib = GLOBAL_DATA(default_library);
 
-#if defined(LINUX) || !defined(J9_PRIORITY_MAP) || defined(J9OS_I5) || defined(OSX)
+#if defined(LINUX) || !defined(J9_PRIORITY_MAP) || defined(J9OS_I5) || defined(OSX) || defined(FREEBSD)
 	if (initialize_priority_map()) {
 		goto thread_init_error;
 	}
-#endif /* defined(LINUX) || !defined(J9_PRIORITY_MAP) || defined(J9OS_I5) || defined(OSX) */
+#endif /* defined(LINUX) || !defined(J9_PRIORITY_MAP) || defined(J9OS_I5) || defined(OSX) || defined(FREEBSD) */
 
 #ifdef J9ZOS390
 	zos_init_yielding();
@@ -119,7 +123,7 @@ init_thread_library(void)
 	return lib->initStatus != 1;
 }
 
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 intptr_t
 set_pthread_name(pthread_t self, pthread_t thread, const char *name)
 {
@@ -135,12 +139,14 @@ set_pthread_name(pthread_t self, pthread_t thread, const char *name)
 	prctl(PR_SET_NAME, name);
 #endif
 	/* we ignore the return value of prctl, since naming is not supported on some older linux distributions */
+#elif defined(FREEBSD)
+	pthread_set_name_np(thread, name);
 #else /* defined(LINUX) */
 	pthread_setname_np(name);
 #endif /* defined(LINUX) */
 	return 0;
 }
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 
 intptr_t
 osthread_join(omrthread_t self, omrthread_t threadToJoin)

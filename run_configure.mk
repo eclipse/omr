@@ -83,6 +83,9 @@ endif
 ifneq (,$(findstring osx,$(SPEC)))
   include $(CONFIG_INCL_DIR)/configure_osx.mk
 endif
+ifneq (,$(findstring freebsd_amd64,$(SPEC)))
+  include $(CONFIG_INCL_DIR)/configure_freebsd_amd64.mk
+endif
 ifneq (,$(findstring win_x86,$(SPEC)))
   include $(CONFIG_INCL_DIR)/configure_win_x86.mk
   # OMRTODO: this is J9 buildfarm specific code.

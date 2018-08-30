@@ -230,6 +230,9 @@ endif
 ifeq (osx,$(OMR_HOST_OS))
   include $(top_srcdir)/omrmakefiles/rules.osx.mk
 endif
+ifeq (freebsd,$(OMR_HOST_OS))
+  include $(top_srcdir)/omrmakefiles/rules.freebsd.mk
+endif
 ifeq (win,$(OMR_HOST_OS))
   include $(top_srcdir)/omrmakefiles/rules.win.mk
 endif

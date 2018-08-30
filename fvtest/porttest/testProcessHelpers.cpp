@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #endif /* defined(OMR_OS_WINDOWS) */
 
-#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -36,7 +36,7 @@
 #include <sys/sem.h>
 #include <errno.h>
 #define PROCESS_HELPER_SEM_KEY 0x05CAC8E /* Reads OSCACHE */
-#endif /* defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX) */
+#endif /* defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD) */
 
 #if defined(J9ZOS390)
 #include <spawn.h>
@@ -54,7 +54,7 @@
 #define PORTTEST_PROCESS_HELPERS_DEBUG
 #endif
 
-#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 
 #if (defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)) || defined(OSX)
 /* union semun is defined by including <sys/sem.h> */
@@ -199,7 +199,7 @@ CloseLaunchSemaphore(OMRPortLibrary *portLibrary, intptr_t semaphore)
 	}
 	return -1;
 }
-#else /* defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX) */
+#else /* defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD) */
 /* Not supported on anything else */
 intptr_t
 openLaunchSemaphore(OMRPortLibrary *portLibrary, const char *name, uintptr_t nProcess)
@@ -222,7 +222,7 @@ CloseLaunchSemaphore(OMRPortLibrary *portLibrary, intptr_t semaphore)
 	return -1;
 }
 
-#endif /* defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX) */
+#endif /* defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD) */
 
 OMRProcessHandle
 launchChildProcess(OMRPortLibrary *portLibrary, const char *testname, const char *argv0, const char *options)
@@ -891,10 +891,10 @@ j9process_create(OMRPortLibrary *portLibrary, const char *command[], uintptr_t c
 	memset(newCommand, 0, newCommandSize);
 
 	for (i = 0 ; i < commandLength; i += 1) {
-#if defined(OSX)
+#if defined(OSX) || defined(FREEBSD)
 		newCommand[i] = (char *)omrmem_allocate_memory(strlen(command[i]) + 1, OMRMEM_CATEGORY_PORT_LIBRARY);
 		omrstr_printf(newCommand[i], strlen(command[i]) + 1, command[i]);
-#else /* defined(OSX) */
+#else /* defined(OSX) || defined(FREEBSD)  */
 		intptr_t translateStatus = translateModifiedUtf8ToPlatform(OMRPORTLIB, command[i], strlen(command[i]), &(newCommand[i]));
 		if (0 != translateStatus) {
 			unsigned int j = 0;
@@ -906,7 +906,7 @@ j9process_create(OMRPortLibrary *portLibrary, const char *command[], uintptr_t c
 			}
 			return translateStatus;
 		}
-#endif /* defined(OSX) */
+#endif /* defined(OSX) || defined(FREEBSD) */
 	}
 	cmd = newCommand[0];
 

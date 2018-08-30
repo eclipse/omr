@@ -3000,6 +3000,8 @@ if test "x$OMR_HOST_OS" = "x"; then :
     OMR_HOST_OS=aix ;; #(
   *linux*) :
     OMR_HOST_OS=linux ;; #(
+  *freebsd*) :
+    OMR_HOST_OS=freebsd ;; #(
   *darwin*) :
     OMR_HOST_OS=osx ;; #(
   *cygwin*) :
@@ -7157,7 +7159,8 @@ else
   if test "x${enable_auto_build_flag}" = xyes; then :
   if test "3" -gt 2; then :
 
-					if test "$OMR_HOST_OS" = linux || test "$OMR_HOST_OS" = osx; then :
+					if test "$OMR_HOST_OS" = linux || test "$OMR_HOST_OS" = osx ||
+	       test "$OMR_HOST_OS" = freebsd; then :
   OMRTHREAD_LIB_UNIX=1
 
    $as_echo "#define OMRTHREAD_LIB_UNIX 1" >>confdefs.h

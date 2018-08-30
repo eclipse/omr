@@ -42,7 +42,7 @@
 const char *utf8 = "UTF-8";
 #if defined(J9ZOS390)
 const char *utf16 = "01200"; /* z/OS does not accept "UTF-16" */
-#elif defined(OSX) /* defined(J9ZOS390) */
+#elif defined(OSX) || defined(FREEBSD) /* defined(J9ZOS390) */
 const char *utf16 = "UTF-16LE";
 #else /* defined(J9ZOS390) */
 const char *utf16 = "UTF-16";

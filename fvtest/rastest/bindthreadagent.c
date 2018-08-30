@@ -20,6 +20,11 @@
  *******************************************************************************/
 
 #include <stdio.h>
+
+#if !defined(OMR_OS_WINDOWS)
+#include <unistd.h>
+#endif /* !defined(OMR_OS_WINDOWS) */
+
 #include "omragent.h"
 #include "omragent_internal.h"
 #include "omrTestHelpers.h"

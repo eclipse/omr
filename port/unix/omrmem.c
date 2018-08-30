@@ -41,9 +41,9 @@
 #include "omrportasserts.h"
 #include "ut_omrport.h"
 #include "protect_helpers.h"
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 #include <sys/mman.h>
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 
 #if defined(AIXPPC)
 #include <sys/shm.h>
@@ -98,7 +98,7 @@ omrmem_advise_and_free_memory_basic(struct OMRPortLibrary *portLibrary, void *me
 {
 	uintptr_t pageSize = 0;
 
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 	pageSize = sysconf(_SC_PAGESIZE);
 #elif defined(AIXPPC)
 	struct vm_page_info pageInfo;
@@ -135,7 +135,7 @@ omrmem_advise_and_free_memory_basic(struct OMRPortLibrary *portLibrary, void *me
 
 			Trc_PRT_mem_advise_and_free_memory_basic_oscall(memPtrPageRounded, memPtrSizePageRounded);
 
-#if (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX)
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(FREEBSD)
 			if (-1 == madvise((void *)memPtrPageRounded, memPtrSizePageRounded, MADV_DONTNEED)) {
 				Trc_PRT_mem_advise_and_free_memory_basic_madvise_failed((void *)memPtrPageRounded, memPtrSizePageRounded, errno);
 			}

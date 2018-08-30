@@ -81,7 +81,7 @@ target_compile_options(omrsig
 		${OMR_PLATFORM_SHARED_COMPILE_OPTIONS}
 )
 
-if(OMR_HOST_OS MATCHES "linux|osx")
+if(OMR_HOST_OS MATCHES "linux|osx|freebsd")
 	target_link_libraries(omrsig PRIVATE dl)
 endif()
 if(OMR_HOST_OS STREQUAL "zos")

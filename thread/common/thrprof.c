@@ -44,7 +44,7 @@
 #include "ut_j9thr.h"
 
 /* for syscall getrusage() used in omrthread_get_process_times */
-#if defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX)
+#if defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 #include <errno.h> /* Examine errno codes. */
 #include <sys/time.h> /* Portability */
 #include <sys/resource.h>
@@ -175,7 +175,7 @@ omrthread_get_cpu_time_ex(omrthread_t thread, int64_t *cpuTime)
 	}
 #endif
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(FREEBSD)
 	{
 		intptr_t ret = 0;
 		int result;
@@ -369,7 +369,7 @@ omrthread_get_self_cpu_time(omrthread_t self)
 	 * Testing on various x86 and PPC Linuxes shows some improvement on RHEL5
 	 * and no noticeable degradation on older Linuxes.
 	 */
-#if defined(LINUX) && defined(CLOCK_THREAD_CPUTIME_ID)
+#if (defined(LINUX) && defined(CLOCK_THREAD_CPUTIME_ID)) || defined(FREEBSD)
 	{
 		struct timespec time;
 
@@ -377,7 +377,7 @@ omrthread_get_self_cpu_time(omrthread_t self)
 			return ((int64_t)time.tv_sec * 1000 * 1000 * 1000) + time.tv_nsec;
 		}
 	}
-#endif /* defined(LINUX) && defined(CLOCK_THREAD_CPUTIME_ID) */
+#endif /* (defined(LINUX) && defined(CLOCK_THREAD_CPUTIME_ID)) || defined(FREEBSD) */
 
 	return omrthread_get_cpu_time(self);
 }
@@ -506,7 +506,7 @@ omrthread_enable_stack_usage(uintptr_t enable)
 uintptr_t
 omrthread_get_stack_usage(omrthread_t thread)
 {
-#if defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX)
+#if defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 	return 0;
 #else /* defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX) */
 	uintptr_t *tos = thread->tos;
@@ -525,7 +525,7 @@ omrthread_get_stack_usage(omrthread_t thread)
 	}
 
 	return count;
-#endif /* defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX) */
+#endif /* defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD) */
 }
 
 
@@ -721,7 +721,7 @@ omrthread_get_process_times(omrthread_process_time_t *processTime)
 		}
 #endif	/* defined(OMR_OS_WINDOWS) */
 
-#if defined(LINUX) || defined(AIXPPC) || defined(OSX)
+#if defined(LINUX) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 		struct rusage rUsage;
 		memset(&rUsage, 0, sizeof(rUsage));
 
@@ -737,7 +737,7 @@ omrthread_get_process_times(omrthread_process_time_t *processTime)
 			Trc_THR_ThreadGetProcessTimes_getrusageFailed(errno);
 			return -2;
 		}
-#endif /* defined(LINUX) || defined(AIXPPC) || defined(OSX) */
+#endif /* defined(LINUX) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD) */
 
 #if defined (J9ZOS390)
 		/* Input buffer, pointer to buffer, and size of the buffer area. */

@@ -78,6 +78,9 @@ case $system in
     Darwin)
         platform="amd64-osx-clang"
         ;;
+    FreeBSD)
+        platform="amd64-freebsd-clang"
+        ;;
     Linux)
         p=$(uname -m)
         case $p in

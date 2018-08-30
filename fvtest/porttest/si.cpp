@@ -1222,20 +1222,20 @@ TEST(PortSysinfoTest, sysinfo_testMemoryInfo)
 			 */
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.availVirtual)
 #endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
-#if defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX)
+#if defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD)
 			/* Size of the file buffer area is not available on Windows, AIX and OSX. Therefore,
 			 * it must be set to OMRPORT_MEMINFO_NOT_AVAILABLE.
 			 */
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.buffered)
-#else /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX) */
+#else /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD) */
 			/* On platforms where buffer area is defined, OMRPORT_MEMINFO_NOT_AVAILABLE is
 			 * surely a failure!
 			 */
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.buffered)
-#endif /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX) */
-#if defined (OSX)
+#endif /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD) */
+#if defined (OSX) || defined(FREEBSD)
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.cached)
-#else /* defined (OSX) */
+#else /* defined (OSX) || defined(FREEBSD) */
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.cached)
 #endif /* defined(OSX) */
 		) {
@@ -1280,16 +1280,16 @@ TEST(PortSysinfoTest, sysinfo_testMemoryInfo)
 #endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
 			portTestEnv->log("Total swap memory: %llu bytes.\n", memInfo.totalSwap);
 			portTestEnv->log("Swap memory free: %llu bytes.\n", memInfo.availSwap);
-#if defined(OSX)
+#if defined(OSX) || defined(FREEBSD)
 			portTestEnv->log("Cache memory: <undefined>.\n");
-#else /* defined(OSX) */
+#else /* defined(OSX) || defined(FREEBSD) */
 			portTestEnv->log("Cache memory: %llu bytes.\n", memInfo.cached);
-#endif /* defined(OSX) */
-#if defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined (OSX)
+#endif /* defined(OSX) || defined(FREEBSD) */
+#if defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined (OSX) || defined(FREEBSD)
 			portTestEnv->log("Buffers memory: <undefined>.\n");
-#else /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined (OSX) */
+#else /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined (OSX) || defined(FREEBSD) */
 			portTestEnv->log("Buffers memory: %llu bytes.\n", memInfo.buffered);
-#endif /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined (OSX) */
+#endif /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined (OSX) || defined(FREEBSD) */
 			portTestEnv->log("Timestamp: %llu.\n", memInfo.timestamp);
 		} else {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "Invalid memory usage statistics retrieved.\n");
@@ -1421,11 +1421,11 @@ TEST(PortSysinfoTest, sysinfo_testProcessorInfo)
 	portTestEnv->log("User time:   %lld.\n", currInfo.procInfoArray[0].userTime);
 	portTestEnv->log("System time: %lld.\n", currInfo.procInfoArray[0].systemTime);
 	portTestEnv->log("Idle time:   %lld.\n", currInfo.procInfoArray[0].idleTime);
-#if defined(OMR_OS_WINDOWS) || defined(OSX)
+#if defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD)
 	portTestEnv->log("Wait time:   <undefined>.\n");
-#else /* Non-windows/OSX platforms */
+#else /* Non-windows/OSX/FreeBSD platforms */
 	portTestEnv->log("tWait time:   %lld.\n", currInfo.procInfoArray[0].waitTime);
-#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD) */
 	portTestEnv->log("Busy time:   %lld.\n", currInfo.procInfoArray[0].busyTime);
 	portTestEnv->changeIndent(-1);
 
@@ -1439,12 +1439,12 @@ TEST(PortSysinfoTest, sysinfo_testProcessorInfo)
 			if ((OMRPORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].userTime) &&
 				(OMRPORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].systemTime) &&
 				(OMRPORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].idleTime) &&
-#if defined(OMR_OS_WINDOWS) || defined(OSX)
-				/* Windows and OSX do not have the notion of Wait times. */
+#if defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD)
+				/* Windows, OSX and FreeBSD do not have the notion of Wait times. */
 				(OMRPORT_PROCINFO_NOT_AVAILABLE == currInfo.procInfoArray[cntr].waitTime) &&
-#else /* Non-windows/OSX platforms */
+#else /* Non-windows/OSX/FreeBSD platforms */
 				(OMRPORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].waitTime) &&
-#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD) */
 				(OMRPORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].busyTime)) {
 
 				/* Print out processor times in each mode for each CPU that is online. */
@@ -1453,11 +1453,11 @@ TEST(PortSysinfoTest, sysinfo_testProcessorInfo)
 				portTestEnv->log("User time:   %lld.\n", currInfo.procInfoArray[cntr].userTime);
 				portTestEnv->log("System time: %lld.\n", currInfo.procInfoArray[cntr].systemTime);
 				portTestEnv->log("Idle time:   %lld.\n", currInfo.procInfoArray[cntr].idleTime);
-#if defined(OMR_OS_WINDOWS) || defined(OSX)
+#if defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD)
 				portTestEnv->log("Wait time:   <undefined>.\n");
-#else /* Non-windows/OSX platforms */
+#else /* Non-windows/OSX/FreeBSD platforms */
 				portTestEnv->log("Wait time:   %lld.\n", currInfo.procInfoArray[cntr].waitTime);
-#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) || defined(FREEBSD) */
 				portTestEnv->log("Busy time:   %lld.\n", currInfo.procInfoArray[cntr].busyTime);
 				portTestEnv->changeIndent(-1);
 			} else {

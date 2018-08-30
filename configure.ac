@@ -523,7 +523,8 @@ OMRCFG_DEFINE_FLAG([OMRTHREAD_LIB_ZOS],[1],
 	)]
 )
 OMRCFG_DEFINE_FLAG([OMRTHREAD_LIB_UNIX],[1],
-	[AS_IF([[test "$OMR_HOST_OS" = linux] || [test "$OMR_HOST_OS" = osx]],
+	[AS_IF([[test "$OMR_HOST_OS" = linux] || [test "$OMR_HOST_OS" = osx] ||
+	       [test "$OMR_HOST_OS" = freebsd]],
 		[OMRCFG_ENABLE_FLAG([OMRTHREAD_LIB_UNIX], [1])],
 		[OMRCFG_DISABLE_FLAG([OMRTHREAD_LIB_UNIX])]
 	)]

@@ -75,6 +75,29 @@ elseif(OMR_HOST_OS STREQUAL "osx")
 			dwarf/DwarfParser.cpp
 			dwarf/DwarfScanner.cpp
 	)
+elseif(OMR_HOST_OS STREQUAL "freebsd")
+
+	find_package(LibDwarf REQUIRED)
+	#	find_library(ZLIB_LIBRARY z)
+
+	target_link_libraries(omr_ddr_scanner
+		PUBLIC
+			${LIBDWARF_LIBRARIES}
+
+	)
+	target_include_directories(omr_ddr_scanner
+		PUBLIC
+			${LIBDWARF_INCLUDE_DIRS}
+	)
+	target_compile_definitions(omr_ddr_scanner
+		PUBLIC
+			${LIBDWARF_DEFINITIONS}
+	)
+	target_sources(omr_ddr_scanner
+		PRIVATE
+			dwarf/DwarfFunctions.cpp
+			dwarf/DwarfScanner.cpp
+	)
 elseif(OMR_HOST_OS STREQUAL "aix")
 	target_sources(omr_ddr_scanner
 		PRIVATE

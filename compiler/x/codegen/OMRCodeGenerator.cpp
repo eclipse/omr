@@ -518,7 +518,7 @@ OMR::X86::CodeGenerator::createLinkage(TR_LinkageConventions lc)
       case TR_Helper:
          // Intentional fall through
       case TR_System:
-         if (TR::Compiler->target.isLinux() || TR::Compiler->target.isOSX())
+         if (TR::Compiler->target.isLinux() || TR::Compiler->target.isOSX() || TR::Compiler->target.isFreeBSD())
             {
 #if defined(TR_TARGET_64BIT)
             linkage = new (self()->trHeapMemory()) TR::AMD64ABILinkage(self());
@@ -1102,7 +1102,7 @@ OMR::X86::CodeGenerator::getNanoTimeTemp()
    if (_nanoTimeTemp == NULL)
       {
       TR::AutomaticSymbol *sym;
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
       sym = TR::AutomaticSymbol::create(self()->trHeapMemory(),TR::Aggregate,sizeof(struct timeval));
 #else
       sym = TR::AutomaticSymbol::create(self()->trHeapMemory(),TR::Aggregate,8);

@@ -51,6 +51,9 @@
 #include <dlfcn.h>
 #include <sys/utsname.h>
 #include <inttypes.h>
+#elif defined(FREEBSD)
+#include <sys/user.h>
+#include <libutil.h>
 #elif defined(AIXPPC)
 #include <sys/ldr.h>
 #include <sys/debug.h>
@@ -96,6 +99,10 @@
 /* -1 means block indefinitely */
 #define POLL_RETRY_INTERVAL -1
 #endif
+
+#if defined(FREEBSD)
+typedef union sigval sigval_t;
+#endif /* defined(FREEBSD) */
 
 typedef struct {
 	int descriptor_pair[2];
@@ -906,6 +913,23 @@ count_threads(struct PlatformWalkData *data)
 	}
 
 	return thread_count;
+}
+#elif defined(FREEBSD)
+static int
+count_threads(struct PlatformWalkData *data)
+{
+	int count;
+	struct kinfo_proc *kp;
+
+	kp = kinfo_getproc(getpid());
+	if (kp == NULL)
+		return -1;
+
+	count = kp->ki_numthreads;
+
+	free(kp);
+
+	return count;
 }
 #elif defined(AIXPPC)
 static int

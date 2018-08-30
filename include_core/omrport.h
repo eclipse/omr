@@ -50,9 +50,9 @@
 #include "omrgcconsts.h"
 #endif /* defined(OMRZTPF) */
 
-#if (defined(LINUX) || defined(RS6000) || defined (OSX))
+#if (defined(LINUX) || defined(RS6000) || defined (OSX) || defined(FREEBSD))
 #include <unistd.h>
-#endif /* (defined(LINUX) || defined(RS6000) || defined (OSX)) */
+#endif /* (defined(LINUX) || defined(RS6000) || defined (OSX)) || defined(FREEBSD) */
 
 #if defined(J9ZOS390)
 #define PORT_ABEND_CODE	0xDED
@@ -755,7 +755,7 @@ typedef struct J9ProcessorInfos {
 #define OMRPORT_SIG_FLAG_IS_SYNC                ((uint32_t)0x08)
 #define OMRPORT_SIG_FLAG_CONTROL_BITS_MASK      ((uint32_t)0x0F)
 
-#if defined(OSX) || defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390)
+#if defined(OSX) || defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(FREEBSD)
 /* The below macros support the unix/omrsignal.c implementation, which is used on OSX, Linux, AIX and zOS. */
 
 /* All signal codes include exactly one of OMRPORT_SIG_FLAG_IS_SYNC or OMRPORT_SIG_FLAG_IS_ASYNC

@@ -54,7 +54,7 @@ target_link_libraries(omrsigtest
 	${OMR_PORT_LIB}
 )
 
-if(OMR_HOST_OS MATCHES "linux|osx")
+if(OMR_HOST_OS MATCHES "linux|osx|freebsd")
 	target_link_libraries(omrsigtest dl)
 endif()
 

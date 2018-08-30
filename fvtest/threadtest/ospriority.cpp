@@ -22,12 +22,12 @@
 #if defined(OMR_OS_WINDOWS)
 #include <windows.h>
 #endif /* defined(OMR_OS_WINDOWS) */
-#if defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX)
+#if defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 #include <pthread.h>
 #if defined(OSX)
 #include <mach/mach_host.h>
 #endif /* defined(OSX) */
-#endif /* defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX) */
+#endif /* defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD) */
 #include "createTestHelper.h"
 #include "omrutil.h"
 #include "omrutilbase.h"
@@ -75,7 +75,7 @@ mapOSPolicy(intptr_t policy)
 	}
 }
 
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 
 void
 initPrioMap(void)
@@ -298,4 +298,4 @@ initPrioMap(void)
 
 #else
 #error "unsupported platform"
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* defined(LINUX) || defined(OSX) || defined(FREEBSD) */

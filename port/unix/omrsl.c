@@ -53,11 +53,11 @@
 /* Start copy from omrfiletext.c */
 /* __STDC_ISO_10646__ indicates that the platform wchar_t encoding is Unicode */
 /* but older versions of libc fail to set the flag, even though they are Unicode */
-#if defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX)
+#if defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) || defined(FREEBSD)
 #define J9VM_USE_MBTOWC
-#else /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) */
+#else /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 #include "omriconvhelpers.h"
-#endif /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) */
+#endif /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 
 
 #if defined(J9VM_USE_MBTOWC) || defined(J9VM_USE_ICONV)
@@ -162,7 +162,7 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 	/* dlopen(2) called with NULL filename opens a handle to current executable. */
 	handle = dlopen(openExec ? NULL : openName, lazyOrNow);
 
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 	if ((NULL == handle) && !openExec) {
 		/* last ditch, try dir port lib DLL is in */
 		char portLibDir[MAX_STRING_LENGTH];
@@ -197,7 +197,7 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 			}
 		}
 	}
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 
 	if (NULL == handle) {
 		getDLError(portLibrary, errBuf, sizeof(errBuf));

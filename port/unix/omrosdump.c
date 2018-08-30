@@ -162,11 +162,11 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 		/*
 		 * CMVC 95748: don't use abort() after fork() on Linux as this seems to upset certain levels of glibc
 		 */
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 #define J9_DUMP_SIGNAL  SIGSEGV
-#else /* defined(LINUX) || defined(OSX) */
+#else /* defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 #define J9_DUMP_SIGNAL  SIGABRT
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 
 		/* Ensure we get default action (core) - reset primary&app handlers */
 		OMRSIG_SIGNAL(J9_DUMP_SIGNAL, SIG_DFL);
@@ -184,9 +184,9 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 			}
 		}
 
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 		pthread_kill(pthread_self(), J9_DUMP_SIGNAL);
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* defined(LINUX) || defined(OSX) || defined(FREEBSD) */
 
 		abort();
 	} /* end of child process */
@@ -197,7 +197,7 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 		return 1;
 	}
 
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 
 	if (NULL != filename) {
 		/* Wait for child process that is generating core file to finish */

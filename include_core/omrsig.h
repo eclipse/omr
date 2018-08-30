@@ -32,13 +32,13 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#if defined(OSX)
+#if defined(OSX) || defined(FREEBSD)
 #define __THROW
-#endif /* defined(OSX) */
+#endif /* defined(OSX) || defined(FREEBSD) */
 
 #if defined(LINUXPPC)
 typedef __sighandler_t sighandler_t;
-#elif defined(LINUX) || defined(OSX)
+#elif defined(LINUX) || defined(OSX) || defined(FREEBSD)
 typedef void (*sighandler_t)(int sig);
 #elif defined(J9ZOS390) || defined(AIXPPC)
 typedef void (*sighandler_t)(int sig);

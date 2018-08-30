@@ -38,7 +38,7 @@ add_executable(jitbuildertest
 )
 
 if(OMR_HOST_ARCH STREQUAL "x86")
-	if(OMR_HOST_OS STREQUAL "linux" OR OMR_HOST_OS STREQUAL "osx")
+	if(OMR_HOST_OS STREQUAL "linux" OR OMR_HOST_OS STREQUAL "osx" OR OMR_HOST_OS STREQUAL "freebsd")
 		target_sources(jitbuildertest PRIVATE CallReturnTest.cpp)
 	endif()
 endif()

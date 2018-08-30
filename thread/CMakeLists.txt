@@ -87,6 +87,11 @@ if(OMR_HOST_OS STREQUAL "osx")
 	include_directories(osx unix)
 endif()
 
+if(OMR_HOST_OS STREQUAL "freebsd")
+	list(APPEND VPATHS freebsd unix)
+	include_directories(freebsd unix)
+endif()
+
 if(OMR_HOST_OS STREQUAL "aix")
 	list(APPEND VPATHS aix unix)
 	include_directories(aix unix)

@@ -86,6 +86,8 @@ OMR::CompilerEnv::initializeHostEnvironment()
    host.setMajorOS(TR::os_zos);
 #elif HOST_OS == OMR_OSX
    host.setMajorOS(TR::os_osx);
+#elif HOST_OS == OMR_FREEBSD
+   host.setMajorOS(TR::os_freebsd);
 #else
    host.setMajorOS(TR::os_unknown);
 #endif
@@ -129,6 +131,8 @@ OMR::CompilerEnv::initializeTargetEnvironment()
    target.setMajorOS(TR::os_zos);
 #elif HOST_OS == OMR_OSX
    target.setMajorOS(TR::os_osx);
+#elif HOST_OS == OMR_FREEBSD
+   target.setMajorOS(TR::os_freebsd);
 #else
    target.setMajorOS(TR::os_unknown);
 #endif

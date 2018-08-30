@@ -64,7 +64,7 @@ typedef int8_t					I_8;
 
 #if defined(MVS)
 typedef int32_t					BOOLEAN;
-#elif defined(LINUX) || defined(RS6000) || defined(J9ZOS390) || defined(OSX) || defined(OMRZTPF) /* MVS */
+#elif defined(LINUX) || defined(RS6000) || defined(J9ZOS390) || defined(OSX) || defined(FREEBSD) || defined(OMRZTPF) /* MVS */
 typedef uint32_t					BOOLEAN;
 #else /* MVS */
 /* Don't typedef BOOLEAN since it's already defined on Windows */
@@ -109,7 +109,7 @@ EXE_EXTENSION_CHAR: the executable has a delimiter that we want to stop at as pa
 */
 
 /* Linux ANSI compiler (gcc) and OSX (clang). */
-#if defined(LINUX) || defined (OSX)
+#if defined(LINUX) || defined (OSX) || defined(FREEBSD)
 
 /* NOTE: Linux supports different processors -- do not assume 386 */
 
@@ -172,7 +172,7 @@ typedef double SYS_FLOAT;
 
 #define HAS_BUILTIN_EXPECT
 
-#endif /* defined(LINUX) || defined (OSX) */
+#endif /* defined(LINUX) || defined (OSX) || defined(FREEBSD) */
 
 /* MVS compiler */
 #ifdef MVS

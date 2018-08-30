@@ -38,9 +38,9 @@
 #define SPEC_WIN_API
 #endif /* defined(OMR_OS_WINDOWS) */
 
-#if defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX)
+#if defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX) || defined(FREEBSD)
 #define SPEC_PTHREAD_API
-#endif /* defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX) */
+#endif /* defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX) || defined(FREEBSD) */
 
 #ifndef ASSERT
 #define ASSERT(x) assert(x)
@@ -50,7 +50,7 @@
 #define PTHREAD_VERBOSE(x) pthread_verboseCall(#x, (x))
 
 /* OS-specific values */
-#if defined(AIXPPC) || defined(LINUX) || defined(OSX)
+#if defined(AIXPPC) || defined(LINUX) || defined(OSX) || defined(FREEBSD)
 #define OS_PTHREAD_INHERIT_SCHED PTHREAD_INHERIT_SCHED
 #define OS_PTHREAD_EXPLICIT_SCHED PTHREAD_EXPLICIT_SCHED
 #define OS_PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_SYSTEM

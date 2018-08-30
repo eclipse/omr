@@ -81,6 +81,12 @@ ifeq (osx,$(OMR_HOST_OS))
   MODULE_INCLUDES += $(THREAD_SRCDIR)osx $(THREAD_SRCDIR)unix
 endif
 
+ifeq (freebsd,$(OMR_HOST_OS))
+  vpath % $(THREAD_SRCDIR)freebsd
+  vpath % $(THREAD_SRCDIR)unix
+  MODULE_INCLUDES += $(THREAD_SRCDIR)freebsd $(THREAD_SRCDIR)unix
+endif
+
 ifeq (aix,$(OMR_HOST_OS))
   vpath % $(THREAD_SRCDIR)aix
   vpath % $(THREAD_SRCDIR)unix

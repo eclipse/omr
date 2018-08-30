@@ -171,6 +171,9 @@ else
   ifeq (osx,$(OMR_HOST_OS))
     OBJECTS += omrosdump_helpers
   endif
+  ifeq (freebsd,$(OMR_HOST_OS))
+    OBJECTS += omrosdump_helpers
+  endif
 endif
 ifeq (zos,$(OMR_HOST_OS))
   ifeq (0,$(OMR_ENV_DATA64))
@@ -290,6 +293,21 @@ ifeq (osx,$(OMR_HOST_OS))
 
   vpath % $(PORT_SRCDIR)osx
   MODULE_INCLUDES += $(PORT_SRCDIR)osx
+endif
+
+ifeq (freebsd,$(OMR_HOST_OS))
+  vpath % $(PORT_SRCDIR)freebsd_include
+  MODULE_INCLUDES += $(PORT_SRCDIR)freebsd_include
+
+  ifeq (x86,$(OMR_HOST_ARCH))
+    ifeq (1,$(OMR_ENV_DATA64))
+      vpath % $(PORT_SRCDIR)freebsdamd64
+      MODULE_INCLUDES += $(PORT_SRCDIR)freebsdamd64
+    endif
+  endif
+
+  vpath % $(PORT_SRCDIR)freebsd
+  MODULE_INCLUDES += $(PORT_SRCDIR)freebsd
 endif
 
 ifneq (win,$(OMR_HOST_OS))

@@ -19,18 +19,18 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX)
+#if defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD)
 #include <pthread.h>
 #include <limits.h>	/* for PTHREAD_STACK_MIN */
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(FREEBSD)
 #include <unistd.h> /* required for the _SC_PAGESIZE  constant */
-#endif /* defined(LINUX) || defined(OSX) */
-#endif /* defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX) */
+#endif /* defined(LINUX) || defined(OSX) || defined(FREEBSD) */
+#endif /* defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX) || defined(FREEBSD) */
 #include "createTestHelper.h"
 #include "common/omrthreadattr.h"
-#if defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX)
+#if defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX) || defined(FREEBSD)
 #include "unix/unixthreadattr.h"
-#endif /* defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX) */
+#endif /* defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX) || defined(FREEBSD) */
 #include "thread_api.h"
 #include "thrdsup.h"
 #include "omrTest.h"
@@ -265,7 +265,9 @@ canCreateThread(const create_attr_t *expected, const omrthread_attr_t attr)
 
 	rc = J9THREAD_VERBOSE(omrthread_create_ex(&handle, (attr? &attr : J9THREAD_ATTR_DEFAULT), 1, threadmain, &data));
 	if (J9THREAD_SUCCESS == rc) {
+#if defined(SPEC_PTHREAD_API) || defined(LINUX)
 		OSTHREAD tid = handle->handle;
+#endif /* defined(SPEC_PTHREAD_API) || defined(LINUX) */
 
 		omrthread_resume(handle);
 
