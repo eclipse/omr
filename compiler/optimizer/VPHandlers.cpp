@@ -5780,7 +5780,7 @@ TR::Node *constrainAcall(OMR::ValuePropagation *vp, TR::Node *node)
                   {
                   newTypeConstraint = TR::VPFixedClass::create(vp, constraint->getClass());
 
-                  if (!vp->comp()->compileRelocatableCode())
+                  if (!vp->comp()->compileRelocatableCode() || vp->comp()->getOption(TR_UseSymbolValidationManager))
                      {
                      if (constraint->getClassType()
                          && constraint->getClassType()->isArray() == TR_no
@@ -12770,7 +12770,7 @@ TR::Node *constrainArrayStoreChk(OMR::ValuePropagation *vp, TR::Node *node)
                   node->setArrayStoreClassInNode(objectClass);
                   }
 
-              else if ( !vp->comp()->compileRelocatableCode() &&
+              else if ( (!vp->comp()->compileRelocatableCode() || vp->comp()->getOption(TR_UseSymbolValidationManager)) &&
                         !(vp->comp()->getOption(TR_DisableArrayStoreCheckOpts))  &&
                         arrayComponentClass &&
                         objectClass  &&
