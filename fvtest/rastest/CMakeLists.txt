@@ -187,6 +187,10 @@ target_link_libraries(omrrastest
 		${OMR_PORT_LIB}
 )
 
+if(OMRPORT_OMRSIG_SUPPORT)
+	target_link_libraries(omrrastest PRIVATE omrsig)
+endif()
+
 add_dependencies(omrrastest
 	bindthreadagent
 	cpuLoadAgent
@@ -215,6 +219,9 @@ target_link_libraries(omrsubscribertest
 		omrvmstartup
 		${OMR_PORT_LIB}
 )
+if(OMRPORT_OMRSIG_SUPPORT)
+	target_link_libraries(omrsubscribertest PRIVATE omrsig)
+endif()
 add_dependencies(omrsubscribertest
 	subscriberAgent
 	subscriberAgentWithJ9thread
@@ -234,6 +241,9 @@ target_link_libraries(omrtraceoptiontest
 		omrvmstartup
 		${OMR_PORT_LIB}
 )
+if(OMRPORT_OMRSIG_SUPPORT)
+	target_link_libraries(omrtraceoptiontest PRIVATE omrsig)
+endif()
 add_dependencies(omrtraceoptiontest
 	traceOptionAgent
 )

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2016 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,6 +108,10 @@ endif
 ifeq (win,$(OMR_HOST_OS))
   MODULE_SHARED_LIBS += ws2_32 # socket library
   MODULE_SHARED_LIBS += shell32 Iphlpapi psapi pdh
+endif
+
+ifeq (1,$(OMRPORT_OMRSIG_SUPPORT))
+  MODULE_SHARED_LIBS += omrsig
 endif
 
 # rules.mk defines the rules for building object files, libraries, and executables.

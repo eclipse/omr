@@ -71,6 +71,10 @@ if(OMR_HOST_OS STREQUAL "zos")
 	target_link_libraries(omrgctest j9a2e)
 endif()
 
+if(OMRPORT_OMRSIG_SUPPORT)
+	target_link_libraries(omrgctest omrsig)
+endif()
+
 set_property(TARGET omrgctest PROPERTY FOLDER fvtest)
 
 add_test(NAME gctest
