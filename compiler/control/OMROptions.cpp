@@ -2216,6 +2216,19 @@ OMR::Options::jitLatePostProcess(TR::OptionSet *optionSet, void * jitConfig)
             if (_coldUpgradeSampleThreshold == TR_DEFAULT_COLD_UPGRADE_SAMPLE_THRESHOLD)
                _coldUpgradeSampleThreshold = 2;
             }
+
+         // disable DelayRelocationForAOTCompilations feature because with higher
+         // method counts, the JIT collects enough IProfiler info prior to
+         // compilation that it doesn't need to wait any longer before running the
+
+         if (self()->getOption(TR_UseHigherMethodCounts))
+            {
+            self()->setOption(TR_DisableDelayRelocationForAOTCompilations, true);// If scount has not been changed on the command line, adjust it here
+            if (self()->getInitialSCount() == TR_INITIAL_SCOUNT)
+               {
+               _initialSCount = _initialCount;
+               }
+            }
          }
       else // No AOT
          {
