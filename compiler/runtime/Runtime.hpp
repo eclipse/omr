@@ -413,6 +413,7 @@ typedef struct TR_RelocationRecordInformation {
    uintptr_t data2;
    uintptr_t data3;
    uintptr_t data4;
+   uintptr_t data5;
 } TR_RelocationRecordInformation;
 
 
