@@ -367,6 +367,12 @@ public:
    void incrementHeuristicRegion() { return; }
    void decrementHeuristicRegion() { return; }
 
+   /* Can be used to ensure that a implementer chosen for inlining is valid;
+    * for example, to ensure that the implementer can be used for inlining
+    * in a relocatable compilation
+    */
+   bool validateImplementer(TR_ResolvedMethod *implementer) { return true; }
+
    // ..........................................................................
    // Optimizer mechanics
    int16_t getOptIndex()        { return _currentOptIndex; }
