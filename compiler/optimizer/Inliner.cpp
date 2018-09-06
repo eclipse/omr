@@ -5689,6 +5689,8 @@ TR_CallSite::addTarget(TR_Memory* mem, TR_InlinerBase *inliner, TR_VirtualGuardS
 
    addTarget(result);
 
+   _comp->validateImplementer(implementer);
+
    if(inliner->tracer()->heuristicLevel())
       {
       char name[1024];
