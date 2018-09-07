@@ -356,7 +356,8 @@ typedef enum
    TR_DebugCounter                        = 59,
    TR_ClassUnloadAssumption               = 60, // this should not be used in AOT relocations
    TR_J2IVirtualThunkPointer              = 61,
-   TR_NumExternalRelocationKinds          = 62,
+   TR_InlinedAbstractMethodWithNopGuard   = 62,
+   TR_NumExternalRelocationKinds          = 63,
    TR_ExternalRelocationTargetKindMask    = 0xff,
    } TR_ExternalRelocationTargetKind;
 

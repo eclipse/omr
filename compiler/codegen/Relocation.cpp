@@ -423,6 +423,7 @@ const char *TR::ExternalRelocation::_externalRelocationTargetKindNames[TR_NumExt
    "TR_DebugCounter (59)",
    "TR_ClassUnloadAssumption (60)",
    "TR_J2IVirtualThunkPointer (61)",
+   "TR_InlinedAbstractMethodWithNopGuard (62)",
    };
 
 uintptr_t TR::ExternalRelocation::_globalValueList[TR_NumGlobalValueItems] =
