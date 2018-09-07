@@ -350,6 +350,8 @@ public:
 
    bool compilationShouldBeInterrupted(TR_CallingContext) { return false; }
 
+   void verifySymbolHasBeenValidated(void *symbol) { return; }
+
    // ..........................................................................
    // Optimizer mechanics
    int16_t getOptIndex()        { return _currentOptIndex; }

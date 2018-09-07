@@ -234,7 +234,7 @@ enum TR_CompilationOptions
    TR_TraceMarkingOfHotFields             = 0x00001000 + 4,
    TR_EnableAnnotations                   = 0x00002000 + 4, // change to disable when on by default
    TR_UnresolvedAreNotColdAtCold          = 0x00004000 + 4, // cold block marker marks unresolved blocks as cold at hotness cold or less
-   // AVAILABLE                           = 0x00008000 + 4,
+   TR_UseSymbolValidationManager          = 0x00008000 + 4,
    TR_EnablePIDExtension                  = 0x00010000 + 4,
    TR_GenerateCompleteInlineRanges        = 0x00020000 + 4,
    TR_DisableInliningOfNatives            = 0x00040000 + 4,
