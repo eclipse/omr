@@ -449,6 +449,8 @@ public:
       ClientSessionData,
       ROMClass,
 
+      SymbolValidationManager,
+
       NumObjectTypes,
       // If adding new object types above, add the corresponding names
       // to objectName[] array defined in TRMemory.cpp
@@ -680,8 +682,6 @@ operator new[](size_t size, TR_StackMemory stackMemory) { return stackMemory.all
 
 inline void *
 operator new[](size_t size, PERSISTENT_NEW_DECLARE) { return TR_Memory::jitPersistentAlloc(size, TR_MemoryBase::UnknownType); }
-
-
 
 
 /*

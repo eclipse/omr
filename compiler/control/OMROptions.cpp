@@ -1319,6 +1319,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"useSamplingJProfilingForInterpSampledMethods","M\tHeuristic. Use samplingJProfiling for methods sampled by interpreter", SET_OPTION_BIT(TR_UseSamplingJProfilingForInterpSampledMethods), "F", NOT_IN_SUBSET },
    {"useSamplingJProfilingForLPQ",              "M\tHeuristic. Use samplingJProfiling for methods from low priority queue", SET_OPTION_BIT(TR_UseSamplingJProfilingForLPQ), "F", NOT_IN_SUBSET },
    {"useStrictStartupHints",        "M\tStartup hints from application obeyed strictly", SET_OPTION_BIT(TR_UseStrictStartupHints), "F", NOT_IN_SUBSET},
+   {"useSymbolValidationManager",        "M\tUse Symbol Validation Manager for Relocatable Compile Validations", SET_OPTION_BIT(TR_UseSymbolValidationManager), "F", NOT_IN_SUBSET},
    {"useVmTotalCpuTimeAsAbstractTime", "M\tUse VmTotalCpuTime as abstractTime", SET_OPTION_BIT(TR_UseVmTotalCpuTimeAsAbstractTime), "F", NOT_IN_SUBSET },
    {"varyInlinerAggressivenessWithTime", "M\tVary inliner aggressiveness with abstract time", SET_OPTION_BIT(TR_VaryInlinerAggressivenessWithTime), "F", NOT_IN_SUBSET },
    {"verifyReferenceCounts", "I\tverify the sanity of object reference counts before manipulation", SET_OPTION_BIT(TR_VerifyReferenceCounts), "F"},
