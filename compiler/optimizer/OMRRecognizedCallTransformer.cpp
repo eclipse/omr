@@ -38,6 +38,12 @@ int32_t OMR::RecognizedCallTransformer::perform()
    TR::NodeChecklist visited(comp());
    for (auto treetop = comp()->getMethodSymbol()->getFirstTreeTop(); treetop != NULL; treetop = treetop->getNextTreeTop())
       {
+      if (treetop->getEnclosingBlock()->isCold())
+         {
+         treetop = treetop->getEnclosingBlock()->getExit();
+         continue;
+         }
+
       if (treetop->getNode()->getNumChildren() > 0)
          {
          auto node = treetop->getNode()->getFirstChild();
