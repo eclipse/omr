@@ -54,9 +54,8 @@ TR::X86DataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
    if (_isClassAddress)
       {
       bool needRelocation = TR::Compiler->cls.classUnloadAssumptionNeedsRelocation(cg()->comp());
-      if (needRelocation)
+      if (needRelocation && !cg()->comp()->compileRelocatableCode())
          {
-         TR_ASSERT(!cg()->comp()->compileRelocatableCode(), "ClassUnloadAssumption relocation should not be used during AOT compilation");
          cg()->addExternalRelocation(new (TR::comp()->trHeapMemory())
                                   TR::ExternalRelocation(cursor, NULL, TR_ClassUnloadAssumption, cg()),
                                   __FILE__, __LINE__, self()->getNode());
@@ -79,6 +78,16 @@ TR::X86DataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
             {
             cg()->jitAdd32BitPicToPatchOnClassRedefinition(((void *) -1), (void *) cursor, true);
             }
+         }
+
+      TR_OpaqueClassBlock *clazz = getData<TR_OpaqueClassBlock *>();
+      if (clazz && cg()->comp()->compileRelocatableCode() && cg()->comp()->getOption(TR_UseSymbolValidationManager))
+         {
+         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                               (uint8_t *)clazz,
+                                                               (uint8_t *)TR::SymbolType::typeClass,
+                                                               TR_SymbolFromManager,
+                                                               cg()),  __FILE__, __LINE__, getNode());
          }
       }
    }
