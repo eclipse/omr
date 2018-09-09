@@ -602,7 +602,7 @@ xmlns:vgc="http://www.ibm.com/j9/verbosegc">
 		<attribute name="id" type="integer" use="optional" />
 		<attribute name="type" type="string" use="required" />
 		<attribute name="space" type="string" use="required" />
-		<attribute name="amount" type="integer" use="required" />
+		<attribute name="amount" type="integer" use="optional" />
 		<attribute name="count" type="integer" use="required" />
 		<attribute name="timems" type="float" use="required" />
 		<attribute name="reason" type="string" use="required" />
