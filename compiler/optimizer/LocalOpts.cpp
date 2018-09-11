@@ -8058,7 +8058,9 @@ TR_ColdBlockMarker::hasNotYetRun(TR::Node *node)
       TR::SymbolReference *symRef = node->getSymbolReference();
       bool isUnresolved;
 
-      if (comp()->compileRelocatableCode() && !comp()->getOption(TR_DisablePeekAOTResolutions))
+      if (comp()->compileRelocatableCode() &&
+          !comp()->getOption(TR_UseSymbolValidationManager) &&
+          !comp()->getOption(TR_DisablePeekAOTResolutions))
          isUnresolved = symRef->isUnresolvedMethodInCP(comp());
       else
          isUnresolved = symRef->isUnresolved();
@@ -8090,7 +8092,9 @@ TR_ColdBlockMarker::hasNotYetRun(TR::Node *node)
          }
       else
          {
-         if (comp()->compileRelocatableCode() && !comp()->getOption(TR_DisablePeekAOTResolutions))
+         if (comp()->compileRelocatableCode() &&
+             !comp()->getOption(TR_UseSymbolValidationManager) &&
+             !comp()->getOption(TR_DisablePeekAOTResolutions))
             {
             bool isUnresolved = node->getSymbolReference()->isUnresolvedFieldInCP(comp());
             //currentely node->hasUnresolvedSymbolReference() returns true more often for AOT than non-AOT beacause of
@@ -8104,7 +8108,15 @@ TR_ColdBlockMarker::hasNotYetRun(TR::Node *node)
             return isUnresolved;
             }
          else
+            {
+            if (comp()->compileRelocatableCode()
+                && comp()->getOption(TR_UseSymbolValidationManager)
+                && node->getSymbol()->isConstString())
+               {
+               return false;
+               }
             return true;
+            }
          }
       }
    return false;
