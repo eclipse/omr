@@ -84,6 +84,7 @@ public:
    virtual bool isFinal();
    
    virtual bool isInterpreted();
+   virtual bool isInterpretedForHeuristics();
    virtual bool hasBackwardBranches();
    virtual bool isObjectConstructor();
    virtual bool isNonEmptyObjectConstructor();
