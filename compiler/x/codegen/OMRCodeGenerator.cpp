@@ -471,7 +471,6 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
       {
       self()->setGPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR_GPR));
       self()->setFPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR_FPR));
-      self()->setX87RegisterIterator(new (self()->trHeapMemory()) TR_X86FPStackIterator(self()->machine()));
       }
 
    self()->setSupportsProfiledInlining();

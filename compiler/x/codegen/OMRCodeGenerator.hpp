@@ -36,7 +36,6 @@ namespace OMR { typedef OMR::X86::CodeGenerator CodeGeneratorConnector; }
 #include "codegen/Machine.hpp"                 // for Machine, etc
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"                // for Register
-#include "codegen/RegisterIterator.hpp"        // for RegisterIterator
 #include "codegen/ScratchRegisterManager.hpp"
 #include "compile/Compilation.hpp"             // for Compilation
 #include "env/jittypes.h"                      // for intptrj_t
@@ -332,9 +331,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
       {
       return (_assignmentDirection = d);
       }
-
-   TR::RegisterIterator *getX87RegisterIterator()                          {return _x87RegisterIterator;}
-   TR::RegisterIterator *setX87RegisterIterator(TR::RegisterIterator *iter) {return (_x87RegisterIterator = iter);}
 
    TR::RealRegister *getFrameRegister()                       {return _frameRegister;}
    TR::RealRegister *getMethodMetaDataRegister();
@@ -634,7 +630,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR::list<TR_OutlinedInstructions*>    _outlinedInstructionsList;
 
    RegisterAssignmentDirection     _assignmentDirection;
-   TR::RegisterIterator            *_x87RegisterIterator;
 
    int32_t                         _instructionPatchAlignmentBoundary;
    int32_t                         _PicSlotCount;
@@ -801,28 +796,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 #endif
 
 #define IS_32BIT_RIP(x,rip)  ((intptrj_t)(x) == (intptrj_t)(rip) + (int32_t)((intptrj_t)(x) - (intptrj_t)(rip)))
-
-
-class TR_X86FPStackIterator : public TR::RegisterIterator
-   {
-   public:
-
-   TR_X86FPStackIterator(TR::Machine *machine, TR_RegisterKinds kind = TR_NoRegister):
-      TR::RegisterIterator(machine, kind)
-      {
-      _machine = machine;
-      _cursor = TR_X86FPStackRegister::fpFirstStackReg;
-      }
-
-   TR::Register *getFirst() {return _machine->getFPStackLocationPtr(_cursor = TR_X86FPStackRegister::fpFirstStackReg);}
-   TR::Register *getCurrent() {return _machine->getFPStackLocationPtr(_cursor);}
-   TR::Register *getNext() {return _cursor > TR_X86FPStackRegister::fpLastStackReg ? NULL : _machine->getFPStackLocationPtr(++_cursor);}
-
-   private:
-
-   TR::Machine *_machine;
-   int32_t _cursor;
-   };
 
 class TR_X86ScratchRegisterManager: public TR_ScratchRegisterManager
    {

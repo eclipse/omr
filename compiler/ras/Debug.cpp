@@ -4969,18 +4969,6 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
                   }
                trfprintf(_file, "</fprs>\n");
                }
-#if defined(TR_TARGET_X86)
-            if (_registerKindsToAssign & TR_X87_Mask)
-               {
-               trfprintf(_file, "<x87>\n");
-               TR::RegisterIterator *iter = _comp->cg()->getX87RegisterIterator();
-               for (TR::Register *reg = iter->getFirst(); reg; reg = iter->getNext())
-                  {
-                  printFullRegInfo(_file, reg);
-                  }
-               trfprintf(_file, "</x87>\n");
-               }
-#endif
             trfprintf(_file, "</regstates>\n");
             }
          if (_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRAPreAssignmentInstruction))
