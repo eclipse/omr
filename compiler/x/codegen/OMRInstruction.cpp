@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -156,7 +156,7 @@ void OMR::X86::Instruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
             {
             // Skip non-assignable registers
             //
-            if (machine->getX86RealRegister((TR::RealRegister::RegNum)i)->getState() == TR::RealRegister::Locked)
+            if (machine->getRealRegister((TR::RealRegister::RegNum)i)->getState() == TR::RealRegister::Locked)
                continue;
 
             TR::Register *virtReg = machine->getVirtualAssociatedWithReal((TR::RealRegister::RegNum)i);

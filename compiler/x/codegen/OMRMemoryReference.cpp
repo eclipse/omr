@@ -860,9 +860,9 @@ OMR::X86::MemoryReference::assignRegisters(
 
    if (_baseRegister != NULL)
       {
-      if (_baseRegister == cg->machine()->getX86RealRegister(TR::RealRegister::vfp))
+      if (_baseRegister == cg->machine()->getRealRegister(TR::RealRegister::vfp))
          {
-         assignedBaseRegister = cg->machine()->getX86RealRegister(TR::RealRegister::vfp);
+         assignedBaseRegister = cg->machine()->getRealRegister(TR::RealRegister::vfp);
          }
       else
          {
@@ -935,7 +935,7 @@ OMR::X86::MemoryReference::estimateBinaryLength(TR::CodeGenerator *cg)
       {
       // Rewrite VFP-relative memref in terms of an actual register
       //
-      _baseRegister = cg->machine()->getX86RealRegister(cg->vfpState()._register);
+      _baseRegister = cg->machine()->getRealRegister(cg->vfpState()._register);
       self()->getSymbolReference().setOffset(self()->getSymbolReference().getOffset() + cg->vfpState()._displacement);
       }
 
@@ -1055,14 +1055,14 @@ OMR::X86::MemoryReference::getBinaryLengthLowerBound(TR::CodeGenerator *cg)
 
       if (registerNumber == TR::RealRegister::vfp)
          {
-         TR_ASSERT(cg->machine()->getX86RealRegister(registerNumber)->getAssignedRealRegister(),
+         TR_ASSERT(cg->machine()->getRealRegister(registerNumber)->getAssignedRealRegister(),
                 "virtual frame pointer must be assigned before estimating instruction length lower bound!\n");
-         registerNumber = toRealRegister(cg->machine()->getX86RealRegister(registerNumber)->
+         registerNumber = toRealRegister(cg->machine()->getRealRegister(registerNumber)->
                              getAssignedRealRegister())->getRegisterNumber();
          }
       }
 
-   TR::RealRegister *base = cg->machine()->getX86RealRegister(registerNumber);
+   TR::RealRegister *base = cg->machine()->getRealRegister(registerNumber);
    switch (addressTypes)
       {
       case 1:
@@ -1420,11 +1420,11 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
 
          if (baseRegisterNumber == TR::RealRegister::vfp)
             {
-            TR_ASSERT(cg->machine()->getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister(),
+            TR_ASSERT(cg->machine()->getRealRegister(baseRegisterNumber)->getAssignedRealRegister(),
                    "virtual frame pointer must be assigned before binary encoding!\n");
 
             base = toRealRegister(cg->machine()->
-               getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister());
+               getRealRegister(baseRegisterNumber)->getAssignedRealRegister());
             baseRegisterNumber = base->getRegisterNumber();
             self()->setBaseRegister(base);
             }
@@ -1483,11 +1483,11 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
 
          if (baseRegisterNumber == TR::RealRegister::vfp)
             {
-            TR_ASSERT(cg->machine()->getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister(),
+            TR_ASSERT(cg->machine()->getRealRegister(baseRegisterNumber)->getAssignedRealRegister(),
                    "virtual frame pointer must be assigned before binary encoding!\n");
 
             base = toRealRegister(cg->machine()->
-                   getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister());
+                   getRealRegister(baseRegisterNumber)->getAssignedRealRegister());
             baseRegisterNumber = base->getRegisterNumber();
             self()->setBaseRegister(base);
             }
@@ -1605,11 +1605,11 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
 
          if (baseRegisterNumber == TR::RealRegister::vfp)
             {
-            TR_ASSERT(cg->machine()->getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister(),
+            TR_ASSERT(cg->machine()->getRealRegister(baseRegisterNumber)->getAssignedRealRegister(),
                    "virtual frame pointer must be assigned before binary encoding!\n");
 
             base = toRealRegister(cg->machine()->
-                   getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister());
+                   getRealRegister(baseRegisterNumber)->getAssignedRealRegister());
             baseRegisterNumber = base->getRegisterNumber();
             self()->setBaseRegister(base);
             }
@@ -1665,11 +1665,11 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
 
          if (baseRegisterNumber == TR::RealRegister::vfp)
             {
-            TR_ASSERT(cg->machine()->getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister(),
+            TR_ASSERT(cg->machine()->getRealRegister(baseRegisterNumber)->getAssignedRealRegister(),
                    "virtual frame pointer must be assigned before binary encoding!\n");
 
             base = toRealRegister(cg->machine()->
-                      getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister());
+                      getRealRegister(baseRegisterNumber)->getAssignedRealRegister());
             baseRegisterNumber = base->getRegisterNumber();
             self()->setBaseRegister(base);
             }

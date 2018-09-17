@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -257,7 +257,7 @@ uint8_t *TR::X86HelperCallSnippet::genHelperCall(uint8_t *buffer)
 
          *buffer = 0x50;
          TR_ASSERT(deps, "null dependencies on restart label of helper call snippet with register args");
-         cg()->machine()->getX86RealRegister(deps->getPostConditions()->getRegisterDependency(registerArgs++)->getRealRegister())->setRegisterFieldInOpcode(buffer++);
+         cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(registerArgs++)->getRealRegister())->setRegisterFieldInOpcode(buffer++);
          }
       }
 
@@ -397,7 +397,7 @@ TR_Debug::printBody(TR::FILE *pOutFile, TR::X86HelperCallSnippet  * snippet, uin
             printPrefix(pOutFile, NULL, bufferPos, 1);
             trfprintf(pOutFile, "push\t");
             TR_ASSERT( deps, "null dependencies on restart label of helper call snippet with register args");
-            print(pOutFile, _cg->machine()->getX86RealRegister(deps->getPostConditions()->getRegisterDependency(registerArgs++)->getRealRegister()), TR_WordReg);
+            print(pOutFile, _cg->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(registerArgs++)->getRealRegister()), TR_WordReg);
             bufferPos++;
             }
          }

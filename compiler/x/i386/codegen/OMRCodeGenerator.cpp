@@ -90,7 +90,7 @@ OMR::X86::I386::CodeGenerator::CodeGenerator() :
          }
       self()->setSupportsDivCheck();
       self()->setJNILinkageCalleeCleanup();
-      self()->setRealVMThreadRegister(self()->machine()->getX86RealRegister(TR::RealRegister::ebp));
+      self()->setRealVMThreadRegister(self()->machine()->getRealRegister(TR::RealRegister::ebp));
       }
    else if (TR::Compiler->target.isLinux())
       {
@@ -106,7 +106,7 @@ OMR::X86::I386::CodeGenerator::CodeGenerator() :
          self()->setHasResumableTrapHandler();
          self()->setEnableImplicitDivideCheck();
          }
-      self()->setRealVMThreadRegister(self()->machine()->getX86RealRegister(TR::RealRegister::ebp));
+      self()->setRealVMThreadRegister(self()->machine()->getRealRegister(TR::RealRegister::ebp));
       self()->setSupportsDivCheck();
       }
    else

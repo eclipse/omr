@@ -50,17 +50,17 @@ OMR::X86::RegisterIterator::RegisterIterator(TR::Machine *machine, TR_RegisterKi
 TR::Register *
 OMR::X86::RegisterIterator::getFirst()
    {
-   return _machine->getX86RealRegister((TR::RealRegister::RegNum)(_cursor = _firstRegIndex));
+   return _machine->getRealRegister((TR::RealRegister::RegNum)(_cursor = _firstRegIndex));
    }
 
 TR::Register *
 OMR::X86::RegisterIterator::getCurrent()
    {
-   return _machine->getX86RealRegister((TR::RealRegister::RegNum)_cursor);
+   return _machine->getRealRegister((TR::RealRegister::RegNum)_cursor);
    }
 
 TR::Register *
 OMR::X86::RegisterIterator::getNext()
    {
-   return _cursor == _lastRegIndex ? NULL : _machine->getX86RealRegister((TR::RealRegister::RegNum)(++_cursor));
+   return _cursor == _lastRegIndex ? NULL : _machine->getRealRegister((TR::RealRegister::RegNum)(++_cursor));
    }

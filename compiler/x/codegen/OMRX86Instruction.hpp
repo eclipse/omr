@@ -2842,7 +2842,7 @@ class X86VFPDedicateInstruction : public TR::X86RegMemInstruction
       // returns [vfp+0].
       //
       TR::Machine *machine = cg->machine();
-      return generateX86MemoryReference(machine->getX86RealRegister(TR::RealRegister::vfp), 0, cg);
+      return generateX86MemoryReference(machine->getRealRegister(TR::RealRegister::vfp), 0, cg);
       }
 
    public:

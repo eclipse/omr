@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ class IA32SystemLinkage : public TR::X86SystemLinkage
    int32_t layoutParm(TR::Node*, int32_t&, uint16_t&, uint16_t&, TR::parmLayoutResult&);
    int32_t layoutParm(TR::ParameterSymbol*, int32_t&, uint16_t&, uint16_t&, TR::parmLayoutResult&);
    virtual TR::Register *buildVolatileAndReturnDependencies(TR::Node *callNode, TR::RegisterDependencyConditions *deps);
-   virtual TR::RealRegister* getSingleWordFrameAllocationRegister() { return machine()->getX86RealRegister(TR::RealRegister::ecx); }
+   virtual TR::RealRegister* getSingleWordFrameAllocationRegister() { return machine()->getRealRegister(TR::RealRegister::ecx); }
    private:
    virtual uint32_t getAlignment(TR::DataType);
    };

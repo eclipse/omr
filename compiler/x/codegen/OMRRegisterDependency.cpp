@@ -508,13 +508,13 @@ TR_X86RegisterDependencyIndex OMR::X86::RegisterDependencyConditions::unionRealD
             if (dep->getRegister() == vmThreadRegister)
                {
                //diagnostic("\nEnvicting virt reg %s dep for %s replaced with virt reg %s\n      {\"%s\"}",
-               //   getDebug()->getName(dep->getRegister()),getDebug()->getName(machine->getX86RealRegister(rr)),getDebug()->getName(vr), cg->comp()->getCurrentMethod()->signature());
+               //   getDebug()->getName(dep->getRegister()),getDebug()->getName(machine->getRealRegister(rr)),getDebug()->getName(vr), cg->comp()->getCurrentMethod()->signature());
                deps->setDependencyInfo(candidate, vr, rr, cg, flag, isAssocRegDependency);
                }
             else
                {
                //diagnostic("\nSkipping virt reg %s dep for %s in favour of %s\n     {%s}}\n",
-               //   getDebug()->getName(vr),getDebug()->getName(machine->getX86RealRegister(rr)),getDebug()->getName(dep->getRegister()), cg->comp()->getCurrentMethod()->signature());
+               //   getDebug()->getName(vr),getDebug()->getName(machine->getRealRegister(rr)),getDebug()->getName(dep->getRegister()), cg->comp()->getCurrentMethod()->signature());
                TR_ASSERT(vr == vmThreadRegister, "Conflicting EBP register dependencies.\n");
                }
             return cursor;
@@ -659,7 +659,7 @@ void TR_X86RegisterDependencyGroup::blockRealDependencyRegisters(TR_X86RegisterD
       {
       if (_dependencies[i].getRealRegister() != TR::RealRegister::NoReg)
          {
-         machine->getX86RealRegister(_dependencies[i].getRealRegister())->block();
+         machine->getRealRegister(_dependencies[i].getRealRegister())->block();
          }
       }
    }
@@ -672,7 +672,7 @@ void TR_X86RegisterDependencyGroup::unblockRealDependencyRegisters(TR_X86Registe
       {
       if (_dependencies[i].getRealRegister() != TR::RealRegister::NoReg)
          {
-         machine->getX86RealRegister(_dependencies[i].getRealRegister())->unblock();
+         machine->getRealRegister(_dependencies[i].getRealRegister())->unblock();
          }
       }
    }
@@ -849,7 +849,7 @@ void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
          if (virtReg->getKind() == TR_GPR)
             {
             dependentRegNum  = dependencies[i]->getRealRegister();
-            dependentRealReg = machine->getX86RealRegister(dependentRegNum);
+            dependentRealReg = machine->getRealRegister(dependentRegNum);
             assignedReg      = NULL;
             TR::RealRegister::RegNum assignedRegNum = TR::RealRegister::NoReg;
             if (virtReg->getAssignedRegister())
@@ -897,7 +897,7 @@ void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
          {
          virtReg = dependencies[i]->getRegister();
          dependentRegNum = dependencies[i]->getRealRegister();
-         dependentRealReg = machine->getX86RealRegister(dependentRegNum);
+         dependentRealReg = machine->getRealRegister(dependentRegNum);
          if (dependentRealReg->getState() == TR::RealRegister::Free)
             {
             if (virtReg->getKind() == TR_FPR || virtReg->getKind() == TR_VRF)
@@ -923,7 +923,7 @@ void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
          virtReg = dependencies[i]->getRegister();
          assignedReg = toRealRegister(virtReg->getAssignedRealRegister());
          dependentRegNum = dependencies[i]->getRealRegister();
-         dependentRealReg = machine->getX86RealRegister(dependentRegNum);
+         dependentRealReg = machine->getRealRegister(dependentRegNum);
          if (dependentRealReg != assignedReg)
             {
             if (virtReg->getKind() == TR_FPR || virtReg->getKind() == TR_VRF)
@@ -1072,7 +1072,7 @@ void TR_X86RegisterDependencyGroup::setDependencyInfo(
       rr != TR::RealRegister::NoReg &&
       rr != TR::RealRegister::ByteReg)
       {
-      TR::RealRegister *realReg = cg->machine()->getX86RealRegister(rr);
+      TR::RealRegister *realReg = cg->machine()->getRealRegister(rr);
       if ((vr->getKind() == TR_GPR) && !isAssocRegDependency)
          {
          // Remember this association so that we can build interference info for
@@ -1124,7 +1124,7 @@ TR::RealRegister *OMR::X86::RegisterDependencyConditions::getRealRegisterFromVir
 
       if (dependency->getRegister() == virtReg)
          {
-         return machine->getX86RealRegister(dependency->getRealRegister());
+         return machine->getRealRegister(dependency->getRealRegister());
          }
       }
 
@@ -1135,7 +1135,7 @@ TR::RealRegister *OMR::X86::RegisterDependencyConditions::getRealRegisterFromVir
 
       if (dependency->getRegister() == virtReg)
          {
-         return machine->getX86RealRegister(dependency->getRealRegister());
+         return machine->getRealRegister(dependency->getRealRegister());
          }
       }
 

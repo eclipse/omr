@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,7 +92,7 @@ OMR::X86::AMD64::CodeGenerator::CodeGenerator() :
 
    self()->initLinkageToGlobalRegisterMap();
 
-   self()->setRealVMThreadRegister(self()->machine()->getX86RealRegister(TR::RealRegister::ebp));
+   self()->setRealVMThreadRegister(self()->machine()->getRealRegister(TR::RealRegister::ebp));
 
    // GRA-related initialization is done after calling initialize() so we can
    // use such things as getNumberOfGlobal[FG]PRs().

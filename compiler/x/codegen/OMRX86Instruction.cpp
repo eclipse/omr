@@ -1518,7 +1518,7 @@ void insertUnresolvedReferenceInstructionMemoryBarrier(TR::CodeGenerator *cg, in
          {
          //generate LOCK OR dword ptr [esp], 0
          padInst = generateAlignmentInstruction(inst, 8, cg);
-         TR::RealRegister *espReal = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+         TR::RealRegister *espReal = cg->machine()->getRealRegister(TR::RealRegister::esp);
          TR::MemoryReference *espMemRef = generateX86MemoryReference(espReal, 0, cg);
          fenceInst = new (cg->trHeapMemory()) TR::X86MemImmInstruction(padInst, fenceOp.getOpCodeValue(), espMemRef, 0, cg);
          }
@@ -2014,8 +2014,8 @@ void TR::X86MemRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigne
              (getMemoryReference()->getIndexRegister() == cg()->getVMThreadRegister()))
             {
             blockedEbp = true;
-            oldState = cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->getState();
-            cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->setState(TR::RealRegister::Locked); //(TR::RealRegister::Locked);
+            oldState = cg()->machine()->getRealRegister(TR::RealRegister::ebp)->getState();
+            cg()->machine()->getRealRegister(TR::RealRegister::ebp)->setState(TR::RealRegister::Locked); //(TR::RealRegister::Locked);
             }
          getMemoryReference()->blockRegisters();
          if (getDependencyConditions())
@@ -2074,15 +2074,15 @@ void TR::X86MemRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigne
             switch (oldState)
                {
                case TR::RealRegister::Free :
-                  cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Free); break;
+                  cg()->machine()->getRealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Free); break;
                case TR::RealRegister::Unlatched :
-                  cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Unlatched); break;
+                  cg()->machine()->getRealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Unlatched); break;
                case TR::RealRegister::Assigned :
-                  cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Assigned); break;
+                  cg()->machine()->getRealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Assigned); break;
                case TR::RealRegister::Blocked :
-                  cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Blocked); break;
+                  cg()->machine()->getRealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Blocked); break;
                case TR::RealRegister::Locked :
-                  cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Locked); break;
+                  cg()->machine()->getRealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Locked); break;
                }
             }
 
@@ -4353,7 +4353,7 @@ generateVirtualGuardNOPInstruction(TR::Instruction *i, TR::Node * node, TR_Virtu
 
 bool TR::X86VirtualGuardNOPInstruction::usesRegister(TR::Register *reg)
    {
-   if (_nopSize > 0 && cg()->machine()->getX86RealRegister(_register) == reg)
+   if (_nopSize > 0 && cg()->machine()->getRealRegister(_register) == reg)
       return true;
    if (getDependencyConditions())
       return getDependencyConditions()->usesRegister(reg);

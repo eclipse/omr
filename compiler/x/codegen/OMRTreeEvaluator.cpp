@@ -3456,7 +3456,7 @@ TR::Register *OMR::X86::TreeEvaluator::BBStartEvaluator(TR::Node *node, TR::Code
    if (comp->getOption(TR_BreakBBStart))
       {
       TR::Machine *machine = cg->machine();
-      generateRegImmInstruction(TEST4RegImm4, node, machine->getX86RealRegister(TR::RealRegister::esp), block->getNumber(), cg);
+      generateRegImmInstruction(TEST4RegImm4, node, machine->getRealRegister(TR::RealRegister::esp), block->getNumber(), cg);
       generateInstruction(BADIA32Op, node, cg);
       }
 

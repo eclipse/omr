@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -616,7 +616,7 @@ int32_t TR::AMD64SystemLinkage::buildArgs(
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
    TR::RealRegister::RegNum noReg = TR::RealRegister::NoReg;
-   TR::RealRegister *espReal = machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
    int32_t firstNodeArgument = callNode->getFirstArgumentIndex();
    int32_t lastNodeArgument = callNode->getNumChildren() - 1;
    int32_t offset = 0;
@@ -849,7 +849,7 @@ TR::Register *TR::AMD64SystemLinkage::buildDirectDispatch(
          generateX86MemoryReference(frameObjectSymRef, cg()),
          cg());
 
-   TR::RealRegister *espReal = cg()->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister *espReal = cg()->machine()->getRealRegister(TR::RealRegister::esp);
    TR::Register *gcMapPCRegister = cg()->allocateRegister();
 
    generateRegMemInstruction(

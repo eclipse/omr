@@ -138,7 +138,7 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
 
    uint8_t getNumberOfGPRs() { return _numGPRs; }
 
-   TR::RealRegister *getX86RealRegister(TR::RealRegister::RegNum regNum)
+   TR::RealRegister *getRealRegister(TR::RealRegister::RegNum regNum)
       {
       return _registerFile[regNum];
       }

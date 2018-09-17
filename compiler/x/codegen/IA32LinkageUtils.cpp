@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -214,7 +214,7 @@ TR::Register *IA32LinkageUtils::pushFloatArg(
    }
 
    pushRegister = cg->evaluate(child);
-   TR::RealRegister *espReal = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister *espReal = cg->machine()->getRealRegister(TR::RealRegister::esp);
    generateRegImmInstruction(SUB4RegImms, child, espReal, 4, cg);
 
    if (cg->useSSEForSinglePrecision() && pushRegister->getKind() == TR_FPR)
@@ -283,7 +283,7 @@ TR::Register *IA32LinkageUtils::pushDoubleArg(
       }
 
    pushRegister = cg->evaluate(child);
-   TR::RealRegister *espReal = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister *espReal = cg->machine()->getRealRegister(TR::RealRegister::esp);
    generateRegImmInstruction(SUB4RegImms, child, espReal, 8, cg);
 
    if (cg->useSSEForSinglePrecision() && pushRegister->getKind() == TR_FPR)

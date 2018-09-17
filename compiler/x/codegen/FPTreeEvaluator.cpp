@@ -1193,7 +1193,7 @@ TR::Register *OMR::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::Symbo
       TR::Register        *doubleReg = cg->evaluate(child);
       TR::Register        *lowReg    = cg->allocateRegister(TR_GPR);
       TR::Register        *highReg   = cg->allocateRegister(TR_GPR);
-      TR::RealRegister *espReal   = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+      TR::RealRegister *espReal   = cg->machine()->getRealRegister(TR::RealRegister::esp);
 
       deps = generateRegisterDependencyConditions((uint8_t) 0, 3, cg);
       deps->addPostCondition(lowReg, TR::RealRegister::NoReg, cg);

@@ -361,7 +361,7 @@ int32_t TR::IA32SystemLinkage::buildArgs(
 
 TR::Register *TR::IA32SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPRegs)
    {
-   TR::RealRegister    *stackPointerReg = machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister    *stackPointerReg = machine()->getRealRegister(TR::RealRegister::esp);
    TR::SymbolReference *methodSymRef    = callNode->getSymbolReference();
    TR::MethodSymbol    *methodSymbol    = callNode->getSymbol()->castToMethodSymbol();
    TR::ILOpCodes        callOpCodeValue = callNode->getOpCodeValue();

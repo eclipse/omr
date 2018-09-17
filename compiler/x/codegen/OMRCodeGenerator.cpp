@@ -333,13 +333,13 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    // Use a virtual frame pointer register.  The real frame pointer register to be used
    // will be substituted based on _vfpState during size estimation.
    //
-   _frameRegister = self()->machine()->getX86RealRegister(TR::RealRegister::vfp);
+   _frameRegister = self()->machine()->getRealRegister(TR::RealRegister::vfp);
 
    TR::Register            *vmThreadRegister = self()->setVMThreadRegister(self()->allocateRegister());
    TR::RealRegister::RegNum vmThreadIndex    = _linkageProperties->getMethodMetaDataRegister();
    if (vmThreadIndex != TR::RealRegister::NoReg)
       {
-      TR::RealRegister *vmThreadReal = self()->machine()->getX86RealRegister(vmThreadIndex);
+      TR::RealRegister *vmThreadReal = self()->machine()->getRealRegister(vmThreadIndex);
       vmThreadRegister->setAssignedRegister(vmThreadReal);
       vmThreadRegister->setAssociation(vmThreadIndex);
       vmThreadReal->setAssignedRegister(vmThreadRegister);
@@ -1122,7 +1122,7 @@ void OMR::X86::CodeGenerator::saveBetterSpillPlacements(TR::Instruction * branch
 
    for (i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; i++)
       {
-      realReg = self()->machine()->getX86RealRegister((TR::RealRegister::RegNum)i);
+      realReg = self()->machine()->getRealRegister((TR::RealRegister::RegNum)i);
 
       // Skip non-assignable registers
       //
@@ -2215,7 +2215,7 @@ void OMR::X86::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap * map
    //
    for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i)
       {
-      TR::RealRegister * reg = self()->machine()->getX86RealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister * reg = self()->machine()->getRealRegister((TR::RealRegister::RegNum)i);
       if (reg->getHasBeenAssignedInMethod())
          {
          TR::Register *virtReg = reg->getAssignedRegister();
@@ -2346,9 +2346,9 @@ TR::RealRegister::RegNum OMR::X86::CodeGenerator::pickNOPRegister(TR::Instructio
    // We don't do ebp or esp (or r11 or r12 for that matter) because their
    // binary encodings are not always idential to those of the other registers.
 
-   TR::RealRegister * ebx = self()->machine()->getX86RealRegister(TR::RealRegister::ebx);
-   TR::RealRegister * esi = self()->machine()->getX86RealRegister(TR::RealRegister::esi);
-   TR::RealRegister * edi = self()->machine()->getX86RealRegister(TR::RealRegister::edi);
+   TR::RealRegister * ebx = self()->machine()->getRealRegister(TR::RealRegister::ebx);
+   TR::RealRegister * esi = self()->machine()->getRealRegister(TR::RealRegister::esi);
+   TR::RealRegister * edi = self()->machine()->getRealRegister(TR::RealRegister::edi);
 
    int8_t ebxLastDef = 0;
    int8_t esiLastDef = 0;
@@ -2688,8 +2688,8 @@ uint8_t *OMR::X86::CodeGenerator::generatePadding(uint8_t              *cursor,
       if (_paddingTable->_flags.testAny(TR_X86PaddingTable::registerMatters))
          {
          TR::RealRegister::RegNum  regIndex  = self()->pickNOPRegister(neighborhood);
-         TR::RealRegister      *reg       = self()->machine()->getX86RealRegister(regIndex);
-         int32_t                  prefixLen = (_paddingTable->_prefixMask & (1<<length))? 1 : 0;
+         TR::RealRegister         *reg       = self()->machine()->getRealRegister(regIndex);
+         int32_t                   prefixLen = (_paddingTable->_prefixMask & (1<<length))? 1 : 0;
 
          // Target reg
          //

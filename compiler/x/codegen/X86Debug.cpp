@@ -262,7 +262,7 @@ TR_Debug::printDependencyConditions(
          }
       else
          {
-         len = sprintf(cursor, "%s", getName(_cg->machine()->getX86RealRegister(r)));
+         len = sprintf(cursor, "%s", getName(_cg->machine()->getRealRegister(r)));
         }
 
       *(cursor+len)=')';
@@ -336,7 +336,7 @@ TR_Debug::dumpDependencyGroup(TR::FILE *                         pOutFile,
         else if (r == TR::RealRegister::SpilledReg)
            trfprintf(pOutFile, "SpilledReg]");
         else
-           trfprintf(pOutFile, "%s]", getName(_cg->machine()->getX86RealRegister(r)));
+           trfprintf(pOutFile, "%s]", getName(_cg->machine()->getRealRegister(r)));
         }
 
       foundDep = true;
@@ -1783,7 +1783,7 @@ TR_Debug::printX86GCRegisterMap(TR::FILE *pOutFile, TR::GCRegisterMap * map)
    for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i)
       {
       if (map->getMap() & (1 << (i-1))) // TODO:AMD64: Use the proper mask value
-         trfprintf(pOutFile,"%s ", getName(machine->getX86RealRegister((TR::RealRegister::RegNum)i)));
+         trfprintf(pOutFile,"%s ", getName(machine->getRealRegister((TR::RealRegister::RegNum)i)));
       }
 
    trfprintf(pOutFile,"}\n");
@@ -2306,7 +2306,7 @@ TR_Debug::printArgumentFlush(TR::FILE *              pOutFile,
                opCodeName = "mov";
                modrmOffset = 1;
                TR::RealRegister::RegNum reg = linkageProperties.getIntegerArgumentRegister(numGPArgs);
-               regName = getName(_cg->machine()->getX86RealRegister(reg));
+               regName = getName(_cg->machine()->getRealRegister(reg));
                }
             numGPArgs++;
             break;
@@ -2317,7 +2317,7 @@ TR_Debug::printArgumentFlush(TR::FILE *              pOutFile,
                opCodeName = "mov";
                modrmOffset = 2;
                TR::RealRegister::RegNum reg = linkageProperties.getIntegerArgumentRegister(numGPArgs);
-               regName = getName(_cg->machine()->getX86RealRegister(reg), TR_DoubleWordReg);
+               regName = getName(_cg->machine()->getRealRegister(reg), TR_DoubleWordReg);
                }
             numGPArgs++;
             break;
@@ -2327,7 +2327,7 @@ TR_Debug::printArgumentFlush(TR::FILE *              pOutFile,
                opCodeName = "movss";
                modrmOffset = 3;
                TR::RealRegister::RegNum reg = linkageProperties.getFloatArgumentRegister(numFPArgs);
-               regName = getName(_cg->machine()->getX86RealRegister(reg), TR_QuadWordReg);
+               regName = getName(_cg->machine()->getRealRegister(reg), TR_QuadWordReg);
                }
             numFPArgs++;
             break;
@@ -2337,7 +2337,7 @@ TR_Debug::printArgumentFlush(TR::FILE *              pOutFile,
                opCodeName = "movsd";
                modrmOffset = 3;
                TR::RealRegister::RegNum reg = linkageProperties.getFloatArgumentRegister(numFPArgs);
-               regName = getName(_cg->machine()->getX86RealRegister(reg), TR_QuadWordReg);
+               regName = getName(_cg->machine()->getRealRegister(reg), TR_QuadWordReg);
                }
             numFPArgs++;
             break;

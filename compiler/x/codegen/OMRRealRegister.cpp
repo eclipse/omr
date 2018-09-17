@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ OMR::X86::RealRegister::regMaskToRealRegister(TR_RegisterMask mask, TR_RegisterK
    else
       TR_ASSERT(false, "Invalid TR_RegisterKinds value passed to OMR::X86::RealRegister::regMaskToRealRegister()");
 
-   return cg->machine()->getX86RealRegister(TR::RealRegister::RegNum(rr+bitPos));
+   return cg->machine()->getRealRegister(TR::RealRegister::RegNum(rr+bitPos));
    }
 
 TR_RegisterMask
