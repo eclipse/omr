@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5870,8 +5870,8 @@ void OMR::Power::TreeEvaluator::preserveTOCRegister(TR::Node *node, TR::CodeGene
    TR::Compilation* comp = cg->comp();
 
    //We need to preserve the JIT TOC whenever we call out. We're saving this on the caller TOC slot as defined by the ABI.
-   TR::Register * grTOCReg       = cg->machine()->getPPCRealRegister(TR::RealRegister::gr2);
-   TR::Register * grSysStackReg   = cg->machine()->getPPCRealRegister(TR::RealRegister::gr1);
+   TR::Register * grTOCReg       = cg->machine()->getRealRegister(TR::RealRegister::gr2);
+   TR::Register * grSysStackReg   = cg->machine()->getRealRegister(TR::RealRegister::gr1);
 
    int32_t callerSaveTOCOffset = (TR::Compiler->target.cpu.isBigEndian() ? 5 : 3) *  TR::Compiler->om.sizeofReferenceAddress();
 
@@ -5883,8 +5883,8 @@ void OMR::Power::TreeEvaluator::preserveTOCRegister(TR::Node *node, TR::CodeGene
 void OMR::Power::TreeEvaluator::restoreTOCRegister(TR::Node *node, TR::CodeGenerator *cg, TR::RegisterDependencyConditions *dependencies)
 {
    //Here we restore the JIT TOC after returning from a call out. We're restoring from the caller TOC slot as defined by the ABI.
-   TR::Register * grTOCReg       = cg->machine()->getPPCRealRegister(TR::RealRegister::gr2);
-   TR::Register * grSysStackReg   = cg->machine()->getPPCRealRegister(TR::RealRegister::gr1);
+   TR::Register * grTOCReg       = cg->machine()->getRealRegister(TR::RealRegister::gr2);
+   TR::Register * grSysStackReg   = cg->machine()->getRealRegister(TR::RealRegister::gr1);
    TR::Compilation* comp = cg->comp();
 
    int32_t callerSaveTOCOffset = (TR::Compiler->target.cpu.isBigEndian() ? 5 : 3) *  TR::Compiler->om.sizeofReferenceAddress();
@@ -5894,7 +5894,7 @@ void OMR::Power::TreeEvaluator::restoreTOCRegister(TR::Node *node, TR::CodeGener
 
 TR::Register *OMR::Power::TreeEvaluator::retrieveTOCRegister(TR::Node *node, TR::CodeGenerator *cg, TR::RegisterDependencyConditions *dependencies)
 {
-   return cg->machine()->getPPCRealRegister(TR::RealRegister::gr2);
+   return cg->machine()->getRealRegister(TR::RealRegister::gr2);
 }
 
 TR::Register * OMR::Power::TreeEvaluator::ibyteswapEvaluator(TR::Node *node, TR::CodeGenerator *cg)

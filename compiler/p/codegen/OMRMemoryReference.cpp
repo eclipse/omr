@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1078,7 +1078,7 @@ uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
    if (self()->getStaticRelocation() != NULL)
       self()->getStaticRelocation()->setSource2Instruction(currentInstruction);
 
-   base = (self()->getBaseRegister()==NULL)?cg->machine()->getPPCRealRegister(TR::RealRegister::gr0):toRealRegister(self()->getBaseRegister());
+   base = (self()->getBaseRegister()==NULL)?cg->machine()->getRealRegister(TR::RealRegister::gr0):toRealRegister(self()->getBaseRegister());
    index=(self()->getIndexRegister()==NULL)?NULL:toRealRegister(self()->getIndexRegister());
 
    if (TR::Compiler->target.is64Bit() && self()->isTOCAccess())
@@ -1384,7 +1384,7 @@ uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
          else
             {
             TR::RealRegister   *stackPtr = cg->getStackPointerRegister();
-            TR::RealRegister *rX = cg->machine()->getPPCRealRegister(choose_rX(currentInstruction, base));
+            TR::RealRegister *rX = cg->machine()->getRealRegister(choose_rX(currentInstruction, base));
             *wcursor = (TR::Compiler->target.is64Bit())?0xf800fff8:0x9000fffc;
             rX->setRegisterFieldRS(wcursor);
             stackPtr->setRegisterFieldRA(wcursor);

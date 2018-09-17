@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -440,7 +440,7 @@ void TR::PPCTrg1Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned, 
    TR::Instruction::assignRegisters( kindToBeAssigned );
 
    if (excludeGPR0 && (assignedRegister != NULL) &&
-       (toRealRegister(assignedRegister) == machine->getPPCRealRegister(TR::RealRegister::gr0)))
+       (toRealRegister(assignedRegister) == machine->getRealRegister(TR::RealRegister::gr0)))
       {
       TR::RealRegister    *alternativeRegister;
 
@@ -552,7 +552,7 @@ void TR::PPCTrg1Src1Instruction::assignRegisters(TR_RegisterKinds kindToBeAssign
    targetVirtual->block();
    assignedRegister = sourceVirtual->getAssignedRealRegister();
    if (excludeGPR0 && (assignedRegister != NULL) &&
-       (toRealRegister(assignedRegister) == machine->getPPCRealRegister(TR::RealRegister::gr0)))
+       (toRealRegister(assignedRegister) == machine->getRealRegister(TR::RealRegister::gr0)))
       {
       TR::RealRegister    *alternativeRegister;
 
@@ -908,7 +908,7 @@ void TR::PPCMemSrc1Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigne
    mref->blockRegisters();
    assignedRegister = sourceVirtual->getAssignedRealRegister();
    if (excludeGPR0 && (assignedRegister != NULL) &&
-       (toRealRegister(assignedRegister) == machine->getPPCRealRegister(TR::RealRegister::gr0)))
+       (toRealRegister(assignedRegister) == machine->getRealRegister(TR::RealRegister::gr0)))
       {
       TR::RealRegister    *alternativeRegister;
 
@@ -953,7 +953,7 @@ TR::Register *TR::PPCMemSrc1Instruction::getSourceRegisterForStmw(uint32_t i)
    if (rrWant <= TR::RealRegister::LastGPR)
        {
       TR::Machine *machine = cg()->machine();
-       return machine->getPPCRealRegister(rrWant);
+       return machine->getRealRegister(rrWant);
        }
    return NULL;
    }
@@ -1066,7 +1066,7 @@ TR::Register *TR::PPCTrg1MemInstruction::getTargetRegisterForLmw(uint32_t i)
    if (rrWant <= TR::RealRegister::LastGPR)
        {
       TR::Machine *machine = cg()->machine();
-       return machine->getPPCRealRegister(rrWant);
+       return machine->getRealRegister(rrWant);
        }
    return NULL;
    }

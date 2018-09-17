@@ -778,7 +778,7 @@ TR_Debug::printPPCGCRegisterMap(TR::FILE *pOutFile, TR::GCRegisterMap * map)
    for (int i = 31; i>=0; i--)
       {
       if (map->getMap() & (1 << i))
-         trfprintf(pOutFile, "%s ", getName(machine->getPPCRealRegister((TR::RealRegister::RegNum)(31 - i + TR::RealRegister::FirstGPR))));
+         trfprintf(pOutFile, "%s ", getName(machine->getRealRegister((TR::RealRegister::RegNum)(31 - i + TR::RealRegister::FirstGPR))));
       }
 
    trfprintf(pOutFile,"}\n");

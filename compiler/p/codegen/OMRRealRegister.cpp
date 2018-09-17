@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@ OMR::Power::RealRegister::regMaskToRealRegister(TR_RegisterMask mask, TR_Registe
       rr = FirstCCR;
    else if (rk == TR_VRF)
       rr = FirstVRF;
-   return cg->machine()->getPPCRealRegister(RegNum(rr+bitPos));
+   return cg->machine()->getRealRegister(RegNum(rr+bitPos));
    }
 
 TR_RegisterMask

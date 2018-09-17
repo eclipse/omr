@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2534,7 +2534,7 @@ TR::Register *OMR::Power::TreeEvaluator::getstackEvaluator(TR::Node *node, TR::C
    {
    const TR::PPCLinkageProperties &properties = cg->getProperties();
 
-   TR::Register *spReg = cg->machine()->getPPCRealRegister(properties.getNormalStackPointerRegister());
+   TR::Register *spReg = cg->machine()->getRealRegister(properties.getNormalStackPointerRegister());
    TR::Register *trgReg = cg->allocateRegister();
 
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, trgReg, spReg);
@@ -2550,7 +2550,7 @@ TR::Register *OMR::Power::TreeEvaluator::deallocaEvaluator(TR::Node *node, TR::C
    const TR::PPCLinkageProperties &properties = cg->getProperties();
 
    // TODO: restore stack chain
-   TR::Register *spReg = cg->machine()->getPPCRealRegister(properties.getNormalStackPointerRegister());
+   TR::Register *spReg = cg->machine()->getRealRegister(properties.getNormalStackPointerRegister());
 
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, spReg, srcReg);
 

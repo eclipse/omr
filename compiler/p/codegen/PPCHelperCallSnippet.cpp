@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -144,7 +144,7 @@ uint8_t *TR::PPCArrayCopyCallSnippet::emitSnippetBody()
 
    uint8_t *buffer = cg()->getBinaryBufferCursor();
    getSnippetLabel()->setCodeLocation(buffer);
-   TR::RealRegister *lengthReg = cg()->machine()->getPPCRealRegister(_lengthRegNum);
+   TR::RealRegister *lengthReg = cg()->machine()->getRealRegister(_lengthRegNum);
    TR::Node *lengthNode = node->getChild(2);
    int64_t byteLen = (lengthNode->getType().isInt32() ?
                       lengthNode->getInt() : lengthNode->getLongInt());
@@ -166,7 +166,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCArrayCopyCallSnippet *snippet, uint8_
    {
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "ArrayCopy Helper Call Snippet");
 
-   TR::RealRegister *lengthReg = _cg->machine()->getPPCRealRegister(snippet->getLengthRegNum());
+   TR::RealRegister *lengthReg = _cg->machine()->getRealRegister(snippet->getLengthRegNum());
 
    printPrefix(pOutFile, NULL, cursor, 4);
    trfprintf(pOutFile, "li \t%s, %d", getName(lengthReg), *((int32_t *) cursor) & 0x0000ffff);

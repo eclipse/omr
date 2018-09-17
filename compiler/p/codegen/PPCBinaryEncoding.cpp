@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +70,7 @@ OMR::Power::Instruction::generateBinaryEncoding()
       if (self()->getOpCodeValue() == TR::InstOpCode::genop)
          {
          TR::RealRegister::RegNum nopreg = TR::Compiler->target.cpu.id() > TR_PPCp6 ? TR::RealRegister::gr2 : TR::RealRegister::gr1;
-         TR::RealRegister *r = self()->cg()->machine()->getPPCRealRegister(nopreg);
+         TR::RealRegister *r = self()->cg()->machine()->getRealRegister(nopreg);
          r->setRegisterFieldRS((uint32_t *) cursor);
          r->setRegisterFieldRA((uint32_t *) cursor);
          }

@@ -644,7 +644,7 @@ static void assignFreeRegisters(TR::Instruction              *currentInstruction
    // Assign a chain of dependencies where the head of the chain depends on a free reg
    while (dep)
       {
-      TR_ASSERT(machine->getPPCRealRegister(dep->getRealRegister())->getState() == TR::RealRegister::Free, "Expecting free target register");
+      TR_ASSERT(machine->getRealRegister(dep->getRealRegister())->getState() == TR::RealRegister::Free, "Expecting free target register");
       TR::RealRegister *assignedReg = dep->getRegister()->getAssignedRealRegister() ?
          toRealRegister(dep->getRegister()->getAssignedRealRegister()) : NULL;
       machine->coerceRegisterAssignment(currentInstruction, dep->getRegister(), dep->getRealRegister());
@@ -666,7 +666,7 @@ static void assignContendedRegisters(TR::Instruction              *currentInstru
 
    TR::Register *virtReg = dep->getRegister();
    TR::RealRegister::RegNum targetRegNum = dep->getRealRegister();
-   TR::RealRegister *targetReg = machine->getPPCRealRegister(targetRegNum);
+   TR::RealRegister *targetReg = machine->getRealRegister(targetRegNum);
    TR::RealRegister *assignedReg = virtReg->getAssignedRealRegister() ?
       toRealRegister(virtReg->getAssignedRealRegister()) :  NULL;
 
@@ -739,7 +739,7 @@ static void assignContendedRegisters(TR::Instruction              *currentInstru
       {
       virtReg = dep->getRegister();
       targetRegNum = dep->getRealRegister();
-      targetReg = machine->getPPCRealRegister(targetRegNum);
+      targetReg = machine->getRealRegister(targetRegNum);
       assignedReg = virtReg->getAssignedRealRegister() ?
          toRealRegister(virtReg->getAssignedRealRegister()) : NULL;
 
@@ -863,19 +863,19 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
    // count up how many registers are locked for each type
    for(i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; i++)
       {
-        realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
+        realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
         if (realReg->getState() == TR::RealRegister::Locked)
            lockedGPRs++;
       }
    for(i = TR::RealRegister::FirstFPR; i <= TR::RealRegister::LastFPR; i++)
       {
-        realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
+        realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
         if (realReg->getState() == TR::RealRegister::Locked)
            lockedFPRs++;
       }
    for(i = TR::RealRegister::FirstVRF; i <= TR::RealRegister::LastVRF; i++)
       {
-        realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
+        realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
         if (realReg->getState() == TR::RealRegister::Locked)
            lockedVRFs++;
       }
@@ -949,7 +949,7 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
          if (virtReg->getKind() != TR_CCR)
             continue;
          dependentRegNum = _dependencies[i].getRealRegister();
-         dependentRealReg = machine->getPPCRealRegister(dependentRegNum);
+         dependentRealReg = machine->getRealRegister(dependentRegNum);
 
          if (dependentRegNum != TR::RealRegister::NoReg &&
              dependentRegNum != TR::RealRegister::SpilledReg &&
@@ -965,7 +965,7 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
       {
       virtReg = _dependencies[i].getRegister();
       dependentRegNum = _dependencies[i].getRealRegister();
-      dependentRealReg = machine->getPPCRealRegister(dependentRegNum);
+      dependentRealReg = machine->getRealRegister(dependentRegNum);
 
       if (dependentRegNum != TR::RealRegister::NoReg &&
           dependentRegNum != TR::RealRegister::SpilledReg &&
@@ -985,7 +985,7 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
          assignedRegister = toRealRegister(virtReg->getAssignedRealRegister());
          }
       dependentRegNum  = _dependencies[i].getRealRegister();
-      dependentRealReg = machine->getPPCRealRegister(dependentRegNum);
+      dependentRealReg = machine->getRealRegister(dependentRegNum);
       if (dependentRegNum != TR::RealRegister::NoReg &&
           dependentRegNum != TR::RealRegister::SpilledReg &&
           dependentRealReg != assignedRegister)

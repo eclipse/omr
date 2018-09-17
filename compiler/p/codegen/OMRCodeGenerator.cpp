@@ -144,9 +144,9 @@ OMR::Power::CodeGenerator::CodeGenerator() :
       self()->setTrackItems(NULL);
       }
 
-   self()->setStackPointerRegister(self()->machine()->getPPCRealRegister(_linkageProperties->getNormalStackPointerRegister()));
-   self()->setMethodMetaDataRegister(self()->machine()->getPPCRealRegister(_linkageProperties->getMethodMetaDataRegister()));
-   self()->setTOCBaseRegister(self()->machine()->getPPCRealRegister(_linkageProperties->getTOCBaseRegister()));
+   self()->setStackPointerRegister(self()->machine()->getRealRegister(_linkageProperties->getNormalStackPointerRegister()));
+   self()->setMethodMetaDataRegister(self()->machine()->getRealRegister(_linkageProperties->getMethodMetaDataRegister()));
+   self()->setTOCBaseRegister(self()->machine()->getRealRegister(_linkageProperties->getTOCBaseRegister()));
    self()->getLinkage()->initPPCRealRegisterLinkage();
    self()->getLinkage()->setParameterLinkageRegisterIndex(self()->comp()->getJittedMethodSymbol());
    self()->machine()->initREGAssociations();
@@ -398,7 +398,7 @@ OMR::Power::CodeGenerator::generateSwitchToInterpreterPrePrologue(
       TR::Instruction *cursor,
       TR::Node *node)
    {
-   TR::Register   *gr0 = self()->machine()->getPPCRealRegister(TR::RealRegister::gr0);
+   TR::Register   *gr0 = self()->machine()->getRealRegister(TR::RealRegister::gr0);
    TR::ResolvedMethodSymbol *methodSymbol = self()->comp()->getJittedMethodSymbol();
    TR::SymbolReference    *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCrevertToInterpreterGlue, false, false, false);
    uintptrj_t             ramMethod = (uintptrj_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
@@ -1713,7 +1713,7 @@ void OMR::Power::CodeGenerator::doBinaryEncoding()
    self()->alignBinaryBufferCursor();
 
    TR::Instruction *nop;
-   TR::Register *gr1 = self()->machine()->getPPCRealRegister(TR::RealRegister::gr1);
+   TR::Register *gr1 = self()->machine()->getRealRegister(TR::RealRegister::gr1);
    bool skipLabel = false;
    static int count=0;
 
@@ -1948,7 +1948,7 @@ void OMR::Power::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap *ma
    for (int i=TR::RealRegister::FirstGPR;
             i<=TR::RealRegister::LastGPR; i++)
       {
-      TR::RealRegister *realReg = self()->machine()->getPPCRealRegister(
+      TR::RealRegister *realReg = self()->machine()->getRealRegister(
               (TR::RealRegister::RegNum)i);
 
       if (realReg->getHasBeenAssignedInMethod())
@@ -2533,7 +2533,7 @@ void OMR::Power::CodeGenerator::setRealRegisterAssociation(TR::Register     *reg
    {
    if (!reg->isLive() || realNum == TR::RealRegister::NoReg)
       return;
-   TR::RealRegister *realReg = self()->machine()->getPPCRealRegister(realNum);
+   TR::RealRegister *realReg = self()->machine()->getRealRegister(realNum);
    self()->getLiveRegisters(reg->getKind())->setAssociation(reg, realReg);
    }
 
@@ -2543,7 +2543,7 @@ void OMR::Power::CodeGenerator::addRealRegisterInterference(TR::Register    *reg
    {
    if (!reg->isLive() || realNum == TR::RealRegister::NoReg)
       return;
-   TR::RealRegister *realReg = self()->machine()->getPPCRealRegister(realNum);
+   TR::RealRegister *realReg = self()->machine()->getRealRegister(realNum);
    reg->getLiveRegisterInfo()->addInterference(realReg->getRealRegisterMask());
    }
 
@@ -3037,7 +3037,7 @@ TR::Instruction *OMR::Power::CodeGenerator::generateDebugCounterBump(TR::Instruc
 
 bool OMR::Power::CodeGenerator::isGlobalRegisterAvailable(TR_GlobalRegisterNumber i, TR::DataType dt)
    {
-   return self()->machine()->getPPCRealRegister((TR::RealRegister::RegNum)self()->getGlobalRegister(i))->getState() == TR::RealRegister::Free;
+   return self()->machine()->getRealRegister((TR::RealRegister::RegNum)self()->getGlobalRegister(i))->getState() == TR::RealRegister::Free;
    }
 
 

@@ -512,7 +512,7 @@ TR::RealRegister *OMR::Power::Machine::freeBestRegister(TR::Instruction     *cur
       for (int i  = first; i <= last; i++)
          {
          uint64_t iInterfere = interference & (1<<(i-maskI));
-         TR::RealRegister *realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
+         TR::RealRegister *realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
          if (realReg->getState() == TR::RealRegister::Assigned)
             {
             TR::Register *associatedVirtual = realReg->getAssignedRegister();
@@ -895,7 +895,7 @@ TR::RealRegister *OMR::Power::Machine::reverseSpillState(TR::Instruction      *c
    TR_Debug          *debugObj = self()->cg()->getDebug();
    if (targetRegister == NULL)
       {
-      if ((rk == TR_CCR) && (!self()->cg()->isOutOfLineColdPath() && !self()->cg()->isOutOfLineHotPath()) && ((sameReg=self()->cg()->machine()->getPPCRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::FirstCCR+toPPCCRBackingStore(location)->getCcrFieldIndex())))->getState() == TR::RealRegister::Free))
+      if ((rk == TR_CCR) && (!self()->cg()->isOutOfLineColdPath() && !self()->cg()->isOutOfLineHotPath()) && ((sameReg=self()->cg()->machine()->getRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::FirstCCR+toPPCCRBackingStore(location)->getCcrFieldIndex())))->getState() == TR::RealRegister::Free))
          {
          targetRegister = sameReg;
          }
@@ -1864,7 +1864,7 @@ OMR::Power::Machine::createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::lis
 
    for (int32_t i = TR::RealRegister::FirstGPR; i <= endReg; i++)
       {
-      TR::RealRegister *realReg = self()->getPPCRealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
       TR_ASSERT(realReg->getState() == TR::RealRegister::Assigned ||
               realReg->getState() == TR::RealRegister::Free ||
               realReg->getState() == TR::RealRegister::Locked,
@@ -1882,7 +1882,7 @@ OMR::Power::Machine::createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::lis
       deps = new (self()->cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, c, self()->cg()->trMemory());
       for (int32_t j = TR::RealRegister::FirstGPR; j <= endReg; j++)
          {
-         TR::RealRegister *realReg = self()->getPPCRealRegister((TR::RealRegister::RegNum)j);
+         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)j);
          if (realReg->getState() == TR::RealRegister::Assigned)
             {
             TR::Register *virtReg = realReg->getAssignedRegister();

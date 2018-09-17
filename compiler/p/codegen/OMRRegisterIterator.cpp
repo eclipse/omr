@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,17 +50,17 @@ OMR::Power::RegisterIterator::RegisterIterator(TR::Machine *machine, TR_Register
 TR::Register *
 OMR::Power::RegisterIterator::getFirst()
    {
-   return _machine->getPPCRealRegister((TR::RealRegister::RegNum)(_cursor = _firstRegIndex));
+   return _machine->getRealRegister((TR::RealRegister::RegNum)(_cursor = _firstRegIndex));
    }
 
 TR::Register *
 OMR::Power::RegisterIterator::getCurrent()
    {
-   return _machine->getPPCRealRegister((TR::RealRegister::RegNum)_cursor);
+   return _machine->getRealRegister((TR::RealRegister::RegNum)_cursor);
    }
 
 TR::Register *
 OMR::Power::RegisterIterator::getNext()
    {
-   return _cursor == _lastRegIndex ? NULL : _machine->getPPCRealRegister((TR::RealRegister::RegNum)(++_cursor));
+   return _cursor == _lastRegIndex ? NULL : _machine->getRealRegister((TR::RealRegister::RegNum)(++_cursor));
    }

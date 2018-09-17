@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -372,46 +372,46 @@ TR::PPCSystemLinkage::initPPCRealRegisterLinkage()
    int icount;
 
    icount = TR::RealRegister::gr1;
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getPPCRealRegister((TR::RealRegister::RegNum)icount));
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getRealRegister((TR::RealRegister::RegNum)icount));
 
    icount = TR::RealRegister::gr2;
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getPPCRealRegister((TR::RealRegister::RegNum)icount));
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getRealRegister((TR::RealRegister::RegNum)icount));
 
    icount = TR::RealRegister::gr13;
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getPPCRealRegister((TR::RealRegister::RegNum)icount));
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getRealRegister((TR::RealRegister::RegNum)icount));
 
    for (icount=TR::RealRegister::gr3; icount<=TR::RealRegister::gr12;
         icount++)
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
 
    for (icount=TR::RealRegister::LastGPR;
         icount>=TR::RealRegister::gr14; icount--)
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
 
    for (icount=TR::RealRegister::FirstFPR;
         icount<=TR::RealRegister::fp13; icount++)
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
 
    for (icount=TR::RealRegister::LastFPR;
         icount>=TR::RealRegister::fp14; icount--)
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
 
    for (icount=TR::RealRegister::FirstVRF;
         icount<=TR::RealRegister::LastVRF; icount++)
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
 
    for (icount=TR::RealRegister::FirstCCR;
         icount<=TR::RealRegister::LastCCR; icount++)
       if (icount>=TR::RealRegister::cr2 && icount<=TR::RealRegister::cr4)
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
          }
       else
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
          }
 
    machine->setNumberOfLockedRegisters(TR_GPR, 3);
@@ -561,7 +561,7 @@ TR::PPCSystemLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    TR::RealRegister::RegNum regIndex = TR::RealRegister::gr13;
    if (!method->isEHAware())
       {
-      while (regIndex<=TR::RealRegister::LastGPR && !machine->getPPCRealRegister(regIndex)->getHasBeenAssignedInMethod())
+      while (regIndex<=TR::RealRegister::LastGPR && !machine->getRealRegister(regIndex)->getHasBeenAssignedInMethod())
          regIndex = (TR::RealRegister::RegNum)((uint32_t)regIndex+1);
       }
 
@@ -575,7 +575,7 @@ TR::PPCSystemLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    regIndex = TR::RealRegister::fp14;
    if (!method->isEHAware())
       {
-      while (regIndex<=TR::RealRegister::LastFPR && !machine->getPPCRealRegister(regIndex)->getHasBeenAssignedInMethod())
+      while (regIndex<=TR::RealRegister::LastFPR && !machine->getRealRegister(regIndex)->getHasBeenAssignedInMethod())
          regIndex = (TR::RealRegister::RegNum)((uint32_t)regIndex + 1);
       }
 
@@ -636,13 +636,13 @@ TR::PPCSystemLinkage::createPrologue(
    const TR::PPCLinkageProperties &properties = getProperties();
    TR::ResolvedMethodSymbol        *bodySymbol = comp()->getJittedMethodSymbol();
    // Stack Pointer Register may currently be set to "alternate"
-   cg()->setStackPointerRegister(machine->getPPCRealRegister(properties.getNormalStackPointerRegister()));
+   cg()->setStackPointerRegister(machine->getRealRegister(properties.getNormalStackPointerRegister()));
    TR::RealRegister        *sp = cg()->getStackPointerRegister();
    TR::RealRegister        *metaBase = cg()->getMethodMetaDataRegister();
-   TR::RealRegister        *gr2 = machine->getPPCRealRegister(TR::RealRegister::gr2);
-   TR::RealRegister        *gr0 = machine->getPPCRealRegister(TR::RealRegister::gr0);
-   TR::RealRegister        *gr11 = machine->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::RealRegister        *cr0 = machine->getPPCRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister        *gr2 = machine->getRealRegister(TR::RealRegister::gr2);
+   TR::RealRegister        *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
+   TR::RealRegister        *gr11 = machine->getRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister        *cr0 = machine->getRealRegister(TR::RealRegister::cr0);
    TR::Node                   *firstNode = comp()->getStartTree()->getNode();
    TR::RealRegister::RegNum regIndex;
    int32_t                    size = bodySymbol->getLocalMappingCursor();
@@ -671,19 +671,19 @@ TR::PPCSystemLinkage::createPrologue(
    TR::RealRegister::RegNum savedFirst=TR::RealRegister::fp14;
    if (!bodySymbol->isEHAware())
       {
-      while (savedFirst<=TR::RealRegister::LastFPR && !machine->getPPCRealRegister(savedFirst)->getHasBeenAssignedInMethod())
+      while (savedFirst<=TR::RealRegister::LastFPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
          savedFirst=(TR::RealRegister::RegNum)((uint32_t)savedFirst+1);
       }
    for (regIndex=TR::RealRegister::LastFPR; regIndex>=savedFirst; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex-1))
       {
       argSize = argSize - 8;
-      cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::stfd, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, 8, cg()), machine->getPPCRealRegister(regIndex), cursor);
+      cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::stfd, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, 8, cg()), machine->getRealRegister(regIndex), cursor);
       }
 
    savedFirst = TR::RealRegister::gr13;
    if (!bodySymbol->isEHAware())
       {
-      while (savedFirst<=TR::RealRegister::LastGPR && !machine->getPPCRealRegister(savedFirst)->getHasBeenAssignedInMethod())
+      while (savedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
          savedFirst=(TR::RealRegister::RegNum)((uint32_t)savedFirst+1);
       }
 
@@ -695,19 +695,19 @@ TR::PPCSystemLinkage::createPrologue(
          for (regIndex=TR::RealRegister::LastGPR; regIndex>=savedFirst; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex-1))
             {
             argSize = argSize - TR::Compiler->om.sizeofReferenceAddress();
-            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), machine->getPPCRealRegister(regIndex), cursor);
+            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), machine->getRealRegister(regIndex), cursor);
             }
       else
          {
          argSize = argSize - (TR::RealRegister::LastGPR - savedFirst + 1) * 4;
-         cursor = generateMemSrc1Instruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), machine->getPPCRealRegister(savedFirst), cursor);
+         cursor = generateMemSrc1Instruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), machine->getRealRegister(savedFirst), cursor);
          }
       }
 
    if ( bodySymbol->isEHAware() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr2)->getHasBeenAssignedInMethod() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr3)->getHasBeenAssignedInMethod() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr4)->getHasBeenAssignedInMethod() )
+        machine->getRealRegister(TR::RealRegister::cr2)->getHasBeenAssignedInMethod() ||
+        machine->getRealRegister(TR::RealRegister::cr3)->getHasBeenAssignedInMethod() ||
+        machine->getRealRegister(TR::RealRegister::cr4)->getHasBeenAssignedInMethod() )
       {
       cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::mfcr, firstNode, gr0, 0xff, cursor);
       cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg()), gr0, cursor);
@@ -763,8 +763,8 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
    TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
    TR::RealRegister *sp = cg()->getStackPointerRegister();
    TR::RealRegister *sp2 = sp;
-   TR::RealRegister *gr0 = machine->getPPCRealRegister(TR::RealRegister::gr0);
-   TR::RealRegister *gr11 = machine->getPPCRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
+   TR::RealRegister *gr11 = machine->getRealRegister(TR::RealRegister::gr11);
    TR::Node *currentNode = cursor->getNode();
    int32_t size = bodySymbol->getLocalMappingCursor();
    int32_t saveSize = 0;
@@ -774,19 +774,19 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
 
    if (!bodySymbol->isEHAware())
       {
-      while (savedFirst<=TR::RealRegister::LastFPR && !machine->getPPCRealRegister(savedFirst)->getHasBeenAssignedInMethod())
+      while (savedFirst<=TR::RealRegister::LastFPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
          savedFirst=(TR::RealRegister::RegNum)((uint32_t)savedFirst+1);
       }
    for (regIndex=TR::RealRegister::LastFPR; regIndex>=savedFirst; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex-1))
       {
       saveSize = saveSize - 8;
-      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::lfd, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, 8, cg()), cursor);
+      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::lfd, currentNode, machine->getRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, 8, cg()), cursor);
       }
 
    savedFirst = TR::RealRegister::gr13;
    if (!bodySymbol->isEHAware())
       {
-      while (savedFirst<=TR::RealRegister::LastGPR && !machine->getPPCRealRegister(savedFirst)->getHasBeenAssignedInMethod())
+      while (savedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
          savedFirst=(TR::RealRegister::RegNum)((uint32_t)savedFirst+1);
       }
 
@@ -798,12 +798,12 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
          for (regIndex=TR::RealRegister::LastGPR; regIndex>=savedFirst; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex-1))
             {
             saveSize = saveSize - TR::Compiler->om.sizeofReferenceAddress();
-            cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
+            cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
             }
       else
          {
          saveSize = saveSize - (TR::RealRegister::LastGPR - savedFirst + 1) * 4;
-         cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getPPCRealRegister(savedFirst), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), cursor);
+         cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getRealRegister(savedFirst), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), cursor);
          }
       }
 
@@ -833,9 +833,9 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
       }
 
    if ( bodySymbol->isEHAware() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr2)->getHasBeenAssignedInMethod() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr3)->getHasBeenAssignedInMethod() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr4)->getHasBeenAssignedInMethod() )
+        machine->getRealRegister(TR::RealRegister::cr2)->getHasBeenAssignedInMethod() ||
+        machine->getRealRegister(TR::RealRegister::cr3)->getHasBeenAssignedInMethod() ||
+        machine->getRealRegister(TR::RealRegister::cr4)->getHasBeenAssignedInMethod() )
       {
       cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, gr0, new (trHeapMemory()) TR::MemoryReference(sp, TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
       cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::mtcrf, currentNode, gr0, 0xff, cursor);
@@ -1566,7 +1566,7 @@ void TR::PPCSystemLinkage::buildVirtualDispatch(TR::Node                        
    //Library TOC Register
    TR::Register        *grTOCReg=TR::TreeEvaluator::retrieveTOCRegister(callNode, cg(), dependencies);
    //Native Stack Pointer (C Stack)
-   TR::RealRegister *grSysStackReg=cg()->machine()->getPPCRealRegister(properties.getNormalStackPointerRegister());
+   TR::RealRegister *grSysStackReg=cg()->machine()->getRealRegister(properties.getNormalStackPointerRegister());
 
    TR_ASSERT((gr0 != NULL),            "TR::PPCSystemLinkage::buildVirtualDispatch no dependence set on scratch register gr0.");
    TR_ASSERT((grTOCReg != NULL),       "TR::PPCSystemLinkage::buildVirtualDispatch no dependence set on Library TOC register gr2.");
