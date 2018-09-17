@@ -276,7 +276,7 @@ TR_Debug::dumpDependencyGroup(TR::FILE *                        pOutFile,
       if (r == TR::RealRegister::NoReg)
          trfprintf(pOutFile, "NoReg]");
       else
-         trfprintf(pOutFile, "%s]", getName(_cg->machine()->getARMRealRegister(r)));
+         trfprintf(pOutFile, "%s]", getName(_cg->machine()->getRealRegister(r)));
 
       foundDep = true;
       }
@@ -791,7 +791,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMMultipleMoveInstruction * instr)
             {
             TR::RealRegister::RegNum r;
             r = (TR::RealRegister::RegNum)((int)TR::RealRegister::FirstGPR + i);
-            print(pOutFile, machine->getARMRealRegister(r));
+            print(pOutFile, machine->getRealRegister(r));
             regList >>= 1;
             if (regList && i != 15)
               trfprintf(pOutFile, ",");
@@ -808,7 +808,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMMultipleMoveInstruction * instr)
       for (int i = 0; i < nreg; i++)
          {
          TR::RealRegister::RegNum r = (TR::RealRegister::RegNum)((int)TR::RealRegister::FirstFPR + startReg + i);
-         print(pOutFile, machine->getARMRealRegister(r), size);
+         print(pOutFile, machine->getRealRegister(r), size);
          if (i != (nreg - 1))
             trfprintf(pOutFile, ",");
          }
@@ -928,7 +928,7 @@ TR_Debug::printARMGCRegisterMap(TR::FILE *pOutFile, TR::GCRegisterMap * map)
    for (int i = 15; i>=0; i--)
       {
       if (map->getMap() & (1 << i))
-         trfprintf(pOutFile, "%s ", getName(machine->getARMRealRegister((TR::RealRegister::RegNum)(i + TR::RealRegister::FirstGPR))));
+         trfprintf(pOutFile, "%s ", getName(machine->getRealRegister((TR::RealRegister::RegNum)(i + TR::RealRegister::FirstGPR))));
       }
 
    trfprintf(pOutFile,"}\n");
@@ -1142,7 +1142,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMCallSnippet * snippet)
                {
                printPrefix(pOutFile, NULL, bufferPos, 4);
                trfprintf(pOutFile, "str\t[gr7, %+d], ", offset);
-               print(pOutFile, machine->getARMRealRegister(linkage.getIntegerArgumentRegister(numIntArgs)));
+               print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(numIntArgs)));
                bufferPos += 4;
                }
             numIntArgs++;
@@ -1156,13 +1156,13 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMCallSnippet * snippet)
                {
                printPrefix(pOutFile, NULL, bufferPos, 4);
                trfprintf(pOutFile, "str\t[gr7, %+d], ", offset);
-               print(pOutFile, machine->getARMRealRegister(linkage.getIntegerArgumentRegister(numIntArgs)));
+               print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(numIntArgs)));
                bufferPos += 4;
                if (numIntArgs < linkage.getNumIntArgRegs() - 1)
                   {
                   printPrefix(pOutFile, NULL, bufferPos, 4);
                   trfprintf(pOutFile, "str\t[gr7, %+d], ", offset + 4);
-                  print(pOutFile, machine->getARMRealRegister(linkage.getIntegerArgumentRegister(numIntArgs + 1)));
+                  print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(numIntArgs + 1)));
                   bufferPos += 4;
                   }
                }
@@ -1179,7 +1179,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMCallSnippet * snippet)
                {
                printPrefix(pOutFile, NULL, bufferPos, 4);
                trfprintf(pOutFile, "stfs\t[gr7, %+d], ", offset);
-               print(pOutFile, machine->getARMRealRegister(linkage.getFloatArgumentRegister(numFloatArgs)));
+               print(pOutFile, machine->getRealRegister(linkage.getFloatArgumentRegister(numFloatArgs)));
                bufferPos += 4;
                }
             numFloatArgs++;
@@ -1193,7 +1193,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMCallSnippet * snippet)
                {
                printPrefix(pOutFile, NULL, bufferPos, 4);
                trfprintf(pOutFile, "stfd\t[gr7, %+d], ", offset);
-               print(pOutFile, machine->getARMRealRegister(linkage.getFloatArgumentRegister(numFloatArgs)));
+               print(pOutFile, machine->getRealRegister(linkage.getFloatArgumentRegister(numFloatArgs)));
                bufferPos += 4;
                }
             numFloatArgs++;

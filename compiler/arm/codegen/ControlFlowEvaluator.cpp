@@ -1414,7 +1414,7 @@ TR::Register *OMR::ARM::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGe
       }
    else
       {
-      TR::RealRegister *machineIP        = cg->machine()->getARMRealRegister(TR::RealRegister::gr15);
+      TR::RealRegister *machineIP        = cg->machine()->getRealRegister(TR::RealRegister::gr15);
       uint32_t      base, rotate;
 
       if (!constantIsImmed8r(numBranchTableEntries, &base, &rotate))
@@ -1902,7 +1902,7 @@ TR::Register *OMR::ARM::TreeEvaluator::igotoEvaluator(TR::Node *node, TR::CodeGe
 
    TR::Node *labelAddr = node->getFirstChild();
    TR::Register *addrReg = cg->evaluate(labelAddr);
-   TR::RealRegister *gr15 = machine->getARMRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *gr15 = machine->getRealRegister(TR::RealRegister::gr15);
    TR::RegisterDependencyConditions *deps = NULL;
    if (node->getNumChildren() > 1)
       {

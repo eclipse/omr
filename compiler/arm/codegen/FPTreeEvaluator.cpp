@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1025,7 +1025,7 @@ TR::Register *OMR::ARM::TreeEvaluator::fconstEvaluator(TR::Node *node, TR::CodeG
    float value = node->getFloat();
    uint32_t i32 = *(int32_t *)(&value);
    TR::Compilation *comp = cg->comp();
-   TR::RealRegister *machineIPReg = cg->machine()->getARMRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *machineIPReg = cg->machine()->getRealRegister(TR::RealRegister::gr15);
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
 
    traceMsg(comp, "In fconstEvaluator %x\n", i32);
@@ -1085,7 +1085,7 @@ TR::Register *OMR::ARM::TreeEvaluator::dconstEvaluator(TR::Node *node, TR::CodeG
    double value = node->getDouble();
    uint64_t i64 = (*(int64_t *)&value);
    TR::Compilation *comp = cg->comp();
-   TR::RealRegister *machineIPReg = cg->machine()->getARMRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *machineIPReg = cg->machine()->getRealRegister(TR::RealRegister::gr15);
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
 
    traceMsg(comp, "In dconstEvaluator %x\n", i64);

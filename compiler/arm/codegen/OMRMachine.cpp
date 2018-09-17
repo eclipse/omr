@@ -147,7 +147,7 @@ TR::RealRegister *OMR::ARM::Machine::freeBestRegister(TR::Instruction     *curre
 
       for (int i  = first; i <= last; i++)
          {
-         TR::RealRegister *realReg = self()->getARMRealRegister((TR::RealRegister::RegNum)i);
+         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
          if (realReg->getState() == TR::RealRegister::Assigned)
             {
             candidates[numCandidates++] = realReg->getAssignedRegister();
@@ -964,7 +964,7 @@ OMR::ARM::Machine::createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::list<
 
    for (int32_t i = TR::RealRegister::FirstGPR; i <= endReg; i++)
       {
-      TR::RealRegister *realReg = self()->getARMRealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
       TR_ASSERT(realReg->getState() == TR::RealRegister::Assigned ||
               realReg->getState() == TR::RealRegister::Free ||
               realReg->getState() == TR::RealRegister::Locked,
@@ -982,7 +982,7 @@ OMR::ARM::Machine::createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::list<
       deps = new (self()->cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, c, self()->cg()->trMemory());
       for (int32_t j = TR::RealRegister::FirstGPR; j <= endReg; j++)
          {
-         TR::RealRegister *realReg = self()->getARMRealRegister((TR::RealRegister::RegNum)j);
+         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)j);
          if (realReg->getState() == TR::RealRegister::Assigned)
             {
             TR::Register *virtReg = realReg->getAssignedRegister();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -430,7 +430,7 @@ void TR_ARMRegisterDependencyGroup::assignRegisters(TR::Instruction  *currentIns
          {
          virtReg = dependencies[i].getRegister();
          dependentRegNum = dependencies[i].getRealRegister();
-         dependentRealReg = machine->getARMRealRegister(dependentRegNum);
+         dependentRealReg = machine->getRealRegister(dependentRegNum);
 
          if (dependentRegNum != TR::RealRegister::NoReg &&
              dependentRegNum != TR::RealRegister::SpilledReg &&
@@ -456,7 +456,7 @@ void TR_ARMRegisterDependencyGroup::assignRegisters(TR::Instruction  *currentIns
             assignedRegister = toRealRegister(virtReg->getAssignedRealRegister());
             }
          dependentRegNum = dependencies[i].getRealRegister();
-         dependentRealReg = machine->getARMRealRegister(dependentRegNum);
+         dependentRealReg = machine->getRealRegister(dependentRegNum);
          if (dependentRegNum != TR::RealRegister::NoReg &&
              dependentRegNum != TR::RealRegister::SpilledReg &&
              dependentRealReg != assignedRegister)

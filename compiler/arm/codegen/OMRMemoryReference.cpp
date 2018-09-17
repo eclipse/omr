@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1194,8 +1194,8 @@ uint8_t *OMR::ARM::MemoryReference::encodeLargeARMConstant(uint32_t *wcursor, ui
       toRealRegister(currentInstruction->getMemoryDataRegister())->getRegisterNumber() == base->getRegisterNumber())
       {
       spillNeeded = true;
-      rX = cg->machine()->getARMRealRegister(choose_rX(currentInstruction, base));
-      stackPtr = cg->machine()->getARMRealRegister(cg->getLinkage()->getProperties().getStackPointerRegister());
+      rX = cg->machine()->getRealRegister(choose_rX(currentInstruction, base));
+      stackPtr = cg->machine()->getRealRegister(cg->getLinkage()->getProperties().getStackPointerRegister());
       }
    else
       {

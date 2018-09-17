@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,7 +97,7 @@ void TR_ARMOutOfLineCodeSection::assignRegisters(TR_RegisterKinds kindsToBeAssig
    // it won't show up in the liveRealRegDeps. If a dead virtual occupies that real reg we need to clean it up.
    for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastFPR; ++i)
       {
-      TR::RealRegister *r = _cg->machine()->getARMRealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister *r = _cg->machine()->getRealRegister((TR::RealRegister::RegNum)i);
       TR::Register        *v = r->getAssignedRegister();
 
       if (v && v != r && v->getFutureUseCount() == 0)
