@@ -57,17 +57,17 @@ OMR::Z::RegisterIterator::RegisterIterator ( TR::Machine * machine, TR_RegisterK
 TR::Register *
 OMR::Z::RegisterIterator::getFirst()
    {
-   return _machine->getS390RealRegister(_cursor = _firstRegIndex);
+   return _machine->getRealRegister(_cursor = _firstRegIndex);
    }
 
 TR::Register *
 OMR::Z::RegisterIterator::getCurrent()
    {
-   return _machine->getS390RealRegister(_cursor);
+   return _machine->getRealRegister(_cursor);
    }
 
 TR::Register *
 OMR::Z::RegisterIterator::getNext()
    {
-   return _cursor == _lastRegIndex ? NULL : _machine->getS390RealRegister(++_cursor);
+   return _cursor == _lastRegIndex ? NULL : _machine->getRealRegister(++_cursor);
    }

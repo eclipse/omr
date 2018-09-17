@@ -213,17 +213,17 @@ public:
 
    virtual TR::RealRegister::RegNum setNormalStackPointerRegister  (TR::RealRegister::RegNum r) { return _normalStackPointerRegister = r; }
    virtual TR::RealRegister::RegNum getNormalStackPointerRegister()   { return _normalStackPointerRegister; }
-   virtual TR::RealRegister *getNormalStackPointerRealRegister() {return getS390RealRegister(_normalStackPointerRegister);}
+   virtual TR::RealRegister *getNormalStackPointerRealRegister() {return getRealRegister(_normalStackPointerRegister);}
 
    virtual TR::RealRegister::RegNum setAlternateStackPointerRegister  (TR::RealRegister::RegNum r) { return _alternateStackPointerRegister = r; }
    virtual TR::RealRegister::RegNum getAlternateStackPointerRegister()   { return _alternateStackPointerRegister; }
-   virtual TR::RealRegister *getAlternateStackPointerRealRegister() {return getS390RealRegister(_alternateStackPointerRegister);}
+   virtual TR::RealRegister *getAlternateStackPointerRealRegister() {return getRealRegister(_alternateStackPointerRegister);}
    virtual void initParamOffset(TR::ResolvedMethodSymbol * method, int32_t stackIndex, List<TR::ParameterSymbol> *parameterList=0);
 
    // Register used for EX instructions for debug hooks - set by notifyHasHooks
    virtual TR::RealRegister::RegNum setDebugHooksRegister(TR::RealRegister::RegNum r) { return _debugHooksRegister = r; }
    virtual TR::RealRegister::RegNum getDebugHooksRegister()   { return _debugHooksRegister; }
-   virtual TR::RealRegister *getDebugHooksRealRegister() {return getS390RealRegister(_debugHooksRegister);}
+   virtual TR::RealRegister *getDebugHooksRealRegister() {return getRealRegister(_debugHooksRegister);}
 
    // == General utilities (linkage independent)
    virtual TR::Instruction *addImmediateToRealRegister(TR::RealRegister * targetReg, int32_t immediate, TR::RealRegister *tempReg, TR::Node *node, TR::Instruction *cursor, bool *checkTempNeeded=NULL);

@@ -102,7 +102,7 @@ template <typename ListKind> class List;
 #define ALLOWLOCKED      true
 #define DISALLOWBLOCKED  false
 
-#define  REAL_REGISTER(ri)  machine->getS390RealRegister(ri)
+#define  REAL_REGISTER(ri)  machine->getRealRegister(ri)
 
 #define GLOBAL_REG_FOR_LITPOOL     3    // GPR6
 
@@ -230,12 +230,12 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
 
    Machine(TR::CodeGenerator *cg);
 
-   TR::RealRegister *getS390RealRegister(TR::RealRegister::RegNum regNum)
+   TR::RealRegister *getRealRegister(TR::RealRegister::RegNum regNum)
       {
       return _registerFile[regNum];
       }
 
-   TR::RealRegister *getS390RealRegister(int32_t regNum)
+   TR::RealRegister *getRealRegister(int32_t regNum)
       {
       return _registerFile[regNum];
       }

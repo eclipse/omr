@@ -89,8 +89,8 @@ TR::S390RSInstruction::generateAdditionalSourceRegisters(TR::Register * fReg, TR
       int8_t curReg = firstRegNum+1;
       for (int8_t i=0; i < numRegsToAdd; i++)
          {
-         // (*_additionalRegisters)[i] = machine->getS390RealRegister(((TR::RealRegister::RegNum)curReg));
-         TR::Register *temp = machine->getS390RealRegister(((TR::RealRegister::RegNum)curReg));
+         // (*_additionalRegisters)[i] = machine->getRealRegister(((TR::RealRegister::RegNum)curReg));
+         TR::Register *temp = machine->getRealRegister(((TR::RealRegister::RegNum)curReg));
          useSourceRegister(temp);
         curReg++;
          }

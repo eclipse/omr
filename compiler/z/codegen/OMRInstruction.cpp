@@ -775,7 +775,7 @@ bool OMR::Z::Instruction::getUsedRegisters(TR::list<TR::Register *> &usedRegs)
   TR::MemoryReference **_targetMem = self()->targetMemBase();
   TR::Register *baseReg, *indexReg;
 
-  if(self()->getOpCodeValue() == TR::InstOpCode::BCR && _sourceRegSize == 1 && _sourceReg[0]->getRealRegister() == machine->getS390RealRegister(TR::RealRegister::GPR0))
+  if(self()->getOpCodeValue() == TR::InstOpCode::BCR && _sourceRegSize == 1 && _sourceReg[0]->getRealRegister() == machine->getRealRegister(TR::RealRegister::GPR0))
     return false;
 
   if((self()->getOpCodeValue() == TR::InstOpCode::XGR || self()->getOpCodeValue() == TR::InstOpCode::XR) && _sourceReg[0] == _targetReg[0])
@@ -898,7 +898,7 @@ bool OMR::Z::Instruction::getUsedRegisters(TR::list<TR::Register *> &usedRegs)
               TR::RealRegister::RegNum rr = dep->getRealRegister();
               if(rr>TR::RealRegister::NoReg && rr<=TR::RealRegister::LastHPR)
                 {
-                usedRegs.push_back(machine->getS390RealRegister(rr));
+                usedRegs.push_back(machine->getRealRegister(rr));
                 }
               }
             }
@@ -931,7 +931,7 @@ bool OMR::Z::Instruction::getUsedRegisters(TR::list<TR::Register *> &usedRegs)
               TR::RealRegister::RegNum rr = dep->getRealRegister();
               if(rr>TR::RealRegister::NoReg && rr<=TR::RealRegister::LastHPR)
                 {
-                usedRegs.push_back(machine->getS390RealRegister(rr));
+                usedRegs.push_back(machine->getRealRegister(rr));
                 }
               }
             }
@@ -1019,7 +1019,7 @@ bool OMR::Z::Instruction::getDefinedRegisters(TR::list<TR::Register *> &defedReg
               TR::RealRegister::RegNum rr = dep->getRealRegister();
               if(rr>TR::RealRegister::NoReg && rr<=TR::RealRegister::LastHPR)
                 {
-                defedRegs.push_back(machine->getS390RealRegister(rr));
+                defedRegs.push_back(machine->getRealRegister(rr));
                 }
               }
             }
@@ -1052,7 +1052,7 @@ bool OMR::Z::Instruction::getDefinedRegisters(TR::list<TR::Register *> &defedReg
               TR::RealRegister::RegNum rr = dep->getRealRegister();
               if(rr>TR::RealRegister::NoReg && rr<=TR::RealRegister::LastHPR)
                 {
-                defedRegs.push_back(machine->getS390RealRegister(rr));
+                defedRegs.push_back(machine->getRealRegister(rr));
                 }
               }
             }
@@ -1104,14 +1104,14 @@ bool OMR::Z::Instruction::getKilledRegisters(TR::list<TR::Register *> &killedReg
         TR::RegisterDependency* dep=postConds->getRegisterDependency(i);
         TR::Register *r=dep->getRegister();
         if(r && r->isPlaceholderReg())
-          killedRegs.push_back(machine->getS390RealRegister(dep->getRealRegister()));
+          killedRegs.push_back(machine->getRealRegister(dep->getRealRegister()));
         }
       }
     }
 
   // A function call via address in a register uses register r1 to hold the target address but this register is also killed.
   if(self()->getOpCodeValue() == TR::InstOpCode::BASR)
-    killedRegs.push_back(machine->getS390RealRegister(TR::RealRegister::GPR1));
+    killedRegs.push_back(machine->getRealRegister(TR::RealRegister::GPR1));
 
   // We might have an out of line EX instruction.  If so, we
   // need to check whether either the EX instruction OR the instruction
@@ -2566,7 +2566,7 @@ OMR::Z::Instruction::assignRegistersAndDependencies(TR_RegisterKinds kindToBeAss
           {
           if (linkage->getPreserved(REGNUM(i)))
             {
-            TR::RealRegister * targetRegister = machine->getS390RealRegister(REGNUM(i));
+            TR::RealRegister * targetRegister = machine->getRealRegister(REGNUM(i));
             TR::Register * assignedReg = targetRegister->getAssignedRegister();
             if(assignedReg && assignedReg->getKind() != TR_FPR)
               {
@@ -3023,7 +3023,7 @@ OMR::Z::Instruction::setUseDefRegisters(bool updateDependencies)
          lowRegNum = (lowRegNum == 15) ? 0 : lowRegNum + 1;
          for (uint32_t i = lowRegNum; i != highRegNum; i = ((i == 15) ? 0 : i + 1))  // wrap around to 0 at 15
             {
-            TR::RealRegister *reg = self()->cg()->machine()->getS390RealRegister(i + TR::RealRegister::GPR0);
+            TR::RealRegister *reg = self()->cg()->machine()->getRealRegister(i + TR::RealRegister::GPR0);
             if (loadOrStoreMultiple == 0) // load
                (*_defRegs)[indexTarget++] = reg;
             else if (loadOrStoreMultiple == 1) // store
@@ -3190,7 +3190,7 @@ OMR::Z::Instruction::getOneLocalLocalAllocFreeReg(TR::RealRegister ** reg)
      {
      if ( (_binFreeRegs>>cnt)&0x1 )
         {
-        *reg = self()->cg()->machine()->getS390RealRegister(cnt+1);
+        *reg = self()->cg()->machine()->getRealRegister(cnt+1);
         return true;
         }
      cnt++;
@@ -3216,11 +3216,11 @@ OMR::Z::Instruction::getTwoLocalLocalAllocFreeReg(TR::RealRegister ** reg1, TR::
         {
         if (*reg1 == NULL)
            {
-           *reg1 = self()->cg()->machine()->getS390RealRegister(cnt+1);
+           *reg1 = self()->cg()->machine()->getRealRegister(cnt+1);
            }
         else
            {
-           *reg2 = self()->cg()->machine()->getS390RealRegister(cnt+1);
+           *reg2 = self()->cg()->machine()->getRealRegister(cnt+1);
            return true;
            }
         }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,7 +100,7 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
             if (intArgNum < linkage->getNumIntegerArgumentRegisters())
                {
                buffer = storeArgumentItem(TR::InstOpCode::ST, buffer,
-                           machine->getS390RealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
+                           machine->getRealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
 
@@ -117,7 +117,7 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
             if (intArgNum < linkage->getNumIntegerArgumentRegisters())
                {
                buffer = storeArgumentItem(TR::InstOpCode::getStoreOpCode(), buffer,
-                           machine->getS390RealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
+                           machine->getRealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
 
@@ -137,16 +137,16 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
                if (TR::Compiler->target.is64Bit())
                   {
                   buffer = storeArgumentItem(TR::InstOpCode::STG, buffer,
-                              machine->getS390RealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
+                              machine->getRealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
                   }
                else
                   {
                   buffer = storeArgumentItem(TR::InstOpCode::ST, buffer,
-                              machine->getS390RealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
+                              machine->getRealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
                   if (intArgNum < linkage->getNumIntegerArgumentRegisters() - 1)
                      {
                      buffer = storeArgumentItem(TR::InstOpCode::ST, buffer,
-                                 machine->getS390RealRegister(linkage->getIntegerArgumentRegister(intArgNum + 1)), offset + 4, cg);
+                                 machine->getRealRegister(linkage->getIntegerArgumentRegister(intArgNum + 1)), offset + 4, cg);
                      }
                   }
                }
@@ -165,7 +165,7 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
             if (floatArgNum < linkage->getNumFloatArgumentRegisters())
                {
                buffer = storeArgumentItem(TR::InstOpCode::STE, buffer,
-                           machine->getS390RealRegister(linkage->getFloatArgumentRegister(floatArgNum)), offset, cg);
+                           machine->getRealRegister(linkage->getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
             if (rightToLeft)
@@ -182,7 +182,7 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
             if (floatArgNum < linkage->getNumFloatArgumentRegisters())
                {
                buffer = storeArgumentItem(TR::InstOpCode::STD, buffer,
-                           machine->getS390RealRegister(linkage->getFloatArgumentRegister(floatArgNum)), offset, cg);
+                           machine->getRealRegister(linkage->getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
             if (rightToLeft)

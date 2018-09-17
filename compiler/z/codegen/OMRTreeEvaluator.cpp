@@ -14578,7 +14578,7 @@ TR_S390ComputeCC::saveHostCC(TR::Node *node, TR::Register *ccReg, TR::CodeGenera
 TR::Register *OMR::Z::TreeEvaluator::loadAutoOffsetEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Register *reg = cg->allocateRegister();
-   TR::MemoryReference *mr = generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0), 0, cg);
+   TR::MemoryReference *mr = generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR0), 0, cg);
    mr->setSymbolReference(node->getSymbolReference());
    generateRXInstruction(cg, TR::InstOpCode::LA, node, reg, mr);
    cg->stopUsingRegister(reg);

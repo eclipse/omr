@@ -148,14 +148,14 @@ OMR::Z::Linkage::markPreservedRegsInDep(TR::RegisterDependencyConditions * deps)
       if (self()->getPreserved(REGNUM(curReg)) &&
           deps->searchPostConditionRegister(REGNUM(curReg)))
          {
-         self()->getS390RealRegister(REGNUM(curReg))->setModified(true);
+         self()->getRealRegister(REGNUM(curReg))->setModified(true);
          }
       }
 
   // and the RAReg
   if (deps && deps->searchPostConditionRegister(self()->cg()->getReturnAddressRegister()))
      {
-     self()->getS390RealRegister(self()->getReturnAddressRegister())->setModified(true);
+     self()->getRealRegister(self()->getReturnAddressRegister())->setModified(true);
      }
   }
 
@@ -163,14 +163,14 @@ void
 OMR::Z::Linkage::markPreservedRegsInBlock(int32_t blockNum)
    {
    // kill RAReg
-   self()->getS390RealRegister(self()->getReturnAddressRegister())->setModified(true);
+   self()->getRealRegister(self()->getReturnAddressRegister())->setModified(true);
 
    // catch blocks kill all preserved regs
    for (int32_t curReg = TR::RealRegister::FirstGPR; curReg <= TR::RealRegister::LastFPR; curReg++)
       {
       if (self()->getPreserved(REGNUM(curReg)))
          {
-         self()->getS390RealRegister(REGNUM(curReg))->setModified(true);
+         self()->getRealRegister(REGNUM(curReg))->setModified(true);
          }
       }
    }
@@ -578,7 +578,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
          }
 
       if (ai >= 0 &&
-         loadOpCode == TR::InstOpCode::L && enableHighWordRA && self()->getS390RealRegister(REGNUM(ai))->isHighWordRegister())
+         loadOpCode == TR::InstOpCode::L && enableHighWordRA && self()->getRealRegister(REGNUM(ai))->isHighWordRegister())
          loadOpCode = TR::InstOpCode::LFH;
 
       if (((self()->isSmallIntParmsAlignedRight() && paramCursor->getType().isIntegral()) ||
@@ -700,25 +700,25 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   if (genBinary)
                      {
                      cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(storeOpCode, (uint8_t *) cursor,
-                                          self()->getS390RealRegister(regNum), offset, self()->cg());
+                                          self()->getRealRegister(regNum), offset, self()->cg());
                      }
                   else
                      {
                      TR::MemoryReference* mr = generateS390MemoryReference(stackPtr, offset, self()->cg(), param_name);
 
                      if (storeOpCode == TR::InstOpCode::STCM)
-                        cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::STCM, firstNode, self()->getS390RealRegister(regNum),
+                        cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::STCM, firstNode, self()->getRealRegister(regNum),
                                     opcodeMask, mr, (TR::Instruction *) cursor);
 
                      else
-                        cursor = generateRXInstruction(self()->cg(), storeOpCode, firstNode, self()->getS390RealRegister(regNum),
+                        cursor = generateRXInstruction(self()->cg(), storeOpCode, firstNode, self()->getRealRegister(regNum),
                                              mr, (TR::Instruction *) cursor);
 
 
 
                      ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                      if (!InPreProlog && !globalAllocatedRegisters.isSet(regNum))
-                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getS390RealRegister(regNum), offset);
+                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getRealRegister(regNum), offset);
                      }
                   }
 
@@ -728,17 +728,17 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                      {
                      if (genBinary)
                         {
-                        cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::ST, (uint8_t *) cursor, self()->getS390RealRegister(regNum),
+                        cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::ST, (uint8_t *) cursor, self()->getRealRegister(regNum),
                                              offset, self()->cg());
                         }
                      else
                         {
                         TR::MemoryReference* mr = generateS390MemoryReference(stackPtr, offset + 4, self()->cg(), param_name);
-                        cursor =  generateRXInstruction(self()->cg(), TR::InstOpCode::ST, firstNode, self()->getS390RealRegister(REGNUM(regNum + 1)),
+                        cursor =  generateRXInstruction(self()->cg(), TR::InstOpCode::ST, firstNode, self()->getRealRegister(REGNUM(regNum + 1)),
                                              mr, (TR::Instruction *) cursor);
                         ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                         if (!InPreProlog && !globalAllocatedRegisters.isSet(regNum))
-                           self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getS390RealRegister(regNum), offset);
+                           self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getRealRegister(regNum), offset);
                         }
 
                      // argument stored, so regnum is free to be used as a scratch reg
@@ -755,17 +755,17 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 #endif
                   if (genBinary)
                      {
-                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STE, (uint8_t *) cursor, self()->getS390RealRegister(regNum),
+                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STE, (uint8_t *) cursor, self()->getRealRegister(regNum),
                                           offset, self()->cg());
                      }
                   else
                      {
                      TR::MemoryReference* mr = generateS390MemoryReference(stackPtr, offset, self()->cg(), param_name);
-                     cursor =  generateRXInstruction(self()->cg(), TR::InstOpCode::STE, firstNode, self()->getS390RealRegister(regNum),
+                     cursor =  generateRXInstruction(self()->cg(), TR::InstOpCode::STE, firstNode, self()->getRealRegister(regNum),
                                           mr, (TR::Instruction *) cursor);
                      ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                      if (!InPreProlog && !globalAllocatedRegisters.isSet(regNum))
-                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getS390RealRegister(regNum), offset);
+                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getRealRegister(regNum), offset);
                      }
                   break;
                case TR::Double:
@@ -774,26 +774,26 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 #endif
                   if (genBinary)
                      {
-                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STD, (uint8_t *) cursor, self()->getS390RealRegister(regNum),
+                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STD, (uint8_t *) cursor, self()->getRealRegister(regNum),
                                           offset, self()->cg());
                      }
                   else
                      {
                      TR::MemoryReference* mr = generateS390MemoryReference(stackPtr, offset, self()->cg(), param_name);
-                     cursor = (void *) generateRXInstruction(self()->cg(), TR::InstOpCode::STD, firstNode, self()->getS390RealRegister(regNum),
+                     cursor = (void *) generateRXInstruction(self()->cg(), TR::InstOpCode::STD, firstNode, self()->getRealRegister(regNum),
                                           mr, (TR::Instruction *) cursor);
                      ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                      if (!InPreProlog && !globalAllocatedRegisters.isSet(regNum))
-                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getS390RealRegister(regNum), offset);
+                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getRealRegister(regNum), offset);
                      }
                   break;
 #ifdef J9_PROJECT_SPECIFIC
                case TR::DecimalLongDouble:
                   if (genBinary)
                      {
-                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STD, (uint8_t *) cursor, self()->getS390RealRegister(regNum),
+                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STD, (uint8_t *) cursor, self()->getRealRegister(regNum),
                                           offset, self()->cg());
-                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STD, (uint8_t *) cursor, self()->getS390RealRegister(REGNUM(regNum+2)),
+                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STD, (uint8_t *) cursor, self()->getRealRegister(REGNUM(regNum+2)),
                                           offset+8, self()->cg());
                      }
                   else
@@ -801,16 +801,16 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                      TR::MemoryReference* mr = generateS390MemoryReference(stackPtr, offset, self()->cg(), param_name);
                      TR::MemoryReference * hiMR = generateS390MemoryReference(*mr, 8, self()->cg());
 
-                     cursor = (void *) generateRXInstruction(self()->cg(), TR::InstOpCode::STD, firstNode, self()->getS390RealRegister(regNum),
+                     cursor = (void *) generateRXInstruction(self()->cg(), TR::InstOpCode::STD, firstNode, self()->getRealRegister(regNum),
                                           mr, (TR::Instruction *) cursor);
-                     cursor = (void *) generateRXInstruction(self()->cg(), TR::InstOpCode::STD, firstNode, self()->getS390RealRegister(REGNUM(regNum+2)),
+                     cursor = (void *) generateRXInstruction(self()->cg(), TR::InstOpCode::STD, firstNode, self()->getRealRegister(REGNUM(regNum+2)),
                                           hiMR, (TR::Instruction *) cursor);
 
                      ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                      if (!InPreProlog && !globalAllocatedRegisters.isSet(regNum))
-                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getS390RealRegister(regNum), offset);
+                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getRealRegister(regNum), offset);
                      if (!InPreProlog && !globalAllocatedRegisters.isSet(REGNUM(regNum+2)))
-                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getS390RealRegister(REGNUM(regNum+2)), offset+8);
+                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getRealRegister(REGNUM(regNum+2)), offset+8);
                      }
                   break;
 #endif
@@ -821,17 +821,17 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                case TR::VectorDouble:
                   if (genBinary)
                      {
-                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::VST, (uint8_t *) cursor, self()->getS390RealRegister(regNum),
+                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::VST, (uint8_t *) cursor, self()->getRealRegister(regNum),
                                           offset, self()->cg());
                      }
                   else
                      {
                      TR::MemoryReference* mr = generateS390MemoryReference(stackPtr, offset, self()->cg(), param_name);
-                     cursor =  generateRXInstruction(self()->cg(), TR::InstOpCode::VST, firstNode, self()->getS390RealRegister(regNum),
+                     cursor =  generateRXInstruction(self()->cg(), TR::InstOpCode::VST, firstNode, self()->getRealRegister(regNum),
                                           mr, (TR::Instruction *) cursor);
                      ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                      if (!InPreProlog && !globalAllocatedRegisters.isSet(regNum))
-                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getS390RealRegister(regNum), offset);
+                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getRealRegister(regNum), offset);
                      }
                   break;
 
@@ -872,8 +872,8 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 #endif
                       )
                      {
-                     cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LDR, firstNode, self()->getS390RealRegister(REGNUM(ai)),
-                                    self()->getS390RealRegister(regNum), (TR::Instruction *) cursor);
+                     cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LDR, firstNode, self()->getRealRegister(REGNUM(ai)),
+                                    self()->getRealRegister(regNum), (TR::Instruction *) cursor);
 
                      ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                      freeScratchable.reset(ai);
@@ -884,8 +884,8 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                      {
                      int32_t ai_l = paramCursor->getAllocatedLow();  //  low reg of a pair
                      TR_ASSERT( (ai_l == (ai+2)),"global RA incorrect for long double params");
-                     cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LXR, firstNode, self()->cg()->allocateFPRegisterPair(self()->getS390RealRegister(REGNUM(ai_l)), self()->getS390RealRegister(REGNUM(ai))),
-                        self()->cg()->allocateFPRegisterPair(self()->getS390RealRegister(REGNUM(regNum+2)),self()->getS390RealRegister(REGNUM(regNum))), (TR::Instruction *) cursor);
+                     cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LXR, firstNode, self()->cg()->allocateFPRegisterPair(self()->getRealRegister(REGNUM(ai_l)), self()->getRealRegister(REGNUM(ai))),
+                        self()->cg()->allocateFPRegisterPair(self()->getRealRegister(REGNUM(regNum+2)),self()->getRealRegister(REGNUM(regNum))), (TR::Instruction *) cursor);
 
                      ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                      freeScratchable.reset(ai);
@@ -898,8 +898,8 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                      {
                      if ((dtype == TR::Int64) && self()->cg()->use64BitRegsOn32Bit())
                         {
-                        cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::SLLG, firstNode, self()->getS390RealRegister(REGNUM(ai)),
-                                    self()->getS390RealRegister(regNum), 32, (TR::Instruction *) cursor);
+                        cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::SLLG, firstNode, self()->getRealRegister(REGNUM(ai)),
+                                    self()->getRealRegister(regNum), 32, (TR::Instruction *) cursor);
 
                         if (regNum != ai)
                            {
@@ -910,14 +910,14 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                         // Figure out if the low word is passed in a reg or in memory
                         if (fullLong)
                            {
-                           cursor = generateRRInstruction(self()->cg(), TR::InstOpCode::LR, firstNode, self()->getS390RealRegister(REGNUM(ai)),
-                                    self()->getS390RealRegister(REGNUM(regNum + 1)), (TR::Instruction *) cursor);
+                           cursor = generateRRInstruction(self()->cg(), TR::InstOpCode::LR, firstNode, self()->getRealRegister(REGNUM(ai)),
+                                    self()->getRealRegister(REGNUM(regNum + 1)), (TR::Instruction *) cursor);
 
                            freeScratchable.set(regNum + 1);
                            }
                         else
                            {
-                           cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::L, firstNode, self()->getS390RealRegister(REGNUM(ai)),
+                           cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::L, firstNode, self()->getRealRegister(REGNUM(ai)),
                                     generateS390MemoryReference(stackPtr, offset + 4, self()->cg()), (TR::Instruction *) cursor);
                            }
 
@@ -927,15 +927,15 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                         }
                      else
                         {
-                        if (enableHighWordRA && self()->getS390RealRegister(REGNUM(ai))->isHighWordRegister())
+                        if (enableHighWordRA && self()->getRealRegister(REGNUM(ai))->isHighWordRegister())
                            {
-                           cursor = generateExtendedHighWordInstruction(firstNode, self()->cg(), TR::InstOpCode::LHLR, self()->getS390RealRegister(REGNUM(ai)),
-                                                          self()->getS390RealRegister(regNum), 0, (TR::Instruction *) cursor);
+                           cursor = generateExtendedHighWordInstruction(firstNode, self()->cg(), TR::InstOpCode::LHLR, self()->getRealRegister(REGNUM(ai)),
+                                                          self()->getRealRegister(regNum), 0, (TR::Instruction *) cursor);
                            }
                         else
                            {
-                           cursor = generateRRInstruction(self()->cg(), TR::InstOpCode::getLoadRegOpCode(), firstNode, self()->getS390RealRegister(REGNUM(ai)),
-                                                          self()->getS390RealRegister(regNum), (TR::Instruction *) cursor);
+                           cursor = generateRRInstruction(self()->cg(), TR::InstOpCode::getLoadRegOpCode(), firstNode, self()->getRealRegister(REGNUM(ai)),
+                                                          self()->getRealRegister(regNum), (TR::Instruction *) cursor);
                            }
 
                         freeScratchable.reset(ai);
@@ -1030,7 +1030,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                {
                if (freeScratchable.isSet(ai_l))
                   {
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), firstNode, self()->getS390RealRegister(REGNUM(ai_l)),
+                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), firstNode, self()->getRealRegister(REGNUM(ai_l)),
                              generateS390MemoryReference(stackPtr, offset + 4, self()->cg()), (TR::Instruction *) cursor);
 
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
@@ -1060,8 +1060,8 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                if (freeScratchable.isSet(ai_l))
                   {
                   cursor = generateRRInstruction(self()->cg(), TR::InstOpCode::getLoadRegOpCode(), firstNode,
-                                   self()->getS390RealRegister(REGNUM(ai_l)),
-                                   self()->getS390RealRegister(REGNUM(regNum + 1)), (TR::Instruction *) cursor);
+                                   self()->getRealRegister(REGNUM(ai_l)),
+                                   self()->getRealRegister(REGNUM(regNum + 1)), (TR::Instruction *) cursor);
 
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                   freeScratchable.reset(ai_l);
@@ -1098,9 +1098,9 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   TR::MemoryReference * mr = generateS390MemoryReference(stackPtr, offset, self()->cg());
 
                   if (loadOpCode == TR::InstOpCode::ICM)
-                     cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::ICM, firstNode, self()->getS390RealRegister(REGNUM(ai)), opcodeMask, mr, (TR::Instruction *) cursor);
+                     cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::ICM, firstNode, self()->getRealRegister(REGNUM(ai)), opcodeMask, mr, (TR::Instruction *) cursor);
                   else
-                     cursor = generateRXInstruction(self()->cg(), loadOpCode, firstNode, self()->getS390RealRegister(REGNUM(ai)),
+                     cursor = generateRXInstruction(self()->cg(), loadOpCode, firstNode, self()->getRealRegister(REGNUM(ai)),
                              mr, (TR::Instruction *) cursor);
 
 
@@ -1122,7 +1122,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   if (freeScratchable.isSet(ai_l))
                      {
                      cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), firstNode,
-                                  self()->getS390RealRegister(REGNUM(ai_l)),
+                                  self()->getRealRegister(REGNUM(ai_l)),
                                   generateS390MemoryReference(stackPtr, offset + 4, self()->cg()), (TR::Instruction *) cursor);
                      ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
 
@@ -1145,7 +1145,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 #endif
                if (freeScratchable.isSet(ai))
                   {
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LE, firstNode, self()->getS390RealRegister(REGNUM(ai)),
+                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LE, firstNode, self()->getRealRegister(REGNUM(ai)),
                               generateS390MemoryReference(stackPtr, offset, self()->cg()), (TR::Instruction *) cursor);
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
 
@@ -1165,7 +1165,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 #endif
                if (freeScratchable.isSet(ai))
                   {
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getS390RealRegister(REGNUM(ai)),
+                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getRealRegister(REGNUM(ai)),
                               generateS390MemoryReference(stackPtr, offset, self()->cg()), (TR::Instruction *) cursor);
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
 
@@ -1184,10 +1184,10 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                TR_ASSERT( (ai_l == (ai+2) ),"global RA incorrect for long double param");
                if (freeScratchable.isSet(ai))
                   {
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getS390RealRegister(REGNUM(ai)),
+                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getRealRegister(REGNUM(ai)),
                               generateS390MemoryReference(stackPtr, offset, self()->cg()), (TR::Instruction *) cursor);
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getS390RealRegister(REGNUM(ai_l)),
+                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getRealRegister(REGNUM(ai_l)),
                               generateS390MemoryReference(stackPtr, offset+8, self()->cg()), (TR::Instruction *) cursor);
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
 
@@ -1242,15 +1242,15 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
             switch(busyMoves[2][i1])
                {
                case 0: // Reg 2 Reg
-                  if (enableHighWordRA && self()->getS390RealRegister(REGNUM(target))->isHighWordRegister())
+                  if (enableHighWordRA && self()->getRealRegister(REGNUM(target))->isHighWordRegister())
                      {
-                     cursor = generateExtendedHighWordInstruction(firstNode, self()->cg(), TR::InstOpCode::LHLR, self()->getS390RealRegister(REGNUM(target)),
-                                                                  self()->getS390RealRegister(REGNUM(source)), 0, (TR::Instruction *) cursor);
+                     cursor = generateExtendedHighWordInstruction(firstNode, self()->cg(), TR::InstOpCode::LHLR, self()->getRealRegister(REGNUM(target)),
+                                                                  self()->getRealRegister(REGNUM(source)), 0, (TR::Instruction *) cursor);
                      }
                   else
                      {
-                     cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::getLoadRegOpCode(), firstNode, self()->getS390RealRegister(REGNUM(target)),
-                                                    self()->getS390RealRegister(REGNUM(source)), (TR::Instruction *) cursor);
+                     cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::getLoadRegOpCode(), firstNode, self()->getRealRegister(REGNUM(target)),
+                                                    self()->getRealRegister(REGNUM(source)), (TR::Instruction *) cursor);
 
                      }
                   freeScratchable.set(source);
@@ -1260,35 +1260,35 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   TR::MemoryReference *mr = generateS390MemoryReference(stackPtr, source, self()->cg());
 
                   if ((TR::InstOpCode::Mnemonic) busyMoves[3][i1] == TR::InstOpCode::ICM)
-                     cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::ICM, firstNode, self()->getS390RealRegister(REGNUM(target)), busyMoves[4][i1], mr, (TR::Instruction *) cursor);
+                     cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::ICM, firstNode, self()->getRealRegister(REGNUM(target)), busyMoves[4][i1], mr, (TR::Instruction *) cursor);
 
                   else if ((TR::InstOpCode::Mnemonic) busyMoves[3][i1] == TR::InstOpCode::LFH)
-                     cursor = generateRXYInstruction(self()->cg(), TR::InstOpCode::LFH, firstNode, self()->getS390RealRegister(REGNUM(target)), mr, (TR::Instruction *) cursor);
+                     cursor = generateRXYInstruction(self()->cg(), TR::InstOpCode::LFH, firstNode, self()->getRealRegister(REGNUM(target)), mr, (TR::Instruction *) cursor);
 
                   else
-                     cursor = generateRXInstruction(self()->cg(), (TR::InstOpCode::Mnemonic) busyMoves[3][i1], firstNode, self()->getS390RealRegister(REGNUM(target)), mr, (TR::Instruction *) cursor);
+                     cursor = generateRXInstruction(self()->cg(), (TR::InstOpCode::Mnemonic) busyMoves[3][i1], firstNode, self()->getRealRegister(REGNUM(target)), mr, (TR::Instruction *) cursor);
 
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                   break;
                   }
                case 3: // Floats
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LE, firstNode, self()->getS390RealRegister(REGNUM(target)),
+                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LE, firstNode, self()->getRealRegister(REGNUM(target)),
                               generateS390MemoryReference(stackPtr, source, self()->cg()), (TR::Instruction *) cursor);
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                   break;
                case 4:  // Doubles
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getS390RealRegister(REGNUM(target)),
+                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getRealRegister(REGNUM(target)),
                               generateS390MemoryReference(stackPtr, source, self()->cg()), (TR::Instruction *) cursor);
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                   break;
                case 5:  // Floats and Doubles
-                  cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LDR, firstNode, self()->getS390RealRegister(REGNUM(target)),
-                              self()->getS390RealRegister(REGNUM(source)), (TR::Instruction *) cursor);
+                  cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LDR, firstNode, self()->getRealRegister(REGNUM(target)),
+                              self()->getRealRegister(REGNUM(source)), (TR::Instruction *) cursor);
                   freeScratchable.set(source);
                   break;
                case 6: // 64bit reg on 31bit
-                  cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::SLLG, firstNode, self()->getS390RealRegister(REGNUM(target)),
-                                    self()->getS390RealRegister(REGNUM(source)), 32, (TR::Instruction *) cursor);
+                  cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::SLLG, firstNode, self()->getRealRegister(REGNUM(target)),
+                                    self()->getRealRegister(REGNUM(source)), 32, (TR::Instruction *) cursor);
                   busyMoves[0][i1] = busyMoves[1][i1] = -1;
                   numMoves--;
                   if (source != target)
@@ -1299,13 +1299,13 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   i1++;
                   source = busyMoves[0][i1];
                   target = busyMoves[1][i1];
-                  cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LR, firstNode, self()->getS390RealRegister(REGNUM(target)),
-                              self()->getS390RealRegister(REGNUM(source)), (TR::Instruction *) cursor);
+                  cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LR, firstNode, self()->getRealRegister(REGNUM(target)),
+                              self()->getRealRegister(REGNUM(source)), (TR::Instruction *) cursor);
                   freeScratchable.set(source);
                   break;
                case 7: // 64bit reg on 31bit
-                  cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::SLLG, firstNode, self()->getS390RealRegister(REGNUM(target)),
-                                    self()->getS390RealRegister(REGNUM(source)), 32, (TR::Instruction *) cursor);
+                  cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::SLLG, firstNode, self()->getRealRegister(REGNUM(target)),
+                                    self()->getRealRegister(REGNUM(source)), 32, (TR::Instruction *) cursor);
                   busyMoves[0][i1] = busyMoves[1][i1] = -1;
                   numMoves--;
                   if (source != target)
@@ -1316,15 +1316,15 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   i1++;
                   source = busyMoves[0][i1];
                   target = busyMoves[1][i1];
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::L, firstNode, self()->getS390RealRegister(REGNUM(target)),
+                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::L, firstNode, self()->getRealRegister(REGNUM(target)),
                               generateS390MemoryReference(stackPtr, source, self()->cg()), (TR::Instruction *) cursor);
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                   break;
                case 9:  // LongDouble
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getS390RealRegister(REGNUM(target)),
+                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getRealRegister(REGNUM(target)),
                               generateS390MemoryReference(stackPtr, source, self()->cg()), (TR::Instruction *) cursor);
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getS390RealRegister(REGNUM(target+2)),
+                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getRealRegister(REGNUM(target+2)),
                               generateS390MemoryReference(stackPtr, source+8, self()->cg()), (TR::Instruction *) cursor);
                   ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
                   freeScratchable.reset(target+2);
@@ -1333,8 +1333,8 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   break;
                case 10:  // LongDouble
                   cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LXR, firstNode,
-                              self()->cg()->allocateFPRegisterPair(self()->getS390RealRegister(REGNUM(target+2)),self()->getS390RealRegister(REGNUM(target))),
-                              self()->cg()->allocateFPRegisterPair(self()->getS390RealRegister(REGNUM(source+2)),self()->getS390RealRegister(REGNUM(source))),
+                              self()->cg()->allocateFPRegisterPair(self()->getRealRegister(REGNUM(target+2)),self()->getRealRegister(REGNUM(target))),
+                              self()->cg()->allocateFPRegisterPair(self()->getRealRegister(REGNUM(source+2)),self()->getRealRegister(REGNUM(source))),
                               (TR::Instruction *) cursor);
                   freeScratchable.set(source);
                   freeScratchable.set(source+2);
@@ -3004,12 +3004,12 @@ OMR::Z::Linkage::getFirstSavedRegister(int32_t fromreg, int32_t toreg)
    // if the first saved reg is an HPR, we will return the corresponding GPR
    bool checkHPR = (self()->cg()->supportsHighWordFacility() &&
                     !self()->comp()->getOption(TR_DisableHighWordRA) &&
-                    (self()->getS390RealRegister(REGNUM(fromreg)))->isLowWordRegister() &&
-                    (self()->getS390RealRegister(REGNUM(toreg)))->isLowWordRegister());
+                    (self()->getRealRegister(REGNUM(fromreg)))->isLowWordRegister() &&
+                    (self()->getRealRegister(REGNUM(toreg)))->isLowWordRegister());
    for (int32_t i = fromreg; i <= toreg; ++i)
       {
-      if ((self()->getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod() ||
-          (checkHPR && (self()->getS390RealRegister(REGNUM(i)))->getHighWordRegister()->getHasBeenAssignedInMethod()))
+      if ((self()->getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod() ||
+          (checkHPR && (self()->getRealRegister(REGNUM(i)))->getHighWordRegister()->getHasBeenAssignedInMethod()))
          {
          firstUsedReg = REGNUM(i);
          return firstUsedReg;
@@ -3030,13 +3030,13 @@ OMR::Z::Linkage::getLastSavedRegister(int32_t fromreg, int32_t toreg)
    // if the last saved reg is an HPR, we will return the corresponding GPR
    bool checkHPR = (self()->cg()->supportsHighWordFacility() &&
                     !self()->comp()->getOption(TR_DisableHighWordRA) &&
-                    (self()->getS390RealRegister(REGNUM(fromreg)))->isLowWordRegister() &&
-                    (self()->getS390RealRegister(REGNUM(toreg)))->isLowWordRegister());
+                    (self()->getRealRegister(REGNUM(fromreg)))->isLowWordRegister() &&
+                    (self()->getRealRegister(REGNUM(toreg)))->isLowWordRegister());
 
    for (int32_t i = fromreg; i <= toreg; ++i)
       {
-      if ((self()->getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod() ||
-          (checkHPR && (self()->getS390RealRegister(REGNUM(i)))->getHighWordRegister()->getHasBeenAssignedInMethod()))
+      if ((self()->getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod() ||
+          (checkHPR && (self()->getRealRegister(REGNUM(i)))->getHighWordRegister()->getHasBeenAssignedInMethod()))
          {
          lastUsedReg = REGNUM(i);
          }
@@ -3111,7 +3111,7 @@ OMR::Z::Linkage::restorePreservedRegs(TR::RealRegister::RegNum firstUsedReg,
       for (uint8_t i = 0; i < newNumUsedRegs; i++)
          {
          cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(),
-                   nextNode, self()->getS390RealRegister(REGNUM(curReg)), rsa, cursor);
+                   nextNode, self()->getRealRegister(REGNUM(curReg)), rsa, cursor);
 
          curDisp += self()->cg()->machine()->getGPRSize();
          curReg++;
@@ -3130,19 +3130,19 @@ OMR::Z::Linkage::restorePreservedRegs(TR::RealRegister::RegNum firstUsedReg,
             ((newFirstUsedReg+1) %2 == 0))
       {
       cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::getLoadMultipleOpCode(), nextNode,
-                 self()->getS390RealRegister(REGNUM(newFirstUsedReg)),
-                 self()->getS390RealRegister(REGNUM(newLastUsedReg)), rsa, cursor);
+                 self()->getRealRegister(REGNUM(newFirstUsedReg)),
+                 self()->getRealRegister(REGNUM(newLastUsedReg)), rsa, cursor);
       }
    else //32-bit (try to use bumps)
       {
       //Load Single + Load Multiple
       cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(),
-                nextNode, self()->getS390RealRegister(REGNUM(newFirstUsedReg)), rsa, cursor);
+                nextNode, self()->getRealRegister(REGNUM(newFirstUsedReg)), rsa, cursor);
 
       rsa = generateS390MemoryReference(spReg, rsa->getOffset()+self()->cg()->machine()->getGPRSize(), self()->cg());
       cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::getLoadMultipleOpCode(), nextNode,
-                    self()->getS390RealRegister(REGNUM(newFirstUsedReg+1)),
-                    self()->getS390RealRegister(REGNUM(newLastUsedReg)), rsa, cursor);
+                    self()->getRealRegister(REGNUM(newFirstUsedReg+1)),
+                    self()->getRealRegister(REGNUM(newLastUsedReg)), rsa, cursor);
       }
    return cursor;
    }
@@ -3346,13 +3346,13 @@ OMR::Z::Linkage::setVectorReturnRegister(TR::RealRegister::RegNum r)
 TR::RealRegister *
 OMR::Z::Linkage::getStackPointerRealRegister()
    {
-   return self()->getS390RealRegister(_stackPointerRegister);
+   return self()->getRealRegister(_stackPointerRegister);
    }
 
 TR::RealRegister *
 OMR::Z::Linkage::getStackPointerRealRegister(uint32_t num)
    {
-   return self()->getS390RealRegister(_stackPointerRegister);
+   return self()->getRealRegister(_stackPointerRegister);
    }
 
 TR::RealRegister::RegNum
@@ -3370,49 +3370,49 @@ OMR::Z::Linkage::getNormalStackPointerRealRegister()
 TR::RealRegister *
 OMR::Z::Linkage::getEntryPointRealRegister()
    {
-   return self()->getS390RealRegister(_entryPointRegister);
+   return self()->getRealRegister(_entryPointRegister);
    }
 
 TR::RealRegister *
 OMR::Z::Linkage::getLitPoolRealRegister()
    {
-   return self()->getS390RealRegister(_litPoolRegister);
+   return self()->getRealRegister(_litPoolRegister);
    }
 
 TR::RealRegister *
 OMR::Z::Linkage::getStaticBaseRealRegister()
    {
-   return self()->getS390RealRegister(_staticBaseRegister);
+   return self()->getRealRegister(_staticBaseRegister);
    }
 
 TR::RealRegister *
 OMR::Z::Linkage::getPrivateStaticBaseRealRegister()
    {
-   return self()->getS390RealRegister(_privateStaticBaseRegister);
+   return self()->getRealRegister(_privateStaticBaseRegister);
    }
 
 TR::RealRegister *
 OMR::Z::Linkage::getExtCodeBaseRealRegister()
    {
-   return self()->getS390RealRegister(_extCodeBaseRegister);
+   return self()->getRealRegister(_extCodeBaseRegister);
    }
 
 TR::RealRegister *
 OMR::Z::Linkage::getReturnAddressRealRegister()
    {
-   return self()->getS390RealRegister(_returnAddrRegister);
+   return self()->getRealRegister(_returnAddrRegister);
    }
 
 TR::RealRegister *
 OMR::Z::Linkage::getVTableIndexArgumentRegisterRealRegister()
    {
-   return self()->getS390RealRegister(_vtableIndexArgumentRegister);
+   return self()->getRealRegister(_vtableIndexArgumentRegister);
    }
 
 TR::RealRegister *
 OMR::Z::Linkage::getJ9MethodArgumentRegisterRealRegister()
    {
-   return self()->getS390RealRegister(_j9methodArgumentRegister);
+   return self()->getRealRegister(_j9methodArgumentRegister);
    }
 
 TR::Compilation *
@@ -3446,7 +3446,7 @@ OMR::Z::Linkage::trStackMemory()
    }
 
 TR::RealRegister *
-OMR::Z::Linkage::getS390RealRegister(TR::RealRegister::RegNum rNum)
+OMR::Z::Linkage::getRealRegister(TR::RealRegister::RegNum rNum)
    {
-   return self()->cg()->machine()->getS390RealRegister(rNum);
+   return self()->cg()->machine()->getRealRegister(rNum);
    }

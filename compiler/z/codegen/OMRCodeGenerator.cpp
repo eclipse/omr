@@ -1531,7 +1531,7 @@ OMR::Z::CodeGenerator::insertInstructionPrefetches()
          _hottestReturn._returnLabel = generateLabelSymbol(self());
 
          TR::Register * tempReg = self()->allocateRegister();
-         TR::RealRegister * spReg =  self()->getS390Linkage()->getS390RealRegister(self()->getS390Linkage()->getStackPointerRegister());
+         TR::RealRegister * spReg =  self()->getS390Linkage()->getRealRegister(self()->getS390Linkage()->getStackPointerRegister());
          int32_t frameSize = self()->getFrameSizeInBytes();
 
          TR::MemoryReference * tempMR = generateS390MemoryReference(spReg, frameSize, self());
@@ -2590,28 +2590,28 @@ OMR::Z::CodeGenerator::prepareRegistersForAssignment()
    // count up how many registers are locked for each type
    for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; ++i)
       {
-      TR::RealRegister* realReg = machine->getS390RealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister* realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
       if (realReg->getState() == TR::RealRegister::Locked)
          ++lockedGPRs;
       }
 
    for (int32_t i = TR::RealRegister::FirstHPR; i <= TR::RealRegister::LastHPR; ++i)
       {
-      TR::RealRegister* realReg = machine->getS390RealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister* realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
       if (realReg->getState() == TR::RealRegister::Locked)
          ++lockedHPRs;
       }
 
    for (int32_t i = TR::RealRegister::FirstFPR; i <= TR::RealRegister::LastFPR; ++i)
       {
-      TR::RealRegister* realReg = machine->getS390RealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister* realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
       if (realReg->getState() == TR::RealRegister::Locked)
          ++lockedFPRs;
       }
 
    for (int32_t i = TR::RealRegister::FirstVRF; i <= TR::RealRegister::LastVRF; ++i)
       {
-      TR::RealRegister* realReg = machine->getS390RealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister* realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
       if (realReg->getState() == TR::RealRegister::Locked)
          ++lockedVRFs;
       }
@@ -2870,8 +2870,8 @@ OMR::Z::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
       {
       for (uint32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; ++i)
          {
-         TR_ASSERT(self()->machine()->getS390RealRegister(i)->getState() != TR::RealRegister::Assigned,
-                    "ASSERTION: GPR registers are still assigned at end of first RA pass! %s regNum=%s\n", self()->comp()->signature(), self()->getDebug()->getName(self()->machine()->getS390RealRegister(i)));
+         TR_ASSERT(self()->machine()->getRealRegister(i)->getState() != TR::RealRegister::Assigned,
+                    "ASSERTION: GPR registers are still assigned at end of first RA pass! %s regNum=%s\n", self()->comp()->signature(), self()->getDebug()->getName(self()->machine()->getRealRegister(i)));
          }
 
       if (self()->getDebug())
@@ -3220,7 +3220,7 @@ OMR::Z::CodeGenerator::doBinaryEncoding()
                   {
                   for (uint8_t i=highReg->getRegisterNumber()+1; i++; i<= numRegs)
                      {
-                     self()->getS390Linkage()->getS390RealRegister(REGNUM(i))->setModified(true);
+                     self()->getS390Linkage()->getRealRegister(REGNUM(i))->setModified(true);
                      }
                   }
                }
@@ -3947,7 +3947,7 @@ OMR::Z::CodeGenerator::setRealRegisterAssociation(TR::Register * reg, TR::RealRe
       return;
       }
 
-   TR::RealRegister * realReg = self()->machine()->getS390RealRegister(realNum);
+   TR::RealRegister * realReg = self()->machine()->getRealRegister(realNum);
    self()->getLiveRegisters(reg->getKind())->setAssociation(reg, realReg);
    }
 
@@ -3992,7 +3992,7 @@ void OMR::Z::CodeGenerator::startInternalControlFlow(TR::Instruction *instr)
           {
           TR::RealRegister::RegNum rr = postConds->getRegisterDependency(i)->getRealRegister();
           if(rr>TR::RealRegister::NoReg && rr<=TR::RealRegister::LastHPR)
-            r = mach->getS390RealRegister(rr);
+            r = mach->getRealRegister(rr);
           }
         if(r) _internalControlFlowRegisters.push_back(r);
         }
@@ -5276,7 +5276,7 @@ OMR::Z::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap * map)
       {
       for (int32_t i = TR::RealRegister::FirstHPR; i <= TR::RealRegister::LastHPR; i++)
          {
-         TR::RealRegister * realReg = self()->machine()->getS390RealRegister((TR::RealRegister::RegNum) i);
+         TR::RealRegister * realReg = self()->machine()->getRealRegister((TR::RealRegister::RegNum) i);
          if (realReg->getHasBeenAssignedInMethod())
             {
             TR::Register * virtReg = realReg->getAssignedRegister();
@@ -5291,7 +5291,7 @@ OMR::Z::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap * map)
       }
    for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; i++)
       {
-      TR::RealRegister * realReg = self()->machine()->getS390RealRegister((TR::RealRegister::RegNum) i);
+      TR::RealRegister * realReg = self()->machine()->getRealRegister((TR::RealRegister::RegNum) i);
       if (realReg->getHasBeenAssignedInMethod())
          {
          TR::Register * virtReg = realReg->getAssignedRegister();
@@ -6498,7 +6498,7 @@ void handleLoadWithRegRanges(TR::Instruction *inst, TR::CodeGenerator *cg)
                  i != highRegNum ;
                  i  = ((i == (isVector ? numVRFs - 1 : 15)) ? 0 : i+1))
       {
-      TR::RealRegister *reg = cg->machine()->getS390RealRegister(i + TR::RealRegister::GPR0);
+      TR::RealRegister *reg = cg->machine()->getRealRegister(i + TR::RealRegister::GPR0);
 
       // Registers that are assigned need to be checked whether they have a matching STM--otherwise we spill.
       // Since we are called post RA for the LM, we check if assigned registers are last used on the LM so we can

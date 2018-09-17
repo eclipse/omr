@@ -614,7 +614,7 @@ enum TR_DispatchType
    TR_HeapMemory        trHeapMemory();
    TR_StackMemory       trStackMemory();
 
-   TR::RealRegister *  getS390RealRegister(TR::RealRegister::RegNum rNum);
+   TR::RealRegister *  getRealRegister(TR::RealRegister::RegNum rNum);
 
    TR::RealRegister::RegNum getFirstSavedRegister(int32_t fromreg, int32_t toreg);
    TR::RealRegister::RegNum getLastSavedRegister(int32_t fromreg, int32_t toreg);

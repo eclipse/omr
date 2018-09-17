@@ -111,7 +111,7 @@ TR::Instruction * generateS390CompareOps(TR::Node * node, TR::CodeGenerator * cg
 void killRegisterIfNotLocked(TR::CodeGenerator * cg, TR::RealRegister::RegNum reg, TR::Instruction * instr , TR::RegisterDependencyConditions * deps = NULL)
    {
          TR::Register *dummy = NULL;
-         if (cg->machine()->getS390RealRegister(reg)->getState() != TR::RealRegister::Locked)
+         if (cg->machine()->getRealRegister(reg)->getState() != TR::RealRegister::Locked)
             {
             if (deps == NULL)
                deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);

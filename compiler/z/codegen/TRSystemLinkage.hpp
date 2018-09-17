@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,7 +98,7 @@ public:
 
    virtual TR::RealRegister::RegNum setEnvironmentPointerRegister (TR::RealRegister::RegNum r) { return _environmentPointerRegister = r; }
    virtual TR::RealRegister::RegNum getEnvironmentPointerRegister() { return _environmentPointerRegister; }
-   virtual TR::RealRegister *getEnvironmentPointerRealRegister() {return getS390RealRegister(_environmentPointerRegister);}
+   virtual TR::RealRegister *getEnvironmentPointerRealRegister() {return getRealRegister(_environmentPointerRegister);}
 
    virtual int32_t getRegisterSaveOffset(TR::RealRegister::RegNum);
 
@@ -146,7 +146,7 @@ public:
 
    virtual void setGOTPointerRegister (TR::RealRegister::RegNum r)         { _GOTPointerRegister = r; }
    virtual TR::RealRegister::RegNum getGOTPointerRegister()         { return _GOTPointerRegister; }
-   virtual TR::RealRegister *getGOTPointerRealRegister() {return getS390RealRegister(_GOTPointerRegister);}
+   virtual TR::RealRegister *getGOTPointerRealRegister() {return getRealRegister(_GOTPointerRegister);}
    virtual int32_t getRegisterSaveOffset(TR::RealRegister::RegNum);
    virtual void initParamOffset(TR::ResolvedMethodSymbol * method, int32_t stackIndex, List<TR::ParameterSymbol> *parameterList=0);
 

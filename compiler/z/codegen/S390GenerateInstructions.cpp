@@ -3120,7 +3120,7 @@ generateSerializationInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Inst
 
    // We needed some special handling in TR::Instruction::assignRegisterNoDependencies
    // to recognize real register GPR0 being passed in.
-   TR::RealRegister *gpr0 = cg->machine()->getS390RealRegister(TR::RealRegister::GPR0);
+   TR::RealRegister *gpr0 = cg->machine()->getRealRegister(TR::RealRegister::GPR0);
 
    TR::Instruction * instr = NULL;
    if (preced)

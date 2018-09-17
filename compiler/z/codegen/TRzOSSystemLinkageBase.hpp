@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,11 +78,11 @@ public:
 
    virtual TR::RealRegister::RegNum setCAAPointerRegister (TR::RealRegister::RegNum r)         { return _CAAPointerRegister = r; }
    virtual TR::RealRegister::RegNum getCAAPointerRegister()         { return _CAAPointerRegister; }
-   virtual TR::RealRegister *getCAAPointerRealRegister() {return getS390RealRegister(_CAAPointerRegister);}
+   virtual TR::RealRegister *getCAAPointerRealRegister() {return getRealRegister(_CAAPointerRegister);}
 
    virtual TR::RealRegister::RegNum setParentDSAPointerRegister (TR::RealRegister::RegNum r)         { return _parentDSAPointerRegister = r; }
    virtual TR::RealRegister::RegNum getParentDSAPointerRegister()         { return _parentDSAPointerRegister; }
-   virtual TR::RealRegister *getParentDSAPointerRealRegister() {return getS390RealRegister(_parentDSAPointerRegister);}
+   virtual TR::RealRegister *getParentDSAPointerRealRegister() {return getRealRegister(_parentDSAPointerRegister);}
 
    // === Fastlink specific
    virtual bool isAggregateReturnedInIntRegisters(int32_t aggregateLenth)   { return isFastLinkLinkageType(); }

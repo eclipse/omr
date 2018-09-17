@@ -309,7 +309,7 @@ TR_S390PostRAPeephole::AGIReduction()
    TR::Register *lgrTargetReg = ((TR::S390RRInstruction*)_cursor)->getRegisterOperand(1);
    TR::Register *lgrSourceReg = ((TR::S390RRInstruction*)_cursor)->getRegisterOperand(2);
 
-   TR::RealRegister *gpr0 = _cg->machine()->getS390RealRegister(TR::RealRegister::GPR0);
+   TR::RealRegister *gpr0 = _cg->machine()->getRealRegister(TR::RealRegister::GPR0);
 
    // no renaming possible if both target and source are the same
    // this can happend with LTR and LTGR
@@ -504,7 +504,7 @@ TR_S390PostRAPeephole::replaceGuardedLoadWithSoftwareReadBarrier()
    TR::MemoryReference *loadMemRef = generateS390MemoryReference(*load->getMemoryReference(), 0, _cg);
    TR::Register *loadTargetReg = _cursor->getRegisterOperand(1);
    TR::Register *vmReg = _cg->getLinkage()->getMethodMetaDataRealRegister();
-   TR::Register *raReg = _cg->machine()->getS390RealRegister(_cg->getReturnAddressRegister());
+   TR::Register *raReg = _cg->machine()->getRealRegister(_cg->getReturnAddressRegister());
    TR::Instruction* prev = load->getPrev();
 
    // If guarded load target and mem ref registers are the same,
@@ -1893,11 +1893,11 @@ TR_S390PostRAPeephole::trueCompEliminationForLoadComp()
    TR::RealRegister *tempReg = NULL;
    if((toRealRegister(srcReg))->getRegisterNumber() == TR::RealRegister::GPR1)
       {
-      tempReg = _cg->machine()->getS390RealRegister(TR::RealRegister::GPR2);
+      tempReg = _cg->machine()->getRealRegister(TR::RealRegister::GPR2);
       }
    else
       {
-      tempReg = _cg->machine()->getS390RealRegister(TR::RealRegister::GPR1);
+      tempReg = _cg->machine()->getRealRegister(TR::RealRegister::GPR1);
       }
 
    if (prev && prev->defsRegister(srcReg))
@@ -2648,7 +2648,7 @@ TR_S390PostRAPeephole::markBlockThatModifiesRegister(TR::Instruction * cursor,
                {
                for (uint8_t i=highReg->getRegisterNumber()+1; i++; i<= numRegs)
                   {
-                  _cg->getS390Linkage()->getS390RealRegister(REGNUM(i))->setModified(true);
+                  _cg->getS390Linkage()->getRealRegister(REGNUM(i))->setModified(true);
                   }
                }
             }
