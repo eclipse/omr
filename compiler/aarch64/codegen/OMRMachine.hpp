@@ -71,7 +71,7 @@ public:
     * @param[in] regNum : register number
     * @return RealRegister for specified register number
     */
-   TR::RealRegister *getARM64RealRegister(TR::RealRegister::RegNum regNum)
+   TR::RealRegister *getRealRegister(TR::RealRegister::RegNum regNum)
       {
       return _registerFile[regNum];
       }

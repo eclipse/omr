@@ -126,37 +126,37 @@ TR::ARM64SystemLinkage::initARM64RealRegisterLinkage()
    TR::RealRegister *reg;
    int icount;
 
-   reg = machine->getARM64RealRegister(TR::RealRegister::RegNum::x16); // IP0
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::x16); // IP0
    reg->setState(TR::RealRegister::Locked);
    reg->setAssignedRegister(reg);
 
-   reg = machine->getARM64RealRegister(TR::RealRegister::RegNum::x17); // IP1
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::x17); // IP1
    reg->setState(TR::RealRegister::Locked);
    reg->setAssignedRegister(reg);
 
-   reg = machine->getARM64RealRegister(TR::RealRegister::RegNum::x29); // FP
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::x29); // FP
    reg->setState(TR::RealRegister::Locked);
    reg->setAssignedRegister(reg);
 
-   reg = machine->getARM64RealRegister(TR::RealRegister::RegNum::x30); // LR
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::x30); // LR
    reg->setState(TR::RealRegister::Locked);
    reg->setAssignedRegister(reg);
 
-   reg = machine->getARM64RealRegister(TR::RealRegister::RegNum::xzr); // zero or SP
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::xzr); // zero or SP
    reg->setState(TR::RealRegister::Locked);
    reg->setAssignedRegister(reg);
 
    // assign "maximum" weight to registers x0-x15
    for (icount = TR::RealRegister::x0; icount <= TR::RealRegister::x15; icount++)
-      machine->getARM64RealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
 
    // assign "maximum" weight to registers x18-x28
    for (icount = TR::RealRegister::x18; icount <= TR::RealRegister::x28; icount++)
-      machine->getARM64RealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
 
    // assign "maximum" weight to registers v0-v31
    for (icount = TR::RealRegister::v0; icount <= TR::RealRegister::v31; icount++)
-      machine->getARM64RealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
    }
 
 
@@ -218,7 +218,7 @@ TR::ARM64SystemLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    // allocate space for preserved registers (x19-x28, v8-v15)
    for (int r = TR::RealRegister::x19; r <= TR::RealRegister::x28; r++)
       {
-      TR::RealRegister *rr = machine->getARM64RealRegister((TR::RealRegister::RegNum)r);
+      TR::RealRegister *rr = machine->getRealRegister((TR::RealRegister::RegNum)r);
       if (rr->getHasBeenAssignedInMethod())
          {
          stackIndex += 8;
@@ -226,7 +226,7 @@ TR::ARM64SystemLinkage::mapStack(TR::ResolvedMethodSymbol *method)
       }
    for (int r = TR::RealRegister::v8; r <= TR::RealRegister::v15; r++)
       {
-      TR::RealRegister *rr = machine->getARM64RealRegister((TR::RealRegister::RegNum)r);
+      TR::RealRegister *rr = machine->getRealRegister((TR::RealRegister::RegNum)r);
       if (rr->getHasBeenAssignedInMethod())
          {
          stackIndex += 8;
@@ -360,7 +360,7 @@ TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::Paramet
    TR::Machine *machine = codeGen->machine();
    TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
    const TR::ARM64LinkageProperties& properties = getProperties();
-   TR::RealRegister *sp = machine->getARM64RealRegister(properties.getStackPointerRegister());
+   TR::RealRegister *sp = machine->getRealRegister(properties.getStackPointerRegister());
    TR::Node *firstNode = comp()->getStartTree()->getNode();
 
    // allocate stack space
@@ -376,7 +376,7 @@ TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::Paramet
 
    // save link register (x30)
    TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, bodySymbol->getLocalMappingCursor(), codeGen);
-   cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, firstNode, stackSlot, machine->getARM64RealRegister(TR::RealRegister::x30), cursor);
+   cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, firstNode, stackSlot, machine->getRealRegister(TR::RealRegister::x30), cursor);
 
    // spill argument registers
    int32_t nextIntArgReg = 0;
@@ -396,7 +396,7 @@ TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::Paramet
          case TR::Address:
             if (nextIntArgReg < getProperties().getNumIntArgRegs())
                {
-               cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, firstNode, stackSlot, machine->getARM64RealRegister((TR::RealRegister::RegNum)(TR::RealRegister::x0 + nextIntArgReg)), cursor);
+               cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, firstNode, stackSlot, machine->getRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::x0 + nextIntArgReg)), cursor);
                nextIntArgReg++;
                }
             else
@@ -408,7 +408,7 @@ TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::Paramet
          case TR::Double:
             if (nextFltArgReg < getProperties().getNumFloatArgRegs())
                {
-               cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::vstrimmd, firstNode, stackSlot, machine->getARM64RealRegister((TR::RealRegister::RegNum)(TR::RealRegister::v0 + nextFltArgReg)), cursor);
+               cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::vstrimmd, firstNode, stackSlot, machine->getRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::v0 + nextFltArgReg)), cursor);
                nextFltArgReg++;
                }
             else
@@ -428,7 +428,7 @@ TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::Paramet
    uint32_t offset = bodySymbol->getLocalMappingCursor() + 8; // +8 for LR
    for (int r = TR::RealRegister::x19; r <= TR::RealRegister::x28; r++)
       {
-      TR::RealRegister *rr = machine->getARM64RealRegister((TR::RealRegister::RegNum)r);
+      TR::RealRegister *rr = machine->getRealRegister((TR::RealRegister::RegNum)r);
       if (rr->getHasBeenAssignedInMethod())
          {
          TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, offset, codeGen);
@@ -438,7 +438,7 @@ TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::Paramet
       }
    for (int r = TR::RealRegister::v8; r <= TR::RealRegister::v15; r++)
       {
-      TR::RealRegister *rr = machine->getARM64RealRegister((TR::RealRegister::RegNum)r);
+      TR::RealRegister *rr = machine->getRealRegister((TR::RealRegister::RegNum)r);
       if (rr->getHasBeenAssignedInMethod())
          {
          TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, offset, codeGen);
@@ -457,13 +457,13 @@ TR::ARM64SystemLinkage::createEpilogue(TR::Instruction *cursor)
    TR::Machine *machine = codeGen->machine();
    TR::Node *lastNode = cursor->getNode();
    TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
-   TR::RealRegister *sp = machine->getARM64RealRegister(properties.getStackPointerRegister());
+   TR::RealRegister *sp = machine->getRealRegister(properties.getStackPointerRegister());
 
    // restore callee-saved registers
    uint32_t offset = bodySymbol->getLocalMappingCursor() + 8; // +8 for LR
    for (int r = TR::RealRegister::x19; r <= TR::RealRegister::x28; r++)
       {
-      TR::RealRegister *rr = machine->getARM64RealRegister((TR::RealRegister::RegNum)r);
+      TR::RealRegister *rr = machine->getRealRegister((TR::RealRegister::RegNum)r);
       if (rr->getHasBeenAssignedInMethod())
          {
          TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, offset, codeGen);
@@ -473,7 +473,7 @@ TR::ARM64SystemLinkage::createEpilogue(TR::Instruction *cursor)
       }
    for (int r = TR::RealRegister::v8; r <= TR::RealRegister::v15; r++)
       {
-      TR::RealRegister *rr = machine->getARM64RealRegister((TR::RealRegister::RegNum)r);
+      TR::RealRegister *rr = machine->getRealRegister((TR::RealRegister::RegNum)r);
       if (rr->getHasBeenAssignedInMethod())
          {
          TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, offset, codeGen);
@@ -484,7 +484,7 @@ TR::ARM64SystemLinkage::createEpilogue(TR::Instruction *cursor)
 
    // restore link register (x30)
    TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, bodySymbol->getLocalMappingCursor(), codeGen);
-   cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, machine->getARM64RealRegister(TR::RealRegister::lr), stackSlot, cursor);
+   cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, machine->getRealRegister(TR::RealRegister::lr), stackSlot, cursor);
 
    // remove space for preserved registers
    uint32_t frameSize = codeGen->getFrameSizeInBytes();

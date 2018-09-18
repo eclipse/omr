@@ -49,17 +49,17 @@ OMR::ARM64::RegisterIterator::RegisterIterator(TR::Machine *machine, TR_Register
 TR::Register *
 OMR::ARM64::RegisterIterator::getFirst()
    {
-   return _machine->getARM64RealRegister((TR::RealRegister::RegNum)(_cursor = _firstRegIndex));
+   return _machine->getRealRegister((TR::RealRegister::RegNum)(_cursor = _firstRegIndex));
    }
 
 TR::Register *
 OMR::ARM64::RegisterIterator::getCurrent()
    {
-   return _machine->getARM64RealRegister((TR::RealRegister::RegNum)_cursor);
+   return _machine->getRealRegister((TR::RealRegister::RegNum)_cursor);
    }
 
 TR::Register *
 OMR::ARM64::RegisterIterator::getNext()
    {
-   return _cursor == _lastRegIndex ? NULL : _machine->getARM64RealRegister((TR::RealRegister::RegNum)(++_cursor));
+   return _cursor == _lastRegIndex ? NULL : _machine->getRealRegister((TR::RealRegister::RegNum)(++_cursor));
    }
