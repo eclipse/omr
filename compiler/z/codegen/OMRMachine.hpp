@@ -102,8 +102,6 @@ template <typename ListKind> class List;
 #define ALLOWLOCKED      true
 #define DISALLOWBLOCKED  false
 
-#define  REAL_REGISTER(ri)  machine->getRealRegister(ri)
-
 #define GLOBAL_REG_FOR_LITPOOL     3    // GPR6
 
 #define TR_LONG_TO_PACKED_SIZE            16    ///< The result byte size in memory for a long to packed conversion (i.e. with CVDG)
