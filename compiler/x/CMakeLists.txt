@@ -55,7 +55,6 @@ compiler_library(x
 	${CMAKE_CURRENT_LIST_DIR}/codegen/X86SystemLinkage.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/XMMBinaryArithmeticAnalyser.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRCodeGenerator.cpp
-	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRegisterIterator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/env/OMRCPU.cpp
 	${CMAKE_CURRENT_LIST_DIR}/env/OMRDebugEnv.cpp
 )

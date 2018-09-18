@@ -190,6 +190,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/codegen/LiveRegister.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/OutOfLineCodeSection.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/Relocation.cpp \
+    $(JIT_OMR_DIRTY_DIR)/codegen/RegisterIterator.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/ScratchRegisterManager.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/StorageInfo.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/OMRTreeEvaluator.cpp \

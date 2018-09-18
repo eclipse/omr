@@ -50,7 +50,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/z/codegen/InstOpCode.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRRegister.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRRealRegister.cpp \
-    $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRRegisterIterator.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRRegisterPair.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRCodeGenPhase.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRCodeGenerator.cpp

@@ -50,7 +50,6 @@ compiler_library(z
 	${CMAKE_CURRENT_LIST_DIR}/codegen/InstOpCode.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRegister.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRealRegister.cpp
-	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRegisterIterator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRegisterPair.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRCodeGenPhase.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRCodeGenerator.cpp

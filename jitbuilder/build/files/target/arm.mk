@@ -47,6 +47,5 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/arm/codegen/SubtractAnalyser.cpp \
     $(JIT_OMR_DIRTY_DIR)/arm/codegen/OMRTreeEvaluator.cpp \
     $(JIT_OMR_DIRTY_DIR)/arm/codegen/UnaryEvaluator.cpp \
-    $(JIT_OMR_DIRTY_DIR)/arm/codegen/OMRRegisterIterator.cpp \
     $(JIT_OMR_DIRTY_DIR)/arm/env/OMRCompilerEnv.cpp
 

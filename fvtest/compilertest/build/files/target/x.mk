@@ -54,8 +54,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRSnippet.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/X86SystemLinkage.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/XMMBinaryArithmeticAnalyser.cpp \
-    $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRCodeGenerator.cpp \
-    $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRRegisterIterator.cpp
+    $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRCodeGenerator.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
     $(JIT_PRODUCT_DIR)/x/codegen/Evaluator.cpp \
