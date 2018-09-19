@@ -34,7 +34,7 @@
 #define TraceIL(m, ...) {if (TraceEnabled) {traceMsg(TR::comp(), m, ##__VA_ARGS__);}}
 
 OMR::VirtualMachineOperandArray::VirtualMachineOperandArray(TR::MethodBuilder *mb, int32_t numOfElements, TR::IlType *elementType, TR::VirtualMachineRegister *arrayBaseRegister)
-   : TR::VirtualMachineState(),
+   : TR::VirtualMachineArray(),
    _mb(mb),
    _numberOfElements(numOfElements),
    _elementType(elementType),
@@ -44,7 +44,7 @@ OMR::VirtualMachineOperandArray::VirtualMachineOperandArray(TR::MethodBuilder *m
    }
 
 OMR::VirtualMachineOperandArray::VirtualMachineOperandArray(TR::VirtualMachineOperandArray *other)
-   : TR::VirtualMachineState(),
+   : TR::VirtualMachineArray(),
    _mb(other->_mb),
    _numberOfElements(other->_numberOfElements),
    _elementType(other->_elementType),
@@ -139,15 +139,22 @@ OMR::VirtualMachineOperandArray::MakeCopy()
    }
 
 TR::IlValue *
-OMR::VirtualMachineOperandArray::Get(int32_t index)
+OMR::VirtualMachineOperandArray::Get(TR::IlBuilder *b, int32_t index)
    {
    TR_ASSERT(index < _numberOfElements, "index has to be less than the number of elements");
    TR_ASSERT(index >= 0, "index can not be negative");
    return _values[index];
    }
 
+TR::IlValue *
+OMR::VirtualMachineOperandArray::Get(TR::IlBuilder *b, TR::IlValue *index)
+   {
+   TR_ASSERT(NULL != index, "index can not be NULL");
+   return Get(b, index->get32bitConstValue());
+   }
+
 void
-OMR::VirtualMachineOperandArray::Set(int32_t index, TR::IlValue *value)
+OMR::VirtualMachineOperandArray::Set(TR::IlBuilder *b, int32_t index, TR::IlValue *value)
    {
    TR_ASSERT(index < _numberOfElements, "index has to be less than the number of elements");
    TR_ASSERT(index >= 0, "index can not be negative");
@@ -164,6 +171,12 @@ OMR::VirtualMachineOperandArray::Set(int32_t index, TR::IlValue *value)
    _values[index] = value;
    }
 
+void
+OMR::VirtualMachineOperandArray::Set(TR::IlBuilder *b, TR::IlValue *index, TR::IlValue *value)
+   {
+   TR_ASSERT(NULL != index, "index can not be NULL");
+   Set(b, index->get32bitConstValue(), value);
+   }
 
 void
 OMR::VirtualMachineOperandArray::Move(TR::IlBuilder *b, int32_t dstIndex, int32_t srcIndex)
@@ -175,6 +188,12 @@ OMR::VirtualMachineOperandArray::Move(TR::IlBuilder *b, int32_t dstIndex, int32_
 
    _values[dstIndex] = b->Copy(_values[srcIndex]);
    TraceIL("VirtualMachineOperandArray[ %p ]::Move builder %p move srcIndex %d %p(%d) to dstIndex %d %p(%d)\n", this, b, srcIndex, _values[srcIndex], _values[srcIndex]->getID(), dstIndex, _values[dstIndex], _values[dstIndex]->getID());
+   }
+
+void
+OMR::VirtualMachineOperandArray::Move(TR::IlBuilder *b, TR::IlValue *dstIndex, TR::IlValue *srcIndex)
+   {
+   Move(b, dstIndex->get32bitConstValue(), srcIndex->get32bitConstValue());
    }
 
 void

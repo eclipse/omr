@@ -29,6 +29,7 @@ compiler_library(ilgen
 	${CMAKE_CURRENT_LIST_DIR}/OMRMethodBuilder.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRThunkBuilder.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRTypeDictionary.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRVirtualMachineInterpreterArray.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRVirtualMachineInterpreterStack.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRVirtualMachineOperandArray.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRVirtualMachineOperandStack.cpp

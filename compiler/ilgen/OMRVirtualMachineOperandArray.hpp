@@ -23,7 +23,7 @@
 #define OMR_VIRTUALMACHINEOPERANDARRAY_INCL
 
 #include <stdint.h>
-#include "ilgen/VirtualMachineState.hpp"
+#include "ilgen/VirtualMachineArray.hpp"
 
 namespace TR { class IlBuilder; }
 namespace TR { class IlType; }
@@ -64,7 +64,7 @@ namespace OMR
  *
  */
 
-class VirtualMachineOperandArray : public TR::VirtualMachineState
+class VirtualMachineOperandArray : public TR::VirtualMachineArray
    {
    public:
    /**
@@ -120,14 +120,28 @@ class VirtualMachineOperandArray : public TR::VirtualMachineState
     * @param index the location of the expression to return
     * @returns the expression at the given index
     */
-   virtual TR::IlValue *Get(int32_t index);
+   virtual TR::IlValue *Get(TR::IlBuilder *b, int32_t index);
    
+   /**
+    * @brief Returns the expression at the given index of the simulated operand array
+    * @param index the location of the expression to return
+    * @returns the expression at the given index
+    */
+   virtual TR::IlValue *Get(TR::IlBuilder *b, TR::IlValue *index);
+
    /**
     * @brief Set the expression into the simulated operand array at the given index
     * @param index the location to store the expression
     * @param value expression to store into the simulated operand array
     */
-   virtual void Set(int32_t index, TR::IlValue *value);
+   virtual void Set(TR::IlBuilder *b, int32_t index, TR::IlValue *value);
+
+   /**
+    * @brief Set the expression into the simulated operand array at the given index
+    * @param index the location to store the expression
+    * @param value expression to store into the simulated operand array
+    */
+   virtual void Set(TR::IlBuilder *b, TR::IlValue *index, TR::IlValue *value);
   
    /**
     * @brief Move the expression from one index to another index in the simulated operand array
@@ -135,6 +149,13 @@ class VirtualMachineOperandArray : public TR::VirtualMachineState
     * @param srcIndex the location to copy the expression from
     */ 
    virtual void Move(TR::IlBuilder *b, int32_t dstIndex, int32_t srcIndex);
+
+   /**
+    * @brief Move the expression from one index to another index in the simulated operand array
+    * @param dstIndex the location to store the expression
+    * @param srcIndex the location to copy the expression from
+    */
+   virtual void Move(TR::IlBuilder *b, TR::IlValue *dstIndex, TR::IlValue *srcIndex);
 
    protected:
    void init();

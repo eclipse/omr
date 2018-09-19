@@ -331,7 +331,7 @@ OperandArrayTestMethod::verify(const char *step, int32_t max, int32_t num, ...)
       REPORT2(_realArray[a] == val, "_realArray[a]", _realArray[a], "val", val);
       }
 
-   if (verbose) cout << "\tResult " << step << ": upper stack untouched: ";
+   if (verbose) cout << "\tResult " << step << ": end of array untouched: ";
    REPORT1(verifyUntouched(max), "max", max);
    }
 
@@ -370,13 +370,13 @@ OperandArrayTestMethod::OperandArrayTestMethod(TR::TypeDictionary *d)
    }
 
 // convenience macros
-#define STACK(b)         ((TR::VirtualMachineOperandArray *)(b)->vmState())
-#define UPDATEARRAY(b,s) (STACK(b)->UpdateArray(b, s))
-#define COMMIT(b)        (STACK(b)->Commit(b))
-#define RELOAD(b)        (STACK(b)->Reload(b))
-#define SET(b,i,v)       (STACK(b)->Set((i),(v)))
-#define GET(b,i)         (STACK(b)->Get((i)))
-#define MOVE(b, d, s)    (STACK(b)->Move(b, d, s))
+#define ARRAY(b)         ((TR::VirtualMachineOperandArray *)(b)->vmState())
+#define UPDATEARRAY(b,s) (ARRAY(b)->UpdateArray(b, s))
+#define COMMIT(b)        (ARRAY(b)->Commit(b))
+#define RELOAD(b)        (ARRAY(b)->Reload(b))
+#define SET(b,i,v)       (ARRAY(b)->Set((b),(i),(v)))
+#define GET(b,i)         (ARRAY(b)->Get((b),(i)))
+#define MOVE(b, d, s)    (ARRAY(b)->Move(b, d, s))
 
 bool
 OperandArrayTestMethod::testArray(TR::BytecodeBuilder *builder, bool useEqual)
