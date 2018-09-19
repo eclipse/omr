@@ -66,6 +66,9 @@ public:
     */
    TR::DataType getDataType();
 
+   int32_t get32bitConstValue();
+   int64_t get64bitConstValue();
+
    /**
     * @brief returns the TR::SymbolReference holding the value, or NULL if willBeUsedInAnotherBlock() has not yet been called
     * Caller should ensure the current block is different than the block that computes the value; if the current block is the

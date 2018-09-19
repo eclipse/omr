@@ -84,6 +84,18 @@ OMR::IlValue::load(TR::Block *block)
    return TR::Node::createLoad(_symRefThatCanBeUsedInOtherBlocks);
    }
 
+int32_t
+OMR::IlValue::get32bitConstValue()
+   {
+   return _nodeThatComputesValue->get32bitIntegralValue();
+   }
+
+int64_t
+OMR::IlValue::get64bitConstValue()
+   {
+   return _nodeThatComputesValue->get64bitIntegralValue();
+   }
+
 void
 OMR::IlValue::storeOver(TR::IlValue *value, TR::Block *block)
    {
