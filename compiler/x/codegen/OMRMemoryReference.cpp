@@ -1228,9 +1228,21 @@ OMR::X86::MemoryReference::addMetaDataForCodeAddress(
                      if (cg->needClassAndMethodPointerRelocations())
                         {
                         *(int32_t *)cursor = (int32_t)(TR::Compiler->cls.persistentClassPointerFromClassPointer(cg->comp(), (TR_OpaqueClassBlock*)(self()->getSymbolReference().getOffset() + (intptrj_t)staticSym->getStaticAddress())));
-                        cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)&self()->getSymbolReference(),
-                                                                                                 node ? (uint8_t *)(intptrj_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                                                 TR_ClassAddress, cg), __FILE__, __LINE__, node);
+                        if (cg->comp()->getOption(TR_UseSymbolValidationManager))
+                           {
+                           cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                                     (uint8_t *)(self()->getSymbolReference().getOffset() + (intptrj_t)staticSym->getStaticAddress()),
+                                                                                                     (uint8_t *)TR::SymbolType::typeClass,
+                                                                                                     TR_SymbolFromManager,
+                                                                                                     cg),
+                                                                                           __FILE__, __LINE__, node);
+                           }
+                        else
+                           {
+                           cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)&self()->getSymbolReference(),
+                                                                                                    node ? (uint8_t *)(intptrj_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                                                    TR_ClassAddress, cg), __FILE__, __LINE__, node);
+                           }
                         }
 
                      if (cg->wantToPatchClassPointer(NULL, cursor)) // might not point to beginning of class

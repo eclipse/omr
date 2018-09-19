@@ -400,10 +400,26 @@ OMR::X86::AMD64::MemoryReference::addMetaDataForCodeAddressWithLoad(
          if (sr.getSymbol()->isStatic())
             {
             if (cg->needClassAndMethodPointerRelocations())
-               cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(displacementLocation, (uint8_t *)srCopy,
-                                                                                         (uint8_t *)(uintptr_t)containingInstruction->getNode()->getInlinedSiteIndex(),
-                                                                                         TR_ClassAddress, cg),__FILE__, __LINE__,
-                                                                                         containingInstruction->getNode());
+               {
+               if (cg->comp()->getOption(TR_UseSymbolValidationManager))
+                  {
+                  cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(displacementLocation,
+                                                                                            (uint8_t *)sr.getSymbol()->castToStaticSymbol()->getStaticAddress(),
+                                                                                            (uint8_t *)TR::SymbolType::typeClass,
+                                                                                            TR_SymbolFromManager,
+                                                                                            cg),
+                                                                                   __FILE__, __LINE__,
+                                                                                   containingInstruction->getNode());
+                  }
+               else
+                  {
+                  cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(displacementLocation, (uint8_t *)srCopy,
+                                                                                            (uint8_t *)(uintptr_t)containingInstruction->getNode()->getInlinedSiteIndex(),
+                                                                                            TR_ClassAddress, cg),__FILE__, __LINE__,
+                                                                                            containingInstruction->getNode());
+                  }
+               }
+
             if (cg->wantToPatchClassPointer(NULL, displacementLocation)) // may not point to beginning of class
                {
                cg->jitAddPicToPatchOnClassRedefinition(((void *)displacement), displacementLocation);

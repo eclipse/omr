@@ -1215,8 +1215,9 @@ TR::VPClassType *TR::VPClassType::create(OMR::ValuePropagation *vp, const char *
    if (classObject)
       {
       bool isClassInitialized = false;
+      bool allowForAOT = vp->comp()->getOption(TR_UseSymbolValidationManager);
       TR_PersistentClassInfo * classInfo =
-         vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classObject, vp->comp());
+         vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classObject, vp->comp(), allowForAOT);
       if (classInfo && classInfo->isInitialized())
          {
          if (isFixed)
@@ -1293,6 +1294,8 @@ TR::VPKnownObject *TR::VPKnownObject::create(OMR::ValuePropagation *vp, TR::Know
    {
    TR::KnownObjectTable *knot = vp->comp()->getKnownObjectTable();
    TR_ASSERT(knot, "Can't create a TR::VPKnownObject without a known-object table");
+   if (!knot)
+      return NULL;
    if (knot->isNull(index)) // No point in worrying about the NULL case because existing constraints handle that optimally
       return NULL;
 

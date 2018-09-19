@@ -356,17 +356,64 @@ typedef enum
    TR_DebugCounter                        = 59,
    TR_ClassUnloadAssumption               = 60, // this should not be used in AOT relocations
    TR_J2IVirtualThunkPointer              = 61,
-   TR_NumExternalRelocationKinds          = 62,
+   TR_InlinedAbstractMethodWithNopGuard   = 62,
+   TR_ValidateRootClass                   = 63,
+   TR_ValidateClassByName                 = 64,
+   TR_ValidateProfiledClass               = 65,
+   TR_ValidateClassFromCP                 = 66,
+   TR_ValidateDefiningClassFromCP         = 67,
+   TR_ValidateStaticClassFromCP           = 68,
+   TR_ValidateClassFromMethod             = 69,
+   TR_ValidateComponentClassFromArrayClass= 70,
+   TR_ValidateArrayClassFromComponentClass= 71,
+   TR_ValidateSuperClassFromClass         = 72,
+   TR_ValidateClassInstanceOfClass        = 73,
+   TR_ValidateSystemClassByName           = 74,
+   TR_ValidateClassFromITableIndexCP      = 75,
+   TR_ValidateDeclaringClassFromFieldOrStatic=76,
+   TR_ValidateClassClass                  = 77,
+   TR_ValidateConcreteSubClassFromClass   = 78,
+   TR_ValidateClassChain                  = 79,
+   TR_ValidateRomClass                    = 80,
+   TR_ValidatePrimitiveClass              = 81,
+   TR_ValidateMethodFromInlinedSite       = 82,
+   TR_ValidateMethodByName                = 83,
+   TR_ValidateMethodFromClass             = 84,
+   TR_ValidateStaticMethodFromCP          = 85,
+   TR_ValidateSpecialMethodFromCP         = 86,
+   TR_ValidateVirtualMethodFromCP         = 87,
+   TR_ValidateVirtualMethodFromOffset     = 88,
+   TR_ValidateInterfaceMethodFromCP       = 89,
+   TR_ValidateMethodFromClassAndSig       = 90,
+   TR_ValidateStackWalkerMaySkipFramesRecord=91,
+   TR_ValidateArrayClassFromJavaVM        = 92,
+   TR_ValidateClassInfoIsInitialized      = 93,
+   TR_ValidateMethodFromSingleImplementer = 94,
+   TR_ValidateMethodFromSingleInterfaceImplementer = 95,
+   TR_ValidateMethodFromSingleAbstractImplementer = 96,
+   TR_ValidateImproperInterfaceMethodFromCP=97,
+   TR_SymbolFromManager                   = 98,
+   TR_NumExternalRelocationKinds          = 99,
    TR_ExternalRelocationTargetKindMask    = 0xff,
    } TR_ExternalRelocationTargetKind;
 
+namespace TR {
 
+enum SymbolType
+   {
+   typeOpaque,
+   typeClass,
+   typeMethod,
+   };
+
+}
 
 typedef struct TR_RelocationRecordInformation {
    uintptr_t data1;
    uintptr_t data2;
    uintptr_t data3;
    uintptr_t data4;
+   uintptr_t data5;
 } TR_RelocationRecordInformation;
 
 

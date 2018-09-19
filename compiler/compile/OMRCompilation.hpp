@@ -350,6 +350,11 @@ public:
 
    bool compilationShouldBeInterrupted(TR_CallingContext) { return false; }
 
+   void verifySymbolHasBeenValidated(void *symbol) { return; }
+   void incrementHeuristicRegion() { return; }
+   void decrementHeuristicRegion() { return; }
+   bool validateImplementer(TR_ResolvedMethod *implementer) { return true; }
+
    // ..........................................................................
    // Optimizer mechanics
    int16_t getOptIndex()        { return _currentOptIndex; }

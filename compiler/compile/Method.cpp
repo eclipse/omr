@@ -385,6 +385,7 @@ bool         TR_ResolvedMethod::isPublic()                                 { not
 bool         TR_ResolvedMethod::isFinal()                                  { notImplemented("isFinal"); return false; }
 bool         TR_ResolvedMethod::isStrictFP()                               { notImplemented("isStrictFP"); return false; }
 bool         TR_ResolvedMethod::isInterpreted()                            { notImplemented("isInterpreted"); return false; }
+bool         TR_ResolvedMethod::isInterpretedForHeuristics()               { notImplemented("isInterpretedForHeuristics"); return false; }
 bool         TR_ResolvedMethod::hasBackwardBranches()                      { notImplemented("hasBackwardBranches"); return false; }
 bool         TR_ResolvedMethod::isObjectConstructor()                      { notImplemented("isObjectConstructor"); return false; }
 bool         TR_ResolvedMethod::isNonEmptyObjectConstructor()              { notImplemented("isNonEmptyObjectConstructor"); return false; }

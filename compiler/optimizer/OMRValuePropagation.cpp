@@ -6478,7 +6478,7 @@ void OMR::ValuePropagation::buildBoundCheckComparisonNodes(BlockVersionInfo *blo
                comparisonNodes->add(nullTestNode);
                }
 
-            if (arrayLength->_instanceOfClass && objectRefChild && !comp()->compileRelocatableCode())
+            if (arrayLength->_instanceOfClass && objectRefChild && (!comp()->compileRelocatableCode() || comp()->getOption(TR_UseSymbolValidationManager)))
                {
                dumpOptDetails(comp(), "%s Creating test for instanceof of %p outside block_%d for versioning arraylenth %p \n", OPT_DETAILS, objectRefChild, blockInfo->_block->getNumber(), arrayLength->_arrayLen);
                TR::Node *duplicateClassPtr = TR::Node::createWithSymRef(objectRefChild, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateClassSymbol(objectRef->getSymbolReference()->getOwningMethodSymbol(comp()), -1, arrayLength->_instanceOfClass, false));
@@ -7063,7 +7063,7 @@ TR::SymbolReference * OMR::ValuePropagation::getStringCacheRef()
   "Enabling recognized methods might trigger this code to be executed in AOT!\n"
   "We need to figure out how to validate and relocate this symbol safely before removing this assertion!\n"
   */
-  if (comp()->compileRelocatableCode())
+  if (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager))
      {
      return NULL;
      }
