@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 
-#include "ilgen/VirtualMachineState.hpp"
+#include "ilgen/VirtualMachineStack.hpp"
 
 namespace TR { class IlBuilder; }
 namespace TR { class IlValue; }
@@ -79,7 +79,7 @@ namespace OMR
  *
  */
 
-class VirtualMachineOperandStack : public TR::VirtualMachineState
+class VirtualMachineOperandStack : public TR::VirtualMachineStack
    {
    public:
   
@@ -135,7 +135,7 @@ class VirtualMachineOperandStack : public TR::VirtualMachineState
     * @param other operand stack for the builder object control is merging into
     * @param b builder object where the operations will be added to make the current operand stack the same as the other
     */
-   virtual void MergeInto(TR::VirtualMachineOperandStack *other, TR::IlBuilder *b);
+   virtual void MergeInto(TR::VirtualMachineState *other, TR::IlBuilder *b);
 
    /**
     * @brief update the values used to read and write the virtual machine stack
@@ -157,14 +157,22 @@ class VirtualMachineOperandStack : public TR::VirtualMachineState
     * @returns expression popped from the stack
     */
    virtual TR::IlValue *Pop(TR::IlBuilder *b);
-
+   
    /**
+    * @deprecated This API has been replaced by Top(TR::IlBuilder *)
     * @brief Returns the expression at the top of the simulated operand stack
     * @returns the expression at the top of the operand stack
     */
    virtual TR::IlValue *Top();
 
    /**
+    * @brief Returns the expression at the top of the simulated operand stack
+    * @returns the expression at the top of the operand stack
+    */
+   virtual TR::IlValue *Top(TR::IlBuilder *b);
+   
+   /**
+    * @deprecated This API has been replaced by Pick(TR::IlBuilder *, int32_t)
     * @brief Returns an expression below the top of the simulated operand stack
     * @param depth number of values below top (Pick(0) is same as Top())
     * @returns the requested expression from the operand stack
@@ -172,11 +180,36 @@ class VirtualMachineOperandStack : public TR::VirtualMachineState
    virtual TR::IlValue *Pick(int32_t depth);
 
    /**
+    * @brief Returns an expression below the top of the simulated operand stack
+    * @param depth number of values below top (Pick(0) is same as Top())
+    * @returns the requested expression from the operand stack
+    */
+   virtual TR::IlValue *Pick(TR::IlBuilder *b, int32_t depth);
+
+   /**
+    * @brief Returns an expression below the top of the simulated operand stack
+    * @param depth number of values below top (Pick(0) is same as Top())
+    *              The value for depth is required to be an IlValue created
+    *              using one of the IlBuilder::Const*() APIs
+    * @returns the requested expression from the operand stack
+    */
+   virtual TR::IlValue *Pick(TR::IlBuilder *b, TR::IlValue *depth);
+
+   /**
     * @brief Removes some number of expressions from the operand stack
     * @param b builder object to use for any operations used to implement the drop (e.g. to update the top of stack)
     * @param depth how many values to drop from the stack
     */
    virtual void Drop(TR::IlBuilder *b, int32_t depth);
+
+   /**
+    * @brief Removes some number of expressions from the operand stack
+    * @param b builder object to use for any operations used to implement the drop (e.g. to update the top of stack)
+    * @param depth how many values to drop from the stack
+    *              The value for depth is required to be an IlValue created
+    *              using one of the IlBuilder::Const*() APIs
+    */
+   virtual void Drop(TR::IlBuilder *b, TR::IlValue *depth);
 
    /**
     * @brief Duplicates the expression on top of the simulated operand stack

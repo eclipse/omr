@@ -32,7 +32,7 @@
 
 OMR::VirtualMachineOperandStack::VirtualMachineOperandStack(TR::MethodBuilder *mb, int32_t sizeHint, TR::IlType *elementType,
    TR::VirtualMachineRegister *stackTopRegister, bool growsUp, int32_t stackInitialOffset)
-   : TR::VirtualMachineState(),
+   : TR::VirtualMachineStack(),
    _mb(mb),
    _stackTopRegister(stackTopRegister),
    _stackMax(sizeHint),
@@ -45,7 +45,7 @@ OMR::VirtualMachineOperandStack::VirtualMachineOperandStack(TR::MethodBuilder *m
    }
 
 OMR::VirtualMachineOperandStack::VirtualMachineOperandStack(TR::VirtualMachineOperandStack *other)
-   : TR::VirtualMachineState(),
+   : TR::VirtualMachineStack(),
    _mb(other->_mb),
    _stackTopRegister(other->_stackTopRegister),
    _stackMax(other->_stackMax),
@@ -86,7 +86,7 @@ OMR::VirtualMachineOperandStack::Commit(TR::IlBuilder *b)
       b->   IndexAt(pElement,
                stack,
       b->      ConstInt32(i - _stackOffset)),
-            Pick(_stackTop-i)); // should generalize, maybe delegate element storage ?
+            Pick(b, _stackTop-i)); // should generalize, maybe delegate element storage ?
       }
    }
 
@@ -109,8 +109,9 @@ OMR::VirtualMachineOperandStack::Reload(TR::IlBuilder* b)
    }
 
 void
-OMR::VirtualMachineOperandStack::MergeInto(TR::VirtualMachineOperandStack* other, TR::IlBuilder* b)
+OMR::VirtualMachineOperandStack::MergeInto(TR::VirtualMachineState* o, TR::IlBuilder* b)
    {
+   TR::VirtualMachineOperandStack* other = (TR::VirtualMachineOperandStack*)o;
    TR_ASSERT(_stackTop == other->_stackTop, "stacks are not same size");
    for (int32_t i=_stackTop;i >= 0;i--)
       {
@@ -162,6 +163,13 @@ OMR::VirtualMachineOperandStack::Top()
    }
 
 TR::IlValue *
+OMR::VirtualMachineOperandStack::Top(TR::IlBuilder *b)
+   {
+   TR_ASSERT(_stackTop >= 0, "no top: stack empty");
+   return _stack[_stackTop];
+   }
+
+TR::IlValue *
 OMR::VirtualMachineOperandStack::Pop(TR::IlBuilder *b)
    {
    TR_ASSERT(_stackTop >= 0, "stack underflow"); 
@@ -175,11 +183,30 @@ OMR::VirtualMachineOperandStack::Pick(int32_t depth)
    return _stack[_stackTop - depth];
    }
 
+TR::IlValue *
+OMR::VirtualMachineOperandStack::Pick(TR::IlBuilder *b, int32_t depth)
+   {
+   TR_ASSERT(_stackTop >= depth, "pick request exceeds stack depth");
+   return _stack[_stackTop - depth];
+   }
+
+TR::IlValue *
+OMR::VirtualMachineOperandStack::Pick(TR::IlBuilder *b, TR::IlValue *depth)
+   {
+   return Pick(b, depth->get32bitConstValue());
+   }
+
 void
 OMR::VirtualMachineOperandStack::Drop(TR::IlBuilder *b, int32_t depth)
    {
    TR_ASSERT(_stackTop >= depth-1, "stack underflow");
    _stackTop-=depth; 
+   }
+
+void
+OMR::VirtualMachineOperandStack::Drop(TR::IlBuilder *b, TR::IlValue *depth)
+   {
+   Drop(b, depth->get32bitConstValue());
    }
 
 void
