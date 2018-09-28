@@ -350,6 +350,29 @@ public:
 
    bool compilationShouldBeInterrupted(TR_CallingContext) { return false; }
 
+   void verifySymbolHasBeenValidated(void *symbol) { return; }
+
+   /* Heuristic Region APIs
+    *
+    * Heuristic Regions can be used to denote regions where decisions
+    * within the region do not need to be remembered. For example, for
+    * relocatable compiles, when the compiler requests some information
+    * via front end query, it's possible that the front end might walk
+    * a data structure, looking at several different possible answers
+    * before finally deciding on one. For a relocatable compile, only
+    * the final answer is important. Thus, a heuristic region is used to
+    * ignore all of the intermediate steps in determining the final
+    * answer.
+    */
+   void incrementHeuristicRegion() { return; }
+   void decrementHeuristicRegion() { return; }
+
+   /* Can be used to ensure that a implementer chosen for inlining is valid;
+    * for example, to ensure that the implementer can be used for inlining
+    * in a relocatable compilation
+    */
+   bool validateImplementer(TR_ResolvedMethod *implementer) { return true; }
+
    // ..........................................................................
    // Optimizer mechanics
    int16_t getOptIndex()        { return _currentOptIndex; }

@@ -1293,6 +1293,8 @@ TR::VPKnownObject *TR::VPKnownObject::create(OMR::ValuePropagation *vp, TR::Know
    {
    TR::KnownObjectTable *knot = vp->comp()->getKnownObjectTable();
    TR_ASSERT(knot, "Can't create a TR::VPKnownObject without a known-object table");
+   if (!knot)
+      return NULL;
    if (knot->isNull(index)) // No point in worrying about the NULL case because existing constraints handle that optimally
       return NULL;
 

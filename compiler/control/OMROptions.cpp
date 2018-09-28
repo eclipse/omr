@@ -1319,6 +1319,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"useSamplingJProfilingForInterpSampledMethods","M\tHeuristic. Use samplingJProfiling for methods sampled by interpreter", SET_OPTION_BIT(TR_UseSamplingJProfilingForInterpSampledMethods), "F", NOT_IN_SUBSET },
    {"useSamplingJProfilingForLPQ",              "M\tHeuristic. Use samplingJProfiling for methods from low priority queue", SET_OPTION_BIT(TR_UseSamplingJProfilingForLPQ), "F", NOT_IN_SUBSET },
    {"useStrictStartupHints",        "M\tStartup hints from application obeyed strictly", SET_OPTION_BIT(TR_UseStrictStartupHints), "F", NOT_IN_SUBSET},
+   {"useSymbolValidationManager",        "M\tUse Symbol Validation Manager for Relocatable Compile Validations", SET_OPTION_BIT(TR_UseSymbolValidationManager), "F", NOT_IN_SUBSET},
    {"useVmTotalCpuTimeAsAbstractTime", "M\tUse VmTotalCpuTime as abstractTime", SET_OPTION_BIT(TR_UseVmTotalCpuTimeAsAbstractTime), "F", NOT_IN_SUBSET },
    {"varyInlinerAggressivenessWithTime", "M\tVary inliner aggressiveness with abstract time", SET_OPTION_BIT(TR_VaryInlinerAggressivenessWithTime), "F", NOT_IN_SUBSET },
    {"verifyReferenceCounts", "I\tverify the sanity of object reference counts before manipulation", SET_OPTION_BIT(TR_VerifyReferenceCounts), "F"},
@@ -2215,6 +2216,19 @@ OMR::Options::jitLatePostProcess(TR::OptionSet *optionSet, void * jitConfig)
             {
             if (_coldUpgradeSampleThreshold == TR_DEFAULT_COLD_UPGRADE_SAMPLE_THRESHOLD)
                _coldUpgradeSampleThreshold = 2;
+            }
+
+         // disable DelayRelocationForAOTCompilations feature because with higher
+         // method counts, the JIT collects enough IProfiler info prior to
+         // compilation that it doesn't need to wait any longer before running the
+
+         if (self()->getOption(TR_UseHigherMethodCounts))
+            {
+            self()->setOption(TR_DisableDelayRelocationForAOTCompilations, true);// If scount has not been changed on the command line, adjust it here
+            if (self()->getInitialSCount() == TR_INITIAL_SCOUNT)
+               {
+               _initialSCount = _initialCount;
+               }
             }
          }
       else // No AOT

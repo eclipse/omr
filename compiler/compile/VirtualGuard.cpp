@@ -196,6 +196,8 @@ TR_VirtualGuard::createVftGuard
    aconstNode->setInlinedSiteIndex(calleeIndex);
    aconstNode->setByteCodeIndex(0);
 
+   comp->verifySymbolHasBeenValidated(static_cast<void *>(thisClass));
+
    TR::Node*guard = TR::Node::createif(TR::ifacmpne, vft, aconstNode, destination);
    setGuardKind(guard, kind, comp);
 

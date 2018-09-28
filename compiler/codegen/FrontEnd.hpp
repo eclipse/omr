@@ -157,6 +157,8 @@ public:
 
    virtual int32_t getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *, int32_t);
 
+   virtual bool canDevirtualizeDispatch()     { return true; }
+
    // --------------------------------------------------------------------------
    // Codegen
    // --------------------------------------------------------------------------
