@@ -145,6 +145,8 @@ static const char * const STATEMENT_TRANSACTIONABORT             = "TransactionA
 */
 static const char * const STATEMENT_ID16BIT                      = "ID16BIT";
 static const char * const STATEMENT_ID32BIT                      = "ID32BIT";
+
+static const char * const SPACE                                  = " ";
 }
 
 } // namespace OMR

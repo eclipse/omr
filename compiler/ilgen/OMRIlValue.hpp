@@ -33,6 +33,7 @@ namespace TR { class Block; }
 namespace TR { class Symbol; }
 namespace TR { class SymbolReference; }
 namespace TR { class MethodBuilder; }
+namespace TR { class MethodBuilderRecorder; }
 namespace TR { class IlValue; }
 
 extern "C" {
@@ -49,9 +50,19 @@ public:
    TR_ALLOC(TR_Memory::IlGenerator)
 
    /**
+    * @brief used to create a TR::IlValue before nodes, treetops, or blocks can be associated
+    */
+   IlValue(TR::MethodBuilderRecorder *methodBuilder);
+
+   /**
     * @brief initial state assumes value will only be used locally
     */
-   IlValue(TR::Node *node, TR::TreeTop *treeTop, TR::Block *block, TR::MethodBuilder *methodBuilder);
+   IlValue(TR::Node *node, TR::TreeTop *treeTop, TR::Block *block, TR::MethodBuilderRecorder *methodBuilder);
+
+   /**
+    * @brief fill in details if IlValue was created without values
+    */
+   void close(TR::Node *node, TR::TreeTop *treeTop, TR::Block *block);
 
    /**
     * @brief return a TR::Node that computes this value, either directly if in same block or by loading a local variable if not
@@ -168,7 +179,7 @@ protected:
    /**
     * @brief Method builder object where value is computed
     */
-   TR::MethodBuilder   * _methodBuilder;
+   TR::MethodBuilderRecorder   * _methodBuilder;
 
    /**
     * @brief TR::SymbolReference for temp holding value if it needs to be used outside basic block that computes it

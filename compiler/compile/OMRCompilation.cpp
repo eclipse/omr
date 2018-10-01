@@ -202,7 +202,8 @@ OMR::Compilation::Compilation(
       TR::Options &options,
       TR::Region &heapMemoryRegion,
       TR_Memory *m,
-      TR_OptimizationPlan *optimizationPlan) :
+      TR_OptimizationPlan *optimizationPlan,
+      bool shouldCompile) :
    _signature(compilee->signature(m)),
    _options(&options),
    _heapMemoryRegion(heapMemoryRegion),
@@ -293,6 +294,7 @@ OMR::Compilation::Compilation(
    _gpuKernelLineNumberList(m),
    _gpuPtxCount(0),
    _bitVectorPool(self()),
+   _shouldCompile(shouldCompile),
    _tlsManager(*self())
    {
 
@@ -1023,7 +1025,7 @@ int32_t OMR::Compilation::compile()
    LexicalTimer t("compile", self()->signature(), self()->phaseTimer());
    TR::LexicalMemProfiler mp("compile", self()->signature(), self()->phaseMemProfiler());
 
-   if (_ilGenSuccess)
+   if (_ilGenSuccess && _shouldCompile)
       {
       _methodSymbol->detectInternalCycles(_methodSymbol->getFlowGraph(), self());
 

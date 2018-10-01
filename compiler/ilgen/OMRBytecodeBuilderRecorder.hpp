@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,47 +19,45 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef OMR_BYTECODEBUILDER_INCL
-#define OMR_BYTECODEBUILDER_INCL
+#ifndef OMR_BYTECODE_BUILDERRECORDER_INCL
+#define OMR_BYTECODE_BUILDERRECORDER_INCL
 
-#include "ilgen/BytecodeBuilderRecorder.hpp"
+#include "ilgen/IlBuilder.hpp"
 
 namespace TR { class BytecodeBuilder; }
-namespace TR { class MethodBuilder; }
-namespace TR { class VirtualMachineState; }
+namespace TR { class BytecodeBuilderRecorder; }
+namespace TR { class MethodBuilderRecorder; }
 
 namespace OMR
 {
 
-class BytecodeBuilder : public TR::BytecodeBuilderRecorder
+class BytecodeBuilderRecorder : public TR::IlBuilder
    {
 public:
    TR_ALLOC(TR_Memory::IlGenerator)
 
-   BytecodeBuilder(TR::MethodBuilder *methodBuilder, int32_t bcIndex, char *name=NULL, int32_t bcLength=-1);
+   BytecodeBuilderRecorder(TR::MethodBuilder *methodBuilder, int32_t bcIndex, char *name=NULL);
 
    virtual bool isBytecodeBuilder() { return true; }
 
-   /* @brief after calling this, all IL nodes created will have this BytecodeBuilder's _bcIndex */
-   void SetCurrentIlGenerator();
-
-   /* The name for this BytecodeBuilder. This can be very helpful for debug output */
-   char *name() { return _name; }
+   /**
+    * @brief bytecode index for this builder object
+    */
+   int32_t bcIndex() { return _bcIndex; }
+   virtual int32_t currentByteCodeIndex() { return _bcIndex; } // override from IlGenerator
 
    /**
-    * @brief bytecode length for this builder object
+    * @brief name for this BytecodeBuilderRecorder, helpful for debug output
     */
-   int32_t bcLength() { return _bcLength; }
-
-   virtual uint32_t countBlocks();
+   char *name() { return _name; }
 
    void AddFallThroughBuilder(TR::BytecodeBuilder *ftb);
 
    void AddSuccessorBuilders(uint32_t numBuilders, ...);
    void AddSuccessorBuilder(TR::BytecodeBuilder **b) { AddSuccessorBuilders(1, b); }
 
-   virtual TR::VirtualMachineState *initialVMState()        { return _initialVMState; }
-   virtual TR::VirtualMachineState *vmState()               { return _vmState; }
+   TR::VirtualMachineState *initialVMState()                { return _initialVMState; }
+   TR::VirtualMachineState *vmState()                       { return _vmState; }
    void setVMState(TR::VirtualMachineState *vmState)        { _vmState = vmState; }
 
    void propagateVMState(TR::VirtualMachineState *fromVMState);
@@ -96,46 +94,17 @@ public:
    void IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2);
    void IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2);
 
-   /**
-    * @brief returns the client object associated with this object, allocating it if necessary
-    */
-   void *client();
-
-   static void setClientAllocator(ClientAllocator allocator)
-      {
-      _clientAllocator = allocator;
-      }
-
-   /**
-    * @brief Set the Get Impl function
-    *
-    * @param getter function pointer to the impl getter
-    */
-   static void setGetImpl(ImplGetter getter)
-      {
-      _getImpl = getter;
-      }
-
 protected:
-   TR::BytecodeBuilder       * _fallThroughBuilder;
-   List<TR::BytecodeBuilder> * _successorBuilders;
-   int32_t                     _bcIndex;
-   char                      * _name;
-   int32_t                     _bcLength;
-   TR::VirtualMachineState   * _initialVMState;
-   TR::VirtualMachineState   * _vmState;
+   int32_t                          _bcIndex;
+   char                             * _name;
+   TR::VirtualMachineState          * _initialVMState;
+   TR::VirtualMachineState          * _vmState;
 
-   virtual void appendBlock(TR::Block *block = 0, bool addEdge=true);
-   void addAllSuccessorBuildersToWorklist();
-   bool connectTrees();
-   virtual void setHandlerInfo(uint32_t catchType);
    void transferVMState(TR::BytecodeBuilder **b);
-
-private:
-   static ClientAllocator      _clientAllocator;
-   static ImplGetter _getImpl;
+   void addSuccessorBuilder(TR::BytecodeBuilder **b);
+   TR::BytecodeBuilder *asBytecodeBuilder();
    };
 
 } // namespace OMR
 
-#endif // !defined(OMR_BYTECODEBUILDER_INCL)
+#endif // !defined(OMR_BYTECODE_BUILDERRECORDER_INCL)

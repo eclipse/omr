@@ -29,8 +29,8 @@ namespace TR
    class MethodBuilder : public TestCompiler::MethodBuilder
       {
       public:
-         MethodBuilder(TR::TypeDictionary *types)
-            : TestCompiler::MethodBuilder(types)
+         MethodBuilder(TR::TypeDictionary *types, TR::VirtualMachineState *vmState = NULL, TR::JitBuilderRecorder *recorder = NULL)
+            : TestCompiler::MethodBuilder(types, NULL)
             { }
 
          MethodBuilder(TR::TypeDictionary *types, TestCompiler::TestDriver *test)

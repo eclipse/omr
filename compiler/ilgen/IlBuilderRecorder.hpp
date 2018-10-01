@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,21 +19,25 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_BYTECODEBUILDER_INCL
-#define TR_BYTECODEBUILDER_INCL
+#ifndef TR_ILBUILDERRECORDER_INCL
+#define TR_ILBUILDERRECORDER_INCL
 
-#include "ilgen/OMRBytecodeBuilder.hpp"
+#include "ilgen/OMRIlBuilderRecorder.hpp"
 
 namespace TR
 {
-   class BytecodeBuilder : public OMR::BytecodeBuilder
+   class IlBuilderRecorder : public OMR::IlBuilderRecorder
       {
       public:
-         BytecodeBuilder(TR::MethodBuilder *methodBuilder, int32_t bcIndex, char *name=NULL, int32_t bcLength=-1)
-            : OMR::BytecodeBuilder(methodBuilder, bcIndex, name, bcLength)
+         IlBuilderRecorder(TR::MethodBuilder *methodBuilder, TR::TypeDictionary *types)
+            : OMR::IlBuilderRecorder(methodBuilder, types)
+            { }
+
+         IlBuilderRecorder(TR::IlBuilder *source)
+            : OMR::IlBuilderRecorder(source)
             { }
       };
 
 } // namespace TR
 
-#endif // !defined(TR_BYTECODEBUILDER_INCL)
+#endif // !defined(TR_ILBUILDERRECORDER_INCL)

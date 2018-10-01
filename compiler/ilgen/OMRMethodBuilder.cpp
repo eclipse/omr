@@ -47,6 +47,7 @@
 #include "ilgen/IlInjector.hpp"
 #include "ilgen/IlBuilder.hpp"
 #include "ilgen/MethodBuilder.hpp"
+#include "ilgen/JitBuilderRecorderTextFile.hpp"
 #include "ilgen/BytecodeBuilder.hpp"
 #include "ilgen/TypeDictionary.hpp"
 #include "ilgen/VirtualMachineState.hpp"
@@ -112,14 +113,9 @@ OMR::MethodBuilder::MethodBuilder(TR::TypeDictionary *types, TR::VirtualMachineS
    _cachedParameterTypes(0),
    _definingFile(""),
    _newSymbolsAreTemps(false),
-   _nextValueID(0),
-   _useBytecodeBuilders(false),
    _countBlocksWorklist(0),
    _connectTreesWorklist(0),
    _allBytecodeBuilders(0),
-   _vmState(vmState),
-   _bytecodeWorklist(NULL),
-   _bytecodeHasBeenInWorklist(NULL),
    _inlineSiteIndex(-1),
    _nextInlineSiteIndex(0),
    _returnBuilder(NULL),
@@ -128,9 +124,9 @@ OMR::MethodBuilder::MethodBuilder(TR::TypeDictionary *types, TR::VirtualMachineS
    _definingLine[0] = '\0';
    }
 
-// used when inlining: 
+// used when inlining:
 OMR::MethodBuilder::MethodBuilder(TR::MethodBuilder *callerMB, TR::VirtualMachineState *vmState)
-   : TR::IlBuilder(asMethodBuilder(), callerMB->typeDictionary()),
+   : TR::MethodBuilderRecorder(callerMB->typeDictionary()),
    _methodName("NoName"),
    _returnType(NoType),
    _numParameters(0),
@@ -144,14 +140,9 @@ OMR::MethodBuilder::MethodBuilder(TR::MethodBuilder *callerMB, TR::VirtualMachin
    _cachedParameterTypes(0),
    _definingFile(""),
    _newSymbolsAreTemps(false),
-   _nextValueID(0),
-   _useBytecodeBuilders(false),
    _countBlocksWorklist(0),
    _connectTreesWorklist(0),
    _allBytecodeBuilders(0),
-   _vmState(vmState),
-   _bytecodeWorklist(NULL),
-   _bytecodeHasBeenInWorklist(NULL),
    _inlineSiteIndex(callerMB->getNextInlineSiteIndex()),
    _nextInlineSiteIndex(0),
    _returnBuilder(NULL),
@@ -178,17 +169,6 @@ TR::MethodBuilder *
 OMR::MethodBuilder::asMethodBuilder()
    {
    return static_cast<TR::MethodBuilder *>(this);
-   }
-
-int32_t
-OMR::MethodBuilder::getNextValueID()
-   {
-   TR::MethodBuilder *caller = callerMethodBuilder();
-   if (caller)
-      // let top most method assign value IDs
-      return caller->getNextValueID();
-
-   return _nextValueID++;
    }
 
 int32_t
@@ -479,18 +459,21 @@ OMR::MethodBuilder::isSymbolAnArray(const char *name)
 void
 OMR::MethodBuilder::DefineLine(const char *line)
    {
+   TR::MethodBuilderRecorder::DefineLine(line);
    snprintf(_definingLine, MAX_LINE_NUM_LEN * sizeof(char), "%s", line);
    }
 
 void
 OMR::MethodBuilder::DefineLine(int line)
    {
+   TR::MethodBuilderRecorder::DefineLine(line);
    snprintf(_definingLine, MAX_LINE_NUM_LEN * sizeof(char), "%d", line);
    }
 
 void
 OMR::MethodBuilder::DefineName(const char *name)
    {
+   TR::MethodBuilderRecorder::DefineName(name);
    _methodName = name;
    }
 
@@ -498,14 +481,15 @@ void
 OMR::MethodBuilder::DefineLocal(const char *name, TR::IlType *dt)
    {
    TR_ASSERT_FATAL(_symbolTypes.find(name) == _symbolTypes.end(), "Symbol '%s' already defined", name);
-   _symbolTypes.insert(std::make_pair(name, dt));
+   TR::MethodBuilderRecorder::DefineLocal(name, dt);
+   _symbolTypes.insert(std::make_pair(name, dt)); // previously: _symbolIsArray->insert(name);
    }
 
 void
 OMR::MethodBuilder::DefineMemory(const char *name, TR::IlType *dt, void *location)
    {
    TR_ASSERT_FATAL(_memoryLocations.find(name) == _memoryLocations.end(), "Memory '%s' already defined", name);
-
+   TR::MethodBuilderRecorder::DefineMemory(name, dt, location);
    _symbolTypes.insert(std::make_pair(name, dt));
    _memoryLocations.insert(std::make_pair(name, location));
    }
@@ -513,6 +497,7 @@ OMR::MethodBuilder::DefineMemory(const char *name, TR::IlType *dt, void *locatio
 void
 OMR::MethodBuilder::DefineParameter(const char *name, TR::IlType *dt)
    {
+   TR::MethodBuilderRecorder::DefineParameter(name, dt);
    TR_ASSERT_FATAL(_parameterSlot.find(name) == _parameterSlot.end(), "Parameter '%s' already defined", name);
 
    _parameterSlot.insert(std::make_pair(name, _numParameters));
@@ -525,7 +510,12 @@ OMR::MethodBuilder::DefineParameter(const char *name, TR::IlType *dt)
 void
 OMR::MethodBuilder::DefineArrayParameter(const char *name, TR::IlType *elementType)
    {
+   TR::MethodBuilderRecorder::DefineArrayParameter(name, elementType);
+   TR::JitBuilderRecorder *savedRecorder = clearRecorder();
+
    DefineParameter(name, elementType);
+
+   restoreRecorder(savedRecorder);
 
    _symbolIsArray.insert(name);
    }
@@ -533,6 +523,7 @@ OMR::MethodBuilder::DefineArrayParameter(const char *name, TR::IlType *elementTy
 void
 OMR::MethodBuilder::DefineReturnType(TR::IlType *dt)
    {
+   TR::MethodBuilderRecorder::DefineReturnType(dt);
    _returnType = dt;
    }
 

@@ -29,7 +29,10 @@ namespace TR
    class IlValue : public OMR::IlValue
       {
       public:
-         IlValue(TR::Node *node, TR::TreeTop *treeTop, TR::Block *block, TR::MethodBuilder *methodBuilder)
+         IlValue(TR::MethodBuilderRecorder *methodBuilder)
+            : OMR::IlValue(methodBuilder)
+            { }
+         IlValue(TR::Node *node, TR::TreeTop *treeTop, TR::Block *block, TR::MethodBuilderRecorder *methodBuilder)
             : OMR::IlValue(node, treeTop, block, methodBuilder)
             { }
       };

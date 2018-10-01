@@ -117,10 +117,25 @@ $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlBuilder.hpp: $(FIXED_SRCBASE)
 $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/IlBuilder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/IlBuilder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
 	cp $< $@ || cp $< $@
 
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlBuilderRecorder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlBuilderRecorder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/IlBuilderRecorder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/IlBuilderRecorder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
 $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRMethodBuilder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRMethodBuilder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
 	cp $< $@ || cp $< $@
 
 $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/MethodBuilder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/MethodBuilder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRMethodBuilderRecorder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRMethodBuilderRecorder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/MethodBuilderRecorder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/MethodBuilderRecorder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/StatementNames.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/StatementNames.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
 	cp $< $@ || cp $< $@
 
 $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRThunkBuilder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRThunkBuilder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
@@ -135,10 +150,40 @@ $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRBytecodeBuilder.hpp: $(FIXED_SR
 $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/BytecodeBuilder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/BytecodeBuilder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
 	cp $< $@ || cp $< $@
 
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRBytecodeBuilderRecorder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRBytecodeBuilderRecorder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/BytecodeBuilderRecorder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/BytecodeBuilderRecorder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
 $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRTypeDictionary.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRTypeDictionary.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
 	cp $< $@ || cp $< $@
 
 $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/TypeDictionary.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/TypeDictionary.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+		cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorder.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorder.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderBinaryBuffer.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderBinaryBuffer.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorderBinaryBuffer.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorderBinaryBuffer.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderBinaryFile.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderBinaryFile.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorderBinaryFile.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorderBinaryFile.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderTextFile.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderTextFile.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
+	cp $< $@ || cp $< $@
+
+$(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorderTextFile.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorderTextFile.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
 	cp $< $@ || cp $< $@
 
 $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineState.hpp: $(FIXED_SRCBASE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineState.hpp $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen
@@ -192,9 +237,22 @@ JITBUILDER_FILES=$(RELEASE_DIR)/Makefile \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/il/OMRILOpCodesEnum.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlType.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/IlType.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/StatementNames.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlValue.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/IlValue.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/IlInjector.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorder.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorder.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderBinaryBuffer.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorderBinaryBuffer.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderBinaryFile.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorderBinaryFile.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderTextFile.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/JitBuilderRecorderTextFile.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlBuilderRecorder.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/IlBuilderRecorder.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRMethodBuilderRecorder.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/MethodBuilderRecorder.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlBuilder.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/IlBuilder.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRMethodBuilder.hpp \
@@ -203,6 +261,8 @@ JITBUILDER_FILES=$(RELEASE_DIR)/Makefile \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/ThunkBuilder.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRBytecodeBuilder.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/BytecodeBuilder.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRBytecodeBuilderRecorder.hpp \
+             $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/BytecodeBuilderRecorder.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRTypeDictionary.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/TypeDictionary.hpp \
              $(RELEASE_INCLUDE)/$(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineState.hpp \
@@ -231,6 +291,8 @@ JITBUILDER_FILES=$(RELEASE_DIR)/Makefile \
              $(RELEASE_SRC)/NestedLoop.cpp \
              $(RELEASE_SRC)/Pointer.hpp \
              $(RELEASE_SRC)/Pointer.cpp \
+             $(RELEASE_SRC)/RecordReplayTest.hpp \
+             $(RELEASE_SRC)/RecordReplayTest.cpp \
              $(RELEASE_SRC)/RecursiveFib.hpp \
              $(RELEASE_SRC)/RecursiveFib.cpp \
              $(RELEASE_SRC)/Simple.hpp \
