@@ -26,8 +26,9 @@
 #define OMR_SCAVENGER_TRACE_REMEMBERED_SET
 #define OMR_SCAVENGER_TRACE_BACKOUT
 #define OMR_SCAVENGER_TRACE_COPY
-#define OMR_SCAVENGER_TRACK_COPY_DISTANCE
 #endif
+
+#define OMR_SCAVENGER_TRACK_COPY_DISTANCE
 
 #include <math.h>
 
@@ -430,6 +431,19 @@ MM_Scavenger::workerSetupForGC(MM_EnvironmentStandard *env)
 {
 	clearThreadGCStats(env, true);
 	env->_maxDeferred = 0;
+
+	env->_numberCopyCachesCreated = 0;
+	env->_aliasAttempt = 0;
+	env->_releaseAll = 0;
+	env->_overflowStack = 0;
+
+	env->_totalPushed = 0;
+	env->_totalPoped = 0;
+	env->_totalReleased = 0;
+	env->_maxStack = 0;
+
+
+
 
 	if(NULL == env->_deferredStack){
 		env->_deferredStack = (MM_CopyScanCacheStandard **) env->getForge()->allocate(sizeof(MM_CopyScanCacheStandard) * _extensions->deferMaxDepth, OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
@@ -1753,22 +1767,25 @@ MM_Scavenger::incrementalScavengeObjectSlots(MM_EnvironmentStandard *env, omrobj
 	uint64_t slotsCopied = 0;
 	uint64_t slotsScanned = 0;
 	bool isParentInNewSpace = isObjectInNewSpace(objectPtr);
-	while (NULL != (slotObject = objectScanner->getNextSlot())) {
-		/* If the object should be remembered and it is in old space, remember it */
-		bool isSlotObjectInNewSpace = copyAndForward(env, slotObject);
-		scanCache->_shouldBeRemembered |= isSlotObjectInNewSpace;
-		slotsScanned += 1;
+	bool isLeaf = false;
+	while (NULL != (slotObject = objectScanner->getNextSlot(isLeaf))) {
 
-		MM_CopyScanCacheStandard *copyCache = env->_effectiveCopyScanCache;
-		if (NULL != copyCache) {
-			/* Copy cache will be set only if a referent object is copied (ie, if not previously forwarded) */
-			slotsCopied += 1;
+			/* If the object should be remembered and it is in old space, remember it */
+			bool isSlotObjectInNewSpace = copyAndForward(env, slotObject);
+			scanCache->_shouldBeRemembered |= isSlotObjectInNewSpace;
+			slotsScanned += 1;
+		if(!isLeaf){
+			MM_CopyScanCacheStandard *copyCache = env->_effectiveCopyScanCache;
+			if (NULL != copyCache) {
+				/* Copy cache will be set only if a referent object is copied (ie, if not previously forwarded) */
+				slotsCopied += 1;
 
-			MM_CopyScanCacheStandard *nextScanCache = aliasToCopyCache(env, slotObject, scanCache, copyCache);
-			if (NULL != nextScanCache) {
-				/* alias and switch to nextScanCache if it was selected */
-				updateCopyScanCounts(env, slotsScanned, slotsCopied);
-				return nextScanCache;
+				MM_CopyScanCacheStandard *nextScanCache = aliasToCopyCache(env, slotObject, scanCache, copyCache);
+				if (NULL != nextScanCache) {
+					/* alias and switch to nextScanCache if it was selected */
+					updateCopyScanCounts(env, slotsScanned, slotsCopied);
+					return nextScanCache;
+				}
 			}
 		}
 	}
@@ -1832,6 +1849,8 @@ MM_Scavenger::getNextScanCache(MM_EnvironmentStandard *env)
 
 	cache = env->_deferredScanCache;
 	if (NULL != cache) {
+
+		env->_totalPoped++;
 		/* there is deferred scanning to do from partial depth first scanning */
 		//OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
@@ -2071,6 +2090,9 @@ nextCache:
 						/* Our stack is full, release the tail of the defer stack to global Q
 						 * and push the scanCache onto the Defer Cache.
 						 */
+
+						env->_overflowStack++;
+
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 						env->_scavengerStats._releaseScanListCount += 1;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
@@ -2123,6 +2145,7 @@ MM_Scavenger::popLastDeferCache(MM_EnvironmentStandard *env){
 	}//else
 		//Assert_MM_true(env->_deferredStack[env->_stackTop] == env->_deferredScanCache);
 
+	env->_totalReleased++;
 
 
 	return lastDeferCache;
@@ -2135,6 +2158,9 @@ MM_Scavenger::deferScan(MM_EnvironmentStandard *env, MM_CopyScanCacheStandard *n
 	//Assert_MM_true(env->_deferredScanDepth < _extensions->deferMaxDepth);
 
 	env->_deferredScanDepth++;
+
+	if(env->_deferredScanDepth > env->_maxStack)
+		env->_maxStack = env->_deferredScanDepth;
 
 //	if(env->_stackTop >= 0) Assert_MM_true(env->_deferredStack[env->_stackTop] != NULL);
 	env->_stackTop =  ++env->_stackTop % _extensions->deferMaxDepth;
@@ -2155,6 +2181,8 @@ MM_Scavenger::deferScan(MM_EnvironmentStandard *env, MM_CopyScanCacheStandard *n
 
 //	if(printStatements) omrtty_printf("{SCAV: _stackTop: %i, _stackBottom: %i}\n", env->_stackTop, env->_stackBottom);
 
+	env->_totalPushed++;
+
 }
 
 void
@@ -2171,6 +2199,7 @@ MM_Scavenger::releaseDeferCaches(MM_EnvironmentStandard *env){
 
 	uintptr_t temp = env->_deferredScanDepth;
 	for (uintptr_t count = 0; count < temp; count++) {
+		env->_totalReleased++;
 		env->_deferredScanDepth--;
 		//if(printStatements)omrtty_printf("{SCAV: releaseDeferCaches [_deferredScanDepth: %i]}\n", env->_deferredScanDepth);
 		//Assert_MM_true(env->_deferredStack[env->_stackTop] != NULL);
@@ -2201,6 +2230,8 @@ MM_Scavenger::releaseDeferCaches(MM_EnvironmentStandard *env){
 
 	env->_stackTop = env->_stackBottom = -1;
 	env->_deferredScanCache = NULL;
+
+	env->_releaseAll++;
 
 	//Assert_MM_true(env->_deferredScanDepth == 0);
 }
@@ -3307,6 +3338,7 @@ MM_Scavenger::aliasToCopyCache(MM_EnvironmentStandard *env, GC_SlotObject *scann
 	MM_CopyScanCacheStandard *newCache = NULL;
 
 	if (0 == _waitingCount) {
+		env->_aliasAttempt++;
 		/* Only alias if the scanCache != copyCache. IF the caches are the same there is no benefit
 		 * to aliasing. The checks afterwards will ensure that a very similar copy order will happen
 		 * if the copyCache changes from the currently aliased scan cache
@@ -3315,7 +3347,9 @@ MM_Scavenger::aliasToCopyCache(MM_EnvironmentStandard *env, GC_SlotObject *scann
 
 		// 4kB between scan pointer nad alloc pointer of the scan
 		if (scanCache == copyCache) {
-			if((uintptr_t)copyCache->cacheAlloc - (uintptr_t)copyCache->scanCurrent > 4000 ){
+			if((uintptr_t)copyCache->cacheAlloc - (uintptr_t)copyCache->scanCurrent > 2000 ){
+				env->_numberCopyCachesCreated++;
+
 				newCache = getFreeCache(env);
 
 				Assert_MM_true(newCache != NULL);
