@@ -2258,17 +2258,20 @@ OMR::Node::canGCandReturn()
       return true;
       }
 
-   // For a treetop or nullchk look at the child.
+   // For a treetop or nullchk or compressedrefs look at the child.
    //
-   if (self()->getOpCodeValue() == TR::treetop || self()->getOpCode().isNullCheck())
+   if (self()->getOpCodeValue() == TR::treetop || self()->getOpCode().isNullCheck() || self()->getOpCode().isAnchor())
       {
       node = self()->getFirstChild();
       if (node->getOpCode().isLoadVarOrStore())
          {
-         // Loads and stores can only GC if resolution is going to occur, and
-         // that is covered by TR_ResolveCheck nodes.
-         //
-         return false;
+         if (node->getOpCode().isReadBar())
+            return true;
+         else
+            // Loads and stores can only GC if resolution is going to occur, and
+            // that is covered by TR_ResolveCheck nodes.
+            //
+            return false;
          }
       if (node->getOpCodeValue() == TR::arraycopy)
          return false;
