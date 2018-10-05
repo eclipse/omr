@@ -789,23 +789,8 @@ TR::Register *OMR::X86::TreeEvaluator::integerAddEvaluator(TR::Node *node, TR::C
                (internalPointerMismatch || targetRegister->containsCollectedReference()))))
             {
             TR::Register *firstOperandReg = targetRegister;
+            targetRegister = cg->allocateRegister();
 
-            // For a non-internal pointer TR::aiadd created when merging news (for example)
-            // commoning is permissible across a GC point; however the register
-            // needs to be marked as a collected reference for GC to behave correctly;
-            // note that support for internal pointer TR::aiadd (e.g. array access) is not present
-            // still
-            //
-            if (targetRegister->containsCollectedReference() &&
-                (node->getOpCode().isArrayRef()) &&
-               !node->isInternalPointer())
-               {
-               targetRegister = cg->allocateCollectedReferenceRegister();
-               }
-            else
-               {
-               targetRegister = cg->allocateRegister();
-               }
             // comp()->useCompressedPointers
             // ladd
             //    ==>iu2l

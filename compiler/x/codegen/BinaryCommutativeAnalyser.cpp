@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -860,30 +860,17 @@ TR::Register *TR_X86BinaryCommutativeAnalyser::integerAddAnalyserImpl(TR::Node  
       }
    else if (getCopyRegs())
       {
-      TR::Register *tempReg;
+      TR::Register* tempReg = _cg->allocateRegister();
       if (firstRegister->containsCollectedReference() ||
           secondRegister->containsCollectedReference() ||
           firstRegister->containsInternalPointer() ||
           secondRegister->containsInternalPointer())
          {
-         if (root->isInternalPointer())
+         if (root->isInternalPointer() && root->getPinningArrayPointer())
             {
-            tempReg = _cg->allocateRegister();
-            if (root->getPinningArrayPointer())
-               {
-               tempReg->setContainsInternalPointer();
-               tempReg->setPinningArrayPointer(root->getPinningArrayPointer());
-               }
+            tempReg->setContainsInternalPointer();
+            tempReg->setPinningArrayPointer(root->getPinningArrayPointer());
             }
-         else if (comp->generateArraylets() && root->getOpCodeValue() == TR::aiadd)
-            // arraylets: aiadd is technically internal pointer into spine object, but isn't marked as internal pointer
-            tempReg = _cg->allocateRegister();
-         else
-            tempReg = _cg->allocateCollectedReferenceRegister();
-         }
-      else
-         {
-         tempReg = _cg->allocateRegister();
          }
 
       targetRegister = tempReg;
