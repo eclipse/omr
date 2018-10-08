@@ -23,17 +23,16 @@ compiler_library(ilgen
 	${CMAKE_CURRENT_LIST_DIR}/IlGenRequest.cpp
 	${CMAKE_CURRENT_LIST_DIR}/IlInjector.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRBytecodeBuilder.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OMRBytecodeBuilderRecorder.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRIlBuilder.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OMRIlBuilderRecorder.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRIlType.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRIlValue.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRJitBuilderRecorder.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRJitBuilderRecorderBinaryBuffer.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRJitBuilderRecorderBinaryFile.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRJitBuilderRecorderTextFile.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRJitBuilderReplay.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRJitBuilderReplayTextFile.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRMethodBuilder.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OMRMethodBuilderRecorder.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRThunkBuilder.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRTypeDictionary.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRVirtualMachineOperandArray.cpp

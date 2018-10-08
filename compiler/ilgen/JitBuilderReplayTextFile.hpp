@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,21 +19,23 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_METHODBUILDERRECORDER_INCL
-#define TR_METHODBUILDERRECORDER_INCL
+ #ifndef TR_JITBUILDERREPLAY_TEXTFILE_INCL
+ #define TR_JITBUILDERREPLAY_TEXTFILE_INCL
 
-#include "ilgen/OMRMethodBuilderRecorder.hpp"
+#include "ilgen/OMRJitBuilderReplayTextFile.hpp"
 
-namespace TR
-{
-   class MethodBuilderRecorder : public OMR::MethodBuilderRecorder
-      {
-      public:
-         MethodBuilderRecorder(TR::TypeDictionary *types, TR::VirtualMachineState *vmState = NULL, TR::JitBuilderRecorder *recorder = NULL)
-            : OMR::MethodBuilderRecorder(types, vmState, recorder)
-            { }
-      };
+ namespace TR
+ {
+    class JitBuilderReplayTextFile : public OMR::JitBuilderReplayTextFile
+       {
+       public:
+          JitBuilderReplayTextFile(const char *fileName)
+             : OMR::JitBuilderReplayTextFile(fileName)
+             { }
+          virtual ~JitBuilderReplayTextFile()
+             { }
+       };
 
-} // namespace TR
+ } // namespace TR
 
-#endif // !defined(TR_METHODBUILDERRECORDER_INCL)
+ #endif // !defined(TR_JITBUILDERREPLAY_TEXTFILE_INCL)

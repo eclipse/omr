@@ -27,12 +27,12 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(mandelbrot-tril
+add_executable(mandelbrot
 	main.cpp
 )
 
-target_link_libraries(mandelbrot-tril
+target_link_libraries(mandelbrot
 	tril
 )
 
-set_property(TARGET mandelbrot-tril PROPERTY FOLDER fvtest/tril/examples)
+set_property(TARGET mandelbrot PROPERTY FOLDER fvtest/tril/examples)

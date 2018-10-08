@@ -53,12 +53,6 @@ OMR::BytecodeBuilder::BytecodeBuilder(TR::MethodBuilder *methodBuilder,
    initSequence();
    }
 
-TR::BytecodeBuilder *
-OMR::BytecodeBuilder::self()
-   {
-   return static_cast<TR::BytecodeBuilder *>(this);
-   }
-
 /**
  * Call this function at the top of your bytecode iteration loop so that all services called
  * while this bytecode builder is being translated will mark their IL nodes as having this
@@ -73,15 +67,15 @@ OMR::BytecodeBuilder::SetCurrentIlGenerator()
    }
 
 void
-OMR::BytecodeBuilder::initialize(TR::IlGeneratorMethodDetails * details,
-                                 TR::ResolvedMethodSymbol     * methodSymbol,
-                                 TR::FrontEnd                 * fe,
-                                 TR::SymbolReferenceTable     * symRefTab)
+TR::BytecodeBuilder::initialize(TR::IlGeneratorMethodDetails * details,
+                                TR::ResolvedMethodSymbol     * methodSymbol,
+                                TR::FrontEnd                 * fe,
+                                TR::SymbolReferenceTable     * symRefTab)
     {
     this->OMR::IlInjector::initialize(details, methodSymbol, fe, symRefTab);
 
     //addBytecodeBuilderToList relies on _comp and it won't be ready until now
-    _methodBuilder->addToAllBytecodeBuildersList(self());
+    _methodBuilder->addToAllBytecodeBuildersList(this);
     }
 
 void
@@ -107,7 +101,7 @@ OMR::BytecodeBuilder::countBlocks()
 
    _count = TR::IlBuilder::countBlocks();
 
-   if (_fallThroughBuilder != NULL)
+   if (NULL != _fallThroughBuilder)
       _methodBuilder->addToBlockCountingWorklist(_fallThroughBuilder);
 
    ListIterator<TR::BytecodeBuilder> iter(_successorBuilders);
@@ -138,7 +132,7 @@ OMR::BytecodeBuilder::connectTrees()
 void
 OMR::BytecodeBuilder::addAllSuccessorBuildersToWorklist()
    {
-   if (_fallThroughBuilder != NULL)
+   if (NULL != _fallThroughBuilder)
       _methodBuilder->addToTreeConnectingWorklist(_fallThroughBuilder);
 
    // iterate over _successorBuilders
@@ -156,17 +150,17 @@ OMR::BytecodeBuilder::AddFallThroughBuilder(TR::BytecodeBuilder *ftb)
 
    TraceIL("IlBuilder[ %p ]:: fallThrough successor [ %p ]\n", this, ftb);
 
-   TR::BytecodeBuilder *originalBuilder = ftb;
-   TR::BytecodeBuilderRecorder::addSuccessorBuilder(&ftb);
+   TR::BytecodeBuilder *b = ftb;
+   transferVMState(&b);    // may change what b points at!
 
-   // check if addSuccessorBuilder had to insert a builder object between "this" and ftb
-   if (ftb != originalBuilder)
-      TraceIL("IlBuilder[ %p ]:: fallThrough successor changed to [ %p ]\n", this, ftb);
+   if (b != ftb)
+      TraceIL("IlBuilder[ %p ]:: fallThrough successor changed to [ %p ]\n", this, b);
+   _fallThroughBuilder = b;
+    _methodBuilder->addBytecodeBuilderToWorklist(ftb);
 
-   TR::IlBuilder *tgtb = ftb;
-   IlBuilder::Goto(&tgtb);
-
-   _fallThroughBuilder = ftb;
+   // add explicit goto and register the actual fall-through block
+   TR::IlBuilder *tgtb = b;
+   TR::IlBuilder::Goto(&tgtb);
    }
 
 // AddSuccessorBuilders() should be called with a list of TR::BytecodeBuilder ** pointers.
@@ -186,10 +180,9 @@ OMR::BytecodeBuilder::AddSuccessorBuilders(uint32_t numExits, ...)
       TR::BytecodeBuilder **builder = (TR::BytecodeBuilder **) va_arg(exits, TR::BytecodeBuilder **);
       if ((*builder)->_bcIndex < _bcIndex) //If the successor has a bcIndex < than the current bcIndex this may be a loop
          _methodSymbol->setMayHaveLoops(true);
-
-      TR::BytecodeBuilderRecorder::addSuccessorBuilder(builder);        // may change what *builder points at!
-
-      _successorBuilders->add(*builder);   // must be the one that comes back from addSuccessorBuilder()
+      transferVMState(builder);            // may change what builder points at!
+      _successorBuilders->add(*builder);   // must be the bytecode builder that comes back from transferVMState()
+      _methodBuilder->addBytecodeBuilderToWorklist(*builder);
       TraceIL("IlBuilder[ %p ]:: successor [ %p ]\n", this, *builder);
       }
    va_end(exits);

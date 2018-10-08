@@ -188,7 +188,6 @@ subscriberAgentWithJ9threadTrace2.out
 tfileTest*.tst
 traceLogTest.trc
 VerboseGC_*.xml*
-*.ilt
 
 # common development artifacts
 *.swp

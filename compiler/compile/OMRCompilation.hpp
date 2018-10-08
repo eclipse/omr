@@ -299,8 +299,7 @@ public:
          TR::Options &,
          TR::Region &heapMemoryRegion,
          TR_Memory *,
-         TR_OptimizationPlan *optimizationPlan,
-         bool shouldCompile = true
+         TR_OptimizationPlan *optimizationPlan
          );
 
    TR::SymbolReference * getSymbolReferenceByReferenceNumber(int32_t referenceNumber);
@@ -1249,8 +1248,6 @@ private:
    int32_t _gpuPtxCount;
 
    BitVectorPool _bitVectorPool; //MUST be declared after _trMemory
-
-   bool _shouldCompile;
 
    /*
     * This must be last

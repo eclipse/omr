@@ -27,7 +27,6 @@
 #include <fstream>
 #include "ilgen/IlBuilder.hpp"
 #include "env/TypedAllocator.hpp"
-#include "ilgen/MethodBuilderRecorder.hpp"
 
 // Maximum length of _definingLine string (including null terminator)
 #define MAX_LINE_NUM_LEN 7
@@ -36,7 +35,6 @@ class TR_BitVector;
 namespace TR { class BytecodeBuilder; }
 namespace TR { class ResolvedMethod; }
 namespace TR { class SymbolReference; }
-namespace TR { class JitBuilderRecorder; }
 namespace TR { class VirtualMachineState; }
 
 namespace TR { class SegmentProvider; }
@@ -56,14 +54,13 @@ typedef bool (*RequestFunctionCallback)(void *client, const char *name);
 namespace OMR
 {
 
-class MethodBuilder : public TR::MethodBuilderRecorder
+class MethodBuilder : public TR::IlBuilder
    {
    public:
    TR_ALLOC(TR_Memory::IlGenerator)
 
-   MethodBuilder(TR::TypeDictionary *types, TR::VirtualMachineState *vmState = NULL, TR::JitBuilderRecorder *recorder = NULL);
+   MethodBuilder(TR::TypeDictionary *types, TR::VirtualMachineState *vmState = NULL);
    MethodBuilder(TR::MethodBuilder *callerMB, TR::VirtualMachineState *vmState = NULL);
-
    virtual ~MethodBuilder();
 
    virtual void setupForBuildIL();
@@ -83,6 +80,9 @@ class MethodBuilder : public TR::MethodBuilderRecorder
    void addToAllBytecodeBuildersList(TR::BytecodeBuilder *bcBuilder);
    void addToTreeConnectingWorklist(TR::BytecodeBuilder *builder);
    void addToBlockCountingWorklist(TR::BytecodeBuilder *builder);
+
+   virtual TR::VirtualMachineState *vmState()                { return _vmState; }
+   virtual void setVMState(TR::VirtualMachineState *vmState) { _vmState = vmState; }
 
    virtual bool isMethodBuilder()                            { return true; }
    virtual TR::MethodBuilder *asMethodBuilder();
@@ -116,7 +116,7 @@ class MethodBuilder : public TR::MethodBuilderRecorder
    void AppendBuilder(TR::BytecodeBuilder *bb) { AppendBytecodeBuilder(bb); }
    void AppendBuilder(TR::IlBuilder *b)    { this->OMR::IlBuilder::AppendBuilder(b); }
 
-   void DefineFile(const char *file);
+   void DefineFile(const char *file)                         { _definingFile = file; }
 
    void DefineLine(const char *line);
    void DefineLine(int line);
@@ -359,11 +359,17 @@ class MethodBuilder : public TR::MethodBuilderRecorder
    TR::IlType                * _cachedParameterTypesArray[10];
 
    bool                        _newSymbolsAreTemps;
+   int32_t                     _nextValueID;
 
+   bool                        _useBytecodeBuilders;
    uint32_t                    _numBlocksBeforeWorklist;
    List<TR::BytecodeBuilder> * _countBlocksWorklist;
    List<TR::BytecodeBuilder> * _connectTreesWorklist;
    List<TR::BytecodeBuilder> * _allBytecodeBuilders;
+   TR::VirtualMachineState   * _vmState;
+
+   TR_BitVector              * _bytecodeWorklist;
+   TR_BitVector              * _bytecodeHasBeenInWorklist;
 
    int32_t                     _inlineSiteIndex;
    int32_t                     _nextInlineSiteIndex;

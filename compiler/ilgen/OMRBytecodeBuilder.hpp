@@ -22,7 +22,7 @@
 #ifndef OMR_BYTECODEBUILDER_INCL
 #define OMR_BYTECODEBUILDER_INCL
 
-#include "ilgen/BytecodeBuilderRecorder.hpp"
+#include "ilgen/IlBuilder.hpp"
 
 namespace TR { class BytecodeBuilder; }
 namespace TR { class MethodBuilder; }
@@ -31,7 +31,7 @@ namespace TR { class VirtualMachineState; }
 namespace OMR
 {
 
-class BytecodeBuilder : public TR::BytecodeBuilderRecorder
+class BytecodeBuilder : public TR::IlBuilder
    {
 public:
    TR_ALLOC(TR_Memory::IlGenerator)
@@ -39,6 +39,12 @@ public:
    BytecodeBuilder(TR::MethodBuilder *methodBuilder, int32_t bcIndex, char *name=NULL, int32_t bcLength=-1);
 
    virtual bool isBytecodeBuilder() { return true; }
+
+   /**
+    * @brief bytecode index for this builder object
+    */
+   int32_t bcIndex() { return _bcIndex; }
+   virtual int32_t currentByteCodeIndex() { return _bcIndex; } // override from IlGenerator
 
    /* @brief after calling this, all IL nodes created will have this BytecodeBuilder's _bcIndex */
    void SetCurrentIlGenerator();

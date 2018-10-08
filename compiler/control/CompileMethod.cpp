@@ -271,8 +271,7 @@ compileMethodFromDetails(
       OMR_VMThread *omrVMThread,
       TR::IlGeneratorMethodDetails & details,
       TR_Hotness hotness,
-      int32_t &rc,
-      bool shouldCompile)
+      int32_t &rc)
    {
    uint64_t translationStartTime = TR::Compiler->vm.getUSecClock();
    OMR::FrontEnd &fe = OMR::FrontEnd::singleton();
@@ -336,7 +335,7 @@ compileMethodFromDetails(
    // FIXME: perhaps use stack memory instead
 
    TR_ASSERT(TR::comp() == NULL, "there seems to be a current TLS TR::Compilation object %p for this thread. At this point there should be no current TR::Compilation object", TR::comp());
-   TR::Compilation compiler(0, omrVMThread, &fe, &compilee, request, options, dispatchRegion, &trMemory, plan, shouldCompile);
+   TR::Compilation compiler(0, omrVMThread, &fe, &compilee, request, options, dispatchRegion, &trMemory, plan);
    TR_ASSERT(TR::comp() == &compiler, "the TLS TR::Compilation object %p for this thread does not match the one %p just created.", TR::comp(), &compiler);
 
    try

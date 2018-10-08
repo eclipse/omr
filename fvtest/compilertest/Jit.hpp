@@ -27,5 +27,4 @@ class TR_Memory;
 
 extern "C" bool initializeJit();
 extern "C" uint32_t compileMethodBuilder(TR::MethodBuilder *m, uint8_t **entry);
-extern "C" uint32_t recordMethodBuilder(TR::MethodBuilder *m);
 extern "C" void shutdownJit();

@@ -25,19 +25,18 @@
 #include <fstream>
 #include <stdarg.h>
 #include <string.h>
-#include "ilgen/IlBuilderRecorder.hpp"
+#include "ilgen/IlInjector.hpp"
 #include "il/ILHelpers.hpp"
 
-#include "ilgen/IlValue.hpp" // must go after IlBuilderRecorder.hpp or TR_ALLOC isn't cleaned up
+#include "ilgen/IlValue.hpp" // must go after IlInjector.hpp or TR_ALLOC isn't cleaned up
 
 namespace OMR { class MethodBuilder; }
-namespace OMR { class JitBuilderWriter; }
 
 namespace TR { class Block; }
 namespace TR { class BytecodeBuilder; }
 namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class IlBuilder; }
-namespace TR { class ResolvedMethodSymbol; }
+namespace TR { class ResolvedMethodSymbol; } 
 namespace TR { class SymbolReference; }
 namespace TR { class SymbolReferenceTable; }
 namespace TR { class VirtualMachineState; }
@@ -202,6 +201,8 @@ public:
    virtual TR::VirtualMachineState *initialVMState()         { return NULL; }
    virtual TR::VirtualMachineState *vmState()                { return NULL; }
    virtual void setVMState(TR::VirtualMachineState *vmState) { }
+
+   //char *getName();
 
    void print(const char *title, bool recurse=false);
    void printBlock(TR::Block *block);
@@ -384,7 +385,8 @@ public:
     * @returns the TR::IlValue corresponding to the called function's return value or NULL if return type is None
     */
    TR::IlValue *ComputedCall(const char *name, int32_t numArgs, TR::IlValue **args);
-   void genCall(TR::IlValue *returnValue, TR::SymbolReference *methodSymRef, int32_t numArgs, TR::IlValue ** paramValues, bool isDirectCall = true);
+
+   TR::IlValue *genCall(TR::SymbolReference *methodSymRef, int32_t numArgs, TR::IlValue ** paramValues, bool isDirectCall = true);
    void Goto(TR::IlBuilder **dest);
    void Goto(TR::IlBuilder *dest);
    void Return();
@@ -685,16 +687,15 @@ protected:
       }
 
    TR::SymbolReference *lookupSymbol(const char *name);
+   void defineSymbol(const char *name, TR::SymbolReference *v);
    TR::IlValue *newValue(TR::IlType *dt, TR::Node *n=NULL);
    TR::IlValue *newValue(TR::DataType dt, TR::Node *n=NULL);
-   void closeValue(TR::IlValue *v, TR::IlType *dt, TR::Node *n);
-   void closeValue(TR::IlValue *v, TR::DataType dt, TR::Node *n);
    void defineValue(const char *name, TR::IlType *dt);
 
    TR::Node *loadValue(TR::IlValue *v);
    void storeNode(TR::SymbolReference *symRef, TR::Node *v);
    void indirectStoreNode(TR::Node *addr, TR::Node *v);
-   void indirectLoadNode(TR::IlValue *returnValue, TR::IlType *dt, TR::Node *addr, bool isVectorLoad = false);
+   TR::IlValue *indirectLoadNode(TR::IlType *dt, TR::Node *addr, bool isVectorLoad=false);
 
    TR::Node *zero(TR::DataType dt);
    TR::Node *zero(TR::IlType *dt);
@@ -704,20 +705,15 @@ protected:
    TR::IlValue *unaryOp(TR::ILOpCodes op, TR::IlValue *v);
    void doVectorConversions(TR::Node **leftPtr, TR::Node **rightPtr);
    TR::IlValue *widenIntegerTo32Bits(TR::IlValue *v);
-
-   void binaryOpFromNodes(TR::ILOpCodes op, TR::IlValue *returnValue, TR::Node *leftNode, TR::Node *rightNode);
+   TR::IlValue *binaryOpFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode);
    TR::Node *binaryOpNodeFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode);
-   void binaryOpFromOpMap(OpCodeMapper mapOp, TR::IlValue *returnValue, TR::IlValue *left, TR::IlValue *right);
-   void binaryOpFromOpCode(TR::ILOpCodes op, TR::IlValue *returnValue, TR::IlValue *left, TR::IlValue *right);
+   TR::IlValue *binaryOpFromOpMap(OpCodeMapper mapOp, TR::IlValue *left, TR::IlValue *right);
+   TR::IlValue *binaryOpFromOpCode(TR::ILOpCodes op, TR::IlValue *left, TR::IlValue *right);
    TR::Node *shiftOpNodeFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode);
-   void shiftOpFromNodes(TR::ILOpCodes op, TR::IlValue *returnValue, TR::Node *leftNode, TR::Node *rightNode);
-   void shiftOpFromOpMap(OpCodeMapper mapOp, TR::IlValue *returnValue, TR::IlValue *left, TR::IlValue *right);
+   TR::IlValue *shiftOpFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode);
    TR::IlValue *shiftOpFromOpMap(OpCodeMapper mapOp, TR::IlValue *left, TR::IlValue *right);
-
    TR::IlValue *compareOp(TR_ComparisonTypes ct, bool needUnsigned, TR::IlValue *left, TR::IlValue *right);
-   void compareOp(TR_ComparisonTypes ct, bool needUnsigned, TR::IlValue *returnValue, TR::IlValue *left, TR::IlValue *right);
-
-   void convertTo(TR::IlValue *convertedValue, TR::DataType t, TR::IlValue *v, bool needUnsigned);
+   TR::IlValue *convertTo(TR::DataType typeTo, TR::IlValue *v, bool needUnsigned);
 
    void ifCmpCondition(TR_ComparisonTypes ct, bool isUnsignedCmp, TR::IlValue *left, TR::IlValue *right, TR::Block *target);
    void ifCmpNotEqualZero(TR::IlValue *condition, TR::Block *target);
@@ -734,7 +730,7 @@ protected:
       }
 
    TR::Block *emptyBlock();
-
+   
    virtual uint32_t countBlocks();
 
    void pullInBuilderTrees(TR::IlBuilder *builder,
@@ -750,8 +746,7 @@ protected:
    TR::Node *genOverflowCHKTreeTop(TR::Node *operationNode, TR::ILOpCodes overflow);
    TR::ILOpCodes getOpCode(TR::IlValue *leftValue, TR::IlValue *rightValue);
    void appendExceptionHandler(TR::Block *blockThrowsException, TR::IlBuilder **builder, uint32_t catchType);
-   void genOperationWithOverflowCHK(TR::IlValue *returnValue, TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode, TR::IlBuilder **handler, TR::ILOpCodes overflow);
-
+   TR::IlValue *genOperationWithOverflowCHK(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode, TR::IlBuilder **handler, TR::ILOpCodes overflow);
    virtual void setHandlerInfo(uint32_t catchType);
    TR::IlValue **processCallArgs(TR::Compilation *comp, int numArgs, va_list args);
    };
