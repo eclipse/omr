@@ -95,10 +95,10 @@ function(pasm2asm_files out_var compiler)
 	set(result "")
 	foreach(in_f ${ARGN})
 		get_filename_component(extension ${in_f} EXT)
-		if (extension STREQUAL ".pasm") # Requires preprocessing
+		if (extension MATCHES "\\.pn?asm") # Requires preprocessing
 			get_filename_component(absolute_in_f ${in_f} ABSOLUTE)
 
-			string(REGEX REPLACE ".pasm" ".asm" out_f ${in_f})
+			string(REGEX REPLACE "\\.p(n?asm)" ".\\1" out_f ${in_f})
 
 			set(out_f "${CMAKE_CURRENT_BINARY_DIR}/${out_f}")
 			get_filename_component(out_dir ${out_f} DIRECTORY)
