@@ -500,8 +500,6 @@ omrsysinfo_get_OS_type(struct OMRPortLibrary *portLibrary)
 #else
 	if (NULL == PPG_si_osType) {
 		int rc;
-		int len;
-		char *buffer;
 		struct utsname sysinfo;
 
 #ifdef J9ZOS390
@@ -510,14 +508,19 @@ omrsysinfo_get_OS_type(struct OMRPortLibrary *portLibrary)
 		rc = uname(&sysinfo);
 #endif
 		if (rc >= 0) {
-			len = strlen(sysinfo.sysname) + 1;
+			size_t len = 0;
+			char *buffer = NULL;
+			char *sysName = sysinfo.sysname;
+			if (0 == strcmp(sysName, "Darwin")) { /* Translate this to "OS X" */
+				sysName = "Mac OS X";
+			}
+			len = strlen(sysName) + 1; /* add room for the null */
 			buffer = portLibrary->mem_allocate_memory(portLibrary, len, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
 			if (NULL == buffer) {
 				return NULL;
 			}
-			/* copy and null terminte (just in case) */
-			strncpy(buffer, sysinfo.sysname, len - 1);
-			buffer[len - 1] = '\0';
+			/* the call to strlen ensures that the string is null-terminated and will fit in buffer */
+			strcpy(buffer, sysName);
 			PPG_si_osType = buffer;
 		}
 	}
