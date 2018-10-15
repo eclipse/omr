@@ -23,7 +23,7 @@
 #define ARM64OPS_INCL
 
 typedef enum  {
-//		Opcode                                                         BINARY    	OPCODE    	comments
+//		Opcode                                                          	BINARY    	OPCODE    	comments
 /* UNALLOCATED */
 		bad,                                                    	/* 0x00000000	BAD       	invalid operation */
 /* Branch,exception generation and system Instruction */
@@ -44,7 +44,6 @@ typedef enum  {
 		br,                                                     	/* 0xD61F0000	BR        	 */
 		blr,                                                    	/* 0xD63F0000	BLR       	 */
 		ret,                                                    	/* 0xD65F0000	RET       	 */
-	/* Unconditional branch (immediate) */
 /* Loads and stores */
 	/* Load/store exclusive */
 		stxrb,                                                  	/* 0x08000000	STXRB     	 */
@@ -309,7 +308,7 @@ typedef enum  {
 		ubfmx,                                                  	/* 0xD3400000	UBFM      	 */
 	/* Extract */
 		extrw,                                                  	/* 0x13800000	EXTR      	 */
-		extrx,                                                  	/* 0x93C00000	EXTR      	 */
+		extrx,                                                  	/* 0x93C08000	EXTR      	 */
 /* Data Processing – register */
 	/* Logical (shifted register) */
 		andw,                                                   	/* 0x0A000000	AND       	 */
@@ -417,7 +416,7 @@ typedef enum  {
 		revx,                                                   	/* 0xDAC00C00	REV       	 */
 		rev16w,                                                 	/* 0xDAC00400	REV16     	 */
 		rev16x,                                                 	/* 0x5AC00400	REV16     	 */
-		rev32,                                                  	/* 0xDAC00800	REV32     	 */																						
+		rev32,                                                  	/* 0xDAC00800	REV32     	 */
 	/* Last VFP instructions */
 		LastOp = rev32,
 		NumOpCodes = LastOp + 1

@@ -23,7 +23,7 @@
 
 const OMR::ARM64::InstOpCode::OpCodeBinaryEntry OMR::ARM64::InstOpCode::binaryEncodings[ARM64NumOpCodes] =
 {
-//		BINARY			Opcode    	Opcode		comments
+//		BINARY    	Opcode    	Opcode	comments
 /* UNALLOCATED */
 		0x00000000,	/* BAD       	bad	invalid operation */
 /* Branch,exception generation and system Instruction */
@@ -44,7 +44,6 @@ const OMR::ARM64::InstOpCode::OpCodeBinaryEntry OMR::ARM64::InstOpCode::binaryEn
 		0xD61F0000,	/* BR        	br	 */
 		0xD63F0000,	/* BLR       	blr	 */
 		0xD65F0000,	/* RET       	ret	 */
-	/* Unconditional branch (immediate) */
 /* Loads and stores */
 	/* Load/store exclusive */
 		0x08000000,	/* STXRB     	stxrb	 */
@@ -271,7 +270,7 @@ const OMR::ARM64::InstOpCode::OpCodeBinaryEntry OMR::ARM64::InstOpCode::binaryEn
 		0xFD000000,	/* STR       	vstrimmd	 */
 		0xFD400000,	/* LDR       	vldrimmd	 */
 		0xF9800000,	/* PRFM      	prfmimm	 */
-/* Data processing - Immediate */
+/* Data processing – Immediate */
 	/* PC-rel. addressing */
 		0x10000000,	/* ADR       	adr	 */
 		0x90000000,	/* ADRP      	adrp	 */
@@ -309,8 +308,8 @@ const OMR::ARM64::InstOpCode::OpCodeBinaryEntry OMR::ARM64::InstOpCode::binaryEn
 		0xD3400000,	/* UBFM      	ubfmx	 */
 	/* Extract */
 		0x13800000,	/* EXTR      	extrw	 */
-		0x93C00000,	/* EXTR      	extrx	 */
-/* Data Processing - register */
+		0x93C08000,	/* EXTR      	extrx	 */
+/* Data Processing – register */
 	/* Logical (shifted register) */
 		0x0A000000,	/* AND       	andw	 */
 		0x0A200000,	/* BIC       	bicw	 */
