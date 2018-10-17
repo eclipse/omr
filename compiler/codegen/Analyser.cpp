@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,12 +52,13 @@ void TR_Analyser::setInputs(TR::Node     *firstChild,
       setReg2();
       }
 
-   // The VFT pointer can be low-tagged, so generally we can't operate on it
-   // directly in memory.
-   //
+   // The VFT pointer can be low-tagged, so generally we can't operate on it directly in memory.
+   // Read Barriers have side effects and hence they cannot be skipped.
+
    TR::SymbolReference *vftPointerSymRef = TR::comp()->getSymRefTab()->element(TR::SymbolReferenceTable::vftSymbol);
 
    if (  firstChild->getOpCode().isMemoryReference()
+      && !firstChild->getOpCode().isReadBar()
       && firstChild->getSymbolReference() != vftPointerSymRef
       && firstChild->getReferenceCount() == 1
       && !lockedIntoRegister1)
@@ -66,6 +67,7 @@ void TR_Analyser::setInputs(TR::Node     *firstChild,
       }
 
    if (  secondChild->getOpCode().isMemoryReference()
+      && !secondChild->getOpCode().isReadBar()
       && secondChild->getSymbolReference() != vftPointerSymRef
       && secondChild->getReferenceCount() == 1
       && !lockedIntoRegister2)
