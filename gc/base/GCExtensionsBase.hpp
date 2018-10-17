@@ -432,6 +432,7 @@ public:
 	uintptr_t scvArraySplitMinimumAmount; /**< minimum number of elements to split array scanning work in the scavenger */
 	uintptr_t scavengerScanCacheMaximumSize; /**< maximum size of scan and copy caches before rounding, zero (default) means calculate them */
 	uintptr_t scavengerScanCacheMinimumSize; /**< minimum size of scan and copy caches before rounding, zero (default) means calculate them */
+	uintptr_t waitCountThreshold;
 	bool tiltedScavenge;
 	bool debugTiltedScavenge;
 	double survivorSpaceMinimumSizeRatio;
@@ -1390,6 +1391,7 @@ public:
 		, scvArraySplitMinimumAmount(DEFAULT_ARRAY_SPLIT_MINIMUM_SIZE)
 		, scavengerScanCacheMaximumSize(DEFAULT_SCAN_CACHE_MAXIMUM_SIZE)
 		, scavengerScanCacheMinimumSize(DEFAULT_SCAN_CACHE_MINIMUM_SIZE)
+		, waitCountThreshold(0)
 		, tiltedScavenge(true)
 		, debugTiltedScavenge(false)
 		, survivorSpaceMinimumSizeRatio(0.10)
