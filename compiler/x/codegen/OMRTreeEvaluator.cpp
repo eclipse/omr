@@ -3434,6 +3434,9 @@ TR::Register *OMR::X86::TreeEvaluator::BBStartEvaluator(TR::Node *node, TR::Code
 
       inst->setNeedToClearFPStack(true);
 
+      if (block->isCatchBlock())
+         inst->setNeedsGCMap(0xFF00FFFF);
+
       node->getLabel()->setInstruction(inst);
       block->setFirstInstruction(inst);
 
