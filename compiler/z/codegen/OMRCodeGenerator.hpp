@@ -109,11 +109,12 @@ namespace TR { class Optimizer; }
 namespace TR { class RegStarRef; }
 namespace TR { class Register; }
 namespace TR { class RegisterDependencyConditions; }
-namespace TR { class RegisterIterator; }
 namespace TR { class RegisterPair; }
 namespace TR { class Symbol; }
 namespace TR { class SymbolReference; }
 namespace TR { class SystemLinkage; }
+
+namespace OMR { class RegisterIterator; }
 
 extern int64_t getIntegralValue(TR::Node* node);
 
@@ -281,12 +282,12 @@ public:
 
    bool shouldYankCompressedRefs() { return true; }
 
-   TR::RegisterIterator *getHPRegisterIterator()                            {return  _hpRegisterIterator;         }
-   TR::RegisterIterator *setHPRegisterIterator(TR::RegisterIterator *iter)   {return _hpRegisterIterator = iter; }
+   OMR::RegisterIterator *getHPRegisterIterator()                            {return  _hpRegisterIterator;         }
+   OMR::RegisterIterator *setHPRegisterIterator(OMR::RegisterIterator *iter)   {return _hpRegisterIterator = iter; }
 
    bool supportsJITFreeSystemStackPointer() { return false; }
-   TR::RegisterIterator *getVRFRegisterIterator()                           {return  _vrfRegisterIterator;        }
-   TR::RegisterIterator *setVRFRegisterIterator(TR::RegisterIterator *iter)  {return _vrfRegisterIterator = iter;}
+   OMR::RegisterIterator *getVRFRegisterIterator()                           {return  _vrfRegisterIterator;        }
+   OMR::RegisterIterator *setVRFRegisterIterator(OMR::RegisterIterator *iter)  {return _vrfRegisterIterator = iter;}
 
    bool supportsLengthMinusOneForMemoryOpts() {return true;}
 
@@ -860,8 +861,8 @@ private:
 
    TR_HashTab * _interfaceSnippetToPICsListHashTab;
 
-   TR::RegisterIterator            *_hpRegisterIterator;
-   TR::RegisterIterator            *_vrfRegisterIterator;
+   OMR::RegisterIterator            *_hpRegisterIterator;
+   OMR::RegisterIterator            *_vrfRegisterIterator;
 
    TR_Array<TR::Register *>        _transientLongRegisters;
 

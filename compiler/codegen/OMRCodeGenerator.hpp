@@ -102,13 +102,14 @@ namespace TR { class RealRegister; }
 namespace TR { class Recompilation; }
 namespace TR { class Register; }
 namespace TR { class RegisterDependencyConditions; }
-namespace TR { class RegisterIterator; }
 namespace TR { class RegisterPair; }
 namespace TR { class Snippet; }
 namespace TR { class Symbol; }
 namespace TR { class SymbolReference; }
 namespace TR { class SymbolReferenceTable; }
 namespace TR { class TreeTop; }
+
+namespace OMR { class RegisterIterator; }
 
 typedef TR::SparseBitVector SharedSparseBitVector;
 
@@ -963,11 +964,11 @@ class OMR_EXTENSIBLE CodeGenerator
    // --------------------------------------------------------------------------
    // Debug
    //
-   TR::RegisterIterator *getGPRegisterIterator() {return _gpRegisterIterator;}
-   TR::RegisterIterator *setGPRegisterIterator(TR::RegisterIterator *iter) {return (_gpRegisterIterator = iter);}
+   OMR::RegisterIterator *getGPRegisterIterator() {return _gpRegisterIterator;}
+   OMR::RegisterIterator *setGPRegisterIterator(OMR::RegisterIterator *iter) {return (_gpRegisterIterator = iter);}
 
-   TR::RegisterIterator *getFPRegisterIterator() {return _fpRegisterIterator;}
-   TR::RegisterIterator *setFPRegisterIterator(TR::RegisterIterator *iter) {return (_fpRegisterIterator = iter);}
+   OMR::RegisterIterator *getFPRegisterIterator() {return _fpRegisterIterator;}
+   OMR::RegisterIterator *setFPRegisterIterator(OMR::RegisterIterator *iter) {return (_fpRegisterIterator = iter);}
 
    // X86 only
    uint32_t estimateBinaryLength(TR::MemoryReference *) { return 0; } // no virt
@@ -1937,8 +1938,8 @@ class OMR_EXTENSIBLE CodeGenerator
 
    void addMonClass(TR::Node* monNode, TR_OpaqueClassBlock* clazz);
 
-   TR::RegisterIterator *_gpRegisterIterator;
-   TR::RegisterIterator *_fpRegisterIterator;
+   OMR::RegisterIterator *_gpRegisterIterator;
+   OMR::RegisterIterator *_fpRegisterIterator;
    TR_RegisterAssignmentFlags _regAssignFlags;
 
    uint32_t _preJitMethodEntrySize;

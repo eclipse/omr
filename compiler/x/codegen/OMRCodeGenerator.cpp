@@ -40,7 +40,7 @@
 #include "codegen/RecognizedMethods.hpp"
 #include "codegen/Register.hpp"                        // for Register
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/RegisterIterator.hpp"
+#include "codegen/OMRRegisterIterator.hpp"             // for RegisterIterator
 #include "codegen/RegisterPressureSimulatorInner.hpp"
 #include "codegen/RegisterRematerializationInfo.hpp"
 #include "codegen/Snippet.hpp"                         // for Snippet, etc
@@ -469,8 +469,8 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
 
    if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
       {
-      self()->setGPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstGPR, TR::RealRegister::LastAssignableGPR));
-      self()->setFPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstXMMR, TR::RealRegister::LastXMMR));
+      self()->setGPRegisterIterator(new (self()->trHeapMemory()) OMR::RegisterIterator(self()->machine(), TR::RealRegister::FirstGPR, TR::RealRegister::LastAssignableGPR));
+      self()->setFPRegisterIterator(new (self()->trHeapMemory()) OMR::RegisterIterator(self()->machine(), TR::RealRegister::FirstXMMR, TR::RealRegister::LastXMMR));
       }
 
    self()->setSupportsProfiledInlining();

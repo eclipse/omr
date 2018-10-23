@@ -44,7 +44,7 @@
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"                       // for Register
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/RegisterIterator.hpp"
+#include "codegen/OMRRegisterIterator.hpp"            // for RegisterIterator
 #include "codegen/RegisterPair.hpp"                   // for RegisterPair
 #include "codegen/RegisterRematerializationInfo.hpp"
 #include "codegen/Snippet.hpp"                        // for Snippet
@@ -4909,12 +4909,12 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
             const bool isFPR = _registerKindsToAssign & TR_FPR_Mask;
             const bool isX87 = _registerKindsToAssign & TR_X87_Mask;
 
-            TR::RegisterIterator *gprIter = _comp->cg()->getGPRegisterIterator();
-            TR::RegisterIterator *hprIter = _comp->cg()->getGPRegisterIterator();
-            TR::RegisterIterator *vrfIter = _comp->cg()->getGPRegisterIterator();
-            TR::RegisterIterator *fprIter = _comp->cg()->getGPRegisterIterator();
-            TR::RegisterIterator *arIter  = _comp->cg()->getGPRegisterIterator();
-            TR::RegisterIterator *x87Iter = _comp->cg()->getGPRegisterIterator();
+            OMR::RegisterIterator *gprIter = _comp->cg()->getGPRegisterIterator();
+            OMR::RegisterIterator *hprIter = _comp->cg()->getGPRegisterIterator();
+            OMR::RegisterIterator *vrfIter = _comp->cg()->getGPRegisterIterator();
+            OMR::RegisterIterator *fprIter = _comp->cg()->getGPRegisterIterator();
+            OMR::RegisterIterator *arIter  = _comp->cg()->getGPRegisterIterator();
+            OMR::RegisterIterator *x87Iter = _comp->cg()->getGPRegisterIterator();
 
             // Print header
 
@@ -4930,7 +4930,7 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
             if (_registerKindsToAssign & TR_GPR_Mask)
                {
                trfprintf(_file, "<gprs>\n");
-               TR::RegisterIterator *iter = _comp->cg()->getGPRegisterIterator();
+               OMR::RegisterIterator *iter = _comp->cg()->getGPRegisterIterator();
                for (TR::Register *gpr = iter->getFirst(); gpr; gpr = iter->getNext())
                   {
                   printFullRegInfo(_file, gpr);
@@ -4941,7 +4941,7 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
             if (_registerKindsToAssign & TR_HPR_Mask)
                {
                trfprintf(_file, "<hprs>\n");
-               TR::RegisterIterator *iter = _cg->getHPRegisterIterator();
+               OMR::RegisterIterator *iter = _cg->getHPRegisterIterator();
                for (TR::Register *hpr = iter->getFirst(); hpr; hpr = iter->getNext())
                   {
                   printFullRegInfo(_file, hpr);
@@ -4951,7 +4951,7 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
             if (_registerKindsToAssign & TR_VRF_Mask && _cg->getSupportsVectorRegisters())
                {
                trfprintf(_file, "<vrfs>\n");
-               TR::RegisterIterator *iter = _cg->getVRFRegisterIterator();
+               OMR::RegisterIterator *iter = _cg->getVRFRegisterIterator();
                for (TR::Register *vrf = iter->getFirst(); vrf; vrf = iter->getNext())
                   {
                   printFullRegInfo(_file, vrf);
@@ -4962,7 +4962,7 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
             if (_registerKindsToAssign & TR_FPR_Mask)
                {
                trfprintf(_file, "<fprs>\n");
-               TR::RegisterIterator *iter = _comp->cg()->getFPRegisterIterator();
+               OMR::RegisterIterator *iter = _comp->cg()->getFPRegisterIterator();
                for (TR::Register *fpr = iter->getFirst(); fpr; fpr = iter->getNext())
                   {
                   printFullRegInfo(_file, fpr);

@@ -27,7 +27,7 @@
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/RegisterIterator.hpp"
+#include "codegen/OMRRegisterIterator.hpp"
 #include "codegen/TreeEvaluator.hpp"
 
 OMR::ARM64::CodeGenerator::CodeGenerator() :
@@ -109,8 +109,8 @@ OMR::ARM64::CodeGenerator::CodeGenerator() :
 
    if (self()->comp()->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
       {
-      self()->setGPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstGPR, TR::RealRegister::LastGPR));
-      self()->setFPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstFPR, TR::RealRegister::LastFPR));
+      self()->setGPRegisterIterator(new (self()->trHeapMemory()) OMR::RegisterIterator(self()->machine(), TR::RealRegister::FirstGPR, TR::RealRegister::LastGPR));
+      self()->setFPRegisterIterator(new (self()->trHeapMemory()) OMR::RegisterIterator(self()->machine(), TR::RealRegister::FirstFPR, TR::RealRegister::LastFPR));
       }
    }
 
