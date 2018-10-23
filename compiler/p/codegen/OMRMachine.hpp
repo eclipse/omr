@@ -91,11 +91,6 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
    TR::Register *setVirtualAssociatedWithReal(TR::RealRegister::RegNum regNum, TR::Register * virtReg);
    TR::Register *getVirtualAssociatedWithReal(TR::RealRegister::RegNum regNum);
 
-   TR::RealRegister *getRealRegister(TR::RealRegister::RegNum regNum)
-      {
-      return _registerFile[regNum];
-      }
-
    TR::RealRegister *findBestFreeRegister(TR::Instruction *currentInstruction,
                                             TR_RegisterKinds rk,
 					    bool excludeGPR0 = false,

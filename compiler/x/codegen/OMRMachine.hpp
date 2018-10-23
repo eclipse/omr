@@ -138,11 +138,6 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
 
    uint8_t getNumberOfGPRs() { return _numGPRs; }
 
-   TR::RealRegister *getRealRegister(TR::RealRegister::RegNum regNum)
-      {
-      return _registerFile[regNum];
-      }
-
    TR::RealRegister **cloneRegisterFile(TR::RealRegister **registerFile, TR_AllocationKind allocKind = heapAlloc);
 
    TR::RealRegister **captureRegisterFile();

@@ -228,11 +228,6 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
 
    Machine(TR::CodeGenerator *cg);
 
-   TR::RealRegister *getRealRegister(TR::RealRegister::RegNum regNum)
-      {
-      return _registerFile[regNum];
-      }
-
    TR::RealRegister *getRealRegister(int32_t regNum)
       {
       return _registerFile[regNum];
