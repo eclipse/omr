@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -460,7 +460,7 @@ convertToFixed(TR::Node * node, TR::CodeGenerator * cg)
    else  // Signed Target Path
       {
       //1) Reset targetRegister
-      cursor = generateRIInstruction(cg, TR::InstOpCode::LA, node, targetRegister, 0);
+      cursor = generateRIInstruction(cg, TR::InstOpCode::XOR, node, targetRegister, targetRegister);
 
       // Java expect that for signed conversion to fixed, if src float is NaN, target to have 0.0.
       //2) NaN test and branch to done
@@ -1769,8 +1769,8 @@ f2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    dependencies->addPostCondition(tempFloatRegister, TR::RealRegister::AssignAny);
 
    //Assume result (long)0x0
-   cursor = generateRIInstruction(cg, TR::InstOpCode::LA, node, evenRegister, 0);
-   cursor = generateRIInstruction(cg, TR::InstOpCode::LA, node, oddRegister, 0);
+   cursor = generateRIInstruction(cg, TR::InstOpCode::XOR, node, evenRegister, evenRegister);
+   cursor = generateRIInstruction(cg, TR::InstOpCode::XOR, node, oddRegister, oddRegister);
    // Round FP towards zero
    cursor = generateRRFInstruction(cg, TR::InstOpCode::FIEBR, node, tempFloatRegister, floatRegister, (int8_t) 0x5, true);
    cursor = generateRXInstruction(cg, TR::InstOpCode::TCEB, node, tempFloatRegister, (uint32_t) 0xccf);
@@ -2000,8 +2000,8 @@ d2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    dependencies->addPostCondition(tempFloatRegister, TR::RealRegister::AssignAny);
 
    //Assume result (long)0x0
-   generateRIInstruction(cg, TR::InstOpCode::LA, node, evenRegister, 0);
-   generateRIInstruction(cg, TR::InstOpCode::LA, node, oddRegister, 0);
+   generateRIInstruction(cg, TR::InstOpCode::XOR, node, evenRegister, evenRegister);
+   generateRIInstruction(cg, TR::InstOpCode::XOR, node, oddRegister, oddRegister);
    // Round double towards zero
    generateRRFInstruction(cg, TR::InstOpCode::FIDBR, node, tempFloatRegister, floatRegister, (int8_t) 0x5, true);
    generateRXInstruction(cg, TR::InstOpCode::TCDB, node, tempFloatRegister, (uint32_t) 0xccf);
