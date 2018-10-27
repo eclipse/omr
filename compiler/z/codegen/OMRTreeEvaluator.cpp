@@ -10066,7 +10066,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
       else
          {
          if (needResultReg)
-            generateRIInstruction(cg, TR::InstOpCode::LA, node, retValReg, 0);
+            generateRRInstruction(cg, TR::InstOpCode::XGR, node, retValReg, retValReg);
          }
 
       cg->recursivelyDecReferenceCount(lengthNode);
@@ -10192,7 +10192,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
       TR::LabelSymbol *endLabel = isEndLabelNeeded ? TR::LabelSymbol::create(cg->trHeapMemory(),cg) : NULL;
 
       if (!isFoldedIf && needResultReg)
-         generateRIInstruction(cg, TR::InstOpCode::LA, node, retValReg, 0);
+         generateRRInstruction(cg, TR::InstOpCode::XGR, node, retValReg, retValReg);
 
       if (earlyCLCEnabled && length > earlyCLCThreshold)
          {
@@ -10393,7 +10393,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
          if (!isFoldedIf && needResultReg)
             {
             branchDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
-            generateRIInstruction(cg, TR::InstOpCode::LA, node, retValReg, 0);
+            generateRRInstruction(cg, TR::InstOpCode::XGR, node, retValReg, retValReg);
             }
 
          if (!lenMinusOne)
@@ -10450,7 +10450,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
             if(!isFoldedIf && needResultReg)
                {
                branchDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
-               generateRIInstruction(cg, TR::InstOpCode::LA, node, retValReg, 0);
+               generateRRInstruction(cg, TR::InstOpCode::XGR, node, retValReg, retValReg);
                }
 
             //endLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -10498,7 +10498,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
             if (!isFoldedIf && needResultReg)
                {
                branchDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
-               generateRIInstruction(cg, TR::InstOpCode::LA, node, retValReg, 0);
+               generateRRInstruction(cg, TR::InstOpCode::XGR, node, retValReg, retValReg);
                }
 
             loopCountReg = cg->allocateRegister();
@@ -10923,7 +10923,7 @@ OMR::Z::TreeEvaluator::lxfrsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
             TR::Register *oneTemp = cg->allocateRegister();
             TR::Register *zeroTemp = cg->allocateRegister();
             generateRIInstruction(cg, TR::InstOpCode::LA, node, oneTemp, 1);
-            generateRIInstruction(cg, TR::InstOpCode::LA, node, zeroTemp, 0);
+            generateRRInstruction(cg, TR::InstOpCode::XGR, node, zeroTemp, zeroTemp);
 
             generateRRInstruction(cg, TR::InstOpCode::ALR, node, valueLowReg, oneTemp);
             generateRRInstruction(cg, TR::InstOpCode::ALCR, node, valueHighReg, zeroTemp);

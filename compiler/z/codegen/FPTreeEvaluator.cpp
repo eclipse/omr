@@ -460,7 +460,7 @@ convertToFixed(TR::Node * node, TR::CodeGenerator * cg)
    else  // Signed Target Path
       {
       //1) Reset targetRegister
-      cursor = generateRIInstruction(cg, TR::InstOpCode::XOR, node, targetRegister, targetRegister);
+      cursor = generateRRInstruction(cg, TR::InstOpCode::XGR, node, targetRegister, targetRegister);
 
       // Java expect that for signed conversion to fixed, if src float is NaN, target to have 0.0.
       //2) NaN test and branch to done
@@ -1769,8 +1769,8 @@ f2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    dependencies->addPostCondition(tempFloatRegister, TR::RealRegister::AssignAny);
 
    //Assume result (long)0x0
-   cursor = generateRIInstruction(cg, TR::InstOpCode::XOR, node, evenRegister, evenRegister);
-   cursor = generateRIInstruction(cg, TR::InstOpCode::XOR, node, oddRegister, oddRegister);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::XGR, node, evenRegister, evenRegister);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::XGR, node, oddRegister, oddRegister);
    // Round FP towards zero
    cursor = generateRRFInstruction(cg, TR::InstOpCode::FIEBR, node, tempFloatRegister, floatRegister, (int8_t) 0x5, true);
    cursor = generateRXInstruction(cg, TR::InstOpCode::TCEB, node, tempFloatRegister, (uint32_t) 0xccf);
@@ -2000,8 +2000,8 @@ d2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    dependencies->addPostCondition(tempFloatRegister, TR::RealRegister::AssignAny);
 
    //Assume result (long)0x0
-   generateRIInstruction(cg, TR::InstOpCode::XOR, node, evenRegister, evenRegister);
-   generateRIInstruction(cg, TR::InstOpCode::XOR, node, oddRegister, oddRegister);
+   generateRRInstruction(cg, TR::InstOpCode::XGR, node, evenRegister, evenRegister);
+   generateRRInstruction(cg, TR::InstOpCode::XGR, node, oddRegister, oddRegister);
    // Round double towards zero
    generateRRFInstruction(cg, TR::InstOpCode::FIDBR, node, tempFloatRegister, floatRegister, (int8_t) 0x5, true);
    generateRXInstruction(cg, TR::InstOpCode::TCDB, node, tempFloatRegister, (uint32_t) 0xccf);
