@@ -1769,8 +1769,8 @@ f2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    dependencies->addPostCondition(tempFloatRegister, TR::RealRegister::AssignAny);
 
    //Assume result (long)0x0
-   cursor = generateRRInstruction(cg, TR::InstOpCode::XGR, node, evenRegister, evenRegister);
-   cursor = generateRRInstruction(cg, TR::InstOpCode::XGR, node, oddRegister, oddRegister);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::XR, node, evenRegister, evenRegister);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::XR, node, oddRegister, oddRegister);
    // Round FP towards zero
    cursor = generateRRFInstruction(cg, TR::InstOpCode::FIEBR, node, tempFloatRegister, floatRegister, (int8_t) 0x5, true);
    cursor = generateRXInstruction(cg, TR::InstOpCode::TCEB, node, tempFloatRegister, (uint32_t) 0xccf);
@@ -1799,7 +1799,7 @@ f2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNL, node, label6);
    //clear exponent bits, odd register will have only fraction
    cursor = generateS390ImmOp(cg, TR::InstOpCode::N, node, oddRegister, oddRegister, (int32_t) 0x007fffff, dependencies);
-   cursor = generateRIInstruction(cg, TR::InstOpCode::LGFI, node, tempRegister2, 1);
+   cursor = generateRIInstruction(cg, TR::InstOpCode::LHI, node, tempRegister2, 1);
    cursor = generateRSInstruction(cg, TR::InstOpCode::SLL, node, tempRegister2, 23);
    //tempRegister = 0x00800000
    cursor = generateRRInstruction(cg, TR::InstOpCode::OR, node, oddRegister, tempRegister2);
@@ -1854,7 +1854,7 @@ f2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    //LABEL6
    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label6);
 
-   cursor = generateRIInstruction(cg, TR::InstOpCode::LGFI, node, oddRegister, 1);
+   cursor = generateRIInstruction(cg, TR::InstOpCode::LHI, node, oddRegister, 1);
    cursor = generateRSInstruction(cg, TR::InstOpCode::SLDL, node, targetRegisterPair, 63);
    TR::MemoryReference * evenMRcopy3 = generateS390MemoryReference(*evenMR, 0, cg); // prevent duplicate use of memory reference
    cursor = generateSIInstruction(cg, TR::InstOpCode::TM, node, evenMRcopy3, (uint32_t) 0x00000080);
@@ -2000,8 +2000,8 @@ d2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    dependencies->addPostCondition(tempFloatRegister, TR::RealRegister::AssignAny);
 
    //Assume result (long)0x0
-   generateRRInstruction(cg, TR::InstOpCode::XGR, node, evenRegister, evenRegister);
-   generateRRInstruction(cg, TR::InstOpCode::XGR, node, oddRegister, oddRegister);
+   generateRRInstruction(cg, TR::InstOpCode::XR, node, evenRegister, evenRegister);
+   generateRRInstruction(cg, TR::InstOpCode::XR, node, oddRegister, oddRegister);
    // Round double towards zero
    generateRRFInstruction(cg, TR::InstOpCode::FIDBR, node, tempFloatRegister, floatRegister, (int8_t) 0x5, true);
    generateRXInstruction(cg, TR::InstOpCode::TCDB, node, tempFloatRegister, (uint32_t) 0xccf);
@@ -2031,7 +2031,7 @@ d2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    //clear exponent bits, evenRegister will have only fraction
 
    generateS390ImmOp(cg, TR::InstOpCode::N, node, evenRegister, evenRegister, (int32_t) 0x000fffff, dependencies);
-   generateRIInstruction(cg, TR::InstOpCode::LGFI, node, tempRegister2, 1);
+   generateRIInstruction(cg, TR::InstOpCode::LHI, node, tempRegister2, 1);
    generateRSInstruction(cg, TR::InstOpCode::SLL, node, tempRegister2, 20);
    generateRRInstruction(cg, TR::InstOpCode::OR, node, evenRegister, tempRegister2);
    // 20th bit of evenRegister is made 1
@@ -2073,7 +2073,7 @@ d2lHelper(TR::Node * node, TR::CodeGenerator * cg)
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, label7);
    //LABEL6
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label6);
-   generateRIInstruction(cg, TR::InstOpCode::LGFI, node, oddRegister, 1);
+   generateRIInstruction(cg, TR::InstOpCode::LHI, node, oddRegister, 1);
    generateRSInstruction(cg, TR::InstOpCode::SLDL, node, targetRegisterPair, 63);
    TR::MemoryReference * tempMR1copy2 = generateS390MemoryReference(*tempMR1, 0, cg);
    generateSIInstruction(cg, TR::InstOpCode::TM, node, tempMR1copy2, (uint32_t) 0x00000080);

@@ -10066,7 +10066,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
       else
          {
          if (needResultReg)
-            generateRRInstruction(cg, TR::InstOpCode::XGR, node, retValReg, retValReg);
+            generateRRInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, retValReg, retValReg);
          }
 
       cg->recursivelyDecReferenceCount(lengthNode);
@@ -10192,7 +10192,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
       TR::LabelSymbol *endLabel = isEndLabelNeeded ? TR::LabelSymbol::create(cg->trHeapMemory(),cg) : NULL;
 
       if (!isFoldedIf && needResultReg)
-         generateRRInstruction(cg, TR::InstOpCode::XGR, node, retValReg, retValReg);
+         generateRRInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, retValReg, retValReg);
 
       if (earlyCLCEnabled && length > earlyCLCThreshold)
          {
@@ -10283,14 +10283,14 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
             {
             if (return102)
                {
-               generateRIInstruction(cg, TR::InstOpCode::LGFI, node, retValReg, 2);
+               generateRIInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGHI : TR::InstOpCode::LHI, node, retValReg, 2);
 
                generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, endLabel);
                cursor = generateRIInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGHI : TR::InstOpCode::LHI, node, retValReg, 1);
                }
             else
                {
-               generateRIInstruction(cg, TR::InstOpCode::LGFI, node, retValReg, 1);
+               generateRIInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGHI : TR::InstOpCode::LHI, node, retValReg, 1);
 
                generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, endLabel);
                cursor = generateRIInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGHI : TR::InstOpCode::LHI, node, retValReg, -1);
@@ -10393,7 +10393,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
          if (!isFoldedIf && needResultReg)
             {
             branchDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
-            generateRRInstruction(cg, TR::InstOpCode::XGR, node, retValReg, retValReg);
+            generateRRInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, retValReg, retValReg);
             }
 
          if (!lenMinusOne)
@@ -10450,7 +10450,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
             if(!isFoldedIf && needResultReg)
                {
                branchDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
-               generateRRInstruction(cg, TR::InstOpCode::XGR, node, retValReg, retValReg);
+               generateRRInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, retValReg, retValReg);
                }
 
             //endLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -10498,7 +10498,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
             if (!isFoldedIf && needResultReg)
                {
                branchDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
-               generateRRInstruction(cg, TR::InstOpCode::XGR, node, retValReg, retValReg);
+               generateRRInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, retValReg, retValReg);
                }
 
             loopCountReg = cg->allocateRegister();
@@ -10618,7 +10618,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
                {
                generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, endLabel);
 
-               generateRIInstruction(cg, TR::InstOpCode::LGFI, node, retValReg, 2);
+               generateRIInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGHI : TR::InstOpCode::LHI, node, retValReg, 2);
 
                generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, endLabel);
 
@@ -10628,7 +10628,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
                {
                generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, endLabel);
 
-               generateRIInstruction(cg, TR::InstOpCode::LGFI, node, retValReg, 1);
+               generateRIInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGHI : TR::InstOpCode::LHI, node, retValReg, 1);
 
                generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, endLabel);
 
@@ -10922,8 +10922,8 @@ OMR::Z::TreeEvaluator::lxfrsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
             TR::Register *oneTemp = cg->allocateRegister();
             TR::Register *zeroTemp = cg->allocateRegister();
-            generateRIInstruction(cg, TR::InstOpCode::LGFI, node, oneTemp, 1);
-            generateRRInstruction(cg, TR::InstOpCode::XGR, node, zeroTemp, zeroTemp);
+            generateRIInstruction(cg, TR::InstOpCode::LHI, node, oneTemp, 1);
+            generateRRInstruction(cg, TR::InstOpCode::XR, node, zeroTemp, zeroTemp);
 
             generateRRInstruction(cg, TR::InstOpCode::ALR, node, valueLowReg, oneTemp);
             generateRRInstruction(cg, TR::InstOpCode::ALCR, node, valueHighReg, zeroTemp);
