@@ -613,9 +613,9 @@ int TR_LocalAnalysisInfo::hasOldExpressionOnRhs(TR::Node *node, bool recalcConta
             other->setNumChildren(otherStoreNumChildren);
 
             if (otherStoreNumChildren == 3)
-               TR::Node::recreate(other, TR::wrtbari);
+               TR::Node::recreate(other, TR::awrtbari);
             else
-               TR::Node::recreate(other, TR::wrtbar);
+               TR::Node::recreate(other, TR::awrtbar);
             }
          else if (seenOtherIndirectStore)
             {
@@ -639,9 +639,9 @@ int TR_LocalAnalysisInfo::hasOldExpressionOnRhs(TR::Node *node, bool recalcConta
                node->setNumChildren(storeNumChildren);
 
                if (storeNumChildren == 3)
-                  TR::Node::recreate(node, TR::wrtbari);
+                  TR::Node::recreate(node, TR::awrtbari);
                else
-                  TR::Node::recreate(node, TR::wrtbar);
+                  TR::Node::recreate(node, TR::awrtbar);
                }
             else if (seenIndirectStore)
                {
@@ -676,9 +676,9 @@ int TR_LocalAnalysisInfo::hasOldExpressionOnRhs(TR::Node *node, bool recalcConta
       node->setNumChildren(storeNumChildren);
 
       if (storeNumChildren == 3)
-         TR::Node::recreate(node, TR::wrtbari);
+         TR::Node::recreate(node, TR::awrtbari);
       else
-         TR::Node::recreate(node, TR::wrtbar);
+         TR::Node::recreate(node, TR::awrtbar);
       }
    else if (seenIndirectStore)
       {

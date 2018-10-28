@@ -397,7 +397,7 @@ TR_S390BinaryAnalyser::longSubtractAnalyser(TR::Node * root)
       bool zArchTrexsupported = performTransformation(comp, "O^O Use SL/SLB for long sub.");
 
       TR::Register * highDiff = NULL;
-      TR::LabelSymbol * doneLSub = TR::LabelSymbol::create(cg()->trHeapMemory(),cg());
+      TR::LabelSymbol * doneLSub = generateLabelSymbol(cg());
       if (getCopyReg1())
          {
          TR::Register * lowThird = cg()->allocateRegister();

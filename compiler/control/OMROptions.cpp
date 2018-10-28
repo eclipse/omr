@@ -58,9 +58,9 @@
 
 using namespace OMR;
 
-#define SET_OPTION_BIT(x)   TR::Options::setBit,   offsetof(OMR::Options,_options[(x)&TR_OWM]), ((x)&~TR_OWM)
-#define RESET_OPTION_BIT(x) TR::Options::resetBit, offsetof(OMR::Options,_options[(x)&TR_OWM]), ((x)&~TR_OWM)
-#define SET_TRACECG_BIT(x)  TR::Options::setBit,   offsetof(OMR::Options, _cgTrace), (x)
+#define SET_OPTION_BIT(x)   TR::Options::setBit,   offsetof(OMR::Options,_options[(x)&TR_OWM]), (static_cast<uintptrj_t>((x)&~TR_OWM))
+#define RESET_OPTION_BIT(x) TR::Options::resetBit, offsetof(OMR::Options,_options[(x)&TR_OWM]), (static_cast<uintptrj_t>((x)&~TR_OWM))
+#define SET_TRACECG_BIT(x)  TR::Options::setBit,   offsetof(OMR::Options, _cgTrace), (static_cast<uintptrj_t>(x))
 
 #define NoOptString                     "noOpt"
 #define DisableAllocationInliningString "disableAllocationInlining"

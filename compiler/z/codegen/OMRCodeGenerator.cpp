@@ -1490,7 +1490,7 @@ OMR::Z::CodeGenerator::insertInstructionPrefetches()
             if (!op.isAdmin())
                {
                real = first;
-               if (op.isLabel() || op.isCall() || first->isEndInternalControlFlow())
+               if (op.isLabel() || op.isCall())
                   {
                   break;
                   }
@@ -2398,10 +2398,6 @@ OMR::Z::CodeGenerator::upgradeToHPRInstruction(TR::Instruction * inst)
          s390NewInst->setThrowsImplicitException();
       if (s390Inst->isOutOfLineEX())
          s390NewInst->setOutOfLineEX();
-      if (s390Inst->isStartInternalControlFlow())
-         s390NewInst->setStartInternalControlFlow();
-      if (s390Inst->isEndInternalControlFlow())
-         s390NewInst->setEndInternalControlFlow();
       if (s390Inst->getIndex())
          s390NewInst->setIndex(s390Inst->getIndex());
       if (s390Inst->getGCMap())
@@ -2439,14 +2435,6 @@ static TR::Instruction *skipInternalControlFlow(TR::Instruction *insertInstr)
       if (ls->isEndInternalControlFlow())
         nestingDepth++;
       }
-    if (insertInstr->isStartInternalControlFlow())
-      {
-      nestingDepth--;
-      if(nestingDepth==0)
-        break;
-      }
-    else if (insertInstr->isEndInternalControlFlow())
-      nestingDepth++;
     } // for
   return insertInstr;
   }
@@ -2678,7 +2666,7 @@ OMR::Z::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
       while (currInst)
          {
          TR::LabelSymbol *labelSym = currInst->isLabel() ? toS390LabelInstruction(currInst)->getLabelSymbol() : NULL;
-         if (currInst->isEndInternalControlFlow() || (labelSym && labelSym->isEndInternalControlFlow()))
+         if (labelSym && labelSym->isEndInternalControlFlow())
             {
             if (currInst->getDependencyConditions())
                {
@@ -2777,19 +2765,6 @@ OMR::Z::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
 
       // Maintain Internal Control Flow Depth
 
-      // Track internal control flow on instructions
-      if (instructionCursor->isStartInternalControlFlow())
-         {
-         _internalControlFlowNestingDepth--;
-         if(_internalControlFlowNestingDepth==0)
-            self()->endInternalControlFlow(instructionCursor);        // Walking backwards so start is end
-         }
-      if (instructionCursor->isEndInternalControlFlow())
-         {
-         _internalControlFlowNestingDepth++;
-         self()->startInternalControlFlow(instructionCursor);
-         }
-
       // Track internal control flow on labels
       if (instructionCursor->getOpCode().getOpCodeValue() == TR::InstOpCode::LABEL)
          {
@@ -2799,16 +2774,12 @@ OMR::Z::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
             {
             if (li->getLabelSymbol()->isStartInternalControlFlow())
                {
-               TR_ASSERT(!li->isStartInternalControlFlow(),
-                       "An instruction should not be both the start of internal control flow and have a lebel that is pegged as the start of internal control flow, because we should only count it once");
                _internalControlFlowNestingDepth--;
                if (_internalControlFlowNestingDepth == 0)
                   self()->endInternalControlFlow(instructionCursor);        // Walking backwards so start is end
                }
             if (li->getLabelSymbol()->isEndInternalControlFlow())
                {
-               TR_ASSERT(!li->isEndInternalControlFlow(),
-                       "An instruction should not be both the end of internal control flow and have a lebel that is pegged as the end of internal control flow, because we should only count it once");
                _internalControlFlowNestingDepth++;
                self()->startInternalControlFlow(instructionCursor);
                }

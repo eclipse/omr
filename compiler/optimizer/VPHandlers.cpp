@@ -2953,7 +2953,7 @@ TR::Node *constrainWrtBar(OMR::ValuePropagation *vp, TR::Node *node)
    if (doOpt &&
        ((gcMode == TR_WrtbarCardMarkAndOldCheck) ||
         (gcMode == TR_WrtbarOldCheck)) &&
-       (node->getOpCodeValue() == TR::wrtbari) &&
+       (node->getOpCodeValue() == TR::awrtbari) &&
        !node->skipWrtBar())
       {
       TR::Node *valueChild = node->getFirstChild();
@@ -3076,7 +3076,7 @@ TR::Node *constrainWrtBar(OMR::ValuePropagation *vp, TR::Node *node)
    // If node is still a write barrier then let's find if it's coming from a new in the same method.
    // If that's the case then the chances are this wrtbar is going to be on a new object and we should
    // let the codegen know so it can generate better sequence.
-   if ((node->getOpCodeValue() == TR::wrtbari) &&
+   if ((node->getOpCodeValue() == TR::awrtbari) &&
        !node->getSymbolReference()->getSymbol()->isArrayShadowSymbol() &&
        !vp->comp()->getOption(TR_DisableWriteBarriersRangeCheck))
       {

@@ -303,7 +303,7 @@ TR_Arrayset::checkArrayStore(TR::Node * storeNode)
 bool
 TR_Arraycopy::checkArrayStore(TR::Node * storeNode)
    {
-   if (!storeNode->getOpCode().isStoreIndirect() && !(storeNode->getOpCodeValue() == TR::treetop && storeNode->getFirstChild()->getOpCodeValue() == TR::wrtbari))
+   if (!storeNode->getOpCode().isStoreIndirect() && !(storeNode->getOpCodeValue() == TR::treetop && storeNode->getFirstChild()->getOpCodeValue() == TR::awrtbari))
       {
       dumpOptDetails(comp(), "arraycopy arraystore tree does not have an indirect store as root\n");
       return false;

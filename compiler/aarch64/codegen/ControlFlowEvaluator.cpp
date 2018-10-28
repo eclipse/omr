@@ -33,10 +33,10 @@ genericReturnEvaluator(TR::Node *node, TR::RealRegister::RegNum rnum, TR_Registe
    TR::Node *firstChild = node->getFirstChild();
    TR::Register *returnRegister = cg->evaluate(firstChild);
 
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
-   addDependency(deps, returnRegister, rnum, rk, cg);
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 0, cg->trMemory());
+   deps->addPreCondition(returnRegister, rnum);
+   generateAdminInstruction(cg, TR::InstOpCode::retn, node, deps);
 
-   generateAdminInstruction(cg, TR::InstOpCode::ret, node, deps);
    cg->comp()->setReturnInfo(i);
    cg->decReferenceCount(firstChild);
 
@@ -63,7 +63,7 @@ OMR::ARM64::TreeEvaluator::returnEvaluator(TR::Node *node, TR::CodeGenerator *cg
    {
 	// TODO:ARM64: Enable TR::TreeEvaluator::ificmpeqEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
 
-   generateAdminInstruction(cg, TR::InstOpCode::ret, node);
+   generateAdminInstruction(cg, TR::InstOpCode::retn, node);
    cg->comp()->setReturnInfo(TR_VoidReturn);
    return NULL;
    }

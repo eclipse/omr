@@ -543,7 +543,7 @@ TR::Register *OMR::ARM::TreeEvaluator::commonLoadEvaluator(TR::Node *node,  TR_A
    }
 
 #if J9_PROJECT_SPECIFIC
-TR::Register *OMR::ARM::TreeEvaluator::wrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *OMR::ARM::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::MemoryReference *tempMR              = new (cg->trHeapMemory()) TR::MemoryReference(node, 4, cg);
    TR::Register            *destinationRegister = cg->evaluate(node->getSecondChild());
@@ -589,7 +589,7 @@ TR::Register *OMR::ARM::TreeEvaluator::wrtbarEvaluator(TR::Node *node, TR::CodeG
    return NULL;
    }
 
-TR::Register *OMR::ARM::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *OMR::ARM::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::MemoryReference *tempMR              = new (cg->trHeapMemory()) TR::MemoryReference(node, 4, cg);
    TR::Register            *destinationRegister = cg->evaluate(node->getChild(2));

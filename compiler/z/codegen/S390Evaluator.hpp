@@ -280,7 +280,6 @@ class arraycmpWithPadHelper
    void generateCLCLitPoolPadding();
    void generateCLCFoldedIfResult();
    void chooseCLCBranchConditions();
-   void setStartInternalControlFlow(TR::Instruction * cursor);
    TR::MemoryReference *  convertToShortDispMemRef(TR::Node * node,
                                                       TR::MemoryReference * largeDispMemRef,
                                                       TR::Register * &largeDispReg,

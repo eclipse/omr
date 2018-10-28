@@ -113,6 +113,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::X86::TreeEvaluator
    static TR::Register *integerPairMinMaxEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lternaryEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lcmpsetEvaluator(TR::Node *n, TR::CodeGenerator *cg);
+   static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    private:
 

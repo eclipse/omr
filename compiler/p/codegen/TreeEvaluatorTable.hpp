@@ -64,17 +64,29 @@
    TR::TreeEvaluator::fstoreEvaluator,                  // TR::fstore
    TR::TreeEvaluator::dstoreEvaluator,                  // TR::dstore
    TR::TreeEvaluator::astoreEvaluator,                  // TR::astore
-   TR::TreeEvaluator::badILOpEvaluator,                    // TR::wrtbar (J9)
    TR::TreeEvaluator::bstoreEvaluator,                  // TR::bstore
    TR::TreeEvaluator::sstoreEvaluator,                  // TR::sstore
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::iwrtbar
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::lwrtbar
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::fwrtbar
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::dwrtbar
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::awrtbar
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::bwrtbar
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::swrtbar
    TR::TreeEvaluator::lstoreEvaluator,                  // TR::lstorei
    TR::TreeEvaluator::fstoreEvaluator,                  // TR::fstorei
    TR::TreeEvaluator::dstoreEvaluator,                  // TR::dstorei
    TR::TreeEvaluator::astoreEvaluator,                  // TR::astorei
-   TR::TreeEvaluator::badILOpEvaluator,                    // TR::wrtbari (J9)
    TR::TreeEvaluator::bstoreEvaluator,                  // TR::bstorei
    TR::TreeEvaluator::sstoreEvaluator,                  // TR::sstorei
    TR::TreeEvaluator::istoreEvaluator,                  // TR::istorei
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::lwrtbari
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::fwrtbari
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::dwrtbari
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::awrtbari
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::bwrtbari
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::swrtbari
+   TR::TreeEvaluator::badILOpEvaluator,                 // TR::iwrtbari
    TR::TreeEvaluator::gotoEvaluator,                    // TR::Goto
    TR::TreeEvaluator::ireturnEvaluator,                 // TR::ireturn
    TR::TreeEvaluator::lreturnEvaluator,                 // TR::lreturn

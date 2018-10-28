@@ -67,7 +67,7 @@
 #endif
 
 TR::S390ConstantDataSnippet::S390ConstantDataSnippet(TR::CodeGenerator * cg, TR::Node * n, void * c, uint16_t size) :
-   TR::Snippet(cg, n, TR::LabelSymbol::create(cg->trHeapMemory(),cg), false)
+   TR::Snippet(cg, n, generateLabelSymbol(cg), false)
    {
 
    if (c)
@@ -443,7 +443,7 @@ TR::S390JNICallDataSnippet::getLength(int32_t estimatedSnippetStart)
 
 TR::S390JNICallDataSnippet::S390JNICallDataSnippet(TR::CodeGenerator * cg,
                                TR::Node * node)
-: TR::S390ConstantDataSnippet(cg, node, TR::LabelSymbol::create(cg->trHeapMemory(),cg),0),
+: TR::S390ConstantDataSnippet(cg, node, generateLabelSymbol(cg),0),
  _baseRegister(0),
  _ramMethod(0),
  _JNICallOutFrameFlags(0),

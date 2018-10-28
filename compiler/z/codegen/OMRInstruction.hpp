@@ -125,12 +125,6 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
    bool isCCuseKnown() { return _flags.testAny(CCuseKnown); }
    void setCCuseKnown() {_flags.set(CCuseKnown);}
 
-   bool isStartInternalControlFlow(){ return _flags.testAny(StartInternalControlFlow); }
-   void setStartInternalControlFlow() {_flags.set(StartInternalControlFlow);}
-
-   bool isEndInternalControlFlow(){ return _flags.testAny(EndInternalControlFlow); }
-   void setEndInternalControlFlow() {_flags.set(EndInternalControlFlow);}
-
    // Region numbers start life as just the inline indexes
    // but are later extended by any optimization that duplicates
    // IL (e.g. loopCanonicalizer)

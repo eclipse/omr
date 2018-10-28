@@ -63,17 +63,29 @@
    dftSimplifier,           // TR::fstore
    dftSimplifier,           // TR::dstore
    astoreSimplifier,        // TR::astore
-   dftSimplifier,           // TR::wrtbar
    dftSimplifier,           // TR::bstore
    dftSimplifier,           // TR::sstore
+   directStoreSimplifier,   // TR::iwrtbar
+   lstoreSimplifier,        // TR::lwrtbar
+   dftSimplifier,           // TR::fwrtbar
+   dftSimplifier,           // TR::dwrtbar
+   dftSimplifier,           // TR::awrtbar
+   dftSimplifier,           // TR::bwrtbar
+   dftSimplifier,           // TR::swrtbar
    indirectStoreSimplifier, // TR::lstorei
    indirectStoreSimplifier, // TR::fstorei
    indirectStoreSimplifier, // TR::dstorei
    indirectStoreSimplifier, // TR::astorei
-   indirectStoreSimplifier, // TR::wrtbari
    indirectStoreSimplifier, // TR::bstorei
    indirectStoreSimplifier, // TR::sstorei
    indirectStoreSimplifier, // TR::istorei
+   indirectStoreSimplifier, // TR::lwrtbari
+   indirectStoreSimplifier, // TR::fwrtbari
+   indirectStoreSimplifier, // TR::dwrtbari
+   indirectStoreSimplifier, // TR::awrtbari
+   indirectStoreSimplifier, // TR::bwrtbari
+   indirectStoreSimplifier, // TR::swrtbari
+   indirectStoreSimplifier, // TR::iwrtbari
    gotoSimplifier,          // TR::Goto
    dftSimplifier,           // TR::ireturn
    dftSimplifier,           // TR::lreturn

@@ -263,7 +263,7 @@ OMR::CodeGenerator::evaluate(TR::Node * node)
          {
          if (((node->getOpCode().isStoreIndirect() &&
                (self()->comp()->useCompressedPointers() && (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address))) ||
-                opcode == TR::wrtbari) &&
+                opcode == TR::awrtbari) &&
                node->getReferenceCount() <= 2 &&
                !checkRefCount)
             checkRefCount = true;

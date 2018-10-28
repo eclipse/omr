@@ -223,7 +223,7 @@ class OMR_EXTENSIBLE Instruction
 
    bool    requiresAtomicPatching();
 
-   int32_t getMaxPatchableInstructionLength() { return 0; } // no virt
+   int32_t getMaxPatchableInstructionLength() { return 0; }
 
    bool isMergeableGuard();
 

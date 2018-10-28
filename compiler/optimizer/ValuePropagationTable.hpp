@@ -203,17 +203,29 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainStore,           // TR::fstore
    constrainStore,           // TR::dstore
    constrainAstore,          // TR::astore
-   constrainWrtBar,          // TR::wrtbar
    constrainIntStore,        // TR::bstore
    constrainIntStore,        // TR::sstore
+   constrainIntStore,        // TR::iwrtbar
+   constrainLongStore,       // TR::lwrtbar
+   constrainStore,           // TR::fwrtbar
+   constrainStore,           // TR::dwrtbar
+   constrainWrtBar,          // TR::awrtbar
+   constrainIntStore,        // TR::bwrtbar
+   constrainIntStore,        // TR::swrtbar
    constrainStore,           // TR::lstorei
    constrainStore,           // TR::fstorei
    constrainStore,           // TR::dstorei
    constrainAstore,          // TR::astorei
-   constrainWrtBar,          // TR::wrtbari
    constrainStore,           // TR::bstorei
    constrainStore,           // TR::sstorei
    constrainStore,           // TR::istorei
+   constrainStore,           // TR::lwrtbari
+   constrainStore,           // TR::fwrtbari
+   constrainStore,           // TR::dwrtbari
+   constrainWrtBar,          // TR::awrtbari
+   constrainStore,           // TR::bwrtbari
+   constrainStore,           // TR::swrtbari
+   constrainStore,           // TR::iwrtbari
    constrainGoto,            // TR::Goto
    constrainReturn,          // TR::ireturn
    constrainReturn,          // TR::lreturn

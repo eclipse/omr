@@ -1471,7 +1471,7 @@ TR_S390BinaryCommutativeAnalyser::longAddAnalyser(TR::Node * root, TR::InstOpCod
    TR::Node * firstChild;
    TR::Node * secondChild;
    TR::Register * highSum = NULL;
-   TR::LabelSymbol * doneLAdd = TR::LabelSymbol::create(cg()->trHeapMemory(),cg());
+   TR::LabelSymbol * doneLAdd = generateLabelSymbol(cg());
    TR::Instruction * cursor = NULL;
    TR::RegisterDependencyConditions * dependencies = NULL;
    TR::Register * twoLow;

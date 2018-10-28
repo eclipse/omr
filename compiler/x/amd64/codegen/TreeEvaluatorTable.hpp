@@ -65,17 +65,29 @@
    TR::TreeEvaluator::floatingPointStoreEvaluator,                     // TR::fstore
    TR::TreeEvaluator::floatingPointStoreEvaluator,                     // TR::dstore
    TR::TreeEvaluator::lstoreEvaluator,                                 // TR::astore
-   TR::TreeEvaluator::badILOpEvaluator,                                // TR::wrtbar (J9)
    TR::TreeEvaluator::bstoreEvaluator,                                 // TR::bstore
    TR::TreeEvaluator::sstoreEvaluator,                                 // TR::sstore
+   TR::TreeEvaluator::iwrtbarEvaluator,                                // TR::iwrtbar
+   TR::TreeEvaluator::lwrtbarEvaluator,                                // TR::lwrtbar
+   TR::TreeEvaluator::fwrtbarEvaluator,                                // TR::fwrtbar
+   TR::TreeEvaluator::dwrtbarEvaluator,                                // TR::dwrtbar
+   TR::TreeEvaluator::awrtbarEvaluator,                                // TR::awrtbar
+   TR::TreeEvaluator::bwrtbarEvaluator,                                // TR::bwrtbar
+   TR::TreeEvaluator::swrtbarEvaluator,                                // TR::swrtbar
    TR::TreeEvaluator::lstoreEvaluator,                                 // TR::lstorei
    TR::TreeEvaluator::floatingPointStoreEvaluator,                     // TR::fstorei
    TR::TreeEvaluator::floatingPointStoreEvaluator,                     // TR::dstorei
    TR::TreeEvaluator::lstoreEvaluator,                                 // TR::astorei
-   TR::TreeEvaluator::badILOpEvaluator,                                // TR::wrtbari (J9)
    TR::TreeEvaluator::bstoreEvaluator,                                 // TR::bstorei
    TR::TreeEvaluator::sstoreEvaluator,                                 // TR::sstorei
    TR::TreeEvaluator::istoreEvaluator,                                 // TR::istorei
+   TR::TreeEvaluator::lwrtbarEvaluator,                                // TR::lwrtbari
+   TR::TreeEvaluator::fwrtbarEvaluator,                                // TR::fwrtbari
+   TR::TreeEvaluator::dwrtbarEvaluator,                                // TR::dwrtbari
+   TR::TreeEvaluator::awrtbarEvaluator,                                // TR::awrtbari
+   TR::TreeEvaluator::bwrtbarEvaluator,                                // TR::bwrtbari
+   TR::TreeEvaluator::swrtbarEvaluator,                                // TR::swrtbari
+   TR::TreeEvaluator::iwrtbarEvaluator,                                // TR::iwrtbari
    TR::TreeEvaluator::gotoEvaluator,                                   // TR::Goto
    TR::TreeEvaluator::integerReturnEvaluator,                          // TR::ireturn
    TR::TreeEvaluator::integerReturnEvaluator,                          // TR::lreturn

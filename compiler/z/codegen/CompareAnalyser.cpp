@@ -291,7 +291,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
 
       if (firstHighZero == false || secondHighZero == false)
          {
-         TR::LabelSymbol * cflowRegionStart = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
+         TR::LabelSymbol * cflowRegionStart = generateLabelSymbol(_cg);
          cflowRegionStart->setStartInternalControlFlow();
          internalControlFlowStarted = true;
          generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, root, cflowRegionStart);
@@ -401,7 +401,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
 
       if (firstHighZero == false || secondHighZero == false)
          {
-         TR::LabelSymbol * cflowRegionStart = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
+         TR::LabelSymbol * cflowRegionStart = generateLabelSymbol(_cg);
          cflowRegionStart->setStartInternalControlFlow();
          internalControlFlowStarted = true;
          generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, root, cflowRegionStart);
@@ -508,7 +508,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
 
       if (firstHighZero == false || secondHighZero == false)
          {
-         TR::LabelSymbol * cflowRegionStart = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
+         TR::LabelSymbol * cflowRegionStart = generateLabelSymbol(_cg);
          cflowRegionStart->setStartInternalControlFlow();
          internalControlFlowStarted = true;
          generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, root, cflowRegionStart);

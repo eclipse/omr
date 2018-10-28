@@ -2321,14 +2321,14 @@ int32_t childTypes[] =
    TR::Float,                      // TR::fstore
    TR::Double,                     // TR::dstore
    TR::Address,                    // TR::astore
-   TR::Address,                    // TR::wrtbar
+   TR::Address,                    // TR::awrtbar
    TR::Int8,                      // TR::bstore
    TR::Int16,                     // TR::sstore
    TR::Int64 | (TR::Address<<8),   // TR::lstorei
    TR::Float | (TR::Address<<8),    // TR::fstorei
    TR::Double | (TR::Address<<8),   // TR::dstorei
    TR::Address,                    // TR::astorei
-   TR::Address,                    // TR::wrtbari
+   TR::Address,                    // TR::awrtbari
    TR::Int8 | (TR::Address<<8),    // TR::bstorei
    TR::Int16 | (TR::Address<<8),   // TR::sstorei
    TR::Int32 | (TR::Address<<8),   // TR::istorei

@@ -806,6 +806,37 @@ TR::Register *OMR::X86::TreeEvaluator::lrdbarEvaluator(TR::Node *node, TR::CodeG
    return TR::TreeEvaluator::lloadEvaluator(node, cg);
    }
 
+
+TR::Register *OMR::X86::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::istoreEvaluator(node,cg);
+   }
+
+TR::Register *OMR::X86::TreeEvaluator::fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
+   }
+
+TR::Register *OMR::X86::TreeEvaluator::bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::bstoreEvaluator(node, cg);
+   }
+
+TR::Register *OMR::X86::TreeEvaluator::swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::sstoreEvaluator(node, cg);
+   }
+
+TR::Register *OMR::X86::TreeEvaluator::lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   }
+
 // cloadEvaluator handled by sloadEvaluator
 
 // iiload handled by iloadEvaluator

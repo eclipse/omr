@@ -84,6 +84,11 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *istoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *sstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);

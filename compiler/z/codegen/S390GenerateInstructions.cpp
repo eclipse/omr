@@ -940,7 +940,7 @@ generateRXFInstruction(TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op, TR::
    if (preced)
       instr = new (INSN_HEAP) TR::S390RXFInstruction(op, n, treg, sreg, mf, preced, cg);
    else
-   	  instr = new (INSN_HEAP) TR::S390RXFInstruction(op, n, treg, sreg, mf, cg);
+           instr = new (INSN_HEAP) TR::S390RXFInstruction(op, n, treg, sreg, mf, cg);
 
    return instr;
    }
@@ -1362,7 +1362,7 @@ generateS390MemInstruction(TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op, 
    if (preced)
       instr = new (INSN_HEAP) TR::S390MemInstruction(op, n, constantField, memAccessMode, mf, preced, cg);
    else
-   	  instr = new (INSN_HEAP) TR::S390MemInstruction(op, n, constantField, memAccessMode, mf, cg);
+           instr = new (INSN_HEAP) TR::S390MemInstruction(op, n, constantField, memAccessMode, mf, cg);
 
    return instr;
    }
@@ -1442,7 +1442,7 @@ generateSS1Instruction(TR::CodeGenerator * cg,
    if (preced)
       instr = new (INSN_HEAP) TR::S390SS1Instruction(op, n, len, mf1, mf2, cond, preced, cg);
    else
-   	  instr = new (INSN_HEAP) TR::S390SS1Instruction(op, n, len, mf1, mf2, cond, cg);
+           instr = new (INSN_HEAP) TR::S390SS1Instruction(op, n, len, mf1, mf2, cond, cg);
 
    return instr;
    }
@@ -2186,7 +2186,7 @@ generateS390PseudoInstruction(TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic o
       instr=new (INSN_HEAP) TR::S390PseudoInstruction(op, n, fenceNode, cond, preced, cg);
       }
    else
-   	  {
+           {
       instr= new (INSN_HEAP) TR::S390PseudoInstruction(op, n, fenceNode, cond, cg);
       }
 
@@ -2306,7 +2306,7 @@ generateDirectCall(TR::CodeGenerator * cg, TR::Node * callNode, bool myself, TR:
 
    // Direct calls on 64-bit systems may require a trampoline. As the trampoline will kill the EP register we should
    // always see the EP register defined in the post-dependencies of such calls.
-#if defined(TR_TARGET_64BIT) 
+#if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
    if (comp->getOption(TR_EnableRMODE64))
 #endif
@@ -2355,11 +2355,11 @@ generateDirectCall(TR::CodeGenerator * cg, TR::Node * callNode, bool myself, TR:
             {
             static int minFR = (feGetEnv("TR_minFR") != NULL) ? atoi(feGetEnv("TR_minFR")) : 0;
             static int maxFR = (feGetEnv("TR_maxFR") != NULL) ? atoi(feGetEnv("TR_maxFR")) : 0;
-             
+
             int32_t frequency = comp->getCurrentBlock()->getFrequency();
             if (frequency > 6 && frequency >= minFR && (maxFR == 0 || frequency > maxFR))
                {
-               TR::LabelSymbol * callLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+               TR::LabelSymbol * callLabel = generateLabelSymbol(cg);
                TR::Instruction * instr = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, callLabel);
                cg->createBranchPreloadCallData(callLabel, callSymRef, instr);
                }
@@ -2400,7 +2400,7 @@ generateDirectCall(TR::CodeGenerator * cg, TR::Node * callNode, bool myself, TR:
          }
 #endif
 
-      }  
+      }
    }
 
 TR::Instruction* generateDataConstantInstruction(TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic op, TR::Node* node, uint32_t data, TR::Instruction* preced)
@@ -2440,7 +2440,7 @@ generateSnippetCall(TR::CodeGenerator * cg, TR::Node * callNode, TR::Snippet * s
       // Need to put the preDeps on the label, and not on the BRASL
       // because we use virtual reg from preDeps after the BRASL
       // In particular, we use the this pointer reg, which  has a preDep to GPR1
-      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, TR::LabelSymbol::create(INSN_HEAP, cg), preDeps);
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, generateLabelSymbol(cg), preDeps);
 
       callInstr = new (INSN_HEAP) TR::S390RILInstruction(TR::InstOpCode::BRASL, callNode, killRegRA, s,
          postDeps, callSymRef, cg);
@@ -2536,7 +2536,7 @@ generateRegLitRefInstruction(TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op
          {
          TR_OpaqueClassBlock* unloadableClass = NULL;
          bool isMethod = node->getOpCodeValue() == TR::loadaddr ? false : node->isMethodPointerConstant();
-	 if (isMethod)
+       if (isMethod)
             {
             unloadableClass = (TR_OpaqueClassBlock *) cg->fe()->createResolvedMethod(cg->trMemory(), (TR_OpaqueMethodBlock *)(intptr_t)imm,
                comp->getCurrentMethod())->classOfMethod();
@@ -3459,7 +3459,7 @@ generateS390DAAExceptionRestoreSnippet(TR::CodeGenerator* cg,
       TR::LabelSymbol * handlerLabel = cg->getCurrentBCDCHKHandlerLabel();
       TR_ASSERT(handlerLabel, "BCDCHK node handler label should not be null");
 
-      TR::LabelSymbol* restoreGPR7SnippetHandler = TR::LabelSymbol::create(INSN_HEAP,cg);
+      TR::LabelSymbol* restoreGPR7SnippetHandler = generateLabelSymbol(cg);
       TR::S390RestoreGPR7Snippet * restoreSnippet =
                      new (INSN_HEAP) TR::S390RestoreGPR7Snippet(cg, n, restoreGPR7SnippetHandler, handlerLabel);
       cg->addSnippet(restoreSnippet);

@@ -223,9 +223,9 @@ OMR::ARM64::TreeEvaluator::cloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	}
 
 TR::Register *
-OMR::ARM64::TreeEvaluator::wrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+OMR::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::wrtbarEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
+	// TODO:ARM64: Enable TR::TreeEvaluator::awrtbarEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
 	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
 	}
 

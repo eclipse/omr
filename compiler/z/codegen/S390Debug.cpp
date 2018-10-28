@@ -369,16 +369,6 @@ TR_Debug::printz(TR::FILE *pOutFile, TR::Instruction * instr)
    //  dump the inst's post deps
    if (instr->getOpCodeValue() != TR::InstOpCode::ASSOCREGS && _comp->cg()->getCodeGeneratorPhase() <= TR::CodeGenPhase::BinaryEncodingPhase)
       dumpDependencies(pOutFile, instr, false, true);
-
-   if(instr->isStartInternalControlFlow())
-      {
-      trfprintf(pOutFile, "\t# (Start of internal control flow)");
-      }
-   if(instr->isEndInternalControlFlow())
-      {
-      trfprintf(pOutFile, "\t# (End of internal control flow)");
-      }
-
    }
 
 TR::Instruction*

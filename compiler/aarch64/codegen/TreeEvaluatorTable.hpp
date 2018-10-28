@@ -64,17 +64,30 @@
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::fstoreEvaluator ,	// TR::fstore		// store float
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::dstoreEvaluator ,	// TR::dstore		// store double
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::astoreEvaluator ,	// TR::astore		// store address
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::wrtbarEvaluator ,	// TR::wrtbar		// direct write barrier store checks for new space in old space reference store the first child is the value as in astore.  The second child is the address of the object that must be checked for old space the symbol reference holds addresses; flags and offsets as in astore
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::bstoreEvaluator ,	// TR::bstore		// store byte
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::sstoreEvaluator ,	// TR::sstore		// store short integer
+    TR::TreeEvaluator::unImpOpEvaluator,         // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::iwrtbarEvaluator , //TR::iwrtbar
+    TR::TreeEvaluator::unImpOpEvaluator,         // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::lwrtbarEvaluator , //TR::lwrtbar
+    TR::TreeEvaluator::unImpOpEvaluator,         // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::fwrtbarEvaluator , //TR::fwrtbar
+    TR::TreeEvaluator::unImpOpEvaluator,         // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::dwrtbarEvaluator , //TR::dwrtbar
+    TR::TreeEvaluator::unImpOpEvaluator,         // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::awrtbarEvaluator , //TR::awrtbar
+    TR::TreeEvaluator::unImpOpEvaluator,         // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::bwrtbarEvaluator , //TR::bwrtbar
+    TR::TreeEvaluator::unImpOpEvaluator,         // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::swrtbarEvaluator , //TR::swrtbar
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::lstoreiEvaluator ,	// TR::lstorei		// store indirect long integer           (child1 a; child2 l)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::fstoreiEvaluator ,	// TR::fstorei		// store indirect float                  (child1 a; child2 f)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::dstoreiEvaluator ,	// TR::dstorei		// store indirect double                 (child1 a; child2 d)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::astoreiEvaluator ,	// TR::astorei		// store indirect address                (child1 a dest; child2 a value)
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::wrtbariEvaluator ,	// TR::wrtbari		// indirect write barrier store checks for new space in old space reference store The first two children are as in astorei.  The third child is address of the beginning of the destination object.  For putfield this will often be the same as the first child (when the offset is on the symbol reference. But for array references; children 1 and 3 will be quite different although child 1's subtree will contain a reference to child 3's subtree
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::bstoreiEvaluator ,	// TR::bstorei		// store indirect byte                   (child1 a; child2 b)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::sstoreiEvaluator ,	// TR::sstorei		// store indirect short integer          (child1 a; child2 s)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::istoreiEvaluator ,	// TR::istorei		// store indirect integer                (child1 a; child2 i)
+    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::lwrtbariEvaluator , // TR::lwrtbari
+    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::fwrtbariEvaluator , // TR::fwrtbari
+    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::dwrtbariEvaluator , // TR::dwrtbari
+    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::awrtbariEvaluator , // TR::awrtbari
+    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::bwrtbariEvaluator , // TR::bwrtbari
+    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::swrtbariEvaluator , // TR::swrtbari
+    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::iwrtbariEvaluator , // TR::iwrtbari
+
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::GotoEvaluator ,	// TR::Goto		// goto label address
     TR::TreeEvaluator::ireturnEvaluator, // TR::ireturn		// return an integer
     TR::TreeEvaluator::lreturnEvaluator, // TR::lreturn		// return a long integer

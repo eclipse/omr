@@ -749,7 +749,7 @@ void TR_FieldPrivatizer::privatizeFields(TR::Node *node, bool postDominatesEntry
                if (opCode.isStore())
                   {
                   _needToStoreBack->set(autoForField->getReferenceNumber());
-                  if (node->getOpCodeValue() == TR::wrtbar)
+                  if (node->getOpCodeValue() == TR::awrtbar)
                      {
                      node->getChild(1)->recursivelyDecReferenceCount();
                      node->setNumChildren(1);

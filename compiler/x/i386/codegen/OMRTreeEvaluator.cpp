@@ -3761,3 +3761,15 @@ OMR::X86::I386::TreeEvaluator::lcmpsetEvaluator(TR::Node *node, TR::CodeGenerato
 
    return resultReg;
    }
+
+TR::Register *OMR::X86::I386::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::istoreEvaluator(node, cg);
+   }
+
+TR::Register *OMR::X86::I386::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::dstoreEvaluator(node, cg);
+   }

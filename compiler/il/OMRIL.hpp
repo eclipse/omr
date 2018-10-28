@@ -47,9 +47,11 @@ class OMR_EXTENSIBLE IL
    static TR::ILOpCodes opCodesForDirectLoad[];
    static TR::ILOpCodes opCodesForDirectReadBarrier[];
    static TR::ILOpCodes opCodesForDirectStore[];
+   static TR::ILOpCodes opCodesForDirectWriteBarrier[];
    static TR::ILOpCodes opCodesForIndirectLoad[];
    static TR::ILOpCodes opCodesForIndirectReadBarrier[];
    static TR::ILOpCodes opCodesForIndirectStore[];
+   static TR::ILOpCodes opCodesForIndirectWriteBarrier[];
    static TR::ILOpCodes opCodesForIndirectArrayLoad[];
    static TR::ILOpCodes opCodesForIndirectArrayStore[];
    static TR::ILOpCodes opCodesForRegisterLoad[];
@@ -76,9 +78,11 @@ class OMR_EXTENSIBLE IL
    TR::ILOpCodes opCodeForDirectLoad(TR::DataType dt);
    TR::ILOpCodes opCodeForDirectReadBarrier(TR::DataType dt);
    TR::ILOpCodes opCodeForDirectStore(TR::DataType dt);
+   TR::ILOpCodes opCodeForDirectWriteBarrier(TR::DataType dt);
    TR::ILOpCodes opCodeForIndirectLoad(TR::DataType dt);
    TR::ILOpCodes opCodeForIndirectReadBarrier(TR::DataType dt);
    TR::ILOpCodes opCodeForIndirectStore(TR::DataType dt);
+   TR::ILOpCodes opCodeForIndirectWriteBarrier(TR::DataType dt);
    TR::ILOpCodes opCodeForIndirectArrayLoad(TR::DataType dt);
    TR::ILOpCodes opCodeForIndirectArrayStore(TR::DataType dt);
    TR::ILOpCodes opCodeForRegisterLoad(TR::DataType dt);

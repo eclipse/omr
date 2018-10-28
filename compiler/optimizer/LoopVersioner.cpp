@@ -2771,13 +2771,13 @@ bool TR_LoopVersioner::detectInvariantIwrtbars(List<TR::TreeTop> *iwrtbarTrees)
       {
       TR::Node *node = nextTree->getData()->getNode();
       bool isBaseInvariant = false;
-      if (node->getOpCodeValue() != TR::wrtbari)
+      if (node->getOpCodeValue() != TR::awrtbari)
         node = node->getFirstChild();
 
       if (trace())
          traceMsg(comp(), "base invariant 0 in %p\n", node);
 
-      if (node->getOpCodeValue() == TR::wrtbari)
+      if (node->getOpCodeValue() == TR::awrtbari)
          {
          if (trace())
             traceMsg(comp(), "base invariant 1 in %p\n", node);
@@ -2909,13 +2909,13 @@ bool TR_LoopVersioner::hasWrtbarBeenSeen(List<TR::TreeTop> *iwrtbarTrees, TR::No
       {
       TR::Node *node = nextTree->getData()->getNode();
 
-      if (node->getOpCodeValue() != TR::wrtbari)
+      if (node->getOpCodeValue() != TR::awrtbari)
         node = node->getFirstChild();
 
       if (trace())
          traceMsg(comp(), "base invariant 0 in %p\n", node);
 
-      if (node->getOpCodeValue() == TR::wrtbari)
+      if (node->getOpCodeValue() == TR::awrtbari)
          {
          if (node == iwrtbarNode)
            return true;
@@ -3465,11 +3465,11 @@ bool TR_LoopVersioner::detectChecksToBeEliminated(TR_RegionStructure *whileLoop,
                  comp()->getOptions()->getGcMode() == TR_WrtbarOldCheck)
                {
                TR::Node *possibleIwrtbarNode = currentTree->getNode();
-               if ((currentOpCode.getOpCodeValue() != TR::wrtbari) &&
+               if ((currentOpCode.getOpCodeValue() != TR::awrtbari) &&
                   (possibleIwrtbarNode->getNumChildren() > 0))
                   possibleIwrtbarNode = possibleIwrtbarNode->getFirstChild();
 
-               if ((possibleIwrtbarNode->getOpCodeValue() == TR::wrtbari) &&
+               if ((possibleIwrtbarNode->getOpCodeValue() == TR::awrtbari) &&
                   !possibleIwrtbarNode->skipWrtBar() &&
                    !hasWrtbarBeenSeen(iwrtbarTrees, possibleIwrtbarNode))
                   {
@@ -4387,7 +4387,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
          TR::TreeTop *nextTreeTop = arrayStoreCheckTree->getNextTreeTop();
          TR::TreeTop *firstNewTree = TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, arrayStoreCheckNode->getFirstChild()), NULL, NULL);
          TR::Node *child = arrayStoreCheckNode->getFirstChild();
-         if (child->getOpCodeValue() == TR::wrtbari && comp()->getOptions()->getGcMode() == TR_WrtbarNone &&
+         if (child->getOpCodeValue() == TR::awrtbari && comp()->getOptions()->getGcMode() == TR_WrtbarNone &&
             performTransformation(comp(), "%sChanging iwrtbar node [%p] to an iastore\n", OPT_DETAILS_LOOP_VERSIONER, child))
             {
             TR::Node::recreate(child, TR::astorei);
@@ -4401,7 +4401,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
          TR_ASSERT((arrayStoreCheckNode->getNumChildren() == 2), "Unknown array store check tree\n");
          secondNewTree = TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, arrayStoreCheckNode->getSecondChild()), NULL, NULL);
          child = arrayStoreCheckNode->getSecondChild();
-         if (child->getOpCodeValue() == TR::wrtbari && comp()->getOptions()->getGcMode() == TR_WrtbarNone &&
+         if (child->getOpCodeValue() == TR::awrtbari && comp()->getOptions()->getGcMode() == TR_WrtbarNone &&
              performTransformation(comp(), "%sChanging iwrtbar node [%p] to an iastore\n", OPT_DETAILS_LOOP_VERSIONER, child))
             {
             TR::Node::recreate(child, TR::astorei);
@@ -5146,7 +5146,7 @@ void TR_LoopVersioner::buildIwrtbarComparisonsTree(List<TR::TreeTop> *iwrtbarTre
       {
       TR::TreeTop *iwrtbarTree = nextTree->getData();
       TR::Node *iwrtbarNode = iwrtbarTree->getNode();
-      if (iwrtbarNode->getOpCodeValue() != TR::wrtbari)
+      if (iwrtbarNode->getOpCodeValue() != TR::awrtbari)
         iwrtbarNode = iwrtbarNode->getFirstChild();
 
       //traceMsg(comp(), "iwrtbar node %p\n", iwrtbarNode);

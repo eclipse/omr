@@ -85,14 +85,14 @@ public:
 	static TR::Register *fstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *dstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *astoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-	static TR::Register *wrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+	static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *bstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *sstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *lstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *fstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *dstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *astoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-	static TR::Register *wrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+	static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *bstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *sstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *istoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);

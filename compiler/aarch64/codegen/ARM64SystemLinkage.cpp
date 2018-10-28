@@ -287,8 +287,8 @@ TR::ARM64SystemLinkage::mapStack(TR::ResolvedMethodSymbol *method)
          }
       }
 
-   // save the stack frame size, aligned to 8 bytes
-   stackIndex = (stackIndex + 7) & (~7);
+   // save the stack frame size, aligned to 16 bytes
+   stackIndex = (stackIndex + 15) & (~15);
    cg()->setFrameSizeInBytes(stackIndex);
 
    nextIntArgReg = 0;
@@ -483,8 +483,9 @@ TR::ARM64SystemLinkage::createEpilogue(TR::Instruction *cursor)
       }
 
    // restore link register (x30)
+   TR::RealRegister *lr = machine->getARM64RealRegister(TR::RealRegister::lr);
    TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, bodySymbol->getLocalMappingCursor(), codeGen);
-   cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, machine->getARM64RealRegister(TR::RealRegister::lr), stackSlot, cursor);
+   cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, lr, stackSlot, cursor);
 
    // remove space for preserved registers
    uint32_t frameSize = codeGen->getFrameSizeInBytes();
@@ -498,7 +499,7 @@ TR::ARM64SystemLinkage::createEpilogue(TR::Instruction *cursor)
       }
 
    // return
-   cursor = generateInstruction(codeGen, TR::InstOpCode::ret, lastNode, cursor);
+   cursor = generateRegBranchInstruction(codeGen, TR::InstOpCode::ret, lastNode, lr, cursor);
    }
 
 

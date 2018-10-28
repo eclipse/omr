@@ -64,25 +64,37 @@
    TR::TreeEvaluator::fstoreEvaluator,      // TR::fstore
    TR::TreeEvaluator::dstoreEvaluator,      // TR::dstore
    TR::TreeEvaluator::istoreEvaluator,      // TR::astore
-#if J9_PROJECT_SPECIFIC
-   TR::TreeEvaluator::wrtbarEvaluator,      // TR::wrtbar
-#else
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::wrtbar
-#endif
    TR::TreeEvaluator::bstoreEvaluator,      // TR::bstore
    TR::TreeEvaluator::sstoreEvaluator,      // TR::sstore
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::iwrtbar
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::lwrtbar
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::fwrtbar
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::dwrtbar
+#if J9_PROJECT_SPECIFIC
+   TR::TreeEvaluator::awrtbarEvaluator,      // TR::awrtbar
+#else
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::awrtbar
+#endif
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::bwrtbar
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::swrtbar
    TR::TreeEvaluator::lstoreEvaluator,      // TR::lstorei
    TR::TreeEvaluator::ifstoreEvaluator,     // TR::fstorei
    TR::TreeEvaluator::idstoreEvaluator,     // TR::dstorei
    TR::TreeEvaluator::istoreEvaluator,      // TR::astorei
-#if J9_PROJECT_SPECIFIC
-   TR::TreeEvaluator::iwrtbarEvaluator,     // TR::wrtbari
-#else
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::wrtbari
-#endif
    TR::TreeEvaluator::bstoreEvaluator,      // TR::bstorei
    TR::TreeEvaluator::sstoreEvaluator,      // TR::sstorei
    TR::TreeEvaluator::istoreEvaluator,      // TR::istorei
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::lwrtbari
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::fwrtbari
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::dwrtbari
+#if J9_PROJECT_SPECIFIC
+   TR::TreeEvaluator::awrtbariEvaluator,     // TR::awrtbari
+#else
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::awrtbari
+#endif
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::bwrtbari
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::swrtbari
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::iwrtbari
    TR::TreeEvaluator::gotoEvaluator,        // TR::Goto
    TR::TreeEvaluator::ireturnEvaluator,     // TR::ireturn
    TR::TreeEvaluator::lreturnEvaluator,     // TR::lreturn

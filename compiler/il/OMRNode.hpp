@@ -1238,7 +1238,7 @@ public:
    bool chkArrayChkReferenceArray2();
    const char * printIsArrayChkReferenceArray2();
 
-   // Flags used by TR::wrtbar and TR::iwrtbar
+   // Flags used by TR::awrtbar and TR::awrtbari
    bool skipWrtBar();
    void setSkipWrtBar(bool v);
    bool chkSkipWrtBar();

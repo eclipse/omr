@@ -37,6 +37,7 @@
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/RegisterPair.hpp"                 // for RegisterPair
 #include "codegen/Snippet.hpp"                      // for TR::S390Snippet, etc
+#include "il/symbol/LabelSymbol.hpp"                // for LabelSymbol
 #include "ras/Debug.hpp"                            // for TR_DebugBase, etc
 #include "ras/DebugCounter.hpp"
 #include "ras/Delimiter.hpp"                        // for Delimiter
@@ -532,11 +533,11 @@ TR_S390PostRAPeephole::replaceGuardedLoadWithSoftwareReadBarrier()
    _cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
 
    _cursor = generateRXInstruction(_cg, TR::InstOpCode::CG, load->getNode(), loadTargetReg,
-   		generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateBaseAddressOffset(comp()), _cg), _cursor);
+       generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateBaseAddressOffset(comp()), _cg), _cursor);
    _cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
 
    _cursor = generateRXInstruction(_cg, TR::InstOpCode::CG, load->getNode(), loadTargetReg,
-   		generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateTopAddressOffset(comp()), _cg), _cursor);
+       generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateTopAddressOffset(comp()), _cg), _cursor);
    _cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
 
    // Save result of LA to gsParameters.operandAddr as invokeJ9ReadBarrier helper expects it to be set
@@ -2256,7 +2257,7 @@ TR_S390PostRAPeephole::inlineEXtargetHelper(TR::Instruction *inst, TR::Instructi
          }
 
       // generate new label
-      TR::LabelSymbol * ssInstrLabel = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
+      TR::LabelSymbol * ssInstrLabel = generateLabelSymbol(_cg);
       TR::Instruction * labelInstr = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _cursor->getNode(), ssInstrLabel, inst);
 
       //cnstDataInstr->move(labelInstr);
@@ -2331,7 +2332,7 @@ TR_S390PostRAPeephole::inlineEXtarget()
           }
 
        // Generate branch and label
-       TR::LabelSymbol *targetLabel = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
+       TR::LabelSymbol *targetLabel = generateLabelSymbol(_cg);
        TR::Instruction *branchInstr = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, _cursor->getNode(), targetLabel, prev);
        TR::Instruction *labelInstr = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _cursor->getNode(), targetLabel, branchInstr);
        inlineEXtargetHelper(branchInstr,instrB4EX);

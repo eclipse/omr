@@ -5686,7 +5686,7 @@ TR::Node *indirectStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simpli
          }
       }
 
-   if ((node->getOpCodeValue() == TR::wrtbari) && 0 &&
+   if ((node->getOpCodeValue() == TR::awrtbari) && 0 &&
        !node->getSymbolReference()->getSymbol()->isArrayShadowSymbol())
       {
       TR::Node *valueChild = node->getSecondChild();

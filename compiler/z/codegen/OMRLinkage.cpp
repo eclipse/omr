@@ -1978,6 +1978,7 @@ OMR::Z::Linkage::pushJNIReferenceArg(TR::Node * callNode, TR::Node * child, int3
        {
        TR::Register * addrReg = self()->cg()->evaluate(child);
        TR::Register * whatReg = self()->cg()->allocateCollectedReferenceRegister();
+       TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(self()->cg());
        TR::LabelSymbol * nonNullLabel = generateLabelSymbol(self()->cg());
 
        generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), child, whatReg,
@@ -1995,16 +1996,17 @@ OMR::Z::Linkage::pushJNIReferenceArg(TR::Node * callNode, TR::Node * child, int3
           }
        generateRIInstruction(self()->cg(), TR::InstOpCode::getCmpHalfWordImmOpCode(), child, whatReg, 0);
 
-       TR::Instruction * br = generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, child, nonNullLabel);
-       br->setStartInternalControlFlow();
+       generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, child, cFlowRegionStart);
+       cFlowRegionStart->setStartInternalControlFlow();
+       generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, child, nonNullLabel);
        generateRRInstruction(self()->cg(), TR::InstOpCode::getXORRegOpCode(), child, pushRegister, pushRegister);
 
        TR::RegisterDependencyConditions * conditions = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, self()->cg());
        conditions->addPostCondition(addrReg, TR::RealRegister::AssignAny);
        conditions->addPostCondition(whatReg, TR::RealRegister::AssignAny);
 
-       TR::Instruction * labelInst = generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, child, nonNullLabel, conditions);
-       labelInst->setEndInternalControlFlow();
+       generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, child, nonNullLabel, conditions);
+       nonNullLabel->setEndInternalControlFlow();
 
        self()->cg()->stopUsingRegister(whatReg);
        }

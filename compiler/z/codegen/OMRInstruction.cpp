@@ -81,7 +81,7 @@
    _targetRegSize(0), _sourceRegSize(0), _sourceMemSize(0), _targetMemSize(0), _sourceStart(-1), _targetStart(-1)
 
 OMR::Z::Instruction::Instruction(TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic op, TR::Node* node)
-   : 
+   :
    OMR::Instruction(cg, op, node),
    CTOR_INITIALIZER_LIST
    {
@@ -91,7 +91,7 @@ OMR::Z::Instruction::Instruction(TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic
    }
 
 OMR::Z::Instruction::Instruction(TR::CodeGenerator*cg, TR::Instruction* precedingInstruction, TR::InstOpCode::Mnemonic op, TR::Node* node)
-   : 
+   :
    OMR::Instruction(cg, precedingInstruction, op, node),
    CTOR_INITIALIZER_LIST
    {
@@ -1151,11 +1151,6 @@ static bool isInternalControlFlowOneEntryOneExit(TR::Instruction *regionEnd, TR:
       done=true;
       regionStart=curr->getPrev();
       }
-    else if(curr->isStartInternalControlFlow())
-      {
-      done=true;
-      regionStart=curr->getPrev();
-      }
     }
 
   // Now check if all branches jump to lables inside region
@@ -1883,7 +1878,7 @@ OMR::Z::Instruction::attemptOpAdjustmentForLongDisplacement()
    if (instructionFormat == RXYa_FORMAT ||
        instructionFormat == RXYb_FORMAT)
       self()->setKind(IsRXY);
-   else if (instructionFormat == RSYa_FORMAT || 
+   else if (instructionFormat == RSYa_FORMAT ||
             instructionFormat == RSYb_FORMAT)
       self()->setKind(IsRSY);
    else if (instructionFormat == SIY_FORMAT)

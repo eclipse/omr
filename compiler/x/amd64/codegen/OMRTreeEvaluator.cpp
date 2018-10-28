@@ -439,3 +439,16 @@ TR::Register *OMR::X86::AMD64::TreeEvaluator::dbits2lEvaluator(TR::Node *node, T
    cg->decReferenceCount(child);
    return treg;
    }
+
+TR::Register *OMR::X86::AMD64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   }
+
+TR::Register *OMR::X86::AMD64::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
+   }
+
