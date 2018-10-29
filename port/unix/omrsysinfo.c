@@ -368,6 +368,31 @@ static int32_t retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct
 static int32_t retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
 #endif
 
+#if defined(J9ZOS390)
+#define CVTBASE  (*(struct cvt * __ptr32 * __ptr32)16)
+	struct cvt {
+		char cvtxx1 [604];
+		struct rmct *  __ptr32 cvtrmct;
+	};
+	struct rmct {
+		char rmctxx1[4];
+		struct iracct *  __ptr32 rmctcct;
+	};
+	struct iracct {
+		char cctxx1 [102];
+		short ccvutilp;    /* system CPU utilization */
+		char cctxx2 [16];
+		short ccvifact;    /* number of online IFAs (zAAPs) */
+		short ccvutila;    /* processor utilization */
+		char cctxx3 [4];
+		short ccvsupct;    /* number of online SUPs (zIIPs) */
+		char cctxx4 [14];
+		short ccvutili;    /* IFA (zAAP) utilization */
+		short ccvutils;    /* SUP (zIIP) utilization */
+	};      
+	struct iracct *cctptr;
+#endif    
+
 /**
  * @internal
  * Determines the proper portable error code to return given a native error code
@@ -2368,12 +2393,13 @@ intptr_t
 omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9SysinfoCPUTime *cpuTime)
 {
 	intptr_t status = OMRPORT_ERROR_SYSINFO_OPFAILED;
-#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX)
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) || defined(J9ZOS390)
 	/* omrtime_nano_time() gives monotonically increasing times as against omrtime_hires_clock() that
 	 * returns times that can (and does) decrease. Use this to compute timestamps.
 	 */
 	uint64_t preTimestamp = portLibrary->time_nano_time(portLibrary); /* ticks */
 	uint64_t postTimestamp; /* ticks */
+	cpuTime->cpuLoad = -1; /* initialize cpuLoad */ 
 
 #if defined(LINUX)
 	intptr_t bytesRead = -1;
@@ -2456,6 +2482,13 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	cpuTime->numberOfCpus = stats.ncpus; /* get the actual number of CPUs against which the time is reported */
 	cpuTime->cpuTime = (stats.user + stats.sys) * NS_PER_CPU_TICK;
 	status = 0;
+	
+#elif defined(J9ZOS390) /* ZOS */
+	cctptr = CVTBASE->cvtrmct->rmctcct;
+	cpuTime->numberOfCpus = portLibrary->sysinfo_get_number_CPUs_by_type(portLibrary, OMRPORT_CPU_ONLINE);
+	cpuTime->cpuLoad = cctptr->ccvutilp;
+	cpuTime->cpuTime = -1;
+	status = 0;
 #endif
 	postTimestamp = portLibrary->time_nano_time(portLibrary);
 
@@ -2466,7 +2499,7 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	/* Use the average of the timestamps before and after reading processor times to reduce bias. */
 	cpuTime->timestamp = (preTimestamp + postTimestamp) / 2;
 	return status;
-#else /* (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) */
+#else /* (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) || defined(J9ZOS390) */
 	/* Support on z/OS being temporarily removed to avoid wrong CPU stats being passed. */
 	return OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED;
 #endif

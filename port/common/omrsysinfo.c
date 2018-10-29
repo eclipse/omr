@@ -515,9 +515,10 @@ omrsysinfo_get_load_average(struct OMRPortLibrary *portLibrary, struct J9PortSys
  * The cpuTime and timestamp values have no absolute significance: they should be used only to compute
  * differences from previous values.
  * On an N-processor  system, cpuTimeStats.cpuTime may increase up to N times faster than real time.
+ * On z/OS use cpuLoad to hold real cpu for the system. Other platform should default to cpuLoad -1.
  *
  * @param[in] OMRPortLibrary portLibrary The port library.
- * @param[out] J9SysinfoCPUTime cpuTime  struct to receive the CPU time and a timestamp
+ * @param[out] J9SysinfoCPUTime cpuTime  struct to receive the CPU time or cpuLoad (z/os) and a timestamp
  *
  * @return 0 on success, negative portable error code on failure.
  *

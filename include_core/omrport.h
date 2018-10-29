@@ -520,6 +520,7 @@ typedef struct J9SysinfoCPUTime {
 	int64_t timestamp; /* time in nanoseconds from a fixed but arbitrary point in time */
 	int64_t cpuTime; /* cumulative CPU utilization (sum of system and user time in nanoseconds) of all CPUs on the system. */
 	int32_t numberOfCpus; /* number of CPUs as reported by the operating system */
+	int32_t cpuLoad; /* CPU utilization % of all processors on the system including gcp and ziips (between 0 and 100) */
 } J9SysinfoCPUTime;
 
 /* Key memory categories are copied here for DDR access */

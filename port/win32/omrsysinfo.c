@@ -997,6 +997,7 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	uint64_t idleTime = 0;
 	uint64_t kernelActiveTime = 0;
 	uint64_t userTime = 0;
+	cpuTime->cpuLoad = -1;
 
 	/*
 	 * GetSystemTimes returns the sum of CPU times across all CPUs
