@@ -460,7 +460,6 @@ convertToFixed(TR::Node * node, TR::CodeGenerator * cg)
       {
       //1) Reset targetRegister
 
-      cursor = generateRRInstruction(cg, TR::InstOpCode::XGR, node, targetRegister, targetRegister);
 
       // Java expect that for signed conversion to fixed, if src float is NaN, target to have 0.0.
       //2) NaN test and branch to done
