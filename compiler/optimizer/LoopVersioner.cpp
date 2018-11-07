@@ -3461,8 +3461,8 @@ bool TR_LoopVersioner::detectChecksToBeEliminated(TR_RegionStructure *whileLoop,
                }
 
             //SPECpower Work
-            if ( comp()->getOptions()->getGcMode() == TR_WrtbarCardMarkAndOldCheck ||
-                 comp()->getOptions()->getGcMode() == TR_WrtbarOldCheck)
+            if ( comp()->getOptions()->getWriteBarrierKind() == TR_WrtbarCardMarkAndOldCheck ||
+                 comp()->getOptions()->getWriteBarrierKind() == TR_WrtbarOldCheck)
                {
                TR::Node *possibleIwrtbarNode = currentTree->getNode();
                if ((currentOpCode.getOpCodeValue() != TR::awrtbari) &&
@@ -4387,7 +4387,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
          TR::TreeTop *nextTreeTop = arrayStoreCheckTree->getNextTreeTop();
          TR::TreeTop *firstNewTree = TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, arrayStoreCheckNode->getFirstChild()), NULL, NULL);
          TR::Node *child = arrayStoreCheckNode->getFirstChild();
-         if (child->getOpCodeValue() == TR::awrtbari && comp()->getOptions()->getGcMode() == TR_WrtbarNone &&
+         if (child->getOpCodeValue() == TR::awrtbari && comp()->getOptions()->getWriteBarrierKind() == TR_WrtbarNone &&
             performTransformation(comp(), "%sChanging iwrtbar node [%p] to an iastore\n", OPT_DETAILS_LOOP_VERSIONER, child))
             {
             TR::Node::recreate(child, TR::astorei);
@@ -4401,7 +4401,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
          TR_ASSERT((arrayStoreCheckNode->getNumChildren() == 2), "Unknown array store check tree\n");
          secondNewTree = TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, arrayStoreCheckNode->getSecondChild()), NULL, NULL);
          child = arrayStoreCheckNode->getSecondChild();
-         if (child->getOpCodeValue() == TR::awrtbari && comp()->getOptions()->getGcMode() == TR_WrtbarNone &&
+         if (child->getOpCodeValue() == TR::awrtbari && comp()->getOptions()->getWriteBarrierKind() == TR_WrtbarNone &&
              performTransformation(comp(), "%sChanging iwrtbar node [%p] to an iastore\n", OPT_DETAILS_LOOP_VERSIONER, child))
             {
             TR::Node::recreate(child, TR::astorei);

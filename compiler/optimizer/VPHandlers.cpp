@@ -2948,7 +2948,7 @@ TR::Node *constrainWrtBar(OMR::ValuePropagation *vp, TR::Node *node)
       doOpt = false;
       }
 
-   TR_WriteBarrierKind gcMode = vp->comp()->getOptions()->getGcMode();
+   TR_WriteBarrierKind gcMode = vp->comp()->getOptions()->getWriteBarrierKind();
 
    if (doOpt &&
        ((gcMode == TR_WrtbarCardMarkAndOldCheck) ||

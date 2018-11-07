@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,9 +88,29 @@ OMR::Options::getNumLimitedGRARegsWithheld()
       }
 
 inline bool
+OMR::Options::generateWriteBarriers()
+   {
+   return self()->getWriteBarrierKind() != TR_WrtbarNone;
+   }
+
+inline bool
+OMR::Options::alwaysCallWriteBarrier()
+   {
+   return self()->getWriteBarrierKind() == TR_WrtbarAlways;
+   }
+
+inline bool
+OMR::Options::gcIsUsingConcurrentMark()
+   {
+   return self()->getWriteBarrierKind() == TR_WrtbarCardMark            ||
+          self()->getWriteBarrierKind() == TR_WrtbarCardMarkAndOldCheck ||
+          self()->getWriteBarrierKind() == TR_WrtbarCardMarkIncremental;
+   }
+
+inline bool
 OMR::Options::needWriteBarriers()
    {
-   return (self()->gcIsUsingConcurrentMark() || _gcMode == TR_WrtbarOldCheck);
+   return self()->gcIsUsingConcurrentMark() || self()->getWriteBarrierKind() == TR_WrtbarOldCheck;
    }
 
 

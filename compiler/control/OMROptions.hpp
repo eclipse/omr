@@ -1890,25 +1890,30 @@ public:
    static bool createDebug();
    static TR_Debug * findOrCreateDebug();
 
-   TR_WriteBarrierKind getGcMode()           { return _gcMode; }
+   /**   \brief Returns the type of write barriers
+   */
+   TR_WriteBarrierKind getWriteBarrierKind() { return _writeBarrierKind; }
+   TR_WriteBarrierKind getGcMode()           { return _writeBarrierKind; } // DEPRECATED
    uintptr_t           getGcCardSize()       { return _gcCardSize; }
    uintptr_t           getHeapBase()         { return _heapBase; }
    uintptr_t           getHeapTop()         { return _heapTop; }
 
-   bool generateWriteBarriers() { return _gcMode != TR_WrtbarNone; }
-   bool alwaysCallWriteBarrier() { return _gcMode == TR_WrtbarAlways; }
-   bool gcIsUsingConcurrentMark()
-      {
-      return    _gcMode == TR_WrtbarCardMark
-             || _gcMode == TR_WrtbarCardMarkAndOldCheck
-             || _gcMode == TR_WrtbarCardMarkIncremental;
-      }
+   bool generateWriteBarriers();
+   bool alwaysCallWriteBarrier();
+   bool gcIsUsingConcurrentMark();
    bool needWriteBarriers();
 
-   void setGcMode(TR_WriteBarrierKind g) { _gcMode = g; }
-   void setGcCardSize(uintptr_t g)       { _gcCardSize = g; }
-   void setHeapBase(uintptr_t g)         { _heapBase = g; }
-   void setHeapTop(uintptr_t g)          { _heapTop = g; }
+   /**
+   * \brief Set the type of write barriers
+   *
+   * \param [in] g The type of write barriers
+   *
+   */
+   void setWriteBarrierKind(TR_WriteBarrierKind g) { _writeBarrierKind = g; }
+   void setGcMode(TR_WriteBarrierKind g)           { _writeBarrierKind = g; } // DEPRECATED
+   void setGcCardSize(uintptr_t g)                 { _gcCardSize = g; }
+   void setHeapBase(uintptr_t g)                   { _heapBase = g; }
+   void setHeapTop(uintptr_t g)                    { _heapTop = g; }
 
    void setIsVariableHeapBaseForBarrierRange0(uintptr_t b) { _isVariableHeapBaseForBarrierRange0 = b ? true : false; }
    bool isVariableHeapBaseForBarrierRange0() { return _isVariableHeapBaseForBarrierRange0; }
@@ -2311,7 +2316,7 @@ protected:
    TR::SimpleRegex *            _memUsage;
    TR::SimpleRegex *            _classesWithFolableFinalFields;
    TR::SimpleRegex *            _disabledIdiomPatterns;
-   TR_WriteBarrierKind         _gcMode;
+   TR_WriteBarrierKind         _writeBarrierKind;
    uintptr_t                   _gcCardSize;
    uintptr_t                   _heapBase;
    uintptr_t                   _heapTop;
