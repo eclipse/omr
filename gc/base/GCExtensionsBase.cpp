@@ -180,6 +180,14 @@ MM_GCExtensionsBase::initialize(MM_EnvironmentBase* env)
 		goto failed;
 	}
 
+#if defined(OMR_GC_COMPRESSED_POINTERS) // This is to eliminate dependence on non compressed refs flag
+	fvtest_enableShadowHeapVerifier = 0;
+	alwaysCallReadBarrier = false;
+#else
+	fvtest_enableShadowHeapVerifier = 1;
+	alwaysCallReadBarrier = true;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+
 	return true;
 
 failed:

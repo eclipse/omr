@@ -262,6 +262,9 @@ public:
 	void* heapBaseForBarrierRange0;
 	uintptr_t heapSizeForBarrierRange0;
 
+	void* shadowHeapBase;
+	void* shadowHeapTop;
+
 	bool doOutOfLineAllocationTrace;
 	bool doFrequentObjectAllocationSampling; /**< Whether to track object allocations*/
 	uintptr_t oolObjectSamplingBytesGranularity; /**< How often (in bytes) we do an ool allocation trace */
@@ -378,6 +381,7 @@ public:
 
 	uintptr_t fvtest_forceSweepChunkArrayCommitFailure; /**< Force failure at Sweep Chunk Array commit operation */
 	uintptr_t fvtest_forceSweepChunkArrayCommitFailureCounter; /**< Force failure at Sweep Chunk Array commit operation counter */
+	uintptr_t fvtest_enableShadowHeapVerifier;
 
 	uintptr_t fvtest_forceMarkMapCommitFailure; /**< Force failure at Mark Map commit operation */
 	uintptr_t fvtest_forceMarkMapCommitFailureCounter; /**< Force failure at Mark Map commit operation counter */
@@ -1260,6 +1264,8 @@ public:
 
 		, heapBaseForBarrierRange0(NULL)
 		, heapSizeForBarrierRange0(0)
+		, shadowHeapBase(0)
+		, shadowHeapTop(0)
 		, doOutOfLineAllocationTrace(true) /* Tracing after ever x bytes allocated per thread. Enabled by default. */
 		, doFrequentObjectAllocationSampling(false) /* Finds most frequently allocated classes. Disabled by default. */
 		, oolObjectSamplingBytesGranularity(16*1024*1024) /* Default granularity set to 16M (shows <1% perf loss). */
@@ -1349,6 +1355,11 @@ public:
 		, fvtest_disableInlineAllocation(0)
 		, fvtest_forceSweepChunkArrayCommitFailure(0)
 		, fvtest_forceSweepChunkArrayCommitFailureCounter(0)
+#if defined(OMR_GC_COMPRESSED_POINTERS) // This is to eliminate dependence on non compressed refs flag
+		, fvtest_enableShadowHeapVerifier(0)
+#else
+		, fvtest_enableShadowHeapVerifier(1)
+#endif/* defined(OMR_GC_COMPRESSED_POINTERS) */
 		, fvtest_forceMarkMapCommitFailure(0)
 		, fvtest_forceMarkMapCommitFailureCounter(0)
 		, fvtest_forceMarkMapDecommitFailure(0)
@@ -1616,7 +1627,11 @@ public:
 		, sweepPoolManagerBumpPointer(NULL)
 		, _masterThreadCpuTimeNanos(0)
 		, alwaysCallWriteBarrier(false)
+#if defined(OMR_GC_COMPRESSED_POINTERS) // This is to eliminate dependence on non compressed refs flag
 		, alwaysCallReadBarrier(false)
+#else
+		, alwaysCallReadBarrier(true)
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */	
 		, _holdRandomThreadBeforeHandlingWorkUnit(false)
 		, _holdRandomThreadBeforeHandlingWorkUnitPeriod(100)
 		, _forceRandomBackoutsAfterScan(false)
