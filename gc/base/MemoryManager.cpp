@@ -120,6 +120,21 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 	if (NULL == ceiling) {
 		instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
 												 ceiling, mode, options, memoryCategory);
+		// OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+		// omrtty_printf("Heap base: %p ----  Heap top: %p\n", instance->getHeapBase(), instance->getHeapTop());
+
+#if !defined(OMR_GC_COMPRESSED_POINTERS)
+						if (extensions->fvtest_enableShadowHeapVerifier) {
+							MM_VirtualMemory* instanceShadow = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
+																							 (void*)OMR_MIN(NON_SCALING_LOW_MEMORY_HEAP_CEILING, (uintptr_t)ceiling), mode, options, memoryCategory);
+
+							extensions->shadowHeapBase = instanceShadow->getHeapBase();
+							extensions->shadowHeapTop = instanceShadow->getHeapTop(); // TODO: Add print statements here
+
+							// OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+							// omrtty_printf("Shadow heap base: %p ----  Shadow heap top: %p\n", extensions->shadowHeapBase, extensions->shadowHeapTop);
+						}
+#endif /* !defined(OMR_GC_COMPRESSED_POINTERS) */
 	} else {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
