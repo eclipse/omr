@@ -28,8 +28,10 @@
 #include "MemorySubSpace.hpp"
 #include "ModronAssertions.h"
 #include "ObjectAllocationInterface.hpp"
-#include "OMRVMThreadListIterator.hpp"
 
+// #include "ObjectIterator.hpp"
+#include "OMRVMThreadListIterator.hpp"
+#include "ModronTypes.hpp"
 class MM_MemorySubSpace;
 class MM_MemorySpace;
 
@@ -196,6 +198,9 @@ void
 MM_Collector::preCollect(MM_EnvironmentBase* env, MM_MemorySubSpace* subSpace, MM_AllocateDescription* allocDescription, uint32_t gcCode)
 {
 	MM_GCExtensionsBase* extensions = env->getExtensions();
+
+	healHeap(env); // heal the objects that were not read
+
 
 	/* There might be a colliding concurrent cycle in progress, that must be completed before we start this one.
 	 * Specific Collector subclass will have exact knowledge if that is the case.
@@ -461,6 +466,8 @@ MM_Collector::postCollect(MM_EnvironmentBase* env, MM_MemorySubSpace* subSpace)
 		/* Set the excessive GC state, whether it was an implicit or system GC */
 		setThreadFailAllocFlag(env, excessiveGCDetected);
 	}
+
+	poisonHeap(env); // poison the heap
 }
 
 /**
@@ -577,4 +584,239 @@ MM_Collector::isMarked(void *objectPtr)
 {
 	Assert_MM_unreachable();
 	return false;
+}
+
+// Only for heap slots
+// static void
+// poisonReferenceSlot(MM_EnvironmentBase *env, GC_SlotObject *slotObject)
+// {
+// 	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+// 	uintptr_t heapBase = (uintptr_t)extensions->heap->getHeapBase();
+// 	uintptr_t heapTop = (uintptr_t)extensions->heap->getHeapTop();
+// 	uintptr_t shadowHeapBase = (uintptr_t)extensions->shadowHeapBase;
+
+// 	uintptr_t poisonedAddress;
+
+// 	uintptr_t referenceFromSlot = (uintptr_t)slotObject->readReferenceFromSlot();
+// 	if (referenceFromSlot < heapTop && referenceFromSlot >= heapBase) {
+// 		poisonedAddress = shadowHeapBase + (referenceFromSlot - heapBase);
+// 		slotObject->writeReferenceToSlot((omrobjectptr_t)poisonedAddress);
+// 	} else {
+
+// 	}
+// }
+
+static void
+poisonReferenceSlot(MM_EnvironmentBase *env, fomrobject_t *slot)
+{
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+	uintptr_t heapBase = (uintptr_t)extensions->heap->getHeapBase();
+	uintptr_t heapTop = (uintptr_t)extensions->heap->getHeapTop();
+	uintptr_t shadowHeapBase = (uintptr_t)extensions->shadowHeapBase;
+
+	uintptr_t poisonedAddress;
+
+	uintptr_t referenceFromSlot = (uintptr_t)*slot;
+	if (referenceFromSlot < heapTop && referenceFromSlot >= heapBase) {
+		poisonedAddress = shadowHeapBase + (referenceFromSlot - heapBase);
+		*slot = (fomrobject_t)poisonedAddress;
+	} else {
+
+	}
+}
+
+// static void
+// poisonReferenceSlots(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region, omrobjectptr_t object, void *userData)
+// {
+
+
+// 	GC_ObjectIterator objectIterator(omrVMThread->_vm, object);
+// 	GC_SlotObject *slotObject;
+// 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(omrVMThread);
+
+// 	while (NULL != (slotObject = objectIterator.nextSlot())) {
+// 		poisonReferenceSlot(env, slotObject);
+// 	}
+// }
+
+static void
+poisonJniWeakReferenceSlots(MM_EnvironmentBase *env)
+{
+	OMR_VMThread *omrVMThread = env->getOmrVMThread();
+
+	GC_JNIWeakGlobalReferenceIterator jniWeakGlobalReferenceIterator(static_cast<J9JavaVM*>(omrVMThread->_vm->_language_vm)->jniWeakGlobalReferences);
+
+	J9Object **slot;
+	while ((slot = (J9Object **)jniWeakGlobalReferenceIterator.nextSlot()) != NULL) {
+		poisonReferenceSlot(env, (fomrobject_t*)slot);
+	}
+}
+
+static void
+poisonMonitorReferenceSlots(MM_EnvironmentBase *env)
+{
+	OMR_VMThread *omrVMThread = env->getOmrVMThread();
+	// OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
+	// omrtty_printf("****\npoisonMonitorReferenceSlots::pre heal slot: sdfdsf\n");
+
+	J9ObjectMonitor *objectMonitor = NULL;
+	J9MonitorTableListEntry *monitorTableList = static_cast<J9JavaVM*>(omrVMThread->_vm->_language_vm)->monitorTableList;
+	while (NULL != monitorTableList) {
+		J9HashTable *table = monitorTableList->monitorTable;
+		
+		// omrtty_printf("1.poisonMonitorReferenceSlots::pre poison slot: sdfdsf\n");
+		
+		if (NULL != table) {
+			GC_HashTableIterator iterator(table);
+			
+			// omrtty_printf("2.poisonMonitorReferenceSlots::pre poison slot: sdfdsf\n");
+			while (NULL != (objectMonitor = (J9ObjectMonitor *)iterator.nextSlot())) {
+
+				J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
+				// omrtty_printf("3.poisonMonitorReferenceSlots::pre poison slot: %p\n",(fomrobject_t*)monitor->userData);
+				poisonReferenceSlot(env, (fomrobject_t*)&monitor->userData);
+				// omrtty_printf("3.poisonMonitorReferenceSlots::post poison slot: %p\n",(fomrobject_t*)monitor->userData);				
+			}
+		}
+		monitorTableList = monitorTableList->next;
+	}
+}
+
+// static void
+// healReferenceSlot(MM_EnvironmentBase *env, GC_SlotObject *slotObject)
+// {
+// 	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+// 	uintptr_t heapBase = (uintptr_t)extensions->heap->getHeapBase();
+// 	uintptr_t shadowHeapBase = (uintptr_t)extensions->shadowHeapBase;
+// 	uintptr_t shadowHeapTop = (uintptr_t)extensions->shadowHeapTop;
+
+// 	uintptr_t healedHeapAddress;
+
+// 	uintptr_t referenceFromSlot = (uintptr_t)slotObject->readReferenceFromSlot();
+// 	if (referenceFromSlot < shadowHeapTop && (referenceFromSlot >= shadowHeapBase)) {
+
+// 		healedHeapAddress = heapBase + (referenceFromSlot - shadowHeapBase);
+// 		slotObject->writeReferenceToSlot((omrobjectptr_t)healedHeapAddress);
+
+// 	}
+// }
+
+static void
+healReferenceSlot(MM_EnvironmentBase *env, fomrobject_t *slot)
+{
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+	uintptr_t heapBase = (uintptr_t)extensions->heap->getHeapBase();
+	uintptr_t shadowHeapBase = (uintptr_t)extensions->shadowHeapBase;
+	uintptr_t shadowHeapTop = (uintptr_t)extensions->shadowHeapTop;
+
+	uintptr_t healedHeapAddress;
+
+	uintptr_t referenceFromSlot = (uintptr_t)*slot;
+	if (referenceFromSlot < shadowHeapTop && (referenceFromSlot >= shadowHeapBase)) {
+
+		healedHeapAddress = heapBase + (referenceFromSlot - shadowHeapBase);
+		*slot = (fomrobject_t)healedHeapAddress;
+
+	}
+}
+
+// static void
+// healReferenceSlots(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region, omrobjectptr_t object, void *userData)
+// {
+// //		OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
+// //		omrtty_printf("healReferenceSlots::object: %p\n",object);
+
+// 		GC_ObjectIterator objectIterator(omrVMThread->_vm, object);
+// 		GC_SlotObject *slotObject;
+
+// 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(omrVMThread);
+
+// 		while (NULL != (slotObject = objectIterator.nextSlot())) {
+// 			healReferenceSlot(env, slotObject);
+// 		}
+// }
+
+static void
+healJniWeakReferenceSlots(MM_EnvironmentBase *env)
+{
+	OMR_VMThread *omrVMThread = env->getOmrVMThread();
+	// OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
+	// OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
+
+	// TODO: Example of slot objects iterator, weak jni global references
+	GC_JNIWeakGlobalReferenceIterator jniWeakGlobalReferenceIterator(static_cast<J9JavaVM*>(omrVMThread->_vm->_language_vm)->jniWeakGlobalReferences);
+
+	J9Object **slot;
+	while ((slot = (J9Object **)jniWeakGlobalReferenceIterator.nextSlot()) != NULL) {
+//		GC_SlotObject slotObject(omrVMThread->_vm, (volatile fomrobject_t *) slot);
+		// omrtty_printf("healJniWeakReferenceSlots::pre heal slot: %p ---- %p\n",slot, *slot);
+		healReferenceSlot(env, (fomrobject_t*)slot);
+		// omrtty_printf("healJniWeakReferenceSlots::post heal slot: %p ---- %p\n",slot, *slot);
+	}
+}
+
+static void
+healMonitorReferenceSlots(MM_EnvironmentBase *env)
+{
+	OMR_VMThread *omrVMThread = env->getOmrVMThread();
+	// OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
+	// omrtty_printf("healMonitorReferenceSlots::pre heal slot: sdfdsf\n");
+
+	J9ObjectMonitor *objectMonitor = NULL;
+	J9MonitorTableListEntry *monitorTableList = static_cast<J9JavaVM*>(omrVMThread->_vm->_language_vm)->monitorTableList;
+	while (NULL != monitorTableList) {
+		J9HashTable *table = monitorTableList->monitorTable;
+		
+		// omrtty_printf("1.healMonitorReferenceSlots::pre heal slot: sdfdsf\n");
+		
+		if (NULL != table) {
+			GC_HashTableIterator iterator(table);
+			
+			// omrtty_printf("2.healMonitorReferenceSlots::pre heal slot: sdfdsf\n");
+			
+			while (NULL != (objectMonitor = (J9ObjectMonitor *)iterator.nextSlot())) {
+
+				J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
+				// omrtty_printf("3.healMonitorReferenceSlots::pre heal slot: %p\n",(fomrobject_t*)monitor->userData);
+				healReferenceSlot(env, (fomrobject_t*)&monitor->userData);
+				// omrtty_printf("3.healMonitorReferenceSlots::post heal slot: %p\n",(fomrobject_t*)monitor->userData);
+			}
+		}
+		monitorTableList = monitorTableList->next;
+	}
+}
+
+uintptr_t
+MM_Collector::poisonHeap(MM_EnvironmentBase *env)
+{
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+	if (extensions->fvtest_enableShadowHeapVerifier) {
+//		_heapWalker->allObjectsDo(env, walkFunction, &_delegate, 0, true, false); // Second last argument is parallel
+
+		// TODO: add the strong and weak jni global referenes from Root Scanner
+		poisonJniWeakReferenceSlots(env);
+		// poisonJniGlobalReferenceSlots(env);
+		poisonMonitorReferenceSlots(env); // TODO: enable this!
+	}
+
+	return 0;
+}
+
+uintptr_t
+MM_Collector::healHeap(MM_EnvironmentBase *env)
+{
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+	if (extensions->fvtest_enableShadowHeapVerifier) {
+		// Don't have the mark map at the start of gc so we'll have to iterate over in a sequential  manner
+
+		// TODO: add the strong and weak jni global referenes from Root Scanner
+		healJniWeakReferenceSlots(env);
+		// healJniGlobalReferenceSlots(env);
+		healMonitorReferenceSlots(env);
+	}
+	return 0;
 }

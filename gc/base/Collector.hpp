@@ -166,6 +166,10 @@ public:
 
 	virtual void kill(MM_EnvironmentBase* env) = 0;
 
+
+	uintptr_t poisonHeap(MM_EnvironmentBase *env);
+	uintptr_t healHeap(MM_EnvironmentBase *env);	
+
 	/**
 	 * Adjust internal structures to reflect the change in heap size.
 	 * 
