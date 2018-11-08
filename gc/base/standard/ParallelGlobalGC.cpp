@@ -50,6 +50,7 @@
 #include "MemorySubSpaceSemiSpace.hpp"
 #include "MemoryPoolLargeObjects.hpp"
 #include "ObjectAllocationInterface.hpp"
+#include "ObjectIterator.hpp"
 #if defined(OMR_GC_OBJECT_MAP)
 #include "ObjectMap.hpp"
 #endif /* defined(OMR_GC_OBJECT_MAP) */
@@ -488,7 +489,7 @@ MM_ParallelGlobalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_Allo
 	/* ----- start of cleanupAfterCollect ------*/
 
 	reportGlobalGCCollectComplete(env);
-	
+
 	cleanupAfterGC(env, allocDescription);
 
 	if (_extensions->trackMutatorThreadCategory) {
@@ -1146,6 +1147,36 @@ MM_ParallelGlobalGC::fixHeapForWalk(MM_EnvironmentBase *env, UDATA walkFlags, ui
 
 	return fixedObjectCount;
 }
+
+// uintptr_t
+// MM_ParallelGlobalGC::poisonHeap(MM_EnvironmentBase *env, MM_HeapWalkerObjectFunc walkFunction)
+// {
+// 	if (_extensions->fvtest_enableShadowHeapVerifier) {
+// //		_heapWalker->allObjectsDo(env, walkFunction, &_delegate, 0, true, false); // Second last argument is parallel
+
+// 		// TODO: add the strong and weak jni global referenes from Root Scanner
+// 		poisonJniWeakReferenceSlots(env);
+// 		// poisonJniGlobalReferenceSlots(env);
+// 		poisonMonitorReferenceSlots(env); // TODO: enable this!
+// 	}
+
+// 	return 0;
+// }
+
+// uintptr_t
+// MM_ParallelGlobalGC::healHeap(MM_EnvironmentBase *env, MM_HeapWalkerObjectFunc walkFunction)
+// {
+// 	if (_extensions->fvtest_enableShadowHeapVerifier) {
+// 		_heapWalker->allObjectsDo(env, walkFunction, &_delegate, 0, false, false); // Second last argument is parallel
+// 		// Don't have the mark map at the start of gc so we'll have to iterate over in a sequential  manner
+
+// 		// TODO: add the strong and weak jni global referenes from Root Scanner
+// 		healJniWeakReferenceSlots(env);
+// 		// healJniGlobalReferenceSlots(env);
+// 		healMonitorReferenceSlots(env);
+// 	}
+// 	return 0;
+// }
 
 /* (non-doxygen)
  * @see MM_GlobalCollector::heapAddRange()
