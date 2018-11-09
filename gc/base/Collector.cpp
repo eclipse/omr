@@ -794,7 +794,7 @@ uintptr_t
 MM_Collector::poisonHeap(MM_EnvironmentBase *env)
 {
 	MM_GCExtensionsBase *extensions = env->getExtensions();
-	if (extensions->fvtest_enableShadowHeapVerifier) {
+	if (extensions->isStandardGC() && extensions->fvtest_enableShadowHeapVerifier) {
 //		_heapWalker->allObjectsDo(env, walkFunction, &_delegate, 0, true, false); // Second last argument is parallel
 
 		// TODO: add the strong and weak jni global referenes from Root Scanner
@@ -810,7 +810,7 @@ uintptr_t
 MM_Collector::healHeap(MM_EnvironmentBase *env)
 {
 	MM_GCExtensionsBase *extensions = env->getExtensions();
-	if (extensions->fvtest_enableShadowHeapVerifier) {
+	if (extensions->isStandardGC() && extensions->fvtest_enableShadowHeapVerifier) {
 		// Don't have the mark map at the start of gc so we'll have to iterate over in a sequential  manner
 
 		// TODO: add the strong and weak jni global referenes from Root Scanner
