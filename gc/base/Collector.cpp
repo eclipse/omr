@@ -896,6 +896,44 @@ healStaticClassSlots(MM_EnvironmentBase *env)
 	}
 }
 
+static void
+healConstantPoolObjects(MM_EnvironmentBase *env)
+{
+	OMR_VMThread *omrVMThread = env->getOmrVMThread();
+	// OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
+	// omrtty_printf("****\npoisonConstantPoolObjects::pre heal slot: sdfdsf\n");
+	
+
+
+
+	GC_SegmentIterator segmentIterator(static_cast<J9JavaVM*>(omrVMThread->_vm->_language_vm)->classMemorySegments, MEMORY_TYPE_RAM_CLASS);
+
+	while(J9MemorySegment *segment = segmentIterator.nextSegment()) {		
+		GC_ClassHeapIterator classHeapIterator(static_cast<J9JavaVM*>(omrVMThread->_vm->_language_vm), segment);
+		J9Class *clazz = NULL;
+		
+		// omrtty_printf("1.poisonConstantPoolObjects::pre poison slot: sdfdsf\n");
+
+		while(NULL != (clazz = classHeapIterator.nextClass())) {
+			
+			// omrtty_printf("2.poisonConstantPoolObjects::pre poison slot: sdfdsf\n");
+	
+			volatile omrobjectptr_t *slotPtr = NULL;
+			GC_ConstantPoolObjectSlotIterator constantPoolObjectSlotIterator((J9JavaVM*)omrVMThread->_vm->_language_vm, clazz, true);
+			while (NULL != (slotPtr = (omrobjectptr_t*)constantPoolObjectSlotIterator.nextSlot())) {
+				omrobjectptr_t objectPtr = *slotPtr;
+				if (NULL != objectPtr) {
+					// omrtty_printf("3.poisonConstantPoolObjects::pre poison slot: %p\n",*slotPtr);
+					
+					healReferenceSlot(env, (fomrobject_t*)slotPtr);
+
+					// omrtty_printf("3.poisonConstantPoolObjects::post poison slot: %p\n",*slotPtr);	
+				}
+			}		
+		}
+	}
+}
+
 uintptr_t
 MM_Collector::poisonHeap(MM_EnvironmentBase *env) //TODO: rename
 {
@@ -926,6 +964,7 @@ MM_Collector::healHeap(MM_EnvironmentBase *env) // TODO: rename
 		// healJniGlobalReferenceSlots(env);
 		healMonitorReferenceSlots(env);
 		healStaticClassSlots(env);
+		healConstantPoolObjects(env);
 	}
 	return 0;
 }
