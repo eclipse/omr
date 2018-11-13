@@ -709,7 +709,7 @@ poisonStaticClassSlots(MM_EnvironmentBase *env)
 				
 				// omrtty_printf("3.poisonStaticClassSlots::pre poison slot: %p\n",*slotPtr);
 				
-				poisonReferenceSlot(env, (fomrobject_t*)slotPtr);
+				poisonReferenceSlot(env, (fomrobject_t*)&slotPtr);
 
 				// omrtty_printf("3.poisonStaticClassSlots::post poison slot: %p\n",*slotPtr);				
 
@@ -746,10 +746,8 @@ poisonConstantPoolObjects(MM_EnvironmentBase *env)
 				omrobjectptr_t objectPtr = *slotPtr;
 				if (NULL != objectPtr) {
 					// omrtty_printf("3.poisonConstantPoolObjects::pre poison slot: %p\n",*slotPtr);
-					
 					poisonReferenceSlot(env, (fomrobject_t*)slotPtr);
-
-					// omrtty_printf("3.poisonConstantPoolObjects::post poison slot: %p\n",*slotPtr);	
+					// omrtty_printf("3.poisonConstantPoolObjects::post poison slot: %p\n",*slotPtr);
 				}
 			}		
 		}
@@ -875,21 +873,21 @@ healStaticClassSlots(MM_EnvironmentBase *env)
 		GC_ClassHeapIterator classHeapIterator(static_cast<J9JavaVM*>(omrVMThread->_vm->_language_vm), segment);
 		J9Class *clazz = NULL;
 		
-		// omrtty_printf("1.poisonStaticClassSlots::pre poison slot: sdfdsf\n");
+		// omrtty_printf("1.healStaticClassSlots::pre poison slot: sdfdsf\n");
 		
 		while(NULL != (clazz = classHeapIterator.nextClass())) {
 			
-			// omrtty_printf("2.poisonStaticClassSlots::pre poison slot: sdfdsf\n");
+			// omrtty_printf("2.healStaticClassSlots::pre poison slot: sdfdsf\n");
 			
 			volatile omrobjectptr_t *slotPtr = NULL;
 			GC_ClassStaticsIterator classStaticsIterator(env, clazz);
 			while((slotPtr = classStaticsIterator.nextSlot()) != NULL) {
 				
-				// omrtty_printf("3.poisonStaticClassSlots::pre poison slot: %p\n",*slotPtr);
+				// omrtty_printf("3.healStaticClassSlots::pre heal slot: %p\n",*slotPtr);
 				
 				healReferenceSlot(env, (fomrobject_t*)slotPtr);
 
-				// omrtty_printf("3.poisonStaticClassSlots::post poison slot: %p\n",*slotPtr);				
+				// omrtty_printf("3.healStaticClassSlots::post heal slot: %p\n",*slotPtr);				
 
 			}
 		}
@@ -939,12 +937,15 @@ MM_Collector::poisonHeap(MM_EnvironmentBase *env) //TODO: rename
 {
 	MM_GCExtensionsBase *extensions = env->getExtensions();
 	if (extensions->isStandardGC() && extensions->fvtest_enableShadowHeapVerifier) {
-//		_heapWalker->allObjectsDo(env, walkFunction, &_delegate, 0, true, false); // Second last argument is parallel
 
-		// TODO: add the strong and weak jni global referenes from Root Scanner
+		// OMR_VMThread *omrVMThread = env->getOmrVMThread();
+		// OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
+
+		// omrtty_printf("Heap Top: %p ---- Heap Base: %p ---- Shadow Heap Top: %p ---- Shadow Heap Base: %p\n", extensions->getHeap()->getHeapTop(), extensions->getHeap()->getHeapBase(), extensions->shadowHeapTop, extensions->shadowHeapBase);
+
 		poisonJniWeakReferenceSlots(env);
 		// poisonJniGlobalReferenceSlots(env);
-		poisonMonitorReferenceSlots(env); // TODO: enable this!
+		poisonMonitorReferenceSlots(env);
 		poisonStaticClassSlots(env);
 		poisonConstantPoolObjects(env);
 	}
