@@ -381,7 +381,9 @@ public:
 
 	uintptr_t fvtest_forceSweepChunkArrayCommitFailure; /**< Force failure at Sweep Chunk Array commit operation */
 	uintptr_t fvtest_forceSweepChunkArrayCommitFailureCounter; /**< Force failure at Sweep Chunk Array commit operation counter */
+
 	uintptr_t fvtest_enableShadowHeapVerifier;
+	uintptr_t fvtest_enableReadBarrierVerification; // Forces failure at all direct memory read sites
 
 	uintptr_t fvtest_forceMarkMapCommitFailure; /**< Force failure at Mark Map commit operation */
 	uintptr_t fvtest_forceMarkMapCommitFailureCounter; /**< Force failure at Mark Map commit operation counter */
@@ -1357,8 +1359,10 @@ public:
 		, fvtest_forceSweepChunkArrayCommitFailureCounter(0)
 #if defined(OMR_GC_COMPRESSED_POINTERS) // This is to eliminate dependence on non compressed refs flag
 		, fvtest_enableShadowHeapVerifier(0)
+		, fvtest_enableReadBarrierVerification(0)
 #else
 		, fvtest_enableShadowHeapVerifier(1)
+		, fvtest_enableReadBarrierVerification(1)
 #endif/* defined(OMR_GC_COMPRESSED_POINTERS) */
 		, fvtest_forceMarkMapCommitFailure(0)
 		, fvtest_forceMarkMapCommitFailureCounter(0)
