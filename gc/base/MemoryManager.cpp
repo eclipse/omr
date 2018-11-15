@@ -120,8 +120,9 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 	if (NULL == ceiling) {
 		instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
 												 ceiling, mode, options, memoryCategory);
-		// OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 		// omrtty_printf("Heap base: %p ----  Heap top: %p\n", instance->getHeapBase(), instance->getHeapTop());
+		// OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+		// omrtty_printf("fvtest_enableReadBarrierVerification: %d\n", extensions->fvtest_enableReadBarrierVerification);
 
 #if !defined(OMR_GC_COMPRESSED_POINTERS)
 						if (extensions->fvtest_enableShadowHeapVerifier) {
@@ -506,7 +507,7 @@ void
 MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle* handle)
 {
 	Assert_MM_true(NULL != handle);
-	MM_VirtualMemory* memory = handle->getVirtualMemory();
+	MM_VirtualMemory* memory = handle->getVirtualMemory(); //TODO: add handle for shadwoheap memory to extensions
 	if (NULL != memory) {
 		Assert_MM_true(memory->getConsumerCount() > 0);
 		memory->decrementConsumerCount();
