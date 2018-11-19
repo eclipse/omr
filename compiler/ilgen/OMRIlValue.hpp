@@ -91,6 +91,18 @@ public:
       }
 
    /**
+    * @brief returns the 32 bit constant value for this IlValue. Caller should ensure that this IlValue represents
+    * a 32 bit (or less) constant value before it calls this function or an assertion will be triggered
+    */
+   int32_t get32bitConstValue();
+
+   /**
+    * @brief returns the 64 bit constant value for this IlValue. Caller should ensure that this IlValue represents
+    * a 64 bit (or less) constant value before it calls this function or an assertion will be triggered
+    */
+   int64_t get64bitConstValue();
+
+   /**
     * @brief associates this object with a particular client object
     */
    void setClient(void *client)

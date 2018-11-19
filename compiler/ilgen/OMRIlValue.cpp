@@ -120,6 +120,18 @@ OMR::IlValue::storeOver(TR::IlValue *value, TR::Block *block)
       }
    }
 
+int32_t
+OMR::IlValue::get32bitConstValue()
+   {
+   return _nodeThatComputesValue->get32bitIntegralValue();
+   }
+
+int64_t
+OMR::IlValue::get64bitConstValue()
+   {
+   return _nodeThatComputesValue->get64bitIntegralValue();
+   }
+
 void *
 OMR::IlValue::client()
    {
