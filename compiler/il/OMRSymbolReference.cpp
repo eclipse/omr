@@ -372,5 +372,6 @@ OMR::SymbolReference::hasBeenAccessedAtRuntime()
 bool
 OMR::SymbolReference::isOSRInductionHelper()
    {
-   return _referenceNumber == TR_induceOSRAtCurrentPCAndRecompile || _referenceNumber == TR_induceOSRAtCurrentPC;
+   TR::MethodSymbol *sym = self()->getSymbol()->getMethodSymbol();
+   return sym && sym->isHelper() && (_referenceNumber == TR_induceOSRAtCurrentPCAndRecompile || _referenceNumber == TR_induceOSRAtCurrentPC);
    }
