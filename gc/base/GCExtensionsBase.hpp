@@ -293,7 +293,8 @@ public:
 #endif /* OMR_GC_COMBINATION_SPEC */
 
 	uintptr_t tlhMinimumSize;
-	uintptr_t tlhMaximumSize;
+	uintptr_t tlhMaximumSize; /**< Actual maximum size for TLH. */
+	uintptr_t tlhActiveMaximumSize; /**< Current maximum size for TLH allocation, could be changed as per allocationSamplingInterval, same as tlhMaximumSize by default. */
 	uintptr_t tlhInitialSize;
 	uintptr_t tlhIncrementSize;
 	uintptr_t tlhSurvivorDiscardThreshold; /**< below this size GC (Scavenger) will discard survivor copy cache TLH, if alloc not succeeded (otherwise we reuse memory for next TLH) */
@@ -609,6 +610,9 @@ public:
 	bool verboseNewFormat; /**< a flag, enabled by -XXgc:verboseNewFormat, to enable the new verbose GC format */
 	bool bufferedLogging; /**< Enabled by -Xgc:bufferedLogging.  Use buffered filestreams when writing logs (e.g. verbose:gc) to a file */
 
+	bool enableAllocationSampling; /**< a flag, true when the hook event J9HOOK_SAMPLED_OBJECT_ALLOCATE is registered, or false when unregistered */
+	uintptr_t allocationSamplingInterval; /**< the heap sampling interval */
+	uintptr_t currentAllocationRemainder; /**< the remainder of current allocation size modulo the heap sampling interval */
 	uintptr_t lowAllocationThreshold; /**< the lower bound of the allocation threshold range */
 	uintptr_t highAllocationThreshold; /**< the upper bound of the allocation threshold range */
 	bool disableInlineCacheForAllocationThreshold; /**< true if inline allocates fall within the allocation threshold*/
@@ -1275,6 +1279,7 @@ public:
 #endif /* OMR_GC_COMBINATION_SPEC */
 		, tlhMinimumSize(MINIMUM_TLH_SIZE)
 		, tlhMaximumSize(131072)
+		, tlhActiveMaximumSize(131072)
 		, tlhInitialSize(2048)
 		, tlhIncrementSize(4096)
 		, tlhSurvivorDiscardThreshold(tlhMinimumSize)
@@ -1520,6 +1525,9 @@ public:
 		, verboseExtensions(false)
 		, verboseNewFormat(true)
 		, bufferedLogging(false)
+		, enableAllocationSampling(false)
+		, allocationSamplingInterval(512 * 1024) /* 512 KB */
+		, currentAllocationRemainder(0)
 		, lowAllocationThreshold(UDATA_MAX)
 		, highAllocationThreshold(UDATA_MAX)
 		, disableInlineCacheForAllocationThreshold(false)

@@ -898,3 +898,9 @@ TraceEntry=Trc_MM_MSSGenerational_allocationRequestFailed_entry Overhead=1 Level
 TraceEvent=Trc_MM_MSSGenerational_allocationRequestFailed1 Overhead=1 Level=1 Group=allocate Template="MSSGenerational::allocationRequestFailed size %zu prev != new %llx, allocate from old %llx"
 TraceEvent=Trc_MM_MSSGenerational_allocationRequestFailed Overhead=1 Level=1 Group=allocate Template="MSSGenerational::allocationRequestFailed size %zu event %u"
 TraceExit=Trc_MM_MSSGenerational_allocationRequestFailed_exit Overhead=1 Level=1 Group=allocate Template="MSSGenerational::allocationRequestFailed size %zu exit %zu result %llx"
+
+TraceEntry=Trc_MM_AllocationSampling_setInterval_Entry Overhead=1 Level=1 Group=allocsamplinginterval Template="j9gc_set_allocation_sampling_interval: samplingInterval=%zu ext->allocationSamplingInterval=%zu"
+TraceExit=Trc_MM_AllocationSampling_setInterval_Exit Overhead=1 Level=1 Group=allocsamplinginterval Template="j9gc_set_allocation_sampling_interval"
+TraceEntry=Trc_MM_AllocationSampling_setFlag_Entry Overhead=1 Level=1 Group=allocsamplinginterval Template="j9gc_set_allocation_sampling: flag = %s"
+TraceExit=Trc_MM_AllocationSampling_setFlag_Exit Overhead=1 Level=1 Group=allocsamplinginterval Template="j9gc_set_allocation_sampling"
+
