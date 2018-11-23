@@ -191,7 +191,7 @@ MM_ParallelGlobalGC *
 MM_ParallelGlobalGC::newInstance(MM_EnvironmentBase *env)
 {
 	MM_ParallelGlobalGC *globalGC;
-		
+
 	globalGC = (MM_ParallelGlobalGC *)env->getForge()->allocate(sizeof(MM_ParallelGlobalGC), OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (globalGC) {
 		new(globalGC) MM_ParallelGlobalGC(env);
@@ -285,7 +285,7 @@ MM_ParallelGlobalGC::initialize(MM_EnvironmentBase *env)
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
 	return true;
-	
+
 error_no_memory:
 	return false;
 }
@@ -382,7 +382,7 @@ MM_ParallelGlobalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_Allo
 
 	/* Reset memory pools of associated memory spaces */
 	_extensions->heap->resetSpacesForGarbageCollect(env);
-	
+
 	/* Clear the gc stats structure */
 	_extensions->globalGCStats.clear();
 
@@ -395,14 +395,14 @@ MM_ParallelGlobalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_Allo
 	_delegate.masterThreadGarbageCollectStarted(env);
 
 	/* ----- end of setupForCollect ------*/
-	
+
 	/* Run a garbage collect */
 
-	/* Mark */	
+	/* Mark */
 	markAll(env, initMarkMap);
 
 	_delegate.postMarkProcessing(env);
-	
+
 	sweep(env, allocDescription, rebuildMarkBits);
 
 	if (_extensions->processLargeAllocateStats) {
@@ -435,7 +435,7 @@ MM_ParallelGlobalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_Allo
 			_collectionStatistics._tenureFragmentation |= MACRO_FRAGMENTATION;
 		}
 	}
-#endif /* defined(OMR_GC_MODRON_COMPACTION) */	
+#endif /* defined(OMR_GC_MODRON_COMPACTION) */
 
 	bool compactedThisCycle = false;
 #if defined(OMR_GC_MODRON_COMPACTION)
@@ -477,15 +477,15 @@ MM_ParallelGlobalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_Allo
 		env->_cycleState->_activeSubSpace->checkResize(env, allocDescription, env->_cycleState->_gcCode.isExplicitGC());
 	}
 #endif
-	
+
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	/* Merge sublists in the remembered set (if necessary) */
 	_extensions->rememberedSet.compact(env);
 #endif /* OMR_GC_MODRON_SCAVENGER */
-	
+
 	/* Restart the allocation caches associated to all threads */
 	masterThreadRestartAllocationCaches(env);
-	
+
 	/* ----- start of cleanupAfterCollect ------*/
 
 	reportGlobalGCCollectComplete(env);
@@ -506,13 +506,13 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 	CompactReason compactReason = COMPACT_NONE;
 	CompactPreventedReason compactPreventedReason = COMPACT_PREVENTED_NONE;
 	uintptr_t tlhPercent, totalBytesAllocated;
-	
+
 	/* Assume no compaction is required until we prove otherwise*/
 	/* If user has specified -XnoCompact then were done */
 	if(_extensions->noCompactOnGlobalGC) {
 		compactReason = COMPACT_NONE;
 		goto nocompact;
-	}	
+	}
 
 #if defined(OMR_GC_IDLE_HEAP_MANAGER)
 	if((_extensions->compactOnIdle) && (J9MMCONSTANT_EXPLICIT_GC_IDLE_GC == gcCode.getCode())) {
@@ -520,15 +520,15 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 		goto compactionReqd;
 	}
 #endif
-	
+
 	/* RAS dump compact requests override all other options. If a dump agent requested 
 	 * a compact we always honour it in order to produce optimal heap dumps
 	 */
 	if (J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT == gcCode.getCode()) {
 		compactReason = COMPACT_FORCED_GC;
 		goto compactionReqd;
-	}	
-	
+	}
+
 	/* If user has specified -XCompact then we compact every time */
 	if(_extensions->compactOnGlobalGC) {
 		compactReason = COMPACT_ALWAYS;
@@ -539,7 +539,7 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 	if (_extensions->isConcurrentScavengerEnabled() && _extensions->isScavengerBackOutFlagRaised()) {
 		compactReason = COMPACT_ABORTED_SCAVENGE;
 		goto compactionReqd;
-	}	
+	}
 
 	/* Is this a system GC ? */ 
 	if(gcCode.isExplicitGC()) { 
@@ -551,7 +551,7 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 			compactReason = COMPACT_NONE;
 			/* The user as specified -XnocompactexplicitGC then we don't compact*/
 			goto nocompact;
-		}		
+		}
 	}
 
 	/* Has GC found enough storage to satisfy the allocation request ? */
@@ -560,19 +560,19 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 		 
 		uintptr_t largestFreeEntry = memorySpace->findLargestFreeEntry(env, allocDescription);
 		uintptr_t bytesRequested = allocDescription->getBytesRequested();
-		
+
 		if(bytesRequested > largestFreeEntry){
 			compactReason = COMPACT_LARGE;
 			goto compactionReqd;
 		}
 	}
-	
+
 	/* If -Xgc:compactToSatisfyAllocate has been specified, then we skip the rest of the triggers */
 	if (_extensions->compactToSatisfyAllocate) {
 		compactReason = COMPACT_NONE;
 		goto nocompact;
 	}
-	
+
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	if (_extensions->scavengerEnabled) {
 		/* Get size of largest object we failed to tenure on last scavenege */
@@ -581,13 +581,13 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 			MM_MemorySpace *memorySpace = env->getMemorySpace();
 			MM_AllocateDescription tenureAllocDescription(failedTenureLargest, OMR_GC_ALLOCATE_OBJECT_TENURED, false, true);
 			uintptr_t largestTenureFreeEntry = memorySpace->findLargestFreeEntry(env, &tenureAllocDescription);
-			
+
 			if(failedTenureLargest > largestTenureFreeEntry){
 				compactReason = COMPACT_LARGE;
 				goto compactionReqd;
 			}
-		}	
-	}	
+		}
+	}
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
 	/* If this is an aggressive collect and the last collect did not compact then 
@@ -598,8 +598,8 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 		compactReason = COMPACT_AGGRESSIVE;
 		goto compactionReqd;
 	}
-	
-#if defined(OMR_GC_THREAD_LOCAL_HEAP)	
+
+#if defined(OMR_GC_THREAD_LOCAL_HEAP)
 
 	/* Now check for signs of fragmentation by checking the average size of TLH
 	 * allocated since the last global collection
@@ -614,12 +614,12 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 
 	/* ..and what percentage of allocations were tlh's */
 	tlhPercent = allocStats->_tlhRefreshCountFresh > 0 ? (uintptr_t) (((uint64_t) allocStats->_tlhAllocatedFresh * 100) / (uint64_t) totalBytesAllocated) : 0;
-	
+
 	/* Check at least 50% of free space at end of last GC has been consumed by tlh allocations */
 	if( tlhPercent > 50 ) {
 		/* Calculate average size of tlh allocated since tenure area last collected */
 		uintptr_t avgTlh= allocStats->_tlhAllocatedFresh / allocStats->_tlhRefreshCountFresh;
-		
+
 		/* Compaction trigger is a multiple of the minimum tlh size */
 		uintptr_t compaction_trigger_avgtlh= _extensions->tlhMinimumSize * MINIMUM_TLHSIZE_MULTIPLIER;
 		if(avgTlh < compaction_trigger_avgtlh) {
@@ -642,25 +642,25 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 		uintptr_t oldFree = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD);
 		uintptr_t oldSize = _extensions->heap->getActiveMemorySize(MEMORY_TYPE_OLD);
 		uintptr_t desperateFree = (oldSize  / OLDFREE_DESPERATE_RATIO_DIVISOR) * OLDFREE_DESPERATE_RATIO_MULTIPLIER;
-			
+
 		/* Is heap space getting tight? */
 		if(oldFree < desperateFree) { 
 			compactReason = COMPACT_AVOID_DESPERATE;
 			goto compactionReqd;
 		}
-		
+
 		if(oldFree < OLDFREE_INSUFFICIENT ) { 
 			compactReason = COMPACT_MEMORY_INSUFFICIENT;
 			goto compactionReqd;
 		}
-	}	
-	
-nocompact:	
+	}
+
+nocompact:
 	/* Compaction not required or prevented from running */
 	_extensions->globalGCStats.compactStats._compactReason = compactReason;
 	_extensions->globalGCStats.compactStats._compactPreventedReason = compactPreventedReason;
 	return false;
-	
+
 compactionReqd:
 	compactPreventedReason = _delegate.checkIfCompactionShouldBePrevented(env);
 	if (COMPACT_PREVENTED_NONE != compactPreventedReason) {
@@ -685,12 +685,12 @@ MM_ParallelGlobalGC::compactRequiredBeforeHeapContraction(MM_EnvironmentBase *en
 	uintptr_t lengthLastFree;
 
 	/* Assume no compaction is required until we prove otherwise*/
-	
+
 	/* if the user specified -XnoCompact then we're done */
 	if (_extensions->noCompactOnGlobalGC) {
 		return false;
-	}	
-	
+	}
+
 	if (env->_cycleState->_gcCode.isExplicitGC() && _extensions->nocompactOnSystemGC){
 		/* if the user specified -XnocompactexplicitGC then we don't compact*/
 		return false;
@@ -722,7 +722,7 @@ MM_ParallelGlobalGC::compactRequiredBeforeHeapContraction(MM_EnvironmentBase *en
 	/* Determine length of free chunk at top of heap */
 	/* Note: We know based on the collector that this is a single contiguous area */
 	lengthLastFree = env->_cycleState->_activeSubSpace->getAvailableContractionSize(env, allocDescription);
-	
+
 	/* If chunk at end of heap is free then check its at least 10% of 
 	 * requested contraction amount
 	 */
@@ -732,7 +732,7 @@ MM_ParallelGlobalGC::compactRequiredBeforeHeapContraction(MM_EnvironmentBase *en
 								 
 		if (lengthLastFree > minContractSize ) {						 
 			return false;
-		}	
+		}
 	}
 
 compactionReqd:
@@ -745,7 +745,7 @@ compactionReqd:
 	 * Remember why for verbose
 	 */
 	_extensions->globalGCStats.compactStats._compactReason = COMPACT_CONTRACT;
-	
+
 	return true;
 }
 #endif /* defined(OMR_GC_MODRON_COMPACTION) */
@@ -767,30 +767,30 @@ MM_ParallelGlobalGC::sweep(MM_EnvironmentBase *env, MM_AllocateDescription *allo
 	_compactThisCycle = shouldCompactThisCycle(env, allocDescription, activeSubSpace->maxExpansionInSpace(env), env->_cycleState->_gcCode);
 
 	if (!_compactThisCycle)  
-#endif /* OMR_GC_MODRON_COMPACTION */		
+#endif /* OMR_GC_MODRON_COMPACTION */
 	{
 		/* Decide whether we need to expand or shrink the heap. If the decision is to 
 		 * shrink, we may need to force a compaction to assist the contraction.
- 		*/ 
+		*/ 
 		activeSubSpace->checkResize(env, allocDescription, isExplicitGC);
-	}	
-			
+	}
+
 	/* If we need to completely rebuild the freeelist (impending compaction or contraction), then do it */
 	SweepCompletionReason reason = NOT_REQUIRED;
 	if(completeFreelistRebuildRequired(env, &reason)) {
 		masterThreadSweepComplete(env, reason);
-			
+
 #if defined(OMR_GC_MODRON_COMPACTION)
 		if (!_compactThisCycle)  
-#endif /* OMR_GC_MODRON_COMPACTION */		
+#endif /* OMR_GC_MODRON_COMPACTION */
 		{
 			/* We now have accurate free space statistics so recalculate any expand/contract amount
-		 	 * as it will no doubt have changed
-		 	*/ 
+			 * as it will no doubt have changed
+			*/ 
 			activeSubSpace->checkResize(env, allocDescription, isExplicitGC);
 		} 
-	}	
-				
+	}
+
 #if defined(OMR_GC_MODRON_COMPACTION)
 	if (0 != activeSubSpace->getContractionSize()) {
 		_compactThisCycle = compactRequiredBeforeHeapContraction(env, allocDescription, activeSubSpace->getContractionSize());
@@ -805,9 +805,9 @@ bool
 MM_ParallelGlobalGC::completeFreelistRebuildRequired(MM_EnvironmentBase *env, SweepCompletionReason *reason)
 {
 	*reason = NOT_REQUIRED;
-	
+
 	MM_MemorySubSpace *activeSubSpace = env->_cycleState->_activeSubSpace;
-#if defined(OMR_GC_MODRON_COMPACTION)	
+#if defined(OMR_GC_MODRON_COMPACTION)
 	if (_compactThisCycle) { 
 		*reason = COMPACTION_REQUIRED;
 	} else 
@@ -824,7 +824,7 @@ MM_ParallelGlobalGC::completeFreelistRebuildRequired(MM_EnvironmentBase *env, Sw
 	} else if (env->_cycleState->_gcCode.isExplicitGC()) {
 		*reason = SYSTEM_GC;
 	}
-	
+
 	return (*reason == NOT_REQUIRED ? false : true);
 }
 
@@ -846,7 +846,7 @@ MM_ParallelGlobalGC::markAll(MM_EnvironmentBase *env, bool initMarkMap)
 	/* run the mark */
 	MM_ParallelMarkTask markTask(env, _dispatcher, _markingScheme, initMarkMap, env->_cycleState);
 	_dispatcher->run(env, &markTask);
-	
+
 	Assert_MM_true(_markingScheme->getWorkPackets()->isAllPacketsEmpty());
 
 	/* Do any post mark checks */
@@ -868,7 +868,7 @@ MM_ParallelGlobalGC::masterThreadSweepComplete(MM_EnvironmentBase *env, SweepCom
 {
 	_sweepScheme->completeSweep(env, reason);
 }
-	
+
 #if defined(OMR_GC_MODRON_COMPACTION)
 void
 MM_ParallelGlobalGC::masterThreadCompact(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, bool rebuildMarkBits)
@@ -886,7 +886,7 @@ MM_ParallelGlobalGC::masterThreadCompact(MM_EnvironmentBase *env, MM_AllocateDes
 	_dispatcher->run(env, &compactTask);
 	compactStats->_endTime = omrtime_hires_clock();
 	reportCompactEnd(env);
-	
+
 	/* Remember the gc count of the last compaction */ 
 	_extensions->globalGCStats.compactStats._lastHeapCompaction= _extensions->globalGCStats.gcCount;
 }
@@ -918,12 +918,17 @@ MM_ParallelGlobalGC::masterThreadRestartAllocationCaches(MM_EnvironmentBase *env
 void
 MM_ParallelGlobalGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, uint32_t gcCode)
 {
+	if (_extensions->isStandardGC() && _extensions->fvtest_enableShadowHeapVerifier) {
+		_delegate.healSlots(env); // heal the objects that were not read
+	}
+
 	_cycleState = MM_CycleState();
 	env->_cycleState = &_cycleState;
 	env->_cycleState->_gcCode = MM_GCCode(gcCode);
 	env->_cycleState->_type = _cycleType;
 	env->_cycleState->_activeSubSpace = subSpace;
 	env->_cycleState->_collectionStatistics = &_collectionStatistics;
+
 
 	/* If we are in an excessiveGC level beyond normal then an aggressive GC is
 	 * conducted to free up as much space as possible
@@ -936,9 +941,9 @@ MM_ParallelGlobalGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpa
 	}
 
 	GC_OMRVMInterface::flushCachesForGC(env);
-	
+
 	_markingScheme->getMarkMap()->setMarkMapValid(false);
-	
+
 	if (_extensions->processLargeAllocateStats) {
 		processLargeAllocateStatsBeforeGC(env);
 	}
@@ -994,6 +999,10 @@ MM_ParallelGlobalGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSp
 #if defined(OMR_GC_IDLE_HEAP_MANAGER)
 	_extensions->lastGCFreeBytes = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD);
 #endif
+
+	if (_extensions->isStandardGC() && _extensions->fvtest_enableShadowHeapVerifier) {
+		_delegate.poisonSlots(env);
+	}
 }
 
 void
@@ -1080,7 +1089,7 @@ MM_ParallelGlobalGC::postMark(MM_EnvironmentBase *env)
 void 
 MM_ParallelGlobalGC::setupForGC(MM_EnvironmentBase *env)
 {
-}	
+}
 
 bool
 MM_ParallelGlobalGC::internalGarbageCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription)
@@ -1108,7 +1117,7 @@ MM_ParallelGlobalGC::prepareHeapForWalk(MM_EnvironmentBase *env)
 	GC_OMRVMInterface::flushCachesForGC(env);
 
 	_markingScheme->masterSetupForWalk(env);
-	
+
 	/* Run a parallel mark */
 	/* TODO CRGTMP fix the cycleState parameter */
 	MM_ParallelMarkTask markTask(env, _dispatcher, _markingScheme, true, NULL);
@@ -1147,36 +1156,6 @@ MM_ParallelGlobalGC::fixHeapForWalk(MM_EnvironmentBase *env, UDATA walkFlags, ui
 
 	return fixedObjectCount;
 }
-
-// uintptr_t
-// MM_ParallelGlobalGC::poisonHeap(MM_EnvironmentBase *env, MM_HeapWalkerObjectFunc walkFunction)
-// {
-// 	if (_extensions->fvtest_enableShadowHeapVerifier) {
-// //		_heapWalker->allObjectsDo(env, walkFunction, &_delegate, 0, true, false); // Second last argument is parallel
-
-// 		// TODO: add the strong and weak jni global referenes from Root Scanner
-// 		poisonJniWeakReferenceSlots(env);
-// 		// poisonJniGlobalReferenceSlots(env);
-// 		poisonMonitorReferenceSlots(env); // TODO: enable this!
-// 	}
-
-// 	return 0;
-// }
-
-// uintptr_t
-// MM_ParallelGlobalGC::healHeap(MM_EnvironmentBase *env, MM_HeapWalkerObjectFunc walkFunction)
-// {
-// 	if (_extensions->fvtest_enableShadowHeapVerifier) {
-// 		_heapWalker->allObjectsDo(env, walkFunction, &_delegate, 0, false, false); // Second last argument is parallel
-// 		// Don't have the mark map at the start of gc so we'll have to iterate over in a sequential  manner
-
-// 		// TODO: add the strong and weak jni global referenes from Root Scanner
-// 		healJniWeakReferenceSlots(env);
-// 		// healJniGlobalReferenceSlots(env);
-// 		healMonitorReferenceSlots(env);
-// 	}
-// 	return 0;
-// }
 
 /* (non-doxygen)
  * @see MM_GlobalCollector::heapAddRange()
@@ -1242,7 +1221,7 @@ void
 MM_ParallelGlobalGC::heapReconfigured(MM_EnvironmentBase *env)
 {
 	_sweepScheme->heapReconfigured(env);
-	
+
 }
 
 bool
@@ -1274,8 +1253,8 @@ uint32_t
 MM_ParallelGlobalGC::getGCTimePercentage(MM_EnvironmentBase *env)
 {
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
-	
-	/* Calculate what ratio of time we are spending in GC */	
+
+	/* Calculate what ratio of time we are spending in GC */
 	uint32_t ratio= extensions->heap->getResizeStats()->calculateGCPercentage();
 	return ratio;
 }
@@ -1310,7 +1289,7 @@ globalGCHookAFCycleStart(J9HookInterface** hook, uintptr_t eventNum, void* event
 	OMR_VMThread *omrVMThread = event->currentThread;
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVMThread->_vm);
 	OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
-	
+
 	extensions->heap->getResizeStats()->setThisAFStartTime(omrtime_hires_clock());
 	extensions->heap->getResizeStats()->setLastTimeOutsideGC();
 	extensions->heap->getResizeStats()->setGlobalGCCountAtAF(extensions->globalGCStats.gcCount);
@@ -1323,14 +1302,14 @@ globalGCHookAFCycleEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventDa
 	OMR_VMThread *omrVMThread = event->currentThread;
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVMThread->_vm);
 	OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
-	
+
 	if((event->subSpaceType == MEMORY_TYPE_NEW) && ((extensions->heap->getResizeStats()->getGlobalGCCountAtAF()) == (extensions->globalGCStats.gcCount))){
 		return;
 	}
-		
+
 	/* ..and remember time of last AF end */
 	extensions->heap->getResizeStats()->setLastAFEndTime(omrtime_hires_clock());
-	
+
 	/* If we have contracted and compacted on this GC then reset ratio ticks as compact will obviously result
 	 * in a large increase in time in GC and could result in an unexpected/undesirable ratio EXPAND on next GC
 	 */ 
@@ -1356,7 +1335,7 @@ globalGCHookCCStart(J9HookInterface** hook, uintptr_t eventNum, void* eventData,
 	OMR_VMThread *omrVMThread = event->currentThread;
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVMThread->_vm);
 	OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
-	
+
 	extensions->heap->getResizeStats()->setThisAFStartTime(omrtime_hires_clock());
 	extensions->heap->getResizeStats()->setLastTimeOutsideGC();
  
@@ -1370,10 +1349,10 @@ globalGCHookCCEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	OMR_VMThread *omrVMThread = event->currentThread;
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVMThread->_vm);
 	OMRPORT_ACCESS_FROM_OMRVMTHREAD(omrVMThread);
-	
+
 	/* ..and remember time of last AF end */
 	extensions->heap->getResizeStats()->setLastAFEndTime(omrtime_hires_clock());
-	
+
 	/* If we have contracted and compacted on this GC then reset ratio ticks as compact will obviously result
 	 * in a large increase in time in GC and could result in an unexpected/undesirable ratio EXPAND on next GC
 	 */ 
@@ -1526,7 +1505,7 @@ MM_ParallelGlobalGC::reportGCIncrementEnd(MM_EnvironmentBase *env)
 	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_CollectionStatisticsStandard *stats = (MM_CollectionStatisticsStandard *)env->_cycleState->_collectionStatistics;
 	stats->collectCollectionStatistics(env, stats);
-	
+
 	intptr_t rc = omrthread_get_process_times(&stats->_endProcessTimes);
 	switch (rc){
 	case -1: /* Error: Function un-implemented on architecture */
