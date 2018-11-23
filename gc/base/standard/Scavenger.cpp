@@ -5065,3 +5065,14 @@ MM_Scavenger::completeConcurrentCycle(MM_EnvironmentBase *env)
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 #endif /* OMR_GC_MODRON_SCAVENGER */
+
+void
+MM_Scavenger::scavenger_poisonSlots(MM_EnvironmentBase *env)
+{
+	_cli->scavenger_poisonSlots(env);
+}
+void
+MM_Scavenger::scavenger_healSlots(MM_EnvironmentBase *env)
+{
+	_cli->scavenger_healSlots(env);
+}
