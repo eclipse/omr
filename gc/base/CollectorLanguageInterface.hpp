@@ -55,8 +55,9 @@ private:
 protected:
 
 public:
-
 	virtual void kill(MM_EnvironmentBase *env) = 0;
+	virtual void scavenger_poisonSlots(MM_EnvironmentBase *env) = 0;
+	virtual void scavenger_healSlots(MM_EnvironmentBase *env) = 0;
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	/**
