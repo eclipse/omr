@@ -4020,6 +4020,10 @@ MM_Scavenger::getCollectorExpandSize(MM_EnvironmentBase *env)
 void
 MM_Scavenger::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, uint32_t gcCode)
 {
+	if (_extensions->fvtest_enableShadowHeapVerifier) {
+		scavenger_healSlots(env);
+	}
+
 	env->_cycleState = &_cycleState;
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
@@ -4058,6 +4062,10 @@ MM_Scavenger::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *su
 	calcGCStats((MM_EnvironmentStandard*)env);
 
 	Assert_MM_true(env->_cycleState == &_cycleState);
+
+	if (_extensions->fvtest_enableShadowHeapVerifier) {
+		scavenger_poisonSlots(env);
+	}
 }
 
 /**
