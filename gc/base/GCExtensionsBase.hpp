@@ -384,6 +384,11 @@ public:
 
 	uintptr_t fvtest_enableShadowHeapVerifier;
 	uintptr_t fvtest_enableReadBarrierVerification; // Forces failure at all direct memory read sites
+	uintptr_t fvtest_enableMonitorObjectsReadBarrierVerification;
+	uintptr_t fvtest_enableClassStaticsReadBarrierVerification;
+	uintptr_t fvtest_enableJNIGlobalWeakReadBarrierVerification;
+	uintptr_t fvtest_enableHeapReadBarrierVerification;
+
 
 	uintptr_t fvtest_forceMarkMapCommitFailure; /**< Force failure at Mark Map commit operation */
 	uintptr_t fvtest_forceMarkMapCommitFailureCounter; /**< Force failure at Mark Map commit operation counter */
@@ -1364,6 +1369,10 @@ public:
 		, fvtest_enableShadowHeapVerifier(1)
 		, fvtest_enableReadBarrierVerification(1)
 #endif/* defined(OMR_GC_COMPRESSED_POINTERS) */
+		, fvtest_enableMonitorObjectsReadBarrierVerification(0)
+		, fvtest_enableClassStaticsReadBarrierVerification(0)
+		, fvtest_enableJNIGlobalWeakReadBarrierVerification(0)
+		, fvtest_enableHeapReadBarrierVerification(0)
 		, fvtest_forceMarkMapCommitFailure(0)
 		, fvtest_forceMarkMapCommitFailureCounter(0)
 		, fvtest_forceMarkMapDecommitFailure(0)
