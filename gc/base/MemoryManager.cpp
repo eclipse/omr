@@ -125,7 +125,7 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 		// omrtty_printf("fvtest_enableReadBarrierVerification: %d\n", extensions->fvtest_enableReadBarrierVerification);
 
 #if !defined(OMR_GC_COMPRESSED_POINTERS)
-						if (extensions->fvtest_enableShadowHeapVerifier) {
+						if (1 == (1 & extensions->fvtest_enableReadBarrierVerification)) {
 							MM_VirtualMemory* instanceShadow = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
 																							 (void*)OMR_MIN(NON_SCALING_LOW_MEMORY_HEAP_CEILING, (uintptr_t)ceiling), mode, options, memoryCategory);
 

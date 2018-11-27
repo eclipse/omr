@@ -382,7 +382,7 @@ public:
 	uintptr_t fvtest_forceSweepChunkArrayCommitFailure; /**< Force failure at Sweep Chunk Array commit operation */
 	uintptr_t fvtest_forceSweepChunkArrayCommitFailureCounter; /**< Force failure at Sweep Chunk Array commit operation counter */
 
-	uintptr_t fvtest_enableShadowHeapVerifier;
+	// uintptr_t fvtest_enableShadowHeapVerifier;
 	uintptr_t fvtest_enableReadBarrierVerification; // Forces failure at all direct memory read sites
 	uintptr_t fvtest_enableMonitorObjectsReadBarrierVerification;
 	uintptr_t fvtest_enableClassStaticsReadBarrierVerification;
@@ -1363,11 +1363,11 @@ public:
 		, fvtest_forceSweepChunkArrayCommitFailure(0)
 		, fvtest_forceSweepChunkArrayCommitFailureCounter(0)
 #if defined(OMR_GC_COMPRESSED_POINTERS) // This is to eliminate dependence on non compressed refs flag
-		, fvtest_enableShadowHeapVerifier(0)
+		// , fvtest_enableShadowHeapVerifier(0)
 		, fvtest_enableReadBarrierVerification(0)
 #else
-		, fvtest_enableShadowHeapVerifier(1)
-		, fvtest_enableReadBarrierVerification(1)
+		// , fvtest_enableShadowHeapVerifier(1)
+		, fvtest_enableReadBarrierVerification(7)
 #endif/* defined(OMR_GC_COMPRESSED_POINTERS) */
 		, fvtest_enableMonitorObjectsReadBarrierVerification(0)
 		, fvtest_enableClassStaticsReadBarrierVerification(0)
