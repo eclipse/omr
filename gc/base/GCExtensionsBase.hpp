@@ -264,6 +264,7 @@ public:
 
 	void* shadowHeapBase;
 	void* shadowHeapTop;
+	void* shadowHeap;
 
 	bool doOutOfLineAllocationTrace;
 	bool doFrequentObjectAllocationSampling; /**< Whether to track object allocations*/
@@ -1273,6 +1274,7 @@ public:
 		, heapSizeForBarrierRange0(0)
 		, shadowHeapBase(0)
 		, shadowHeapTop(0)
+		, shadowHeap(NULL)
 		, doOutOfLineAllocationTrace(true) /* Tracing after ever x bytes allocated per thread. Enabled by default. */
 		, doFrequentObjectAllocationSampling(false) /* Finds most frequently allocated classes. Disabled by default. */
 		, oolObjectSamplingBytesGranularity(16*1024*1024) /* Default granularity set to 16M (shows <1% perf loss). */

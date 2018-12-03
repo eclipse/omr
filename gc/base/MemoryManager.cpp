@@ -130,7 +130,8 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 																							 (void*)OMR_MIN(NON_SCALING_LOW_MEMORY_HEAP_CEILING, (uintptr_t)ceiling), mode, options, memoryCategory);
 
 							extensions->shadowHeapBase = instanceShadow->getHeapBase();
-							extensions->shadowHeapTop = instanceShadow->getHeapTop(); // TODO: Add print statements here
+							extensions->shadowHeapTop = instanceShadow->getHeapTop();
+							extensions->shadowHeap = instanceShadow;
 
 							// OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 							// omrtty_printf("Shadow heap base: %p ----  Shadow heap top: %p\n", extensions->shadowHeapBase, extensions->shadowHeapTop);
@@ -146,7 +147,7 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 		 */
 		/* NON_SCALING_LOW_MEMORY_HEAP_CEILING is set to 4G for 64-bit platforms only, 0 for 32-bit platforms */
 		Assert_MM_true(NON_SCALING_LOW_MEMORY_HEAP_CEILING > 0);
-		
+
 		/*
 		 * Usually the suballocator memory should be allocated first (before heap) however
 		 * in case when preferred address is specified we will try to allocate heap first
@@ -523,6 +524,26 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 			}
 		}
 	}
+
+#if !defined(OMR_GC_COMPRESSED_POINTERS)
+	MM_GCExtensionsBase* extensions = env->getExtensions();
+	MM_VirtualMemory* shadowMemory = (MM_VirtualMemory *)extensions->shadowHeap;
+	if (NULL != shadowMemory) {
+		Assert_MM_true(shadowMemory->getConsumerCount() > 0);
+		shadowMemory->decrementConsumerCount();
+		if (0 == shadowMemory->getConsumerCount()) {
+			/* this is last consumer attached to this Virtual Memory instance - delete it */
+			shadowMemory->kill(env);
+
+			/*
+			 * If this instance has been used as a preallocated (but not taken) memory it should be cleared as well
+			 */
+			if (shadowMemory == _preAllocated.getVirtualMemory()) {
+				_preAllocated.setVirtualMemory(NULL);
+			}
+		}
+	}
+#endif /* !defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	handle->setVirtualMemory(NULL);
 	handle->setMemoryBase(NULL);
