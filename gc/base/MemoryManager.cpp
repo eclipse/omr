@@ -529,19 +529,22 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 	MM_GCExtensionsBase* extensions = env->getExtensions();
 	MM_VirtualMemory* shadowMemory = (MM_VirtualMemory *)extensions->shadowHeap;
 	if (NULL != shadowMemory) {
-		Assert_MM_true(shadowMemory->getConsumerCount() > 0);
-		shadowMemory->decrementConsumerCount();
-		if (0 == shadowMemory->getConsumerCount()) {
-			/* this is last consumer attached to this Virtual Memory instance - delete it */
-			shadowMemory->kill(env);
+		
+		shadowMemory->kill(env);
 
-			/*
-			 * If this instance has been used as a preallocated (but not taken) memory it should be cleared as well
-			 */
-			if (shadowMemory == _preAllocated.getVirtualMemory()) {
-				_preAllocated.setVirtualMemory(NULL);
-			}
-		}
+		// Assert_MM_true(shadowMemory->getConsumerCount() > 0);
+		// shadowMemory->decrementConsumerCount();
+		// if (0 == shadowMemory->getConsumerCount()) {
+		// 	/* this is last consumer attached to this Virtual Memory instance - delete it */
+		// 	shadowMemory->kill(env);
+
+		// 	/*
+		// 	 * If this instance has been used as a preallocated (but not taken) memory it should be cleared as well
+		// 	 */
+		// 	if (shadowMemory == _preAllocated.getVirtualMemory()) {
+		// 		_preAllocated.setVirtualMemory(NULL);
+		// 	}
+		// }
 	}
 #endif /* !defined(OMR_GC_COMPRESSED_POINTERS) */
 
