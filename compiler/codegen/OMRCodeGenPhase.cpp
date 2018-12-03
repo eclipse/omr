@@ -312,6 +312,37 @@ OMR::CodeGenPhase::performBinaryEncodingPhase(TR::CodeGenerator * cg, TR::CodeGe
    }
 
 
+void
+OMR::CodeGenPhase::performInstructionSimplificationPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase)
+   {
+   TR::Compilation* comp = cg->comp();
+   bool trace = comp->getOption(TR_TraceCG);
+   phase->reportPhase(InstructionSimplificationPhase);
+
+   TR::LexicalMemProfiler mp(phase->getName(), comp->phaseMemProfiler());
+   LexicalTimer pt(phase->getName(), comp->phaseTimer());
+
+   if (comp->getOption(TR_DisableInstructionSimplification))
+      {
+      if (trace)
+         {
+         traceMsg(comp, "\n<simplification>\nInstruction Simplification is disabled\n</simplification>\n");
+         }
+      }
+   else
+      {
+      if (trace)
+         {
+         traceMsg(comp, "\n<simplification>\n");
+         }
+      cg->doInstructionSimplification();
+      if (trace)
+         {
+         traceMsg(comp, "</simplification>\n");
+         comp->getDebug()->dumpMethodInstrs(comp->getOutFile(), "Post Simplification Instructions", false);
+         }
+      }
+   }
 
 
 void
@@ -328,9 +359,6 @@ OMR::CodeGenPhase::performPeepholePhase(TR::CodeGenerator * cg, TR::CodeGenPhase
    if (comp->getOption(TR_TraceCG))
       comp->getDebug()->dumpMethodInstrs(comp->getOutFile(), "Post Peephole Instructions", false);
    }
-
-
-
 
 
 void
@@ -388,9 +416,6 @@ OMR::CodeGenPhase::performRegisterAssigningPhase(TR::CodeGenerator * cg, TR::Cod
    }
 
 
-
-
-
 void
 OMR::CodeGenPhase::performCreateStackAtlasPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase)
    {
@@ -432,7 +457,6 @@ OMR::CodeGenPhase::performInstructionSelectionPhase(TR::CodeGenerator * cg, TR::
       comp->failCompilation<TR::CompilationInterrupted>("interrupted after instruction selection");
       }
    }
-
 
 
 void
@@ -692,6 +716,8 @@ OMR::CodeGenPhase::getName(PhaseValue phase)
          return "SetupForInstructionSelection";
       case InstructionSelectionPhase:
          return "InstructionSelection";
+      case InstructionSimplificationPhase:
+         return "InstructionSimplification";
       case CreateStackAtlasPhase:
          return "CreateStackAtlas";
       case RegisterAssigningPhase:

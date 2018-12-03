@@ -412,6 +412,7 @@ class OMR_EXTENSIBLE CodeGenerator
    void generateCode();
    void doRegisterAssignment(TR_RegisterKinds kindsToAssign);
    void doBinaryEncoding();
+   void doInstructionSimplification() { return; }
    void doPeephole() { return; }
    bool hasComplexAddressingMode() { return false; }
    void removeUnusedLocals();

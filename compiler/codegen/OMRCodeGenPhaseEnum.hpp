@@ -30,6 +30,7 @@
       UncommonCallConstNodesPhase,
       SetupForInstructionSelectionPhase,
       InstructionSelectionPhase,
+      InstructionSimplificationPhase,
       CreateStackAtlasPhase,
       RegisterAssigningPhase,
       MapStackPhase,

@@ -30,6 +30,7 @@
    TR::CodeGenPhase::performUncommonCallConstNodesPhase,                                     //UncommonCallConstNodesPhase
    TR::CodeGenPhase::performSetupForInstructionSelectionPhase,                               //SetupForInstructionSelectionPhase
    TR::CodeGenPhase::performInstructionSelectionPhase,                                       //InstructionSelectionPhase
+   TR::CodeGenPhase::performInstructionSimplificationPhase,                                  //InstructionSimplificationPhase
    TR::CodeGenPhase::performCreateStackAtlasPhase,                                           //CreateStackAtlasPhase
    TR::CodeGenPhase::performRegisterAssigningPhase,                                          //RegisterAssigningPhase
    TR::CodeGenPhase::performMapStackPhase,                                                   //MapStackPhase
