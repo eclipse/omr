@@ -1597,7 +1597,7 @@ public:
 		, tarokEnableIncrementalClassGC(true)
 		, tarokEnableCompressedCardTable(true)
 		, compressedCardTable(NULL)
-		, tarokEnableLeafFirstCopying(false)
+		, tarokEnableLeafFirstCopying(true)
 		, tarokMaximumAgeInBytes(0)
 		, tarokMaximumNurseryAgeInBytes(0)
 		, tarokAllocationAgeEnabled(false)
