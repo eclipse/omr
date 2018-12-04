@@ -527,10 +527,11 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 
 #if !defined(OMR_GC_COMPRESSED_POINTERS)
 	MM_GCExtensionsBase* extensions = env->getExtensions();
-	MM_VirtualMemory* shadowMemory = (MM_VirtualMemory *)extensions->shadowHeapHandle->getVirtualMemory();
+	MM_VirtualMemory* shadowMemory = extensions->shadowHeapHandle->getVirtualMemory();
 	if (NULL != shadowMemory) {
 		
 		shadowMemory->kill(env);
+		extensions->shadowHeapHandle->setVirtualMemory(NULL);
 
 		// Assert_MM_true(shadowMemory->getConsumerCount() > 0);
 		// shadowMemory->decrementConsumerCount();
