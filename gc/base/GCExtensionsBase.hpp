@@ -38,6 +38,7 @@
 #include "GlobalGCStats.hpp"
 #include "GlobalVLHGCStats.hpp"
 #include "LargeObjectAllocateStats.hpp"
+#include "MemoryHandle.hpp"
 #include "MixedObjectModel.hpp"
 #include "NUMAManager.hpp"
 #include "OMRVMThreadListIterator.hpp"
@@ -264,7 +265,7 @@ public:
 
 	void* shadowHeapBase;
 	void* shadowHeapTop;
-	void* shadowHeap;
+	MM_MemoryHandle* shadowHeapHandle;
 
 	bool doOutOfLineAllocationTrace;
 	bool doFrequentObjectAllocationSampling; /**< Whether to track object allocations*/
@@ -1274,7 +1275,7 @@ public:
 		, heapSizeForBarrierRange0(0)
 		, shadowHeapBase(0)
 		, shadowHeapTop(0)
-		, shadowHeap(NULL)
+		, shadowHeapHandle(NULL)
 		, doOutOfLineAllocationTrace(true) /* Tracing after ever x bytes allocated per thread. Enabled by default. */
 		, doFrequentObjectAllocationSampling(false) /* Finds most frequently allocated classes. Disabled by default. */
 		, oolObjectSamplingBytesGranularity(16*1024*1024) /* Default granularity set to 16M (shows <1% perf loss). */

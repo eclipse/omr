@@ -131,7 +131,7 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 
 							extensions->shadowHeapBase = instanceShadow->getHeapBase();
 							extensions->shadowHeapTop = instanceShadow->getHeapTop();
-							extensions->shadowHeap = instanceShadow;
+							extensions->shadowHeapHandle->setVirtualMemory(instanceShadow);
 
 							// OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 							// omrtty_printf("Shadow heap base: %p ----  Shadow heap top: %p\n", extensions->shadowHeapBase, extensions->shadowHeapTop);
@@ -527,7 +527,7 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 
 #if !defined(OMR_GC_COMPRESSED_POINTERS)
 	MM_GCExtensionsBase* extensions = env->getExtensions();
-	MM_VirtualMemory* shadowMemory = (MM_VirtualMemory *)extensions->shadowHeap;
+	MM_VirtualMemory* shadowMemory = (MM_VirtualMemory *)extensions->shadowHeapHandle->getVirtualMemory();
 	if (NULL != shadowMemory) {
 		
 		shadowMemory->kill(env);
