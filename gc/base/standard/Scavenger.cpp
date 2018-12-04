@@ -4020,7 +4020,7 @@ MM_Scavenger::getCollectorExpandSize(MM_EnvironmentBase *env)
 void
 MM_Scavenger::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, uint32_t gcCode)
 {
-	if (5 == (5 & _extensions->fvtest_enableReadBarrierVerification)) {
+	if (1 == (1	 & _extensions->fvtest_enableReadBarrierVerification)) {
 		scavenger_healSlots(env);
 	}
 
@@ -4063,7 +4063,7 @@ MM_Scavenger::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *su
 
 	Assert_MM_true(env->_cycleState == &_cycleState);
 
-	if (5 == (5 & _extensions->fvtest_enableReadBarrierVerification)) {
+	if (1 == (1 & _extensions->fvtest_enableReadBarrierVerification)) {
 		scavenger_poisonSlots(env);
 	}
 }

@@ -918,7 +918,7 @@ MM_ParallelGlobalGC::masterThreadRestartAllocationCaches(MM_EnvironmentBase *env
 void
 MM_ParallelGlobalGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, uint32_t gcCode)
 {
-	if (3 == (3 & _extensions->fvtest_enableReadBarrierVerification)) {
+	if (1 == (1 & _extensions->fvtest_enableReadBarrierVerification)) {
 		_delegate.healSlots(env); // heal the objects that were not read
 	}
 
@@ -1000,7 +1000,7 @@ MM_ParallelGlobalGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSp
 	_extensions->lastGCFreeBytes = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD);
 #endif
 
-	if (3 == (3 & _extensions->fvtest_enableReadBarrierVerification)) {
+	if (1 == (1 & _extensions->fvtest_enableReadBarrierVerification)) {
 		_delegate.poisonSlots(env);
 	}
 }
