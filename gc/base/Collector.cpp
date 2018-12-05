@@ -28,10 +28,8 @@
 #include "MemorySubSpace.hpp"
 #include "ModronAssertions.h"
 #include "ObjectAllocationInterface.hpp"
-
-// #include "ObjectIterator.hpp"
 #include "OMRVMThreadListIterator.hpp"
-#include "ModronTypes.hpp"
+
 class MM_MemorySubSpace;
 class MM_MemorySpace;
 
