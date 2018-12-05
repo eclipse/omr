@@ -181,11 +181,9 @@ MM_GCExtensionsBase::initialize(MM_EnvironmentBase* env)
 	}
 
 #if defined(OMR_GC_COMPRESSED_POINTERS) // This is to eliminate dependence on non compressed refs flag
-	// fvtest_enableShadowHeapVerifier = 0;
 	fvtest_enableReadBarrierVerification = 0;
 	alwaysCallReadBarrier = false;
 #else
-	// fvtest_enableShadowHeapVerifier = 1;
 	fvtest_enableReadBarrierVerification = 7;
 	alwaysCallReadBarrier = true;
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
