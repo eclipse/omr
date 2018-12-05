@@ -508,7 +508,7 @@ void
 MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle* handle)
 {
 	Assert_MM_true(NULL != handle);
-	MM_VirtualMemory* memory = handle->getVirtualMemory(); //TODO: add handle for shadwoheap memory to extensions
+	MM_VirtualMemory* memory = handle->getVirtualMemory();
 	if (NULL != memory) {
 		Assert_MM_true(memory->getConsumerCount() > 0);
 		memory->decrementConsumerCount();
@@ -529,23 +529,9 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 	MM_GCExtensionsBase* extensions = env->getExtensions();
 	MM_VirtualMemory* shadowMemory = extensions->shadowHeapHandle->getVirtualMemory();
 	if (NULL != shadowMemory) {
-		
+
 		shadowMemory->kill(env);
 		extensions->shadowHeapHandle->setVirtualMemory(NULL);
-
-		// Assert_MM_true(shadowMemory->getConsumerCount() > 0);
-		// shadowMemory->decrementConsumerCount();
-		// if (0 == shadowMemory->getConsumerCount()) {
-		// 	/* this is last consumer attached to this Virtual Memory instance - delete it */
-		// 	shadowMemory->kill(env);
-
-		// 	/*
-		// 	 * If this instance has been used as a preallocated (but not taken) memory it should be cleared as well
-		// 	 */
-		// 	if (shadowMemory == _preAllocated.getVirtualMemory()) {
-		// 		_preAllocated.setVirtualMemory(NULL);
-		// 	}
-		// }
 	}
 #endif /* !defined(OMR_GC_COMPRESSED_POINTERS) */
 
