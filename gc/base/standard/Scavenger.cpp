@@ -4020,9 +4020,11 @@ MM_Scavenger::getCollectorExpandSize(MM_EnvironmentBase *env)
 void
 MM_Scavenger::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, uint32_t gcCode)
 {
+#if !defined(OMR_GC_COMPRESSED_POINTERS)
 	if (1 == (1 & _extensions->fvtest_enableReadBarrierVerification)) {
 		scavenger_healSlots(env);
 	}
+#endif /* !defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	env->_cycleState = &_cycleState;
 
@@ -4063,9 +4065,11 @@ MM_Scavenger::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *su
 
 	Assert_MM_true(env->_cycleState == &_cycleState);
 
+#if !defined(OMR_GC_COMPRESSED_POINTERS)
 	if (1 == (1 & _extensions->fvtest_enableReadBarrierVerification)) {
 		scavenger_poisonSlots(env);
 	}
+#endif /* !defined(OMR_GC_COMPRESSED_POINTERS) */
 }
 
 /**
@@ -5074,6 +5078,7 @@ MM_Scavenger::completeConcurrentCycle(MM_EnvironmentBase *env)
 
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
+#if !defined(OMR_GC_COMPRESSED_POINTERS)
 void
 MM_Scavenger::scavenger_poisonSlots(MM_EnvironmentBase *env)
 {
@@ -5084,3 +5089,4 @@ MM_Scavenger::scavenger_healSlots(MM_EnvironmentBase *env)
 {
 	_cli->scavenger_healSlots(env);
 }
+#endif /* !defined(OMR_GC_COMPRESSED_POINTERS) */
