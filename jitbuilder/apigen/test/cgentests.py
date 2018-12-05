@@ -113,6 +113,16 @@ class CGeneratorTest(unittest.TestCase):
         self.assertRegexpMatches(self.generator.generate_ctor_decl(ctor),
                                 "class_1\s*\*\s*Newclass_1ctor_overload_1\(\s*bool\s*\(\s*\*\s*class_1_callback_1_\s*\)\(\s*bool\s*\)\s*\)\s*;")
 
+    def test_generate_dtor_decl_1(self):
+        c = self.api.get_class_by_name("class_2")
+        self.assertRegexpMatches(self.generator.generate_dtor_decl(c),
+                                "void\s+Deleteclass_2\(class_2\s*\*\s*self\)\s*;")
+
+    def test_generate_dtor_decl_2(self):
+        c = self.api.get_class_by_name("class_1_inner_class_1")
+        self.assertRegexpMatches(self.generator.generate_dtor_decl(c),
+                                "void\s+Deleteclass_1_inner_class_1\(class_1class_1_inner_class_1\s*\*\s*self\)\s*;")
+
     def test_generate_allocator_decl_1(self):
         class_desc = self.api.get_class_by_name("class_1_inner_class_1")
         self.assertRegexpMatches(self.generator.generate_allocator_decl(class_desc),
