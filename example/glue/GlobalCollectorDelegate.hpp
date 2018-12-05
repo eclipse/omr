@@ -136,6 +136,9 @@ public:
 	 * @param env environment for calling thread
 	 */
 	void prepareHeapForWalk(MM_EnvironmentBase *env) {}
+
+	void poisonSlots(MM_EnvironmentBase *env) {}
+	void healSlots(MM_EnvironmentBase *env) {}
 	
 	/**
 	 * In order to allow the heap to remain walkable for diagnostics some fixup is required
