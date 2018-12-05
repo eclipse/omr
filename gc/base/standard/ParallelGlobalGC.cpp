@@ -917,9 +917,11 @@ MM_ParallelGlobalGC::masterThreadRestartAllocationCaches(MM_EnvironmentBase *env
 void
 MM_ParallelGlobalGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, uint32_t gcCode)
 {
+#if !defined(OMR_GC_COMPRESSED_POINTERS)
 	if (1 == (1 & _extensions->fvtest_enableReadBarrierVerification)) {
 		_delegate.healSlots(env); // heal the objects that were not read
 	}
+#endif /* !defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	_cycleState = MM_CycleState();
 	env->_cycleState = &_cycleState;
@@ -998,9 +1000,13 @@ MM_ParallelGlobalGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSp
 	_extensions->lastGCFreeBytes = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD);
 #endif
 
+
+#if !defined(OMR_GC_COMPRESSED_POINTERS)
 	if (1 == (1 & _extensions->fvtest_enableReadBarrierVerification)) {
 		_delegate.poisonSlots(env);
 	}
+#endif /* !defined(OMR_GC_COMPRESSED_POINTERS) */
+
 }
 
 void
