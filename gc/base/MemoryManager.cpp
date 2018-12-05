@@ -147,7 +147,7 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 		 */
 		/* NON_SCALING_LOW_MEMORY_HEAP_CEILING is set to 4G for 64-bit platforms only, 0 for 32-bit platforms */
 		Assert_MM_true(NON_SCALING_LOW_MEMORY_HEAP_CEILING > 0);
-
+		
 		/*
 		 * Usually the suballocator memory should be allocated first (before heap) however
 		 * in case when preferred address is specified we will try to allocate heap first
