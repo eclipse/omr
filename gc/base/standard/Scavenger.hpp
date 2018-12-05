@@ -72,7 +72,7 @@ private:
 	bool _isRememberedSetInOverflowAtTheBeginning; /**< Cached RS Overflow flag at the beginning of the scavenge */
 
 	MM_GCExtensionsBase *_extensions;
-
+	
 	MM_Dispatcher *_dispatcher;
 
 	volatile uintptr_t _doneIndex; /**< sequence ID of completeScan loop, which we may have a few during one GC cycle */
@@ -118,7 +118,7 @@ private:
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	MM_MasterGCThread _masterGCThread; /**< An object which manages the state of the master GC thread */
-
+	
 	volatile enum ConcurrentState {
 		concurrent_state_idle,
 		concurrent_state_init,
@@ -126,7 +126,7 @@ private:
 		concurrent_state_scan,
 		concurrent_state_complete
 	} _concurrentState;
-
+	
 	uint64_t _concurrentScavengerSwitchCount; /**< global counter of cycle start and cycle end transitions */
 	volatile bool _shouldYield; /**< Set by the first GC thread that observes that a criteria for yielding is met. Reset only when the concurrent phase is finished. */
 
@@ -139,7 +139,7 @@ protected:
 
 public:
 	OMR_VM *_omrVM;
-
+	
 	/*
 	 * Function members
 	 */
@@ -207,13 +207,13 @@ public:
 	 * Hook callback. Called when a global collect has completed
 	 */
 	static void hookGlobalCollectionComplete(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
-
+	
 	/**
 	 *  This method is called on the start of a global GC.
 	 *  @param env the current thread.
 	 */
 	void globalCollectionStart(MM_EnvironmentBase *env);
-
+	
 	/**
 	 *  This method is called on the completion of a global GC.
 	 *  @param env the current thread.
@@ -292,7 +292,7 @@ public:
 	void fixupObjectScan(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	bool fixupSlot(GC_SlotObject *slotObject);
 	bool fixupSlotWithoutCompression(volatile omrobjectptr_t *slotPtr);
-
+	
 	void scavengeRememberedSetListIndirect(MM_EnvironmentStandard *env);
 	void scavengeRememberedSetListDirect(MM_EnvironmentStandard *env);
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
@@ -303,7 +303,7 @@ public:
  	 * @return true if Global GC was executed, false if concurrent kickoff forced or Global GC is not possible 
  	 */
 	bool percolateGarbageCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, PercolateReason percolateReason, uint32_t gcCode);
-
+	
 	void reportGCCycleStart(MM_EnvironmentStandard *env);
 	void reportGCCycleEnd(MM_EnvironmentStandard *env);
 	void reportGCCycleFinalIncrementEnding(MM_EnvironmentStandard *envModron);
@@ -472,12 +472,12 @@ public:
 	void clearThreadGCStats(MM_EnvironmentBase *env, bool firstIncrement);
 	/**
 	 * Merge thread local stats for current phase/increment in to global current increment stats
-	 */
+	 */	
 	void mergeThreadGCStats(MM_EnvironmentBase *env);
 	/**
 	 * Merge global current increment stats in to global cycle stats
 	 * @param firstIncrement true if last increment in a cycle
-	 */
+	 */		
 	void mergeIncrementGCStats(MM_EnvironmentBase *env, bool lastIncrement);
 	/**
 	 * Common merge logic used for both thread and increment level merges.
@@ -584,16 +584,17 @@ protected:
 	 */
 	virtual MM_ConcurrentPhaseStatsBase *getConcurrentPhaseStats() { return &_concurrentPhaseStats; }
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
-
+	
 public:
-
 
 	static MM_Scavenger *newInstance(MM_EnvironmentStandard *env, MM_HeapRegionManager *regionManager);
 	virtual void kill(MM_EnvironmentBase *env);
-	
+
+#if !defined(OMR_GC_COMPRESSED_POINTERS)
 	virtual void scavenger_poisonSlots(MM_EnvironmentBase *env);
 	virtual void scavenger_healSlots(MM_EnvironmentBase *env);
-
+#endif /* !defined(OMR_GC_COMPRESSED_POINTERS) */
+	
 	virtual bool collectorStartup(MM_GCExtensionsBase* extensions);
 	virtual void collectorShutdown(MM_GCExtensionsBase* extensions);
 
@@ -610,10 +611,10 @@ public:
 	bool scavengeRoots(MM_EnvironmentBase *env);
 	bool scavengeScan(MM_EnvironmentBase *env);
 	bool scavengeComplete(MM_EnvironmentBase *env);
-
+	
 	/* mutator thread specific methods */
 	void mutatorSetupForGC(MM_EnvironmentBase *env);
-
+	
 	/* methods used by either mutator or GC threads */
 	/**
 	 * All open copy caches (even if not full) are pushed onto scan queue. Unused memory is abondoned.
@@ -621,7 +622,7 @@ public:
 	 * @param threadEnvironment Thread for which copy caches are to be released. Could be either GC or mutator thread.
 	 */
 	void threadFinalReleaseCaches(MM_EnvironmentBase *env);
-
+	
 	/**
 	 * trigger STW phase (either start or end) of a Concurrent Scavenger Cycle 
 	 */ 
@@ -639,7 +640,7 @@ public:
 	bool isConcurrentInProgress() {
 		return concurrent_state_idle != _concurrentState;
 	}
-
+	
 	bool isMutatorThreadInSyncWithCycle(MM_EnvironmentBase *env) {
 		return (env->_concurrentScavengerSwitchCount == _concurrentScavengerSwitchCount);
 	}
@@ -647,11 +648,11 @@ public:
 	/**
 	 * Enabled/disable approriate thread local resources when starting or finishing Concurrent Scavenger Cycle
 	 */ 
-	void switchConcurrentForThread(MM_EnvironmentBase *env);
-
+	void switchConcurrentForThread(MM_EnvironmentBase *env);	
+	
 	void reportConcurrentScavengeStart(MM_EnvironmentStandard *env);
 	void reportConcurrentScavengeEnd(MM_EnvironmentStandard *env);
-
+	
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 	/**
@@ -676,25 +677,25 @@ public:
 		/* check if the object in cached allocate (from GC perspective, evacuate) ranges */
 		return ((void *)objectPtr >= _evacuateSpaceBase) && ((void *)objectPtr < _evacuateSpaceTop);
 	}
-
+	
 	MMINLINE void *
 	getEvacuateBase()
 	{
 		return _evacuateSpaceBase;
 	}
-
+	
 	MMINLINE void *
 	getEvacuateTop()
 	{
 		return _evacuateSpaceTop;
 	}
-
+	
 	MMINLINE void *
 	getSurvivorBase()
 	{
 		return _survivorSpaceBase;
 	}
-
+	
 	MMINLINE void *
 	getSurvivorTop()
 	{
@@ -818,6 +819,7 @@ public:
 		, _concurrentScavengerSwitchCount(0)
 		, _shouldYield(false)
 #endif /* #if defined(OMR_GC_CONCURRENT_SCAVENGER) */
+
 		, _omrVM(env->getOmrVM())
 	{
 		_typeId = __FUNCTION__;
