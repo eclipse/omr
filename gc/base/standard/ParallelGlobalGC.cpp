@@ -54,11 +54,11 @@
 #include "ObjectMap.hpp"
 #endif /* defined(OMR_GC_OBJECT_MAP) */
 #include "OMRVMInterface.hpp"
+#include "ObjectIterator.hpp"
 #if defined(OMR_GC_MODRON_COMPACTION)
 #include "ParallelCompactTask.hpp"
 #endif /* OMR_GC_MODRON_COMPACTION */
 #include "ParallelGlobalGC.hpp"
-#include "ParallelHeapWalker.hpp"
 #include "ParallelMarkTask.hpp"
 #include "ParallelSweepScheme.hpp"
 #include "ParallelTask.hpp"
@@ -77,6 +77,70 @@
 #if defined(OMR_VALGRIND_MEMCHECK)
 #include "MemcheckWrapper.hpp"
 #endif /* defined(OMR_VALGRIND_MEMCHECK) */
+
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+void
+poisonReferenceSlot(MM_EnvironmentBase *env, GC_SlotObject *slotObject)
+{
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+	uintptr_t heapBase = (uintptr_t)extensions->heap->getHeapBase();
+	uintptr_t heapTop = (uintptr_t)extensions->heap->getHeapTop();
+	uintptr_t referenceFromSlot = (uintptr_t)slotObject->readReferenceFromSlot();
+
+	if ((heapTop > referenceFromSlot) && (heapBase <= referenceFromSlot)) {
+
+		uintptr_t shadowHeapBase = (uintptr_t)extensions->shadowHeapBase;
+		uintptr_t poisonedAddress = shadowHeapBase + (referenceFromSlot - heapBase);
+		slotObject->writeReferenceToSlot((omrobjectptr_t)poisonedAddress);
+
+	}
+}
+
+void
+poisonReferenceSlots(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region, omrobjectptr_t object, void *userData)
+{
+	GC_ObjectIterator objectIterator(omrVMThread->_vm, object);
+	GC_SlotObject *slotObject;
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(omrVMThread);
+
+	while (NULL != (slotObject = objectIterator.nextSlot())) {
+		poisonReferenceSlot(env, slotObject);
+	}
+}
+
+void
+healReferenceSlot(MM_EnvironmentBase *env, GC_SlotObject *slotObject)
+{
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+	uintptr_t shadowHeapBase = (uintptr_t)extensions->shadowHeapBase;
+	uintptr_t referenceFromSlot = (uintptr_t)slotObject->readReferenceFromSlot();
+	uintptr_t shadowHeapTop = (uintptr_t)extensions->shadowHeapTop;
+
+	if ((shadowHeapTop > referenceFromSlot) && (shadowHeapBase <= referenceFromSlot)) {
+
+		uintptr_t heapBase = (uintptr_t)extensions->heap->getHeapBase();
+		uintptr_t healedHeapAddress = heapBase + (referenceFromSlot - shadowHeapBase);
+		/* This healing occurs at the start of GC, hence, does not need atomic write */
+		slotObject->writeReferenceToSlot((omrobjectptr_t)healedHeapAddress);
+
+	}
+}
+
+void
+healReferenceSlots(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region, omrobjectptr_t object, void *userData)
+{
+		GC_ObjectIterator objectIterator(omrVMThread->_vm, object);
+		GC_SlotObject *slotObject;
+
+		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(omrVMThread);
+
+		while (NULL != (slotObject = objectIterator.nextSlot())) {
+			healReferenceSlot(env, slotObject);
+		}
+}
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
 
 /* Define hook routines to be called on AF start and End */
 static void globalGCHookAFCycleStart(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
@@ -917,6 +981,14 @@ MM_ParallelGlobalGC::masterThreadRestartAllocationCaches(MM_EnvironmentBase *env
 void
 MM_ParallelGlobalGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, uint32_t gcCode)
 {
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+	if (1 == _extensions->fvtest_enableReadBarrierVerification) {
+		/* heal the objects that were not read */
+		_delegate.healSlots(env);
+		healHeap(env);
+	}
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+
 	_cycleState = MM_CycleState();
 	env->_cycleState = &_cycleState;
 	env->_cycleState->_gcCode = MM_GCCode(gcCode);
@@ -993,6 +1065,15 @@ MM_ParallelGlobalGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSp
 #if defined(OMR_GC_IDLE_HEAP_MANAGER)
 	_extensions->lastGCFreeBytes = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD);
 #endif
+
+
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+	if (1 == _extensions->fvtest_enableReadBarrierVerification) {
+		_delegate.poisonSlots(env);
+		poisonHeap(env);
+	}
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+
 }
 
 void
@@ -1725,3 +1806,21 @@ MM_ParallelGlobalGC::reportCompactEnd(MM_EnvironmentBase *env)
 }
 #endif /* OMR_GC_MODRON_COMPACTION */
 
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+void
+MM_ParallelGlobalGC::poisonHeap(MM_EnvironmentBase *env)
+{
+	/* This will poison only the heap slots */
+	_heapWalker->allObjectsDo(env, poisonReferenceSlots, NULL, 0, true, false);
+}
+
+void
+MM_ParallelGlobalGC::healHeap(MM_EnvironmentBase *env)
+{
+	/* This will heal only the heap slots */
+	_heapWalker->allObjectsDo(env, healReferenceSlots, NULL, 0, false, false);
+	/* Don't have the mark map at the start of gc so we'll have to iterate over
+	 * in a sequential manner
+	 */
+}
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */

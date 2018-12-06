@@ -120,6 +120,19 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 	if (NULL == ceiling) {
 		instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
 												 ceiling, mode, options, memoryCategory);
+
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+		if (1 == extensions->fvtest_enableReadBarrierVerification) {
+			MM_VirtualMemory* instanceShadow = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags,
+																			 tailPadding, preferredAddress,
+																			 (void*)OMR_MIN(NON_SCALING_LOW_MEMORY_HEAP_CEILING,
+																			 (uintptr_t)ceiling), mode, options, memoryCategory);
+
+			extensions->shadowHeapBase = instanceShadow->getHeapBase();
+			extensions->shadowHeapTop = instanceShadow->getHeapTop();
+			extensions->shadowHeapHandle->setVirtualMemory(instanceShadow);
+		}
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
 	} else {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
@@ -507,6 +520,16 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 			}
 		}
 	}
+
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+	MM_GCExtensionsBase* extensions = env->getExtensions();
+	MM_VirtualMemory* shadowMemory = extensions->shadowHeapHandle->getVirtualMemory();
+	if (NULL != shadowMemory) {
+
+		shadowMemory->kill(env);
+		extensions->shadowHeapHandle->setVirtualMemory(NULL);
+	}
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	handle->setVirtualMemory(NULL);
 	handle->setMemoryBase(NULL);
