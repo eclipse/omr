@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,57 +19,25 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_SEGMENT_POOL
-#define TR_SEGMENT_POOL
-
-#pragma once
-
-#include <deque>
-#include <stack>
-#include "env/TypedAllocator.hpp"
-#include "infra/ReferenceWrapper.hpp"
 #include "env/SegmentProvider.hpp"
-#include "env/RawAllocator.hpp"
 
-namespace TR {
-
-/**
- * @brief The SegmentPool class maintains a pool of memory segments.
- */
-
-class SegmentPool : public TR::SegmentProvider
+void *
+operator new(size_t size, OMR::BackingSegment &segment) throw()
    {
-public:
-   SegmentPool(TR::SegmentProvider &backingProvider, size_t cacheSize, TR::RawAllocator rawAllocator);
-   ~SegmentPool() throw();
+   if (segment.size() < size) return NULL;
+   return segment.base();
+   }
 
-   virtual TR::MemorySegment &request(size_t requiredSize);
-   virtual void release(TR::MemorySegment &) throw();
+void *operator new[](size_t size, OMR::BackingSegment &segment) throw()
+   {
+   return operator new(size, segment);
+   }
 
-private:
-   size_t const _poolSize;
-   size_t _storedSegments;
-   TR::SegmentProvider &_backingProvider;
+void operator delete(void *, OMR::BackingSegment &segment) throw()
+   {
+   }
 
-   typedef TR::typed_allocator<
-      TR::reference_wrapper<TR::MemorySegment>,
-      TR::RawAllocator
-      > DequeAllocator;
-
-   typedef std::deque<
-      TR::reference_wrapper<TR::MemorySegment>,
-      DequeAllocator
-      > StackContainer;
-
-   typedef std::stack<
-      TR::reference_wrapper<TR::MemorySegment>,
-      StackContainer
-      > SegmentStack;
-
-   SegmentStack _segmentStack;
-
-   };
-
-}
-
-#endif // TR_SEGMENT_POOL
+void operator delete[](void *ptr, OMR::BackingSegment  &segment) throw()
+   {
+   operator delete(ptr, segment);
+   }

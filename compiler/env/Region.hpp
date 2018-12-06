@@ -31,10 +31,10 @@
 #include "env/TypedAllocator.hpp"
 #include "env/MemorySegment.hpp"
 #include "env/RawAllocator.hpp"
+#include "env/SegmentProvider.hpp"
 
 namespace TR {
 
-class SegmentProvider;
 class RegionProfiler;
 
 class Region

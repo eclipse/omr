@@ -26,13 +26,13 @@
 #include "map"
 #include "ilgen/IlBuilder.hpp"
 #include "env/TypedAllocator.hpp"
+#include "env/SegmentProvider.hpp"
 
 class TR_Memory;
 
 namespace OMR { class StructType; }
 namespace OMR { class UnionType; }
 namespace TR  { class IlReference; }
-namespace TR  { class SegmentProvider; }
 namespace TR  { class Region; }
 
 extern "C" {

@@ -27,6 +27,7 @@
 #include <fstream>
 #include "ilgen/IlBuilder.hpp"
 #include "env/TypedAllocator.hpp"
+#include "env/SegmentProvider.hpp"
 
 // Maximum length of _definingLine string (including null terminator)
 #define MAX_LINE_NUM_LEN 7
@@ -37,7 +38,6 @@ namespace TR { class ResolvedMethod; }
 namespace TR { class SymbolReference; }
 namespace TR { class VirtualMachineState; }
 
-namespace TR { class SegmentProvider; }
 namespace TR { class Region; }
 class TR_Memory;
 

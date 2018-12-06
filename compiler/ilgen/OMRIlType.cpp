@@ -27,7 +27,7 @@
 #include "compile/Compilation.hpp"
 #include "ilgen/TypeDictionary.hpp"
 #include "env/Region.hpp"
-#include "env/SystemSegmentProvider.hpp"
+#include "env/SegmentProvider.hpp"
 #include "env/TRMemory.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"

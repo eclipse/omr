@@ -72,10 +72,10 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/env/OMRClassEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRDebugEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRVMEnv.cpp \
-    $(JIT_OMR_DIRTY_DIR)/env/SegmentProvider.cpp \
-    $(JIT_OMR_DIRTY_DIR)/env/SegmentAllocator.cpp \
-    $(JIT_OMR_DIRTY_DIR)/env/SystemSegmentProvider.cpp \
-    $(JIT_OMR_DIRTY_DIR)/env/DebugSegmentProvider.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/OMRSegmentAllocator.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/OMRSegmentProvider.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/OMRDebugSegmentAllocator.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/OMRDebugSegmentProvider.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/Region.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/StackMemoryRegion.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRPersistentInfo.cpp \

@@ -54,13 +54,16 @@ class OMR_EXTENSIBLE CompilerEnv
 
 public:
 
-   CompilerEnv(TR::RawAllocator raw, const TR::PersistentAllocatorKit &persistentAllocatorKit);
+   CompilerEnv(const TR::PersistentAllocatorKit &persistentAllocatorKit);
 
    TR::CompilerEnv *self();
 
    /// Primordial raw allocator.  This is guaranteed to be thread safe.
    ///
    TR::RawAllocator rawAllocator;
+
+   // Primordial segment allocator
+   TR::SegmentAllocator segmentAllocator;
 
    // Compilation host environment
    //

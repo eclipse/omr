@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,36 +19,44 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef PERSISTENTALLOCATORKIT_HPP
-#define PERSISTENTALLOCATORKIT_HPP
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(__APPLE__) || defined(_AIX)
+#include <sys/mman.h>
+#if defined(__APPLE__) || !defined(MAP_ANONYMOUS)
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+#elif defined(OMR_OS_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#else
+#include <string.h>
+#endif /* defined(OMR_OS_WINDOWS) */
 
-#ifndef TR_PERSISTENT_ALLOCATOR_KIT
-#define TR_PERSISTENT_ALLOCATOR_KIT
+#include "env/MemorySegment.hpp"
+#include "env/DebugSegmentProvider.hpp"
 
-namespace OMR { class PersistentAllocatorKit; }
-namespace TR { using OMR::PersistentAllocatorKit; }
-
-#endif // TR_PERSISTENT_ALLOCATOR_KIT
-
-#include "env/RawAllocator.hpp"
-#include "env/SegmentAllocator.hpp"
-
-
-namespace OMR
-{
-
-struct PersistentAllocatorKit
+TR::MemorySegment &
+TR::DebugSegmentProvider::request(size_t requiredSize)
    {
-   PersistentAllocatorKit(TR::RawAllocator r, TR::SegmentAllocator s) :
-      rawAllocator(r),
-      segmentAllocator(s)
+   size_t const roundedSize = round(requiredSize);
+   BackingSegment &newSegment = _segmentAllocator.allocate(roundedSize);
+   TR::reference_wrapper<BackingSegment> newSegmentRef = TR::ref(newSegment);
+
+   try
       {
+      _allocatedSegments.push_back(newSegmentRef);
+      _bytesAllocated += requiredSize;
+      }
+   catch (...)
+      {
+      _segmentAllocator.deallocate(newSegment);
+      throw;
       }
 
-   TR::RawAllocator rawAllocator;
-   TR::SegmentAllocator segmentAllocator;
-   };
+   return provideNewSegment(roundedSize, newSegmentRef);
+   }
 
-}
-
-#endif // PERSISTENTALLOCATORKIT_HPP
+void
+TR::DebugSegmentProvider::release(TR::MemorySegment &segment) throw()
+   {
+   _segmentAllocator.protect(*reinterpret_cast<BackingSegment *>(segment.base()));
+   }

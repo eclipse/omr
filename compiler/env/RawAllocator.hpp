@@ -19,16 +19,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef OMR_RAW_ALLOCATOR_HPP
-#define OMR_RAW_ALLOCATOR_HPP
+#ifndef TR_RAW_ALLOCATOR_HPP
+#define TR_RAW_ALLOCATOR_HPP
 
 #pragma once
 
-#ifndef TR_RAW_ALLOCATOR
-#define TR_RAW_ALLOCATOR
 namespace OMR { class RawAllocator; }
-namespace TR { typedef OMR::RawAllocator RawAllocator; }
-#endif
+namespace TR { using OMR::RawAllocator; }
 
 #include <stddef.h>  // for size_t
 #include <cstdlib>   // for free, malloc
@@ -120,4 +117,4 @@ inline void * operator new[](size_t size, OMR::RawAllocator allocator, const std
    return allocator.allocate(size, tag);
    }
 
-#endif // OMR_RAW_ALLOCATOR_HPP
+#endif // TR_RAW_ALLOCATOR_HPP

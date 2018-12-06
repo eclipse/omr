@@ -19,37 +19,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef OMR_SEGMENT_ALLOCATOR_HPP
-#define OMR_SEGMENT_ALLOCATOR_HPP
+#ifndef TR_SEGMENTALLOCATOR_INCL
+#define TR_SEGMENTALLOCATOR_INCL
 
 #pragma once
 
-#include "env/SegmentProvider.hpp"
+#include "env/OMRSegmentAllocator.hpp"
 
-namespace TR {
+namespace TR { using OMR::SegmentAllocator; }
+namespace TR { using OMR::BackingSegment; }
 
-class SegmentAllocator : public SegmentProvider
-   {
-public:
-   virtual size_t regionBytesAllocated() const throw() = 0;
-   virtual size_t systemBytesAllocated() const throw() = 0;
-   virtual size_t allocationLimit() const throw() = 0;
-   virtual void setAllocationLimit(size_t) = 0;
 
-protected:
-   explicit SegmentAllocator(size_t defaultSegmentSize) :
-      SegmentProvider(defaultSegmentSize)
-      {
-      }
-
-   SegmentAllocator(const SegmentAllocator &other) :
-      SegmentProvider(other)
-      {
-      }
-
-   virtual ~SegmentAllocator() throw();
-   };
-
-}
-
-#endif // OMR_SEGMENT_ALLOCATOR_HPP
+#endif // defined(TR_SEGMENTALLOCATOR_INCL)

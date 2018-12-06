@@ -20,7 +20,6 @@
  *******************************************************************************/
 
 #include "env/MemorySegment.hpp"
-#include "env/SegmentProvider.hpp"
 #include "env/Region.hpp"
 #include "infra/ReferenceWrapper.hpp"
 #include "env/TRMemory.hpp"

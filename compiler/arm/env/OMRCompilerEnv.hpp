@@ -48,8 +48,8 @@ class OMR_EXTENSIBLE CompilerEnv : public OMR::CompilerEnv
    {
 public:
 
-   CompilerEnv(TR::RawAllocator raw, const TR::PersistentAllocatorKit &persistentAllocatorKit) :
-         OMR::CompilerEnv(raw, persistentAllocatorKit)
+   CompilerEnv(const TR::PersistentAllocatorKit &persistentAllocatorKit) :
+         OMR::CompilerEnv(persistentAllocatorKit)
       {}
 
    // Initialize 'target' environment for this compilation

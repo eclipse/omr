@@ -26,10 +26,10 @@
 
 
 OMR::CompilerEnv::CompilerEnv(
-   TR::RawAllocator raw,
    const TR::PersistentAllocatorKit &persistentAllocatorKit
    ) :
-      rawAllocator(raw),
+      rawAllocator(persistentAllocatorKit.rawAllocator),
+      segmentAllocator(persistentAllocatorKit.segmentAllocator),
       _initialized(false),
       _persistentAllocator(persistentAllocatorKit),
       regionAllocator(_persistentAllocator)

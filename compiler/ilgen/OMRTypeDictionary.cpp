@@ -29,7 +29,8 @@
 #include "ilgen/IlReference.hpp"
 #include "ilgen/TypeDictionary.hpp"
 #include "env/Region.hpp"
-#include "env/SystemSegmentProvider.hpp"
+#include "env/SegmentAllocator.hpp"
+#include "env/SegmentProvider.hpp"
 #include "env/TRMemory.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -432,7 +433,7 @@ OMR::UnionType::clearSymRefs()
 // the user defined destructor, we need to make sure that any members (and their contents) that are allocated in _memoryRegion are
 // explicitly destroyed and deallocated *before* _memoryRegion in the TypeDictionary::MemoryManager destructor.
 OMR::TypeDictionary::MemoryManager::MemoryManager() :
-   _segmentProvider( new(TR::Compiler->persistentAllocator()) TR::SystemSegmentProvider(1 << 16, TR::Compiler->rawAllocator) ),
+   _segmentProvider(new(TR::Compiler->persistentAllocator()) TR::SegmentProvider(1 << 16, 1 << 16, 0, TR::Compiler->segmentAllocator, TR::Compiler->rawAllocator)),
    _memoryRegion( new(TR::Compiler->persistentAllocator()) TR::Region(*_segmentProvider, TR::Compiler->rawAllocator) ),
    _trMemory( new(TR::Compiler->persistentAllocator()) TR_Memory(*::trPersistentMemory, *_memoryRegion) )
    {}
@@ -443,7 +444,7 @@ OMR::TypeDictionary::MemoryManager::~MemoryManager()
    ::operator delete(_trMemory, TR::Compiler->persistentAllocator());
    _memoryRegion->~Region();
    ::operator delete(_memoryRegion, TR::Compiler->persistentAllocator());
-   static_cast<TR::SystemSegmentProvider *>(_segmentProvider)->~SystemSegmentProvider();
+   _segmentProvider->~SegmentProvider();
    ::operator delete(_segmentProvider, TR::Compiler->persistentAllocator());
    }
 

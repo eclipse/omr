@@ -26,7 +26,7 @@
 #include "compile/Method.hpp"
 #include "env/FrontEnd.hpp"
 #include "env/Region.hpp"
-#include "env/SystemSegmentProvider.hpp"
+#include "env/SegmentProvider.hpp"
 #include "env/TRMemory.hpp"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
@@ -81,7 +81,7 @@
 // the user defined destructor, we need to make sure that any members (and their contents) that are allocated in _memoryRegion are
 // explicitly destroyed and deallocated *before* _memoryRegion in the MethodBuilder::MemoryManager destructor.
 OMR::MethodBuilder::MemoryManager::MemoryManager() :
-   _segmentProvider(new(TR::Compiler->persistentAllocator()) TR::SystemSegmentProvider(MEM_SEGMENT_SIZE, TR::Compiler->rawAllocator)),
+   _segmentProvider(new(TR::Compiler->persistentAllocator()) TR::SegmentProvider(MEM_SEGMENT_SIZE, MEM_SEGMENT_SIZE, 0, TR::Compiler->segmentAllocator, TR::Compiler->rawAllocator)),
    _memoryRegion(new(TR::Compiler->persistentAllocator()) TR::Region(*_segmentProvider, TR::Compiler->rawAllocator)),
    _trMemory(new(TR::Compiler->persistentAllocator()) TR_Memory(*::trPersistentMemory, *_memoryRegion))
    {}
@@ -92,7 +92,7 @@ OMR::MethodBuilder::MemoryManager::~MemoryManager()
    ::operator delete(_trMemory, TR::Compiler->persistentAllocator());
    _memoryRegion->~Region();
    ::operator delete(_memoryRegion, TR::Compiler->persistentAllocator());
-   static_cast<TR::SystemSegmentProvider *>(_segmentProvider)->~SystemSegmentProvider();
+   static_cast<TR::SegmentProvider *>(_segmentProvider)->~SegmentProvider();
    ::operator delete(_segmentProvider, TR::Compiler->persistentAllocator());
    }
 

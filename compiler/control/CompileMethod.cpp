@@ -54,7 +54,9 @@
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "infra/Assert.hpp"                    // for TR_ASSERT
 #include "ras/Debug.hpp"                       // for createDebugObject, etc
-#include "env/SystemSegmentProvider.hpp"
+#include "env/SegmentAllocator.hpp"
+#include "env/SegmentProvider.hpp"
+#include "env/DebugSegmentAllocator.hpp"
 #include "env/DebugSegmentProvider.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
@@ -277,13 +279,20 @@ compileMethodFromDetails(
    OMR::FrontEnd &fe = OMR::FrontEnd::singleton();
    auto jitConfig = fe.jitConfig();
    TR::RawAllocator rawAllocator;
-   TR::SystemSegmentProvider defaultSegmentProvider(1 << 16, rawAllocator);
-   TR::DebugSegmentProvider debugSegmentProvider(1 << 16, rawAllocator);
-   TR::SegmentAllocator &scratchSegmentProvider =
+
+   // used when debugging memory allocators: remaps allocated segments rather than freeing to trap on use-after-free
+   TR::DebugSegmentAllocator debugSegmentAllocator;
+   TR::DebugSegmentProvider debugSegmentProvider(1 << 16, 1 << 16, 0, debugSegmentAllocator, rawAllocator);
+
+   // used when not debugging memory allocators
+   TR::SegmentAllocator defaultSegmentAllocator;
+   TR::SegmentProvider defaultSegmentProvider(1 << 16, 1 << 16, 0, defaultSegmentAllocator, rawAllocator);
+
+   TR::SegmentProvider &segmentProvider =
       TR::Options::getCmdLineOptions()->getOption(TR_EnableScratchMemoryDebugging) ?
-         static_cast<TR::SegmentAllocator &>(debugSegmentProvider) :
-         static_cast<TR::SegmentAllocator &>(defaultSegmentProvider);
-   TR::Region dispatchRegion(scratchSegmentProvider, rawAllocator);
+      debugSegmentProvider : defaultSegmentProvider;
+
+   TR::Region dispatchRegion(segmentProvider, rawAllocator);
    TR_Memory trMemory(*fe.persistentMemory(), dispatchRegion);
    TR_ResolvedMethod & compilee = *((TR_ResolvedMethod *)details.getMethod());
 
@@ -396,7 +405,7 @@ compileMethodFromDetails(
                TR_VerboseLog::write(
                   " time=%llu mem=%lluKB",
                   translationTime,
-                  static_cast<unsigned long long>(scratchSegmentProvider.bytesAllocated()) / 1024
+                  static_cast<unsigned long long>(segmentProvider.bytesAllocated()) / 1024
                   );
                }
 

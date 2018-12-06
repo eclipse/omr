@@ -120,12 +120,13 @@ initializeJitBuilder(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_
    // Create a bootstrap raw allocator.
    //
    TR::RawAllocator rawAllocator;
+   TR::SegmentAllocator segmentAllocator;
 
    try
       {
       // Allocate the host environment structure
       //
-      TR::Compiler = new (rawAllocator) TR::CompilerEnv(rawAllocator, TR::PersistentAllocatorKit(rawAllocator));
+      TR::Compiler = new (rawAllocator) TR::CompilerEnv(TR::PersistentAllocatorKit(rawAllocator, segmentAllocator));
       }
    catch (const std::bad_alloc& ba)
       {

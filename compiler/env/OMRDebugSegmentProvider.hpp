@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,16 +19,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef OMR_SYSTEM_SEGMENT_PROVIDER
-#define OMR_SYSTEM_SEGMENT_PROVIDER
+#ifndef OMR_DEBUGSEGMENTPROVIDER_INCL
+#define OMR_DEBUGSEGMENTPROVIDER_INCL
 
 #pragma once
-
-#ifndef TR_SYSTEM_SEGMENT_PROVIDER
-#define TR_SYSTEM_SEGMENT_PROVIDER
-namespace OMR { class SystemSegmentProvider; }
-namespace TR { using OMR::SystemSegmentProvider; }
-#endif
 
 #include <stddef.h>
 #include <set>
@@ -36,39 +30,36 @@ namespace TR { using OMR::SystemSegmentProvider; }
 #include "infra/ReferenceWrapper.hpp"
 #include "env/SegmentAllocator.hpp"
 #include "env/RawAllocator.hpp"
+#include "env/SegmentProvider.hpp"
 
-namespace OMR {
+namespace OMR
+{
 
-class SystemSegmentProvider : public TR::SegmentAllocator
+/** @class DebugSegmentProvider
+ *  @brief The DebugSegmentProvider class provides a facility for verifying the
+ *  correctness of compiler scratch memory use.
+ *
+ *  Using the native facilities available on each platform, a DebugSegmentProvider
+ *  provides an alternative allocation mechanism for the TR::MemorySegments used
+ *  by the compiler's scratch memory regions.  Instead of releasing virtual address
+ *  segments back to the operating system, this implementation instead either
+ *  remaps the segment, freeing the underlying physical pages, and changing the
+ *  memory protection to trap on any access [preferred], or, if such facilities
+ *  are not available, paints the memory segment with a value that should cause
+ *  pointer dereferences to be unaligned, and resolve to the high-half of the
+ *  virtual address space often reserved for kernel / supervisor use.
+ **/
+class DebugSegmentProvider : public TR::SegmentProvider
    {
 public:
-   SystemSegmentProvider(size_t segmentSize, TR::RawAllocator rawAllocator);
-   ~SystemSegmentProvider() throw();
+   DebugSegmentProvider(size_t defaultSegmentSize, size_t allocateSegmentSize, size_t allocationLimit, TR::SegmentAllocator &segmentAllocator, TR::RawAllocator rawAllocator)
+      : TR::SegmentProvider(defaultSegmentSize, allocateSegmentSize, allocationLimit, segmentAllocator, rawAllocator)
+      { }
+
    virtual TR::MemorySegment &request(size_t requiredSize);
    virtual void release(TR::MemorySegment &segment) throw();
-   size_t bytesAllocated() const throw();
-   size_t regionBytesAllocated() const throw();
-   size_t systemBytesAllocated() const throw();
-   size_t allocationLimit() const throw();
-   void setAllocationLimit(size_t);
-
-private:
-   TR::RawAllocator _rawAllocator;
-   size_t _currentBytesAllocated;
-   size_t _highWaterMark;
-   typedef TR::typed_allocator<
-      TR::MemorySegment,
-      TR::RawAllocator
-      > SegmentSetAllocator;
-
-   std::set<
-      TR::MemorySegment,
-      std::less< TR::MemorySegment >,
-      SegmentSetAllocator
-      > _segments;
-
    };
 
-} // namespace TR
+} // namespace OMR
 
-#endif // OMR_SYSTEM_SEGMENT_PROVIDER
+#endif // OMR_DEBUGSEGMENTPROVIDER_INCL

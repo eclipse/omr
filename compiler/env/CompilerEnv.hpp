@@ -23,7 +23,6 @@
 #define TR_COMPILER_ENV_INCL
 
 #include "env/OMRCompilerEnv.hpp"
-#include "env/RawAllocator.hpp"
 #include "infra/Annotations.hpp"  // for OMR_EXTENSIBLE
 
 namespace TR
@@ -32,8 +31,8 @@ namespace TR
 class OMR_EXTENSIBLE CompilerEnv : public OMR::CompilerEnvConnector
    {
 public:
-   CompilerEnv(TR::RawAllocator raw, const TR::PersistentAllocatorKit &persistentAllocatorKit) :
-         OMR::CompilerEnvConnector(raw, persistentAllocatorKit)
+   CompilerEnv(const TR::PersistentAllocatorKit &persistentAllocatorKit) :
+         OMR::CompilerEnvConnector(persistentAllocatorKit)
       {}
    };
 
