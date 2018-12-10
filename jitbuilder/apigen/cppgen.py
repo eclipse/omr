@@ -216,6 +216,20 @@ class CppGenerator:
         """
         return ", ".join(["..." if p.can_be_vararg() else self.generate_parm(p) for p in parms_desc])
 
+    def generate_service_parms(self, service):
+        """
+        Produces a stringified, comma separated list of parameter
+        declarations for a service.
+        """
+        return self.generate_parm_list(service.parameters())
+
+    def generate_service_vararg_parms(self, service):
+        """
+        Produces a stringified, comma separated list of parameter
+        declarations for a service.
+        """
+        return self.generate_vararg_parm_list(service.parameters())
+
     def generate_arg(self, parm_desc):
         """
         Produces an argument variable from a parameter description.
@@ -234,6 +248,42 @@ class CppGenerator:
         a caller to a callee function.
         """
         return ", ".join([ self.generate_arg(a) for a in parms_desc ])
+
+    def get_service_decl_name(self, service, owner=None):
+        """
+        Produces the full name of a service for use in a function declarations.
+        """
+        # in C++ there is no need to do anything special for the name of a
+        # function in a declaration
+        return service.name()
+
+    def get_service_impl_name(self, service, owner=None):
+        """
+        Produces the full name of a service for use in a function definition.
+        """
+        # in C++, the name of a function implementation must be prefixed with
+        # the class-name, separated by the scope resolution operator
+        owner = owner if owner is not None else service.owning_class()
+        prefix = "{}::".format(self.get_class_name(owner)) if owner is not None else ""
+        return "{prefix}{name}".format(prefix=prefix, name=service.name())
+
+    def get_service_call_name(self, service, owner=None):
+        """
+        Produces the full name of a service usable as a call.
+
+        If the `owner` object is equal to `service.owner()`, then it is assumed that
+        no special prefixing is needed for the callable name.
+        """
+        call_owner =  service.owning_class() if owner is None else owner
+        prefix = "" if owner == service.owning_class() else "{}::".format(self.get_class_name(call_owner))
+        return "{prefix}{name}".format(prefix=prefix, name=service.name())
+
+    def generate_get_client_field(self, name):
+        """
+        Produces a string that "gets" a field with name 'name' from a client class.
+        """
+        # in C++, there is no need to do anything special like adding an explicit `this->`
+        return name
 
     def callback_thunk_name(self, class_desc, callback_desc):
         """
@@ -277,7 +327,7 @@ class CppGenerator:
         static = "static " if service.is_static() else ""
         qual = ("virtual " if is_callback else "") + static
         ret = self.get_client_type(service.return_type())
-        name = service.name()
+        name = self.get_service_decl_name(service)
         parms = self.generate_parm_list(service.parameters())
 
         decl = "{visibility}{qualifier}{rtype} {name}({parms});\n".format(visibility=vis, qualifier=qual, rtype=ret, name=name, parms=parms)
@@ -530,10 +580,13 @@ class CppGenerator:
         corresponding reconstruction is done after.
         """
         rtype = self.get_client_type(desc.return_type())
-        name = desc.name()
-        parms = self.generate_parm_list(desc.parameters())
+        service_name = self.get_service_impl_name(desc)
+        parms = self.generate_service_parms(desc)
+        class_prefix = class_desc.short_name()
+        writer.write("{rtype} {name}({parms}) {{\n".format(rtype=rtype, name=service_name, parms=parms))
+
+        impl_name = desc.name()
         class_name = self.get_class_name(class_desc)
-        writer.write("{rtype} {cname}::{name}({parms}) {{\n".format(rtype=rtype, cname=class_name, name=name, parms=parms))
 
         if desc.is_impl_default():
             writer.write("return 0;\n")
@@ -542,7 +595,8 @@ class CppGenerator:
                 self.write_arg_setup(writer, parm)
 
             args = self.generate_arg_list(desc.parameters())
-            impl_call = "{impl_cast}->{sname}({args})".format(impl_cast=self.to_impl_cast(class_desc,"_impl"),sname=name,args=args)
+            impl_cast =  self.to_impl_cast(class_desc,self.generate_get_client_field("_impl"))
+            impl_call = "{impl_cast}->{name}({args})".format(impl_cast=impl_cast,name=impl_name,args=args)
             if "none" == desc.return_type().name():
                 writer.write(impl_call + ";\n")
                 for parm in desc.parameters():
@@ -576,12 +630,12 @@ class CppGenerator:
         an array and calls the array version of the function.
         """
         rtype = self.get_client_type(desc.return_type())
-        name = desc.name()
+        service_name = self.get_service_impl_name(desc)
         vararg = desc.parameters()[-1]
         vararg_type = self.get_client_type(vararg.type())
 
         parms = self.generate_vararg_parm_list(desc.parameters())
-        writer.write("{rtype} {cname}::{name}({parms}) {{\n".format(rtype=rtype,cname=class_name,name=name,parms=parms))
+        writer.write("{rtype} {name}({parms}) {{\n".format(rtype=rtype,name=service_name,parms=parms))
 
         args = ", ".join([p.name() for p in desc.parameters()])
         writer.write("{t}* {arg} = new {t}[{num}];\n".format(t=vararg_type,arg=vararg.name(),num=vararg.array_len()))
@@ -589,8 +643,11 @@ class CppGenerator:
         writer.write("va_start(vararg, {num});\n".format(num=vararg.array_len()))
         writer.write("for (int i = 0; i < {num}; ++i) {{ {arg}[i] = va_arg(vararg, {t}); }}\n".format(num=vararg.array_len(),arg=vararg.name(),t=vararg_type))
         writer.write("va_end(vararg);\n")
+
         get_ret = "" if "none" == desc.return_type().name() else "{rtype} ret = ".format(rtype=rtype)
-        writer.write("{get_ret}{name}({args});\n".format(get_ret=get_ret,name=name,args=args))
+        callee_name = self.get_service_call_name(desc, desc.owning_class())
+        writer.write("{get_ret}{name}({args});\n".format(get_ret=get_ret,name=callee_name,args=args))
+
         writer.write("delete[] {arg};\n".format(arg=vararg.name()))
         if "none" != desc.return_type().name():
             writer.write("return ret;\n")
