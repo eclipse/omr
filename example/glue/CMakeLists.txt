@@ -30,15 +30,20 @@ target_sources(omr_example_gc_glue INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/CollectorLanguageInterfaceImpl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/CompactSchemeFixupObject.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ConcurrentMarkingDelegate.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/EnvironmentDelegate.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/FrequentObjectsStats.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/GlobalCollectorDelegate.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/MarkingDelegate.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/ObjectIterator.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ObjectModelDelegate.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/StartupManagerImpl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/VerboseManagerImpl.cpp
 )
+
+if(NOT OMR_GC_API)
+	target_sources(omr_example_gc_glue INTERFACE
+		${CMAKE_CURRENT_SOURCE_DIR}/EnvironmentDelegate.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/MarkingDelegate.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/ObjectIterator.cpp
+	)
+endif(NOT OMR_GC_API)
 
 target_link_libraries(omr_example_gc_glue
 	INTERFACE
@@ -69,9 +74,10 @@ target_link_libraries(omr_example_ras_glue
 
 add_library(omr_example_core_glue INTERFACE)
 
-target_sources(omr_example_core_glue INTERFACE
-	${CMAKE_CURRENT_SOURCE_DIR}/LanguageVMGlue.c
-	${CMAKE_CURRENT_SOURCE_DIR}/omrExampleVM.cpp
+target_sources(omr_example_core_glue
+	INTERFACE
+		${CMAKE_CURRENT_SOURCE_DIR}/LanguageVMGlue.c
+		${CMAKE_CURRENT_SOURCE_DIR}/omrExampleVM.cpp
 )
 
 target_link_libraries(omr_example_core_glue

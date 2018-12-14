@@ -32,4 +32,7 @@ CONFIGURE_ARGS += \
   --enable-OMR_THR_CUSTOM_SPIN_OPTIONS \
   --enable-OMR_NOTIFY_POLICY_CONTROL
 
-OMRGLUE_INCLUDES=example/
+OMRGLUE_INCLUDES = \
+  example \
+  example/include \
+  example/include_extended

@@ -63,7 +63,9 @@ MODULE_INCLUDES += \
   $(OMRGC_IPATH) \
   $(top_srcdir)/fvtest/util \
   $(OMR_GTEST_INCLUDES) \
-  ./glue
+  glue \
+  include \
+  include_extended
 
 # OMR_GTEST_DIR is a special variable defined by configure.mk. It contains the
 # location of the googletest source code.
