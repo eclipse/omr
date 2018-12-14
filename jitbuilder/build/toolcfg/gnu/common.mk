@@ -96,7 +96,8 @@ CX_FLAGS+=\
     -fomit-frame-pointer \
     -fasynchronous-unwind-tables \
     -Wreturn-type \
-    -fno-dollars-in-identifiers
+    -fno-dollars-in-identifiers \
+    -fno-strict-aliasing
 
 CXX_FLAGS+=\
     -std=c++0x \
@@ -145,12 +146,12 @@ ifeq ($(HOST_ARCH),p)
 endif
 
 ifeq ($(PLATFORM),amd64-linux-gcc)
-    CX_FLAGS+=-m32 -fpic -fno-strict-aliasing -mfpmath=sse -msse -msse2 -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
+    CX_FLAGS+=-m32 -fpic -mfpmath=sse -msse -msse2 -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
 endif
 
 ifeq ($(PLATFORM),amd64-linux64-gcc)
     CX_DEFINES+=J9HAMMER
-    CX_FLAGS+=-m64 -fPIC -fno-strict-aliasing -mfpmath=sse -msse -msse2 -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
+    CX_FLAGS+=-m64 -fPIC -mfpmath=sse -msse -msse2 -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
 endif
 
 ifeq ($(PLATFORM),ppc64-linux64-gcc)
@@ -165,12 +166,12 @@ endif
 
 ifeq ($(PLATFORM),s390-linux-gcc)
     CX_DEFINES+=J9VM_TIERED_CODE_CACHE MAXMOVE S390 FULL_ANSI
-    CX_FLAGS+=-m31 -fPIC -fno-strict-aliasing -mtune=z10 -march=z9-109 -mzarch
+    CX_FLAGS+=-m31 -fPIC -mtune=z10 -march=z9-109 -mzarch
 endif
 
 ifeq ($(PLATFORM),s390-linux64-gcc)
     CX_DEFINES+=S390 S39064 FULL_ANSI MAXMOVE J9VM_TIERED_CODE_CACHE
-    CX_FLAGS+=-fPIC -fno-strict-aliasing -mtune=z10 -march=z9-109 -mzarch
+    CX_FLAGS+=-fPIC -mtune=z10 -march=z9-109 -mzarch
 endif
 
 ifeq ($(C_COMPILER),clang)
