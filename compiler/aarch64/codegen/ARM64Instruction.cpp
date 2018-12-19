@@ -296,12 +296,6 @@ void TR::ARM64MemSrc1Instruction::assignRegisters(TR_RegisterKinds kindToBeAssig
       }
    mref->unblockRegisters();
 
-   if (sourceVirtual->decFutureUseCount() == 0)
-      {
-      sourceVirtual->setAssignedRegister(NULL);
-      assignedRegister->setState(TR::RealRegister::Unlatched);
-      }
-
    setSource1Register(assignedRegister);
 
    if (getDependencyConditions())
