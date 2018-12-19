@@ -138,3 +138,9 @@ omrthread_numa_get_node_affinity(omrthread_t thread, uintptr_t *numaNodes, uintp
 	*nodeCount = 0;
 	return 0;
 }
+
+
+uintptr_t
+omrthread_numa_get_current_node(){
+	return 0;
+}

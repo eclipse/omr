@@ -1411,6 +1411,14 @@ omrthread_numa_get_node_affinity(omrthread_t thread, uintptr_t *numaNodes, uintp
 void
 omrthread_numa_set_enabled(BOOLEAN enabled);
 
+
+/**
+ * Gets the NUMA node the caller is being executed on
+ * @return uintptr_t
+ */
+uintptr_t
+omrthread_numa_get_current_node();
+
 /* -------------- rasthrsup.c ------------------- */
 /**
  * @brief

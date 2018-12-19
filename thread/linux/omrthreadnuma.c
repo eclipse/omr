@@ -35,6 +35,7 @@
 #include <inttypes.h>
 #include <sched.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <stdio.h>
 
 #include "omrcfg.h"
@@ -546,3 +547,17 @@ dumpNumaInfo() {
 
 }
 #endif
+
+
+uintptr_t
+omrthread_numa_get_current_node(){
+    unsigned node = 0;
+#if OMR_PORT_NUMA_SUPPORT
+    if (0 == syscall(SYS_getcpu, NULL, &node, NULL)) {
+        ++node;
+    } else {
+        node = 0;
+    }
+#endif
+    return node;
+}
