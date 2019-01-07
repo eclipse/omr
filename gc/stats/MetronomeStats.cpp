@@ -25,4 +25,7 @@
 void
 MM_MetronomeStats::merge(MM_MetronomeStats* statsToMerge)
 {
+	_weakReferenceStats.merge(&statsToMerge->_weakReferenceStats);
+	_softReferenceStats.merge(&statsToMerge->_softReferenceStats);
+	_phantomReferenceStats.merge(&statsToMerge->_phantomReferenceStats);
 }

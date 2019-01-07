@@ -25,6 +25,7 @@
 
 #include "Base.hpp"
 #include "AtomicOperations.hpp"
+#include "ReferenceStats.hpp"
 
 /**
  * @todo Provide class documentation
@@ -47,6 +48,13 @@ public:
 	uint64_t nonDeterministicSweepDelay;
 
 	uint64_t _microsToStopMutators; /**< The number of microseconds the master thread had to wait for the mutator threads to stop, at the beginning of this increment */
+
+	UDATA _unfinalizedCandidates; /**< unfinalized objects that are candidates to be finalized visited this cycle */
+	UDATA _unfinalizedEnqueued; /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
+
+	MM_ReferenceStats _weakReferenceStats; /**< Weak reference stats for the cycle */
+	MM_ReferenceStats _softReferenceStats; /**< Soft reference stats for the cycle */
+	MM_ReferenceStats _phantomReferenceStats; /**< Phantom reference stats for the cycle */
 protected:
 private:
 public:
@@ -72,6 +80,9 @@ public:
 		_workPacketOverflowCount = 0;
 		_objectOverflowCount = 0;
 		_microsToStopMutators = 0;
+		_weakReferenceStats.clear();
+		_softReferenceStats.clear();
+		_phantomReferenceStats.clear();
 	}
 
 	MMINLINE void incrementWorkPacketOverflowCount()
