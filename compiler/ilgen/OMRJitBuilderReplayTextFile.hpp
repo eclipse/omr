@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,82 +37,27 @@
     {
     public:
 
-    // enum to handle Service method to distinguish between a MethodBuilder and an IlBuilder
-    enum BuilderFlag {METHOD_BUILDER, IL_BUILDER};
-
     JitBuilderReplayTextFile(const char *fileName);
 
-    void start();
-    void processFirstLineFromTextFile();
-    char * getLineAsChar();
-    char * getTokensFromLine(std::string);
+    /**
+    * @brief Consumers for what has been recorded 
+    * (consumers)
+    */
 
-    bool parseConstructor();
-    bool parseBuildIL();
-
-    void addIDPointerPairToMap(char * tokens);
-    char * getServiceStringFromToken(std::string tokens);
-    const char * getServiceStringFromMap(char ** tokens);
-
-    bool handleService(BuilderFlag builderFlag, char * tokens);
-    bool handleServiceMethodBuilder(uint32_t mbID, char * tokens);
-    bool handleServiceIlBuilder(uint32_t mbID, char * tokens);
-
-    void handleMethodBuilder(uint32_t serviceID, char * tokens);
-    void handleDefineLine(TR::MethodBuilder * mb, char * tokens);
-    void handleDefineFile(TR::MethodBuilder * mb, char * tokens);
-    void handleDefineName(TR::MethodBuilder * mb, char * tokens);
-    void handleDefineParameter(TR::MethodBuilder * mb, char * tokens);
-    void handleDefineArrayParameter(TR::MethodBuilder * mb, char * tokens);
-    void handleDefineReturnType(TR::MethodBuilder * mb, char * tokens);
-    void handleDefineFunction(TR::MethodBuilder * mb, char * tokens);
-    void handleAllLocalsHaveBeenDefined(TR::MethodBuilder * mb, char * tokens);
-    void handleDefineLocal(TR::MethodBuilder *mb, char *tokens);
-    void handleDefineLocal(TR::IlBuilder *ilmb, char *tokens);
-    void handlePrimitiveType(TR::IlBuilder * ilmb, char * tokens);
-
-
-    void handleConstInt8(TR::IlBuilder * ilmb, char * tokens);
-    void handleConstInt32(TR::IlBuilder * ilmb, char * tokens);
-    void handleConstInt64(TR::IlBuilder * ilmb, char * tokens);
-    void handleConstDouble(TR::IlBuilder * ilmb, char * tokens);
-    void handleConstAddress(TR::IlBuilder * ilmb, char * tokens);
-    void handlePointerType(TR::IlBuilder * ilmb, char * tokens);
-    void handleCreateLocalArray(TR::IlBuilder * ilmb, char * tokens);
-    void handleLoad(TR::IlBuilder * ilmb, char * tokens);
-    void handleLoadAt(TR::IlBuilder * ilmb, char * tokens);
-    void handleAdd(TR::IlBuilder * ilmb, char * tokens);
-    void handleSub(TR::IlBuilder * ilmb, char * tokens);
-    void handleMul(TR::IlBuilder * ilmb, char * tokens);
-    void handleDiv(TR::IlBuilder * ilmb, char * tokens);
-    void handleAnd(TR::IlBuilder * ilmb, char * tokens);
-    void handleOr(TR::IlBuilder * ilmb, char * tokens);
-    void handleXor(TR::IlBuilder * ilmb, char * tokens);
-    void handleStore(TR::IlBuilder * ilmb, char * tokens);
-    void handleStoreAt(TR::IlBuilder * ilmb, char * tokens);
-    void handleForLoop(TR::IlBuilder * ilmb, char * tokens);
-
-    void handleNewIlBuilder(TR::IlBuilder * ilmb, char * tokens);
-    void handleLessThan(TR::IlBuilder * ilmb, char * tokens);
-    void handleGreaterThan(TR::IlBuilder * ilmb, char * tokens);
-    void handleNotEqualTo(TR::IlBuilder * ilmb, char * tokens);
-    void handleIfThenElse(TR::IlBuilder * ilmb, char * tokens);
-    void handleCall(TR::IlBuilder * ilmb, char * tokens);
-    void handleConvertTo(TR::IlBuilder * ilmb, char * tokens);
-
-    void handleReturnValue(TR::IlBuilder * ilmb, char * tokens);
-    void handleReturn(TR::IlBuilder * ilmb, char * tokens);
-
-    void handleUnsignedShiftR(TR::IlBuilder * ilmb, char * tokens);
-    void handleIfCmpEqualZero(TR::IlBuilder * ilmb, char * tokens);
-    void handleIndexAt(TR::IlBuilder * ilmb, char * tokens);
-
-    uint32_t getNumberFromToken(char * token);
-
-    private:
-    std::fstream _file;
-    std::istringstream _fileStream;
-    bool _isFile;
+    void               ConsumeStart();
+    int8_t             Consume8bitNumber();
+    int16_t            Consume16bitNumber();
+    int32_t            Consume32bitNumber();
+    int64_t            Consume64bitNumber();
+    float              ConsumeFloatNumber();
+    double             ConsumeDoubleNumber();
+    const char *       ConsumeStatement();
+    TR::IlType *       ConsumeType();
+    TR::IlValue *      ConsumeValue();
+    const char * const ConsumeString();
+    TypeID             ConsumeID();
+    TR::IlBuilder *    ConsumeBuilder();
+    const void *       ConsumeLocation();
 
     };
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,8 +28,10 @@
  #include "ilgen/MethodBuilder.hpp"
 
 
- OMR::JitBuilderReplay::JitBuilderReplay()
+ OMR::JitBuilderReplay::JitBuilderReplay(const char *fileName)
+    : _file(fileName, std::fstream::in)
     {
+    start();
     }
 
  OMR::JitBuilderReplay::~JitBuilderReplay()
@@ -37,41 +39,35 @@
     }
 
 void
-OMR::JitBuilderReplay::start() {
+OMR::JitBuilderReplay::start() 
+   {
    StoreReservedIDs();
-}
+   }
 
 void
 OMR::JitBuilderReplay::StoreReservedIDs()
    {
-      StoreIDPointerPair(0, 0);
-      StoreIDPointerPair(1, (void *)1);
+   registerMapping(0, 0);
+   registerMapping(1, (void *)1);
    }
 
 void
-OMR::JitBuilderReplay::initializeMethodBuilder(TR::MethodBuilder * replay)
+OMR::JitBuilderReplay::registerMapping(TypeID ID, TypePointer ptr)
    {
-       _mb = replay;
-       StoreIDPointerPair((TypeID)2, replay);
-   }
+   TypeMapPointer::iterator it = _pointerMap.find(ID);
+   if (it != _pointerMap.end())
+      TR_ASSERT_FATAL(0, "Unexpected pointer already defined for ID %d", ID);
 
-void
-OMR::JitBuilderReplay::StoreIDPointerPair(TypeID ID, TypePointer ptr)
-   {
-     TypeMapPointer::iterator it = _pointerMap.find(ID);
-     if (it != _pointerMap.end())
-        TR_ASSERT_FATAL(0, "Unexpected pointer already defined for ID %d", ID);
-
-     _pointerMap.insert(std::make_pair(ID, ptr));
+   _pointerMap.insert(std::make_pair(ID, ptr));
    }
 
 OMR::JitBuilderReplay::TypePointer
 OMR::JitBuilderReplay::lookupPointer(TypeID id)
    {
-     TypeMapPointer::iterator it = _pointerMap.find(id);
-     if (it == _pointerMap.end())
-        TR_ASSERT_FATAL(0, "Attempt to lookup an id that has not yet been created");
+   TypeMapPointer::iterator it = _pointerMap.find(id);
+   if (it == _pointerMap.end())
+      TR_ASSERT_FATAL(0, "Attempt to lookup an id that has not yet been created");
 
-     TypePointer pointer = it->second;
-     return pointer;
+   TypePointer pointer = it->second;
+   return pointer;
    }
