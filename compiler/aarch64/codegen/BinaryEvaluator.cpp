@@ -366,23 +366,41 @@ OMR::ARM64::TreeEvaluator::lxorEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
 	}
 
+// Evaluate iand, ior and ixor
+static inline TR::Register *
+evaluateBooleanTypeInteger(TR::Node *node, TR::InstOpCode::Mnemonic regOp, TR::CodeGenerator *cg)
+   {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Register *src1Reg = cg->gprClobberEvaluate(firstChild);
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *src2Reg = cg->gprClobberEvaluate(secondChild);
+   TR::Register *trgReg = cg->allocateRegister();
+
+   generateTrg1Src2Instruction(cg, regOp, node, trgReg, src1Reg, src2Reg);
+
+   node->setRegister(trgReg);
+   firstChild->decReferenceCount();
+   secondChild->decReferenceCount();
+   return trgReg;
+   }
+
 TR::Register *
 OMR::ARM64::TreeEvaluator::iandEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::iandEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
+	// boolean and of 2 integers
+	return evaluateBooleanTypeInteger(node, TR::InstOpCode::andw, cg);
 	}
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::iorEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::iorEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
+	// boolean or of 2 integers
+	return evaluateBooleanTypeInteger(node, TR::InstOpCode::orrw, cg);
 	}
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ixorEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::ixorEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
+	// boolean xor of 2 integers
+	return evaluateBooleanTypeInteger(node, TR::InstOpCode::eorw, cg);
 	}
