@@ -115,6 +115,54 @@ static void mulConstant32(TR::Node *node, TR::Register *treg, TR::Register *sreg
       }
    }
 
+// Multiply a register by a 64-bit constant
+static void mulConstant64(TR::Node *node, TR::Register *treg, TR::Register *sreg, int64_t value, TR::CodeGenerator *cg)
+   {
+   if (value == 0)
+      {
+      loadConstant64(cg, node, 0, treg);
+      }
+   else if (value == 1)
+      {
+      generateMovInstruction(cg, node, treg, sreg);
+      }
+   else if (value == -1)
+      {
+      generateNegInstruction(cg, node, treg, sreg);
+      }
+   else
+      {
+      TR::Register *tmpReg = cg->allocateRegister();
+      loadConstant64(cg, node, value, tmpReg);
+      generateMulInstruction(cg, node, treg, sreg, tmpReg);
+      cg->stopUsingRegister(tmpReg);
+      }
+   }
+
+// Divide a register by a 64-bit constant
+static void divConstant64(TR::Node *node, TR::Register *treg, TR::Register *sreg, int64_t value, TR::CodeGenerator *cg)
+   {
+      if (value == 0)
+      {
+      loadConstant64(cg, node, 0, treg);
+      }
+   else if (value == 1)
+      {
+      generateMovInstruction(cg, node, treg, sreg);
+      }
+   else if (value == -1)
+      {
+      generateNegInstruction(cg, node, treg, sreg);
+      }
+   else
+      {
+      TR::Register *tmpReg = cg->allocateRegister();
+      loadConstant64(cg, node, value, tmpReg);
+      generateSignedDivInstruction(cg, node, treg, sreg, tmpReg);
+      cg->stopUsingRegister(tmpReg);
+      }
+   }
+
 TR::Register *
 OMR::ARM64::TreeEvaluator::imulEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -159,10 +207,37 @@ OMR::ARM64::TreeEvaluator::imulhEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::lmulEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::lmulEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Register *src1Reg = cg->evaluate(firstChild);
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *trgReg;
+
+   if (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)
+      {
+      int64_t value = secondChild->getLongInt();
+      if (value > 0 && cg->convertMultiplyToShift(node))
+         {
+         trgReg = cg->evaluate(node);
+         return trgReg;
+         }
+      else
+         {
+         trgReg = cg->allocateRegister();
+         mulConstant64(node, trgReg, src1Reg, value, cg);
+         }
+      }
+   else
+      {
+      TR::Register *src2Reg = cg->evaluate(secondChild);
+      trgReg = cg->allocateRegister();
+      generateMulInstruction(cg, node, trgReg, src1Reg, src2Reg);
+      }
+   firstChild->decReferenceCount();
+   secondChild->decReferenceCount();
+   node->setRegister(trgReg);
+   return trgReg;
+   }
 
 static TR::Register *idivHelper(TR::Node *node, bool is64bit, TR::CodeGenerator *cg)
    {
@@ -218,13 +293,58 @@ OMR::ARM64::TreeEvaluator::iremEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *
 OMR::ARM64::TreeEvaluator::ldivEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return idivHelper(node, true, cg);
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Register *src1Reg = cg->evaluate(firstChild);
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *trgReg;
+
+   if (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)
+      {
+      int64_t value = secondChild->getLongInt();
+	   trgReg = cg->allocateRegister();
+	   divConstant64(node, trgReg, src1Reg, value, cg);
+      }
+   else
+      {
+      TR::Register *src2Reg = cg->evaluate(secondChild);
+      trgReg = cg->allocateRegister();
+      generateSignedDivInstruction(cg, node, trgReg, src1Reg, src2Reg);
+      }
+   firstChild->decReferenceCount();
+   secondChild->decReferenceCount();
+   node->setRegister(trgReg);
+   return trgReg;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::lremEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return iremHelper(node, true, cg);
+	{
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Register *dividendReg = cg->evaluate(firstChild);
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *trgReg;
+
+   /* Three instructions are needed to create remainder functionality */
+   if (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)
+      {
+      int64_t divisor = secondChild->getLongInt();
+      trgReg = cg->allocateRegister();
+      divConstant64(node, trgReg, dividendReg, divisor, cg);
+      mulConstant64(node, trgReg, trgReg, divisor, cg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, trgReg, dividendReg, trgReg);
+      }
+   else
+      { 
+      TR::Register *divisorReg = cg->evaluate(secondChild);
+      trgReg = cg->allocateRegister();
+      generateSignedDivInstruction(cg, node, trgReg, dividendReg, divisorReg);
+      generateMulInstruction(cg, node, trgReg, trgReg, divisorReg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, trgReg, dividendReg, trgReg);
+      }
+   firstChild->decReferenceCount();
+   secondChild->decReferenceCount();
+   node->setRegister(trgReg);
+   return trgReg;
    }
 
 static TR::Register *shiftHelper(TR::Node *node, TR::ARM64ShiftCode shiftType, TR::CodeGenerator *cg)

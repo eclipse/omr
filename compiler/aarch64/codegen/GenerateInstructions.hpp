@@ -686,6 +686,24 @@ TR::Instruction *generateMulInstruction(
                   TR::Instruction *preced = NULL);
 
 /*
+ * @brief Generates SDIV instruction
+ * @param[in] cg : CodeGenerator
+ * @param[in] node : node
+ * @param[in] treg : target register
+ * @param[in] s1reg : source register 1
+ * @param[in] s2reg : source register 2
+ * @param[in] preced : preceding instruction
+ * @return generated instruction
+ */
+TR::Instruction *generateSignedDivInstruction(
+                  TR::CodeGenerator *cg,
+                  TR::Node *node,
+                  TR::Register *treg,
+                  TR::Register *s1reg,
+                  TR::Register *s2reg,
+                  TR::Instruction *preced = NULL);
+
+/*
  * @brief Generates CSET instruction
  * @param[in] cg : CodeGenerator
  * @param[in] node : node

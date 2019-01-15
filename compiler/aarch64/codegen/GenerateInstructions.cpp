@@ -432,6 +432,22 @@ TR::Instruction *generateMulInstruction(TR::CodeGenerator *cg, TR::Node *node,
    return instr;
    }
 
+TR::Instruction *generateSignedDivInstruction(TR::CodeGenerator *cg, TR::Node *node,
+   TR::Register *treg, TR::Register *s1reg, TR::Register *s2reg, TR::Instruction *preced)
+   {
+   /* Alias of SDIV instruction */
+
+   bool is64bit = node->getDataType().isInt64();
+   TR::InstOpCode::Mnemonic op = is64bit ? TR::InstOpCode::sdivx : TR::InstOpCode::sdivw;
+
+   TR::Instruction *instr =
+      (preced) ?
+      new (cg->trHeapMemory()) TR::ARM64Trg1Src2Instruction(op, node, treg, s1reg, s2reg, preced, cg) :
+      new (cg->trHeapMemory()) TR::ARM64Trg1Src2Instruction(op, node, treg, s1reg, s2reg, cg);
+
+   return instr;
+   }
+
 TR::Instruction *generateCSetInstruction(TR::CodeGenerator *cg, TR::Node *node,
    TR::Register *treg, TR::ARM64ConditionCode cc, TR::Instruction *preced)
    {
