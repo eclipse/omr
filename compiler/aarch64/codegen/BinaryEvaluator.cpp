@@ -345,25 +345,40 @@ OMR::ARM64::TreeEvaluator::irolEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return trgReg;
    }
 
+// Evaluate land, lor and lxor
+static inline TR::Register *
+evaluateBooleanTypeInteger(TR::Node *node, TR::InstOpCode::Mnemonic regOp, TR::CodeGenerator *cg)
+   {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Register *src1Reg = cg->gprClobberEvaluate(firstChild);
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *src2Reg = cg->gprClobberEvaluate(secondChild);
+   TR::Register *trgReg = cg->allocateRegister();
+
+   generateTrg1Src2Instruction(cg, regOp, node, trgReg, src1Reg, src2Reg);
+
+   node->setRegister(trgReg);
+   firstChild->decReferenceCount();
+   secondChild->decReferenceCount();
+   return trgReg;
+   }
+
 TR::Register *
 OMR::ARM64::TreeEvaluator::landEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::landEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
+	return evaluateBooleanTypeInteger(node, TR::InstOpCode::andx, cg);
 	}
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::lorEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::lorEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
+	return evaluateBooleanTypeInteger(node, TR::InstOpCode::orrx, cg);
 	}
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::lxorEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::lxorEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
+	return evaluateBooleanTypeInteger(node, TR::InstOpCode::eorx, cg);
 	}
 
 TR::Register *
