@@ -347,7 +347,7 @@ endif()
 
 target_sources(omrport_obj PRIVATE ${resolvedPaths})
 
-add_library(omrport STATIC
+add_library(${OMR_PORT_LIB} STATIC
 	$<TARGET_OBJECTS:omrport_obj>
 )
 
@@ -359,7 +359,7 @@ if(OMR_ENHANCED_WARNINGS)
 	target_compile_options(omrport_obj PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 
-target_link_libraries(omrport
+target_link_libraries(${OMR_PORT_LIB}
 	PUBLIC
 		omr_base
 	PRIVATE
@@ -381,14 +381,14 @@ target_compile_definitions(omrport_obj PRIVATE -DOMRPORT_LIBRARY_DEFINE)
 #TODO hack to get to compile. Need platform checks
 if(NOT OMR_HOST_OS STREQUAL "win")
 	if(NOT OMR_HOST_OS STREQUAL "zos")
-		target_link_libraries(omrport PRIVATE dl)
+		target_link_libraries(${OMR_PORT_LIB} PRIVATE dl)
 	endif()
 endif()
 
 if(OMR_HOST_OS STREQUAL "osx")
-	target_link_libraries(omrport PRIVATE iconv)
+	target_link_libraries(${OMR_PORT_LIB} PRIVATE iconv)
 endif()
 
 if(OMR_HOST_OS STREQUAL "win")
-	target_link_libraries(omrport PRIVATE psapi pdh)
+	target_link_libraries(${OMR_PORT_LIB} PRIVATE psapi pdh)
 endif()

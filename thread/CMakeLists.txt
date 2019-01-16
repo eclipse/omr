@@ -313,16 +313,16 @@ if(OMR_ENHANCED_WARNINGS)
 	target_compile_options(j9thr_obj PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 
-add_library(j9thrstatic STATIC
+add_library(${OMR_THREAD_LIB} STATIC
 	$<TARGET_OBJECTS:j9thr_obj>
 )
 
-target_include_directories(j9thrstatic
+target_include_directories(${OMR_THREAD_LIB}
 	INTERFACE
 	.
 )
 
-target_link_libraries(j9thrstatic
+target_link_libraries(${OMR_THREAD_LIB}
 	PUBLIC
 		omr_base
 		j9pool

@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-add_library(omrtrace STATIC
+add_library(${OMR_TRACE_LIB} STATIC
 	omrtraceapi.cpp
 	omrtracecomponent.cpp
 	omrtraceformatter.cpp
@@ -33,14 +33,14 @@ add_library(omrtrace STATIC
 )
 
 if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(omrtrace PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
+	target_compile_options(${OMR_TRACE_LIB} PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
 endif()
 
 if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(omrtrace PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
+	target_compile_options(${OMR_TRACE_LIB} PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 
-target_link_libraries(omrtrace
+target_link_libraries(${OMR_TRACE_LIB}
 	PUBLIC
 		omr_base
 		${OMR_THREAD_LIB}

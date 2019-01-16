@@ -44,25 +44,25 @@ target_compile_definitions(j9hook_obj
 		$<TARGET_PROPERTY:omr_base,INTERFACE_COMPILE_DEFINITIONS>
 )
 
-add_library(j9hookstatic STATIC
+add_library(${OMR_HOOK_LIB} STATIC
 	$<TARGET_OBJECTS:j9hook_obj>
 )
 
 if(OMR_WARNINGS_AS_ERRORS)
 	target_compile_options(j9hook_obj PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-	target_compile_options(j9hookstatic PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
+	target_compile_options(${OMR_HOOK_LIB} PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
 endif()
 
 if(OMR_ENHANCED_WARNINGS)
 	target_compile_options(j9hook_obj PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-	target_compile_options(j9hookstatic PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
+	target_compile_options(${OMR_HOOK_LIB} PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 
-target_include_directories(j9hookstatic
+target_include_directories(${OMR_HOOK_LIB}
 	PUBLIC
 	$<TARGET_PROPERTY:j9hook_obj,INTERFACE_INCLUDE_DIRECTORIES>
 )
-target_link_libraries(j9hookstatic
+target_link_libraries(${OMR_HOOK_LIB}
 	PUBLIC
 		omr_base
 		${OMR_PORT_LIB}
@@ -70,4 +70,4 @@ target_link_libraries(j9hookstatic
 )
 add_tracegen(j9hook.tdf)
 
-set_target_properties(j9hook_obj j9hookstatic PROPERTIES FOLDER util)
+set_target_properties(j9hook_obj ${OMR_HOOK_LIB} PROPERTIES FOLDER util)

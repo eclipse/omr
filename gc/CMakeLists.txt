@@ -66,7 +66,7 @@ target_compile_definitions(omrgc_tracegen
 		$<TARGET_PROPERTY:omr_base,INTERFACE_COMPILE_DEFINITIONS>
 )
 
-add_library(omrgc STATIC
+add_library(${OMR_GC_LIB} STATIC
 	base/AddressOrderedListPopulator.cpp
 	base/AllocationContext.cpp
 	base/AllocationInterfaceGeneric.cpp
@@ -203,14 +203,14 @@ add_library(omrgc STATIC
 )
 
 if(OMR_GC_OBJECT_MAP)
-	target_sources(omrgc
+	target_sources(${OMR_GC_LIB}
 		PRIVATE
 			base/ObjectMap.cpp
 	)
 endif()
 
 if(OMR_GC_MODRON_STANDARD)
-	target_sources(omrgc
+	target_sources(${OMR_GC_LIB}
 		PRIVATE
 			base/standard/ConfigurationFlat.cpp
 			base/standard/ConfigurationStandard.cpp
@@ -228,7 +228,7 @@ if(OMR_GC_MODRON_STANDARD)
 			base/standard/WorkPacketsStandard.cpp
 	)
 	if (OMR_GC_MODRON_COMPACTION)
-		target_sources(omrgc
+		target_sources(${OMR_GC_LIB}
 			PRIVATE
 				base/standard/CompactFixHeapForWalkTask.cpp
 				base/standard/CompactScheme.cpp
@@ -238,7 +238,7 @@ if(OMR_GC_MODRON_STANDARD)
 		)
 	endif()
 	if(OMR_GC_MODRON_CONCURRENT_MARK)
-		target_sources(omrgc
+		target_sources(${OMR_GC_LIB}
 			PRIVATE
 				base/standard/ConcurrentCardTable.cpp
 				base/standard/ConcurrentCardTableForWC.cpp
@@ -258,20 +258,20 @@ if(OMR_GC_MODRON_STANDARD)
 				stats/ConcurrentGCStats.cpp
 		)
 		if(OMR_GC_MODRON_SCAVENGER)
-			target_sources(omrgc
+			target_sources(${OMR_GC_LIB}
 				PRIVATE
 					base/standard/ConcurrentScanRememberedSetTask.cpp
 			)
 		endif()
 	endif()
 	if(OMR_GC_CONCURRENT_SWEEP)
-		target_sources(omrgc
+		target_sources(${OMR_GC_LIB}
 			PRIVATE
 				base/standard/ConcurrentSweepScheme.cpp
 		)
 	endif()
 	if(OMR_GC_MODRON_SCAVENGER)
-		target_sources(omrgc
+		target_sources(${OMR_GC_LIB}
 			PRIVATE
 				base/HeapSplit.cpp # TODO delete as this should not be used anymore!
 				base/MemorySubSpaceGenerational.cpp
@@ -287,7 +287,7 @@ if(OMR_GC_MODRON_STANDARD)
 				stats/ScavengerCopyScanRatio.cpp
 		)
 		if(OMR_GC_CONCURRENT_SCAVENGER)
-			ltarget_sources(omrgc
+			ltarget_sources(${OMR_GC_LIB}
 				PRIVATE
 					base/standard/ConcurrentScavengeTask.cpp
 			)
@@ -296,7 +296,7 @@ if(OMR_GC_MODRON_STANDARD)
 endif()
 
 if(OMR_GC_SEGREGATED_HEAP)
-	target_sources(omrgc
+	target_sources(${OMR_GC_LIB}
 		PRIVATE
 			base/segregated/AllocationContextSegregated.cpp
 			base/segregated/ConfigurationSegregated.cpp
@@ -322,17 +322,17 @@ if(OMR_GC_SEGREGATED_HEAP)
 	)
 endif()
 
-add_dependencies(omrgc omrgc_hookgen)
+add_dependencies(${OMR_GC_LIB} omrgc_hookgen)
 
 if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(omrgc PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
+	target_compile_options(${OMR_GC_LIB} PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
 endif()
 
 if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(omrgc PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
+	target_compile_options(${OMR_GC_LIB} PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 
-target_include_directories(omrgc
+target_include_directories(${OMR_GC_LIB}
 	PUBLIC
 		.
 		${CMAKE_CURRENT_BINARY_DIR}  #Ideally this should be private, but the glue pulls this in
@@ -349,7 +349,7 @@ target_include_directories(omrgc
 		$<TARGET_PROPERTY:${OMR_GC_GLUE_TARGET},INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-target_link_libraries(omrgc
+target_link_libraries(${OMR_GC_LIB}
 	PUBLIC
 		omr_base
 	PRIVATE
@@ -361,7 +361,7 @@ target_link_libraries(omrgc
 		${OMR_HOOK_LIB}
 )
 
-set_target_properties(omrgc omrgc_hookgen omrgc_tracegen PROPERTIES FOLDER gc)
+set_target_properties(${OMR_GC_LIB} omrgc_hookgen omrgc_tracegen PROPERTIES FOLDER gc)
 
 if(OMR_GC_API)
 	add_subdirectory(api)
