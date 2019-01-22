@@ -104,13 +104,13 @@
     TR::TreeEvaluator::directCallEvaluator, // TR::acall		// direct call returning reference
     TR::TreeEvaluator::directCallEvaluator, // TR::call		// direct call returning void
     TR::TreeEvaluator::iaddEvaluator, // TR::iadd		// add 2 integers
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::laddEvaluator ,	// TR::ladd		// add 2 long integers
+    TR::TreeEvaluator::laddEvaluator ,        // TR::ladd		// add 2 long integers
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::faddEvaluator ,	// TR::fadd		// add 2 floats
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::daddEvaluator ,	// TR::dadd		// add 2 doubles
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::baddEvaluator ,	// TR::badd		// add 2 bytes
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::saddEvaluator ,	// TR::sadd		// add 2 short integers
     TR::TreeEvaluator::isubEvaluator, // TR::isub		// subtract 2 integers                (child1 - child2)
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::lsubEvaluator ,	// TR::lsub		// subtract 2 long integers           (child1 - child2)
+    TR::TreeEvaluator::lsubEvaluator ,	// TR::lsub		// subtract 2 long integers           (child1 - child2)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::fsubEvaluator ,	// TR::fsub		// subtract 2 floats                  (child1 - child2)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::dsubEvaluator ,	// TR::dsub		// subtract 2 doubles                 (child1 - child2)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::bsubEvaluator ,	// TR::bsub		// subtract 2 bytes                   (child1 - child2)

@@ -30,33 +30,67 @@
 #include "il/Node_inlines.hpp"
 #include "infra/Bit.hpp"
 
-static TR::Register *addOrSubInteger(TR::Node *node, TR::CodeGenerator *cg)
+static TR::Register *
+addOrSub32Or64Integer(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *firstChild = node->getFirstChild();
    TR::Register *src1Reg = cg->evaluate(firstChild);
    TR::Node *secondChild = node->getSecondChild();
-   TR::Register *trgReg = cg->allocateRegister();
+   TR::Register *trgReg = NULL;
+
+   if (1 == firstChild->getReferenceCount())
+      {
+      trgReg = cg->evaluate(firstChild);
+      }
+   else if (1 == secondChild->getReferenceCount())
+      {
+      trgReg = cg->evaluate(secondChild);
+      }
+   else
+      {
+      trgReg = cg->allocateRegister();
+      }
+
    bool isAdd = node->getOpCode().isAdd();
+   bool is64bit = node->getDataType().isInt64();
 
    if (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)
       {
-      int32_t value = secondChild->getInt();
-      if (constantIsUnsignedImm12(value))
+      if (is64bit) // 64-Bit
          {
-         generateTrg1Src1ImmInstruction(cg, isAdd ? TR::InstOpCode::addimmw : TR::InstOpCode::subimmw, node, trgReg, src1Reg, value);
+         int64_t value = secondChild->getLongInt();
+         if (constantIsUnsignedImm12(value))
+            {
+            generateTrg1Src1ImmInstruction(cg, isAdd ? TR::InstOpCode::addimmx : TR::InstOpCode::subimmx, node, trgReg, src1Reg, value);
+            }
+         else
+            {
+            TR::Register *tmpReg = cg->allocateRegister();
+            loadConstant64(cg, node, value, tmpReg);
+            generateTrg1Src2Instruction(cg, isAdd ? TR::InstOpCode::addx : TR::InstOpCode::subx, node, trgReg, src1Reg, tmpReg);
+            cg->stopUsingRegister(tmpReg);
+            }
          }
-      else
+      else // 32-Bit
          {
-         TR::Register *tmpReg = cg->allocateRegister();
-         loadConstant32(cg, node, value, tmpReg);
-         generateTrg1Src2Instruction(cg, isAdd ? TR::InstOpCode::addw : TR::InstOpCode::subw, node, trgReg, src1Reg, tmpReg);
-         cg->stopUsingRegister(tmpReg);
+         int32_t value = secondChild->getInt();
+         if (constantIsUnsignedImm12(value))
+            {
+            generateTrg1Src1ImmInstruction(cg, isAdd ? TR::InstOpCode::addimmw : TR::InstOpCode::subimmw, node, trgReg, src1Reg, value);
+            }
+         else
+            {
+            TR::Register *tmpReg = cg->allocateRegister();
+            loadConstant32(cg, node, value, tmpReg);
+            generateTrg1Src2Instruction(cg, isAdd ? TR::InstOpCode::addw : TR::InstOpCode::subw, node, trgReg, src1Reg, tmpReg);
+            cg->stopUsingRegister(tmpReg);
+            }
          }
       }
    else
       {
       TR::Register *src2Reg = cg->evaluate(secondChild);
-      generateTrg1Src2Instruction(cg, isAdd ? TR::InstOpCode::addw : TR::InstOpCode::subw, node, trgReg, src1Reg, src2Reg);
+      generateTrg1Src2Instruction(cg, (is64bit ? (isAdd ? TR::InstOpCode::addx : TR::InstOpCode::subx) : (isAdd ? TR::InstOpCode::addw : TR::InstOpCode::subw)), node, trgReg, src1Reg, src2Reg);
       }
 
    node->setRegister(trgReg);
@@ -68,27 +102,27 @@ static TR::Register *addOrSubInteger(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *
 OMR::ARM64::TreeEvaluator::iaddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return addOrSubInteger(node, cg);
+   return addOrSub32Or64Integer(node, cg);
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::laddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::laddEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   // add 2 long integers
+   return addOrSub32Or64Integer(node, cg);
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::isubEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return addOrSubInteger(node, cg);
+   return addOrSub32Or64Integer(node, cg);
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::lsubEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::lsubEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
+	// subtract 2 long integers (child1 - child2)
+	return addOrSub32Or64Integer(node, cg);
 	}
 
 // Multiply a register by a 32-bit constant
