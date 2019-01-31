@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2016 IBM Corp. and others
+# Copyright (c) 2016, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,5 +49,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/p/codegen/OMRConstantDataSnippet.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/env/OMRCPU.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/env/OMRDebugEnv.cpp \
+    $(JIT_OMR_DIRTY_DIR)/p/il/OMRNode.cpp \
     $(JIT_PRODUCT_DIR)/p/codegen/Evaluator.cpp
 
