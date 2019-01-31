@@ -35,7 +35,7 @@ namespace OMR { typedef OMR::Power::Node NodeConnector; }
 
 #include "compiler/il/OMRNode.hpp"
 
-#include "infra/Assert.hpp"  // for TR_ASSERT
+#include "infra/Assert.hpp"
 
 namespace OMR
 {
