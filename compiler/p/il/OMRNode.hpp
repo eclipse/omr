@@ -45,7 +45,7 @@ namespace Power
 
 class OMR_EXTENSIBLE Node : public OMR::Node
    {
-protected:
+public:
 
    Node() : OMR::Node() {}
 
