@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,12 @@ include(OmrOption)
 include(OmrPlatform)
 include(OmrTracegen)
 include(OmrSanitizerSupport)
+
+# If we don't have a build type, default to release /w debug
+if(NOT CMAKE_BUILD_TYPE)
+	message(STATUS "CMAKE_BUILD_TYPE is not set, defaulting to RelWithDebInfo")
+	set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
 
 ###
 ### Set up the global platform configuration
