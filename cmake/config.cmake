@@ -41,8 +41,9 @@ set(OMR_PORT ON CACHE BOOL "Enable portability library")
 set(OMR_OMRSIG ON CACHE BOOL "Enable the OMR signal compatibility library")
 set(OMR_THREAD ON CACHE BOOL "Enable thread library")
 
-set(OMR_COMPILER OFF CACHE BOOL "Enable the Compiler")
+set(OMR_COMPILER ON CACHE BOOL "Enable the Compiler")
 set(OMR_JITBUILDER OFF CACHE BOOL "Enable building JitBuilder")
+set(OMR_NJ ON CACHE BOOL "Enable building NJ Low Level C Api")
 set(OMR_TEST_COMPILER OFF CACHE BOOL "Enable building the test compiler")
 
 set(OMR_GC ON CACHE BOOL "Enable the GC")
@@ -59,6 +60,9 @@ if(NOT OMR_COMPILER)
 	if(OMR_TEST_COMPILER)
 		message(FATAL_ERROR "OMR_TEST_COMPILER is enabled but OMR_COMPILER is not enabled")
 	endif()
+	if (OMR_NJ)
+		message(FATAL_ERROR "OMR_NJ is enabled but OMR_COMPILER is not enabled")
+	endif()	
 endif()
 
 ## Enable OMR_JITBUILDER_TEST if OMR_JITBUILDER is enabled.

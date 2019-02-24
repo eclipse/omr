@@ -208,6 +208,10 @@ if(OMR_JITBUILDER)
 	add_subdirectory(jitbuilder)
 endif(OMR_JITBUILDER)
 
+if (OMR_NJ)
+	add_subdirectory(nj)
+endif(OMR_NJ)
+
 # This should come last to ensure dependencies
 # are defined
 if(OMR_FVTEST)
