@@ -43,6 +43,7 @@
 #include <string>
 #include <vector>
 
+#include <stdio.h>
 #include <stdarg.h>
 
 #define TraceEnabled (injector->comp()->getOption(TR_TraceILGen))
