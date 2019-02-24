@@ -54,6 +54,9 @@
     }                                                                          \
   }
 
+#if defined(OMR_OS_WINDOWS)
+#define snprintf _snprintf
+#endif /* defined(OMR_OS_WINDOWS) */
 
 class TR_Memory;
 
