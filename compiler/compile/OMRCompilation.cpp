@@ -246,7 +246,6 @@ OMR::Compilation::Compilation(
    _snippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(self()->allocator())),
    _methodSnippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(self()->allocator())),
    _snippetsToBePatchedOnClassRedefinition(getTypedAllocator<TR::Snippet*>(self()->allocator())),
-   _snippetsToBePatchedOnRegisterNative(getTypedAllocator<TR_Pair<TR::Snippet,TR_ResolvedMethod> *>(self()->allocator())),
    _genILSyms(getTypedAllocator<TR::ResolvedMethodSymbol*>(self()->allocator())),
    _noEarlyInline(true),
    _returnInfo(TR_VoidReturn),
