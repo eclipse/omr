@@ -5108,7 +5108,7 @@ void OMR::Options::setGlobalAggressiveAOT()
    // setOption(TR_NoOptServer); // questionable
 
    // conservative upgrades
-   _coldUpgradeSampleThreshold = 10; // instead of 3 or even 2
+   _coldUpgradeSampleThreshold = 20; // instead of 3 or even 2
 
    //setOption(TR_VaryInlinerAggressivenessWithTime); // aggressiveness will go gradually down; for non-AOT warm compilations
 
