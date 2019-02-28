@@ -2213,7 +2213,7 @@ OMR::Options::jitLatePostProcess(TR::OptionSet *optionSet, void * jitConfig)
             // For AOT with GCR enabled we can be more conservative with
             // upgrades through sampling because we can rely on GCR
             // In this case we'll use the same threshold value as the one
-            // employed in `setGlobalAggressiveAOT` (note that larger values
+            // employed in `setGlobalVirtualizedEnvOptions` (note that larger values
             // means more conservative upgrades and that the default value is
             // currently TR_DEFAULT_COLD_UPGRADE_SAMPLE_THRESHOLD==3)
             if (!self()->getOption(TR_DisableGuardedCountingRecompilations) &&
@@ -2690,8 +2690,8 @@ OMR::Options::jitPreProcess()
                case OMR::Options::CONSERVATIVE_DEFAULT: // conservative default
                   self()->setConservativeDefaultBehavior();
                   break;
-               case OMR::Options::AGGRESSIVE_AOT: // aggressive AOT (Rely on AOT as much as possible)
-                  self()->setGlobalAggressiveAOT();
+               case OMR::Options::VIRTUALIZED_ENVIRONMENT: // aggressive AOT (Rely on AOT as much as possible)
+                  self()->setGlobalVirtualizedEnvOptions();
                   break;
                case OMR::Options::AGGRESSIVE_QUICKSTART: // aggressive quickstart (Quickstart with interpreter profiler)
                   self()->setAggressiveQuickStart();
@@ -5078,27 +5078,20 @@ void OMR::Options::setAggressiveQuickStart()
 
 void OMR::Options::setInlinerOptionsForAggressiveAOT()
    {
-   _bigCalleeThreshold = 150; // use a lower value to inline less and save compilation time
-
-#ifdef J9ZOS390
-   _inlinerVeryLargeCompiledMethodThreshold = 200; // down from 230
-#else
-   _inlinerVeryLargeCompiledMethodThreshold = 100; // down from 150/210
-   _inlinerVeryLargeCompiledMethodFaninThreshold = 0; // down from 1
-#endif
+   self()->setVirtualizedEnvOptionsForInliner();
    }
 
 void OMR::Options::setLocalAggressiveAOT()
    {
-   // disable GCR (AOT supposedly is good enough)
-   self()->setOption(TR_DisableGuardedCountingRecompilations);
-
-   // More conservative recompilation through sampling
-   self()->setOption(TR_ConservativeCompilation, true);
-   self()->setInlinerOptionsForAggressiveAOT();
+   self()->setLocalVirtualizedEnvOptions();
    }
 
 void OMR::Options::setGlobalAggressiveAOT()
+   {
+   self()->setGlobalVirtualizedEnvOptions();
+   }
+
+void OMR::Options::setGlobalVirtualizedEnvOptions()
    {
    // Generate as much AOT code as possible, at warm opt level
    self()->setOption(TR_ForceAOT, true);
@@ -5122,9 +5115,30 @@ void OMR::Options::setGlobalAggressiveAOT()
    self()->setOption(TR_DisableHardwareProfilerReducedWarm);
 
    // Set Non-static fields
-   self()->setLocalAggressiveAOT();
+   self()->setLocalVirtualizedEnvOptions();
    }
 
+void OMR::Options::setLocalVirtualizedEnvOptions()
+   {
+   // disable GCR (AOT supposedly is good enough)
+   self()->setOption(TR_DisableGuardedCountingRecompilations);
+
+   // More conservative recompilation through sampling
+   self()->setOption(TR_ConservativeCompilation, true);
+   self()->setInlinerOptionsForAggressiveAOT();
+   }
+
+void OMR::Options::setVirtualizedEnvOptionsForInliner()
+   {
+   _bigCalleeThreshold = 150; // use a lower value to inline less and save compilation time
+
+#ifdef J9ZOS390
+   _inlinerVeryLargeCompiledMethodThreshold = 200; // down from 230
+#else
+   _inlinerVeryLargeCompiledMethodThreshold = 100; // down from 150/210
+   _inlinerVeryLargeCompiledMethodFaninThreshold = 0; // down from 1
+#endif
+   }
 
 void OMR::Options::setConservativeDefaultBehavior()
    {

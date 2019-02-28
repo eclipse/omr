@@ -1442,6 +1442,7 @@ public:
       QUICKSTART,
       AGGRESSIVE_QUICKSTART,
       AGGRESSIVE_AOT,
+      VIRTUALIZED_ENVIRONMENT = AGGRESSIVE_AOT,
       CONSERVATIVE_DEFAULT,
       DEFAULT,
    };
@@ -1689,10 +1690,15 @@ public:
    void setQuickStart();
    void setConservativeQuickStart();
    void setAggressiveQuickStart();
+   void setConservativeDefaultBehavior();
+
    void setGlobalAggressiveAOT();
    void setLocalAggressiveAOT();
    void setInlinerOptionsForAggressiveAOT();
-   void setConservativeDefaultBehavior();
+
+   void setGlobalVirtualizedEnvOptions();
+   void setLocalVirtualizedEnvOptions();
+   void setVirtualizedEnvOptionsForInliner();
 
    static bool getCountsAreProvidedByUser() { return _countsAreProvidedByUser; } // set very late in setCounts()
    static TR_YesNoMaybe startupTimeMatters() { return _startupTimeMatters; } // set very late in setCounts()
