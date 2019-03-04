@@ -47,6 +47,7 @@ namespace OMR { typedef OMR::Z::CodeGenerator CodeGeneratorConnector; }
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/ScratchRegisterManager.hpp"
 #include "codegen/Snippet.hpp"
+#include "codegen/StorageInfo.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
@@ -823,6 +824,19 @@ public:
    #define TR_DEFAULT_DATA_SNIPPET_EXPONENT 7
    int32_t constantDataSnippetExponent() { return TR_DEFAULT_DATA_SNIPPET_EXPONENT; } // 1 << 7 = 128 byte max size for each constantDataSnippet
 
+   /**
+    * @brief Answers how (based on opcodes and offsets) two store/load/address
+    *        nodes overlap in memory.  Any combination of stores, loads, and
+    *        address nodes are allowed.
+    *
+    * @param[in] node1 : first node to check
+    * @param[in] length1 : length of memory storage for node1
+    * @param[in] node2 : second node to check
+    * @param[in] length2 : length of memory storage for node2
+    *
+    * @return A TR_StorageOverlapKind describing how node1 and node2 overlap
+    */
+   TR_StorageOverlapKind storageMayOverlap(TR::Node *node1, size_t length1, TR::Node *node2, size_t length2);
 
  private:
    TR_BitVector _globalGPRsPreservedAcrossCalls;

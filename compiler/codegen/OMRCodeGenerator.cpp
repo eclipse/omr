@@ -50,7 +50,6 @@
 #include "codegen/RegisterUsage.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/Snippet.hpp"
-#include "codegen/StorageInfo.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/GCStackAtlas.hpp"
@@ -1352,31 +1351,6 @@ OMR::CodeGenerator::createOrFindClonedNode(TR::Node *node, int32_t numChildren)
       node = (TR::Node *) _uncommmonedNodes.getData(index);
       }
    return node;
-   }
-
-
-// returns true iff, based on opcodes and offsets if two store/load/address nodes are definitely disjoint (i.e. guaranteed not to overlap)
-// any combination of stores,loads and address nodes are allowed as node1 and node2
-// The return tells how node1 and node2 is overlapped (TR_StorageOverlapKind)
-TR_StorageOverlapKind
-OMR::CodeGenerator::storageMayOverlap(TR::Node *node1, size_t length1, TR::Node *node2, size_t length2)
-   {
-   if ((node2->getOpCode().isLoadVarOrStore() || node2->getType().isAddress()) && // node1 is usually an always valid store so check node2 first
-       (node1->getOpCode().isLoadVarOrStore() || node1->getType().isAddress()))
-      {
-      TR_StorageInfo node1Info = TR_StorageInfo(node1, length1, self()->comp());
-      TR_StorageInfo node2Info = TR_StorageInfo(node2, length2, self()->comp());
-
-      return node1Info.mayOverlapWith(&node2Info);
-      }
-   else
-      {
-      if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"overlap=true : node1 %s (%p) and/or node2 %s (%p) are not valid load/store/address nodes\n",
-            node1->getOpCode().getName(),node1,node2->getOpCode().getName(),node2);
-
-      return TR_MayOverlap;
-      }
    }
 
 

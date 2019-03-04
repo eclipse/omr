@@ -36,7 +36,6 @@
 #include "codegen/FrontEnd.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#include "codegen/StorageInfo.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"

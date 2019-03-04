@@ -40,7 +40,6 @@ namespace OMR { typedef OMR::CodeGenerator CodeGeneratorConnector; }
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/StorageInfo.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
@@ -1297,8 +1296,6 @@ class OMR_EXTENSIBLE CodeGenerator
    bool addressesMatch(TR::Node *addr1, TR::Node *addr2, bool addressesUnderSameTreeTop=false);
    // Z codegen
    bool uniqueAddressOccurrence(TR::Node *addr1, TR::Node *addr2, bool addressesUnderSameTreeTop);
-
-   TR_StorageOverlapKind storageMayOverlap(TR::Node *node1, size_t length1, TR::Node *node2, size_t length2);
 
    // arrayTranslateTableRequiresAlignment returns a mask if alignent required, otherwise 0
    // For example, if a page is 4096 bytes and array translation required page alignment, 4095 would
