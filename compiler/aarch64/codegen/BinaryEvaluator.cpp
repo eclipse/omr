@@ -104,6 +104,42 @@ genericBinaryEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic regOp, TR::InstO
    return trgReg;
    }
 
+/**
+ * Helper that checks for division by zero before evaluating.
+ * @param[in] node : calling node
+ * @param[in] regOp : the target AArch64 instruction opcode
+ * @param[in] regOp : the matching AArch64 immediate instruction opcode
+ * @param[in] is64Bit : true when it is 64-bit operation
+ * @param[in] cg : codegenerator
+ * @return target register
+ */
+static inline TR::Register *
+evaluateWithZeroDenomCheck(TR::Node *node, TR::InstOpCode::Mnemonic regOp, TR::InstOpCode::Mnemonic regOpImm, bool is64Bit, TR::CodeGenerator *cg)
+   {
+   TR::Register *trgReg = NULL;
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *srcReg = cg->evaluate(secondChild);
+   TR::Register *zeroReg = cg->allocateRegister();
+   is64Bit ? loadConstant64(cg, node, 0, zeroReg) : loadConstant32(cg, node, 0, zeroReg);
+   TR::LabelSymbol *specialCase = generateLabelSymbol(cg);
+
+   /*Ideally branch on zero would be used here, but it is not available*/
+   generateCompareInstruction(cg, node, srcReg, zeroReg, is64Bit, NULL);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, specialCase, TR::CC_EQ, NULL, NULL);
+   trgReg = genericBinaryEvaluator(node, regOp, regOpImm, is64Bit, cg);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, specialCase);
+   if(!trgReg)
+      {
+      TR::Node *firstChild = node->getFirstChild();
+      trgReg = cg->allocateRegister();
+      node->setRegister(trgReg);
+      firstChild->decReferenceCount();
+      secondChild->decReferenceCount();
+      }
+   cg->stopUsingRegister(zeroReg);
+   return trgReg;
+   }
+
 static TR::Register *addOrSubInteger(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *firstChild = node->getFirstChild();
@@ -351,7 +387,7 @@ OMR::ARM64::TreeEvaluator::lmulhEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *
 OMR::ARM64::TreeEvaluator::idivEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return genericBinaryEvaluator(node, TR::InstOpCode::sdivw, TR::InstOpCode::sdivw, false, cg);
+   return evaluateWithZeroDenomCheck(node, TR::InstOpCode::sdivw, TR::InstOpCode::sdivw, false, cg);
    }
 
 TR::Register *
@@ -363,7 +399,7 @@ OMR::ARM64::TreeEvaluator::iremEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *
 OMR::ARM64::TreeEvaluator::ldivEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return genericBinaryEvaluator(node, TR::InstOpCode::sdivx, TR::InstOpCode::sdivx, true, cg);
+   return evaluateWithZeroDenomCheck(node, TR::InstOpCode::sdivx, TR::InstOpCode::sdivx, true, cg);
    }
 
 TR::Register *
