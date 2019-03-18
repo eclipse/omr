@@ -61,15 +61,7 @@ OMR::ArithEnv::floatDivideFloat(float a, float b)
 float
 OMR::ArithEnv::floatRemainderFloat(float a, float b)
    {
-
-   // C99 IEEE remainder is not available in older MSVC versions
-
-#if defined (_MSC_VER)
-   return 0;
-#else
    return remainderf(a, b);
-#endif
-
    }
 
 float
@@ -107,11 +99,7 @@ OMR::ArithEnv::doubleDivideDouble(double a, double b)
 double
 OMR::ArithEnv::doubleRemainderDouble(double a, double b)
    {
-#if defined (_MSC_VER)
-   return 0;
-#else
    return remainder(a, b);
-#endif
    }
 
 double
