@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,7 +108,7 @@ ifneq (,$(findstring executable,$(ARTIFACT_TYPE)))
     GLOBAL_LDFLAGS+=$(DEFAULT_LIBS)
 endif
 
-TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /ztpf/svtcur/redhat/all /ztpf/commit
+TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /zbld/svtcur/gnu/all /ztpf/commit
 
 ###
 ### Shared Libraries
@@ -136,6 +136,7 @@ ifeq (gcc,$(OMR_TOOLCHAIN))
     GLOBAL_LDFLAGS+=-Wl,--as-needed
     GLOBAL_LDFLAGS+=-Wl,--eh-frame-hdr
     GLOBAL_LDFLAGS+=$(foreach d,$(TPF_ROOT),-L$d/base/lib)
+    GLOBAL_LDFLAGS+=$(foreach d,$(TPF_ROOT),-L$d/base/stdlib)
     GLOBAL_LDFLAGS+=$(foreach d,$(TPF_ROOT),-L$d/opensource/stdlib)
     GLOBAL_LDFLAGS+=-lgcc
     GLOBAL_LDFLAGS+=-lCTOE
