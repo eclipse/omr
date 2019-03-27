@@ -26,6 +26,7 @@ import unittest
 from test.apidescriptiontests import *
 from test.genutilstests import *
 from test.cppgentests import *
+from test.cgentests import *
 
 if __name__ == '__main__':
     unittest.main()

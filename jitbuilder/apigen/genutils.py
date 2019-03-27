@@ -76,7 +76,7 @@ class APIType:
                              ]
 
     def __eq__(self, other):
-        return self.type_name == other.type_name and self.api == other.api and self.builtin_types == other.builtin_types
+        return isinstance(other, APIType) and self.type_name == other.type_name and self.api == other.api and self.builtin_types == other.builtin_types
 
     def __ne__(self, other):
         return not (self == other)
@@ -105,7 +105,7 @@ class APIField:
         self.api = api # not used but included for consistency
 
     def __eq__(self, other):
-        return self.description == other.description and self.api == other.api
+        return isinstance(other, APIField) and self.description == other.description and self.api == other.api
 
     def __ne__(self, other):
         return not (self == other)
@@ -129,7 +129,7 @@ class APIService:
             self.service = service
 
         def __eq__(self, other):
-            return self.description == other.description and self.service == other.service
+            return isinstance(other, APIService.APIParameter) and self.description == other.description and self.service == other.service
 
         def __ne__(self, other):
             return not (self == other)
@@ -172,7 +172,7 @@ class APIService:
         self.api = api
 
     def __eq__(self, other):
-        return self.description == other.description and self.owner == other.owner and self.api == other.api
+        return isinstance(other, APIService) and self.description == other.description and self.owner == other.owner and self.api == other.api
 
     def __ne__(self, other):
         return not (self == other)
@@ -287,7 +287,7 @@ class APIClass:
         self.api = api
 
     def __eq__(self, other):
-        return self.description == other.description and self.api == other.api
+        return isinstance(other, APIClass) and self.description == other.description and self.api == other.api
 
     def __ne__(self, other):
         return not (self == other)
@@ -401,7 +401,7 @@ class APIDescription:
             if c.has_parent(): table[c.name()] = c.parent()
 
     def __eq__(self, other):
-        return self.description == other.description
+        return isinstance(other, APIDescription) and self.description == other.description
 
     def __ne__(self, other):
         return not (self == other)
