@@ -962,15 +962,20 @@ FPtoIntBitsTypeCoercionHelper(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * targetReg = NULL;
    TR::Register * sourceReg = NULL;
    TR::DataType nodeType = node->getDataType();
+   bool is64BitNode = (nodeType == TR::Int64);
 
    if (node->getFirstChild()->isSingleRefUnevaluated() &&
           node->getFirstChild()->getOpCode().isLoadVar())
       {
       TR::MemoryReference * tempmemref = generateS390MemoryReference(node->getFirstChild(), cg);
-      if (nodeType == TR::Int64)
+      if (is64BitNode)
+         {
          targetReg = genericLoadHelper<64, 64, MemReg>(node, cg, tempmemref, NULL, false, true);
+         }
       else
+         {
          targetReg = genericLoadHelper<32, 32, MemReg>(node, cg, tempmemref, NULL, false, true);
+         }
       }
    else
       {
@@ -981,80 +986,67 @@ FPtoIntBitsTypeCoercionHelper(TR::Node * node, TR::CodeGenerator * cg)
       // It seems the FP instruction performance is sub-optimal (i.e. LGDR), and we're better
       // off storing to memory and then loading into a GPR.
       TR::MemoryReference * tempMR1 = generateS390MemoryReference(node, f2iSR, cg);
-      auto mnemonic = nodeType == TR::Int64 ? TR::InstOpCode::STD : TR::InstOpCode::STE;
-      generateRXInstruction(cg, mnemonic, node, sourceReg, tempMR1);
+      generateRXInstruction(cg, is64BitNode ? TR::InstOpCode::STD : TR::InstOpCode::STE, node, sourceReg, tempMR1);
 
       TR::MemoryReference * tempMR2 = generateS390MemoryReference(*tempMR1, 0, cg);
-      if (nodeType == TR::Int64)
+      if (is64BitNode)
+         {
          targetReg = genericLoadHelper<64, 64, MemReg>(node, cg, tempMR2, NULL, false, true);
+         }
       else
+         {
          targetReg = genericLoadHelper<32, 32, MemReg>(node, cg, tempMR2, NULL, false, true);
+         }
       }
 
     if (node->normalizeNanValues())
        {
-       TR::RegisterDependencyConditions * deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg);
-
-       TR::Register * targetFPR = cg->allocateRegister(TR_FPR);
-       deps->addPostCondition(targetFPR, TR::RealRegister::AssignAny);
-
-       TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
-       TR::LabelSymbol * cleansedNumber = generateLabelSymbol(cg);
-
-       TR::Register * litBase = NULL;
-
-       if (node->getNumChildren() == 2)
-          {
-          litBase = cg->evaluate(node->getSecondChild());
-          }
-       else if (cg->isLiteralPoolOnDemandOn())
-          {
-          litBase = cg->allocateRegister();
-          generateLoadLiteralPoolAddress(cg, node, litBase);
-          }
-
-       TR::MemoryReference* nanMemRef = nodeType == TR::Int64 ?
-                 generateS390MemoryReference(static_cast<int64_t>(0x7ff8000000000000), nodeType, cg, litBase) : 
-                 generateS390MemoryReference(static_cast<int32_t>(0x7fc00000),         nodeType, cg, litBase);
-       
-       auto testMnemonic = nodeType == TR::Int64 ? TR::InstOpCode::TCDB : TR::InstOpCode::TCEB;
-
-       if (litBase)
-          {
-          deps->addPostCondition(litBase, TR::RealRegister::AssignAny);
-          }
+       // We need two dependencies. One for targetReg, and the second because generateRegLitRefInstruction may allocate
+       // a base register to load from a literal pool.
+       TR::RegisterDependencyConditions * deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
        deps->addPostCondition(targetReg, TR::RealRegister::AssignAny);
 
-       generateRRInstruction(cg, TR::InstOpCode::LDGR, node, targetFPR, targetReg); 
+       TR::Register * targetFPR = cg->allocateRegister(TR_FPR);
 
-       generateRXEInstruction(cg, testMnemonic, node, targetFPR, generateS390MemoryReference(0x00F, cg), 0);
-
-       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, cleansedNumber);
-
-       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
+       TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
+       TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(cg);
        cFlowRegionStart->setStartInternalControlFlow();
+       cFlowRegionEnd->setEndInternalControlFlow();
 
-       if (nodeType == TR::Int64)
-          targetReg = genericLoadHelper<64, 64, MemReg>(node, cg, nanMemRef, NULL, false, true);
-       else
-          targetReg = genericLoadHelper<32, 32, MemReg>(node, cg, nanMemRef, NULL, false, true);
-
-       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cleansedNumber, deps);
-       cleansedNumber->setEndInternalControlFlow();
-
-       cg->stopUsingRegister(targetFPR);
-
-       if (cg->isLiteralPoolOnDemandOn())
+       // Load value into an FPR and test to see if it's a NaN. We don't need to test if it's +INF or -INF as they have only one possible representation in BFP.
+       if (is64BitNode)
           {
-          cg->stopUsingRegister(litBase);
+          generateRRInstruction(cg, TR::InstOpCode::LDGR, node, targetFPR, targetReg);
           }
+       else
+          {
+          // The 32-bit value needs to be in the high word in order to test it correctly inside the FPR.
+          TR::Register * tempReg = cg->allocateRegister();
+          generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, targetReg, 32);
+          generateRRInstruction(cg, TR::InstOpCode::LDGR, node, targetFPR, tempReg);
+          cg->stopUsingRegister(tempReg);
+          }
+       generateRXEInstruction(cg, is64BitNode ? TR::InstOpCode::TCDB : TR::InstOpCode::TCEB, node, targetFPR, generateS390MemoryReference(0x00F, cg), 0);
+
+       // Branch to end if value is not a NaN.
+       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, cFlowRegionEnd);
+       // If value is a NaN, then load in the normalized value of NaN.
+       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
+       if (is64BitNode)
+          {
+          generateRegLitRefInstruction(cg, TR::InstOpCode::LG, node, targetReg, static_cast<int64_t>(DOUBLE_NAN), deps, NULL, NULL, false);
+          }
+       else
+          {
+          generateRegLitRefInstruction(cg, TR::InstOpCode::L, node, targetReg, FLOAT_NAN, deps, NULL, NULL, false);
+          }
+       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionEnd, deps);
+       cg->stopUsingRegister(targetFPR);
        }
+
     node->setRegister(targetReg);
+    cg->stopUsingRegister(targetReg);
     cg->decReferenceCount(node->getFirstChild());
-
-    if (node->getNumChildren() == 2)
-       cg->decReferenceCount(node->getSecondChild());
-
     return targetReg;
    }
 
