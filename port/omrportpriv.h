@@ -549,6 +549,16 @@ extern J9_CFUNC int32_t
 omrsysinfo_cgroup_subsystem_iterator_next(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state, struct OMRCgroupMetricElement *metricElement);
 extern J9_CFUNC void
 omrsysinfo_cgroup_subsystem_iterator_destroy(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state);
+extern J9_CFUNC void
+omrsysinfo_get_cpu_affinity(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset);
+extern J9_CFUNC void
+omrsysinfo_free_cpu_set(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset);
+extern J9_CFUNC void
+omrsysinfo_add_cpuset(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset, int32_t cpu);
+extern J9_CFUNC int32_t
+omrsysinfo_isset_cpuset(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset, int32_t cpu);
+extern J9_CFUNC int32_t
+omrsysinfo_get_cpu_count(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset);
 
 /* J9SourceJ9Signal*/
 extern J9_CFUNC int32_t

@@ -4768,6 +4768,89 @@ omrsysinfo_cgroup_subsystem_iterator_destroy(struct OMRPortLibrary *portLibrary,
 	}
 }
 
+void
+omrsysinfo_get_cpu_affinity(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset)
+{
+#if defined(LINUX) && !defined(OMRZTPF)
+	int32_t size = sizeof(cpuset->set.cpuset); /* Size in bytes */
+	int32_t rc = sched_getaffinity(0, size, &cpuset->set.cpuset); /* pid = 0 returns mask of calling process */
+	if (rc != 0) {
+		if (EINVAL == errno) {
+			/* Too many CPUs for the fixed cpu_set_t structure */
+			int32_t numCPUs = sysconf(_SC_NPROCESSORS_CONF);
+			cpuset->set.d_cpuset.cpuset = CPU_ALLOC(numCPUs);
+			if (NULL != cpuset->set.d_cpuset.cpuset) {
+				cpuset->set.d_cpuset.size = CPU_ALLOC_SIZE(numCPUs);
+				CPU_ZERO_S(cpuset->set.d_cpuset.size, cpuset->set.d_cpuset.cpuset);
+				rc = sched_getaffinity(getpid(), cpuset->set.d_cpuset.size, cpuset->set.d_cpuset.cpuset);
+				if (0 != rc) {
+					return;
+				}
+				cpuset->dynamic = TRUE;
+			}
+		}
+	}
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
+}
+
+void
+omrsysinfo_free_cpu_set(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset)
+{
+#if defined(LINUX) && !defined(OMRZTPF)
+	if (cpuset->dynamic) {
+		CPU_FREE(cpuset->set.d_cpuset.cpuset);
+	}
+#endif
+}
+
+void
+omrsysinfo_add_cpuset(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset, int32_t cpu)
+{
+#if defined(LINUX) && !defined(OMRZTPF)
+	if (cpuset->dynamic) {
+		if (cpu >= (CPU_ALLOC_SIZE(cpuset->set.d_cpuset.size) * 8)) {
+			CPU_FREE(cpuset->set.d_cpuset.cpuset);
+			cpuset->set.d_cpuset.cpuset = CPU_ALLOC(cpu+1);
+		}
+		CPU_SET(cpu, cpuset->set.d_cpuset.cpuset);
+	} else {
+		if (cpu >= sizeof(cpuset->set.cpuset)) {
+			cpuset->set.d_cpuset.cpuset = CPU_ALLOC(cpu+1);
+			cpuset->dynamic = TRUE;
+			CPU_SET(cpu, cpuset->set.d_cpuset.cpuset);
+		} else {
+			CPU_SET(cpu, &cpuset->set.cpuset);
+		}
+	}
+#endif
+}
+
+int32_t omrsysinfo_isset_cpuset(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset, int32_t cpu)
+{
+	int32_t rc = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_METRIC_NOT_AVAILABLE;
+#if defined(LINUX) && !defined(OMRZTPF)
+	if (cpuset->dynamic) {
+		rc = CPU_ISSET(cpu, cpuset->set.d_cpuset.cpuset);
+	} else {
+		rc = CPU_ISSET(cpu, &cpuset->set.cpuset);
+	}
+#endif
+	return rc;
+}
+
+int32_t
+omrsysinfo_get_cpu_count(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset)
+{
+	int32_t result = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_METRIC_NOT_AVAILABLE;
+#if defined(LINUX) && !defined(OMRZTPF)
+	if (cpuset->dynamic) {
+		result = CPU_COUNT(cpuset->set.d_cpuset.cpuset);
+	} else {
+		result = CPU_COUNT(&cpuset->set.cpuset);
+	}
+#endif
+	return result;
+}
 
 #if defined(OMRZTPF)
 /*
