@@ -916,3 +916,13 @@ TraceEvent=Trc_MM_Scavenger_percolate_preventTenureExpand Overhead=1 Level=1 Gro
 TraceEvent=Trc_MM_Scavenger_percolate_tenureMaxFree Overhead=1 Level=1 Group=percolate Template="Percolating due to meeting Tenure max free"
 
 TraceAssert=Assert_MM_double_map_unreachable noEnv Overhead=1 Level=1 Assert="(false)"
+
+TraceEntry=Trc_MM_RealtimeGC_masterSetupForGC_Entry Overhead=1 Level=2 Template="RealtimeGC::masterSetupForGC"
+TraceEvent=Trc_MM_RealtimeGC_masterSetupForGC_statsCleared Overhead=1 Level=2 Template="RealtimeGC::masterSetupForGC stats cleared"
+TraceExit=Trc_MM_RealtimeGC_masterSetupForGC_Exit Overhead=1 Level=2 Template="RealtimeGC::masterSetupForGC"
+
+TraceEntry=Trc_MM_RealtimeGC_internalPreCollect_Entry Overhead=1 Level=2 Template="RealtimeGC::internalPreCollect"
+TraceExit=Trc_MM_RealtimeGC_internalPreCollect_Exit Overhead=1 Level=2 Template="RealtimeGC::internalPreCollect"
+
+TraceEntry=Trc_MM_Collector_preCollect_Entry Overhead=1 Level=2 Template="Collector::preCollect"
+TraceExit=Trc_MM_Collector_preCollect_Exit Overhead=1 Level=2 Template="Collector::preCollect"

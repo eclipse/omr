@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -195,6 +195,8 @@ MM_Collector::recordExcessiveStatsForGCEnd(MM_EnvironmentBase* env)
 void
 MM_Collector::preCollect(MM_EnvironmentBase* env, MM_MemorySubSpace* subSpace, MM_AllocateDescription* allocDescription, uint32_t gcCode)
 {
+	Trc_MM_Collector_preCollect_Entry(env->getLanguageVMThread());
+
 	MM_GCExtensionsBase* extensions = env->getExtensions();
 
 	/* There might be a colliding concurrent cycle in progress, that must be completed before we start this one.
@@ -261,6 +263,8 @@ MM_Collector::preCollect(MM_EnvironmentBase* env, MM_MemorySubSpace* subSpace, M
 	if (_globalCollector) {
 		extensions->didGlobalGC = true;
 	}
+
+	Trc_MM_Collector_preCollect_Exit(env->getLanguageVMThread());
 }
 
 /**
