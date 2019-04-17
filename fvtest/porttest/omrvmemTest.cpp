@@ -803,7 +803,7 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 		/* Memory verified successfully */
 		{
 			/* Initialize arraylet offsets to different ranges */
-			long arrayLetOffsets[ARRAYLET_COUNT];
+			size_t arrayLetOffsets[ARRAYLET_COUNT];
 			/* Must be multiple of pagesize: sysconf(_SC_PAGE_SIZE) 	Simulates the order of arraylet leaves in an array */
 			arrayLetOffsets[0] = 0;                                                             /* 1 */
 			arrayLetOffsets[1] = (long)((HEAP_SIZE / 2) + (HEAP_SIZE / 8));	                    /* 6 */

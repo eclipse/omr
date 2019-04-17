@@ -1051,7 +1051,11 @@ typedef struct J9PortVmemIdentifier {
 	uintptr_t pageFlags;
 	uintptr_t mode;
 	uintptr_t allocator;
+#if defined(LINUX)
 	int fd;
+#elif (defined(WINDOWS) || defined(WIN32))
+	void *fd;
+#endif /* (defined(WINDOWS) || defined(WIN32)) */
 	OMRMemCategory *category;
 } J9PortVmemIdentifier;
 

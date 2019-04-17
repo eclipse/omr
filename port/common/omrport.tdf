@@ -725,6 +725,7 @@ TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_ex_UnableToAllocateWithinSpec
 TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_shmdt_failed Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory (shmdt failed) address=%p"
 
 TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_ex_large_page_request_failed_reverting_to_default_page_size Group=mem Overhead=1 Level=1 NoEnv Template="omrvmem_reserve_memory_ex_large_page_request_failed_reverting_to_default_page_size, byteAmout: %u, numPages: %u"
+TraceException=Trc_PRT_vmem_omrvmem_reserve_memory_ex_file_handle_failed Group=mem Overhead=1 Level=3 NoEnv Template="omrvmem_reserve_memory_ex (unable to get file handle for %u bytes)"
 
 TraceException=Trc_PRT_vmem_omrvmem_startup_failed_to_close_dll Group=mem Overhead=1 Level=1 NoEnv Template="Failed to close DLL Kernel32"
 
