@@ -1158,7 +1158,7 @@ default_pageSize_reserve_memory(struct OMRPortLibrary *portLibrary, void *addres
  */
 
 void *
-omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
+omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, uintptr_t* addresses, uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
 {
 	int protectionFlags = PROT_READ | PROT_WRITE;
 	int flags = MAP_PRIVATE | MAP_ANON;
@@ -1207,9 +1207,9 @@ omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* a
 		fd = oldIdentifier->fd;
 #if defined(OMRVMEM_DEBUG)
 		printf("Found %zu arraylet leaves.\n", addressesCount);
-		int j = 0;
+		size_t j = 0;
 		for(j = 0; j < addressesCount; j++) {
-			printf("addresses[%d] = %p\n", j, addresses[j]);
+			printf("addresses[%zu] = %p\n", j, addresses[j]);
 		}
 		printf("Contiguous address is: %p\n", contiguousMap);
 		printf("About to double map arraylets. File handle got from old identifier: %d\n", fd);
@@ -1218,7 +1218,7 @@ omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* a
 		size_t i;
 		for (i = 0; i < addressesCount; i++) {
 			void *nextAddress = (void *)(contiguousMap + i * addressSize);
-			uintptr_t addressOffset = (uintptr_t)(addresses[i] - (uintptr_t)oldIdentifier->address);
+			uintptr_t addressOffset = addresses[i] - (uintptr_t)oldIdentifier->address;
 			void *address = mmap(
 					nextAddress,
 					addressSize,

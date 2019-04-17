@@ -794,7 +794,7 @@ getMemoryInRange(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier
 	void *memoryPointer = NULL;
 #if defined(OMRVMEM_DEBUG)
 	static int count = 0;
-#endif
+#endif /* defined(OMRVMEM_DEBUG) */
 
 	if(mode & OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN) {
 		useBackingSharedFile = TRUE;
@@ -833,7 +833,7 @@ getMemoryInRange(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier
 		currentAddress = endAddress;
 #if defined(OMRVMEM_DEBUG)
 		printf("\t\t getMemoryInRange top down, start address: %p\n", currentAddress);
-#endif
+#endif /* defined(OMRVMEM_DEBUG) */
 
 	} else if (0 != (vmemOptions & OMRPORT_VMEM_ALLOC_DIR_BOTTOM_UP)) {
 		allocationFlags &= ~MEM_TOP_DOWN;
@@ -842,7 +842,7 @@ getMemoryInRange(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier
 		}
 #if defined(OMRVMEM_DEBUG)
 		printf("\t\t getMemoryInRange bottom up, start address: %p\n", currentAddress);
-#endif
+#endif /* defined(OMRVMEM_DEBUG) */
 
 	} else if (NULL == startAddress) {
 		if (OMRPORT_VMEM_MAX_ADDRESS == endAddress) {
@@ -885,7 +885,7 @@ getMemoryInRange(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier
 			printf("\t\t getMemoryInRange calling VirtualAlloc: address: %p, size: %p, allocationFlags: %x, protection: %x\n", (LPVOID)currentAddress, byteAmount, allocationFlags, protection);
 			fflush(stdout);
 		}
-#endif
+#endif /* defined(OMRVMEM_DEBUG) */
 
 		if (useBackingSharedFile) {
 			// Similar to mmap on POSIX
@@ -928,7 +928,7 @@ getMemoryInRange(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier
 			printf("\t\t\t getMemoryInRange returned from VirtualAlloc\n");
 			fflush(stdout);
 		}
-#endif
+#endif /* defined(OMRVMEM_DEBUG) */
 		/* stop if returned pointer is within range */
 		if (NULL != memoryPointer) {
 			if ((startAddress <= memoryPointer) && (endAddress >= memoryPointer)) {
@@ -1625,8 +1625,102 @@ OLD_IMPL:
 }
 
 void *
-omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
+omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, uintptr_t *addresses, uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
 {
-	portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
-	return NULL;
+	BOOLEAN successfulContiguousMap = FALSE;
+	BOOLEAN shouldUnmapAddr = FALSE;
+	DWORD flAllocationType = MEM_RESERVE;
+	DWORD  flProtect = PAGE_NOACCESS;
+	HANDLE fd = NULL;
+	LPVOID contiguousMap = NULL;
+#if defined(OMRVMEM_DEBUG)
+	SYSTEM_INFO systemInfo;
+	GetSystemInfo(&systemInfo);
+#endif /* defined(OMRVMEM_DEBUG) */
+	byteAmount = addressesCount * addressSize;
+
+	/* Creates contiguous memory space for arraylets */
+	contiguousMap = VirtualAlloc(
+			NULL,		/* addr */
+			byteAmount, 	/* size */
+			flAllocationType,
+			flProtect);
+	if (contiguousMap == NULL) {
+		portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_VMEM_OPFAILED, "Failed to map contiguous block of memory");
+	} else {
+		/* No need to commit memory because heap region is already commited */
+		shouldUnmapAddr = TRUE;
+		successfulContiguousMap = TRUE;
+		/* Update identifier and increment counter */
+		update_vmemIdentifier(newIdentifier, (void *)contiguousMap, (void *)contiguousMap, byteAmount, mode, pageSize, OMRPORT_VMEM_PAGE_FLAG_NOT_USED, category, NULL);
+		omrmem_categories_increment_counters(category, byteAmount);
+	}
+
+	/* MUST free this address to map the file view */
+	if (VirtualFree(contiguousMap, 0, MEM_RELEASE) == 0) {
+		contiguousMap = NULL;
+		successfulContiguousMap = FALSE;
+#if defined(OMRVMEM_DEBUG)
+		printf("\tFailed to free contiguous\n");
+		fflush(stdout);
+#endif /* defined(OMRVMEM_DEBUG) */
+	}
+
+	/* First need to commit regions where arraylets will be stored
+	   In a normal application, this is not necessary because arraylets
+	   are only stored in regions that were commited already */
+
+
+	/* Perform double mapping  */
+	if(contiguousMap != NULL) {
+		SIZE_T i;
+		fd = oldIdentifier->fd;
+#if defined(OMRVMEM_DEBUG)
+		for(i = 0; i < addressesCount; i++) {
+			printf("addresses[%lld] = %p\n", i, (void *)addresses[i]);
+		}
+		printf("Contiguous address is: %p\n", contiguousMap);
+		printf("About to double map arraylets. File handle got from old identifier: %p\n", (void*)fd);
+		fflush(stdout);
+#endif /* defined(OMRVMEM_DEBUG) */
+		for (i = 0; i < addressesCount; i++) {
+			void *nextAddress = (void *)((uintptr_t)contiguousMap + i * addressSize);
+			DWORD addressOffset = (DWORD)(addresses[i] - (uintptr_t)oldIdentifier->address);
+			LPVOID address = MapViewOfFileEx(
+				fd,			/* file descriptor */
+				FILE_MAP_WRITE, 	/* read and write access */
+				0,			/* file descriptor offset high */
+				addressOffset,		/* file descriptor offset low (Offset into contiguous memory) */
+				addressSize,		/* number of bytes to map */
+				(LPVOID)nextAddress);	/* address in contiguous region to be mapped */
+
+			if (address == NULL) {
+				successfulContiguousMap = FALSE;
+				portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_VMEM_OPFAILED, "Failed to double map.");
+#if defined(OMRVMEM_DEBUG)
+				printf("***************************** GetLastError(): %d\n", GetLastError());
+				printf("Failed to mmap address[%lld] at mmapContiguous(), nextAddress: %p, offset: %d, System.pagesize: %d, pagesize: %lld\n", i, nextAddress, addressOffset, systemInfo.dwAllocationGranularity, pageSize);
+				fflush(stdout);
+#endif /* defined(OMRVMEM_DEBUG) */
+				break;
+			} else if (nextAddress != address) {
+				successfulContiguousMap = FALSE;
+				portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_VMEM_OPFAILED, "Double Map failed to provide the correct address");
+#if defined(OMRVMEM_DEBUG)
+				printf("Map failed to provide the correct address. nextAddress %p != %p, offset: %d\n", nextAddress, address, addressOffset);
+				fflush(stdout);
+#endif /* defined(OMRVMEM_DEBUG) */
+				break;
+			}
+		}
+	}
+
+	if (!successfulContiguousMap) {
+		if (shouldUnmapAddr) {
+			VirtualFree(contiguousMap, byteAmount, 0);
+		}
+		contiguousMap = NULL;
+	}
+
+	return contiguousMap;
 }

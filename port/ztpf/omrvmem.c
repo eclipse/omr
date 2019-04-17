@@ -1882,7 +1882,7 @@ omrvmem_get_process_memory_size(struct OMRPortLibrary *portLibrary,
 }
 
 void *
-omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
+omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, uintptr_t* addresses, uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
 {
 	portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
 	return NULL;

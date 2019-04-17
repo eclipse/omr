@@ -558,7 +558,7 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
 void*
-MM_MemoryManager::doubleMapArraylet(MM_MemoryHandle* handle, MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
+MM_MemoryManager::doubleMapArraylet(MM_MemoryHandle* handle, MM_EnvironmentBase *env, uintptr_t* arrayletLeaves, UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
 {
 	Assert_MM_true(NULL != handle);
 	MM_VirtualMemory* memory = handle->getVirtualMemory();

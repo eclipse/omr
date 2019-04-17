@@ -73,6 +73,9 @@ uintptr_t
 protect_region_granularity(struct OMRPortLibrary *portLibrary, void *address)
 {
 	uintptr_t granularity = 0;
-	granularity = omrvmem_supported_page_sizes(portLibrary)[0];
+	SYSTEM_INFO systemInfo;
+	GetSystemInfo(&systemInfo);
+	granularity = (uintptr_t)systemInfo.dwAllocationGranularity;
+
 	return granularity;
 }

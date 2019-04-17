@@ -1439,7 +1439,7 @@ typedef struct OMRPortLibrary {
 	/** see @ref omrvmem.c::omrvmem_reserve_memory_ex "omrvmem_reserve_memory_ex"*/
 	void *(*vmem_reserve_memory_ex)(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier, struct J9PortVmemParams *params) ;
 	/** see @ref omrvmem.c::omrvmem_get_contiguous_region_memory "omrvmem_get_contiguous_region_memory"*/
-	void *(*vmem_get_contiguous_region_memory)(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category);
+	void *(*vmem_get_contiguous_region_memory)(struct OMRPortLibrary *portLibrary, uintptr_t* addresses, uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category);
 	/** see @ref omrvmem.c::omrvmem_get_page_size "omrvmem_get_page_size"*/
 	uintptr_t (*vmem_get_page_size)(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier) ;
 	/** see @ref omrvmem.c::omrvmem_get_page_flags "omrvmem_get_page_flags"*/

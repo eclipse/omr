@@ -627,7 +627,7 @@ exit:
  * @param[in] allocName Calling function name to display in errors
  */
 static void 
-verifyContiguousMem(struct OMRPortLibrary *portLibrary, const char *testName, size_t pagesize, size_t arrayletSize, void * contiguous, void* addresses[], char *vals, const char *allocName) 
+verifyContiguousMem(struct OMRPortLibrary *portLibrary, const char *testName, size_t pagesize, size_t arrayletSize, void * contiguous, uintptr_t *addresses, char *vals, const char *allocName) 
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 	char * contiguousMap = (char*)contiguous;
@@ -723,24 +723,37 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 	size_t arrayletLeafSize = SIXTEEN_KB; // 16KB
 	char vals[ARRAYLET_COUNT] = {'3', '5', '6', '8', '9', '0', '1', '2'};
 	size_t totalArrayletSize = 0;
-	void* arrayletLeaveAddrs[ARRAYLET_COUNT];
+	/* In OpenJ9 we must malloc the leaves addresses, so we test it here as well */
+	uintptr_t *arrayletLeaveAddrs = (uintptr_t *)malloc(ARRAYLET_COUNT * sizeof(uintptr_t));
+	BOOLEAN shouldDealocateAddrs = TRUE;
 
 	reportTestEntry(OMRPORTLIB, testName);
 
 	/* First get all the supported page sizes */
 	pageSizes = omrvmem_supported_page_sizes();
 	uintptr_t pageSize = pageSizes[0];
+	uintptr_t systemGranularity = pageSize;
+
+	if(arrayletLeaveAddrs == NULL) {
+		shouldDealocateAddrs = FALSE;
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "Unable to malloc and commit 0x%zx bytes with page size 0x%zx.\n", HEAP_SIZE, pageSize);
+		goto exit;
+        }
 #if defined(J9ZOS390)
 	pageFlags = omrvmem_supported_page_flags();
 #endif /* J9ZOS390 */
 
+#if defined(WINDOWS) || defined(WIN32)
+	systemGranularity = omrmmap_get_region_granularity(NULL);
+#endif  /* defined(WINDOWS) || defined(WIN32) */
+
 	/* Make sure arrayletLeafSize is a multiple of pagesize */
-	if(arrayletLeafSize / pageSize == 0 && (arrayletLeafSize < pageSize)) {
+	if(arrayletLeafSize / systemGranularity == 0 && (arrayletLeafSize < systemGranularity)) {
 		/* Leaf size limit is 2 MB due to heap size and number of leaves. If pageSize is too big for test skip */
-		if(pageSize > LEAF_SIZE_LIMIT) {
+		if(systemGranularity > LEAF_SIZE_LIMIT) {
 			goto exit;
 		}
-		arrayletLeafSize = pageSize;
+		arrayletLeafSize = systemGranularity;
 	}
 
 	/* reserve and commit memory for heap size */
@@ -816,12 +829,12 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 
 			size_t i = 0;
 			for(; i < ARRAYLET_COUNT; i++) {
-				arrayletLeaveAddrs[i] = memPtr + arrayLetOffsets[i];
+				arrayletLeaveAddrs[i] = (uintptr_t)(memPtr + arrayLetOffsets[i]);
 				totalArrayletSize += arrayletLeafSize;
 			}
 
 			for(i = 0; i < ARRAYLET_COUNT; i++) {
-				memset(arrayletLeaveAddrs[i], vals[i%ARRAYLET_COUNT], arrayletLeafSize);
+				memset((void *)arrayletLeaveAddrs[i], vals[i%ARRAYLET_COUNT], arrayletLeafSize);
 			}
 			/* Arraylet initialization complete */
 			
@@ -898,6 +911,9 @@ J9ZOS390_exit:
 #endif /* J9ZOS390 */
 	portTestEnv->changeIndent(-1);
 exit:
+	if (shouldDealocateAddrs) {
+		free((void *)arrayletLeaveAddrs);
+	}
 	reportTestExit(OMRPORTLIB, testName);
 }
 

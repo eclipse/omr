@@ -176,7 +176,7 @@ MM_HeapVirtualMemory::getHeapTop()
 
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
 void*
-MM_HeapVirtualMemory::doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
+MM_HeapVirtualMemory::doubleMapArraylet(MM_EnvironmentBase *env, uintptr_t* arrayletLeaves, UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
 {
 	MM_MemoryManager* memoryManager = MM_GCExtensionsBase::getExtensions(_omrVM)->memoryManager;
 	return memoryManager->doubleMapArraylet(&_vmemHandle, env, arrayletLeaves, arrayletLeafCount, arrayletLeafSize, byteAmount, newIdentifier, pageSize);

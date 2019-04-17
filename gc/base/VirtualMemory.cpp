@@ -163,7 +163,7 @@ MM_VirtualMemory::reserveMemory(J9PortVmemParams* params)
 
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
 void*
-MM_VirtualMemory::doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
+MM_VirtualMemory::doubleMapArraylet(MM_EnvironmentBase *env, uintptr_t* arrayletLeaves, UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
 {
 	OMRPORT_ACCESS_FROM_OMRVM(_extensions->getOmrVM());
 	struct J9PortVmemIdentifier *oldIdentifier = &_identifier;
