@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,7 +130,7 @@ countBits(uintptr_t x)
  */
 enum {
 #if defined(OMR_ENV_DATA64)
-#if defined(OMR_THR_LOCK_NURSERY) || defined(OMR_INTERP_SMALL_MONITOR_SLOT)
+#if defined(OMR_THR_LOCK_NURSERY) || defined(OMR_GC_COMPRESSED_POINTERS)
 	maxOffset = 64, // number of bits in compressed mark bits
 	maxHints = 0, // 0 hints on 64 bit hardware
 	hintSize = 7, // bits per hint

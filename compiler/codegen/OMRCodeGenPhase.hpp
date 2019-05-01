@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #ifndef OMR_CODEGEN_PHASE
 #define OMR_CODEGEN_PHASE
 
-#include "infra/Annotations.hpp"                      // for OMR_EXTENSIBLE
+#include "infra/Annotations.hpp"
 
 /*
  * The following #define and typedef must appear before any #includes in this file

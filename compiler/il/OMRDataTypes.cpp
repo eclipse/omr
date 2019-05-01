@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,13 +21,13 @@
 
 #include "il/DataTypes.hpp"
 
-#include <ctype.h>                    // for isdigit
-#include <stddef.h>                   // for NULL
-#include <stdint.h>                   // for int32_t, intptrj_t
-#include <string.h>                   // for strlen
-#include "env/jittypes.h"             // for intptrj_t
-#include "il/DataTypes.hpp"           // for DataType
-#include "infra/Assert.hpp"           // for TR_ASSERT
+#include <ctype.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
 
 // When adding new types also update pDataTypeNames[] in ras/Tree.cpp
 

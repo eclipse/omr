@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,48 +21,50 @@
 
 #include "p/codegen/PPCSystemLinkage.hpp"
 
-#include <stddef.h>                            // for NULL, size_t
-#include <stdint.h>                            // for uint32_t, int32_t, etc
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
-#include "codegen/GCStackAtlas.hpp"            // for GCStackAtlas
-#include "codegen/InstOpCode.hpp"              // for InstOpCode, etc
-#include "codegen/Instruction.hpp"             // for Instruction
-#include "codegen/Linkage.hpp"                 // for Linkage
-#include "codegen/LiveRegister.hpp"            // for TR_LiveRegisters
-#include "codegen/Machine.hpp"                 // for Machine, LOWER_IMMED, etc
-#include "codegen/MemoryReference.hpp"         // for MemoryReference
-#include "codegen/RealRegister.hpp"            // for RealRegister, etc
-#include "codegen/Register.hpp"                // for Register
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
+#include "codegen/GCStackAtlas.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/LiveRegister.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterPair.hpp"            // for RegisterPair
-#include "codegen/TreeEvaluator.hpp"           // for TreeEvaluator
-#include "compile/Compilation.hpp"             // for Compilation
+#include "codegen/RegisterPair.hpp"
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/ObjectModel.hpp"                 // for ObjectModel
+#include "env/ObjectModel.hpp"
 #include "env/Processors.hpp"
-#include "env/StackMemoryRegion.hpp"           // for TR::StackMemoryRegion
+#include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                      // for uintptrj_t
-#include "il/DataTypes.hpp"                    // for DataTypes::Float, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes, etc
-#include "il/Node.hpp"                         // for Node
-#include "il/Node_inlines.hpp"                 // for Node::getChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode
-#include "il/symbol/AutomaticSymbol.hpp"       // for AutomaticSymbol
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/List.hpp"                      // for ListIterator, List
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
-#include "p/codegen/PPCOpsDefines.hpp"         // for Op_load, Op_st, etc
+#include "p/codegen/PPCOpsDefines.hpp"
 #include "runtime/Runtime.hpp"
 
 uint32_t
@@ -372,46 +374,46 @@ TR::PPCSystemLinkage::initPPCRealRegisterLinkage()
    int icount;
 
    icount = TR::RealRegister::gr1;
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getPPCRealRegister((TR::RealRegister::RegNum)icount));
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getRealRegister((TR::RealRegister::RegNum)icount));
 
    icount = TR::RealRegister::gr2;
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getPPCRealRegister((TR::RealRegister::RegNum)icount));
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getRealRegister((TR::RealRegister::RegNum)icount));
 
    icount = TR::RealRegister::gr13;
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
-   machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getPPCRealRegister((TR::RealRegister::RegNum)icount));
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
+   machine->getRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getRealRegister((TR::RealRegister::RegNum)icount));
 
    for (icount=TR::RealRegister::gr3; icount<=TR::RealRegister::gr12;
         icount++)
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
 
    for (icount=TR::RealRegister::LastGPR;
         icount>=TR::RealRegister::gr14; icount--)
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
 
    for (icount=TR::RealRegister::FirstFPR;
         icount<=TR::RealRegister::fp13; icount++)
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
 
    for (icount=TR::RealRegister::LastFPR;
         icount>=TR::RealRegister::fp14; icount--)
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
 
    for (icount=TR::RealRegister::FirstVRF;
         icount<=TR::RealRegister::LastVRF; icount++)
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
 
    for (icount=TR::RealRegister::FirstCCR;
         icount<=TR::RealRegister::LastCCR; icount++)
       if (icount>=TR::RealRegister::cr2 && icount<=TR::RealRegister::cr4)
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
          }
       else
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
          }
 
    machine->setNumberOfLockedRegisters(TR_GPR, 3);
@@ -561,7 +563,7 @@ TR::PPCSystemLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    TR::RealRegister::RegNum regIndex = TR::RealRegister::gr13;
    if (!method->isEHAware())
       {
-      while (regIndex<=TR::RealRegister::LastGPR && !machine->getPPCRealRegister(regIndex)->getHasBeenAssignedInMethod())
+      while (regIndex<=TR::RealRegister::LastGPR && !machine->getRealRegister(regIndex)->getHasBeenAssignedInMethod())
          regIndex = (TR::RealRegister::RegNum)((uint32_t)regIndex+1);
       }
 
@@ -575,7 +577,7 @@ TR::PPCSystemLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    regIndex = TR::RealRegister::fp14;
    if (!method->isEHAware())
       {
-      while (regIndex<=TR::RealRegister::LastFPR && !machine->getPPCRealRegister(regIndex)->getHasBeenAssignedInMethod())
+      while (regIndex<=TR::RealRegister::LastFPR && !machine->getRealRegister(regIndex)->getHasBeenAssignedInMethod())
          regIndex = (TR::RealRegister::RegNum)((uint32_t)regIndex + 1);
       }
 
@@ -636,19 +638,19 @@ TR::PPCSystemLinkage::createPrologue(
    const TR::PPCLinkageProperties &properties = getProperties();
    TR::ResolvedMethodSymbol        *bodySymbol = comp()->getJittedMethodSymbol();
    // Stack Pointer Register may currently be set to "alternate"
-   cg()->setStackPointerRegister(machine->getPPCRealRegister(properties.getNormalStackPointerRegister()));
+   cg()->setStackPointerRegister(machine->getRealRegister(properties.getNormalStackPointerRegister()));
    TR::RealRegister        *sp = cg()->getStackPointerRegister();
    TR::RealRegister        *metaBase = cg()->getMethodMetaDataRegister();
-   TR::RealRegister        *gr2 = machine->getPPCRealRegister(TR::RealRegister::gr2);
-   TR::RealRegister        *gr0 = machine->getPPCRealRegister(TR::RealRegister::gr0);
-   TR::RealRegister        *gr11 = machine->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::RealRegister        *cr0 = machine->getPPCRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister        *gr2 = machine->getRealRegister(TR::RealRegister::gr2);
+   TR::RealRegister        *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
+   TR::RealRegister        *gr11 = machine->getRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister        *cr0 = machine->getRealRegister(TR::RealRegister::cr0);
    TR::Node                   *firstNode = comp()->getStartTree()->getNode();
    TR::RealRegister::RegNum regIndex;
    int32_t                    size = bodySymbol->getLocalMappingCursor();
    int32_t                    argSize;
-    
-   
+
+
 #ifdef __LITTLE_ENDIAN__
    //Move TOCBase into r2
    cursor = loadConstant(cg(), firstNode, (int64_t)(cg()->getTOCBase()), gr2, cursor, false, false);
@@ -671,19 +673,19 @@ TR::PPCSystemLinkage::createPrologue(
    TR::RealRegister::RegNum savedFirst=TR::RealRegister::fp14;
    if (!bodySymbol->isEHAware())
       {
-      while (savedFirst<=TR::RealRegister::LastFPR && !machine->getPPCRealRegister(savedFirst)->getHasBeenAssignedInMethod())
+      while (savedFirst<=TR::RealRegister::LastFPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
          savedFirst=(TR::RealRegister::RegNum)((uint32_t)savedFirst+1);
       }
    for (regIndex=TR::RealRegister::LastFPR; regIndex>=savedFirst; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex-1))
       {
       argSize = argSize - 8;
-      cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::stfd, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, 8, cg()), machine->getPPCRealRegister(regIndex), cursor);
+      cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::stfd, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, 8, cg()), machine->getRealRegister(regIndex), cursor);
       }
 
    savedFirst = TR::RealRegister::gr13;
    if (!bodySymbol->isEHAware())
       {
-      while (savedFirst<=TR::RealRegister::LastGPR && !machine->getPPCRealRegister(savedFirst)->getHasBeenAssignedInMethod())
+      while (savedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
          savedFirst=(TR::RealRegister::RegNum)((uint32_t)savedFirst+1);
       }
 
@@ -695,19 +697,19 @@ TR::PPCSystemLinkage::createPrologue(
          for (regIndex=TR::RealRegister::LastGPR; regIndex>=savedFirst; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex-1))
             {
             argSize = argSize - TR::Compiler->om.sizeofReferenceAddress();
-            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), machine->getPPCRealRegister(regIndex), cursor);
+            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), machine->getRealRegister(regIndex), cursor);
             }
       else
          {
          argSize = argSize - (TR::RealRegister::LastGPR - savedFirst + 1) * 4;
-         cursor = generateMemSrc1Instruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), machine->getPPCRealRegister(savedFirst), cursor);
+         cursor = generateMemSrc1Instruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, argSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), machine->getRealRegister(savedFirst), cursor);
          }
       }
 
    if ( bodySymbol->isEHAware() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr2)->getHasBeenAssignedInMethod() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr3)->getHasBeenAssignedInMethod() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr4)->getHasBeenAssignedInMethod() )
+        machine->getRealRegister(TR::RealRegister::cr2)->getHasBeenAssignedInMethod() ||
+        machine->getRealRegister(TR::RealRegister::cr3)->getHasBeenAssignedInMethod() ||
+        machine->getRealRegister(TR::RealRegister::cr4)->getHasBeenAssignedInMethod() )
       {
       cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::mfcr, firstNode, gr0, 0xff, cursor);
       cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(sp, TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg()), gr0, cursor);
@@ -763,8 +765,8 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
    TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
    TR::RealRegister *sp = cg()->getStackPointerRegister();
    TR::RealRegister *sp2 = sp;
-   TR::RealRegister *gr0 = machine->getPPCRealRegister(TR::RealRegister::gr0);
-   TR::RealRegister *gr11 = machine->getPPCRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
+   TR::RealRegister *gr11 = machine->getRealRegister(TR::RealRegister::gr11);
    TR::Node *currentNode = cursor->getNode();
    int32_t size = bodySymbol->getLocalMappingCursor();
    int32_t saveSize = 0;
@@ -774,19 +776,19 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
 
    if (!bodySymbol->isEHAware())
       {
-      while (savedFirst<=TR::RealRegister::LastFPR && !machine->getPPCRealRegister(savedFirst)->getHasBeenAssignedInMethod())
+      while (savedFirst<=TR::RealRegister::LastFPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
          savedFirst=(TR::RealRegister::RegNum)((uint32_t)savedFirst+1);
       }
    for (regIndex=TR::RealRegister::LastFPR; regIndex>=savedFirst; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex-1))
       {
       saveSize = saveSize - 8;
-      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::lfd, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, 8, cg()), cursor);
+      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::lfd, currentNode, machine->getRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, 8, cg()), cursor);
       }
 
    savedFirst = TR::RealRegister::gr13;
    if (!bodySymbol->isEHAware())
       {
-      while (savedFirst<=TR::RealRegister::LastGPR && !machine->getPPCRealRegister(savedFirst)->getHasBeenAssignedInMethod())
+      while (savedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
          savedFirst=(TR::RealRegister::RegNum)((uint32_t)savedFirst+1);
       }
 
@@ -798,12 +800,12 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
          for (regIndex=TR::RealRegister::LastGPR; regIndex>=savedFirst; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex-1))
             {
             saveSize = saveSize - TR::Compiler->om.sizeofReferenceAddress();
-            cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
+            cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
             }
       else
          {
          saveSize = saveSize - (TR::RealRegister::LastGPR - savedFirst + 1) * 4;
-         cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getPPCRealRegister(savedFirst), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), cursor);
+         cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getRealRegister(savedFirst), new (trHeapMemory()) TR::MemoryReference(sp, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), cursor);
          }
       }
 
@@ -833,9 +835,9 @@ TR::PPCSystemLinkage::createEpilogue(TR::Instruction *cursor)
       }
 
    if ( bodySymbol->isEHAware() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr2)->getHasBeenAssignedInMethod() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr3)->getHasBeenAssignedInMethod() ||
-        machine->getPPCRealRegister(TR::RealRegister::cr4)->getHasBeenAssignedInMethod() )
+        machine->getRealRegister(TR::RealRegister::cr2)->getHasBeenAssignedInMethod() ||
+        machine->getRealRegister(TR::RealRegister::cr3)->getHasBeenAssignedInMethod() ||
+        machine->getRealRegister(TR::RealRegister::cr4)->getHasBeenAssignedInMethod() )
       {
       cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, gr0, new (trHeapMemory()) TR::MemoryReference(sp, TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
       cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::mtcrf, currentNode, gr0, 0xff, cursor);
@@ -1028,7 +1030,7 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
                   }
                else
                   {
-                  addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                  TR::addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                   }
                }
             else // numIntegerArgs >= properties.getNumIntArgRegs()
@@ -1048,7 +1050,7 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
                if (numIntegerArgs & 1)
                   {
                   if (numIntegerArgs < properties.getNumIntArgRegs())
-                     addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                   numIntegerArgs++;
                   }
                }
@@ -1093,9 +1095,9 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
                else
                   {
                   if (TR::Compiler->target.is64Bit())
-                     addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                   else
-                     addDependency(dependencies, argRegister->getRegisterPair()->getHighOrder(), properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, argRegister->getRegisterPair()->getHighOrder(), properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                   }
                if (TR::Compiler->target.is32Bit())
                   {
@@ -1115,7 +1117,7 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
                         dependencies->addPostCondition(resultReg, TR::RealRegister::gr4);
                         }
                      else
-                        addDependency(dependencies, argRegister->getRegisterPair()->getLowOrder(), properties.getIntegerArgumentRegister(numIntegerArgs+1), TR_GPR, cg());
+                        TR::addDependency(dependencies, argRegister->getRegisterPair()->getLowOrder(), properties.getIntegerArgumentRegister(numIntegerArgs+1), TR_GPR, cg());
                      }
                   else // numIntegerArgs == properties.getNumIntArgRegs()-1
                      {
@@ -1176,7 +1178,7 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
                   dependencies->addPostCondition(resultReg, (r == 0) ? TR::RealRegister::fp1 : TR::RealRegister::fp2);
                   }
                else
-                  addDependency(dependencies, argReg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
+                  TR::addDependency(dependencies, argReg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
                }
             else if (!aix_style_linkage)
                // numFloatArgs >= properties.getNumFloatArgRegs()
@@ -1197,7 +1199,7 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
                      dependencies->addPostCondition(bReg, TR::RealRegister::gr3);
                      }
                   else
-                     addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                   }
                else // numIntegerArgs >= properties.getNumIntArgRegs()
                   {
@@ -1249,7 +1251,7 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
                   dependencies->addPostCondition(resultReg, (r==0) ? TR::RealRegister::fp1 : TR::RealRegister::fp2);
                   }
                else
-                  addDependency(dependencies, argReg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
+                  TR::addDependency(dependencies, argReg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
                }
             else if (!aix_style_linkage)
                // numFloatArgs >= properties.getNumFloatArgRegs()
@@ -1273,12 +1275,12 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
                      dependencies->addPostCondition(bReg, TR::RealRegister::gr3);
                      }
                   else
-                     addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
 
                   if (TR::Compiler->target.is32Bit())
                      {
                      if ((numIntegerArgs+1) < properties.getNumIntArgRegs())
-                        addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs+1), TR_GPR, cg());
+                        TR::addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs+1), TR_GPR, cg());
                      else
                         {
                         mref = getOutgoingArgumentMemRef(argSize, argReg, TR::InstOpCode::stfd, pushToMemory[argIndex++], 8);
@@ -1318,7 +1320,7 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
                   dependencies->addPostCondition(resultReg, TR::RealRegister::vsr34);
                   }
                else
-                  addDependency(dependencies, argReg, properties.getVectorArgumentRegister(numVectorArgs), TR_VRF, cg());
+                  TR::addDependency(dependencies, argReg, properties.getVectorArgumentRegister(numVectorArgs), TR_VRF, cg());
                }
             else
                {
@@ -1341,7 +1343,7 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
          }
       else
          {
-         addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+         TR::addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
          }
       numIntegerArgs++;
       }
@@ -1356,15 +1358,15 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
    liveRegs = cg()->getLiveRegisters(TR_VRF);
    liveVMX = (!liveRegs || liveRegs->getNumberOfLiveRegisters() > 0);
 
-   addDependency(dependencies, NULL, TR::RealRegister::fp0, TR_FPR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::gr12, TR_GPR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::cr0, TR_CCR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::cr1, TR_CCR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::cr5, TR_CCR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::cr6, TR_CCR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::cr7, TR_CCR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::fp0, TR_FPR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr12, TR_GPR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr0, TR_CCR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr1, TR_CCR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr5, TR_CCR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr6, TR_CCR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr7, TR_CCR, cg());
 
 #ifdef J9_PROJECT_SPECIFIC
    TR::TreeEvaluator::buildArgsProcessFEDependencies(callNode, cg(), dependencies);
@@ -1392,7 +1394,7 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
 
          if (!properties.getPreserved((TR::RealRegister::RegNum)i) || !isHelper)
             {
-            addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_VSX_SCALAR, cg());
+            TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_VSX_SCALAR, cg());
             }
 
          }
@@ -1402,7 +1404,7 @@ int32_t TR::PPCSystemLinkage::buildArgs(TR::Node *callNode,
       {
       if (!properties.getPreserved((TR::RealRegister::RegNum)i) || liveVSXVector)
          {
-         addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_FPR, cg());
+         TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_FPR, cg());
          }
       }
 
@@ -1432,8 +1434,6 @@ void TR::PPCSystemLinkage::buildDirectCall(TR::Node *callNode,
    int32_t                        refNum = callSymRef->getReferenceNumber();
 
    //This is not JIT pseudo TOC, but jit-module system TOC.
-   //Unfortunately, Ruby JIT is multiplexing gr2(as system module TOC) for JIT-pseudo TOC
-
 
    if(aix_style_linkage)
          {
@@ -1442,7 +1442,7 @@ void TR::PPCSystemLinkage::buildDirectCall(TR::Node *callNode,
          //for the time being.
          if(TR::Compiler->target.cpu.isBigEndian())
             {
-#if !(defined(PYTHON) || defined(OMR_RUBY) || defined(JITTEST))
+#if !defined(JITTEST)
             TR::TreeEvaluator::restoreTOCRegister(callNode, cg(), dependencies);
 #endif
             }
@@ -1463,7 +1463,7 @@ void TR::PPCSystemLinkage::buildDirectCall(TR::Node *callNode,
 
    //Bug fix: JIT doesn't need to restore caller's system TOC since there is no infrastructure to generate
    //         ABI-conforming module of dynamic code.  Plus, linux32 has no system TOC.
-#if defined(PYTHON) || defined(OMR_RUBY) || defined(JITTEST)
+#if defined(JITTEST)
    TR::TreeEvaluator::restoreTOCRegister(callNode, cg(), dependencies);
 #endif
    }
@@ -1566,7 +1566,7 @@ void TR::PPCSystemLinkage::buildVirtualDispatch(TR::Node                        
    //Library TOC Register
    TR::Register        *grTOCReg=TR::TreeEvaluator::retrieveTOCRegister(callNode, cg(), dependencies);
    //Native Stack Pointer (C Stack)
-   TR::RealRegister *grSysStackReg=cg()->machine()->getPPCRealRegister(properties.getNormalStackPointerRegister());
+   TR::RealRegister *grSysStackReg=cg()->machine()->getRealRegister(properties.getNormalStackPointerRegister());
 
    TR_ASSERT((gr0 != NULL),            "TR::PPCSystemLinkage::buildVirtualDispatch no dependence set on scratch register gr0.");
    TR_ASSERT((grTOCReg != NULL),       "TR::PPCSystemLinkage::buildVirtualDispatch no dependence set on Library TOC register gr2.");

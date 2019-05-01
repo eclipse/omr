@@ -86,6 +86,12 @@ MM_HeapRegionManagerTarok::tearDown(MM_EnvironmentBase *env)
 	MM_HeapRegionManager::tearDown(env);
 }
 
+bool
+MM_HeapRegionManagerTarok::areFreeRegionsForNode(MM_EnvironmentBase *env, uintptr_t numaNode)
+{
+	return (NULL != _freeRegionTable[numaNode]);
+}
+
 MM_HeapRegionDescriptor *
 MM_HeapRegionManagerTarok::acquireSingleTableRegion(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, uintptr_t numaNode)
 {

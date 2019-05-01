@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -406,9 +406,15 @@ OMR::TransformUtil::createConditionalAlternatePath(TR::Compilation* comp,
    {
    cfg->setStructure(0);
 
+   bool mergeToElseBlock = (elseBlock == mergeBlock);
+
    TR::Block* ifBlock = elseBlock;
    ifBlock->prepend(ifTree);
    elseBlock = ifBlock->split(ifTree->getNextTreeTop(), cfg, false /*fixupCommoning*/, true /*copyExceptionSuccessors*/);
+
+   // Since `elseBlock` is changed above, update `mergeBlock`
+   if (mergeToElseBlock)
+      mergeBlock = elseBlock;
 
    TR::Block * thenBlock = TR::Block::createEmptyBlock(thenTree->getNode(), comp, 0, elseBlock);
    if (markCold)

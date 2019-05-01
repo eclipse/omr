@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,9 @@
 #ifndef NODEEXTENSION_INCL
 #define NODEEXTENSION_INCL
 
-#include <stddef.h>                       // for size_t
-#include <stdint.h>                       // for uintptr_t, uint16_t, etc
-#include "env/TRMemory.hpp"               // for TR_ArenaAllocator
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
 
 #define NUM_DEFAULT_ELEMS 1
 #define NUM_DEFAULT_NODECHILDREN 2

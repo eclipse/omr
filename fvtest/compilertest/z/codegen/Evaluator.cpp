@@ -28,28 +28,24 @@
 #include "il/Node_inlines.hpp"
 #include "env/IO.hpp"
 
-
-#define NOT_IMPLEMENTED { TR_ASSERT_FATAL(0, "This function is not implemented in TestCompiler JIT"); }
-
-
 uint32_t
 TR::S390RestoreGPR7Snippet::getLength(int32_t estimatedSnippetStart)
    {
-   NOT_IMPLEMENTED;
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 uint8_t *
 TR::S390RestoreGPR7Snippet::emitSnippetBody()
    {
-   NOT_IMPLEMENTED;
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::S390RestoreGPR7Snippet *snippet)
    {
-   NOT_IMPLEMENTED;
+   TR_UNIMPLEMENTED();
    }
 
 void

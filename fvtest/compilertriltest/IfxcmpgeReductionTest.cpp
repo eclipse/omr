@@ -20,7 +20,6 @@
  *******************************************************************************/
 
 #include <gtest/gtest.h>
-#include "Jit.hpp"
 #include "JitTest.hpp"
 #include "default_compiler.hpp"
 

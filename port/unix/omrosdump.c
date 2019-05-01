@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -148,7 +148,7 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 		markAllPagesWritable(portLibrary);
 #endif /* defined(LINUX) */
 
-#ifdef AIXPPC
+#if defined(AIXPPC)
 		/* On AIX we need to ask sigaction for full dumps */
 		{
 			struct sigaction act;
@@ -157,7 +157,7 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 			sigfillset(&act.sa_mask);
 			sigaction(SIGIOT, &act, 0);
 		}
-#endif
+#endif /* defined(AIXPPC) */
 
 		/*
 		 * CMVC 95748: don't use abort() after fork() on Linux as this seems to upset certain levels of glibc
@@ -208,12 +208,12 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 		return 1;
 	}
 
-#elif defined(AIXPPC)
+#elif defined(AIXPPC) /* defined(LINUX) || defined(OSX) */
 
 	if (filename && filename[0] != '\0') {
 		char corepath[EsMaxPath] = "";
 
-		/* Wait for child process that is generating core file to finish */
+		/* Wait for child process that is generating core file to finish. */
 		waitpid(pid, NULL, 0);
 
 		/* Copy path and remove basename */
@@ -225,7 +225,8 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 		findOSPreferredCoreDir(portLibrary, corepath);
 
 		/* Search for expected names in the directory <corepath>
-		 * and get the absolute path for the generated core file */
+		 * and get the absolute path for the generated core file.
+		 */
 		appendCoreName(portLibrary, corepath, pid);
 
 		/* check if the generated core filename ends in .Z (which indicates core compression was on) */
@@ -257,11 +258,11 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 
 	return 0;
 
-#else
+#else /* defined(LINUX) || defined(OSX) */
 
 #error "This platform doesn't have an implementation of omrdump_create"
 
-#endif /* #if defined(AIX) */
+#endif /* defined(LINUX) || defined(OSX) */
 
 #else /* J9OS_I5 */
 
@@ -298,6 +299,7 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 		coredumpinfop.flags = GENCORE_VERSION_1;
 		return gencore(&coredumpinfop);
 	}
+
 #endif /* J9OS_I5 */
 }
 
@@ -318,19 +320,18 @@ unlimitCoreFileSize(struct OMRPortLibrary *portLibrary)
 int32_t
 omrdump_startup(struct OMRPortLibrary *portLibrary)
 {
-
 #if defined(AIXPPC)
-	uintptr_t handle;
+	uintptr_t handle = 0;
 
 	portLibrary->error_set_last_error(portLibrary, 0, 0);
 	portLibrary->portGlobals->control.aix_proc_attr = 1;
 
 	if (0 == portLibrary->sl_open_shared_library(portLibrary, NULL, &handle, 0)) {
-		int (*setattr)(pid_t pid, procattr_t * attr, uint32_t size);
+		int (*setattr)(pid_t pid, procattr_t * attr, size_t size) = NULL;
 
-		if (0 == portLibrary->sl_lookup_name(portLibrary, handle, "proc_setattr", (uintptr_t *)&setattr, "IPLj")) {
+		if (0 == portLibrary->sl_lookup_name(portLibrary, handle, "proc_setattr", (uintptr_t *)&setattr, "IPLp")) {
 			procattr_t attr;
-			int rc;
+			int rc = 0;
 
 			memset(&attr, PA_IGNORE, sizeof(procattr_t));
 			/* enable the flags that are required for including non-anonymous mmap regions and shared memory in core file */
@@ -339,10 +340,11 @@ omrdump_startup(struct OMRPortLibrary *portLibrary)
 			attr.core_shm = PA_ENABLE;
 
 			rc = setattr(-1, &attr, sizeof(procattr_t));
-			if (rc != 0) {
+			if (0 != rc) {
 				if (ENOSYS == errno) {
 					/* CMVC 176613: we can get here if the machine was updated from 6100-04 to 6100-05 without a subsequent reboot,
-					 * in which case, behave the same as if we're running on an AIX version which does not support proc_setattr() */
+					 * in which case, behave the same as if we're running on an AIX version which does not support proc_setattr().
+					 */
 				} else {
 					int32_t error = errno; /* Save errno for past closing the shared library. */
 					portLibrary->sl_close_shared_library(portLibrary, handle);
@@ -358,7 +360,7 @@ omrdump_startup(struct OMRPortLibrary *portLibrary)
 		}
 		portLibrary->sl_close_shared_library(portLibrary, handle);
 	}
-#endif
+#endif /* defined(AIXPPC) */
 
 	/* We can only get here omrdump_startup completed successfully */
 

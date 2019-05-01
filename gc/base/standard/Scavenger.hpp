@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,8 @@
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 #include "MasterGCThread.hpp"
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
+#include "ScavengerDelegate.hpp"
+
 struct J9HookInterface;
 class GC_ObjectScanner;
 class MM_AllocateDescription;
@@ -67,7 +69,8 @@ class MM_Scavenger : public MM_Collector
 	 * Data members
 	 */
 private:
-	MM_CollectorLanguageInterface *_cli;
+	MM_ScavengerDelegate _delegate;
+
 	const uintptr_t _objectAlignmentInBytes;	/**< Run-time objects alignment in bytes */
 	bool _isRememberedSetInOverflowAtTheBeginning; /**< Cached RS Overflow flag at the beginning of the scavenge */
 
@@ -105,6 +108,7 @@ private:
 	uintptr_t _cachesPerThread; /**< maximum number of copy and scan caches required per thread at any one time */
 	omrthread_monitor_t _scanCacheMonitor; /**< monitor to synchronize threads on scan lists */
 	omrthread_monitor_t _freeCacheMonitor; /**< monitor to synchronize threads on free list */
+	uintptr_t _waitingCountAliasThreshold; /**< Only alias a copy cache IF the number of threads waiting hasn't reached the threshold*/
 	volatile uintptr_t _waitingCount; /**< count of threads waiting  on scan cache queues (blocked via _scanCacheMonitor); threads never wait on _freeCacheMonitor */
 	uintptr_t _cacheLineAlignment; /**< The number of bytes per cache line which is used to determine which boundaries in memory represent the beginning of a cache line */
 	volatile bool _rescanThreadsForRememberedObjects; /**< Indicates that thread-referenced objects were tenured and threads must be rescanned */
@@ -127,10 +131,8 @@ private:
 	} _concurrentState;
 	
 	uint64_t _concurrentScavengerSwitchCount; /**< global counter of cycle start and cycle end transitions */
-	
-	/* TODO: put it parent Collector class and share with Balanced? */ 
-	volatile bool _forceConcurrentTermination;
-	
+	volatile bool _shouldYield; /**< Set by the first GC thread that observes that a criteria for yielding is met. Reset only when the concurrent phase is finished. */
+
 	MM_ConcurrentPhaseStatsBase _concurrentPhaseStats;
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
@@ -145,17 +147,57 @@ public:
 	 * Function members
 	 */
 private:
+	/**
+	 * Flush the threads reference and remembered set caches before waiting in getNextScanCache.
+	 * This removes the requirement of a synchronization point after calls to completeScan when
+	 * it is followed by reference or remembered set processing.
+	 * @param env - current thread environment
+	 */
+	void flushBuffersForGetNextScanCache(MM_EnvironmentStandard *env);
+	
 	void saveMasterThreadTenureTLHRemainders(MM_EnvironmentStandard *env);
 	void restoreMasterThreadTenureTLHRemainders(MM_EnvironmentStandard *env);
+	
 	void setBackOutFlag(MM_EnvironmentBase *env, BackOutState value);
 	MMINLINE bool isBackOutFlagRaised() { return _extensions->isScavengerBackOutFlagRaised(); }
-	MMINLINE bool shouldAbortScanLoop() {
+	
+	/**
+	 * Check if concurrent phase of the cycle should yield to an external activity. If so, set the flag so that other GC threads react appropriately
+	 */ 
+	MMINLINE bool checkAndSetShouldYieldFlag(MM_EnvironmentStandard *env);
+	
+	/**
+	 * Check if top level scan loop should be aborted before the work is done
+	 */
+	MMINLINE bool shouldAbortScanLoop(MM_EnvironmentStandard *env) {
+		bool shouldAbort = false;
+
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-		/* Concurrent Scavenger needs to drain the scan queue, even if Scavenge aborted */
-		return false;
-#else		
-		return isBackOutFlagRaised();
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */		
+		if (IS_CONCURRENT_ENABLED) {
+			/* Concurrent Scavenger needs to drain the scan queue in last scan loop before aborted handling starts.
+			 * It is however fine to leave it populated, if we want to yield in a middle of concurrent phase which aborted,
+			 * since there will be at least one scan loop afterwards in complete phase that will drain it. Bottom line,
+			 * we don't care about isBackOutFlagRaised when deciding whether to yield.
+			 */
+					 
+			shouldAbort = _shouldYield;
+			if (shouldAbort) {
+				Assert_MM_true(concurrent_state_scan == _concurrentState);
+				/* Since we are aborting the scan loop without synchornizing with other GC threads (before which we flush buffers),
+				 * we have to do it now. 
+				 * There should be no danger in not synchonizing with other threads, since we can only abort/yield in main scan loop
+				 * and not during clearable STW phase, where is a potential danger of entering a scan loop without ensuring all
+				 * threads flushed buffers from previous scan loop.
+				 */
+				flushBuffersForGetNextScanCache(env);
+			}
+		} else
+#endif /* #if defined(OMR_GC_CONCURRENT_SCAVENGER) */
+		{		
+			shouldAbort = isBackOutFlagRaised();
+		}
+		
+		return shouldAbort;
 	}
 
 public:
@@ -196,14 +238,6 @@ public:
 	MMINLINE uintptr_t calculateOptimumCopyScanCacheSize(MM_EnvironmentStandard *env);
 	MMINLINE MM_CopyScanCacheStandard *reserveMemoryForAllocateInSemiSpace(MM_EnvironmentStandard *env, omrobjectptr_t objectToEvacuate, uintptr_t objectReserveSizeInBytes);
 	MM_CopyScanCacheStandard *reserveMemoryForAllocateInTenureSpace(MM_EnvironmentStandard *env, omrobjectptr_t objectToEvacuate, uintptr_t objectReserveSizeInBytes);
-
-	/**
-	 * Flush the threads reference and remembered set caches before waiting in getNextScanCache.
-	 * This removes the requirement of a synchronization point after calls to completeScan when
-	 * it is followed by reference or remembered set processing.
-	 * @param env - current thread environment
-	 */
-	MMINLINE void flushBuffersForGetNextScanCache(MM_EnvironmentStandard *env);
 
 	MM_CopyScanCacheStandard *getNextScanCache(MM_EnvironmentStandard *env);
 
@@ -515,6 +549,9 @@ public:
 	 */
 	void resetTenureLargeAllocateStats(MM_EnvironmentBase *env);
 
+	/* API used by ParallelScavengeTask to set _waitingCountAliasThreshold. */
+	void setAliasThreshold(uintptr_t waitingCountAliasThreshold) { _waitingCountAliasThreshold = waitingCountAliasThreshold; }
+
 protected:
 	virtual void setupForGC(MM_EnvironmentBase *env);
 	virtual void masterSetupForGC(MM_EnvironmentStandard *env);
@@ -555,7 +592,15 @@ public:
 
 	static MM_Scavenger *newInstance(MM_EnvironmentStandard *env, MM_HeapRegionManager *regionManager);
 	virtual void kill(MM_EnvironmentBase *env);
-	
+
+	MM_ScavengerDelegate* getDelegate() { return &_delegate; }
+
+	/* Read Barrier Verifier specific methods */
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
+	virtual void scavenger_poisonSlots(MM_EnvironmentBase *env);
+	virtual void scavenger_healSlots(MM_EnvironmentBase *env);
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
+
 	virtual bool collectorStartup(MM_GCExtensionsBase* extensions);
 	virtual void collectorShutdown(MM_GCExtensionsBase* extensions);
 
@@ -579,10 +624,10 @@ public:
 	/* methods used by either mutator or GC threads */
 	/**
 	 * All open copy caches (even if not full) are pushed onto scan queue. Unused memory is abondoned.
-	 * @param env Invoking thread. Could be master thread on behalf on mutator threads (threadEnvironment) for which copy caches are to be released, or could be mutator or GC thread itself.
-	 * @param threadEnvironment Thread for which copy caches are to be released. Could be either GC or mutator thread.
+	 * @param env Invoking thread, for which copy caches are to be released. Could be either GC or mutator thread.
+	 * @param final If true (typically at the end of a cycle), abandon TLH remainders, too. Otherwise keep them for possible future copy cache refresh.
 	 */
-	void threadFinalReleaseCopyCaches(MM_EnvironmentBase *env, MM_EnvironmentBase *threadEnvironment);
+	void threadReleaseCaches(MM_EnvironmentBase *env, bool final);
 	
 	/**
 	 * trigger STW phase (either start or end) of a Concurrent Scavenger Cycle 
@@ -598,10 +643,6 @@ public:
 	void workThreadScan(MM_EnvironmentStandard *env);
 	void workThreadComplete(MM_EnvironmentStandard *env);
 
-	
-	virtual void forceConcurrentFinish() {
-		_forceConcurrentTermination = true;
-	}
 	bool isConcurrentInProgress() {
 		return concurrent_state_idle != _concurrentState;
 	}
@@ -741,7 +782,7 @@ public:
 
 	MM_Scavenger(MM_EnvironmentBase *env, MM_HeapRegionManager *regionManager) :
 		MM_Collector()
-		, _cli(env->getExtensions()->collectorLanguageInterface)
+		, _delegate(env)
 		, _objectAlignmentInBytes(env->getObjectAlignmentInBytes())
 		, _isRememberedSetInOverflowAtTheBeginning(false)
 		, _extensions(env->getExtensions())
@@ -768,6 +809,7 @@ public:
 		, _cachesPerThread(0)
 		, _scanCacheMonitor(NULL)
 		, _freeCacheMonitor(NULL)
+		, _waitingCountAliasThreshold(0)
 		, _waitingCount(0)
 		, _cacheLineAlignment(0)
 #if !defined(OMR_GC_CONCURRENT_SCAVENGER)
@@ -781,8 +823,9 @@ public:
 		, _masterGCThread(env)
 		, _concurrentState(concurrent_state_idle)
 		, _concurrentScavengerSwitchCount(0)
-		, _forceConcurrentTermination(false)
-#endif		
+		, _shouldYield(false)
+#endif /* #if defined(OMR_GC_CONCURRENT_SCAVENGER) */
+
 		, _omrVM(env->getOmrVM())
 	{
 		_typeId = __FUNCTION__;

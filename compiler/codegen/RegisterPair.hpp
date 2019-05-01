@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,8 @@
 #ifndef TR_REGISTER_PAIR_INCL
 #define TR_REGISTER_PAIR_INCL
 
-#include "codegen/RegisterConstants.hpp"         // for TR_RegisterKinds
-#include "codegen/OMRRegisterPair.hpp"  // for RegisterPair
+#include "codegen/RegisterConstants.hpp"
+#include "codegen/OMRRegisterPair.hpp"
 
 namespace TR { class Register; }
 

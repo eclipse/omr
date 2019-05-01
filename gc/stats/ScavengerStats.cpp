@@ -194,4 +194,4 @@ MM_ScavengerStats::clear(bool firstIncrement)
 	_copy_cachesize_sum = 0;
 	memset(_copy_distance_counts, 0, sizeof(_copy_distance_counts));
 	memset(_copy_cachesize_counts, 0, sizeof(_copy_cachesize_counts));
-};
+}

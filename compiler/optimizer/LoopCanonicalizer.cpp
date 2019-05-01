@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,48 +21,48 @@
 
 #include "optimizer/LoopCanonicalizer.hpp"
 
-#include <limits.h>                              // for INT_MAX
-#include <stdint.h>                              // for int32_t, int64_t, etc
-#include <stdlib.h>                              // for NULL, llabs
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                  // for TR_FrontEnd, etc
-#include "compile/Compilation.hpp"               // for Compilation
+#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/bitvectr.h"                        // for ABitVector, etc
+#include "cs2/bitvectr.h"
 #include "cs2/sparsrbit.h"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                      // for SparseBitVector, etc
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                          // for Block, toBlock
-#include "il/DataTypes.hpp"                      // for DataTypes::Int32, etc
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes::Goto, etc
-#include "il/ILOps.hpp"                          // for ILOpCode, etc
-#include "il/Node.hpp"                           // for Node, etc
-#include "il/Node_inlines.hpp"                   // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                         // for Symbol
-#include "il/SymbolReference.hpp"                // for SymbolReference
-#include "il/TreeTop.hpp"                        // for TreeTop
-#include "il/TreeTop_inlines.hpp"                // for TreeTop::getNode, etc
-#include "il/symbol/LabelSymbol.hpp"             // for LabelSymbol
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/BitVector.hpp"                   // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                         // for CFG, etc
-#include "infra/ILWalk.hpp"                      // for PostorderNodeIterator
-#include "infra/List.hpp"                        // for ListIterator, etc
-#include "infra/CfgEdge.hpp"                     // for CFGEdge
-#include "infra/CfgNode.hpp"                     // for CFGNode
-#include "infra/Checklist.hpp"                   // for NodeChecklist
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/ILWalk.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "infra/Checklist.hpp"
 #include "optimizer/InductionVariable.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"               // for Optimizer
-#include "optimizer/Structure.hpp"               // for TR_RegionStructure, etc
-#include "optimizer/UseDefInfo.hpp"              // for TR_UseDefInfo, etc
-#include "optimizer/VPConstraint.hpp"            // for TR::VPConstraint
-#include "ras/Debug.hpp"                         // for TR_DebugBase
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
+#include "optimizer/UseDefInfo.hpp"
+#include "optimizer/VPConstraint.hpp"
+#include "ras/Debug.hpp"
 
 namespace TR { class RegisterMappedSymbol; }
 

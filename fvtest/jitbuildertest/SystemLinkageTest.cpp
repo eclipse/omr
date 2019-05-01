@@ -54,7 +54,7 @@ class SystemLinkageTest : public JitBuilderTest {};
 TEST_F(SystemLinkageTest, FooTest)
    {
    FooFunction *foo;
-   ASSERT_COMPILE(TR::TypeDictionary, FooBuilder, foo);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, FooBuilder, foo);
 
    ASSERT_TRUE(foo(200, 3.14159, -10, 6.67300 * pow(10, -11),
                    200, 3.14159, -10, 6.67300 * pow(10, -11)));

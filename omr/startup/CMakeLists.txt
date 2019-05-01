@@ -50,3 +50,5 @@ if(OMR_GC)
 			${OMR_GC_LIB}
 	)
 endif()
+
+target_enable_ddr(omrvmstartup "${OMR_DDR_SET}")

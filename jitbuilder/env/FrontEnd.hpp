@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,6 @@
 #include "env/FEBase.hpp"
 #include "env/jittypes.h"
 #include "runtime/JBJitConfig.hpp"
-#include "runtime/CodeCache.hpp"
 
 namespace TR { class GCStackAtlas; }
 namespace OMR { struct MethodMetaDataPOD; }
@@ -40,8 +39,6 @@ namespace TR
 template <> struct FETraits<JitBuilder::FrontEnd>
    {
    typedef JitBuilder::JitConfig      JitConfig;
-   typedef TR::CodeCacheManager CodeCacheManager;
-   typedef TR::CodeCache        CodeCache;
    static const size_t  DEFAULT_SEG_SIZE = (128 * 1024); // 128kb
    };
 
@@ -63,7 +60,7 @@ class FrontEnd : public TR::FEBase<FrontEnd>
 
 #if defined(TR_TARGET_S390)
    virtual void generateBinaryEncodingPrologue(TR_BinaryEncodingData *beData, TR::CodeGenerator *cg);
-   virtual bool getS390SupportsHPRDebug() { return false; }
+   virtual bool getS390SupportsHPR() { return false; }
 #endif
 
    virtual intptrj_t methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference *symRef,  void *currentCodeCache);

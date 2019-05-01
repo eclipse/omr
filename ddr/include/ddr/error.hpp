@@ -22,7 +22,8 @@
  #if !defined(DDR_ERROR_HPP)
  #define DDR_ERROR_HPP
 
-#include <ddr/config.hpp>
+#include "ddr/config.hpp"
+
 #include <stdio.h>
 
 #define ERRMSG(...) do { \

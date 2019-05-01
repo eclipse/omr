@@ -23,7 +23,7 @@
 
 #include "ddr/ir/ClassUDT.hpp"
 #include "ddr/ir/EnumUDT.hpp"
-#include "ddr/ir/Field.hpp"
+#include "ddr/ir/Symbol_IR.hpp"
 #include "ddr/ir/TypedefUDT.hpp"
 #include "ddr/ir/UnionUDT.hpp"
 

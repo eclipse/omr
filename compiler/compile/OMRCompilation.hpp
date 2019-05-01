@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,35 +37,35 @@ namespace OMR { typedef OMR::Compilation CompilationConnector; }
  */
 
 
-#include <stdarg.h>                           // for va_list
-#include <stddef.h>                           // for NULL, size_t
-#include <stdint.h>                           // for int32_t, int16_t, etc
-#include "codegen/FrontEnd.hpp"               // for TR_FrontEnd
-#include "codegen/RecognizedMethods.hpp"      // for RecognizedMethod
-#include "compile/CompilationTypes.hpp"       // for TR_Hotness
-#include "compile/OSRData.hpp"                // for HCRMode
-#include "compile/Method.hpp"                 // for mcount_t
-#include "compile/TLSCompilationManager.hpp"  // for TLSCompilationManager
-#include "control/OptimizationPlan.hpp"       // for TR_OptimizationPlan
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/FrontEnd.hpp"
+#include "codegen/RecognizedMethods.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/OSRData.hpp"
+#include "compile/Method.hpp"
+#include "compile/TLSCompilationManager.hpp"
+#include "control/OptimizationPlan.hpp"
 #include "control/Options.hpp"                // For Options
-#include "control/Options_inlines.hpp"        // for TR::Options, etc
-#include "cs2/timer.h"                        // for LexicalBlockTimer, etc
-#include "env/PersistentInfo.hpp"             // for PersistentInfo
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "env/Region.hpp"                     // for Region
+#include "control/Options_inlines.hpp"
+#include "cs2/timer.h"
+#include "env/PersistentInfo.hpp"
+#include "env/TRMemory.hpp"
+#include "env/Region.hpp"
 #include "env/jittypes.h"
-#include "il/DataTypes.hpp"                   // for etc
+#include "il/DataTypes.hpp"
 #include "il/IL.hpp"
-#include "il/Node.hpp"                        // for vcount_t, ncount_t
-#include "infra/Array.hpp"                    // for TR_Array
-#include "infra/Flags.hpp"                    // for flags32_t
-#include "infra/Link.hpp"                     // for TR_Pair (ptr only), etc
-#include "infra/List.hpp"                     // for List, ListHeadAndTail, etc
-#include "infra/Stack.hpp"                    // for TR_Stack
-#include "infra/ThreadLocal.h"                // for tlsSet
-#include "optimizer/Optimizations.hpp"        // for Optimizations, etc
-#include "ras/Debug.hpp"                      // for TR_DebugBase
-#include "ras/DebugCounter.hpp"               // for TR::DebugCounter, etc
+#include "il/Node.hpp"
+#include "infra/Array.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/Stack.hpp"
+#include "infra/ThreadLocal.h"
+#include "optimizer/Optimizations.hpp"
+#include "ras/Debug.hpp"
+#include "ras/DebugCounter.hpp"
 #include "ras/ILValidationStrategies.hpp"
 
 #include "il/symbol/ResolvedMethodSymbol.hpp"
@@ -514,12 +514,32 @@ public:
    ToStringMap  &getToStringMap()  { return _toStringMap; }
    ToCommentMap &getToCommentMap() { return _toCommentMap; }
 
+   /**
+    * @brief Answers whether a call to the provided resolved method would represent a
+    *        recursive method call from the method currently being compiled.
+    *
+    * @param[in] targetResolvedMethod : the method symbol to check
+    *
+    * @return true if calling the targetResolvedMethod is a recursive call from the
+    *         method being compiled; false otherwise.
+    */
+   bool isRecursiveMethodTarget(TR_ResolvedMethod *targetResolvedMethod);
+
+   /**
+    * @brief Answers whether a call to the provided target symbol would represent a
+    *        recursive method call from the method currently being compiled.
+    *
+    * @param[in] targetSymbol : the method symbol to check
+    *
+    * @return true if calling the targetSymbol is a recursive call from the method
+    *         being compiled; false otherwise.
+    */
+   bool isRecursiveMethodTarget(TR::Symbol *targetSymbol);
+
    // ==========================================================================
    // Should be in Code Generator
    //
    // J9
-   int32_t getNumReservedIPICTrampolines() const { return _numReservedIPICTrampolines; }
-   void setNumReservedIPICTrampolines(int32_t n) { _numReservedIPICTrampolines = n; }
 
    TR::list<TR::Instruction*> *getStaticPICSites() {return &_staticPICSites;}
    TR::list<TR::Instruction*> *getStaticHCRPICSites() {return &_staticHCRPICSites;}
@@ -532,17 +552,24 @@ public:
    TR::list<TR::Snippet*> *getSnippetsToBePatchedOnClassRedefinition() { return &_snippetsToBePatchedOnClassRedefinition; }
    TR::list<TR_Pair<TR::Snippet,TR_ResolvedMethod> *> *getSnippetsToBePatchedOnRegisterNative() { return &_snippetsToBePatchedOnRegisterNative; }
 
-   void switchCodeCache(TR::CodeCache *newCodeCache);
-   bool getCodeCacheSwitched() { return _codeCacheSwitched; }
-
-   void setCurrentCodeCache(TR::CodeCache *codeCache);
-   TR::CodeCache *getCurrentCodeCache();
-
    TR_RegisterCandidates *getGlobalRegisterCandidates() { return _globalRegisterCandidates; }
    void setGlobalRegisterCandidates(TR_RegisterCandidates *t) { _globalRegisterCandidates = t; }
 
    bool hasNativeCall()                         { return _flags.testAny(HasNativeCall); }
    void setHasNativeCall()                      { _flags.set(HasNativeCall); }
+
+   /*
+   * \brief
+   *    This query tells whether the trees might contain rdbar/wrtbar opcodes
+   *    that are not fully supported by optimizer yet
+   *
+   * \note
+   *    This query is for temporarily fixing up unanchored rdbars or disable
+   *    opts not supporting the newly added rdbar/wrtbar opcodes. Subprojects
+   *    can override the answer. This query should be deleted eventually if
+   *    all the optimizations support the opcodes.
+   */
+   bool incompleteOptimizerSupportForReadWriteBarriers();
 
    // P codegen
    TR::list<TR_PrefetchInfo*> &getExtraPrefetchInfo() { return _extraPrefetchInfo; }
@@ -675,6 +702,18 @@ public:
    void verifyTrees(TR::ResolvedMethodSymbol *s = 0);
    void verifyBlocks(TR::ResolvedMethodSymbol *s = 0);
    void verifyCFG(TR::ResolvedMethodSymbol *s = 0);
+
+   /*
+   * \brief
+   *    Check to make sure the rdbars are anchored and anchor a rdbar if it's found unanchored
+   *
+   * \note
+   *    Ideally all optimizations should anchor a rdbar when it's created.
+   *    This API is for fixing the unanchored rdbars in case some optimizations forget to
+   *    anchor the node by mistake. Optimizations should still try to generate correct rdbar
+   *    trees instead of relying on this API.
+   */
+   void verifyAndFixRdbarAnchors();
 
    void setIlVerifier(TR::IlVerifier *ilVerifier) { _ilVerifier = ilVerifier; }
 
@@ -1137,7 +1176,6 @@ private:
 
    bool                              _usesPreexistence;
    bool                              _loopVersionedWrtAsyncChecks;
-   bool                              _codeCacheSwitched;
    bool                              _commitedCallSiteInfo;
    bool                              _containsBigDecimalLoad;
    bool                              _isOptServer;
@@ -1193,10 +1231,6 @@ private:
    void *                            _relocatableMethodCodeStart;
    const int32_t                     _compThreadID; // The ID of the supporting compilation thread; 0 for compilation an application thread
    volatile bool                     _failCHtableCommitFlag;
-
-   int32_t                           _numReservedIPICTrampolines;
-                                                              // The list is moved to the jittedBodyInfo at end of compilatuion
-
 
    PhaseTimingSummary                _phaseTimer;
    TR::PhaseMemSummary               _phaseMemProfiler;

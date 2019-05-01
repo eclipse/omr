@@ -32,6 +32,7 @@ compiler_library(codegen
 	${CMAKE_CURRENT_LIST_DIR}/LiveRegister.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OutOfLineCodeSection.cpp
 	${CMAKE_CURRENT_LIST_DIR}/Relocation.cpp
+	${CMAKE_CURRENT_LIST_DIR}/RegisterIterator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/ScratchRegisterManager.cpp
 	${CMAKE_CURRENT_LIST_DIR}/StorageInfo.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRTreeEvaluator.cpp

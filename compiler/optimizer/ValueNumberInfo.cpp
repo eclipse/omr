@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,35 +21,35 @@
 
 #include "optimizer/ValueNumberInfo.hpp"
 
-#include <stdint.h>                            // for int32_t, uint16_t, etc
-#include <string.h>                            // for NULL, memset
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "compile/Compilation.hpp"             // for Compilation, etc
+#include <stdint.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "cs2/bitvectr.h"
-#include "cs2/hashtab.h"                       // for HashIndex
+#include "cs2/hashtab.h"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
-#include "env/jittypes.h"                      // for intptrj_t
-#include "il/DataTypes.hpp"                    // for TR::DataType, etc
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, vcount_t
-#include "il/Node_inlines.hpp"                 // for Node::getChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/TreeTop.hpp"                      // for TreeTop
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
+#include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/List.hpp"                      // for ListIterator, etc
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/UseDefInfo.hpp"            // for TR_UseDefInfo, etc
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/UseDefInfo.hpp"
+#include "ras/Debug.hpp"
 
 TR_ValueNumberInfo::TR_ValueNumberInfo(TR::Compilation *comp)
    : _compilation(comp),

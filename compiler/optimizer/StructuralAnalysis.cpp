@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,26 +21,26 @@
 
 #include "optimizer/StructuralAnalysis.hpp"
 
-#include <stddef.h>                                   // for NULL
-#include <stdint.h>                                   // for int32_t, etc
+#include <stddef.h>
+#include <stdint.h>
 #include "env/StackMemoryRegion.hpp"
-#include "codegen/FrontEnd.hpp"                       // for TR_FrontEnd
-#include "compile/Compilation.hpp"                    // for Compilation
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/TRMemory.hpp"
-#include "il/Block.hpp"                               // for Block, toBlock
+#include "il/Block.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                           // for TR_ASSERT
-#include "infra/Cfg.hpp"                              // for CFG
-#include "infra/List.hpp"                             // for List, etc
-#include "infra/Stack.hpp"                            // for TR_Stack
-#include "infra/CfgEdge.hpp"                          // for CFGEdge
-#include "infra/CfgNode.hpp"                          // for CFGNode
+#include "infra/Assert.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/Stack.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/DominatorVerifier.hpp"
 #include "optimizer/Structure.hpp"
-#include "optimizer/Dominators.hpp"          // for TR_Dominators
-#include "ras/Debug.hpp"                              // for TR_DebugBase
+#include "optimizer/Dominators.hpp"
+#include "ras/Debug.hpp"
 
 void TR_RegionAnalysis::simpleIterator (TR_Stack<int32_t>& workStack,
                                         StructureBitVector& vector,

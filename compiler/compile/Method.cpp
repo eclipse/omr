@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,18 +21,18 @@
 
 #include "compile/Method.hpp"
 
-#include <string.h>                            // for memchr
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include <string.h>
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/jittypes.h"                      // for intptrj_t, uintptrj_t
-#include "il/SymbolReference.hpp"              // for classNameToSignature
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/List.hpp"                      // for ListAppender
-#include "runtime/Runtime.hpp"                 // for TR_RuntimeHelper
+#include "env/jittypes.h"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/List.hpp"
+#include "runtime/Runtime.hpp"
 
 class TR_FrontEnd;
 class TR_OpaqueMethodBlock;
@@ -297,280 +297,275 @@ bool TR_ResolvedMethod::isDAAIntrinsicMethod()
 #endif
    }
 
-#define notImplemented(A) TR_ASSERT(0, "TR_Method::%s is undefined", (A) )
-
-uint32_t              TR_Method::numberOfExplicitParameters() { notImplemented("numberOfExplicitParameters"); return 0; }
-TR::DataType        TR_Method::parmType(uint32_t)           { notImplemented("parmType"); return TR::NoType; }
-TR::ILOpCodes          TR_Method::directCallOpCode()           { notImplemented("directCallOpCode"); return TR::BadILOp; }
-TR::ILOpCodes          TR_Method::indirectCallOpCode()         { notImplemented("indirectCallOpCode"); return TR::BadILOp; }
-TR::DataType        TR_Method::returnType()                 { notImplemented("returnType"); return TR::NoType; }
-bool                  TR_Method::returnTypeIsUnsigned()       { notImplemented("returnTypeIsUnsigned"); return TR::NoType;}
-uint32_t              TR_Method::returnTypeWidth()            { notImplemented("returnTypeWidth"); return 0; }
-TR::ILOpCodes          TR_Method::returnOpCode()               { notImplemented("returnOpCode"); return TR::BadILOp; }
-uint16_t              TR_Method::classNameLength()            { notImplemented("classNameLength"); return 0; }
-uint16_t              TR_Method::nameLength()                 { notImplemented("nameLength"); return 0; }
-uint16_t              TR_Method::signatureLength()            { notImplemented("signatureLength"); return 0; }
-char *                TR_Method::classNameChars()             { notImplemented("classNameChars"); return 0; }
-char *                TR_Method::nameChars()                  { notImplemented("nameChars"); return 0; }
-char *                TR_Method::signatureChars()             { notImplemented("signatureChars"); return 0; }
-bool                  TR_Method::isConstructor()              { notImplemented("isConstructor"); return false; }
-bool                  TR_Method::isFinalInObject()            { notImplemented("isFinalInObject"); return false; }
-const char *          TR_Method::signature(TR_Memory *, TR_AllocationKind) { notImplemented("signature"); return 0; }
-void                  TR_Method::setArchetypeSpecimen(bool b)            { notImplemented("setArchetypeSpecimen"); }
+uint32_t              TR_Method::numberOfExplicitParameters() { TR_UNIMPLEMENTED(); return 0; }
+TR::DataType          TR_Method::parmType(uint32_t)           { TR_UNIMPLEMENTED(); return TR::NoType; }
+TR::ILOpCodes         TR_Method::directCallOpCode()           { TR_UNIMPLEMENTED(); return TR::BadILOp; }
+TR::ILOpCodes         TR_Method::indirectCallOpCode()         { TR_UNIMPLEMENTED(); return TR::BadILOp; }
+TR::DataType          TR_Method::returnType()                 { TR_UNIMPLEMENTED(); return TR::NoType; }
+bool                  TR_Method::returnTypeIsUnsigned()       { TR_UNIMPLEMENTED(); return TR::NoType;}
+uint32_t              TR_Method::returnTypeWidth()            { TR_UNIMPLEMENTED(); return 0; }
+TR::ILOpCodes         TR_Method::returnOpCode()               { TR_UNIMPLEMENTED(); return TR::BadILOp; }
+uint16_t              TR_Method::classNameLength()            { TR_UNIMPLEMENTED(); return 0; }
+uint16_t              TR_Method::nameLength()                 { TR_UNIMPLEMENTED(); return 0; }
+uint16_t              TR_Method::signatureLength()            { TR_UNIMPLEMENTED(); return 0; }
+char *                TR_Method::classNameChars()             { TR_UNIMPLEMENTED(); return 0; }
+char *                TR_Method::nameChars()                  { TR_UNIMPLEMENTED(); return 0; }
+char *                TR_Method::signatureChars()             { TR_UNIMPLEMENTED(); return 0; }
+bool                  TR_Method::isConstructor()              { TR_UNIMPLEMENTED(); return false; }
+bool                  TR_Method::isFinalInObject()            { TR_UNIMPLEMENTED(); return false; }
+const char *          TR_Method::signature(TR_Memory *, TR_AllocationKind) { TR_UNIMPLEMENTED(); return 0; }
+void                  TR_Method::setArchetypeSpecimen(bool b) { TR_UNIMPLEMENTED(); }
 
 TR_MethodParameterIterator *
 TR_Method::getParameterIterator(TR::Compilation&, TR_ResolvedMethod *)
    {
-   notImplemented("getParameterIterator");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 bool
 TR_Method::isBigDecimalMethod(TR::Compilation * comp)
    {
-   notImplemented("isBigDecimalMethod");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
 bool
 TR_Method::isUnsafeCAS(TR::Compilation * comp)
    {
-   notImplemented("isUnsafeCAS");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
 bool
 TR_Method::isUnsafeWithObjectArg(TR::Compilation * comp)
    {
-   notImplemented("isUnsafeWithObjectArg");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
 bool
 TR_Method::isBigDecimalConvertersMethod(TR::Compilation * comp)
    {
-   notImplemented("isBigDecimalConvertersMethod");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
-#undef notImplemented
-#define notImplemented(A) TR_ASSERT(0, "TR_ResolvedMethod::%s is undefined for %p", (A), this )
+TR_Method *  TR_ResolvedMethod::convertToMethod()                          { TR_UNIMPLEMENTED(); return 0; }
+uint32_t     TR_ResolvedMethod::numberOfParameters()                       { TR_UNIMPLEMENTED(); return 0; }
+uint32_t     TR_ResolvedMethod::numberOfExplicitParameters()               { TR_UNIMPLEMENTED(); return 0; }
+TR::DataType TR_ResolvedMethod::parmType(uint32_t)                         { TR_UNIMPLEMENTED(); return TR::NoType; }
+TR::ILOpCodes TR_ResolvedMethod::directCallOpCode()                        { TR_UNIMPLEMENTED(); return TR::BadILOp; }
+TR::ILOpCodes TR_ResolvedMethod::indirectCallOpCode()                      { TR_UNIMPLEMENTED(); return TR::BadILOp; }
+TR::DataType TR_ResolvedMethod::returnType()                               { TR_UNIMPLEMENTED(); return TR::NoType; }
+uint32_t     TR_ResolvedMethod::returnTypeWidth()                          { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::returnTypeIsUnsigned()                     { TR_UNIMPLEMENTED(); return 0; }
+TR::ILOpCodes TR_ResolvedMethod::returnOpCode()                            { TR_UNIMPLEMENTED(); return TR::BadILOp; }
+uint16_t     TR_ResolvedMethod::classNameLength()                          { TR_UNIMPLEMENTED(); return 0; }
+uint16_t     TR_ResolvedMethod::nameLength()                               { TR_UNIMPLEMENTED(); return 0; }
+uint16_t     TR_ResolvedMethod::signatureLength()                          { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::classNameChars()                           { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::nameChars()                                { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::signatureChars()                           { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::isConstructor()                            { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isStatic()                                 { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isAbstract()                               { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isCompilable(TR_Memory *)                  { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isInlineable(TR::Compilation *)            { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isNative()                                 { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isSynchronized()                           { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isPrivate()                                { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isProtected()                              { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isPublic()                                 { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isFinal()                                  { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isStrictFP()                               { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isInterpreted()                            { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isInterpretedForHeuristics()               { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::hasBackwardBranches()                      { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isObjectConstructor()                      { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isNonEmptyObjectConstructor()              { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isCold(TR::Compilation *, bool, TR::ResolvedMethodSymbol * /* = NULL */)             { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isSubjectToPhaseChange(TR::Compilation *) { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isSameMethod(TR_ResolvedMethod *)          { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isNewInstanceImplThunk()                   { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isJNINative()                              { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isJITInternalNative()                      { TR_UNIMPLEMENTED(); return false; }
+//bool         TR_ResolvedMethod::isUnsafeWithObjectArg(TR::Compilation *)    { TR_UNIMPLEMENTED(); return false; }
+void *       TR_ResolvedMethod::resolvedMethodAddress()                    { TR_UNIMPLEMENTED(); return 0; }
+void *       TR_ResolvedMethod::startAddressForJittedMethod()              { TR_UNIMPLEMENTED(); return 0; }
+void *       TR_ResolvedMethod::startAddressForJNIMethod(TR::Compilation *) { TR_UNIMPLEMENTED(); return 0; }
+void *       TR_ResolvedMethod::startAddressForJITInternalNativeMethod()   { TR_UNIMPLEMENTED(); return 0; }
+void *       TR_ResolvedMethod::startAddressForInterpreterOfJittedMethod() { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *) { TR_UNIMPLEMENTED(); return 0; }
+void         TR_ResolvedMethod::setWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *){ TR_UNIMPLEMENTED(); return; }
 
-TR_Method *  TR_ResolvedMethod::convertToMethod()                          { notImplemented("convertToMethod"); return 0; }
-uint32_t     TR_ResolvedMethod::numberOfParameters()                       { notImplemented("numberOfParameters"); return 0; }
-uint32_t     TR_ResolvedMethod::numberOfExplicitParameters()               { notImplemented("numberOfExplicitParameters"); return 0; }
-TR::DataType TR_ResolvedMethod::parmType(uint32_t)                         { notImplemented("parmType"); return TR::NoType; }
-TR::ILOpCodes TR_ResolvedMethod::directCallOpCode()                         { notImplemented("directCallOpCode"); return TR::BadILOp; }
-TR::ILOpCodes TR_ResolvedMethod::indirectCallOpCode()                       { notImplemented("indirectCallOpCode"); return TR::BadILOp; }
-TR::DataType TR_ResolvedMethod::returnType()                               { notImplemented("returnType"); return TR::NoType; }
-uint32_t     TR_ResolvedMethod::returnTypeWidth()                          { notImplemented("returnTypeWidth"); return 0; }
-bool         TR_ResolvedMethod::returnTypeIsUnsigned()                     { notImplemented("returnTypeIsUnsigned"); return 0; }
-TR::ILOpCodes TR_ResolvedMethod::returnOpCode()                             { notImplemented("returnOpCode"); return TR::BadILOp; }
-uint16_t     TR_ResolvedMethod::classNameLength()                          { notImplemented("classNameLength"); return 0; }
-uint16_t     TR_ResolvedMethod::nameLength()                               { notImplemented("nameLength"); return 0; }
-uint16_t     TR_ResolvedMethod::signatureLength()                          { notImplemented("signatureLength"); return 0; }
-char *       TR_ResolvedMethod::classNameChars()                           { notImplemented("classNameChars"); return 0; }
-char *       TR_ResolvedMethod::nameChars()                                { notImplemented("nameChars"); return 0; }
-char *       TR_ResolvedMethod::signatureChars()                           { notImplemented("signatureChars"); return 0; }
-bool         TR_ResolvedMethod::isConstructor()                            { notImplemented("isConstructor"); return false; }
-bool         TR_ResolvedMethod::isStatic()                                 { notImplemented("isStatic"); return false; }
-bool         TR_ResolvedMethod::isAbstract()                               { notImplemented("isAbstract"); return false; }
-bool         TR_ResolvedMethod::isCompilable(TR_Memory *)                  { notImplemented("isCompilable"); return false; }
-bool         TR_ResolvedMethod::isInlineable(TR::Compilation *)             { notImplemented("isInlineable"); return false; }
-bool         TR_ResolvedMethod::isNative()                                 { notImplemented("isNative"); return false; }
-bool         TR_ResolvedMethod::isSynchronized()                           { notImplemented("isSynchronized"); return false; }
-bool         TR_ResolvedMethod::isPrivate()                                { notImplemented("isPrivate"); return false; }
-bool         TR_ResolvedMethod::isProtected()                              { notImplemented("isProtected"); return false; }
-bool         TR_ResolvedMethod::isPublic()                                 { notImplemented("isPublic"); return false; }
-bool         TR_ResolvedMethod::isFinal()                                  { notImplemented("isFinal"); return false; }
-bool         TR_ResolvedMethod::isStrictFP()                               { notImplemented("isStrictFP"); return false; }
-bool         TR_ResolvedMethod::isInterpreted()                            { notImplemented("isInterpreted"); return false; }
-bool         TR_ResolvedMethod::isInterpretedForHeuristics()               { notImplemented("isInterpretedForHeuristics"); return false; }
-bool         TR_ResolvedMethod::hasBackwardBranches()                      { notImplemented("hasBackwardBranches"); return false; }
-bool         TR_ResolvedMethod::isObjectConstructor()                      { notImplemented("isObjectConstructor"); return false; }
-bool         TR_ResolvedMethod::isNonEmptyObjectConstructor()              { notImplemented("isNonEmptyObjectConstructor"); return false; }
-bool         TR_ResolvedMethod::isCold(TR::Compilation *, bool, TR::ResolvedMethodSymbol * /* = NULL */)             { notImplemented("isCold"); return false; }
-bool         TR_ResolvedMethod::isSubjectToPhaseChange(TR::Compilation *) { notImplemented("isSubjectToPhaseChange"); return false; }
-bool         TR_ResolvedMethod::isSameMethod(TR_ResolvedMethod *)          { notImplemented("isSameMethod"); return false; }
-bool         TR_ResolvedMethod::isNewInstanceImplThunk()                   { notImplemented("isNewInstanceImplThunk"); return false; }
-bool         TR_ResolvedMethod::isJNINative()                              { notImplemented("isJNINative"); return false; }
-bool         TR_ResolvedMethod::isJITInternalNative()                      { notImplemented("isJITInternalNative"); return false; }
-//bool         TR_ResolvedMethod::isUnsafeWithObjectArg(TR::Compilation *)    { notImplemented("isUnsafeWithObjectArg"); return false; }
-void *       TR_ResolvedMethod::resolvedMethodAddress()                    { notImplemented("resolvedMethodAddress"); return 0; }
-void *       TR_ResolvedMethod::startAddressForJittedMethod()              { notImplemented("startAddressForJittedMethod"); return 0; }
-void *       TR_ResolvedMethod::startAddressForJNIMethod(TR::Compilation *) { notImplemented("startAddressForJNIMethod"); return 0; }
-void *       TR_ResolvedMethod::startAddressForJITInternalNativeMethod()   { notImplemented("startAddressForJITInternalNativeMethod"); return 0; }
-void *       TR_ResolvedMethod::startAddressForInterpreterOfJittedMethod() { notImplemented("startAddressForInterpreterOfJittedMethod"); return 0; }
-bool         TR_ResolvedMethod::isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *) { notImplemented("isWarmCallGraphTooBig"); return 0; }
-void         TR_ResolvedMethod::setWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *){ notImplemented("setWarmCallGraphTooBig"); return; }
+TR_FrontEnd *TR_ResolvedMethod::fe()                                       { TR_UNIMPLEMENTED(); return 0; }
+intptrj_t    TR_ResolvedMethod::getInvocationCount()                       { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::setInvocationCount(intptrj_t, intptrj_t)   { TR_UNIMPLEMENTED(); return false; }
+uint16_t     TR_ResolvedMethod::numberOfParameterSlots()                   { TR_UNIMPLEMENTED(); return 0; }
+uint16_t     TR_ResolvedMethod::archetypeArgPlaceholderSlot(TR_Memory *)   { TR_UNIMPLEMENTED(); return 0; }
+uint16_t     TR_ResolvedMethod::numberOfTemps()                            { TR_UNIMPLEMENTED(); return 0; }
+uint16_t     TR_ResolvedMethod::numberOfPendingPushes()                    { TR_UNIMPLEMENTED(); return 0; }
+uint8_t *    TR_ResolvedMethod::bytecodeStart()                            { TR_UNIMPLEMENTED(); return 0; }
+uint32_t     TR_ResolvedMethod::maxBytecodeIndex()                         { TR_UNIMPLEMENTED(); return 0; }
+void *       TR_ResolvedMethod::ramConstantPool()                          { TR_UNIMPLEMENTED(); return 0; }
+void *       TR_ResolvedMethod::constantPool()                             { TR_UNIMPLEMENTED(); return 0; }
 
-TR_FrontEnd *TR_ResolvedMethod::fe()                                       { notImplemented("fe"); return 0; }
-intptrj_t    TR_ResolvedMethod::getInvocationCount()                       { notImplemented("getInvocationCount"); return 0; }
-bool         TR_ResolvedMethod::setInvocationCount(intptrj_t, intptrj_t)   { notImplemented("setInvocationCount"); return false; }
-uint16_t     TR_ResolvedMethod::numberOfParameterSlots()                   { notImplemented("numberOfParameterSlots"); return 0; }
-uint16_t     TR_ResolvedMethod::archetypeArgPlaceholderSlot(TR_Memory *)   { notImplemented("numberOfParameterSlots"); return 0; }
-uint16_t     TR_ResolvedMethod::numberOfTemps()                            { notImplemented("numberOfTemps"); return 0; }
-uint16_t     TR_ResolvedMethod::numberOfPendingPushes()                    { notImplemented("numberOfPendingPushes"); return 0; }
-uint8_t *    TR_ResolvedMethod::bytecodeStart()                            { notImplemented("bytecodeStart"); return 0; }
-uint32_t     TR_ResolvedMethod::maxBytecodeIndex()                         { notImplemented("maxBytecodeIndex"); return 0; }
-void *       TR_ResolvedMethod::ramConstantPool()                          { notImplemented("ramConstantPool"); return 0; }
-void *       TR_ResolvedMethod::constantPool()                             { notImplemented("constantPool"); return 0; }
+TR::DataType TR_ResolvedMethod::getLDCType(int32_t)                        { TR_UNIMPLEMENTED(); return TR::NoType; }
+bool         TR_ResolvedMethod::isClassConstant(int32_t cpIndex)           { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isStringConstant(int32_t cpIndex)          { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isMethodTypeConstant(int32_t cpIndex)      { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isMethodHandleConstant(int32_t cpIndex)    { TR_UNIMPLEMENTED(); return false; }
+uint32_t     TR_ResolvedMethod::intConstant(int32_t)                       { TR_UNIMPLEMENTED(); return 0; }
+uint64_t     TR_ResolvedMethod::longConstant(int32_t)                      { TR_UNIMPLEMENTED(); return 0; }
+float *      TR_ResolvedMethod::floatConstant(int32_t)                     { TR_UNIMPLEMENTED(); return 0; }
+double *     TR_ResolvedMethod::doubleConstant(int32_t, TR_Memory *)       { TR_UNIMPLEMENTED(); return 0; }
+void *       TR_ResolvedMethod::stringConstant(int32_t)                    { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::isUnresolvedString(int32_t, bool optimizeForAOT)                { TR_UNIMPLEMENTED(); return false; }
+void *       TR_ResolvedMethod::getConstantDynamicTypeFromCP(int32_t cpIndex)   { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::isConstantDynamic(int32_t cpIndex)            { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isUnresolvedConstantDynamic(int32_t cpIndex)  { TR_UNIMPLEMENTED(); return false; }
+void *       TR_ResolvedMethod::dynamicConstant(int32_t cpIndex)              { TR_UNIMPLEMENTED(); return 0; }
+void *       TR_ResolvedMethod::methodTypeConstant(int32_t)                { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::isUnresolvedMethodType(int32_t)            { TR_UNIMPLEMENTED(); return false; }
+void *       TR_ResolvedMethod::methodHandleConstant(int32_t)              { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::isUnresolvedMethodHandle(int32_t)          { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) { TR_UNIMPLEMENTED(); return false; }
+void *       TR_ResolvedMethod::callSiteTableEntryAddress(int32_t callSiteIndex)      { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::isUnresolvedMethodTypeTableEntry(int32_t cpIndex) { TR_UNIMPLEMENTED(); return false; }
+void *       TR_ResolvedMethod::methodTypeTableEntryAddress(int32_t cpIndex)      { TR_UNIMPLEMENTED(); return 0; }
 
-TR::DataType TR_ResolvedMethod::getLDCType(int32_t)                        { notImplemented("getLDCType"); return TR::NoType; }
-bool         TR_ResolvedMethod::isClassConstant(int32_t cpIndex)           { notImplemented("isClassConstant"); return false; }
-bool         TR_ResolvedMethod::isStringConstant(int32_t cpIndex)          { notImplemented("isStringConstant"); return false; }
-bool         TR_ResolvedMethod::isMethodTypeConstant(int32_t cpIndex)      { notImplemented("isMethodTypeConstant"); return false; }
-bool         TR_ResolvedMethod::isMethodHandleConstant(int32_t cpIndex)    { notImplemented("isMethodHandleConstant"); return false; }
-uint32_t     TR_ResolvedMethod::intConstant(int32_t)                       { notImplemented("intConstant"); return 0; }
-uint64_t     TR_ResolvedMethod::longConstant(int32_t)                      { notImplemented("longConstant"); return 0; }
-float *      TR_ResolvedMethod::floatConstant(int32_t)                     { notImplemented("floatConstant"); return 0; }
-double *     TR_ResolvedMethod::doubleConstant(int32_t, TR_Memory *)       { notImplemented("doubleConstant"); return 0; }
-void *       TR_ResolvedMethod::stringConstant(int32_t)                    { notImplemented("stringConstant"); return 0; }
-bool         TR_ResolvedMethod::isUnresolvedString(int32_t, bool optimizeForAOT)                { notImplemented("isUnresolvedString"); return false; }
-void *       TR_ResolvedMethod::getConstantDynamicTypeFromCP(int32_t cpIndex)   { notImplemented("ConstantDynamic"); return 0; }
-bool         TR_ResolvedMethod::isConstantDynamic(int32_t cpIndex)            { notImplemented("ConstantDynamic"); return false; }
-bool         TR_ResolvedMethod::isUnresolvedConstantDynamic(int32_t cpIndex)  { notImplemented("ConstantDynamic"); return false; }
-void *       TR_ResolvedMethod::dynamicConstant(int32_t cpIndex)              { notImplemented("ConstantDynamic"); return 0; }
-void *       TR_ResolvedMethod::methodTypeConstant(int32_t)                { notImplemented("methodTypeConstant"); return 0; }
-bool         TR_ResolvedMethod::isUnresolvedMethodType(int32_t)            { notImplemented("isUnresolvedMethodType"); return false; }
-void *       TR_ResolvedMethod::methodHandleConstant(int32_t)              { notImplemented("methodHandleConstant"); return 0; }
-bool         TR_ResolvedMethod::isUnresolvedMethodHandle(int32_t)          { notImplemented("isUnresolvedMethodHandle"); return false; }
-bool         TR_ResolvedMethod::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) { notImplemented("isUnresolvedCallSiteTableEntry"); return false; }
-void *       TR_ResolvedMethod::callSiteTableEntryAddress(int32_t callSiteIndex)      { notImplemented("callSiteTableEntryAddress"); return 0; }
-bool         TR_ResolvedMethod::isUnresolvedMethodTypeTableEntry(int32_t cpIndex) { notImplemented("isUnresolvedMethodTypeTableEntry"); return false; }
-void *       TR_ResolvedMethod::methodTypeTableEntryAddress(int32_t cpIndex)      { notImplemented("methodTypeTableEntryAddress"); return 0; }
+TR_OpaqueClassBlock *TR_ResolvedMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex)  { TR_UNIMPLEMENTED(); return 0; }
+int32_t      TR_ResolvedMethod::classCPIndexOfFieldOrStatic(int32_t)       { TR_UNIMPLEMENTED(); return 0; }
+const char * TR_ResolvedMethod::signature(TR_Memory *, TR_AllocationKind)  { TR_UNIMPLEMENTED(); return 0; }
+const char * TR_ResolvedMethod::externalName(TR_Memory *, TR_AllocationKind)  { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::fieldName (int32_t, TR_Memory *, TR_AllocationKind kind)           { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::staticName(int32_t, TR_Memory *, TR_AllocationKind kind)           { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::localName (uint32_t, uint32_t, TR_Memory *){ /*TR_UNIMPLEMENTED();*/ return 0; }
+char *       TR_ResolvedMethod::fieldName (int32_t, int32_t &, TR_Memory *, TR_AllocationKind kind) { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::staticName(int32_t, int32_t &, TR_Memory *, TR_AllocationKind kind) { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::localName (uint32_t, uint32_t, int32_t&, TR_Memory *){ /*TR_UNIMPLEMENTED();*/ return 0; }
+char *       TR_ResolvedMethod::fieldNameChars(int32_t, int32_t &)         { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::fieldSignatureChars(int32_t, int32_t &)    { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::staticSignatureChars(int32_t, int32_t &)   { TR_UNIMPLEMENTED(); return 0; }
+void * &     TR_ResolvedMethod::addressOfClassOfMethod()                   { TR_UNIMPLEMENTED(); }
+uint32_t     TR_ResolvedMethod::vTableSlot(uint32_t)                       { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::virtualMethodIsOverridden()                { TR_UNIMPLEMENTED(); return false; }
+void         TR_ResolvedMethod::setVirtualMethodIsOverridden()             { TR_UNIMPLEMENTED(); }
+void *       TR_ResolvedMethod::addressContainingIsOverriddenBit()         { TR_UNIMPLEMENTED(); return 0; }
+int32_t     TR_ResolvedMethod::virtualCallSelector(uint32_t)               { TR_UNIMPLEMENTED(); return 0; }
+uint32_t     TR_ResolvedMethod::numberOfExceptionHandlers()                { TR_UNIMPLEMENTED(); return 0; }
+uint8_t *    TR_ResolvedMethod::allocateException(uint32_t,TR::Compilation*){ TR_UNIMPLEMENTED(); return 0; }
 
-TR_OpaqueClassBlock *TR_ResolvedMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex)  { notImplemented("getDeclaringClassFromFieldOrStatic"); return 0; }
-int32_t      TR_ResolvedMethod::classCPIndexOfFieldOrStatic(int32_t)       { notImplemented("classCPIndexOfFieldOrStatic"); return 0; }
-const char * TR_ResolvedMethod::signature(TR_Memory *, TR_AllocationKind)  { notImplemented("signature"); return 0; }
-const char * TR_ResolvedMethod::externalName(TR_Memory *, TR_AllocationKind)  { notImplemented("signature"); return 0; }
-char *       TR_ResolvedMethod::fieldName (int32_t, TR_Memory *, TR_AllocationKind kind)           { notImplemented("fieldName"); return 0; }
-char *       TR_ResolvedMethod::staticName(int32_t, TR_Memory *, TR_AllocationKind kind)           { notImplemented("staticName"); return 0; }
-char *       TR_ResolvedMethod::localName (uint32_t, uint32_t, TR_Memory *){ /*notImplemented("localName");*/ return 0; }
-char *       TR_ResolvedMethod::fieldName (int32_t, int32_t &, TR_Memory *, TR_AllocationKind kind){ notImplemented("fieldName"); return 0; }
-char *       TR_ResolvedMethod::staticName(int32_t, int32_t &, TR_Memory *, TR_AllocationKind kind){ notImplemented("staticName"); return 0; }
-char *       TR_ResolvedMethod::localName (uint32_t, uint32_t, int32_t&, TR_Memory *){ /*notImplemented("localName");*/ return 0; }
-char *       TR_ResolvedMethod::fieldNameChars(int32_t, int32_t &)         { notImplemented("fieldNameChars"); return 0; }
-char *       TR_ResolvedMethod::fieldSignatureChars(int32_t, int32_t &)    { notImplemented("fieldSignatureChars"); return 0; }
-char *       TR_ResolvedMethod::staticSignatureChars(int32_t, int32_t &)   { notImplemented("staticSignatureChars"); return 0; }
-void * &     TR_ResolvedMethod::addressOfClassOfMethod()                   { notImplemented("addressOfClassOfMethod"); return *(void **)0; }
-uint32_t     TR_ResolvedMethod::vTableSlot(uint32_t)                       { notImplemented("vTableSlot"); return 0; }
-bool         TR_ResolvedMethod::virtualMethodIsOverridden()                { notImplemented("virtualMethodIsOverridden"); return false; }
-void         TR_ResolvedMethod::setVirtualMethodIsOverridden()             { notImplemented("setVirtualMethodIsOverridden"); }
-void *       TR_ResolvedMethod::addressContainingIsOverriddenBit()         { notImplemented("addressContainingIsOverriddenBit"); return 0; }
-int32_t     TR_ResolvedMethod::virtualCallSelector(uint32_t)               { notImplemented("virtualCallSelector"); return 0; }
-uint32_t     TR_ResolvedMethod::numberOfExceptionHandlers()                { notImplemented("numberOfExceptionHandlers"); return 0; }
-uint8_t *    TR_ResolvedMethod::allocateException(uint32_t,TR::Compilation*){ notImplemented("allocateException"); return 0; }
-
-int32_t      TR_ResolvedMethod::exceptionData(int32_t, int32_t *, int32_t *, int32_t *) { notImplemented("exceptionData"); return 0; }
-char *       TR_ResolvedMethod::getClassNameFromConstantPool(uint32_t, uint32_t &)      { notImplemented("getClassNameFromConstantPool"); return 0; }
-bool         TR_ResolvedMethod::fieldsAreSame(int32_t, TR_ResolvedMethod *, int32_t, bool &sigSame)    { notImplemented("fieldsAreSame"); return false; }
-bool         TR_ResolvedMethod::staticsAreSame(int32_t, TR_ResolvedMethod *, int32_t, bool &sigSame)   { notImplemented("staticsAreSame"); return false; }
-char *       TR_ResolvedMethod::classNameOfFieldOrStatic(int32_t, int32_t &)            { notImplemented("classNameOfFieldOrStatic"); return 0; }
-char *       TR_ResolvedMethod::classSignatureOfFieldOrStatic(int32_t, int32_t &)       { notImplemented("classSignatureOfFieldOrStatic"); return 0; }
-char *       TR_ResolvedMethod::staticNameChars(int32_t, int32_t &)                     { notImplemented("staticNameChars"); return 0; }
-const char * TR_ResolvedMethod::newInstancePrototypeSignature(TR_Memory *, TR_AllocationKind)        { notImplemented("newInstancePrototypeSignature"); return 0; }
+int32_t      TR_ResolvedMethod::exceptionData(int32_t, int32_t *, int32_t *, int32_t *) { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::getClassNameFromConstantPool(uint32_t, uint32_t &)      { TR_UNIMPLEMENTED(); return 0; }
+bool         TR_ResolvedMethod::fieldsAreSame(int32_t, TR_ResolvedMethod *, int32_t, bool &sigSame)    { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::staticsAreSame(int32_t, TR_ResolvedMethod *, int32_t, bool &sigSame)   { TR_UNIMPLEMENTED(); return false; }
+char *       TR_ResolvedMethod::classNameOfFieldOrStatic(int32_t, int32_t &)            { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::classSignatureOfFieldOrStatic(int32_t, int32_t &)       { TR_UNIMPLEMENTED(); return 0; }
+char *       TR_ResolvedMethod::staticNameChars(int32_t, int32_t &)                     { TR_UNIMPLEMENTED(); return 0; }
+const char * TR_ResolvedMethod::newInstancePrototypeSignature(TR_Memory *, TR_AllocationKind)          { TR_UNIMPLEMENTED(); return 0; }
 
 bool
 TR_ResolvedMethod::getUnresolvedFieldInCP(int32_t)
    {
-   notImplemented("getUnresolvedFieldInCP");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
 bool
 TR_ResolvedMethod::getUnresolvedStaticMethodInCP(int32_t)
    {
-   notImplemented("getUnresolvedStaticMethodInCP");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
 bool
 TR_ResolvedMethod::getUnresolvedSpecialMethodInCP(int32_t)
    {
-   notImplemented("getUnresolvedSpecialMethodInCP");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
 bool
 TR_ResolvedMethod::getUnresolvedVirtualMethodInCP(int32_t)
    {
-   notImplemented("getUnresolvedVirtualMethod");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
 bool
 TR_ResolvedMethod::fieldAttributes(TR::Compilation *, int32_t, uint32_t *, TR::DataType *, bool *, bool *, bool *, bool, bool *, bool)
    {
-   notImplemented("fieldAttributes");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
 bool
 TR_ResolvedMethod::staticAttributes(TR::Compilation *, int32_t, void * *, TR::DataType *, bool *, bool *, bool *, bool, bool *, bool)
    {
-   notImplemented("staticAttributes");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
-TR_OpaqueClassBlock * TR_ResolvedMethod::containingClass()                                 { notImplemented("containingClass"); return 0; }
-TR_OpaqueClassBlock * TR_ResolvedMethod::getClassFromConstantPool(TR::Compilation *, uint32_t, bool) { notImplemented("getClassFromConstantPool"); return 0; }
-TR_OpaqueClassBlock * TR_ResolvedMethod::classOfStatic(int32_t, bool)                            { notImplemented("classOfStatic"); return 0; }
-TR_OpaqueClassBlock * TR_ResolvedMethod::classOfMethod()                                   { notImplemented("classOfMethod"); return 0; }
-uint32_t              TR_ResolvedMethod::classCPIndexOfMethod(uint32_t)                    { notImplemented("classCpIndexOfMethod"); return 0; }
+TR_OpaqueClassBlock * TR_ResolvedMethod::containingClass()                                 { TR_UNIMPLEMENTED(); return 0; }
+TR_OpaqueClassBlock * TR_ResolvedMethod::getClassFromConstantPool(TR::Compilation *, uint32_t, bool) { TR_UNIMPLEMENTED(); return 0; }
+TR_OpaqueClassBlock * TR_ResolvedMethod::classOfStatic(int32_t, bool)                            { TR_UNIMPLEMENTED(); return 0; }
+TR_OpaqueClassBlock * TR_ResolvedMethod::classOfMethod()                                   { TR_UNIMPLEMENTED(); return 0; }
+uint32_t              TR_ResolvedMethod::classCPIndexOfMethod(uint32_t)                    { TR_UNIMPLEMENTED(); return 0; }
 
-TR_OpaqueMethodBlock *TR_ResolvedMethod::getNonPersistentIdentifier()                      { notImplemented("getNonPersistentIdentifier"); return 0; }
-TR_OpaqueMethodBlock *TR_ResolvedMethod::getPersistentIdentifier()                         { notImplemented("getPersistentIdentifier"); return 0; }
-TR_OpaqueClassBlock * TR_ResolvedMethod::getResolvedInterfaceMethod(int32_t, uintptrj_t *) { notImplemented("getResolvedInterfaceMethod"); return 0; }
+TR_OpaqueMethodBlock *TR_ResolvedMethod::getNonPersistentIdentifier()                      { TR_UNIMPLEMENTED(); return 0; }
+TR_OpaqueMethodBlock *TR_ResolvedMethod::getPersistentIdentifier()                         { TR_UNIMPLEMENTED(); return 0; }
+TR_OpaqueClassBlock * TR_ResolvedMethod::getResolvedInterfaceMethod(int32_t, uintptrj_t *) { TR_UNIMPLEMENTED(); return 0; }
 
-TR_ResolvedMethod * TR_ResolvedMethod::owningMethod()                                      { notImplemented("owningMethod"); return 0; }
-void TR_ResolvedMethod::setOwningMethod(TR_ResolvedMethod*)                                { notImplemented("setOwningMethod");  }
+TR_ResolvedMethod * TR_ResolvedMethod::owningMethod()                                      { TR_UNIMPLEMENTED(); return 0; }
+void TR_ResolvedMethod::setOwningMethod(TR_ResolvedMethod*)                                { TR_UNIMPLEMENTED();  }
 
-TR_ResolvedMethod * TR_ResolvedMethod::getResolvedStaticMethod (TR::Compilation *, int32_t, bool *)           { notImplemented("getResolvedStaticMethod"); return 0; }
-TR_ResolvedMethod * TR_ResolvedMethod::getResolvedSpecialMethod(TR::Compilation *, int32_t, bool *)           { notImplemented("getResolvedSpecialMethod"); return 0; }
-TR_ResolvedMethod * TR_ResolvedMethod::getResolvedVirtualMethod(TR::Compilation *, int32_t, bool, bool *)     { notImplemented("getResolvedVirtualMethod"); return 0; }
-TR_ResolvedMethod * TR_ResolvedMethod::getResolvedDynamicMethod(TR::Compilation *, int32_t, bool *)           { notImplemented("getResolvedDynamicMethod"); return 0; }
-TR_ResolvedMethod * TR_ResolvedMethod::getResolvedHandleMethod (TR::Compilation *, int32_t, bool *)           { notImplemented("getResolvedHandleMethod"); return 0; }
-TR_ResolvedMethod * TR_ResolvedMethod::getResolvedHandleMethodWithSignature(TR::Compilation *, int32_t, char *){notImplemented("getResolvedHandleMethodWithSignature"); return 0; }
+TR_ResolvedMethod * TR_ResolvedMethod::getResolvedStaticMethod (TR::Compilation *, int32_t, bool *)           { TR_UNIMPLEMENTED(); return 0; }
+TR_ResolvedMethod * TR_ResolvedMethod::getResolvedSpecialMethod(TR::Compilation *, int32_t, bool *)           { TR_UNIMPLEMENTED(); return 0; }
+TR_ResolvedMethod * TR_ResolvedMethod::getResolvedVirtualMethod(TR::Compilation *, int32_t, bool, bool *)     { TR_UNIMPLEMENTED(); return 0; }
+TR_ResolvedMethod * TR_ResolvedMethod::getResolvedDynamicMethod(TR::Compilation *, int32_t, bool *)           { TR_UNIMPLEMENTED(); return 0; }
+TR_ResolvedMethod * TR_ResolvedMethod::getResolvedHandleMethod (TR::Compilation *, int32_t, bool *)           { TR_UNIMPLEMENTED(); return 0; }
+TR_ResolvedMethod * TR_ResolvedMethod::getResolvedHandleMethodWithSignature(TR::Compilation *, int32_t, char *) { TR_UNIMPLEMENTED(); return 0; }
 
 uint32_t
 TR_ResolvedMethod::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock *, int32_t)
    {
-   notImplemented("getResolvedInterfaceMethodOffset");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 TR_ResolvedMethod *
 TR_ResolvedMethod::getResolvedInterfaceMethod(TR::Compilation *, TR_OpaqueClassBlock *, int32_t)
    {
-   notImplemented("getResolvedInterfaceMethod");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 TR_ResolvedMethod *
 TR_ResolvedMethod::getResolvedVirtualMethod(TR::Compilation *, TR_OpaqueClassBlock *, int32_t, bool)
    {
-   notImplemented("getResolvedVirtualMethod");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 void
 TR_ResolvedMethod::setMethodHandleLocation(uintptrj_t *location)
    {
-   notImplemented("setMethodHandleLocation");
+   TR_UNIMPLEMENTED();
    }
 
 TR::IlGeneratorMethodDetails *
 TR_ResolvedMethod::getIlGeneratorMethodDetails()
    {
-   notImplemented("getIlGeneratorMethodDetails");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 TR::SymbolReferenceTable *
 TR_ResolvedMethod::_genMethodILForPeeking(TR::ResolvedMethodSymbol *, TR::Compilation *, bool resetVisitCount, TR_PrexArgInfo  *argInfo)
    {
-   notImplemented("genMethodILForPeeking");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 

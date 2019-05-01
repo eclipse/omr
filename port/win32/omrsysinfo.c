@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,11 @@
 #include <stdio.h>
 #include <windows.h>
 #include <WinSDKVer.h>
+/* Undefine the winsockapi because winsock2 defines it.  Removes warnings. */
+#if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
+#undef _WINSOCKAPI_
+#endif
+#include <winsock2.h>
 
 #if defined(_WIN32_WINNT_WINBLUE) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE)
 #include <VersionHelpers.h>
@@ -164,7 +169,7 @@ omrsysinfo_get_env(struct OMRPortLibrary *portLibrary, const char *envVar, char 
 const char *
 omrsysinfo_get_OS_type(struct OMRPortLibrary *portLibrary)
 {
-
+BOOLEAN isServerMajorVersion10 = FALSE;
 /*
 WIN32_WINNT version constants :
 
@@ -185,18 +190,22 @@ WIN32_WINNT version constants :
 
 	if (NULL == PPG_si_osType) {
 		char *defaultTypeName = "Windows";
-#if !defined(_WIN32_WINNT_WINBLUE) || !(_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE)
+#if !defined(_WIN32_WINNT_WINBLUE) || (_WIN32_WINNT_MAXVER < _WIN32_WINNT_WINBLUE)
+		/* Windows 8 or earlier */
 		OSVERSIONINFOEX versionInfo;
 #endif
 		PPG_si_osType = defaultTypeName; /* by default, use the "unrecognized version" string */
 		PPG_si_osTypeOnHeap = NULL;
 
 #if defined(_WIN32_WINNT_WINBLUE) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE)
+		/* Windows 8.1 or later */
 		/* OS Versions:  https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx */
 		if (IsWindowsServer()) {
 #if defined(_WIN32_WINNT_WIN10) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WIN10)
 			if (IsWindows10OrGreater()) {
-				PPG_si_osType = "Windows Server 2016";
+				/* Starting with major version 10, use the registry to get the version */
+				PPG_si_osType = defaultTypeName;
+				isServerMajorVersion10 = TRUE;
 			} else
 #endif /* defined(_WIN32_WINNT_WIN10) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WIN10) */
 			if (IsWindows8Point1OrGreater()) {
@@ -213,6 +222,7 @@ WIN32_WINNT version constants :
 		} else {
 #if defined(_WIN32_WINNT_WIN10) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WIN10)
 			if (IsWindows10OrGreater()) {
+				/* May need to check ReleaseId when next Windows version is released */
 				PPG_si_osType = "Windows 10";
 			} else
 #endif /* defined(_WIN32_WINNT_WIN10) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WIN10) */
@@ -257,9 +267,9 @@ WIN32_WINNT version constants :
 						break;
 					}
 					break;
-				default:
-					PPG_si_osType = defaultTypeName;
-					break;
+					default:
+						PPG_si_osType = defaultTypeName;
+						break;
 				}
 				break;
 			}
@@ -324,14 +334,9 @@ WIN32_WINNT version constants :
 				}
 				break;
 				default: {
-					switch (versionInfo.dwMinorVersion) {
-					case 0:
-						PPG_si_osType = "Windows Server 2016";
-						break;
-					default:
-						PPG_si_osType = defaultTypeName;
-						break;
-					}
+					/* Starting with major version 10, use the registry to get the version */
+					PPG_si_osType = defaultTypeName;
+					isServerMajorVersion10 = TRUE;
 				}
 				break;
 				}
@@ -344,25 +349,57 @@ WIN32_WINNT version constants :
 
 		}
 #endif /* defined(_WIN32_WINNT_WINBLUE) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE) */
-
+#define PRODUCT_NAME_KEY "ProductName"
+#define RELEASE_ID_KEY "ReleaseId"
+#define WINDOWS_SERVER_PREFIX "Windows Server version "
 		if (defaultTypeName == PPG_si_osType) {
 			HKEY hKey;
-			if (ERROR_SUCCESS == RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey)) {
-				DWORD nameSize = 0;
-				/* query the first time to get the content size of the value. */
-				if (ERROR_SUCCESS == RegQueryValueExA(hKey, "ProductName", NULL, NULL, NULL, &nameSize)) {
-					char *productNameBuffer = portLibrary->mem_allocate_memory(portLibrary, nameSize, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
-					if (NULL != productNameBuffer) {
-						/* query the second time to get the value */
-						if (ERROR_SUCCESS == RegQueryValueExA(hKey, "ProductName", NULL, NULL, (LPBYTE)productNameBuffer, &nameSize)) {
-							PPG_si_osType = PPG_si_osTypeOnHeap = productNameBuffer;
-						} else {
-							portLibrary->mem_free_memory(portLibrary, productNameBuffer);
+			if (ERROR_SUCCESS == RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+					"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey)) {
+				DWORD valueSize = 0;
+				if (isServerMajorVersion10
+						&& (ERROR_SUCCESS == RegQueryValueExA(hKey, RELEASE_ID_KEY, NULL, NULL, NULL, &valueSize))) {
+					char ridBuffer[5]; /* the ReleaseId string format is YYMM */
+					if (sizeof(ridBuffer) >= valueSize) {
+						if (ERROR_SUCCESS == RegQueryValueExA(hKey, RELEASE_ID_KEY, NULL, NULL, (LPBYTE)ridBuffer, &valueSize)) {
+							if (0 == strcmp(ridBuffer, "1607")) {
+								PPG_si_osType = "Windows Server 2016";
+							} else if (0 == strcmp(ridBuffer, "1809")) {
+								PPG_si_osType = "Windows Server 2019";
+							} else {
+								size_t bufferSize = sizeof(WINDOWS_SERVER_PREFIX) + valueSize + 1;
+								char *productNameBuffer = portLibrary->mem_allocate_memory(portLibrary,
+										valueSize, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+								if (NULL != productNameBuffer) {
+									/* Print the version string using the format used by Microsoft */
+									portLibrary->str_printf(portLibrary, productNameBuffer, bufferSize,
+											"%s%s", WINDOWS_SERVER_PREFIX, ridBuffer);
+									PPG_si_osTypeOnHeap = productNameBuffer;
+									PPG_si_osType = PPG_si_osTypeOnHeap;
+								}
+							}
+						}
+					}
+				}
+				if (defaultTypeName == PPG_si_osType) {
+					/* query the first time to get the content size of the value. */
+					if (ERROR_SUCCESS == RegQueryValueExA(hKey, PRODUCT_NAME_KEY, NULL, NULL, NULL, &valueSize)) {
+						char *productNameBuffer = portLibrary->mem_allocate_memory(portLibrary, valueSize, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+						if (NULL != productNameBuffer) {
+							/* query the second time to get the value */
+							if (ERROR_SUCCESS == RegQueryValueExA(hKey, PRODUCT_NAME_KEY, NULL, NULL, (LPBYTE)productNameBuffer, &valueSize)) {
+								PPG_si_osType = PPG_si_osTypeOnHeap = productNameBuffer;
+							} else {
+								portLibrary->mem_free_memory(portLibrary, productNameBuffer);
+							}
 						}
 					}
 				}
 			}
 		}
+#undef PRODUCT_NAME_KEY
+#undef RELEASE_ID_KEY
+#undef WINDOWS_SERVER_PREFIX
 		if (defaultTypeName == PPG_si_osType) {
 #if defined(_WIN32_WINNT_WINBLUE) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE)
 			Trc_PRT_sysinfo_failed_to_get_os_type();
@@ -862,6 +899,7 @@ omrsysinfo_shutdown(struct OMRPortLibrary *portLibrary)
 int32_t
 omrsysinfo_startup(struct OMRPortLibrary *portLibrary)
 {
+	PPG_isRunningInContainer = FALSE;
 	/* Obtain and cache executable name; if this fails, executable name remains NULL, but
 	 * shouldn't cause failure to startup port library.  Failure will be noticed only
 	 * when the omrsysinfo_get_executable_name() actually gets invoked.
@@ -949,6 +987,16 @@ omrsysinfo_get_groupname(struct OMRPortLibrary *portLibrary, char *buffer, uintp
 {
 	/* Not applicable to Windows */
 	return -1;
+}
+
+intptr_t
+omrsysinfo_get_hostname(struct OMRPortLibrary *portLibrary, char *buffer, size_t length)
+{
+	if (0 != gethostname(buffer, (int) length)) {
+		Trc_PRT_sysinfo_gethostname_error(OMRPORT_ERROR_SYSINFO_OPFAILED);
+		return OMRPORT_ERROR_SYSINFO_OPFAILED;
+	}
+	return 0;
 }
 
 uint32_t
@@ -1672,20 +1720,45 @@ omrsysinfo_cgroup_is_memlimit_set(struct OMRPortLibrary *portLibrary)
 	return FALSE;
 }
 
-intptr_t
-omrsysinfo_cgroup_get_handle_subsystem_file(struct OMRPortLibrary *portLibrary,  uint64_t subsystemFlag, const char *fileName)
-{
-	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
-}
-
 struct OMRCgroupEntry *
 omrsysinfo_get_cgroup_subsystem_list(struct OMRPortLibrary *portLibrary)
 {
 	return NULL;
 }
 
+BOOLEAN
+omrsysinfo_is_running_in_container(struct OMRPortLibrary *portLibrary)
+{
+	return PPG_isRunningInContainer;
+}
+
 int32_t
-omrsysinfo_is_running_in_container(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer)
+omrsysinfo_cgroup_subsystem_iterator_init(struct OMRPortLibrary *portLibrary, uint64_t subsystem, struct OMRCgroupMetricIteratorState *state)
 {
 	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
 }
+
+BOOLEAN
+omrsysinfo_cgroup_subsystem_iterator_hasNext(struct OMRPortLibrary *portLibrary, const struct OMRCgroupMetricIteratorState *state)
+{
+	return FALSE;
+}
+
+int32_t
+omrsysinfo_cgroup_subsystem_iterator_metricKey(struct OMRPortLibrary *portLibrary, const struct OMRCgroupMetricIteratorState *state, const char **metricKey)
+{
+	return OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_METRIC_NOT_AVAILABLE;
+}
+
+int32_t
+omrsysinfo_cgroup_subsystem_iterator_next(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state, struct OMRCgroupMetricElement *metricElement)
+{
+	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;	
+}
+
+void
+omrsysinfo_cgroup_subsystem_iterator_destroy(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state)
+{
+	return;
+}
+

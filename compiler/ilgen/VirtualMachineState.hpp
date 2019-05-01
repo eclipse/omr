@@ -30,6 +30,9 @@ namespace TR
 
 class VirtualMachineState : public OMR::VirtualMachineState
    {
+   public:
+   VirtualMachineState() : OMR::VirtualMachineState()
+      { }
    };
 
 } // namespace TR

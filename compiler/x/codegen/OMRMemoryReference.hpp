@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,22 +33,22 @@ namespace OMR { typedef OMR::X86::MemoryReference MemoryReferenceConnector; }
 
 #include "compiler/codegen/OMRMemoryReference.hpp"
 
-#include <stddef.h>                                // for NULL
-#include <stdint.h>                                // for uint8_t, int32_t, etc
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator
-#include "codegen/Instruction.hpp"                 // for Instruction
-#include "codegen/Machine.hpp"                     // for Machine, etc
-#include "codegen/RealRegister.hpp"                // for RealRegister, etc
-#include "codegen/Register.hpp"                    // for Register
-#include "codegen/Snippet.hpp"                     // for Snippet
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/Snippet.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
-#include "compile/Compilation.hpp"                 // for Compilation
-#include "env/TRMemory.hpp"                        // for TR_Memory, etc
-#include "env/jittypes.h"                          // for intptrj_t
-#include "il/Node.hpp"                             // for rcount_t
-#include "il/SymbolReference.hpp"                  // for SymbolReference
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/Node.hpp"
+#include "il/SymbolReference.hpp"
 #include "infra/Bit.hpp"
-#include "infra/Flags.hpp"                         // for flags16_t
+#include "infra/Flags.hpp"
 #include "x/codegen/DataSnippet.hpp"
 
 #include "x/codegen/ConstantDataSnippet.hpp"

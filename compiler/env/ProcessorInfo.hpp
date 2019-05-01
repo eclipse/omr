@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #ifndef TR_PROCESSOR_INFO_INCL
 #define TR_PROCESSOR_INFO_INCL
 
-#include <stdint.h>  // for uint32_t
+#include <stdint.h>
 
 
 enum TR_S390MachineType
@@ -51,9 +51,10 @@ enum TR_S390MachineType
    TR_Z13s                    =  2965,  // z13s
    TR_Z14                     =  3906,
    TR_Z14s                    =  3907,
+   TR_Z15                     =  8561,
+   TR_Z15s                    =  8562,
    TR_ZNEXT                   =  9998,
    TR_ZNEXTs                  =  9999,
-
    TR_ZH                      =  2458,  // reserve for zHybrid
    TR_DATAPOWER               =  2462,  // reserve for DataPower on 2458
    TR_ZH_RESERVE1             =  2459,  // reserve for zHybrid

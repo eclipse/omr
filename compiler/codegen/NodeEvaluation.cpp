@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,33 +21,33 @@
 
 #include "codegen/OMRCodeGenerator.hpp"
 
-#include <limits.h>                          // for INT_MAX
-#include <stddef.h>                          // for NULL
-#include <stdint.h>                          // for int32_t
-#include "codegen/CodeGenerator.hpp"         // for CodeGenerator, etc
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
-#include "codegen/LiveRegister.hpp"          // for TR_LiveRegisterInfo, etc
-#include "codegen/Register.hpp"              // for Register
-#include "codegen/RegisterPair.hpp"          // for RegisterPair
+#include "codegen/LiveRegister.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterPair.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/Compilation.hpp"           // for Compilation, comp
-#include "compile/SymbolReferenceTable.hpp"  // for SymbolReferenceTable, etc
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "il/DataTypes.hpp"                  // for DataTypes::Address
-#include "il/ILOpCodes.hpp"                  // for ILOpCodes::aloadi, etc
-#include "il/ILOps.hpp"                      // for ILOpCode
-#include "il/Node.hpp"                       // for Node, rcount_t
-#include "il/Node_inlines.hpp"               // for Node::getChild, etc
-#include "il/Symbol.hpp"                     // for Symbol
-#include "il/SymbolReference.hpp"            // for SymbolReference
-#include "infra/Assert.hpp"                  // for TR_ASSERT
-#include "infra/Stack.hpp"                   // for TR_Stack
-#include "ras/Debug.hpp"                     // for TR_DebugBase
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Stack.hpp"
+#include "ras/Debug.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
 #ifdef TR_TARGET_S390
-#include "z/codegen/S390Register.hpp"                  // for TR_StorageReference, etc
+#include "z/codegen/S390Register.hpp"
 #endif
 #endif
 
@@ -263,7 +263,7 @@ OMR::CodeGenerator::evaluate(TR::Node * node)
          {
          if (((node->getOpCode().isStoreIndirect() &&
                (self()->comp()->useCompressedPointers() && (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address))) ||
-                opcode == TR::wrtbari) &&
+                opcode == TR::awrtbari) &&
                node->getReferenceCount() <= 2 &&
                !checkRefCount)
             checkRefCount = true;

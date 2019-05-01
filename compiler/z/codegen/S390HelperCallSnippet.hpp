@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,10 +24,10 @@
 
 #include "codegen/Snippet.hpp"
 
-#include <stddef.h>                // for NULL
-#include <stdint.h>                // for int32_t, uint32_t, uint8_t
-#include "il/SymbolReference.hpp"  // for SymbolReference
-#include "infra/Assert.hpp"        // for TR_ASSERT
+#include <stddef.h>
+#include <stdint.h>
+#include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class LabelSymbol; }

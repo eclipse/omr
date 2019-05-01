@@ -177,6 +177,17 @@ OMR::VirtualMachineOperandArray::Move(TR::IlBuilder *b, int32_t dstIndex, int32_
    TraceIL("VirtualMachineOperandArray[ %p ]::Move builder %p move srcIndex %d %p(%d) to dstIndex %d %p(%d)\n", this, b, srcIndex, _values[srcIndex], _values[srcIndex]->getID(), dstIndex, _values[dstIndex], _values[dstIndex]->getID());
    }
 
+void *
+OMR::VirtualMachineOperandArray::client()
+   {
+   if (_client == NULL && _clientAllocator != NULL)
+      _client = _clientAllocator(static_cast<TR::VirtualMachineOperandArray *>(this));
+   return _client;
+   }
+
+ClientAllocator OMR::VirtualMachineOperandArray::_clientAllocator = NULL;
+ClientAllocator OMR::VirtualMachineOperandArray::_getImpl = NULL;
+
 void
 OMR::VirtualMachineOperandArray::init()
    {

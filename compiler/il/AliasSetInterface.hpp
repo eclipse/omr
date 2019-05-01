@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,20 +22,20 @@
 #ifndef ALIASSETINTERFACE_INCL
 #define ALIASSETINTERFACE_INCL
 
-#include <stddef.h>                            // for NULL
-#include <stdint.h>                            // for uint32_t
-#include "compile/Compilation.hpp"             // for Compilation, comp, etc
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "cs2/sparsrbit.h"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                    // for SparseBitVector, etc
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference, etc
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
+#include "env/TRMemory.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
 
 
 template <class AliasSetInterface>

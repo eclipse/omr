@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,8 +35,8 @@ namespace OMR { typedef OMR::X86::AMD64::CodeGenerator CodeGeneratorConnector; }
 
 #include "compiler/x/codegen/OMRCodeGenerator.hpp"
 
-#include "codegen/RealRegister.hpp"       // for TR::RealRegister::NumRegisters
-#include "codegen/RegisterConstants.hpp"  // for TR_GlobalRegisterNumber
+#include "codegen/RealRegister.hpp"
+#include "codegen/RegisterConstants.hpp"
 
 namespace TR { class ILOpCode; }
 namespace TR { class Node; }

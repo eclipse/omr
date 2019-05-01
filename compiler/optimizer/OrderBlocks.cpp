@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,38 +21,38 @@
 
 #include "optimizer/OrderBlocks.hpp"
 
-#include <algorithm>                           // for std::min
-#include <stdint.h>                            // for int32_t, int16_t
-#include <stdio.h>                             // for NULL, fprintf, printf, etc
-#include <stdlib.h>                            // for atoi
-#include <string.h>                            // for strlen, memcpy
-#include "codegen/FrontEnd.hpp"                // for feGetEnv, TR_FrontEnd
-#include "compile/Compilation.hpp"             // for Compilation
+#include <algorithm>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
-#include "cs2/bitvectr.h"                      // for ABitVector<>::BitRef
-#include "env/IO.hpp"                          // for POINTER_PRINTF_FORMAT
-#include "env/StackMemoryRegion.hpp"           // for TR:StackMemoryRegion
-#include "env/TRMemory.hpp"                    // for TR_Memory, BitVector
-#include "il/Block.hpp"                        // for Block, toBlock
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::BBStart, etc
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, vcount_t
+#include "control/Options_inlines.hpp"
+#include "cs2/bitvectr.h"
+#include "env/IO.hpp"
+#include "env/StackMemoryRegion.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "il/symbol/LabelSymbol.hpp"           // for LabelSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Cfg.hpp"                       // for CFG, etc
-#include "infra/List.hpp"                      // for List, ListIterator, etc
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/CfgNode.hpp"                   // for CFGNode
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/OptimizationManager.hpp"   // for OptimizationManager
+#include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/Structure.hpp"             // for TR_BlockStructure, etc
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
 
 #include "optimizer/OMRSimplifierHelpers.hpp"
 

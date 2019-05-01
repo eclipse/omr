@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,6 @@ if(OMR_COMPILER_SUPPORT_)
 	return()
 endif()
 set(OMR_COMPILER_SUPPORT_ 1)
-
 
 # This file contains a number of support pieces required to build the compiler
 # component.
@@ -74,13 +73,11 @@ function(make_compiler_target TARGET_NAME SCOPE)
 	# TODO: Extract into platform specific section.
 	target_compile_definitions(${TARGET_NAME} ${SCOPE}
 		BITVECTOR_BIT_NUMBERING_MSB
-		UT_DIRECT_TRACE_REGISTRATION
 		${TR_COMPILE_DEFINITIONS}
 		${COMPILER_DEFINES}
 	)
 
-	message("Made ${TARGET_NAME} into a compiler target,for ${TARGET_COMPILER}.")
-	message("Defines are ${COMPILER_DEFINES} and ${TR_COMPILE_DEFINITIONS}, arch is ${TR_TARGET_ARCH} and ${TR_TARGET_SUBARCH}, compile options are ${TR_COMPILE_OPTIONS} ")
+	message(STATUS "Adding ${SCOPE} compiler options to ${TARGET_NAME} for ${TARGET_COMPILER}.")
 endfunction(make_compiler_target)
 
 # Filter through the provided list, and rewrite any
@@ -119,7 +116,6 @@ function(pasm2asm_files out_var compiler)
 	endforeach()
 	set(${out_var} "${result}" PARENT_SCOPE)
 endfunction()
-
 
 # Filter through the provided list, and rewrite any
 # .asm files to .s files, and add the .s file to the list
@@ -176,7 +172,6 @@ function(spp2s_files out_var compiler)
 	# Convert an SPP file to an IPP using the pre-processor.
 	# Rewrite the IPP file to a .s file using sed.
 
-
 	# Get the definitions already set in this directory
 	# - A concern would be how this would interact with target_compile_definitions
 	get_property(compile_defs DIRECTORY PROPERTY COMPILE_DEFINITIONS)
@@ -184,7 +179,6 @@ function(spp2s_files out_var compiler)
 	set(SPP_INCLUDES ${${compiler}_INCLUDES})
 	set(SPP_DEFINES  ${${compiler}_DEFINES} ${compile_defs})
 
-	message(STATUS "Set SPP defines to ${SPP_DEFINES}")
 	omr_add_prefix(SPP_INCLUDES "-I" ${SPP_INCLUDES})
 	omr_add_prefix(SPP_DEFINES  "-D" ${SPP_DEFINES})
 	set(result "")
@@ -224,7 +218,6 @@ function(spp2s_files out_var compiler)
 	set(${out_var} "${result}" PARENT_SCOPE)
 endfunction()
 
-
 # Some source files in OMR don't map well into the transforms
 # CMake already knows about. This generates a pipeline of custom commands
 # to transform these source files into files that CMake _does_ understand.
@@ -238,12 +231,39 @@ function(omr_inject_object_modification_targets result compiler_name)
 	# Run masm2gas on contained .asm files
 	masm2gas_asm_files(arg ${compiler_name} ${arg})
 
-
 	# COnvert SPP files to .s files
 	spp2s_files(arg ${compiler_name} ${arg})
 
 	set(${result} ${arg} PARENT_SCOPE)
 endfunction(omr_inject_object_modification_targets)
+
+# make_gnu_asm_defines(output_var <define> ...)
+# Make output_var a string which will define each <define>
+# as an assembler define (rather than a c pre-processor define)
+function(make_gnu_asm_defines output)
+
+	foreach(arg IN LISTS ARGN)
+		set(clean_arg)
+		string(REGEX REPLACE "^-D" "" clean_arg "${arg}")
+		# if clean_arg already is of form FOO=BAR, append it as is
+		# otherwise we change it to FOO=1
+		if(clean_arg MATCHES "=")
+			set(arg_str "${arg_str},--defsym,${clean_arg}")
+		else()
+			set(arg_str "${arg_str},--defsym,${clean_arg}=1")
+		endif()
+	endforeach()
+
+	if(OMR_ENV_DATA64)
+		set(arg_str ",--64${arg_str}")
+	endif()
+
+	# if we actually generated any string
+	# ie we were passed in any <define> values
+	if(arg_str)
+		set(${output} "-Wa${arg_str}" PARENT_SCOPE)
+	endif()
+endfunction(make_gnu_asm_defines)
 
 # Setup the current scope for compiling the Testarossa compiler technology. Used in
 # conjunction with make_compiler_target -- Only can infect add_directory scope.
@@ -254,7 +274,25 @@ macro(set_tr_compile_options)
 	set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} PARENT_SCOPE)
 	# message("[set_tr_compile_options] Set CMAKE_CXX_FLAGS to ${CMAKE_CXX_FLAGS}")
 	# message("[set_tr_compile_options] Set CMAKE_C_FLAGS to ${CMAKE_C_FLAGS}")
-	set(CMAKE_ASM_FLAGS ${TR_ASM_FLAGS} PARENT_SCOPE)
+
+	set(TR_ASM_FLAGS "")
+	foreach(def IN LISTS TR_COMPILE_DEFINITIONS)
+		#  Prepend leading '-D' only if required
+		if(def MATCHES "^-D")
+			set(TR_ASM_FLAGS "${TR_ASM_FLAGS} ${def}")
+		else()
+			set(TR_ASM_FLAGS "${TR_ASM_FLAGS} -D${def}")
+		endif()
+	endforeach()
+
+	# We need special handling on x86 because we could be gnu or NASM assembler
+	if(OMR_ARCH_X86)
+		make_gnu_asm_defines(gnu_defines ${TR_COMPILE_DEFINITIONS})
+		set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${gnu_defines}" PARENT_SCOPE)
+		set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} ${TR_ASM_FLAGS}" PARENT_SCOPE)
+	else()
+		set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${TR_ASM_FLAGS}" PARENT_SCOPE)
+	endif()
 endmacro(set_tr_compile_options)
 
 # Create an OMR Compiler component
@@ -279,15 +317,14 @@ function(create_omr_compiler_library)
 		)
 
 	if(COMPILER_SHARED)
-		message("Creating shared library for ${COMPILER_NAME}")
+		message(STATUS "Creating shared library for ${COMPILER_NAME}")
 		set(LIB_TYPE SHARED)
 	else()
-		message("Creating static library for ${COMPILER_NAME}")
+		message(STATUS "Creating static library for ${COMPILER_NAME}")
 		set(LIB_TYPE STATIC)
 	endif()
 
 	set_tr_compile_options()
-
 
 	get_filename_component(abs_root ${CMAKE_CURRENT_LIST_DIR} ABSOLUTE)
 	# We use the cache to allow passing information about compiler targets
@@ -306,13 +343,10 @@ function(create_omr_compiler_library)
 		CACHE INTERNAL "Include header list for ${COMPILER}"
 	)
 
-	message("${COMPILER_NAME}_ROOT = ${${COMPILER_NAME}_ROOT}")
-
-
 	# Generate a build name file.
 	set(BUILD_NAME_FILE "${CMAKE_BINARY_DIR}/${COMPILER_NAME}Name.cpp")
 	add_custom_command(OUTPUT ${BUILD_NAME_FILE}
-		COMMAND perl ${omr_SOURCE_DIR}/tools/compiler/scripts/generateVersion.pl ${COMPILER_NAME} > ${BUILD_NAME_FILE}
+		COMMAND perl ${omr_SOURCE_DIR}/tools/compiler/scripts/generateVersion.pl ${COMPILER_NAME} ${BUILD_NAME_FILE}
 		VERBATIM
 		COMMENT "Generate ${BUILD_NAME_FILE}"
 	)
@@ -322,6 +356,11 @@ function(create_omr_compiler_library)
 	add_library(${COMPILER_NAME} ${LIB_TYPE}
 		${BUILD_NAME_FILE}
 		${COMPILER_OBJECTS}
+	)
+
+	target_link_libraries(${COMPILER_NAME}
+		PUBLIC
+			omr_base
 	)
 
 	# Grab the list of core compiler objects from the global property.
@@ -335,14 +374,10 @@ function(create_omr_compiler_library)
 		list(REMOVE_ITEM core_compiler_objects ${abs_filename})
 	endforeach()
 
-
-
 	omr_inject_object_modification_targets(core_compiler_objects ${COMPILER_NAME} ${core_compiler_objects})
 
 	# Append to the compiler sources list
 	target_sources(${COMPILER_NAME} PRIVATE ${core_compiler_objects})
-
-
 
 	# Set include paths and defines.
 	make_compiler_target(${COMPILER_NAME} PRIVATE COMPILER ${COMPILER_NAME})

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,9 +24,9 @@
 
 #include "x/codegen/X86SystemLinkage.hpp"
 
-#include <stdint.h>                        // for uint16_t, int32_t, etc
-#include "codegen/Register.hpp"            // for Register
-#include "il/DataTypes.hpp"                // for DataTypes
+#include <stdint.h>
+#include "codegen/Register.hpp"
+#include "il/DataTypes.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Node; }
@@ -57,7 +57,7 @@ class AMD64SystemLinkage : public TR::X86SystemLinkage
 
    TR::Register *buildVolatileAndReturnDependencies(TR::Node *callNode, TR::RegisterDependencyConditions *deps);
 
-   virtual TR::RealRegister* getSingleWordFrameAllocationRegister() { return machine()->getX86RealRegister(TR::RealRegister::r11); }
+   virtual TR::RealRegister* getSingleWordFrameAllocationRegister() { return machine()->getRealRegister(TR::RealRegister::r11); }
 
    private:
    bool layoutTypeInRegs(TR::DataType type, uint16_t &intReg, uint16_t &floatReg, TR::parmLayoutResult&);

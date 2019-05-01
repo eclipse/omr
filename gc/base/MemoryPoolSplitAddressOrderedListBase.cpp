@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,7 +186,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::initialize(MM_EnvironmentBase* env)
 		return false;
 	} else {
 		for (uintptr_t i = 0; i < _heapFreeListCountExtended; ++i) {
-			new (&_largeObjectAllocateStatsForFreeList[i]) MM_LargeObjectAllocateStats();
+			new (&_largeObjectAllocateStatsForFreeList[i]) MM_LargeObjectAllocateStats(env);
 
 			/* set multiple factor = 2 for doubling _maxVeryLargeEntrySizes to avoid run out of _veryLargeEntryPool (minus count during decrement) */
 			if (!_largeObjectAllocateStatsForFreeList[i].initialize(env, (uint16_t)extensions->largeObjectAllocationProfilingTopK, extensions->largeObjectAllocationProfilingThreshold, extensions->largeObjectAllocationProfilingVeryLargeObjectThreshold, (float)extensions->largeObjectAllocationProfilingSizeClassRatio / (float)100.0,

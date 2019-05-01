@@ -49,6 +49,5 @@ compiler_library(p
 	${CMAKE_CURRENT_LIST_DIR}/codegen/TreeEvaluatorVMX.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/UnaryEvaluator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRConstantDataSnippet.cpp
-	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRegisterIterator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/env/OMRCPU.cpp
 )

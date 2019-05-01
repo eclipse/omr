@@ -27,6 +27,7 @@ add_subdirectory(util)
 
 add_subdirectory(omrGtestGlue)
 add_subdirectory(algotest)
+add_subdirectory(coretest)
 add_subdirectory(porttest)
 add_subdirectory(rastest)
 add_subdirectory(sigtest)
@@ -35,8 +36,12 @@ add_subdirectory(threadtest)
 add_subdirectory(utiltest)
 add_subdirectory(vmtest)
 
-if(OMR_GC)
+if(OMR_GC_TEST)
 	add_subdirectory(gctest)
+endif()
+
+if(OMR_GC_API_TEST)
+	add_subdirectory(gc_api_test)
 endif()
 
 if(OMR_JITBUILDER_TEST)

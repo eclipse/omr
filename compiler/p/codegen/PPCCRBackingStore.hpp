@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
 #ifndef PPCCRBACKINGSTORE_INCL
 #define PPCCRBACKINGSTORE_INCL
 
-#include <stdint.h>                  // for uint8_t
-#include "codegen/BackingStore.hpp"  // for TR_BackingStore
-#include "compile/Compilation.hpp"   // for Compilation
-#include "il/SymbolReference.hpp"    // for SymbolReference
+#include <stdint.h>
+#include "codegen/BackingStore.hpp"
+#include "compile/Compilation.hpp"
+#include "il/SymbolReference.hpp"
 
 class TR_PPCCRBackingStore;
 

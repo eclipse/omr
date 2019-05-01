@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,21 +21,21 @@
 
 #include "infra/Assert.hpp"
 
-#include <assert.h>                            // for assert
-#include <stdarg.h>                            // for va_list
-#include <stdio.h>                             // for fprintf, stderr, etc
-#include <stdlib.h>                            // for exit
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, isJ9
-#include "compile/Compilation.hpp"             // for Compilation, comp
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
+#include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
-#include "control/Recompilation.hpp"           // for TR_Recompilation
+#include "control/Options_inlines.hpp"
+#include "control/Recompilation.hpp"
 #include "env/CompilerEnv.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Annotations.hpp"               // for OMR_NORETURN
-#include "ras/Debug.hpp"                       // for TR_Debug
-#include "stdarg.h"                            // for va_end, va_copy, etc
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Annotations.hpp"
+#include "ras/Debug.hpp"
+#include "stdarg.h"
 
 #ifdef J9_PROJECT_SPECIFIC
 #include "env/VMJ9.h"
@@ -75,25 +75,12 @@ void OMR_NORETURN TR::trap()
       }
    }
 
-static void assumeDontCallMeDirectlyImpl( const char * file, int32_t line, const char *condition, const char *s, va_list ap, bool fatal)
+
+static void traceAssertionFailure(const char * file, int32_t line, const char *condition, const char *s, va_list ap)
    {
    TR::Compilation *comp = TR::comp();
 
-   // if the ignoreAssert option is set, then we ignore failing assert
-   if (comp && comp->getOption(TR_IgnoreAssert) && !fatal)
-      return;
-
    if (!condition) condition = "";
-
-#ifdef J9_PROJECT_SPECIFIC
-   if (comp && comp->fej9()->traceIsEnabled())
-      comp->fej9()->traceAssumeFailure(line, file);
-#endif
-
-   // Fatal assertions fire always, however, non fatal assertions
-   // can be disabled via TR_SoftFailOnAssume.
-   if (comp && comp->getOption(TR_SoftFailOnAssume) && !fatal)
-      comp->failCompilation<TR::AssertionFailure>("Assertion Failure");
 
    // Default is to always print to screen
    bool printOnscreen = true;
@@ -148,26 +135,31 @@ static void assumeDontCallMeDirectlyImpl( const char * file, int32_t line, const
          }
       comp->diagnosticImpl("\n");
       }
-
-   TR::trap();
    }
 
 namespace TR
    {
    void assertion(const char *file, int line, const char *condition, const char *format, ...)
       {
-      va_list ap;
-      va_start(ap, format);
-      assumeDontCallMeDirectlyImpl( file, line, condition, format, ap, false);
-      va_end(ap);
+      TR::Compilation *comp = TR::comp();
+      if (comp)
+         {
+         // TR_IgnoreAssert: ignore nonfatal assertion failures.
+         if (comp->getOption(TR_IgnoreAssert))
+            return;
+         // TR_SoftFailOnAssume: on nonfatal assertion failure, cancel the compilation without crashing the process.
+         if (comp->getOption(TR_SoftFailOnAssume))
+            comp->failCompilation<TR::AssertionFailure>("Assertion Failure");
+         }
+      fatal_assertion(file, line, condition, format);
       }
 
    void OMR_NORETURN fatal_assertion(const char *file, int line, const char *condition, const char *format, ...)
       {
       va_list ap;
       va_start(ap, format);
-      assumeDontCallMeDirectlyImpl( file, line, condition, format, ap, true);
+      traceAssertionFailure(file, line, condition, format, ap);
       va_end(ap);
+      TR::trap();
       }
-
    }

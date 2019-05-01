@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@ namespace OMR { class VMEnv; }
 namespace OMR { typedef OMR::VMEnv VMEnvConnector; }
 #endif
 
-#include <stdint.h>        // for int32_t, int64_t, uint32_t
+#include <stdint.h>
 #include "infra/Annotations.hpp"
 #include "env/jittypes.h"
 

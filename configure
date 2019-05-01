@@ -692,7 +692,6 @@ OMR_ARCH_ARM
 OMR_ARCH_POWER
 OMR_PORT_ASYNC_HANDLER
 OMR_GC_VLHGC
-OMR_GC_STACCATO
 OMR_GC_SEGREGATED_HEAP
 OMR_GC_REALTIME
 OMR_GC_OBJECT_ALLOCATION_NOTIFY
@@ -700,6 +699,7 @@ OMR_GC_LEAF_BITS
 OMR_GC_HYBRID_ARRAYLETS
 OMR_GC_CONCURRENT_SWEEP
 OMR_GC_CONCURRENT_SCAVENGER
+OMR_GC_DOUBLE_MAP_ARRAYLETS
 OMR_GC_MODRON_SCAVENGER
 OMR_GC_MODRON_CONCURRENT_MARK
 OMR_GC_MODRON_COMPACTION
@@ -729,7 +729,7 @@ OMR_THREAD
 OMR_PORT
 OMR_TEST_COMPILER
 OMR_JITBUILDER
-OMR_JIT
+OMR_COMPILER
 OMR_GC
 ac_ct_CXX
 CXXFLAGS
@@ -825,7 +825,7 @@ enable_tracegen
 enable_native_encoding
 enable_auto_build_flag
 enable_OMR_GC
-enable_OMR_JIT
+enable_OMR_COMPILER
 enable_OMR_JITBUILDER
 enable_OMR_TEST_COMPILER
 enable_OMR_PORT
@@ -855,6 +855,7 @@ enable_OMR_GC_DYNAMIC_CLASS_UNLOADING
 enable_OMR_GC_MODRON_COMPACTION
 enable_OMR_GC_MODRON_CONCURRENT_MARK
 enable_OMR_GC_MODRON_SCAVENGER
+enable_OMR_GC_DOUBLE_MAP_ARRAYLETS
 enable_OMR_GC_CONCURRENT_SCAVENGER
 enable_OMR_GC_CONCURRENT_SWEEP
 enable_OMR_GC_HYBRID_ARRAYLETS
@@ -862,7 +863,6 @@ enable_OMR_GC_LEAF_BITS
 enable_OMR_GC_OBJECT_ALLOCATION_NOTIFY
 enable_OMR_GC_REALTIME
 enable_OMR_GC_SEGREGATED_HEAP
-enable_OMR_GC_STACCATO
 enable_OMR_GC_VLHGC
 enable_OMR_PORT_ASYNC_HANDLER
 enable_OMR_ARCH_POWER
@@ -1567,7 +1567,7 @@ Optional Features:
                           are not explicitly enabled or disabled. (Default:
                           yes)
   --disable-OMR_GC        Enable building the OMR GC. (Default: yes)
-  --enable-OMR_JIT        Enable building the OMR JIT. (Default: no)
+  --enable-OMR_COMPILER   Enable building the OMR Compiler. (Default: no)
   --enable-OMR_JITBUILDER Enable building JitBuilder. (Default: no)
   --enable-OMR_TEST_COMPILER
                           Enable building the Test compiler. (Default: no)
@@ -1620,6 +1620,8 @@ Optional Features:
 
   --enable-OMR_GC_MODRON_SCAVENGER
 
+  --enable-OMR_GC_DOUBLE_MAP_ARRAYLETS
+
   --enable-OMR_GC_CONCURRENT_SCAVENGER
 
   --enable-OMR_GC_CONCURRENT_SWEEP
@@ -1633,8 +1635,6 @@ Optional Features:
   --enable-OMR_GC_REALTIME
 
   --enable-OMR_GC_SEGREGATED_HEAP
-
-  --enable-OMR_GC_STACCATO
 
   --enable-OMR_GC_VLHGC
   --enable-OMR_PORT_ASYNC_HANDLER
@@ -5330,20 +5330,20 @@ else
 fi
 
 
-# Check whether --enable-OMR_JIT was given.
-if test "${enable_OMR_JIT+set}" = set; then :
-  enableval=$enable_OMR_JIT; if test "x${enableval}" = xyes; then :
-  OMR_JIT=1
+# Check whether --enable-OMR_COMPILER was given.
+if test "${enable_OMR_COMPILER+set}" = set; then :
+  enableval=$enable_OMR_COMPILER; if test "x${enableval}" = xyes; then :
+  OMR_COMPILER=1
 
-   $as_echo "#define OMR_JIT 1" >>confdefs.h
+   $as_echo "#define OMR_COMPILER 1" >>confdefs.h
 
 else
-  OMR_JIT=0
+  OMR_COMPILER=0
 
 
 fi
 else
-  OMR_JIT=0
+  OMR_COMPILER=0
 
 
 fi
@@ -5952,6 +5952,25 @@ else
 fi
 
 
+# Check whether --enable-OMR_GC_DOUBLE_MAP_ARRAYLETS was given.
+if test "${enable_OMR_GC_DOUBLE_MAP_ARRAYLETS+set}" = set; then :
+  enableval=$enable_OMR_GC_DOUBLE_MAP_ARRAYLETS; if test "x${enableval}" = xyes; then :
+  OMR_GC_DOUBLE_MAP_ARRAYLETS=1
+
+   $as_echo "#define OMR_GC_DOUBLE_MAP_ARRAYLETS 1" >>confdefs.h
+
+else
+  OMR_GC_DOUBLE_MAP_ARRAYLETS=0
+
+
+fi
+else
+  OMR_GC_DOUBLE_MAP_ARRAYLETS=0
+
+
+fi
+
+
 # Check whether --enable-OMR_GC_CONCURRENT_SCAVENGER was given.
 if test "${enable_OMR_GC_CONCURRENT_SCAVENGER+set}" = set; then :
   enableval=$enable_OMR_GC_CONCURRENT_SCAVENGER; if test "x${enableval}" = xyes; then :
@@ -6080,25 +6099,6 @@ else
 fi
 else
   OMR_GC_SEGREGATED_HEAP=0
-
-
-fi
-
-
-# Check whether --enable-OMR_GC_STACCATO was given.
-if test "${enable_OMR_GC_STACCATO+set}" = set; then :
-  enableval=$enable_OMR_GC_STACCATO; if test "x${enableval}" = xyes; then :
-  OMR_GC_STACCATO=1
-
-   $as_echo "#define OMR_GC_STACCATO 1" >>confdefs.h
-
-else
-  OMR_GC_STACCATO=0
-
-
-fi
-else
-  OMR_GC_STACCATO=0
 
 
 fi

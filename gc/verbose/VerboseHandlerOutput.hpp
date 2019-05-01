@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,8 @@
 
 #include "modronbase.h"
 
+#include "LightweightNonReentrantLock.hpp"
+
 class MM_CollectionStatistics;
 class MM_EnvironmentBase;
 class MM_GCExtensionsBase;
@@ -38,6 +40,8 @@ class MM_VerboseManager;
 class MM_VerboseHandlerOutput : public MM_Base
 {
 private:
+	MM_LightweightNonReentrantLock _reportingLock;
+
 protected:
 	MM_GCExtensionsBase *_extensions;
 	OMR_VM *_omrVM;
@@ -454,7 +458,7 @@ public:
 	void handleConcurrentEnd(J9HookInterface** hook, UDATA eventNum, void* eventData);
 	
 	virtual	void handleConcurrentStartInternal(J9HookInterface** hook, UDATA eventNum, void* eventData) {}
-	virtual void handleConcurrentEndInternal(J9HookInterface** hook, UDATA eventNum, void* eventData) {}
+	virtual void handleConcurrentEndInternal(J9HookInterface** hook, UDATA eventNum, void* eventData);
 	virtual const char *getConcurrentTypeString() { return NULL; }
 	
 	virtual void handleConcurrentGCOpStart(J9HookInterface** hook, uintptr_t eventNum, void* eventData) {}

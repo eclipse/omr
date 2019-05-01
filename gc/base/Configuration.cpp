@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -271,40 +271,42 @@ MM_Configuration::initializeRunTimeObjectAlignmentAndCRShift(MM_EnvironmentBase*
 	OMR_VM *omrVM = env->getOmrVM();
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-	UDATA heapTop = (uintptr_t)heap->getHeapTop();
-	UDATA maxAddressValue = (uintptr_t)1 << 32;
-	UDATA shift = (extensions->shouldAllowShiftingCompression) ? LOW_MEMORY_HEAP_CEILING_SHIFT : 0;
-	bool canChangeShift = true;
+	if (env->compressObjectReferences()) {
+		UDATA heapTop = (uintptr_t)heap->getHeapTop();
+		UDATA maxAddressValue = (uintptr_t)1 << 32;
+		UDATA shift = (extensions->shouldAllowShiftingCompression) ? LOW_MEMORY_HEAP_CEILING_SHIFT : 0;
+		bool canChangeShift = true;
 
-	if (extensions->shouldForceSpecifiedShiftingCompression) {
-		shift = extensions->forcedShiftingCompressionAmount;
-		canChangeShift = false;
-	}
-	if (heapTop <= (maxAddressValue << shift)) {
-		/* now, try to clamp the shifting */
-		if (canChangeShift) {
-			intptr_t underShift = (intptr_t)shift - 1;
-			while ((heapTop <= (maxAddressValue << underShift)) && (underShift >= 0)) {
-				underShift -= 1;
-			}
-			shift = (uintptr_t)(underShift + 1);
+		if (extensions->shouldForceSpecifiedShiftingCompression) {
+			shift = extensions->forcedShiftingCompressionAmount;
+			canChangeShift = false;
 		}
-	} else {
-		/* impossible geometry:  use an assert for now but just return false once we are done testing the shifting */
-		Assert_MM_unreachable();
-		return false;
-	}
+		if (heapTop <= (maxAddressValue << shift)) {
+			/* now, try to clamp the shifting */
+			if (canChangeShift) {
+				intptr_t underShift = (intptr_t)shift - 1;
+				while ((heapTop <= (maxAddressValue << underShift)) && (underShift >= 0)) {
+					underShift -= 1;
+				}
+				shift = (uintptr_t)(underShift + 1);
+			}
+		} else {
+			/* impossible geometry:  use an assert for now but just return false once we are done testing the shifting */
+			Assert_MM_unreachable();
+			return false;
+		}
 #if !defined(S390) && !defined(J9ZOS390)
-	/* s390 benefits from smaller shift values but other platforms don't so just force the shift to 3 if it was not 0 to save
-	 * on testing resources.
-	 * (still honour the "canChangeShift" flag, though, since we want our testing options to still work)
-	 */
-	if ((canChangeShift) && (0 != shift) && (shift < DEFAULT_LOW_MEMORY_HEAP_CEILING_SHIFT)) {
-		shift = DEFAULT_LOW_MEMORY_HEAP_CEILING_SHIFT;
-	}
+		/* s390 benefits from smaller shift values but other platforms don't so just force the shift to 3 if it was not 0 to save
+		 * on testing resources.
+		 * (still honour the "canChangeShift" flag, though, since we want our testing options to still work)
+		 */
+		if ((canChangeShift) && (0 != shift) && (shift < DEFAULT_LOW_MEMORY_HEAP_CEILING_SHIFT)) {
+			shift = DEFAULT_LOW_MEMORY_HEAP_CEILING_SHIFT;
+		}
 #endif /* defined(S390) */
 
-	omrVM->_compressedPointersShift = shift;
+		omrVM->_compressedPointersShift = shift;
+	}
 
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 

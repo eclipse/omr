@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -272,7 +272,7 @@ omrport_control(struct OMRPortLibrary *portLibrary, const char *key, uintptr_t v
 	}
 #endif
 
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	if (0 == strcmp(OMRPORT_CTLDATA_NOSUBALLOC32BITMEM, key)) {
 		portLibrary->portGlobals->disableEnsureCap32 = value;
 		return 0;

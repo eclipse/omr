@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,37 +21,36 @@
 
 #include "optimizer/LocalAnalysis.hpp"
 
-#include <stdint.h>                              // for int32_t, uint32_t
-#include <string.h>                              // for NULL, memset
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                  // for TR_FrontEnd
-#include "codegen/Linkage.hpp"                   // for Linkage
-#include "compile/Compilation.hpp"               // for Compilation
-#include "compile/Method.hpp"                    // for MAX_SCOUNT
-#include "compile/ResolvedMethod.hpp"            // for TR_ResolvedMethod
+#include <stdint.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "cs2/bitvectr.h"
-#include "env/TRMemory.hpp"                      // for BitVector, etc
-#include "env/jittypes.h"                        // for intptrj_t
-#include "il/Block.hpp"                          // for Block, toBlock
-#include "il/DataTypes.hpp"                      // for DataTypes::Address, etc
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes::NULLCHK, etc
-#include "il/ILOps.hpp"                          // for ILOpCode, etc
-#include "il/Node.hpp"                           // for Node, etc
-#include "il/Node_inlines.hpp"                   // for Node::getChild, etc
-#include "il/Symbol.hpp"                         // for Symbol
-#include "il/SymbolReference.hpp"                // for SymbolReference, etc
-#include "il/TreeTop.hpp"                        // for TreeTop
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"            // for MethodSymbol
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/BitVector.hpp"                   // for TR_BitVector
-#include "infra/Cfg.hpp"                         // for CFG
-#include "infra/List.hpp"                        // for ListIterator, List
-#include "infra/CfgEdge.hpp"                     // for CFGEdge
-#include "optimizer/Optimizer.hpp"               // for Optimizer
-#include "ras/Debug.hpp"                         // for TR_DebugBase
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "ras/Debug.hpp"
 
 
 class TR_OpaqueClassBlock;
@@ -613,9 +612,9 @@ int TR_LocalAnalysisInfo::hasOldExpressionOnRhs(TR::Node *node, bool recalcConta
             other->setNumChildren(otherStoreNumChildren);
 
             if (otherStoreNumChildren == 3)
-               TR::Node::recreate(other, TR::wrtbari);
+               TR::Node::recreate(other, TR::awrtbari);
             else
-               TR::Node::recreate(other, TR::wrtbar);
+               TR::Node::recreate(other, TR::awrtbar);
             }
          else if (seenOtherIndirectStore)
             {
@@ -639,9 +638,9 @@ int TR_LocalAnalysisInfo::hasOldExpressionOnRhs(TR::Node *node, bool recalcConta
                node->setNumChildren(storeNumChildren);
 
                if (storeNumChildren == 3)
-                  TR::Node::recreate(node, TR::wrtbari);
+                  TR::Node::recreate(node, TR::awrtbari);
                else
-                  TR::Node::recreate(node, TR::wrtbar);
+                  TR::Node::recreate(node, TR::awrtbar);
                }
             else if (seenIndirectStore)
                {
@@ -676,9 +675,9 @@ int TR_LocalAnalysisInfo::hasOldExpressionOnRhs(TR::Node *node, bool recalcConta
       node->setNumChildren(storeNumChildren);
 
       if (storeNumChildren == 3)
-         TR::Node::recreate(node, TR::wrtbari);
+         TR::Node::recreate(node, TR::awrtbari);
       else
-         TR::Node::recreate(node, TR::wrtbar);
+         TR::Node::recreate(node, TR::awrtbar);
       }
    else if (seenIndirectStore)
       {

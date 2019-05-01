@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,19 +21,19 @@
 
 #include "infra/InterferenceGraph.hpp"
 
-#include <stdint.h>                     // for int32_t
-#include <string.h>                     // for NULL, memset
+#include <stdint.h>
+#include <string.h>
 #include "env/StackMemoryRegion.hpp"
-#include "compile/Compilation.hpp"      // for Compilation, operator<<
-#include "cs2/bitvectr.h"               // for ABitVector, etc
-#include "env/TRMemory.hpp"             // for Allocator, TR_Memory, etc
-#include "infra/Array.hpp"              // for TR_Array
-#include "infra/Assert.hpp"             // for TR_ASSERT
-#include "infra/BitVector.hpp"          // for TR_BitVector, etc
-#include "infra/IGBase.hpp"             // for IMIndex, TR_IGBase
-#include "infra/IGNode.hpp"             // for TR_IGNode, IGNodeColour, etc
-#include "infra/List.hpp"               // for List, ListIterator
-#include "infra/Stack.hpp"              // for TR_Stack
+#include "compile/Compilation.hpp"
+#include "cs2/bitvectr.h"
+#include "env/TRMemory.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/IGBase.hpp"
+#include "infra/IGNode.hpp"
+#include "infra/List.hpp"
+#include "infra/Stack.hpp"
 
 TR_InterferenceGraph::TR_InterferenceGraph(TR::Compilation *comp, int32_t estimatedNodes) :
       _compilation(comp),

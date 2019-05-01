@@ -36,6 +36,9 @@ MM_RootScannerStats::clear()
 	for (uintptr_t i = 0; i < RootScannerEntity_Count; i++) {
 		_entityScanTime[i] = 0;
 	}
+	_statsUsed = false;
+	_maxIncrementTime = 0;
+	_maxIncrementEntity = RootScannerEntity_None;
 }
 
 void

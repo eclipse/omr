@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,19 +19,19 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                                 // for NULL
-#include <stdint.h>                                 // for int32_t
+#include <stddef.h>
+#include <stdint.h>
 #include "compile/Compilation.hpp"
-#include "env/TRMemory.hpp"                         // for BitVector, etc
-#include "il/Block.hpp"                             // for Block
-#include "il/Node.hpp"                              // for Node, vcount_t
-#include "il/TreeTop.hpp"                           // for TreeTop
-#include "il/TreeTop_inlines.hpp"                   // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/Link.hpp"                           // for TR_LinkHead
-#include "infra/List.hpp"                           // for List, etc
-#include "infra/CfgEdge.hpp"                        // for CFGEdge
-#include "infra/CfgNode.hpp"                        // for CFGNode
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/Node.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"
 

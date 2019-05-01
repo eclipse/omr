@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,16 +31,16 @@ namespace OMR { class Optimizer; }
 namespace OMR { typedef OMR::Optimizer OptimizerConnector; }
 #endif
 
-#include <stddef.h>                      // for NULL
-#include <stdint.h>                      // for int32_t, uint16_t, uint32_t
-#include "compile/CompilationTypes.hpp"  // for TR_Hotness
-#include "env/TRMemory.hpp"              // for TR_Memory, etc
-#include "il/Node.hpp"                   // for vcount_t
-#include "il/TreeTop.hpp"                // for TreeTop
-#include "il/TreeTop_inlines.hpp"        // for TreeTop::getNode
-#include "infra/Assert.hpp"              // for TR_ASSERT
-#include "infra/List.hpp"                // for List
-#include "optimizer/Optimizations.hpp"   // for Optimizations, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/CompilationTypes.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimizations.hpp"
 #include "optimizer/OptimizationStrategies.hpp"
 
 class TR_BitVector;

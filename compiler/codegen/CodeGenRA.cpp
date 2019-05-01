@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,75 +21,66 @@
 
 #include "codegen/OMRCodeGenerator.hpp"
 
-#include <limits.h>                            // for INT_MAX
-#include <stdint.h>                            // for int32_t, uint8_t, etc
-#include <stdlib.h>                            // for NULL, atoi
-#include <algorithm>                           // for std::find, etc
+#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <algorithm>
 #include "codegen/BackingStore.hpp"
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
-#include "codegen/FrontEnd.hpp"                // for feGetEnv, etc
-#include "codegen/GCStackAtlas.hpp"            // for GCStackAtlas
-#include "codegen/Instruction.hpp"             // for Instruction
-#include "codegen/Linkage.hpp"                 // for Linkage
+#include "codegen/FrontEnd.hpp"
+#include "codegen/GCStackAtlas.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/LiveReference.hpp"
 #include "codegen/LiveRegister.hpp"
-#include "codegen/Register.hpp"                // for Register
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/Compilation.hpp"             // for Compilation
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                          // for POINTER_PRINTF_FORMAT
-#include "env/ObjectModel.hpp"                 // for ObjectModel
+#include "env/IO.hpp"
+#include "env/ObjectModel.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for DataType, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                        // for ILOpCode, etc
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getType, etc
-#include "il/Symbol.hpp"                       // for Symbol
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                      // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                       // for CFG
-#include "infra/Flags.hpp"                     // for flags32_t
-#include "infra/Link.hpp"                      // for TR_LinkHead
-#include "infra/List.hpp"                      // for List, etc
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/CfgNode.hpp"                   // for CFGNode
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/RegisterCandidate.hpp"
 #include "optimizer/Structure.hpp"
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "ras/Debug.hpp"
 
 #define OPT_DETAILS "O^O CODE GENERATION: "
 
 #define NUM_REGS_USED_BY_COMPLEX_OPCODES 3
 
 namespace TR { class RealRegister; }
-
-#ifdef DEBUG
-int OMR::CodeGenerator::_totalNumSpilledRegisters = 0;
-int OMR::CodeGenerator::_totalNumRematerializedConstants = 0;
-int OMR::CodeGenerator::_totalNumRematerializedLocals = 0;
-int OMR::CodeGenerator::_totalNumRematerializedStatics = 0;
-int OMR::CodeGenerator::_totalNumRematerializedIndirects = 0;
-int OMR::CodeGenerator::_totalNumRematerializedAddresses = 0;
-int OMR::CodeGenerator::_totalNumRematerializedXMMRs = 0;
-#endif
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
 void
@@ -437,7 +428,7 @@ OMR::CodeGenerator::allocateInternalPointerSpill(TR::AutomaticSymbol *pinningArr
       TR::AutomaticSymbol *spillSymbol =
          TR::AutomaticSymbol::createInternalPointer(self()->trHeapMemory(),
                                                    TR::Address,
-                                                   self()->comp()->getOption(TR_ForceLargeRAMoves) ? 8 : TR::Compiler->om.sizeofReferenceAddress(),
+                                                   TR::Compiler->om.sizeofReferenceAddress(),
                                                    self()->fe());
       spillSymbol->setSpillTempAuto();
       spillSymbol->setPinningArrayPointer(pinningArrayPointer);
@@ -462,8 +453,8 @@ OMR::CodeGenerator::allocateSpill(bool containsCollectedReference, int32_t *offs
 TR_BackingStore *
 OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedReference, int32_t *offset, bool reuse)
    {
-   TR_ASSERT(dataSize <= 16, "assertion failure");
-   TR_ASSERT(!containsCollectedReference || (dataSize == TR::Compiler->om.sizeofReferenceAddress()), "assertion failure");
+   TR_ASSERT_FATAL(dataSize <= 16, "assertion failure");
+   TR_ASSERT_FATAL(!containsCollectedReference || (dataSize == TR::Compiler->om.sizeofReferenceAddress()), "assertion failure");
 
    if (self()->getTraceRAOption(TR_TraceRASpillTemps))
       traceMsg(self()->comp(), "\nallocateSpill(%d, %s, %s)", dataSize, containsCollectedReference? "collected":"uncollected", offset? "offset":"NULL");
@@ -529,16 +520,14 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
       {
       // Must allocate a new one
       //
-      int spillSize;
-      const int MIN_SPILL_SIZE = (self()->comp()->getOption(TR_ForceLargeRAMoves)) ? 8 : TR::Compiler->om.sizeofReferenceAddress();
-      int32_t slot;
-      spillSize = std::max(dataSize, MIN_SPILL_SIZE);
+      int spillSize = std::max(dataSize, static_cast<int32_t>(TR::Compiler->om.sizeofReferenceAddress()));
+
       TR_ASSERT(4 <= spillSize && spillSize <= 16, "Spill temps should be between 4 and 16 bytes");
       spillSymbol = TR::AutomaticSymbol::create(self()->trHeapMemory(),TR::NoType,spillSize);
       spillSymbol->setSpillTempAuto();
       self()->comp()->getMethodSymbol()->addAutomatic(spillSymbol);
       spill = new (self()->trHeapMemory()) TR_BackingStore(self()->comp()->getSymRefTab(), spillSymbol, 0);
-      slot = spill->getSymbolReference()->getCPIndex();
+      int32_t slot = spill->getSymbolReference()->getCPIndex();
       slot = (slot < 0) ? (-slot - 1) : slot;
       self()->comp()->getJittedMethodSymbol()->getAutoSymRefs(slot).add(spill->getSymbolReference());
       _allSpillList.push_front(spill);
@@ -710,17 +699,9 @@ TR::Register * OMR::CodeGenerator::allocateRegister(TR_RegisterKinds rk)
    self()->addAllocatedRegister(temp);
    if (self()->getDebug())
       self()->getDebug()->newRegister(temp);
-   if (  rk == TR_GPR
-      && (  !self()->getDebug()
-         || !self()->getTraceRAOption(TR_TraceRASpillTemps)
-         || performTransformation(self()->comp(), "O^O SPILL TEMPS: Set UpperHalfIsDead on %s\n", self()->getDebug()->getName(temp)))) // allocateRegister is called for the vmthread during initialization when getDebug has not been initialized yet
-      {
-      temp->setIsUpperHalfDead();
-      }
 
    return temp;
    }
-
 
 void
 OMR::CodeGenerator::findAndFixCommonedReferences()
@@ -1163,7 +1144,6 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
                                TR_GlobalRegisterNumber & highRegisterNumber,
                                TR_LinkHead<TR_RegisterCandidate> *candidatesAlreadyAssigned)
    {
-   bool enableHighWordGRA =  self()->supportsHighWordFacility() && !self()->comp()->getOption(TR_DisableHighWordRA);
    static volatile bool isInitialized=false;
    static volatile uint8_t gprsWithheldFromPickRegister=0, fprsWithheldFromPickRegister=0, vrfWithheldFromPickRegister=0, gprsWithheldFromPickRegisterWhenWarm=0;
    int32_t currentCandidateWeight =-1;
@@ -1281,8 +1261,6 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
       const bool canExitEarly = !rc->canBeReprioritized();
       TR_BitVector alreadyAssignedOnEntry(self()->comp()->getSymRefCount(), self()->trMemory(), stackAlloc, growable);
       TR_BitVector alreadyAssignedOnExit(self()->comp()->getSymRefCount(), self()->trMemory(), stackAlloc, growable);
-      bool hprSimulated = false;
-      bool hprColdBlockSkipped = false;
 
       TR_BitVector blocksToVisit = rc->getBlocksLiveOnEntry();
       blocksToVisit |= rc->getBlocksLiveOnExit();
@@ -1316,11 +1294,6 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
 
          TR::Block *block = allBlocks[blockIterator.getNextElement()];
 
-         // do not assign HPR to candidate if we skipped any block simulation for correctness
-         if (!block->isExtensionOfPreviousBlock() && blockIsIgnorablyCold(block, self()))
-            {
-            hprColdBlockSkipped = true;
-            }
          if (!block->isExtensionOfPreviousBlock() && !blockIsIgnorablyCold(block, self()))
             {
             // This block starts an extended BB.
@@ -1402,24 +1375,7 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
                   // Perform the simulation for current block and accumulate into highWaterMark
                   //
                   TR_RegisterPressureSummary summary(state._gprPressure, state._fprPressure, state._vrfPressure);
-                  if (enableHighWordGRA)
-                     {
-                     TR::DataType dtype = rc->getSymbolReference()->getSymbol()->getDataType();
-                     if (dtype == TR::Int8 ||
-                         dtype == TR::Int16 ||
-                         dtype == TR::Int32)
-                        {
-                        // unless proven, candidate is HPR eligible
-                        state.setCandidateIsHPREligible(true);
-                        }
-                     else
-                        {
-                        state.setCandidateIsHPREligible(false);
-                        summary.spill(TR_hprSpill, self());
-                        }
-                     }
                   self()->simulateBlockEvaluation(block, &state, &summary);
-                  hprSimulated = true;
                   highWaterMark.accumulate(summary);
 
 #if defined(CACHE_CANDIDATE_SPECIFIC_RESULTS)
@@ -1712,51 +1668,6 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
             }
          }
 
-      if (enableHighWordGRA)
-         {
-         TR_BitVector HPRMasks = *self()->getGlobalRegisters(TR_hprSpill, self()->comp()->getMethodSymbol()->getLinkageConvention());
-         // We cannot assign an HPR if the corresponding GPR is alive.
-         // There is no safe way to anticipate whether instruction selection will clobber the High word
-         // e.g. generating 64-bit instructions for long arithmetics on 32-bit platform
-         // todo: maybe try checking candidate data type while assigning GPR? only clobber HPR candidate
-         // if the GPR candidate is long
-
-         if (remainingRegisters.intersects(HPRMasks))
-            {
-            for (int i = self()->getFirstGlobalGPR(); i < self()->getFirstGlobalHPR(); ++i)
-               {
-               if (!remainingRegisters.isSet(i))
-                  {
-                  TR_GlobalRegisterNumber highWordReg = self()->getGlobalHPRFromGPR(i);
-                  if (self()->traceSimulateTreeEvaluation())
-                     {
-                     traceMsg(self()->comp(), "            %s is not available, rejecting %s\n",
-                             self()->getDebug()->getGlobalRegisterName(i), self()->getDebug()->getGlobalRegisterName(highWordReg));
-                     }
-                  remainingRegisters.reset(highWordReg);
-                  }
-               }
-            }
-         // hack: always give priorities to HPR over GPR
-         // if any HPR candidate is present
-         if (remainingRegisters.intersects(HPRMasks))
-            {
-            TR::DataType dtype = rc->getSymbolReference()->getSymbol()->getDataType();
-            if (hprSimulated && !hprColdBlockSkipped)
-               {
-               if (self()->traceSimulateTreeEvaluation())
-                  {
-                  traceMsg(self()->comp(), "            HPR candidates are available, rejecting all GPR\n");
-                  remainingRegisters &= HPRMasks;
-                  }
-               }
-            else
-               {
-               // if simulation did not happen, do not use hpr (cold blocks etc)
-               remainingRegisters -= HPRMasks;
-               }
-            }
-         }
       if (self()->traceSimulateTreeEvaluation())
          {
          traceMsg(self()->comp(), "            final registers: ");
@@ -2587,7 +2498,6 @@ nodeGotFoldedIntoMemref(
 void
 OMR::CodeGenerator::simulateTreeEvaluation(TR::Node *node, TR_RegisterPressureState *state, TR_RegisterPressureSummary *summary)
    {
-   bool enableHighWordGRA = self()->supportsHighWordFacility() && !self()->comp()->getOption(TR_DisableHighWordRA);
    // Analogous to cg->evaluate(node).
    //
    // This can be called on nodes that have already been evaluated, and it does
@@ -2648,37 +2558,6 @@ OMR::CodeGenerator::simulateTreeEvaluation(TR::Node *node, TR_RegisterPressureSt
       for (uint16_t i = 0; i < node->getNumChildren(); i++)
          self()->simulateDecReferenceCount(node->getChild(i), state);
       return;
-      }
-
-   if (enableHighWordGRA)
-      {
-      // 390 Highword, maybe move this below to else .hasRegister?
-      if (self()->isCandidateLoad(node, state))
-         {
-         if (node->getOpCodeValue() == TR::iload)
-            {
-            //potential HPR candidate
-            //state->setCandidateIsHPREligible(true);
-            node->setIsHPREligible();
-            }
-         else
-            {
-            // not HPR candidate
-            state->setCandidateIsHPREligible(false);
-            summary->spill(TR_hprSpill, self());
-            }
-         }
-      // if candidate is an object ref
-      if (state->_candidate && node->getOpCode().hasSymbolReference())
-         {
-         if (node->getOpCode().isRef() &&
-             node->getSymbolReference() == state->_candidate->getSymbolReference())
-            {
-            // not HPR candidate
-            state->setCandidateIsHPREligible(false);
-            summary->spill(TR_hprSpill, self());
-            }
-         }
       }
 
    TR_SimulatedNodeState &nodeState = self()->simulatedNodeState(node);
@@ -2775,63 +2654,12 @@ OMR::CodeGenerator::simulateTreeEvaluation(TR::Node *node, TR_RegisterPressureSt
                traceMsg(self()->comp(), " ++%s", self()->getDebug()->getName(child));
             }
 
-         if (enableHighWordGRA)
-            {
-            // first time visiting this node, clear the flag
-            if (node->getVisitCount() == state->_visitCountForInit && !self()->isCandidateLoad(node, state))
-               {
-               node->resetIsHPREligible();
-               }
-            }
          self()->simulateNodeEvaluation(node, state, summary);
 
-         if (enableHighWordGRA)
-            {
-            bool needToCheckHPR = false;
-            for (uint16_t i = 0; i < node->getNumChildren(); i++)
-               {
-               TR::Node *child = node->getChild(i);
-               if (child->getIsHPREligible())
-                  {
-                  //traceMsg(comp(), " child %d has isHPREligible set", i);
-                  needToCheckHPR = true;
-                  }
-               }
-
-            // if enableHighwordRA 390
-            if (needToCheckHPR && state->getCandidateIsHPREligible())
-               {
-               if (node->isEligibleForHighWordOpcode())
-                  {
-                  //traceMsg(comp(), " hpr");
-                  }
-               else
-                  {
-                  //traceMsg(comp(), " !hpr");
-                  node->resetIsHPREligible();
-                  state->setCandidateIsHPREligible(false);
-                  summary->spill(TR_hprSpill, self());
-                  }
-               }
-
-            if (node->getIsHPREligible())
-               {
-               //traceMsg(comp(), " assignedToHPR");
-               }
-            }
          node->setFutureUseCount(originalRefcount); // Parent will decrement
-
          }
       else
          {
-         if (enableHighWordGRA)
-            {
-            // first time visiting this node, clear the flag
-            if (node->getVisitCount() == state->_visitCountForInit && !self()->isCandidateLoad(node, state))
-               {
-               node->resetIsHPREligible();
-               }
-            }
          // Some kinds of nodes very commonly use temporaries, and sometimes
          // the number of temporaries depends on the registers used by
          // children, so compute this while the children are still live.
@@ -2852,41 +2680,6 @@ OMR::CodeGenerator::simulateTreeEvaluation(TR::Node *node, TR_RegisterPressureSt
             }
 
          self()->simulateNodeEvaluation(node, state, summary);
-
-         if (enableHighWordGRA)
-            {
-            bool needToCheckHPR = false;
-            for (uint16_t i = 0; i < node->getNumChildren(); i++)
-               {
-               TR::Node *child = node->getChild(i);
-               if (child->getIsHPREligible())
-                  {
-                  //traceMsg(comp(), " child %d has isHPREligible set", i);
-                  needToCheckHPR = true;
-                  }
-               }
-
-            if (needToCheckHPR && state->getCandidateIsHPREligible())
-               {
-               // if enableHighwordRA 390
-               if (node->isEligibleForHighWordOpcode())
-                  {
-                  //traceMsg(comp(), " hpr");
-                  }
-               else
-                  {
-                  node->resetIsHPREligible();
-                  state->setCandidateIsHPREligible(false);
-                  summary->spill(TR_hprSpill, self());
-                  //traceMsg(comp(), " !hpr");
-                  }
-               }
-
-            if (node->getIsHPREligible())
-               {
-               //traceMsg(comp(), " assignedToHPR");
-               }
-            }
          }
 
       // Accumulate the current state into the summary
@@ -2904,19 +2697,6 @@ OMR::CodeGenerator::simulateTreeEvaluation(TR::Node *node, TR_RegisterPressureSt
             TR::Symbol * rcSymbol = state->_candidate->getSymbolReference()->getSymbol();
             TR::Linkage *linkage = self()->getLinkage();
 
-#if defined(TR_TARGET_S390)
-            TR_BitVector* killedRegisters = linkage->getKilledRegisters(node);
-            if (killedRegisters)
-               {
-               TR_BitVectorIterator bvi;
-               bvi.setBitVector(*killedRegisters);
-               while (bvi.hasMoreElements())
-                  {
-                  int32_t realRegNum = bvi.getNextElement();   // GPR0..GPR15, realRegNum 0..15
-                  summary->spill((TR_SpillKinds)(TR_gpr0Spill + realRegNum), self());
-                  }
-               }
-#endif
             // In Xplink, 31-bit mode, each call has a special argument passed in GPR12
             // Incoming special argument can be  passed to the call,
             // otherwise, TR_linkageSpill has to be set so that other candidates don't get

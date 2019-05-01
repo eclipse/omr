@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,18 +23,18 @@
 
 #include "codegen/FrontEnd.hpp"
 #include "codegen/Relocation.hpp"
-#include "compile/Compilation.hpp"            // for Compilation, comp
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
-#include "env/jittypes.h"                     // for intptrj_t
-#include "il/ILOpCodes.hpp"                   // for ILOpCodes::aconst
-#include "il/Node.hpp"                        // for Node
-#include "il/Symbol.hpp"                      // for Symbol
-#include "il/symbol/StaticSymbol.hpp"         // for StaticSymbol
-#include "infra/Assert.hpp"                   // for TR_ASSERT
-#include "infra/Bit.hpp"                      // for intParts
+#include "env/jittypes.h"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
 #include "runtime/Runtime.hpp"
 
 int32_t TR::ARMConstantDataSnippet::addConstantRequest(void              *v,

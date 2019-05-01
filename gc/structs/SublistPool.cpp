@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,14 +59,22 @@ MM_SublistPool::initialize(MM_EnvironmentBase *env, OMR::GC::AllocationCategory:
 void
 MM_SublistPool::tearDown(MM_EnvironmentBase *env)
 {
-	MM_SublistPuddle *puddle, *nextPuddle;
 
 	if(_mutex) {
 		omrthread_monitor_destroy(_mutex);
 	}
 
 	/* Free all puddles associated to the sublist */
-	puddle = _list;
+	freePuddles(env, _list);
+	freePuddles(env, _previousList);
+}
+
+void
+MM_SublistPool::freePuddles(MM_EnvironmentBase *env, MM_SublistPuddle *list)
+{
+	MM_SublistPuddle *puddle, *nextPuddle;
+
+	puddle = list;
 	while(puddle) {
 		nextPuddle = puddle->getNext();
 		MM_SublistPuddle::kill(env, puddle);
@@ -369,25 +377,13 @@ MM_SublistPool::compact(MM_EnvironmentBase *env)
 void
 MM_SublistPool::clear(MM_EnvironmentBase *env)
 {
-	MM_SublistPuddle *puddle = NULL;
-
 	/* Reset the size */
 	_currentSize = 0;
 
 	/* Free the puddles and reset the lists to NULL */
-	puddle = _list;
-	while(NULL != puddle) {
-		MM_SublistPuddle* nextPuddle = puddle->getNext();
-		MM_SublistPuddle::kill(env, puddle);
-		puddle = nextPuddle;
-	}
-	
-	puddle = _previousList;
-	while(NULL != puddle) {
-		MM_SublistPuddle* nextPuddle = puddle->getNext();
-		MM_SublistPuddle::kill(env, puddle);
-		puddle = nextPuddle;
-	}
+	freePuddles(env, _list);
+	freePuddles(env, _previousList);
+
 	_list = NULL;
 	_allocPuddle = NULL;
 	_previousList = NULL;

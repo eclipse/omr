@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,10 @@ macro(omr_platform_global_setup)
 
 	set(OMR_PLATFORM_GLOBALLY_INITIALIZED 1)
 
-	add_compile_options(${OMR_PLATFORM_COMPILE_OPTIONS})
+
+	omr_append_flags(CMAKE_C_FLAGS ${OMR_PLATFORM_COMPILE_OPTIONS})
+	omr_append_flags(CMAKE_CXX_FLAGS ${OMR_PLATFORM_COMPILE_OPTIONS})
+	omr_append_flags(CMAKE_ASM_FLAGS ${OMR_PLATFORM_COMPILE_OPTIONS})
 
 	omr_append_flags(CMAKE_C_FLAGS
 		${OMR_PLATFORM_C_COMPILE_OPTIONS}
@@ -110,6 +113,30 @@ macro(omr_platform_global_setup)
 		omr_toolconfig_global_setup()
 	endif()
 endmacro()
+
+# omr_process_exports(<target> [symbol]...)
+# performs appropriate processing to export symbols from a target.
+# Note: function is internaly guarded, so its safe to call multiple times
+function(omr_process_exports target)
+	omr_assert(FATAL_ERROR TEST TARGET ${target} MESSAGE "omr_process_exports called on invalid target '${target}'")
+
+	# Check if we have already processed the exports
+	get_target_property(has_processed ${target} OMR_EXPORTS_PROCESSED)
+
+	if((NOT has_processed) AND (COMMAND _omr_toolchain_process_exports))
+		_omr_toolchain_process_exports(${target})
+	endif()
+
+	set_target_properties(${target} PROPERTIES OMR_EXPORTS_PROCESSED TRUE)
+endfunction()
+
+# omr_add_exports(<target>)
+# Exports given symbols from a given target, and calls omr_process_exports
+function(omr_add_exports target)
+	omr_assert(FATAL_ERROR TEST TARGET ${target} MESSAGE "omr_add_exports called on invalid target '${target}'")
+	set_property(TARGET ${target} APPEND PROPERTY EXPORTED_SYMBOLS ${ARGN})
+	omr_process_exports(${target})
+endfunction()
 
 ###
 ### Flags we aren't using

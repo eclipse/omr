@@ -82,9 +82,6 @@ MM_MemoryPoolLargeObjects::newInstance(MM_EnvironmentBase* env, MM_MemoryPoolAdd
 bool
 MM_MemoryPoolLargeObjects::initialize(MM_EnvironmentBase* env)
 {
-	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-	bool debug = _extensions->debugLOAResize;
-
 	if (!MM_MemoryPool::initialize(env)) {
 		return false;
 	}
@@ -119,9 +116,7 @@ MM_MemoryPoolLargeObjects::initialize(MM_EnvironmentBase* env)
 		return false;
 	}
 
-	if (debug) {
-		omrtty_printf("LOA Initialize: SOA subpool %p LOA subpool %p\n ", _memoryPoolSmallObjects, _memoryPoolLargeObjects);
-	}
+	Trc_MM_LOAResize_initialize(env->getLanguageVMThread(), _memoryPoolSmallObjects, _memoryPoolLargeObjects);
 
 	_loaFreeRatioHistory = (double*)env->getForge()->allocate(_extensions->loaFreeHistorySize * sizeof(double), OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
 
@@ -223,8 +218,6 @@ MM_MemoryPoolLargeObjects::preCollect(MM_EnvironmentBase* env, bool systemGC, bo
 void
 MM_MemoryPoolLargeObjects::resizeLOA(MM_EnvironmentBase* env)
 {
-	bool debug = _extensions->debugLOAResize;
-
 	_soaFreeBytesAfterLastGC = _memoryPoolSmallObjects->getApproximateFreeMemorySize();
 
 	float  minimumFreeRatio = ((float)_extensions->heapFreeMinimumRatioMultiplier) / ((float)_extensions->heapFreeMinimumRatioDivisor);
@@ -240,7 +233,6 @@ MM_MemoryPoolLargeObjects::resizeLOA(MM_EnvironmentBase* env)
 		void* newLOABase;
 		double oldLOARatio;
 		uintptr_t contractRequired;
-		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 		/* Calculate LOA size based on new loa ratio */
 		uintptr_t loaMinimumSize = MM_Math::roundToFloor(_extensions->heapAlignment,
@@ -256,9 +248,7 @@ MM_MemoryPoolLargeObjects::resizeLOA(MM_EnvironmentBase* env)
 
 		uintptr_t newLOAsize = _soaFreeBytesAfterLastGC * (uintptr_t)( _extensions->largeObjectAreaInitialRatio / minimumFreeRatio);
 
-		if (debug) {
-			omrtty_printf("post GC resize LOA: newLOAsize %zu\n", newLOAsize);
-		}
+		Trc_MM_LOAResize_resizeLOA1(env->getLanguageVMThread(), newLOAsize);
 
 		if (newLOAsize < _loaSize){
 
@@ -276,17 +266,14 @@ MM_MemoryPoolLargeObjects::resizeLOA(MM_EnvironmentBase* env)
 
 			newLOAsize = _loaSize - contractRequired;
 
-			if (debug) {
-				omrtty_printf("newLOAsize adjusted by LOA occupnacy %zu\n", newLOAsize);
-			}
+			Trc_MM_LOAResize_resizeLOA2(env->getLanguageVMThread(), newLOAsize);
 
 			if ((double)newLOAsize/(double)_memorySubSpace->getActiveMemorySize() < _extensions->largeObjectAreaMinimumRatio){
 
 				contractRequired = (uintptr_t)((double)_loaSize - ((double)(_memorySubSpace->getActiveMemorySize() * _extensions->largeObjectAreaMinimumRatio)));
 				newLOAsize = _loaSize - contractRequired;
-				if (debug) {
-					omrtty_printf("newLOAsize adjusted min LOA ratio %zu\n", newLOAsize);
-				}
+
+				Trc_MM_LOAResize_resizeLOA3(env->getLanguageVMThread(), newLOAsize);
 			}
 
 			/* If minimum required now zero then there is no storage available for transfer */
@@ -310,7 +297,7 @@ MM_MemoryPoolLargeObjects::resizeLOA(MM_EnvironmentBase* env)
 				oldLOARatio = _currentLOARatio;
 
 				/* Does this leave a reasonable sized LOA ? */
-				if (!isSizeEnoughForLOA(env, _loaSize - spaceDelta)) {
+				if (!isSizeEnoughForLOA(env, (_loaSize > spaceDelta) ? (_loaSize - spaceDelta) : 0)) {
 					/* No.. make LOA empty as not even big enough for one free chunk of LOA */
 					spaceDelta = _loaSize;
 					_soaSize += spaceDelta;
@@ -332,11 +319,7 @@ MM_MemoryPoolLargeObjects::resizeLOA(MM_EnvironmentBase* env)
 					assume0(0 != _currentLOARatio);
 				}
 
-				if (debug) {
-					omrtty_printf("LOA Rebalanced to meet minimum SOA requirements: LOA ratio has decreased from %.3f --> %.3f\n",
-							oldLOARatio,
-							_currentLOARatio);
-				}
+				Trc_MM_LOAResize_resizeLOA4(env->getLanguageVMThread(), oldLOARatio, _currentLOARatio);
 
 				_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_CONTRACT_MIN_SOA);
 				_memorySubSpace->reportHeapResizeAttempt(env, spaceDelta , HEAP_LOA_CONTRACT);
@@ -371,8 +354,6 @@ MM_MemoryPoolLargeObjects::completeFreelistRebuildRequired(MM_EnvironmentBase* e
 double
 MM_MemoryPoolLargeObjects::calculateTargetLOARatio(MM_EnvironmentBase* env, uintptr_t allocSize)
 {
-	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-	bool debug = _extensions->debugLOAResize;
 	double newLOARatio = _currentLOARatio;
 	float maxLOAFreeRatio = ((float)_extensions->heapFreeMaximumRatioMultiplier) / ((float)_extensions->heapFreeMinimumRatioDivisor);
 	uintptr_t loaFreeBytes = _memoryPoolLargeObjects->getActualFreeMemorySize();
@@ -438,11 +419,8 @@ MM_MemoryPoolLargeObjects::calculateTargetLOARatio(MM_EnvironmentBase* env, uint
 		_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_EXPAND_HEAP_ALIGNMENT);
 	}
 
-	if (debug && newLOARatio != _currentLOARatio) {
-		omrtty_printf("LOA Calculate target ratio: ratio has %s from  %.3f --> %.3f\n",
-				newLOARatio < _currentLOARatio ? "decreased" : "increased",
-						_currentLOARatio,
-						newLOARatio);
+	if (newLOARatio != _currentLOARatio) {
+		Trc_MM_LOAResize_calculateTargetLOARatio(env->getLanguageVMThread(), newLOARatio < _currentLOARatio ? "decreased" : "increased", _currentLOARatio, newLOARatio);
 	}
 
 	return newLOARatio;
@@ -455,18 +433,12 @@ MM_MemoryPoolLargeObjects::calculateTargetLOARatio(MM_EnvironmentBase* env, uint
 double
 MM_MemoryPoolLargeObjects::resetTargetLOARatio(MM_EnvironmentBase* env)
 {
-	bool debug = _extensions->debugLOAResize;
-
 	/* Nothing needs to be done if the LOA size is already at minimum size */
 	if (_currentLOARatio == _extensions->largeObjectAreaMinimumRatio) {
 		return _currentLOARatio;
 	}
 
-	if (debug) {
-		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-		omrtty_printf("LOA Reset target ratio: ratio reset from %.3f to minimum size of %.3f\n",
-					 _currentLOARatio, _extensions->largeObjectAreaMinimumRatio);
-	}
+	Trc_MM_LOAResize_resetTargetLOARatio(env->getLanguageVMThread(), _currentLOARatio, _extensions->largeObjectAreaMinimumRatio);
 
 	_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_CONTRACT_AGGRESSIVE);
 
@@ -478,7 +450,6 @@ MM_MemoryPoolLargeObjects::resetLOASize(MM_EnvironmentBase* env, double newLOARa
 {
 	uintptr_t oldLOASize = _loaSize;
 	uintptr_t newLOASize, oldAreaSize;
-	bool debug = _extensions->debugLOAResize;
 	HeapResizeType resizeType = HEAP_NO_RESIZE;
 
 	/* Has LOA changed in size ? */
@@ -517,10 +488,7 @@ MM_MemoryPoolLargeObjects::resetLOASize(MM_EnvironmentBase* env, double newLOARa
 		/* and new LOA base if LOA ratio > 0 */
 		_currentLOABase = _currentLOARatio > 0 ? determineLOABase(env, _soaSize) : LOA_EMPTY;
 
-		if (debug) {
-			OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-			omrtty_printf("Reset LOA Size: LOA Base is now %p\n", _currentLOABase);
-		}
+		Trc_MM_LOAResize_resetLOASize(env->getLanguageVMThread(), _currentLOABase);
 
 		_memorySubSpace->reportHeapResizeAttempt(env, resizeSize , resizeType);
 	}
@@ -924,9 +892,6 @@ MM_MemoryPoolLargeObjects::collectorAllocateTLH(MM_EnvironmentBase* env, MM_Allo
 void
 MM_MemoryPoolLargeObjects::expandWithRange(MM_EnvironmentBase* env, uintptr_t expandSize, void* lowAddress, void* highAddress, bool canCoalesce)
 {
-	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-	bool debug = _extensions->debugLOAResize;
-
 	uintptr_t oldAreaSize, newLOASize;
 
 	assume0(MM_Math::roundToCeiling(_extensions->heapAlignment, expandSize) == expandSize);
@@ -952,11 +917,7 @@ MM_MemoryPoolLargeObjects::expandWithRange(MM_EnvironmentBase* env, uintptr_t ex
 			_memoryPoolLargeObjects->expandWithRange(env, _loaSize, _currentLOABase, highAddress, canCoalesce);
 		}
 
-		if (debug) {
-			omrtty_printf("LOA Initial Allocation: heapSize %zu, Initial LOA ratio is %.3f --> LOA base is %p initial LOA size %zu\n",
-						 oldAreaSize, _currentLOARatio, _currentLOABase, _loaSize);
-		}
-
+		Trc_MM_LOAResize_expandWithRange1(env->getLanguageVMThread(), oldAreaSize, _currentLOARatio, _currentLOABase, _loaSize);
 	} else {
 
 		/* If LOA ratio has reduced to zero then we have an empty
@@ -976,10 +937,7 @@ MM_MemoryPoolLargeObjects::expandWithRange(MM_EnvironmentBase* env, uintptr_t ex
 			/* ..and then redistribute free memory between SOA and LOA */
 			redistributeFreeMemory(env, oldAreaSize);
 
-			if (debug) {
-				omrtty_printf("LOA resized on heap expansion: heapSize %zu,  LOA ratio is %.3f --> LOA base is now %p LOA size %zu\n",
-							 oldAreaSize, _currentLOARatio, _currentLOABase, _loaSize);
-			}
+			Trc_MM_LOAResize_expandWithRange2(env->getLanguageVMThread(), oldAreaSize, _currentLOARatio, _currentLOABase, _loaSize);
 		}
 
 		/* Reset SOA LWM.
@@ -1009,9 +967,6 @@ MM_MemoryPoolLargeObjects::expandWithRange(MM_EnvironmentBase* env, uintptr_t ex
 void*
 MM_MemoryPoolLargeObjects::contractWithRange(MM_EnvironmentBase* env, uintptr_t contractSize, void* lowAddress, void* highAddress)
 {
-	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-	bool debug = _extensions->debugLOAResize;
-
 	/* Get current size of old area */
 	uintptr_t oldAreaSize = _memorySubSpace->getActiveMemorySize();
 
@@ -1034,10 +989,7 @@ MM_MemoryPoolLargeObjects::contractWithRange(MM_EnvironmentBase* env, uintptr_t 
 
 		redistributeFreeMemory(env, oldAreaSize);
 
-		if (debug) {
-			omrtty_printf("LOA resized on heap contraction: heapSize %zu,  LOA ratio is %.3f --> LOA base is now %p LOA size %zu\n",
-						 oldAreaSize, _currentLOARatio, _currentLOABase, _loaSize);
-		}
+		Trc_MM_LOAResize_contractWithRange(env->getLanguageVMThread(), oldAreaSize, _currentLOARatio, _currentLOABase, _loaSize);
 	}
 
 	/* ..and remmeber new old area size for next time */

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2015 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,7 +94,7 @@ else
 endif
 
 GLOBAL_CFLAGS+=-Wc,"langlvl(extc99)" $(GLOBAL_FLAGS)
-GLOBAL_CXXFLAGS+=-Wc,"langlvl(extended)" -+ $(GLOBAL_FLAGS)
+GLOBAL_CXXFLAGS+=-Wc,"langlvl(extended0x)" -+ $(GLOBAL_FLAGS)
 
 ifneq (,$(findstring archive,$(ARTIFACT_TYPE)))
   DO_LINK:=0
@@ -108,7 +108,7 @@ ifeq (1,$(DO_LINK))
 
   # This is the first option applied to the C++ linking command.
   # It is not applied to the C linking command.
-  OMR_MK_CXXLINKFLAGS=-Wc,"langlvl(extended)" -+ 
+  OMR_MK_CXXLINKFLAGS=-Wc,"langlvl(extended0x)" -+ 
 
   ifneq (,$(findstring shared,$(ARTIFACT_TYPE)))
     GLOBAL_LDFLAGS+=-Wl,xplink,dll

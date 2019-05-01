@@ -36,7 +36,7 @@ class BytecodeBuilder : public TR::IlBuilder
 public:
    TR_ALLOC(TR_Memory::IlGenerator)
 
-   BytecodeBuilder(TR::MethodBuilder *methodBuilder, int32_t bcIndex, char *name=NULL);
+   BytecodeBuilder(TR::MethodBuilder *methodBuilder, int32_t bcIndex, char *name=NULL, int32_t bcLength=-1);
 
    virtual bool isBytecodeBuilder() { return true; }
 
@@ -51,6 +51,11 @@ public:
 
    /* The name for this BytecodeBuilder. This can be very helpful for debug output */
    char *name() { return _name; }
+
+   /**
+    * @brief bytecode length for this builder object
+    */
+   int32_t bcLength() { return _bcLength; }
 
    virtual uint32_t countBlocks();
 
@@ -97,11 +102,32 @@ public:
    void IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2);
    void IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2);
 
+   /**
+    * @brief returns the client object associated with this object, allocating it if necessary
+    */
+   void *client();
+
+   static void setClientAllocator(ClientAllocator allocator)
+      {
+      _clientAllocator = allocator;
+      }
+
+   /**
+    * @brief Set the Get Impl function
+    *
+    * @param getter function pointer to the impl getter
+    */
+   static void setGetImpl(ImplGetter getter)
+      {
+      _getImpl = getter;
+      }
+
 protected:
    TR::BytecodeBuilder       * _fallThroughBuilder;
    List<TR::BytecodeBuilder> * _successorBuilders;
    int32_t                     _bcIndex;
    char                      * _name;
+   int32_t                     _bcLength;
    TR::VirtualMachineState   * _initialVMState;
    TR::VirtualMachineState   * _vmState;
 
@@ -110,6 +136,10 @@ protected:
    bool connectTrees();
    virtual void setHandlerInfo(uint32_t catchType);
    void transferVMState(TR::BytecodeBuilder **b);
+
+private:
+   static ClientAllocator      _clientAllocator;
+   static ImplGetter _getImpl;
    };
 
 } // namespace OMR

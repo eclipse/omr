@@ -357,7 +357,7 @@ setup_native_thread(J9ThreadWalkState *state, CONTEXT *sigContext)
 J9PlatformThread *
 omrintrospect_threads_startDo_with_signal(struct OMRPortLibrary *portLibrary, J9Heap *heap, J9ThreadWalkState *state, void *signal_info)
 {
-	struct J9Win32SignalInfo *sigFaultInfo = signal_info;
+	struct OMRWin32SignalInfo *sigFaultInfo = signal_info;
 	DWORD processId = GetCurrentProcessId();
 	struct PlatformWalkData *data;
 	int result = 0;

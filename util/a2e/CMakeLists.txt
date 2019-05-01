@@ -31,6 +31,11 @@ target_compile_options(j9a2e
 		${OMR_PLATFORM_SHARED_COMPILE_OPTIONS}
 )
 
+target_link_libraries(j9a2e
+	PUBLIC
+		omr_base
+)
+
 if(OMR_WARNINGS_AS_ERRORS)
 	target_compile_options(j9a2e PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
 endif()
@@ -51,3 +56,5 @@ add_custom_command(TARGET j9a2e
 )
 
 set_property(TARGET j9a2e PROPERTY FOLDER util)
+
+target_enable_ddr(j9a2e "${OMR_DDR_SET}")

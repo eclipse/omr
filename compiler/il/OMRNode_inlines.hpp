@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,19 +24,19 @@
 
 #include "il/OMRNode.hpp"
 
-#include <stddef.h>                   // for NULL
-#include <stdint.h>                   // for int32_t
-#include "compile/Compilation.hpp"    // for Compilation, comp
-#include "env/CompilerEnv.hpp"        // for TR::Host
-#include "env/Environment.hpp"        // for Environment
-#include "env/IO.hpp"                 // for POINTER_PRINTF_FORMAT
-#include "il/AliasSetInterface.hpp"  // for TR_NodeUseAliasSetInterface, etc
-#include "il/DataTypes.hpp"           // for DataTypes, DataType
-#include "il/ILOpCodes.hpp"           // for ILOpCodes
-#include "il/ILOps.hpp"               // for ILOpCode
-#include "il/Node.hpp"                // for Node
-#include "infra/Assert.hpp"           // for TR_ASSERT
-#include "infra/Flags.hpp"            // for flags32_t
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/CompilerEnv.hpp"
+#include "env/Environment.hpp"
+#include "env/IO.hpp"
+#include "il/AliasSetInterface.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
 
 namespace TR { class TreeTop; }
 
@@ -381,6 +381,20 @@ OMR::Node::setUseDefIndex(uint16_t udi)
 /**
  * UnionBase functions
  */
+
+int32_t
+OMR::Node::getOSRInductionOffset()
+   {
+   TR_ASSERT(self()->isPotentialOSRPointHelperCall(), "TR::Node::getOSRInductionOffset: used for a non potentialOSRPointHelper call node n%dn %p", self()->getGlobalIndex(), self());
+   return (int32_t)_unionBase._osrInductionOffset;
+   }
+
+int32_t
+OMR::Node::setOSRInductionOffset(int32_t offset)
+   {
+   TR_ASSERT(self()->isPotentialOSRPointHelperCall(), "TR::Node::setOSRInductionOffset: used for a non potentialOSRPointHelper call node n%dn %p", self()->getGlobalIndex(), self());
+   return (int32_t)(_unionBase._osrInductionOffset = (int64_t)offset);
+   }
 
 int64_t
 OMR::Node::getConstValue()

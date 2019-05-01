@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,19 +19,19 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/CodeGenerator.hpp"      // for CodeGenerator
-#include "codegen/FrontEnd.hpp"           // for feGetEnv, TR_FrontEnd
-#include "codegen/LiveRegister.hpp"       // for TR_LiveRegisters
-#include "codegen/Register.hpp"           // for Register
-#include "codegen/RegisterConstants.hpp"  // for TR_RegisterKinds::TR_GPR, etc
-#include "codegen/TreeEvaluator.hpp"      // for TreeEvaluator
-#include "compile/Compilation.hpp"        // for Compilation
-#include "il/ILOpCodes.hpp"               // for ILOpCodes, etc
-#include "il/ILOps.hpp"                   // for ILOpCode
-#include "il/Node.hpp"                    // for Node, etc
-#include "il/Node_inlines.hpp"            // for Node::getFirstChild, etc
-#include "codegen/X86Instruction.hpp"   // for generateRegRegInstruction, etc
-#include "x/codegen/X86Ops.hpp"           // for MOVRegReg, TR_X86OpCodes, etc
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/LiveRegister.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "codegen/X86Instruction.hpp"
+#include "x/codegen/X86Ops.hpp"
 #include "env/CompilerEnv.hpp"
 
 extern TR::Register *intOrLongClobberEvaluate(TR::Node *node, bool nodeIs64Bit, TR::CodeGenerator *cg);

@@ -42,9 +42,13 @@ endif()
 
 target_link_libraries(omrtrace
 	PUBLIC
-	${OMR_THREAD_LIB}
-	omrutil
+		omr_base
+		${OMR_THREAD_LIB}
+		omrutil
 )
+
+target_enable_ddr(omrtrace "${OMR_DDR_SET}")
+
 #TODO: check if following makefile fragment still required:
 #ifeq (gcc,$(OMR_TOOLCHAIN))
 ## disable builtin strncpy buffer length check for optimized builds (_FORTIFY_SOURCE=1 requires -O3)

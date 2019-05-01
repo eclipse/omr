@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,34 +19,34 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>                                  // for int32_t
-#include <string.h>                                  // for strncmp, strlen, etc
-#include "codegen/FrontEnd.hpp"                      // for TR_FrontEnd
-#include "compile/Compilation.hpp"                   // for Compilation
+#include <stdint.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/TRMemory.hpp"
 #include "env/CompilerEnv.hpp"
-#include "il/Block.hpp"                              // for Block
+#include "il/Block.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                              // for ILOpCode
-#include "il/Node.hpp"                               // for Node, vcount_t
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                             // for Symbol
-#include "il/SymbolReference.hpp"                    // for SymbolReference
-#include "il/TreeTop.hpp"                            // for TreeTop
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                          // for TR_ASSERT
-#include "infra/List.hpp"                            // for List
-#include "optimizer/VPConstraint.hpp"           // for TR::VPConstraint, etc
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "optimizer/VPConstraint.hpp"
 #include "optimizer/OMRValuePropagation.hpp"
 #include "runtime/Runtime.hpp"
 #include "optimizer/TransformUtil.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
 #include "env/VMJ9.h"
-#include "optimizer/VPBCDConstraint.hpp"        // for VP BCD constraing handling, etc
+#include "optimizer/VPBCDConstraint.hpp"
 #endif
 
 class TR_OpaqueClassBlock;

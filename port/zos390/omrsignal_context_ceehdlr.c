@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -303,7 +303,7 @@ infoForControl_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *in
 	case 0:
 		*name = "fpc";
 		*value = &(j9mch->fpc);
-		return OMRPORT_SIG_VALUE_ADDRESS;
+		return OMRPORT_SIG_VALUE_32;
 	case 1:
 		*name = "psw0";
 		*value = &(j9mch->psw0);

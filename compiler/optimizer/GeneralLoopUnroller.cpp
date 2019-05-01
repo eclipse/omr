@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,36 +21,36 @@
 
 #include "optimizer/GeneralLoopUnroller.hpp"
 
-#include <stdio.h>                             // for printf
-#include <stdlib.h>                            // for atoi
-#include <string.h>                            // for NULL, memset
-#include <algorithm>                           // for std::find
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for feGetEnv, TR_FrontEnd
-#include "codegen/RecognizedMethods.hpp"       // for RecognizedMethod, etc
-#include "compile/Compilation.hpp"             // for Compilation, etc
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <algorithm>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/RecognizedMethods.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/bitvectr.h"                      // for operator<<, etc
+#include "cs2/bitvectr.h"
 #include "env/StackMemoryRegion.hpp"
-#include "env/jittypes.h"                      // for intptrj_t
+#include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/symbol/AutomaticSymbol.hpp"       // for AutomaticSymbol
-#include "il/symbol/LabelSymbol.hpp"           // for LabelSymbol
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Cfg.hpp"                       // for CFG, etc
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/CfgNode.hpp"                   // for CFGNode
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/TreeTop.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc
-#include "optimizer/TransformUtil.hpp"         // for TransformUtil
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
+#include "optimizer/TransformUtil.hpp"
+#include "ras/Debug.hpp"
 
 #define OPT_DETAILS "O^O GENERAL LOOP UNROLLER: "
 #define OPT_DETAILS1 "O^O ARRAY ALIASING REFINER: "

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,19 +21,19 @@
 
 #include "p/codegen/PPCAOTRelocation.hpp"
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for int32_t
-#include "codegen/CodeGenerator.hpp"        // for CodeGenerator
-#include "codegen/Instruction.hpp"          // for Instruction
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Instruction.hpp"
 #include "codegen/Relocation.hpp"
-#include "compile/Compilation.hpp"          // for Compilation
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                   // for intptrj_t
-#include "il/symbol/LabelSymbol.hpp"        // for LabelSymbol
-#include "runtime/Runtime.hpp"              // for LO_VALUE
+#include "env/jittypes.h"
+#include "il/symbol/LabelSymbol.hpp"
+#include "runtime/Runtime.hpp"
 
 void TR::PPCPairedRelocation::mapRelocation(TR::CodeGenerator *cg)
    {

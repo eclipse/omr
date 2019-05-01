@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,13 +19,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                   // for size_t
-#include <stdint.h>                   // for uint32_t, int32_t, intptr_t
-#include <stdio.h>                    // for fprintf, stderr, sscanf
-#include <stdlib.h>                   // for free
-#include "env/TRMemory.hpp"           // for globalAllocator, etc
-#include "ras/CallStackIterator.hpp"  // for TR_CallStackIterator
-#include "compile/Compilation.hpp"    // for Compilation
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "env/TRMemory.hpp"
+#include "ras/CallStackIterator.hpp"
+#include "compile/Compilation.hpp"
 
 
 void TR_CallStackIterator::printStackBacktrace(TR::Compilation *comp)
@@ -173,7 +173,7 @@ const char *TR_PPCCallStackIterator::getProcedureName()
 
 #elif defined(LINUX)
 #include <execinfo.h>
-#include <cxxabi.h> // for abi::__cxa_demangle
+#include <cxxabi.h>
 
 void TR_LinuxCallStackIterator::printSymbol(int32_t frame, char *sig, TR::Compilation *comp)
    {
@@ -232,7 +232,7 @@ void TR_LinuxCallStackIterator::printStackBacktrace(TR::Compilation *comp)
 
 #elif defined(J9ZOS390)
 
-#include <unistd.h>  // for __e2a_l
+#include <unistd.h>
 #include <ceeedcct.h>
 
 extern "builtin" void *__gdsa();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,80 +22,82 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 
-#include <limits.h>                                    // for INT_MAX
-#include <stdint.h>                                    // for int32_t, etc
-#include <string.h>                                    // for NULL, strstr, etc
+#include <limits.h>
+#include <stdint.h>
+#include <string.h>
 #include "codegen/BackingStore.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"                        // for feGetEnv, etc
-#include "codegen/GCStackAtlas.hpp"                    // for GCStackAtlas
-#include "codegen/GCStackMap.hpp"                      // for TR_GCStackMap, etc
-#include "codegen/Instruction.hpp"                     // for Instruction, etc
-#include "codegen/Linkage.hpp"                         // for Linkage, etc
+#include "codegen/FrontEnd.hpp"
+#include "codegen/GCStackAtlas.hpp"
+#include "codegen/GCStackMap.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/LiveRegister.hpp"
-#include "codegen/Machine.hpp"                         // for Machine, etc
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"                    // for RealRegister, etc
+#include "codegen/RealRegister.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#include "codegen/Register.hpp"                        // for Register
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterIterator.hpp"
 #include "codegen/RegisterPressureSimulatorInner.hpp"
 #include "codegen/RegisterRematerializationInfo.hpp"
-#include "codegen/Snippet.hpp"                         // for Snippet, etc
-#include "codegen/TreeEvaluator.hpp"                   // for TreeEvaluator, etc
+#include "codegen/Snippet.hpp"
+#include "codegen/TreeEvaluator.hpp"
 #include "codegen/X86Evaluator.hpp"
 #ifdef TR_TARGET_64BIT
 #include "x/amd64/codegen/AMD64SystemLinkage.hpp"
 #else
 #include "x/i386/codegen/IA32SystemLinkage.hpp"
 #endif
-#include "compile/Compilation.hpp"                     // for Compilation, etc
+#include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"                 // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
 #ifdef J9_PROJECT_SPECIFIC
 #include "control/RecompilationInfo.hpp"
 #endif
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                                  // for IO
+#include "env/IO.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/Block.hpp"                                // for Block
-#include "il/DataTypes.hpp"                            // for TR::DataType, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                                // for ILOpCode, etc
-#include "il/Node.hpp"                                 // for Node
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                               // for Symbol
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                              // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"                   // for LabelSymbol, etc
-#include "il/symbol/MethodSymbol.hpp"                  // for MethodSymbol
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"                  // for StaticSymbol
-#include "infra/Assert.hpp"                            // for TR_ASSERT
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
-#include "infra/BitVector.hpp"                         // for TR_BitVector, etc
-#include "infra/Flags.hpp"                             // for flags8_t, etc
-#include "infra/IGNode.hpp"                            // for TR_IGNode
+#include "infra/BitVector.hpp"
+#include "infra/Flags.hpp"
+#include "infra/IGNode.hpp"
 #include "infra/InterferenceGraph.hpp"
-#include "infra/List.hpp"                              // for ListIterator, etc
-#include "infra/Stack.hpp"                             // for TR_Stack
+#include "infra/List.hpp"
+#include "infra/Stack.hpp"
 #include "optimizer/RegisterCandidate.hpp"
-#include "ras/Debug.hpp"                               // for TR_DebugBase
+#include "ras/Debug.hpp"
 #include "ras/DebugCounter.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "x/codegen/DataSnippet.hpp"
 #include "x/codegen/OutlinedInstructions.hpp"
 #include "x/codegen/FPTreeEvaluator.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                        // for TR_X86OpCode, etc
+#include "x/codegen/X86Ops.hpp"
 #include "x/codegen/X86Ops_inlines.hpp"
 
 namespace OMR { class RegisterUsage; }
@@ -107,18 +109,18 @@ namespace TR { class RegisterDependencyConditions; }
 
 TR_X86ProcessorInfo OMR::X86::CodeGenerator::_targetProcessorInfo;
 
-void TR_X86ProcessorInfo::initialize(TR::Compilation *comp)
+void TR_X86ProcessorInfo::initialize()
    {
    // For now, we only convert the feature bits into a flags32_t, for easier querying.
    // To retrieve other information, the VM functions can be called directly.
    //
-   _featureFlags.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags(comp));
-   _featureFlags2.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags2(comp));
-   _featureFlags8.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags8(comp));
+   _featureFlags.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags());
+   _featureFlags2.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags2());
+   _featureFlags8.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags8());
 
    // Determine the processor vendor.
    //
-   const char *vendor = TR::Compiler->target.cpu.getX86ProcessorVendorId(comp);
+   const char *vendor = TR::Compiler->target.cpu.getX86ProcessorVendorId();
    if (!strncmp(vendor, "GenuineIntel", 12))
       _vendorFlags.set(TR_GenuineIntel);
    else if (!strncmp(vendor, "AuthenticAMD", 12))
@@ -135,7 +137,7 @@ void TR_X86ProcessorInfo::initialize(TR::Compilation *comp)
 
    // set up the processor family and cache description
 
-   uint32_t _processorSignature = TR::Compiler->target.cpu.getX86ProcessorSignature(comp);
+   uint32_t _processorSignature = TR::Compiler->target.cpu.getX86ProcessorSignature();
 
    if (isGenuineIntel())
       {
@@ -204,7 +206,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    {
 
    bool supportsSSE2 = false;
-   _targetProcessorInfo.initialize(comp);
+   _targetProcessorInfo.initialize();
 
    // Pick a padding table
    //
@@ -225,7 +227,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    //
 
 #if defined(TR_TARGET_X86) && !defined(J9HAMMER)
-   if (_targetProcessorInfo.supportsSSE2() && TR::Compiler->target.cpu.testOSForSSESupport(comp))
+   if (_targetProcessorInfo.supportsSSE2() && TR::Compiler->target.cpu.testOSForSSESupport())
       supportsSSE2 = true;
 #endif // defined(TR_TARGET_X86) && !defined(J9HAMMER)
 
@@ -279,7 +281,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    // 32-bit platforms must check the processor and OS.
    // 64-bit platforms unconditionally support prefetching.
    //
-   if (_targetProcessorInfo.supportsSSE() && TR::Compiler->target.cpu.testOSForSSESupport(comp))
+   if (_targetProcessorInfo.supportsSSE() && TR::Compiler->target.cpu.testOSForSSESupport())
 #endif // defined(TR_TARGET_X86) && !defined(J9HAMMER)
       {
       self()->setTargetSupportsSoftwarePrefetches();
@@ -333,13 +335,13 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    // Use a virtual frame pointer register.  The real frame pointer register to be used
    // will be substituted based on _vfpState during size estimation.
    //
-   _frameRegister = self()->machine()->getX86RealRegister(TR::RealRegister::vfp);
+   _frameRegister = self()->machine()->getRealRegister(TR::RealRegister::vfp);
 
    TR::Register            *vmThreadRegister = self()->setVMThreadRegister(self()->allocateRegister());
    TR::RealRegister::RegNum vmThreadIndex    = _linkageProperties->getMethodMetaDataRegister();
    if (vmThreadIndex != TR::RealRegister::NoReg)
       {
-      TR::RealRegister *vmThreadReal = self()->machine()->getX86RealRegister(vmThreadIndex);
+      TR::RealRegister *vmThreadReal = self()->machine()->getRealRegister(vmThreadIndex);
       vmThreadRegister->setAssignedRegister(vmThreadReal);
       vmThreadRegister->setAssociation(vmThreadIndex);
       vmThreadReal->setAssignedRegister(vmThreadRegister);
@@ -369,13 +371,34 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    self()->addSupportedLiveRegisterKind(TR_VRF);
    self()->setLiveRegisters(new (self()->trHeapMemory()) TR_LiveRegisters(comp), TR_VRF);
 
-   self()->setSupportsArrayCmp();
-   self()->setSupportsPrimitiveArrayCopy();
-   self()->setSupportsReferenceArrayCopy();
-
-   if (!comp->getOption(TR_DisableArraySetOpts))
+   if (!TR::Compiler->om.canGenerateArraylets())
       {
-      self()->setSupportsArraySet();
+      self()->setSupportsArrayCmp();
+      self()->setSupportsPrimitiveArrayCopy();
+      if (!comp->getOption(TR_DisableArraySetOpts))
+         {
+         self()->setSupportsArraySet();
+         }
+      static bool disableX86TRTO = (bool)feGetEnv("TR_disableX86TRTO");
+      if (!disableX86TRTO)
+         {
+         if (self()->getX86ProcessorInfo().supportsSSE4_1())
+            {
+            self()->setSupportsArrayTranslateTRTO();
+            }
+         }
+      static bool disableX86TROT = (bool)feGetEnv("TR_disableX86TROT");
+      if (!disableX86TROT)
+         {
+         if (self()->getX86ProcessorInfo().supportsSSE4_1())
+            {
+            self()->setSupportsArrayTranslateTROT();
+            }
+         if (self()->getX86ProcessorInfo().supportsSSE2())
+            {
+            self()->setSupportsArrayTranslateTROTNoBreak();
+            }
+         }
       }
 
    self()->setSupportsScaledIndexAddressing();
@@ -385,6 +408,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    self()->setSupportsEfficientNarrowIntComputation();
    self()->setSupportsEfficientNarrowUnsignedIntComputation();
    self()->setSupportsVirtualGuardNOPing();
+   self()->setSupportsDynamicANewArray();
 
    // allows [i/l]div to decompose to [i/l]mulh in TreeSimplifier
    //
@@ -421,20 +445,6 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
 
    self()->setPicSlotCount(0);
 
-   static bool disableX86TRTO = feGetEnv("TR_disableX86TRTO") != NULL;
-   static bool disableX86TROT = feGetEnv("TR_disableX86TROT") != NULL;
-   if ( comp->cg()->getX86ProcessorInfo().supportsSSE4_1())
-      {
-      if (!disableX86TRTO)
-         self()->setSupportsArrayTranslateTRTO();
-      if (!disableX86TROT)
-         self()->setSupportsArrayTranslateTROT();
-      }
-   if (!disableX86TROT && comp->cg()->getX86ProcessorInfo().supportsSSE2())
-      {
-      self()->setSupportsArrayTranslateTROTNoBreak();
-      }
-
    if (!comp->getOption(TR_DisableRegisterPressureSimulation))
       {
       for (int32_t i = 0; i < TR_numSpillKinds; i++)
@@ -469,9 +479,8 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
 
    if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
       {
-      self()->setGPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR_GPR));
-      self()->setFPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR_FPR));
-      self()->setX87RegisterIterator(new (self()->trHeapMemory()) TR_X86FPStackIterator(self()->machine()));
+      self()->setGPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstGPR, TR::RealRegister::LastAssignableGPR));
+      self()->setFPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstXMMR, TR::RealRegister::LastXMMR));
       }
 
    self()->setSupportsProfiledInlining();
@@ -490,6 +499,7 @@ OMR::X86::CodeGenerator::CodeGenerator() :
    _dependentDiscardableRegisters(getTypedAllocator<TR::Register*>(TR::comp()->allocator())),
    _clobberingInstructions(getTypedAllocator<TR::ClobberingInstruction*>(TR::comp()->allocator())),
    _outlinedInstructionsList(getTypedAllocator<TR_OutlinedInstructions*>(TR::comp()->allocator())),
+   _numReservedIPICTrampolines(0),
    _flags(0)
    {
    _clobIterator = _clobberingInstructions.begin();
@@ -1067,20 +1077,17 @@ OMR::X86::CodeGenerator::supportsMergingGuards()
 bool
 OMR::X86::CodeGenerator::supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol)
    {
-   bool result = false;
-
    switch (symbol)
       {
       case TR::SymbolReferenceTable::atomicAddSymbol:
       case TR::SymbolReferenceTable::atomicFetchAndAddSymbol:
       case TR::SymbolReferenceTable::atomicSwapSymbol:
-         {
-         result = true;
-         break;
-         }
+      case TR::SymbolReferenceTable::atomicCompareAndSwapReturnStatusSymbol:
+      case TR::SymbolReferenceTable::atomicCompareAndSwapReturnValueSymbol:
+         return true;
+      default:
+         return false;
       }
-
-   return result;
    }
 
 TR::RealRegister *
@@ -1123,7 +1130,7 @@ void OMR::X86::CodeGenerator::saveBetterSpillPlacements(TR::Instruction * branch
 
    for (i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; i++)
       {
-      realReg = self()->machine()->getX86RealRegister((TR::RealRegister::RegNum)i);
+      realReg = self()->machine()->getRealRegister((TR::RealRegister::RegNum)i);
 
       // Skip non-assignable registers
       //
@@ -1866,11 +1873,11 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
    uint8_t * temp = self()->allocateCodeMemory(self()->getEstimatedCodeLength(), 0, &coldCode);
    TR_ASSERT(temp, "Failed to allocate primary code area.");
 
-   if (TR::Compiler->target.is64Bit() && self()->comp()->getCodeCacheSwitched() && self()->getPicSlotCount() != 0)
+   if (TR::Compiler->target.is64Bit() && self()->hasCodeCacheSwitched() && self()->getPicSlotCount() != 0)
       {
-      int32_t numTrampolinesToReserve = self()->getPicSlotCount() - self()->comp()->getNumReservedIPICTrampolines();
+      int32_t numTrampolinesToReserve = self()->getPicSlotCount() - self()->getNumReservedIPICTrampolines();
       TR_ASSERT(numTrampolinesToReserve >= 0, "Discrepancy with number of IPIC trampolines to reserve getPicSlotCount()=%d getNumReservedIPICTrampolines()=%d",
-         self()->getPicSlotCount(), self()->comp()->getNumReservedIPICTrampolines());
+         self()->getPicSlotCount(), self()->getNumReservedIPICTrampolines());
       self()->reserveNTrampolines(numTrampolinesToReserve);
       }
 
@@ -2216,7 +2223,7 @@ void OMR::X86::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap * map
    //
    for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i)
       {
-      TR::RealRegister * reg = self()->machine()->getX86RealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister * reg = self()->machine()->getRealRegister((TR::RealRegister::RegNum)i);
       if (reg->getHasBeenAssignedInMethod())
          {
          TR::Register *virtReg = reg->getAssignedRegister();
@@ -2324,10 +2331,12 @@ int32_t OMR::X86::CodeGenerator::branchDisplacementToHelperOrTrampoline(
    {
    intptrj_t helperAddress = (intptrj_t)helper->getMethodAddress();
 
-   if (NEEDS_TRAMPOLINE(helperAddress, nextInstructionAddress, self()))
+   if (self()->directCallRequiresTrampoline(helperAddress, (intptrj_t)nextInstructionAddress))
       {
-      helperAddress = self()->fe()->indexedTrampolineLookup(helper->getReferenceNumber(), (void *)(nextInstructionAddress-4));
-      TR_ASSERT(IS_32BIT_RIP(helperAddress, nextInstructionAddress), "Local helper trampoline should be reachable directly.\n");
+      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(helper->getReferenceNumber(), (void *)(nextInstructionAddress-4));
+
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinRIPRange(helperAddress, (intptrj_t)nextInstructionAddress),
+                      "Local helper trampoline should be reachable directly");
       }
 
    return (int32_t)(helperAddress - (intptrj_t)(nextInstructionAddress));
@@ -2347,9 +2356,9 @@ TR::RealRegister::RegNum OMR::X86::CodeGenerator::pickNOPRegister(TR::Instructio
    // We don't do ebp or esp (or r11 or r12 for that matter) because their
    // binary encodings are not always idential to those of the other registers.
 
-   TR::RealRegister * ebx = self()->machine()->getX86RealRegister(TR::RealRegister::ebx);
-   TR::RealRegister * esi = self()->machine()->getX86RealRegister(TR::RealRegister::esi);
-   TR::RealRegister * edi = self()->machine()->getX86RealRegister(TR::RealRegister::edi);
+   TR::RealRegister * ebx = self()->machine()->getRealRegister(TR::RealRegister::ebx);
+   TR::RealRegister * esi = self()->machine()->getRealRegister(TR::RealRegister::esi);
+   TR::RealRegister * edi = self()->machine()->getRealRegister(TR::RealRegister::edi);
 
    int8_t ebxLastDef = 0;
    int8_t esiLastDef = 0;
@@ -2689,8 +2698,8 @@ uint8_t *OMR::X86::CodeGenerator::generatePadding(uint8_t              *cursor,
       if (_paddingTable->_flags.testAny(TR_X86PaddingTable::registerMatters))
          {
          TR::RealRegister::RegNum  regIndex  = self()->pickNOPRegister(neighborhood);
-         TR::RealRegister      *reg       = self()->machine()->getX86RealRegister(regIndex);
-         int32_t                  prefixLen = (_paddingTable->_prefixMask & (1<<length))? 1 : 0;
+         TR::RealRegister         *reg       = self()->machine()->getRealRegister(regIndex);
+         int32_t                   prefixLen = (_paddingTable->_prefixMask & (1<<length))? 1 : 0;
 
          // Target reg
          //
@@ -3105,4 +3114,22 @@ OMR::X86::CodeGenerator::arrayTranslateAndTestMinimumNumberOfIterations()
    // aggressive at scorching, since loops that iterate exactly 8
    // times can appear to iterate slightly less than that.
    return self()->comp()->getOptLevel() >= scorching ? 4 : 8;
+   }
+
+void
+OMR::X86::CodeGenerator::switchCodeCacheTo(TR::CodeCache *newCodeCache)
+   {
+   self()->setNumReservedIPICTrampolines(0);
+   OMR::CodeGenerator::switchCodeCacheTo(newCodeCache);
+   }
+
+
+bool
+OMR::X86::CodeGenerator::directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress)
+   {
+   // Adjust the sourceAddress to the start of the following instruction (+5 bytes)
+   //
+   return
+      !TR::Compiler->target.cpu.isTargetWithinRIPRange(targetAddress, sourceAddress+5) ||
+      self()->comp()->getOption(TR_StressTrampolines);
    }

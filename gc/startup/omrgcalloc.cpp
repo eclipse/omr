@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,20 +29,13 @@
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
 #include "omrgcstartup.hpp"
+#include "ModronAssertions.h"
 
 omrobjectptr_t
 OMR_GC_AllocateObject(OMR_VMThread * omrVMThread, MM_AllocateInitialization *allocator)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(omrVMThread);
-
-	/* TODO: Deprecate this -- required for early versions of ruby/omr integration */
-	if (allocator->isGCAllowed() && (NULL == env->getExtensions()->getGlobalCollector())) {
-		/* Lazily create the collector before attempting to allocate. */
-		if (OMR_ERROR_NONE != OMR_GC_InitializeCollector(omrVMThread)) {
-			return NULL;
-		}
-	}
-
+        Assert_MM_true(NULL != env->getExtensions()->getGlobalCollector());
 	return allocator->allocateAndInitializeObject(omrVMThread);
 }
 

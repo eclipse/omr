@@ -207,7 +207,7 @@ endef
 endif
 
 DDR_SED_COMMAND := \
-    sed -n -e '/^DDRFILE_BEGIN /,/^DDRFILE_END /s/^/@/p'
+    sed -n -e '/^DDRFILE_BEGIN /,/^DDRFILE_END /s/^/@/' -e '/^@./p'
 
 define DDR_C_COMMAND
 $(CC) $(CPPFLAGS) $(MODULE_CPPFLAGS) $(GLOBAL_CPPFLAGS) -E $< | $(DDR_SED_COMMAND) > $@

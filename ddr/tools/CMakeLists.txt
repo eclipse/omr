@@ -21,3 +21,5 @@
 
 add_subdirectory(blob_reader)
 add_subdirectory(ddrgen)
+
+export(TARGETS omr_blob_reader omr_ddrgen FILE "DDRTools.cmake")

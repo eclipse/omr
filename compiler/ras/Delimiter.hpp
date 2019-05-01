@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,8 @@
 #ifndef TR_DELIMITER_INCL
 #define TR_DELIMITER_INCL
 
-#include <string.h>            // for NULL, strlen
-#include "infra/Assert.hpp"    // for TR_ASSERT
+#include <string.h>
+#include "infra/Assert.hpp"
 
 namespace TR { class Compilation; }
 

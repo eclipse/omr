@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,15 +22,11 @@
 #ifndef RUNTIME_INCL
 #define RUNTIME_INCL
 
-#include <stdint.h>        // for int32_t, uint32_t, uintptr_t, etc
-#include "env/defines.h"   // for TR_HOST_X86, TR_HOST_64BIT
-#include "env/jittypes.h"  // for intptrj_t
+#include <stdint.h>
+#include "env/defines.h"
+#include "env/jittypes.h"
 
 #include "env/Processors.hpp"
-
-#ifdef RUBY_PROJECT_SPECIFIC
-#include "ruby/config.h"
-#endif
 
 #include "codegen/LinkageConventionsEnum.hpp"
 
@@ -393,7 +389,10 @@ typedef enum
    TR_ValidateMethodFromSingleAbstractImplementer = 96,
    TR_ValidateImproperInterfaceMethodFromCP=97,
    TR_SymbolFromManager                   = 98,
-   TR_NumExternalRelocationKinds          = 99,
+   TR_MethodCallAddress                   = 99,
+   TR_DiscontiguousSymbolFromManager      = 100,
+   TR_ResolvedTrampolines                 = 101,
+   TR_NumExternalRelocationKinds          = 102,
    TR_ExternalRelocationTargetKindMask    = 0xff,
    } TR_ExternalRelocationTargetKind;
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,49 +19,50 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                                  // for NULL
-#include <stdint.h>                                  // for int32_t, etc
-#include "codegen/AheadOfTimeCompile.hpp"            // for AheadOfTimeCompile
-#include "codegen/CodeGenerator.hpp"                 // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                      // for TR_FrontEnd
-#include "codegen/InstOpCode.hpp"                    // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                   // for Instruction, etc
-#include "codegen/Linkage.hpp"                       // for addDependency
-#include "codegen/Machine.hpp"                       // for Machine, etc
-#include "codegen/MemoryReference.hpp"               // for MemoryReference, etc
-#include "codegen/RealRegister.hpp"                  // for RealRegister, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/AheadOfTimeCompile.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#include "codegen/Register.hpp"                      // for Register
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
-#include "compile/Compilation.hpp"                   // for Compilation, etc
+#include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/Processors.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                            // for intptrj_t, uintptrj_t
-#include "il/DataTypes.hpp"                          // for TR::DataType
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                              // for ILOpCode
-#include "il/Node.hpp"                               // for Node
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                             // for Symbol
-#include "il/SymbolReference.hpp"                    // for SymbolReference
-#include "il/TreeTop.hpp"                            // for TreeTop
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"                // for MethodSymbol
-#include "il/symbol/StaticSymbol.hpp"                // for StaticSymbol
-#include "infra/Assert.hpp"                          // for TR_ASSERT
-#include "infra/List.hpp"                            // for List
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 #include "p/codegen/PPCAOTRelocation.hpp"
 #include "p/codegen/PPCInstruction.hpp"
-#include "p/codegen/PPCOpsDefines.hpp"               // for Op_load, Op_st
-#include "p/codegen/PPCTableOfConstants.hpp"         // for PTOC_FULL_INDEX, etc
+#include "p/codegen/PPCOpsDefines.hpp"
+#include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/Runtime.hpp"
 
 class TR_OpaqueClassBlock;
@@ -437,7 +438,7 @@ void OMR::Power::MemoryReference::adjustForResolution(TR::CodeGenerator *cg)
    {
    _modBase = cg->allocateRegister();
    _conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
-   addDependency(_conditions, _modBase, TR::RealRegister::gr11, TR_GPR, cg);
+   TR::addDependency(_conditions, _modBase, TR::RealRegister::gr11, TR_GPR, cg);
    }
 
 void OMR::Power::MemoryReference::decNodeReferenceCounts(TR::CodeGenerator *cg)
@@ -1078,7 +1079,7 @@ uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
    if (self()->getStaticRelocation() != NULL)
       self()->getStaticRelocation()->setSource2Instruction(currentInstruction);
 
-   base = (self()->getBaseRegister()==NULL)?cg->machine()->getPPCRealRegister(TR::RealRegister::gr0):toRealRegister(self()->getBaseRegister());
+   base = (self()->getBaseRegister()==NULL)?cg->machine()->getRealRegister(TR::RealRegister::gr0):toRealRegister(self()->getBaseRegister());
    index=(self()->getIndexRegister()==NULL)?NULL:toRealRegister(self()->getIndexRegister());
 
    if (TR::Compiler->target.is64Bit() && self()->isTOCAccess())
@@ -1175,18 +1176,37 @@ uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
                   (TR_RelocationRecordInformation*)comp->trMemory()->allocateMemory(
                      sizeof(TR_RelocationRecordInformation),
                      heapAlloc);
-               recordInfo->data1 = (uintptr_t)self()->getSymbolReference();
-               recordInfo->data2 = node == NULL ? -1 : node->getInlinedSiteIndex();
-               recordInfo->data3 = fixedSequence1;
-               cg->addExternalRelocation(
-                  new (cg->trHeapMemory()) TR::ExternalRelocation(
-                     cursor,
-                     (uint8_t*)recordInfo,
-                     TR_ClassAddress,
-                     cg),
-                  __FILE__,
-                  __LINE__,
-                  node);
+
+               if (comp->getOption(TR_UseSymbolValidationManager))
+                  {
+                  recordInfo->data1 = (uintptr_t)self()->getSymbolReference()->getSymbol()->getStaticSymbol()->getStaticAddress();
+                  recordInfo->data2 = (uintptr_t)TR::SymbolType::typeClass;
+                  recordInfo->data3 = fixedSequence1;
+                  cg->addExternalRelocation(
+                     new (cg->trHeapMemory()) TR::ExternalRelocation(
+                        cursor,
+                        (uint8_t*)recordInfo,
+                        TR_DiscontiguousSymbolFromManager,
+                        cg),
+                     __FILE__,
+                     __LINE__,
+                     node);
+                  }
+               else
+                  {
+                  recordInfo->data1 = (uintptr_t)self()->getSymbolReference();
+                  recordInfo->data2 = node == NULL ? -1 : node->getInlinedSiteIndex();
+                  recordInfo->data3 = fixedSequence1;
+                  cg->addExternalRelocation(
+                     new (cg->trHeapMemory()) TR::ExternalRelocation(
+                        cursor,
+                        (uint8_t*)recordInfo,
+                        TR_ClassAddress,
+                        cg),
+                     __FILE__,
+                     __LINE__,
+                     node);
+                  }
 
                // The relocation will OR its values into the immediates, so
                // they have to be zero beforehand
@@ -1384,7 +1404,7 @@ uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
          else
             {
             TR::RealRegister   *stackPtr = cg->getStackPointerRegister();
-            TR::RealRegister *rX = cg->machine()->getPPCRealRegister(choose_rX(currentInstruction, base));
+            TR::RealRegister *rX = cg->machine()->getRealRegister(choose_rX(currentInstruction, base));
             *wcursor = (TR::Compiler->target.is64Bit())?0xf800fff8:0x9000fffc;
             rX->setRegisterFieldRS(wcursor);
             stackPtr->setRegisterFieldRA(wcursor);
@@ -1600,6 +1620,16 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
             TR::Register *reg = _baseRegister = cg->allocateRegister();
             loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_DataAddress);
             return;
+            }
+         else if (isClass && !ref->isUnresolved() && comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR::Register *reg = _baseRegister = cg->allocateRegister();
+            loadAddressConstant(cg, nodeForSymbol, (intptrj_t)ref, reg, NULL, false, TR_ClassAddress);
+            return;
+            }
+         else
+            {
+            TR_ASSERT_FATAL(!comp->getOption(TR_UseSymbolValidationManager) || ref->isUnresolved(), "SVM relocation unhandled");
             }
          }
 

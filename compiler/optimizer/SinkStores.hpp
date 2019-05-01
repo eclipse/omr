@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,15 +22,15 @@
 #ifndef SINKSTORES_INCL
 #define SINKSTORES_INCL
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for int32_t, uint64_t, etc
-#include "compile/Compilation.hpp"            // for Compilation
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "il/Node.hpp"                        // for vcount_t
-#include "infra/Flags.hpp"                    // for flags16_t
-#include "infra/List.hpp"                     // for List, etc
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "infra/Flags.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 class TR_BitVector;
 class TR_HashTab;

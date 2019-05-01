@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -266,6 +266,7 @@ Port::omrfile_stat(const char *path, unsigned int flags, struct J9FileStat *buf)
 	DWORD result;
 	wchar_t unicodeBuffer[UNICODE_BUFFER_SIZE];
 	wchar_t *unicodePath;
+	RCType rc = RC_OK;
 
 	if (NULL == path || NULL == buf) {
 		return RC_FAILED;
@@ -280,12 +281,10 @@ Port::omrfile_stat(const char *path, unsigned int flags, struct J9FileStat *buf)
 	}
 
 	result = GetFileAttributesW(unicodePath);
-	if (unicodeBuffer != unicodePath) {
-		Port::omrmem_free((void **)&unicodePath);
-	}
 
 	if (INVALID_FILE_ATTRIBUTES == result) {
-		return RC_FAILED;
+		rc = RC_FAILED;
+		goto cleanup;
 	}
 
 	if (result & FILE_ATTRIBUTE_DIRECTORY) {
@@ -314,7 +313,8 @@ Port::omrfile_stat(const char *path, unsigned int flags, struct J9FileStat *buf)
 
 		result = GetFullPathNameW(unicodePath, UNICODE_BUFFER_SIZE, driveBuffer, NULL);
 		if (result == 0 || result > UNICODE_BUFFER_SIZE) {
-			return RC_FAILED;
+			rc =  RC_FAILED;
+			goto cleanup;
 		}
 		driveBuffer[3] = '\0'; /* Chop off everything after the initial X:\ */
 		switch (GetDriveTypeW(driveBuffer)) {
@@ -330,7 +330,12 @@ Port::omrfile_stat(const char *path, unsigned int flags, struct J9FileStat *buf)
 		}
 	}
 
-	return RC_OK;
+cleanup:
+	if (unicodeBuffer != unicodePath) {
+		Port::omrmem_free((void **)&unicodePath);
+	}
+
+	return rc;
 }
 
 RCType

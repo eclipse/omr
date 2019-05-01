@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,24 +21,24 @@
 
 #include "p/codegen/PPCTableOfConstants.hpp"
 
-#include <stdint.h>                            // for int32_t, int8_t, etc
-#include <string.h>                            // for memset, NULL, strlen, etc
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, etc
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
+#include <stdint.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
-#include "env/TRMemory.hpp"                    // for TR_PersistentMemory, etc
-#include "env/jittypes.h"                      // for intptrj_t, uintptrj_t
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Monitor.hpp"                   // for Monitor
+#include "env/PersistentInfo.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Monitor.hpp"
 #include "runtime/Runtime.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
@@ -92,7 +92,7 @@ void *TR_PPCTableOfConstants::initTOC(TR_FrontEnd *fe, TR::PersistentInfo * pinf
    int32_t idx;
    for (idx=1; idx<TR_PPCnumRuntimeHelpers; idx++)
       tocBase[idx-1] = (uintptrj_t)runtimeHelperValue((TR_RuntimeHelper)idx);
-#if defined(PYTHON) || defined(OMR_RUBY) || defined(JITTEST)
+#if defined(JITTEST)
    //Store at the index of TR_PPCnumRuntimeHelpers, the systemTOC. Note: Slot tocBase[TR_PPCnumRuntimeHelpers-1] is free.
    //See TR::TreeEvaluator::restoreTOCRegister.
    tocBase[TR_PPCnumRuntimeHelpers] = systemTOC;

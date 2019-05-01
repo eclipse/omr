@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,37 +21,37 @@
 
 #include "codegen/OMRTreeEvaluator.hpp"
 
-#include <stddef.h>                                      // for NULL
-#include <stdint.h>                                      // for uint8_t, etc
+#include <stddef.h>
+#include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"                          // for TR_FrontEnd, etc
+#include "codegen/FrontEnd.hpp"
 #include "codegen/LiveRegister.hpp"
-#include "codegen/Machine.hpp"                           // for Machine
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
-#include "codegen/Register.hpp"                          // for Register
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/Compilation.hpp"                       // for Compilation
+#include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
-#include "il/DataTypes.hpp"                              // for DOUBLE_NAN, etc
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                                  // for ILOpCode
-#include "il/Node.hpp"                                   // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                                 // for Symbol
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"                     // for LabelSymbol
-#include "infra/Assert.hpp"                              // for TR_ASSERT
-#include "infra/List.hpp"                                // for List
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
 #include "ras/Debug.hpp"
 #include "x/codegen/ConstantDataSnippet.hpp"
 #include "x/codegen/OutlinedInstructions.hpp"
 #include "x/codegen/X86Evaluator.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                          // for ::LABEL, etc
+#include "x/codegen/X86Ops.hpp"
 
 TR::Register *OMR::X86::AMD64::TreeEvaluator::aconstEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -439,3 +439,16 @@ TR::Register *OMR::X86::AMD64::TreeEvaluator::dbits2lEvaluator(TR::Node *node, T
    cg->decReferenceCount(child);
    return treg;
    }
+
+TR::Register *OMR::X86::AMD64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   }
+
+TR::Register *OMR::X86::AMD64::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
+   }
+

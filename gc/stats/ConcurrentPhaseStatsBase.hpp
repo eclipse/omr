@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,18 +45,41 @@ public:
 	uintptr_t _cycleID;	/**< The "_id" of the corresponding cycle */
 	uintptr_t _scanTargetInBytes;	/**< The number of bytes a given concurrent task was expected to scan before terminating */
 	uintptr_t _bytesScanned;	/**< The number of bytes a given concurrent task did scan before it terminated (can be lower than _scanTargetInBytes if the termination was asynchronously requested) */
-	bool _terminationWasRequested;	/**< True if a given concurrent task's termination was asynchronously requested (although it might have terminated due to meeting its target, anyway - there is a timing window which allows both of these reasons to be true) */
+	bool _terminationWasRequested;	/**< todo: remove after downstream projects start using _terminationRequestType */
+	enum TerminationRequestType {
+		terminationRequest_None,
+		terminationRequest_ByGC,
+		terminationRequest_External
+	};
+	TerminationRequestType _terminationRequestType; /**< Reason for concurrent task termination, asynchronous external event or itself GC (work or survivor space exhausted etc). */
 
 	/* Member Functions */
 private:
 protected:
 public:
+
+	bool isTerminationRequested() {
+		return terminationRequest_None != _terminationRequestType;
+	}
+	bool isTerminationRequestExternal() {
+		return terminationRequest_External == _terminationRequestType;
+	}
+	
+	void clear() {
+		_cycleID = 0;
+		_scanTargetInBytes = 0;
+		_bytesScanned = 0;
+		_terminationWasRequested = false;
+		_terminationRequestType = terminationRequest_None;
+	}
+	 
 	MM_ConcurrentPhaseStatsBase()
 		: MM_Base()
 		, _cycleID(0)
 		, _scanTargetInBytes(0)
 		, _bytesScanned(0)
 		, _terminationWasRequested(false)
+		, _terminationRequestType(terminationRequest_None)
 	{}
 }; 
 

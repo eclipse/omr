@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,9 @@
 #ifndef PPCAOTRELOCATION_INCL
 #define PPCAOTRELOCATION_INCL
 
-#include <stdint.h>                         // for uint8_t
-#include "codegen/Relocation.hpp"           // for TR::LabelRelocation
-#include "env/TRMemory.hpp"                 // for TR_Memory, etc
+#include <stdint.h>
+#include "codegen/Relocation.hpp"
+#include "env/TRMemory.hpp"
 #include "runtime/Runtime.hpp"
 
 namespace TR { class CodeGenerator; }

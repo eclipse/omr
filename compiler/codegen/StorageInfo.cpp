@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,20 +21,19 @@
 
 #include "codegen/StorageInfo.hpp"
 
-#include <algorithm>                        // for std::max, etc
-#include <stdint.h>                         // for int32_t
-#include <string.h>                         // for strlen
-#include "codegen/CodeGenerator.hpp"        // for CodeGenerator
-#include "codegen/Linkage.hpp"              // for Linkage
-#include "compile/Compilation.hpp"          // for Compilation
-#include "il/DataTypes.hpp"                 // for TR::DataType
-#include "il/ILOpCodes.hpp"                 // for ILOpCodes::aload, etc
-#include "il/ILOps.hpp"                     // for ILOpCode
-#include "il/Node.hpp"                      // for Node
-#include "il/Node_inlines.hpp"              // for Node::getType, etc
-#include "il/Symbol.hpp"                    // for Symbol
-#include "il/SymbolReference.hpp"           // for SymbolReference
-#include "infra/Assert.hpp"                 // for TR_ASSERT
+#include <algorithm>
+#include <stdint.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
 
 char *TR_StorageInfo::TR_StorageClassNames[TR_NumStorageClassTypes] =
    {

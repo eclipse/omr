@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,6 +89,7 @@ public:
 #endif /* OMR_GC_THREAD_LOCAL_HEAP */
 
 	virtual void setAllocateAtSafePointOnly(MM_EnvironmentBase* env, bool safePoint) { _allocateAtSafePointOnly = safePoint; }
+	virtual bool shouldAllocateAtSafePointOnly() { return _allocateAtSafePointOnly; }
 
 	/* Calls for internal collection routines */
 	virtual void* collectorAllocate(MM_EnvironmentBase* env, MM_Collector* requestCollector, MM_AllocateDescription* allocDescription);

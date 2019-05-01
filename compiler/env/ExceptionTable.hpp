@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,10 +24,10 @@
 
 #include "infra/Array.hpp"
 
-#include <stdint.h>          // for uint32_t, uint16_t, int32_t
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
-#include "env/jittypes.h"    // for TR_ByteCodeInfo
-#include "infra/List.hpp"    // for List (ptr only), ListIterator
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "infra/List.hpp"
 
 class TR_ResolvedMethod;
 namespace TR { class Block; }

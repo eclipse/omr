@@ -1,0 +1,181 @@
+###############################################################################
+# Copyright (c) 2019, 2019 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at http://eclipse.org/legal/epl-2.0
+# or the Apache License, Version 2.0 which accompanies this distribution
+# and is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following Secondary
+# Licenses when the conditions for such availability set forth in the
+# Eclipse Public License, v. 2.0 are satisfied: GNU General Public License,
+# version 2 with the GNU Classpath Exception [1] and GNU General Public
+# License, version 2 with the OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+#############################################################################
+
+cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+
+project(dummy LANGUAGES NONE)
+
+set(OMR_MODULES_DIR @OMR_MODULES_DIR@)
+set(DDR_SUPPORT_DIR "@OMR_MODULES_DIR@/ddr")
+set(DDR_INPUTS
+	$<JOIN:$<TARGET_PROPERTY:@DDR_TARGET_NAME@,INPUT_TARGETS>,
+	>
+)
+
+include("@DDR_TOOLS_EXPORT@")
+
+
+function(get_relative_path output filename base)
+	get_filename_component(temp "${filename}" ABSOLUTE BASE_DIR "${base}")
+	file(RELATIVE_PATH temp "${temp}" "${base}")
+	set("${output}" "${temp}" PARENT_SCOPE)
+endfunction()
+
+
+
+function(add_filename_extension output filename prefix)
+	get_filename_component(extension "${filename}" EXT)
+	string(LENGTH "${extension}" ext_length)
+	if(ext_length EQUAL 0)
+		message(SEND_ERROR "No file extension found")
+	endif()
+
+	string(REGEX REPLACE "${extension}$" "${prefix}${extension}" temp "${filename}")
+	set("${output}" "${temp}" PARENT_SCOPE)
+endfunction(add_filename_extension)
+
+function(process_source_files src_files)
+	set(options )
+	set(one_value "SOURCE_DIR" "TARGET" "OUTPUT_STUBS" "OUTPUT_ANNOTATED")
+	set(multi_value "INCLUDE_DIRS" "DEFINES" "INCLUDE_FILES" "PREINCLUDES")
+
+	cmake_parse_arguments("OPT" "${options}" "${one_value}" "${multi_value}" ${ARGV})
+
+	set(stub_files)
+	set(annotated_files)
+
+	#build up the command line to the preprocessor
+	set(BASE_ARGS )
+	foreach(incdir IN LISTS OPT_INCLUDE_DIRS)
+		list(APPEND BASE_ARGS "-I${incdir}")
+	endforeach()
+
+	foreach(def IN LISTS OPT_DEFINES)
+		list(APPEND BASE_ARGS "-D${def}")
+	endforeach()
+
+
+	foreach(source_file IN LISTS OPT_UNPARSED_ARGUMENTS)
+		get_filename_component(extension "${source_file}" EXT)
+		# If file isnt a c/c++ file, ignore it
+		if(NOT extension MATCHES "\.[ch](pp)?$")
+			continue()
+		endif()
+		get_filename_component(abs_file "${source_file}" ABSOLUTE BASE_DIR "${OPT_SOURCE_DIR}")
+		file(RELATIVE_PATH output_file "${OPT_SOURCE_DIR}" "${abs_file}")
+		string(REGEX REPLACE "\\.\\.(/|$)" "__\\1" output_file "${output_file}")
+		set(output_file "${OPT_TARGET}/${output_file}")
+		get_filename_component(output_dir "${output_file}" DIRECTORY)
+		file(MAKE_DIRECTORY "${output_dir}")
+
+		add_filename_extension(stub_file "${output_file}" ".stub")
+		add_filename_extension(annt_file "${output_file}" ".annt")
+
+		list(APPEND stub_files "${stub_file}")
+		list(APPEND annotated_files "${annt_file}")
+
+		add_custom_command(
+			OUTPUT "${stub_file}"
+			DEPENDS
+				${abs_file}
+				${DDR_SUPPORT_DIR}/cmake_ddr.awk
+				${DDR_SUPPORT_DIR}/GenerateStub.cmake
+				COMMAND ${CMAKE_COMMAND} -DAWK_SCRIPT=${DDR_SUPPORT_DIR}/cmake_ddr.awk -Dinput_file=${abs_file} -Doutput_file=${stub_file} -P ${DDR_SUPPORT_DIR}/GenerateStub.cmake
+		)
+
+		#TODO don't hardcode command
+		set(pp_command "gcc")
+		list(APPEND pp_command ${BASE_ARGS} "-E" "${stub_file}" )
+		add_custom_command(
+			OUTPUT "${annt_file}"
+			DEPENDS "${stub_file}"
+			COMMAND  ${pp_command} | awk "/^\$/{next} /^DDRFILE_BEGIN /,/^DDRFILE_END /{print \"@\" $0}"  > ${annt_file}
+			VERBATIM
+		)
+	endforeach()
+
+	if(OPT_OUTPUT_STUBS)
+		set("${OPT_OUTPUT_STUBS}" "${stub_files}" PARENT_SCOPE)
+	endif()
+
+	if(OPT_OUTPUT_ANNOTATED)
+		message(STATUS "setting annotated file for ${target} ${annotated_files}")
+		set("${OPT_OUTPUT_ANNOTATED}" "${annotated_files}" PARENT_SCOPE)
+	endif()
+endfunction(process_source_files)
+
+set(stubannotated_files )
+set(target_files )
+
+function(process_target target)
+	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${target}")
+	file(STRINGS "${CMAKE_SOURCE_DIR}/${target}.txt" target_config)
+
+	cmake_parse_arguments("OPT" "" "SOURCE_DIR;OUTPUT_FILE" "INCLUDE_PATH;DEFINES;SOURCES;HEADERS;PREINCLUDES" ${target_config})
+
+	if(OPT_OUTPUT_FILE)
+		set(target_files ${target_files} "${OPT_OUTPUT_FILE}" PARENT_SCOPE)
+	endif()
+
+
+	process_source_files(
+		${OPT_SOURCES}
+		TARGET "${target}"
+		SOURCE_DIR "${OPT_SOURCE_DIR}"
+		OUTPUT_ANNOTATED project_annt_src
+		INCLUDE_DIRS ${OPT_INCLUDE_PATH}
+
+	)
+	list(APPEND annotated_files ${project_annt_src})
+
+	# The only difference between source files and header files, is that header files may need
+	# other headers pre-included so that preprocessor macros work properly
+	process_source_files(
+		${OPT_HEADERS}
+		TARGET "${target}"
+		SOURCE_DIR "${OPT_SOURCE_DIR}"
+		OUTPUT_ANNOTATED project_annt_hdr
+		#TODO need to add pre-include files
+	)
+	list(APPEND annotated_files ${project_annt_hdr})
+
+	# Bump changes up to parent scope
+	set(annotated_files "${annotated_files}" PARENT_SCOPE)
+
+endfunction(process_target)
+
+foreach(target IN LISTS DDR_INPUTS)
+	process_target("${target}")
+endforeach()
+
+add_custom_command(
+	OUTPUT macroList
+	DEPENDS ${annotated_files}
+	COMMAND cat ${annotated_files} > macroList
+)
+
+add_custom_command(
+	OUTPUT blob.dat superset.out
+	DEPENDS macroList
+	COMMAND omr_ddrgen ${target_files} -e --macrolist macroList --blob blob.dat --superset superset.out
+)
+
+add_custom_target(ddrgen ALL DEPENDS blob.dat)

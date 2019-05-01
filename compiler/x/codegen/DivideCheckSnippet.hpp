@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef DIVIDECHECKSNIPPET_INCL
 #define DIVIDECHECKSNIPPET_INCL
 
-#include <stdint.h>                      // for int32_t, uint32_t, uint8_t
-#include "codegen/Snippet.hpp"           // for TR::X86Snippet::Kind, etc
-#include "il/DataTypes.hpp"              // for TR::DataType
-#include "x/codegen/RestartSnippet.hpp"  // for TR::X86RestartSnippet
-#include "x/codegen/X86Instruction.hpp"  // for TR::X86RegRegInstruction
+#include <stdint.h>
+#include "codegen/Snippet.hpp"
+#include "il/DataTypes.hpp"
+#include "x/codegen/RestartSnippet.hpp"
+#include "x/codegen/X86Instruction.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class ILOpCode; }

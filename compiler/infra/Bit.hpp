@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,12 +23,12 @@
 #define BITMANIP_H
 #define IN_BITMANIP_H
 
-#include <algorithm>         // for std::max
-#include <limits.h>          // for INT_MIN, LONG_MIN
-#include <stdint.h>          // for int32_t, int64_t, uint32_t, etc
-#include <stdlib.h>          // for abs, labs
-#include "il/DataTypes.hpp"  // for CONSTANT64, TR::getMaxSignedPrecision<TR::Int64>(), etc
-#include "infra/Assert.hpp"  // for TR_ASSERT
+#include <algorithm>
+#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
 
 #if defined(TR_TARGET_X86) && defined(OMR_OS_WINDOWS)
    #define abs64 _abs64

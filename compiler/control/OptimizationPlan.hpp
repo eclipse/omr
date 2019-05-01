@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,14 +24,14 @@
 
 #include "optimizer/Optimizer.hpp"
 
-#include <stddef.h>                      // for size_t
-#include <stdint.h>                      // for int32_t, uint32_t
-#include "compile/CompilationTypes.hpp"  // for TR_Hotness
-#include "env/FilePointerDecl.hpp"       // for FILE
-#include "env/TRMemory.hpp"              // for TR_Memory, etc
-#include "il/DataTypes.hpp"              // for etc
-#include "infra/Assert.hpp"              // for TR_ASSERT
-#include "infra/Flags.hpp"               // for flags32_t
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/CompilationTypes.hpp"
+#include "env/FilePointerDecl.hpp"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
 
 namespace TR { class CompilationInfo; }
 class TR_MethodEvent;

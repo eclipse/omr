@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,8 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>        // for uint64_t, etc
-#include "env/jittypes.h"  // for uintptrj_t
+#include <stdint.h>
+#include "env/jittypes.h"
 
 #ifdef TR_BIGEND_TO_LITEND
 // byte order big to little long (8 bytes)

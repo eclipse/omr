@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,9 @@
 #ifndef TR_ILGENREQUEST_INCL
 #define TR_ILGENREQUEST_INCL
 
-#include "env/FilePointerDecl.hpp"    // for FILE
-#include "ilgen/OMRIlGenRequest.hpp"  // for IlGenRequestConnector
-#include "infra/Annotations.hpp"      // for OMR_EXTENSIBLE
+#include "env/FilePointerDecl.hpp"
+#include "ilgen/OMRIlGenRequest.hpp"
+#include "infra/Annotations.hpp"
 
 class TR_FrontEnd;
 class TR_IlGenerator;

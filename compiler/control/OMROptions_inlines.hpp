@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 #define OMR_OPTIONS_INLINE_INCL
 
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"   // for Option
+#include "control/Options_inlines.hpp"
 
 /*
  * Performance sensitive implementations are included here
@@ -86,12 +86,6 @@ OMR::Options::getNumLimitedGRARegsWithheld()
       else
          return regsToWithhold;
       }
-
-inline bool
-OMR::Options::needWriteBarriers()
-   {
-   return (self()->gcIsUsingConcurrentMark() || _gcMode == TR_WrtbarOldCheck);
-   }
 
 
 inline bool

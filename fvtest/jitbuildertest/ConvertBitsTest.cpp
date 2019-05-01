@@ -37,7 +37,7 @@ DEFINE_BUILDER( BitConvertInt2Float,
 TEST_F(BitConversionTest, Int2Float)
    {
    BitConvertInt2FloatFunction* int2float;
-   ASSERT_COMPILE(TR::TypeDictionary, BitConvertInt2Float, int2float);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, BitConvertInt2Float, int2float);
 
    ASSERT_EQ(0.0f, int2float(0));
    ASSERT_EQ(-1.0f, int2float(0xbf800000U));
@@ -59,7 +59,7 @@ DEFINE_BUILDER( BitConvertFloat2Int,
 TEST_F(BitConversionTest, Float2Int)
    {
    BitConvertFloat2IntFunction* float2int;
-   ASSERT_COMPILE(TR::TypeDictionary, BitConvertFloat2Int, float2int);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, BitConvertFloat2Int, float2int);
 
    ASSERT_EQ(UINT32_C(0), float2int(0.0f));
    ASSERT_EQ(UINT32_C(0xbf800000), float2int(-1.0f));
@@ -81,7 +81,7 @@ DEFINE_BUILDER( BitConvertLong2Double,
 TEST_F(BitConversionTest, Long2Double)
    {
    BitConvertLong2DoubleFunction* long2double;
-   ASSERT_COMPILE(TR::TypeDictionary, BitConvertLong2Double, long2double);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, BitConvertLong2Double, long2double);
 
    ASSERT_EQ(0.0, long2double(0));
    ASSERT_EQ(-1.0, long2double(0xbff0000000000000ULL));
@@ -103,7 +103,7 @@ DEFINE_BUILDER( BitConvertDouble2Long,
 TEST_F(BitConversionTest, Double2Long)
    {
    BitConvertDouble2LongFunction* double2long;
-   ASSERT_COMPILE(TR::TypeDictionary, BitConvertDouble2Long, double2long);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, BitConvertDouble2Long, double2long);
 
    ASSERT_EQ(UINT64_C(0), double2long(0.0));
    ASSERT_EQ(UINT64_C(0xbff0000000000000), double2long(-1.0));

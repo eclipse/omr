@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,17 +35,17 @@ namespace OMR { typedef OMR::Power::CodeGenerator CodeGeneratorConnector; }
 
 #include "compiler/codegen/OMRCodeGenerator.hpp"
 
-#include "codegen/InstOpCode.hpp"              // for InstOpCode, etc
-#include "codegen/Machine.hpp"                 // for LOWER_IMMED, etc
-#include "codegen/RealRegister.hpp"            // for RealRegister, etc
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
 #include "codegen/ScratchRegisterManager.hpp"
 #include "compile/SymbolReferenceTable.hpp"
-#include "env/CPU.hpp"                         // for Cpu
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
+#include "env/CPU.hpp"
+#include "env/PersistentInfo.hpp"
 #include "env/Processors.hpp"
 #include "env/TypedAllocator.hpp"
-#include "env/jittypes.h"                      // for intptrj_t
-#include "infra/BitVector.hpp"                 // for TR_BitVector
+#include "env/jittypes.h"
+#include "infra/BitVector.hpp"
 #include "infra/TRlist.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"
 
@@ -183,6 +183,8 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR::Instruction *generateNop(TR::Node *n, TR::Instruction *preced = 0, TR_NOPKind nopKind=TR_NOPStandard);
    TR::Instruction *generateGroupEndingNop(TR::Node *node , TR::Instruction *preced = 0);
    TR::Instruction *generateProbeNop(TR::Node *node , TR::Instruction *preced = 0);
+
+   bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg);
 
    bool isSnippetMatched(TR::Snippet *, int32_t, TR::SymbolReference *);
 
@@ -384,6 +386,8 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    bool supportsFusedMultiplyAdd() {return true;}
    bool supportsNegativeFusedMultiplyAdd() {return true;}
 
+   bool supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol);
+
    bool getSupportsTenuredObjectAlignment() { return true; }
    bool isObjectOfSizeWorthAligning(uint32_t size)
       {
@@ -421,7 +425,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    // PPC specific thresholds for constant re-materialization
    int64_t getLargestNegConstThatMustBeMaterialized() {return -32769;}  // minimum 16-bit signed int minux 1
    int64_t getSmallestPosConstThatMustBeMaterialized() {return 32768;}  // maximum 16-bit signed int plus 1
-   bool shouldValueBeInACommonedNode(int64_t); // no virt, cast
+   bool shouldValueBeInACommonedNode(int64_t);
 
    static bool isILOpCodeSupported(TR::ILOpCodes);
    // Constant Data update
@@ -492,6 +496,17 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
       TR::LabelSymbol *label,
       TR::Register *tempReg,
       TR::Instruction **q);
+
+   /**
+    * @brief Answers whether a trampoline is required for a direct call instruction to
+    *           reach a target address.
+    *
+    * @param[in] targetAddress : the absolute address of the call target
+    * @param[in] sourceAddress : the absolute address of the call instruction
+    *
+    * @return : true if a trampoline is required; false otherwise.
+    */
+   bool directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress);
 
    private:
 

@@ -389,8 +389,8 @@ barrier_update_r(barrier_r *barrier, int new_value)
 		old_value = barrier->in_count;
 	} while (compareAndSwapUDATA((uintptr_t *)&barrier->in_count, old_value, old_value + difference) != old_value);
 
-	if (old_value < 0 || (old_value == 0 && barrier->initial_value != 0)) {
-		int restore_value = old_value;
+	if (old_value == 0 && barrier->initial_value != 0) {
+		uintptr_t restore_value = old_value;
 
 		/* barrier was already exited, so undo update and return error */
 		do {

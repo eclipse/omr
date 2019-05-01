@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -260,7 +260,7 @@ setupNativeThread(J9ThreadWalkState *state, thread_context *sigContext)
 			CLEAR_ERROR(state);
 		}
 
-		if (NULL == state->current_thread->callstack && state->current_thread->callstack->symbol) {
+		if ((NULL != state->current_thread->callstack) && (NULL == state->current_thread->callstack->symbol)) {
 			SPECULATE_ERROR(state, FAULT_DURING_BACKTRACE, 3);
 			state->portLibrary->introspect_backtrace_symbols(state->portLibrary, state->current_thread, state->heap);
 			CLEAR_ERROR(state);

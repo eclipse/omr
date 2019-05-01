@@ -52,7 +52,7 @@ JitBuilder::ResolvedMethod::ResolvedMethod(TR_OpaqueMethodBlock *method)
 JitBuilder::ResolvedMethod::ResolvedMethod(TR::MethodBuilder *m)
    : _fileName(m->getDefiningFile()),
      _lineNumber(m->getDefiningLine()),
-     _name((char *)m->getMethodName()), // sad cast
+     _name((char *)m->GetMethodName()), // sad cast
      _numParms(m->getNumParameters()),
      _parmTypes(m->getParameterTypes()),
      _returnType(m->getReturnType()),

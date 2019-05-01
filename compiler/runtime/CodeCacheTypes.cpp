@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@
  *******************************************************************************/
 
 #include "runtime/CodeCacheTypes.hpp"
-#include "runtime/CodeCacheManager.hpp"        // for TR::CodeCacheManager
+#include "runtime/CodeCacheManager.hpp"
 
 namespace OMR
 {
@@ -37,7 +37,7 @@ CodeCacheHashTable::dumpHashUnresolvedMethod(void)
       {
       entry = _buckets[i];
       if (entry)
-         mcc_printf("index = %d, constPool = 0x%x  cpIndex = %d\n", i, entry->_info._unresolved._constPool,entry->_info._unresolved._constPoolIndex);
+         mcc_printf("index = %d, constPool = 0x%p  cpIndex = %d\n", i, entry->_info._unresolved._constPool,entry->_info._unresolved._constPoolIndex);
       }
    return;
    }

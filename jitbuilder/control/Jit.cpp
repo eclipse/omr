@@ -113,7 +113,6 @@ initializeCodeCache(TR::CodeCacheManager & codeCacheManager)
 // helpers is an array of pointers to helpers that compiled code needs to reference
 //   currently this argument isn't needed by anything so this function can stay internal
 // options is any JIT option string passed in to globally influence compilation
-static
 bool
 initializeJitBuilder(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t numHelpers, char *options)
    {
@@ -149,7 +148,6 @@ initializeJitBuilder(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_
    return true;
    }
 
-
 /*
  _____      _                        _
 | ____|_  _| |_ ___ _ __ _ __   __ _| |
@@ -174,36 +172,26 @@ initializeJitBuilder(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_
 
 
 
-extern "C"
 bool
-initializeJitWithOptions(char *options)
+internal_initializeJitWithOptions(char *options)
    {
    return initializeJitBuilder(0, 0, 0, options);
    }
 
-extern "C"
 bool
-initializeJit()
+internal_initializeJit()
    {
    return initializeJitBuilder(0, 0, 0, (char *)"-Xjit:acceptHugeMethods,enableBasicBlockHoisting,omitFramePointer,useILValidator");
    }
 
-extern "C"
 int32_t
-compileMethodBuilder(TR::MethodBuilder *m, uint8_t **entry)
+internal_compileMethodBuilder(TR::MethodBuilder *m, void **entry)
    {
-   TR::ResolvedMethod resolvedMethod(m);
-   TR::IlGeneratorMethodDetails details(&resolvedMethod);
-
-   int32_t rc=0;
-   *entry = compileMethodFromDetails(NULL, details, warm, rc);
-   m->typeDictionary()->NotifyCompilationDone();
-   return rc;
+   return m->Compile(entry);
    }
 
-extern "C"
 void
-shutdownJit()
+internal_shutdownJit()
    {
    auto fe = JitBuilder::FrontEnd::instance();
 

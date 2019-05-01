@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2018 IBM Corp. and others
+Copyright (c) 2016, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -10,7 +10,7 @@ is available at https://www.apache.org/licenses/LICENSE-2.0.
 This Source Code may also be made available under the following
 Secondary Licenses when the conditions for such availability set
 forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-General Public License, version 2 with the GNU Classpath 
+General Public License, version 2 with the GNU Classpath
 Exception [1] and GNU General Public License, version 2 with the
 OpenJDK Assembly Exception [2].
 
@@ -90,11 +90,28 @@ doc/compiler | Additional documentation
 
 ## Namespaces
 
-The `OMR::`, `TestCompiler::`, and `JitBuilder::` namespaces are used to isolate compiler technology for those particular environments.  Processor architecture specialized namespaces (e.g., `X86::`, `Power::`, `Z::`, and `ARM::`) can be nested within them.  If you extend the Eclipse OMR technology you should choose a unique namespace for your project.
+The `OMR`, `TestCompiler`, and `JitBuilder` namespaces are used to isolate
+compiler technology for those particular components.  Processor architecture
+specialized namespaces (e.g., `X86`, `Power`, `Z`, and `ARM`) can be
+nested within them, and secondary nesting for sub-architectures (e.g., `I386`,
+`AMD64`) is also permitted.
 
-In general, the `TR::` namespace (short for Testarossa) is the canonical namespace for all of the compiler technology that is visible across multiple projects.
+The `TR` namespace (an abbreviation for Testarossa) should be used for all
+components of the OMR compiler that are part of the public API for consuming
+projects.  The OMR compiler public API includes the concrete classes for the
+extensible class representation (see [*extensible classes*](../doc/compiler/extensible_classes/Extensible_Classes.md)).
 
-You may encounter references that are in the global namespace but whose identifiers are preceeded simply with `TR_`.  This is inconsistent with namespace convention just described and they are being moved to the `TR::` namespace as refactoring continues.
+At present, the use of the `TR` namespace for the public API is largely aspirational
+as much of the code appears as it did when it was first contributed.  The epic to
+track the work to migrate components of the OMR compiler public API to the `TR`
+namespace is issue [#3519](https://github.com/eclipse/omr/issues/3519).
+Throughout the current compiler code, you may encounter references that are in
+the global namespace but whose identifiers are prefixed simply with `TR_`.
+This is inconsistent with the namespace convention just described and they are
+being moved to the `TR` namespace as part of #3519.
+
+If you extend the Eclipse OMR compiler you should choose a unique namespace
+for your project that does not conflict with the compiler namespaces.
 
 ## XXX_PROJECT_SPECIFIC macros
 

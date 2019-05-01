@@ -33,7 +33,6 @@
 #include "gtest/gtest.h"
 #include "il/DataTypes.hpp"
 #include "ilgen.hpp"
-#include "Jit.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
 #define ASSERT_NULL(pointer) ASSERT_EQ(NULL, (pointer))

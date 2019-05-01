@@ -183,6 +183,15 @@ MM_HeapSplit::getPageFlags()
 	return (_lowExtent->getPageSize() < _highExtent->getPageSize()) ? _lowExtent->getPageFlags() : _highExtent->getPageFlags();
 }
 
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+void*
+MM_HeapSplit::doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
+{
+	/* Unreachable */
+	return NULL;
+}
+#endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
+
 /**
  * Answer the largest size the heap will ever consume.
  * The value returned represents the difference between the lowest and highest possible address range

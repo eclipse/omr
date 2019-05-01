@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,7 +76,7 @@ function(omr_add_hookgen)
 
 	add_custom_command(
 		OUTPUT "${OPT_PRIVATE_DIR}/${private_header}" "${OPT_PUBLIC_DIR}/${public_header}"
-		COMMAND hookgen "${CMAKE_CURRENT_BINARY_DIR}/${input_filename}"
+		COMMAND ${OMR_EXE_LAUNCHER} $<TARGET_FILE:hookgen> "${CMAKE_CURRENT_BINARY_DIR}/${input_filename}"
 		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${OPT_INPUT}"
 	)
 

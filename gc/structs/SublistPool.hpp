@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,6 +74,7 @@ public:
  */
 private:
 	MM_SublistPuddle *createNewPuddle(MM_EnvironmentBase *env);
+	void freePuddles(MM_EnvironmentBase *env, MM_SublistPuddle *list);
 
 protected:
 public:

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,9 +31,9 @@
 
 #include "codegen/CodeGenPhase.hpp"
 
-#include "infra/Assert.hpp"                           // for TR_ASSERT
-#include "codegen/CodeGenerator.hpp"                  // for CodeGenerator, etc
-#include "compile/Compilation.hpp"                    // for Compilation, etc
+#include "infra/Assert.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
 #include "optimizer/LoadExtensions.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "il/TreeTop.hpp"

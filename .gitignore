@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-/build/
+build/
 objs/
 CMakeFiles/
 CMakeCache.txt
@@ -160,6 +160,7 @@ Testing/
 *.suo
 *.vcxproj
 *.vcxproj.filters
+CMakeSettings.json
 Debug/
 gc/example/Debug/
 omr_test/Debug/
@@ -170,6 +171,12 @@ port/omrsyslogmessages.h
 port/omrsyslogmessages.rc
 port/MSG00001.bin
 x64/
+
+# Visual Studio Code
+/.vscode
+
+# CLion
+.idea/
 
 # Test Output
 core
@@ -188,3 +195,4 @@ VerboseGC_*.xml*
 # common development artifacts
 *.swp
 tags
+*~

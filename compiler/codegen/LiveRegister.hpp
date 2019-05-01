@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,16 +22,16 @@
 #ifndef LIVEREGISTER_INCL
 #define LIVEREGISTER_INCL
 
-#include <stddef.h>                       // for NULL
-#include <stdint.h>                       // for uint64_t
-#include "codegen/RegisterConstants.hpp"  // for TR_RegisterMask
-#include "compile/Compilation.hpp"        // for Compilation
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/RegisterConstants.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/TRMemory.hpp"               // for TR_Memory, etc
-#include "infra/Assert.hpp"               // for TR_ASSERT
-#include "ras/Debug.hpp"                  // for TR_DebugBase
+#include "env/TRMemory.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Node; }

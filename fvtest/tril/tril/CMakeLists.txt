@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,11 +51,7 @@ FLEX_TARGET(tril_scanner tril.l ${CMAKE_CURRENT_BINARY_DIR}/tril.scanner.c
 )
 ADD_FLEX_BISON_DEPENDENCY(tril_scanner tril_parser)
 
-if(TRIL_TEST_COMPILER)
-    set(TRIL_BACKEND_LIB      testcompiler)
-else()
-    set(TRIL_BACKEND_LIB      jitbuilder)
-endif()
+set(TRIL_BACKEND_LIB      testcompiler)
 
 add_library(tril STATIC
 	${BISON_tril_parser_OUTPUTS}
@@ -68,14 +64,14 @@ add_library(tril STATIC
 # This is mildly peculiar. Because tril relies
 # on jitbuilder as a 'backend' of sorts, we use
 # its includes. Tril exports this as interface
-make_compiler_target(tril PUBLIC COMPILER ${TRIL_BACKEND_LIB}) 
+make_compiler_target(tril PUBLIC COMPILER ${TRIL_BACKEND_LIB})
 
 target_include_directories(tril PUBLIC
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(tril PUBLIC 
+target_link_libraries(tril PUBLIC
 	${TRIL_BACKEND_LIB}
 	${CMAKE_DL_LIBS}
 )

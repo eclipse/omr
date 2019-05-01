@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,9 +28,6 @@
 #include "env/CompilerEnv.hpp"
 
 
-#define notImplemented(A) TR_ASSERT(0, "TR_FrontEnd::%s is undefined", (A) )
-
-
 OMR::KnownObjectTable::KnownObjectTable(TR::Compilation *comp) :
       _comp(comp),
       _fe(comp->fe()),
@@ -47,14 +44,14 @@ OMR::KnownObjectTable::self()
 TR::KnownObjectTable::Index
 OMR::KnownObjectTable::getEndIndex()
    {
-   notImplemented("OMR::KnownObjectTable::getEndIndex");
+   TR_UNIMPLEMENTED();
    return -1;
    }
 
 TR::KnownObjectTable::Index
 OMR::KnownObjectTable::getIndex(uintptrj_t objectPointer)
    {
-   notImplemented("OMR::KnownObjectTable::getIndex");
+   TR_UNIMPLEMENTED();
    return -1;
    }
 
@@ -92,21 +89,21 @@ OMR::KnownObjectTable::isArrayWithConstantElements(Index index)
 uintptrj_t *
 OMR::KnownObjectTable::getPointerLocation(Index index)
    {
-   notImplemented("OMR::KnownObjectTable::getPointerLocation");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 bool
 OMR::KnownObjectTable::isNull(Index index)
    {
-   notImplemented("OMR::KnownObjectTable::isNull");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
 void
 OMR::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
    {
-   notImplemented("OMR::KnownObjectTable::dumpTo");
+   TR_UNIMPLEMENTED();
    }
 
 TR::KnownObjectTable::Index

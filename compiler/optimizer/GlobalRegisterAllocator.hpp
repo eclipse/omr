@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,19 +22,19 @@
 #ifndef GLOBAL_REGISTER_ALLOCATOR_INCL
 #define GLOBAL_REGISTER_ALLOCATOR_INCL
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for int32_t, uint32_t
-#include "compile/Compilation.hpp"            // for Compilation
-#include "cs2/hashtab.h"                      // for HashTable
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "il/DataTypes.hpp"                   // for DataTypes
-#include "il/Node.hpp"                        // for Node, vcount_t
-#include "infra/BitVector.hpp"                // for TR_BitVector
-#include "infra/Link.hpp"                     // for TR_Link, TR_LinkHead
-#include "infra/List.hpp"                     // for List, etc
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
-#include "optimizer/UseDefInfo.hpp"           // for TR_UseDefInfo, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "cs2/hashtab.h"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "il/Node.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
+#include "optimizer/UseDefInfo.hpp"
 
 class TR_GlobalRegister;
 class TR_NodeMappings;

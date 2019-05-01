@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,9 +19,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/CodeGenerator.hpp"  // for CodeGenerator
-#include "codegen/Machine.hpp"        // for Machine
-#include "codegen/RealRegister.hpp"   // for RealRegister, etc
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
 
 TR::RealRegister *
 OMR::X86::RealRegister::regMaskToRealRegister(TR_RegisterMask mask, TR_RegisterKinds rk, TR::CodeGenerator *cg)
@@ -39,7 +39,7 @@ OMR::X86::RealRegister::regMaskToRealRegister(TR_RegisterMask mask, TR_RegisterK
    else
       TR_ASSERT(false, "Invalid TR_RegisterKinds value passed to OMR::X86::RealRegister::regMaskToRealRegister()");
 
-   return cg->machine()->getX86RealRegister(TR::RealRegister::RegNum(rr+bitPos));
+   return cg->machine()->getRealRegister(TR::RealRegister::RegNum(rr+bitPos));
    }
 
 TR_RegisterMask

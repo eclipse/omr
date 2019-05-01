@@ -83,7 +83,7 @@ private:
 	DDR_RC createClassUDT(IDiaSymbol *symbol, ClassUDT **newClass, NamespaceUDT *outerUDT);
 	DDR_RC createEnumUDT(IDiaSymbol *symbol, NamespaceUDT *outerUDT);
 	DDR_RC createTypedef(IDiaSymbol *symbol, NamespaceUDT *outerUDT);
-	DDR_RC loadDataFromPdb(const wchar_t *filename, IDiaDataSource **diaDataSource, IDiaSession **diaSession, IDiaSymbol **diaSymbol);
+	DDR_RC loadDataFromBinary(const wchar_t *filename, IDiaDataSource **diaDataSource, IDiaSession **diaSession, IDiaSymbol **diaSymbol);
 	DDR_RC setSuperClassName(IDiaSymbol *symbol, ClassUDT *newUDT);
 	void getNamespaceFromName(const string &name, NamespaceUDT **outerUDT);
 	static DDR_RC getName(IDiaSymbol *symbol, string *name);

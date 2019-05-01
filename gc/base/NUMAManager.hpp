@@ -42,6 +42,7 @@ public:
 protected:
 private:
 	bool _physicalNumaEnabled;	/**< True if physical (as opposed to logical-only as is the case of simulated NUMA) NUMA support is enabled in the receiver */
+	bool _shouldSetCPUAffinity;  /**< False if we should not be modifying the affinity of mutator threads */
 	uintptr_t _simulatedNodeCount;	/**< The number of nodes being logically simulated by an fvtest option (changes affinity leaders, not physical nodes, and only honoured if NUMA is disabled) */
 	uintptr_t _maximumNodeNumber;	/**< The highest j9NodeNumber of all elements in the _activeNodes array or 0 if NUMA isn't available or being simulated */
 	J9MemoryNodeDetail *_activeNodes;	/**< The array of node details for the active (having either usable memory or CPUs) NUMA nodes on the system (might be simulated) */
@@ -63,6 +64,11 @@ public:
 	void shouldEnablePhysicalNUMA(bool numaEnabled);
 
 	bool isPhysicalNUMAEnabled() const { return _physicalNumaEnabled; }
+
+
+	void shouldSetCPUAffinity(bool setAffinity) { _shouldSetCPUAffinity = setAffinity; }
+
+	bool shouldSetCPUAffinity() { return _shouldSetCPUAffinity; }
 
 	/**
 	 * Get low-level NUMA node number from logical node ID.
@@ -146,6 +152,7 @@ public:
 	 */
 	MM_NUMAManager()
 		: _physicalNumaEnabled(false)
+		, _shouldSetCPUAffinity(true)
 		, _simulatedNodeCount(0)
 		, _maximumNodeNumber(0)
 		, _activeNodes(NULL)
@@ -157,5 +164,5 @@ public:
 	{}
 };
 
-#endif /* OMR_GC_VLHGC */
+#endif /* NUMAMANAGER_HPP_ */
 

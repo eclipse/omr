@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,12 +22,12 @@
 #ifndef GENERATEINSTRUCTION_INCL
 #define GENERATEINSTRUCTION_INCL
 
-#include <stddef.h>                // for NULL
-#include <stdint.h>                // for uint8_t, uint32_t, int8_t, etc
-#include "codegen/InstOpCode.hpp"  // for InstOpCode, InstOpCode::Mnemonic, etc
-#include "codegen/Snippet.hpp"     // for Snippet
-#include "env/jittypes.h"          // for uintptrj_t
-#include "il/Symbol.hpp"           // for Symbol, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Snippet.hpp"
+#include "env/jittypes.h"
+#include "il/Symbol.hpp"
 
 #include "z/codegen/S390Instruction.hpp"
 
@@ -351,12 +351,12 @@ TR::Instruction * generateRXInstruction(
                    TR::Instruction         *preced = 0);
 
 TR::Instruction * generateRXInstruction(
-                   TR::CodeGenerator *cg,
-                   TR::InstOpCode::Mnemonic          op,
-                   TR::Node                *n,
-                   TR::Register            *treg,
-                   uint32_t                 constForMR,
-                   TR::Instruction         *preced = 0);
+                   TR::CodeGenerator* cg, 
+                   TR::InstOpCode::Mnemonic op, 
+                   TR::Node* n, 
+                   uint8_t mask, 
+                   TR::MemoryReference* mf, 
+                   TR::Instruction* preced = 0);
 
 TR::Instruction * generateRXEInstruction(
                    TR::CodeGenerator       *cg,
@@ -366,38 +366,6 @@ TR::Instruction * generateRXEInstruction(
                    TR::MemoryReference *mf,
                    uint8_t                mask3,
                    TR::Instruction     *preced = 0);
-
-TR::Instruction * generateRXYInstruction(
-                   TR::CodeGenerator *cg,
-                   TR::InstOpCode::Mnemonic          op,
-                   TR::Node                 *n,
-                   TR::Register            *treg,
-                   TR::MemoryReference *mf,
-                   TR::Instruction         *preced = 0);
-
-TR::Instruction * generateRXYbInstruction(
-                   TR::CodeGenerator        *cg,
-                   TR::InstOpCode::Mnemonic      op,
-                   TR::Node                 *n,
-                   uint8_t                   mask,
-                   TR::MemoryReference    *mf,
-                   TR::Instruction          *preced = 0);
-
-TR::Instruction * generateRXYInstruction(
-                   TR::CodeGenerator *cg,
-                   TR::InstOpCode::Mnemonic          op,
-                   TR::Node                 *n,
-                   TR::RegisterPair         *regp,
-                   TR::MemoryReference *mf,
-                   TR::Instruction         *preced = 0);
-
-TR::Instruction * generateRXYInstruction(
-                   TR::CodeGenerator *cg,
-                   TR::InstOpCode::Mnemonic          op,
-                   TR::Node                *n,
-                   TR::Register            *treg,
-                   uint32_t                 constForMR,
-                   TR::Instruction         *preced = 0);
 
 TR::Instruction * generateRXFInstruction(
                    TR::CodeGenerator *cg,
@@ -598,14 +566,6 @@ TR::Instruction * generateRILInstruction(
                    TR::Instruction          *preced = 0);
 
 TR::Instruction * generateSIInstruction(
-                   TR::CodeGenerator *cg,
-                   TR::InstOpCode::Mnemonic          op,
-                   TR::Node                *n,
-                   TR::MemoryReference *mf,
-                   uint32_t                imm,
-                   TR::Instruction         *preced = 0);
-
-TR::Instruction * generateSIYInstruction(
                    TR::CodeGenerator *cg,
                    TR::InstOpCode::Mnemonic          op,
                    TR::Node                *n,
@@ -915,15 +875,6 @@ TR::Instruction * generateRSWithImplicitPairStoresInstruction(
                    TR::MemoryReference *mf,
                    TR::Instruction         *preced = 0);
 
-TR::Instruction * generateRSYInstruction(
-                   TR::CodeGenerator *cg,
-                   TR::InstOpCode::Mnemonic          op,
-                   TR::Node                *n,
-                   TR::Register            *treg,
-                   uint32_t                mask,
-                   TR::MemoryReference *mf,
-                   TR::Instruction         *preced = 0);
-
 TR::Instruction * generateRRSInstruction(
                    TR::CodeGenerator       * cg,
                    TR::InstOpCode::Mnemonic         op,
@@ -1209,7 +1160,8 @@ TR::Instruction * generateVRRiInstruction(
                       TR::Node                * n          ,
                       TR::Register            * targetReg  ,    /* GPR */
                       TR::Register            * sourceReg2 ,    /* VRF */
-                      uint8_t                   mask3);         /* 4 bits*/
+                      uint8_t                   mask3      ,    /* 4 bits*/
+                      uint8_t                   mask4 = 0);
 
 /****** VRS ******/
 TR::Instruction * generateVRSaInstruction(
@@ -1219,7 +1171,8 @@ TR::Instruction * generateVRSaInstruction(
                       TR::Register            * targetReg  ,
                       TR::Register            * sourceReg  ,
                       TR::MemoryReference * mr         ,
-                      uint8_t                  mask4      );   /* 4 bits */
+                      uint8_t                  mask4     ,   /* 4 bits */
+                      TR::Instruction         * preced = NULL);
 
 TR::Instruction * generateVRSbInstruction(
                       TR::CodeGenerator     * cg         ,
@@ -1228,7 +1181,8 @@ TR::Instruction * generateVRSbInstruction(
                       TR::Register            * targetReg  ,   /* VRF */
                       TR::Register            * sourceReg  ,
                       TR::MemoryReference * mr         ,
-                      uint8_t                  mask4 = 0  );  /* 4 bits */
+                      uint8_t                  mask4 = 0  ,  /* 4 bits */
+                      TR::Instruction         * preced = NULL);
 
 TR::Instruction * generateVRScInstruction(
                       TR::CodeGenerator     * cg         ,
@@ -1237,7 +1191,8 @@ TR::Instruction * generateVRScInstruction(
                       TR::Register            * targetReg  ,
                       TR::Register            * sourceReg  ,
                       TR::MemoryReference * mr         ,
-                      uint8_t                  mask4      );  /* 4 bits */
+                      uint8_t                  mask4      ,  /* 4 bits */
+                      TR::Instruction         * preced = NULL);
 
 TR::Instruction * generateVRSdInstruction(
                       TR::CodeGenerator       * cg         ,
@@ -1245,7 +1200,8 @@ TR::Instruction * generateVRSdInstruction(
                       TR::Node                * n          ,
                       TR::Register            * targetReg  ,   /* VRF */
                       TR::Register            * sourceReg3 ,   /* GPR R3 */
-                      TR::MemoryReference     * mr        );
+                      TR::MemoryReference     * mr         ,
+                      TR::Instruction         * preced = NULL);
 
 /****** VRV ******/
 TR::Instruction * generateVRVInstruction(
@@ -1254,7 +1210,8 @@ TR::Instruction * generateVRVInstruction(
                       TR::Node              * n          ,
                       TR::Register            * sourceReg  ,
                       TR::MemoryReference * mr         ,
-                      uint8_t                  mask3      );  /* 4 bits */
+                      uint8_t                  mask3      ,  /* 4 bits */
+                      TR::Instruction* preced = NULL);
 
 /****** VRX ******/
 TR::Instruction * generateVRXInstruction(
@@ -1274,7 +1231,8 @@ TR::Instruction * generateVSIInstruction(
                       TR::Node               * n          ,
                       TR::Register           * reg        ,   /* VRF */
                       TR::MemoryReference    * mr         ,
-                      uint8_t                  imm3  = 0);   /* 8 bits */
+                      uint8_t                  imm3   = 0,    /* 8 bits */
+                      TR::Instruction        * preced = NULL);
 
 /************************************************************ Misc Instructions ************************************************************/
 TR::Instruction *generateS390ImmSymInstruction(
@@ -1323,25 +1281,14 @@ TR::Instruction *generateS390DebugCounterBumpInstruction(
                    TR::Snippet* cas,
                    int32_t d = 1,
                    TR::Instruction *preced = 0);
-TR::Instruction *generateAndImmediate(
-                   TR::CodeGenerator *cg,
-                   TR::Node *node,
-                   TR::Register *reg,
-                   int32_t imm);
 
-TR::Instruction *generateLogicalImmediate(
-                   TR::CodeGenerator *cg,
-                   TR::Node *node,
-                   TR::InstOpCode::Mnemonic defaultOp,
-                   TR::InstOpCode::Mnemonic lhOp,
-                   TR::InstOpCode::Mnemonic llOp,
-                   TR::Register *reg, int32_t imm);
-
-TR::Instruction *generateOrImmediate(
-                   TR::CodeGenerator *cg,
-                   TR::Node *node,
-                   TR::Register *reg,
-                   int32_t imm);
+TR::Instruction *generateShiftRightImmediate(
+                  TR::CodeGenerator *cg,
+                  TR::Node *node,
+                  TR::Register *trgReg,
+                  TR::Register *srcReg,
+                  int32_t imm,
+                  TR::Instruction *preced = 0);
 
 #ifdef J9_PROJECT_SPECIFIC
 TR::Instruction *generateVirtualGuardNOPInstruction(
@@ -1353,7 +1300,7 @@ TR::Instruction *generateVirtualGuardNOPInstruction(
                    TR::Instruction                     *preced = 0);
 
 bool
-canThrowDecimalOverflowException(TR::InstOpCode::Mnemonic op);
+canThrowDecimalOverflowException(TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic op);
 
 void
 generateS390DAAExceptionRestoreSnippet(TR::CodeGenerator* cg,
@@ -1559,15 +1506,6 @@ TR::Instruction *generateRuntimeInstrumentationInstruction(
                    TR::Register      *target = NULL,
                    TR::Instruction   *preced = NULL);
 
-TR::Instruction *generateExtendedHighWordInstruction(
-                   TR::Node * node,
-                   TR::CodeGenerator *cg,
-                   TR::InstOpCode::Mnemonic op,
-                   TR::Register * targetReg,
-                   TR::Register * srcReg,
-                   int8_t imm8,
-                   TR::Instruction *preced = 0);
-
 TR::Instruction *
 generateReplicateNodeInVectorReg(TR::Node * node, TR::CodeGenerator *cg, TR::Register * targetVRF, TR::Node * srcElementNode,
                                  int elementSize, TR::Register *zeroReg=NULL, TR::Instruction * preced=NULL);
@@ -1583,8 +1521,4 @@ void generateShiftAndKeepSelected31Bit(
       int aToBit, int aShiftAmount, bool aClearOtherBits, bool aSetConditionCode);
 
 TR::Instruction *generateZeroVector(TR::Node *node, TR::CodeGenerator *cg, TR::Register *vecZeroReg);
-
-#ifdef DEBUG
-#define TRACE_EVAL
-#endif
 #endif

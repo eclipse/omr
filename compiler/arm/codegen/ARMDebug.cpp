@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,8 @@ int jitDebugARM;
 #endif
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCRegisterMap.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Snippet.hpp"
 #include "codegen/StackCheckFailureSnippet.hpp"
@@ -38,6 +40,7 @@ int jitDebugARM;
 #include "env/jittypes.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
 #include "arm/codegen/ARMHelperCallSnippet.hpp"
@@ -276,7 +279,7 @@ TR_Debug::dumpDependencyGroup(TR::FILE *                        pOutFile,
       if (r == TR::RealRegister::NoReg)
          trfprintf(pOutFile, "NoReg]");
       else
-         trfprintf(pOutFile, "%s]", getName(_cg->machine()->getARMRealRegister(r)));
+         trfprintf(pOutFile, "%s]", getName(_cg->machine()->getRealRegister(r)));
 
       foundDep = true;
       }
@@ -414,7 +417,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMImmSymInstruction * instr)
    {
    uint8_t *bufferPos = instr->getBinaryEncoding();
    int32_t  imm       = instr->getSourceImmediate();
-   int32_t  distance  = imm - (intptr_t)bufferPos;
 
    TR::SymbolReference      *symRef    = instr->getSymbolReference();
    TR::Symbol                *sym       = symRef->getSymbol();
@@ -422,8 +424,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMImmSymInstruction * instr)
    TR_ResolvedMethod     *callee    = calleeSym ? calleeSym->getResolvedMethod() : NULL;
 
    bool longJump = imm &&
-                   (distance > BRANCH_FORWARD_LIMIT || distance < BRANCH_BACKWARD_LIMIT) &&
-                   (!callee || !callee->isSameMethod(_comp->getCurrentMethod()));
+                   _cg->directCallRequiresTrampoline((intptrj_t)imm, (intptrj_t)bufferPos) &&
+                   !_comp->isRecursiveMethodTarget(sym);
 
    if (bufferPos != NULL && longJump)
       {
@@ -791,7 +793,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMMultipleMoveInstruction * instr)
             {
             TR::RealRegister::RegNum r;
             r = (TR::RealRegister::RegNum)((int)TR::RealRegister::FirstGPR + i);
-            print(pOutFile, machine->getARMRealRegister(r));
+            print(pOutFile, machine->getRealRegister(r));
             regList >>= 1;
             if (regList && i != 15)
               trfprintf(pOutFile, ",");
@@ -808,7 +810,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMMultipleMoveInstruction * instr)
       for (int i = 0; i < nreg; i++)
          {
          TR::RealRegister::RegNum r = (TR::RealRegister::RegNum)((int)TR::RealRegister::FirstFPR + startReg + i);
-         print(pOutFile, machine->getARMRealRegister(r), size);
+         print(pOutFile, machine->getRealRegister(r), size);
          if (i != (nreg - 1))
             trfprintf(pOutFile, ",");
          }
@@ -823,21 +825,20 @@ void
 TR_Debug::printARMHelperBranch(TR::SymbolReference *symRef, uint8_t *bufferPos, TR::FILE *pOutFile, const char * opcodeName)
    {
    TR::MethodSymbol *methodSym = symRef->getSymbol()->castToMethodSymbol();
-   uintptr_t        target    = (uintptr_t)methodSym->getMethodAddress();
-   int32_t          distance  = target - (uintptr_t)bufferPos;
-   char            *info      = "";
+   intptrj_t         target    = (intptrj_t)methodSym->getMethodAddress();
+   char             *info      = "";
 
-   if ((distance > BRANCH_FORWARD_LIMIT || distance < BRANCH_BACKWARD_LIMIT))
+   if (_cg->directCallRequiresTrampoline(target, (intptrj_t)bufferPos))
       {
       int32_t refNum = symRef->getReferenceNumber();
       if (refNum < TR_ARMnumRuntimeHelpers)
          {
-         target = _comp->fe()->indexedTrampolineLookup(refNum, (void *)bufferPos);
+         target = TR::CodeCacheManager::instance()->findHelperTrampoline(refNum, (void *)bufferPos);
          info   = " through trampoline";
          }
       else if (*((uintptr_t*)bufferPos) == 0xe28fe004)  // This is a JNI method
          {
-         target = *((uintptr_t*)(bufferPos+8));
+         target = *((intptrj_t*)(bufferPos+8));
          info   = " long jump";
          }
       else
@@ -928,7 +929,7 @@ TR_Debug::printARMGCRegisterMap(TR::FILE *pOutFile, TR::GCRegisterMap * map)
    for (int i = 15; i>=0; i--)
       {
       if (map->getMap() & (1 << i))
-         trfprintf(pOutFile, "%s ", getName(machine->getARMRealRegister((TR::RealRegister::RegNum)(i + TR::RealRegister::FirstGPR))));
+         trfprintf(pOutFile, "%s ", getName(machine->getRealRegister((TR::RealRegister::RegNum)(i + TR::RealRegister::FirstGPR))));
       }
 
    trfprintf(pOutFile,"}\n");
@@ -1142,7 +1143,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMCallSnippet * snippet)
                {
                printPrefix(pOutFile, NULL, bufferPos, 4);
                trfprintf(pOutFile, "str\t[gr7, %+d], ", offset);
-               print(pOutFile, machine->getARMRealRegister(linkage.getIntegerArgumentRegister(numIntArgs)));
+               print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(numIntArgs)));
                bufferPos += 4;
                }
             numIntArgs++;
@@ -1156,13 +1157,13 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMCallSnippet * snippet)
                {
                printPrefix(pOutFile, NULL, bufferPos, 4);
                trfprintf(pOutFile, "str\t[gr7, %+d], ", offset);
-               print(pOutFile, machine->getARMRealRegister(linkage.getIntegerArgumentRegister(numIntArgs)));
+               print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(numIntArgs)));
                bufferPos += 4;
                if (numIntArgs < linkage.getNumIntArgRegs() - 1)
                   {
                   printPrefix(pOutFile, NULL, bufferPos, 4);
                   trfprintf(pOutFile, "str\t[gr7, %+d], ", offset + 4);
-                  print(pOutFile, machine->getARMRealRegister(linkage.getIntegerArgumentRegister(numIntArgs + 1)));
+                  print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(numIntArgs + 1)));
                   bufferPos += 4;
                   }
                }
@@ -1179,7 +1180,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMCallSnippet * snippet)
                {
                printPrefix(pOutFile, NULL, bufferPos, 4);
                trfprintf(pOutFile, "stfs\t[gr7, %+d], ", offset);
-               print(pOutFile, machine->getARMRealRegister(linkage.getFloatArgumentRegister(numFloatArgs)));
+               print(pOutFile, machine->getRealRegister(linkage.getFloatArgumentRegister(numFloatArgs)));
                bufferPos += 4;
                }
             numFloatArgs++;
@@ -1193,7 +1194,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMCallSnippet * snippet)
                {
                printPrefix(pOutFile, NULL, bufferPos, 4);
                trfprintf(pOutFile, "stfd\t[gr7, %+d], ", offset);
-               print(pOutFile, machine->getARMRealRegister(linkage.getFloatArgumentRegister(numFloatArgs)));
+               print(pOutFile, machine->getRealRegister(linkage.getFloatArgumentRegister(numFloatArgs)));
                bufferPos += 4;
                }
             numFloatArgs++;
@@ -1505,31 +1506,14 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMRecompilationSnippet * snippet)
 
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Counting Recompilation Snippet");
 
-   char     *info = "";
-   int32_t   distance;
-   uintptr_t target;
    TR::SymbolReference *symRef = _cg->getSymRef(TR_ARMcountingRecompileMethod);
-   int32_t refNum = symRef->getReferenceNumber();
-   if ((distance > BRANCH_FORWARD_LIMIT || distance < BRANCH_BACKWARD_LIMIT))
-      {
-      target = _comp->fe()->indexedTrampolineLookup(refNum, (void *)cursor);
-      info = " Through trampoline";
-      }
+   printARMHelperBranch(symRef, cursor, pOutFile);
+   cursor += 4;
 
-   const char *name = getName(symRef);
-   printPrefix(pOutFile, NULL, cursor, 4);
-   if (name)
-      trfprintf(pOutFile, "bl\t%s\t;%s (" POINTER_PRINTF_FORMAT ")", name, info, target);
-   else
-      trfprintf(pOutFile, "bl\t" POINTER_PRINTF_FORMAT "\t\t;%s", target, info);
-   printPrefix(pOutFile, NULL, cursor, 4);
-
-#ifdef J9_PROJECT_SPECIFIC
    // methodInfo
    printPrefix(pOutFile, NULL, cursor, 4);
    trfprintf(pOutFile, "dd \t0x%08x\t\t;%s", _comp->getRecompilationInfo()->getMethodInfo(), "methodInfo");
    cursor += 4;
-#endif
 
    // startPC
    printPrefix(pOutFile, NULL, cursor, 4);

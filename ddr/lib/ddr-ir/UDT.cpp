@@ -19,9 +19,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "ddr/config.hpp"
 #include "ddr/ir/UDT.hpp"
+
 #include "ddr/ir/NamespaceUDT.hpp"
+#include "ddr/ir/Symbol_IR.hpp"
 
 UDT::UDT(size_t size, unsigned int lineNumber)
 	: Type(size)

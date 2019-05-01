@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef STORAGEINFO_INCL
 #define STORAGEINFO_INCL
 
-#include <stddef.h>          // for size_t
-#include <stdint.h>          // for intptr_t
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
-#include "il/DataTypes.hpp"  // for DataTypes
-#include "infra/Flags.hpp"   // for flags8_t
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "infra/Flags.hpp"
 
 namespace TR { class SymbolReference; }
 namespace TR { class Compilation; }

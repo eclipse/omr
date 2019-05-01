@@ -168,7 +168,7 @@ endif
 # JitBuilder
 ifeq (1,$(OMR_JITBUILDER))
   main_targets += jitbuilder
-  test_targets += fvtest/jitbuildertest jitbuilder/release
+  test_targets += fvtest/jitbuildertest jitbuilder/release/cpp
 endif
 
 ifeq (yes,$(ENABLE_DDR))
@@ -273,7 +273,7 @@ endif
 ifeq (1,$(OMR_JITBUILDER))
   fvtest/jitbuildertest:: $(compiler_prereqs)
   jitbuilder:: $(compiler_prereqs)
-  jitbuilder/release:: $(compiler_prereqs)
+  jitbuilder/release/cpp:: $(compiler_prereqs)
 endif
 
 ###

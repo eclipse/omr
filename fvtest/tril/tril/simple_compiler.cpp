@@ -32,7 +32,6 @@
 #include "il/DataTypes.hpp"
 #include "ilgen.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
-#include "Jit.hpp" 
 
 #include <algorithm>
 

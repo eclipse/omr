@@ -21,8 +21,6 @@
 
 #include "JBTestUtil.hpp"
 
-#include "ilgen/BytecodeBuilder.hpp"
-
 typedef void (*DoubleReturnFunction)(void);
 
 DEFINE_BUILDER( DoubleReturn,
@@ -43,6 +41,6 @@ class ControlfFlowTest : public JitBuilderTest {};
 TEST_F(ControlfFlowTest, DoubleReturnTest)
    {
    DoubleReturnFunction doubleReturn;
-   ASSERT_COMPILE(TR::TypeDictionary, DoubleReturn, doubleReturn);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, DoubleReturn, doubleReturn);
    ASSERT_NO_FATAL_FAILURE(doubleReturn());
    }

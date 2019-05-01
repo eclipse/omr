@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,8 +24,8 @@
 
 #include "codegen/OMRInstOpCode.hpp"
 
-#include <stdint.h>          // for uint8_t, uint32_t
-#include "infra/Assert.hpp"  // for TR_ASSERT
+#include <stdint.h>
+#include "infra/Assert.hpp"
 
 namespace TR
 {
@@ -41,6 +41,7 @@ public:
    InstOpCode(Mnemonic m) :
       OMR::InstOpCodeConnector(m) { }
 
+   const char* getMnemonicName() const                                  { return TR::InstOpCode::metadata[_mnemonic].name; }
    /* OMR TODO: Delegating method; need to be removed and replace with getMnemonic */
    TR::InstOpCode::Mnemonic getOpCodeValue()                            { return _mnemonic; }
    TR::InstOpCode::Mnemonic setOpCodeValue(TR::InstOpCode::Mnemonic op) { return _mnemonic = op; }
@@ -121,7 +122,7 @@ getMaskForBranchCondition (TR::InstOpCode::S390BranchCondition branchCond)
       case TR::InstOpCode::COND_BLR         :
       case TR::InstOpCode::COND_BM          :
       case TR::InstOpCode::COND_BMR         :
-      case TR::InstOpCode::COND_BRL         : 
+      case TR::InstOpCode::COND_BRL         :
       case TR::InstOpCode::COND_BRM         : return 0x04 ;
       case TR::InstOpCode::COND_MASK5       : return 0x05 ;
       case TR::InstOpCode::COND_MASK6       :
@@ -146,7 +147,7 @@ getMaskForBranchCondition (TR::InstOpCode::S390BranchCondition branchCond)
       case TR::InstOpCode::COND_BNM         :
       case TR::InstOpCode::COND_BNMR        : return 0x0A ;
       case TR::InstOpCode::COND_MASK11      :
-      case TR::InstOpCode::COND_BRNL        : 
+      case TR::InstOpCode::COND_BRNL        :
       case TR::InstOpCode::COND_BRNM        : return 0x0B ;
       case TR::InstOpCode::COND_MASK12      :
       case TR::InstOpCode::COND_BNH         :
@@ -154,7 +155,7 @@ getMaskForBranchCondition (TR::InstOpCode::S390BranchCondition branchCond)
       case TR::InstOpCode::COND_BNP         :
       case TR::InstOpCode::COND_BNPR        : return 0x0C ;
       case TR::InstOpCode::COND_MASK13      :
-      case TR::InstOpCode::COND_BRNH        : 
+      case TR::InstOpCode::COND_BRNH        :
       case TR::InstOpCode::COND_BRNP        : return 0x0D ;
       case TR::InstOpCode::COND_MASK14      :
       case TR::InstOpCode::COND_BNO         :
@@ -166,7 +167,7 @@ getMaskForBranchCondition (TR::InstOpCode::S390BranchCondition branchCond)
       case TR::InstOpCode::COND_BCR         :
       case TR::InstOpCode::COND_BR          :
       case TR::InstOpCode::COND_BRC         :
-      case TR::InstOpCode::COND_BRU         : 
+      case TR::InstOpCode::COND_BRU         :
       case TR::InstOpCode::COND_BRUL        : return 0x0F ;
       default:
          TR_ASSERT(0, "Unknown branch instruction specified");

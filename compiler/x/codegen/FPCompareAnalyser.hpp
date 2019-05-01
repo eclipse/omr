@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef IA32FPCOMPAREANALYSER_INCL
 #define IA32FPCOMPAREANALYSER_INCL
 
-#include <stddef.h>                   // for NULL
-#include <stdint.h>                   // for uint8_t
-#include "codegen/CodeGenerator.hpp"  // for CodeGenerator
-#include "infra/Assert.hpp"           // for TR_ASSERT
-#include "x/codegen/X86Ops.hpp"       // for TR_X86OpCodes
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "infra/Assert.hpp"
+#include "x/codegen/X86Ops.hpp"
 
 namespace TR { class Machine; }
 namespace TR { class Node; }

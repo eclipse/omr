@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ namespace OMR { typedef OMR::X86::AMD64::Machine MachineConnector; }
 
 #include "x/codegen/OMRMachine.hpp"
 
-#include <stdint.h>                           // for uint8_t, uint32_t
+#include <stdint.h>
 namespace TR { class CodeGenerator; }
 namespace TR { class RealRegister; }
 namespace TR { class Register; }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,20 +19,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>                        // for uint32_t
-#include <stdlib.h>                        // for NULL, atoi
-#include "codegen/CodeGenerator.hpp"       // for CodeGenerator
-#include "codegen/FrontEnd.hpp"            // for feGetEnv
-#include "codegen/InstOpCode.hpp"          // for InstOpCode, etc
-#include "codegen/Instruction.hpp"         // for Instruction, etc
-#include "codegen/MemoryReference.hpp"     // for MemoryReference
-#include "codegen/PPCInstruction.hpp"      // for PPCDepImmSymInstruction 
-#include "codegen/RegisterConstants.hpp"   // for TR_RegisterKinds
+#include <stdint.h>
+#include <stdlib.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/PPCInstruction.hpp"
+#include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "compile/Compilation.hpp"         // for Compilation, comp
-#include "il/Block.hpp"                    // for Block
-#include "il/ILOpCodes.hpp"                // for ILOpCodes::BBStart
-#include "il/Node.hpp"                     // for Node
+#include "compile/Compilation.hpp"
+#include "env/CompilerEnv.hpp"
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 namespace TR { class PPCConditionalBranchInstruction; }
 namespace TR { class PPCDepImmInstruction;            }
@@ -218,49 +220,53 @@ int32_t TR::PPCDepImmSymInstruction::estimateBinaryLength(int32_t currentEstimat
    return(currentEstimate + length);
    }
 // This is overrriden by J9 but we haven't made this extensible completely yet,
-// and so for now we simply don't build this one. 
-#ifndef J9_PROJECT_SPECIFIC 
+// and so for now we simply don't build this one.
+#ifndef J9_PROJECT_SPECIFIC
 uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
    {
    uint8_t   *instructionStart = cg()->getBinaryBufferCursor();
    uint8_t   *cursor = getOpCode().copyBinaryToBuffer(instructionStart);
-   intptrj_t  imm = getAddrImmediate();
-   intptrj_t  distance = imm - (intptrj_t)cursor;
+   intptrj_t  distance;
 
    if (getOpCodeValue() == TR::InstOpCode::bl || getOpCodeValue() == TR::InstOpCode::b)
       {
-      TR::ResolvedMethodSymbol *sym = getSymbolReference()->getSymbol()->getResolvedMethodSymbol();
-      TR_ResolvedMethod *resolvedMethod = sym == NULL ? NULL : sym->getResolvedMethod();
-
-      if (resolvedMethod != NULL && resolvedMethod->isSameMethod(cg()->comp()->getCurrentMethod()))
+      if (cg()->comp()->isRecursiveMethodTarget(getSymbolReference()->getSymbol()))
          {
          uint8_t *jitTojitStart = cg()->getCodeStart();
          jitTojitStart += ((*(int32_t *)(jitTojitStart - 4)) >> 16) & 0x0000ffff;
-         *(int32_t *)cursor |= (jitTojitStart - cursor) & 0x03fffffc;
+         distance = (intptrj_t)(jitTojitStart - cursor);
          }
       else
          {
-         if (distance > BRANCH_FORWARD_LIMIT ||
-             distance < BRANCH_BACKWARD_LIMIT)
+         intptrj_t targetAddress = getAddrImmediate();
+
+         if (cg()->directCallRequiresTrampoline(targetAddress, (intptrj_t)cursor))
             {
             int32_t refNum = getSymbolReference()->getReferenceNumber();
             if (refNum < TR_PPCnumRuntimeHelpers)
                {
-               distance = cg()->fe()->indexedTrampolineLookup(refNum, (void *)cursor) - (intptrj_t)cursor;
+               targetAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(refNum, (void *)cursor);
+               }
+            else
+               {
+               targetAddress = cg()->fe()->methodTrampolineLookup(cg()->comp(), getSymbolReference(), (void *)cursor);
                }
             }
 
-         TR_ASSERT(distance <= BRANCH_FORWARD_LIMIT && distance >= BRANCH_BACKWARD_LIMIT,
-                    "CodeCache is more than 32MB");
-         *(int32_t *)cursor |= distance & 0x03fffffc;
+         TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),
+                         "Target address is out of range");
+
+         distance = targetAddress - (intptrj_t)cursor;
          }
       }
    else
       {
       // Place holder only: non-TR::InstOpCode::b[l] usage of this instruction doesn't
       // exist at this moment.
-      *(int32_t *)cursor |= distance & 0x03fffffc;
+      distance = getAddrImmediate() - (intptrj_t)cursor;
       }
+
+   *(int32_t *)cursor |= distance & 0x03fffffc;
 
    cursor += 4;
    setBinaryLength(cursor - instructionStart);

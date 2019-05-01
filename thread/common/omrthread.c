@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1183,11 +1183,12 @@ omrthread_attach(omrthread_t *handle)
 intptr_t
 omrthread_attach_ex(omrthread_t *handle, omrthread_attr_t *attr)
 {
-	intptr_t retVal = J9THREAD_SUCCESS;
+	intptr_t retVal = J9THREAD_ERR;
 	omrthread_t thread;
 	omrthread_library_t lib;
 
 	if (init_thread_library()) {
+		retVal = J9THREAD_ERR;
 		goto cleanup0;
 	}
 
@@ -1374,7 +1375,6 @@ void
 omrthread_detach(omrthread_t thread)
 {
 	uintptr_t destroy = 0;
-	uintptr_t attached = 0;
 
 	if (thread == NULL) {
 		thread = MACRO_SELF();
@@ -1391,7 +1391,7 @@ omrthread_detach(omrthread_t thread)
 				 * detached.  Mark it dead so that it can be destroyed.
 				 */
 				thread->flags |= J9THREAD_FLAG_DEAD;
-				attached = destroy = 1;
+				destroy = 1;
 			} else {
 				/* A j9-created thread should never be dead here */
 				destroy = thread->flags & J9THREAD_FLAG_DEAD;
@@ -1519,7 +1519,6 @@ thread_wrapper(WRAPPER_ARG arg)
 {
 	omrthread_t thread = (omrthread_t)arg;
 	omrthread_library_t lib = NULL;
-	uintptr_t flags;
 	int globalAlreadyLocked = GLOBAL_NOT_LOCKED;
 
 	ASSERT(thread);
@@ -1556,7 +1555,6 @@ thread_wrapper(WRAPPER_ARG arg)
 		OMROSCOND_WAIT_LOOP();
 	}
 	thread->flags |= J9THREAD_FLAG_STARTED;
-	flags = thread->flags;
 
 	/* Set the numa affinity if it is pending on this thread */
 #if defined(OMR_PORT_NUMA_SUPPORT)
@@ -1575,11 +1573,16 @@ thread_wrapper(WRAPPER_ARG arg)
 				affinityCount += 1;
 			}
 		}
-		/* If the affinityCount is zero, this call will have the effect of clearing any affinity that the thread may have inherited
-		 * and it assuming the initial affinity that the process had (if reverting to that affinity isn't possible on the platform,
-		 * the call is supposed to do nothing).
+		/* if J9THREAD_LIB_FLAG_NO_DEFAULT_AFFINITY is set we only want to modify the affinity if
+		 * the caller provided us with a non-zero affinity
 		 */
-		omrthread_numa_set_node_affinity_nolock(thread, affinity, affinityCount, 0);
+		if ((affinityCount != 0) || OMR_ARE_NO_BITS_SET(lib->flags, J9THREAD_LIB_FLAG_NO_DEFAULT_AFFINITY)) {
+			/* If the affinityCount is zero, this call will have the effect of clearing any affinity that the thread may have inherited
+			* and it assuming the initial affinity that the process had (if reverting to that affinity isn't possible on the platform,
+			* the call is supposed to do nothing).
+			*/
+			omrthread_numa_set_node_affinity_nolock(thread, affinity, affinityCount, 0);
+		}
 	}
 #endif /* OMR_PORT_NUMA_SUPPORT */
 	THREAD_UNLOCK(thread);
@@ -1998,11 +2001,13 @@ threadAllocate(omrthread_library_t lib, int globalIsLocked)
 static intptr_t
 threadDestroy(omrthread_t thread, int globalAlreadyLocked)
 {
+#if defined(OMR_OS_WINDOWS) || defined(THREAD_ASSERTS)
 	omrthread_library_t lib;
 
 	ASSERT(thread);
 	lib = thread->library;
 	ASSERT(lib);
+#endif /* defined(OMR_OS_WINDOWS) || defined(THREAD_ASSERTS) */
 
 	THREAD_LOCK(thread, CALLER_DESTROY);
 	if ((thread->flags & J9THREAD_FLAG_DEAD) == 0) {
@@ -5023,12 +5028,15 @@ monitor_notify_three_tier(omrthread_t self, omrthread_monitor_t monitor, int not
 	MONITOR_LOCK(monitor, CALLER_NOTIFY_ONE_OR_ALL);
 	queue = monitor->waiting;
 	if (queue) {
+#if defined(THREAD_ASSERTS)
 		intptr_t state;
 
 		state = omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_EXCEEDED);
 		ASSERT((state == J9THREAD_MONITOR_SPINLOCK_OWNED)
 			|| (state == J9THREAD_MONITOR_SPINLOCK_EXCEEDED));
-
+#else
+		omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_EXCEEDED);
+#endif
 		if (notifyall) {
 			/* set all the thread flags */
 			do {

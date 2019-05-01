@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,45 +21,45 @@
 
 #include "optimizer/LocalCSE.hpp"
 
-#include <stdlib.h>                             // for atoi
-#include <string.h>                             // for NULL, memset
-#include "codegen/CodeGenerator.hpp"            // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                 // for TR_FrontEnd, etc
-#include "compile/Compilation.hpp"              // for Compilation
-#include "compile/Method.hpp"                   // for MAX_SCOUNT
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"          // for TR::Options, etc
-#include "cs2/arrayof.h"                        // for ArrayOf
-#include "cs2/sparsrbit.h"                      // for ASparseBitVector, etc
-#include "env/IO.hpp"                           // for POINTER_PRINTF_FORMAT
+#include "control/Options_inlines.hpp"
+#include "cs2/arrayof.h"
+#include "cs2/sparsrbit.h"
+#include "env/IO.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                     // for BitVector, etc
-#include "env/jittypes.h"                       // for intptrj_t
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                         // for Block
-#include "il/DataTypes.hpp"                     // for DataType, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                         // for ILOpCode, etc
-#include "il/Node.hpp"                          // for Node, etc
-#include "il/Node_inlines.hpp"                  // for Node::getDataType, etc
-#include "il/Symbol.hpp"                        // for Symbol
-#include "il/SymbolReference.hpp"               // for SymbolReference, etc
-#include "il/TreeTop.hpp"                       // for TreeTop
-#include "il/TreeTop_inlines.hpp"               // for Node::getChild, etc
-#include "il/symbol/AutomaticSymbol.hpp"        // for AutomaticSymbol
-#include "il/symbol/MethodSymbol.hpp"           // for MethodSymbol
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                     // for TR_ASSERT
-#include "infra/BitVector.hpp"                  // for TR_BitVector
-#include "infra/List.hpp"                       // for TR_ScratchList, etc
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/List.hpp"
 #include "infra/SimpleRegex.hpp"
-#include "optimizer/Optimization.hpp"           // for Optimization
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"              // for Optimizer
-#include "ras/Debug.hpp"                        // for TR_Debug
+#include "optimizer/Optimizer.hpp"
+#include "ras/Debug.hpp"
 
 #define MAX_DEPTH 3000
 #define MAX_COPY_PROP 400
@@ -114,13 +114,7 @@ bool OMR::LocalCSE::shouldCopyPropagateNode(TR::Node *parent, TR::Node *node, in
 
 bool OMR::LocalCSE::shouldCommonNode(TR::Node *parent, TR::Node *node)
    {
-   if (!isTreetopSafeToCommon())
-      return false;
-
-   if (node->getType().isAggregate())
-      return true;
-
-   return node->canEvaluate();
+   return isTreetopSafeToCommon();
    }
 
 TR::Node * getRHSOfStoreDefNode(TR::Node * storeNode)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,31 +22,31 @@
 #ifndef INDUCTIONVAR_INCL
 #define INDUCTIONVAR_INCL
 
-#include <stddef.h>                              // for NULL
-#include <stdint.h>                              // for int32_t, int64_t
-#include <deque>                                 // for std::deque
-#include <map>                                   // for std::map
-#include <utility>                               // for std::pair
-#include "codegen/FrontEnd.hpp"                  // for TR_FrontEnd
-#include "compile/Compilation.hpp"               // for Compilation
+#include <stddef.h>
+#include <stdint.h>
+#include <deque>
+#include <map>
+#include <utility>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/TRMemory.hpp"                      // for TR_Memory, etc
-#include "env/jittypes.h"                        // for intptrj_t
-#include "il/Block.hpp"                          // for Block
-#include "il/DataTypes.hpp"                      // for DataTypes, etc
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes
-#include "il/ILOps.hpp"                          // for ILOpCode, etc
-#include "il/Node.hpp"                           // for Node, vcount_t
-#include "il/Node_inlines.hpp"                   // for Node::getDataType
-#include "il/Symbol.hpp"                         // for Symbol
-#include "il/SymbolReference.hpp"                // for SymbolReference
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/BitVector.hpp"                   // for TR_BitVector
-#include "infra/List.hpp"                        // for List, etc
-#include "optimizer/Optimization.hpp"            // for Optimization
-#include "optimizer/OptimizationManager.hpp"     // for OptimizationManager
-#include "optimizer/LoopCanonicalizer.hpp"  // for TR_LoopTransformer
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
+#include "optimizer/LoopCanonicalizer.hpp"
 
 class TR_BlockStructure;
 class TR_Dominators;
@@ -521,6 +521,7 @@ class TR_InductionVariableAnalysis : public TR::Optimization
 
    static void appendPredecessors(WorkQueue &workList, TR::Block *block);
 
+   void removeStaleIVs(TR_RegionStructure *region);
    void gatherCandidates(TR_Structure *s, TR_BitVector *b, TR_BitVector*);
 
    void perform(TR_RegionStructure *str);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2016 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -148,7 +148,7 @@ public:
 class MM_LargeObjectAllocateStats : public MM_Base {
 public:
 private:
-	OMRPortLibrary *_portLibrary;
+	MM_EnvironmentBase *_env;				/**< cached thread environment */
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 	uintptr_t _tlhMaximumSize;				/**< cached value of _tlhMaximumSize */
 	uintptr_t _tlhMinimumSize;				/**< cached value of _tlhMinimumSize */
@@ -325,8 +325,8 @@ public:
 	uintptr_t getFreeMemoryBeforeEstimate() { return _freeMemoryBeforeEstimate; }
 	uintptr_t getMaxHeapSize() {return _maxHeapSize; }
 
-	MM_LargeObjectAllocateStats() :
-		_portLibrary(NULL),
+	MM_LargeObjectAllocateStats(MM_EnvironmentBase* env) :
+		_env(env),
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 		_tlhMaximumSize(0),
 		_tlhMinimumSize(0),

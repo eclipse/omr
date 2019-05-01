@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,16 +35,16 @@
 
 #include "compiler/codegen/OMRRegisterDependency.hpp"
 
-#include <stddef.h>                              // for size_t
-#include <stdint.h>                              // for uint8_t, uint32_t, etc
-#include <stdio.h>                               // for NULL, FILE
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/RealRegister.hpp"
-#include "codegen/Register.hpp"                  // for Register
-#include "codegen/RegisterConstants.hpp"         // for TR_RegisterKinds, etc
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependencyStruct.hpp"
-#include "env/TRMemory.hpp"                      // for TR_Memory, etc
-#include "infra/Assert.hpp"                      // for TR_ASSERT
+#include "env/TRMemory.hpp"
+#include "infra/Assert.hpp"
 
 namespace TR { class Instruction; }
 namespace TR { class Node; }

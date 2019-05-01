@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,22 +31,22 @@ namespace OMR { class SymbolReference; }
 namespace OMR { typedef OMR::SymbolReference SymbolReferenceConnector; }
 #endif
 
-#include <stddef.h>                          // for NULL
-#include <stdint.h>                          // for int32_t, uint32_t, etc
-#include "compile/Compilation.hpp"           // for Compilation
-#include "compile/Method.hpp"                // for mcount_t
-#include "compile/SymbolReferenceTable.hpp"  // for SymbolReferenceTable, etc
-#include "cs2/sparsrbit.h"                   // for ASparseBitVector
-#include "env/KnownObjectTable.hpp"          // for KnownObjectTable, etc
-#include "env/TRMemory.hpp"                  // for TR_Memory, etc
-#include "env/jittypes.h"                    // for intptrj_t, uintptrj_t
-#include "il/DataTypes.hpp"                  // for TR_YesNoMaybe, etc
-#include "il/ILOpCodes.hpp"                  // for ILOpCodes
-#include "il/Symbol.hpp"                     // for Symbol
-#include "infra/Annotations.hpp"             // for OMR_EXTENSIBLE
-#include "infra/Assert.hpp"                  // for TR_ASSERT
-#include "infra/BitVector.hpp"               // for TR_BitVector, Assign, etc
-#include "infra/Flags.hpp"                   // for flags32_t
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "cs2/sparsrbit.h"
+#include "env/KnownObjectTable.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Symbol.hpp"
+#include "infra/Annotations.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Flags.hpp"
 
 class TR_Debug;
 class TR_ResolvedMethod;
@@ -286,6 +286,13 @@ public:
    /**
     * Flag functions end
     */
+
+
+   /*
+    * ReferenceNumber functions
+    */
+
+   bool isOSRInductionHelper();
 
 protected:
 

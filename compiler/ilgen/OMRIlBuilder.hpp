@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,7 @@
 namespace OMR { class MethodBuilder; }
 
 namespace TR { class Block; }
+namespace TR { class BytecodeBuilder; }
 namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class IlBuilder; }
 namespace TR { class ResolvedMethodSymbol; } 
@@ -46,11 +47,17 @@ namespace TR { class TypeDictionary; }
 template <class T> class List;
 template <class T> class ListAppender;
 
+extern "C"
+{
+typedef bool (*ClientBuildILCallback)(void *clientObject);
+typedef void * (*ClientAllocator)(void *implObject);
+typedef void * (*ImplGetter)(void *client);
+}
+
 namespace OMR
 {
 
 typedef TR::ILOpCodes (*OpCodeMapper)(TR::DataType);
-
 
 class IlBuilder : public TR::IlInjector
    {
@@ -94,7 +101,12 @@ public:
     */
    class JBCase
       {
-      private:
+      public:
+         void * client();
+         void setClient(void * client) { _client = client; }
+         static void setClientAllocator(ClientAllocator allocator) { _clientAllocator = allocator; }
+         static void setGetImpl(ImplGetter getter) { _getImpl = getter; }
+
          /**
           * @brief Construct a new JBCase object.
           *
@@ -106,11 +118,15 @@ public:
           * @param f whether the case falls-through or not
           */
          JBCase(int32_t v, TR::IlBuilder *b, int32_t f)
-             : _value(v), _builder(b), _fallsThrough(f) {}
+             : _value(v), _builder(b), _fallsThrough(f), _client(NULL) {}
 
+      private:
          int32_t _value;          // value matched by the case
          TR::IlBuilder *_builder; // builder for the case body
          int32_t _fallsThrough;   // whether the case falls-through
+         void * _client;
+         static ClientAllocator _clientAllocator;
+         static ImplGetter _getImpl;
 
          friend class OMR::IlBuilder;
       };
@@ -123,7 +139,12 @@ public:
     */
    class JBCondition
       {
-      private:
+      public:
+         void * client();
+         void setClient(void * client) { _client = client; }
+         static void setClientAllocator(ClientAllocator allocator) { _clientAllocator = allocator; }
+         static void setGetImpl(ImplGetter getter) { _getImpl = getter; }
+
          /**
           * @brief Construct a new JBCondition object.
           *
@@ -134,10 +155,14 @@ public:
           * @param conditionValue the IlValue representing value for the condition
           */
          JBCondition(TR::IlBuilder *conditionBuilder, TR::IlValue *conditionValue)
-            : _builder(conditionBuilder), _condition(conditionValue) {}
+            : _builder(conditionBuilder), _condition(conditionValue), _client(NULL) {}
 
+      private:
          TR::IlBuilder *_builder; // builder used to generate the condition value
          TR::IlValue *_condition; // value for the condition
+         void * _client;
+         static ClientAllocator _clientAllocator;
+         static ImplGetter _getImpl;
 
          friend class OMR::IlBuilder;
       };
@@ -146,6 +171,8 @@ public:
 
    IlBuilder(TR::MethodBuilder *methodBuilder, TR::TypeDictionary *types)
       : TR::IlInjector(types),
+      _client(0),
+      _clientCallbackBuildIL(0),
       _methodBuilder(methodBuilder),
       _sequence(0),
       _sequenceAppender(0),
@@ -193,6 +220,8 @@ public:
 
    TR::IlBuilder *createBuilderIfNeeded(TR::IlBuilder *builder);
    TR::IlBuilder *OrphanBuilder();
+   TR::BytecodeBuilder *OrphanBytecodeBuilder(int32_t bcIndex=0, char *name=NULL);
+
    bool TraceEnabled_log();
    void TraceIL_log(const char *s, ...);
 
@@ -232,7 +261,9 @@ public:
    TR::IlValue *Mul(TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *MulWithOverflow(TR::IlBuilder **handler, TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *Div(TR::IlValue *left, TR::IlValue *right);
+   TR::IlValue *UnsignedDiv(TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *Rem(TR::IlValue *left, TR::IlValue *right);
+   TR::IlValue *UnsignedRem(TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *And(TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *Or(TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *Xor(TR::IlValue *left, TR::IlValue *right);
@@ -482,7 +513,7 @@ public:
       }
 
    /**
-    * @brief Generates a switch-case control flow structure.
+    * @brief Generates a lookup switch-case control flow structure.
     *
     * @param selectionVar the variable to switch on.
     * @param defaultBuilder the builder for the default case.
@@ -495,7 +526,7 @@ public:
                JBCase** cases);
 
    /**
-    * @brief Generates a switch-case control flow structure (vararg overload).
+    * @brief Generates a lookup switch-case control flow structure (vararg overload).
     *
     * Instead of taking an array of pointers to JBCase instances, this overload
     * takes a pointer to each instance as a separate varargs argument.
@@ -511,6 +542,39 @@ public:
                ...);
 
    /**
+    * @brief Generates a table switch-case control flow structure.
+    *
+    * @param selectionVar the variable to switch on.
+    * @param defaultBuilder the builder for the default case.
+    * @param generateBoundsCheck generate the bounds check or not for the range of the cases
+    * @param numCases the number of cases.
+    * @param cases array of pointers to JBCase instances corresponding to each case.
+    */
+   void TableSwitch(const char *selectionVar,
+               TR::IlBuilder **defaultBuilder,
+               bool generateBoundsCheck,
+               uint32_t numCases,
+               JBCase** cases);
+
+   /**
+    * @brief Generates a table switch-case control flow structure (vararg overload).
+    *
+    * Instead of taking an array of pointers to JBCase instances, this overload
+    * takes a pointer to each instance as a separate varargs argument.
+    *
+    * @param selectionVar the variable to switch on.
+    * @param defaultBuilder the builder for the default case.
+    * @param generateBoundsCheck generate the bounds check or not for the range of the cases
+    * @param numCases the number of cases.
+    * @param ... the list of pointers to JBCase instances corresponding to each case.
+    */
+   void TableSwitch(const char *selectionVar,
+               TR::IlBuilder **defaultBuilder,
+               bool generateBoundsCheck,
+               uint32_t numCases,
+               ...);
+
+   /**
     * @brief Construct an instance for JBCase.
     *
     * @param caseValue the value matched by the case.
@@ -522,8 +586,83 @@ public:
                      TR::IlBuilder **caseBuilder,
                      int32_t caseFallsThrough);
 
+   /**
+    * @brief associates this object with a particular client object
+    */
+   void setClient(void *client)
+      {
+      _client = client;
+      }
+
+   /**
+    * @brief returns the client object associated with this object, allocating it if necessary
+    */
+   void *client();
+
+   /**
+    * @brief Set the ClientCallback buildIL function
+    * 
+    * @param callback function pointer to the buildIL() callback for the client
+    */
+   void setClientCallback_buildIL(void *callback)
+      {
+      _clientCallbackBuildIL = (ClientBuildILCallback)callback;
+      }
+
+   /**
+    * @brief Set the Client Allocator function
+    * 
+    * @param allocator function pointer to the client object allocator
+    */
+   static void setClientAllocator(ClientAllocator allocator)
+      {
+      _clientAllocator = allocator;
+      }
+
+   /**
+    * @brief Set the Get Impl function
+    *
+    * @param getter function pointer to the impl getter
+    */
+   static void setGetImpl(ImplGetter getter)
+      {
+      _getImpl = getter;
+      }
 
 protected:
+
+   /**
+    * @brief pointer to a client object that corresponds to this object
+    */
+   void                        * _client;
+ 
+   /**
+    * @brief pointer to buildIL callback function for this object
+    * usually NULL, but client objects can set this via setBuildILCallback() to be called
+    * when buildIL is called on this object
+    */
+   ClientBuildILCallback         _clientCallbackBuildIL;
+
+   /**
+    * @brief pointer to allocator function for this object.
+    *
+    * Clients must set this pointer using setClientAllocator().
+    * When this allocator is called, a pointer to the current
+    * class (this) will be passed as argument. The expected
+    * returned value is a pointer to the base type of the
+    * client object.
+    */
+   static ClientAllocator        _clientAllocator;
+
+   /**
+    * @brief pointer to impl getter function
+    *
+    * Clients must set this pointer using setImplGetter().
+    * When called with an instance of a client object,
+    * the function must return the corresponding
+    * implementation object
+    */
+   static ImplGetter             _getImpl;
 
    /**
     * @brief MethodBuilder parent for this IlBuilder object
@@ -575,7 +714,12 @@ protected:
     */
    bool                          _isHandler;
 
-   virtual bool buildIL() { return true; }
+   virtual bool buildIL()
+      {
+      if (_clientCallbackBuildIL)
+         return (*_clientCallbackBuildIL)(client());
+      return true;
+      }
 
    TR::SymbolReference *lookupSymbol(const char *name);
    void defineSymbol(const char *name, TR::SymbolReference *v);
@@ -596,6 +740,7 @@ protected:
    TR::IlValue *unaryOp(TR::ILOpCodes op, TR::IlValue *v);
    void doVectorConversions(TR::Node **leftPtr, TR::Node **rightPtr);
    TR::IlValue *widenIntegerTo32Bits(TR::IlValue *v);
+   TR::IlValue *widenIntegerTo32BitsUnsigned(TR::IlValue *v);
    TR::IlValue *binaryOpFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode);
    TR::Node *binaryOpNodeFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode);
    TR::IlValue *binaryOpFromOpMap(OpCodeMapper mapOp, TR::IlValue *left, TR::IlValue *right);
@@ -640,6 +785,8 @@ protected:
    TR::IlValue *genOperationWithOverflowCHK(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode, TR::IlBuilder **handler, TR::ILOpCodes overflow);
    virtual void setHandlerInfo(uint32_t catchType);
    TR::IlValue **processCallArgs(TR::Compilation *comp, int numArgs, va_list args);
+   JBCase **createCaseArray(uint32_t numCases, va_list arg);
+   void generateSwitchCases(TR::Node *switchNode, TR::Node *defaultNode, TR::IlBuilder **defaultBuilder, uint32_t numCases, JBCase **cases);
    };
 
 } // namespace OMR

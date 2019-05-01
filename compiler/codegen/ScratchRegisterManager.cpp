@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,16 +21,16 @@
 
 #include "codegen/ScratchRegisterManager.hpp"
 
-#include <stddef.h>                        // for NULL
-#include <stdint.h>                        // for int32_t
-#include "codegen/CodeGenerator.hpp"       // for CodeGenerator
-#include "codegen/Register.hpp"            // for Register
-#include "codegen/RegisterConstants.hpp"   // for TR_RegisterKinds, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "compile/Compilation.hpp"         // for Compilation
+#include "compile/Compilation.hpp"
 #include "env/TRMemory.hpp"
-#include "infra/Assert.hpp"                // for TR_ASSERT
-#include "infra/List.hpp"                  // for ListIterator, List
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
 
 TR_ScratchRegisterManager::TR_ScratchRegisterManager(int32_t capacity, TR::CodeGenerator *cg) :
    _capacity(capacity),
@@ -78,7 +78,6 @@ bool TR_ScratchRegisterManager::reclaimScratchRegister(TR::Register *reg)
 
 TR::Register *TR_ScratchRegisterManager::findOrCreateScratchRegister(TR_RegisterKinds rk)
    {
-   TR_ASSERT(rk != TR_VRF,"VRF: RA (findOrCreateScratchRegister) unimplemented");
    // Check for free registers in the list.  If there are none then create
    // one if there is enough room.
    //

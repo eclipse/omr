@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,16 +31,16 @@ namespace OMR { class CFG; }
 namespace OMR { typedef OMR::CFG CFGConnector; }
 #endif
 
-#include <stddef.h>                 // for NULL
-#include <stdint.h>                 // for uint32_t
+#include <stddef.h>
+#include <stdint.h>
 #include <vector>
-#include "compile/Compilation.hpp"  // for Compilation
-#include "cs2/listof.h"             // for ListOf
-#include "env/TRMemory.hpp"         // for Allocator, TR_Memory, etc
-#include "il/Node.hpp"              // for vcount_t
-#include "infra/Assert.hpp"         // for TR_ASSERT
-#include "infra/List.hpp"           // for TR_TwoListIterator, List
-#include "infra/Link.hpp"           // for TR_LinkHead1
+#include "compile/Compilation.hpp"
+#include "cs2/listof.h"
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "infra/Link.hpp"
 #include "infra/CfgEdge.hpp"
 #include "infra/CfgNode.hpp"
 

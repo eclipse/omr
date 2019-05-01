@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,29 +22,29 @@
 #ifndef PPCINSTRUCTION_INCL
 #define PPCINSTRUCTION_INCL
 
-#include <stddef.h>                              // for NULL
-#include <stdint.h>                              // for uint32_t, int32_t, etc
+#include <stddef.h>
+#include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/InstOpCode.hpp"                // for InstOpCode, etc
-#include "codegen/Instruction.hpp"               // for Instruction, etc
-#include "codegen/MemoryReference.hpp"           // for MemoryReference
-#include "codegen/RealRegister.hpp"              // for RealRegister, etc
-#include "codegen/Register.hpp"                  // for Register
-#include "codegen/RegisterConstants.hpp"         // for TR_RegisterKinds
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/RegisterDependencyStruct.hpp"
-#include "codegen/Snippet.hpp"                   // for Snippet
+#include "codegen/Snippet.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
-#include "compile/Compilation.hpp"               // for comp
+#include "compile/Compilation.hpp"
 #include "env/Processors.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                        // for uintptrj_t
+#include "env/jittypes.h"
 #include "il/DataTypes.hpp"
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes::dbgFence
-#include "il/Node.hpp"                           // for Node
-#include "il/symbol/LabelSymbol.hpp"             // for LabelSymbol
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "p/codegen/PPCOpsDefines.hpp"           // for PPCOpProp_NoHint
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "p/codegen/PPCOpsDefines.hpp"
 #include "runtime/Runtime.hpp"
 
 #include "codegen/GCStackMap.hpp"
@@ -1820,28 +1820,38 @@ class PPCControlFlowInstruction : public TR::Instruction
    TR::InstOpCode _opCode2;
    TR::InstOpCode _opCode3;
    TR::InstOpCode _cmpOp;
+   bool _useRegPairForResult;
+   bool _useRegPairForCond;
 
    public:
 
    PPCControlFlowInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n,
       TR::CodeGenerator *codeGen,
-      TR::RegisterDependencyConditions *deps=NULL)
+      TR::RegisterDependencyConditions *deps=NULL,
+      bool useRegPairForResult=false,
+      bool useRegPairForCond=false)
       : TR::Instruction(op, n, codeGen), _numSources(0), _numTargets(0), _label(NULL),
-        _opCode2(TR::InstOpCode::bad), _conditions(deps)
+        _opCode2(TR::InstOpCode::bad), _conditions(deps), _useRegPairForResult(useRegPairForResult),
+        _useRegPairForCond(useRegPairForCond)
       {
       if (deps!=NULL) deps->bookKeepingRegisterUses(this, codeGen);
       }
    PPCControlFlowInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n,
       TR::Instruction *preceedingInstruction,
       TR::CodeGenerator *codeGen,
-      TR::RegisterDependencyConditions *deps=NULL)
+      TR::RegisterDependencyConditions *deps=NULL,
+      bool useRegPairForResult=false,
+      bool useRegPairForCond=false)
       : TR::Instruction(op, n, preceedingInstruction, codeGen),
         _numSources(0), _numTargets(0), _label(NULL), _opCode2(TR::InstOpCode::bad),
-        _conditions(deps)
+        _conditions(deps), _useRegPairForResult(useRegPairForResult),
+         _useRegPairForCond(useRegPairForCond)
       {
       if (deps!=NULL) deps->bookKeepingRegisterUses(this, codeGen);
       }
 
+   bool useRegPairForResult() { return _useRegPairForResult; }
+   bool useRegPairForCond() { return _useRegPairForCond; }
    virtual Kind getKind() { return IsControlFlow; }
 
    int32_t getNumSources()                    {return _numSources;}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,21 +19,21 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <algorithm>                    // for std::min
-#include <stddef.h>                     // for size_t, NULL
-#include <stdint.h>                     // for int32_t, uint32_t, uintptr_t, etc
-#include <stdio.h>                      // for fflush, fprintf, stderr
-#include <stdlib.h>                     // for free, malloc
-#include <string.h>                     // for memset
-#include "infra/CriticalSection.hpp"    // for CriticalSection
+#include <algorithm>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "infra/CriticalSection.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"  // for TR::Options, etc
-#include "env/PersistentAllocator.hpp"  // for PersistentAllocator
-#include "env/TRMemory.hpp"             // for TR_PersistentMemory, etc
-#include "il/DataTypes.hpp"             // for pointer_cast
-#include "infra/Assert.hpp"             // for TR_ASSERT
-#include "infra/Monitor.hpp"            // for Monitor
-#include "infra/MonitorTable.hpp"       // for MonitorTable
+#include "control/Options_inlines.hpp"
+#include "env/PersistentAllocator.hpp"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Monitor.hpp"
+#include "infra/MonitorTable.hpp"
 
 namespace TR { class Compilation; }
 namespace TR { class PersistentInfo; }

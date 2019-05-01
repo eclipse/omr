@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,9 +21,9 @@
 
 #include "infra/Random.hpp"
 
-#include <limits.h>                 // for MIN_INT, MAX_INT
-#include <stdint.h>                 // for int32_t, uint32_t
-#include "compile/Compilation.hpp"  // for Compilation
+#include <limits.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
 
 TR_HasRandomGenerator::TR_HasRandomGenerator(TR::Compilation *comp)
   : _randomGenerator(comp->primaryRandom()) {}

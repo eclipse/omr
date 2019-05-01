@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,12 +21,12 @@
 
 #include "codegen/Analyser.hpp"
 
-#include "compile/Compilation.hpp"  // for Compilation
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable, etc
-#include "il/ILOps.hpp"             // for ILOpCode
-#include "il/Node.hpp"              // for Node
-#include "il/Node_inlines.hpp"      // for Node::getReferenceCount
-#include "il/Symbol.hpp"            // for Symbol
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
 
 namespace TR { class SymbolReference; }
 

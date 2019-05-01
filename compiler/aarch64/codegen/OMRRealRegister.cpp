@@ -55,7 +55,8 @@ const uint8_t OMR::ARM64::RealRegister::fullRegBinaryEncodings[TR::RealRegister:
       0x1c, // x28
       0x1d, // x29
       0x1e, // x30
-      0x1f, // xzr / sp
+      0x1f, // sp
+      0x1f, // xzr
       0x00, // v0
       0x01, // v1
       0x02, // v2

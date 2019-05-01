@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2018 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -365,7 +365,7 @@ AC_DEFUN([OMRCFG_DEFINE_FLAG_OFF],
 
 ############### Top-Level Components
 OMRCFG_DEFINE_FLAG_ON([OMR_GC], [], [Enable building the OMR GC. (Default: yes)])
-OMRCFG_DEFINE_FLAG_OFF([OMR_JIT], [], [Enable building the OMR JIT. (Default: no)])
+OMRCFG_DEFINE_FLAG_OFF([OMR_COMPILER], [], [Enable building the OMR Compiler. (Default: no)])
 OMRCFG_DEFINE_FLAG_OFF([OMR_JITBUILDER], [], [Enable building JitBuilder. (Default: no)])
 OMRCFG_DEFINE_FLAG_OFF([OMR_TEST_COMPILER], [], [Enable building the Test compiler. (Default: no)])
 OMRCFG_DEFINE_FLAG_ON([OMR_PORT], [], [Enable building the Port library. (Default: yes)])
@@ -407,6 +407,7 @@ OMRCFG_DEFINE_FLAG_OFF([OMR_GC_DYNAMIC_CLASS_UNLOADING])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_MODRON_COMPACTION])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_MODRON_CONCURRENT_MARK])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_MODRON_SCAVENGER])
+OMRCFG_DEFINE_FLAG_OFF([OMR_GC_DOUBLE_MAP_ARRAYLETS])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_CONCURRENT_SCAVENGER])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_CONCURRENT_SWEEP])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_HYBRID_ARRAYLETS])
@@ -414,7 +415,6 @@ OMRCFG_DEFINE_FLAG_OFF([OMR_GC_LEAF_BITS])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_OBJECT_ALLOCATION_NOTIFY])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_REALTIME])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_SEGREGATED_HEAP])
-OMRCFG_DEFINE_FLAG_OFF([OMR_GC_STACCATO])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_VLHGC])
 OMRCFG_DEFINE_FLAG_OFF([OMR_PORT_ASYNC_HANDLER])
 OMRCFG_DEFINE_FLAG_OFF([OMR_ARCH_POWER])

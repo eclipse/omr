@@ -22,7 +22,7 @@
 #ifndef TYPEDICTIONARY_EXTRAS_OUTSIDE_CLASS_INCL
 #define TYPEDICTIONARY_EXTRAS_OUTSIDE_CLASS_INCL
 
-#include <type_traits>
+#include <OMR/TypeTraits.hpp>
 
 /**
  * @brief Convenience API for defining JitBuilder structs from C/C++ structs (PODs)

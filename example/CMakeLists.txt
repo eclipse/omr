@@ -30,6 +30,11 @@ target_include_directories(omr_example_base
 		glue
 )
 
+target_link_libraries(omr_example_base
+	INTERFACE
+		omr_base
+)
+
 # The GC example shows how to use OMR's GC component
 if(OMR_GC)
 	add_executable(gcexample

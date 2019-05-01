@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,19 +21,19 @@
 
 #include "control/CompilationController.hpp"
 
-#include <stdint.h>                           // for int32_t
-#include <stdio.h>                            // for fprintf, NULL, stderr
-#include <stdlib.h>                           // for atoi
-#include "codegen/FrontEnd.hpp"               // for feGetEnv
-#include "compile/Compilation.hpp"            // for Compilation
-#include "compile/CompilationTypes.hpp"       // for TR_Hotness
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
 #include "control/OptimizationPlan.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"        // for TR::Options
-#include "control/Recompilation.hpp"          // for TR_Recompilation
-#include "env/TRMemory.hpp"                   // for PERSISTENT_NEW, etc
-#include "infra/Monitor.hpp"                  // for Monitor
-#include "infra/ThreadLocal.h"                // for tlsAlloc, tlsFree
+#include "control/Options_inlines.hpp"
+#include "control/Recompilation.hpp"
+#include "env/TRMemory.hpp"
+#include "infra/Monitor.hpp"
+#include "infra/ThreadLocal.h"
 
 namespace TR { class CompilationInfo; }
 

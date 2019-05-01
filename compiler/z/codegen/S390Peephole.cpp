@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,26 +21,29 @@
 
 #include "z/codegen/S390Peephole.hpp"
 
-#include <stdint.h>                                 // for int32_t, etc
-#include <stdio.h>                                  // for printf, sprintf
-#include <string.h>                                 // for NULL, strcmp, etc
-#include "codegen/CodeGenPhase.hpp"                 // for CodeGenPhase, etc
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/CodeGenPhase.hpp"
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"                     // for TR_FrontEnd, etc
-#include "codegen/InstOpCode.hpp"                   // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                  // for Instruction, etc
-#include "codegen/MemoryReference.hpp"              // for MemoryReference, etc
-#include "codegen/RealRegister.hpp"                 // for RealRegister, etc
-#include "codegen/Register.hpp"                     // for Register
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterPair.hpp"                 // for RegisterPair
-#include "codegen/Snippet.hpp"                      // for TR::S390Snippet, etc
-#include "ras/Debug.hpp"                            // for TR_DebugBase, etc
+#include "codegen/RegisterPair.hpp"
+#include "codegen/Snippet.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "ras/Debug.hpp"
 #include "ras/DebugCounter.hpp"
-#include "ras/Delimiter.hpp"                        // for Delimiter
-#include "runtime/Runtime.hpp"                      // for TR_LinkageInfo
+#include "ras/Delimiter.hpp"
+#include "runtime/Runtime.hpp"
 #include "z/codegen/CallSnippet.hpp"
 #include "z/codegen/OpMemToMem.hpp"
 #include "z/codegen/S390Evaluator.hpp"
@@ -309,7 +312,7 @@ TR_S390PostRAPeephole::AGIReduction()
    TR::Register *lgrTargetReg = ((TR::S390RRInstruction*)_cursor)->getRegisterOperand(1);
    TR::Register *lgrSourceReg = ((TR::S390RRInstruction*)_cursor)->getRegisterOperand(2);
 
-   TR::RealRegister *gpr0 = _cg->machine()->getS390RealRegister(TR::RealRegister::GPR0);
+   TR::RealRegister *gpr0 = _cg->machine()->getRealRegister(TR::RealRegister::GPR0);
 
    // no renaming possible if both target and source are the same
    // this can happend with LTR and LTGR
@@ -479,100 +482,6 @@ TR_S390PostRAPeephole::AGIReduction()
       }
 
    return performed;
-   }
-
-/**
- * \brief Swaps guarded storage loads with regular loads and a software read barrier
- *
- * \details
- * This function swaps LGG/LLGFSG with regular loads and software read barrier sequence
- * for runs with -Xgc:concurrentScavenge on hardware that doesn't support guarded storage facility.
- * The sequence first checks if concurrent scavange is in progress and if the current object pointer is
- * in the evacuate space then calls the GC helper to update the object pointer.
- */
-
-bool
-TR_S390PostRAPeephole::replaceGuardedLoadWithSoftwareReadBarrier()
-   {
-   if (!TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
-      {
-      return false;
-      }
-
-   auto* concurrentScavangeNotActiveLabel = generateLabelSymbol(_cg);
-   TR::S390RXInstruction *load = static_cast<TR::S390RXInstruction*> (_cursor);
-   TR::MemoryReference *loadMemRef = generateS390MemoryReference(*load->getMemoryReference(), 0, _cg);
-   TR::Register *loadTargetReg = _cursor->getRegisterOperand(1);
-   TR::Register *vmReg = _cg->getLinkage()->getMethodMetaDataRealRegister();
-   TR::Register *raReg = _cg->machine()->getS390RealRegister(_cg->getReturnAddressRegister());
-   TR::Instruction* prev = load->getPrev();
-
-   // If guarded load target and mem ref registers are the same,
-   // preserve the register before overwriting it, since we need to repeat the load after calling the GC helper.
-   bool shouldPreserveLoadReg = (loadMemRef->getBaseRegister() == loadTargetReg);
-   if (shouldPreserveLoadReg) {
-      TR::MemoryReference *gsIntermediateAddrMemRef = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetGSIntermediateResultOffset(comp()), _cg);
-      _cursor = generateRXInstruction(_cg, TR::InstOpCode::STG, load->getNode(), loadTargetReg, gsIntermediateAddrMemRef, prev);
-      prev = _cursor;
-   }
-
-   if (load->getOpCodeValue() == TR::InstOpCode::LGG)
-      {
-      _cursor = generateRXInstruction(_cg, TR::InstOpCode::LG, load->getNode(), loadTargetReg, loadMemRef, prev);
-      }
-   else
-      {
-      _cursor = generateRXInstruction(_cg, TR::InstOpCode::LLGF, load->getNode(), loadTargetReg, loadMemRef, prev);
-      _cursor = generateRSInstruction(_cg, TR::InstOpCode::SLLG, load->getNode(), loadTargetReg, loadTargetReg, TR::Compiler->om.compressedReferenceShift(), _cursor);
-      }
-
-   // Check if concurrent scavange is in progress and if object pointer is in the evacuate space
-   TR::MemoryReference *privFlagMR = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetConcurrentScavengeActiveByteAddressOffset(comp()), _cg);
-   _cursor = generateSIInstruction(_cg, TR::InstOpCode::TM, load->getNode(), privFlagMR, 0x00000002, _cursor);
-   _cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
-
-   _cursor = generateRXInstruction(_cg, TR::InstOpCode::CG, load->getNode(), loadTargetReg,
-   		generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateBaseAddressOffset(comp()), _cg), _cursor);
-   _cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
-
-   _cursor = generateRXInstruction(_cg, TR::InstOpCode::CG, load->getNode(), loadTargetReg,
-   		generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateTopAddressOffset(comp()), _cg), _cursor);
-   _cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
-
-   // Save result of LA to gsParameters.operandAddr as invokeJ9ReadBarrier helper expects it to be set
-   TR::MemoryReference *loadAddrMemRef = generateS390MemoryReference(*load->getMemoryReference(), 0, _cg);
-   _cursor = generateRXInstruction(_cg, TR::InstOpCode::LA, load->getNode(), loadTargetReg, loadAddrMemRef, _cursor);
-   TR::MemoryReference *gsOperandAddrMemRef = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetGSOperandAddressOffset(comp()), _cg);
-   _cursor = generateRXInstruction(_cg, TR::InstOpCode::STG, load->getNode(), loadTargetReg, gsOperandAddrMemRef, _cursor);
-
-   // Use raReg to call handleReadBarrier helper, preserve raReg before the call in the load reg
-   _cursor = generateRRInstruction(_cg, TR::InstOpCode::LGR, load->getNode(), loadTargetReg, raReg, _cursor);
-   TR::MemoryReference *gsHelperAddrMemRef = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetGSHandlerAddressOffset(comp()), _cg);
-   _cursor = generateRXYInstruction(_cg, TR::InstOpCode::LG, load->getNode(), raReg, gsHelperAddrMemRef, _cursor);
-   _cursor = new (_cg->trHeapMemory()) TR::S390RRInstruction(TR::InstOpCode::BASR, load->getNode(), raReg, raReg, _cursor, _cg);
-   _cursor = generateRRInstruction(_cg, TR::InstOpCode::LGR, load->getNode(), raReg, loadTargetReg, _cursor);
-
-   if (shouldPreserveLoadReg) {
-      TR::MemoryReference * restoreBaseRegAddrMemRef = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetGSIntermediateResultOffset(comp()), _cg);
-      _cursor = generateRXInstruction(_cg, TR::InstOpCode::LG, load->getNode(), loadTargetReg, restoreBaseRegAddrMemRef, _cursor);
-   }
-   // Repeat load as the object pointer got updated by GC after calling handleReadBarrier helper
-   TR::MemoryReference *updateLoadMemRef = generateS390MemoryReference(*load->getMemoryReference(), 0, _cg);
-   if (load->getOpCodeValue() == TR::InstOpCode::LGG)
-      {
-      _cursor = generateRXInstruction(_cg, TR::InstOpCode::LG, load->getNode(), loadTargetReg, updateLoadMemRef,_cursor);
-      }
-   else
-      {
-      _cursor = generateRXInstruction(_cg, TR::InstOpCode::LLGF, load->getNode(), loadTargetReg, updateLoadMemRef, _cursor);
-      _cursor = generateRSInstruction(_cg, TR::InstOpCode::SLLG, load->getNode(), loadTargetReg, loadTargetReg, TR::Compiler->om.compressedReferenceShift(), _cursor);
-      }
-
-   _cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, load->getNode(), concurrentScavangeNotActiveLabel, _cursor);
-
-   _cg->deleteInst(load);
-
-   return true;
    }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1506,7 +1415,7 @@ TR_S390PostRAPeephole::LoadAndMaskReduction(TR::InstOpCode::Mnemonic LZOpCode)
          loadInst->getMemoryReference()->resetMemRefUsedBefore();
 
          // Replace the load instruction with load-and-mask instruction
-         _cg->replaceInst(loadInst, _cursor = generateRXYInstruction(_cg, LZOpCode, comp()->getStartTree()->getNode(), loadTargetReg, loadInst->getMemoryReference(), _cursor->getPrev()));
+         _cg->replaceInst(loadInst, _cursor = generateRXInstruction(_cg, LZOpCode, comp()->getStartTree()->getNode(), loadTargetReg, loadInst->getMemoryReference(), _cursor->getPrev()));
 
          return true;
          }
@@ -1893,11 +1802,11 @@ TR_S390PostRAPeephole::trueCompEliminationForLoadComp()
    TR::RealRegister *tempReg = NULL;
    if((toRealRegister(srcReg))->getRegisterNumber() == TR::RealRegister::GPR1)
       {
-      tempReg = _cg->machine()->getS390RealRegister(TR::RealRegister::GPR2);
+      tempReg = _cg->machine()->getRealRegister(TR::RealRegister::GPR2);
       }
    else
       {
-      tempReg = _cg->machine()->getS390RealRegister(TR::RealRegister::GPR1);
+      tempReg = _cg->machine()->getRealRegister(TR::RealRegister::GPR1);
       }
 
    if (prev && prev->defsRegister(srcReg))
@@ -2256,7 +2165,7 @@ TR_S390PostRAPeephole::inlineEXtargetHelper(TR::Instruction *inst, TR::Instructi
          }
 
       // generate new label
-      TR::LabelSymbol * ssInstrLabel = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
+      TR::LabelSymbol * ssInstrLabel = generateLabelSymbol(_cg);
       TR::Instruction * labelInstr = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _cursor->getNode(), ssInstrLabel, inst);
 
       //cnstDataInstr->move(labelInstr);
@@ -2331,7 +2240,7 @@ TR_S390PostRAPeephole::inlineEXtarget()
           }
 
        // Generate branch and label
-       TR::LabelSymbol *targetLabel = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
+       TR::LabelSymbol *targetLabel = generateLabelSymbol(_cg);
        TR::Instruction *branchInstr = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, _cursor->getNode(), targetLabel, prev);
        TR::Instruction *labelInstr = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _cursor->getNode(), targetLabel, branchInstr);
        inlineEXtargetHelper(branchInstr,instrB4EX);
@@ -2410,23 +2319,6 @@ TR_S390PostRAPeephole::attemptZ7distinctOperants()
          // SR      GPR0,GPR11
          // AHIK    GPR6,GPR0, -1
          return false;
-         }
-      if (!comp()->getOption(TR_DisableHighWordRA) && instr->getOpCodeValue() == TR::InstOpCode::LGR)
-         {
-         // handles this case:
-         // LGR     GPR2,GPR9        ; LR=Clobber_eval
-         // LFH     HPR9,#366#SPILL8 Auto[<spill temp 0x84571FDB0>] ?+0(GPR5) ; Load Spill
-         // AGHI    GPR2,16
-         //
-         // cannot transform this into:
-         // LFH     HPR9,#366#SPILL8 Auto[<spill temp 0x84571FDB0>] 96(GPR5) ; Load Spill
-         // AGHIK   GPR2,GPR9,16,
-
-         TR::RealRegister * lgrSourceHighWordRegister = toRealRegister(lgrSourceReg)->getHighWordRegister();
-         if (current->defsRegister(lgrSourceHighWordRegister))
-            {
-            return false;
-            }
          }
       // found the first next use/def of lgrTargetRegister
       if (current->usesRegister(lgrTargetReg))
@@ -2648,7 +2540,7 @@ TR_S390PostRAPeephole::markBlockThatModifiesRegister(TR::Instruction * cursor,
                {
                for (uint8_t i=highReg->getRegisterNumber()+1; i++; i<= numRegs)
                   {
-                  _cg->getS390Linkage()->getS390RealRegister(REGNUM(i))->setModified(true);
+                  _cg->getS390Linkage()->getRealRegister(REGNUM(i))->setModified(true);
                   }
                }
             }
@@ -2669,7 +2561,7 @@ TR_S390PostRAPeephole::reloadLiteralPoolRegisterForCatchBlock()
    // This causes a failure when we come back to a catch block because the register context will not be preserved.
    // Hence, we can not assume that R6 will still contain the lit pool register and hence need to reload it.
 
-   bool isZ10 = TR::Compiler->target.cpu.getS390SupportsZ10();
+   bool isZ10 = _cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10);
 
    // we only need to reload literal pool for Java on older z architecture on zos when on demand literal pool is off
    if ( TR::Compiler->target.isZOS() && !isZ10 && !_cg->isLiteralPoolOnDemandOn())
@@ -3156,17 +3048,6 @@ TR_S390PostRAPeephole::perform()
                }
             }
             break;
-
-         case TR::InstOpCode::LGG:
-         case TR::InstOpCode::LLGFSG:
-            {
-            replaceGuardedLoadWithSoftwareReadBarrier();
-
-            if (comp()->getOption(TR_TraceCG))
-               printInst();
-
-            break;
-            }
 
          default:
             {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,12 +24,12 @@
 
 #include "codegen/Snippet.hpp"
 
-#include <stdint.h>                   // for int32_t, uint8_t, uint32_t, etc
-#include "codegen/CodeGenerator.hpp"  // for CodeGenerator
-#include "env/jittypes.h"             // for intptrj_t
-#include "il/symbol/LabelSymbol.hpp"  // for LabelSymbol
-#include "infra/Assert.hpp"           // for TR_ASSERT
-#include "x/codegen/X86Ops.hpp"       // for TR_X86OpCode, ::JMP4, etc
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "env/jittypes.h"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "x/codegen/X86Ops.hpp"
 #include "x/codegen/X86Ops_inlines.hpp"
 
 namespace TR { class Node; }

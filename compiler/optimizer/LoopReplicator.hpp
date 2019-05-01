@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,12 +19,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>                           // for int32_t
-#include "il/Node.hpp"                        // for Node, vcount_t
-#include "infra/Link.hpp"                     // for TR_Link, etc
-#include "infra/List.hpp"                     // for TR_Queue, etc
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
-#include "optimizer/LoopCanonicalizer.hpp"    // for TR_LoopTransformer
+#include <stdint.h>
+#include "il/Node.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "optimizer/OptimizationManager.hpp"
+#include "optimizer/LoopCanonicalizer.hpp"
 
 class TR_BitVector;
 class TR_RegionStructure;

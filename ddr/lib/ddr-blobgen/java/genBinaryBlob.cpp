@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,8 @@ using std::pair;
 using std::make_pair;
 using std::vector;
 using std::stringstream;
+
+#define INVALID_OFFSET (~(uint32_t)0)
 
 class BlobBuildVisitor : public TypeVisitor
 {
@@ -227,10 +229,10 @@ JavaBlobGenerator::stringTableOffset(BlobHeader *blobHeader, J9HashTable *string
 	DDR_RC rc = DDR_RC_OK;
 	StringTableEntry exemplar;
 
-	*offset = UINT32_MAX;
+	*offset = INVALID_OFFSET;
 
 	exemplar.cString = cString;
-	exemplar.offset = UINT32_MAX;
+	exemplar.offset = INVALID_OFFSET;
 
 	/* Add will return an existing entry if one matches, NULL on allocation failure, or the new node */
 	StringTableEntry *entry = (StringTableEntry *)hashTableAdd(stringTable, &exemplar);
@@ -239,11 +241,11 @@ JavaBlobGenerator::stringTableOffset(BlobHeader *blobHeader, J9HashTable *string
 		/* the string was new, but memory allocation failed */
 		ERRMSG("Unable to allocate memory for string table entry: %s", cString);
 		rc = DDR_RC_ERROR;
-	} else if (UINT32_MAX != entry->offset) {
+	} else if (INVALID_OFFSET != entry->offset) {
 		/* an existing entry was found */
 		*offset = entry->offset;
 	} else {
-		/* If the offset is UINT32_MAX, this indicates that a new entry was added */
+		/* the offset is INVALID_OFFSET which indicates that a new entry was added */
 		entry->offset = blobHeader->stringDataSize;
 
 		/* For new string entries, allocate memory to hold the string */
@@ -270,8 +272,8 @@ JavaBlobGenerator::genBinaryBlob(OMRPortLibrary *portLibrary, Symbol_IR *ir, con
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 
 	/* iterate ir:
-	 *  - count structs - update blob header
-	 *  - build string hash table
+	 * - count structs - update blob header
+	 * - build string hash table
 	 */
 	DDR_RC rc = countStructsAndStrings(ir);
 
@@ -342,8 +344,8 @@ JavaBlobGenerator::genBinaryBlob(OMRPortLibrary *portLibrary, Symbol_IR *ir, con
 }
 
 /* iterate ir:
- *  - count structs - update blob header
- *  - build string hash table
+ * - count structs - update blob header
+ * - build string hash table
  */
 DDR_RC
 JavaBlobGenerator::countStructsAndStrings(Symbol_IR *ir)
@@ -678,8 +680,8 @@ JavaBlobGenerator::addBlobField(Field *field, uint32_t *fieldCount, size_t baseO
 		const string adjustedPrefix = prefix + field->_name + ".";
 		rc = fieldType->acceptVisitor(BlobBuildVisitor(this, adjustedOffset, adjustedPrefix));
 	} else {
-		uint32_t nameOffset = UINT32_MAX;
-		uint32_t typeOffset = UINT32_MAX;
+		uint32_t nameOffset = INVALID_OFFSET;
+		uint32_t typeOffset = INVALID_OFFSET;
 		string typeName;
 
 		rc = formatFieldType(field, &typeName);
@@ -715,7 +717,7 @@ JavaBlobGenerator::addBlobField(Field *field, uint32_t *fieldCount, size_t baseO
 DDR_RC
 JavaBlobGenerator::addBlobConst(const string &name, long long value, uint32_t *constCount)
 {
-	uint32_t offset = UINT32_MAX;
+	uint32_t offset = INVALID_OFFSET;
 	DDR_RC rc = stringTableOffset(&_buildInfo.header, _buildInfo.stringHash, name.c_str(), &offset);
 
 	if (DDR_RC_OK == rc) {
@@ -741,8 +743,12 @@ JavaBlobGenerator::addBlobConst(const string &name, long long value, uint32_t *c
 DDR_RC
 JavaBlobGenerator::addBlobStruct(const string &name, const string &superName, uint32_t constCount, uint32_t fieldCount, uint32_t size)
 {
-	uint32_t nameOffset = UINT32_MAX;
-	uint32_t superOffset = UINT32_MAX;
+	if (!_printEmptyTypes && (0 == constCount) && (0 == fieldCount)) {
+		return DDR_RC_OK;
+	}
+
+	uint32_t nameOffset = INVALID_OFFSET;
+	uint32_t superOffset = INVALID_OFFSET;
 	DDR_RC rc = stringTableOffset(&_buildInfo.header, _buildInfo.stringHash, name.c_str(), &nameOffset);
 
 	if ((DDR_RC_OK == rc) && !superName.empty()) {
@@ -793,7 +799,20 @@ public:
 DDR_RC
 BlobFieldVisitor::visitType(Type *type) const
 {
-	*_typePrefix += type->_name;
+	const string & typeName = type->_name;
+	bool isSigned = false;
+	size_t bitWidth = 0;
+
+	if (Type::isStandardType(typeName.c_str(), (size_t)typeName.length(), &isSigned, &bitWidth)) {
+		stringstream newType;
+
+		newType << (isSigned ? "I" : "U") << bitWidth;
+
+		*_typePrefix += newType.str();
+	} else {
+		*_typePrefix += typeName;
+	}
+
 	return DDR_RC_OK;
 }
 
@@ -829,12 +848,24 @@ BlobFieldVisitor::visitTypedef(TypedefUDT *type) const
 		*_typePrefix += "void";
 	} else {
 		string prefix = opaqueType->getSymbolKindName();
+		string fullName = opaqueType->getFullName();
 
 		/* prefix "union" should not be included */
 		if (prefix.empty() || ("union" == prefix)) {
-			*_typePrefix += opaqueType->getFullName();
+			bool isSigned = false;
+			size_t bitWidth = 0;
+
+			if (Type::isStandardType(fullName.c_str(), (size_t)fullName.length(), &isSigned, &bitWidth)) {
+				stringstream newType;
+
+				newType << (isSigned ? "I" : "U") << bitWidth;
+
+				*_typePrefix += newType.str();
+			} else {
+				*_typePrefix += fullName;
+			}
 		} else {
-			*_typePrefix += prefix + " " + opaqueType->getFullName();
+			*_typePrefix += prefix + " " + fullName;
 		}
 	}
 
@@ -905,7 +936,7 @@ JavaBlobGenerator::addFieldAndConstCount(bool addFieldsOnly, size_t fieldCount, 
 	DDR_RC rc = DDR_RC_OK;
 	size_t structDataSize = sizeof(BlobField) * fieldCount + sizeof(BlobConstant) * constCount;
 
-	if (!addFieldsOnly) {
+	if (!addFieldsOnly && (_printEmptyTypes || (0 != structDataSize))) {
 		structDataSize += sizeof(BlobStruct);
 	}
 
@@ -916,7 +947,7 @@ JavaBlobGenerator::addFieldAndConstCount(bool addFieldsOnly, size_t fieldCount, 
 
 		if (addFieldsOnly) {
 			/* just count fields and constants */
-		} else if (_printEmptyTypes || (0 != _buildInfo.constCount) || (0 != _buildInfo.fieldCount)) {
+		} else if (_printEmptyTypes || (0 != structDataSize)) {
 			_buildInfo.header.structureCount += 1;
 		}
 	} else {
@@ -942,7 +973,7 @@ BlobEnumerateVisitor::visitNamespace(NamespaceUDT *type) const
 	if (_addFieldsOnly || !type->isAnonymousType()) {
 		size_t constCount = 0;
 
-		if(!_addFieldsOnly) {
+		if (!_addFieldsOnly) {
 			for (vector<Macro>::iterator it = type->_macros.begin(); it != type->_macros.end(); ++it) {
 				/* Add only integer constants to the blob. */
 				if (DDR_RC_OK == it->getNumeric(NULL)) {

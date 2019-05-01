@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,17 +22,17 @@
 #ifndef TRS_INCL
 #define TRS_INCL
 
-#include <stddef.h>                 // for NULL
-#include <stdint.h>                 // for int32_t, int64_t, uint8_t
-#include "compile/Compilation.hpp"  // for Compilation
-#include "env/TRMemory.hpp"         // for TR_Memory, TR_MemoryBase, etc
-#include "il/ILOpCodes.hpp"         // for ILOpCodes
-#include "il/ILOps.hpp"             // for TR::ILOpCode
-#include "il/Node.hpp"              // for Node, vcount_t
-#include "il/NodeUtils.hpp"         // for TR_ParentOfChildNode
-#include "il/Node_inlines.hpp"      // for Node::getInt, etc
-#include "infra/Assert.hpp"         // for TR_ASSERT
-#include "ras/Debug.hpp"            // for TR_DebugBase
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/NodeUtils.hpp"
+#include "il/Node_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
 
 class TR_AddressTree
    {

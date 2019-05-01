@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,32 +19,32 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                            // for NULL
-#include <stdint.h>                            // for int32_t
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
-#include "codegen/InstOpCode.hpp"              // for InstOpCode, etc
-#include "codegen/Machine.hpp"                 // for LOWER_IMMED, etc
-#include "codegen/MemoryReference.hpp"         // for MemoryReference
-#include "codegen/Register.hpp"                // for Register
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/RegisterPair.hpp"            // for RegisterPair
-#include "codegen/TreeEvaluator.hpp"           // for TreeEvaluator
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/CompilationTypes.hpp"        // for TR_Hotness
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
+#include "codegen/RegisterPair.hpp"
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/Processors.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                      // for intptrj_t
-#include "il/DataTypes.hpp"                    // for CONSTANT64
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::dceil, etc
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "infra/Assert.hpp"                    // for TR_ASSERT
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "infra/Assert.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
-#include "p/codegen/PPCOpsDefines.hpp"         // for Op_load
+#include "p/codegen/PPCOpsDefines.hpp"
 
 class TR_OpaqueClassBlock;
 class TR_OpaqueMethodBlock;

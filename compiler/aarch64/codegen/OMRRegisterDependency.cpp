@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ OMR::ARM64::RegisterDependencyConditions::RegisterDependencyConditions(
                                        uint32_t          extranum,
                                        TR::Instruction  **cursorPtr)
    {
-   TR_ASSERT(false, "Not implemented yet.");
+   TR_UNIMPLEMENTED();
    }
 
 void OMR::ARM64::RegisterDependencyConditions::unionNoRegPostCondition(TR::Register *reg, TR::CodeGenerator *cg)
@@ -131,13 +131,24 @@ bool OMR::ARM64::RegisterDependencyConditions::usesRegister(TR::Register *r)
    return false;
    }
 
+void OMR::ARM64::RegisterDependencyConditions::incRegisterTotalUseCounts(TR::CodeGenerator *cg)
+   {
+   for (int i = 0; i < _addCursorForPre; i++)
+      {
+      _preConditions->getRegisterDependency(i)->getRegister()->incTotalUseCount();
+      }
+   for (int j = 0; j < _addCursorForPost; j++)
+      {
+      _postConditions->getRegisterDependency(j)->getRegister()->incTotalUseCount();
+      }
+   }
+
 TR::RegisterDependencyConditions *
 OMR::ARM64::RegisterDependencyConditions::clone(
    TR::CodeGenerator *cg,
    TR::RegisterDependencyConditions *added)
    {
-   TR_ASSERT(false, "Not implemented yet.");
-
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
@@ -256,7 +267,7 @@ void TR_ARM64RegisterDependencyGroup::assignRegisters(
          {
          virtReg = _dependencies[i].getRegister();
          dependentRegNum = _dependencies[i].getRealRegister();
-         dependentRealReg = machine->getARM64RealRegister(dependentRegNum);
+         dependentRealReg = machine->getRealRegister(dependentRegNum);
 
          if (dependentRegNum != TR::RealRegister::NoReg &&
              dependentRegNum != TR::RealRegister::SpilledReg &&
@@ -281,7 +292,7 @@ void TR_ARM64RegisterDependencyGroup::assignRegisters(
             assignedRegister = toRealRegister(virtReg->getAssignedRealRegister());
             }
          dependentRegNum = _dependencies[i].getRealRegister();
-         dependentRealReg = machine->getARM64RealRegister(dependentRegNum);
+         dependentRealReg = machine->getRealRegister(dependentRegNum);
          if (dependentRegNum != TR::RealRegister::NoReg &&
              dependentRegNum != TR::RealRegister::SpilledReg &&
              dependentRealReg != assignedRegister)

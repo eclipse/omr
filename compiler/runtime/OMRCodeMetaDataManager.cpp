@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,20 +21,20 @@
 
 #include "runtime/OMRCodeMetaDataManager.hpp"
 
-#include <stdint.h>                                 // for uintptr_t, intptr_t
-#include <string.h>                                 // for NULL, memset, memcpy, etc
-#include "avl_api.h"                                // for avl_insert, avl_search
-#include "env/TRMemory.hpp"                         // for TR_Memory, etc
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "j9nongenerated.h"                         // for J9AVLTree, etc
-#include "runtime/CodeCache.hpp"                    // for CodeCache, etc
-#include "runtime/CodeCacheMemorySegment.hpp"       // for CodeCacheMemorySegment
-#include "runtime/CodeMetaDataManager.hpp"          // for MetaDataHashTable, etc
+#include <stdint.h>
+#include <string.h>
+#include "avl_api.h"
+#include "env/TRMemory.hpp"
+#include "infra/Assert.hpp"
+#include "j9nongenerated.h"
+#include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheMemorySegment.hpp"
+#include "runtime/CodeMetaDataManager.hpp"
 #include "runtime/CodeMetaDataManager_inlines.hpp"
-#include "runtime/CodeMetaDataPOD.hpp"              // for MethodMetaDataPOD
+#include "runtime/CodeMetaDataPOD.hpp"
 
 #if !defined(TR_TARGET_POWER) || !defined(__clang__)
-#include "AtomicSupport.hpp"                        // for VM_AtomicSupport
+#include "AtomicSupport.hpp"
 #endif
 
 namespace OMR

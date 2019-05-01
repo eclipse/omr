@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,11 +35,11 @@ namespace OMR { typedef OMR::X86::Instruction InstructionConnector; }
 
 #include "compiler/codegen/OMRInstruction.hpp"
 
-#include <stddef.h>                                    // for NULL
-#include <stdint.h>                                    // for int32_t, etc
-#include "codegen/InstOpCode.hpp"                      // for InstOpCode, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/InstOpCode.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "x/codegen/X86Ops.hpp"                        // for TR_X86OpCode, etc
+#include "x/codegen/X86Ops.hpp"
 
 namespace TR { class X86ImmInstruction;   }
 namespace TR { class X86LabelInstruction; }
@@ -117,41 +117,16 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
    virtual bool     needsRepPrefix();
    virtual bool     needsLockPrefix();
    virtual EnlargementResult enlarge(int32_t requestedEnlargementSize, int32_t maxEnlargementSize, bool allowPartialEnlargement) { return EnlargementResult(0, 0); }
+   
+   virtual TR::X86RegInstruction *getX86RegInstruction() { return NULL; }
 
-   enum TR_UpperHalfRefConditions
-      {
-      // These should be the first two so that booleans work properly
-      TR_never,
-      TR_always,
-
-      // Some other conditions under which the top half of a register might be used
-      TR_if64bitSource,
-      TR_ifUses64bitTarget,
-      TR_ifUses64bitSourceOrTarget, // A conservative default for when to setIsUpperHalfDead(true).  Shouldn't really be needed.
-      TR_ifModifies32or64bitTarget,
-      TR_ifModifies32or64bitSource,
-      };
-
-   bool registerRefKindApplies(TR_UpperHalfRefConditions when);
-   void setIsUpperHalfDead(TR::Register *reg, bool value, TR_UpperHalfRefConditions when=TR_always);
-   void aboutToAssignUsedRegister(TR::Register *reg, TR_UpperHalfRefConditions usesUpperHalf=TR_ifUses64bitSourceOrTarget);
-   void aboutToAssignDefdRegister(TR::Register *reg, TR_UpperHalfRefConditions defsUpperHalf=TR_never);
-
-   void aboutToAssignRegister(TR::Register *reg, TR_UpperHalfRefConditions usesUpperHalf=TR_ifUses64bitSourceOrTarget, TR_UpperHalfRefConditions defsUpperHalf=TR_never);
-
-   void aboutToAssignMemRef(TR::MemoryReference *memref);
-
-   void aboutToAssignRegDeps(TR_UpperHalfRefConditions usesUpperHalf=TR_ifUses64bitSourceOrTarget, TR_UpperHalfRefConditions defsUpperHalf=TR_never);
-
-   virtual TR::X86RegInstruction *getIA32RegInstruction() { return NULL; }
-
-   virtual TR::X86LabelInstruction *getIA32LabelInstruction() { return NULL; }
+   virtual TR::X86LabelInstruction *getX86LabelInstruction() { return NULL; }
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
    // The following safe virtual downcast method is used under debug only
    // for assertion checking.
    //
-   virtual TR::X86ImmInstruction *getIA32ImmInstruction() { return NULL; }
+   virtual TR::X86ImmInstruction *getX86ImmInstruction() { return NULL; }
 
    virtual uint32_t getNumOperandReferencedGPRegisters() { return 0; }
    virtual uint32_t getNumOperandReferencedFPRegisters() { return 0; }

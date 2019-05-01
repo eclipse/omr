@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,12 +22,12 @@
 #ifndef TR_LOCALDEADSTOREELIMINATION_INCL
 #define TR_LOCALDEADSTOREELIMINATION_INCL
 
-#include <stdint.h>                           // for int32_t
-#include "env/TRMemory.hpp"                   // for Allocator, etc
-#include "il/Node.hpp"                        // for vcount_t, rcount_t
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
 #include "infra/deque.hpp"
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 namespace TR { class Block; }
 namespace TR { class NodeChecklist; }

@@ -263,16 +263,6 @@ sem_trywait_zos(j9sem_t s)
 
 #endif
 
-#if defined(OSX)
-intptr_t
-dispatch_semaphore_init(j9sem_t s, int initValue)
-{
-	dispatch_semaphore_t *sem = (dispatch_semaphore_t *)s;
-	*sem = dispatch_semaphore_create(initValue);
-	return 0;
-}
-#endif /* defined(OSX) */
-
 #if J9THREAD_USE_MONOTONIC_COND_CLOCK
 /**
  * Called by omrthread library init to set the cond clock to CLOCK_MONOTONIC.

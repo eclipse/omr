@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +21,7 @@
 
 #include "optimizer/RematTools.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                                   // for ILOpCode, etc
+#include "il/ILOps.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "il/Block.hpp"

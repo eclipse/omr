@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,44 +21,45 @@
 
 #include "p/codegen/OMRMachine.hpp"
 
-#include <stdint.h>                            // for uint16_t, int32_t, etc
-#include <string.h>                            // for NULL, memcpy, memset
-#include <algorithm>                           // for std::find
-#include "codegen/BackingStore.hpp"            // for TR_BackingStore
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
-#include "codegen/InstOpCode.hpp"              // for InstOpCode, etc
-#include "codegen/Instruction.hpp"             // for Instruction, etc
-#include "codegen/Linkage.hpp"                 // for Linkage
-#include "codegen/LiveRegister.hpp"            // for TR_LiveRegisters
-#include "codegen/Machine.hpp"                 // for MachineBase, Machine, etc
+#include <stdint.h>
+#include <string.h>
+#include <algorithm>
+#include "codegen/BackingStore.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/LiveRegister.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/Machine_inlines.hpp"
-#include "codegen/MemoryReference.hpp"         // for MemoryReference
-#include "codegen/RealRegister.hpp"            // for RealRegister, etc
-#include "codegen/Register.hpp"                // for Register
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "compile/Compilation.hpp"             // for Compilation
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/ObjectModel.hpp"                 // for ObjectModel
+#include "env/ObjectModel.hpp"
 #include "env/Processors.hpp"
 #include "env/TRMemory.hpp"
-#include "il/Block.hpp"                        // for Block
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::BBStart
-#include "il/Node.hpp"                         // for Node
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"           // for LabelSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector
-#include "infra/List.hpp"                      // for List, ListIterator
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/List.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
-#include "p/codegen/PPCCRBackingStore.hpp"     // for toPPCCRBackingStore, etc
+#include "p/codegen/PPCCRBackingStore.hpp"
 #include "p/codegen/PPCInstruction.hpp"
-#include "p/codegen/PPCOpsDefines.hpp"         // for Op_load, Op_st
-#include "ras/Debug.hpp"                       // for TR_DebugBase
-#include "env/IO.hpp"                          // for PRINTF_POINTER_FORMAT
+#include "p/codegen/PPCOpsDefines.hpp"
+#include "ras/Debug.hpp"
+#include "env/IO.hpp"
 
 namespace TR { class AutomaticSymbol; }
 
@@ -512,7 +513,7 @@ TR::RealRegister *OMR::Power::Machine::freeBestRegister(TR::Instruction     *cur
       for (int i  = first; i <= last; i++)
          {
          uint64_t iInterfere = interference & (1<<(i-maskI));
-         TR::RealRegister *realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
+         TR::RealRegister *realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
          if (realReg->getState() == TR::RealRegister::Assigned)
             {
             TR::Register *associatedVirtual = realReg->getAssignedRegister();
@@ -895,7 +896,7 @@ TR::RealRegister *OMR::Power::Machine::reverseSpillState(TR::Instruction      *c
    TR_Debug          *debugObj = self()->cg()->getDebug();
    if (targetRegister == NULL)
       {
-      if ((rk == TR_CCR) && (!self()->cg()->isOutOfLineColdPath() && !self()->cg()->isOutOfLineHotPath()) && ((sameReg=self()->cg()->machine()->getPPCRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::FirstCCR+toPPCCRBackingStore(location)->getCcrFieldIndex())))->getState() == TR::RealRegister::Free))
+      if ((rk == TR_CCR) && (!self()->cg()->isOutOfLineColdPath() && !self()->cg()->isOutOfLineHotPath()) && ((sameReg=self()->cg()->machine()->getRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::FirstCCR+toPPCCRBackingStore(location)->getCcrFieldIndex())))->getState() == TR::RealRegister::Free))
          {
          targetRegister = sameReg;
          }
@@ -1864,7 +1865,7 @@ OMR::Power::Machine::createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::lis
 
    for (int32_t i = TR::RealRegister::FirstGPR; i <= endReg; i++)
       {
-      TR::RealRegister *realReg = self()->getPPCRealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
       TR_ASSERT(realReg->getState() == TR::RealRegister::Assigned ||
               realReg->getState() == TR::RealRegister::Free ||
               realReg->getState() == TR::RealRegister::Locked,
@@ -1882,7 +1883,7 @@ OMR::Power::Machine::createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::lis
       deps = new (self()->cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, c, self()->cg()->trMemory());
       for (int32_t j = TR::RealRegister::FirstGPR; j <= endReg; j++)
          {
-         TR::RealRegister *realReg = self()->getPPCRealRegister((TR::RealRegister::RegNum)j);
+         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)j);
          if (realReg->getState() == TR::RealRegister::Assigned)
             {
             TR::Register *virtReg = realReg->getAssignedRegister();

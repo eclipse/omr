@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,10 @@
 #include "codegen/TreeEvaluator.hpp"
 #include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                          // for POINTER_PRINTF_FORMAT
+#include "env/IO.hpp"
 #include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/DataTypes.hpp"                    // for getMaxSigned, etc
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -39,7 +39,7 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "il/Block.hpp"
-#include "il/symbol/LabelSymbol.hpp"           // for LabelSymbol
+#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Bit.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"
@@ -141,7 +141,7 @@ void setIsHighWordZero(TR::Node * node, TR::Simplifier * s)
       node->setIsHighWordZero(false);
    }
 
-TR::Node *_gotoSimplifier(TR::Node * node, TR::Block * block,  TR::TreeTop* curTree,  TR::Optimization * s)
+TR::Node *_gotoSimplifier(TR::Node * node, TR::Block * block, TR::TreeTop* curTree, TR::Optimization * s)
    {
    if (branchToFollowingBlock(node, block, s->comp()))
       {
@@ -149,7 +149,7 @@ TR::Node *_gotoSimplifier(TR::Node * node, TR::Block * block,  TR::TreeTop* curT
          {
          TR_ASSERT(node->getFirstChild()->getOpCodeValue() == TR::GlRegDeps, "Expecting TR::GlRegDeps");
 
-         // has GlRegDeps(after GRA), can be removed only if BBExit has exaclty the same GlRegDeps
+         // has GlRegDeps(after GRA), can be removed only if BBExit has exactly the same GlRegDeps
          if (block->getExit()->getNode()->getNumChildren() == 0)
             return node;
          if (!s->optimizer()->areNodesEquivalent(node->getFirstChild(), block->getExit()->getNode()->getFirstChild()))
@@ -565,7 +565,7 @@ bool isNZDoublePowerOfTwo(double value)
    }
 
 // Exponentiation operations must be sensitive to the signedness of the exponent (the base signedness does not matter)
-// If the exp operation itself is unsigned (for example from pduexp) then the exponent value is interpreted as an unsigned number.
+// If the exp operation itself is unsigned, then the exponent value is interpreted as an unsigned number.
 // This matters because otherwise (for example) an 8 bit exponent with the encoding 0xFF would be interpreted as base ** -1
 // instead of base ** 255
 bool isIntegralExponentInRange(TR::Node *parent, TR::Node *exponent, int64_t maxNegativeExponent, int64_t maxPositiveExponent, TR::Simplifier * s)
@@ -883,10 +883,12 @@ int32_t floatToInt(float value, bool roundUp)
    else
       {
       if (roundUp)
+         {
          if (value > 0)
             value += 0.5;
          else
             value -= 0.5;
+         }
       result = (int32_t)value;
       }
    return result;
@@ -906,10 +908,12 @@ int32_t doubleToInt(double value, bool roundUp)
    else
       {
       if (roundUp)
+         {
          if (value > 0)
             value += 0.5;
          else
             value -= 0.5;
+         }
 
       result = (int32_t)value;
       }

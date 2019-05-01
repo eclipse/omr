@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,16 +19,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "env/IO.hpp"               // for IO
+#include "env/IO.hpp"
 
-#include <stdint.h>                 // for int32_t
-#include <stdio.h>                  // for FILE, fclose, fflush, fopen, etc
+#include <stdint.h>
+#include <stdio.h>
 #include <stdarg.h>
-#include "env/FilePointer.hpp"      // for FilePointer
-#include "env/FilePointerDecl.hpp"  // for FILE
+#include "env/FilePointer.hpp"
+#include "env/FilePointerDecl.hpp"
 
 #ifdef LINUX
-#include <unistd.h>                 // for getpid, intptr_t, pid_t
+#include <unistd.h>
 #endif
 
 class TR_FrontEnd;

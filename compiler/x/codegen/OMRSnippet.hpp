@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,6 @@ class OMR_EXTENSIBLE Snippet : public OMR::Snippet
          IsUnresolvedCall,
       IsIPicData,
       IsVPicData,
-      IsUnresolvedVirtualCall,
       IsUnresolvedVTableSlot,
       IsVirtualPIC,
       IsCheckFailure,
@@ -78,14 +77,9 @@ class OMR_EXTENSIBLE Snippet : public OMR::Snippet
          IsForceRecompilation,
          IsGuardedDevirtual,
          IsHelperCall,
-            IsWriteBarrier,
-            IsWriteBarrierAMD64,
-            IsScratchArgHelperCall,
          IsFPConversion,
             IsFPConvertToInt,
             IsFPConvertToLong,
-         IsPassJNINull,
-         IsJNIPause,
       IsUnresolvedDataIA32,
       IsUnresolvedDataAMD64,
       numKinds

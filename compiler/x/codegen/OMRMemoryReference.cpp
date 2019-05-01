@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,41 +19,41 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                                // for NULL
-#include <stdint.h>                                // for int32_t, uint8_t, etc
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                    // for TR_FrontEnd, etc
-#include "codegen/Instruction.hpp"                 // for Instruction, etc
-#include "codegen/Machine.hpp"                     // for Machine
-#include "codegen/MemoryReference.hpp"             // for MemoryReference, etc
-#include "codegen/RealRegister.hpp"                // for RealRegister, etc
-#include "codegen/Register.hpp"                    // for Register
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
-#include "compile/Compilation.hpp"                 // for Compilation
-#include "compile/ResolvedMethod.hpp"              // for TR_ResolvedMethod
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                              // for POINTER_PRINTF_FORMAT
+#include "env/IO.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                            // for ILOpCode
-#include "il/Node.hpp"                             // for Node, rcount_t
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                           // for Symbol
-#include "il/SymbolReference.hpp"                  // for SymbolReference
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
 #include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"              // for StaticSymbol
-#include "infra/Assert.hpp"                        // for TR_ASSERT
-#include "infra/Flags.hpp"                         // for flags16_t
-#include "ras/Debug.hpp"                           // for TR_DebugBase
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "ras/Debug.hpp"
 #include "runtime/Runtime.hpp"
 #include "x/codegen/DataSnippet.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                    // for LEARegMem, etc
+#include "x/codegen/X86Ops.hpp"
 
 class TR_OpaqueClassBlock;
 class TR_ScratchRegisterManager;
@@ -523,8 +523,13 @@ OMR::X86::MemoryReference::populateMemoryReference(
        subTree->getSymbolReference()->getSymbol()->isMethodMetaData())
       evalSubTree = false;
 
-   if (evalSubTree &&
-       subTree->getReferenceCount() > 1 || subTree->getRegister() != NULL || (self()->inUpcastingMode() && !subTree->cannotOverflow()))
+   // This condition was previously formatted in a misleading way given the
+   //  conditional being evaluated. I believe the condition is correct (rather,
+   //  I have no strong evidence that it is incorrect other than the formatting)
+   //  so I added parentheses to eliminate a compiler warning and reformatted
+   if ((evalSubTree && subTree->getReferenceCount() > 1)
+       || (subTree->getRegister() != NULL)
+       || (self()->inUpcastingMode() && !subTree->cannotOverflow()))
       {
       if (_baseRegister != NULL)
          {
@@ -860,9 +865,9 @@ OMR::X86::MemoryReference::assignRegisters(
 
    if (_baseRegister != NULL)
       {
-      if (_baseRegister == cg->machine()->getX86RealRegister(TR::RealRegister::vfp))
+      if (_baseRegister == cg->machine()->getRealRegister(TR::RealRegister::vfp))
          {
-         assignedBaseRegister = cg->machine()->getX86RealRegister(TR::RealRegister::vfp);
+         assignedBaseRegister = cg->machine()->getRealRegister(TR::RealRegister::vfp);
          }
       else
          {
@@ -935,7 +940,7 @@ OMR::X86::MemoryReference::estimateBinaryLength(TR::CodeGenerator *cg)
       {
       // Rewrite VFP-relative memref in terms of an actual register
       //
-      _baseRegister = cg->machine()->getX86RealRegister(cg->vfpState()._register);
+      _baseRegister = cg->machine()->getRealRegister(cg->vfpState()._register);
       self()->getSymbolReference().setOffset(self()->getSymbolReference().getOffset() + cg->vfpState()._displacement);
       }
 
@@ -1055,14 +1060,14 @@ OMR::X86::MemoryReference::getBinaryLengthLowerBound(TR::CodeGenerator *cg)
 
       if (registerNumber == TR::RealRegister::vfp)
          {
-         TR_ASSERT(cg->machine()->getX86RealRegister(registerNumber)->getAssignedRealRegister(),
+         TR_ASSERT(cg->machine()->getRealRegister(registerNumber)->getAssignedRealRegister(),
                 "virtual frame pointer must be assigned before estimating instruction length lower bound!\n");
-         registerNumber = toRealRegister(cg->machine()->getX86RealRegister(registerNumber)->
+         registerNumber = toRealRegister(cg->machine()->getRealRegister(registerNumber)->
                              getAssignedRealRegister())->getRegisterNumber();
          }
       }
 
-   TR::RealRegister *base = cg->machine()->getX86RealRegister(registerNumber);
+   TR::RealRegister *base = cg->machine()->getRealRegister(registerNumber);
    switch (addressTypes)
       {
       case 1:
@@ -1420,11 +1425,11 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
 
          if (baseRegisterNumber == TR::RealRegister::vfp)
             {
-            TR_ASSERT(cg->machine()->getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister(),
+            TR_ASSERT(cg->machine()->getRealRegister(baseRegisterNumber)->getAssignedRealRegister(),
                    "virtual frame pointer must be assigned before binary encoding!\n");
 
             base = toRealRegister(cg->machine()->
-               getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister());
+               getRealRegister(baseRegisterNumber)->getAssignedRealRegister());
             baseRegisterNumber = base->getRegisterNumber();
             self()->setBaseRegister(base);
             }
@@ -1483,11 +1488,11 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
 
          if (baseRegisterNumber == TR::RealRegister::vfp)
             {
-            TR_ASSERT(cg->machine()->getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister(),
+            TR_ASSERT(cg->machine()->getRealRegister(baseRegisterNumber)->getAssignedRealRegister(),
                    "virtual frame pointer must be assigned before binary encoding!\n");
 
             base = toRealRegister(cg->machine()->
-                   getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister());
+                   getRealRegister(baseRegisterNumber)->getAssignedRealRegister());
             baseRegisterNumber = base->getRegisterNumber();
             self()->setBaseRegister(base);
             }
@@ -1605,11 +1610,11 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
 
          if (baseRegisterNumber == TR::RealRegister::vfp)
             {
-            TR_ASSERT(cg->machine()->getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister(),
+            TR_ASSERT(cg->machine()->getRealRegister(baseRegisterNumber)->getAssignedRealRegister(),
                    "virtual frame pointer must be assigned before binary encoding!\n");
 
             base = toRealRegister(cg->machine()->
-                   getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister());
+                   getRealRegister(baseRegisterNumber)->getAssignedRealRegister());
             baseRegisterNumber = base->getRegisterNumber();
             self()->setBaseRegister(base);
             }
@@ -1665,11 +1670,11 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
 
          if (baseRegisterNumber == TR::RealRegister::vfp)
             {
-            TR_ASSERT(cg->machine()->getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister(),
+            TR_ASSERT(cg->machine()->getRealRegister(baseRegisterNumber)->getAssignedRealRegister(),
                    "virtual frame pointer must be assigned before binary encoding!\n");
 
             base = toRealRegister(cg->machine()->
-                      getX86RealRegister(baseRegisterNumber)->getAssignedRealRegister());
+                      getRealRegister(baseRegisterNumber)->getAssignedRealRegister());
             baseRegisterNumber = base->getRegisterNumber();
             self()->setBaseRegister(base);
             }

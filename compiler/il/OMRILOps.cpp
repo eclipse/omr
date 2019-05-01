@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,15 +21,15 @@
 
 #include "il/OMRILOps.hpp"
 
-#include <stdint.h>             // for int32_t
+#include <stdint.h>
 #include <stddef.h>
 #include "env/CompilerEnv.hpp"
-#include "il/DataTypes.hpp"     // for DataTypes::NumCoreTypes, DataTypes
-#include "il/ILOpCodes.hpp"     // for ILOpCodes
-#include "il/ILOps.hpp"         // for OpCodeProperties, TR::ILOpCode, etc
-#include "il/ILProps.hpp"       // for ILOpCodeProperties.hpp
-#include "infra/Assert.hpp"     // for TR_ASSERT
-#include "infra/Flags.hpp"      // for flags32_t
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/ILProps.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
 
 /**
  * Table of opcode properties.
@@ -257,7 +257,7 @@ OMR::ILOpCode::compareOpCode(TR::DataType dt,
             switch(ct)
                {
                case TR_cmpEQ: return TR::fcmpeq;
-               case TR_cmpNE: return TR::fcmpne;
+               case TR_cmpNE: return TR::fcmpneu;
                case TR_cmpLT: return TR::fcmplt;
                case TR_cmpLE: return TR::fcmple;
                case TR_cmpGT: return TR::fcmpgt;
@@ -271,7 +271,7 @@ OMR::ILOpCode::compareOpCode(TR::DataType dt,
             switch(ct)
                {
                case TR_cmpEQ: return TR::dcmpeq;
-               case TR_cmpNE: return TR::dcmpne;
+               case TR_cmpNE: return TR::dcmpneu;
                case TR_cmpLT: return TR::dcmplt;
                case TR_cmpLE: return TR::dcmple;
                case TR_cmpGT: return TR::dcmpgt;

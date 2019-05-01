@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,12 +34,16 @@
 #define _GNU_SOURCE
 #elif defined(OSX)
 #define _XOPEN_SOURCE
+#include <libproc.h>
 #include <mach/mach.h>
 #include <mach/processor_info.h>
 #include <mach/mach_host.h>
 #include <mach-o/dyld.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
 #endif /* defined(LINUX) && !defined(OMRZTPF) */
 
 #include <inttypes.h>
@@ -259,6 +263,8 @@ struct  {
 #define ROOT_CGROUP "/"
 #define SYSTEMD_INIT_CGROUP "/init.scope"
 #define OMR_PROC_PID_ONE_CGROUP_FILE "/proc/1/cgroup"
+#define MAX_DEFAULT_VALUE_CHECK (LLONG_MAX - (1024 * 1024 * 1024)) /* subtracting the MAX page size (1GB) from LLONG_MAX to check against a value */
+#define CGROUP_METRIC_FILE_CONTENT_MAX_LIMIT 1024
 
 /* An entry in /proc/<pid>/cgroup is of following form:
  * 	<hierarchy ID>:<subsystem>[,<subsystem>]*:<cgroup name>
@@ -268,6 +274,8 @@ struct  {
  */
 #define PROC_PID_CGROUP_ENTRY_FORMAT "%d:%[^:]:%s"
 #define PROC_PID_CGROUP_SYSTEMD_ENTRY_FORMAT "%d::%s"
+
+#define SINGLE_CGROUP_METRIC 1
 
 /* Currently 12 subsystems or resource controllers are defined.
  */
@@ -312,6 +320,56 @@ struct {
 	{ "cpuset", OMR_CGROUP_SUBSYSTEM_CPUSET}
 };
 
+typedef struct OMRCgroupMetricInfoElement {
+	char *metricTag;
+	char *metricKeyInFile;
+	char *metricUnit;
+	BOOLEAN isValueToBeChecked;
+} OMRCgroupMetricInfoElement;
+
+static struct OMRCgroupMetricInfoElement oomControlMetricElementList[] = {
+	{ "OOM Killer Disabled", "oom_kill_disable", NULL, FALSE },
+	{ "Under OOM", "under_oom", NULL, FALSE }
+};
+
+static struct OMRCgroupMetricInfoElement cpuStatMetricElementList[] = {
+	{ "Period intervals elapsed count", "nr_periods", NULL, FALSE },
+	{ "Throttled count", "nr_throttled", NULL, FALSE },
+	{ "Total throttle time", "throttled_time", "nanoseconds", FALSE }
+};
+
+typedef struct OMRCgroupSubsystemMetricMap {
+	char *metricFileName;
+	OMRCgroupMetricInfoElement *metricInfoElementList;
+	int32_t metricElementsCount;
+} OMRCgroupSubsystemMetricMap;
+
+static struct OMRCgroupSubsystemMetricMap omrCgroupMemoryMetricMap[] = {
+	{ "memory.limit_in_bytes", &(OMRCgroupMetricInfoElement){ "Memory Limit", NULL, "bytes", TRUE }, SINGLE_CGROUP_METRIC },
+	{ "memory.memsw.limit_in_bytes", &(OMRCgroupMetricInfoElement){ "Memory + Swap Limit", NULL, "bytes", TRUE }, SINGLE_CGROUP_METRIC },
+	{ "memory.usage_in_bytes", &(OMRCgroupMetricInfoElement){ "Memory Usage", NULL, "bytes", FALSE }, SINGLE_CGROUP_METRIC },
+	{ "memory.memsw.usage_in_bytes", &(OMRCgroupMetricInfoElement){ "Memory + Swap Usage", NULL, "bytes", FALSE }, SINGLE_CGROUP_METRIC },
+	{ "memory.max_usage_in_bytes", &(OMRCgroupMetricInfoElement){ "Memory Max Usage", NULL, "bytes", FALSE }, SINGLE_CGROUP_METRIC },
+	{ "memory.memsw.max_usage_in_bytes", &(OMRCgroupMetricInfoElement){ "Memory + Swap Max Usage", NULL, "bytes", FALSE }, SINGLE_CGROUP_METRIC },
+	{ "memory.failcnt", &(OMRCgroupMetricInfoElement){ "Memory limit exceeded count", NULL, NULL, FALSE }, SINGLE_CGROUP_METRIC },
+	{ "memory.memsw.failcnt", &(OMRCgroupMetricInfoElement){ "Memory + Swap limit exceeded count", NULL, NULL, FALSE }, SINGLE_CGROUP_METRIC },
+	{ "memory.oom_control", &oomControlMetricElementList[0], sizeof(oomControlMetricElementList)/sizeof(oomControlMetricElementList[0]) }
+};
+
+static struct OMRCgroupSubsystemMetricMap omrCgroupCpuMetricMap[] = {
+	{ "cpu.cfs_period_us", &(OMRCgroupMetricInfoElement){ "CPU Period", NULL, "microseconds", FALSE }, SINGLE_CGROUP_METRIC },
+	{ "cpu.cfs_quota_us", &(OMRCgroupMetricInfoElement){ "CPU Quota", NULL, "microseconds", TRUE }, SINGLE_CGROUP_METRIC },
+	{ "cpu.shares", &(OMRCgroupMetricInfoElement){ "CPU Shares", NULL, NULL, FALSE }, SINGLE_CGROUP_METRIC },
+	{ "cpu.stat", &cpuStatMetricElementList[0], sizeof(cpuStatMetricElementList)/sizeof(cpuStatMetricElementList[0]) }
+};
+
+static struct OMRCgroupSubsystemMetricMap omrCgroupCpusetMetricMap[] = {
+	{ "cpuset.cpu_exclusive", &(OMRCgroupMetricInfoElement){ "CPU exclusive", NULL, NULL, FALSE }, SINGLE_CGROUP_METRIC },
+	{ "cpuset.mem_exclusive", &(OMRCgroupMetricInfoElement){ "Mem exclusive", NULL, NULL, FALSE }, SINGLE_CGROUP_METRIC },
+	{ "cpuset.cpus", &(OMRCgroupMetricInfoElement){ "CPUs", NULL, NULL, FALSE }, SINGLE_CGROUP_METRIC },
+	{ "cpuset.mems", &(OMRCgroupMetricInfoElement){ "Mems", NULL, NULL, FALSE }, SINGLE_CGROUP_METRIC }
+};
+
 static uint32_t attachedPortLibraries;
 static omrthread_monitor_t cgroupEntryListMonitor;
 #endif /* defined(LINUX) */
@@ -351,6 +409,7 @@ static int32_t readCgroupFile(struct OMRPortLibrary *portLibrary, int pid, BOOLE
 static OMRCgroupSubsystem getCgroupSubsystemFromFlag(uint64_t subsystemFlag);
 static int32_t getAbsolutePathOfCgroupSubsystemFile(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlag, const char *fileName, char *fullPath, intptr_t *bufferLength);
 static int32_t  getHandleOfCgroupSubsystemFile(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlag, const char *fileName, FILE **subsystemFile);
+static int32_t readCgroupMetricFromFile(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlag, const char *fileName, const char *metricKeyInFile, char **fileContent, char *value);
 static int32_t readCgroupSubsystemFile(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlag, const char *fileName, int32_t numItemsToRead, const char *format, ...);
 static int32_t isRunningInContainer(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer);
 static int32_t getCgroupMemoryLimit(struct OMRPortLibrary *portLibrary, uint64_t *limit);
@@ -527,46 +586,133 @@ omrsysinfo_get_OS_type(struct OMRPortLibrary *portLibrary)
 #endif
 }
 
+#if defined (OSX)
+#define KERN_OSPRODUCTVERSION "kern.osproductversion"
+#define PLIST_FILE "/System/Library/CoreServices/SystemVersion.plist"
+#define PRODUCT_VERSION_ELEMENT "<key>ProductVersion</key>"
+#define STRING_OPEN_TAG "<string>"
+#define STRING_CLOSE_TAG "</string>"
+#endif
+
+#if defined(J9OS_I5)
+ /* 'V', 'R', 'M', '0', & null */
+#define RELEASE_OVERHEAD 5
+#define FORMAT_STRING "V%sR%sM0"
+#else
+/* "." and terminating null character */
+#define RELEASE_OVERHEAD 2
+#define FORMAT_STRING "%s.%s"
+#endif /* defined(J9OS_I5) */
 
 const char *
 omrsysinfo_get_OS_version(struct OMRPortLibrary *portLibrary)
 {
 	if (NULL == PPG_si_osVersion) {
-		int rc;
+		int rc = -1;
+#if defined (OSX)
+		char *versionString = NULL;
+		char *allocatedFileBuffer = NULL;
+#else
 		struct utsname sysinfo;
+#endif
 
 #ifdef J9ZOS390
 		rc = __osname(&sysinfo);
+#elif defined (OSX)
+		/* uname() on MacOS returns the version of the Darwin kernel, not the operating system product name.
+		 * For compatibility with the reference implementation,
+		 * we need the operating system product name.
+		 * On newer versions of MacOS, the OS name is provided by sysctlbyname().
+		 * On older versions of MacOS, the OS name is provided by a property list file.
+		 * The relevant portion is:
+		 * 		<key>ProductVersion</key>
+		 * 		<string>10.13.6</string>
+		 *
+		 */
+		size_t resultSize = 0;
+		rc = sysctlbyname(KERN_OSPRODUCTVERSION, NULL, &resultSize, NULL, 0);
+		if (rc < 0) { /* older version of MacOS.  Fall back to parsing the plist. */
+			intptr_t plistFile = portLibrary->file_open(portLibrary, PLIST_FILE, EsOpenRead, 0444);
+			if (plistFile >= 0) {
+				char myBuffer[512];  /* the file size is typically ~480 bytes */
+				char *buffer = myBuffer;
+				size_t len = (size_t) portLibrary->file_flength(portLibrary, plistFile);
+				rc = 0;
+				if (len >= sizeof(myBuffer)) { /* leave space for a terminating null */
+					allocatedFileBuffer = portLibrary->mem_allocate_memory(portLibrary, len + 1, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+					buffer = allocatedFileBuffer;
+				}
+				if (NULL != buffer) {
+					char *readPtr = buffer;
+					size_t bytesRemaining = len;
+					while (bytesRemaining > 0) {
+						intptr_t result = portLibrary->file_read(portLibrary, plistFile, readPtr, bytesRemaining);
+						if (result > 0) {
+							bytesRemaining -= result;
+							readPtr += result;
+						} else {
+							rc = -1; /* error or unexpected EOF */
+							break;
+						}
+					}
+					if (0 == rc) {
+						buffer[len] = '\0';
+						readPtr = strstr(buffer, PRODUCT_VERSION_ELEMENT);
+						if (NULL != readPtr) {
+							readPtr = strstr(readPtr + sizeof(PRODUCT_VERSION_ELEMENT) - 1, STRING_OPEN_TAG);
+						}
+						if (NULL != readPtr) {
+							versionString = readPtr + sizeof(STRING_OPEN_TAG) - 1;
+							readPtr = strstr(versionString, STRING_CLOSE_TAG);
+						}
+						if (NULL != readPtr) {
+							*readPtr = '\0';
+							resultSize = readPtr - versionString;
+						} else {
+							rc = -1; /* parse error */
+						}
+					}
+				}
+				portLibrary->file_close(portLibrary, plistFile);
+				if (rc < 0) {
+					/* free the buffer if it was allocated */
+					portLibrary->mem_free_memory(portLibrary, allocatedFileBuffer);
+				}
+			}
+		}
 #else
 		rc = uname(&sysinfo);
-#endif
+#endif /* defined(OSX) */
 
 		if (rc >= 0) {
 			int len;
-			char *buffer;
+			char *buffer = NULL;
 #if defined(RS6000) || defined(J9ZOS390)
-#if defined(J9OS_I5)
-			len = strlen(sysinfo.version) + strlen(sysinfo.release) + 5; /* 'V', 'R', 'M', '0', & null */
-#else
-			len = strlen(sysinfo.version) + strlen(sysinfo.release) + 2; /* "." and terminating null character */
-#endif /* J9OS_I5 */
+			len = strlen(sysinfo.version) + strlen(sysinfo.release) + RELEASE_OVERHEAD;
 			buffer = portLibrary->mem_allocate_memory(portLibrary, len, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
-			if (NULL == buffer) {
-				return NULL;
+			if (NULL != buffer) {
+				portLibrary->str_printf(portLibrary, buffer, len, FORMAT_STRING, sysinfo.version, sysinfo.release);
 			}
-#if defined(J9OS_I5)
-			portLibrary->str_printf(portLibrary, buffer, len, "V%sR%sM0", sysinfo.version, sysinfo.release);
-#else
-			portLibrary->str_printf(portLibrary, buffer, len, "%s.%s", sysinfo.version, sysinfo.release);
-#endif /* J9OS_I5 */
+#elif defined (OSX)
+			len = resultSize + 1;
+			buffer = portLibrary->mem_allocate_memory(portLibrary, len, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+			if (NULL != buffer) {
+				if (NULL != versionString) {
+					strncpy(buffer, versionString, len);
+				} else {
+					rc = sysctlbyname(KERN_OSPRODUCTVERSION, buffer, &resultSize, NULL, 0);
+				}
+				buffer[resultSize] = '\0';
+			}
+			/* allocatedFileBuffer is null if it was not allocated */
+			portLibrary->mem_free_memory(portLibrary, allocatedFileBuffer);
 #else
 			len = strlen(sysinfo.release) + 1;
 			buffer = portLibrary->mem_allocate_memory(portLibrary, len, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
-			if (NULL == buffer) {
-				return NULL;
+			if (NULL != buffer) {
+				strncpy(buffer, sysinfo.release, len);
+				buffer[len - 1] = '\0';
 			}
-			strncpy(buffer, sysinfo.release, len);
-			buffer[len - 1] = '\0';
 #endif /* RS6000 */
 			PPG_si_osVersion = buffer;
 		}
@@ -1457,6 +1603,7 @@ _cleanup:
 #define CGROUP_MEMORY_STAT_CACHE "cache"
 #define CGROUP_MEMORY_STAT_CACHE_SZ (sizeof(CGROUP_MEMORY_STAT_CACHE)-1)
 
+#if !defined(OMRZTPF)
 /**
  * Function collects memory usage statistics from the memory subsystem of the process's cgroup.
  *
@@ -1552,6 +1699,8 @@ _exit:
 
 	return rc;
 }
+
+#endif /* !defined(OMRZTPF) */
 
 /**
  * Function collects memory usage statistics on Linux platforms and returns the same.
@@ -1762,10 +1911,14 @@ retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
 	memInfo->hostBuffered = memInfo->buffered;
 
 	Trc_PRT_retrieveAIXMemoryStats_Exit(0);
-	return 0;
 #else
-	return -1; /* not supported */
+	memInfo->totalPhysical = 0;
+	memInfo->availPhysical = 0;
+	memInfo->totalSwap = 0;
+	memInfo->availSwap = 0;
+	memInfo->cached = 0;
 #endif
+	return 0;
 }
 
 #endif /* end OS specific guards */
@@ -1958,6 +2111,7 @@ omrsysinfo_shutdown(struct OMRPortLibrary *portLibrary)
 int32_t
 omrsysinfo_startup(struct OMRPortLibrary *portLibrary)
 {
+	PPG_isRunningInContainer = FALSE;
 	/* Obtain and cache executable name; if this fails, executable name remains NULL, but
 	 * shouldn't cause failure to startup port library.  Failure will be noticed only
 	 * when the omrsysinfo_get_executable_name() actually gets invoked.
@@ -1977,6 +2131,7 @@ omrsysinfo_startup(struct OMRPortLibrary *portLibrary)
 		}
 	}
 	attachedPortLibraries += 1;
+	isRunningInContainer(portLibrary, &PPG_isRunningInContainer);
 #endif /* defined(LINUX) */
 	return 0;
 }
@@ -2077,6 +2232,17 @@ omrsysinfo_get_groupname(struct OMRPortLibrary *portLibrary, char *buffer, uintp
 		portLibrary->str_printf(portLibrary, buffer, length, "%s", remoteCopy);
 	}
 
+	return 0;
+}
+
+intptr_t
+omrsysinfo_get_hostname(struct OMRPortLibrary *portLibrary, char *buffer, size_t length)
+{
+	if (0 != gethostname(buffer, length)) {
+		int32_t err = errno;
+		Trc_PRT_sysinfo_gethostname_error(findError(errno));
+		return portLibrary->error_set_last_error(portLibrary, err, findError(err));
+	}
 	return 0;
 }
 
@@ -2208,74 +2374,98 @@ omrsysinfo_set_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 
 	Trc_PRT_sysinfo_set_limit_Entered(resourceID, limit);
 
-	if (OMRPORT_RESOURCE_ADDRESS_SPACE == resourceRequested) {
+	switch (resourceRequested) {
+	case OMRPORT_RESOURCE_FILE_DESCRIPTORS:
+		resource = RLIMIT_NOFILE;
+		break;
+	case OMRPORT_RESOURCE_ADDRESS_SPACE:
 #if !defined(OMRZTPF)
 		resource = RLIMIT_AS;
 #else /* !defined(OMRZTPF) */
 		/* z/TPF does not have virtual address support */
 		rc = -1;
-		Trc_PRT_sysinfo_set_limit_Exit(rc);
-		return rc;
 #endif /* !defined(OMRZTPF) */
-	} else if (OMRPORT_RESOURCE_CORE_FILE == resourceRequested) {
+		break;
+	case OMRPORT_RESOURCE_CORE_FILE:
 #if !defined(OMRZTPF)
 		resource = RLIMIT_CORE;
 #else /* !defined(OMRZTPF) */
-		rc = -1;
-		Trc_PRT_sysinfo_set_limit_Exit(rc);
-		return rc;
+		rc = OMRPORT_LIMIT_UNKNOWN;
 #endif /* !defined(OMRZTPF) */
+		break;
+	default:
+		break;
 	}
 
-	switch (resourceRequested) {
-	case OMRPORT_RESOURCE_ADDRESS_SPACE:
-		/* FALLTHROUGH */
-	case OMRPORT_RESOURCE_CORE_FILE: {
+	if (0 == rc) {
+		switch (resourceRequested) {
+		case OMRPORT_RESOURCE_FILE_DESCRIPTORS:
+			/* FALLTHROUGH */
+		case OMRPORT_RESOURCE_ADDRESS_SPACE:
+			/* FALLTHROUGH */
+		case OMRPORT_RESOURCE_CORE_FILE: {
 #if !defined(OMRZTPF)
-		rc = getrlimit(resource, &lim);
-		if (-1 == rc) {
-			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-			Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
+			rc = getrlimit(resource, &lim);
+			if (-1 == rc) {
+				portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+				Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
+				break;
+			}
+
+			if (hardLimitRequested) {
+				lim.rlim_max = limit;
+			} else {
+#if defined(OSX)
+				/* MacOS doesn't allow the soft file limit to be unlimited */
+				if ((OMRPORT_RESOURCE_FILE_DESCRIPTORS == resourceRequested)
+						&& (RLIM_INFINITY == limit)) {
+					int32_t maxFiles = 0;
+					size_t resultSize = sizeof(maxFiles);
+					int name[] = {CTL_KERN, KERN_MAXFILESPERPROC};
+					rc = sysctl(name, 2, &maxFiles, &resultSize, NULL, 0);
+					if (-1 == rc) {
+						portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+						Trc_PRT_sysinfo_setrlimit_error(resource, limit, findError(errno));
+					} else {
+						limit = maxFiles;
+					}
+				}
+#endif
+				lim.rlim_cur = limit;
+			}
+
+			rc = setrlimit(resource, &lim);
+			if (-1 == rc) {
+				portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+				Trc_PRT_sysinfo_setrlimit_error(resource, limit, findError(errno));
+			}
+#else /* !defined(OMRZTPF) */
+			rc = OMRPORT_LIMIT_UNKNOWN;
+#endif /* !defined(OMRZTPF) */
 			break;
 		}
 
-		if (hardLimitRequested) {
-			lim.rlim_max = limit;
-		} else {
-			lim.rlim_cur = limit;
-		}
-
-		rc = setrlimit(resource, &lim);
-		if (-1 == rc) {
-			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-			Trc_PRT_sysinfo_setrlimit_error(resource, limit, findError(errno));
-		}
-#else /* !defined(OMRZTPF) */
-		rc = -1;
-#endif /* !defined(OMRZTPF) */
-		break;
-	}
-
-	case OMRPORT_RESOURCE_CORE_FLAGS: {
+		case OMRPORT_RESOURCE_CORE_FLAGS: {
 #if defined(AIXPPC)
-		struct vario myvar;
+			struct vario myvar;
 
-		myvar.v.v_fullcore.value = limit;
-		rc = sys_parm(SYSP_SET, SYSP_V_FULLCORE, &myvar);
-		if (-1 == rc) {
-			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-			Trc_PRT_sysinfo_sysparm_error(errno);
-		}
+			myvar.v.v_fullcore.value = limit;
+			rc = sys_parm(SYSP_SET, SYSP_V_FULLCORE, &myvar);
+			if (-1 == rc) {
+				portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+				Trc_PRT_sysinfo_sysparm_error(errno);
+			}
 #else
-		/* unsupported so return error */
-		rc = -1;
+			/* unsupported so return error */
+			rc = OMRPORT_LIMIT_UNKNOWN;
 #endif
-		break;
-	}
+			break;
+		}
 
-	default:
-		Trc_PRT_sysinfo_setLimit_unrecognised_resourceID(resourceID);
-		rc = -1;
+		default:
+			Trc_PRT_sysinfo_setLimit_unrecognised_resourceID(resourceID);
+			rc = OMRPORT_LIMIT_UNKNOWN;
+		}
 	}
 
 	Trc_PRT_sysinfo_set_limit_Exit(rc);
@@ -2442,7 +2632,11 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 		return OMRPORT_ERROR_FILE_OPFAILED;
 	}
 #elif defined(J9OS_I5)
-	return OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED;
+	/*call in PASE wrapper to retrieve needed information.*/
+	cpuTime->numberOfCpus = Xj9GetEntitledProcessorCapacity() / 100;
+	/*Xj9GetSysCPUTime() is newly added to retrieve System CPU Time fromILE.*/
+	cpuTime->cpuTime = Xj9GetSysCPUTime();
+	status = 0;	
 #elif defined(AIXPPC) /* AIX */
 	perfstat_cpu_total_t stats;
 	const uintptr_t NS_PER_CPU_TICK = 10000000L;
@@ -3417,66 +3611,100 @@ setPortableError(OMRPortLibrary *portLibrary, const char *funcName, int32_t port
 int32_t
 omrsysinfo_get_open_file_count(struct OMRPortLibrary *portLibrary, uint64_t *count)
 {
-	int32_t ret = 0;
-#if defined(LINUX) || defined(AIXPPC)
+	int32_t ret = -1;
 	uint64_t fdCount = 0;
-	char buffer[PATH_MAX] = {0};
-	const char *procDirectory = "/proc/%d/fd/";
-	struct dirent *dp = NULL;
-	DIR *dir = NULL;
 
 	Trc_PRT_sysinfo_get_open_file_count_Entry();
 	/* Check whether a valid pointee exists, to write to. */
 	if (NULL == count) {
 		portLibrary->error_set_last_error(portLibrary, EINVAL, findError(EINVAL));
 		Trc_PRT_sysinfo_get_open_file_count_invalidArgRecvd("count");
-		ret = -1;
-		goto leave_routine;
-	}
-	/* On Linux, "/proc/self" is as good as "/proc/<current-pid>/", but not on
-	 * AIX, where the current process's PID must be specified.
-	 */
-	portLibrary->str_printf(portLibrary, buffer, sizeof(buffer), procDirectory, getpid());
-	dir = opendir(buffer);
-	if (NULL == dir) {
-		int32_t rc = findError(errno);
-		portLibrary->error_set_last_error(portLibrary, errno, rc);
-		Trc_PRT_sysinfo_get_open_file_count_failedOpeningProcFS(rc);
-		ret = -1;
-		goto leave_routine;
-	}
-	/* opendir(3) was successful; look into the directory for fds. */
-	errno = 0; /* readdir(3) will set this, if an error occurs. */
-	dp = readdir(dir);
-	while (NULL != dp) {
-		/* Skip "." and ".." */
-		if (!(('.' == dp->d_name[0] && '\0' == dp->d_name[1])
-		||    ('.' == dp->d_name[0] && '.' == dp->d_name[1] && '\0' == dp->d_name[2]))
-		) {
-			fdCount++;
-		}
-		dp = readdir(dir);
-	}
-	/* readdir(3) would eventually return NULL; check whether there was an
-	 * error and readdir returned prematurely.
-	 */
-	if (0 != errno) {
-		int32_t rc = findError(errno);
-		portLibrary->error_set_last_error(portLibrary, errno, rc);
-		Trc_PRT_sysinfo_get_open_file_count_failedReadingProcFS(rc);
-		ret = -1;
 	} else {
-		/* Successfully counted up the files opened. */
-		*count = fdCount;
-		Trc_PRT_sysinfo_get_open_file_count_fileCount(fdCount);
-	}
-	closedir(dir); /* Done reading the /proc file-system. */
-leave_routine:
-	/* Clean-ups, setting-error (if any), etc, done. */
-#elif defined(OSX) || defined(J9ZOS390)
-	/* TODO: stub where z/OS || OSX code goes in. */
-	ret = OMRPORT_ERROR_SYSINFO_GET_OPEN_FILES_NOT_SUPPORTED;
+#if defined(LINUX) || defined(AIXPPC)
+		char buffer[PATH_MAX] = {0};
+		const char *procDirectory = "/proc/%d/fd/";
+		DIR *dir = NULL;
+
+		/* On Linux, "/proc/self" is as good as "/proc/<current-pid>/", but not on
+		 * AIX, where the current process's PID must be specified.
+		 */
+		portLibrary->str_printf(portLibrary, buffer, sizeof(buffer), procDirectory, getpid());
+		dir = opendir(buffer);
+		if (NULL == dir) {
+			int32_t rc = findError(errno);
+			portLibrary->error_set_last_error(portLibrary, errno, rc);
+			Trc_PRT_sysinfo_get_open_file_count_failedOpeningProcFS(rc);
+		} else {
+			struct dirent *dp = NULL;
+			/* opendir(3) was successful; look into the directory for fds. */
+			errno = 0; /* readdir(3) will set this, if an error occurs. */
+			dp = readdir(dir);
+			while (NULL != dp) {
+				/* Skip "." and ".." */
+				if (!(('.' == dp->d_name[0] && '\0' == dp->d_name[1])
+					|| ('.' == dp->d_name[0] && '.' == dp->d_name[1] && '\0' == dp->d_name[2]))
+				) {
+					fdCount++;
+				}
+				dp = readdir(dir);
+			}
+			/* readdir(3) would eventually return NULL; check whether there was an
+			 * error and readdir returned prematurely.
+			 */
+			if (0 != errno) {
+				int32_t rc = findError(errno);
+				portLibrary->error_set_last_error(portLibrary, errno, rc);
+				Trc_PRT_sysinfo_get_open_file_count_failedReadingProcFS(rc);
+			} else {
+				/* Successfully counted up the files opened. */
+				*count = fdCount;
+				Trc_PRT_sysinfo_get_open_file_count_fileCount(fdCount);
+				ret = 0;
+			}
+			closedir(dir); /* Done reading the /proc file-system. */
+		}
+#elif defined(OSX)
+		pid_t pid = getpid();
+		/* First call with null to get the size of the buffer required */
+		int32_t bufferSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, 0, 0);
+		if (bufferSize <= 0) {
+			int32_t rc = findError(errno);
+			portLibrary->error_set_last_error(portLibrary, errno, rc);
+			Trc_PRT_sysinfo_get_open_file_count_failedReadingProcFS(rc);
+		} else {
+			struct proc_fdinfo *procFDInfo = (struct proc_fdinfo *) portLibrary->mem_allocate_memory(portLibrary, bufferSize, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+			if (NULL == procFDInfo) {
+				Trc_PRT_sysinfo_get_open_file_count_memAllocFailed();
+				portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_SYSINFO_MEMORY_ALLOC_FAILED, "memory allocation for proc_fdinfo failed");
+			} else {
+				/* Second call with a buffer just allocated, retrieve those available proc_fdinfo instances */
+				int32_t retTmp = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, procFDInfo, bufferSize);
+				if (retTmp < 0) {
+					int32_t rc = findError(errno);
+					portLibrary->error_set_last_error(portLibrary, errno, rc);
+					Trc_PRT_sysinfo_get_open_file_count_failedReadingProcFS(rc);
+				} else {
+					int32_t i = 0;
+					int32_t numberOfProcFDs = bufferSize / PROC_PIDLISTFD_SIZE;
+					for (i = 0; i < numberOfProcFDs; i++) {
+						/* A file opened */
+						if (PROX_FDTYPE_VNODE == procFDInfo[i].proc_fdtype) {
+							fdCount++;
+						}
+					}
+					*count = fdCount;
+					Trc_PRT_sysinfo_get_open_file_count_fileCount(fdCount);
+					ret = 0;
+				}
+				portLibrary->mem_free_memory(portLibrary, procFDInfo);
+			}
+		}
+#elif defined(J9ZOS390)
+		/* TODO: stub where z/OS code goes in. */
+		ret = OMRPORT_ERROR_SYSINFO_GET_OPEN_FILES_NOT_SUPPORTED;
 #endif
+	}
+	
 	Trc_PRT_sysinfo_get_open_file_count_Exit(ret);
 	return ret;
 }
@@ -3971,6 +4199,55 @@ _end:
 }
 
 /**
+ * Reads the Cgroup metric (if has multiple searched for metric key and reads it) and returns the value to the param `value`
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ * @param[in] subsystemFlag flag of type OMR_CGROUP_SUBSYSTEMS_* representing the cgroup subsystem
+ * @param[in] fileName name of the file under cgroup subsystem
+ * @param[in] metricKeyInFile name of the cgroup metric which is in a group of metrics in a cgroup subsystem file
+ * @param[in/out] value pointer to char * which stores the value for the specified cgroup subsystem metric
+ * @param[in/out] fileContent double pointer to allocate memory and write file content in case of a multiline file with more than 1 metric available in it
+ *
+ * @return 0 on success, negative error code on any error
+ */
+static int32_t
+readCgroupMetricFromFile(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlag, const char *fileName, const char *metricKeyInFile, char **fileContent, char *value)
+{
+	int32_t rc = 0;
+	FILE *file = NULL;
+	rc = getHandleOfCgroupSubsystemFile(portLibrary, subsystemFlag, fileName, &file);
+	if (0 != rc) {
+		goto _end;
+	}
+	if (NULL == metricKeyInFile) { /* If `metricKeyInFile` is NULL then it states the file has only one Cgroup metric to be read */
+		if (NULL == fgets(value, MAX_LINE_LENGTH, file)) {
+			rc = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_METRIC_NOT_AVAILABLE;
+		}
+		goto _end;
+	} else { /* Else we read the file to a buffer and pick the metrics from it later */
+		*fileContent = portLibrary->mem_allocate_memory(portLibrary, CGROUP_METRIC_FILE_CONTENT_MAX_LIMIT, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+		if (NULL != *fileContent) {
+			size_t returnvalue = fread(*fileContent, 1, CGROUP_METRIC_FILE_CONTENT_MAX_LIMIT, file);
+			if (0 == returnvalue) {
+				portLibrary->mem_free_memory(portLibrary, *fileContent);
+				rc = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_METRIC_NOT_AVAILABLE;
+				goto _end;
+			}
+		} else {
+			rc = OMRPORT_ERROR_SYSINFO_MEMORY_ALLOC_FAILED;
+			goto _end;
+		}
+	}
+
+_end:
+	if (NULL != file) {
+		/* closing the file pointer */
+		fclose(file);
+	}
+	return rc;
+}
+
+/**
  * Read a file under a subsystem in cgroup hierarchy based on the format specified
  *
  * @param[in] portLibrary pointer to OMRPortLibrary
@@ -4018,7 +4295,8 @@ _end:
  * Checks if the process is running inside container
  *
  * @param[in] portLibrary pointer to OMRPortLibrary
- * @param[out] inContainer pointer to BOOLEAN which on successful return indicates if the process is running in container or not
+ * @param[out] inContainer pointer to BOOLEAN which on successful return indicates if
+ * 		the process is running in container or not.  On error it indicates FALSE.
  *
  * @return 0 on success, otherwise negative error code
  */
@@ -4026,6 +4304,7 @@ static int32_t
 isRunningInContainer(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer)
 {
 	int32_t rc = 0;
+	FILE *cgroupFile = NULL;
 
 	/* Assume we are not in container */
 	*inContainer = FALSE;
@@ -4036,7 +4315,7 @@ isRunningInContainer(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer)
 		 * then the process is not running in a container.
 		 * For any other cgroup name, assume we are in a container.
 		 */
-		FILE *cgroupFile = fopen(OMR_PROC_PID_ONE_CGROUP_FILE, "r");
+		cgroupFile = fopen(OMR_PROC_PID_ONE_CGROUP_FILE, "r");
 
 		if (NULL == cgroupFile) {
 			int32_t osErrCode = errno;
@@ -4089,6 +4368,9 @@ isRunningInContainer(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer)
 	}
 	Trc_PRT_isRunningInContainer_container_detected((uintptr_t)*inContainer);
 _end:
+	if (NULL != cgroupFile) {
+		fclose(cgroupFile);
+	}
 	return rc;
 }
 
@@ -4272,41 +4554,6 @@ omrsysinfo_cgroup_is_memlimit_set(struct OMRPortLibrary *portLibrary)
 #endif /* defined(LINUX) && !defined(OMRZTPF) */
 }
 
-intptr_t
-omrsysinfo_cgroup_get_handle_subsystem_file(struct OMRPortLibrary *portLibrary,  uint64_t subsystemFlag, const char *fileName)
-{
-	intptr_t fd = 0;
-#if defined(LINUX) && !defined(OMRZTPF)
-	int32_t rc = OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
-	char fullPathBuf[PATH_MAX];
-	char *fullPath = fullPathBuf;
-	intptr_t bufferLength = PATH_MAX;
-	BOOLEAN allocateMemory = FALSE;
-	rc = getAbsolutePathOfCgroupSubsystemFile(portLibrary, subsystemFlag, fileName, fullPath, &bufferLength);
-	if (OMRPORT_ERROR_STRING_BUFFER_TOO_SMALL == rc) {
-		fullPath = portLibrary->mem_allocate_memory(portLibrary, bufferLength, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
-		if (NULL == fullPath) {
-			Trc_PRT_readCgroupSubsystemFile_oom_for_filename();
-			rc = portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_SYSINFO_MEMORY_ALLOC_FAILED, "memory allocation for filename buffer failed");
-			goto _end;
-		}
-		allocateMemory = TRUE;
-		rc = getAbsolutePathOfCgroupSubsystemFile(portLibrary, subsystemFlag, fileName, fullPath, &bufferLength);
-	}
-	if (0 == rc) {
-		fd = portLibrary->file_open(portLibrary, fullPath, EsOpenRead, 0);
-	}
-	if (allocateMemory) {
-		portLibrary->mem_free_memory(portLibrary, fullPath);
-	}
-
-_end:
-	
-#endif /* defined(LINUX) && !defined(OMRZTPF) */
-
-	return fd;
-}
-
 /*
  * Returns the cgroup subsystems list
  */
@@ -4321,20 +4568,204 @@ omrsysinfo_get_cgroup_subsystem_list(struct OMRPortLibrary *portLibrary)
 }
 
 /*
- * Returns 0 on success and error on failure
- * Gets if the JVM is running in a Container by assigning the BOOLEAN value to inContainer param
- * TRUE if running inside a container and FALSE if not
+ * Gets if the Runtime is running in a Container by assigning the BOOLEAN value to inContainer param
+ * Returns TRUE if running inside a container and FALSE if not or if an error occurs
  */
-int32_t
-omrsysinfo_is_running_in_container(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer)
+BOOLEAN
+omrsysinfo_is_running_in_container(struct OMRPortLibrary *portLibrary)
 {
-	int32_t rc = 0;
-	Assert_PRT_true(NULL != inContainer);
-	*inContainer = FALSE;
+	return PPG_isRunningInContainer; 
+}
+
+int32_t
+omrsysinfo_cgroup_subsystem_iterator_init(struct OMRPortLibrary *portLibrary, uint64_t subsystem, struct OMRCgroupMetricIteratorState *state)
+{
+	Assert_PRT_true(NULL != state);
+	int32_t rc = OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
 #if defined(LINUX) && !defined(OMRZTPF)
-	rc = isRunningInContainer(portLibrary, inContainer);
+	state->count = 0;
+	state->subsystemid = subsystem;
+	state->fileMetricCounter = 0;
+	switch (subsystem) {
+	case OMR_CGROUP_SUBSYSTEM_MEMORY :
+		 state->numElements = sizeof(omrCgroupMemoryMetricMap) / sizeof(omrCgroupMemoryMetricMap[0]);
+		 break;
+	case OMR_CGROUP_SUBSYSTEM_CPU :
+		 state->numElements = sizeof(omrCgroupCpuMetricMap) / sizeof(omrCgroupCpuMetricMap[0]);
+		 break;
+	case OMR_CGROUP_SUBSYSTEM_CPUSET :
+		 state->numElements = sizeof(omrCgroupCpusetMetricMap) / sizeof(omrCgroupCpusetMetricMap[0]);
+		 break;
+	default :
+		goto _end;
+	}
+	rc = 0;
+
+_end:
 #endif /* defined(LINUX) && !defined(OMRZTPF) */
 	return rc;
+}
+
+BOOLEAN
+omrsysinfo_cgroup_subsystem_iterator_hasNext(struct OMRPortLibrary *portLibrary, const struct OMRCgroupMetricIteratorState *state)
+{
+	BOOLEAN check = FALSE;
+#if defined(LINUX) && !defined(OMRZTPF)
+	check = state->count < state->numElements;
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
+	return check;
+}
+
+int32_t
+omrsysinfo_cgroup_subsystem_iterator_metricKey(struct OMRPortLibrary *portLibrary, const struct OMRCgroupMetricIteratorState *state, const char **metricKey)
+{
+	int32_t rc = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_METRIC_NOT_AVAILABLE;
+#if defined(LINUX) && !defined(OMRZTPF)
+	if (NULL != metricKey) {
+		const struct OMRCgroupSubsystemMetricMap *subsystemMetricMap = NULL;
+		switch (state->subsystemid) {
+		case OMR_CGROUP_SUBSYSTEM_MEMORY:
+			subsystemMetricMap = omrCgroupMemoryMetricMap;
+			break;
+		case OMR_CGROUP_SUBSYSTEM_CPU:
+			subsystemMetricMap = omrCgroupCpuMetricMap;
+			break;
+		case OMR_CGROUP_SUBSYSTEM_CPUSET:
+			subsystemMetricMap = omrCgroupCpusetMetricMap;
+			break;
+		default:
+			rc = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
+			goto _end;
+		}
+		if (state->fileMetricCounter < subsystemMetricMap[state->count].metricElementsCount){
+			*metricKey = (subsystemMetricMap[state->count].metricInfoElementList + state->fileMetricCounter)->metricTag;
+			rc = 0;
+		} else {
+			rc = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_METRIC_NOT_AVAILABLE;
+		}
+	}
+_end:
+#endif
+	return rc;
+}
+
+int32_t
+omrsysinfo_cgroup_subsystem_iterator_next(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state, struct OMRCgroupMetricElement *metricElement)
+{
+	int32_t rc = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
+#if defined(LINUX) && !defined(OMRZTPF)
+	struct OMRCgroupMetricInfoElement *currentElement = NULL;
+	const struct OMRCgroupSubsystemMetricMap *subsystemMetricMap = NULL;
+	const struct OMRCgroupSubsystemMetricMap *subsystemMetricMapElement = NULL;
+	if (state->count >= state->numElements) {
+		goto _end;
+	}
+	switch (state->subsystemid) {
+	case OMR_CGROUP_SUBSYSTEM_MEMORY:
+		subsystemMetricMap = omrCgroupMemoryMetricMap;
+		break;
+	case OMR_CGROUP_SUBSYSTEM_CPU:
+		subsystemMetricMap = omrCgroupCpuMetricMap;
+		break;
+	case OMR_CGROUP_SUBSYSTEM_CPUSET:
+		subsystemMetricMap = omrCgroupCpusetMetricMap;
+		break;
+	default:
+		rc = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
+		state->count += 1;
+		goto _end;
+	}
+	subsystemMetricMapElement = &subsystemMetricMap[state->count];
+	currentElement = subsystemMetricMapElement->metricInfoElementList;
+	if (NULL == state->fileContent) {
+		rc = readCgroupMetricFromFile(portLibrary, state->subsystemid, subsystemMetricMapElement->metricFileName, currentElement->metricKeyInFile, &(state->fileContent), metricElement->value);
+
+		/* In error condition or single metric condition we increment the counter to continue to next metric */
+		if ((0 != rc) || (NULL == state->fileContent)) {
+			state->fileContent = NULL;
+			state->count += 1;
+			goto _end;
+		}
+
+		state->fileMetricCounter = 0;
+	}
+
+	if (state->fileMetricCounter < subsystemMetricMapElement->metricElementsCount) {
+		BOOLEAN isMetricFound = FALSE;
+		char *current = state->fileContent;
+		char *end = state->fileContent + strlen(state->fileContent) - 1;
+		int32_t metricKeyLen = 0;
+		currentElement += state->fileMetricCounter;
+		metricKeyLen = strlen(currentElement->metricKeyInFile);
+		while (current < end) {
+			if (0 == strncmp(current, currentElement->metricKeyInFile, metricKeyLen)) {
+				char *newLine = current;
+				current += metricKeyLen;
+				/* advance past any whitespace */
+				while ((current != end) &&  (' ' == *current)) {
+					current += 1;
+				}
+				/* find the newline */
+				newLine = current;
+				while ('\n' != *newLine) {
+					newLine += 1;
+				}
+				strncpy(metricElement->value, current, newLine - current);
+				metricElement->value[newLine - current] = '\0';
+				isMetricFound = TRUE;
+				rc = 0;
+				break;
+			}
+			current += 1;
+		}
+		/* if we complete parse the fileContent and couldn't find the metric return error code */
+		if (!isMetricFound) {
+			rc = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_METRIC_NOT_AVAILABLE;
+		}
+
+		state->fileMetricCounter += 1;
+	}
+
+	if (state->fileMetricCounter >= subsystemMetricMapElement->metricElementsCount) {
+		if (NULL != state->fileContent) {
+			portLibrary->mem_free_memory(portLibrary, state->fileContent);
+			state->fileContent = NULL;
+		}
+		state->count += 1;
+	}
+
+_end:
+	if (0 == rc) {
+		/**
+		 * 'value' may have new line at the end (fgets add '\n' at the end)
+		 * which is not required so we could remove it 
+		 */
+		size_t len = strlen(metricElement->value);
+		metricElement->units = currentElement->metricUnit;
+		if ((len > 0) && (metricElement->value[len-1] == '\n')) {
+			metricElement->value[len-1] = '\0';
+		}
+		if (currentElement->isValueToBeChecked) {
+			int64_t result = 0;
+			sscanf(metricElement->value, "%" PRId64, &result);
+			if ((result > (MAX_DEFAULT_VALUE_CHECK)) || (result < 0)) {
+				metricElement->units = NULL;
+				strcpy(metricElement->value, "Not Set");
+			}
+		}
+	}
+	
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
+	return rc;	
+}
+
+void
+omrsysinfo_cgroup_subsystem_iterator_destroy(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state)
+{
+	if (NULL != state->fileContent) {
+		portLibrary->mem_free_memory(portLibrary, state->fileContent);
+		state->fileContent = NULL;
+	}
 }
 
 

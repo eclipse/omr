@@ -1,4 +1,4 @@
-// Copyright (c) 1998, 2018 IBM Corp. and others
+// Copyright (c) 1998, 2019 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1083,3 +1083,11 @@ TraceEvent=Trc_PRT_retrieveLinuxMemoryStats_CgroupMemoryStatsFailed Group=sysinf
 
 TraceEntry=Trc_PRT_signal_omrsig_is_signal_ignored_entered Group=signal Overhead=1 Level=3 NoEnv Template="omrsig_is_signal_ignored: Entered, portLibrarySignalFlag=0x%X"
 TraceExit=Trc_PRT_signal_omrsig_is_signal_ignored_exiting Group=signal Overhead=1 Level=3 NoEnv Template="omrsig_is_signal_ignored: Exiting, rc=%d, isSignalIgnored=%d"
+
+TraceException=Trc_PRT_signal_unblockSignals_sigemptyset_failed Group=signal Overhead=1 Level=1 NoEnv Template="omrsignal unblockSignals: sigemptyset failed with rc=%d and errno=%d"
+TraceException=Trc_PRT_signal_unblockSignals_sigaddset_failed Group=signal Overhead=1 Level=1 NoEnv Template="omrsignal unblockSignals: sigaddset failed with signal=0x%X, rc=%d and errno=%d"
+TraceException=Trc_PRT_signal_unblockSignals_pthread_sigmask_failed Group=signal Overhead=1 Level=1 NoEnv Template="omrsignal unblockSignals: pthread_sigmask failed with rc=%d and errno=%d"
+
+TraceException=Trc_PRT_sysinfo_get_open_file_count_memAllocFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_open_file_count: Error: memory allocation for proc_fdinfo failed."
+
+TraceException=Trc_PRT_sysinfo_gethostname_error Group=sysinfo Overhead=1 Level=1 NoEnv Template="gethostname failed: errno=%d"

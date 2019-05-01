@@ -100,7 +100,7 @@ MM_LightweightNonReentrantLock::initialize(MM_EnvironmentBase *env, ModronLnrlOp
 
 error_no_memory:
 	return false;
-};
+}
 
 /**
  * Discards a lock object.

@@ -55,12 +55,12 @@ omr_gctest:
 # until we common this up, run "testall" on linux_x86 and osx but run "test" everywhere else
 omr_jitbuilderexamples:
 ifneq (,$(findstring linux_x86,$(SPEC)))
-	make -C jitbuilder/release testall
+	make -C jitbuilder/release/cpp testall
 else
 ifneq (,$(findstring osx,$(SPEC)))
-	make -C jitbuilder/release testall
+	make -C jitbuilder/release/cpp testall
 else
-	make -C jitbuilder/release test
+	make -C jitbuilder/release/cpp test
 endif
 endif
 

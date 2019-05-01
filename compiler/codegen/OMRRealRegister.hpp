@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,10 +31,10 @@ namespace OMR { class RealRegister; }
 namespace OMR { typedef OMR::RealRegister RealRegisterConnector; }
 #endif
 
-#include <stdint.h>                         // for uint16_t, int32_t
-#include "codegen/Register.hpp"             // for Register
-#include "codegen/RegisterConstants.hpp"    // for TR_RegisterKinds, etc
-#include "infra/Flags.hpp"                  // for flags8_t
+#include <stdint.h>
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
+#include "infra/Flags.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class RealRegister; }

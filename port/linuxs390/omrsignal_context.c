@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,9 +27,9 @@
 #define NUM_REGS 16
 
 void
-fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *j9Info)
+fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *signalInfo)
 {
-	j9Info->platformSignalInfo.context = (ucontext_t *)contextInfo;
+	signalInfo->platformSignalInfo.context = (ucontext_t *)contextInfo;
 	/* module info is filled on demand */
 }
 
@@ -207,7 +207,7 @@ infoForControl(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *inf
 	case 2:
 		*name = "fpc";
 		*value = &(mcontext->fpregs.fpc);
-		return OMRPORT_SIG_VALUE_ADDRESS;
+		return OMRPORT_SIG_VALUE_32;
 	case OMRPORT_SIG_CONTROL_S390_BEA:
 	case 3:
 		*name = "bea";

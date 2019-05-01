@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2018 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,14 +71,13 @@ OMR_GC_OBJECT_ALLOCATION_NOTIFY := @OMR_GC_OBJECT_ALLOCATION_NOTIFY@
 OMR_GC_OBJECT_MAP := @OMR_GC_OBJECT_MAP@
 OMR_GC_REALTIME := @OMR_GC_REALTIME@
 OMR_GC_SEGREGATED_HEAP := @OMR_GC_SEGREGATED_HEAP@
-OMR_GC_STACCATO := @OMR_GC_STACCATO@
 OMR_GC_THREAD_LOCAL_HEAP := @OMR_GC_THREAD_LOCAL_HEAP@
 OMR_GC_TLH_PREFETCH_FTA := @OMR_GC_TLH_PREFETCH_FTA@
 OMR_GC_VLHGC := @OMR_GC_VLHGC@
 OMR_INTERP_COMPRESSED_OBJECT_HEADER := @OMR_INTERP_COMPRESSED_OBJECT_HEADER@
 OMR_INTERP_HAS_SEMAPHORES := @OMR_INTERP_HAS_SEMAPHORES@
 OMR_INTERP_SMALL_MONITOR_SLOT := @OMR_INTERP_SMALL_MONITOR_SLOT@
-OMR_JIT := @OMR_JIT@
+OMR_COMPILER := @OMR_COMPILER@
 OMR_JITBUILDER := @OMR_JITBUILDER@
 OMR_NOTIFY_POLICY_CONTROL := @OMR_NOTIFY_POLICY_CONTROL@
 OMR_OMRSIG := @OMR_OMRSIG@
@@ -206,8 +205,6 @@ DIASDK_HOME := @DIASDK_HOME@
 # Header files in the current directory should have first precedence.
 MODULE_INCLUDES += .
 GLOBAL_INCLUDES += $(top_srcdir)/include_core $(top_srcdir)/nls
-
-GLOBAL_CPPFLAGS += -DUT_DIRECT_TRACE_REGISTRATION
 
 # By default, shared libs are built into exe_output_dir, and
 # static libs are built into lib_output_dir.

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,9 +21,9 @@
 
 #include "control/OptimizationPlan.hpp"
 
-#include <stdio.h>            // for fprintf, NULL, stderr
-#include "env/TRMemory.hpp"   // for TR_OptimizationPlan::jitPersistentFree, etc
-#include "infra/Monitor.hpp"  // for Monitor
+#include <stdio.h>
+#include "env/TRMemory.hpp"
+#include "infra/Monitor.hpp"
 
 TR_OptimizationPlan* TR_OptimizationPlan::_pool = 0;
 unsigned long        TR_OptimizationPlan::_totalNumAllocatedPlans = 0;

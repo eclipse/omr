@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,27 +22,28 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 
-#include <limits.h>                       // for INT_MAX
-#include <stdint.h>                       // for uint32_t, int16_t, int32_t, etc
-#include "codegen/FrontEnd.hpp"           // for feGetEnv
-#include "codegen/Linkage.hpp"            // for TR::X86LinkageProperties
-#include "codegen/RealRegister.hpp"       // for TR::RealRegister::RegNum
-#include "codegen/Register.hpp"           // for Register
-#include "codegen/RegisterConstants.hpp"  // for TR_GlobalRegisterNumber
-#include "codegen/TreeEvaluator.hpp"      // for TreeEvaluators
+#include <limits.h>
+#include <stdint.h>
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
+#include "codegen/TreeEvaluator.hpp"
 #include "codegen/X86Evaluator.hpp"
-#include "compile/Compilation.hpp"        // for Compilation
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "il/DataTypes.hpp"               // for DataTypes, etc
-#include "il/ILOpCodes.hpp"               // for ILOpCodes::instanceof, etc
-#include "il/ILOps.hpp"                   // for ILOpCode, TR::ILOpCode
-#include "il/Node.hpp"                    // for Node
-#include "il/Node_inlines.hpp"            // for Node::getFirstChild
-#include "infra/Assert.hpp"               // for TR_ASSERT
-#include "infra/BitVector.hpp"            // for TR_BitVector
-#include "x/codegen/X86Ops.hpp"           // for ::MOV8RegReg
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "x/codegen/X86Ops.hpp"
 
 OMR::X86::AMD64::CodeGenerator::CodeGenerator() :
    OMR::X86::CodeGenerator()
@@ -71,10 +72,6 @@ OMR::X86::AMD64::CodeGenerator::CodeGenerator() :
    if (accessStaticsIndirectly)
       self()->setAccessStaticsIndirectly(true);
 
-   static char *alwaysUseTrampolines = feGetEnv("TR_AlwaysUseTrampolines");
-   if (alwaysUseTrampolines)
-      self()->setAlwaysUseTrampolines();
-
    self()->setSupportsDoubleWordCAS();
    self()->setSupportsDoubleWordSet();
 
@@ -92,7 +89,7 @@ OMR::X86::AMD64::CodeGenerator::CodeGenerator() :
 
    self()->initLinkageToGlobalRegisterMap();
 
-   self()->setRealVMThreadRegister(self()->machine()->getX86RealRegister(TR::RealRegister::ebp));
+   self()->setRealVMThreadRegister(self()->machine()->getRealRegister(TR::RealRegister::ebp));
 
    // GRA-related initialization is done after calling initialize() so we can
    // use such things as getNumberOfGlobal[FG]PRs().

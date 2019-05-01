@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -487,11 +487,11 @@ public:
 				break;
 			}
 		}
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		while (oldFlags != MM_AtomicOperations::lockCompareExchangeU32(flagsPtr, oldFlags, newFlags));
-#else /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
 		while (oldFlags != MM_AtomicOperations::lockCompareExchange(flagsPtr, (uintptr_t)oldFlags, (uintptr_t)newFlags));
-#endif /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 		return result;
 	}
@@ -589,11 +589,11 @@ public:
 				break;
 			}
 		}
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		while (oldFlags != MM_AtomicOperations::lockCompareExchangeU32(flagsPtr, oldFlags, newFlags));
-#else /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
 		while (oldFlags != MM_AtomicOperations::lockCompareExchange(flagsPtr, (uintptr_t)oldFlags, (uintptr_t)newFlags));
-#endif /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 		return result;
 	}
@@ -633,11 +633,11 @@ public:
 				break;
 			}
 		}
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		while (oldFlags != MM_AtomicOperations::lockCompareExchangeU32(flagsPtr, oldFlags, newFlags));
-#else /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
 		while (oldFlags != MM_AtomicOperations::lockCompareExchange(flagsPtr, (uintptr_t)oldFlags, (uintptr_t)newFlags));
-#endif /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 		/* check to verify that this thread and no other thread atomically set flags -> toState */
 		return result ? (0 == (oldFlags & rememberedMask)) : false;
@@ -677,11 +677,11 @@ public:
 			}
 			newFlags = (oldFlags & ~rememberedMask) | to;
 		}
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		while (oldFlags != MM_AtomicOperations::lockCompareExchangeU32(flagsPtr, oldFlags, newFlags));
-#else /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
 		while (oldFlags != MM_AtomicOperations::lockCompareExchange(flagsPtr, (uintptr_t)oldFlags, (uintptr_t)newFlags));
-#endif /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 		return result;
 	}

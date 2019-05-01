@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,14 +92,14 @@ void print(TR::FILE *pOutFile, TR::CodeGenerator *cg)
    (void)trfflush(pOutFile);
    trfprintf(pOutFile,", Real: ");
    (void)trfflush(pOutFile);
-   if (machine->getARMRealRegister(_realRegister)==NULL)
+   if (machine->getRealRegister(_realRegister)==NULL)
       {
       trfprintf(pOutFile,"NoReg");
       (void)trfflush(pOutFile);
       }
    else
       {
-      machine->getARMRealRegister(_realRegister)->print(pOutFile, TR_WordReg);
+      machine->getRealRegister(_realRegister)->print(pOutFile, TR_WordReg);
       (void)trfflush(pOutFile);
       }
    trfprintf(pOutFile,", Flags: %x",_flags);

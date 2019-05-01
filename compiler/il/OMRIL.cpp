@@ -100,6 +100,25 @@ TR::ILOpCodes OMR::IL::opCodesForDirectStore[] =
    TR::BadILOp,  // TR::Aggregate
    };
 
+TR::ILOpCodes OMR::IL::opCodesForDirectWriteBarrier[] =
+   {
+   TR::BadILOp,  // NoType
+   TR::bwrtbar,   // Int8
+   TR::swrtbar,   // Int16
+   TR::iwrtbar,   // Int32
+   TR::lwrtbar,   // Int64
+   TR::fwrtbar,   // Float
+   TR::dwrtbar,   // Double
+   TR::awrtbar,   // Address
+   TR::BadILOp,   // VectorInt8
+   TR::BadILOp,   // VectorInt16
+   TR::BadILOp,   // VectorInt32
+   TR::BadILOp,   // VectorInt64
+   TR::BadILOp,   // VectorFloat
+   TR::BadILOp,   // VectorDouble
+   TR::BadILOp,  // TR::Aggregate
+   };
+
 TR::ILOpCodes OMR::IL::opCodesForIndirectLoad[] =
    {
    TR::BadILOp,  // NoType
@@ -154,6 +173,25 @@ TR::ILOpCodes OMR::IL::opCodesForIndirectStore[] =
    TR::vstorei,  // TR::VectorInt64
    TR::vstorei,  // TR::VectorFloat
    TR::vstorei,  // TR::VectorDouble
+   TR::BadILOp,  // TR::Aggregate
+   };
+
+TR::ILOpCodes OMR::IL::opCodesForIndirectWriteBarrier[] =
+   {
+   TR::BadILOp,  // NoType
+   TR::bwrtbari,   // Int8
+   TR::swrtbari,   // Int16
+   TR::iwrtbari,   // Int32
+   TR::lwrtbari,   // Int64
+   TR::fwrtbari,   // Float
+   TR::dwrtbari,   // Double
+   TR::awrtbari,   // Address
+   TR::BadILOp,   // VectorInt8
+   TR::BadILOp,   // VectorInt16
+   TR::BadILOp,   // VectorInt32
+   TR::BadILOp,   // VectorInt64
+   TR::BadILOp,   // VectorFloat
+   TR::BadILOp,   // VectorDouble
    TR::BadILOp,  // TR::Aggregate
    };
 
@@ -562,7 +600,17 @@ OMR::IL::opCodeForCorrespondingIndirectLoad(TR::ILOpCodes loadOpCode)
       case TR::iuload: return TR::iustore;
       case TR::iuloadi: return TR::iustorei;
       case TR::luloadi: return TR::lustorei;
-
+      case TR::brdbari:
+      case TR::srdbari:
+      case TR::irdbari:
+      case TR::lrdbari:
+      case TR::frdbari:
+      case TR::drdbari:
+      case TR::ardbari:
+         //There is not necessarily a guaranteed symmetry about whether an indirect rdbar should be mapped to
+         //an indirect wrtbar or a normal indirect store. The mapping of rdbar/ wrtbar totally depends on the
+         //actual use in subprojects and should be undefined in OMR level.
+         TR_ASSERT_FATAL(0, "xrdbari can't be used with global opcode mapping API at OMR level\n");
       default: break;
       }
 
@@ -584,13 +632,23 @@ OMR::IL::opCodeForCorrespondingIndirectStore(TR::ILOpCodes storeOpCode)
       case TR::fstorei:  return TR::floadi;
       case TR::dstorei:  return TR::dloadi;
       case TR::astorei:  return TR::aloadi;
-      case TR::wrtbari:  return TR::aloadi;
+      case TR::awrtbari: return TR::aloadi;
       case TR::vstorei:  return TR::vloadi;
-      case TR::cstorei: return TR::cloadi;
+      case TR::cstorei:  return TR::cloadi;
       case TR::bustorei: return TR::buloadi;
-      case TR::iustore: return TR::iuload;
+      case TR::iustore:  return TR::iuload;
       case TR::iustorei: return TR::iuloadi;
       case TR::lustorei: return TR::luloadi;
+      case TR::bwrtbari:
+      case TR::swrtbari:
+      case TR::iwrtbari:
+      case TR::lwrtbari:
+      case TR::fwrtbari:
+      case TR::dwrtbari:
+         //There is not necessarily a guaranteed symmetry about whether an indirect wrtbar should be mapped to
+         //an indirect rdbar or a normal indirect load. The mapping of rdbar/wrtbar totally depends on the
+         //actual use in subprojects and should be undefined in OMR level.
+         TR_ASSERT_FATAL(0, "xwrtbari can't be used with global opcode mapping API at OMR level\n");
 
       default: break;
       }
@@ -640,6 +698,15 @@ OMR::IL::opCodeForDirectStore(TR::DataType dt)
    }
 
 TR::ILOpCodes
+OMR::IL::opCodeForDirectWriteBarrier(TR::DataType dt)
+   {
+   TR_ASSERT(dt < TR::NumOMRTypes, "unexpected opcode");
+
+   return OMR::IL::opCodesForDirectWriteBarrier[dt];
+   }
+
+
+TR::ILOpCodes
 OMR::IL::opCodeForIndirectLoad(TR::DataType dt)
    {
    TR_ASSERT(dt < TR::NumOMRTypes, "unexpected opcode");
@@ -661,6 +728,14 @@ OMR::IL::opCodeForIndirectStore(TR::DataType dt)
    TR_ASSERT(dt < TR::NumOMRTypes, "unexpected opcode");
 
    return OMR::IL::opCodesForIndirectStore[dt];
+   }
+
+TR::ILOpCodes
+OMR::IL::opCodeForIndirectWriteBarrier(TR::DataType dt)
+   {
+   TR_ASSERT(dt < TR::NumOMRTypes, "unexpected opcode");
+
+   return OMR::IL::opCodesForIndirectWriteBarrier[dt];
    }
 
 TR::ILOpCodes

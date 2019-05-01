@@ -21,13 +21,11 @@
 
 #include "ddr/ir/Macro.hpp"
 
-#include <algorithm>
+#include "ddr/ir/Type.hpp"
+
 #include <ctype.h>
 #include <stdint.h>
 #include <string.h>
-#include <vector>
-
-using std::string;
 
 enum Symbol {
 	OR_OR,   /* || */
@@ -58,19 +56,11 @@ enum Symbol {
 class MacroScanner
 {
 private:
-	struct KnownType
-	{
-		const char *name;
-		size_t bitWidth;
-		bool isSigned;
-	};
-
 	char const *_cursor;
 
 	static bool isDigit(char c, int32_t base);
 	static int32_t digitValue(char c);
 
-	bool readIdentifier(string *ret);
 	void skipWhitespace();
 
 public:
@@ -164,25 +154,6 @@ MacroScanner::skipWhitespace()
 	}
 }
 
-bool
-MacroScanner::readIdentifier(string *ret)
-{
-	skipWhitespace();
-
-	const char *start = _cursor;
-
-	if (isalpha(*start)) {
-		do {
-			_cursor += 1;
-		} while (('_' == *_cursor) || isalnum(*_cursor));
-
-		ret->assign(start, _cursor - start);
-		return true;
-	}
-
-	return false;
-}
-
 /**
  * Checks if the cursor is at a valid type cast expression, after encountering
  * a left parenthesis. If it is, determine the signedness and bit width of the
@@ -202,10 +173,19 @@ MacroScanner::validTypeCast(bool *isSigned, size_t *bitWidth)
 		return false;
 	}
 
-	std::vector<string> types;
+	skipWhitespace();
 
-	for (string type; readIdentifier(&type);) {
-		types.push_back(type);
+	const char *start = _cursor;
+	const char *end = start;
+
+	while (isalpha(*_cursor)) {
+		do {
+			_cursor += 1;
+		} while (('_' == *_cursor) || isalnum(*_cursor));
+
+		end = _cursor;
+
+		skipWhitespace();
 	}
 
 	if (!atSymbol(RPAREN)) {
@@ -213,75 +193,7 @@ MacroScanner::validTypeCast(bool *isSigned, size_t *bitWidth)
 		return false;
 	}
 
-	if (1 == types.size()) {
-		static const KnownType knownTypes[] = {
-			/* signed standard types */
-			{ "int8_t",    8, true },
-			{ "int16_t",  16, true },
-			{ "int32_t",  32, true },
-			{ "int64_t",  64, true },
-
-			/* unsigned standard types */
-			{ "uint8_t",    8, false },
-			{ "uint16_t",  16, false },
-			{ "uint32_t",  32, false },
-			{ "uint64_t",  64, false },
-
-			/* standard pointer types */
-			{ "intptr_t",  64, true },
-			{ "uintptr_t", 64, false },
-
-			/* terminator */
-			{ NULL, 0, false }
-		};
-
-		const char *type = types.front().c_str();
-
-		for (const KnownType *knownType = knownTypes; NULL != knownType->name; ++knownType) {
-			if (0 == strcmp(type, knownType->name)) {
-				*bitWidth = knownType->bitWidth;
-				*isSigned = knownType->isSigned;
-				return true;
-			}
-		}
-	}
-
-	/*
-	 * Standard C allows types and modifiers in any order, so we count
-	 * the number of occurrences of each word to verify it is reasonable.
-	 */
-	size_t numChar = std::count(types.begin(), types.end(), "char");
-	size_t numShort = std::count(types.begin(), types.end(), "short");
-	size_t numInt = std::count(types.begin(), types.end(), "int");
-	size_t numLong = std::count(types.begin(), types.end(), "long");
-	size_t numSigned = std::count(types.begin(), types.end(), "signed");
-	size_t numUnsigned = std::count(types.begin(), types.end(), "unsigned");
-
-	/* Types are signed unless explicitly 'unsigned'. */
-	*isSigned = 0 == numUnsigned;
-
-	/* If this default width survives, this cast will be ignored. */
-	*bitWidth = 0;
-
-	/* total count of valid types should equal the size of types vector */
-	if (types.size() == (numChar + numShort + numInt + numLong + numSigned + numUnsigned)) {
-		/* recognize types that include at most one of 'signed' or 'unsigned' */
-		if (1 >= numSigned + numUnsigned) {
-			if ((1 == numChar) && (0 == numShort) && (0 == numInt) && (0 == numLong)) {
-				*bitWidth = sizeof(char) * 8;
-			} else if ((1 == numShort) && (0 == numChar) && (1 >= numInt) && (0 == numLong)) {
-				*bitWidth = sizeof(short) * 8;
-			} else if ((1 == numInt) && (0 == numChar) && (0 == numShort) && (0 == numLong)) {
-				*bitWidth = sizeof(int) * 8;
-			} else if ((1 == numLong) && (0 == numChar) && (0 == numShort) && (1 >= numInt)) {
-				*bitWidth = sizeof(long) * 8;
-			} else if ((2 == numLong) && (0 == numChar) && (0 == numShort) && (1 >= numInt)) {
-				*bitWidth = sizeof(long long) * 8;
-			}
-		}
-	}
-
-	return true;
+	return Type::isStandardType(start, (size_t)(end - start), isSigned, bitWidth);
 }
 
 /**
@@ -889,7 +801,7 @@ MacroParser::unaryExpression(int64_t *ret)
 			*ret = ~operand;
 			return true;
 		}
-	} else if (_scanner.validTypeCast(&isSigned, &bitWidth) ) {
+	} else if (_scanner.validTypeCast(&isSigned, &bitWidth)) {
 		if (validSingleTerm(&operand)) {
 			switch (bitWidth) {
 			case 8:

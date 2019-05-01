@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef HASHTAB_INCL
 #define HASHTAB_INCL
 
-#include <stdint.h>          // for uint32_t, int32_t, int64_t, etc
-#include <string.h>          // for NULL, memset, strcmp
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
-#include "env/jittypes.h"    // for uintptrj_t, intptrj_t
-#include "infra/Assert.hpp"  // for TR_ASSERT
+#include <stdint.h>
+#include <string.h>
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "infra/Assert.hpp"
 
 #include "infra/Bit.hpp"
 

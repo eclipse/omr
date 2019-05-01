@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,25 +21,25 @@
 
 #include "il/symbol/OMRSymbol.hpp"
 
-#include <stddef.h>                            // for size_t
-#include <stdint.h>                            // for uint32_t, int32_t, etc
-#include <string.h>                            // for memcmp, strncmp
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
-#include "env/KnownObjectTable.hpp"            // for KnownObjectTable, etc
-#include "env/ObjectModel.hpp"                 // for ObjectModel
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "env/KnownObjectTable.hpp"
+#include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
-#include "il/DataTypes.hpp"                    // for DataType
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/symbol/AutomaticSymbol.hpp"       // for AutomaticSymbol
-#include "il/symbol/RegisterMappedSymbol.hpp"  // for RegisterMappedSymbol
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Flags.hpp"                     // for flags32_t
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "il/DataTypes.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "ras/Debug.hpp"
 
 template <typename AllocatorType>
 TR::Symbol * OMR::Symbol::create(AllocatorType m)

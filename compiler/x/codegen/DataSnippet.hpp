@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,8 +23,8 @@
 #define X86DATASNIPPET_INCL
 
 #include "codegen/Snippet.hpp"
-#include "infra/vector.hpp"    // for TR::vector
-#include <stdint.h>            // for uint8_t, int32_t, int64_t, etc
+#include "infra/vector.hpp"
+#include <stdint.h>
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Node; }

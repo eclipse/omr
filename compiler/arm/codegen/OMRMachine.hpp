@@ -79,10 +79,6 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
 
    Machine(TR::CodeGenerator *cg);
 
-   TR::RealRegister *getARMRealRegister(TR::RealRegister::RegNum regNum)
-      {
-      return _registerFile[regNum];
-      }
 
    TR::RealRegister *findBestFreeRegister(TR_RegisterKinds rk,
                                             bool excludeGPR0 = false,

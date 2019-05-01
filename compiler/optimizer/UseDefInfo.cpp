@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,43 +21,42 @@
 
 #include "optimizer/UseDefInfo.hpp"
 
-#include <limits.h>                                      // for USHRT_MAX, INT_MAX
-#include <stddef.h>                                      // for NULL
-#include <stdint.h>                                      // for int32_t, etc
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"                          // for TR_FrontEnd
-#include "codegen/Linkage.hpp"                           // for Linkage
-#include "compile/Compilation.hpp"                       // for Compilation, etc
-#include "compile/Method.hpp"                            // for TR_Method, mcount_t
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"                   // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "cs2/allocator.h"
-#include "cs2/bitvectr.h"                                // for ABitVector, etc
-#include "cs2/hashtab.h"                                 // for HashTable, etc
+#include "cs2/bitvectr.h"
+#include "cs2/hashtab.h"
 #include "cs2/sparsrbit.h"
-#include "env/TRMemory.hpp"                              // for Allocator, etc
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                                  // for Block
+#include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                                  // for ILOpCode, etc
-#include "il/Node.hpp"                                   // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                                 // for Symbol
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                                // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
-#include "infra/Assert.hpp"                              // for TR_ASSERT
+#include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
-#include "infra/Cfg.hpp"                                 // for CFG
+#include "infra/Cfg.hpp"
 #include "infra/List.hpp"
-#include "infra/CfgNode.hpp"                             // for CFGNode
+#include "infra/CfgNode.hpp"
 #include "optimizer/CallInfo.hpp"
-#include "optimizer/Optimizer.hpp"                       // for Optimizer
+#include "optimizer/Optimizer.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
 

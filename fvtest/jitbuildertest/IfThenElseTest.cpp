@@ -20,8 +20,6 @@
  *******************************************************************************/
 
 #include "JBTestUtil.hpp"
-#include "compiler/ilgen/IlBuilder.hpp"
-
 
 // Both path exist, no merge return needed
 DEFINE_BUILDER(SubIfThenElseBothPathBuilder,
@@ -29,8 +27,8 @@ DEFINE_BUILDER(SubIfThenElseBothPathBuilder,
                PARAM("valueA", Int64),
                PARAM("valueB", Int64) )
    {
-   TR::IlBuilder *elsePath = NULL;
-   TR::IlBuilder *thenPath = NULL;
+   OMR::JitBuilder::IlBuilder *elsePath = NULL;
+   OMR::JitBuilder::IlBuilder *thenPath = NULL;
 
    IfThenElse(&thenPath, &elsePath, ConstInt64(0));
    thenPath->Return(
@@ -50,7 +48,7 @@ DEFINE_BUILDER(SubIfThenNullBuilder,
                PARAM("valueA", Int64),
                PARAM("valueB", Int64) )
    {
-   TR::IlBuilder *thenPath = NULL;
+   OMR::JitBuilder::IlBuilder *thenPath = NULL;
 
    IfThenElse(&thenPath, NULL, ConstInt64(1));
    thenPath->Return(
@@ -70,7 +68,7 @@ DEFINE_BUILDER(SubIfNullElseBuilder,
                PARAM("valueA", Int64),
                PARAM("valueB", Int64) )
    {
-   TR::IlBuilder *elsePath = NULL;
+   OMR::JitBuilder::IlBuilder *elsePath = NULL;
 
    IfThenElse(NULL, &elsePath, ConstInt64(1));
    elsePath->Return(
@@ -90,20 +88,20 @@ class IfThenElseTest : public JitBuilderTest {};
 TEST_F(IfThenElseTest, TrueBothPath)
    {
    IfLongFunctionType typeIfFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, SubIfThenElseBothPathBuilder, typeIfFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, SubIfThenElseBothPathBuilder, typeIfFunction);
    ASSERT_EQ(typeIfFunction(10, 5), -5);
    }
 
 TEST_F(IfThenElseTest, TrueElsePath)
    {
    IfLongFunctionType typeIfFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, SubIfThenNullBuilder, typeIfFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, SubIfThenNullBuilder, typeIfFunction);
    ASSERT_EQ(typeIfFunction(10, 5), 5);
    }
 
 TEST_F(IfThenElseTest, FalseBothPath)
    {
    IfLongFunctionType typeIfFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, SubIfNullElseBuilder, typeIfFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, SubIfNullElseBuilder, typeIfFunction);
    ASSERT_EQ(typeIfFunction(10, 5), 5);
    }

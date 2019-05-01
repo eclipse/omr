@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,29 +21,29 @@
 
 #include "z/codegen/TranslateEvaluator.hpp"
 
-#include <stddef.h>                                // for NULL
-#include <stdint.h>                                // for uint8_t, int32_t, etc
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                    // for TR_FrontEnd
-#include "codegen/InstOpCode.hpp"                  // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                 // for Instruction
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"                // for RealRegister, etc
+#include "codegen/RealRegister.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/RegisterDependencyStruct.hpp"
-#include "codegen/TreeEvaluator.hpp"               // for getConditionCode
+#include "codegen/TreeEvaluator.hpp"
 #include "codegen/S390Evaluator.hpp"
-#include "compile/Compilation.hpp"                 // for Compilation
+#include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
-#include "il/Block.hpp"                            // for Block
-#include "il/ILOpCodes.hpp"                        // for ILOpCodes::trt, etc
-#include "il/ILOps.hpp"                            // for ILOpCode
-#include "il/Node.hpp"                             // for Node
-#include "il/Node_inlines.hpp"                     // for Node::getChild, etc
-#include "il/TreeTop.hpp"                          // for TreeTop
-#include "il/TreeTop_inlines.hpp"                  // for TreeTop::getNode
-#include "infra/Assert.hpp"                        // for TR_ASSERT
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 
 namespace TR { class Register; }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,10 @@ class MM_RootScannerStats : public MM_Base
 {
 /* Data Members */
 public:
+	bool _statsUsed; /**< Flag that indicates if the owner thread used the stats for last increment (for any of its roots) */
 	uint64_t _entityScanTime[RootScannerEntity_Count]; /**< Time spent scanning each root scanner entity per thread.  Values of 0 indicate no time (regardless of clock resolution) spent scanning. */
+	uint64_t _maxIncrementTime;  /**< Longest increment */
+	RootScannerEntity _maxIncrementEntity; /**< Entity of the longest increment */
 	
 /* Function Members */
 public:

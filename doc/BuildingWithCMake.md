@@ -22,9 +22,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # Building with CMake
 
-Development is underway for a new build system using CMake. At this point, the CMake build system is **incomplete and
-experimental**.
-
 Normal build instructions are in the main [`README.md`](../README.md).
 
 ## Requirements

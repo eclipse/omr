@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
    /* .format      = */ PSEUDO,
    /* .minimumALS  = */ TR_S390ProcessorInfo::TR_UnknownArchitecture,
    /* .properties  = */ S390OpProp_None
-   },   
+   },
 
    {
    /* .mnemonic    = */ OMR::InstOpCode::BAD,
@@ -45,7 +45,7 @@
    /* .format      = */ PSEUDO,
    /* .minimumALS  = */ TR_S390ProcessorInfo::TR_UnknownArchitecture,
    /* .properties  = */ S390OpProp_None
-   },   
+   },
 
    {
    /* .mnemonic    = */ OMR::InstOpCode::BREAK,
@@ -12564,8 +12564,8 @@
    /* .description = */ "POPULATION COUNT",
    /* .opcode[0]   = */ 0xB9,
    /* .opcode[1]   = */ 0xE1,
-   /* .format      = */ RRE_FORMAT,
-   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z196,
+   /* .format      = */ RRFc_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
    /* .properties  = */ S390OpProp_Is64Bit |
                         S390OpProp_UsesTarget |
                         S390OpProp_SetsCC |
@@ -15322,7 +15322,7 @@
    /* .opcode[0]   = */ 0xE3,
    /* .opcode[1]   = */ 0x4C,
    /* .format      = */ RXYa_FORMAT,
-   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z14,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_UnknownArchitecture,
    /* .properties  = */ S390OpProp_IsLoad |
                         S390OpProp_Is64Bit |
                         S390OpProp_BranchOp |
@@ -15350,7 +15350,7 @@
    /* .opcode[0]   = */ 0xE3,
    /* .opcode[1]   = */ 0x48,
    /* .format      = */ RXYa_FORMAT,
-   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z14,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_UnknownArchitecture,
    /* .properties  = */ S390OpProp_IsLoad |
                         S390OpProp_Is64Bit |
                         S390OpProp_BranchOp |
@@ -15540,7 +15540,8 @@
    /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z14,
    /* .properties  = */ S390OpProp_SetsCC |
                         S390OpProp_SetsOperand1 |
-                        S390OpProp_UsesM3
+                        S390OpProp_UsesM3 |
+                        S390OpProp_UsesM4
    },
 
    {
@@ -15553,7 +15554,8 @@
    /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z14,
    /* .properties  = */ S390OpProp_SetsCC |
                         S390OpProp_SetsOperand1 |
-                        S390OpProp_UsesM3
+                        S390OpProp_UsesM3 |
+                        S390OpProp_UsesM4
    },
 
    {
@@ -15913,4 +15915,400 @@
    /* .format      = */ VSI_FORMAT,
    /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z14,
    /* .properties  = */ S390OpProp_IsStore
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::MVCRL,
+   /* .name        = */ "MVCRL",
+   /* .description = */ "MOVE RIGHT TO LEFT",
+   /* .opcode[0]   = */ 0xE5,
+   /* .opcode[1]   = */ 0x0A,
+   /* .format      = */ SSE_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_ImplicitlyUsesGPR0 |
+                        S390OpProp_IsLoad |
+                        S390OpProp_IsStore |
+                        S390OpProp_HasTwoMemoryReferences
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::NCGRK,
+   /* .name        = */ "NCGRK",
+   /* .description = */ "AND WITH COMPLEMENT (64)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0xE5,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is64Bit |
+                        S390OpProp_SetsCC |
+                        S390OpProp_SetsZeroFlag |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::NCRK,
+   /* .name        = */ "NCRK",
+   /* .description = */ "AND WITH COMPLEMENT (32)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0xF5,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is32Bit |
+                        S390OpProp_SetsCC |
+                        S390OpProp_SetsZeroFlag |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::NNGRK,
+   /* .name        = */ "NNGRK",
+   /* .description = */ "NAND (64)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0x64,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is64Bit |
+                        S390OpProp_SetsCC |
+                        S390OpProp_SetsZeroFlag |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::NNRK,
+   /* .name        = */ "NNRK",
+   /* .description = */ "NAND (32)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0x74,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is32Bit |
+                        S390OpProp_SetsCC |
+                        S390OpProp_SetsZeroFlag |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::NOGRK,
+   /* .name        = */ "NOGRK",
+   /* .description = */ "NOR (64)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0x66,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is64Bit |
+                        S390OpProp_SetsCC |
+                        S390OpProp_SetsZeroFlag |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::NORK,
+   /* .name        = */ "NORK",
+   /* .description = */ "NOR (32)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0x76,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is32Bit |
+                        S390OpProp_SetsCC |
+                        S390OpProp_SetsZeroFlag |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::NXGRK,
+   /* .name        = */ "NXGRK",
+   /* .description = */ "NOR (64)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0x67,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is64Bit |
+                        S390OpProp_SetsCC |
+                        S390OpProp_SetsZeroFlag |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::NXRK,
+   /* .name        = */ "NXRK",
+   /* .description = */ "NOT EXCLUSIVE OR (32)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0x77,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is32Bit |
+                        S390OpProp_SetsCC |
+                        S390OpProp_SetsZeroFlag |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::OCGRK,
+   /* .name        = */ "OCGRK",
+   /* .description = */ "OR WITH COMPLEMENT (64)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0x65,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is64Bit |
+                        S390OpProp_SetsCC |
+                        S390OpProp_SetsZeroFlag |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::OCRK,
+   /* .name        = */ "OCRK",
+   /* .description = */ "OR WITH COMPLEMENT (32)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0x75,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is32Bit |
+                        S390OpProp_SetsCC |
+                        S390OpProp_SetsZeroFlag |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::SELGR,
+   /* .name        = */ "SELGR",
+   /* .description = */ "SELECT (64)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0xE3,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is64Bit |
+                        S390OpProp_ReadsCC |
+                        S390OpProp_IsRegCopy |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::SELHHHR,
+   /* .name        = */ "SELHHHR",
+   /* .description = */ "SELECT HIGH (32)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0xC0,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is32Bit |
+                        S390OpProp_ReadsCC |
+                        S390OpProp_IsRegCopy |
+                        S390OpProp_TargetHW |
+                        S390OpProp_SrcHW |
+                        S390OpProp_Src2HW |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::SELR,
+   /* .name        = */ "SELR",
+   /* .description = */ "SELECT (32)",
+   /* .opcode[0]   = */ 0xB9,
+   /* .opcode[1]   = */ 0xF0,
+   /* .format      = */ RRFa_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_Is32Bit |
+                        S390OpProp_ReadsCC |
+                        S390OpProp_IsRegCopy |
+                        S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VLBR,
+   /* .name        = */ "VLBR",
+   /* .description = */ "VECTOR LOAD BYTE REVERSED ELEMENTS",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x06,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsLoad |
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_UsesM3 |
+                        S390OpProp_HasExtendedMnemonic
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VLBRREP,
+   /* .name        = */ "VLBRREP",
+   /* .description = */ "VECTOR LOAD BYTE REVERSED ELEMENT AND REPLICATE",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x05,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsLoad |
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_UsesM3 |
+                        S390OpProp_HasExtendedMnemonic
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VLEBRF,
+   /* .name        = */ "VLEBRF",
+   /* .description = */ "VECTOR LOAD BYTE REVERSED ELEMENT (32)",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x03,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsLoad |
+                        S390OpProp_UsesTarget |
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_UsesM3
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VLEBRG,
+   /* .name        = */ "VLEBRF",
+   /* .description = */ "VECTOR LOAD BYTE REVERSED ELEMENT (64)",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x02,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsLoad |
+                        S390OpProp_UsesTarget |
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_UsesM3
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VLEBRH,
+   /* .name        = */ "VLEBRH",
+   /* .description = */ "VECTOR LOAD BYTE REVERSED ELEMENT (16)",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x01,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsLoad |
+                        S390OpProp_UsesTarget |
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_UsesM3
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VLER,
+   /* .name        = */ "VLER",
+   /* .description = */ "VECTOR LOAD ELEMENTS REVERSED",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x07,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsLoad |
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_UsesM3 |
+                        S390OpProp_HasExtendedMnemonic
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VLLEBRZ,
+   /* .name        = */ "VLLEBRZ",
+   /* .description = */ "VECTOR LOAD BYTE REVERSED ELEMENT AND ZERO",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x04,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsLoad |
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_UsesM3 |
+                        S390OpProp_HasExtendedMnemonic
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VSTBR,
+   /* .name        = */ "VSTBR",
+   /* .description = */ "VECTOR STORE BYTE REVERSED ELEMENTS",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x0E,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsStore |
+                        S390OpProp_UsesM3 |
+                        S390OpProp_HasExtendedMnemonic
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VSTEBRF,
+   /* .name        = */ "VSTEBRF",
+   /* .description = */ "VECTOR STORE BYTE REVERSED ELEMENT (32)",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x0B,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsStore |
+                        S390OpProp_UsesM3
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VSTEBRG,
+   /* .name        = */ "VSTEBRG",
+   /* .description = */ "VECTOR STORE BYTE REVERSED ELEMENT (64)",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x0A,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsStore |
+                        S390OpProp_UsesM3
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VSTEBRH,
+   /* .name        = */ "VSTEBRH",
+   /* .description = */ "VECTOR STORE BYTE REVERSED ELEMENT (16)",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x09,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsStore |
+                        S390OpProp_UsesM3
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VSTER,
+   /* .name        = */ "VSTER",
+   /* .description = */ "VECTOR STORE ELEMENTS REVERSED",
+   /* .opcode[0]   = */ 0xE6,
+   /* .opcode[1]   = */ 0x0F,
+   /* .format      = */ VRX_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_IsStore |
+                        S390OpProp_UsesM3 |
+                        S390OpProp_HasExtendedMnemonic
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VSLD,
+   /* .name        = */ "VSLD",
+   /* .description = */ "VECTOR SHIFT LEFT DOUBLE BY BIT",
+   /* .opcode[0]   = */ 0xE7,
+   /* .opcode[1]   = */ 0x86,
+   /* .format      = */ VRId_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VSRD,
+   /* .name        = */ "VSRD",
+   /* .description = */ "VECTOR SHIFT RIGHT DOUBLE BY BIT",
+   /* .opcode[0]   = */ 0xE7,
+   /* .opcode[1]   = */ 0x87,
+   /* .format      = */ VRId_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_SetsOperand1
+   },
+
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::VSTRS,
+   /* .name        = */ "VSTRS",
+   /* .description = */ "VECTOR STRING SEARCH",
+   /* .opcode[0]   = */ 0xE7,
+   /* .opcode[1]   = */ 0x8B,
+   /* .format      = */ VRRd_FORMAT,
+   /* .minimumALS  = */ TR_S390ProcessorInfo::TR_z15,
+   /* .properties  = */ S390OpProp_SetsCC |
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_VectorStringOp |
+                        S390OpProp_UsesM5 |
+                        S390OpProp_UsesM6
    },

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,8 +44,8 @@ add_library(omrcore STATIC
 	OMR_TIMemorySize.cpp
 	OMR_VM.cpp
 	OMR_VMThread.cpp
-	ut_omrti.c
-	ut_omrvm.c
+	${CMAKE_CURRENT_BINARY_DIR}/ut_omrti.c
+	${CMAKE_CURRENT_BINARY_DIR}/ut_omrvm.c
 )
 
 if(OMR_WARNINGS_AS_ERRORS)
@@ -64,6 +64,8 @@ target_include_directories(omrcore
 )
 
 target_link_libraries(omrcore
+	PUBLIC
+		omr_base
 	PRIVATE
 		${OMR_CORE_GLUE_TARGET}
 		${OMR_RAS_GLUE_TARGET}
@@ -81,3 +83,5 @@ if(OMR_GC)
 			$<TARGET_PROPERTY:${OMR_GC_GLUE_TARGET},INTERFACE_INCLUDE_DIRECTORIES>
 	)
 endif(OMR_GC)
+
+target_enable_ddr(omrcore "${OMR_DDR_SET}")

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 uint32_t
 OMR::ELFRelocationResolver::resolveRelocationType(const TR::StaticRelocation &relocation)
    {
-   TR_ASSERT(false, "Unimplemented for this platform.");
+   TR_UNIMPLEMENTED();
    return static_cast<uint32_t>(-1);
    }
 

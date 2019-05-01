@@ -138,7 +138,7 @@ MM_HeapRegionDescriptorSegregated::resetTailFree(uintptr_t range)
 	if (range > 0) {
 		((MM_HeapRegionDescriptorSegregated *)_regionManager->mapRegionTableIndexToDescriptor(self + range - 1))->setRangeHead(this);
 	}
-};
+}
 
 void
 MM_HeapRegionDescriptorSegregated::setSmall(uintptr_t sizeClass)

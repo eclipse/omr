@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,9 @@
 #ifndef S390TRANSLATEEVALUATOR_INCL
 #define S390TRANSLATEEVALUATOR_INCL
 
-#include <stddef.h>                // for NULL
-#include <stdint.h>                // for uint8_t
-#include "codegen/InstOpCode.hpp"  // for InstOpCode, InstOpCode::Mnemonic, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/InstOpCode.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Node; }

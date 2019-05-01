@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,32 +21,32 @@
 
 #include "z/codegen/CompareAnalyser.hpp"
 
-#include <stddef.h>                                // for NULL
-#include <stdint.h>                                // for int32_t, uint32_t, etc
-#include "codegen/Analyser.hpp"                    // for NUM_ACTIONS
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator
-#include "codegen/InstOpCode.hpp"                  // for InstOpCode, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/Analyser.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/InstOpCode.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"                // for RealRegister, etc
-#include "codegen/Register.hpp"                    // for Register
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "env/TRMemory.hpp"
-#include "il/DataTypes.hpp"                        // for LONG_SHIFT_MASK
-#include "il/ILOpCodes.hpp"                        // for ILOpCodes::iload, etc
-#include "il/ILOps.hpp"                            // for ILOpCode
-#include "il/Node.hpp"                             // for Node
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                           // for Symbol
-#include "il/SymbolReference.hpp"                  // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"               // for LabelSymbol
-#include "infra/Assert.hpp"                        // for TR_ASSERT
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 
 void
 TR_S390CompareAnalyser::integerCompareAnalyser(TR::Node * root, TR::InstOpCode::Mnemonic regRegOpCode, TR::InstOpCode::Mnemonic regMemOpCode,
    TR::InstOpCode::Mnemonic memRegOpCode)
    {
-   TR_ASSERT( 0, "TR_S390CompareAnalyser::integerCompareAnalyser: Not implemented yet");
+   TR_UNIMPLEMENTED();
    return;
    }
 
@@ -291,7 +291,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
 
       if (firstHighZero == false || secondHighZero == false)
          {
-         TR::LabelSymbol * cflowRegionStart = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
+         TR::LabelSymbol * cflowRegionStart = generateLabelSymbol(_cg);
          cflowRegionStart->setStartInternalControlFlow();
          internalControlFlowStarted = true;
          generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, root, cflowRegionStart);
@@ -401,7 +401,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
 
       if (firstHighZero == false || secondHighZero == false)
          {
-         TR::LabelSymbol * cflowRegionStart = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
+         TR::LabelSymbol * cflowRegionStart = generateLabelSymbol(_cg);
          cflowRegionStart->setStartInternalControlFlow();
          internalControlFlowStarted = true;
          generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, root, cflowRegionStart);
@@ -508,7 +508,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
 
       if (firstHighZero == false || secondHighZero == false)
          {
-         TR::LabelSymbol * cflowRegionStart = TR::LabelSymbol::create(_cg->trHeapMemory(),_cg);
+         TR::LabelSymbol * cflowRegionStart = generateLabelSymbol(_cg);
          cflowRegionStart->setStartInternalControlFlow();
          internalControlFlowStarted = true;
          generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, root, cflowRegionStart);

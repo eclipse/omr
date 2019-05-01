@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,22 +21,22 @@
 
 #include "codegen/AheadOfTimeCompile.hpp"
 
-#include "codegen/CodeGenerator.hpp"         // for CodeGenerator
-#include "codegen/Relocation.hpp"            // for TR::Relocation
-#include "compile/Method.hpp"                // for TR_AOTMethodInfo
-#include "compile/ResolvedMethod.hpp"        // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"  // for SymbolReferenceTable
-#include "compile/VirtualGuard.hpp"          // for TR_VirtualGuard
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Relocation.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "compile/VirtualGuard.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #ifdef J9_PROJECT_SPECIFIC
-#include "env/CHTable.hpp"                   // for TR_AOTGuardSite
+#include "env/CHTable.hpp"
 #endif
-#include "env/jittypes.h"                    // for TR_InlinedCallSite
-#include "il/Node.hpp"                       // for Node
-#include "infra/Assert.hpp"                  // for TR_ASSERT
-#include "infra/List.hpp"                    // for ListHeadAndTail, ListElement
-#include "ras/Debug.hpp"                     // for TR_DebugBase
+#include "env/jittypes.h"
+#include "il/Node.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
 #include "env/CompilerEnv.hpp"
 
 namespace TR { class SymbolReference; }
@@ -113,57 +113,6 @@ void OMR::AheadOfTimeCompile::traceRelocationOffsets(uint8_t *&cursor, int32_t o
          }
       cursor += offsetSize;
       }
-   }
-
-uintptr_t
-findCorrectInlinedSiteIndex(void *constantPool, TR::Compilation *comp, uintptr_t currentInlinedSiteIndex)
-   {
-   uintptr_t cp2 = 0;
-
-   uintptr_t inlinedSiteIndex = currentInlinedSiteIndex;
-   if (inlinedSiteIndex==(uintptr_t)-1)
-      {
-      cp2 = (uintptr_t) comp->getCurrentMethod()->constantPool();
-      }
-   else
-      {
-      TR_InlinedCallSite &ics2 = comp->getInlinedCallSite(inlinedSiteIndex);
-      TR_AOTMethodInfo *aotMethodInfo2 = (TR_AOTMethodInfo *)ics2._methodInfo;
-      cp2 = (uintptr_t)aotMethodInfo2->resolvedMethod->constantPool();
-      }
-
-   bool matchFound = false;
-
-   if ( (uintptr_t) constantPool == cp2)
-      {
-      matchFound = true;
-      }
-   else
-      {
-      if ((uintptr_t)constantPool == (uintptr_t)comp->getCurrentMethod()->constantPool())
-         {
-         matchFound = true;
-         inlinedSiteIndex = (uintptr_t)-1;
-         }
-      else
-         {
-         for (uintptr_t i = 0; i < comp->getNumInlinedCallSites(); i++)
-            {
-            TR_InlinedCallSite &ics = comp->getInlinedCallSite(i);
-
-            TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)ics._methodInfo;
-
-            if ((uintptr_t)constantPool == (uintptr_t)aotMethodInfo->resolvedMethod->constantPool())
-               {
-               matchFound = true;
-               inlinedSiteIndex = i;
-               break;
-               }
-            }
-         }
-      }
-   TR_ASSERT(matchFound, "couldn't find this CP in inlined site list");
-   return inlinedSiteIndex;
    }
 
 void createGuardSiteForRemovedGuard(TR::Compilation *comp, TR::Node *ifNode)

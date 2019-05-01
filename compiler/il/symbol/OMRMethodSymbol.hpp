@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,12 +33,12 @@ namespace OMR { typedef OMR::MethodSymbol MethodSymbolConnector; }
 
 #include "il/Symbol.hpp"
 
-#include "codegen/LinkageConventionsEnum.hpp"  // for TR_LinkageConventions, etc
-#include "codegen/RecognizedMethods.hpp"       // for RecognizedMethod, etc
-#include "compile/Method.hpp"                  // for TR_Method
-#include "il/DataTypes.hpp"                    // for DataTypes
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Flags.hpp"                     // for flags32_t
+#include "codegen/LinkageConventionsEnum.hpp"
+#include "codegen/RecognizedMethods.hpp"
+#include "compile/Method.hpp"
+#include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
 
 namespace TR { class MethodSymbol; }
 

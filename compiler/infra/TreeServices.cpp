@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,8 +23,8 @@
 
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "il/DataTypes.hpp"             // for TR::DataType
-#include "il/Node.hpp"                  // for Node
+#include "il/DataTypes.hpp"
+#include "il/Node.hpp"
 
 bool
 TR_AddressTree::isILLoad(TR::Node * node)

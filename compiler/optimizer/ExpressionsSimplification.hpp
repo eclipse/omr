@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef EXPSIMP_INCL
 #define EXPSIMP_INCL
 
-#include <stdint.h>                           // for int32_t, uint16_t
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "il/Node.hpp"                        // for Node, vcount_t
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 class TR_BitVector;
 class TR_RegionStructure;

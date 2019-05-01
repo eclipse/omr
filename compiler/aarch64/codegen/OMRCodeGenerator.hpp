@@ -151,6 +151,18 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    const TR::ARM64LinkageProperties &getProperties() { return *_linkageProperties; }
 
    /**
+    * @brief Returns the stack pointer register
+    * @return stack pointer register
+    */
+   TR::RealRegister *getStackPointerRegister() { return _stackPtrRegister; }
+   /**
+    * @brief Sets the stack pointer register
+    * @param[in] r : stack pointer register
+    * @return stack pointer register
+    */
+   TR::RealRegister *setStackPointerRegister(TR::RealRegister *r) { return (_stackPtrRegister = r); }
+
+   /**
     * @brief Returns the method meta-data register
     * @return meta-data register
     */
@@ -161,6 +173,20 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
     * @return meta-data register
     */
    TR::RealRegister *setMethodMetaDataRegister(TR::RealRegister *r) { return (_methodMetaDataRegister = r); }
+
+   /**
+    * @brief Applies 24-bit Label relative relocation (for conditional branch)
+    * @param[in] cursor : instruction cursor
+    * @param[in] label : label
+    */
+   void apply24BitLabelRelativeRelocation(int32_t *cursor, TR::LabelSymbol *label);
+
+   /**
+    * @brief Applies 32-bit Label relative relocation (for unconditional branch)
+    * @param[in] cursor : instruction cursor
+    * @param[in] label : label
+    */
+   void apply32BitLabelRelativeRelocation(int32_t *cursor, TR::LabelSymbol *label);
 
    /**
     * @brief Status of IsOutOfLineHotPath flag
@@ -260,6 +286,17 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR_GlobalRegisterNumber _gprLinkageGlobalRegisterNumbers[TR::RealRegister::NumRegisters]; // could be smaller
    TR_GlobalRegisterNumber _fprLinkageGlobalRegisterNumbers[TR::RealRegister::NumRegisters]; // could be smaller
 
+   /**
+    * @brief Answers whether a trampoline is required for a direct call instruction to
+    *           reach a target address.
+    *
+    * @param[in] targetAddress : the absolute address of the call target
+    * @param[in] sourceAddress : the absolute address of the call instruction
+    *
+    * @return : true if a trampoline is required; false otherwise.
+    */
+   bool directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress);
+
    private:
 
    enum // flags
@@ -273,6 +310,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    uint32_t _numGPR;
    uint32_t _numFPR;
 
+   TR::RealRegister *_stackPtrRegister;
    TR::RealRegister *_methodMetaDataRegister;
    TR::ARM64ImmInstruction *_returnTypeInfoInstruction;
    TR::ConstantDataSnippet *_constantData;

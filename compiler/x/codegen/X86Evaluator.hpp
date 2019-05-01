@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,9 +24,9 @@
 
 
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for uint8_t
-#include "x/codegen/X86Ops.hpp"             // for TR_X86OpCodes
+#include <stddef.h>
+#include <stdint.h>
+#include "x/codegen/X86Ops.hpp"
 #include "codegen/TreeEvaluator.hpp"
 
 namespace TR { class CodeGenerator; }
@@ -37,39 +37,10 @@ namespace TR { class Register; }
 namespace TR { class RegisterDependencyConditions; }
 
 
-extern void constLengthArrayCopy(
-   TR::Node *node,
-   TR::CodeGenerator *cg,
-   TR::Register *byteSrcReg,
-   TR::Register *byteDstReg,
-   TR::Node *byteLenNode,
-   bool preserveSrcPointer,
-   bool preserveDstPointer);
-
-extern void genCodeToPerformLeftToRightAndBlockConcurrentOpIfNeeded(
-   TR::Node *node,
-   TR::MemoryReference *memRef,
-   TR::Register *valueReg,
-   TR::Register *tempReg,
-   TR::Register *tempReg1,
-   TR::Register *tempReg2,
-   TR::LabelSymbol *nonLockedOpLabel,
-   TR::LabelSymbol *&opDoneLabel,
-   TR::RegisterDependencyConditions *&deps,
-   uint8_t size,
-   TR::CodeGenerator *cg,
-   bool isLoad,
-   bool genOutOfline,
-   bool keepValueRegAlive = false,
-   TR::LabelSymbol *startControlFlowLabel = NULL);
-
-
-
 class TR_X86ComputeCC : public TR::TreeEvaluator
    {
    public:
 
-   static void bitwise32(TR::Node *node, TR::Register *ccReg, TR::Register *target, TR::CodeGenerator *cg);
    static bool setCarryBorrow(TR::Node *flagNode, bool invertValue, TR::CodeGenerator *cg);
 
    };

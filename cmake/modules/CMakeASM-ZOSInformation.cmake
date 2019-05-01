@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 set(CMAKE_ASM-ZOS_SOURCE_FILE_EXTENSIONS s)
 
 
-set(CMAKE_ASM-ZOS_COMPILE_OBJECT "<CMAKE_ASM-ZOS_COMPILER> <INCLUDES> <FLAGS> <DEFINES> -o <OBJECT> <SOURCE>")
+set(CMAKE_ASM-ZOS_COMPILE_OBJECT "<CMAKE_ASM-ZOS_COMPILER> -c <INCLUDES> <FLAGS> <DEFINES> -o <OBJECT> <SOURCE>")
 
 # Load the generic ASMInformation file:
 set(ASM_DIALECT "-ZOS")

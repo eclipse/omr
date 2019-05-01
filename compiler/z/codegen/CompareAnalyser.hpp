@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
 #ifndef S390COMPAREANALYSER_INCL
 #define S390COMPAREANALYSER_INCL
 
-#include <stdint.h>                   // for uint8_t
-#include "codegen/Analyser.hpp"       // for NUM_ACTIONS, TR_Analyser
-#include "codegen/CodeGenerator.hpp"  // for CodeGenerator
-#include "codegen/InstOpCode.hpp"     // for InstOpCode, etc
+#include <stdint.h>
+#include "codegen/Analyser.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/InstOpCode.hpp"
 
 namespace TR { class LabelSymbol; }
 namespace TR { class Machine; }

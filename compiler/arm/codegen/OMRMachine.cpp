@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <algorithm>                            // for std::find
+#include <algorithm>
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ARMInstruction.hpp"
@@ -147,7 +147,7 @@ TR::RealRegister *OMR::ARM::Machine::freeBestRegister(TR::Instruction     *curre
 
       for (int i  = first; i <= last; i++)
          {
-         TR::RealRegister *realReg = self()->getARMRealRegister((TR::RealRegister::RegNum)i);
+         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
          if (realReg->getState() == TR::RealRegister::Assigned)
             {
             candidates[numCandidates++] = realReg->getAssignedRegister();
@@ -964,7 +964,7 @@ OMR::ARM::Machine::createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::list<
 
    for (int32_t i = TR::RealRegister::FirstGPR; i <= endReg; i++)
       {
-      TR::RealRegister *realReg = self()->getARMRealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
       TR_ASSERT(realReg->getState() == TR::RealRegister::Assigned ||
               realReg->getState() == TR::RealRegister::Free ||
               realReg->getState() == TR::RealRegister::Locked,
@@ -982,7 +982,7 @@ OMR::ARM::Machine::createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::list<
       deps = new (self()->cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, c, self()->cg()->trMemory());
       for (int32_t j = TR::RealRegister::FirstGPR; j <= endReg; j++)
          {
-         TR::RealRegister *realReg = self()->getARMRealRegister((TR::RealRegister::RegNum)j);
+         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)j);
          if (realReg->getState() == TR::RealRegister::Assigned)
             {
             TR::Register *virtReg = realReg->getAssignedRegister();

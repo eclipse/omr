@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,47 +23,48 @@
 int jitDebugPPC;
 #else
 
-#include <stdint.h>                                // for int32_t, uint32_t, etc
-#include <string.h>                                // for NULL, strcmp, etc
-#include "codegen/CodeGenPhase.hpp"                // for CodeGenPhase, etc
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                    // for TR_FrontEnd
-#include "codegen/GCRegisterMap.hpp"               // for GCRegisterMap
-#include "codegen/InstOpCode.hpp"                  // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                 // for Instruction, etc
-#include "codegen/Machine.hpp"                     // for Machine
-#include "codegen/MemoryReference.hpp"             // for MemoryReference
-#include "codegen/RealRegister.hpp"                // for RealRegister, etc
-#include "codegen/Register.hpp"                    // for Register
+#include <stdint.h>
+#include <string.h>
+#include "codegen/CodeGenPhase.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/GCRegisterMap.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/RegisterDependencyStruct.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
-#include "compile/Compilation.hpp"                 // for Compilation
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                              // for IO
-#include "env/jittypes.h"                          // for intptrj_t
-#include "il/Block.hpp"                            // for Block
-#include "il/DataTypes.hpp"                        // for DataTypes::Double, etc
-#include "il/ILOpCodes.hpp"                        // for ILOpCodes::BBEnd, etc
-#include "il/Node.hpp"                             // for Node
-#include "il/Symbol.hpp"                           // for Symbol
-#include "il/SymbolReference.hpp"                  // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"               // for LabelSymbol
-#include "infra/Assert.hpp"                        // for TR_ASSERT
-#include "infra/List.hpp"                          // for ListIterator, etc
+#include "env/IO.hpp"
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
 #include "p/codegen/PPCHelperCallSnippet.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCOpsDefines.hpp"
 #include "p/codegen/PPCOutOfLineCodeSection.hpp"
-#include "codegen/Snippet.hpp"                     // for TR::PPCSnippet, etc
-#include "ras/Debug.hpp"                           // for TR_Debug
+#include "codegen/Snippet.hpp"
+#include "ras/Debug.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "runtime/Runtime.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
-#include "p/codegen/CallSnippet.hpp"               // for TR::PPCCallSnippet, etc
+#include "p/codegen/CallSnippet.hpp"
 #include "p/codegen/InterfaceCastSnippet.hpp"
 #include "p/codegen/StackCheckFailureSnippet.hpp"
 #endif
@@ -389,24 +390,24 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCDepImmInstruction * instr)
 bool
 TR_Debug::isBranchToTrampoline(TR::SymbolReference *symRef, uint8_t *cursor, int32_t &distance)
    {
-   void *methodAddress = symRef->getMethodAddress();
+   intptrj_t methodAddress = (intptrj_t)(symRef->getMethodAddress());
+   bool requiresTrampoline = false;
 
-   distance = (intptrj_t)methodAddress - (intptrj_t)cursor;
-
-   if (distance < BRANCH_BACKWARD_LIMIT || distance > BRANCH_FORWARD_LIMIT)
+   if (_cg->directCallRequiresTrampoline(methodAddress, (intptrj_t)cursor))
       {
-      distance = _comp->fe()->indexedTrampolineLookup(symRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
-      return true;
+      methodAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(symRef->getReferenceNumber(), (void *)cursor);
+      requiresTrampoline = true;
       }
-   return false;
+
+   distance = (int32_t)(methodAddress - (intptrj_t)cursor);
+   return requiresTrampoline;
    }
 
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::PPCDepImmSymInstruction * instr)
    {
-   intptrj_t imm = instr->getAddrImmediate();
+   intptrj_t targetAddress = instr->getAddrImmediate();
    uint8_t *cursor = instr->getBinaryEncoding();
-   intptrj_t distance = 0;
    TR::Symbol *target = instr->getSymbolReference()->getSymbol();
    TR::LabelSymbol *label = target->getLabelSymbol();
 
@@ -414,31 +415,32 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCDepImmSymInstruction * instr)
 
    if (cursor)
       {
-      distance = imm - (intptrj_t)cursor;
       if (label)
          {
-         distance = (intptrj_t)label->getCodeLocation() - (intptrj_t)cursor;
+         targetAddress = (intptrj_t)label->getCodeLocation();
          }
-      else if (imm == 0)
+      else if (targetAddress == 0)
          {
          uint8_t *jitTojitStart = _cg->getCodeStart();
 
          jitTojitStart += ((*(int32_t *)(jitTojitStart - 4)) >> 16) & 0x0000ffff;
-         distance = (intptrj_t)jitTojitStart - (intptrj_t)cursor;
+         targetAddress = (intptrj_t)jitTojitStart;
          }
-      else if (distance < BRANCH_BACKWARD_LIMIT || distance > BRANCH_FORWARD_LIMIT)
+      else if (_cg->directCallRequiresTrampoline(targetAddress, (intptrj_t)cursor))
          {
          int32_t refNum = instr->getSymbolReference()->getReferenceNumber();
          if (refNum < TR_PPCnumRuntimeHelpers)
             {
-            distance = _comp->fe()->indexedTrampolineLookup(refNum, (void *)cursor) - (intptrj_t)cursor;
+            targetAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(refNum, (void *)cursor);
             }
          else
             {
-            distance = _comp->fe()->methodTrampolineLookup(_comp, instr->getSymbolReference(), (void *)cursor) - (intptrj_t)cursor;
+            targetAddress = _comp->fe()->methodTrampolineLookup(_comp, instr->getSymbolReference(), (void *)cursor);
             }
          }
       }
+
+   intptrj_t distance = targetAddress - (intptrj_t)cursor;
 
    const char *name = target ? getName(instr->getSymbolReference()) : 0;
    if (name)
@@ -778,7 +780,7 @@ TR_Debug::printPPCGCRegisterMap(TR::FILE *pOutFile, TR::GCRegisterMap * map)
    for (int i = 31; i>=0; i--)
       {
       if (map->getMap() & (1 << i))
-         trfprintf(pOutFile, "%s ", getName(machine->getPPCRealRegister((TR::RealRegister::RegNum)(31 - i + TR::RealRegister::FirstGPR))));
+         trfprintf(pOutFile, "%s ", getName(machine->getRealRegister((TR::RealRegister::RegNum)(31 - i + TR::RealRegister::FirstGPR))));
       }
 
    trfprintf(pOutFile,"}\n");

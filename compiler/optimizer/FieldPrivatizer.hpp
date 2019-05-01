@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,13 @@
 #ifndef FIELDPRIV_INCL
 #define FIELDPRIV_INCL
 
-#include <stdint.h>                                     // for int32_t, etc
-#include "cs2/bitvectr.h"                               // for ABitVector
-#include "env/TRMemory.hpp"                             // for Allocator
-#include "il/Node.hpp"                                  // for Node, vcount_t
+#include <stdint.h>
+#include "cs2/bitvectr.h"
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
 #include "il/SymbolReference.hpp"
 #include "infra/HashTab.hpp"
-#include "infra/List.hpp"                               // for List
+#include "infra/List.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/IsolatedStoreElimination.hpp"
 #include "optimizer/LoopCanonicalizer.hpp"

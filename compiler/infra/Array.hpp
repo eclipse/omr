@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef ARRAY_INCL
 #define ARRAY_INCL
 
-#include <limits.h>          // for UINT_MAX
-#include <stdint.h>          // for uint32_t, int32_t
-#include <string.h>          // for memset, NULL, memcpy
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
-#include "infra/Assert.hpp"  // for TR_ASSERT
+#include <limits.h>
+#include <stdint.h>
+#include <string.h>
+#include "env/TRMemory.hpp"
+#include "infra/Assert.hpp"
 
 // TR_Array implements a dynamic array of objects
 //

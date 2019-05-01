@@ -46,6 +46,8 @@
 		blr,                                                    	/* 0xD63F0000	BLR       	 */
 		ret,                                                    	/* 0xD65F0000	RET       	 */
 	/* Unconditional branch (immediate) */
+		b,                                                      	/* 0x14000000	B         	 */
+		bl,                                                     	/* 0x94000000	BL        	 */
 /* Loads and stores */
 	/* Load/store exclusive */
 		stxrb,                                                  	/* 0x08000000	STXRB     	 */
@@ -310,7 +312,7 @@
 		ubfmx,                                                  	/* 0xD3400000	UBFM      	 */
 	/* Extract */
 		extrw,                                                  	/* 0x13800000	EXTR      	 */
-		extrx,                                                  	/* 0x93C00000	EXTR      	 */
+		extrx,                                                  	/* 0x93C08000	EXTR      	 */
 /* Data Processing - register */
 	/* Logical (shifted register) */
 		andw,                                                   	/* 0x0A000000	AND       	 */
@@ -419,9 +421,54 @@
 		rev16w,                                                 	/* 0xDAC00400	REV16     	 */
 		rev16x,                                                 	/* 0x5AC00400	REV16     	 */
 		rev32,                                                  	/* 0xDAC00800	REV32     	 */
-
-	/* Last VFP instructions */
+/* VFP instructions */
+	/* Floating-Point Conversion */
+		fmov_stow,                                              	/* 0x1E260000	FMOV      	 */
+		fmov_wtos,                                              	/* 0x1E270000	FMOV      	 */
+		fmov_dtox,                                              	/* 0x9E660000	FMOV      	 */
+		fmov_xtod,                                              	/* 0x9E670000	FMOV      	 */
+		fcvt_stod,                                              	/* 0x1E22C000	FCVT      	 */
+		fcvt_dtos,                                              	/* 0x1E624000	FCVT      	 */
+		fcvtzs_stow,                                            	/* 0x1E380000	FCVTZS    	 */
+		fcvtzs_dtow,                                            	/* 0x1E780000	FCVTZS    	 */
+		fcvtzs_stox,                                            	/* 0x9E380000	FCVTZS    	 */
+		fcvtzs_dtox,                                            	/* 0x9E780000	FCVTZS    	 */
+		scvtf_wtos,                                             	/* 0x1E220000	SCVTF     	 */
+		scvtf_wtod,                                             	/* 0x1E620000	SCVTF     	 */
+		scvtf_xtos,                                             	/* 0x9E220000	SCVTF     	 */
+		scvtf_xtod,                                             	/* 0x9E620000	SCVTF     	 */
+	/* Floating-Point Immediate */
+		fmovimms,                                               	/* 0x1E201000	FMOV      	 */
+		fmovimmd,                                               	/* 0x1E601000	FMOV      	 */
+	/* Floating-Point Compare */
+		fcmps,                                                  	/* 0x1E202000	FCMP      	 */
+		fcmps_zero,                                             	/* 0x1E202008	FCMP      	 */
+		fcmpd,                                                  	/* 0x1E602000	FCMP      	 */
+		fcmpd_zero,                                             	/* 0x1E602008	FCMP      	 */
+	/* Floating-Point Data-processing (1 source) */
+		fmovs,                                                  	/* 0x1E204000	FMOV      	 */
+		fmovd,                                                  	/* 0x1E604000	FMOV      	 */
+		fabss,                                                  	/* 0x1E20C000	FABS      	 */
+		fabsd,                                                  	/* 0x1E60C000	FABS      	 */
+		fnegs,                                                  	/* 0x1E214000	FNEG      	 */
+		fnegd,                                                  	/* 0x1E614000	FNEG      	 */
+	/* Floating-Point Data-processing (2 source) */
+		fadds,                                                  	/* 0x1E202800	FADD      	 */
+		faddd,                                                  	/* 0x1E602800	FADD      	 */
+		fsubs,                                                  	/* 0x1E203800	FSUB      	 */
+		fsubd,                                                  	/* 0x1E603800	FSUB      	 */
+		fmuls,                                                  	/* 0x1E200800	FMUL      	 */
+		fmuld,                                                  	/* 0x1E600800	FMUL      	 */
+		fdivs,                                                  	/* 0x1E201800	FDIV      	 */
+		fdivd,                                                  	/* 0x1E601800	FDIV      	 */
+		fmaxs,                                                  	/* 0x1E204800	FMAX      	 */
+		fmaxd,                                                  	/* 0x1E604800	FMAX      	 */
+		fmins,                                                  	/* 0x1E205800	FMIN      	 */
+		fmind,                                                  	/* 0x1E605800	FMIN      	 */
+/* Internal OpCodes */
 		proc,  // Entry to the method
+		fence, // Fence
+		retn,  // Return
 		dd,    // Define word
 		label, // Destination of a jump
 		ARM64LastOp = label,

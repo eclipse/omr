@@ -68,6 +68,7 @@ class GlobalValuePropagation : public TR::ValuePropagation
    void getImproperRegionStores(TR_StructureSubGraphNode *node, ValueConstraints &stores);
    bool buildInputConstraints(TR::CFGNode *node);
    void propagateOutputConstraints(TR_StructureSubGraphNode *node, bool lastTimeThrough, bool isNaturalLoop, List<TR::CFGEdge> &outEdges1, List<TR::CFGEdge> *outEdges2);
+   TR_BitVector *mergeDefinedOnAllPaths(TR_StructureSubGraphNode *node);
    // Blocks not included in this set will be skipped for speed.
    // NULL bitvector means the info is unavailable, and all blocks should be processed.
    //

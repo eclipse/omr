@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,12 +24,12 @@
 
 #include "codegen/TableOfConstants.hpp"
 
-#include <stddef.h>                      // for NULL
-#include <stdint.h>                      // for int32_t, int8_t, uint32_t, etc
-#include <sys/mman.h>                    // for use munmap in destructor
-#include "env/TRMemory.hpp"              // for TR_Memory, etc
-#include "env/jittypes.h"                // for uintptrj_t, intptrj_t
-#include "infra/Monitor.hpp"             // for Monitor
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/mman.h>
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "infra/Monitor.hpp"
 
 class TR_FrontEnd;
 namespace TR { class CodeGenerator; }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,14 +22,14 @@
 #ifndef TR_CFGNODE_INCL
 #define TR_CFGNODE_INCL
 
-#include <limits.h>             // for SHRT_MAX
-#include <stddef.h>             // for NULL
-#include <stdint.h>             // for int32_t, int16_t
-#include "env/TRMemory.hpp"     // for TR_Memory, etc
-#include "il/Node.hpp"          // for vcount_t
-#include "infra/Link.hpp"       // for TR_Link1
-#include "infra/List.hpp"       // for List
-#include "infra/CfgEdge.hpp"    // for CFGEdge
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
 #include "infra/forward_list.hpp"
 class TR_StructureSubGraphNode;
 namespace TR { class Block; }

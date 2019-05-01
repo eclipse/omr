@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,13 @@
 #ifndef TR_CFGEDGE_INCL
 #define TR_CFGEDGE_INCL
 
-#include <limits.h>          // for SHRT_MAX
-#include <stddef.h>          // for NULL
-#include <stdint.h>          // for int32_t, int16_t
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
-#include "il/Node.hpp"       // for vcount_t
-#include "infra/Flags.hpp"   // for flags16_t
-#include "infra/Link.hpp"    // for TR_Link
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
 
 namespace TR { class CFGNode; }
 

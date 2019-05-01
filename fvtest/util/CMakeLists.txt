@@ -23,6 +23,12 @@ add_library(omrtestutil STATIC
 	printerrorhelper.cpp
 	testvmhelper.cpp
 )
+
+target_link_libraries(omrtestutil
+	PUBLIC
+		omr_base
+)
+
 if(OMR_WARNINGS_AS_ERRORS)
 	target_compile_options(omrtestutil PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
 endif()

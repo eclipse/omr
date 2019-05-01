@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,21 +22,21 @@
 #ifndef OMR_SIMPLIFIER_INCL
 #define OMR_SIMPLIFIER_INCL
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for int32_t, uint32_t, etc
-#include "cs2/hashtab.h"                      // for HashTable
-#include "env/IO.hpp"                         // for POINTER_PRINTF_FORMAT
-#include "env/TRMemory.hpp"                   // for Allocator
-#include "il/DataTypes.hpp"                   // for DataTypes, etc
-#include "il/ILOpCodes.hpp"                   // for ILOpCodes
-#include "il/ILOps.hpp"                       // for ILOpCode
-#include "il/Node.hpp"                        // for Node, etc
-#include "il/Node_inlines.hpp"                // for Node::getFirstChild, etc
-#include "infra/Assert.hpp"                   // for TR_ASSERT
-#include "infra/Checklist.hpp"                // for {Node,Block}Checklist
-#include "infra/HashTab.hpp"                  // for TR_HashTabInt
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include <stddef.h>
+#include <stdint.h>
+#include "cs2/hashtab.h"
+#include "env/IO.hpp"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Checklist.hpp"
+#include "infra/HashTab.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 class TR_RegionStructure;
 class TR_UseDefInfo;

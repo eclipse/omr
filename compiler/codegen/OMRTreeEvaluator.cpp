@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,35 +21,35 @@
 
 #include "codegen/OMRTreeEvaluator.hpp"
 
-#include <stdint.h>                            // for uint64_t, etc
-#include <stdio.h>                             // for NULL, printf, etc
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, etc
-#include "codegen/Register.hpp"                // for Register
+#include <stdint.h>
+#include <stdio.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/Compilation.hpp"             // for Compilation
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
+#include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
-#include "il/Block.hpp"                        // for Block
+#include "il/Block.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                       // for Symbol
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                      // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
-#include "infra/List.hpp"                      // for ListIterator, etc
+#include "infra/List.hpp"
 #include "infra/TreeServices.hpp"
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "ras/Debug.hpp"
 
 bool OMR::TreeEvaluator::isStaticClassSymRef(TR::SymbolReference * symRef)
    {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,17 +31,17 @@ namespace OMR { class Optimization; }
 namespace OMR { typedef OMR::Optimization OptimizationConnector; }
 #endif
 
-#include <stddef.h>                                   // for NULL
-#include <stdint.h>                                   // for int32_t
-#include "compile/Compilation.hpp"                    // for Compilation
-#include "env/TRMemory.hpp"                           // for Allocator, Allocatable, etc
-#include "il/ILOpCodes.hpp"                           // for ILOpCodes
-#include "infra/Assert.hpp"                           // for TR_ASSERT
-#include "infra/Random.hpp"                           // for TR_HasRandomGenerator
-#include "optimizer/OptimizationManager.hpp"          // for OptimizationManager
-#include "optimizer/OptimizationManager_inlines.hpp"  // for OptimizationManager::self, etc
-#include "optimizer/Optimizations.hpp"                // for Optimizations, etc
-#include "optimizer/Optimizer.hpp"                    // for Optimizer
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/ILOpCodes.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Random.hpp"
+#include "optimizer/OptimizationManager.hpp"
+#include "optimizer/OptimizationManager_inlines.hpp"
+#include "optimizer/Optimizations.hpp"
+#include "optimizer/Optimizer.hpp"
 class TR_Debug;
 class TR_FrontEnd;
 namespace TR { class SymbolReferenceTable; }

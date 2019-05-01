@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,17 +19,17 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/CodeGenerator.hpp"                  // for CodeGenerator, etc
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RegisterPair.hpp"                   // for RegisterPair
+#include "codegen/RegisterPair.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "il/ILOpCodes.hpp"                           // for ILOpCodes, etc
-#include "il/ILOps.hpp"                               // for ILOpCode
-#include "il/Node.hpp"                                // for Node, etc
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "infra/Assert.hpp"                           // for TR_ASSERT
+#include "infra/Assert.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                       // for ::LABEL, ::JE4, etc
+#include "x/codegen/X86Ops.hpp"
 
 namespace TR { class Instruction; }
 

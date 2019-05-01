@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,15 +21,15 @@
 
 #include "x/codegen/DivideCheckSnippet.hpp"
 
-#include <stddef.h>                      // for NULL
-#include "codegen/CodeGenerator.hpp"     // for CodeGenerator
-#include "codegen/Machine.hpp"           // for Machine
-#include "codegen/RealRegister.hpp"      // for RealRegister, etc
-#include "il/ILOps.hpp"                  // for TR::ILOpCode
-#include "il/symbol/LabelSymbol.hpp"     // for LabelSymbol
-#include "ras/Debug.hpp"                 // for TR_Debug
-#include "codegen/X86Instruction.hpp"  // for TR::X86RegRegInstruction
-#include "x/codegen/X86Ops.hpp"          // for ::JNE4, ::CMP4RegImms, etc
+#include <stddef.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
+#include "il/ILOps.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "ras/Debug.hpp"
+#include "codegen/X86Instruction.hpp"
+#include "x/codegen/X86Ops.hpp"
 #include "x/codegen/X86Ops_inlines.hpp"
 #include "env/IO.hpp"
 #include "env/CompilerEnv.hpp"

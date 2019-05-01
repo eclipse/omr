@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ namespace OMR { typedef OMR::ARM::CompilerEnv CompilerEnvConnector; }
 #endif
 
 #include "compiler/env/OMRCompilerEnv.hpp"
-#include "infra/Annotations.hpp"  // for OMR_EXTENSIBLE
+#include "infra/Annotations.hpp"
 #include "env/RawAllocator.hpp"
 
 

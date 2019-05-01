@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,48 +21,47 @@
 
 #include "codegen/X86Instruction.hpp"
 
-#include <stddef.h>                                   // for NULL
-#include <stdint.h>                                   // for int32_t, etc
-#include "codegen/CodeGenerator.hpp"                  // for CodeGenerator, etc
-#include "codegen/Instruction.hpp"                    // for Instruction, etc
-#include "codegen/Linkage.hpp"                        // for Linkage
-#include "codegen/Machine.hpp"                        // for Machine
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"                   // for RealRegister, etc
-#include "codegen/Register.hpp"                       // for Register
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/RegisterDependencyStruct.hpp"
 #include "codegen/RegisterRematerializationInfo.hpp"
 #include "codegen/Relocation.hpp"
-#include "codegen/Snippet.hpp"                        // for Snippet, etc
+#include "codegen/Snippet.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
-#include "compile/Compilation.hpp"                    // for Compilation
+#include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                             // for uintptrj_t
-#include "il/Block.hpp"                               // for Block
-#include "il/ILOpCodes.hpp"                           // for ILOpCodes, etc
-#include "il/ILOps.hpp"                               // for ILOpCode
-#include "il/Node.hpp"                                // for Node, etc
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                              // for Symbol
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                             // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"                  // for LabelSymbol
-#include "infra/Assert.hpp"                           // for TR_ASSERT
-#include "infra/List.hpp"                             // for List, etc
-#include "ras/Debug.hpp"                              // for TR_DebugBase
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
 #include "runtime/Runtime.hpp"
 #ifdef J9_PROJECT_SPECIFIC
 #include "x/codegen/GuardedDevirtualSnippet.hpp"
 #endif
 #include "x/codegen/OutlinedInstructions.hpp"
-#include "x/codegen/X86Ops.hpp"                       // for TR_X86OpCodes, etc
+#include "x/codegen/X86Ops.hpp"
 #include "x/codegen/X86Register.hpp"
 
 class TR_VirtualGuardSite;
@@ -154,62 +153,62 @@ TR::RealRegister *assignGPRegister(TR::Instruction   *instr,
 ////////////////////////////////////////////////////////////////////////////////
 // TR::X86LabelInstruction:: member functions
 ////////////////////////////////////////////////////////////////////////////////
-
-TR::X86LabelInstruction::X86LabelInstruction(TR_X86OpCodes    op,
-                                                 TR::Node          *node,
-                                                 TR::LabelSymbol    *sym,
-                                                 TR::CodeGenerator *cg,
-                                                 bool b)
-  : TR::Instruction(node, op, cg), _symbol(sym),_needToClearFPStack(b), _outlinedInstructionBranch(NULL), _reloType(TR_NoRelocation), _permitShortening(true)
+void TR::X86LabelInstruction::initialize(TR::LabelSymbol* sym, bool b)
    {
-   if (sym && op == LABEL)
+   _symbol = sym;
+   _needToClearFPStack = b;
+   _outlinedInstructionBranch = NULL;
+   _reloType = TR_NoRelocation;
+   _permitShortening = true;
+   if (sym && self()->getOpCodeValue() == LABEL)
       sym->setInstruction(this);
    else if (sym)
       sym->setDirectlyTargeted();
    }
 
-TR::X86LabelInstruction::X86LabelInstruction(TR::Instruction   *precedingInstruction,
-                                                 TR_X86OpCodes    op,
-                                                 TR::LabelSymbol    *sym,
-                                                 TR::CodeGenerator *cg,
-                                                 bool b)
-  : TR::Instruction(op, precedingInstruction, cg), _symbol(sym), _needToClearFPStack(b), _outlinedInstructionBranch(NULL), _reloType(TR_NoRelocation), _permitShortening(true)
+TR::X86LabelInstruction::X86LabelInstruction(TR_X86OpCodes      op,
+                                             TR::Node*          node,
+                                             TR::LabelSymbol*   sym,
+                                             TR::CodeGenerator* cg,
+                                             bool               b)
+  : TR::Instruction(node, op, cg)
    {
-   if (sym && op == LABEL)
-      sym->setInstruction(this);
-   else if (sym)
-      sym->setDirectlyTargeted();
+   initialize(sym, b);
    }
 
-TR::X86LabelInstruction::X86LabelInstruction(TR_X86OpCodes                       op,
-                                                 TR::Node                             *node,
-                                                 TR::LabelSymbol                       *sym,
-                                                 TR::RegisterDependencyConditions  *cond,
-                                                 TR::CodeGenerator                    *cg,
-                                                 bool b)
-  : TR::Instruction(cond, node, op, cg), _symbol(sym), _needToClearFPStack(b), _outlinedInstructionBranch(NULL), _reloType(TR_NoRelocation), _permitShortening(true)
+TR::X86LabelInstruction::X86LabelInstruction(TR::Instruction*   precedingInstruction,
+                                             TR_X86OpCodes      op,
+                                             TR::LabelSymbol*   sym,
+                                             TR::CodeGenerator* cg,
+                                             bool               b)
+  : TR::Instruction(op, precedingInstruction, cg)
    {
-   if (sym && op == LABEL)
-      sym->setInstruction(this);
-   else if (sym)
-      sym->setDirectlyTargeted();
+   initialize(sym, b);
    }
 
-TR::X86LabelInstruction::X86LabelInstruction(TR::Instruction                      *precedingInstruction,
-                                                 TR_X86OpCodes                       op,
-                                                 TR::LabelSymbol                       *sym,
-                                                 TR::RegisterDependencyConditions  *cond,
-                                                 TR::CodeGenerator                    *cg,
-                                                 bool b)
-  : TR::Instruction(cond, op, precedingInstruction, cg), _symbol(sym), _needToClearFPStack(b), _outlinedInstructionBranch(NULL), _reloType(TR_NoRelocation), _permitShortening(true)
+TR::X86LabelInstruction::X86LabelInstruction(TR_X86OpCodes                     op,
+                                             TR::Node*                         node,
+                                             TR::LabelSymbol*                  sym,
+                                             TR::RegisterDependencyConditions* cond,
+                                             TR::CodeGenerator*                cg,
+                                             bool                              b)
+  : TR::Instruction(cond, node, op, cg)
    {
-   if (sym && op == LABEL)
-      sym->setInstruction(this);
-   else if (sym)
-      sym->setDirectlyTargeted();
+   initialize(sym, b);
    }
 
-TR::X86LabelInstruction  *TR::X86LabelInstruction::getIA32LabelInstruction()
+TR::X86LabelInstruction::X86LabelInstruction(TR::Instruction*                  precedingInstruction,
+                                             TR_X86OpCodes                     op,
+                                             TR::LabelSymbol*                  sym,
+                                             TR::RegisterDependencyConditions* cond,
+                                             TR::CodeGenerator*                cg,
+                                             bool                              b)
+  : TR::Instruction(cond, op, precedingInstruction, cg)
+   {
+   initialize(sym, b);
+   }
+
+TR::X86LabelInstruction  *TR::X86LabelInstruction::getX86LabelInstruction()
    {
    return this;
    }
@@ -273,10 +272,6 @@ void TR::X86LabelInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned
       {
       if (getDependencyConditions())
          {
-         // No way to know why a regdep is on a label, so we must be conservative
-         //
-         aboutToAssignRegDeps(TR_always);
-
          // ----------------------
          // Assign post conditions
          // ----------------------
@@ -483,7 +478,7 @@ TR::X86ImmInstruction::X86ImmInstruction(TR::Instruction                     *pr
 // The following safe virtual downcast method is only used in an assertion
 // check within "toIA32ImmInstruction"
 //
-TR::X86ImmInstruction  *TR::X86ImmInstruction::getIA32ImmInstruction()
+TR::X86ImmInstruction  *TR::X86ImmInstruction::getX86ImmInstruction()
    {
    return this;
    }
@@ -648,7 +643,7 @@ TR::X86RegInstruction::X86RegInstruction(TR::Instruction                      *p
    getOpCode().trackUpperBitsOnReg(reg, cg);
    }
 
-TR::X86RegInstruction  *TR::X86RegInstruction::getIA32RegInstruction()
+TR::X86RegInstruction  *TR::X86RegInstruction::getX86RegInstruction()
    {
    return this;
    }
@@ -697,9 +692,6 @@ bool TR::X86RegInstruction::usesRegister(TR::Register *reg)
 
 void TR::X86RegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   aboutToAssignRegDeps();
-   aboutToAssignTargetRegister();
-
    if (getDependencyConditions())
       {
       getTargetRegister()->block();
@@ -850,10 +842,6 @@ bool TR::X86RegRegInstruction::usesRegister(TR::Register *reg)
 
 void TR::X86RegRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   aboutToAssignRegDeps();
-   aboutToAssignTargetRegister();
-   aboutToAssignSourceRegister();
-
    if (getDependencyConditions())
       {
       if ((cg()->getAssignmentDirection() == cg()->Backward))
@@ -889,22 +877,6 @@ void TR::X86RegRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigne
 
       bool regRegCopy = isRegRegMove();
       TR_X86OpCodes opCode = getOpCodeValue();
-      static char* useOutOfDateRegRegMoveList = feGetEnv("TR_UseOutOfDateRegRegMoveList");
-      if (useOutOfDateRegRegMoveList)
-         {
-         if (opCode == MOVAPSRegReg ||
-             opCode == MOV8RegReg   ||
-             opCode == MOV4RegReg   ||
-             opCode == MOV2RegReg   ||
-             opCode == MOV1RegReg)
-            {
-            regRegCopy = true;
-            }
-         else
-            {
-            regRegCopy = false;
-            }
-         }
 
       if (getDependencyConditions())
          {
@@ -1153,7 +1125,8 @@ void
 TR::X86RegImmSymInstruction::autoSetReloKind()
    {
    TR::Symbol *symbol = getSymbolReference()->getSymbol();
-   if (symbol->isConst())
+   if (symbol->isConst() ||
+       symbol->isConstantPoolAddress())
       {
       setReloKind(TR_ConstantPool);
       }
@@ -1298,11 +1271,6 @@ bool TR::X86RegRegRegInstruction::usesRegister(TR::Register *reg)
 
 void TR::X86RegRegRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   aboutToAssignRegDeps();
-   aboutToAssignTargetRegister();
-   aboutToAssignSourceRegister();
-   aboutToAssignSource2ndRegister();
-
    if ((cg()->getAssignmentDirection() == cg()->Backward))
       {
       if (getDependencyConditions())
@@ -1332,10 +1300,6 @@ void TR::X86RegRegRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssi
       firstRegister  = getTargetRegister();
       secondRegister = getSourceRegister();
       thirdRegister  = getSource2ndRegister();
-
-      aboutToAssignRegister(firstRegister,  TR_ifUses64bitTarget, TR_ifModifies32or64bitTarget);
-      aboutToAssignRegister(secondRegister, TR_if64bitSource,     TR_ifModifies32or64bitSource);
-      aboutToAssignRegister(thirdRegister,  TR_if64bitSource,     TR_ifModifies32or64bitSource);
 
       secondRegister->block();
       thirdRegister->block();
@@ -1518,7 +1482,7 @@ void insertUnresolvedReferenceInstructionMemoryBarrier(TR::CodeGenerator *cg, in
          {
          //generate LOCK OR dword ptr [esp], 0
          padInst = generateAlignmentInstruction(inst, 8, cg);
-         TR::RealRegister *espReal = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+         TR::RealRegister *espReal = cg->machine()->getRealRegister(TR::RealRegister::esp);
          TR::MemoryReference *espMemRef = generateX86MemoryReference(espReal, 0, cg);
          fenceInst = new (cg->trHeapMemory()) TR::X86MemImmInstruction(padInst, fenceOp.getOpCodeValue(), espMemRef, 0, cg);
          }
@@ -1710,9 +1674,6 @@ TR::Snippet *TR::X86MemInstruction::getSnippetForGC()
 
 void TR::X86MemInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   aboutToAssignRegDeps();
-   aboutToAssignMemRef(getMemoryReference());
-
    if (getDependencyConditions())
       {
       getMemoryReference()->blockRegisters();
@@ -1818,12 +1779,8 @@ TR::X86CallMemInstruction::X86CallMemInstruction(TR_X86OpCodes                  
 
 void TR::X86CallMemInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   aboutToAssignRegDeps();
-   aboutToAssignMemRef(getMemoryReference());
-
    if ((cg()->getAssignmentDirection() == cg()->Backward))
       {
-      aboutToAssignRegDeps(TR_always);
       if (getDependencyConditions())
          {
          getMemoryReference()->blockRegisters();
@@ -1987,10 +1944,6 @@ bool TR::X86MemRegInstruction::usesRegister(TR::Register *reg)
 
 void TR::X86MemRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   aboutToAssignRegDeps();
-   aboutToAssignSourceRegister();
-   aboutToAssignMemRef(getMemoryReference());
-
    if ((cg()->getAssignmentDirection() == cg()->Backward))
       {
       if (getDependencyConditions())
@@ -2014,8 +1967,8 @@ void TR::X86MemRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigne
              (getMemoryReference()->getIndexRegister() == cg()->getVMThreadRegister()))
             {
             blockedEbp = true;
-            oldState = cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->getState();
-            cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->setState(TR::RealRegister::Locked); //(TR::RealRegister::Locked);
+            oldState = cg()->machine()->getRealRegister(TR::RealRegister::ebp)->getState();
+            cg()->machine()->getRealRegister(TR::RealRegister::ebp)->setState(TR::RealRegister::Locked); //(TR::RealRegister::Locked);
             }
          getMemoryReference()->blockRegisters();
          if (getDependencyConditions())
@@ -2074,15 +2027,15 @@ void TR::X86MemRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigne
             switch (oldState)
                {
                case TR::RealRegister::Free :
-                  cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Free); break;
+                  cg()->machine()->getRealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Free); break;
                case TR::RealRegister::Unlatched :
-                  cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Unlatched); break;
+                  cg()->machine()->getRealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Unlatched); break;
                case TR::RealRegister::Assigned :
-                  cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Assigned); break;
+                  cg()->machine()->getRealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Assigned); break;
                case TR::RealRegister::Blocked :
-                  cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Blocked); break;
+                  cg()->machine()->getRealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Blocked); break;
                case TR::RealRegister::Locked :
-                  cg()->machine()->getX86RealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Locked); break;
+                  cg()->machine()->getRealRegister(TR::RealRegister::ebp)->resetState(TR::RealRegister::Locked); break;
                }
             }
 
@@ -2281,10 +2234,6 @@ TR::Snippet *TR::X86RegMemInstruction::getSnippetForGC()
 
 void TR::X86RegMemInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   aboutToAssignRegDeps();
-   aboutToAssignTargetRegister();
-   aboutToAssignMemRef(getMemoryReference());
-
    if (getDependencyConditions())
       {
       if (cg()->getAssignmentDirection() == cg()->Backward)
@@ -2498,11 +2447,6 @@ bool TR::X86RegRegMemInstruction::usesRegister(TR::Register *reg)
 
 void TR::X86RegRegMemInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   aboutToAssignRegDeps();
-   aboutToAssignTargetRegister();
-   aboutToAssignSource2ndRegister();
-   aboutToAssignMemRef(getMemoryReference());
-
    if ((cg()->getAssignmentDirection() == cg()->Backward))
       {
       if (getDependencyConditions())
@@ -3965,7 +3909,7 @@ TR::AMD64RegImm64SymInstruction::autoSetReloKind()
    TR::Symbol *symbol = getSymbolReference()->getSymbol();
    if (symbol->isDebugCounter())
       setReloKind(TR_DebugCounter);
-   else if (symbol->isConst())
+   else if (symbol->isConst() || symbol->isConstantPoolAddress())
       setReloKind(TR_ConstantPool);
    else if (symbol->isStatic() && !getSymbolReference()->isUnresolved() && !symbol->isClassObject() && !symbol->isNotDataAddress())
       setReloKind(TR_DataAddress);
@@ -3976,6 +3920,12 @@ TR::AMD64RegImm64SymInstruction::autoSetReloKind()
 ////////////////////////////////////////////////////////////////////////////////
 // Generate methods
 ////////////////////////////////////////////////////////////////////////////////
+
+TR::Instruction  *
+generateInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::Instruction(op, prev, cg);
+   }
 
 TR::Instruction  *
 generateInstruction(TR_X86OpCodes op, TR::Node * node, TR::CodeGenerator *cg)
@@ -4215,18 +4165,6 @@ generateLongLabelInstruction(TR_X86OpCodes                       op,
    }
 
 TR::X86LabelInstruction  *
-generateLongLabelInstruction(TR_X86OpCodes     op,
-                             TR::Node          *node,
-                             TR::LabelSymbol    *sym,
-                             bool              needsVMThreadRegister,
-                             TR::CodeGenerator *cg)
-   {
-   TR::X86LabelInstruction *instr = new (cg->trHeapMemory()) TR::X86LabelInstruction(op, node, sym, cg);
-   instr->prohibitShortening();
-   return instr;
-   }
-
-TR::X86LabelInstruction  *
 generateLabelInstruction(TR_X86OpCodes     opCode,
                          TR::Node           *node,
                          TR::LabelSymbol     *label,
@@ -4320,7 +4258,7 @@ generateConditionalJumpInstruction(
       }
    else
       {
-      inst = generateLabelInstruction(opCode, ifNode, destinationLabel, false, cg);
+      inst = generateLabelInstruction(opCode, ifNode, destinationLabel, cg);
       }
 
    return inst;
@@ -4353,7 +4291,7 @@ generateVirtualGuardNOPInstruction(TR::Instruction *i, TR::Node * node, TR_Virtu
 
 bool TR::X86VirtualGuardNOPInstruction::usesRegister(TR::Register *reg)
    {
-   if (_nopSize > 0 && cg()->machine()->getX86RealRegister(_register) == reg)
+   if (_nopSize > 0 && cg()->machine()->getRealRegister(_register) == reg)
       return true;
    if (getDependencyConditions())
       return getDependencyConditions()->usesRegister(reg);

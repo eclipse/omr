@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,15 +22,15 @@
 #ifndef ARMCONSTANTDATASNIPPET_INCL
 #define ARMCONSTANTDATASNIPPET_INCL
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for uint8_t, int32_t, etc
-#include "codegen/CodeGenerator.hpp"        // for CodeGenerator
-#include "codegen/Instruction.hpp"          // for Instruction
-#include "env/jittypes.h"                   // for intptrj_t
-#include "env/TRMemory.hpp"                 // for TR_Memory, etc
-#include "il/DataTypes.hpp"                 // for DataTypes
-#include "infra/Array.hpp"                  // for TR_Array
-#include "infra/List.hpp"                   // for List
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Instruction.hpp"
+#include "env/jittypes.h"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "infra/Array.hpp"
+#include "infra/List.hpp"
 
 namespace TR { class Node; }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@ namespace OMR { typedef OMR::Z::CPU CPUConnector; }
 #endif
 
 #include "compiler/env/OMRCPU.hpp"
+#include "env/jittypes.h"
 #include "env/ProcessorInfo.hpp"
 
 namespace OMR
@@ -70,9 +71,11 @@ public:
 
    bool getS390SupportsZ14() { return false; }
 
+   bool getS390SupportsZ15() { return false; }
+
    bool getS390SupportsZNext() { return false; }
 
-   bool getS390SupportsHPRDebug() { return false; }
+   bool getS390SupportsHPR() { return false; }
 
    bool getS390SupportsDFP() { return false; }
 
@@ -83,11 +86,29 @@ public:
    bool getS390SupportsRI() { return false; }
 
    bool getS390SupportsVectorFacility() { return false; }
-   
+
    bool getS390SupportsGuardedStorageFacility() { return false; }
 
    TR_S390MachineType getS390MachineType() const { return _s390MachineType; }
    void setS390MachineType(TR_S390MachineType t) { _s390MachineType = t; }
+
+   /**
+    * @brief Answers whether the distance between a target and source address
+    *        is within the reachable displacement range for a branch relative
+    *        RIL-format instruction.
+    *
+    * @param[in] : targetAddress : the address of the target
+    *
+    * @param[in] : sourceAddress : the address of the branch relative RIL-format
+    *                 instruction from which the displacement range is measured.
+    *
+    * @return true if the target is within range; false otherwise.
+    */
+   bool isTargetWithinBranchRelativeRILRange(intptrj_t targetAddress, intptrj_t sourceAddress)
+      {
+      return (targetAddress == sourceAddress + ((intptrj_t)((int32_t)((targetAddress - sourceAddress)/2)))*2) &&
+             (targetAddress % 2 == 0);
+      }
 
 private:
 

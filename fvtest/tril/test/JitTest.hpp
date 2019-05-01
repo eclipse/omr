@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,12 @@
 #define JITTEST_HPP
 
 #include <gtest/gtest.h>
+#include "ilgen/MethodBuilder.hpp"
 #include "Jit.hpp"
+
+bool initializeJit();
+int32_t compileMethodBuilder(TR::MethodBuilder * methodBuilder, void ** entryPoint);
+void shutdownJit();
 
 namespace Tril {
 namespace Test {

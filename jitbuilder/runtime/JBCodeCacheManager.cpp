@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,4 +103,14 @@ JitBuilder::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
    TR::CodeCacheMemorySegment *memSegment = (TR::CodeCacheMemorySegment *) ((size_t)memorySlab + codeCacheSizeToAllocate - sizeof(TR::CodeCacheMemorySegment));
    new (memSegment) TR::CodeCacheMemorySegment(memorySlab, reinterpret_cast<uint8_t *>(memSegment));
    return memSegment;
+   }
+
+void
+JitBuilder::CodeCacheManager::freeCodeCacheSegment(TR::CodeCacheMemorySegment * memSegment)
+   {
+#if defined(OMR_OS_WINDOWS)
+   VirtualFree(memSegment->_base, 0, MEM_RELEASE); // second arg must be zero when calling with MEM_RELEASE
+#else
+   munmap(memSegment->_base, memSegment->_top - memSegment->_base + sizeof(TR::CodeCacheMemorySegment));
+#endif
    }

@@ -432,6 +432,12 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
     * @return true when it uses the register
     */
    bool usesRegister(TR::Register *r);
+
+   /**
+    * @brief Increment totalUseCounts of registers in the RegisterDependencyConditions
+    * @param[in] cg : CodeGenerator
+    */
+   void incRegisterTotalUseCounts(TR::CodeGenerator *cg);
    };
 
 } // ARM64

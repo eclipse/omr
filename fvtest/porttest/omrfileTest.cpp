@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4784,10 +4784,26 @@ exit:
 	reportTestExit(OMRPORTLIB, testName);
 }
 
+/**
+ * Verify omrfile_lastmod() returns -1 on an invalid file.
+ * @ref omrfile.c::omrfile_lastmod "omrfile_lastmod()"
+ */
+TEST_F(PortFileTest2, lastmod_failedToFindFile)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+	const char *testName = APPEND_ASYNC(lastmod_failedToFindFile);
 
+	reportTestEntry(OMRPORTLIB, testName);
 
+	const char *fileName = "lastmod_failedToFindFile.tst";
+	omrfile_unlink(fileName);
 
-
+	int rc = omrfile_lastmod(fileName);
+	if (rc != -1) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_lastmod() did not return -1 on an invalid file.");
+	}
+	reportTestExit(OMRPORTLIB, testName);
+}
 
 /**
  * Verify port file system.

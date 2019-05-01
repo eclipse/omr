@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,7 @@ typedef enum MM_GCPolicy {
 #define OMR_GC_READ_BARRIER_TYPE_ILLEGAL 0x0
 #define OMR_GC_READ_BARRIER_TYPE_NONE 0x1
 #define OMR_GC_READ_BARRIER_TYPE_ALWAYS 0x2
-#define OMR_GC_READ_BARRIER_TYPE_EVACUATE 0x3
+#define OMR_GC_READ_BARRIER_TYPE_RANGE_CHECK 0x3
 #define OMR_GC_READ_BARRIER_TYPE_COUNT 0x4
 
 typedef enum MM_GCWriteBarrierType {
@@ -84,7 +84,7 @@ typedef enum MM_GCWriteBarrierType {
 typedef enum MM_GCReadBarrierType {
 	gc_modron_readbar_illegal = OMR_GC_READ_BARRIER_TYPE_ILLEGAL,
 	gc_modron_readbar_none = OMR_GC_READ_BARRIER_TYPE_NONE,
-	gc_modron_readbar_evacuate = OMR_GC_READ_BARRIER_TYPE_EVACUATE,
+	gc_modron_readbar_range_check = OMR_GC_READ_BARRIER_TYPE_RANGE_CHECK,
 	gc_modron_readbar_always = OMR_GC_READ_BARRIER_TYPE_ALWAYS,
 	gc_modron_readbar_count = OMR_GC_READ_BARRIER_TYPE_COUNT
 } MM_GCReadBarrierType;
@@ -371,7 +371,10 @@ typedef enum {
 	UNLOADING_CLASSES,
 	EXPAND_FAILED,
 	ABORTED_SCAVENGE,
-	CRITICAL_REGIONS
+	CRITICAL_REGIONS,
+	CONCURRENT_MARK_EXHAUSTED,
+	PREVENT_TENURE_EXPAND,
+	MET_PROJECTED_TENURE_MAX_FREE
 } PercolateReason;
 /**
  * @}
@@ -403,7 +406,8 @@ typedef enum {
 	SCAV_RATIO_TOO_HIGH,
 	SATISFY_COLLECTOR,
 	EXPAND_DESPERATE,
-	FORCED_NURSERY_EXPAND
+	FORCED_NURSERY_EXPAND,
+	HINT_PREVIOUS_RUNS
 } ExpandReason;
 
 typedef enum {
@@ -462,10 +466,10 @@ typedef enum {
 #define J9VMGC_SIZECLASSES_LOG_SMALLEST 0x4
 
 /* Default object age for generational collectors */
-#define J9_OBJECT_HEADER_AGE_DEFAULT 0xA
+#define OMR_OBJECT_HEADER_AGE_DEFAULT 0x9
 
-#define J9_SCV_TENURE_RATIO_LOW 10
-#define J9_SCV_TENURE_RATIO_HIGH 30
+#define OMR_SCV_TENURE_RATIO_LOW 10
+#define OMR_SCV_TENURE_RATIO_HIGH 30
 #define OMR_SCV_REMSET_FRAGMENT_SIZE 32
 #define OMR_SCV_REMSET_SIZE 16384
 
@@ -496,7 +500,6 @@ typedef enum {
 #define PREFERRED_HEAP_BASE 0x0
 #endif
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
 #define SUBALLOCATOR_INITIAL_SIZE (200*1024*1024)
 #define SUBALLOCATOR_COMMIT_SIZE (50*1024*1024)
 #if defined(AIXPPC)
@@ -505,7 +508,6 @@ typedef enum {
 #else /* defined(AIXPPC) */
 #define SUBALLOCATOR_ALIGNMENT (8*1024*1024)
 #endif /* defined(AIXPPC) */
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 #if defined(OMR_GC_REALTIME)
 #define METRONOME_DEFAULT_HRT_PERIOD_MICRO 1000 /* This gives vanilla linux a chance to use the HRT */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,19 +22,19 @@
 #ifndef USEDEFINFO_INCL
 #define USEDEFINFO_INCL
 
-#include <stddef.h>                 // for NULL
-#include <stdint.h>                 // for int32_t, uint32_t, intptr_t
-#include "compile/Compilation.hpp"  // for Compilation
-#include "cs2/bitvectr.h"           // for ABitVector
-#include "cs2/sparsrbit.h"          // for ASparseBitVector
-#include "env/TRMemory.hpp"         // for Allocator, SparseBitVector, etc
-#include "il/Node.hpp"              // for Node, scount_t
-#include "il/Symbol.hpp"            // for Symbol
-#include "il/SymbolReference.hpp"   // for SymbolReference
-#include "infra/Assert.hpp"         // for TR_ASSERT
-#include "infra/deque.hpp"          // for TR::deque
-#include "infra/vector.hpp"         // for TR::vector
-#include "infra/TRlist.hpp"         // for TR::list
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "cs2/bitvectr.h"
+#include "cs2/sparsrbit.h"
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
+#include "infra/deque.hpp"
+#include "infra/vector.hpp"
+#include "infra/TRlist.hpp"
 
 class TR_ReachingDefinitions;
 class TR_ValueNumberInfo;

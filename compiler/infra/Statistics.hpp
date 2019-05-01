@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
 #ifndef _STATISTICS_HPP__
 #define _STATISTICS_HPP__
 
-#include <math.h>            // for sqrt
-#include <stdio.h>           // for fprintf, fputs, FILE, fputc, sprintf
-#include <string.h>          // for strncpy, memset
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include "env/TRMemory.hpp"
 
 //--------------------------------- TR_Stats ---------------------------------
 // Class for colecting simple statistics (MIN/MAX/SUM/MEAN/StdDev)

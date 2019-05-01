@@ -31,60 +31,17 @@ class TR_Memory;
 
 namespace OMR { class StructType; }
 namespace OMR { class UnionType; }
+namespace TR  { class IlReference; }
 namespace TR  { class SegmentProvider; }
 namespace TR  { class Region; }
-namespace TR  { typedef TR::SymbolReference IlReference; }
 
+extern "C" {
+typedef void * (*ClientAllocator)(void * impl);
+typedef void * (*ImplGetter)(void *client);
+}
 
 namespace OMR
 {
-
-/**
- * @brief Convenience API for defining JitBuilder structs from C/C++ structs (PODs)
- * 
- * These macros simply allow the name of C/C++ structs and fields to be used to
- * define JitBuilder structs. This can help ensure a consistent API between a
- * VM struct and JitBuilder's representation of the same struct. Their definitions
- * expand to calls to `TR::TypeDictionary` methods that create a representation
- * corresponding to that specified type.
- * 
- * ## Usage
- * 
- * Given the following struct:
- * 
- * ```c++
- * struct MyStruct {
- *    int32_t id;
- *    int32_t* val;
- * };
- * 
- * a JitBuilder representation of this struct can be defined as follows:
- * 
- * ```c++
- * TR::TypeDictionary d;
- * d.DEFINE_STRUCT(MyStruct);
- * d.DEFINE_FIELD(MyStruct, id, Int32);
- * d.DEFINE_FIELD(MyStruct, val, pInt32);
- * d.CLOSE_STRUCT(MyStruct);
- * ```
- * 
- * This definition will expand to the following:
- * 
- * ```c++
- * TR::TypeDictionary d;
- * d.DefineStruct("MyStruct");
- * d.DefineField("MyStruct", "id", Int32, offsetof(MyStruct, id));
- * d.DefineField("MyStruct", "val", pInt32, offsetof(MyStruct, val));
- * d.CloseStruct("MyStruct", sizeof(MyStruct));
- * ```
- */
-#define DEFINE_STRUCT(structName) \
-   DefineStruct(#structName)
-#define DEFINE_FIELD(structName, fieldName, filedIlType) \
-   DefineField(#structName, #fieldName, filedIlType, offsetof(structName, fieldName))
-#define CLOSE_STRUCT(structName) \
-   CloseStruct(#structName, sizeof(structName))
-
 
 class TypeDictionary
    {
@@ -199,182 +156,43 @@ public:
    TR_Memory *trMemory() { return memoryManager._trMemory; }
    TR::IlType *getWord() { return Word; }
 
-   //TR::IlReference *ArrayReference(TR::IlType *arrayType);
-
-   /**
-    * @brief A template class for checking whether a particular type is supported by `toIlType<>()`
-    * @tparam C/C++ type
-    * @return whether `toIlType<>()` can generate a corresponding TR::IlType instance or will fail to compile
-    *
-    * A type is considered supported iff JitBuilder directly provides, or can derive,
-    * a type that corresponds, or that is equivalent, to the specified type.
-    * 
-    * ## Usage
-    * 
-    * `is_supported` can be used the same way as any type property check from
-    * the C++11 type traits standard library. Eg:
-    * 
-    * ```c++
-    * static_assert(is_supported<int>::value, "int is not a supported type!");
-    * ```
-    * 
-    * ## Examples
-    *
-    * - `is_supported<int8_t>::value == true` because JitBuilder directly provides the corresponding type `Int8`
-    * - `is_supported<int32_t*>::value == true` because JitBuilder directly provides the corresponding type `pInt32` or `PointerTo(Int32)`
-    * - `is_supported<double**>::value == true` because JitBuilder can derive the corresponding type `PointerTo(pFloat)` or `PointerTo(PointerTo(Float))`
-    * - `is_supported<uint16_t>::value == true` because JitBuilder provides the equivalent type `Int16`
-    * - `is_supported<SomeStruct>::value == false` because JitBuilder cannot derive the type of a struct
-    * - `is_supported<SomeEnum>::value == false` because JitBuilder cannot derive a type that is equivalent to the underlying type of the enum
-    * - `is_supported<void>::value == true` because JitBuilder directly provides the corresponding `NoType`
-    */
-   template <typename T>
-   struct is_supported {
-      static const bool value =  std::is_arithmetic<T>::value // note: is_arithmetic = is_integral || is_floating_point
-                              || std::is_void<T>::value;
-   };
-   template <typename T>
-   struct is_supported<T*> {
-      // a pointer type is supported iff the type being pointed to is supported
-      static const bool value =  is_supported<T>::value;
-   };
-
-   /** @fn template <typename T> TR::IlType* toIlType()
-    * @brief Given a C/C++ type, returns a corresponding TR::IlType, if available
-    * @tparam C/C++ type
-    * @return TR::IlType instance corresponding to the specified C/C++ type
-    * 
-    * Given a C/C++ type, `toIlType<>` will attempt to match the type with a
-    * corresponding TR::IlType instance that is usable with JitBuilder. If no
-    * type is **known** to match the specified type (meaning the type is
-    * unsupported), then the function call fails to compile.
-    * 
-    * Currently, only the following types are supported:
-    * 
-    * - all integral types (int, long, etc.)
-    * - all floating point types (float, double)
-    * - void
-    * - pointers to all the above types
-    * 
-    * Note that many user defined types (e.g. structs and arrays) are not
-    * currently supported.
-    * 
-    * For convenience, the template class `is_supported` can be used to determine
-    * at compile time whether a particular type is supported.
-    * 
-    * ## Usage
-    * 
-    * Using this template function is as simple as:
-    * 
-    * ```c++
-    * auto d = TR::TypeDictionary{};
-    * auto t = d.toIlType<int>();
-    * ```
-    * 
-    * If the type specified has no known corresponding TR::IlType, then the function
-    * call simply fails to compile, reporting that there is "no matching function
-    * call" (or some variation thereof).
-    * 
-    * ## Design
-    * 
-    * `toIlType<>()` is an overloaded template function. It uses SFINAE and the C++11
-    * type traits library to enable a specific overload (function implementation)
-    * that will return an instance of TR::IlType. Type traits are used to define
-    * rules that a type must follow to match a given function implementation.
-    * 
-    * For integer and floating point types, the type traits library is used to
-    * identify the "family" of the specified type. For example, `std::is_integral<>`
-    * is used to identify all the integer types. The `sizeof` operator is then used
-    * to determine the size of the specified type. The combination of the type's
-    * family and size is used to select the function that gets selected.
-    * 
-    * For types that do not belong to a family (e.g. `void`), the size is not needed.
-    * 
-    * For pointer types, `std::remove_pointer<>` is used to get the type being
-    * pointed to. Iff `is_supported<>::value` evaluates to true for this type,
-    * then `toIlType<>()` is recursively called on it.
-    * 
-    * If `toIlType<>()` is called on a type that does not match any rule,
-    * no implementation is instantiated and the call fails to compile.
-    * 
-    * ### Rule definition
-    * 
-    * The rules for enable a template overload (described above) are defined
-    * using `std::enable_if<>`, where conditional enabling is achieved using
-    * SFINAE. The field `std::enable_if<>::type` is used as the type of the
-    * anonymous argument in `toIlType<>()`.
-    * 
-    * All definitions take the following form:
-    * 
-    * ```c++
-    * template <typename T>
-    * void toIlType(typename std::enable_if<THE CONDITION>::type* = 0) {...}
-    * ```
-    * 
-    * and have the same signature: `void(void*)`. Calls to `toIlType<>()`
-    * **must** therefore specify a type parameter to avoid ambiguity.
-    * 
-    * ### Design considerations
-    * 
-    * Conceptually, `toIlType<>()` defines a mapping from C/C++ types to
-    * `TR::IlType` instances.
-    * 
-    * A more idiomatic implementation of `toIlType<>()` would have used a template
-    * class (metafunction) instead of a template function. However, because instances
-    * of `TR::IlType` are stored and returned as pointers, the "return" value of the
-    * metafunction cannot be known at compile time. Therefore, a function returning
-    * the correct instance must be used instead.
-    * 
-    * For rule definitions, especially for integer types, although it may seem
-    * feasible to simply specialize `toIlType<>()` for `int8_t`, `int16_t`, etc.
-    * this approach does not take into consideration that multiple integer types
-    * may have the same size (e.g. `int` and `long`). Using this approach would
-    * cause `toIlType<>()` to only be implemented for one of those types.
-    * 
-    * Another approach might be to attempt to specialize for all primitive types
-    * (i.e. `int`, `float`, etc). However, in this approach, a specialization
-    * would not only have to be provided for each type but also for all
-    * `unsigned`, `const`, and `volatile` variations of those types. Furthermore,
-    * because the C and C++ standards do not specify the exact size of some types,
-    * a size check would have to also be performed. This leads to the combinatorial
-    * explosion of the number of template specializations that must be defined,
-    * which is rather unmanageable.
-    * 
-    * As a note, it's important that enabling rules be mutually exclusive so
-    * that a type either enables a single template overload, or none at all.
-    * Otherwise, calls to `toIlType<>()` can become ambiguous for some types.
-    */
-
-   // integral
-   template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 1)>::type* = 0) { return Int8; }
-   template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 2)>::type* = 0) { return Int16; }
-   template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 4)>::type* = 0) { return Int32; }
-   template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 8)>::type* = 0) { return Int64; }
-
-   // floating point
-   template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_floating_point<T>::value && (sizeof(T) == 4)>::type* = 0) { return Float; }
-   template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_floating_point<T>::value && (sizeof(T) == 8)>::type* = 0) { return Double; }
-
-   // void
-   template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_void<T>::value>::type* = 0) { return NoType; }
-
-   // pointer
-   template <typename T>
-   TR::IlType* toIlType(typename std::enable_if<std::is_pointer<T>::value && is_supported<typename std::remove_pointer<T>::type>::value>::type* = 0) {
-      return PointerTo(toIlType<typename std::remove_pointer<T>::type>());
-   }
-
    /*
     * @brief advise that compilation is complete so compilation-specific objects like symbol references can be cleared from caches
     */
    void NotifyCompilationDone();
+
+   /**
+    * @brief associates this object with a particular client object
+    */
+   void setClient(void *client)
+      {
+      _client = client;
+      }
+
+   /**
+    * @brief returns the client object associated with this object
+    */
+   void *client();
+
+   /**
+    * @brief Set the Client Allocator function
+    *
+    * @param allocator a function pointer to the client object allocator
+    */
+   static void setClientAllocator(ClientAllocator allocator)
+      {
+      _clientAllocator = allocator;
+      }
+
+   /**
+    * @brief Set the Get Impl function
+    *
+    * @param getter function pointer to the impl getter
+    */
+   static void setGetImpl(ImplGetter getter)
+      {
+      _getImpl = getter;
+      }
 
 protected:
    // We have MemoryManager as the first member of TypeDictionary, so that
@@ -392,6 +210,25 @@ protected:
 
    MemoryManager memoryManager;
 
+   OMR::StructType * getStruct(const char *structName);
+   OMR::UnionType  * getUnion(const char *unionName);
+
+   /**
+    * @brief pointer to a client object that corresponds to this object
+    */
+   void * _client;
+
+   /**
+    * @brief pointer to the function used to allocate an instance of a
+    * client object
+    */
+   static ClientAllocator _clientAllocator;
+
+   /**
+    * @brief pointer to impl getter function
+    */
+   static ImplGetter _getImpl;
+
    typedef bool (*StrComparator)(const char *, const char *);
 
    typedef TR::typed_allocator<std::pair<const char * const, OMR::StructType *>, TR::Region &> StructMapAllocator;
@@ -402,6 +239,7 @@ protected:
    typedef std::map<const char *, OMR::UnionType *, StrComparator, UnionMapAllocator> UnionMap;
    UnionMap           _unionsByName;
 
+public:
    // convenience for primitive types
    TR::IlType       * _primitiveType[TR::NumOMRTypes];
    TR::IlType       * NoType;
@@ -436,9 +274,6 @@ protected:
    TR::IlType       * pVectorInt64;
    TR::IlType       * pVectorFloat;
    TR::IlType       * pVectorDouble;
-
-   OMR::StructType * getStruct(const char *structName);
-   OMR::UnionType  * getUnion(const char *unionName);
    };
 
 } // namespace OMR

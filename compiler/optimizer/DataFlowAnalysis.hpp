@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,23 +22,23 @@
 #ifndef DFA_INCL
 #define DFA_INCL
 
-#include <stddef.h>                              // for NULL, size_t
-#include <stdint.h>                              // for int32_t, int8_t, etc
-#include "compile/Compilation.hpp"               // for Compilation
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/TRMemory.hpp"                      // for TR_Memory, etc
-#include "il/Node.hpp"                           // for Node, vcount_t
-#include "infra/Array.hpp"                       // for TR_Array
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/BitVector.hpp"                   // for TR_BitVector
-#include "infra/Flags.hpp"                       // for flags16_t, flags8_t
-#include "infra/HashTab.hpp"                     // for TR_HashTab
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Flags.hpp"
+#include "infra/HashTab.hpp"
 #include "infra/Link.hpp"
-#include "infra/List.hpp"                        // for List, etc
+#include "infra/List.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/LocalAnalysis.hpp"
-#include "optimizer/UseDefInfo.hpp"     // for TR_UseDefInfo, etc
+#include "optimizer/UseDefInfo.hpp"
 
 class Candidate;
 class FlushCandidate;

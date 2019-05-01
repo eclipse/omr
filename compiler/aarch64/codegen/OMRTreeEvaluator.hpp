@@ -33,6 +33,7 @@ namespace OMR { typedef OMR::ARM64::TreeEvaluator TreeEvaluatorConnector; }
 #endif
 
 #include "compiler/codegen/OMRTreeEvaluator.hpp"
+#include "codegen/InstOpCode.hpp"
 #include "codegen/RealRegister.hpp"
 #include "compile/CompilationTypes.hpp"
 
@@ -47,6 +48,24 @@ namespace TR { class CodeGenerator; }
  * @param[in] cg : CodeGenerator
  */
 TR::Register *genericReturnEvaluator(TR::Node *node, TR::RealRegister::RegNum rnum, TR_RegisterKinds rk, TR_ReturnInfo i, TR::CodeGenerator *cg);
+
+/**
+ * @brief Helper function for xloadEvaluators
+ * @param[in] node : node
+ * @param[in] op : instruction for load
+ * @param[in] memSize : data size on memory
+ * @param[in] cg : CodeGenerator
+ */
+TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t memSize, TR::CodeGenerator *cg);
+
+/**
+ * @brief Helper function for xstoreEvaluators
+ * @param[in] node : node
+ * @param[in] op : instruction for store
+ * @param[in] memSize : data size on memory
+ * @param[in] cg : CodeGenerator
+ */
+TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t memSize, TR::CodeGenerator *cg);
 
 namespace OMR
 {
@@ -85,18 +104,18 @@ public:
 	static TR::Register *fstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *dstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *astoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-	static TR::Register *wrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+	static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *bstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *sstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *lstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *fstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *dstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *astoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-	static TR::Register *wrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+	static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *bstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *sstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *istoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-	static TR::Register *GotoEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+	static TR::Register *gotoEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *ireturnEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *lreturnEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *freturnEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -111,6 +130,7 @@ public:
 	static TR::Register *dcallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *acallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *callEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+	static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *iaddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *laddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *faddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -427,7 +447,7 @@ public:
 	static TR::Register *treetopEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *MethodEnterHookEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *MethodExitHookEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-	static TR::Register *PassThroughEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+	static TR::Register *passThroughEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *compressedRefsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *BBStartEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *BBEndEvaluator(TR::Node *node, TR::CodeGenerator *cg);

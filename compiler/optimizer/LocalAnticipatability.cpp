@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,31 +19,31 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>                              // for int32_t
-#include <stdlib.h>                              // for NULL, atoi
+#include <stdint.h>
+#include <stdlib.h>
 #include "env/StackMemoryRegion.hpp"
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                  // for feGetEnv
-#include "compile/Compilation.hpp"               // for Compilation
-#include "compile/Method.hpp"                    // for MAX_SCOUNT
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/sparsrbit.h"                       // for ASparseBitVector
+#include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
-#include "env/TRMemory.hpp"                      // for SparseBitVector, etc
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                          // for Block
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes::loadaddr, etc
-#include "il/ILOps.hpp"                          // for TR::ILOpCode, etc
-#include "il/Node.hpp"                           // for Node, etc
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                         // for Symbol
-#include "il/SymbolReference.hpp"                // for SymbolReference, etc
-#include "il/TreeTop.hpp"                        // for TreeTop
-#include "il/TreeTop_inlines.hpp"                // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"            // for MethodSymbol
-#include "infra/BitVector.hpp"                   // for TR_BitVector, etc
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/BitVector.hpp"
 #include "optimizer/LocalAnalysis.hpp"
 #include "compile/AliasBuilder.hpp"
 

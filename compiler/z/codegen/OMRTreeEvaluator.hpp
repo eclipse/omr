@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,13 +35,14 @@ namespace OMR { typedef OMR::Z::TreeEvaluator TreeEvaluatorConnector; }
 
 #include "compiler/codegen/OMRTreeEvaluator.hpp"
 
-#include "codegen/InstOpCode.hpp"          // for InstOpCode, etc
-#include "il/DataTypes.hpp"                // for DataTypes
-#include "il/ILOpCodes.hpp"                // for ILOpCodes
+#include "codegen/InstOpCode.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
 
 class TR_OpaquePseudoRegister;
 class TR_PseudoRegister;
 class TR_StorageReference;
+class TR_S390ScratchRegisterManager;
 namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
 namespace TR { class LabelSymbol; }
@@ -85,7 +86,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    {
    public:
 
-   static TR::Register *badILOpEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *aconstEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *iconstEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lconstEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -99,6 +99,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *mbranchEvaluator(TR::Node * node, TR::CodeGenerator * cg);
    static TR::Register *iloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *aloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *floadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *dloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -120,12 +121,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *indirectCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *libmFuncEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *libxloptFuncEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fenceEvaluator(TR::Node * node, TR::CodeGenerator *cg);
    static TR::Register *treetopEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *aiaddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *aladdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *addrAddHelper(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *iaddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *laddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *faddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -144,7 +143,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *mulhEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *dualMulHelper64(TR::Node * node, TR::Node * lmulNode, TR::Node * lumulhNode, TR::CodeGenerator * cg);
-   static TR::Register *dualMulHelper32(TR::Node * node, TR::Node * lmulNode, TR::Node * lumulhNode, TR::CodeGenerator * cg);
    static TR::Register *dualMulEvaluator(TR::Node * node, TR::CodeGenerator *cg);
 
    static TR::Register *lmulEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -409,7 +407,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *lookupEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static void tableEvaluatorCaseLabelHelper(TR::Node * node, TR::CodeGenerator * cg, tableKind tableKindToBeEvaluated, int32_t numBranchTableEntries, TR::Register * selectorReg, TR::Register * branchTableReg, TR::Register *reg1  );
    static TR::Register *tableEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *exceptionRangeFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *loadaddrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -457,6 +454,13 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *bitpermuteEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    
    static TR::Register *tryToReuseInputVectorRegs(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *checkAndAllocateReferenceRegister(TR::Node * node,
+                                                          TR::CodeGenerator * cg,
+                                                          bool& dynLitPoolLoad);
+   static void checkAndSetMemRefDataSnippetRelocationType(TR::Node * node,
+                                                          TR::CodeGenerator * cg,
+                                                          TR::MemoryReference* tempMR);
 
    static TR::Node* DAAAddressPointer (TR::Node* callNode, TR::CodeGenerator* cg);
 
@@ -521,40 +525,144 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
     */
    static void primitiveArraycopyEvaluator(TR::Node* node, TR::CodeGenerator* cg, TR::Node* byteSrcNode, TR::Node* byteDstNode, TR::Node* byteLenNode);
 
-   /** \brief
-    *     Evaluates a reference arraycopy node by generating an MVC memory-memory copy for a forward arraycopy and a
-    *     loop based on the reference size for a backward arraycopy. For runtimes which support it, this function will
-    *     also generate write barrier checks on \p byteSrcObjNode and \p byteDstObjNode.
-    *
-    *  \param node
-    *     The reference arraycopy node.
+/** \brief
+    *  Generates Load/Store sequence for array copy as per type of array copy element
+    *  
+    * \param node
+    *     The arraycopy node.
     *
     *  \param cg
     *     The code generator used to generate the instructions.
     *
-    *  \param byteSrcNode
-    *     The source address of the array copy.
+    *  \param srcMemRef
+    *     Memory Reference of src from where we need to load
     *
-    *  \param byteDstNode
-    *     The destination address of the array copy.
+    *  \param dstMemRef
+    *     Memory Reference of destination where we need to store
+    *
+    *  \param srm
+    *     Scratch Register Manager providing pool of scratch registers to use
+    * 
+    *  \param elementType
+    *     Array Copy element type
+    * 
+    *  \param needsGuardedLoad
+    *     Boolean stating if we need to use Guarded Load instruction
+    * 
+    *  \param deps
+    *     Register dependency conditions of the external ICF. Load-and-store for array copy
+    *     itself is usually a load-store instruction pair without internal control flows.
+    *     But project specific implementations could extend this and construct an ICF.
+    *     Should an ICF be constructed, the inner ICF will use the outer ICF's dependencies and build upon it.
+    *
+    */
+   static void generateLoadAndStoreForArrayCopy(TR::Node *node, TR::CodeGenerator *cg, TR::MemoryReference *srcMemRef, TR::MemoryReference *dstMemRef, TR_S390ScratchRegisterManager *srm, TR::DataType elenmentType, bool needsGuardedLoad, TR::RegisterDependencyConditions* deps = NULL);
+
+/** \brief
+    *  Generate sequence for forward array copy using MVC memory-memory copy instruction
+    *
+    *  \param node
+    *     The arraycopy node.
+    *
+    *  \param cg
+    *     The code generator used to generate the instructions.
+    *
+    *  \param byteSrcReg
+    *     Register holding starting address of source
+    *
+    *  \param byteDstReg
+    *     Register holding starting address of destination
+    *
+    *  \param byteLenReg
+    *     Register holding number of bytes to copy
+    * 
+    *  \param byteLenNode
+    *     Node for number of bytes to copy
+    * 
+    *  \param srm
+    *     Scratch Register Manager providing pool of scratch registers to use
+    * 
+    *  \param mergeLabel
+    *     Label Symbol where we merge from Out Of line code section
+    */
+   static void forwardArrayCopySequenceGenerator(TR::Node *node, TR::CodeGenerator *cg, TR::Register *byteSrcReg, TR::Register *byteDstReg, TR::Register *byteLenReg, TR::Node *byteLenNode, TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *mergeLabel);
+
+   static void genLoopForwardArrayCopy(TR::Node *node, TR::CodeGenerator *cg, TR::Register *byteSrcReg, TR::Register *byteDstReg, TR::Register *loopIterReg, bool isConstantLength = false);
+
+/** \brief
+    *  Generates Element wise Memory To Memory copy sequence in forward/backward direction
+    *
+    * \param node
+    *     The arraycopy node.
+    *
+    *  \param cg
+    *     The code generator used to generate the instructions.
+    *
+    *  \param byteSrcReg
+    *     Register holding starting address of source
+    *
+    *  \param byteDstReg
+    *     Register holding starting address of destination
+    *
+    *  \param byteLenReg
+    *     Register holding number of bytes to copy
+    * 
+    *  \param srm
+    *     Scratch Register Manager providing pool of scratch registers to use
+    *
+    *  \param isForward
+    *     Boolean specifying if we need to copy elements in forward direction
+    * 
+    *  \param needsGuardedLoad
+    *     Boolean stating if we need to use Guarded Load instruction
+    *
+    *  \param genStartICFLabel
+    *     Boolean stating if we need to set the start ICF flag
+    * 
+    *  \param deps
+    *     Register dependency conditions of the external ICF this mem-to-mem copy resides. Mem-to-Mem element copy
+    *     itself is a loop of load-store instructions that has its own ICF. If this ICF resides in another ICF,
+    *     the inner ICF will use the outer ICF's dependencies.
+    *
+    *  \return
+    *     Register depdendecy conditions containg registers allocated within Internal Control Flow
+    * 
+    */
+   static TR::RegisterDependencyConditions* generateMemToMemElementCopy(TR::Node *node, TR::CodeGenerator *cg, TR::Register *byteSrcReg, TR::Register *byteDstReg, TR::Register *byteLenReg, TR_S390ScratchRegisterManager *srm, bool isForward, bool needsGuardedLoad, bool genStartICFLabel=false, TR::RegisterDependencyConditions* deps = NULL);
+
+/** \brief
+    *  Generates sequence for backward array copy
+    *  
+    * \param node
+    *     The arraycopy node.
+    *
+    *  \param cg
+    *     The code generator used to generate the instructions.
+    * 
+    *  \param byteSrcReg
+    *     Register holding starting address of source
+    *
+    *  \param byteDstReg
+    *     Register holding starting address of destination
+    *
+    *  \param byteLenReg
+    *     Register holding number of bytes to copy
     *
     *  \param byteLenNode
-    *     The number of bytes to copy.
-    *
-    *  \param byteSrcObjNode
-    *     The runtime object which represents the source array.
-    *
-    *  \param byteDstObjNode
-    *     The runtime object which represents the destination array.
-    *
-    *  \note
-    *     The reference size must be explicitly specified on the \p node via the <c>getArrayCopyElementType</c> API.
+    *     Node for number of bytes to copy
+    * 
+    *  \param srm
+    *     Scratch Register Manager providing pool of scratch registers to use
+    * 
+    *  \param mergeLabel
+    *     Label Symbol where we merge from Out Of line code section
+    * 
+    *  \return
+    *     Register depdendecy conditions containg registers allocated within Internal Control Flow
     */
-   static void referenceArraycopyEvaluator(TR::Node* node, TR::CodeGenerator* cg, TR::Node* byteSrcNode, TR::Node* byteDstNode, TR::Node* byteLenNode, TR::Node* byteSrcObjNode, TR::Node* byteDstObjNode);
+   static TR::RegisterDependencyConditions* backwardArrayCopySequenceGenerator(TR::Node *node, TR::CodeGenerator *cg, TR::Register *byteSrcReg, TR::Register *byteDstReg, TR::Register *byteLenReg, TR::Node *byteLenNode, TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *mergeLabel);
 
    static TR::Register *arraysetEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *o2xEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *x2oEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register * evaluateLengthMinusOneForMemoryCmp(TR::Node *node, TR::CodeGenerator *cg, bool clobberEvaluate, bool &lenMinusOne);
 
@@ -595,9 +703,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *BBEndEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *lcmpEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *lucmpEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *icmpEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *iucmpEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *iu2lEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bu2aEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bu2iEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -620,15 +725,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *minEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *maxEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
-   static TR::Register *composeEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *aletEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-
    static TR::Register *evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool needsResolve, TR::CodeGenerator * cg);
-
-   static bool genNullTestForCompressedPointers(TR::Node *node, TR::CodeGenerator *cg, TR::Register *targetRegister, TR::LabelSymbol * &skipAdd);
-
-   static TR::Register *getstackEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *deallocaEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *PrefetchEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
@@ -638,12 +735,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *trtEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *integerHighestOneBit(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *integerLowestOneBit(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *integerNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *integerNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *integerBitCount(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *longHighestOneBit(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *longLowestOneBit(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *longNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *longNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *longBitCount(TR::Node *node, TR::CodeGenerator *cg);
@@ -663,10 +758,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *fsqrtEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *dnintEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fnintEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *memcmpEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *ixfrsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *lxfrsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *fxfrsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
 // VM dependent routines
 
@@ -675,8 +766,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Instruction* genLoadForObjectHeaders      (TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::MemoryReference *tempMR, TR::Instruction *iCursor);
    static TR::Instruction* genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::MemoryReference *tempMR, TR::Instruction *iCursor);
 
-   static TR::Register       *inlineIfTestDataClassHelper(TR::Node *node, TR::CodeGenerator *cg, bool &inlined);
-   static void         evaluateRegLoads(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *inlineIfTestDataClassHelper(TR::Node *node, TR::CodeGenerator *cg, bool &inlined);
    static TR::Register *vsplatsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *z990PopCountHelper(TR::Node *node, TR::CodeGenerator *cg, TR::Register *inReg, TR::Register *outReg);
@@ -775,7 +865,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    
    static void         commonButestEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register* ifFoldingHelper(TR::Node *node, TR::CodeGenerator *cg, bool &handledBIF);
-   static bool         isCandidateForBIFEvaluation(TR::Node * node);
    };
 
 }

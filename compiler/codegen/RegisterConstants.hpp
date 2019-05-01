@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,8 @@
 #ifndef REGISTERKINDS_INCL
 #define REGISTERKINDS_INCL
 
-#include <stdint.h>         // for int16_t, uint32_t
-#include "infra/Flags.hpp"  // for flags32_t
+#include <stdint.h>
+#include "infra/Flags.hpp"
 
 typedef uint32_t TR_RegisterMask;
 
@@ -39,11 +39,8 @@ enum TR_RegisterKinds
    TR_VRF           = 4,
    TR_VSX_SCALAR    = 5,
    TR_VSX_VECTOR    = 6,
-   TR_GPR64         = 7,
-   TR_SSR           = 8,   // used for TR_PseudoRegisters for SS (storage to storage) instructions to return results
-   TR_HPR           = 9,   // High word register for zGryphon
-   TR_GPRL          = 10,  // Low word register for zGryphon
-   LastRegisterKind = TR_GPRL,
+   TR_SSR           = 7,   // used for TR_PseudoRegisters for SS (storage to storage) instructions to return results
+   LastRegisterKind = TR_SSR,
    NumRegisterKinds = LastRegisterKind+1,
 
    TR_NoRegister    = LastRegisterKind+1,
@@ -56,10 +53,7 @@ enum TR_RegisterKinds
    TR_VRF_Mask    = TO_KIND_MASK(TR_VRF),
    TR_VSX_SCALAR_Mask    = TO_KIND_MASK(TR_VSX_SCALAR),
    TR_VSX_VECTOR_Mask    = TO_KIND_MASK(TR_VSX_VECTOR),
-   TR_GPR64_Mask  = TO_KIND_MASK(TR_GPR64),
-   TR_SSR_Mask    = TO_KIND_MASK(TR_SSR),
-   TR_HPR_Mask    = TO_KIND_MASK(TR_HPR),
-   TR_GPRL_Mask   = TO_KIND_MASK(TR_GPRL)
+   TR_SSR_Mask    = TO_KIND_MASK(TR_SSR)
    };
 
 enum TR_RegisterSizes

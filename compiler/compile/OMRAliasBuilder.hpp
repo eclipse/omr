@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,10 +31,10 @@ namespace OMR { class AliasBuilder; }
 namespace OMR { typedef OMR::AliasBuilder AliasBuilderConnector; }
 #endif
 
-#include "compile/Method.hpp"   // for vcount_t
-#include "env/TRMemory.hpp"     // for Allocator, etc
+#include "compile/Method.hpp"
+#include "env/TRMemory.hpp"
 #include "infra/BitVector.hpp"
-#include "infra/Array.hpp"      // for TR_Array
+#include "infra/Array.hpp"
 #include "infra/List.hpp"
 #include "infra/Link.hpp"
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
 #ifndef OMR_PREEXISTENCE_INCL
 #define OMR_PREEXISTENCE_INCL
 
-#include <stdint.h>                      // for int32_t, uint32_t
-#include <string.h>                      // for memset, NULL
-#include "env/KnownObjectTable.hpp"  // for KnownObjectTable, etc
-#include "env/TRMemory.hpp"              // for TR_Memory, etc
+#include <stdint.h>
+#include <string.h>
+#include "env/KnownObjectTable.hpp"
+#include "env/TRMemory.hpp"
 
 class TR_CallSite;
 class TR_InlinerTracer;

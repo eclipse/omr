@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,8 +21,8 @@
 
 #include "env/CPU.hpp"
 
-#include "env/Processors.hpp"  // for TR_Processor, etc
-#include "infra/Assert.hpp"    // for TR_ASSERT
+#include "env/Processors.hpp"
+#include "infra/Assert.hpp"
 
 bool
 OMR::Power::CPU::getPPCis64bit()
@@ -31,4 +31,12 @@ OMR::Power::CPU::getPPCis64bit()
    TR_ASSERT(p >= TR_FirstPPCProcessor && p <= TR_LastPPCProcessor, "Not a valid PPC Processor Type");
 
    return (p >= TR_FirstPPC64BitProcessor)? true : false;
+   }
+
+bool
+OMR::Power::CPU::isTargetWithinIFormBranchRange(intptrj_t targetAddress, intptrj_t sourceAddress)
+   {
+   intptrj_t range = targetAddress - sourceAddress;
+   return range <= self()->maxIFormBranchForwardOffset() &&
+          range >= self()->maxIFormBranchBackwardOffset();
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,47 +21,47 @@
 
 #include "optimizer/FieldPrivatizer.hpp"
 
-#include <stddef.h>                                     // for size_t
-#include <stdint.h>                                     // for int32_t, etc
-#include <string.h>                                     // for strncmp, etc
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"                         // for TR_FrontEnd
-#include "compile/Compilation.hpp"                      // for Compilation, etc
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "cs2/allocator.h"
-#include "cs2/bitvectr.h"                               // for ABitVector, etc
-#include "cs2/hashtab.h"                                // for HashTable, etc
+#include "cs2/bitvectr.h"
+#include "cs2/hashtab.h"
 #include "cs2/sparsrbit.h"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                             // for Allocator, etc
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                                 // for Block, etc
-#include "il/DataTypes.hpp"                             // for DataTypes, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                                 // for ILOpCode, etc
-#include "il/Node.hpp"                                  // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                                // for Symbol
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                               // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"                   // for MethodSymbol, etc
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                             // for TR_ASSERT
-#include "infra/BitVector.hpp"                          // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                                // for CFG
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
 #include "infra/HashTab.hpp"
-#include "infra/List.hpp"                               // for ListIterator, etc
-#include "infra/CfgEdge.hpp"                            // for CFGEdge
-#include "infra/CfgNode.hpp"                            // for CFGNode
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/Inliner.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"                      // for Optimizer
+#include "optimizer/Optimizer.hpp"
 #include "optimizer/RegisterCandidate.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/Dominators.hpp"
@@ -85,6 +85,15 @@ TR_FieldPrivatizer::TR_FieldPrivatizer(TR::OptimizationManager *manager)
 
 int32_t TR_FieldPrivatizer::perform()
    {
+
+   // Need to confirm places calling opCodeFor* APIs are doing the right
+   // thing for readbar and wrtbar. All the transformations applied to normal
+   // load/store s should be applied to rd/wrtbar s. However, we need to be
+   // careful about the difference in the shape of the trees and the
+   // mapping relationship between different loads and stores
+   if (comp()->incompleteOptimizerSupportForReadWriteBarriers())
+      return 0;
+
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
    _postDominators = NULL;
@@ -749,7 +758,7 @@ void TR_FieldPrivatizer::privatizeFields(TR::Node *node, bool postDominatesEntry
                if (opCode.isStore())
                   {
                   _needToStoreBack->set(autoForField->getReferenceNumber());
-                  if (node->getOpCodeValue() == TR::wrtbar)
+                  if (node->getOpCodeValue() == TR::awrtbar)
                      {
                      node->getChild(1)->recursivelyDecReferenceCount();
                      node->setNumChildren(1);
@@ -826,7 +835,9 @@ bool TR_FieldPrivatizer::bothSubtreesMatch(TR::Node *node1, TR::Node *node2)
       {
       if (node1->getOpCode().isLoadVar() ||
           (node1->getOpCodeValue() == TR::loadaddr && node1->getSymbolReference()->getSymbol()->isNotCollected()))
+         {
          if (node1->getSymbolReference()->getReferenceNumber() == node2->getSymbolReference()->getReferenceNumber())
+            {
             if (node1->getNumChildren() > 0)
                {
                if (bothSubtreesMatch(node1->getFirstChild(), node2->getFirstChild()))
@@ -836,7 +847,8 @@ bool TR_FieldPrivatizer::bothSubtreesMatch(TR::Node *node1, TR::Node *node2)
                {
                return true;
                }
-
+            }
+         }
       }
 
    return false;

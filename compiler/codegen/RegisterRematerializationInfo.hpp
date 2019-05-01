@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef REMATERIALIZATIONINFO_INCL
 #define REMATERIALIZATIONINFO_INCL
 
-#include <stddef.h>                       // for NULL
-#include "codegen/RegisterConstants.hpp"  // for TR_RematerializableTypes
-#include "env/jittypes.h"                 // for intptrj_t
-#include "env/TRMemory.hpp"               // for TR_Memory, etc
-#include "infra/Flags.hpp"                // for flags16_t
+#include <stddef.h>
+#include "codegen/RegisterConstants.hpp"
+#include "env/jittypes.h"
+#include "env/TRMemory.hpp"
+#include "infra/Flags.hpp"
 
 namespace TR { class Instruction; }
 namespace TR { class Node; }

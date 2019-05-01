@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,12 +56,13 @@ MM_VerboseHandlerOutput::newInstance(MM_EnvironmentBase *env, MM_VerboseManager 
 
 
 MM_VerboseHandlerOutput::MM_VerboseHandlerOutput(MM_GCExtensionsBase *extensions) :
-	_extensions(extensions)
+	_reportingLock()
+	,_extensions(extensions)
 	,_omrVM(NULL)
 	,_mmPrivateHooks(NULL)
 	,_mmOmrHooks(NULL)
 	,_manager(NULL)
-{};
+{}
 
 bool
 MM_VerboseHandlerOutput::initialize(MM_EnvironmentBase *env, MM_VerboseManager *manager)
@@ -70,6 +71,10 @@ MM_VerboseHandlerOutput::initialize(MM_EnvironmentBase *env, MM_VerboseManager *
 	_mmPrivateHooks = J9_HOOK_INTERFACE(_extensions->privateHookInterface);
 	_mmOmrHooks = J9_HOOK_INTERFACE(_extensions->omrHookInterface);
 	_manager = manager;
+
+	if (!_reportingLock.initialize(env, &env->getExtensions()->lnrlOptions, "MM_VerboseHandlerOutput:_reportingLock")) {
+		return false;
+	}
 
 	return true;
 }
@@ -85,6 +90,7 @@ MM_VerboseHandlerOutput::kill(MM_EnvironmentBase *env)
 void
 MM_VerboseHandlerOutput::tearDown(MM_EnvironmentBase *env)
 {
+	_reportingLock.tearDown();
 	return ;
 }
 
@@ -265,12 +271,15 @@ MM_VerboseHandlerOutput::handleInitialized(J9HookInterface** hook, uintptr_t eve
 	writer->formatAndOutput(env, 1, "<attribute name=\"maxHeapSize\" value=\"0x%zx\" />", event->maxHeapSize);
 	writer->formatAndOutput(env, 1, "<attribute name=\"initialHeapSize\" value=\"0x%zx\" />", event->initialHeapSize);
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-	writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefs\" value=\"true\" />");
-	writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefsDisplacement\" value=\"0x%zx\" />", 0);
-	writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefsShift\" value=\"0x%zx\" />", event->compressedPointersShift);
-#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
-	writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefs\" value=\"false\" />");
+	if (env->compressObjectReferences()) {
+		writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefs\" value=\"true\" />");
+		writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefsDisplacement\" value=\"0x%zx\" />", 0);
+		writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefsShift\" value=\"0x%zx\" />", event->compressedPointersShift);
+	} else
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	{
+		writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefs\" value=\"false\" />");
+	}
 	writer->formatAndOutput(env, 1, "<attribute name=\"pageSize\" value=\"0x%zx\" />", event->heapPageSize);
 	writer->formatAndOutput(env, 1, "<attribute name=\"pageType\" value=\"%s\" />", event->heapPageType);
 	writer->formatAndOutput(env, 1, "<attribute name=\"requestedPageSize\" value=\"0x%zx\" />", event->heapRequestedPageSize);
@@ -696,13 +705,13 @@ MM_VerboseHandlerOutput::handleAcquiredExclusiveToSatisfyAllocation(J9HookInterf
 void
 MM_VerboseHandlerOutput::enterAtomicReportingBlock()
 {
-	/* default implementation needs no special support */
+	_reportingLock.acquire();
 }
 
 void
 MM_VerboseHandlerOutput::exitAtomicReportingBlock()
 {
-	/* default implementation needs no special support */
+	_reportingLock.release();
 }
 
 void
@@ -861,6 +870,33 @@ MM_VerboseHandlerOutput::handleConcurrentStart(J9HookInterface** hook, UDATA eve
 	exitAtomicReportingBlock();
 }
 
+
+void
+MM_VerboseHandlerOutput::handleConcurrentEndInternal(J9HookInterface** hook, UDATA eventNum, void* eventData)
+{
+	MM_ConcurrentPhaseEndEvent *event = (MM_ConcurrentPhaseEndEvent *)eventData;
+	MM_ConcurrentPhaseStatsBase *stats = (MM_ConcurrentPhaseStatsBase *)event->concurrentStats;
+	MM_VerboseWriterChain* writer = _manager->getWriterChain();
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(event->currentThread);
+
+	const char *reasonForTermination = NULL;
+	if (stats->isTerminationRequested()) {
+		if (stats->isTerminationRequestExternal()) {
+			/* For example, Java JVMTI and similar. Unfortunately, we could not tell what. */
+			reasonForTermination = "termination requested externally";
+		} else {
+			/* Most interesting reason would be exhausted allocate/survivor, since it could mean that
+			 * tilting is too aggressive (and survival rate is jittery), and suggest tilt tuning/limiting.
+			 * There could be various other reasons, like STW global GC (system, end of concurrent mark etc.),
+			 * or even notorious 'exclusive VM access to satisfy allocate'.
+			 * Either way, the more detailed reason could be deduced from verbose GC.
+			 */
+			reasonForTermination = "termination requested by GC";
+		}
+		writer->formatAndOutput(env, 0, "<warning details=\"%s\" />", reasonForTermination, _extensions->gcExclusiveAccessThreadId);
+	}
+}
+
 void
 MM_VerboseHandlerOutput::handleConcurrentEnd(J9HookInterface** hook, UDATA eventNum, void* eventData)
 {
@@ -877,7 +913,7 @@ MM_VerboseHandlerOutput::handleConcurrentEnd(J9HookInterface** hook, UDATA event
 	writer->formatAndOutput(env, 0, "<concurrent-end %s>", tagTemplate);
 	handleConcurrentEndInternal(hook, eventNum, eventData);
 	handleConcurrentGCOpEnd(hook, eventNum, eventData);
-	writer->formatAndOutput(env, 0, "</concurrent-end>");
+	writer->formatAndOutput(env, 0, "</concurrent-end>\n");
 	writer->flush(env);
 	exitAtomicReportingBlock();
 }

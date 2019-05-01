@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,17 +21,17 @@
 
 #include "x/codegen/DataSnippet.hpp"
 
-#include <stdint.h>                   // for uint8_t, int16_t, uint32_t, etc
-#include <string.h>                   // for NULL, memcpy
-#include "codegen/CodeGenerator.hpp"  // for CodeGenerator
-#include "compile/Compilation.hpp"    // for Compilation
+#include <stdint.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
-#include "env/TRMemory.hpp"           // for TR_HeapMemory
-#include "env/jittypes.h"             // for intptrj_t
-#include "il/symbol/LabelSymbol.hpp"  // for LabelSymbol
-#include "ras/Debug.hpp"              // for TR_Debug
-#include "codegen/Relocation.hpp"     // for TR::ExternalRelocation
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/symbol/LabelSymbol.hpp"
+#include "ras/Debug.hpp"
+#include "codegen/Relocation.hpp"
 
 namespace TR { class Node; }
 

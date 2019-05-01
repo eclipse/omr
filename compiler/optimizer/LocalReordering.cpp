@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,27 +21,27 @@
 
 #include "optimizer/LocalReordering.hpp"
 
-#include <stdint.h>                            // for int32_t
-#include <string.h>                            // for NULL, memset
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for feGetEnv
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include <stdint.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "cs2/sparsrbit.h"
-#include "env/TRMemory.hpp"                    // for SparseBitVector, etc
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                        // for Block
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::treetop, etc
-#include "il/ILOps.hpp"                        // for ILOpCode, TR::ILOpCode
-#include "il/Node.hpp"                         // for Node, vcount_t
-#include "il/Node_inlines.hpp"                 // for Node::getChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "optimizer/Optimization.hpp"          // for Optimization
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 
 #define OPT_DETAILS "O^O LOCAL REORDERING: "

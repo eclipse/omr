@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,9 +35,9 @@ namespace OMR { typedef OMR::Z::RealRegister RealRegisterConnector; }
 
 #include "compiler/codegen/OMRRealRegister.hpp"
 
-#include <stdint.h>                              // for uint32_t, int32_t, etc
-#include "codegen/RegisterConstants.hpp"         // for TR_RegisterKinds
-#include "infra/Flags.hpp"                       // for flags8_t
+#include <stdint.h>
+#include "codegen/RegisterConstants.hpp"
+#include "infra/Flags.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class RealRegister; }
@@ -56,27 +56,11 @@ class OMR_EXTENSIBLE RealRegister : public OMR::RealRegister
    RealRegister(TR_RegisterKinds, uint16_t, RegState, RegNum, RegMask, TR::CodeGenerator *);
 
    public:
-
-   // getters/setters
-   void setHighWordRegister(TR::RealRegister *r) {_highWordRegister = r;}
-   void setLowWordRegister(TR::RealRegister *r) {_lowWordRegister = r;}
-
-   TR::RealRegister * getHighWordRegister();
-   TR::RealRegister * getLowWordRegister();
-   TR::RealRegister * getSiblingWordRegister();
-
-   bool isHighWordRegister();
-   bool isLowWordRegister();
-
-
-
+      
    // methods for manipulating flags
    bool getModified() {return _modified.testAny(isModified);}
    bool setModified(bool b)  { (b)? _modified.set(isModified) : _modified.reset(isModified);  return b; }
-
-   bool getAssignedHigh() {return _realRegFlags.testAny(isAssignedHigh);}
-   bool setAssignedHigh(bool b) {b? _realRegFlags.set(isAssignedHigh) : _realRegFlags.reset(isAssignedHigh); return b;}
-
+   
    bool setHasBeenAssignedInMethod(bool b); // derived from base class
 
 
@@ -109,20 +93,15 @@ class OMR_EXTENSIBLE RealRegister : public OMR::RealRegister
    static bool isRealReg(RegNum reg);
    static bool isGPR(RegNum reg);
    static bool isFPR(RegNum reg);
-   static bool isHPR(RegNum reg);
    static bool isVRF(RegNum reg);
 
    private:
 
    enum
       {
-      isAssignedHigh  = 0x02,  // Indicates use of high word on 32-bit platform
       isModified      = 0x01,
       };
-
-   TR::RealRegister *_highWordRegister;
-   TR::RealRegister *_lowWordRegister;
-
+   
    flags8_t        _modified;
    static const uint8_t _fullRegBinaryEncodings[NumRegisters];
 

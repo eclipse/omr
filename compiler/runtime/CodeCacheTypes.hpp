@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,19 +26,23 @@
 #define __TPF_DO_NOT_MAP_ATOE_REMOVE
 #endif
 
-#include <stddef.h>                            // for size_t
-#include <stdint.h>                            // for uint8_t, int32_t, etc
-#include "runtime/MethodExceptionData.hpp"     // for MethodExceptionData
+#undef CODECACHE_DEBUG
+
+#include <stddef.h>
+#include <stdint.h>
+#if defined(CODECACHE_DEBUG)
+#include <stdio.h>
+#endif /* CODECACHE_DEBUG */
+
+#include "runtime/MethodExceptionData.hpp"
 
 /*
  *  Debugging help
  */
-#ifdef CODECACHE_DEBUG
-#define mcc_printf if (CodeCacheDebug) printf
-#define mcc_hashprintf /*printf*/
+#if defined(CODECACHE_DEBUG)
+#define mcc_printf(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #else
-#define mcc_printf
-#define mcc_hashprintf
+#define mcc_printf(fmt, ...) ((void)0)
 #endif
 
 class TR_OpaqueMethodBlock;

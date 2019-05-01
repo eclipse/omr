@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,17 +22,17 @@
 #ifndef INTERFERENCEGRAPH_INCL
 #define INTERFERENCEGRAPH_INCL
 
-#include <stddef.h>                 // for NULL
-#include <stdint.h>                 // for int32_t
-#include "env/TRMemory.hpp"         // for Allocator, TR_HeapMemory, etc
-#include "env/jittypes.h"           // for uintptrj_t
-#include "compile/Compilation.hpp"  // for Compilation
-#include "cs2/bitvectr.h"           // for ABitVector
-#include "infra/Array.hpp"          // for TR_Array
-#include "infra/Assert.hpp"         // for TR_ASSERT
-#include "infra/BitVector.hpp"      // for TR_BitVector
-#include "infra/IGBase.hpp"         // for TR_IGBase, IMIndex
-#include "infra/IGNode.hpp"         // for IGNodeColour, TR_IGNode, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "compile/Compilation.hpp"
+#include "cs2/bitvectr.h"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/IGBase.hpp"
+#include "infra/IGNode.hpp"
 
 template <class T> class TR_Stack;
 

@@ -21,6 +21,7 @@
 
 #include "infra/Assert.hpp"
 #include "ilgen/VirtualMachineRegister.hpp"
+#include "compile/Compilation.hpp"
 
 OMR::VirtualMachineRegister::VirtualMachineRegister(
       TR::IlBuilder *b,
@@ -68,3 +69,23 @@ OMR::VirtualMachineRegister::adjust(TR::IlBuilder *b, TR::IlValue *rawAmount)
    b->      Load(_localName),
             rawAmount));
    }
+
+TR::VirtualMachineState *
+OMR::VirtualMachineRegister::MakeCopy()
+   {
+   return new (TR::comp()->trMemory()->trHeapMemory()) TR::VirtualMachineRegister(_localName,
+                                                                                  _pointerToRegisterType,
+                                                                                  _adjustByStep,
+                                                                                  _addressOfRegister);
+   }
+
+void *
+OMR::VirtualMachineRegister::client()
+   {
+   if (_client == NULL && _clientAllocator != NULL)
+      _client = _clientAllocator(static_cast<TR::VirtualMachineRegister *>(this));
+   return _client;
+   }
+
+ClientAllocator OMR::VirtualMachineRegister::_clientAllocator = NULL;
+ClientAllocator OMR::VirtualMachineRegister::_getImpl = NULL;

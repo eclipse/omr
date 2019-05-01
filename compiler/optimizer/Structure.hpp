@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,24 +22,24 @@
 #ifndef STRUCTURE_INCL
 #define STRUCTURE_INCL
 
-#include <limits.h>                 // for SHRT_MAX
-#include <stddef.h>                 // for NULL
-#include <stdint.h>                 // for int32_t, int16_t, uint32_t, etc
-#include "codegen/FrontEnd.hpp"     // for TR_FrontEnd
-#include "compile/Compilation.hpp"  // for Compilation
-#include "env/TRMemory.hpp"         // for TR_Memory, etc
-#include "il/Block.hpp"             // for Block
-#include "il/DataTypes.hpp"         // for TR_YesNoMaybe
-#include "il/Node.hpp"              // for Node, vcount_t
-#include "infra/Assert.hpp"         // for TR_ASSERT
-#include "infra/BitVector.hpp"      // for TR_BitVector
-#include "infra/Cfg.hpp"            // for CFG
-#include "infra/Flags.hpp"          // for flags8_t
-#include "infra/Link.hpp"           // for TR_LinkHead, TR_Link
-#include "infra/List.hpp"           // for List
-#include "infra/CfgEdge.hpp"        // for CFGEdge
-#include "infra/CfgNode.hpp"        // for CFGNode
-#include "infra/vector.hpp"         // for TR::vector
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/Node.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "infra/vector.hpp"
 
 #include "optimizer/VPConstraint.hpp"
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,22 +21,22 @@
 
 #include "il/symbol/OMRLabelSymbol.hpp"
 
-#include <stddef.h>                            // for NULL, size_t
-#include <stdint.h>                            // for intptr_t
-#include <stdio.h>                             // for sprintf
-#include <stdlib.h>                            // for calloc
-#include "codegen/CodeGenPhase.hpp"            // for CodeGenPhase
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "compile/Compilation.hpp"             // for Compilation, comp
-#include "env/TRMemory.hpp"                    // for PERSISTENT_NEW_DECLARE, etc
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for TR_YesNoMaybe, etc
-#include "il/Symbol.hpp"                       // for Symbol, etc
-#include "il/symbol/LabelSymbol.hpp"           // for LabelSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "codegen/CodeGenPhase.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
 
 namespace TR { class ParameterSymbol; }
 namespace TR { class Snippet; }

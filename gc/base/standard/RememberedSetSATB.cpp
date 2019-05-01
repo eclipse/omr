@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,7 +88,7 @@ MM_RememberedSetSATB::tearDown(MM_EnvironmentBase *env)
  * @param fragment The fragment to initialize.
  */
 void
-MM_RememberedSetSATB::initializeFragment(MM_EnvironmentBase* env, J9VMGCRememberedSetFragment* fragment)
+MM_RememberedSetSATB::initializeFragment(MM_EnvironmentBase* env, MM_GCRememberedSetFragment* fragment)
 {
 	fragment->fragmentAlloc = NULL;
 	fragment->fragmentTop = NULL;
@@ -113,7 +113,7 @@ MM_RememberedSetSATB::initializeFragment(MM_EnvironmentBase* env, J9VMGCRemember
  * @param value The value to store in the fragment. 
  */
 void
-MM_RememberedSetSATB::storeInFragment(MM_EnvironmentBase* env, J9VMGCRememberedSetFragment* fragment, UDATA* value)
+MM_RememberedSetSATB::storeInFragment(MM_EnvironmentBase* env, MM_GCRememberedSetFragment* fragment, UDATA* value)
 {
 	if (!isFragmentValid(env, fragment)) {
 		if (!refreshFragment(env, fragment)) {
@@ -133,7 +133,7 @@ MM_RememberedSetSATB::storeInFragment(MM_EnvironmentBase* env, J9VMGCRememberedS
  * @param fragment The fragment to validate. 
  */
 bool
-MM_RememberedSetSATB::isFragmentValid(MM_EnvironmentBase* env, const J9VMGCRememberedSetFragment* fragment)
+MM_RememberedSetSATB::isFragmentValid(MM_EnvironmentBase* env, const MM_GCRememberedSetFragment* fragment)
 {
 	if (fragment->fragmentStorage == NULL) {
 		return false;
@@ -150,7 +150,7 @@ MM_RememberedSetSATB::isFragmentValid(MM_EnvironmentBase* env, const J9VMGCRemem
  * @param fragment The fragment to preserve the index for.
  */
 void
-MM_RememberedSetSATB::preserveLocalFragmentIndex(MM_EnvironmentBase* env, J9VMGCRememberedSetFragment* fragment)
+MM_RememberedSetSATB::preserveLocalFragmentIndex(MM_EnvironmentBase* env, MM_GCRememberedSetFragment* fragment)
 {
 	assume((fragment->localFragmentIndex != J9GC_REMEMBERED_SET_RESERVED_INDEX), "Attempt to preserve an already preserved fragment index.");
 	fragment->preservedLocalFragmentIndex = fragment->localFragmentIndex;
@@ -162,7 +162,7 @@ MM_RememberedSetSATB::preserveLocalFragmentIndex(MM_EnvironmentBase* env, J9VMGC
  * @param fragment The fragment to restore.
  */
 void
-MM_RememberedSetSATB::restoreLocalFragmentIndex(MM_EnvironmentBase* env, J9VMGCRememberedSetFragment* fragment)
+MM_RememberedSetSATB::restoreLocalFragmentIndex(MM_EnvironmentBase* env, MM_GCRememberedSetFragment* fragment)
 {
 	assume((fragment->localFragmentIndex == J9GC_REMEMBERED_SET_RESERVED_INDEX), "Attempt to restore a non-preserved fragment index.");
 	fragment->localFragmentIndex = fragment->preservedLocalFragmentIndex;
@@ -194,7 +194,7 @@ MM_RememberedSetSATB::restoreGlobalFragmentIndex(MM_EnvironmentBase* env)
  * @return the actual value corresponding to the fragment index, preserved or not.
  */
 UDATA
-MM_RememberedSetSATB::getLocalFragmentIndex(MM_EnvironmentBase* env, const J9VMGCRememberedSetFragment* fragment)
+MM_RememberedSetSATB::getLocalFragmentIndex(MM_EnvironmentBase* env, const MM_GCRememberedSetFragment* fragment)
 {
 	/* There should be no synchronization required based on the following assumptions:
 	 * 1) The thread starting the GC will call preserveLocalFragmentIndex on all threads "atomically".
@@ -271,7 +271,7 @@ MM_RememberedSetSATB::setGlobalIndex(MM_EnvironmentBase* env, UDATA indexValue)
  * is to be updated.
  */
 bool
-MM_RememberedSetSATB::refreshFragment(MM_EnvironmentBase *env, J9VMGCRememberedSetFragment* fragment)
+MM_RememberedSetSATB::refreshFragment(MM_EnvironmentBase *env, MM_GCRememberedSetFragment* fragment)
 {
 	MM_Packet *packet = NULL;
 	bool result = false;

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,12 @@ set(OMR_ASSERT_ 1)
 # omr_assert([<mode>] TEST <condition>... [MESSAGE <message>])
 # <mode> is one of FATAL_ERROR (default), WARNING, STATUS
 function(omr_assert)
-	cmake_parse_arguments(omr_assert "STATUS;WARNING;FATAL_ERROR" "MESSAGE" "TEST" ${ARGN})
+	cmake_parse_arguments(omr_assert "STATUS;WARNING;SEND_ERROR;FATAL_ERROR" "MESSAGE" "TEST" ${ARGN})
 
 	if(omr_assert_FATAL_ERROR)
 		set(mode FATAL_ERROR)
+	elseif(omr_assert_SEND_ERROR)
+		set(mode SEND_ERROR)
 	elseif(omr_assert_WARNING)
 		set(mode WARNING)
 	elseif(omr_assert_STATUS)

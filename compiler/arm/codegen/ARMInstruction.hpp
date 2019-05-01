@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -700,7 +700,7 @@ class ARMLoadStartPCInstruction : public TR::ARMTrg1Src2Instruction
                              TR::Register      *treg,
                              TR::SymbolReference *symRef,
                              TR::CodeGenerator *cg)
-      : TR::ARMTrg1Src2Instruction(ARMOp_sub, node, treg, cg->machine()->getARMRealRegister(TR::RealRegister::gr15),
+      : TR::ARMTrg1Src2Instruction(ARMOp_sub, node, treg, cg->machine()->getRealRegister(TR::RealRegister::gr15),
          new (cg->trHeapMemory()) TR_ARMOperand2(0xde, 24), cg), /* The value 0xde does not mean anything. It will be replaced in the binary encoding phase. */
         _symbolReference(symRef)
       {
@@ -711,7 +711,7 @@ class ARMLoadStartPCInstruction : public TR::ARMTrg1Src2Instruction
                              TR::Register      *treg,
                              TR::SymbolReference *symRef,
                              TR::CodeGenerator *cg)
-      : TR::ARMTrg1Src2Instruction(precedingInstruction, ARMOp_sub, node, treg, cg->machine()->getARMRealRegister(TR::RealRegister::gr15),
+      : TR::ARMTrg1Src2Instruction(precedingInstruction, ARMOp_sub, node, treg, cg->machine()->getRealRegister(TR::RealRegister::gr15),
          new (cg->trHeapMemory()) TR_ARMOperand2(0xde, 0), cg),  /* The value 0xde does not mean anything. It will be replaced in the binary encoding phase. */
         _symbolReference(symRef)
       {

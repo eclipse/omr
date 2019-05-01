@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,8 +39,12 @@ add_executable(jitbuildertest
 
 if(OMR_HOST_ARCH STREQUAL "x86")
 	if(OMR_HOST_OS STREQUAL "linux" OR OMR_HOST_OS STREQUAL "osx")
-		target_sources(jitbuildertest PUBLIC CallReturnTest.cpp)
+		target_sources(jitbuildertest PRIVATE CallReturnTest.cpp)
 	endif()
+endif()
+
+if(NOT OMR_HOST_ARCH STREQUAL "ppc")
+	target_sources(jitbuildertest PUBLIC UnsignedDivRemTest.cpp)
 endif()
 
 target_link_libraries(jitbuildertest

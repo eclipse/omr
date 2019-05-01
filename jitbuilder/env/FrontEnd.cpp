@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,8 +43,6 @@
 
 #define RANGE_NEEDS_FOUR_BYTE_OFFSET(r) (((r) >= (USHRT_MAX   )) ? 1 : 0)
 
-#define notImplemented(A) TR_ASSERT(0, "This function is not defined for JitBuilder::FrontEnd %s", (A) )
-
 namespace JitBuilder
 {
 
@@ -75,7 +73,7 @@ FrontEnd::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMet
 intptrj_t
 FrontEnd::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference *symRef, void *callSite)
    {
-   TR_ASSERT(0, "methodTrampolineLookup not implemented yet");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
@@ -127,9 +125,6 @@ FrontEnd::mapsAreIdentical(
        mapCursor != stackAtlas->getParameterMap() &&
        mapCursor->getMapSizeInBytes() == nextMapCursor->getMapSizeInBytes() &&
        mapCursor->getRegisterMap() == nextMapCursor->getRegisterMap() &&
-#ifdef TR_HOST_S390
-       (mapCursor->getHighWordRegisterMap() == nextMapCursor->getHighWordRegisterMap()) &&
-#endif
        !memcmp(mapCursor->getMapBits(), nextMapCursor->getMapBits(), mapCursor->getMapSizeInBytes()))
       {
       return true;

@@ -37,11 +37,13 @@
 
 OMR::BytecodeBuilder::BytecodeBuilder(TR::MethodBuilder *methodBuilder,
                                       int32_t bcIndex,
-                                      char *name)
+                                      char *name,
+                                      int32_t bcLength)
    : TR::IlBuilder(methodBuilder, methodBuilder->typeDictionary()),
    _fallThroughBuilder(0),
    _bcIndex(bcIndex),
    _name(name),
+   _bcLength(bcLength),
    _initialVMState(0),
    _vmState(0)
    {
@@ -197,8 +199,8 @@ OMR::BytecodeBuilder::setHandlerInfo(uint32_t catchType)
 void
 OMR::BytecodeBuilder::propagateVMState(TR::VirtualMachineState *fromVMState)
    {
-   _initialVMState = fromVMState->MakeCopy();
-   _vmState = fromVMState->MakeCopy();
+   _initialVMState = fromVMState->makeCopy();
+   _vmState = fromVMState->makeCopy();
    }
 
 // transferVMState needs to be called before the actual transfer operation (Goto, IfCmp,
@@ -219,7 +221,7 @@ OMR::BytecodeBuilder::transferVMState(TR::BytecodeBuilder **b)
       // create an intermediate builder object to do that work
       TR::BytecodeBuilder *intermediateBuilder = _methodBuilder->OrphanBytecodeBuilder((*b)->_bcIndex, (*b)->_name);
 
-      _vmState->MergeInto((*b)->initialVMState(), intermediateBuilder);
+      _vmState->mergeInto((*b)->initialVMState(), intermediateBuilder);
       TraceIL("IlBuilder[ %p ]:: transferVMState merged vm state on way to [ %p ] using [ %p ]\n", this, *b, intermediateBuilder);
 
       TR::IlBuilder *tgtb = *b;
@@ -439,3 +441,14 @@ OMR::BytecodeBuilder::IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder *dest, TR:
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpUnsignedGreaterOrEqual(dest, v1, v2);
    }
+
+void *
+OMR::BytecodeBuilder::client()
+   {
+   if (_client == NULL && _clientAllocator != NULL)
+      _client = _clientAllocator(static_cast<TR::BytecodeBuilder *>(this));
+   return _client;
+   }
+
+ClientAllocator OMR::BytecodeBuilder::_clientAllocator = NULL;
+ClientAllocator OMR::BytecodeBuilder::_getImpl = NULL;

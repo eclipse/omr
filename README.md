@@ -24,19 +24,19 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 | Build | Status |
 | ---------------------- | -------------------- |
-| **Travis CI (Overall)** | [![Travis Overall Status](https://api.travis-ci.org/eclipse/omr.svg?branch=master)](https://travis-ci.org/eclipse/omr) |
-| **Windows x86(Appveyor)** | [![Appveyor Status](https://ci.appveyor.com/api/projects/status/github/eclipse/omr?svg=true&branch=master)](https://ci.appveyor.com/project/eclipsewebmaster/omr) |
-| **Windows x86-64 (Jenkins)** | [![Windows x86-64 Status](https://ci.eclipse.org/omr/job/Build-win_x86-64/badge/icon)](https://ci.eclipse.org/omr/job/Build-win_x86-64/) |
-| **Linux x86-64 (Jenkins)** | [![Linux x86-64 Status](https://ci.eclipse.org/omr/job/Build-linux_x86-64/badge/icon)](https://ci.eclipse.org/omr/job/Build-linux_x86-64/) |
-| **Linux x86-64 CMAKE Makefile (Travis)** | [![Travis Linux x86-64 CMAKE Makefile Status](https://travis-matrix-badges.herokuapp.com/repos/eclipse/omr/branches/master/1)](https://travis-ci.org/eclipse/omr) |
-| **Linux x86-64 (Travis)** | [![Travis Linux x86-64 Status](https://travis-matrix-badges.herokuapp.com/repos/eclipse/omr/branches/master/2)](https://travis-ci.org/eclipse/omr) |
-| **Linux x86-64 LINT (Travis)** | [![Travis Linux x86-64 LINT Status](https://travis-matrix-badges.herokuapp.com/repos/eclipse/omr/branches/master/5)](https://travis-ci.org/eclipse/omr) |
-| **Linux x86-64 CMAKE Ninja (Travis)** | [![Travis Linux x86-64 CMAKE Ninja Status](https://travis-matrix-badges.herokuapp.com/repos/eclipse/omr/branches/master/6)](https://travis-ci.org/eclipse/omr) |
-| **Linux AArch64 (Travis)** | [![Travis Linux AArch64 Status](https://travis-matrix-badges.herokuapp.com/repos/eclipse/omr/branches/master/3)](https://travis-ci.org/eclipse/omr) |
-| **Linux ARM (Travis)** | [![Travis Linux ARM Status](https://travis-matrix-badges.herokuapp.com/repos/eclipse/omr/branches/master/4)](https://travis-ci.org/eclipse/omr) |
-| **Power 64-bit Linux (Jenkins)** | [![Build-linux_ppc-64_le_gcc Status](https://ci.eclipse.org/omr/job/Build-linux_ppc-64_le_gcc/badge/icon)](https://ci.eclipse.org/omr/job/Build-linux_ppc-64_le_gcc/) |
-| **Power 64-bit AIX (Jenkins)** | [![Build-aix_ppc-64 Status](https://ci.eclipse.org/omr/job/Build-aix_ppc-64/badge/icon)](https://ci.eclipse.org/omr/job/Build-aix_ppc-64/) |
-| **Linux on Z 64-bit (Jenkins)** | [![Build-linux_390-64 Status](https://ci.eclipse.org/omr/job/Build-linux_390-64/badge/icon)](https://ci.eclipse.org/omr/job/Build-linux_390-64/) |
+| **Linux x86-64 Lint (Travis)** | [![Travis Overall Status](https://api.travis-ci.org/eclipse/omr.svg?branch=master)](https://travis-ci.org/eclipse/omr) |
+| **Windows x86 (Appveyor)** | [![Appveyor Status](https://ci.appveyor.com/api/projects/status/github/eclipse/omr?svg=true&branch=master)](https://ci.appveyor.com/project/eclipsewebmaster/omr) |
+| **Windows x86-64** | [![Windows x86-64 Status](https://ci.eclipse.org/omr/job/Build-win_x86-64/badge/icon)](https://ci.eclipse.org/omr/job/Build-win_x86-64/) |
+| **Linux x86** | [![Build Status](https://ci.eclipse.org/omr/job/Build-linux_x86/badge/icon)](https://ci.eclipse.org/omr/job/Build-linux_x86/) |
+| **Linux x86-64** | [![Linux x86-64 Status](https://ci.eclipse.org/omr/job/Build-linux_x86-64/badge/icon)](https://ci.eclipse.org/omr/job/Build-linux_x86-64/) |
+| **Linux x86-64 Compressed Pointers** | [![Build Status](https://ci.eclipse.org/omr/job/Build-linux_x86-64_cmprssptrs/badge/icon)](https://ci.eclipse.org/omr/job/Build-linux_x86-64_cmprssptrs/) |
+| **Linux AArch64 (ARM 64-bit)** | [![Build-linux_aarch64 Status](https://ci.eclipse.org/omr/job/Build-linux_aarch64/badge/icon)](https://ci.eclipse.org/omr/job/Build-linux_aarch64/) |
+| **Linux ARM 32-bit** | [![Build-linux_arm Status](https://ci.eclipse.org/omr/job/Build-linux_arm/badge/icon)](https://ci.eclipse.org/omr/job/Build-linux_arm/) |
+| **OSX x86-64** | [![Build Status](https://ci.eclipse.org/omr/job/Build-osx_x86-64/badge/icon)](https://ci.eclipse.org/omr/job/Build-osx_x86-64/) |
+| **Linux Power 64-bit** | [![Build-linux_ppc-64_le_gcc Status](https://ci.eclipse.org/omr/job/Build-linux_ppc-64_le_gcc/badge/icon)](https://ci.eclipse.org/omr/job/Build-linux_ppc-64_le_gcc/) |
+| **AIX Power 64-bit** | [![Build-aix_ppc-64 Status](https://ci.eclipse.org/omr/job/Build-aix_ppc-64/badge/icon)](https://ci.eclipse.org/omr/job/Build-aix_ppc-64/) |
+| **Linux Z (s390x) 64-bit** | [![Build-linux_390-64 Status](https://ci.eclipse.org/omr/job/Build-linux_390-64/badge/icon)](https://ci.eclipse.org/omr/job/Build-linux_390-64/) |
+
 
 What Is Eclipse OMR?
 ====================
@@ -153,50 +153,41 @@ look at a 'standalone' build, which hooks Eclipse OMR up to the its testing syst
 only.
 
 ### Basic configuration and compile
-To build standalone Eclipse OMR, run the following commands from the top of the
-source tree. The top of the Eclipse OMR source tree is the directory that contains
-run_configure.mk.
+To build standalone Eclipse OMR, run the following commands from the root of the
+source tree. For more detailed instructions please read [BuildingWithCMake.md](doc/BuildingWithCMake.md).
 
-    # Generate autotools makefiles with SPEC-specific presets
-    make -f run_configure.mk SPEC=linux_x86-64 OMRGLUE=./example/glue
+    # Create a build directory and cd into it
+    mkdir build
+    cd build
+    
+    #generate the build system using cmake
+    cmake ..
 
-    # Build
+    # Build (you can optionally compile in parallel by adding -j<N> to the make command)
     make
 
+    # Run tests (note that no contribution should cause new test failures in testing).
+    # Use the `-V` option to see verbose output from the tests.
+    ctest [-V]
+
+### Building Eclipse OMR on Windows using Visual Studio
+The following instructions below demonstrate the steps to build Eclipse OMR on Windows
+using Visual Studios. In the example Visual Studio 11 2012 Win64 is being used.
+You can easily switch this to the version of Visual Studio you would like to use.
+
+    # Create a build directory and cd into it
+    mkdir build
+    cd build
+    
+    #generate the build system using cmake
+    cmake -G "Visual Studio 11 2012 Win64" ..
+
+    # Build
+    cmake --build .
+
     # Run tests (note that no contribution should cause new test failures in "make test")
-    make test
+    ctest
 
-Run `make -f run_configure.mk help` for a list of configure makefile targets.
-Run `make help` for a list of build targets.
-
-### Building Eclipse OMR on Windows
-A shell script interpreter, such as bash, is required to run configure.
-
-### How to Configure with Custom Options
-Run `./configure --help` to see the full list of configure command-line
-options.
-
-To run configure using both `SPEC` presets and custom options, pass the
-`EXTRA_CONFIGURE_ARGS` option to `run_configure.mk`.
-
-For example, to disable optimizations, run configure like this:
-
-    # Example configure
-    make -f run_configure.mk SPEC=linux_x86-64 OMRGLUE=./example/glue 'EXTRA_CONFIGURE_ARGS=--disable-optimized' clean all
-
-To disable building fvtests, run configure like this:
-
-    # Example configure disabling fvtests
-    make -f run_configure.mk SPEC=linux_x86-64 OMRGLUE=./example/glue 'EXTRA_CONFIGURE_ARGS=--disable-fvtest' clean all
-
-Note that the `clean` target of `run_configure.mk` deletes the header files and
-makefiles generated by configure. Invoking the `clean all` targets ensures that
-the header files and makefiles are regenerated using the custom options.
-
-The minimal invocation of configure is:
-
-    # Basic configure example
-    $ ./configure OMRGLUE=./example/glue
 
 Where can I learn more?
 ===============================

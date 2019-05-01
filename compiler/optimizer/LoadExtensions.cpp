@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,35 +21,35 @@
 
 #include "optimizer/LoadExtensions.hpp"
 
-#include <stdint.h>                           // for uint16_t
-#include <string.h>                           // for NULL, memset
-#include "codegen/CodeGenerator.hpp"          // for CodeGenerator
-#include "compile/Compilation.hpp"            // for Compilation
+#include <stdint.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"        // for TR::Options, etc
-#include "cs2/bitvectr.h"                     // for ABitVector<>::Cursor
+#include "control/Options_inlines.hpp"
+#include "cs2/bitvectr.h"
 #include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "il/DataTypes.hpp"                   // for TR::DataType, etc
-#include "il/ILOpCodes.hpp"                   // for ILOpCodes::a2l, etc
-#include "il/ILOps.hpp"                       // for TR::ILOpCode, ILOpCode
-#include "il/Node.hpp"                        // for Node, etc
-#include "il/Node_inlines.hpp"                // for Node::getUseDefIndex, etc
-#include "il/Symbol.hpp"                      // for Symbol
-#include "il/TreeTop.hpp"                     // for TreeTop
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "infra/Assert.hpp"                   // for TR_ASSERT
-#include "infra/BitVector.hpp"                // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                      // for CFG
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
 #include "infra/SimpleRegex.hpp"
 #include "infra/ILWalk.hpp"
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/Optimization_inlines.hpp" // for Optimization inlines
-#include "optimizer/Optimizer.hpp"            // for Optimizer
-#include "optimizer/UseDefInfo.hpp"           // for TR_UseDefInfo, etc
-#include "ras/Debug.hpp"                      // for TR_Debug
+#include "optimizer/Optimization.hpp"
+#include "optimizer/Optimization_inlines.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/UseDefInfo.hpp"
+#include "ras/Debug.hpp"
 
 TR_LoadExtensions::TR_LoadExtensions(TR::OptimizationManager *manager)
    : TR::Optimization(manager),
@@ -135,8 +135,8 @@ const bool TR_LoadExtensions::canSkipConversion(TR::Node* conversion, TR::Node* 
          (TR::Compiler->target.is64Bit() || comp()->cg()->use64BitRegsOn32Bit() || conversion->getSize() != 8) &&
 
          // Ensure the conversion matches our preferred extension on the load
-         (loadPrefersSignExtension && loadPrefersSignExtension == conversionOpCode.isSignExtension() ||
-          loadPrefersZeroExtension && loadPrefersZeroExtension == conversion->isZeroExtension()))
+         ((loadPrefersSignExtension && loadPrefersSignExtension == conversionOpCode.isSignExtension()) ||
+          (loadPrefersZeroExtension && loadPrefersZeroExtension == conversion->isZeroExtension())))
          {
          if (trace())
             {

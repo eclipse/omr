@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,9 @@
 #ifndef NODEPOOL_INCL
 #define NODEPOOL_INCL
 
-#include "env/TRMemory.hpp"  // for Allocator, TR_Memory, etc
-#include "il/Node.hpp"       // for Node
-#include "il/NodeUtils.hpp"  // for etc
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "il/NodeUtils.hpp"
 
 namespace TR { class SymbolReference; }
 namespace TR { class Compilation; }

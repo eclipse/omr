@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,11 +19,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>                       // for int32_t, uint8_t
-#include "codegen/CodeGenerator.hpp"      // for CodeGenerator
-#include "codegen/Machine.hpp"            // for Machine
-#include "codegen/RealRegister.hpp"       // for RealRegister, etc
-#include "codegen/RegisterConstants.hpp"  // for TR_RegisterKinds, etc
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/RegisterConstants.hpp"
 
 TR::RealRegister *
 OMR::Power::RealRegister::regMaskToRealRegister(TR_RegisterMask mask, TR_RegisterKinds rk, TR::CodeGenerator *cg)
@@ -40,7 +40,7 @@ OMR::Power::RealRegister::regMaskToRealRegister(TR_RegisterMask mask, TR_Registe
       rr = FirstCCR;
    else if (rk == TR_VRF)
       rr = FirstVRF;
-   return cg->machine()->getPPCRealRegister(RegNum(rr+bitPos));
+   return cg->machine()->getRealRegister(RegNum(rr+bitPos));
    }
 
 TR_RegisterMask

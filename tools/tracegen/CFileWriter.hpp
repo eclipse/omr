@@ -102,7 +102,7 @@ private:
 	 * @param directRegistration
 	 * @return RC_OK on success, RC_FAILED on failure
 	 */
-	RCType writeRegistrationFunctionsOnStream(FILE *fd, J9TDFFile *tdf, bool directRegistration);
+	RCType writeRegistrationFunctionsOnStream(FILE *fd, J9TDFFile *tdf);
 
 	/**
 	 * Output registration functions

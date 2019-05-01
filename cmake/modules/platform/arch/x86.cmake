@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,15 +39,11 @@ list(APPEND TR_COMPILE_DEFINITIONS -DTR_HOST_X86 -DTR_TARGET_X86)
 set(TR_HOST_ARCH    x)
 
 if(OMR_ENV_DATA64)
-	list(APPEND TR_COMPILE_DEFINITIONS -DTR_HOST_64BIT -DTR_TARGET_64BIT)
+	list(APPEND TR_COMPILE_DEFINITIONS -DTR_HOST_64BIT -DTR_TARGET_64BIT -DBITVECTOR_64BIT)
 
 
 	set(TR_HOST_SUBARCH amd64)
 	set(TR_HOST_BITS    64)
-	#TODO the asm flags only work for GNU right now.
-	if(CMAKE_ASM_COMPILER_ID STREQUAL "GNU")
-		set(TR_ASM_FLAGS "-Wa,--64,--defsym,TR_HOST_X86=1,--defsym,TR_HOST_64BIT=1,--defsym,BITVECTOR_64BIT=1,--defsym,LINUX=1,--defsym,TR_TARGET_X86=1,--defsym,TR_TARGET_64BIT=1")
-	endif()
 else()
 	list(APPEND TR_COMPILE_DEFINITIONS -DTR_HOST_32BIT -DTR_TARGET_32BIT)
 

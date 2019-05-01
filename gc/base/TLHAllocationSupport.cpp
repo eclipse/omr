@@ -64,7 +64,7 @@ MM_TLHAllocationSupport::reportClearCache(MM_EnvironmentBase *env)
 	MM_MemorySubSpace *subspace = env->getMemorySpace()->getDefaultMemorySubSpace();
 
 	TRIGGER_J9HOOK_MM_PRIVATE_CACHE_CLEARED(extensions->privateHookInterface, _omrVMThread, subspace, getBase(), getAlloc(), getTop());
-};
+}
 
 /**
  * Report allocation of a new allocation cache
@@ -75,7 +75,7 @@ MM_TLHAllocationSupport::reportRefreshCache(MM_EnvironmentBase *env)
 	MM_MemorySubSpace *subspace = env->getMemorySpace()->getDefaultMemorySubSpace();
 
 	TRIGGER_J9HOOK_MM_PRIVATE_CACHE_REFRESHED(env->getExtensions()->privateHookInterface, _omrVMThread, subspace, getBase(), getTop());
-};
+}
 
 /**
  * Purge the TLH data from the receiver.
@@ -95,7 +95,7 @@ MM_TLHAllocationSupport::clear(MM_EnvironmentBase *env)
 		reportClearCache(env);
 	}
 	wipeTLH(env);
-};
+}
 
 /**
  * Reconnect the cache to the owning environment.
@@ -120,7 +120,7 @@ MM_TLHAllocationSupport::clear(MM_EnvironmentBase *env)
 	}
 
 	_tlh->refreshSize = extensions->tlhInitialSize;
-};
+}
 
 /**
  * Restart the cache from its current start to an appropriate base state.
@@ -143,7 +143,7 @@ MM_TLHAllocationSupport::restart(MM_EnvironmentBase *env)
 	setAllZeroes();
 
 	_tlh->refreshSize = MM_Math::roundToCeiling(extensions->tlhInitialSize, refreshSize / 2);
-};
+}
 
 /**
  * Refresh the TLH.
@@ -318,7 +318,7 @@ MM_TLHAllocationSupport::allocateFromTLH(MM_EnvironmentBase *env, MM_AllocateDes
 	}
 
 	return memPtr;
-};
+}
 
 /**
  * Replenish the allocation interface TLH cache with new storage.

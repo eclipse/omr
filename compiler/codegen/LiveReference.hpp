@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
 #ifndef LIVEREFERENCE_INCL
 #define LIVEREFERENCE_INCL
 
-#include <stddef.h>          // for NULL
-#include <stdint.h>          // for uint32_t
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
-#include "infra/List.hpp"    // for List
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "infra/List.hpp"
 
 namespace TR { class Node; }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,16 +24,16 @@
 
 #include "ras/Debug.hpp"
 
-#include <stdarg.h>                // for va_list
-#include <stddef.h>                // for NULL
-#include <stdint.h>                // for int32_t, int8_t, uint32_t, int64_t, etc
-#include "cs2/hashtab.h"           // for HashTable
-#include "env/CompilerEnv.hpp"     // for target->is64Bit()
-#include "env/TRMemory.hpp"        // for TR_MemoryBase::ObjectType::DebugCounter, etc
-#include "env/jittypes.h"          // for intptrj_t
-#include "infra/Flags.hpp"         // for flags8_t
-#include "infra/List.hpp"          // for TR_PersistentList
-#include "infra/Monitor.hpp"       // for createCounter race conditions
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include "cs2/hashtab.h"
+#include "env/CompilerEnv.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "infra/Flags.hpp"
+#include "infra/List.hpp"
+#include "infra/Monitor.hpp"
 
 namespace TR { class Compilation; }
 namespace TR { class Node; }

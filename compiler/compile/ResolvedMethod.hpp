@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,16 +22,16 @@
 #ifndef TR_RESOLVEDMETHODBASE_INCL
 #define TR_RESOLVEDMETHODBASE_INCL
 
-#include <stddef.h>                       // for NULL
-#include <stdint.h>                       // for uint16_t, uint8_t, etc
-#include "codegen/RecognizedMethods.hpp"  // for RecognizedMethod
-#include "compile/Method.hpp"             // for TR_Method, etc
-#include "env/TRMemory.hpp"               // for TR_Memory (ptr only), etc
-#include "env/jittypes.h"                 // for intptrj_t, uintptrj_t
-#include "il/DataTypes.hpp"               // for DataTypes, etc
-#include "il/ILOpCodes.hpp"               // for ILOpCodes
-#include "infra/Assert.hpp"               // for TR_ASSERT
-#include "runtime/Runtime.hpp"            // for TR_RuntimeHelper
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/RecognizedMethods.hpp"
+#include "compile/Method.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "infra/Assert.hpp"
+#include "runtime/Runtime.hpp"
 
 class TR_FrontEnd;
 class TR_OpaqueClassBlock;
@@ -82,7 +82,7 @@ public:
    virtual bool isProtected();
    virtual bool isPublic();
    virtual bool isFinal();
-   
+
    virtual bool isInterpreted();
    virtual bool isInterpretedForHeuristics();
    virtual bool hasBackwardBranches();
@@ -235,8 +235,6 @@ public:
          { return convertToMethod()->getParameterIterator(comp, this); }
 
    bool isJ9() { return convertToMethod()->isJ9(); }
-   bool isPython() { return convertToMethod()->isPython(); }
-   bool isRuby() { return convertToMethod()->isRuby(); }
 
    virtual TR::IlGeneratorMethodDetails *getIlGeneratorMethodDetails();
 

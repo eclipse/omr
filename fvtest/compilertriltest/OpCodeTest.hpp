@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,8 +86,8 @@ class OpCodeTest : public JitTest, public ::testing::WithParamInterface< std::tu
 template <typename T>
 class BinaryOpTest : public JitTest, public ::testing::WithParamInterface< std::tuple< std::tuple<T,T>, std::tuple<std::string, T (*)(T,T)>> > {};
 
-template <typename T>
-class UnaryOpTest : public JitTest, public ::testing::WithParamInterface< std::tuple< T , std::tuple<std::string, T (*)(T)>> > {};
+template <typename Ret, typename T = Ret>
+class UnaryOpTest : public JitTest, public ::testing::WithParamInterface< std::tuple< T , std::tuple<std::string, Ret (*)(T)>> > {};
 
 
 } // namespace CompTest

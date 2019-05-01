@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <setjmp.h>
+#include <errno.h>
 #include "omrsignal_context.h"
 
 #if !defined(J9ZOS390)
@@ -104,18 +105,18 @@ static uint32_t shutDownASynchReporter;
 
 static uint32_t attachedPortLibraries;
 
-typedef struct J9UnixAsyncHandlerRecord {
+typedef struct OMRUnixAsyncHandlerRecord {
 	OMRPortLibrary *portLib;
 	omrsig_handler_fn handler;
 	void *handler_arg;
 	uint32_t flags;
-	struct J9UnixAsyncHandlerRecord *next;
-} J9UnixAsyncHandlerRecord;
+	struct OMRUnixAsyncHandlerRecord *next;
+} OMRUnixAsyncHandlerRecord;
 
 /* holds the options set by omrsig_set_options */
 uint32_t signalOptionsGlobal;
 
-static J9UnixAsyncHandlerRecord *asyncHandlerList;
+static OMRUnixAsyncHandlerRecord *asyncHandlerList;
 
 #if !defined(J9ZOS390)
 
@@ -156,8 +157,8 @@ static omrthread_monitor_t asyncReporterShutdownMonitor;
 static uint32_t asyncThreadCount;
 static uint32_t attachedPortLibraries;
 
-struct J9SignalHandlerRecord {
-	struct J9SignalHandlerRecord *previous;
+struct OMRSignalHandlerRecord {
+	struct OMRSignalHandlerRecord *previous;
 	struct OMRPortLibrary *portLibrary;
 	omrsig_handler_fn handler;
 	void *handler_arg;
@@ -166,9 +167,9 @@ struct J9SignalHandlerRecord {
 	struct __jumpinfo farJumpInfo;
 #endif /* defined(J9ZOS390) */
 	uint32_t flags;
-};
+} OMRSignalHandlerRecord;
 
-typedef struct J9CurrentSignal {
+typedef struct OMRCurrentSignal {
 	int signal;
 	siginfo_t *sigInfo;
 	void *contextInfo;
@@ -176,7 +177,7 @@ typedef struct J9CurrentSignal {
 	uintptr_t breakingEventAddr;
 #endif
 	uint32_t portLibSignalType;
-} J9CurrentSignal;
+} OMRCurrentSignal;
 
 /* key to get the end of the synchronous handler records */
 static omrthread_tls_key_t tlsKey;
@@ -199,14 +200,25 @@ static struct {
 	{OMRPORT_SIG_FLAG_SIGXFSZ, SIGXFSZ},
 	{OMRPORT_SIG_FLAG_SIGINT, SIGINT},
 	{OMRPORT_SIG_FLAG_SIGHUP, SIGHUP},
-	{OMRPORT_SIG_FLAG_SIGCONT, SIGCONT}
+	{OMRPORT_SIG_FLAG_SIGCONT, SIGCONT},
+	{OMRPORT_SIG_FLAG_SIGWINCH, SIGWINCH},
+	{OMRPORT_SIG_FLAG_SIGPIPE, SIGPIPE},
+	{OMRPORT_SIG_FLAG_SIGALRM, SIGALRM},
+	{OMRPORT_SIG_FLAG_SIGCHLD, SIGCHLD},
+	{OMRPORT_SIG_FLAG_SIGTSTP, SIGTSTP},
+	{OMRPORT_SIG_FLAG_SIGUSR1, SIGUSR1},
+	{OMRPORT_SIG_FLAG_SIGUSR2, SIGUSR2},
+	{OMRPORT_SIG_FLAG_SIGURG, SIGURG},
+	{OMRPORT_SIG_FLAG_SIGXCPU, SIGXCPU},
+	{OMRPORT_SIG_FLAG_SIGVTALRM, SIGVTALRM},
+	{OMRPORT_SIG_FLAG_SIGPROF, SIGPROF},
+	{OMRPORT_SIG_FLAG_SIGIO, SIGIO}
 #if defined(AIXPPC)
 	, {OMRPORT_SIG_FLAG_SIGRECONFIG, SIGRECONFIG}
 #endif
 #if defined(J9ZOS390)
 	, {OMRPORT_SIG_FLAG_SIGABEND, SIGABND}
 #endif
-
 };
 
 static omrthread_t asynchSignalReporterThread = NULL;
@@ -236,6 +248,8 @@ static void masterASynchSignalHandler(int signal, siginfo_t *sigInfo, void *cont
 static void masterSynchSignalHandler(int signal, siginfo_t *sigInfo, void *contextInfo);
 static void masterASynchSignalHandler(int signal, siginfo_t *sigInfo, void *contextInfo);
 #endif
+
+static int32_t unblockSignals(void);
 
 int32_t
 omrsig_can_protect(struct OMRPortLibrary *portLibrary,  uint32_t flags)
@@ -317,7 +331,7 @@ omrsig_info_count(struct OMRPortLibrary *portLibrary, void *info, uint32_t categ
 int32_t
 omrsig_protect(struct OMRPortLibrary *portLibrary, omrsig_protected_fn fn, void *fn_arg, omrsig_handler_fn handler, void *handler_arg, uint32_t flags, uintptr_t *result)
 {
-	struct J9SignalHandlerRecord thisRecord = {0};
+	struct OMRSignalHandlerRecord thisRecord = {0};
 	omrthread_t thisThread = NULL;
 	uint32_t flagsSignalsOnly = flags & OMRPORT_SIG_FLAG_SIGALLSYNC;
 	uint32_t flagsWithoutMasterHandlers = flagsSignalsOnly & ~signalsWithMasterHandlers;
@@ -360,7 +374,7 @@ omrsig_protect(struct OMRPortLibrary *portLibrary, omrsig_protected_fn fn, void 
 		 * The only scenario where this is of real concern, is if more than one signal was handled per call to omrsig_protect. In
 		 * this case, the current signal in tls will be pointing at a stale stack frame and signal: CMVC 126838
 		 */
-		J9CurrentSignal *currentSignal = omrthread_tls_get(thisThread, tlsKeyCurrentSignal);
+		OMRCurrentSignal *currentSignal = omrthread_tls_get(thisThread, tlsKeyCurrentSignal);
 
 		/* setjmp/longjmp does not clear the mask setup by the OS when it delivers the signal. User sigsetjmp/siglongjmp(buf, 1) instead */
 		if (0 != sigsetjmp(thisRecord.returnBuf, 1)) {
@@ -391,8 +405,8 @@ int32_t
 omrsig_set_async_signal_handler(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, void *handler_arg, uint32_t flags)
 {
 	int32_t rc = 0;
-	J9UnixAsyncHandlerRecord *cursor = NULL;
-	J9UnixAsyncHandlerRecord **previousLink = NULL;
+	OMRUnixAsyncHandlerRecord *cursor = NULL;
+	OMRUnixAsyncHandlerRecord **previousLink = NULL;
 
 	Trc_PRT_signal_omrsig_set_async_signal_handler_entered(handler, handler_arg, flags);
 
@@ -451,7 +465,7 @@ omrsig_set_async_signal_handler(struct OMRPortLibrary *portLibrary, omrsig_handl
 	if (NULL == cursor) {
 		/* cursor will only be NULL if we failed to find it in the list */
 		if (0 != flags) {
-			J9UnixAsyncHandlerRecord *record = portLibrary->mem_allocate_memory(portLibrary, sizeof(*record), OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+			OMRUnixAsyncHandlerRecord *record = portLibrary->mem_allocate_memory(portLibrary, sizeof(*record), OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
 
 			if (NULL == record) {
 				rc = OMRPORT_SIG_ERROR;
@@ -479,8 +493,8 @@ int32_t
 omrsig_set_single_async_signal_handler(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, void *handler_arg, uint32_t portlibSignalFlag, void **oldOSHandler)
 {
 	uint32_t rc = 0;
-	J9UnixAsyncHandlerRecord *cursor = NULL;
-	J9UnixAsyncHandlerRecord **previousLink = NULL;
+	OMRUnixAsyncHandlerRecord *cursor = NULL;
+	OMRUnixAsyncHandlerRecord **previousLink = NULL;
 	BOOLEAN foundHandler = FALSE;
 
 	Trc_PRT_signal_omrsig_set_single_async_signal_handler_entered(handler, handler_arg, portlibSignalFlag);
@@ -552,7 +566,7 @@ omrsig_set_single_async_signal_handler(struct OMRPortLibrary *portLibrary, omrsi
 	}
 
 	if (!foundHandler && (0 != portlibSignalFlag)) {
-		J9UnixAsyncHandlerRecord *record = portLibrary->mem_allocate_memory(portLibrary, sizeof(*record), OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+		OMRUnixAsyncHandlerRecord *record = portLibrary->mem_allocate_memory(portLibrary, sizeof(*record), OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
 		if (NULL == record) {
 			rc = OMRPORT_SIG_ERROR;
 		} else {
@@ -742,7 +756,7 @@ countInfoInCategory(struct OMRPortLibrary *portLibrary, void *info, uint32_t cat
 #if defined(OMR_PORT_ASYNC_HANDLER)
 /**
  * Given a port library signal flag and Unix signal value, execute the associated handlers
- * stored within asyncHandlerList (list of J9UnixAsyncHandlerRecord).
+ * stored within asyncHandlerList (list of OMRUnixAsyncHandlerRecord).
  *
  * @param asyncSignalFlag port library signal flag
  * @param unixSignal Unix signal value
@@ -752,7 +766,7 @@ countInfoInCategory(struct OMRPortLibrary *portLibrary, void *info, uint32_t cat
 static void
 runHandlers(uint32_t asyncSignalFlag, int unixSignal)
 {
-	J9UnixAsyncHandlerRecord *cursor = asyncHandlerList;
+	OMRUnixAsyncHandlerRecord *cursor = asyncHandlerList;
 
 	/* report the signal recorded in signalType to all registered listeners (for this signal).
 	 * incrementing the asyncThreadCount will prevent the list from being modified while we use it.
@@ -949,9 +963,9 @@ masterSynchSignalHandler(int signal, siginfo_t *sigInfo, void *contextInfo)
 	uint32_t result = U_32_MAX;
 
 	if (NULL != thisThread) {
-		struct J9SignalHandlerRecord *thisRecord = NULL;
-		struct J9CurrentSignal currentSignal = {0};
-		struct J9CurrentSignal *previousSignal = NULL;
+		struct OMRSignalHandlerRecord *thisRecord = NULL;
+		struct OMRCurrentSignal currentSignal = {0};
+		struct OMRCurrentSignal *previousSignal = NULL;
 		uint32_t portLibType = mapOSSignalToPortLib(signal, sigInfo);
 
 		/* record this signal in tls so that omrsig_handler can be called if any of the handlers decide we should be shutting down */
@@ -972,30 +986,30 @@ masterSynchSignalHandler(int signal, siginfo_t *sigInfo, void *contextInfo)
 
 		while (NULL != thisRecord) {
 			if (OMR_ARE_ANY_BITS_SET(thisRecord->flags, portLibType)) {
-				struct OMRUnixSignalInfo j9Info;
-				struct J9PlatformSignalInfo platformSignalInfo;
+				struct OMRUnixSignalInfo signalInfo;
+				struct OMRPlatformSignalInfo platformSignalInfo;
 
 				/* the equivalent of these memsets were here before, but were they needed? */
-				memset(&j9Info, 0, sizeof(j9Info));
+				memset(&signalInfo, 0, sizeof(signalInfo));
 				memset(&platformSignalInfo, 0, sizeof(platformSignalInfo));
 
-				j9Info.portLibrarySignalType = portLibType;
-				j9Info.handlerAddress = (void *)thisRecord->handler;
-				j9Info.handlerAddress2 = (void *)masterSynchSignalHandler;
-				j9Info.sigInfo = sigInfo;
-				j9Info.platformSignalInfo = platformSignalInfo;
+				signalInfo.portLibrarySignalType = portLibType;
+				signalInfo.handlerAddress = (void *)thisRecord->handler;
+				signalInfo.handlerAddress2 = (void *)masterSynchSignalHandler;
+				signalInfo.sigInfo = sigInfo;
+				signalInfo.platformSignalInfo = platformSignalInfo;
 
 				/* found a suitable handler */
 				/* what signal type do we want to pass on here? port or platform based ?*/
-				fillInUnixSignalInfo(thisRecord->portLibrary, contextInfo, &j9Info);
+				fillInUnixSignalInfo(thisRecord->portLibrary, contextInfo, &signalInfo);
 #if defined(S390) && defined(LINUX)
-				j9Info.platformSignalInfo.breakingEventAddr = breakingEventAddr;
+				signalInfo.platformSignalInfo.breakingEventAddr = breakingEventAddr;
 #endif
 
 				/* remove the handler we are about to invoke, now, in case the handler crashes */
 				omrthread_tls_set(thisThread, tlsKey, thisRecord->previous);
 
-				result = thisRecord->handler(thisRecord->portLibrary, portLibType, &j9Info, thisRecord->handler_arg);
+				result = thisRecord->handler(thisRecord->portLibrary, portLibType, &signalInfo, thisRecord->handler_arg);
 
 				/* The only case in which we don't want the previous handler back on top is if it just returned OMRPORT_SIG_EXCEPTION_RETURN
 				 * 		In this case we will remove it from the top after executing the siglongjmp */
@@ -1356,7 +1370,7 @@ mapOSSignalToPortLib(uint32_t signalNo, siginfo_t *sigInfo)
  *
  * Note that FPE signal codes (subtypes) all map to the same signal number and are not included
  *
- * @param portLibSignal The internal J9 Port Library signal number
+ * @param portLibSignal The internal port library signal number
  *
  * @return The corresponding Unix signal number or OMRPORT_SIG_ERROR (-1) if the portLibSignal
  *         could not be mapped
@@ -1540,6 +1554,16 @@ initializeSignalTools(OMRPortLibrary *portLibrary)
 #endif /* defined(J9ZOS390) */
 #endif /* defined(OSX) */
 
+	/* If a process has blocked signals, then the signals stay blocked in the
+	 * sub-processes across fork(s) and exec(s). Blocked signals prevent signal
+	 * handlers to be invoked. Signals listed in signalMap should be unblocked
+	 * during initialization in case a parent process has blocked any of those
+	 * signals.
+	 */
+	if (0 != unblockSignals()) {
+		return -1;
+	}
+
 #if defined(OMR_PORT_ASYNC_HANDLER)
 	if (J9THREAD_SUCCESS != createThreadWithCategory(
 			&asynchSignalReporterThread,
@@ -1671,7 +1695,7 @@ omrsig_get_options(struct OMRPortLibrary *portLibrary)
 intptr_t
 omrsig_get_current_signal(struct OMRPortLibrary *portLibrary)
 {
-	J9CurrentSignal *currentSignal = omrthread_tls_get(omrthread_self(), tlsKeyCurrentSignal);
+	OMRCurrentSignal *currentSignal = omrthread_tls_get(omrthread_self(), tlsKeyCurrentSignal);
 	if (NULL == currentSignal) {
 		return 0;
 	}
@@ -1742,8 +1766,8 @@ static void
 removeAsyncHandlers(OMRPortLibrary *portLibrary)
 {
 	/* clean up the list of async handlers */
-	J9UnixAsyncHandlerRecord *cursor = NULL;
-	J9UnixAsyncHandlerRecord **previousLink = NULL;
+	OMRUnixAsyncHandlerRecord *cursor = NULL;
+	OMRUnixAsyncHandlerRecord **previousLink = NULL;
 
 	omrthread_monitor_enter(asyncMonitor);
 
@@ -1780,7 +1804,7 @@ removeAsyncHandlers(OMRPortLibrary *portLibrary)
 void
 omrsig_chain_at_shutdown_and_exit(struct OMRPortLibrary *portLibrary)
 {
-	J9CurrentSignal *currentSignal = omrthread_tls_get(omrthread_self(), tlsKeyCurrentSignal);
+	OMRCurrentSignal *currentSignal = omrthread_tls_get(omrthread_self(), tlsKeyCurrentSignal);
 
 	Trc_PRT_signal_omrsig_chain_at_shutdown_and_exit_enter(portLibrary);
 
@@ -1795,3 +1819,45 @@ omrsig_chain_at_shutdown_and_exit(struct OMRPortLibrary *portLibrary)
 }
 #endif /* defined(OMRPORT_OMRSIG_SUPPORT) */
 
+/**
+ * This function will unblock signals listed in signalMap by changing the
+ * signal mask of the calling thread. This function should only be called
+ * during initialization from the main thread and before creation of other
+ * threads.
+ *
+ * @param[in] void
+ *
+ * @return 0 on success and non-zero on failure
+ */
+static int32_t
+unblockSignals(void) {
+	int32_t rc = 0;
+	int i = 0;
+	sigset_t signalSet;
+
+	rc = sigemptyset(&signalSet);
+	if (0 != rc) {
+		Trc_PRT_signal_unblockSignals_sigemptyset_failed(rc, errno);
+		goto exit;
+	}
+
+	/* Iterate through all signals listed in signalMap. */
+	for (i = 0; i < sizeof(signalMap) / sizeof(signalMap[0]); i++) {
+		/* Add the current signal to the signal set. */
+		int currentSignal = signalMap[i].unixSignalNo;
+		rc = sigaddset(&signalSet, currentSignal);
+		if (0 != rc) {
+			Trc_PRT_signal_unblockSignals_sigaddset_failed(currentSignal, rc, errno);
+			goto exit;
+		}
+	}
+
+	/* Unblock the signals listed in signalMap. */
+	rc = pthread_sigmask(SIG_UNBLOCK, &signalSet, NULL);
+	if (0 != rc) {
+		Trc_PRT_signal_unblockSignals_pthread_sigmask_failed(rc, errno);
+	}
+
+exit:
+	return rc;
+}

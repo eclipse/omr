@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,11 +21,11 @@
 
 #include "ras/LogTracer.hpp"
 
-#include <stdarg.h>                            // for va_list
-#include "compile/Compilation.hpp"             // for Compilation
-#include "optimizer/Optimization.hpp"          // for Optimization
+#include <stdarg.h>
+#include "compile/Compilation.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "ras/Debug.hpp"
 
 TR_LogTracer::TR_LogTracer(TR::Compilation *comp, TR::Optimization *opt) : _comp(comp), _traceLevel(trace_notrace)
    {

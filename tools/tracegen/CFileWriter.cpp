@@ -45,7 +45,9 @@ CFileWriter::writeOutputFiles(J9TDFOptions *options, J9TDFFile *tdf, J9TDFGroup 
 	time_t targetFileMtime = FileUtils::getMtime(fileName);
 
 	if ((false == options->force) && (targetFileMtime > sourceFileMtime)) {
-		printf("C file is already up-to-date: %s\n", fileName);
+		if (options->verboseOutput) {
+			printf("C file is already up-to-date: %s\n", fileName);
+		}
 		Port::omrmem_free((void **)&fileName);
 		return RC_OK;
 	}
@@ -113,18 +115,11 @@ CFileWriter::writeOutputFiles(J9TDFOptions *options, J9TDFFile *tdf, J9TDFGroup 
 		}
 		fprintf(fd, "\n#endif /* defined(UT_TRACE_ENABLED_IN_BUILD) */\n");
 
-		/* include an initialisation function */
-		fprintf(fd, "\n#if defined(UT_DIRECT_TRACE_REGISTRATION)\n\n");
-		if (RC_OK != writeRegistrationFunctionsOnStream(fd, tdf, true)) {
+		if (RC_OK != writeRegistrationFunctionsOnStream(fd, tdf)) {
 			eprintf("Failed to write registration functions");
 			goto failed;
 		}
-		fprintf(fd, "\n#else /* defined(UT_DIRECT_TRACE_REGISTRATION) */\n\n");
-		if (RC_OK != writeRegistrationFunctionsOnStream(fd, tdf, false)) {
-			eprintf("Failed to write registration functions");
-			goto failed;
-		}
-		fprintf(fd, "\n#endif /* defined(UT_DIRECT_TRACE_REGISTRATION) */\n\n");
+
 		fprintf(fd, "/* End of generated file */\n");
 
 		if (0 == fclose(fd)) {
@@ -184,28 +179,16 @@ failed:
 }
 
 RCType
-CFileWriter::writeRegistrationFunctionsOnStream(FILE *fd, J9TDFFile *tdf, bool directRegistration)
+CFileWriter::writeRegistrationFunctionsOnStream(FILE *fd, J9TDFFile *tdf)
 {
-	const char *parameterType = NULL;
-	const char *parameterName = NULL;
-	const char *ok = NULL;
-	const char *err = NULL;
+	const char *parameterType = "UtInterface *";
+	const char *parameterName = "utIntf";
+	const char *ok = "0";
+	const char *err = "-1";
 	char *unregisterSubmodule = NULL;
 	char *registerSubmodule = NULL;
 	char *submodules = NULL;
 	RCType rc = RC_FAILED;
-
-	if (directRegistration) {
-		parameterType = "UtInterface *";
-		parameterName = "utIntf";
-		ok = "0";
-		err = "-1";
-	} else {
-		parameterType = "JavaVM *";
-		parameterName = "vm";
-		ok = "JNI_OK";
-		err = "JNI_ERR";
-	}
 
 	fprintf(fd, "/* function to register with trace engine and configure current module */\n");
 	fprintf(fd, "int32_t\n"); /* type */
@@ -213,23 +196,13 @@ CFileWriter::writeRegistrationFunctionsOnStream(FILE *fd, J9TDFFile *tdf, bool d
 	fprintf(fd, "{\n");
 	fprintf(fd, "\tI_32 rc = %s;\n\n", ok); /* func vars */
 	fprintf(fd, "#if defined(UT_TRACE_ENABLED_IN_BUILD)\n");
-	if (!directRegistration) {
-		fprintf(fd, "\tUtInterface *utIntf;\n"); /* func vars */
-	}
+
 	/* trace enabled function body */
 	fprintf(fd, "\n\t%s_UtModuleInfo.containerModule = containerModule;\n\n", tdf->header.executable);
 
-	if (directRegistration) {
-		fprintf(fd, "\tif( utIntf == NULL ) {\n");
-		fprintf(fd, "\t\trc = %s;\n", err);
-		fprintf(fd, "\t}\n");
-	} else {
-		fprintf(fd, "\tif( vm != NULL ) {\n");
-		fprintf(fd, "\t\trc = (*vm)->GetEnv(vm, (void**)&utIntf, UTE_VERSION_1_1);\n");
-		fprintf(fd, "\t} else {\n");
-		fprintf(fd, "\t\trc = %s;\n", err);
-		fprintf(fd, "\t}\n");
-	}
+	fprintf(fd, "\tif( utIntf == NULL ) {\n");
+	fprintf(fd, "\t\trc = %s;\n", err);
+	fprintf(fd, "\t}\n");
 
 	fprintf(fd, "\n\tif (rc == %s) {\n", ok);
 	fprintf(fd, "\t\tutIntf->module->TraceInit(NULL, &%s_UtModuleInfo);\n", tdf->header.executable);
@@ -266,19 +239,11 @@ CFileWriter::writeRegistrationFunctionsOnStream(FILE *fd, J9TDFFile *tdf, bool d
 	fprintf(fd, "{\n");
 	fprintf(fd, "\tI_32 rc = %s;\n\n", ok); /* func vars */
 	fprintf(fd, "#if defined(UT_TRACE_ENABLED_IN_BUILD)\n");
-	if (directRegistration) {
-		fprintf(fd, "\tif( utIntf == NULL ) {\n");
-		fprintf(fd, "\t\trc = %s;\n", err);
-		fprintf(fd, "\t}\n");
-	} else {
-		fprintf(fd, "\tUtInterface *utIntf;\n\n"); /* func vars */
-		/* trace enabled function body */
-		fprintf(fd, "\tif( vm != NULL ) {\n");
-		fprintf(fd, "\t\trc = (*vm)->GetEnv(vm, (void**)&utIntf, UTE_VERSION_1_1);\n");
-		fprintf(fd, "\t} else {\n");
-		fprintf(fd, "\t\trc = %s;\n", err);
-		fprintf(fd, "\t}\n");
-	}
+
+	fprintf(fd, "\tif( utIntf == NULL ) {\n");
+	fprintf(fd, "\t\trc = %s;\n", err);
+	fprintf(fd, "\t}\n");
+
 	fprintf(fd, "\n\tif (rc == %s) {\n", ok);
 	fprintf(fd, "\t\tutIntf->module->TraceTerm(NULL, &%s_UtModuleInfo);\n", tdf->header.executable);
 	fprintf(fd, "\t}\n");

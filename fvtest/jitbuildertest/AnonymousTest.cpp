@@ -19,8 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "gtest/gtest.h" 
-#include "Jit.hpp"
 #include "JBTestUtil.hpp"
 
 DECLARE_BUILDER(Anonymous);
@@ -44,7 +42,7 @@ class AnonymousTest : public JitBuilderTest {};
 TEST_F(AnonymousTest, AnonymousTest) 
    {
    AnonFunc func; 
-   ASSERT_COMPILE(TR::TypeDictionary, Anonymous, func); 
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, Anonymous, func);
 
    ASSERT_EQ( func(), 1024u); 
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,8 +31,8 @@ namespace OMR { class GCRegisterMap; }
 namespace OMR { typedef OMR::GCRegisterMap GCRegisterMapConnector; }
 #endif
 
-#include <stdint.h>          // for uint32_t
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
+#include <stdint.h>
+#include "env/TRMemory.hpp"
 
 namespace TR { class GCRegisterMap; }
 
@@ -45,7 +45,7 @@ class GCRegisterMap
 
    TR_ALLOC(TR_Memory::GCRegisterMap)
 
-   GCRegisterMap() : _map(0), _registerSaveDescription(0), _hprmap(0) {}
+   GCRegisterMap() : _map(0), _registerSaveDescription(0) {}
 
    TR::GCRegisterMap * self();
 
@@ -57,11 +57,6 @@ class GCRegisterMap
    void maskRegistersWithInfoBits(uint32_t mask, uint32_t info) {_map = (mask & (_map | info));}
    void setInfoBits(uint32_t info) {_map |= info;}
 
-   uint32_t getHPRMap() {return _hprmap;}
-   void setHighWordRegisterBits(uint32_t bits) {_hprmap |= bits;}
-   void resetHighWordRegisterBits(uint32_t bits) { _hprmap &= ~bits; }
-   void emptyHPR() {_hprmap = 0;}
-
    uint32_t getRegisterSaveDescription() {return _registerSaveDescription;}
    void setRegisterSaveDescription(uint32_t bits) {_registerSaveDescription = bits;}
 
@@ -69,8 +64,6 @@ class GCRegisterMap
 
    uint32_t _map;
    uint32_t _registerSaveDescription;
-   uint32_t _hprmap;
-
    };
 
 }

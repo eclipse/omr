@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,14 +22,14 @@
 #ifndef REDUNDANT_ASYNC_CHECK_REMOVAL_H
 #define REDUNDANT_ASYNC_CHECK_REMOVAL_H
 
-#include <stdint.h>                           // for int32_t, int64_t, etc
-#include "compile/Compilation.hpp"            // for Compilation
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "il/ILOpCodes.hpp"                   // for ILOpCodes
-#include "infra/Cfg.hpp"                      // for CFG
-#include "infra/List.hpp"                     // for List, etc
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/ILOpCodes.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 class TR_BitVector;
 class TR_BlockStructure;

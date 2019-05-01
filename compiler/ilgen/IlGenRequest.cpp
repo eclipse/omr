@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,9 +21,9 @@
 
 #include "ilgen/IlGenRequest.hpp"
 
-#include <stddef.h>                            // for NULL
+#include <stddef.h>
 #include "codegen/FrontEnd.hpp"
-#include "ilgen/IlGen.hpp"                     // for TR_IlGenerator
+#include "ilgen/IlGen.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "env/IO.hpp"
 

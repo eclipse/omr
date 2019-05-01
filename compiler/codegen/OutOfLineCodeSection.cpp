@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,18 +21,18 @@
 
 #include "codegen/OutOfLineCodeSection.hpp"
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for int32_t
-#include "codegen/CodeGenerator.hpp"        // for CodeGenerator
-#include "codegen/TreeEvaluator.hpp"        // for TreeEvaluator
-#include "compile/Compilation.hpp"          // for Compilation
-#include "il/ILOps.hpp"                     // for ILOpCode
-#include "il/Node.hpp"                      // for Node, vcount_t
-#include "il/Node_inlines.hpp"              // for Node::setReferenceCount, etc
-#include "il/Symbol.hpp"                    // for Symbol
-#include "il/SymbolReference.hpp"           // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"        // for LabelSymbol
-#include "infra/Assert.hpp"                 // for TR_ASSERT
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
 
 TR_OutOfLineCodeSection::TR_OutOfLineCodeSection(TR::Node          *callNode,
                                                  TR::ILOpCodes      callOp,

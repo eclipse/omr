@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,35 +21,35 @@
 
 #include "optimizer/VPConstraint.hpp"
 
-#include <ctype.h>                              // for isdigit
-#include <stddef.h>                             // for size_t
-#include "codegen/FrontEnd.hpp"                 // for TR::IO::fprintf, etc
-#include "compile/Compilation.hpp"              // for Compilation
-#include "compile/ResolvedMethod.hpp"           // for TR_ResolvedMethod
+#include <ctype.h>
+#include <stddef.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
-#include "env/KnownObjectTable.hpp"         // for KnownObjectTable, etc
-#include "env/ObjectModel.hpp"                  // for ObjectModel
-#include "env/PersistentInfo.hpp"               // for PersistentInfo
+#include "env/KnownObjectTable.hpp"
+#include "env/ObjectModel.hpp"
+#include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
 #ifdef J9_PROJECT_SPECIFIC
-#include "env/VMAccessCriticalSection.hpp"      // for VMAccessCriticalSection
+#include "env/VMAccessCriticalSection.hpp"
 #endif
-#include "il/DataTypes.hpp"                     // for getMaxSigned, etc
-#include "il/ILOps.hpp"                         // for ILOpCode
-#include "il/Node.hpp"                          // for Node, etc
-#include "il/Symbol.hpp"                        // for Symbol
-#include "il/SymbolReference.hpp"               // for SymbolReference, etc
-#include "il/symbol/StaticSymbol.hpp"           // for StaticSymbol
-#include "ilgen/IlGenRequest.hpp"               // for IlGenRequest
+#include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/OMRValuePropagation.hpp"       // for OMR::ValuePropagation, etc
+#include "optimizer/OMRValuePropagation.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
-#include "env/PersistentCHTable.hpp"            // for TR_PersistentCHTable
+#include "env/PersistentCHTable.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/VMJ9.h"
 #endif

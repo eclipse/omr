@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,25 +19,25 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                              // for NULL
-#include <stdint.h>                              // for uint32_t, int32_t, etc
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator, etc
-#include "codegen/InstOpCode.hpp"                // for InstOpCode, etc
-#include "codegen/Instruction.hpp"               // for Instruction, etc
-#include "codegen/Machine.hpp"                   // for Machine
-#include "codegen/MemoryReference.hpp"           // for MemoryReference
-#include "codegen/RealRegister.hpp"              // for RealRegister, etc
-#include "codegen/Register.hpp"                  // for Register
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterDependencyStruct.hpp"  // for RegisterDependency, etc
-#include "compile/Compilation.hpp"               // for Compilation
-#include "env/ObjectModel.hpp"                   // for ObjectModel
+#include "codegen/RegisterDependencyStruct.hpp"
+#include "compile/Compilation.hpp"
+#include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "ras/Debug.hpp"                         // for TR_DebugBase
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
 #include "codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                  // for TR_X86OpCodes, etc
+#include "x/codegen/X86Ops.hpp"
 #include "env/CompilerEnv.hpp"
 
 namespace TR { class Node; }
@@ -128,8 +128,6 @@ void OMR::X86::Instruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
 
    if (self()->getOpCodeValue() != ASSOCREGS)
       {
-      self()->aboutToAssignRegDeps();
-
       if ((self()->cg()->getAssignmentDirection() == self()->cg()->Backward))
          {
          self()->getDependencyConditions()->assignPostConditionRegisters(self(), kindsToBeAssigned, self()->cg());
@@ -156,7 +154,7 @@ void OMR::X86::Instruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
             {
             // Skip non-assignable registers
             //
-            if (machine->getX86RealRegister((TR::RealRegister::RegNum)i)->getState() == TR::RealRegister::Locked)
+            if (machine->getRealRegister((TR::RealRegister::RegNum)i)->getState() == TR::RealRegister::Locked)
                continue;
 
             TR::Register *virtReg = machine->getVirtualAssociatedWithReal((TR::RealRegister::RegNum)i);
@@ -199,88 +197,6 @@ bool OMR::X86::Instruction::usesRegister(TR::Register *reg)
 bool OMR::X86::Instruction::dependencyRefsRegister(TR::Register *reg)
    {
    return self()->getDependencyConditions() ? _conditions->refsRegister(reg) : false;
-   }
-
-void OMR::X86::Instruction::setIsUpperHalfDead(TR::Register *reg, bool value, TR_UpperHalfRefConditions when)
-   {
-   if (self()->registerRefKindApplies(when))
-      {
-      reg->setIsUpperHalfDead(value);
-      }
-   }
-
-bool OMR::X86::Instruction::registerRefKindApplies(TR_UpperHalfRefConditions when)
-   {
-   switch (when)
-      {
-      case TR_never:
-         return false;
-      case TR_always:
-         return true;
-      case TR_if64bitSource:
-         return self()->getOpCode().hasLongSource();
-      case TR_ifUses64bitTarget:
-         return self()->getOpCode().usesTarget() && self()->getOpCode().hasLongTarget();
-      case TR_ifUses64bitSourceOrTarget:
-         return self()->registerRefKindApplies(TR_if64bitSource) || self()->registerRefKindApplies(TR_ifUses64bitTarget);
-      case TR_ifModifies32or64bitTarget:
-         return self()->getOpCode().modifiesTarget() && (self()->getOpCode().hasLongTarget() || self()->getOpCode().hasIntTarget());
-      case TR_ifModifies32or64bitSource:
-         return self()->getOpCode().modifiesSource() && (self()->getOpCode().hasLongSource() || self()->getOpCode().hasIntSource());
-      default:
-         TR_ASSERT(0, "Unknown register reference kind");
-         return false;
-      }
-   }
-
-void OMR::X86::Instruction::aboutToAssignDefdRegister(TR::Register *reg, TR_UpperHalfRefConditions defsUpperHalf)
-   {
-   // Only setIsUpperHalfDead() when you're sure this instruction doesn't need the upper half
-
-   if (TR::Compiler->target.is32Bit() || reg->getKind() != TR_GPR || self()->cg()->getAssignmentDirection() != self()->cg()->Backward)
-      return;
-
-   if (self()->cg()->internalControlFlowNestingDepth() == 0)
-      self()->setIsUpperHalfDead(reg, true, defsUpperHalf);
-   }
-
-void OMR::X86::Instruction::aboutToAssignUsedRegister(TR::Register *reg, TR_UpperHalfRefConditions usesUpperHalf)
-   {
-   // Must setIsUpperHalfDead(false) there's any chance this instruction needs the upper half
-
-   if (TR::Compiler->target.is32Bit() || reg->getKind() != TR_GPR || self()->cg()->getAssignmentDirection() != self()->cg()->Backward)
-      return;
-
-   self()->setIsUpperHalfDead(reg, false, usesUpperHalf);
-   }
-
-void OMR::X86::Instruction::aboutToAssignMemRef(TR::MemoryReference *memref)
-   {
-   if (TR::Compiler->target.is64Bit())
-      {
-      if (memref->getBaseRegister())
-         self()->aboutToAssignUsedRegister(memref->getBaseRegister(), TR_always);
-
-      if (memref->getIndexRegister())
-         self()->aboutToAssignUsedRegister(memref->getIndexRegister(), TR_always);
-      }
-   }
-
-void OMR::X86::Instruction::aboutToAssignRegDeps(TR_UpperHalfRefConditions usesUpperHalf, TR_UpperHalfRefConditions defsUpperHalf)
-   {
-   if (!self()->getDependencyConditions())
-      return;
-
-   for (uint32_t i = 0; i < self()->getDependencyConditions()->getNumPreConditions(); i++)
-      {
-      TR::RegisterDependency *dep = self()->getDependencyConditions()->getPreConditions()->getRegisterDependency(i);
-      self()->aboutToAssignRegister(dep->getRegister(), usesUpperHalf, defsUpperHalf);
-      }
-   for (uint32_t i = 0; i < self()->getDependencyConditions()->getNumPostConditions(); i++)
-      {
-      TR::RegisterDependency *dep = self()->getDependencyConditions()->getPostConditions()->getRegisterDependency(i);
-      self()->aboutToAssignRegister(dep->getRegister(), usesUpperHalf, defsUpperHalf);
-      }
    }
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
@@ -394,14 +310,6 @@ bool
 OMR::X86::Instruction::isLabel()
    {
    return self()->getOpCodeValue() == LABEL;
-   }
-
-void
-OMR::X86::Instruction::aboutToAssignRegister(TR::Register *reg, TR_UpperHalfRefConditions usesUpperHalf, TR_UpperHalfRefConditions defsUpperHalf)
-   {
-   // It's important to call these in this order
-   self()->aboutToAssignDefdRegister(reg, defsUpperHalf);
-   self()->aboutToAssignUsedRegister(reg, usesUpperHalf);
    }
 
 uint8_t *

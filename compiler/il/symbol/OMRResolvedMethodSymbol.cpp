@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,16 +21,17 @@
 
 #include "il/symbol/OMRResolvedMethodSymbol.hpp"
 
-#include <stdint.h>                             // for int32_t, etc
-#include <stdlib.h>                             // for strtol, atoi
-#include <string.h>                             // for NULL, strncmp, etc
-#include "codegen/CodeGenerator.hpp"            // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                 // for TR_FrontEnd, etc
-#include "codegen/Linkage.hpp"                  // for Linkage
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#include "compile/Compilation.hpp"              // for Compilation
-#include "compile/Method.hpp"                   // for TR_Method, etc
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "compile/OSRData.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
@@ -39,34 +40,34 @@
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
-#include "il/Block.hpp"                         // for Block
+#include "il/Block.hpp"
 #include "il/DataTypes.hpp"
-#include "il/ILOpCodes.hpp"                     // for ILOpCodes::treetop, etc
-#include "il/ILOps.hpp"                         // for ILOpCode
-#include "il/Node.hpp"                          // for Node, etc
-#include "il/Node_inlines.hpp"                  // for Node::getChild, etc
-#include "il/Symbol.hpp"                        // for Symbol
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                       // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"           // for MethodSymbol
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "ilgen/IlGen.hpp"                      // for TR_IlGenerator
-#include "ilgen/IlGenRequest.hpp"               // for IlGenRequest
-#include "infra/Array.hpp"                      // for TR_Array
-#include "infra/Assert.hpp"                     // for TR_ASSERT
-#include "infra/BitVector.hpp"                  // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                        // for CFG
-#include "infra/Flags.hpp"                      // for flags32_t
-#include "infra/List.hpp"                       // for List, etc
+#include "ilgen/IlGen.hpp"
+#include "ilgen/IlGenRequest.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Flags.hpp"
+#include "infra/List.hpp"
 #include "infra/Random.hpp"
-#include "infra/CfgEdge.hpp"                    // for CFGEdge
-#include "infra/CfgNode.hpp"                    // for CFGNode
-#include "optimizer/Optimizer.hpp"              // for Optimizer
-#include "ras/Debug.hpp"                        // for TR_Debug
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "ras/Debug.hpp"
 #include "runtime/Runtime.hpp"
 #include "infra/SimpleRegex.hpp"
 
@@ -131,9 +132,6 @@ OMR::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod * method, TR::
      _comp(comp),
      _firstJitTempIndex(-1),
      _cannotAttemptOSR(NULL),
-     _pythonConstsSymRef(NULL),
-     _pythonNumLocalVars(0),
-     _pythonLocalVarSymRefs(NULL),
      _properties(0),
      _bytecodeProfilingOffsets(comp->allocator())
    {
@@ -518,9 +516,7 @@ OMR::ResolvedMethodSymbol::genInduceOSRCallNode(TR::TreeTop* insertionPoint,
    //there is no guarantee that the future block containing the induceOSR call still will have an exception
    //edge to the OSR catch block.
    TR::SymbolReferenceTable* symRefTab = self()->comp()->getSymRefTab();
-   TR::SymbolReference *induceOSRSymRef = symRefTab->findOrCreateRuntimeHelper(TR_induceOSRAtCurrentPC, true, true, true);
-   // treat jitInduceOSR like an interpreted call so that each platform's codegen generate a snippet for it
-   induceOSRSymRef->getSymbol()->getMethodSymbol()->setInterpreted();
+   TR::SymbolReference *induceOSRSymRef = symRefTab->findOrCreateInduceOSRSymbolRef(TR_induceOSRAtCurrentPC);
    TR::Node *refNode = insertionPoint->getNode();
 
    if (self()->comp()->getOption(TR_TraceOSR))
@@ -579,9 +575,50 @@ OMR::ResolvedMethodSymbol::genInduceOSRCallNode(TR::TreeTop* insertionPoint,
    return insertionPoint->getPrevTreeTop();
    }
 
+/*
+ *  \brief Generate the helper call to request for OSR transition and recompilation of the current compiled method.
+ *
+ *  \return true if the OSR transition is supported at the requested \parm induceBCI and the OSR induction helper call
+ *          is generated successfully
+ */
+bool
+OMR::ResolvedMethodSymbol::induceOSRAfterAndRecompile(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch,
+    bool extendRemainder, int32_t offset, TR::TreeTop ** lastTreeTop)
+   {
+   TR_ASSERT(self()->comp()->allowRecompilation(), "request OSR and recompilation at node %p when recomp is disabled\n", insertionPoint);
+   TR::TreeTop *induceOSRCallTree = self()->induceOSRAfterImpl(insertionPoint, induceBCI, branch, extendRemainder, offset, lastTreeTop);
+   if (!induceOSRCallTree)
+      return false;
+   TR::Node *induceOSRCallNode = induceOSRCallTree->getNode()->getFirstChild();
+   TR::SymbolReference *symRef = induceOSRCallNode->getSymbolReference();
+   TR_ASSERT_FATAL(induceOSRCallNode->getOpCode().isCall() &&
+                   symRef->getReferenceNumber() == TR_induceOSRAtCurrentPC,
+                   "induceOSRCallNode %p (n%dn) under induceOSRCallTree %p should be a call node with TR_induceOSRAtCurrentPC helper call", induceOSRCallNode, induceOSRCallNode->getGlobalIndex(), induceOSRCallTree->getNode());
+   induceOSRCallNode->setSymbolReference(self()->comp()->getSymRefTab()->findOrCreateInduceOSRSymbolRef(TR_induceOSRAtCurrentPCAndRecompile));
+   return true;
+   }
 
+/*
+ *  \brief Generate the helper call to request for OSR transition only.
+ *
+ *  \return true if the OSR transition is supported at the requested \parm induceBCI and the OSR induction helper call
+ *          is generated successfully
+ */
 bool
 OMR::ResolvedMethodSymbol::induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch,
+    bool extendRemainder, int32_t offset, TR::TreeTop ** lastTreeTop)
+   {
+   return self()->induceOSRAfterImpl(insertionPoint, induceBCI, branch, extendRemainder, offset, lastTreeTop) != NULL;
+   }
+
+/*
+ *  \brief Internal implementation for generating the helper call to request for OSR transition.
+ *
+ *  \return The treetop of the inserted induceOSR helper call if OSR transition is supported at the requested \parm induceBCI.
+ *          NULL if OSR transition is not supported at the requested \parm induceBCI.
+ */
+TR::TreeTop *
+OMR::ResolvedMethodSymbol::induceOSRAfterImpl(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch,
     bool extendRemainder, int32_t offset, TR::TreeTop ** lastTreeTop)
    {
    TR::Block *block = insertionPoint->getEnclosingBlock();
@@ -634,10 +671,9 @@ OMR::ResolvedMethodSymbol::induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCo
       cfg->copyExceptionSuccessors(block, osrBlock);
 
       // induce OSR in the new block
-      self()->genInduceOSRCallAndCleanUpFollowingTreesImmediately(osrBlock->getExit(), induceBCI, false, self()->comp());
-      return true;
+      return self()->genInduceOSRCallAndCleanUpFollowingTreesImmediately(osrBlock->getExit(), induceBCI, false, self()->comp());
       }
-   return false;
+   return NULL;
    }
 
 TR::TreeTop *
@@ -1598,8 +1634,12 @@ OMR::ResolvedMethodSymbol::cannotAttemptOSRDuring(int32_t callSite, TR::Compilat
             break;
             }
 
-         // Check the caller existed during ILGen
-         if (callSiteInfo._byteCodeInfo.doNotProfile())
+         // In voluntaryOSR mode, check the caller existed during ILGen because
+         // there is no OSR support for call nodes created outside of ILGen.
+         //
+         // In involuntaryOSR node, yield points are always OSR points and there should be OSR
+         // support for very yield point under this mode.
+         if (callSiteInfo._byteCodeInfo.doNotProfile() && comp->getOSRMode() == TR::voluntaryOSR)
             {
             if (comp->getOption(TR_TraceOSR))
                traceMsg(comp, "Cannot attempt OSR during caller bytecode index %d:%d as it did not exist at ilgen\n", callSite, byteCodeIndex);

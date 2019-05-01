@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,17 +21,17 @@
 
 #include "il/symbol/OMRAutomaticSymbol.hpp"
 
-#include <stddef.h>                           // for NULL, size_t
-#include <stdint.h>                           // for uint32_t, int32_t
-#include "codegen/RegisterConstants.hpp"      // for TR_RegisterKinds
-#include "env/TRMemory.hpp"                   // for PERSISTENT_NEW_DECLARE
-#include "il/ILOpCodes.hpp"                   // for ILOpCodes::newarray, etc
-#include "il/Node.hpp"                        // for rcount_t
-#include "il/symbol/AutomaticSymbol.hpp"      // for AutomaticSymbolBase, etc
-#include "infra/Assert.hpp"                   // for TR_ASSERT
-#include "infra/Flags.hpp"                    // for flags8_t, flags32_t
-#include "infra/IGNode.hpp"                   // for UNCOLOURED, etc
-#include "infra/InterferenceGraph.hpp"        // for TR_InterferenceGraph
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/RegisterConstants.hpp"
+#include "env/TRMemory.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "infra/IGNode.hpp"
+#include "infra/InterferenceGraph.hpp"
 
 class TR_FrontEnd;
 namespace TR { class Node; }
@@ -92,7 +92,7 @@ OMR::AutomaticSymbol::init()
    }
 
 TR::ILOpCodes
-OMR::AutomaticSymbol::getKind()
+OMR::AutomaticSymbol::getOpCodeKind()
   {
   TR_ASSERT(self()->isLocalObject(), "Should be local object");
   return _kind;

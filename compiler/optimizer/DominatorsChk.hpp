@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,10 +24,10 @@
 #ifndef DOMINATORSCHK_INCL
 #define DOMINATORSCHK_INCL
 
-#include <stdint.h>                 // for int32_t
-#include "compile/Compilation.hpp"  // for Compilation
-#include "env/TRMemory.hpp"         // for TR_Memory, etc
-#include "il/Node.hpp"              // for vcount_t
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
 
 class TR_BitVector;
 namespace TR { class Block; }

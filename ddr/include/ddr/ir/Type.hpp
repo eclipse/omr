@@ -22,13 +22,11 @@
 #ifndef TYPE_HPP
 #define TYPE_HPP
 
-#include "ddr/blobgen/genBlob.hpp"
-#include "ddr/ir/Symbol_IR.hpp"
 #include "ddr/ir/TypeVisitor.hpp"
-#include "ddr/scanner/Scanner.hpp"
 #include "ddr/std/string.hpp"
 
 #include <set>
+#include <vector>
 
 using std::set;
 using std::string;
@@ -39,6 +37,7 @@ class ClassType;
 class EnumUDT;
 class Macro;
 class NamespaceUDT;
+class Symbol_IR;
 class TypedefUDT;
 class UDT;
 class UnionUDT;
@@ -47,6 +46,8 @@ struct FieldOverride;
 class Type
 {
 public:
+	static bool isStandardType(const char *type, size_t typeLen, bool *isSigned, size_t *bitWidth);
+
 	bool _blacklisted;
 	bool _opaque;
 	string _name;

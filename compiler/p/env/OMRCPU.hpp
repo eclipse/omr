@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,8 @@ namespace OMR { typedef OMR::Power::CPU CPUConnector; }
 
 #include "compiler/env/OMRCPU.hpp"
 
-#include "infra/Assert.hpp"  // for TR_ASSERT
+#include "env/jittypes.h"
+#include "infra/Assert.hpp"
 
 #define VALID_PROCESSOR TR_ASSERT(id() >= TR_FirstPPCProcessor && id() <= TR_LastPPCProcessor, "Not a valid PPC Processor Type")
 
@@ -63,6 +64,37 @@ public:
    bool getPPCSupportsAES() { return false; }
    bool getPPCSupportsTM()  { return false; }
    bool getPPCSupportsLM()  { return false; }
+
+   /**
+    * @brief Provides the maximum forward branch displacement in bytes reachable
+    *        with an I-Form branch instruction.
+    *
+    * @return Maximum forward branch displacement in bytes.
+    */
+   int32_t maxIFormBranchForwardOffset() { return 0x01fffffc; }
+
+   /**
+    * @brief Provides the maximum backward branch displacement in bytes reachable
+    *        with an I-Form branch instruction.
+    *
+    * @return Maximum backward branch displacement in bytes.
+    */
+   int32_t maxIFormBranchBackwardOffset() { return 0xfe000000; }
+
+   /**
+    * @brief Answers whether the distance between a target and source address
+    *        is within the reachable displacement range of an I-form branch
+    *        instruction.
+    *
+    * @param[in] : targetAddress : the address of the target
+    *
+    * @param[in] : sourceAddress : the address of the I-form branch instruction
+    *                 from which the displacement range is measured.
+    *
+    * @return true if the target is within range; false otherwise.
+    */
+   bool isTargetWithinIFormBranchRange(intptrj_t targetAddress, intptrj_t sourceAddress);
+
    };
 
 }

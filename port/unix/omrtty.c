@@ -154,7 +154,7 @@ omrtty_available(struct OMRPortLibrary *portLibrary)
 	/* PR94604 */
 	int rc;
 	off_t curr, end;
-	intptr_t avail = 0;
+	int avail = 0;
 
 	/* when redirected from a file */
 	curr = lseek(STDIN_FILENO, 0L, SEEK_CUR); /* don't use tell(), it doesn't exist on all platforms, i.e. linux */
@@ -167,11 +167,16 @@ omrtty_available(struct OMRPortLibrary *portLibrary)
 	}
 
 	/* ioctl doesn't work for files on all platforms (i.e. SOLARIS) */
+
+	/* Historically, OMR has used an intptr_t as the output of an FIONREAD ioctl call. The claim was that some devices
+	 * may sometimes output a 64bit wide integer. However, this exposed us to issues with endianness and aliasing.
+	 * Meanwhile, documentation shows that the output is always an int, on every supported platform. If for some reason
+	 * this code isn't working, it may be related to FIONREAD putting out more than an integer.
+	 */ 
+
 	rc = ioctl(STDIN_FILENO, FIONREAD, &avail);
-	/*[PR 102639] 64 bit platforms use a 32 bit value, using intptr_t fails on big endian */
-	/* Pass in intptr_t because ioctl() is device dependent, some devices may write 64 bits */
 	if (rc != -1) {
-		return *(int32_t *)&avail;
+		return avail;
 	}
 	return 0;
 }

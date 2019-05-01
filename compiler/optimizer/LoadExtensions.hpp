@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,17 +22,17 @@
 #ifndef LOADEXTENSIONS_INCL
 #define LOADEXTENSIONS_INCL
 
-#include <stdint.h>                           // for int32_t
-#include "codegen/CodeGenerator.hpp"          // for CodeGenerator
-#include "compile/Compilation.hpp"            // for Compilation
-#include "il/DataTypes.hpp"                   // for TR::DataType
-#include "il/ILOps.hpp"                       // for ILOpCode
-#include "il/Node.hpp"                        // for Node, etc
-#include "il/Node_inlines.hpp"                // for Node::getType
-#include "il/Symbol.hpp"                      // for Symbol
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/Optimization_inlines.hpp" // for Optimization inlines
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/Optimization_inlines.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 /** \brief
  *     Examines how often a load is being used to feed into a signed vs. unsigned conversion (ex. i2l vs iu2l) and

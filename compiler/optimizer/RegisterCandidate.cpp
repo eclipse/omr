@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,53 +25,53 @@
 
 #include "optimizer/RegisterCandidate.hpp"
 
-#include <algorithm>                           // for std::max, etc
-#include <limits.h>                            // for INT_MAX
-#include <stdint.h>                            // for int32_t, uint32_t, etc
-#include <stdio.h>                             // for printf
-#include <stdlib.h>                            // for atoi
-#include <string.h>                            // for memset
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                // for feGetEnv, TR_FrontEnd
+#include <algorithm>
+#include <limits.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "compile/Compilation.hpp"             // for Compilation, etc
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
-#include "cs2/bitvectr.h"                      // for ABitVector<>::Cursor, etc
-#include "cs2/hashtab.h"                       // for HashTable, HashIndex
-#include "cs2/sparsrbit.h"                     // for ASparseBitVector, etc
+#include "control/Options_inlines.hpp"
+#include "cs2/bitvectr.h"
+#include "cs2/hashtab.h"
+#include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
-#include "env/TRMemory.hpp"                    // for SparseBitVector, etc
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                        // for Block, toBlock, etc
-#include "il/DataTypes.hpp"                    // for DataTypes, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::treetop, etc
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference, etc
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "il/symbol/AutomaticSymbol.hpp"       // for AutomaticSymbol
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/RegisterMappedSymbol.hpp"  // for RegisterMappedSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                       // for CFG, TR_SuccessorIterator
-#include "infra/Link.hpp"                      // for TR_LinkHead
-#include "infra/List.hpp"                      // for ListIterator, List, etc
-#include "infra/Checklist.hpp"                 // for NodeChecklist
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/CfgNode.hpp"                   // for CFGNode
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/Checklist.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
+#include "ras/Debug.hpp"
 
 
 //TODO:GRA: if we are going to have two versions of GRA one with Meta Data and one without then we can do someting here
@@ -1850,8 +1850,8 @@ TR_RegisterCandidates::reprioritizeCandidates(
       if (rc->getBlocksLiveOnEntry().intersects(*successorBits))
          {
          if ((!onlyReprioritizeLongs ||
-              (rc->getType().isInt64()) &&
-               TR::Compiler->target.is32Bit()) &&
+              (rc->getType().isInt64() &&
+               TR::Compiler->target.is32Bit())) &&
              ((reprioritizeFP && isFPCandidate) ||
               (!reprioritizeFP && !isFPCandidate)))
             {
@@ -2852,44 +2852,6 @@ TR_RegisterCandidates::assign(TR::Block ** cfgBlocks, int32_t numberOfBlocks, in
       TR::CodeGenerator * cg = comp()->cg();
       cg->removeUnavailableRegisters(rc, blocks, availableRegisters);
 
-      if (comp()->cg()->supportsHighWordFacility() && !comp()->getOption(TR_DisableHighWordRA) && !comp()->getOption(TR_DisableRegisterPressureSimulation))
-         {
-         if (!rc->getType().isInt8() && !rc->getType().isInt16() && !rc->getType().isInt32())
-            {
-            for (int8_t i = firstRegister; i <= lastRegister; ++i)
-               {
-               // Eliminate all GPRs from consideration whose HPRs are not available since the GPR and HPR overlap
-               // and our register candidate is a 64-bit symbol
-               if (cg->isGlobalHPR(i) && !availableRegisters.isSet(i))
-                  {
-                  TR_GlobalRegisterNumber clobberedGPR = cg->getGlobalGPRFromHPR(i);
-
-                  if (trace)
-                     {
-                     traceMsg(comp(), "RC is 64bit and %s is unavailable - removing %s from available list\n", cg->getDebug()->getGlobalRegisterName(i), cg->getDebug()->getGlobalRegisterName(clobberedGPR));
-                     }
-
-                  availableRegisters.reset(clobberedGPR);
-                  }
-               }
-
-            // Now the only candidates remaining should be GPR-HPR pairs which are both available
-            for (int8_t i = firstRegister; i <= lastRegister; ++i)
-               {
-               // We should not consider HPRs for 64-bit register candidates
-               if (cg->isGlobalHPR(i) && availableRegisters.isSet(i))
-                  {
-                  availableRegisters.reset(i);
-
-                  if (trace)
-                     {
-                     traceMsg(comp(), "RC is 64bit - removing %s from available list\n", cg->getDebug()->getGlobalRegisterName(i));
-                     }
-                  }
-               }
-            }
-         }
-
       static const char * vrbVecGRA = feGetEnv("TR_traceVectorGRA");
 
       if (enableVectorGRA)
@@ -3218,9 +3180,9 @@ TR_RegisterCandidates::assign(TR::Block ** cfgBlocks, int32_t numberOfBlocks, in
                      maxFrequency < smallestMaxFrequency ||
                      ((maxFrequency == smallestMaxFrequency) &&
                       ((numClearStructures > maxClearStructures) ||
-                       (numClearStructures == maxClearStructures) &&
+                       ((numClearStructures == maxClearStructures) &&
                         ((numBlocksAtMaxFrequency < numberOfConflicts) ||
-                         ((numBlocksAtMaxFrequency == numberOfConflicts) && (_liveOnEntryConflicts[i].elementCount() < _liveOnEntryConflicts[conflictingRegister].elementCount()))))))
+                         ((numBlocksAtMaxFrequency == numberOfConflicts) && (_liveOnEntryConflicts[i].elementCount() < _liveOnEntryConflicts[conflictingRegister].elementCount())))))))
                     {
                     smallestMaxFrequency = maxFrequency;
                     maxClearStructures = numClearStructures;

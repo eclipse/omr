@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,32 +24,33 @@
 #pragma csect(TEST,"OMRZSnippet#T")
 
 
-#include <stddef.h>                             // for NULL
-#include <stdint.h>                             // for int32_t, uint32_t, etc
-#include "codegen/BackingStore.hpp"             // for TR_BackingStore
-#include "codegen/CodeGenerator.hpp"            // for CodeGenerator, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/BackingStore.hpp"
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"                 // for TR_FrontEnd
-#include "codegen/InstOpCode.hpp"               // for InstOpCode, etc
-#include "codegen/RealRegister.hpp"             // for RealRegister
-#include "codegen/Register.hpp"                 // for Register
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/Relocation.hpp"
-#include "codegen/Snippet.hpp"                  // for TR::S390Snippet, etc
+#include "codegen/Snippet.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
-#include "compile/Compilation.hpp"              // for Compilation
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                       // for intptrj_t
-#include "il/Symbol.hpp"                        // for Symbol
-#include "il/SymbolReference.hpp"               // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"            // for LabelSymbol
-#include "il/symbol/MethodSymbol.hpp"           // for MethodSymbol
-#include "infra/Assert.hpp"                     // for TR_ASSERT
-#include "ras/Debug.hpp"                        // for TR_Debug
-#include "runtime/Runtime.hpp"                  // for ::TR_HelperAddress, etc
-#include "z/codegen/CallSnippet.hpp"            // for TR::S390CallSnippet
+#include "env/jittypes.h"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
+#include "runtime/CodeCacheManager.hpp"
+#include "runtime/Runtime.hpp"
+#include "z/codegen/CallSnippet.hpp"
 #include "z/codegen/S390HelperCallSnippet.hpp"
 
 namespace TR { class Node; }
@@ -125,6 +126,7 @@ OMR::Z::Snippet::generatePICBinary(TR::CodeGenerator * cg, uint8_t * cursor, TR:
    else
       {
       // Generate BRASL instruction.
+      intptrj_t instructionStartAddress = (intptrj_t)cursor;
       *(int16_t *) cursor = 0xC0E5;
       cursor += sizeof(int16_t);
 
@@ -139,20 +141,21 @@ OMR::Z::Snippet::generatePICBinary(TR::CodeGenerator * cg, uint8_t * cursor, TR:
       if (cg->comp()->getOption(TR_EnableRMODE64))
 #endif
          {
-         if (NEEDS_TRAMPOLINE(destAddr, cursor, cg))
+         if (cg->directCallRequiresTrampoline(destAddr, instructionStartAddress))
             {
             // Destination is beyond our reachable jump distance, we'll find the
             // trampoline.
-            destAddr = cg->fe()->indexedTrampolineLookup(glueRef->getReferenceNumber(), (void *)cursor);
+            destAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
             self()->setUsedTrampoline(true);
             }
          }
 #endif
 
-      TR_ASSERT(CHECK_32BIT_TRAMPOLINE_RANGE(destAddr, cursor),  "Helper Call is not reachable.");
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinBranchRelativeRILRange(destAddr, instructionStartAddress),
+                      "Helper Call is not reachable.");
       self()->setSnippetDestAddr(destAddr);
 
-      *(int32_t *) cursor = (int32_t)((destAddr - (intptrj_t)(cursor - 2)) / 2);
+      *(int32_t *) cursor = (int32_t)((destAddr - instructionStartAddress) / 2);
       AOTcgDiag1(cg->comp(), "add TR_AbsoluteHelperAddress cursor=%x\n", cursor);
       cg->addProjectSpecializedRelocation(cursor, (uint8_t*) glueRef, NULL, TR_HelperAddress,
                                       __FILE__, __LINE__, self()->getNode());

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ namespace OMR { typedef OMR::X86::I386::TreeEvaluator TreeEvaluatorConnector; }
 
 #include "compiler/x/codegen/OMRTreeEvaluator.hpp"
 
-#include "x/codegen/X86Ops.hpp"  // for TR_X86OpCodes
+#include "x/codegen/X86Ops.hpp"
 
 namespace TR { class Register; }
 
@@ -113,6 +113,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::X86::TreeEvaluator
    static TR::Register *integerPairMinMaxEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lternaryEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lcmpsetEvaluator(TR::Node *n, TR::CodeGenerator *cg);
+   static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    private:
 

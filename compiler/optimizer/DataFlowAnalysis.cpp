@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,17 +21,17 @@
 
 #include "optimizer/DataFlowAnalysis.hpp"
 
-#include <stddef.h>                                 // for NULL
-#include <stdint.h>                                 // for uint8_t, int32_t
-#include "compile/Compilation.hpp"                  // for Compilation
-#include "env/TRMemory.hpp"                         // for TR_Memory
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/ILOps.hpp"                             // for ILOpCode
-#include "il/Node.hpp"                              // for Node
-#include "il/Node_inlines.hpp"                      // for Node::getChild
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "infra/List.hpp"                           // for TR_ScratchList, etc
-#include "optimizer/Optimizer.hpp"                  // for Optimizer
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimizer.hpp"
 
 class TR_ExceptionCheckMotion;
 class TR_RedundantExpressionAdjustment;

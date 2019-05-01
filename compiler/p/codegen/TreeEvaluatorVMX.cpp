@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,34 +19,35 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                              // for size_t
-#include <stdint.h>                              // for uint64_t, int32_t, etc
-#include <stdio.h>                               // for NULL, fclose, feof, etc
-#include <stdlib.h>                              // for strtol
-#include <string.h>                              // for strchr, strstr
-#include "codegen/BackingStore.hpp"              // for TR_BackingStore
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                  // for feGetEnv
-#include "codegen/InstOpCode.hpp"                // for InstOpCode, etc
-#include "codegen/Instruction.hpp"               // for Instruction
-#include "codegen/Linkage.hpp"                   // for addDependency
-#include "codegen/MemoryReference.hpp"           // for MemoryReference
-#include "codegen/RealRegister.hpp"              // for RealRegister, etc
-#include "codegen/Register.hpp"                  // for Register
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/BackingStore.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterDependencyStruct.hpp"  // for RegisterDependency
-#include "codegen/TreeEvaluator.hpp"             // for TreeEvaluator
+#include "codegen/RegisterDependencyStruct.hpp"
+#include "codegen/TreeEvaluator.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                        // for intptrj_t
-#include "il/DataTypes.hpp"                      // for DataTypes::Double, etc
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes::fconst
-#include "il/ILOps.hpp"                          // for ILOpCode
-#include "il/Node.hpp"                           // for Node
-#include "il/Node_inlines.hpp"                   // for Node::getDataType, etc
-#include "il/symbol/LabelSymbol.hpp"             // for generateLabelSymbol, etc
-#include "infra/Assert.hpp"                      // for TR_ASSERT
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 
 TR::Register *OMR::Power::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -238,16 +239,16 @@ TR::Register *OMR::Power::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
       TR::LabelSymbol *donelabel = generateLabelSymbol(cg);
 
       TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(6, 6, cg->trMemory());
-      addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
       deps->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
       deps->getPreConditions()->getRegisterDependency(0)->setExcludeGPR0();
-      addDependency(deps, fillReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(deps, lenReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, fillReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, lenReg, TR::RealRegister::NoReg, TR_GPR, cg);
       deps->getPostConditions()->getRegisterDependency(2)->setExcludeGPR0();
       deps->getPreConditions()->getRegisterDependency(2)->setExcludeGPR0();
-      addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(deps, condReg, TR::RealRegister::cr0, TR_CCR, cg);
-      addDependency(deps, fp1Reg, TR::RealRegister::NoReg, TR_FPR, cg);
+      TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, condReg, TR::RealRegister::cr0, TR_CCR, cg);
+      TR::addDependency(deps, fp1Reg, TR::RealRegister::NoReg, TR_FPR, cg);
 
       generateTrg1Src1ImmInstruction(cg, lenNode->getOpCode().isInt() ? TR::InstOpCode::cmpli4 : TR::InstOpCode::cmpli8, node, condReg, lenReg, 0);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, donelabel, condReg);
@@ -366,15 +367,15 @@ TR::Register *OMR::Power::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
       TR::LabelSymbol *donelabel = generateLabelSymbol(cg);
 
       TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(5, 5, cg->trMemory());
-      addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
       deps->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
       deps->getPreConditions()->getRegisterDependency(0)->setExcludeGPR0();
-      addDependency(deps, fillReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(deps, lenReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, fillReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, lenReg, TR::RealRegister::NoReg, TR_GPR, cg);
       deps->getPostConditions()->getRegisterDependency(2)->setExcludeGPR0();
       deps->getPreConditions()->getRegisterDependency(2)->setExcludeGPR0();
-      addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(deps, condReg, TR::RealRegister::cr0, TR_CCR, cg);
+      TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, condReg, TR::RealRegister::cr0, TR_CCR, cg);
 
       generateTrg1Src1ImmInstruction(cg, lenNode->getOpCode().isInt() ? TR::InstOpCode::cmpli4 : TR::InstOpCode::cmpli8, node, condReg, lenReg, 0);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, donelabel, condReg);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,8 +35,8 @@ namespace OMR { typedef OMR::X86::AMD64::MemoryReference MemoryReferenceConnecto
 
 #include "compiler/x/codegen/OMRMemoryReference.hpp"
 
-#include <stdint.h>        // for uint32_t, uint8_t
-#include "env/jittypes.h"  // for intptrj_t
+#include <stdint.h>
+#include "env/jittypes.h"
 
 class TR_ScratchRegisterManager;
 namespace TR { class LabelSymbol; }

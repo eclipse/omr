@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
 #ifndef S390BINARYCOMMUTATIVEANALYSER_INCL
 #define S390BINARYCOMMUTATIVEANALYSER_INCL
 
-#include <stddef.h>                // for NULL
-#include <stdint.h>                // for uint8_t, uint16_t
-#include "codegen/Analyser.hpp"    // for NUM_ACTIONS, TR_Analyser
-#include "codegen/InstOpCode.hpp"  // for InstOpCode, InstOpCode::Mnemonic, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/Analyser.hpp"
+#include "codegen/InstOpCode.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class LabelSymbol; }
@@ -69,19 +69,10 @@ class TR_S390BinaryCommutativeAnalyser : public TR_Analyser
                         TR::InstOpCode::S390BranchCondition fBranchOpCond = TR::InstOpCode::COND_NOP,
                         TR::InstOpCode::S390BranchCondition rBranchOpCond = TR::InstOpCode::COND_NOP);
 
-   void genericLongAnalyser(TR::Node       *root,
-                            TR::InstOpCode::Mnemonic lowRegToRegOpCode,
-                            TR::InstOpCode::Mnemonic highRegToRegOpCode,
-                            TR::InstOpCode::Mnemonic lowMemToRegOpCode,
-                            TR::InstOpCode::Mnemonic highMemToRegOpCode,
-                            TR::InstOpCode::Mnemonic copyOpCode);
-
    void integerAddAnalyser(TR::Node       *root,
                            TR::InstOpCode::Mnemonic regToRegOpCode,
                            TR::InstOpCode::Mnemonic memToRegOpCode,
                            TR::InstOpCode::Mnemonic copyOpCode);
-
-   void longAddAnalyser(TR::Node *root, TR::InstOpCode::Mnemonic copyOpCode);
 
    void floatBinaryCommutativeAnalyser(TR::Node       *root,
                         TR::InstOpCode::Mnemonic regToRegOpCode,

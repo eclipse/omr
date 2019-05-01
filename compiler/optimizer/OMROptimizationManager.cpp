@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,26 +20,26 @@
  *******************************************************************************/
 
 #include "optimizer/OptimizationManager.hpp"
-#include "optimizer/OptimizationManager_inlines.hpp"        // for OptimizationManager::self, etc
+#include "optimizer/OptimizationManager_inlines.hpp"
 
-#include <stddef.h>                            // for NULL
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for feGetEnv, etc
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/CompilationTypes.hpp"        // for TR_Hotness
-#include "compile/Method.hpp"                  // for TR_Method
+#include <stddef.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for etc
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Cfg.hpp"                       // for CFG
-#include "infra/Flags.hpp"                     // for flags32_t
-#include "infra/List.hpp"                      // for List
+#include "infra/Cfg.hpp"
+#include "infra/Flags.hpp"
+#include "infra/List.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"             // for Optimizer
+#include "optimizer/Optimizer.hpp"
 #include "ras/ILValidator.hpp"
 #include "ras/ILValidationStrategies.hpp"
 #include "env/CompilerEnv.hpp"

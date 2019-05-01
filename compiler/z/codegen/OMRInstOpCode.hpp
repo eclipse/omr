@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,8 @@ class TR_S390ProcessorInfo
       TR_zEC12 = 7,
       TR_z13 = 8,
       TR_z14 = 9,
-      TR_zNext = 10,
+      TR_z15 = 10,
+      TR_zNext = 11,
 
       TR_LatestArchitecture = TR_zNext
       };
@@ -108,12 +109,15 @@ class TR_S390ProcessorInfo
    bool checkzEC12();
    bool checkZ13();
    bool checkZ14();
+   bool checkZ15();
    bool checkZNext();
 
    void initialize()
       {
       if (checkZNext())
          _processorArchitecture = TR_zNext;
+      else if (checkZ15())
+          _processorArchitecture = TR_z15;
       else if (checkZ14())
          _processorArchitecture = TR_z14;
       else if (checkZ13())
@@ -639,7 +643,6 @@ class InstOpCode: public OMR::InstOpCode
    /* Queries for instruction properties */
    uint32_t hasBypass();
    uint32_t isAdmin();
-   uint32_t isHighWordInstruction();
    uint64_t isOperandHW(uint32_t i);
    uint64_t setsOperand(uint32_t opNum);
 
@@ -724,6 +727,16 @@ class InstOpCode: public OMR::InstOpCode
    uint8_t getInstructionFormat() { return getInstructionFormat(_mnemonic);}
    const uint8_t * getOpCodeBinaryRepresentation() { return getOpCodeBinaryRepresentation(_mnemonic);}
 
+   /** \brief
+     *    Gets the 20-bit displacement mnemonic which is equivalent to a 12-bit displacement mnemonic.
+     *
+     *  \param op
+     *     The 12-bit displacement mnemonic for which to find an equivalent 20-bit displacement mnemonic.
+     *
+     *  \return
+     *     The 20-bit displacement mnemonic if it exists, otherwise `BAD` mnemonic.
+     */
+   static Mnemonic getEquivalentLongDisplacementMnemonic(Mnemonic op);
 
    /* Static methods for getting the correct opCode depending on platform (32bit, 64bit, etc.) */
    static Mnemonic getLoadOnConditionRegOpCode();

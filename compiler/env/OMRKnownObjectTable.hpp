@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,11 +32,11 @@ namespace OMR { typedef OMR::KnownObjectTable KnownObjectTableConnector; }
 #endif
 
 
-#include <stdint.h>                 // for int32_t
-#include "env/FilePointerDecl.hpp"  // for FILE
-#include "env/jittypes.h"           // for uintptrj_t
-#include "infra/Annotations.hpp"    // for OMR_EXTENSIBLE
-#include "infra/BitVector.hpp"                 // for TR_BitVector
+#include <stdint.h>
+#include "env/FilePointerDecl.hpp"
+#include "env/jittypes.h"
+#include "infra/Annotations.hpp"
+#include "infra/BitVector.hpp"
 
 class TR_FrontEnd;
 namespace TR { class Compilation; }

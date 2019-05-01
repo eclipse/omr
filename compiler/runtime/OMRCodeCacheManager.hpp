@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,13 @@
 #ifndef OMR_CODECACHEMANAGER_INCL
 #define OMR_CODECACHEMANAGER_INCL
 
-#include <stddef.h>                            // for size_t
-#include <stdint.h>                            // for uint8_t, int32_t, etc
-#include "il/DataTypes.hpp"                    // for TR_YesNoMaybe
-#include "infra/CriticalSection.hpp"           // for CriticalSection
-#include "runtime/CodeCacheConfig.hpp"         // for CodeCacheConfig
-#include "runtime/MethodExceptionData.hpp"     // for MethodExceptionData
-#include "runtime/Runtime.hpp"                 // for TR_CCPreLoadedCode, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "il/DataTypes.hpp"
+#include "infra/CriticalSection.hpp"
+#include "runtime/CodeCacheConfig.hpp"
+#include "runtime/MethodExceptionData.hpp"
+#include "runtime/Runtime.hpp"
 #include "runtime/CodeCacheTypes.hpp"
 #include "env/RawAllocator.hpp"
 #include "codegen/StaticRelocation.hpp"
@@ -113,7 +113,6 @@ protected:
       };
 
 public:
-   enum ErrorCode { };
 
    CodeCacheManager(TR::RawAllocator rawAllocator);
 
@@ -130,11 +129,20 @@ public:
       };
 
    TR::CodeCacheConfig & codeCacheConfig() { return _config; }
-   bool codeCacheIsFull() { return _codeCacheIsFull; }
-   void setCodeCacheIsFull(bool codeCacheIsFull) { _codeCacheIsFull = codeCacheIsFull; }
+
+   /**
+    * @brief Inquires whether the code cache full flag has been set
+    *
+    * @return true if code cache full flag is set; false otherwise.
+    */
+   bool codeCacheFull() { return _codeCacheFull; }
+
+   /**
+    * @brief Sets the flag indicating a full code cache
+    */
+   void setCodeCacheFull() { _codeCacheFull = true; };
 
    TR::CodeCache *initialize(bool useConsolidatedCache, uint32_t numberOfCodeCachesToCreateAtStartup);
-   void lateInitialization();
 
    void destroy();
 
@@ -153,7 +161,7 @@ public:
 
    void addCodeCache(TR::CodeCache *codeCache);
 
-   TR::CodeCacheMemorySegment *getNewCacheMemorySegment(size_t segmentSize, size_t & codeCacheSizeAllocated);
+   TR::CodeCacheMemorySegment *getNewCodeCacheMemorySegment(size_t segmentSize, size_t & codeCacheSizeAllocated);
 
    void        unreserveCodeCache(TR::CodeCache *codeCache);
    TR::CodeCache * reserveCodeCache(bool compilationCodeAllocationsMustBeContiguous,
@@ -162,8 +170,6 @@ public:
                                     int32_t *numReserved);
    TR::CodeCache * getNewCodeCache(int32_t reservingCompThreadID);
 
-   void addFreeBlock(void *metaData, uint8_t *startPC);
-
    uint8_t * allocateCodeMemory(size_t warmCodeSize,
                                 size_t coldCodeSize,
                                 TR::CodeCache **codeCache_pp,
@@ -171,10 +177,38 @@ public:
                                 bool needsToBeContiguous,
                                 bool isMethodHeaderNeeded=true);
 
+   /**
+    * @brief Allocate and initialize a new code cache from a new memory segment
+    *
+    * @param[in] segmentSizeInBytes : segment size to create the code cache from
+    * @param[in] reservingCompilationTID : thread id of the requestor
+    *               if (reservingCompilationTID)
+    *                  <= -2 : no reservation is requested
+    *                  == -1 : the application thread is requesting the allocation; new code cache will be reserved
+    *                  >=  0 : a compilation thread is requesting the allocation; new code cache will be reserved
+    *
+    * @return if allocation is successful, the allocated TR::CodeCache object from
+    *           the new segment; NULL otherwise.
+    */
+   TR::CodeCache * allocateCodeCacheFromNewSegment(
+      size_t segmentSizeInBytes,
+      int32_t reservingCompilationTID);
+
    TR::CodeCache * findCodeCacheFromPC(void *inCacheAddress);
 
+   /**
+    * @brief Finds a helper trampoline for the given helper reachable from the
+    *        given code cache address.
+    *
+    * @param[in] helperIndex : the index of the helper requested
+    * @param[in] callSite : the call site address
+    *
+    * @return The address of the helper trampoline in the same code cache as
+    *         the call site address
+    */
+   intptrj_t findHelperTrampoline(int32_t helperIndex, void *callSite);
+
    CodeCacheTrampolineCode * findMethodTrampoline(TR_OpaqueMethodBlock *method, void *callingPC);
-   CodeCacheTrampolineCode * findHelperTrampoline(void *callingPC, int32_t helperIndex);
    void synchronizeTrampolines();
    CodeCacheTrampolineCode * replaceTrampoline(TR_OpaqueMethodBlock *method,
                                                void *callSite,
@@ -182,15 +216,11 @@ public:
                                                void *oldTargetPC,
                                                void *newTargetPC,
                                                bool needSync);
-   void reservationInterfaceCache(void *callSite, TR_OpaqueMethodBlock *method);
 
    void performSizeAdjustments(size_t &warmCodeSize,
                                size_t &coldCodeSize,
                                bool needsToBeContiguous,
                                bool isMethodHeaderNeeded);
-
-   bool almostOutOfCodeCache();
-   void printMccStats();
 
    bool canAddNewCodeCache();
 
@@ -213,10 +243,6 @@ public:
    TR::CodeCache * getRepositoryCodeCacheAddress() { return _repositoryCodeCache; }
    TR::Monitor *   getCodeCacheRepositoryMonitor() { return _codeCacheRepositoryMonitor; }
 
-#if DEBUG
-   void dumpCodeCaches();
-#endif
-
    uint8_t * allocateCodeMemoryWithRetries(size_t warmCodeSize,
                                            size_t coldCodeSize,
                                            TR::CodeCache **codeCache_pp,
@@ -224,7 +250,6 @@ public:
                                            uint8_t ** coldCode,
                                            bool needsToBeContiguous,
                                            bool isMethodHeaderNeeded=true);
-   void setCodeCacheFull() { };  // default does nothing
    void setHasFailedCodeCacheAllocation() { }
 
    bool initialized() const                 { return _initialized; }
@@ -234,10 +259,22 @@ public:
    void registerCompiledMethod(const char *sig, uint8_t *startPC, uint32_t codeSize);
    void registerStaticRelocation(const TR::StaticRelocation &relocation);
 
-protected:
+   /**
+    * @brief Hint to free a given code cache segment.
+    *
+    * This function is intended to allow code cache segments allocated by
+    * `allocateCodeCacheSegment()` to be freed. Because it may not always
+    * be safe to actually free code cache memory, callers should treat
+    * this function as a hint. It is up to downstream projects to decide
+    * how to handle these requests. By default, if no overrides are
+    * provided, no memory is ever freed.
+    *
+    * @param memSegment is a pointer to the TR::CodeCacheMemorySegment instance
+    *        that handles the segment memory to be freed.
+    */
+   void freeCodeCacheSegment(TR::CodeCacheMemorySegment * memSegment) {}
 
-   void printRemainingSpaceInCodeCaches();
-   void printOccupancyStats();
+protected:
 
    TR::RawAllocator               _rawAllocator;
    TR::CodeCacheConfig            _config;
@@ -252,7 +289,7 @@ protected:
 
    bool                           _initialized;                       /*!< flag to indicate if code cache manager has been initialized or not */
    bool                           _lowCodeCacheSpaceThresholdReached; /*!< true if close to exhausting available code cache */
-   bool                           _codeCacheIsFull;
+   bool                           _codeCacheFull;
 
 #if (HOST_OS == OMR_LINUX)
    public:

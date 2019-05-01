@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,23 +23,23 @@
 
 #include "optimizer/DominatorVerifier.hpp"
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for int32_t
+#include <stddef.h>
+#include <stdint.h>
 #include "env/StackMemoryRegion.hpp"
-#include "compile/Compilation.hpp"            // for Compilation
-#include "cs2/arrayof.h"                      // for StaticArrayOf
+#include "compile/Compilation.hpp"
+#include "cs2/arrayof.h"
 #include "env/TRMemory.hpp"
-#include "il/Block.hpp"                       // for Block
-#include "il/TreeTop.hpp"                     // for TreeTop
+#include "il/Block.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "infra/Assert.hpp"                   // for TR_ASSERT
-#include "infra/BitVector.hpp"                // for TR_BitVector
-#include "infra/Cfg.hpp"                      // for CFG
-#include "infra/List.hpp"                     // for ListIterator, List
-#include "infra/CfgEdge.hpp"                  // for CFGEdge
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
 #include "optimizer/DominatorsChk.hpp"
-#include "optimizer/Dominators.hpp"           // for TR_Dominators
-#include "ras/Debug.hpp"                      // for TR_DebugBase
+#include "optimizer/Dominators.hpp"
+#include "ras/Debug.hpp"
 
 TR_DominatorVerifier::TR_DominatorVerifier(TR_Dominators &findDominators)
    : _compilation(findDominators.comp())

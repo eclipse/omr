@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,59 +29,60 @@
 #pragma csect(TEST,"OMRZMemoryReference#T")
 
 
-#include <stddef.h>                                 // for size_t
-#include <stdint.h>                                 // for int32_t, etc
-#include <string.h>                                 // for NULL, strcmp
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"                     // for TR_FrontEnd, etc
-#include "codegen/InstOpCode.hpp"                   // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                  // for Instruction, etc
-#include "codegen/Linkage.hpp"                      // for Linkage
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
-#include "codegen/Machine.hpp"                      // for MAXDISP, Machine, etc
-#include "codegen/MemoryReference.hpp"              // for MemoryReference, etc
-#include "codegen/RealRegister.hpp"                 // for RealRegister, etc
-#include "codegen/Register.hpp"                     // for Register
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/RegisterPair.hpp"                 // for RegisterPair
+#include "codegen/RegisterPair.hpp"
 #include "codegen/Relocation.hpp"
-#include "codegen/Snippet.hpp"                      // for TR::S390Snippet, etc
+#include "codegen/Snippet.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
-#include "compile/Compilation.hpp"                  // for Compilation
+#include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
-#include "env/ObjectModel.hpp"                      // for ObjectModel
-#include "env/StackMemoryRegion.hpp"                // for TR::StackMemoryRegion
+#include "env/ObjectModel.hpp"
+#include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
-#include "env/defines.h"                            // for TR_HOST_64BIT
-#include "env/jittypes.h"                           // for intptrj_t, uintptrj_t
-#include "il/Block.hpp"                             // for Block
-#include "il/DataTypes.hpp"                         // for DataTypes, etc
+#include "env/defines.h"
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                             // for ILOpCode
-#include "il/Node.hpp"                              // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference, etc
-#include "il/TreeTop.hpp"                           // for TreeTop
-#include "il/TreeTop_inlines.hpp"                   // for TreeTop::getNode
-#include "il/symbol/AutomaticSymbol.hpp"            // for AutomaticSymbol
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"               // for StaticSymbol
-#include "infra/Array.hpp"                          // for TR_Array
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/Bit.hpp"                            // for trailingZeroes
-#include "infra/Flags.hpp"                          // for flags32_t
-#include "infra/List.hpp"                           // for List, etc
-#include "ras/Debug.hpp"                            // for TR_DebugBase
-#include "z/codegen/EndianConversion.hpp"           // for boi
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
+#include "infra/Flags.hpp"
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
+#include "z/codegen/EndianConversion.hpp"
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
@@ -472,7 +473,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
      _symbolReference(rootLoadOrStore->getOpCode().hasSymbolReference()?rootLoadOrStore->getSymbolReference():NULL),
      _originalSymbolReference(rootLoadOrStore->getOpCode().hasSymbolReference()?rootLoadOrStore->getSymbolReference():NULL),
      _listingSymbolReference(NULL),
-   _offset(0),_displacement(0), _flags(0), _storageReference(storageReference), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL),
+   _offset(0), _flags(0), _storageReference(storageReference), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL),
    _incrementedNodesList(cg->comp()->trMemory())
    {
 
@@ -577,20 +578,6 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
          {
          self()->createUnresolvedDataSnippet(rootLoadOrStore, cg, symRef, tempReg, isStore);
          }
-
-      // indexRegister may setup in populateMemoryReference to hold the address for the load/store
-      // since indexRegister is invalid in a RS instruction (LM/STM for long), we need to insert an intermediate
-      // LA instruction to get the address using index and base register before doing LM/STM
-      // we'll never generate LM to load/store long int on 64bit platform
-      // storageReference cases may contain symbol sizes from 1->64 and in any case this condition is now enforced when
-      // the subsequent generate*Instruction routine is called with this memRef
-      if ((rootLoadOrStore->getType().isInt64() || (symbol && symbol->getSize() == 8)) &&
-         !(TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) &&
-          !canUseRX &&
-          (storageReference == NULL))
-         {
-         self()->separateIndexRegister(rootLoadOrStore, cg, false, NULL); // enforce4KDisplacementLimit=false
-         }
       }
    else
       {
@@ -611,7 +598,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
                // Storing to the symbol reference
                TR::Register * tempReg;
                if (TR::Compiler->target.is64Bit())
-                  tempReg = cg->allocate64bitRegister();
+                  tempReg = cg->allocateRegister();
                else
                   tempReg = cg->allocateRegister();
                self()->setBaseRegister(tempReg, cg);
@@ -705,7 +692,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
 
 OMR::Z::MemoryReference::MemoryReference(TR::Node *addressChild, bool canUseIndexReg, TR::CodeGenerator *cg)
    : _baseRegister(NULL), _baseNode(NULL), _indexRegister(NULL), _indexNode(NULL), _targetSnippet(NULL), _targetSnippetInstruction(NULL),
-     _offset(0), _displacement(0), _flags(0), _storageReference(NULL), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL), _incrementedNodesList(cg->comp()->trMemory())
+     _offset(0), _flags(0), _storageReference(NULL), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL), _incrementedNodesList(cg->comp()->trMemory())
    {
    bool done = false;
    if (addressChild->getRegister() == NULL)
@@ -758,7 +745,7 @@ OMR::Z::MemoryReference::createLiteralPoolSnippet(TR::Node * node, TR::CodeGener
 
 OMR::Z::MemoryReference::MemoryReference(TR::Node * node, TR::SymbolReference * symRef, TR::CodeGenerator * cg, TR_StorageReference *storageReference)
    : _baseRegister(NULL), _baseNode(NULL), _indexRegister(NULL), _indexNode(NULL), _targetSnippet(NULL), _targetSnippetInstruction(NULL),
-     _displacement(0), _flags(0), _storageReference(storageReference), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL),
+     _flags(0), _storageReference(storageReference), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL),
      _incrementedNodesList(cg->comp()->trMemory())
    {
 
@@ -829,7 +816,7 @@ OMR::Z::MemoryReference::initSnippetPointers(TR::Snippet * s, TR::CodeGenerator 
 
 OMR::Z::MemoryReference::MemoryReference(TR::Snippet * s, TR::Register * indx, int32_t disp, TR::CodeGenerator * cg)
    : _baseNode(NULL), _baseRegister(NULL), _indexRegister(indx), _indexNode(NULL), _targetSnippetInstruction(NULL),
-    _displacement(0), _offset(disp), _flags(0), _storageReference(NULL), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL),
+    _offset(disp), _flags(0), _storageReference(NULL), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL),
     _incrementedNodesList(cg->comp()->trMemory())
    {
    _symbolReference = new (cg->trHeapMemory()) TR::SymbolReference(cg->comp()->getSymRefTab());
@@ -847,7 +834,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Snippet * s, TR::Register * indx, i
 
 OMR::Z::MemoryReference::MemoryReference(TR::Snippet * s, TR::CodeGenerator * cg, TR::Register * base, TR::Node * node)
    : _baseNode(NULL), _baseRegister(NULL), _indexRegister(NULL), _indexNode(NULL), _targetSnippetInstruction(NULL),
-   _displacement(0), _offset(0), _flags(0), _storageReference(NULL), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL),
+   _offset(0), _flags(0), _storageReference(NULL), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL),
    _incrementedNodesList(cg->comp()->trMemory())
    {
    TR::Compilation *comp = cg->comp();
@@ -873,7 +860,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Snippet * s, TR::CodeGenerator * cg
       if (cg->isLiteralPoolOnDemandOn())
          {
          if (TR::Compiler->target.is64Bit())
-            self()->setBaseRegister(cg->allocate64bitRegister(), cg);
+            self()->setBaseRegister(cg->allocateRegister(), cg);
          else
             self()->setBaseRegister(cg->allocateRegister(), cg);
          generateLoadLiteralPoolAddress(cg, node, _baseRegister);
@@ -897,7 +884,6 @@ OMR::Z::MemoryReference::MemoryReference(int32_t           disp,
   _indexNode(NULL),
   _targetSnippet(NULL),
   _targetSnippetInstruction(NULL),
-  _displacement(0),
   _flags(0),
   _storageReference(NULL),
   _fixedSizeForAlignment(0),
@@ -923,7 +909,6 @@ OMR::Z::MemoryReference::MemoryReference(TR::CodeGenerator *cg) :
   _targetSnippet(NULL),
   _targetSnippetInstruction(NULL),
 // this flag is used for 64bit code-gen only under current J9 fat object model
-  _displacement(0),
   _flags(0),
   _storageReference(NULL),
   _fixedSizeForAlignment(0),
@@ -948,7 +933,6 @@ OMR::Z::MemoryReference::MemoryReference(TR::Register      *br,
   _indexNode(NULL),
   _targetSnippet(NULL),
   _targetSnippetInstruction(NULL),
-  _displacement(0),
   _offset(disp),
   _flags(0),
   _storageReference(NULL),
@@ -975,7 +959,6 @@ OMR::Z::MemoryReference::MemoryReference(TR::Register      *br,
   _indexNode(NULL),
   _targetSnippet(NULL),
   _targetSnippetInstruction(NULL),
-  _displacement(0),
   _offset(disp),
   _flags(0),
   _storageReference(NULL),
@@ -1000,7 +983,6 @@ OMR::Z::MemoryReference::MemoryReference(TR::Register      *br,
   _indexNode(NULL),
   _targetSnippet(NULL),
   _targetSnippetInstruction(NULL),
-  _displacement(0),
   _offset(disp),
   _flags(0),
   _storageReference(NULL),
@@ -1080,6 +1062,22 @@ bool
 OMR::Z::MemoryReference::isAligned()
    {
    return self()->rightAlignMemRef() || self()->leftAlignMemRef();
+   }
+
+const bool
+OMR::Z::MemoryReference::isLongDisplacementRequired()
+   {
+   auto displacement = self()->getOffset();
+
+   return ((displacement > MINLONGDISP && displacement < MINDISP) || (displacement >= MAXDISP && displacement < MAXLONGDISP));
+   }
+
+const bool
+OMR::Z::MemoryReference::isHugeDisplacementRequired()
+   {
+   auto displacement = self()->getOffset();
+
+   return (displacement <= MINLONGDISP || displacement >= MAXLONGDISP);
    }
 
 void
@@ -1696,7 +1694,6 @@ OMR::Z::MemoryReference::populateThroughEvaluation(TR::Node * rootLoadOrStore, T
    _indexNode = NULL;
    _targetSnippet = NULL;
    _targetSnippetInstruction = NULL;
-   _displacement = 0;
    _offset = 0;
    _flags = 0;
    _fixedSizeForAlignment = 0;
@@ -1827,16 +1824,6 @@ OMR::Z::MemoryReference::populateMemoryReference(TR::Node * subTree, TR::CodeGen
          {
          self()->populateLoadAddrTree(subTree, cg);
          }
-      else if (subTree->getOpCodeValue() == TR::aload &&
-               cg->isAddressOfStaticSymRefWithLockedReg(subTree->getSymbolReference()))
-         {
-         self()->populateAloadTree(subTree, cg, false);
-         }
-      else if (subTree->getOpCodeValue() == TR::aload &&
-               cg->isAddressOfPrivateStaticSymRefWithLockedReg(subTree->getSymbolReference()))
-         {
-         self()->populateAloadTree(subTree, cg, true);
-         }
       else if (subTree->getOpCodeValue() == TR::aconst)
          {
          if (TR::Compiler->target.is64Bit())
@@ -1907,7 +1894,7 @@ OMR::Z::MemoryReference::consolidateRegisters(TR::Node * node, TR::CodeGenerator
       if (node && node->isInternalPointer() && node->getPinningArrayPointer())
          {
          if (TR::Compiler->target.is64Bit())
-            tempTargetRegister = cg->allocate64bitRegister();
+            tempTargetRegister = cg->allocateRegister();
          else
             tempTargetRegister = cg->allocateRegister();
 
@@ -1922,7 +1909,7 @@ OMR::Z::MemoryReference::consolidateRegisters(TR::Node * node, TR::CodeGenerator
    else
       {
       if (TR::Compiler->target.is64Bit())
-         tempTargetRegister = cg->allocate64bitRegister();
+         tempTargetRegister = cg->allocateRegister();
       else
          tempTargetRegister = cg->allocateRegister();
       }
@@ -1980,9 +1967,9 @@ OMR::Z::MemoryReference::handleLargeOffset(TR::Node * node, TR::MemoryReference 
       op=TR::InstOpCode::LAY;
 
       if (preced)
-         preced = generateRXYInstruction(cg, op, node, tempTargetRegister, interimMemoryReference, preced);
+         preced = generateRXInstruction(cg, op, node, tempTargetRegister, interimMemoryReference, preced);
       else
-         generateRXYInstruction(cg, op, node, tempTargetRegister, interimMemoryReference);
+         generateRXInstruction(cg, op, node, tempTargetRegister, interimMemoryReference);
       }
    else
       {
@@ -2038,6 +2025,11 @@ OMR::Z::MemoryReference::alignmentBumpMayRequire4KFixup(TR::Node * node, TR::Cod
    return false;
    }
 
+/**
+ * \brief
+ *  Enforces format limits on several instruction formats that have a displacement and base register without
+ *  an index register. This routine was originally meant for SS formats and is now used on SS, VRS, VRV and VSI formats.
+*/
 TR::Instruction *
 OMR::Z::MemoryReference::enforceSSFormatLimits(TR::Node * node, TR::CodeGenerator * cg, TR::Instruction *preced)
    {
@@ -2051,11 +2043,7 @@ OMR::Z::MemoryReference::enforceSSFormatLimits(TR::Node * node, TR::CodeGenerato
 TR::Instruction *
 OMR::Z::MemoryReference::enforceRSLFormatLimits(TR::Node * node, TR::CodeGenerator * cg, TR::Instruction *preced)
    {
-   bool forceDueToAlignmentBump = self()->alignmentBumpMayRequire4KFixup(node, cg);
-   // call separateIndexRegister first so any large offset is handled along with the index register folding
-   preced = self()->separateIndexRegister(node, cg, true, preced, forceDueToAlignmentBump); // enforce4KDisplacementLimit=true
-   preced = self()->enforce4KDisplacementLimit(node, cg, preced, false, forceDueToAlignmentBump);
-   return preced;
+   return self()->enforceSSFormatLimits(node, cg, preced);
    }
 
 TR::Instruction *
@@ -2087,7 +2075,7 @@ OMR::Z::MemoryReference::enforce4KDisplacementLimit(TR::Node * node, TR::CodeGen
       {
       TR::Register * tempTargetRegister = NULL;
       if (TR::Compiler->target.is64Bit())
-         tempTargetRegister = cg->allocate64bitRegister();
+         tempTargetRegister = cg->allocateRegister();
       else
          tempTargetRegister = cg->allocateRegister();
       TR::MemoryReference * interimMemoryReference = generateS390MemoryReference(cg);
@@ -2157,7 +2145,7 @@ OMR::Z::MemoryReference::enforceDisplacementLimit(TR::Node * node, TR::CodeGener
       TR_ASSERT( node,"node should be non-null for enforceDisplacementLimit\n");
       TR::Register * tempTargetRegister;
       if (TR::Compiler->target.is64Bit())
-         tempTargetRegister = cg->allocate64bitRegister();
+         tempTargetRegister = cg->allocateRegister();
       else
          tempTargetRegister = cg->allocateRegister();
 
@@ -2210,7 +2198,7 @@ OMR::Z::MemoryReference::eliminateNegativeDisplacement(TR::Node * node, TR::Code
 
       TR::Register * tempTargetRegister;
       if (TR::Compiler->target.is64Bit())
-         tempTargetRegister = cg->allocate64bitRegister();
+         tempTargetRegister = cg->allocateRegister();
       else
          tempTargetRegister = cg->allocateRegister();
       TR::MemoryReference * interimMemoryReference = generateS390MemoryReference(cg);
@@ -2259,7 +2247,7 @@ OMR::Z::MemoryReference::separateIndexRegister(TR::Node * node, TR::CodeGenerato
          }
       TR::Register * tempTargetRegister = NULL;
       if (TR::Compiler->target.is64Bit())
-         tempTargetRegister = cg->allocate64bitRegister();
+         tempTargetRegister = cg->allocateRegister();
       else
          tempTargetRegister = cg->allocateRegister();
      TR::MemoryReference * interimMemoryReference = generateS390MemoryReference(cg);
@@ -2394,13 +2382,6 @@ OMR::Z::MemoryReference::assignRegisters(TR::Instruction * currentInstruction, T
          assignedBaseRegister->setAssignedRegister(NULL);
          assignedBaseRegister->setState(TR::RealRegister::Free);
          cg->traceRegFreed(_baseRegister, assignedBaseRegister);
-         if (cg->supportsHighWordFacility() && !comp->getOption(TR_DisableHighWordRA) &&
-             _baseRegister->is64BitReg())
-            {
-            toRealRegister(assignedBaseRegister)->getHighWordRegister()->setAssignedRegister(NULL);
-            toRealRegister(assignedBaseRegister)->getHighWordRegister()->setState(TR::RealRegister::Free);
-            cg->traceRegFreed(_baseRegister, toRealRegister(assignedBaseRegister)->getHighWordRegister());
-            }
          }
       self()->setBaseRegister(assignedBaseRegister, cg);
       }
@@ -2498,13 +2479,11 @@ OMR::Z::MemoryReference::estimateBinaryLength(int32_t  currentEstimate, TR::Code
          length += 28;
          if (instr->getOpCode().hasTwoMemoryReferences())
             length += 18;
+
          // STG/LG (6+6)
-         if ( !comp->getOption(TR_DisableLongDispStackSlot) )
-            {
+         length += 12;
+         if (instr->getOpCode().hasTwoMemoryReferences())
             length += 12;
-            if (instr->getOpCode().hasTwoMemoryReferences())
-               length += 12;
-            }
          }
       else
          {
@@ -2512,13 +2491,11 @@ OMR::Z::MemoryReference::estimateBinaryLength(int32_t  currentEstimate, TR::Code
          length += 24;
          if (instr->getOpCode().hasTwoMemoryReferences())
             length += 16;
+
          // ST/L (4+4)
-         if ( !comp->getOption(TR_DisableLongDispStackSlot) )
-            {
+         length += 8;
+         if (instr->getOpCode().hasTwoMemoryReferences())
             length += 8;
-            if (instr->getOpCode().hasTwoMemoryReferences())
-               length += 8;
-            }
          }
       }
    instr->setEstimatedBinaryLength(length);
@@ -2920,10 +2897,9 @@ OMR::Z::MemoryReference::generateBinaryEncoding(uint8_t * cursor, TR::CodeGenera
       self()->setOffset(cg->getFrameSizeInBytes());
       }
    uint8_t * instructionStart = cursor;
-   uint32_t * wcursor = NULL;
    TR::RealRegister * base  = (self()->getBaseRegister() ? toRealRegister(self()->getBaseRegister()) : 0);
    TR::RealRegister * index = (self()->getIndexRegister() ? toRealRegister(self()->getIndexRegister()) : 0);
-   int32_t disp           = _offset;
+
    int32_t nbytes     = 0;
    bool largeDisp     = false;
    TR::Compilation *comp = cg->comp();
@@ -2940,105 +2916,81 @@ OMR::Z::MemoryReference::generateBinaryEncoding(uint8_t * cursor, TR::CodeGenera
    TR::Node * node = instr->getNode();
 
    bool is2ndSSMemRef=self()->is2ndMemRef();
-   bool useNodesForLongFixup = !comp->getOption(TR_DisableLongDispNodes);
 
-   /*
-      RX Format
-       ________ ____ ____ ____ ____________
-      |Op Code | R1 | X2 | B2 |     D2     |
-      |________|____|____|____|____________|
-      0         8   12   16   20          31
-     - or -
-      RS Format (LM and STM)
-       ________ ____ ____ ____ ____________
-      |Op Code | R1 | R3 | B2 |     D2     |
-      |________|____|____|____|____________|
-      0         8   12   16   20          31
-     - or -
-      RXE Format
-       ________ ____ ____ ____ __ ________ ____________ _______
-      |Op Code | R1 | X2 | B2 |D2         | ////////// |Op Code|
-      |________|____|____|____|___________|____________|_______|
-      0         8   12   16   20          32           40      47
-     - or -
-      RXF Format
-       ________ ____ ____ ____ __ ________ ___ _________ _______
-      |Op Code | R1 | X2 | B2 |D2         | R1 | ////// |Op Code|
-      |________|____|____|____|___________|___ _________|_______|
-      0         8   12   16   20          32   36      40      47
-     - or -
-      RXY Format
-       ________ ____ ____ ____ __ ________ ____________ _______
-      |Op Code | R1 | X2 | B2 |DL2        | DH2        |Op Code|
-      |________|____|____|____|___________|____________|_______|
-      0         8   12   16   20          32           40      47
-    */
-
-
-
-   //calculate an estimate for the displacment of this reference
-   disp = self()->calcDisplacement(cursor, instr, cg);
+   int32_t displacement = self()->calcDisplacement(cursor, instr, cg);
 
    //add project specific relocations for specific instructions
-   self()->addInstrSpecificRelocation(cg, instr, disp, cursor);
+   self()->addInstrSpecificRelocation(cg, instr, displacement, cursor);
 
-   // Most cases we will know at inst selection phase that the disp is big.  But it is still possible
-   // for us to hit bin phase and realize the DISP is large (eg when the stack is large).
-   if (disp<0 || disp>=MAXDISP)
+   // We may end up "upgrading" the instruction in case of long displacement, so this variable may change
+   auto instructionFormat = instr->getKind();
+
+   // In most cases we will know at instruction selection that the displacement is large. But it is still possible for
+   // us to reach binary encoding without knowing a displacement will be large. A typical example of this is when
+   // referencing stack symbols whose displacement will be unknown until the stack is mapped; an operation that happens
+   // after instruction selection and before binary encoding.
+   if (displacement < MINDISP || displacement >= MAXDISP)
       {
-      //  Find a reg not used by current inst.
-      //
-      if (comp->getOption(TR_DisableLongDispStackSlot))
+      auto longDisplacementMnemonic = TR::InstOpCode::getEquivalentLongDisplacementMnemonic(instr->getOpCodeValue());
+
+      if ((displacement < MAXLONGDISP && displacement > MINLONGDISP)
+         && (longDisplacementMnemonic != TR::InstOpCode::BAD
+            || instructionFormat == TR::Instruction::IsRXY
+            || instructionFormat == TR::Instruction::IsRXYb
+            || instructionFormat == TR::Instruction::IsRSY
+            || instructionFormat == TR::Instruction::IsSIY))
          {
-         scratchReg = cg->getExtCodeBaseRealRegister();
-         spillNeeded = false;
-         }
-      else if (TR::MemoryReference::canUseTargetRegAsScratchReg(instr))
-         {
-         scratchReg = (TR::RealRegister * )((TR::S390RegInstruction *)instr)->getRegisterOperand(1);
-         spillNeeded = false;
+         // The corresponding RX/RS/SI `generateBinaryEncoding()` function will "upgrade" the instruction to the
+         // corresponding long displacement version. Note that the logic here must stay synchronized with the following
+         // evaluators which we add here as eyecatchers for future modifications:
+         //
+         // TR::S390RXInstruction::generateBinaryEncoding()
+         // TR::S390RSInstruction::generateBinaryEncoding()
+         // TR::S390SIInstruction::generateBinaryEncoding()
+
+         // Nothing to do here, simply "upgrade" the instruction
+         // TODO (#2848): We should set this to the actual `longDisplacementMnemonic` format once we unify instruction
+         // formats and S390*Instruction formats
+         instructionFormat = TR::Instruction::IsRXY;
+
+         if (longDisplacementMnemonic != TR::InstOpCode::BAD)
+            {
+            TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "z/memref/long-displacement-upgrade/(%s)", comp->signature()));
+            }
          }
       else
          {
-         TR_ASSERT( !self()->isMemRefMustNotSpill(),"OMR::Z::MemoryReference::generateBinaryEncoding -- This memoryReference must not spill");
-         if (!is2ndSSMemRef)
+         //  Find a reg not used by current inst.
+         if (TR::MemoryReference::canUseTargetRegAsScratchReg(instr))
             {
-            scratchReg  = instr->assignBestSpillRegister();
-            //traceMsg(comp, "Using first spillReg %p \n", instr);
+            scratchReg = (TR::RealRegister * )((TR::S390RegInstruction *)instr)->getRegisterOperand(1);
+            spillNeeded = false;
             }
          else
             {
-            scratchReg  = instr->assignBestSpillRegister2();
-            if (TR::Compiler->target.is64Bit())
-               offsetToLongDispSlot += 8;
+            TR_ASSERT( !self()->isMemRefMustNotSpill(),"OMR::Z::MemoryReference::generateBinaryEncoding -- This memoryReference must not spill");
+            if (!is2ndSSMemRef)
+               {
+               scratchReg  = instr->assignBestSpillRegister();
+               //traceMsg(comp, "Using first spillReg %p \n", instr);
+               }
             else
-               offsetToLongDispSlot += 4;
-            //traceMsg(comp, "Using another spillReg, increment spill slot %p \n", instr);
+               {
+               scratchReg  = instr->assignBestSpillRegister2();
+               if (TR::Compiler->target.is64Bit())
+                  offsetToLongDispSlot += 8;
+               else
+                  offsetToLongDispSlot += 4;
+               //traceMsg(comp, "Using another spillReg, increment spill slot %p \n", instr);
+               }
+            spillNeeded = true;
             }
-         spillNeeded = true;
-         }
 
-      TR_ASSERT(scratchReg!=NULL,
-        "OMR::Z::MemoryReference::generateBinaryEncoding -- A scratch reg should always be found.");
+         TR_ASSERT(scratchReg!=NULL,
+           "OMR::Z::MemoryReference::generateBinaryEncoding -- A scratch reg should always be found.");
 
-      auto instructionFormat = instr->getOpCode().getInstructionFormat(instr->getOpCodeValue());
-
-      // If the instr is already of RSY/RXY/SIY form && its disp is within the range, no fixup is needed.
-      if ((instr->hasLongDisplacementSupport() ||
-           instructionFormat == RSYa_FORMAT ||
-           instructionFormat == RSYb_FORMAT ||
-           instructionFormat == RXYa_FORMAT ||
-           instructionFormat == RXYb_FORMAT ||
-           instructionFormat == SIY_FORMAT) &&
-          disp < MAXLONGDISP && disp > MINLONGDISP)
-         {
-         instr->attemptOpAdjustmentForLongDisplacement();
-         }
-      else if (useNodesForLongFixup
-         )
-         {
          largeDisp = true;
-         if ( !comp->getOption(TR_DisableLongDispStackSlot) && spillNeeded )
+         if (spillNeeded)
             {
             currInstr = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, scratchReg,
                generateS390MemoryReference(LongDispSlotBaseReg, offsetToLongDispSlot, cg), prevInstr);
@@ -3046,7 +2998,7 @@ OMR::Z::MemoryReference::generateBinaryEncoding(uint8_t * cursor, TR::CodeGenera
             cg->setBinaryBufferCursor(cursor = currInstr->generateBinaryEncoding());
             prevInstr = currInstr;
             }
-         currInstr = generateImmToRegister(cg, node, scratchReg, (intptr_t)(disp), prevInstr);
+         currInstr = generateImmToRegister(cg, node, scratchReg, (intptr_t)(displacement), prevInstr);
          currInstr->setEstimatedBinaryLength(currInstr->getOpCode().getInstructionLength());
          while(prevInstr != currInstr)
             {
@@ -3054,168 +3006,42 @@ OMR::Z::MemoryReference::generateBinaryEncoding(uint8_t * cursor, TR::CodeGenera
             cg->setBinaryBufferCursor(cursor = prevInstr->generateBinaryEncoding());
             }
          prevInstr = currInstr;
-         disp = 0;
-         }
-      else if (disp>=(int32_t)0xFFFF8000 && disp<=(int32_t)0x00007FFF)
-         {
-         TR_ASSERT(scratchReg!=NULL,
-            "OMR::Z::MemoryReference::generateBinaryEncoding -- A scratch reg should always be found [%p].",instr);
+         displacement = 0;
 
-         largeDisp = true;
-         if (TR::Compiler->target.is64Bit())
+         // Now we need to figure out how to use the manufactured displacement
+         if (instructionFormat == TR::Instruction::IsRS ||
+             instructionFormat == TR::Instruction::IsRSY ||
+             instructionFormat == TR::Instruction::IsRSL ||
+             instructionFormat == TR::Instruction::IsSI ||
+             instructionFormat == TR::Instruction::IsSIY ||
+             instructionFormat == TR::Instruction::IsSIL ||
+             instructionFormat == TR::Instruction::IsSS1 ||
+             instructionFormat == TR::Instruction::IsSS2 ||
+             instructionFormat == TR::Instruction::IsSS4 ||
+             instructionFormat == TR::Instruction::IsS   ||
+             instructionFormat == TR::Instruction::IsRIS ||
+             instructionFormat == TR::Instruction::IsRRS ||
+             instructionFormat == TR::Instruction::IsSSE ||
+             instructionFormat == TR::Instruction::IsSSF ||
+             // Vector instruction formats that have 12-bit displacements and no index registers
+             instructionFormat == TR::Instruction::IsVSI ||
+             instructionFormat == TR::Instruction::IsVRV ||
+             instructionFormat == TR::Instruction::IsVRSa||
+             instructionFormat == TR::Instruction::IsVRSb||
+             instructionFormat == TR::Instruction::IsVRSc||
+             instructionFormat == TR::Instruction::IsVRSd)
             {
-            if ( !comp->getOption(TR_DisableLongDispStackSlot) && spillNeeded )
-               {
-               *(int32_t *) cursor  = boi(0xE3005000 | (offsetToLongDispSlot&0xFFF)); // STG Rscrtch,offToLongDispSlot(,GPR5)
-               scratchReg->setRegisterField((uint32_t *)cursor);
-               cursor += 4;
-               nbytes += 4;
-               *(int16_t *) cursor = bos(0x0024);
-               cursor += 2;
-               nbytes += 2;
-               }
-
-            *(int32_t *) cursor  = boi(0xa7090000 | (disp&0xFFFF));                   // LGHI Rscrtch, disp&0xFFFF
-            scratchReg->setRegisterField((uint32_t *)cursor);
-            }
-         else
-            {
-            if ( !comp->getOption(TR_DisableLongDispStackSlot) && spillNeeded )
-               {
-               *(int32_t *) cursor  = boi(0x50005000 | (offsetToLongDispSlot&0xFFF)); // ST Rscrtch,offToLongDispSlot(,GPR5)
-               scratchReg->setRegisterField((uint32_t *)cursor);
-               cursor += 4;
-               nbytes += 4;
-               }
-
-            *(int32_t *) cursor  = boi(0xa7080000 | (disp&0xFFFF));                   // LHI Rscrtch, disp&0xFFFF
-            scratchReg->setRegisterField((uint32_t *)cursor);
-            }
-         cursor += 4;
-         nbytes += 4;
-
-         disp = 0;
-         }
-      else if (disp>=(int32_t)0xF8000000 && disp<=(int32_t)0x07FFFFFF)
-         {
-         largeDisp = true;
-
-         int32_t high = disp>>12;
-         int32_t low  = disp&0xFFF;
-
-         TR_ASSERT(high<=MAX_IMMEDIATE_VAL && high>=MIN_IMMEDIATE_VAL,
-            "OMR::Z::MemoryReference::generateBinaryEncoding -- Immediate value out of range.");
-
-         if (TR::Compiler->target.is64Bit())
-            {
-            if ( !comp->getOption(TR_DisableLongDispStackSlot) && spillNeeded )
-               {
-               *(int32_t *) cursor  = (0xE3005000 | (offsetToLongDispSlot&0xFFF)); // STG Rscrtch,offToLongDispSlot(,GPR5)
-               scratchReg->setRegisterField((uint32_t *)cursor);
-               cursor += 4;
-               nbytes += 4;
-               *(int16_t *) cursor = bos(0x0024);
-               cursor += 2;
-               nbytes += 2;
-               }
-
-            *(int32_t *) cursor  = boi(0xa7090000 | (high&0xFFFF));                  //  LGHI Rscrtch, (disp>>12)&0xFFFF
-            scratchReg->setRegisterField((uint32_t *)cursor);
-            cursor += 4;
-            nbytes += 4;
-            *(int32_t *) cursor  = boi(0xeb00000c);                                    //  SLLG Rscrtch,Rscrtch,12
-            scratchReg->setRegisterField((uint32_t *)cursor);
-            scratchReg->setRegister2Field((uint32_t *)cursor);
-            cursor += 4;
-            nbytes += 4;
-            *(int16_t *) cursor = bos(0x000d);
-            cursor += 2;
-            nbytes += 2;
-            if (low)
-               {
-               *(int32_t *) cursor = boi(0x41000000 | low);                          //  LA Rscrtch, disp&0xFFF(,Rscrtch)
-               scratchReg->setRegisterField((uint32_t *)cursor);
-               scratchReg->setBaseRegisterField((uint32_t *)cursor);
-
-               cursor += 4;
-               nbytes += 4;
-               }
-            }
-         else
-            {
-            if ( !comp->getOption(TR_DisableLongDispStackSlot) && spillNeeded )
-               {
-               *(int32_t *) cursor  = boi(0x50005000 | (offsetToLongDispSlot&0xFFF)); // ST Rscrtch,offToLongDispSlot(,GPR5)
-               scratchReg->setRegisterField((uint32_t *)cursor);
-               cursor += 4;
-               nbytes += 4;
-               }
-
-            *(int32_t *) cursor  = boi(0xa7080000 | (high&0xFFFF));                  //  LHI Rscrtch, (disp>>12)&0xFFFF
-            scratchReg->setRegisterField((uint32_t *)cursor);
-            cursor += 4;
-            nbytes += 4;
-            *(int32_t *) cursor  = boi(0x8900000c);                                    //  SLL Rscrtch, 12
-            scratchReg->setRegisterField((uint32_t *)cursor);
-            cursor += 4;
-            nbytes += 4;
-            if (low)
-               {
-               *(int32_t *) cursor = boi(0x41000000 | low);                          //  LA Rscrtch, disp&0xFFF(,Rscrtch)
-               scratchReg->setRegisterField((uint32_t *)cursor);
-               scratchReg->setBaseRegisterField((uint32_t *)cursor);
-
-               cursor += 4;
-               nbytes += 4;
-               }
-            }
-         disp = 0;
-         }
-      else  // disp not handled
-         {
-         TR_ASSERT(0,
-            "OMR::Z::MemoryReference::generateBinaryEncoding -- 0x%x displacement not handled\n",disp);
-         }
-
-      // Now we need to figure out how to use the manufactured disp
-      if (largeDisp)
-         {
-         if (instr->getKind()==TR::Instruction::IsRS ||
-            instr->getKind()==TR::Instruction::IsRSY ||
-            instr->getKind()==TR::Instruction::IsRSL ||
-            instr->getKind()==TR::Instruction::IsSI  ||
-            instr->getKind()==TR::Instruction::IsSIY ||
-            instr->getKind()==TR::Instruction::IsSIL ||
-            instr->getKind()==TR::Instruction::IsSS1 ||
-            instr->getKind()==TR::Instruction::IsSS2 ||
-            instr->getKind()==TR::Instruction::IsSS4 ||
-            instr->getKind()==TR::Instruction::IsS    )
-            {
-            TR_ASSERT_FATAL(base != NULL, "Expected non-NULL base register for long displacement on %s [%p] instruction", cg->getDebug()->getOpCodeName(&instr->getOpCode()), instr);
+            TR_ASSERT_FATAL(base != NULL, "Expected non-NULL base register for long displacement on %s [%p] instruction", instr->getOpCode().getMnemonicName(), instr);
 
             //   ICM GPRt, DISP(,base)
             // becomes:
             //   LA  Rscrtch, 0(base,Rscrtch)
             //   ICM GPRt, 0(Rscrtch)
-            if (useNodesForLongFixup
-               )
-               {
-               currInstr = generateRXInstruction(cg, TR::InstOpCode::LA, node, scratchReg,
-                  generateS390MemoryReference(base, scratchReg, 0, cg), prevInstr);
-               currInstr->setEstimatedBinaryLength(currInstr->getOpCode().getInstructionLength());
-               cg->setBinaryBufferCursor(cursor = currInstr->generateBinaryEncoding());
-               prevInstr = currInstr;
-               }
-            else
-               {
-               *(int32_t *) cursor  = boi(0x41000000);                   // LA
-               scratchReg->setRegisterField((uint32_t *)cursor);
-               scratchReg->setBaseRegisterField((uint32_t *)cursor);
-               base->setIndexRegisterField((uint32_t *)cursor);
-
-               cursor += 4;
-               nbytes += 4;
-               }
+            currInstr = generateRXInstruction(cg, TR::InstOpCode::LA, node, scratchReg,
+               generateS390MemoryReference(base, scratchReg, 0, cg), prevInstr);
+            currInstr->setEstimatedBinaryLength(currInstr->getOpCode().getInstructionLength());
+            cg->setBinaryBufferCursor(cursor = currInstr->generateBinaryEncoding());
+            prevInstr = currInstr;
 
             base = scratchReg;
             self()->setBaseRegister(base, cg);
@@ -3227,38 +3053,24 @@ OMR::Z::MemoryReference::generateBinaryEncoding(uint8_t * cursor, TR::CodeGenera
             // becomes:
             //   LA Rscrtch, 0(index,Rscrtch)
             //   A  GPRt, 0(Rscrtch,base)
-            if (useNodesForLongFixup
-               )
-               {
-               currInstr = generateRXInstruction(cg, TR::InstOpCode::LA, node, scratchReg,
-                  generateS390MemoryReference(index, scratchReg, 0, cg), prevInstr);
-               currInstr->setEstimatedBinaryLength(currInstr->getOpCode().getInstructionLength());
-               cg->setBinaryBufferCursor(cursor = currInstr->generateBinaryEncoding());
-               prevInstr = currInstr;
-               }
-            else
-               {
-               *(int32_t *) cursor = boi(0x41000000);                    // LA
-               scratchReg->setRegisterField((uint32_t *)cursor);
-               scratchReg->setBaseRegisterField((uint32_t *)cursor);
-               index->setIndexRegisterField((uint32_t *)cursor);
-
-               cursor += 4;
-               nbytes += 4;
-               }
+            currInstr = generateRXInstruction(cg, TR::InstOpCode::LA, node, scratchReg,
+               generateS390MemoryReference(index, scratchReg, 0, cg), prevInstr);
+            currInstr->setEstimatedBinaryLength(currInstr->getOpCode().getInstructionLength());
+            cg->setBinaryBufferCursor(cursor = currInstr->generateBinaryEncoding());
+            prevInstr = currInstr;
 
             index = scratchReg;
             self()->setIndexRegister(index);
             }
          else if (index==NULL)                                      // Since index reg is free, use it directly
             {
-            TR_ASSERT_FATAL(instr->getKind()==TR::Instruction::IsRX ||
-                    instr->getKind() == TR::Instruction::IsVRX ||
-                    instr->getKind() == TR::Instruction::IsRXY ||
-                    instr->getKind() == TR::Instruction::IsRXYb ||
-                    instr->getKind() == TR::Instruction::IsRXE ||
-                    instr->getKind() == TR::Instruction::IsRXF,
-                "Unexpected instruction type for long displacement on %s [%p] instruction", cg->getDebug()->getOpCodeName(&instr->getOpCode()), instr);
+            TR_ASSERT_FATAL(instructionFormat == TR::Instruction::IsRX ||
+                     instructionFormat == TR::Instruction::IsVRX ||
+                     instructionFormat == TR::Instruction::IsRXY ||
+                     instructionFormat == TR::Instruction::IsRXYb ||
+                     instructionFormat == TR::Instruction::IsRXE ||
+                     instructionFormat == TR::Instruction::IsRXF,
+                  "Unexpected instruction type for long displacement on %s [%p] instruction", instr->getOpCode().getMnemonicName(), instr);
 
             //    A GPRt, DISP(,base)
             // becomes:
@@ -3269,12 +3081,12 @@ OMR::Z::MemoryReference::generateBinaryEncoding(uint8_t * cursor, TR::CodeGenera
             }
          else // base is NULL                                       // Since base reg is free, use it directly
             {
-            TR_ASSERT_FATAL(instr->getKind() == TR::Instruction::IsRX  ||
-                    instr->getKind() == TR::Instruction::IsRXY ||
-                    instr->getKind() == TR::Instruction::IsRXYb ||
-                    instr->getKind() == TR::Instruction::IsRXE ||
-                    instr->getKind() == TR::Instruction::IsRXF,
-                "Unexpected instruction type for long displacement on %s [%p] instruction", cg->getDebug()->getOpCodeName(&instr->getOpCode()), instr);
+            TR_ASSERT_FATAL(instructionFormat == TR::Instruction::IsRX  ||
+                     instructionFormat == TR::Instruction::IsRXY ||
+                     instructionFormat == TR::Instruction::IsRXYb ||
+                     instructionFormat == TR::Instruction::IsRXE ||
+                     instructionFormat == TR::Instruction::IsRXF,
+                  "Unexpected instruction type for long displacement on %s [%p] instruction", instr->getOpCode().getMnemonicName(), instr);
 
             //    A GPRt, DISP(,index)
             // becomes:
@@ -3283,93 +3095,79 @@ OMR::Z::MemoryReference::generateBinaryEncoding(uint8_t * cursor, TR::CodeGenera
             base = scratchReg;
             self()->setBaseRegister(base, cg);
             }
+
          if (nbytes == 0)
-             nbytes = cursor - instructionStart;
-         if (useNodesForLongFixup
-            )
-            currInstr->setNext(instr);
+               nbytes = cursor - instructionStart;
+
+         currInstr->setNext(instr);
+
+         // Mark the instruction as requiring a large disp
+         if (is2ndSSMemRef)
+            instr->setExtDisp2();
+         else
+            instr->setExtDisp();
+
+         TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "z/memref/huge-displacement-upgrade/(%s)", comp->signature()));
+
+         if (comp->getOption(TR_TraceCG))
+            traceMsg(comp, "[%p] Long Disp Inst using %s as scratch reg\n", instr, cg->getDebug()->getName(scratchReg));
          }
       }
 
+   // Update the offset now that the correct encded displacement is known
+   self()->setOffset(displacement);
 
-   if (instr->getKind() == TR::Instruction::IsRXY ||
-       instr->getKind() == TR::Instruction::IsRXYb ||
-       instr->getKind() == TR::Instruction::IsRSY ||
-       instr->getKind() == TR::Instruction::IsSIY)
+   if (instructionFormat == TR::Instruction::IsRXY ||
+       instructionFormat == TR::Instruction::IsRXYb ||
+       instructionFormat == TR::Instruction::IsRSY ||
+       instructionFormat == TR::Instruction::IsSIY)
       {
-      TR_ASSERT((disp >= MINLONGDISP && disp <= MAXLONGDISP),
-         "extended memory reference: displacement %d out of range", disp);
-      wcursor = (uint32_t *) cursor;
-      *wcursor &= boi(0xFFFFF000);
-      *wcursor |= boi(disp & 0x00000FFF);
-      uint32_t * nextWCursor = wcursor + 1;
-      *nextWCursor &= boi(0x00FFFFFF);
-      *nextWCursor |= boi((disp & 0x000FF000) << 12);
+      TR_ASSERT_FATAL(displacement > MINLONGDISP && displacement < MAXLONGDISP, "Displacement (%d) for RXY,RSY,SIY instruction is out of range", displacement);
+
+      *reinterpret_cast<uint32_t*>(cursor) &= boi(0xFFFFF000);
+      *reinterpret_cast<uint32_t*>(cursor) |= boi(displacement & 0x00000FFF);
+
+      *reinterpret_cast<uint32_t*>(cursor + 4) &= boi(0x00FFFFFF);
+      *reinterpret_cast<uint32_t*>(cursor + 4) |= boi((displacement & 0x000FF000) << 12);
       }
    else
       {
-      TR_ASSERT((disp >= 0 && disp < MAXDISP),"memory reference: displacement %d out of range", disp);
+      TR_ASSERT_FATAL(displacement >= MINDISP && displacement < MAXDISP, "Displacement (%d) is out of range", displacement);
 
-      if (is2ndSSMemRef)
-         wcursor = (uint32_t *) (cursor + 2);
-      else
-         wcursor = (uint32_t *) cursor;
-      *wcursor &= boi(0xFFFFF000);
-      *wcursor |= boi(disp);
+      cursor += is2ndSSMemRef ? 2 : 0;
+
+      *reinterpret_cast<uint32_t*>(cursor) &= boi(0xFFFFF000);
+      *reinterpret_cast<uint32_t*>(cursor) |= boi(displacement);
       }
 
-   // Mark the instruction as requiring a large disp
+   if (base != NULL)
+      {
+      base->setBaseRegisterField(reinterpret_cast<uint32_t*>(cursor));
+      }
+
+   if (index != NULL)
+      {
+      index->setIndexRegisterField(reinterpret_cast<uint32_t*>(cursor));
+      }
+
+   // Slot must be less than MAXDISP away from SP
+   TR_ASSERT(offsetToLongDispSlot < MAXDISP, "Offset to long displacement slot (%d) is out of range", offsetToLongDispSlot);
+
+   // We don't allow stack slot to be used for branch instructions, as gcmaps would be wrong on the gcpoint
    if (largeDisp)
       {
-      if (is2ndSSMemRef)
-         instr->setExtDisp2();
-      else
-         instr->setExtDisp();
-      if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "[%p] Long Disp Inst using %s as scratch reg\n", instr, cg->getDebug()->getName(scratchReg));
+      TR_ASSERT(!instr->getOpCode().isBranchOp(), "We don't handle long disp for branch instruction [%p] using long displacement stack slot", instr);
       }
 
-   _displacement = disp;
-
-   if (base)
+   //  No one else from inst selection phase using this slot
+   if (!largeDisp                    &&
+         self()->getCheckForLongDispSlot()     &&
+         displacement == offsetToLongDispSlot  &&
+         ((base  == LongDispSlotBaseReg && index == NULL) ||
+         (index == LongDispSlotBaseReg && base == NULL))
+      )
       {
-      base->setBaseRegisterField(wcursor);
-      }
-   if (index)
-      {
-      index->setIndexRegisterField(wcursor);
-      }
-
-   // A bunch of checks to make sure we catch anything going wrong
-   if ( !comp->getOption(TR_DisableLongDispStackSlot) )
-      {
-      // Slot must be less than MAXDISP away from SP
-      TR_ASSERT(offsetToLongDispSlot<MAXDISP,
-        "OMR::Z::MemoryReference::generateBinaryEncoding -- offsetToLongDispSlot %d >= MAXDISP\n",offsetToLongDispSlot);
-
-      // We don't allow stack slot to be used for branch insts, as gcmaps would be wrong on the gcpoint.
-      if ( largeDisp )
-         {
-         TR_ASSERT(instr->getOpCode().isBranchOp() == false,
-           "OMR::Z::MemoryReference::generateBinaryEncoding -- We don't handle long disp for branch insts %p using ExtCodeBase stack slot.\n",instr);
-         }
-
-      //  No one else from inst selection phase using this slot
-      if (!largeDisp                    &&
-          self()->getCheckForLongDispSlot()     &&
-          disp == offsetToLongDispSlot  &&
-          ((base  == LongDispSlotBaseReg && index == NULL) ||
-           (index == LongDispSlotBaseReg && base == NULL))
-         )
-         {
-         TR_ASSERT(0, "OMR::Z::MemoryReference::generateBinaryEncoding -- BAD use of ExtCodeBase SLOT %d on the stack %x node is %x.\n",
-           offsetToLongDispSlot, instr, instr->getNode());
-         }
-      }
-   else if (largeDisp) // && no long disp slot
-      {
-      TR_ASSERT(cg->isExtCodeBaseFreeForAssignment() == false,
-         "OMR::Z::MemoryReference::generateBinaryEncoding -- Ext Code Base was wrongly released\n");
+      TR_ASSERT(false, "Bad use of long displacement slot (%d) on the stack for instruction [%p] corresponding to node [%p]", offsetToLongDispSlot, instr, instr->getNode());
       }
 
    return nbytes;
@@ -3392,14 +3190,8 @@ OMR::Z::MemoryReference::generateBinaryEncodingTouchUpForLongDisp(uint8_t *curso
    TR::RealRegister * LongDispSlotBaseReg = useNormalSP ? (cg->getLinkage())->getNormalStackPointerRealRegister():spReg;
 
    bool spillNeeded = true; // LocalLocal alloc would set this to false
-   bool useNodesForLongFixup = !comp->getOption(TR_DisableLongDispNodes);
 
-   if (comp->getOption(TR_DisableLongDispStackSlot))
-      {
-      scratchReg = cg->getExtCodeBaseRealRegister();
-      spillNeeded = false;
-      }
-   else if (TR::MemoryReference::canUseTargetRegAsScratchReg(instr))
+   if (TR::MemoryReference::canUseTargetRegAsScratchReg(instr))
       {
       scratchReg = (TR::RealRegister * )((TR::S390RegInstruction *)instr)->getRegisterOperand(1);
       spillNeeded = false;
@@ -3430,44 +3222,15 @@ OMR::Z::MemoryReference::generateBinaryEncodingTouchUpForLongDisp(uint8_t *curso
         "OMR::Z::MemoryReference::generateBinaryEncodingTouchUpForLongDisp -- A scratch reg should always be found.");
 
    // Restore the scratch register
-   if (!comp->getOption(TR_DisableLongDispStackSlot) && largeDisp  && spillNeeded)
+   if (largeDisp  && spillNeeded)
       {
-      if (useNodesForLongFixup
-         )
-         {
-         //traceMsg(comp,"restoring scratchReg %p disp = %d \n", instr,disp);
-         TR::Instruction * nextInstr = instr->getNext();
-         TR::Instruction * currInstr = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), instr->getNode(), scratchReg,
-            generateS390MemoryReference(LongDispSlotBaseReg, offsetToLongDispSlot, cg), instr);
-         currInstr->setEstimatedBinaryLength(currInstr->getOpCode().getInstructionLength());
-         if (!useNodesForLongFixup)
-            {
-            cg->setBinaryBufferCursor(cursor = currInstr->generateBinaryEncoding());
-            nbytes += cursor - instructionStart;
-            }
-         else
-            {
-            nbytes += currInstr->getOpCode().getInstructionLength();
-            }
-         currInstr->setNext(nextInstr);
-         }
-      else if (TR::Compiler->target.is64Bit())
-         {
-         *(int32_t *) cursor = boi(0xE3005000 | (offsetToLongDispSlot&0xFFF)); // LG Rscrtch,offToLongDispSlot(,GPR5)
-         scratchReg->setRegisterField((uint32_t *)cursor);
-         cursor += 4;
-         nbytes += 4;
-         *(int16_t *) cursor = bos(0x0004);
-         cursor += 2;
-         nbytes += 2;
-         }
-      else
-         {
-         *(int32_t *) cursor = boi(0x58005000 | (offsetToLongDispSlot&0xFFF)); // L  Rscrtch,offToLongDispSlot(,GPR5)
-         scratchReg->setRegisterField((uint32_t *)cursor);
-         cursor += 4;
-         nbytes += 4;
-         }
+      TR::Instruction * nextInstr = instr->getNext();
+      TR::Instruction * currInstr = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), instr->getNode(), scratchReg,
+         generateS390MemoryReference(LongDispSlotBaseReg, offsetToLongDispSlot, cg), instr);
+      currInstr->setEstimatedBinaryLength(currInstr->getOpCode().getInstructionLength());
+
+      nbytes += currInstr->getOpCode().getInstructionLength();
+      currInstr->setNext(nextInstr);
       }
 
    return nbytes;
@@ -3499,15 +3262,6 @@ OMR::Z::MemoryReference::doEvaluate(TR::Node * subTree, TR::CodeGenerator * cg)
       self()->setForceEvaluation();
       return false;
       }
-
-   if (subTree->getOpCodeValue() == TR::aload &&
-       cg->isAddressOfStaticSymRefWithLockedReg(subTree->getSymbolReference()))
-      return false;
-
-   if (subTree->getOpCodeValue() == TR::aload &&
-       cg->isAddressOfPrivateStaticSymRefWithLockedReg(subTree->getSymbolReference()))
-      return false;
-
 
    if (subTree->getOpCodeValue() != TR::loadaddr && subTree->getReferenceCount() > 1)
       return true;

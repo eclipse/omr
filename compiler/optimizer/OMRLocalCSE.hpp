@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,18 +22,18 @@
 #ifndef OMR_LOCALCSE_INCL
 #define OMR_LOCALCSE_INCL
 
-#include <map>                         // for std::multimap
-#include <stddef.h>                    // for NULL
-#include <stdint.h>                    // for int32_t, uint32_t
-#include "env/TRMemory.hpp"            // for Allocator, TR_Memory, etc
-#include "cs2/arrayof.h"               // for ArrayOf
-#include "env/TypedAllocator.hpp"      // for TR::typed_allocator
-#include "il/DataTypes.hpp"            // for DataTypes
-#include "il/Node.hpp"                 // for vcount_t, rcount_t
-#include "il/SymbolReference.hpp"      // for SharedSparseBitVector, etc
-#include "infra/Array.hpp"             // for TR_ArrayIterator, TR_Array
-#include "infra/List.hpp"              // for TR_ScratchList
-#include "optimizer/Optimization.hpp"  // for Optimization
+#include <map>
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "cs2/arrayof.h"
+#include "env/TypedAllocator.hpp"
+#include "il/DataTypes.hpp"
+#include "il/Node.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Array.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimization.hpp"
 
 class TR_NodeKillAliasSetInterface;
 namespace TR { class Block; }

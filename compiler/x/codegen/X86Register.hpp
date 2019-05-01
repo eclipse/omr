@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,8 @@
 #ifndef X86REGISTER_INCL
 #define X86REGISTER_INCL
 
-#include "codegen/RealRegister.hpp"       // for RealRegister, etc
-#include "codegen/RegisterConstants.hpp"  // for TR_RegisterKinds::TR_X87
+#include "codegen/RealRegister.hpp"
+#include "codegen/RegisterConstants.hpp"
 
 class TR_X86FPStackRegister;
 namespace TR { class CodeGenerator; }

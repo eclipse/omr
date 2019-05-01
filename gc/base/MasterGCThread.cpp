@@ -28,6 +28,7 @@
 
 #include "CollectorLanguageInterfaceImpl.hpp"
 #include "ConcurrentGMPStats.hpp"
+#include "ConcurrentPhaseStatsBase.hpp"
 #include "ParallelDispatcher.hpp"
 #include "EnvironmentBase.hpp"
 #include "Collector.hpp"
@@ -190,31 +191,34 @@ MM_MasterGCThread::handleConcurrent(MM_EnvironmentBase *env)
 
 	_masterThreadState = STATE_RUNNING_CONCURRENT;
 
-	if (_acquireVMAccessDuringConcurrent) {
-		omrthread_monitor_exit(_collectorControlMutex);
-		env->acquireVMAccess();
-	}
-	if (_collector->isConcurrentWorkAvailable(env)) {
-		MM_ConcurrentPhaseStatsBase *stats = _collector->getConcurrentPhaseStats();
-
-		_collector->preConcurrentInitializeStatsAndReport(env, stats);
-		if (!_acquireVMAccessDuringConcurrent) {
+	do {
+		if (_acquireVMAccessDuringConcurrent) {
 			omrthread_monitor_exit(_collectorControlMutex);
+			env->acquireVMAccess();
 		}
-		uintptr_t bytesConcurrentlyScanned = _collector->masterThreadConcurrentCollect(env);
+		if (_collector->isConcurrentWorkAvailable(env)) {
+			MM_ConcurrentPhaseStatsBase *stats = _collector->getConcurrentPhaseStats();
+			stats->clear();
 
-		if (!_acquireVMAccessDuringConcurrent) {
+			_collector->preConcurrentInitializeStatsAndReport(env, stats);
+			if (!_acquireVMAccessDuringConcurrent) {
+				omrthread_monitor_exit(_collectorControlMutex);
+			}
+			uintptr_t bytesConcurrentlyScanned = _collector->masterThreadConcurrentCollect(env);
+
+			if (!_acquireVMAccessDuringConcurrent) {
+				omrthread_monitor_enter(_collectorControlMutex);
+			}
+
+			_collector->postConcurrentUpdateStatsAndReport(env, stats, bytesConcurrentlyScanned);
+			workDone = true;
+		}
+
+		if (_acquireVMAccessDuringConcurrent) {
+			env->releaseVMAccess();
 			omrthread_monitor_enter(_collectorControlMutex);
 		}
-
-		_collector->postConcurrentUpdateStatsAndReport(env, stats, bytesConcurrentlyScanned);
-		workDone = true;
-	}
-
-	if (_acquireVMAccessDuringConcurrent) {
-		env->releaseVMAccess();
-		omrthread_monitor_enter(_collectorControlMutex);
-	}
+	} while (_collector->getConcurrentPhaseStats()->isTerminationRequestExternal() && _collector->isConcurrentWorkAvailable(env));
 
 	if (STATE_RUNNING_CONCURRENT == _masterThreadState) {
 		_masterThreadState = STATE_WAITING;

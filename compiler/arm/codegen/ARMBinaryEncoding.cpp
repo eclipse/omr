@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <algorithm>                            // for std::find
+#include <algorithm>
 #include "codegen/CodeGenerator.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -28,9 +28,10 @@
 #include "arm/codegen/ARMInstruction.hpp"
 #include "infra/Bit.hpp"
 #ifdef J9_PROJECT_SPECIFIC
-#include "env/CHTable.hpp"                     // for TR_VirtualGuardSite
+#include "env/CHTable.hpp"
 #endif
 #include "env/CompilerEnv.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 void OMR::ARM::Instruction::generateConditionBinaryEncoding(uint8_t *instructionStart)
    {
@@ -69,17 +70,14 @@ uint32_t encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor,
 
 uint32_t encodeHelperBranch(bool isBranchAndLink, TR::SymbolReference *symRef, uint8_t *cursor, TR_ARMConditionCode cc, TR::Node *node, TR::CodeGenerator *cg)
    {
-   int32_t  distance;
-   uint32_t target;
+   intptrj_t target = (intptrj_t)symRef->getMethodAddress();
 
-   target = (uintptr_t)symRef->getMethodAddress();
-   distance = target - (uintptr_t) cursor;
-   if (distance > BRANCH_FORWARD_LIMIT || distance < BRANCH_BACKWARD_LIMIT)
+   if (cg->directCallRequiresTrampoline(target, (intptrj_t)cursor))
       {
-      target = cg->fe()->indexedTrampolineLookup(symRef->getReferenceNumber(), (void *)cursor);
-      TR_ASSERT(((int32_t)target - (int32_t)cursor) <= BRANCH_FORWARD_LIMIT &&
-             ((int32_t)target - (int32_t)cursor) >=  BRANCH_BACKWARD_LIMIT,
-             "CodeCache is more than 32MB.\n");
+      target = TR::CodeCacheManager::instance()->findHelperTrampoline(symRef->getReferenceNumber(), (void *)cursor);
+
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(target, (intptrj_t)cursor),
+                      "Target address is out of range");
       }
 
    cg->addExternalRelocation(
@@ -88,7 +86,7 @@ uint32_t encodeHelperBranch(bool isBranchAndLink, TR::SymbolReference *symRef, u
                                      TR_HelperAddress, cg),
       __FILE__, __LINE__, node);
 
-   return (isBranchAndLink ? 0x0B000000 : 0x0A000000) | encodeBranchDistance((uintptr_t) cursor, target) | (((uint32_t) cc) << 28);
+   return (isBranchAndLink ? 0x0B000000 : 0x0A000000) | encodeBranchDistance((uintptr_t) cursor, (uint32_t)target) | (((uint32_t) cc) << 28);
    }
 
 uint8_t *TR::ARMLabelInstruction::generateBinaryEncoding()
@@ -254,19 +252,13 @@ uint8_t *TR::ARMImmSymInstruction::generateBinaryEncoding()
    uint8_t *cursor           = instructionStart;
    cursor = getOpCode().copyBinaryToBuffer(instructionStart);
    generateConditionBinaryEncoding(instructionStart);
-   int32_t imm = getSourceImmediate();
-   int32_t distance = imm - (intptr_t)cursor;
    TR::LabelSymbol *label;
-   void *trmpln = NULL;
 
    if (getOpCodeValue() == ARMOp_bl)
       {
-      TR::ResolvedMethodSymbol *sym = getSymbolReference()->getSymbol()->getResolvedMethodSymbol();
-      TR_ResolvedMethod *resolvedMethod = (sym==NULL)?NULL:sym->getResolvedMethod();
-
       label = getSymbolReference()->getSymbol()->getLabelSymbol();
 
-      if (comp->getCodeCacheSwitched())
+      if (cg()->hasCodeCacheSwitched())
          {
          TR::SymbolReference *calleeSymRef = NULL;
 
@@ -286,7 +278,9 @@ uint8_t *TR::ARMImmSymInstruction::generateBinaryEncoding()
             }
          }
 
-      if (resolvedMethod != NULL && resolvedMethod->isSameMethod(comp->getCurrentMethod()) && !comp->isDLT())
+      TR::ResolvedMethodSymbol *sym = getSymbolReference()->getSymbol()->getResolvedMethodSymbol();
+
+      if (comp->isRecursiveMethodTarget(sym))
          {
          uint32_t jitTojitStart = (uintptr_t) cg()->getCodeStart();
 
@@ -310,7 +304,9 @@ uint8_t *TR::ARMImmSymInstruction::generateBinaryEncoding()
             }
          else
             {
-            if (distance<=0x01fffffc && distance>=0xfe000000)
+            int32_t imm = getSourceImmediate();
+
+            if (TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange((intptrj_t)imm, (intptrj_t)cursor))
                {
                *(int32_t *)cursor |= encodeBranchDistance((uintptr_t)cursor, (uint32_t) imm);
                }
@@ -338,11 +334,12 @@ uint8_t *TR::ARMImmSymInstruction::generateBinaryEncoding()
                else
                   {
                   // have to use the trampoline as the target and not the label
-                  trmpln = (void *)cg()->fe()->methodTrampolineLookup(comp, getSymbolReference(), (void *)cursor);
-                  distance = (intptr_t) trmpln - (intptr_t)cursor;
-                  TR_ASSERT(distance <= BRANCH_FORWARD_LIMIT && distance >= BRANCH_BACKWARD_LIMIT,
-                         "CodeCache is more than 32MB.\n");
-                  *(int32_t *)cursor |= encodeBranchDistance((uintptr_t)cursor, (uintptr_t) trmpln);
+                  intptrj_t targetAddress = cg()->fe()->methodTrampolineLookup(comp, getSymbolReference(), (void *)cursor);
+
+                  TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(targetAddress, (intptrj_t)cursor),
+                                  "Target address is out of range");
+
+                  *(int32_t *)cursor |= encodeBranchDistance((uintptr_t)cursor, (uintptr_t) targetAddress);
                   }
 #endif
                // no need to add 4 to cursor, it is done below in the
@@ -362,6 +359,7 @@ uint8_t *TR::ARMImmSymInstruction::generateBinaryEncoding()
       // Place holder only: non-ARMOp_bl usage of this instruction doesn't
       // exist at this moment.
       TR_ASSERT(0, "non bl encoding");
+      int32_t distance = getSourceImmediate() - (intptr_t)cursor;
       *(int32_t *)cursor |= distance & 0x03fffffc;
       }
    cursor += 4;

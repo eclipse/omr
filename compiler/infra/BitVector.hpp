@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,12 +22,12 @@
 #ifndef BITVECTOR_INCL
 #define BITVECTOR_INCL
 
-#include <stdint.h>                 // for int32_t, uint32_t, uint64_t
-#include <string.h>                 // for NULL, memset
-#include "env/FilePointerDecl.hpp"  // for FILE
-#include "env/TRMemory.hpp"         // for TR_Memory, etc
-#include "env/defines.h"            // for BITVECTOR_BIT_NUMBERING_MSB
-#include "infra/Assert.hpp"         // for TR_ASSERT
+#include <stdint.h>
+#include <string.h>
+#include "env/FilePointerDecl.hpp"
+#include "env/TRMemory.hpp"
+#include "env/defines.h"
+#include "infra/Assert.hpp"
 
 class TR_BitVector;
 class TR_BitVectorCursor;

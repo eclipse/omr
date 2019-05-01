@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,26 +21,26 @@
 
 #include "control/Recompilation.hpp"
 
-#include <limits.h>                          // for INT_MAX
-#include <stdint.h>                          // for uint16_t, uint32_t, etc
-#include <stdlib.h>                          // for NULL, strtoul
-#include <string.h>                          // for memset
-#include "codegen/CodeGenerator.hpp"         // for CodeGenerator
-#include "codegen/FrontEnd.hpp"              // for TR_FrontEnd, feGetEnv, etc
-#include "compile/Compilation.hpp"           // for Compilation
-#include "compile/CompilationTypes.hpp"      // for TR_Hotness
-#include "compile/ResolvedMethod.hpp"        // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"  // for SymbolReferenceTable
-#include "control/OptimizationPlan.hpp"      // for TR_OptimizationPlan, etc
+#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "control/OptimizationPlan.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"       // for TR::Options, etc
-#include "env/PersistentInfo.hpp"            // for PersistentInfo
-#include "env/TRMemory.hpp"                  // for TR_Link::operator new, etc
-#include "env/jittypes.h"                    // for uintptrj_t
-#include "il/DataTypes.hpp"                  // for etc
-#include "infra/Assert.hpp"                  // for TR_ASSERT
-#include "infra/Link.hpp"                    // for TR_LinkHead
-#include "infra/Timer.hpp"                   // for TR_SingleTimer
+#include "control/Options_inlines.hpp"
+#include "env/PersistentInfo.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Link.hpp"
+#include "infra/Timer.hpp"
 
 class TR_OpaqueMethodBlock;
 namespace TR { class Instruction; }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@
 #include "codegen/CallSnippet.hpp"
 #endif
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/RealRegister.hpp"
@@ -663,8 +664,8 @@ static TR::Register *idivAndIRemHelper(TR::Node *node, bool isDivide, TR::CodeGe
       dr_reg = divisor;
       }
 
-   addDependency(dependencies, dd_reg, TR::RealRegister::gr0, TR_GPR, cg);
-   addDependency(dependencies, dr_reg, TR::RealRegister::gr1, TR_GPR, cg);
+   TR::addDependency(dependencies, dd_reg, TR::RealRegister::gr0, TR_GPR, cg);
+   TR::addDependency(dependencies, dr_reg, TR::RealRegister::gr1, TR_GPR, cg);
 
    TR::SymbolReference *helper = cg->symRefTab()->findOrCreateRuntimeHelper(isDivide ? TR_ARMintDivide : TR_ARMintRemainder, false, false, false);
 
@@ -1001,9 +1002,9 @@ static TR::Register *longRightShiftEvaluator(TR::Node *node, bool isLogical, TR:
          generateTrg1Src1Instruction(cg, ARMOp_mov, node, trgReg->getLowOrder(), srcLowReg);
          generateTrg1Src1Instruction(cg, ARMOp_mov, node, trgReg->getHighOrder(), srcHighReg);
 
-         addDependency(dependencies, trgReg->getLowOrder(), TR::RealRegister::gr0, TR_GPR, cg);
-         addDependency(dependencies, trgReg->getHighOrder(), TR::RealRegister::gr1, TR_GPR, cg);
-         addDependency(dependencies, shiftAmountReg, TR::RealRegister::gr2, TR_GPR, cg);
+         TR::addDependency(dependencies, trgReg->getLowOrder(), TR::RealRegister::gr0, TR_GPR, cg);
+         TR::addDependency(dependencies, trgReg->getHighOrder(), TR::RealRegister::gr1, TR_GPR, cg);
+         TR::addDependency(dependencies, shiftAmountReg, TR::RealRegister::gr2, TR_GPR, cg);
          TR::SymbolReference *longShiftHelper = cg->symRefTab()->findOrCreateRuntimeHelper(isLogical ? TR_ARMlongShiftRightLogical : TR_ARMlongShiftRightArithmetic, false, false, false);
 
          generateImmSymInstruction(cg, ARMOp_bl,
@@ -1115,7 +1116,7 @@ TR::Register *OMR::ARM::TreeEvaluator::lrolEvaluator(TR::Node *node, TR::CodeGen
       }
    else
       {
-      TR_ASSERT(false, "TR::lrol - Not Implemented yet");
+      TR_UNIMPLEMENTED();
       }
 
    node->setRegister(trgReg);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,7 +153,7 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::inflate(MM_EnvironmentBase *env)
 		Assert_MM_true(size == (semiSpaceSize * 2));
 
 		/* Add the spaces as table-backed heap regions */
-		if(NULL == (_highSemiSpaceRegion = getHeapRegionManager()->createAuxiliaryRegionDescriptor(env, subSpaceSurvivor, semiSpaceMiddle, _highAddress))) {
+		if(NULL == (_highSemiSpaceRegion = getHeapRegionManager()->createAuxiliaryRegionDescriptor(env, subSpaceAllocate, semiSpaceMiddle, _highAddress))) {
 			return false;
 		}
 		
@@ -170,7 +170,7 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::inflate(MM_EnvironmentBase *env)
 					semiSpaceMiddle, _highAddress);
 			Assert_MM_inflateInvalidRange();
 		}
-		if(NULL == (_lowSemiSpaceRegion = getHeapRegionManager()->createAuxiliaryRegionDescriptor(env, subSpaceAllocate, _lowAddress, semiSpaceMiddle))) {
+		if(NULL == (_lowSemiSpaceRegion = getHeapRegionManager()->createAuxiliaryRegionDescriptor(env, subSpaceSurvivor, _lowAddress, semiSpaceMiddle))) {
 			return false;
 		}
 
@@ -189,9 +189,9 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::inflate(MM_EnvironmentBase *env)
 		}
 
 		/* Inform the semi spaces that they have been expanded */
-		bool result = subSpaceAllocate->expanded(env, this, _lowSemiSpaceRegion->getSize(), _lowSemiSpaceRegion->getLowAddress(), _lowSemiSpaceRegion->getHighAddress(), false);
+		bool result = subSpaceAllocate->expanded(env, this, _highSemiSpaceRegion->getSize(), _highSemiSpaceRegion->getLowAddress(), _highSemiSpaceRegion->getHighAddress(), false);
 		subSpaceAllocate->heapReconfigured(env);
-		result = result && subSpaceSurvivor->expanded(env, this, _highSemiSpaceRegion->getSize(), _highSemiSpaceRegion->getLowAddress(), _highSemiSpaceRegion->getHighAddress(), false);
+		result = result && subSpaceSurvivor->expanded(env, this, _lowSemiSpaceRegion->getSize(), _lowSemiSpaceRegion->getLowAddress(), _lowSemiSpaceRegion->getHighAddress(), false);
 		subSpaceSurvivor->heapReconfigured(env);
 		return result;
 	}
@@ -547,6 +547,19 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::contract(MM_EnvironmentBase *env, uin
 
 		/* Check if the move location actually does in fact move any valid heap */
 		if(allocateSegmentBase > allocateLeadingFreeTop) {
+			if (extensions->isConcurrentScavengerEnabled()) {
+				/* Fixup logic does not account for possible object growth, which would be required for objects
+				 * that have been allocated and hashed during the last concurrent phase (hence, in hybrid Survivor-Allocate
+				 * that is subject to movement).
+				 */
+				if(debug) {
+					omrtty_printf("\tHeap movement (%p %p) to (%p %p) required, but not allowed with CS enabled.\n",
+						allocateLeadingFreeTop, allocateTrailingFreeBase,
+						allocateSegmentBase, ((uintptr_t)allocateSegmentBase) + heapSizeToMove);
+				}
+				return 0;
+			}
+
 			/* Adjust all fields that point to the refered to region */
 			struct Modron_psavmssMoveData psavmssMoveData;
 			psavmssMoveData.env = env;
@@ -716,6 +729,19 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::contract(MM_EnvironmentBase *env, uin
 
 		/* Check if the move location actually does in fact move any valid heap */
 		if(allocateSegmentBase > allocateLeadingFreeTop) {
+			if (extensions->isConcurrentScavengerEnabled()) {
+				/* Fixup logic does not account for possible object growth, which would be required for objects
+				 * that have been allocated and hashed during the last concurrent phase (hence, in hybrid Survivor-Allocate
+				 * that is subject to movement).
+				 */
+				if(debug) {
+					omrtty_printf("\tHeap movement (%p %p) to (%p %p) required, but not allowed with CS enabled.\n",
+						allocateLeadingFreeTop, allocateTrailingFreeBase,
+						allocateSegmentBase, ((uintptr_t)allocateSegmentBase) + heapSizeToMove);
+				}
+				return 0;
+			}
+
 			/* Adjust all fields that point to the refered to region */
 			struct Modron_psavmssMoveData psavmssMoveData;
 			psavmssMoveData.env = env;

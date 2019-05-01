@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,33 +19,33 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                                // for NULL
-#include <stdint.h>                                // for uint8_t, uint32_t, etc
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                    // for TR_FrontEnd
-#include "codegen/Instruction.hpp"                 // for Instruction
-#include "codegen/MemoryReference.hpp"             // for MemoryReference
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
-#include "codegen/Register.hpp"                    // for Register
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/ScratchRegisterManager.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
-#include "compile/Compilation.hpp"                 // for Compilation, isSMP
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                              // for POINTER_PRINTF_FORMAT
+#include "env/IO.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                          // for intptrj_t
-#include "il/Node.hpp"                             // for Node
-#include "il/Symbol.hpp"                           // for Symbol
-#include "il/SymbolReference.hpp"                  // for SymbolReference
-#include "infra/Assert.hpp"                        // for TR_ASSERT
-#include "infra/Flags.hpp"                         // for flags16_t
+#include "env/jittypes.h"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
 #include "runtime/Runtime.hpp"
-#include "x/codegen/X86Instruction.hpp"            // for etc
-#include "x/codegen/X86Ops.hpp"                    // for ::MOV8RegImm64, etc
+#include "x/codegen/X86Instruction.hpp"
+#include "x/codegen/X86Ops.hpp"
 
 class TR_OpaqueClassBlock;
 namespace TR { class Machine; }
@@ -142,26 +142,20 @@ void OMR::X86::AMD64::MemoryReference::finishInitialization(
    // Figure out whether we need to allocate a register for the address
    //
    bool mightNeedAddressRegister;
-   if (!self()->getBaseRegister() &&
-       !self()->getIndexRegister() &&
-       (cg->needRelocationsForStatics() ||
-        cg->needClassAndMethodPointerRelocations() ||
-        cg->needRelocationsForBodyInfoData() ||
-        cg->needRelocationsForPersistentInfoData()))
-      {
-      mightNeedAddressRegister = true;
-      }
-   else if (sr.getSymbol() != NULL && sr.isUnresolved())
-      {
-      // Once resolved, the address could be anything, so be conservative.
-      //
-      mightNeedAddressRegister = true;
-      }
-   else if (self()->getDataSnippet())
+   if (self()->getDataSnippet())
       {
       // Assume snippets are in RIP range
       //
       mightNeedAddressRegister = false;
+      }
+   else if (!self()->getBaseRegister()  &&
+            !self()->getIndexRegister() &&
+            (cg->needRelocationsForStatics()            ||
+             cg->needClassAndMethodPointerRelocations() ||
+             cg->needRelocationsForBodyInfoData()       ||
+             cg->needRelocationsForPersistentInfoData()))
+      {
+      mightNeedAddressRegister = true;
       }
    else if (self()->getBaseRegister() == cg->getFrameRegister())
       {
@@ -171,27 +165,24 @@ void OMR::X86::AMD64::MemoryReference::finishInitialization(
       //
       mightNeedAddressRegister = false;
       }
+   else if (sr.getSymbol() != NULL && sr.isUnresolved())
+      {
+      // Once resolved, the address could be anything, so be conservative.
+      //
+      mightNeedAddressRegister = true;
+      }
    else if (comp->getOption(TR_EnableHCR) && sr.getSymbol() && sr.getSymbol()->isClassObject())
       {
       // Can't do any displacement-based tests because the displacement can change
       //
       mightNeedAddressRegister = true;
       }
-   else if (self()->getBaseRegister() == NULL)
-      {
-      // It's either [offset] or [scale*index+offset].
-      //
-      mightNeedAddressRegister = !IS_32BIT_SIGNED(self()->getDisplacement());
-      }
-   else if (self()->getIndexRegister() == NULL)
-      {
-      // It's [base+offset].
-      //
-      mightNeedAddressRegister = !IS_32BIT_SIGNED(self()->getDisplacement());
-      }
    else
       {
-      // It's [base+index+offset]
+      // [offset]
+      // [scale*index + offset]
+      // [base + offset]
+      // [base+index+offset]
       // TODO: if the offset is just barely over 32 bits, maybe we could
       // get away with this, where a+b = offset64:
       //

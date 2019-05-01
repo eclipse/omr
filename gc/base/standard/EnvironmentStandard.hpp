@@ -48,7 +48,6 @@ class MM_EnvironmentStandard : public MM_EnvironmentBase
 /* Data Section */
 public:
 	MM_CopyScanCacheStandard *_survivorCopyScanCache; /**< the current copy cache for flipping */
-	MM_CopyScanCacheStandard *_scanCache; /**< the current scan cache */
 	MM_CopyScanCacheStandard *_deferredScanCache; /**< a copy cache about to be pushed to scan queue, but before that may be merged with some other caches that collectively form contiguous memory */
 	MM_CopyScanCacheStandard *_deferredCopyCache; /**< a copy cache about to be pushed to scan queue, but before that may be merged with some other caches that collectively form contiguous memory */
 	MM_CopyScanCacheStandard *_tenureCopyScanCache; /**< the current copy cache for tenuring */
@@ -85,7 +84,6 @@ public:
 	MM_EnvironmentStandard(OMR_VMThread *omrVMThread) :
 		MM_EnvironmentBase(omrVMThread)
 		,_survivorCopyScanCache(NULL)
-		,_scanCache(NULL)
 		,_deferredScanCache(NULL)
 		,_deferredCopyCache(NULL)
 		,_tenureCopyScanCache(NULL)

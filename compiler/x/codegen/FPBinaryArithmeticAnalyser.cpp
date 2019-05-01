@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,26 +21,26 @@
 
 #include "x/codegen/FPBinaryArithmeticAnalyser.hpp"
 
-#include <stddef.h>                                  // for NULL
-#include <stdint.h>                                  // for uint8_t
-#include "codegen/CodeGenerator.hpp"                 // for CodeGenerator
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"                      // for feGetEnv
+#include "codegen/FrontEnd.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/Register.hpp"                      // for Register
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/TreeEvaluator.hpp"                 // for TreeEvaluator
-#include "compile/Compilation.hpp"                   // for Compilation, etc
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "il/ILOpCodes.hpp"                          // for ILOpCodes::dadd, etc
-#include "il/ILOps.hpp"                              // for ILOpCode, etc
-#include "il/Node.hpp"                               // for Node
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                      // for ::BADIA32Op, etc
+#include "x/codegen/X86Ops.hpp"
 
 uint8_t
 TR_X86FPBinaryArithmeticAnalyser::getIA32FPOpPackage(TR::Node *node)

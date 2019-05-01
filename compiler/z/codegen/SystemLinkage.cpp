@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,50 +22,51 @@
 // See also S390Linkage.cpp which contains more S390 Linkage
 // implementations (primarily Private Linkage and base class).
 
-#include <algorithm>                                // for std::max
-#include <stddef.h>                                 // for NULL, size_t
-#include <stdint.h>                                 // for int32_t, etc
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
+#include <algorithm>
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"                     // for TR_FrontEnd
-#include "codegen/InstOpCode.hpp"                   // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                  // for Instruction
-#include "codegen/Linkage.hpp"                      // for REGNUM, etc
-#include "codegen/Machine.hpp"                      // for Machine, etc
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"                 // for RealRegister, etc
-#include "codegen/Register.hpp"                     // for Register
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterPair.hpp"                 // for RegisterPair
+#include "codegen/RegisterPair.hpp"
 #include "codegen/Snippet.hpp"
-#include "codegen/SystemLinkage.hpp"                // for SystemLinkage
+#include "codegen/SystemLinkage.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/Compilation.hpp"                  // for Compilation
+#include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/TRMemory.hpp"                         // for Allocator, etc
-#include "env/jittypes.h"                           // for intptrj_t, uintptrj_t
-#include "il/DataTypes.hpp"                         // for DataTypes, etc
-#include "il/ILOpCodes.hpp"                         // for ILOpCodes::acall, etc
-#include "il/ILOps.hpp"                             // for ILOpCode
-#include "il/Node.hpp"                              // for Node
-#include "il/Node_inlines.hpp"                      // for Node::getChild, etc
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "il/TreeTop.hpp"                           // for TreeTop
-#include "il/TreeTop_inlines.hpp"                   // for TreeTop::getNode
-#include "il/symbol/AutomaticSymbol.hpp"            // for AutomaticSymbol
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
 #include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"               // for MethodSymbol
-#include "il/symbol/ParameterSymbol.hpp"            // for ParameterSymbol
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Array.hpp"                          // for TR_Array
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/List.hpp"                           // for ListIterator, etc
-#include "ras/Debug.hpp"                            // for TR_DebugBase
-#include "ras/Delimiter.hpp"                        // for Delimiter
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
+#include "ras/Delimiter.hpp"
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
@@ -97,29 +98,6 @@ TR::S390SystemLinkage::initS390RealRegisterLinkage()
    spReal->setAssignedRegister(spReal);
    spReal->setHasBeenAssignedInMethod(true);
 
-   if (cg()->supportsHighWordFacility() && !comp()->getOption(TR_DisableHighWordRA) && TR::Compiler->target.is64Bit())
-      {
-      TR::RealRegister * tempHigh = toRealRegister(spReal)->getHighWordRegister();
-      tempHigh->setState(TR::RealRegister::Locked);
-      tempHigh->setAssignedRegister(tempHigh);
-      tempHigh->setHasBeenAssignedInMethod(true);
-      }
-
-#if 0
-   TR::RealRegister * gpr0Real  = machine()->getS390RealRegister(TR::RealRegister::GPR0);
-   gpr0Real->setState(TR::RealRegister::Locked);
-   gpr0Real->setAssignedRegister(gpr0Real);
-   gpr0Real->setHasBeenAssignedInMethod(true);
-#endif
-
-#if 0
-// May lock this if GOT needed
-   TR::RealRegister * gpr12Real  = cg()->machine()->getS390RealRegister(TR::RealRegister::GPR12);
-   gpr12Real->setState(TR::RealRegister::Locked);
-   gpr12Real->setAssignedRegister(gpr12Real);
-   gpr12Real->setHasBeenAssignedInMethod(true);
-#endif
-
    // set register weight
    for (icount = TR::RealRegister::FirstGPR; icount >= TR::RealRegister::LastAssignableGPR; icount++)
       {
@@ -136,7 +114,7 @@ TR::S390SystemLinkage::initS390RealRegisterLinkage()
          {
          weight = icount;
          }
-      cg()->machine()->getS390RealRegister((TR::RealRegister::RegNum) icount)->setWeight(weight);
+      cg()->machine()->getRealRegister((TR::RealRegister::RegNum) icount)->setWeight(weight);
       }
    }
 
@@ -218,58 +196,9 @@ TR::S390SystemLinkage::getputFPRs(TR::InstOpCode::Mnemonic opcode, TR::Instructi
          offset = beginSaveOffset + (j*fprSize);
          rsa = generateS390MemoryReference(spReg, offset, cg());
          cursor = generateRXInstruction(cg(), opcode,
-               node, getS390RealRegister(REGNUM(i+TR::RealRegister::FirstFPR)), rsa, cursor);
+               node, getRealRegister(REGNUM(i+TR::RealRegister::FirstFPR)), rsa, cursor);
          j++;
          }
-      }
-
-   return cursor;
-   }
-
-TR::Instruction *
-TR::S390SystemLinkage::getputHPRs(TR::InstOpCode::Mnemonic opcode, TR::Instruction * cursor, TR::Node *node, TR::RealRegister *spReg)
-   {
-   int16_t HPRSaveMask;
-   int32_t offset, firstSaved, lastSaved, beginSaveOffset;
-   TR::MemoryReference *rsa;
-   int32_t i, j, hprSize;
-
-   if (spReg == NULL)
-      {
-      spReg = getNormalStackPointerRealRegister();
-      }
-
-   HPRSaveMask = getHPRSaveMask();
-   beginSaveOffset = getHPRSaveAreaEndOffset(); // following suit, see other getput functions, map stack
-
-   lastSaved = TR::Linkage::getLastMaskedBit(HPRSaveMask);
-   firstSaved = TR::Linkage::getFirstMaskedBit(HPRSaveMask);
-   hprSize = cg()->machine()->getHPRSize();
-
-   j = 0;
-   uint8_t k = firstSaved; // dispel warning
-   bool previousWasOne = false;
-   offset = beginSaveOffset; // dispel warning
-   for(i = firstSaved; i <= lastSaved; ++i)
-      {
-      if(HPRSaveMask & (1 << i))
-         {
-         if(!previousWasOne)
-            {
-            offset = beginSaveOffset + (j*hprSize);
-            k = i;
-            }
-         j++;
-         }
-      if(previousWasOne && (i == lastSaved || !(HPRSaveMask & (1 << i))))
-         {
-         rsa = generateS390MemoryReference(spReg, offset, cg());
-         int shift = (i == lastSaved) && (HPRSaveMask & (1 << i)) ? 0 : 1;
-         cursor = generateRSInstruction(cg(), opcode,
-               node, getS390RealRegister(REGNUM(k+TR::RealRegister::FirstGPR)),
-               getS390RealRegister(REGNUM(i-shift+TR::RealRegister::FirstGPR)), rsa, cursor);
-         }
-      previousWasOne = HPRSaveMask & (1 << i);
       }
 
    return cursor;
@@ -320,7 +249,7 @@ TR::S390SystemLinkage::addImmediateToRealRegister(TR::RealRegister *targetReg, i
       }
 
    if (!checkTempNeeded)
-      cursor = generateRXYInstruction(cg(), TR::InstOpCode::LAY, node, targetReg, generateS390MemoryReference(targetReg,value,cg()), cursor);
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::LAY, node, targetReg, generateS390MemoryReference(targetReg,value,cg()), cursor);
 
    return cursor;
    }
@@ -412,7 +341,6 @@ TR::S390zOSSystemLinkage::S390zOSSystemLinkage(TR::CodeGenerator * codeGen)
    setAlternateStackPointerRegister  (TR::RealRegister::GPR9 );
    setEntryPointRegister    (TR::RealRegister::GPR6);
    setLitPoolRegister       (TR::RealRegister::GPR8 );
-   setExtCodeBaseRegister   (TR::RealRegister::GPR7  );
    setReturnAddressRegister (TR::RealRegister::GPR7 );
 
    setEnvironmentPointerRegister (TR::RealRegister::GPR5  );
@@ -835,7 +763,6 @@ TR::S390zLinuxSystemLinkage::S390zLinuxSystemLinkage(TR::CodeGenerator * codeGen
    setAlternateStackPointerRegister  (TR::RealRegister::GPR11 );
    setEntryPointRegister    (TR::RealRegister::GPR14 );
    setLitPoolRegister       (TR::RealRegister::GPR13 );
-   setExtCodeBaseRegister   (TR::RealRegister::GPR7  );
    setReturnAddressRegister (TR::RealRegister::GPR14 );
 
    setGOTPointerRegister   (TR::RealRegister::GPR12  );
@@ -897,8 +824,8 @@ TR::S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::R
       TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
       TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint)
    {
- #if defined(PYTHON) || defined(OMR_RUBY) || defined(JITTEST)
-   TR_ASSERT(0,"Python/Ruby/Test should have their own front-end customization.");
+ #if defined(JITTEST)
+   TR_ASSERT(0,"Test compiler should have its own front-end customization.");
  #endif
 
    }
@@ -950,7 +877,12 @@ TR::S390zOSSystemLinkage::callNativeFunction(TR::Node * callNode, TR::RegisterDe
       case TR::lcall:
       case TR::lucall:
          {
-         if (codeGen->use64BitRegsOn32Bit())
+         if (TR::Compiler->target.is64Bit())
+            {
+            retReg = deps->searchPostConditionRegister(getIntegerReturnRegister());
+            returnRegister = deps->searchPostConditionRegister(getIntegerReturnRegister());
+            }
+         else
             {
             TR::Instruction *cursor = NULL;
             lowReg = deps->searchPostConditionRegister(getLongLowReturnRegister());
@@ -962,19 +894,6 @@ TR::S390zOSSystemLinkage::callNativeFunction(TR::Node * callNode, TR::RegisterDe
 
             codeGen->stopUsingRegister(lowReg);
             retReg = highReg;
-            returnRegister = retReg;
-            }
-         else if (TR::Compiler->target.is64Bit())
-            {
-            retReg = deps->searchPostConditionRegister(getIntegerReturnRegister());
-            returnRegister = deps->searchPostConditionRegister(getIntegerReturnRegister());
-            }
-         else
-            {
-            lowReg = deps->searchPostConditionRegister(getLongLowReturnRegister());
-            highReg = deps->searchPostConditionRegister(getLongHighReturnRegister());
-
-            retReg = codeGen->allocateConsecutiveRegisterPair(lowReg, highReg);
             returnRegister = retReg;
             }
          }
@@ -1037,9 +956,9 @@ TR::S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR
    TR::Register * systemReturnAddressRegister =
       deps->searchPostConditionRegister(getReturnAddressRegister());
 
-   //omr todo: this should be placed in Test/Python/Ruby
+   //omr todo: this should be placed in the Test compiler
    //zLinux SystemLinkage
-#if defined(PYTHON) || defined(OMR_RUBY) || defined(JITTEST)
+#if defined(JITTEST)
       {
 
       if (callNode->getOpCode().isIndirect())
@@ -1097,28 +1016,7 @@ TR::S390zLinuxSystemLinkage::callNativeFunction(TR::Node * callNode,
       case TR::lucall:
       case TR::lucalli:
          {
-         if (cg()->use64BitRegsOn32Bit())
-            {
-            TR::Instruction *cursor = NULL;
-            lowReg = deps->searchPostConditionRegister(getLongLowReturnRegister());
-            highReg = deps->searchPostConditionRegister(getLongHighReturnRegister());
-
-            generateRSInstruction(cg(), TR::InstOpCode::SLLG, callNode, highReg, highReg, 32);
-            cursor =
-               generateRRInstruction(cg(), TR::InstOpCode::LR, callNode, highReg, lowReg);
-
-/*
-            TR::RegisterDependencyConditions * deps =
-               new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg());
-            deps->addPostCondition(lowReg, getLongLowReturnRegister());
-            deps->addPostCondition(highReg, getLongHighReturnRegister());
-            cursor->setDependencyConditions(deps);
-*/
-
-            cg()->stopUsingRegister(lowReg);
-            returnRegister = highReg;
-            }
-         else if (TR::Compiler->target.is64Bit())
+         if (TR::Compiler->target.is64Bit())
             {
             returnRegister = deps->searchPostConditionRegister(getIntegerReturnRegister());
             }
@@ -1126,7 +1024,12 @@ TR::S390zLinuxSystemLinkage::callNativeFunction(TR::Node * callNode,
             {
             lowReg = deps->searchPostConditionRegister(getLongLowReturnRegister());
             highReg = deps->searchPostConditionRegister(getLongHighReturnRegister());
-            returnRegister = cg()->allocateConsecutiveRegisterPair(lowReg, highReg);
+
+            generateRSInstruction(cg(), TR::InstOpCode::SLLG, callNode, highReg, highReg, 32);
+            generateRRInstruction(cg(), TR::InstOpCode::LR, callNode, highReg, lowReg);
+
+            cg()->stopUsingRegister(lowReg);
+            returnRegister = highReg;
             }
          }
          break;
@@ -1436,7 +1339,7 @@ TR::S390SystemLinkage::mapStack(TR::ResolvedMethodSymbol * method, uint32_t stac
       int16_t FPRSaveMask = 0;
       for (i = TR::RealRegister::FirstFPR; i <= TR::RealRegister::LastFPR; ++i)
          {
-         if (getPreserved(REGNUM(i)) && ((getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod()))
+         if (getPreserved(REGNUM(i)) && ((getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod()))
             {
             FPRSaveMask |= 1 << (i - TR::RealRegister::FirstFPR);
             stackIndex -= cg()->machine()->getFPRSize();
@@ -1453,26 +1356,19 @@ TR::S390SystemLinkage::mapStack(TR::ResolvedMethodSymbol * method, uint32_t stac
       setFPRSaveAreaEndOffset(stackIndex);
       }
 
-   //  Map slot for Long Disp
-   if ( !comp()->getOption(TR_DisableLongDispStackSlot) )
+   // Map slot for long displacement
+   if (TR::Compiler->target.isLinux())
       {
-      if(TR::Compiler->target.isLinux())
-         {
-         //zLinux has a special reserved slot in the linkage convention
-         setOffsetToLongDispSlot(TR::Compiler->target.is64Bit() ? 8 : 4);
-         }
-      else
-         {
-         //setOffsetToLongDispSlot(stackIndex -= cg()->sizeOfJavaPointer());
-         setOffsetToLongDispSlot(stackIndex -= 16);
-         }
-      if (comp()->getOption(TR_TraceCG))
-         traceMsg(comp(), "\n\nOffsetToLongDispSlot = %d\n", getOffsetToLongDispSlot());
+      // Linux on Z has a special reserved slot in the linkage convention
+      setOffsetToLongDispSlot(TR::Compiler->target.is64Bit() ? 8 : 4);
       }
    else
       {
-      setOffsetToLongDispSlot(0);
+      setOffsetToLongDispSlot(stackIndex -= 16);
       }
+
+   if (comp()->getOption(TR_TraceCG))
+      traceMsg(comp(), "\n\nOffsetToLongDispSlot = %d\n", getOffsetToLongDispSlot());
 
    if (isParmBlockRegister()) // OS Type 1 linkage
        {
@@ -1543,7 +1439,7 @@ TR::S390SystemLinkage::saveGPRsInPrologue2(TR::Instruction * cursor)
             firstReg = static_cast<TR::RealRegister::RegNum>(i);
             }
 
-         if ((getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
+         if ((getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
             {
             traceMsg(comp(), "\t It is Assigned. Putting in to GPRSaveMask\n");
             GPRSaveMask |= 1 << (i - TR::RealRegister::FirstGPR);
@@ -1551,7 +1447,7 @@ TR::S390SystemLinkage::saveGPRsInPrologue2(TR::Instruction * cursor)
             lastReg = static_cast<TR::RealRegister::RegNum>(i);
             }
 
-         if ((getS390RealRegister(REGNUM(i)))->getModified())
+         if ((getRealRegister(REGNUM(i)))->getModified())
             {
             traceMsg(comp(), "\tIt is also Modified\n");
             }
@@ -1568,29 +1464,29 @@ TR::S390SystemLinkage::saveGPRsInPrologue2(TR::Instruction * cursor)
    TR::MemoryReference *retAddrMemRef = generateS390MemoryReference(spReg, offset, cg());
 
    if (lastReg - firstReg == 0)
-      cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), firstNode, getS390RealRegister(REGNUM(firstReg )), retAddrMemRef, cursor);
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), firstNode, getRealRegister(REGNUM(firstReg )), retAddrMemRef, cursor);
    else if (lastReg > firstReg)
-      cursor = generateRSInstruction(cg(),  TR::InstOpCode::getStoreMultipleOpCode(), firstNode, getS390RealRegister(REGNUM(firstReg)),  getS390RealRegister(REGNUM(lastReg)), retAddrMemRef, cursor);
+      cursor = generateRSInstruction(cg(),  TR::InstOpCode::getStoreMultipleOpCode(), firstNode, getRealRegister(REGNUM(firstReg)),  getRealRegister(REGNUM(lastReg)), retAddrMemRef, cursor);
 
 
    //r14 is a special case.  It is the return value register.  Since we will have to save/restore it often, we will try to reduce the range above by just emiting its own save/restore
    // should also experiment with changing preferred ordering in pickregister.
    traceMsg(comp(), "Considering Register %d:\n",i- TR::RealRegister::FirstGPR);
 
-   if(getPreserved(REGNUM(i)) && (getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
+   if(getPreserved(REGNUM(i)) && (getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
       {
       traceMsg(comp(), "\t It is Assigned. Putting in to GPRSaveMask\n");
       GPRSaveMask |= 1 << (i - TR::RealRegister::FirstGPR);
       offset =  getRegisterSaveOffset(REGNUM(i));
       TR::MemoryReference *retAddrMemRef = generateS390MemoryReference(spReg, offset, cg());
-      cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), firstNode, getS390RealRegister(REGNUM(i)), retAddrMemRef, cursor);
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), firstNode, getRealRegister(REGNUM(i)), retAddrMemRef, cursor);
       }
 
    //r15 (stack pointer) might need to be put in to the register mask as well.  Other code will deal with how we save/restore it.
 
    ++i;
    traceMsg(comp(), "Considering Register %d:\n",i- TR::RealRegister::FirstGPR);
-   if(getPreserved(REGNUM(i)) && (getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
+   if(getPreserved(REGNUM(i)) && (getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
       {
       traceMsg(comp(), "\t It is Assigned. Putting in to GPRSaveMask\n");
       GPRSaveMask |= 1 << (i - TR::RealRegister::FirstGPR);
@@ -1628,7 +1524,7 @@ TR::S390SystemLinkage::saveGPRsInPrologue(TR::Instruction * cursor)
             firstReg = static_cast<TR::RealRegister::RegNum>(i);
             }
 
-         if ((getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
+         if ((getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
             {
             if (comp()->getOption(TR_TraceCG))
                traceMsg(comp(), "\t It is Assigned. Putting in to GPRSaveMask\n");
@@ -1636,7 +1532,7 @@ TR::S390SystemLinkage::saveGPRsInPrologue(TR::Instruction * cursor)
             findStartReg = false;
             }
 
-         if (!findStartReg && ( !(getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod() || (i == TR::RealRegister::LastGPR && firstReg != TR::RealRegister::LastGPR)) )
+         if (!findStartReg && ( !(getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod() || (i == TR::RealRegister::LastGPR && firstReg != TR::RealRegister::LastGPR)) )
             {
             // LastGPR is the stack pointer on zLinux which always be saved and restored
             if (i == TR::RealRegister::LastGPR && !getIsLeafRoutine())
@@ -1656,9 +1552,9 @@ TR::S390SystemLinkage::saveGPRsInPrologue(TR::Instruction * cursor)
             TR::MemoryReference *retAddrMemRef = generateS390MemoryReference(spReg, offset, cg());
 
             if (lastReg - firstReg == 0)
-               cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), firstNode, getS390RealRegister(REGNUM(firstReg)), retAddrMemRef, cursor);
+               cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), firstNode, getRealRegister(REGNUM(firstReg)), retAddrMemRef, cursor);
             else
-               cursor = generateRSInstruction(cg(),  TR::InstOpCode::getStoreMultipleOpCode(), firstNode, getS390RealRegister(REGNUM(firstReg)),  getS390RealRegister(REGNUM(lastReg)), retAddrMemRef, cursor);
+               cursor = generateRSInstruction(cg(),  TR::InstOpCode::getStoreMultipleOpCode(), firstNode, getRealRegister(REGNUM(firstReg)),  getRealRegister(REGNUM(lastReg)), retAddrMemRef, cursor);
 
 
             findStartReg = true;
@@ -1675,7 +1571,7 @@ TR::S390SystemLinkage::saveGPRsInPrologue(TR::Instruction * cursor)
        lastReg = static_cast<TR::RealRegister::RegNum>(TR::RealRegister::LastGPR);
        offset =  getRegisterSaveOffset(REGNUM(lastReg));
        TR::MemoryReference *retAddrMemRef = generateS390MemoryReference(spReg, offset, cg());
-       cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), firstNode, getS390RealRegister(REGNUM(lastReg)), retAddrMemRef, cursor);
+       cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), firstNode, getRealRegister(REGNUM(lastReg)), retAddrMemRef, cursor);
       }
 
    setGPRSaveMask(GPRSaveMask);
@@ -1722,53 +1618,12 @@ TR::S390zLinuxSystemLinkage::checkLeafRoutine(int32_t stackFrameSize, TR::Instru
    // c) ensure stack pointer isn't used.
    TR::RealRegister * spReg = getStackPointerRealRegister();
 
-   if(spReg->isUsedInMemRef() || getHPRSaveMask())       //don't need to check gprmask or hpr mask as these are saved in caller stack.
+   if (spReg->isUsedInMemRef())       //don't need to check gprmask as these are saved in caller stack.
       {
       if(comp()->getOption(TR_TraceCG))
-         traceMsg(comp(), "LeafRoutine: stack pointer isUsedInMemRef = %d or hprsavemask = %d is set to 1\n",spReg->isUsedInMemRef(),getHPRSaveMask());
+         traceMsg(comp(), "LeafRoutine: stack pointer isUsedInMemRef = %d is set to 1\n",spReg->isUsedInMemRef());
 
       return ft;
-      }
-
-
-   // d) no calls
-
-
-   // For no calls we check if method contains possible branch instruction
-   // and for small sized methods - so some leafs may skip by
-   //
-
-   #define ZLINUX_SYSTEMLINK_LEAF_INSTRUCTION_CHECK_THRESHOLD 150
-   TR::Instruction *cursor = comp()->cg()->getFirstInstruction();
-   int32_t numToCheck = ZLINUX_SYSTEMLINK_LEAF_INSTRUCTION_CHECK_THRESHOLD;
-   bool regs[TR::RealRegister::NumRegisters] = { };
-
-
-
-   bool hasCalls = findPossibleCallInstruction(cursor, numToCheck,callInstruction,regs,TR::RealRegister::NumRegisters);
-
-
-   if (!hasCalls && cursor == NULL)
-      {
-      if(comp()->getOption(TR_TraceCG))
-         traceMsg(comp(), "callInstruction = %p cursor = %p\n",*callInstruction,cursor);
-
-      if (callInstruction && *callInstruction && checkPreservedRegisterUsage(regs,TR::RealRegister::NumRegisters))
-         {
-         ft = noStackForwardingFrame;
-         }
-      else if (callInstruction && *callInstruction) // register usage doesn't allow a framewithout a stack.
-         {
-         ft = standardFrame;
-         }
-      else if (checkPreservedRegisterUsage(regs,TR::RealRegister::NumRegisters))
-         {
-         ft = noStackLeafFrame;
-         }
-      else
-         {
-         ft = StackLeafFrame;
-         }
       }
 
    return ft;
@@ -1784,11 +1639,11 @@ bool OMR::Z::Linkage::checkPreservedRegisterUsage(bool *regs, int32_t regsSize)
 
    for( i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR-2; ++i )      //special case for r14, the return value
       {
-      //TR_ASSERT(regs[i] == (getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod(), "Mismatch between register assigned information!!\n");
+      //TR_ASSERT(regs[i] == (getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod(), "Mismatch between register assigned information!!\n");
 
-      //traceMsg(comp(), "regs[%d] = %d getHasBeenAssignedInMethod = %d\n",i,regs[i],(getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod());
+      //traceMsg(comp(), "regs[%d] = %d getHasBeenAssignedInMethod = %d\n",i,regs[i],(getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod());
 
-      if (self()->getPreserved(REGNUM(i)) && (self()->getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
+      if (self()->getPreserved(REGNUM(i)) && (self()->getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
          {
          if(self()->comp()->getOption(TR_TraceCG))
             traceMsg(self()->comp(), "\t%d",i-TR::RealRegister::FirstGPR);
@@ -1889,8 +1744,8 @@ void TR::S390SystemLinkage::createPrologue(TR::Instruction * cursor)
 
    int16_t GPRSaveMask = getGPRSaveMask();
 
-#if defined(PYTHON) || defined(OMR_RUBY) || defined(JITTEST)
-   // Literal Pool for Ruby and Python and test
+#if defined(JITTEST)
+   // Literal Pool for Test compiler
    firstSnippet = cg()->getFirstSnippet();
    if ( cg()->isLiteralPoolOnDemandOn() != true && firstSnippet != NULL )
       cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, firstNode, lpReg, firstSnippet, cursor, cg());
@@ -1902,14 +1757,14 @@ void TR::S390SystemLinkage::createPrologue(TR::Instruction * cursor)
       // Check for large stack
       bool largeStack = (stackFrameSize < MIN_IMMEDIATE_VAL || stackFrameSize > MAX_IMMEDIATE_VAL);
 
-      TR::RealRegister * tempReg = getS390RealRegister(TR::RealRegister::GPR0);
-      TR::RealRegister * backChainReg = getS390RealRegister(TR::RealRegister::GPR1);
+      TR::RealRegister * tempReg = getRealRegister(TR::RealRegister::GPR0);
+      TR::RealRegister * backChainReg = getRealRegister(TR::RealRegister::GPR1);
 
 
       if (!largeStack)
          {
          // Adjust stack pointer with LA (reduce AGI delay)
-         cursor = generateRXYInstruction(cg(), TR::InstOpCode::LAY, firstNode, spReg, generateS390MemoryReference(spReg,(stackFrameSize) * -1, cg()),cursor);
+         cursor = generateRXInstruction(cg(), TR::InstOpCode::LAY, firstNode, spReg, generateS390MemoryReference(spReg,(stackFrameSize) * -1, cg()),cursor);
          }
       else
          {
@@ -1950,7 +1805,7 @@ void TR::S390SystemLinkage::createPrologue(TR::Instruction * cursor)
          retAddrMemRef = generateS390MemoryReference(spReg, offset, cg());
          offset += cg()->machine()->getFPRSize();
          cursor = generateRXInstruction(cg(), TR::InstOpCode::STD,
-               firstNode, getS390RealRegister(REGNUM(i+TR::RealRegister::FirstFPR)), retAddrMemRef, cursor);
+               firstNode, getRealRegister(REGNUM(i+TR::RealRegister::FirstFPR)), retAddrMemRef, cursor);
          }
       }
 
@@ -1983,7 +1838,7 @@ TR::S390SystemLinkage::restoreGPRsInEpilogue2(TR::Instruction *cursor)
          if (findStartReg)
             firstReg = static_cast<TR::RealRegister::RegNum>(i);
 
-         if ((getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
+         if ((getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
             {
             traceMsg(comp(), "\tand Assigned. ");
             findStartReg = false;
@@ -2002,21 +1857,21 @@ TR::S390SystemLinkage::restoreGPRsInEpilogue2(TR::Instruction *cursor)
    TR::MemoryReference *retAddrMemRef = generateS390MemoryReference(spReg, offset + stackFrameSize, cg());
 
    if (lastReg - firstReg == 0)
-      cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), nextNode, getS390RealRegister(REGNUM(firstReg)), retAddrMemRef, cursor);
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), nextNode, getRealRegister(REGNUM(firstReg)), retAddrMemRef, cursor);
    else if (lastReg > firstReg)
-      cursor = generateRSInstruction(cg(),  TR::InstOpCode::getLoadMultipleOpCode(), nextNode, getS390RealRegister(REGNUM(firstReg)),  getS390RealRegister(REGNUM(lastReg)), retAddrMemRef, cursor);
+      cursor = generateRSInstruction(cg(),  TR::InstOpCode::getLoadMultipleOpCode(), nextNode, getRealRegister(REGNUM(firstReg)),  getRealRegister(REGNUM(lastReg)), retAddrMemRef, cursor);
 
 
    //r14 is a special case.  It is the return value register.  Since we will have to save/restore it often, we will try to reduce the range above by just emiting its own save/restore
    // should also experiment with changing preferred ordering in pickregister.
    traceMsg(comp(), "Considering Register %d:\n",i- TR::RealRegister::FirstGPR);
 
-   if(getPreserved(REGNUM(i)) && (getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
+   if(getPreserved(REGNUM(i)) && (getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
       {
       traceMsg(comp(), "\t It is Assigned.\n");
       offset =  getRegisterSaveOffset(REGNUM(i));
       TR::MemoryReference *retAddrMemRef = generateS390MemoryReference(spReg, offset + stackFrameSize, cg());
-      cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), nextNode, getS390RealRegister(REGNUM(i)), retAddrMemRef, cursor);
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), nextNode, getRealRegister(REGNUM(i)), retAddrMemRef, cursor);
       }
 
    return cursor;
@@ -2050,14 +1905,14 @@ TR::S390SystemLinkage::restoreGPRsInEpilogue(TR::Instruction *cursor)
          if (findStartReg)
             firstReg = static_cast<TR::RealRegister::RegNum>(i);
 
-         if ((getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
+         if ((getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
             {
             if (comp()->getOption(TR_TraceCG))
                traceMsg(comp(), "\tand Assigned. ");
             findStartReg = false;
             }
 
-         if (!findStartReg && ( !(getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod() || (i == TR::RealRegister::LastGPR && firstReg != TR::RealRegister::LastGPR)) )
+         if (!findStartReg && ( !(getRealRegister(REGNUM(i)))->getHasBeenAssignedInMethod() || (i == TR::RealRegister::LastGPR && firstReg != TR::RealRegister::LastGPR)) )
             {
             // LastGPR is the stack pointer on zLinux which always be saved and restored
             if (i == TR::RealRegister::LastGPR && !getIsLeafRoutine())
@@ -2075,9 +1930,9 @@ TR::S390SystemLinkage::restoreGPRsInEpilogue(TR::Instruction *cursor)
             TR::MemoryReference *retAddrMemRef = generateS390MemoryReference(spReg, offset + stackFrameSize, cg());
 
             if (lastReg - firstReg == 0)
-               cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), nextNode, getS390RealRegister(REGNUM(firstReg )), retAddrMemRef, cursor);
+               cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), nextNode, getRealRegister(REGNUM(firstReg )), retAddrMemRef, cursor);
             else
-               cursor = generateRSInstruction(cg(),  TR::InstOpCode::getLoadMultipleOpCode(), nextNode, getS390RealRegister(REGNUM(firstReg)),  getS390RealRegister(REGNUM(lastReg)), retAddrMemRef, cursor);
+               cursor = generateRSInstruction(cg(),  TR::InstOpCode::getLoadMultipleOpCode(), nextNode, getRealRegister(REGNUM(firstReg)),  getRealRegister(REGNUM(lastReg)), retAddrMemRef, cursor);
 
 
             findStartReg = true;
@@ -2094,7 +1949,7 @@ TR::S390SystemLinkage::restoreGPRsInEpilogue(TR::Instruction *cursor)
        lastReg = static_cast<TR::RealRegister::RegNum>(TR::RealRegister::LastGPR);
        offset =  getRegisterSaveOffset(REGNUM(lastReg));
        TR::MemoryReference *retAddrMemRef = generateS390MemoryReference(spReg, offset + stackFrameSize, cg());
-       cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), nextNode, getS390RealRegister(REGNUM(lastReg )), retAddrMemRef, cursor);
+       cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), nextNode, getRealRegister(REGNUM(lastReg )), retAddrMemRef, cursor);
        }
    return cursor;
    }
@@ -2120,7 +1975,7 @@ void TR::S390SystemLinkage::createEpilogue(TR::Instruction * cursor)
    TR::LabelSymbol * epilogBeginLabel = generateLabelSymbol(cg());
 
    cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, nextNode, epilogBeginLabel, cursor);
-   
+
    //Restore preserved FPRs
    firstSaved = TR::Linkage::getFirstMaskedBit(FPRSaveMask);
    lastSaved = TR::Linkage::getLastMaskedBit(FPRSaveMask);
@@ -2136,7 +1991,7 @@ void TR::S390SystemLinkage::createEpilogue(TR::Instruction * cursor)
         retAddrMemRef = generateS390MemoryReference(spReg, offset, cg());
 
         cursor = generateRXInstruction(cg(), TR::InstOpCode::LD,
-           nextNode, getS390RealRegister(REGNUM(i+TR::RealRegister::FirstFPR)), retAddrMemRef, cursor);
+           nextNode, getRealRegister(REGNUM(i+TR::RealRegister::FirstFPR)), retAddrMemRef, cursor);
 
         offset +=  cg()->machine()->getFPRSize();
         }
@@ -2147,7 +2002,7 @@ void TR::S390SystemLinkage::createEpilogue(TR::Instruction * cursor)
       // Check for large stack
       bool largeStack = (stackFrameSize < MIN_IMMEDIATE_VAL || stackFrameSize > MAX_IMMEDIATE_VAL);
 
-      TR::RealRegister * tempReg = getS390RealRegister(TR::RealRegister::GPR0);
+      TR::RealRegister * tempReg = getRealRegister(TR::RealRegister::GPR0);
 
       if (comp()->getOption(TR_TraceCG))
          traceMsg(comp(), "GPRSaveMask: Register context %x\n", GPRSaveMask&0xffff);
@@ -2161,7 +2016,7 @@ void TR::S390SystemLinkage::createEpilogue(TR::Instruction * cursor)
       }
 
    cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, nextNode,
-          getS390RealRegister(REGNUM(TR::RealRegister::GPR14)), cursor);
+          getRealRegister(REGNUM(TR::RealRegister::GPR14)), cursor);
    ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
    }
 
@@ -2203,162 +2058,6 @@ TR::S390zOSSystemLinkage::getRegisterSaveOffset(TR::RealRegister::RegNum srcReg)
       TR_ASSERT(false, "ERROR: TR::S390zOSSystemLinkage::getRegisterSaveOffset called for volatile reg: %d\n",srcReg);
       return -1;
       }
-   }
-
-/**
- * Find first instruction, within a window of instructions, that may be a possible call banch instruction
- * Window of instructions is determined by starting instruction and count.
- *
- * Input arguments are updated on return and a boolean result is returned.
- *
- * Usage: Predocminantly used for "leaf" detection.
- *
- * @note
- *  1) Some linkages may have different instructions used for branching to callee
- *     In those cases, the code below should include a linkage check or the
- *     particular linkage should have derived version of this routine.
- *  2) A "true" return does not mean the instruction found is a call, it may be a call.
- *     If necessary, The caller of this routine can do further verication base on
- *     the returned instruction.
- */
-void
-OMR::Z::Linkage::setUsedRegisters(TR::Instruction *instruction, bool *regs, int32_t regsSize)
-   {
-   if(!regs || regsSize == 0)
-      return;
-
-   TR::list<TR::Register *> usedRegs(getTypedAllocator<TR::Register*>(self()->comp()->allocator()));
-   if(instruction->getRegisters(usedRegs))
-      {
-      for(auto cursor = usedRegs.begin(); cursor != usedRegs.end(); ++cursor)
-         {
-         if ((*cursor) && (*cursor)->getRealRegister())
-            {
-            TR::RealRegister::RegNum regNum = toRealRegister((*cursor))->getRegisterNumber();
-
-            TR_ASSERT(regNum < regsSize, "Trying to set regNum %d to true when max regsSize = %d\n",regNum,regsSize);
-
-            if(self()->comp()->getOption(TR_TraceCG))
-               traceMsg(self()->comp(), "Instruction %p uses reg %d\n",instruction,regNum - TR::RealRegister::FirstGPR );
-            regs[regNum] = true;
-            }
-         }
-      }
-
-
-   }
-/**
- * @param cursor Both an input and output parameter
- *        On Input: Instruction to start at
- *        On Output: Instruction found or instruction just outside window (or NULL if no more -- this is the successful indicator that this may be a leaf routine)
- * @param numToCheck Both an input and output parameter
- *        On Input: Max number of instructions to check
- *        On Output: Number of instructions checked
- * @param regs Calculate which registers are used
- * @param regsSize Size of regs array
- * @return Either true for no call found or a single call that can be changed to a jump
- */
-bool
-OMR::Z::Linkage::findPossibleCallInstruction(
-           TR::Instruction * &cursor,
-           int32_t& numToCheck,
-           TR::Instruction **callInstruction,
-           bool *regs, int32_t regsSize)
-
-   {
-   bool result = false;
-
-   TR::Instruction *instruction = cursor;
-
-   int32_t n = 0;
-
-   while ((instruction != NULL) && (result == false))
-      {
-      if (n == numToCheck) break;
-      n++;
-
-      TR::InstOpCode::Mnemonic opCode = instruction->getOpCodeValue();
-      switch (opCode)
-         {
-         case TR::InstOpCode::BASSM:
-         case TR::InstOpCode::BASR:
-         case TR::InstOpCode::BALR:
-         case TR::InstOpCode::BAS:   // fastlink uses this
-         case TR::InstOpCode::BAL:
-         case TR::InstOpCode::BRAS:
-         case TR::InstOpCode::BRASL:
-            {
-            result = true;
-            }
-            break;
-         default:
-            {
-            // The first call instruction, don't set any of the registers as being
-            // used (r14) because it will be transformed if possible
-            //
-            self()->setUsedRegisters(instruction,regs,regsSize);
-            instruction = instruction->getNext();
-            }
-            break;
-         }
-      }
-
-
-   bool canReplaceCallWithJump = false;
-   if(callInstruction)
-      {
-      *callInstruction = instruction;
-      canReplaceCallWithJump = true;
-      }
-
-
-   if (instruction)
-      instruction = instruction->getNext();
-
-   while (instruction !=NULL && canReplaceCallWithJump)
-      {
-      if (n == numToCheck) break;
-         n++;
-
-      self()->setUsedRegisters(instruction,regs,regsSize);
-
-      TR::InstOpCode::Mnemonic opCode = instruction->getOpCodeValue();
-      switch (opCode)
-         {
-         case TR::InstOpCode::ASSOCREGS:
-         case TR::InstOpCode::FENCE:
-         case TR::InstOpCode::LABEL:
-         case TR::InstOpCode::RET:
-            break;
-         default:
-            canReplaceCallWithJump = false;
-            break;
-         }
-      instruction = instruction->getNext();
-      }
-
-
-   if (result && canReplaceCallWithJump && *callInstruction && n < numToCheck)
-      {
-      TR::InstOpCode::Mnemonic opCode = (*callInstruction)->getOpCodeValue();
-
-      if(opCode == TR::InstOpCode::BASR)     // don't know which instruction to use for a virtual dispatch (yet).  In theory, BCR.
-         {
-         canReplaceCallWithJump = false;
-         }
-      else      // otherwise, we found only 1 call that can be changed to a jump
-         {
-         result = false;
-         }
-      }
-   else if (callInstruction)
-      {
-      *callInstruction = NULL;
-      }
-
-   cursor = instruction;
-   numToCheck = n;
-   return result;
    }
 
 void OMR::Z::Linkage::replaceCallWithJumpInstruction(TR::Instruction *callInstruction)

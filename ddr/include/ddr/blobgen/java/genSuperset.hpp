@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,11 +23,6 @@
 #define GENSUPERSET_HPP
 
 #include "ddr/blobgen/genBlob.hpp"
-#include "ddr/std/unordered_map.hpp"
-
-#include <set>
-
-using std::set;
 
 class Field;
 class SupersetFieldVisitor;
@@ -37,15 +32,11 @@ class Symbol_IR;
 class JavaSupersetGenerator : public SupersetGenerator
 {
 private:
-	set<string> _baseTypedefSet; /* Set of types renamed to "[U/I][SIZE]" */
-	unordered_map<string, string> _baseTypedefMap; /* Types remapped for assembled type names. */
-	unordered_map<string, string> _baseTypedefReplace; /* Type names which are replaced everywhere. */
 	intptr_t _file;
 	OMRPortLibrary *_portLibrary;
 	bool _printEmptyTypes;
 	string _pendingTypeHeading;
 
-	void initBaseTypedefSet();
 	void convertJ9BaseTypedef(Type *type, string *name);
 	void replaceBaseTypedef(Type *type, string *name);
 	DDR_RC getFieldType(Field *field, string *assembledTypeName, string *simpleTypeName);

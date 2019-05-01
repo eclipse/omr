@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,36 +21,36 @@
 
 #include "optimizer/ExpressionsSimplification.hpp"
 
-#include <stddef.h>                              // for NULL
-#include <stdint.h>                              // for int32_t, intptr_t
-#include "compile/Compilation.hpp"               // for Compilation
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                      // for TR_Memory, etc
-#include "env/jittypes.h"                        // for intptrj_t
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                          // for Block, toBlock
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes::ineg, etc
-#include "il/ILOps.hpp"                          // for ILOpCode
-#include "il/Node.hpp"                           // for Node, etc
-#include "il/Node_inlines.hpp"                   // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                         // for Symbol
-#include "il/SymbolReference.hpp"                // for SymbolReference
-#include "il/TreeTop.hpp"                        // for TreeTop
-#include "il/TreeTop_inlines.hpp"                // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/BitVector.hpp"                   // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                         // for CFG
-#include "infra/List.hpp"                        // for ListIterator, List, etc
-#include "infra/CfgEdge.hpp"                     // for CFGEdge
-#include "infra/CfgNode.hpp"                     // for CFGNode
-#include "optimizer/Dominators.hpp"              // for TR_PostDominators
-#include "optimizer/LocalAnalysis.hpp"           // for TR_LocalAnalysis
-#include "optimizer/Optimization.hpp"            // for Optimization
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "optimizer/Dominators.hpp"
+#include "optimizer/LocalAnalysis.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/Structure.hpp"               // for TR_RegionStructure, etc
-#include "optimizer/TransformUtil.hpp"           // for TransformUtil
-#include "optimizer/VPConstraint.hpp"            // for TR::VPConstraint
-#include "ras/Debug.hpp"                         // for TR_DebugBase
+#include "optimizer/Structure.hpp"
+#include "optimizer/TransformUtil.hpp"
+#include "optimizer/VPConstraint.hpp"
+#include "ras/Debug.hpp"
 
 #define OPT_DETAILS "O^O EXPRESSION SIMPLIFICATION: "
 

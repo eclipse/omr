@@ -4,7 +4,7 @@
 // file you must edit '$OMR/compiler/p/codegen/PPCOps.ops'
 // and then run 'perl $OMR/tools/compiler/p/ftops.pl'.
 
-#include "codegen/InstOpCode.hpp"  // for InstOpCode, etc
+#include "codegen/InstOpCode.hpp"
 
 const TR_PPCOpCodeBinaryEntry OMR::Power::InstOpCode::binaryEncodings[PPCNumOpCodes] =
    {

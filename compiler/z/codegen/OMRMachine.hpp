@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,10 +34,10 @@ namespace OMR { typedef OMR::Z::Machine MachineConnector; }
 
 #include "compiler/codegen/OMRMachine.hpp"
 
-#include <string.h>                  // for memset
-#include "codegen/RealRegister.hpp"  // for RealRegister, etc
-#include "il/DataTypes.hpp"          // for CONSTANT64, etc
-#include "infra/Flags.hpp"           // for flags32_t
+#include <string.h>
+#include "codegen/RealRegister.hpp"
+#include "il/DataTypes.hpp"
+#include "infra/Flags.hpp"
 #include "infra/TRlist.hpp"
 
 class TR_Debug;
@@ -54,15 +54,13 @@ template <typename ListKind> class List;
 
 // Number of machine registers
 #define NUM_S390_GPR 16
-#define NUM_S390_HPR 16
 #define NUM_S390_FPR 16
 #define NUM_S390_VRF 16 ///< 32 after full RA complete
 #define NUM_S390_FPR_PAIRS 8
 
-/** Max. displacement */
+#define MINDISP      0
 #define MAXDISP      4096
 
-// Min/Max. long displacement
 #define MAXLONGDISP      +524287 // 0x7FFFF
 #define MINLONGDISP      -524288 // 0x80000
 
@@ -101,8 +99,6 @@ template <typename ListKind> class List;
 #define DISALLOWBLOCKED  false
 #define ALLOWLOCKED      true
 #define DISALLOWBLOCKED  false
-
-#define  REAL_REGISTER(ri)  machine->getS390RealRegister(ri)
 
 #define GLOBAL_REG_FOR_LITPOOL     3    // GPR6
 
@@ -182,7 +178,7 @@ namespace Z
 class OMR_EXTENSIBLE Machine : public OMR::Machine
    {
    TR::Register                *_registerAssociations[TR::RealRegister::NumRegisters];
-   uint32_t                     _globalRegisterNumberToRealRegisterMap[NUM_S390_GPR+NUM_S390_FPR+NUM_S390_VRF+NUM_S390_HPR];
+   uint32_t                     _globalRegisterNumberToRealRegisterMap[NUM_S390_GPR+NUM_S390_FPR+NUM_S390_VRF];
    TR::RealRegister::RegNum     _S390FirstOfFPRegisterPairs[NUM_S390_FPR_PAIRS];
    TR::RealRegister::RegNum     _S390SecondOfFPRegisterPairs[NUM_S390_FPR_PAIRS];
 
@@ -190,19 +186,12 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
    TR::RealRegister::RegState   _registerStatesSnapShot[TR::RealRegister::NumRegisters];
    TR::Register                *_registerAssociationsSnapShot[TR::RealRegister::NumRegisters];
    bool                         _registerAssignedSnapShot[TR::RealRegister::NumRegisters];
-   bool                         _registerAssignedHighSnapShot[TR::RealRegister::NumRegisters];
    uint16_t                     _registerWeightSnapShot[TR::RealRegister::NumRegisters];
    TR::Register                *_assignedRegisterSnapShot[TR::RealRegister::NumRegisters];
    uint32_t                     _globalRegisterNumberToRealRegisterMapSnapShot[TR::RealRegister::NumRegisters];
-   bool                         _containsHPRSpillSnapShot[TR::RealRegister::NumRegisters];
-
-   /** Used to keep track of blocked registers (HPR/GPR) that upgrades/spill's etc should not use. Typical stores ~0-3 registers. */
-   TR_Stack<TR::RealRegister *>               *_blockedUpgradedRegList;
-
+   
    TR_GlobalRegisterNumber  _firstGlobalGPRRegisterNumber;
    TR_GlobalRegisterNumber  _lastGlobalGPRRegisterNumber;
-   TR_GlobalRegisterNumber  _firstGlobalHPRRegisterNumber;
-   TR_GlobalRegisterNumber  _lastGlobalHPRRegisterNumber;
    TR_GlobalRegisterNumber  _last8BitGlobalGPRRegisterNumber;
    TR_GlobalRegisterNumber  _firstGlobalFPRRegisterNumber;
    TR_GlobalRegisterNumber  _firstOverlappedGlobalFPRRegisterNumber;
@@ -230,20 +219,18 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
 
    Machine(TR::CodeGenerator *cg);
 
-   TR::RealRegister *getS390RealRegister(TR::RealRegister::RegNum regNum)
-      {
-      return _registerFile[regNum];
-      }
-
-   TR::RealRegister *getS390RealRegister(int32_t regNum)
+   /**
+    * @brief Converts RegNum to RealRegister
+    * @param[in] regNum : register number
+    * @return RealRegister for specified register number
+    */
+   TR::RealRegister *getRealRegister(int32_t regNum)
       {
       return _registerFile[regNum];
       }
 
    uint8_t getGPRSize();
    uint8_t getFPRSize() const { return 8;}
-   uint8_t getARSize() const { return 4;}
-   uint8_t getHPRSize() const { return 4;}
    uint8_t getVRFSize() const { return 16;}
 
    TR::RegisterDependencyConditions * createDepCondForLiveGPRs(TR::list<TR::Register*> *spilledRegisterList);
@@ -272,17 +259,17 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
    uint8_t genBitVectOfLiveGPRPairs();
 
    TR::RealRegister* findBestSwapRegister(TR::Register* reg1, TR::Register* reg2);
-   TR::Instruction* registerCopy(TR::Instruction *precedingInstruction,
-                                    TR_RegisterKinds rk,
-                                    TR::Register *targetReg, TR::Register *sourceReg,
-                                    TR::CodeGenerator *cg, flags32_t instFlags);
-   TR::Instruction* registerExchange(TR::Instruction      *precedingInstruction,
-                                        TR_RegisterKinds     rk,
-                                        TR::RealRegister *targetReg,
-                                        TR::RealRegister *sourceReg,
-                                        TR::RealRegister *middleReg,
-                                        TR::CodeGenerator    *cg,
-                                        flags32_t            instFlags);
+   TR::Instruction* registerCopy(TR::CodeGenerator* cg,
+      TR_RegisterKinds rk,
+      TR::RealRegister* targetReg,
+      TR::RealRegister* sourceReg,
+      TR::Instruction* precedingInstruction);
+   TR::Instruction* registerExchange(TR::CodeGenerator* cg,
+      TR_RegisterKinds rk,
+      TR::RealRegister* targetReg,
+      TR::RealRegister* sourceReg,
+      TR::RealRegister* middleReg,
+      TR::Instruction* precedingInstruction);
 
    bool  isLegalEvenOddPair(TR::RealRegister* evenReg, TR::RealRegister* oddReg, uint64_t availRegMask=0x0000ffff);
    bool  isLegalEvenRegister(TR::RealRegister* reg, bool allowBlocked, uint64_t availRegMask=0x0000ffff, bool allowLocked=false);
@@ -301,15 +288,7 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
                                 TR::Instruction* currInst, uint64_t availRegMask=0x0000ffff);
    void    freeBestFPRegisterPair(TR::RealRegister** firstReg, TR::RealRegister** lastReg,
                                   TR::Instruction* currInst, uint64_t availRegMask=0x0000ffff);
-
-   // Access Register managed
-   TR::RealRegister* findVirtRegInHighWordRegister(TR::Register *virtReg);
-
-   // Used to keep track of blocked GPR's during HPR upgrades/spills/copies to prevent clobbering
-   bool addToUpgradedBlockedList(TR::RealRegister * reg);
-   void allocateUpgradedBlockedList(TR_Stack<TR::RealRegister*> * mem);
-   TR::RealRegister * getNextRegFromUpgradedBlockedList();
-
+   
    // High Register managed
    void spillAllVolatileHighRegisters(TR::Instruction  *currentInstruction);
 
@@ -325,15 +304,12 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
    TR::RealRegister *findBestFreeRegister(TR::Instruction   *currentInstruction,
                                              TR_RegisterKinds  rk,
                                              TR::Register      *virtualReg = NULL,
-                                             uint64_t          availRegMask = 0xffffffff,
-                                             bool              needsHighWord = false);
+                                             uint64_t          availRegMask = 0xffffffff);
 
    TR::RealRegister *freeBestRegister(TR::Instruction   *currentInstruction,
                                          TR::Register     *virtReg,
                                          TR_RegisterKinds rk,
-                                         uint64_t availRegMask = 0xffffffff,
-                                         bool allowNullReturn = false,
-                                         bool doNotSpillToSiblingHPR = false);
+                                         bool allowNullReturn = false);
 
    TR::RealRegister *findBestRegisterForShuffle(TR::Instruction  *currentInstruction,
                                                    TR::Register         *currentAssignedRegister,
@@ -343,13 +319,7 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
                                             TR::Register * toFreeReg,
                                             uint64_t availRegMask);
 
-
-   void freeRealRegister(TR::Instruction *currentInstruction,
-                         TR::RealRegister *targetReal,
-                         bool is64BitReg);
-
-   TR::Instruction * freeHighWordRegister(TR::Instruction *currentInstruction, TR::RealRegister *targetRegisterHW, flags32_t instFlags);
-   void spillRegister(TR::Instruction *currentInstruction, TR::Register *virtReg, uint32_t availHighWordRegMap = -1);
+   void spillRegister(TR::Instruction *currentInstruction, TR::Register *virtReg);
 
    TR::RealRegister *reverseSpillState(TR::Instruction      *currentInstruction,
                                           TR::Register         *spilledRegister,
@@ -359,8 +329,7 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
 
    TR::Instruction *coerceRegisterAssignment(TR::Instruction *currentInstruction,
                                             TR::Register    *virtualRegister,
-                                            TR::RealRegister::RegNum registerNumber,
-                                            flags32_t       instFlags);
+                                            TR::RealRegister::RegNum registerNumber);
 
    TR_Debug         *getDebug();
 
@@ -381,27 +350,13 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
       }
 
    TR_GlobalRegisterNumber setLastGlobalGPRRegisterNumber(TR_GlobalRegisterNumber reg);
-
-   TR_GlobalRegisterNumber getLastGlobalHPRRegisterNumber()
-      {
-      return _lastGlobalHPRRegisterNumber;
-      }
-
-   TR_GlobalRegisterNumber setLastGlobalHPRRegisterNumber(TR_GlobalRegisterNumber reg);
-
+   
    TR_GlobalRegisterNumber getFirstGlobalGPRRegisterNumber()
       {
       return _firstGlobalGPRRegisterNumber;
       }
 
    TR_GlobalRegisterNumber setFirstGlobalGPRRegisterNumber(TR_GlobalRegisterNumber reg);
-
-   TR_GlobalRegisterNumber getFirstGlobalHPRRegisterNumber()
-      {
-      return _firstGlobalHPRRegisterNumber;
-      }
-
-   TR_GlobalRegisterNumber setFirstGlobalHPRRegisterNumber(TR_GlobalRegisterNumber reg);
 
    TR_GlobalRegisterNumber getLast8BitGlobalGPRRegisterNumber()
       {
@@ -584,10 +539,6 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
      {
      return _lastLinkageFPR=reg;
      }
-
-   TR::Register * getGPRFromGlobalRegisterNumber(TR_GlobalRegisterNumber reg);
-
-   TR::Register * getHPRFromGlobalRegisterNumber(TR_GlobalRegisterNumber reg);
 
    ////////////////////////////////
 

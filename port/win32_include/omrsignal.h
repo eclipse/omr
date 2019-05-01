@@ -25,7 +25,7 @@
 
 #include "omrcomp.h"
 
-typedef struct J9Win32SignalInfo {
+typedef struct OMRWin32SignalInfo {
 	uint32_t type;
 	void *handlerAddress;
 	void *handlerAddress2;
@@ -35,7 +35,7 @@ typedef struct J9Win32SignalInfo {
 	uint32_t offsetInDLL;
 	uint32_t threadId;
 	char moduleName[_MAX_PATH];
-} J9Win32SignalInfo;
+} OMRWin32SignalInfo;
 
 #endif     /* omrsignal_h */
 

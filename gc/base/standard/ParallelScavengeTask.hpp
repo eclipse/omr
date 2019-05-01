@@ -57,6 +57,7 @@ public:
 	virtual void run(MM_EnvironmentBase *env);
 	virtual void setup(MM_EnvironmentBase *env);
 	virtual void cleanup(MM_EnvironmentBase *env);
+	virtual void masterSetup(MM_EnvironmentBase *env);
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 	/**

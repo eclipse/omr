@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,55 +19,55 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <math.h>                                     // for log10
-#include <stdarg.h>                                   // for va_list
-#include <stddef.h>                                   // for size_t
-#include <stdint.h>                                   // for int32_t, etc
-#include <stdio.h>                                    // for NULL, etc
-#include <string.h>                                   // for memset
-#include "codegen/CodeGenerator.hpp"                  // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                       // for TR_FrontEnd, etc
+#include <math.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "compile/Compilation.hpp"                    // for Compilation
-#include "compile/Method.hpp"                         // for TR_Method, etc
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                                 // for IO
-#include "env/TRMemory.hpp"                           // for TR_Memory, etc
+#include "env/IO.hpp"
+#include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/Block.hpp"                               // for Block, toBlock
-#include "il/DataTypes.hpp"                           // for TR::DataType, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                               // for ILOpCode, etc
-#include "il/Node.hpp"                                // for Node
-#include "il/Node_inlines.hpp"                        // for Node::getChild, etc
-#include "il/Symbol.hpp"                              // for Symbol, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                             // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"                 // for MethodSymbol
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                           // for TR_ASSERT
-#include "infra/BitVector.hpp"                        // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                              // for CFG
-#include "infra/Flags.hpp"                            // for flags32_t
-#include "infra/List.hpp"                             // for ListIterator, etc
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Flags.hpp"
+#include "infra/List.hpp"
 #include "infra/SimpleRegex.hpp"
-#include "infra/CfgEdge.hpp"                          // for CFGEdge
-#include "infra/CfgNode.hpp"                          // for CFGNode
-#include "optimizer/Optimizations.hpp"                // for Optimizations
-#include "optimizer/Optimizer.hpp"                    // for Optimizer
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "optimizer/Optimizations.hpp"
+#include "optimizer/Optimizer.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/StructuralAnalysis.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
 #include "optimizer/VPConstraint.hpp"
-#include "ras/Debug.hpp"                              // for TR_Debug, etc
+#include "ras/Debug.hpp"
 
 
 #define DEFAULT_TREETOP_INDENT     2
@@ -1585,7 +1585,9 @@ TR_Debug::printNodeInfo(TR::Node * node, TR_PrettyPrinterString& output, bool pr
 
    if (node->getOpCode().isNullCheck())
       {
-      output.append(" on %s%dn", globalIndexPrefix.getStr(), node->getNullCheckReference()->getGlobalIndex());
+      if (node->getNullCheckReference())
+         output.append(" on %s%dn", globalIndexPrefix.getStr(), node->getNullCheckReference()->getGlobalIndex());
+      else output.append(" on null NullCheckReference ----- INVALID tree!!");
       }
    else if (node->getOpCodeValue() == TR::allocationFence)
       {
@@ -2321,14 +2323,14 @@ int32_t childTypes[] =
    TR::Float,                      // TR::fstore
    TR::Double,                     // TR::dstore
    TR::Address,                    // TR::astore
-   TR::Address,                    // TR::wrtbar
+   TR::Address,                    // TR::awrtbar
    TR::Int8,                      // TR::bstore
    TR::Int16,                     // TR::sstore
    TR::Int64 | (TR::Address<<8),   // TR::lstorei
    TR::Float | (TR::Address<<8),    // TR::fstorei
    TR::Double | (TR::Address<<8),   // TR::dstorei
    TR::Address,                    // TR::astorei
-   TR::Address,                    // TR::wrtbari
+   TR::Address,                    // TR::awrtbari
    TR::Int8 | (TR::Address<<8),    // TR::bstorei
    TR::Int16 | (TR::Address<<8),   // TR::sstorei
    TR::Int32 | (TR::Address<<8),   // TR::istorei
@@ -3463,8 +3465,6 @@ int32_t childTypes[] =
 
    TR::PackedDecimal | (TR::Int32<<16),                      // TR::pdshrSetSign
    TR::PackedDecimal | (TR::Int32<<16),                      // TR::pdshlSetSign
-   TR::PackedDecimal | (TR::Int32<<16),                      // TR::pdshrPreserveSign
-   TR::PackedDecimal | (TR::Int32<<16),                      // TR::pdshlPreserveSign
    TR::PackedDecimal | (TR::Int32<<16),                      // TR::pdshlOverflow
    TR::PackedDecimal,                                        // TR::pdchk
 
@@ -3489,20 +3489,12 @@ int32_t childTypes[] =
    TR::PackedDecimal,                                        // TR::pdcmpge
    TR::PackedDecimal,                                        // TR::pdcmpgt
    TR::PackedDecimal,                                        // TR::pdcmple
-
-   TR::PackedDecimal,                                        // TR::pdcheck
-   TR::PackedDecimal,                                        // TR::pdfix
-
    TR::PackedDecimal,                                        // TR::pdclean
-   TR::PackedDecimal,                                        // TR::pdexp
-   TR::PackedDecimal,                                        // TR::pduexp
 
    TR::PackedDecimal,                                        // TR::pdclear
    TR::PackedDecimal,                                        // TR::pdclearSetSign
 
    TR::PackedDecimal | (TR::Int32<<16),                      // TR::pdSetSign
-
-   TR::PackedDecimal,                                        // TR::pddivrem
 
    TR::PackedDecimal,                                        // TR::pdModifyPrecision
 

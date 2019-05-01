@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,95 +21,96 @@
 
 #include "compile/OMRCompilation.hpp"
 
-#include <limits.h>                            // for UINT_MAX
-#include <math.h>                              // for log, pow
-#include <signal.h>                            // for sig_atomic_t
-#include <stdarg.h>                            // for va_list
-#include <stddef.h>                            // for NULL, size_t
-#include <stdint.h>                            // for uint8_t, uint64_t, etc
-#include <stdio.h>                             // for fprintf, stderr, etc
-#include <stdlib.h>                            // for abs, atoi, malloc, etc
-#include <string.h>                            // for strncmp, strlen, etc
-#include <algorithm>                           // for std::find
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, etc
-#include "codegen/Instruction.hpp"             // for Instruction
-#include "codegen/RecognizedMethods.hpp"       // for RecognizedMethod, etc
-#include "compile/Compilation.hpp"             // for self(), etc
+#include <limits.h>
+#include <math.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <algorithm>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/RecognizedMethods.hpp"
+#include "compile/Compilation.hpp"
 #include "compile/Compilation_inlines.hpp"
-#include "compile/CompilationTypes.hpp"        // for TR_Hotness
-#include "compile/Method.hpp"                  // for TR_Method, etc
-#include "compile/OSRData.hpp"                 // for TR_OSRCompilationData, etc
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
-#include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
-#include "control/OptimizationPlan.hpp"        // for TR_OptimizationPlan
+#include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
+#include "compile/OSRData.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "compile/VirtualGuard.hpp"
+#include "control/OptimizationPlan.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
-#include "cs2/allocator.h"                     // for heap_allocator
+#include "control/Options_inlines.hpp"
+#include "cs2/allocator.h"
 #include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
-#include "env/CompileTimeProfiler.hpp"         // for TR::CompileTimeProfiler
-#include "env/IO.hpp"                  // for IO (trfflush)
-#include "env/ObjectModel.hpp"                 // for ObjectModel
-#include "env/KnownObjectTable.hpp"            // for KnownObjectTable
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
+#include "env/CompileTimeProfiler.hpp"
+#include "env/IO.hpp"
+#include "env/ObjectModel.hpp"
+#include "env/KnownObjectTable.hpp"
+#include "env/PersistentInfo.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
-#include "env/defines.h"                       // for TR_HOST_X86
-#include "env/jittypes.h"                      // for TR_ByteCodeInfo, etc
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for DataTypes::Address, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::BBStart, etc
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/NodePool.hpp"                     // for TR::NodePool
-#include "il/Node_inlines.hpp"                 // for Node::getType, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "ilgen/IlGenRequest.hpp"              // for IlGenRequest
+#include "env/TRMemory.hpp"
+#include "env/defines.h"
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/NodePool.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Bit.hpp"                       // for leadingZeroes
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                       // for CFG
-#include "infra/Flags.hpp"                     // for flags32_t
-#include "infra/Link.hpp"                      // for TR_Pair
-#include "infra/List.hpp"                      // for List, ListIterator, etc
-#include "infra/Random.hpp"                    // for TR_RandomGenerator
-#include "infra/Stack.hpp"                     // for TR_Stack
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/Timer.hpp"                     // for TR_SingleTimer
-#include "infra/ThreadLocal.h"                 // for tlsDefine
-#include "optimizer/DebuggingCounters.hpp"     // for TR_DebuggingCounters
-#include "optimizer/Optimizations.hpp"         // for Optimizations, etc
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/RegisterCandidate.hpp"     // for TR_RegisterCandidates
-#include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Flags.hpp"
+#include "infra/ILWalk.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/Random.hpp"
+#include "infra/Stack.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/Timer.hpp"
+#include "infra/ThreadLocal.h"
+#include "optimizer/DebuggingCounters.hpp"
+#include "optimizer/Optimizations.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/RegisterCandidate.hpp"
+#include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
-#include "ras/Debug.hpp"                       // for TR_DebugBase
-#include "ras/DebugCounter.hpp"                // for TR_DebugCounterGroup, etc
+#include "ras/Debug.hpp"
+#include "ras/DebugCounter.hpp"
 #include "ras/ILValidationStrategies.hpp"
 #include "ras/ILValidator.hpp"
-#include "ras/IlVerifier.hpp"                  // for TR::IlVerifier
-#include "control/Recompilation.hpp"           // for TR_Recompilation, etc
+#include "ras/IlVerifier.hpp"
+#include "control/Recompilation.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
-#include "ilgen/IlGen.hpp"                     // for TR_IlGenerator
-#include "env/RegionProfiler.hpp"              // for TR::RegionProfiler
+#include "ilgen/IlGen.hpp"
+#include "env/RegionProfiler.hpp"
 // this ratio defines how full the alias memory region is allowed to become before
 // it is recreated after an optimization finishes
 #define ALIAS_REGION_LOAD_FACTOR 0.75
 
 #ifdef J9_PROJECT_SPECIFIC
-#include "control/RecompilationInfo.hpp"           // for TR_Recompilation, etc
+#include "control/RecompilationInfo.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
-#include "env/CHTable.hpp"                     // for TR_AOTGuardSite, etc
+#include "env/CHTable.hpp"
 #include "env/VMJ9.h"
 #endif
 
@@ -258,7 +259,6 @@ OMR::Compilation::Compilation(
    _numNestingLevels(0),
    _usesPreexistence(options.getOption(TR_ForceUsePreexistence)),
    _loopVersionedWrtAsyncChecks(false),
-   _codeCacheSwitched(false),
    _commitedCallSiteInfo(false),
    _containsBigDecimalLoad(false),
    _osrStateIsReliable(true),
@@ -280,7 +280,6 @@ OMR::Compilation::Compilation(
    _relocatableMethodCodeStart(NULL),
    _compThreadID(id),
    _failCHtableCommitFlag(false),
-   _numReservedIPICTrampolines(0),
    _phaseTimer("Compilation", self()->allocator("phaseTimer"), self()->getOption(TR_Timing)),
    _phaseMemProfiler("Compilation", self()->allocator("phaseMemProfiler"), self()->getOption(TR_LexicalMemProfiler)),
    _compilationNodes(NULL),
@@ -370,6 +369,18 @@ OMR::Compilation::Compilation(
 #endif
          );
    _isServerInlining = !options.getOption(TR_NoOptServer);
+
+   // TR_DisableInternalPointers must be set before allocateCodeGenerator(self()) is called because
+   // CodeGenerator's _disableInternalPointers member is set in its constructor and this is one of
+   // options that is checked for
+   if (_isOptServer)
+      {
+      if(self()->getMethodHotness() <= warm)
+         {
+         if (!TR::Compiler->target.cpu.isPower()) // Temporarily exclude PPC due to perf regression
+            self()->setOption(TR_DisableInternalPointers);
+         }
+      }
 
    //_methodSymbol must be done after symRefTab, but before codegen
    // _methodSymbol must be initialized here because creating a jitted method symbol
@@ -648,9 +659,15 @@ bool OMR::Compilation::isPotentialOSRPoint(TR::Node *node, TR::Node **osrPointNo
       else if (node->getOpCode().isCall())
          {
          TR::SymbolReference *callSymRef = node->getSymbolReference();
-         if (callSymRef->getReferenceNumber() >=
+         if (node->isPotentialOSRPointHelperCall())
+            {
+            potentialOSRPoint = true;
+            }
+         else if (callSymRef->getReferenceNumber() >=
              self()->getSymRefTab()->getNonhelperIndex(self()->getSymRefTab()->getLastCommonNonhelperSymbol()))
+            {
             potentialOSRPoint = (disableGuardedCallOSR == NULL);
+            }
          }
       else if (node->getOpCodeValue() == TR::monent)
          potentialOSRPoint = (disableMonentOSR == NULL);
@@ -776,6 +793,11 @@ OMR::Compilation::getOSRInductionOffset(TR::Node *node)
       TR_ASSERT(0, "getOSRInductionOffset should only be called on OSR points");
       }
 
+   if (osrNode->isPotentialOSRPointHelperCall())
+      {
+      return osrNode->getOSRInductionOffset();
+      }
+
    if (osrNode->getOpCode().isCall())
       return 3;
 
@@ -818,6 +840,7 @@ OMR::Compilation::requiresAnalysisOSRPoint(TR::Node *node)
    if (!self()->isPotentialOSRPoint(node, &osrNode))
       {
       TR_ASSERT(0, "requiresAnalysisOSRPoint should only be called on OSR points\n");
+      return false;
       }
 
    // Calls require an analysis and transition point as liveness may change across them
@@ -918,15 +941,7 @@ int32_t OMR::Compilation::compile()
    bool printCodegenTime = self()->getOption(TR_CummTiming);
 
    if (self()->isOptServer())
-      {
-      // Temporarily exclude PPC due to perf regression
-      if( (self()->getMethodHotness() <= warm))
-         {
-         if (!TR::Compiler->target.cpu.isPower())
-            TR::Options::getCmdLineOptions()->setOption(TR_DisableInternalPointers);
-         }
-      self()->getOptions()->setOption(TR_DisablePartialInlining);
-      }
+      self()->setOption(TR_DisablePartialInlining);
 
 #ifdef J9_PROJECT_SPECIFIC
    if (self()->getOptions()->getDelayCompile())
@@ -1069,6 +1084,11 @@ int32_t OMR::Compilation::compile()
             dumpOptDetails(self(), "failed while verifying compressedRefs anchors\n");
          }
 #endif
+
+#if !defined(DEBUG) && !defined(PROD_WITH_ASSUMES)
+      if (self()->incompleteOptimizerSupportForReadWriteBarriers())
+#endif
+         self()->verifyAndFixRdbarAnchors();
 
 #if !defined(DISABLE_CFG_CHECK)
       if (self()->getOption(TR_UseILValidator))
@@ -1996,35 +2016,6 @@ OMR::Compilation::getCounterFromStaticAddress(TR::SymbolReference *symRef)
       }
    }
 
-TR::CodeCache *
-OMR::Compilation::getCurrentCodeCache()
-   {
-   return _codeGenerator ? _codeGenerator->getCodeCache() : 0;
-   }
-
-void
-OMR::Compilation::setCurrentCodeCache(TR::CodeCache * codeCache)
-   {
-   if (_codeGenerator) _codeGenerator->setCodeCache(codeCache);
-   }
-
-void OMR::Compilation::switchCodeCache(TR::CodeCache *newCodeCache)
-   {
-   TR_ASSERT( self()->getCurrentCodeCache() != newCodeCache, "Attempting to switch to the currently held code cache");
-   self()->setCurrentCodeCache(newCodeCache);  // Even if we signal, we need to update the reserved code cache for recompilations.
-   _codeCacheSwitched = true;
-   _numReservedIPICTrampolines = 0;
-   if ( self()->cg()->committedToCodeCache() || !newCodeCache )
-      {
-      if (newCodeCache)
-         {
-         self()->failCompilation<TR::RecoverableCodeCacheError>("Already committed to current code cache");
-         }
-
-      self()->failCompilation<TR::CodeCacheError>("Already committed to current code cache");
-      }
-   }
-
 void OMR::Compilation::validateIL(TR::ILValidationContext ilValidationContext)
    {
    TR_ASSERT_FATAL(_ilValidator != NULL, "Attempting to validate the IL without the ILValidator being initialized");
@@ -2058,6 +2049,32 @@ void OMR::Compilation::verifyCFG(TR::ResolvedMethodSymbol *methodSymbol)
       if (!methodSymbol)
     methodSymbol = _methodSymbol;
       self()->getDebug()->verifyCFG(methodSymbol);
+      }
+   }
+
+void OMR::Compilation::verifyAndFixRdbarAnchors()
+   {
+   TR::NodeChecklist anchoredRdbarNodes(self());
+   for (TR::PreorderNodeIterator iter(self()->getStartTree(), self()); iter.currentTree() != NULL; ++iter)
+      {
+      TR::Node *node = iter.currentNode();
+      if (node->getOpCodeValue() == TR::treetop ||
+          node->getOpCode().isResolveOrNullCheck() ||
+          node->getOpCode().isAnchor())
+         {
+         if (node->getFirstChild()->getOpCode().isReadBar())
+            anchoredRdbarNodes.add(node->getFirstChild());
+         }
+      else if (node->getOpCode().isReadBar())
+         {
+         if (!anchoredRdbarNodes.contains(node))
+            {
+            TR_ASSERT(0, "node (n%dn) %p is rdbar but not anchored\n", node->getGlobalIndex(), node);
+            TR::Node *newttNode = TR::Node::create(TR::treetop, 1, node);
+            iter.currentTree()->insertBefore(TR::TreeTop::create(self(), newttNode));
+            traceMsg(self(), "node (n%dn) %p is an unanchored readbar, anchor it now under treetop node (n%dn) %p\n", node->getGlobalIndex(), node, newttNode->getGlobalIndex(), newttNode);
+            }
+         }
       }
    }
 
@@ -2718,4 +2735,31 @@ void OMR::Compilation::invalidateAliasRegion()
       self()->_aliasRegion.~Region();
       new (&self()->_aliasRegion) TR::Region(_heapMemoryRegion);
       }
+   }
+
+bool OMR::Compilation::incompleteOptimizerSupportForReadWriteBarriers()
+   {
+   return false;
+   }
+
+
+bool OMR::Compilation::isRecursiveMethodTarget(TR_ResolvedMethod *targetResolvedMethod)
+   {
+   return targetResolvedMethod && targetResolvedMethod->isSameMethod(self()->getCurrentMethod()) && !self()->isDLT();
+   }
+
+
+bool OMR::Compilation::isRecursiveMethodTarget(TR::Symbol *targetSymbol)
+   {
+   bool isRecursive = false;
+
+   if (targetSymbol)
+      {
+      TR::MethodSymbol *methodSymbol = targetSymbol->isMethod() ? targetSymbol->castToMethodSymbol() : NULL;
+      TR::ResolvedMethodSymbol *resolvedSymbol = methodSymbol ? methodSymbol->getResolvedMethodSymbol() : NULL;
+      TR_ResolvedMethod *resolvedMethod  = resolvedSymbol ? resolvedSymbol->getResolvedMethod() : NULL;
+      isRecursive = self()->isRecursiveMethodTarget(resolvedMethod);
+      }
+
+   return isRecursive;
    }

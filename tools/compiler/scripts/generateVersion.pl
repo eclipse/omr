@@ -1,7 +1,7 @@
 #!/bin/perl
 
 ###############################################################################
-# Copyright (c) 2000, 2016 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,9 +24,9 @@
 
 use strict;
 
-# FIXME: incorporate the variant name into the buidl too (prod vs debug)
+# FIXME: incorporate the variant name into the build too (prod vs debug)
 
-die("\nUsage:\n  $0 rel_name\n") unless (@ARGV eq 1);
+die("\nUsage:\n  $0 rel_name [output]\n") unless ((@ARGV == 1) || (@ARGV == 2));
 
 my $rel = $ARGV[0];
 
@@ -39,8 +39,28 @@ if (defined $ENV{"TR_BUILD_NAME"}) {
     # FIXME: try to include a workspace name too
     # Optionally, check if the user has defined $USER_TR_VERSION, and incorporate
     # too.
-    my $time = POSIX::strftime("\%Y\%m\%d_\%H\%M", localtime($^T));
+    my $time = POSIX::strftime("%Y%m%d_%H%M", localtime($^T));
     $snapshot_name = $rel . "_" . $time . "_" . $ENV{LOGNAME};
 }
 
-print "#include \"control/OMROptions.hpp\"\n\nconst char TR_BUILD_NAME[] = \"$snapshot_name\";\n\n";
+my $code = "#include \"control/OMROptions.hpp\"\n"
+		 . "\n"
+		 . "const char TR_BUILD_NAME[] = \"$snapshot_name\";\n";
+
+if (@ARGV < 2) {
+    print $code;
+} else {
+    my $outfile = $ARGV[1];
+    my $oldcode = '';
+
+    if (open(my $oldfile, "<", $outfile)) {
+        $oldcode = join('', <$oldfile>);
+        close($oldfile);
+    }
+
+    if ($code ne $oldcode) {
+        open(my $newfile, ">", $outfile) or die("Cannot write to $outfile");
+        print $newfile $code;
+        close($newfile);
+    }
+}

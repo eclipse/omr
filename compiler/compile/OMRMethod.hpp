@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,15 +24,15 @@
 
 #include "compile/InlineBlock.hpp"
 
-#include <limits.h>                         // for INT_MAX
-#include <stddef.h>                         // for NULL, size_t
-#include <stdint.h>                         // for uint8_t, uint16_t
-#include "codegen/RecognizedMethods.hpp"    // for RecognizedMethod, etc
-#include "env/TRMemory.hpp"                 // for TR_Memory, etc
-#include "il/DataTypes.hpp"                 // for TR::DataType, DataTypes
-#include "il/ILOpCodes.hpp"                 // for ILOpCodes
-#include "il/Node.hpp"                      // for rcount_t
-#include "infra/Assert.hpp"                 // for TR_ASSERT
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/RecognizedMethods.hpp"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "infra/Assert.hpp"
 
 class TR_BitVector;
 class TR_CompactLocals;
@@ -116,7 +116,7 @@ class TR_Method
 
    TR_ALLOC(TR_Memory::Method);
 
-   enum Type {J9, Python, Ruby, Test, JitBuilder};
+   enum Type {J9, Test, JitBuilder};
 
 
    virtual TR::DataType parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)
@@ -138,8 +138,6 @@ class TR_Method
    virtual char *signatureChars(); // returns the utf8 of the signature
 
    bool isJ9()     { return _typeOfMethod == J9;     }
-   bool isPython() { return _typeOfMethod == Python; }
-   bool isRuby()   { return _typeOfMethod == Ruby;   }
    Type methodType() { return _typeOfMethod; }
 
    TR_Method(Type t = J9) : _typeOfMethod(t) { _recognizedMethod = _mandatoryRecognizedMethod = TR::unknownMethod; }

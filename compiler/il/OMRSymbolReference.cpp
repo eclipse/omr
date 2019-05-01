@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,32 +21,32 @@
 
 #include "il/OMRSymbolReference.hpp"
 
-#include <assert.h>                            // for assert
-#include <stdint.h>                            // for int32_t, uint32_t, etc
-#include <string.h>                            // for NULL, memset, strncmp
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/Method.hpp"                  // for TR_Method, mcount_t
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable, etc
+#include <assert.h>
+#include <stdint.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/hashtab.h"                       // for HashTable, HashIndex
+#include "cs2/hashtab.h"
 #include "cs2/sparsrbit.h"
-#include "env/KnownObjectTable.hpp"            // for KnownObjectTable, etc
-#include "env/TRMemory.hpp"                    // for Allocator, etc
-#include "env/jittypes.h"                      // for uintptrj_t, intptrj_t
-#include "il/AliasSetInterface.hpp"           // for TR_UseDefAliasSetInterface
-#include "il/DataTypes.hpp"                    // for TR_YesNoMaybe, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/Flags.hpp"                     // for flags8_t, flags32_t, etc
+#include "env/KnownObjectTable.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/AliasSetInterface.hpp"
+#include "il/DataTypes.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Flags.hpp"
 
 class TR_OpaqueClassBlock;
 
@@ -367,4 +367,10 @@ TR_YesNoMaybe
 OMR::SymbolReference::hasBeenAccessedAtRuntime()
    {
    return (TR_YesNoMaybe)(_flags.getValue(AccessedAtRuntimeMask) / AccessedAtRuntimeBase);
+   }
+
+bool
+OMR::SymbolReference::isOSRInductionHelper()
+   {
+   return _referenceNumber == TR_induceOSRAtCurrentPCAndRecompile || _referenceNumber == TR_induceOSRAtCurrentPC;
    }

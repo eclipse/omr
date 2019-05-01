@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,8 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h> // for NULL, etc
-#include <stdint.h> // for uint16_t, int32_t, etc
+#include <stddef.h>
+#include <stdint.h>
 
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/BackingStore.hpp"
@@ -120,7 +120,7 @@ TR::RealRegister *OMR::ARM64::Machine::freeBestRegister(TR::Instruction *current
 
       for (int i = first; i <= last; i++)
          {
-         TR::RealRegister *realReg = self()->getARM64RealRegister((TR::RealRegister::RegNum)i);
+         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
          if (realReg->getState() == TR::RealRegister::Assigned)
             {
             candidates[numCandidates++] = realReg->getAssignedRegister();
@@ -443,30 +443,40 @@ TR::RealRegister *OMR::ARM64::Machine::assignOneRegister(TR::Instruction *curren
                                                          TR::Register *virtualRegister)
    {
    TR_RegisterKinds rk = virtualRegister->getKind();
-   TR::RealRegister *assignedRegister;
+   TR::RealRegister *assignedRegister = virtualRegister->getAssignedRealRegister();
 
-   self()->cg()->clearRegisterAssignmentFlags();
-   self()->cg()->setRegisterAssignmentFlag(TR_NormalAssignment);
+   if (assignedRegister == NULL)
+      {
+      self()->cg()->clearRegisterAssignmentFlags();
+      self()->cg()->setRegisterAssignmentFlag(TR_NormalAssignment);
 
-   if (virtualRegister->getTotalUseCount() != virtualRegister->getFutureUseCount())
-      {
-      self()->cg()->setRegisterAssignmentFlag(TR_RegisterReloaded);
-      assignedRegister = self()->reverseSpillState(currentInstruction, virtualRegister, NULL);
-      }
-   else
-      {
-      assignedRegister = self()->findBestFreeRegister(rk, true);
-      if (assignedRegister == NULL)
+      if (virtualRegister->getTotalUseCount() != virtualRegister->getFutureUseCount())
          {
-         self()->cg()->setRegisterAssignmentFlag(TR_RegisterSpilled);
-         assignedRegister = self()->freeBestRegister(currentInstruction, virtualRegister, NULL);
+         self()->cg()->setRegisterAssignmentFlag(TR_RegisterReloaded);
+         assignedRegister = self()->reverseSpillState(currentInstruction, virtualRegister, NULL);
          }
+      else
+         {
+         assignedRegister = self()->findBestFreeRegister(rk, true);
+         if (assignedRegister == NULL)
+            {
+            self()->cg()->setRegisterAssignmentFlag(TR_RegisterSpilled);
+            assignedRegister = self()->freeBestRegister(currentInstruction, virtualRegister, NULL);
+            }
+         }
+
+      virtualRegister->setAssignedRegister(assignedRegister);
+      assignedRegister->setAssignedRegister(virtualRegister);
+      assignedRegister->setState(TR::RealRegister::Assigned);
+      self()->cg()->traceRegAssigned(virtualRegister, assignedRegister);
       }
 
-   virtualRegister->setAssignedRegister(assignedRegister);
-   assignedRegister->setAssignedRegister(virtualRegister);
-   assignedRegister->setState(TR::RealRegister::Assigned);
-   self()->cg()->traceRegAssigned(virtualRegister, assignedRegister);
+   if (virtualRegister->decFutureUseCount() == 0)
+      {
+      virtualRegister->setAssignedRegister(NULL);
+      assignedRegister->setState(TR::RealRegister::Unlatched);
+      }
+
    return assignedRegister;
    }
 
@@ -482,11 +492,11 @@ static void registerCopy(TR::Instruction *precedingInstruction,
    switch (rk)
       {
       case TR_GPR:
-         zeroReg = cg->machine()->getARM64RealRegister(TR::RealRegister::xzr);
+         zeroReg = cg->machine()->getRealRegister(TR::RealRegister::xzr);
          generateTrg1Src2Instruction(cg, TR::InstOpCode::orrx, node, targetReg, zeroReg, sourceReg, precedingInstruction); /* mov (register) */
          break;
       case TR_FPR:
-         TR_ASSERT(false, "Not implemented yet.");
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::fmovd, node, targetReg, sourceReg, precedingInstruction);
          break;
       default:
          TR_ASSERT(false, "Unsupported RegisterKind.");
@@ -870,7 +880,14 @@ void OMR::ARM64::Machine::initializeRegisterFile()
                                                  TR::RealRegister::lr,
                                                  self()->cg());
 
-   /* XZR or SP depending on instruction */
+   /* SP */
+   _registerFile[TR::RealRegister::sp] = new (self()->cg()->trHeapMemory()) TR::RealRegister(TR_GPR,
+                                                 0,
+                                                 TR::RealRegister::Free,
+                                                 TR::RealRegister::sp,
+                                                 self()->cg());
+
+   /* XZR */
    _registerFile[TR::RealRegister::xzr] = new (self()->cg()->trHeapMemory()) TR::RealRegister(TR_GPR,
                                                  0,
                                                  TR::RealRegister::Free,

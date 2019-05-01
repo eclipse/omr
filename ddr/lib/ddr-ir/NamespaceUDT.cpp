@@ -21,6 +21,8 @@
 
 #include "ddr/ir/NamespaceUDT.hpp"
 
+#include "ddr/ir/Symbol_IR.hpp"
+
 NamespaceUDT::NamespaceUDT(unsigned int lineNumber)
 	: UDT(0, lineNumber)
 	, _subUDTs()

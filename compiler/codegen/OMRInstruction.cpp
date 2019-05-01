@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,15 +19,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator
-#include "codegen/InstOpCode.hpp"                  // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                 // for Instruction
-#include "codegen/Register.hpp"                    // for Register
-#include "compile/Compilation.hpp"                 // for Compilation
-#include "il/TreeTop.hpp"                          // for TreeTop
-#include "il/TreeTop_inlines.hpp"                  // for TreeTop::getNode
-#include "infra/Assert.hpp"                        // for TR_ASSERT
-#include "ras/Debug.hpp"                           // for TR_DebugBase
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Register.hpp"
+#include "compile/Compilation.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
 
 namespace TR { class Node; }
 
@@ -244,15 +244,15 @@ Instruction::useRegister(TR::Register *reg)
    {
 
    if (reg->getStartOfRange() == 0 ||
-       (reg->getStartOfRange()->getIndex() > self()->getIndex()) &&
-       !self()->cg()->getIsInOOLSection())
+       ((reg->getStartOfRange()->getIndex() > self()->getIndex()) &&
+        !self()->cg()->getIsInOOLSection()))
       {
       reg->setStartOfRange(self());
       }
 
    if (reg->getEndOfRange() == 0 ||
-       (reg->getEndOfRange()->getIndex() < self()->getIndex()) &&
-       !self()->cg()->getIsInOOLSection())
+       ((reg->getEndOfRange()->getIndex() < self()->getIndex()) &&
+        !self()->cg()->getIsInOOLSection()))
       {
       reg->setEndOfRange(self());
       }

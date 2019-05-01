@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,10 @@
 #else /* J9ZOS390 */
 #define OMR_COMPATIBLE_FUNCTION_POINTER(fp) ((void*)(fp))
 #endif /* J9ZOS390 */
+
+#if !defined(OMR_GC_COMPRESSED_POINTERS)
+#define OMR_GC_FULL_POINTERS
+#endif /* defined(J9VM_GC_FULL_POINTERS) */
 
 #ifdef __cplusplus
 extern "C" {
@@ -143,7 +147,17 @@ typedef struct OMR_VM {
 	struct OMRTraceEngine *_trcEngine;
 	void *_methodDictionary;
 #endif /* OMR_RAS_TDF_TRACE */
+#if defined(OMR_GC_REALTIME)
+	omrthread_monitor_t _gcCycleOnMonitor;
+	uintptr_t _gcCycleOn;
+#endif /* defined(OMR_GC_REALTIME) */
 } OMR_VM;
+
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#define OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM) TRUE
+#else /* OMR_GC_COMPRESSED_POINTERS */
+#define OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM) FALSE
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 typedef struct OMR_VMThread {
 	struct OMR_VM *_vm;
@@ -185,6 +199,12 @@ typedef struct OMR_VMThread {
 	void *_savedObject1; /**< holds new object allocation until object can be attached to reference graph (see MM_AllocationDescription::save/restoreObjects()) */
 	void *_savedObject2; /**< holds new object allocation until object can be attached to reference graph (see MM_AllocationDescription::save/restoreObjects()) */
 } OMR_VMThread;
+
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#define OMRVMTHREAD_COMPRESS_OBJECT_REFERENCES(omrVMThread) TRUE
+#else /* OMR_GC_COMPRESSED_POINTERS */
+#define OMRVMTHREAD_COMPRESS_OBJECT_REFERENCES(omrVMThread) FALSE
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 /**
  * Perform basic structural initialization of the OMR runtime

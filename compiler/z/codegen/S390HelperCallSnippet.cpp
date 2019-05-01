@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,25 +21,26 @@
 
 #include "z/codegen/S390HelperCallSnippet.hpp"
 
-#include <stddef.h>                             // for NULL
-#include <stdint.h>                             // for int32_t, int16_t, etc
-#include "codegen/CodeGenerator.hpp"            // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                 // for TR_FrontEnd
-#include "codegen/GCStackMap.hpp"               // for TR_GCStackMap
-#include "codegen/InstOpCode.hpp"               // for InstOpCode, etc
-#include "codegen/Relocation.hpp"               // for AOTcgDiag1
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/GCStackMap.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Relocation.hpp"
 #include "codegen/SnippetGCMap.hpp"
-#include "compile/SymbolReferenceTable.hpp"     // for SymbolReferenceTable
+#include "compile/SymbolReferenceTable.hpp"
 #include "env/IO.hpp"
-#include "env/jittypes.h"                       // for intptrj_t
-#include "il/Symbol.hpp"                        // for Symbol
-#include "il/SymbolReference.hpp"               // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"            // for LabelSymbol
-#include "il/symbol/MethodSymbol.hpp"           // for MethodSymbol
-#include "infra/Assert.hpp"                     // for TR_ASSERT
-#include "ras/Debug.hpp"                        // for TR_Debug
+#include "env/jittypes.h"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "runtime/Runtime.hpp"
-#include "z/codegen/CallSnippet.hpp"            // for TR::S390CallSnippet
+#include "z/codegen/CallSnippet.hpp"
 
 namespace TR { class Node; }
 
@@ -51,7 +52,7 @@ TR::S390HelperCallSnippet::emitSnippetBody()
 
    TR::Node * callNode = getNode();
    TR::SymbolReference * helperSymRef = getHelperSymRef();
-   bool jitInduceOSR = helperSymRef == cg()->symRefTab()->element(TR_induceOSRAtCurrentPC);
+   bool jitInduceOSR = helperSymRef->isOSRInductionHelper();
    if (jitInduceOSR)
       {
       // Flush in-register arguments back to the stack for interpreter
@@ -67,6 +68,8 @@ TR::S390HelperCallSnippet::emitSnippetBody()
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
 
+   intptrj_t branchInstructionStartAddress;
+
    if (                                                                               // Methods that require
              alwaysExcept())                                                          // R14 to point to snippet:
       {
@@ -79,6 +82,7 @@ TR::S390HelperCallSnippet::emitSnippetBody()
       // will see R14 is pointing to this snippet, and pick up the correct
       // stack map.
 
+      branchInstructionStartAddress = (intptrj_t)cursor;
       *(int16_t *) cursor = 0xC0E5;                                                   // BRASL  R14, <Helper Addr>
       cursor += sizeof(int16_t);
       }
@@ -95,6 +99,7 @@ TR::S390HelperCallSnippet::emitSnippetBody()
       *(int32_t *) cursor = (int32_t)((returnAddr - (intptrj_t)(cursor - 2)) / 2);
       cursor += sizeof(int32_t);
 
+      branchInstructionStartAddress = (intptrj_t)cursor;
       *(int16_t *) cursor = 0xC0F4;                                                   // BRCL   <Helper Addr>
       cursor += sizeof(int16_t);
       }
@@ -110,9 +115,9 @@ TR::S390HelperCallSnippet::emitSnippetBody()
    if (cg()->comp()->getOption(TR_EnableRMODE64))
 #endif
       {
-      if (NEEDS_TRAMPOLINE(destAddr, cursor, cg()))
+      if (cg()->directCallRequiresTrampoline(destAddr, branchInstructionStartAddress))
          {
-         destAddr = cg()->fe()->indexedTrampolineLookup(helperSymRef->getReferenceNumber(), (void *)cursor);
+         destAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(helperSymRef->getReferenceNumber(), (void *)cursor);
          this->setUsedTrampoline(true);
 
          // We clobber rEP if we take a trampoline. Update our register map if necessary.
@@ -124,10 +129,11 @@ TR::S390HelperCallSnippet::emitSnippetBody()
       }
 #endif
 
-   TR_ASSERT(CHECK_32BIT_TRAMPOLINE_RANGE(destAddr, cursor), "Helper Call is not reachable.");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinBranchRelativeRILRange(destAddr, branchInstructionStartAddress),
+                   "Helper Call is not reachable.");
    this->setSnippetDestAddr(destAddr);
 
-   *(int32_t *) cursor = (int32_t)((destAddr - (intptrj_t)(cursor - 2)) / 2);
+   *(int32_t *) cursor = (int32_t)((destAddr - branchInstructionStartAddress) / 2);
    AOTcgDiag1(cg()->comp(), "add TR_HelperAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, (uint8_t*) helperSymRef, NULL, TR_HelperAddress,
                              __FILE__, __LINE__, getNode());
@@ -147,7 +153,7 @@ TR::S390HelperCallSnippet::getLength(int32_t)
    // LARL + BRASL/BRCL
    length = 12;
 
-   if (helperSymRef == cg()->symRefTab()->element(TR_induceOSRAtCurrentPC))
+   if (helperSymRef->isOSRInductionHelper())
       {
       length += TR::S390CallSnippet::instructionCountForArguments(getNode(), cg());
       }

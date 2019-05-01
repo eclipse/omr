@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,15 +21,15 @@
 
 #include "il/symbol/OMRParameterSymbol.hpp"
 
-#include <stddef.h>                       // for size_t
-#include <stdint.h>                       // for int32_t, uint32_t
-#include <string.h>                       // for strlen
-#include "env/KnownObjectTable.hpp"       // for KnownObjectTable, etc
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include "env/KnownObjectTable.hpp"
 #include "env/TRMemory.hpp"
-#include "il/DataTypes.hpp"               // for DataTypes, etc
-#include "il/Symbol.hpp"                  // for Symbol::IsParameter, etc
-#include "il/symbol/ParameterSymbol.hpp"  // for ParameterSymbol
-#include "infra/Flags.hpp"                // for flags32_t
+#include "il/DataTypes.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "infra/Flags.hpp"
 
 TR::ParameterSymbol *
 OMR::ParameterSymbol::self()

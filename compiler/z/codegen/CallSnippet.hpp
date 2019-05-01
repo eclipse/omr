@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,12 +22,12 @@
 #ifndef S390CALLSNIPPET_INCL
 #define S390CALLSNIPPET_INCL
 
-#include <stddef.h>                   // for NULL
-#include <stdint.h>                   // for int32_t, uint8_t, uint32_t
-#include "codegen/InstOpCode.hpp"     // for InstOpCode, etc
-#include "il/DataTypes.hpp"           // for DataTypes
-#include "runtime/Runtime.hpp"        // for TR_RuntimeHelper
-#include "codegen/Snippet.hpp"  // for TR::S390Snippet, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/InstOpCode.hpp"
+#include "il/DataTypes.hpp"
+#include "runtime/Runtime.hpp"
+#include "codegen/Snippet.hpp"
 
 #include "z/codegen/S390Instruction.hpp"
 

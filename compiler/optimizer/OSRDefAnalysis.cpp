@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,43 +21,43 @@
 
 #include "optimizer/OSRDefAnalysis.hpp"
 
-#include <stdint.h>                                   // for int32_t, etc
-#include <string.h>                                   // for NULL, memset
-#include "codegen/FrontEnd.hpp"                       // for feGetEnv, etc
-#include "compile/Compilation.hpp"                    // for Compilation
-#include "compile/OSRData.hpp"                        // for TR_OSRPoint, etc
+#include <stdint.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/OSRData.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/arrayof.h"                              // for ArrayOf
-#include "cs2/bitvectr.h"                             // for ABitVector, etc
-#include "env/TRMemory.hpp"                           // for Allocator, etc
+#include "cs2/arrayof.h"
+#include "cs2/bitvectr.h"
+#include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/Block.hpp"                               // for Block
-#include "il/DataTypes.hpp"                           // for DataTypes, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                               // for ILOpCode
-#include "il/Node.hpp"                                // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                              // for Symbol
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                             // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/AutomaticSymbol.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Array.hpp"                            // for TR_Array
-#include "infra/Assert.hpp"                           // for TR_ASSERT
-#include "infra/BitVector.hpp"                        // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                              // for CFG
-#include "infra/List.hpp"                             // for List, etc
-#include "infra/CfgEdge.hpp"                          // for CFGEdge
-#include "infra/CfgNode.hpp"                          // for CFGNode
-#include "optimizer/Optimization.hpp"                 // for Optimization
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"
-#include "optimizer/Optimizer.hpp"                    // for Optimizer
-#include "optimizer/DataFlowAnalysis.hpp"             // for TR_Liveness, etc
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/DataFlowAnalysis.hpp"
 #include "optimizer/StructuralAnalysis.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "optimizer/UseDefInfo.hpp"
@@ -1403,6 +1403,8 @@ int32_t TR_OSRLiveRangeAnalysis::fullAnalysis(bool includeParms, bool containsPe
    vcount_t visitCount = comp()->incVisitCount();
    block = comp()->getStartBlock();
    _visitedBCI->empty();
+   int32_t callerIndex = comp()->getCurrentInlinedSiteIndex();
+
    while (block)
       {
       blockNum    = block->getNumber();
@@ -1507,8 +1509,9 @@ int32_t TR_OSRLiveRangeAnalysis::fullAnalysis(bool includeParms, bool containsPe
             && (comp()->isOSRTransitionTarget(TR::preExecutionOSR) || comp()->requiresAnalysisOSRPoint(node)))
             {
             TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
+            TR_ASSERT_FATAL(bcInfo.getCallerIndex() == callerIndex, "Found node with invalid caller index");
             TR_OSRPoint *osrPoint = comp()->getMethodSymbol()->findOSRPoint(bcInfo);
-            TR_ASSERT(osrPoint != NULL, "Cannot find a pre OSR point for node %p", node);
+            TR_ASSERT_FATAL(osrPoint != NULL, "Cannot find a pre OSR point for node %p", node);
 
             buildOSRLiveRangeInfo(node, _liveVars, osrPoint, liveLocalIndexToSymRefNumberMap,
                numBits, osrMethodData, containsPendingPushes);
@@ -1799,7 +1802,7 @@ void TR_OSRLiveRangeAnalysis::buildOSRLiveRangeInfo(TR::Node *node, TR_BitVector
             *deadSymRefs |= *_workDeadSymRefs; 
          }
 
-      if (newlyAllocated && !deadSymRefs->isEmpty())
+      if (newlyAllocated && deadSymRefs && !deadSymRefs->isEmpty())
          osrMethodData->addLiveRangeInfo(byteCodeIndex, deadSymRefs);
       }
 

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,9 @@ set(OMR_WARNING_AS_ERROR_FLAG -Werror)
 
 set(OMR_ENHANCED_WARNING_FLAG -Wall)
 
-list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -pthread)
+list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -pthread -fno-strict-aliasing)
+
+list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -std=c++0x)
 
 if(OMR_ENV_DATA64)
 	if (NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64"))
@@ -58,22 +60,10 @@ endif()
 # of the OMR code should be heavily reduced. In the mean time, we keep
 # the distinction
 
-
 # TR_COMPILE_OPTIONS are variables appended to CMAKE_{C,CXX}_FLAGS, and so
 # apply to both C and C++ compilations.
 list(APPEND TR_COMPILE_OPTIONS
 	-Wno-write-strings #This warning swamps almost all other output
-)
-
-# TR_CXX_COMPILE_OPTIONS are appended to CMAKE_CXX_FLAGS, and so apply only to
-# C++ file compilation
-list(APPEND TR_CXX_COMPILE_OPTIONS
-	-std=c++0x
-)
-
-# TR_C_COMPILE_OPTIONS are appended to CMAKE_C_FLAGS, and so apply only to
-# C file compilation
-list(APPEND TR_C_COMPILE_OPTIONS
 )
 
 set(PASM_CMD ${CMAKE_C_COMPILER})

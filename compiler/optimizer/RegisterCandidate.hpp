@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,21 +22,21 @@
 #ifndef REGISTERCANDIDATE_INCL
 #define REGISTERCANDIDATE_INCL
 
-#include <stddef.h>                       // for NULL
-#include <stdint.h>                       // for int32_t, uint32_t, uint8_t
-#include "codegen/RegisterConstants.hpp"  // for TR_GlobalRegisterNumber, etc
-#include "env/TRMemory.hpp"               // for Allocator, TR_Memory, etc
-#include "il/Block.hpp"                   // for TR::Block
-#include "il/DataTypes.hpp"               // for TR::DataType, DataTypes
-#include "il/Node.hpp"                    // for Node (ptr only), etc
-#include "il/SymbolReference.hpp"         // for TR::SymbolReference
-#include "infra/Array.hpp"                // for TR_Array
-#include "infra/Assert.hpp"               // for TR_ASSERT
-#include "infra/BitVector.hpp"            // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                  // for CFG, CFGBase::::EndBlock, etc
-#include "infra/Flags.hpp"                // for flags16_t
-#include "infra/Link.hpp"                 // for TR_LinkHead, TR_Link
-#include "infra/List.hpp"                 // for List
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/RegisterConstants.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/Node.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
 #include <map>
 
 class TR_GlobalRegisterAllocator;

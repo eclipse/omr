@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,42 +19,42 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                                 // for NULL
-#include <stdint.h>                                 // for int32_t, uint8_t, etc
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                     // for feGetEnv
-#include "codegen/Instruction.hpp"                  // for Instruction
-#include "codegen/LiveRegister.hpp"                 // for TR_LiveRegisters
-#include "codegen/Machine.hpp"                      // for Machine
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/LiveRegister.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"                 // for RealRegister
-#include "codegen/Register.hpp"                     // for Register
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "codegen/X86Evaluator.hpp"
-#include "compile/Compilation.hpp"                  // for Compilation
-#include "env/IO.hpp"                               // for POINTER_PRINTF_FORMAT
-#include "env/ObjectModel.hpp"                      // for ObjectModel
-#include "env/TRMemory.hpp"                         // for TR_HeapMemory, etc
-#include "env/jittypes.h"                           // for intptrj_t, uintptrj_t
-#include "il/DataTypes.hpp"                         // for DataTypes, etc
-#include "il/ILOpCodes.hpp"                         // for ILOpCodes, etc
-#include "il/ILOps.hpp"                             // for ILOpCode, etc
-#include "il/Node.hpp"                              // for Node, etc
+#include "compile/Compilation.hpp"
+#include "env/IO.hpp"
+#include "env/ObjectModel.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "il/symbol/AutomaticSymbol.hpp"            // for AutomaticSymbol
-#include "il/symbol/LabelSymbol.hpp"                // for LabelSymbol
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/Bit.hpp"                            // for isPowerOf2, etc
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
 #include "x/codegen/BinaryCommutativeAnalyser.hpp"
 #include "x/codegen/DivideCheckSnippet.hpp"
 #include "x/codegen/IntegerMultiplyDecomposer.hpp"
 #include "x/codegen/SubtractAnalyser.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                     // for LEARegMem, etc
+#include "x/codegen/X86Ops.hpp"
 #include "env/CompilerEnv.hpp"
 
 extern TR::Register *intOrLongClobberEvaluate(TR::Node *node, bool nodeIs64Bit, TR::CodeGenerator *cg);
@@ -2625,7 +2625,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerDivOrRemEvaluator(TR::Node *node, 
                                                       divisionLabel,
                                                       node->getOpCode(),
                                                       node->getType(),
-                                                      divideInstr->getIA32RegInstruction()->getIA32RegRegInstruction(),
+                                                      divideInstr->getX86RegInstruction()->getIA32RegRegInstruction(),
                                                       cg));
          }
 

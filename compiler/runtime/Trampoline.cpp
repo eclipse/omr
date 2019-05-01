@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,22 +19,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                     // for NULL
-#include <stdint.h>                     // for int32_t, uint8_t, uint32_t
-#include <stdio.h>                      // for sprintf
-#include <string.h>                     // for strlen
-#include "codegen/FrontEnd.hpp"         // for feGetEnv
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"  // for TR::Options
-#include "env/Processors.hpp"           // for TR_Processor, etc
-#include "env/jittypes.h"               // for intptrj_t
-#include "runtime/CodeCache.hpp"        // for CodeCacheManager
-#include "runtime/CodeCacheConfig.hpp"  // for CodeCacheConfig
-#include "runtime/Runtime.hpp"          // for runtimeHelperValue, etc
+#include "control/Options_inlines.hpp"
+#include "env/Processors.hpp"
+#include "env/jittypes.h"
+#include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheConfig.hpp"
+#include "runtime/Runtime.hpp"
 #include "env/CompilerEnv.hpp"
 
-#if defined(OMR_RUBY) || defined(PYTHON) || defined(JITTEST)
-#include "env/ConcreteFE.hpp"  // for FrontEnd
+#if defined(JITTEST)
+#include "env/ConcreteFE.hpp"
 #endif
 
 namespace TR { class CodeGenerator; }
@@ -332,7 +332,7 @@ void armCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *
 #define TRAMPOLINE_SIZE         8
 
 /*copied here from Runtime.hpp*/
-// TODO:ARM64 
+// TODO:ARM64
 #define BRANCH_FORWARD_LIMIT      (0x01fffffc)
 #define BRANCH_BACKWARD_LIMIT     ((int32_t)0xfe000000)
 

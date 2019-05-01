@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,14 +31,14 @@ namespace OMR { class Register; }
 namespace OMR { typedef OMR::Register RegisterConnector; }
 #endif
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for uint32_t, uint16_t
-#include "codegen/RegisterConstants.hpp"    // for TR_RegisterKinds, etc
-#include "env/TRMemory.hpp"                 // for TR_Memory, etc
-#include "il/Node.hpp"                      // for ncount_t, MAX_NODE_COUNT
-#include "infra/Assert.hpp"                 // for TR_ASSERT
-#include "infra/Flags.hpp"                  // for flags32_t
-#include "infra/Annotations.hpp"            // for OMR_EXTENSIBLE
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/RegisterConstants.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Annotations.hpp"
 
 class TR_BackingStore;
 namespace TR { class AutomaticSymbol; }
@@ -114,10 +114,6 @@ class OMR_EXTENSIBLE Register
    uint32_t getIndex()           { return _index; }
    void     setIndex(uint32_t i) { _index=i; }
 
-   TR::Register *getCCRegister() { return _cc; }
-   void setCCRegister(TR::Register *s) { _cc = s; }
-
-
    /*
     * Get/Set Flag Value
     */
@@ -144,9 +140,6 @@ class OMR_EXTENSIBLE Register
 
    bool isSinglePrecision()                 {return _flags.testAny(IsSinglePrecision);}
    void setIsSinglePrecision(bool b = true) {_flags.set(IsSinglePrecision, b);}
-
-   bool isUpperHalfDead()                   {return _flags.testAny(UpperHalfIsDead);}
-   void setIsUpperHalfDead(bool b = true)   {_flags.set(UpperHalfIsDead, b);}
 
    /*
     * Methods for getting real reg, reg pairs etc in subclasses.
@@ -187,7 +180,6 @@ class OMR_EXTENSIBLE Register
       IsLive                        = 0x0010, // Register is currently live
       ContainsInternalPointer       = 0x0080,
       IsSinglePrecision             = 0x0400,
-      UpperHalfIsDead               = 0x0400, // GPRS ONLY -- no need to save/restore the high-order bits when spilled; aliased with IsSinglePrecision
       };
 
 
@@ -213,9 +205,6 @@ class OMR_EXTENSIBLE Register
 
    TR_RegisterKinds _kind;
    uint32_t         _index;             // index into register table
-
-   // Holds the condition codes produced by the operation that produced the container register.
-   TR::Register     *_cc;
    };
 
 }

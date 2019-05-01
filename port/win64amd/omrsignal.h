@@ -25,7 +25,7 @@
 
 #include "omrcomp.h"
 
-typedef struct J9Win32SignalInfo {
+typedef struct OMRWin32SignalInfo {
 	uint32_t systemType;
 	uint32_t portLibType;
 	void *handlerAddress;
@@ -37,7 +37,7 @@ typedef struct J9Win32SignalInfo {
 	char moduleName[_MAX_PATH];
 	BOOLEAN deferToTryExcept;
 	BOOLEAN tryExceptHandlerIgnore;
-} J9Win32SignalInfo;
+} OMRWin32SignalInfo;
 
 #endif     /* omrsignal_h */
 

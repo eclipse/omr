@@ -136,6 +136,29 @@ class VirtualMachineOperandArray : public TR::VirtualMachineState
     */ 
    virtual void Move(TR::IlBuilder *b, int32_t dstIndex, int32_t srcIndex);
 
+   /**
+    * @brief returns the client object associated with this object
+    */
+   virtual void *client();
+
+   /**
+    * @brief Set the Client Allocator function
+    */
+   static void setClientAllocator(ClientAllocator allocator)
+      {
+      _clientAllocator = allocator;
+      }
+
+   /**
+    * @brief Set the Get Impl function
+    *
+    * @param getter function pointer to the impl getter
+    */
+   static void setGetImpl(ImplGetter getter)
+      {
+      _getImpl = getter;
+      }
+
    protected:
    void init();
 
@@ -146,6 +169,9 @@ class VirtualMachineOperandArray : public TR::VirtualMachineState
    TR::IlType *_elementType;
    TR::IlValue **_values;
    const char *_arrayBaseName;
+
+   static ClientAllocator _clientAllocator;
+   static ImplGetter _getImpl;
    };
 }
 

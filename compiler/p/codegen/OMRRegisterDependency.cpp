@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,39 +19,40 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                              // for NULL
-#include <stdint.h>                              // for int32_t, uint8_t, etc
-#include <algorithm>                             // for std::find
-#include "codegen/BackingStore.hpp"              // for TR_BackingStore
-#include "codegen/CodeGenPhase.hpp"              // for CodeGenPhase, etc
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator
-#include "codegen/InstOpCode.hpp"                // for InstOpCode, etc
-#include "codegen/Instruction.hpp"               // for Instruction
+#include <stddef.h>
+#include <stdint.h>
+#include <algorithm>
+#include "codegen/BackingStore.hpp"
+#include "codegen/CodeGenPhase.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
-#include "codegen/LiveRegister.hpp"              // for TR_LiveRegisters
-#include "codegen/Machine.hpp"                   // for Machine
-#include "codegen/MemoryReference.hpp"           // for MemoryReference
-#include "codegen/RealRegister.hpp"              // for RealRegister, etc
-#include "codegen/Register.hpp"                  // for Register
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/LiveRegister.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterDependencyStruct.hpp"  // for RegisterDependency
-#include "codegen/RegisterPair.hpp"              // for RegisterPair
-#include "codegen/TreeEvaluator.hpp"             // for getHighGlobalRegisterNumberIfAny()
-#include "compile/Compilation.hpp"               // for Compilation
+#include "codegen/RegisterDependencyStruct.hpp"
+#include "codegen/RegisterPair.hpp"
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/ObjectModel.hpp"                   // for ObjectModel
+#include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
-#include "il/Node.hpp"                           // for Node
-#include "il/Node_inlines.hpp"                   // for Node::getChild
-#include "il/symbol/LabelSymbol.hpp"             // for LabelSymbol
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/List.hpp"                        // for List
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 #include "p/codegen/PPCInstruction.hpp"
-#include "p/codegen/PPCOpsDefines.hpp"           // for Op_load
-#include "ras/Debug.hpp"                         // for TR_DebugBase
+#include "p/codegen/PPCOpsDefines.hpp"
+#include "ras/Debug.hpp"
 
 namespace TR { class SymbolReference; }
 
@@ -183,7 +184,7 @@ OMR::Power::RegisterDependencyConditions::RegisterDependencyConditions(
       TR::RealRegister::RegNum regNum = (TR::RealRegister::RegNum)cg->getGlobalRegister(child->getGlobalRegisterNumber());
 
       TR::RealRegister::RegNum highRegNum;
-      TR_GlobalRegisterNumber validHighRegNum = TR::TreeEvaluator::getHighGlobalRegisterNumberIfAny(child, cg); 
+      TR_GlobalRegisterNumber validHighRegNum = TR::TreeEvaluator::getHighGlobalRegisterNumberIfAny(child, cg);
 
       if (validHighRegNum != -1)
          {
@@ -228,7 +229,7 @@ OMR::Power::RegisterDependencyConditions::RegisterDependencyConditions(
       TR::RealRegister::RegNum regNum = (TR::RealRegister::RegNum)cg->getGlobalRegister(child->getGlobalRegisterNumber());
 
       TR::RealRegister::RegNum highRegNum;
-      TR_GlobalRegisterNumber validHighRegNum = TR::TreeEvaluator::getHighGlobalRegisterNumberIfAny(child, cg); 
+      TR_GlobalRegisterNumber validHighRegNum = TR::TreeEvaluator::getHighGlobalRegisterNumberIfAny(child, cg);
 
       if (validHighRegNum != -1)
          {
@@ -644,7 +645,7 @@ static void assignFreeRegisters(TR::Instruction              *currentInstruction
    // Assign a chain of dependencies where the head of the chain depends on a free reg
    while (dep)
       {
-      TR_ASSERT(machine->getPPCRealRegister(dep->getRealRegister())->getState() == TR::RealRegister::Free, "Expecting free target register");
+      TR_ASSERT(machine->getRealRegister(dep->getRealRegister())->getState() == TR::RealRegister::Free, "Expecting free target register");
       TR::RealRegister *assignedReg = dep->getRegister()->getAssignedRealRegister() ?
          toRealRegister(dep->getRegister()->getAssignedRealRegister()) : NULL;
       machine->coerceRegisterAssignment(currentInstruction, dep->getRegister(), dep->getRealRegister());
@@ -666,7 +667,7 @@ static void assignContendedRegisters(TR::Instruction              *currentInstru
 
    TR::Register *virtReg = dep->getRegister();
    TR::RealRegister::RegNum targetRegNum = dep->getRealRegister();
-   TR::RealRegister *targetReg = machine->getPPCRealRegister(targetRegNum);
+   TR::RealRegister *targetReg = machine->getRealRegister(targetRegNum);
    TR::RealRegister *assignedReg = virtReg->getAssignedRealRegister() ?
       toRealRegister(virtReg->getAssignedRealRegister()) :  NULL;
 
@@ -739,7 +740,7 @@ static void assignContendedRegisters(TR::Instruction              *currentInstru
       {
       virtReg = dep->getRegister();
       targetRegNum = dep->getRealRegister();
-      targetReg = machine->getPPCRealRegister(targetRegNum);
+      targetReg = machine->getRealRegister(targetRegNum);
       assignedReg = virtReg->getAssignedRealRegister() ?
          toRealRegister(virtReg->getAssignedRealRegister()) : NULL;
 
@@ -863,19 +864,19 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
    // count up how many registers are locked for each type
    for(i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; i++)
       {
-        realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
+        realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
         if (realReg->getState() == TR::RealRegister::Locked)
            lockedGPRs++;
       }
    for(i = TR::RealRegister::FirstFPR; i <= TR::RealRegister::LastFPR; i++)
       {
-        realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
+        realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
         if (realReg->getState() == TR::RealRegister::Locked)
            lockedFPRs++;
       }
    for(i = TR::RealRegister::FirstVRF; i <= TR::RealRegister::LastVRF; i++)
       {
-        realReg = machine->getPPCRealRegister((TR::RealRegister::RegNum)i);
+        realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
         if (realReg->getState() == TR::RealRegister::Locked)
            lockedVRFs++;
       }
@@ -918,7 +919,7 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
             {
             TR::RealRegister::RegNum assignedRegNum = toRealRegister(virtReg->getAssignedRealRegister())->getRegisterNumber();
 
-            // Always block if the required register and assigned register match or if the assigned register is 
+            // Always block if the required register and assigned register match or if the assigned register is
             // required by another dependency but only if there are any spare registers left so as to avoid blocking
             // all existing registers
             if (_dependencies[i].getRealRegister() == assignedRegNum ||
@@ -949,7 +950,7 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
          if (virtReg->getKind() != TR_CCR)
             continue;
          dependentRegNum = _dependencies[i].getRealRegister();
-         dependentRealReg = machine->getPPCRealRegister(dependentRegNum);
+         dependentRealReg = machine->getRealRegister(dependentRegNum);
 
          if (dependentRegNum != TR::RealRegister::NoReg &&
              dependentRegNum != TR::RealRegister::SpilledReg &&
@@ -965,7 +966,7 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
       {
       virtReg = _dependencies[i].getRegister();
       dependentRegNum = _dependencies[i].getRealRegister();
-      dependentRealReg = machine->getPPCRealRegister(dependentRegNum);
+      dependentRealReg = machine->getRealRegister(dependentRegNum);
 
       if (dependentRegNum != TR::RealRegister::NoReg &&
           dependentRegNum != TR::RealRegister::SpilledReg &&
@@ -985,7 +986,7 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
          assignedRegister = toRealRegister(virtReg->getAssignedRealRegister());
          }
       dependentRegNum  = _dependencies[i].getRealRegister();
-      dependentRealReg = machine->getPPCRealRegister(dependentRegNum);
+      dependentRealReg = machine->getRealRegister(dependentRegNum);
       if (dependentRegNum != TR::RealRegister::NoReg &&
           dependentRegNum != TR::RealRegister::SpilledReg &&
           dependentRealReg != assignedRegister)

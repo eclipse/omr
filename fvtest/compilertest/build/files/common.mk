@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,6 +72,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/env/OMRClassEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRDebugEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRVMEnv.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/OMRVMMethodEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/SegmentProvider.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/SegmentAllocator.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/SystemSegmentProvider.cpp \
@@ -160,6 +161,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/optimizer/OMRSimplifierHandlers.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/StructuralAnalysis.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/Structure.cpp \
+    $(JIT_OMR_DIRTY_DIR)/optimizer/SwitchAnalyzer.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/TranslateTable.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/UnionBitVectorAnalysis.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/UseDefInfo.cpp \
@@ -187,6 +189,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/codegen/LiveRegister.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/OutOfLineCodeSection.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/Relocation.cpp \
+    $(JIT_OMR_DIRTY_DIR)/codegen/RegisterIterator.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/ScratchRegisterManager.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/StorageInfo.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/OMRTreeEvaluator.cpp \
@@ -249,13 +252,23 @@ JIT_PRODUCT_SOURCE_FILES+=\
     $(JIT_OMR_DIRTY_DIR)/env/Globals.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRCompilerEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/PersistentAllocator.cpp \
-    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlBuilder.cpp \
-    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlValue.cpp \
     $(JIT_OMR_DIRTY_DIR)/ilgen/IlInjector.cpp \
-    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRMethodBuilder.cpp \
     $(JIT_OMR_DIRTY_DIR)/ilgen/OMRBytecodeBuilder.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlBuilder.cpp \
     $(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlType.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRIlValue.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorder.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderBinaryBuffer.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderBinaryFile.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRJitBuilderRecorderTextFile.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRMethodBuilder.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRThunkBuilder.cpp \
     $(JIT_OMR_DIRTY_DIR)/ilgen/OMRTypeDictionary.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineOperandArray.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineOperandStack.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineRegister.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineRegisterInStruct.cpp \
+    $(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineState.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/Alignment.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/CodeCacheTypes.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/OMRCodeCache.cpp \

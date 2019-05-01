@@ -62,7 +62,7 @@
  * \arg OMRPORT_SIG_VALUE_FLOAT_64 -- value is a (double*) and points to a floating point value. No assumptions should be made about the validity of the floating point number.
  *
  * @note The caller may modify the value returned in value for some entries. Only entries in the OMRPORT_SIG_GPR, OMRPORT_SIG_CONTROL or OMRPORT_SIG_FPR categories may be modified.
- * @note If the exception is resumed using J9SIG_EXCEPTION_CONTINUE_EXECUTION, the modified values will be used
+ * @note If the exception is resumed using OMRPORT_SIG_EXCEPTION_CONTINUE_EXECUTION, the modified values will be used
  */
 uint32_t
 omrsig_info(struct OMRPortLibrary *portLibrary, void *info, uint32_t category, int32_t index, const char **name, void **value)
@@ -243,7 +243,7 @@ omrsig_map_portlib_signal_to_os_signal(struct OMRPortLibrary *portLibrary, uint3
  * for the portlibSignalFlag signal are left unchanged when this function overrides the master
  * handler. When the master handler is re-registered with the portlibSignalFlag signal, then
  * the records associated with master handler don't need to be restored. An example of records
- * is J9*AsyncHandlerRecord(s) in asyncHandlerList.
+ * is OMR*AsyncHandlerRecord(s) in asyncHandlerList.
  *
  * Each platform variant of omrsignal.c should have a signalMap. signalMap should have a list of
  * signals, which are supported on a platform. This function supports all signals listed in

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ add_tracegen(hashtable.tdf)
 add_library(j9hashtable STATIC
 	hash.c
 	hashtable.c
-	ut_hashtable.c
+	${CMAKE_CURRENT_BINARY_DIR}/ut_hashtable.c
 )
 
 if(OMR_WARNINGS_AS_ERRORS)
@@ -57,3 +57,5 @@ target_link_libraries(j9hashtable
 )
 
 set_property(TARGET j9hashtable PROPERTY FOLDER util)
+
+target_enable_ddr(j9hashtable "${OMR_DDR_SET}")

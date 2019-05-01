@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,16 +33,16 @@ namespace OMR { typedef OMR::Power::Linkage LinkageConnector; }
 
 #include "compiler/codegen/OMRLinkage.hpp"
 
-#include <stddef.h>                               // for NULL
-#include <stdint.h>                               // for uint32_t, uint8_t, etc
-#include "codegen/CodeGenerator.hpp"              // for CodeGenerator
-#include "codegen/InstOpCode.hpp"                 // for InstOpCode, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/InstOpCode.hpp"
 #include "codegen/RealRegister.hpp"
-#include "codegen/Register.hpp"                   // for Register
-#include "codegen/RegisterConstants.hpp"          // for TR_RegisterKinds, etc
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "env/TRMemory.hpp"                       // for TR_Memory, etc
-#include "infra/Annotations.hpp"                  // for OMR_EXTENSIBLE
+#include "env/TRMemory.hpp"
+#include "infra/Annotations.hpp"
 
 class TR_FrontEnd;
 namespace TR { class AutomaticSymbol; }
@@ -381,9 +381,7 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
    {
    public:
 
-   Linkage () : OMR::Linkage() {}
-
-   Linkage (TR::CodeGenerator *cg) : _cg(cg) {}
+   Linkage (TR::CodeGenerator *cg) : OMR::Linkage(cg) {}
 
    virtual bool hasToBeOnStack(TR::ParameterSymbol *parm);
    virtual void mapStack(TR::ResolvedMethodSymbol *method);
@@ -424,14 +422,6 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
 
    virtual TR::Register *buildIndirectDispatch(TR::Node *callNode) = 0;
 
-   TR::CodeGenerator *cg() {return _cg;}
-   TR::Compilation *comp() {return _cg->comp();}
-   TR_FrontEnd *fe() {return _cg->fe();}
-
-   TR_Memory *trMemory() {return _cg->trMemory(); }
-   TR_HeapMemory trHeapMemory();
-   TR_StackMemory trStackMemory();
-
    // Given an offset (generally into a stack frame) of the slot used
    // to hold a parameter, compute the offset of the data itself.
    // (in the case of 32-bit slots, the offset will be 3 for a char,
@@ -445,10 +435,6 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
    virtual uintptr_t calculateParameterRegisterOffset(uintptr_t o, TR::ParameterSymbol& p) { return o; }
 
    TR_ReturnInfo getReturnInfoFromReturnType(TR::DataType);
-
-protected:
-
-   TR::CodeGenerator*_cg;
    };
 }
 }

@@ -35,7 +35,8 @@ install:
 
 before_build:
   - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
-  - cmd: cmake -Wdev -G "Visual Studio 11 2012" -DOMR_ENV_DATA32=ON -Ccmake\caches\Appveyor.cmake.
+  - set PATH=C:\Python37;%PATH%
+  - cmd: cmake -Wdev -G "Visual Studio 11 2012" -DOMR_ENV_DATA32=ON -Ccmake\caches\Appveyor.cmake .
 
 build:
   project: omr.sln

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,28 +33,28 @@ namespace OMR { typedef OMR::SymbolReferenceTable SymbolReferenceTableConnector;
 
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 
-#include <map>                                 // for std::map
-#include <stddef.h>                            // for NULL, size_t
-#include <stdint.h>                            // for int32_t, etc
-#include "env/TRMemory.hpp"                    // for Allocator, etc
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
+#include <map>
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "compile/AliasBuilder.hpp"            // for AliasBuilder
-#include "compile/Method.hpp"                  // for mcount_t
-#include "cs2/hashtab.h"                       // for HashTable, etc
-#include "env/jittypes.h"                      // for intptrj_t, uintptrj_t
-#include "il/DataTypes.hpp"                    // for DataTypes, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "il/symbol/RegisterMappedSymbol.hpp"  // for RegsiterMappedSymbol
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector
-#include "infra/Flags.hpp"                     // for flags8_t
-#include "infra/Link.hpp"                      // for TR_Link, etc
-#include "infra/List.hpp"                      // for List, etc
+#include "compile/AliasBuilder.hpp"
+#include "compile/Method.hpp"
+#include "cs2/hashtab.h"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
 #include "runtime/Runtime.hpp"
 
 
@@ -146,6 +146,35 @@ class SymbolReferenceTable
       osrScratchBufferSymbol,    //osrScratchBuffer slot on  j9vmthread
       osrFrameIndexSymbol,       // osrFrameIndex slot on j9vmthread
       osrReturnAddressSymbol,       // osrFrameIndex slot on j9vmthread
+
+      /** \brief
+       *
+       *  A call with this symbol marks a place in the jitted code where OSR transition to the VM interpreter is supported.
+       *  The transition target bytecode is the bytecode index on the call plus an induction offset which is stored on the
+       *  call node.
+       *
+       *  \code
+       *    call <potentialOSRPointHelperSymbol>
+       *  \endcode
+       *
+       *  \note
+       *   The call is not to be codegen evaluated, it should be cleaned up before codegen.
+       */
+      potentialOSRPointHelperSymbol,
+      /** \brief
+       *
+       *  A call with this symbol marks a place that has been optimized with runtime assumptions. Such place needs protection of OSR
+       *  points. When the assumption becomes wrong, the execution of jitted code with the assumption has to be transition to the VM
+       *  interpreter before running the invalid code.
+       *
+       *  \code
+       *    call <osrFearPointHelperSymbol>
+       *  \endcode
+       *
+       *  \note
+       *   The call is not to be codegen evaluated, it should be cleaned up before codegen.
+       */
+      osrFearPointHelperSymbol,
       lowTenureAddressSymbol,    // on j9vmthread
       highTenureAddressSymbol,   // on j9vmthread
       fragmentParentSymbol,
@@ -191,7 +220,7 @@ class SymbolReferenceTable
        *  This symbol represents an intrinsic call of the following format:
        *
        *  \code
-       *    icall <atomicAddSymbol>
+       *    icall/lcall <atomicAddSymbol>
        *      <address>
        *      <value>
        *  \endcode
@@ -212,7 +241,7 @@ class SymbolReferenceTable
        *  This symbol represents an intrinsic call of the following format:
        *
        *  \code
-       *    icall <atomicFetchAndAddSymbol>
+       *    icall/lcall <atomicFetchAndAddSymbol>
        *      <address>
        *      <value>
        *  \endcode
@@ -236,7 +265,7 @@ class SymbolReferenceTable
        *  This symbol represents an intrinsic call of the following format:
        *
        *  \code
-       *    icall <atomicSwapSymbol>
+       *    icall/lcall <atomicSwapSymbol>
        *      <address>
        *      <value>
        *  \endcode
@@ -254,19 +283,56 @@ class SymbolReferenceTable
       atomicSwapSymbol,
       atomicSwap32BitSymbol,
       atomicSwap64BitSymbol,
-      atomicCompareAndSwapSymbol,
 
-      // python symbols start here
-      pythonFrameCodeObjectSymbol,   // code object from the frame object
-      pythonFrameFastLocalsSymbol,   // fastlocals array base from the frame object
-      pythonFrameGlobalsSymbol,      // globals dict object from the frame object
-      pythonFrameBuiltinsSymbol,     // builtins dict object from the frame object
-      pythonCodeConstantsSymbol,     // the code constants tuple object
-      pythonCodeNumLocalsSymbol,     // number of local variables from the code object
-      pythonCodeNamesSymbol,         // names tuple object from the code object
-      pythonObjectTypeSymbol,        // type pointer from a python object
-      pythonTypeIteratorMethodSymbol,// used for the iterator method slot from a python type
-      pythonObjectRefCountSymbol,
+      /** \brief
+       *
+       *  This symbol represents an intrinsic call of the following format:
+       *
+       *  \code
+       *    icall <atomicCompareAndSwapReturnStatusSymbol>
+       *      <address>
+       *      <old value>
+       *      <new value>
+       *  \endcode
+       *
+       *  Which performs the following operation atomically:
+       *
+       *  \code
+       *    temp = [address]
+       *    if (temp == <old value>)
+       *      [address] = <new value>
+       *      return true
+       *    else
+       *      return false
+       *  \endcode
+       *
+       *  The data type of \c <old value> indicates the width of the operation.
+       */
+      atomicCompareAndSwapReturnStatusSymbol,
+
+      /** \brief
+       *
+       *  This symbol represents an intrinsic call of the following format:
+       *
+       *  \code
+       *    icall/lcall <atomicCompareAndSwapReturnValueSymbol>
+       *      <address>
+       *      <old value>
+       *      <new value>
+       *  \endcode
+       *
+       *  Which performs the following operation atomically:
+       *
+       *  \code
+       *    temp = [address]
+       *    if (temp == <old value>)
+       *      [address] = <new value>
+       *    return temp
+       *  \endcode
+       *
+       *  The data type of \c <old value> indicates the width of the operation.
+       */
+      atomicCompareAndSwapReturnValueSymbol,
 
       firstPerCodeCacheHelperSymbol,
       lastPerCodeCacheHelperSymbol = firstPerCodeCacheHelperSymbol + TR_numCCPreLoadedCode - 1,
@@ -279,11 +345,60 @@ class SymbolReferenceTable
       return lastCommonNonhelperSymbol;
       }
 
-   // Check whether the given symbol reference (or reference number) is the
-   // known "non-helper" symbol reference.
-   //
-   bool isNonHelper(TR::SymbolReference *, CommonNonhelperSymbol);
-   bool isNonHelper(int32_t, CommonNonhelperSymbol);
+   /**
+    * Check whether the given symbol reference is the specified
+    * "non-helper" symbol reference
+    * @param[in] symRef the symbol reference to check
+    * @param[in] nonHelper the non-helper symbol to check
+    * @returns `true` if symRef is the specified non-helper symbol;
+    * `false` otherwise
+    */
+   bool isNonHelper(TR::SymbolReference *symRef, CommonNonhelperSymbol nonHelper);
+
+   /**
+    * Check whether the given reference number is the specified
+    * "non-helper" symbol.
+    * @param[in] ref the reference number to check
+    * @param[in] nonHelper the non-helper symbol to check
+    * @returns `true` if ref is the specified non-helper symbol;
+    * `false` otherwise
+    */
+   bool isNonHelper(int32_t ref, CommonNonhelperSymbol nonHelper);
+
+   /**
+    * Check whether the given symbol reference is a "non-helper" symbol.
+    * @param[in] symRef the symbol reference to check
+    * @returns `true` if symRef is a non-helper reference;
+    * `false` otherwise
+    */
+   bool isNonHelper(TR::SymbolReference *symRef);
+
+   /**
+    * Check whether the given reference number is a "non-helper" symbol.
+    * @param[in] ref the reference number to check
+    * @returns `true` if ref is a non-helper reference;
+    * `false` otherwise
+    */
+   bool isNonHelper(int32_t ref);
+
+   /**
+    * Retrieve the @ref CommonNonhelperSymbol for this symbol reference.
+    * @param[in] symRef the symbol reference to check
+    * @returns the @ref CommonNonhelperSymbol that this symbol reference
+    * refers to or the value of getLastCommonNonhelperSymbol() if
+    * the symbol reference does not refer to a non-helper
+    */
+   CommonNonhelperSymbol getNonHelperSymbol(TR::SymbolReference *symRef);
+
+   /**
+    * Retrieve the `CommonNonhelperSymbol` for this reference number.
+    * @param[in] ref the reference number to check
+    * @returns the @ref CommonNonhelperSymbol that this symbol reference
+    * refers to or the value of getLastCommonNonhelperSymbol() if
+    * the symbol reference does not refer to a non-helper
+    */
+   CommonNonhelperSymbol getNonHelperSymbol(int32_t ref);
+
 
    // Total number of symbols (known and dynamic) in the SRT
    //
@@ -329,8 +444,11 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateRuntimeHelper(TR_RuntimeHelper index, bool canGCandReturn, bool canGCandExcept, bool preservesAllRegisters);
 
    TR::SymbolReference * findOrCreateCodeGenInlinedHelper(CommonNonhelperSymbol index);
+   TR::SymbolReference * findOrCreatePotentialOSRPointHelperSymbolRef();
+   TR::SymbolReference * findOrCreateOSRFearPointHelperSymbolRef();
+   TR::SymbolReference * findOrCreateInduceOSRSymbolRef(TR_RuntimeHelper induceOSRHelper);
 
-   TR::ParameterSymbol * createParameterSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType);
+   TR::ParameterSymbol * createParameterSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType, TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN);
    TR::SymbolReference * findOrCreateAutoSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType, bool isReference = true,
          bool isInternalPointer = false, bool reuseAuto = true, bool isAdjunct = false, size_t size = 0);
    TR::SymbolReference * createTemporary(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::DataType, bool isInternalPointer = false, size_t size = 0);
@@ -404,7 +522,7 @@ class SymbolReferenceTable
    TR::SymbolReference * findArrayComponentTypeSymbolRef();
    TR::SymbolReference * findClassIsArraySymbolRef();
    TR::SymbolReference * findHeaderFlagsSymbolRef() { return element(headerFlagsSymbol); }
-   TR::SymbolReference * createKnownStaticRefereneceSymbolRef(void *address, TR::KnownObjectTable::Index knownObjectIndex=TR::KnownObjectTable::UNKNOWN);
+   TR::SymbolReference * createKnownStaticReferenceSymbolRef(void *address, TR::KnownObjectTable::Index knownObjectIndex=TR::KnownObjectTable::UNKNOWN);
 
    TR::SymbolReference * findOrCreateArrayTranslateSymbol();
    TR::SymbolReference * findOrCreateSinglePrecisionSQRTSymbol();
@@ -424,6 +542,12 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, uintptrj_t *referenceLocation);
    TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, uintptrj_t *referenceLocation, bool isArrayWithConstantElements);
    TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, TR::KnownObjectTable::Index objectIndex);
+   /*
+    * The public API that should be used when the caller needs a temp to hold a known object
+    *
+    * \note If there is a temp with the same known object already use the existing one. Otherwise, create a new temp.
+    */
+   TR::SymbolReference * findOrCreateTemporaryWithKnowObjectIndex(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::KnownObjectTable::Index knownObjectIndex);
    TR::SymbolReference * findOrCreateThisRangeExtensionSymRef(TR::ResolvedMethodSymbol *owningMethodSymbol = 0);
    TR::SymbolReference * findOrCreateContiguousArraySizeSymbolRef();
    TR::SymbolReference * findOrCreateNewArrayNoZeroInitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
@@ -505,8 +629,38 @@ class SymbolReferenceTable
    TR_BitVector *getSharedAliases(TR::SymbolReference *sr);
 
    protected:
+   /** \brief
+    *    This function creates the symbol reference given a temp symbol and the known object index
+    *
+    *  \param symbol
+    *    the temp symbol needed for creating the symbol reference
+    *
+    *  \note
+    *    This function should only be called from functions inside symbol reference table when creating new autos or temps.
+    *    Code outside symbol reference table should use the public API findOrCreateTemporaryWithKnowObjectIndex.
+    */
+   TR::SymbolReference * createTempSymRefWithKnownObject(TR::Symbol *symbol, mcount_t owningMethodIndex, int32_t slot, TR::KnownObjectTable::Index knownObjectIndex);
 
+   /**\brief
+    *
+    * This is the lowest level of function to find the symbol reference of any type with known object index
+    *
+    * \param symbol
+    *       For temp symbol reference, \p symbol can be NULL.
+    *       For symbol reference type other than temp, an original symbol is needed to find its corresponding symbol reference.
+    *       Take a static field with known object index for example, \p symbol is the original static field symbol.
+    *
+    * \param knownObjectIndex
+    *
+    */
+   TR::SymbolReference * findSymRefWithKnownObject(TR::Symbol *symbol, TR::KnownObjectTable::Index knownObjectIndex);
+   /*
+    * For finding symbol reference with known object index for a temp
+    */
+   TR::SymbolReference * findTempSymRefWithKnownObject(TR::KnownObjectTable::Index knownObjectIndex);
    TR::SymbolReference * findOrCreateCPSymbol(TR::ResolvedMethodSymbol *, int32_t, TR::DataType, bool, void *, TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN);
+   TR::SymbolReference * findOrCreateAutoSymbolImpl(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType, bool isReference = true,
+         bool isInternalPointer = false, bool reuseAuto = true, bool isAdjunct = false, size_t size = 0, TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN);
 
    bool shouldMarkBlockAsCold(TR_ResolvedMethod * owningMethod, bool isUnresolvedInCP);
    void markBlockAsCold();

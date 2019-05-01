@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,37 +21,36 @@
 
 #include "x/codegen/CompareAnalyser.hpp"
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for uint8_t, uint32_t
-#include "codegen/Analyser.hpp"             // for NUM_ACTIONS
-#include "codegen/CodeGenerator.hpp"        // for CodeGenerator
-#include "codegen/FrontEnd.hpp"             // for TR_FrontEnd
-#include "codegen/Linkage.hpp"              // for Linkage, etc
-#include "codegen/LiveRegister.hpp"         // for TR_LiveRegisters
-#include "codegen/Machine.hpp"              // for Machine
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/Analyser.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/LiveRegister.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"         // for TR::RealRegister::RegNum
-#include "codegen/Register.hpp"             // for Register
-#include "codegen/RegisterConstants.hpp"    // for TR_RegisterKinds::TR_GPR
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/TreeEvaluator.hpp"        // for TreeEvaluator
-#include "compile/Compilation.hpp"          // for Compilation
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/TRMemory.hpp"                 // for TR_HeapMemory
-#include "il/ILOpCodes.hpp"                 // for ILOpCodes, etc
-#include "il/ILOps.hpp"                     // for ILOpCode
-#include "il/Node.hpp"                      // for Node, etc
-#include "il/Node_inlines.hpp"              // for Node::getFirstChild, etc
-#include "il/TreeTop.hpp"                   // for TreeTop
-#include "il/TreeTop_inlines.hpp"           // for TreeTop::getNode
-#include "il/symbol/LabelSymbol.hpp"        // for LabelSymbol
-#include "infra/Assert.hpp"                 // for TR_ASSERT
-#include "infra/List.hpp"                   // for List, ListIterator
-#include "ras/Debug.hpp"                    // for TR_DebugBase
+#include "env/TRMemory.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
 #include "runtime/Runtime.hpp"
-#include "codegen/X86Instruction.hpp"       // for generateLabelInstruction, etc
-#include "x/codegen/X86Ops.hpp"             // for ::JNE4, TR_X86OpCodes, etc
+#include "codegen/X86Instruction.hpp"
+#include "x/codegen/X86Ops.hpp"
 
 static bool addressIsTemporarilyInt(TR::Node *node)
    {

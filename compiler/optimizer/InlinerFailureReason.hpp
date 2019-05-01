@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,19 +73,6 @@ enum TR_InlinerFailureReason
    Will_Create_Unallowed_Temps,
    MT_Marked,
 
-   //Ruby Specific Inlining Failures here.
-   Ruby_ambiguious_profiled_klass,
-   Ruby_missing_method_entry,
-   Ruby_unsupported_method_entry_flag,
-   Ruby_non_iseq_method,
-   Ruby_inlining_cfunc,
-   RUBY_not_simple_args,
-   Ruby_has_opt_args,
-   Ruby_non_zero_catchtable,
-   Ruby_unsupported_calltype,
-   Ruby_invalid_call_info,
-   Ruby_invalid_klass,
-
    Unknown_Reason
    };
 static const char *TR_InlinerFailureReasonStr [] =
@@ -130,17 +117,6 @@ static const char *TR_InlinerFailureReasonStr [] =
    FailureReasonStr( Needs_Method_Tracing ),
    FailureReasonStr( Will_Create_Unallowed_Temps ),
    FailureReasonStr( MT_Marked ),
-
-   FailureReasonStr( Ruby_ambiguious_profiled_klass ),
-   FailureReasonStr( Ruby_missing_method_entry ),
-   FailureReasonStr( Ruby_unsupported_method_entry_flag ),
-   FailureReasonStr( Ruby_non_iseq_method ),
-   FailureReasonStr( Ruby_inlining_cfunc ),
-   FailureReasonStr( Ruby_has_opt_args ),
-   FailureReasonStr( Ruby_non_zero_catchtable ),
-   FailureReasonStr( Ruby_unsupported_calltype ),
-   FailureReasonStr( Ruby_invalid_call_info ),
-   FailureReasonStr( Ruby_invalid_klass ),
 
    FailureReasonStr( Unknown_Reason ),
    };

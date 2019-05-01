@@ -1,0 +1,120 @@
+{
+    "project": "Project",
+    "version": {
+        "major": 0,
+        "minor": 0,
+        "patch": 0
+    },
+    "namespace": ["NS1", "NS2"],
+    "types": [],
+    "fields": [
+        {
+            "name": "Project_field_1",
+            "type": "int32",
+            "assign_at_init": true
+        },
+        {
+            "name": "Project_field_2",
+            "type": "constString",
+            "assign_at_init": false
+        }
+    ],
+    "services": [
+        {
+            "name": "Project_service_1",
+            "overloadsuffix": "overload",
+            "flags": [],
+            "return": "none",
+            "parms": [
+                {"name":"Project_service_1_parm_1","type":"int16"},
+                {"name":"Project_service_1_parm_2","type":"pointer","attributes":["in_out"]},
+                {"name":"Project_service_1_parm_3","type":"double","attributes":["array", "can_be_vararg"],"array-len":"Project_service_1_parm_1"}
+            ]
+        }
+    ],
+    "classes": [
+        {
+            "name": "class_1",
+            "short-name": "c1",
+            "types": [
+                {
+                    "name": "class_1_inner_class_1",
+                    "short-name": "c1ic1",
+                    "types": [],
+                    "fields": [],
+                    "constructors": [
+                        {
+                            "name": "",
+                            "overloadsuffix": "",
+                            "flags": [],
+                            "return": "none",
+                            "parms": []
+                        }
+                    ],
+                    "services": [],
+                    "callbacks": []
+                }
+            ],
+            "fields": [
+                {"name":"class_1_field_1","type":"float","assign_at_init":true},
+                {"name":"class_1_field_2","type":"double","assign_at_init":true}
+            ],
+            "constructors": [
+                {
+                    "name": "",
+                    "overloadsuffix": "ctor_overload_1",
+                    "flags": [],
+                    "return": "none",
+                    "parms": []
+                }
+            ],
+            "services": [
+                {
+                    "name": "class_1_service_1",
+                    "overloadsuffix": "",
+                    "flags": [ "sets-allocators" ],
+                    "return": "constString",
+                    "parms": [
+                        {"name":"class_1_service_1_parm","type":"constString"}
+                    ]
+                },
+                {
+                    "name": "class_1_service_2",
+                    "overloadsuffix": "overload",
+                    "flags": [ "protected" ],
+                    "return": "none",
+                    "parms": []
+                }
+            ],
+            "callbacks": [
+                {
+                    "name": "class_1_callback_1",
+                    "overloadsuffix": "",
+                    "flags": [],
+                    "return": "boolean",
+                    "parms": [
+                        {"name":"class_1_callback_1_parm","type":"boolean"}
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "class_2",
+            "short-name": "c2",
+            "extends": "class_1",
+            "types": [],
+            "fields": [],
+            "constructors": [
+                {
+                    "name": "",
+                    "overloadsuffix": "",
+                    "flags": [],
+                    "return": "none",
+                    "parms": []
+                }
+            ],
+            "services": [],
+            "callbacks": []
+        }
+    ]
+}

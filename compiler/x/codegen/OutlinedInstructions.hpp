@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef OUTLINEDINSTRUCTIONS_INCL
 #define OUTLINEDINSTRUCTIONS_INCL
 
-#include "codegen/RegisterConstants.hpp"    // for TR_RegisterKinds
-#include "compile/Compilation.hpp"          // for comp, etc
-#include "env/TRMemory.hpp"                 // for TR_Memory, etc
-#include "il/ILOpCodes.hpp"                 // for ILOpCodes
-#include "x/codegen/X86Ops.hpp"             // for TR_X86OpCodes
+#include "codegen/RegisterConstants.hpp"
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/ILOpCodes.hpp"
+#include "x/codegen/X86Ops.hpp"
 
 class TR_RegisterAssignerState;
 namespace TR { class X86VFPSaveInstruction; }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,50 +21,63 @@
 
 #include "codegen/OMRLinkage.hpp"
 
-#include <stddef.h>                              // for NULL
-#include <stdint.h>                              // for int32_t, uint32_t, etc
-#include "env/StackMemoryRegion.hpp"             // for TR::StackMemoryRegion
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                  // for feGetEnv
-#include "codegen/GCStackAtlas.hpp"              // for GCStackAtlas
-#include "codegen/Linkage.hpp"                   // for LinkageBase, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "env/StackMemoryRegion.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/GCStackAtlas.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
-#include "codegen/LiveRegister.hpp"              // for TR_LiveRegisterInfo, etc
+#include "codegen/LiveRegister.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"              // for RealRegister, etc
-#include "codegen/Register.hpp"                  // for Register
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterDependencyStruct.hpp"  // for RegisterDependency, etc
-#include "codegen/RegisterPair.hpp"              // for RegisterPair
-#include "compile/Compilation.hpp"               // for Compilation
+#include "codegen/RegisterDependencyStruct.hpp"
+#include "codegen/RegisterPair.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/ObjectModel.hpp"                   // for ObjectModel
-#include "env/TRMemory.hpp"                      // for TR_Memory
+#include "env/ObjectModel.hpp"
+#include "env/TRMemory.hpp"
 #include "env/CompilerEnv.hpp"
-#include "il/DataTypes.hpp"                      // for DataTypes::Address, etc
-#include "il/ILOps.hpp"                          // for ILOpCode
-#include "il/Node.hpp"                           // for Node
-#include "il/Node_inlines.hpp"                   // for Node::getDataType
-#include "il/Symbol.hpp"                         // for Symbol
-#include "il/symbol/AutomaticSymbol.hpp"         // for AutomaticSymbol
-#include "il/symbol/MethodSymbol.hpp"            // for MethodSymbol
-#include "il/symbol/ParameterSymbol.hpp"         // for ParameterSymbol
+#include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/IGNode.hpp"                      // for TR_IGNode, etc
+#include "infra/Assert.hpp"
+#include "infra/IGNode.hpp"
 #include "infra/InterferenceGraph.hpp"
-#include "infra/List.hpp"                        // for ListIterator, List
-#include "ras/Debug.hpp"                         // for TR_DebugBase
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
 #include "codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                  // for ::MOVSSRegMem, etc
-#include "x/codegen/X86SystemLinkage.hpp"        // for TR::toX86SystemLinkage, etc
+#include "x/codegen/X86Ops.hpp"
+#include "x/codegen/X86SystemLinkage.hpp"
 
 #ifdef DEBUG
 static uint32_t accumOrigSize = 0;
 static uint32_t accumMappedSize = 0;
 #endif
+
+
+OMR::X86::Linkage::Linkage(TR::CodeGenerator *cg) :
+      OMR::Linkage(cg),
+   _minimumFirstInstructionSize(0)
+   {
+   // Initialize the movOp table based on preferred load instructions for this target.
+   //
+   TR_X86OpCodes op = cg->getXMMDoubleLoadOpCode() ? cg->getXMMDoubleLoadOpCode() : MOVSDRegMem;
+   _movOpcodes[RegMem][Float8] = op;
+   }
+
 
 void OMR::X86::Linkage::mapCompactedStack(TR::ResolvedMethodSymbol *method)
    {
@@ -569,7 +582,7 @@ void OMR::X86::Linkage::associatePreservedRegisters(TR::RegisterDependencyCondit
          {
          // Can't use locked regs
          //
-         if (self()->machine()->getX86RealRegister((TR::RealRegister::RegNum)realReg)->getState() == TR::RealRegister::Locked)
+         if (self()->machine()->getRealRegister((TR::RealRegister::RegNum)realReg)->getState() == TR::RealRegister::Locked)
             continue;
 
          // Volatile regs are no good for virtuals that live across a call
@@ -759,20 +772,6 @@ TR_MovDataTypes
 OMR::X86::Linkage::paramMovType(TR::ParameterSymbol *param)
    {
    return self()->movType(param->getDataType());
-   }
-
-
-TR_HeapMemory
-OMR::X86::Linkage::trHeapMemory()
-   {
-   return self()->trMemory();
-   }
-
-
-TR_StackMemory
-OMR::X86::Linkage::trStackMemory()
-   {
-   return self()->trMemory();
    }
 
 

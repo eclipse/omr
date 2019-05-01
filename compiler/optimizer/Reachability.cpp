@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,18 +21,18 @@
 
 #include "optimizer/Reachability.hpp"
 
-#include <algorithm>                    // for std::min
-#include <limits.h>                     // for INT_MAX
-#include <string.h>                     // for NULL, memset
-#include "compile/Compilation.hpp"      // for Compilation
+#include <algorithm>
+#include <limits.h>
+#include <string.h>
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/TRMemory.hpp"             // for TR_Memory
-#include "il/Block.hpp"                 // for Block, toBlock
-#include "infra/BitVector.hpp"          // for TR_BitVector
-#include "infra/Cfg.hpp"                // for CFG, TR_PredecessorIterator, etc
-#include "infra/List.hpp"               // for ListIterator, List
-#include "infra/CfgEdge.hpp"            // for CFGEdge
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
 
 TR_ReachabilityAnalysis::TR_ReachabilityAnalysis(TR::Compilation *comp):_comp(comp){}
 

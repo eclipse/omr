@@ -26,3 +26,8 @@ target_sources(omr_main_function
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}/main_function.cpp
 )
+
+target_link_libraries(omr_main_function
+	INTERFACE
+		omr_base
+)

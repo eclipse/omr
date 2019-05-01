@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,23 +21,23 @@
 
 #include "optimizer/ReorderIndexExpr.hpp"
 
-#include <stdio.h>                               // for NULL, printf
-#include "codegen/FrontEnd.hpp"                  // for feGetEnv
-#include "compile/Compilation.hpp"               // for Compilation
-#include "env/TRMemory.hpp"                      // for TR_Memory
-#include "il/Block.hpp"                          // for Block
-#include "il/ILOps.hpp"                          // for ILOpCode
-#include "il/Node.hpp"                           // for Node
-#include "il/Node_inlines.hpp"                   // for Node::getChild, etc
-#include "il/SymbolReference.hpp"                // for SymbolReference
-#include "il/TreeTop.hpp"                        // for TreeTop
+#include <stdio.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/Cfg.hpp"                         // for CFG
-#include "infra/List.hpp"                        // for ListIterator, etc
+#include "infra/Assert.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"               // for Optimizer
-#include "optimizer/Structure.hpp"               // for TR_RegionStructure, etc
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
 #include "optimizer/InductionVariable.hpp"
 
 #define OPT_DETAILS "O^O ARRAY INDEX EXPRESSION MANIPULATION: "

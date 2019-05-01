@@ -59,19 +59,28 @@ add_library(invalidAgentMissingOnLoad SHARED
 	invalidAgentMissingOnLoad.def
 )
 
+target_link_libraries(invalidAgentMissingOnLoad PUBLIC omr_base)
+
 add_library(invalidAgentMissingOnUnload SHARED
 	invalidAgentMissingOnUnload.c
 	invalidAgentMissingOnUnload.def
 )
+
+target_link_libraries(invalidAgentMissingOnUnload PUBLIC omr_base)
+
 add_library(invalidAgentReturnError SHARED
 	invalidAgentReturnError.c
 	omragent.def
 )
 
+target_link_libraries(invalidAgentReturnError PUBLIC omr_base)
+
 add_library(sampleSubscriber SHARED
 	sampleSubscriber.c
 	omragent.def
 )
+
+target_link_libraries(sampleSubscriber PUBLIC omr_base)
 
 add_library(subscriberAgent SHARED
 	subscriberAgent.c
@@ -90,6 +99,10 @@ add_library(traceOptionAgent SHARED
 	omragent.def
 )
 
+target_link_libraries(traceOptionAgent
+	PUBLIC
+		omr_base
+)
 
 add_executable(omrrastest
 	agentNegativeTest.cpp

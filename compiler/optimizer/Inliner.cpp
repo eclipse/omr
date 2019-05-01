@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,87 +21,87 @@
 
 #include "optimizer/Inliner.hpp"
 
-#include <algorithm>                                      // for std::max, etc
-#include <assert.h>                                       // for assert
-#include <limits.h>                                       // for INT_MAX
-#include <stdarg.h>                                       // for va_list, etc
-#include <stddef.h>                                       // for NULL, size_t
-#include <stdint.h>                                       // for int32_t, etc
-#include <stdio.h>                                        // for printf, fflush, etc
-#include <stdlib.h>                                       // for atoi, atof
-#include <string.h>                                       // for strncmp, etc
+#include <algorithm>
+#include <assert.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <exception>
-#include <vector>                                         // for std::vector
-#include "codegen/CodeGenerator.hpp"                      // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                           // for TR_FrontEnd, etc
+#include <vector>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "env/KnownObjectTable.hpp"
-#include "codegen/Linkage.hpp"                            // for Linkage
 #include "codegen/RecognizedMethods.hpp"
-#include "compile/Compilation.hpp"                        // for Compilation
+#include "compile/Compilation.hpp"
 #include "compile/InlineBlock.hpp"
-#include "compile/Method.hpp"                             // for TR_Method
-#include "compile/OSRData.hpp"                            // for HCRMode, etc
+#include "compile/Method.hpp"
+#include "compile/OSRData.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"                    // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
 #include "cs2/allocator.h"
 #include "cs2/bitvectr.h"
 #include "cs2/sparsrbit.h"
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/ObjectModel.hpp"                            // for ObjectModel
-#include "env/PersistentInfo.hpp"                         // for PersistentInfo
+#include "env/ObjectModel.hpp"
+#include "env/PersistentInfo.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                                   // for Block
-#include "il/DataTypes.hpp"                               // for DataType, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                                   // for ILOpCode, etc
-#include "il/Node.hpp"                                    // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                                  // for Symbol
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                                 // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/AutomaticSymbol.hpp"
 #include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"                     // for MethodSymbol
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"                     // for StaticSymbol
+#include "il/symbol/StaticSymbol.hpp"
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
-#include "infra/Array.hpp"                                // for TR_Array
-#include "infra/Assert.hpp"                               // for TR_ASSERT
-#include "infra/BitVector.hpp"                            // for TR_BitVector
-#include "infra/Cfg.hpp"                                  // for CFG
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
 #include "infra/HashTab.hpp"
-#include "infra/Link.hpp"                                 // for TR_LinkHead, etc
-#include "infra/List.hpp"                                 // for ListIterator, etc
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
 #include "infra/Random.hpp"
 #include "infra/SimpleRegex.hpp"
-#include "infra/Stack.hpp"                                // for TR_Stack
-#include "infra/CfgEdge.hpp"                              // for CFGEdge
-#include "infra/CfgNode.hpp"                              // for CFGNode
-#include "optimizer/CallInfo.hpp"                         // for TR_CallTarget, etc
+#include "infra/Stack.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "infra/ILWalk.hpp"
+#include "optimizer/CallInfo.hpp"
 #include "optimizer/InlinerFailureReason.hpp"
-#include "optimizer/Optimization.hpp"                     // for Optimization
+#include "optimizer/Optimization.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"                        // for Optimizer
-#include "optimizer/PreExistence.hpp"                     // for TR_PrexArgInfo, etc
-#include "optimizer/RematTools.hpp"                       // for RematTools, RematSafetyInfo
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/PreExistence.hpp"
+#include "optimizer/RematTools.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/StructuralAnalysis.hpp"
-#include "ras/Debug.hpp"                                  // for TR_DebugBase, etc
+#include "ras/Debug.hpp"
 #include "ras/DebugCounter.hpp"
-#include "ras/LogTracer.hpp"                              // for heuristicTrace, etc
+#include "ras/LogTracer.hpp"
 #include "runtime/Runtime.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
@@ -164,6 +164,11 @@ static bool succAndPredAreNotOSRBlocks(TR::CFGEdge * edge)
       !toBlock(edge->getFrom())->isOSRCodeBlock() &&
       !toBlock(edge->getTo())->isOSRCatchBlock() &&
       !toBlock(edge->getFrom())->isOSRCatchBlock();
+   }
+
+static bool succIsOSRCatchBlock(TR::CFGEdge * edge)
+   {
+   return toBlock(edge->getTo())->isOSRCatchBlock();
    }
 
 int32_t
@@ -1358,30 +1363,15 @@ TR_DumbInliner::analyzeCallSite(
 static TR::TreeTop * cloneAndReplaceCallNodeReference(TR::TreeTop *, TR::Node *, TR::Node *, TR::TreeTop *, TR::Compilation *);
 static void addSymRefsToList(List<TR::SymbolReference> &, List<TR::SymbolReference> &);
 
-static TR::Node *findPotentialDecompilationPoint(TR::Node *node, TR::Compilation *comp)
-   {
-   if (node->getVisitCount() == comp->getVisitCount())
-      return NULL;
-   else
-      node->setVisitCount(comp->getVisitCount());
-
-   TR::Node *result = NULL;
-   if (node->getOpCode().hasSymbolReference() && node->getSymbolReference()->canCauseGC())
-      return result = node;
-   else
-      for (int32_t i = 0; !result && i < node->getNumChildren(); i++)
-         result = findPotentialDecompilationPoint(node->getChild(i), comp);
-
-   return result;
-   }
-
 static TR::Node *findPotentialDecompilationPoint(TR::ResolvedMethodSymbol *calleeSymbol, TR::Compilation *comp)
    {
-   comp->incVisitCount();
-   TR::Node *result = NULL;
-   for (TR::TreeTop *tt = calleeSymbol->getFirstTreeTop(); tt && !result; tt = tt->getNextTreeTop())
-      result = findPotentialDecompilationPoint(tt->getNode(), comp);
-   return result;
+   for (TR::PreorderNodeIterator it(calleeSymbol->getFirstTreeTop(), comp); it.currentTree() != NULL; ++it)
+      {
+      TR::Node *node = it.currentNode();
+      if (node->getOpCode().hasSymbolReference() && comp->isPotentialOSRPoint(node))
+         return node;
+      }
+   return NULL;
    }
 
 void
@@ -1418,20 +1408,19 @@ TR_InlinerBase::replaceCallNode(
    TR::ResolvedMethodSymbol * callerSymbol, TR::Node * resultNode, rcount_t originalCallNodeReferenceCount,
    TR::TreeTop * callNodeTreeTop, TR::Node * parent, TR::Node * callNode)
    {
-
+   TR::NodeChecklist visitedNodes(comp());
    // replace the call node with resultNode or remove the caller tree top
    //
    if (resultNode)
       {
-      resultNode->setVisitCount(_visitCount); // make sure we don't visit this node again
+      visitedNodes.add(resultNode);
       parent->setChild(0, resultNode);
       callNode->recursivelyDecReferenceCount();
       resultNode->incReferenceCount();
       rcount_t numberOfReferencesToFind = originalCallNodeReferenceCount - 1;
       TR::TreeTop * tt = callNodeTreeTop->getNextTreeTop();
-      comp()->incVisitCount();
       for (; tt && numberOfReferencesToFind; tt = tt->getNextTreeTop())
-         replaceCallNodeReferences(tt->getNode(), 0, 0, callNode, resultNode, numberOfReferencesToFind);
+         replaceCallNodeReferences(tt->getNode(), 0, 0, callNode, resultNode, numberOfReferencesToFind, visitedNodes);
       }
    else
       callerSymbol->removeTree(callNodeTreeTop);
@@ -1444,7 +1433,7 @@ TR_InlinerBase::replaceCallNode(
 void
 TR_InlinerBase::replaceCallNodeReferences(
    TR::Node * node, TR::Node * parent, uint32_t childIndex,
-   TR::Node * callNode, TR::Node * replacementNode, rcount_t & numberOfReferencesToFind)
+   TR::Node * callNode, TR::Node * replacementNode, rcount_t & numberOfReferencesToFind, TR::NodeChecklist &visitedNodes)
    {
    bool replacedNode = false;
    if (node == callNode)
@@ -1465,15 +1454,14 @@ TR_InlinerBase::replaceCallNodeReferences(
    // consider when changing below code.
    //
    if ((_inliningAsWeWalk && node->getOpCode().isCall() && (node->getVisitCount() == _visitCount)) ||
-         (node->getVisitCount() == comp()->getVisitCount()))
+         visitedNodes.contains(node))
       return;
 
-   node->setVisitCount(comp()->getVisitCount());
-
+   visitedNodes.add(node);
    if (!replacedNode)
       {
       for (int32_t i = 0; i < node->getNumChildren() && numberOfReferencesToFind; ++i)
-         replaceCallNodeReferences(node->getChild(i), node, i, callNode, replacementNode, numberOfReferencesToFind);
+         replaceCallNodeReferences(node->getChild(i), node, i, callNode, replacementNode, numberOfReferencesToFind, visitedNodes);
       }
    }
 
@@ -1539,11 +1527,6 @@ TR_InlinerBase::createVirtualGuard(
       //TR_ASSERT(thisClass == info->getThisClass(), "type info mismatch");
       return TR_VirtualGuard::createVftGuard(guard->_kind, comp(), calleeIndex, callNode,
                                              destination, thisClass);
-      }
-   else if (guard->_type == TR_RubyInlineTest)
-      {
-      return TR_VirtualGuard::createRubyInlineGuard(guard->_kind, comp(), calleeIndex, callNode,
-                                             destination, guard->_thisClass);
       }
    else if (guard->_type == TR_MethodTest)
       return TR_VirtualGuard::createMethodGuard(guard->_kind, comp(), calleeIndex, callNode,
@@ -2252,12 +2235,10 @@ TR_ParameterToArgumentMapper::printMapping()
       return;
    for (TR_ParameterMapping * pm = _mappings.getFirst(); pm; pm = pm->getNext())
       {
-      debugTrace(tracer(),"Mapping at addr %p:\n\tparmSymbol = %p (offset %d) \treplacementSymRef = %d\t_parameterNode = %p\treplacementSymRef2 = %d\treplacementSymRef3 = %d\n"
+      debugTrace(tracer(),"Mapping at addr %p:\n\tparmSymbol = %p (offset %d) \treplacementSymRef = %d\t_parameterNode = %p\n"
                            "\t_argIndex = %d\t_parmIsModified = %d\t_isConst = %d\t_addressTaken =%d",
                            pm, pm->_parmSymbol,pm->_parmSymbol->getOffset(),pm->_replacementSymRef ? pm->_replacementSymRef->getReferenceNumber() : -1, pm->_parameterNode,
-                           pm->_replacementSymRef2 ? pm->_replacementSymRef2->getReferenceNumber() : -1, pm->_replacementSymRef3 ? pm->_replacementSymRef3->getReferenceNumber() : -1,
                            pm->_argIndex, pm->_parmIsModified, pm->_isConst, pm->_addressTaken);
-
       }
    }
 
@@ -2421,9 +2402,8 @@ void
 TR_ParameterToArgumentMapper::lookForModifiedParameters()
    {
    TR_InlinerDelimiter delimiter(tracer(),"pam.lookForModifiedParameters");
-   TR::TreeTop* tt = _calleeSymbol->getFirstTreeTop();
-   for (; tt; tt = tt->getNextTreeTop())
-      lookForModifiedParameters(tt->getNode());
+   for (TR::PreorderNodeIterator it(_calleeSymbol->getFirstTreeTop(), comp()); it.currentTree() != NULL; ++it)
+      lookForModifiedParameters(it.currentNode());
    }
 
 TR_ParameterMapping *
@@ -2438,12 +2418,6 @@ TR_ParameterToArgumentMapper::findMapping(TR::Symbol * symbol)
 void
 TR_ParameterToArgumentMapper::lookForModifiedParameters(TR::Node * node)
    {
-   for (int32_t i = 0; i < node->getNumChildren(); ++i)
-      {
-      TR::Node *child = node->getChild(i);
-      lookForModifiedParameters(child);
-      }
-
    TR_ParameterMapping * parmMap;
    if (node->getOpCode().hasSymbolReference() && node->getSymbol()->isParm() && (parmMap = findMapping(node->getSymbol())))
       {
@@ -2693,7 +2667,7 @@ TR_TransformInlinedFunction::transform()
    if (comp()->getOption(TR_EnableJProfiling) ||
        (firstBlock->getPredecessors().size() > 1) ||
        firstBlock->hasExceptionSuccessors() ||
-       comp()->fe()->isMethodEnterTracingEnabled(calleeResolvedMethod->getPersistentIdentifier()) ||
+       comp()->fe()->isMethodTracingEnabled(calleeResolvedMethod->getPersistentIdentifier()) ||
        TR::Compiler->vm.canMethodEnterEventBeHooked(comp()))
       {
       int32_t freq = firstBlock->getFrequency();
@@ -2709,11 +2683,12 @@ TR_TransformInlinedFunction::transform()
    TR::Node * penultimateNode = _penultimateTreeTop->getNode();
    if (!_penultimateTreeTop->getNode()->getOpCode().isReturn() || _firstCatchBlock)
       _generatedLastBlock = TR::Block::createEmptyBlock(penultimateNode, comp(), firstBlock->getFrequency(), firstBlock);
-   comp()->incVisitCount();
 
+
+   TR::NodeChecklist visitedNodes(comp());
    for (_currentTreeTop = tt; _currentTreeTop; _currentTreeTop = _currentTreeTop->getNextTreeTop())
       {
-      transformNode(_currentTreeTop->getNode(), 0, 0);
+      transformNode(_currentTreeTop->getNode(), 0, 0, visitedNodes);
       }
 
    _parameterMapper.mapOSRCallSiteRematTable(comp()->getCurrentInlinedSiteIndex());
@@ -2760,16 +2735,14 @@ TR_TransformInlinedFunction::transform()
    }
 
 void
-TR_TransformInlinedFunction::transformNode(TR::Node * node, TR::Node * parent, uint32_t childIndex)
+TR_TransformInlinedFunction::transformNode(TR::Node * node, TR::Node * parent, uint32_t childIndex, TR::NodeChecklist &visitedNodes)
    {
-   //     printf("transformNode on node with symbol ID %d, for childIndex %d\n", node->getSymbol()->getWCodeId(), childIndex);
-   vcount_t i, visitCount = comp()->getVisitCount();
-   if (visitCount == node->getVisitCount())
+   if (visitedNodes.contains(node))
       return;
-   node->setVisitCount(visitCount);
+   visitedNodes.add(node);
 
-   for (i = 0; i < node->getNumChildren(); ++i)
-      transformNode(node->getChild(i), node, i);
+   for (int i = 0; i < node->getNumChildren(); ++i)
+      transformNode(node->getChild(i), node, i, visitedNodes);
 
    TR::ILOpCode opcode = node->getOpCode();
    if (opcode.isReturn())
@@ -2847,7 +2820,7 @@ TR_TransformInlinedFunction::transformNode(TR::Node * node, TR::Node * parent, u
                }
 
             parent->setChild(childIndex, newNode);
-            node->setVisitCount(visitCount - 1);
+            visitedNodes.remove(node);
             }
          }
       }
@@ -2967,9 +2940,8 @@ TR_HandleInjectedBasicBlock::printNodesWithMultipleReferences()
       return;
    for(MultiplyReferencedNode *mn = _multiplyReferencedNodes.getFirst() ; mn ; mn = mn->getNext())
       {
-      debugTrace(tracer(),"MultiplyReferencedNode = %p\ttreetop = %p\n\treplacementSymRef =%d\treplacementSymRef2 = %d\treplacementSymRef3 = %d\t_referencesToBeFound = %d"
+      debugTrace(tracer(),"MultiplyReferencedNode = %p\ttreetop = %p\n\treplacementSymRef =%d\t_referencesToBeFound = %d"
                            "\tisConst = %d\tsymbolCanBeReloaded = %d",mn->_node,mn->_treeTop,mn->_replacementSymRef ? mn->_replacementSymRef->getReferenceNumber() : -1,
-                                 mn->_replacementSymRef2 ? mn->_replacementSymRef2->getReferenceNumber() : -1, mn->_replacementSymRef3 ? mn->_replacementSymRef3->getReferenceNumber() : -1,
                                  mn->_referencesToBeFound, mn->_isConst, mn->_symbolCanBeReloaded);
       }
    }
@@ -2980,7 +2952,6 @@ TR_HandleInjectedBasicBlock::findAndReplaceReferences(
    {
    TR_InlinerDelimiter delimiter(tracer(),"hibb.findAndReplaceReferences");
    debugTrace(tracer(),"replaceBlock1 = %d replaceBlock2 = %d callBBStart->getNode = %p",replaceBlock1 ? replaceBlock1->getNumber():-1, replaceBlock2 ? replaceBlock2->getNumber() : -1 , callBBStart->getNode());
-   comp()->incVisitCount();
 
    TR::Block * lastBlock = callBBStart->getNode()->getBlock();
    TR::Block * startBlock = lastBlock->startOfExtendedBlock();
@@ -2995,12 +2966,12 @@ TR_HandleInjectedBasicBlock::findAndReplaceReferences(
       {
       createTemps(false);
 
-      vcount_t visitCount = comp()->incVisitCount();
-      replaceNodesReferencedFromAbove(replaceBlock1, visitCount);
+      TR::NodeChecklist visitedNodes(comp());
+      replaceNodesReferencedFromAbove(replaceBlock1, visitedNodes);
 
       if (replaceBlock2)
          {
-         replaceNodesReferencedFromAbove(replaceBlock2, visitCount);
+         replaceNodesReferencedFromAbove(replaceBlock2, visitedNodes);
          }
       }
    if (replaceBlock2)
@@ -3012,10 +2983,10 @@ TR_HandleInjectedBasicBlock::findAndReplaceReferences(
       if (_multiplyReferencedNodes.getFirst())
          {
          createTemps(true);
-         vcount_t visitCount = comp()->incVisitCount();
-         replaceNodesReferencedFromAbove(replaceBlock1, visitCount);
+         TR::NodeChecklist visitedNodes(comp());
+         replaceNodesReferencedFromAbove(replaceBlock1, visitedNodes);
          if (replaceBlock2)
-            replaceNodesReferencedFromAbove(replaceBlock2, visitCount);
+            replaceNodesReferencedFromAbove(replaceBlock2, visitedNodes);
          }
       }
    }
@@ -3041,19 +3012,19 @@ TR_HandleInjectedBasicBlock::collectNodesWithMultipleReferences(TR::TreeTop * tt
    }
 
 void
-TR_HandleInjectedBasicBlock::replaceNodesReferencedFromAbove(TR::Block * block, vcount_t visitCount)
+TR_HandleInjectedBasicBlock::replaceNodesReferencedFromAbove(TR::Block * block, TR::NodeChecklist &visitedNodes)
    {
    TR::Block * lastBlock = block;
    while (lastBlock->getNextBlock() && lastBlock->getNextBlock()->isExtensionOfPreviousBlock())
       lastBlock = lastBlock->getNextBlock();
    TR::TreeTop * tt = block->getEntry();
    for (; _multiplyReferencedNodes.getFirst() && tt != lastBlock->getExit(); tt = tt->getNextTreeTop())
-      replaceNodesReferencedFromAbove(tt, tt->getNode(), 0, 0, visitCount);
+      replaceNodesReferencedFromAbove(tt, tt->getNode(), 0, 0, visitedNodes);
    }
 
 void
 TR_HandleInjectedBasicBlock::replaceNodesReferencedFromAbove(
-   TR::TreeTop * tt, TR::Node * node, TR::Node * parent, uint32_t childIndex, vcount_t visitCount)
+   TR::TreeTop * tt, TR::Node * node, TR::Node * parent, uint32_t childIndex, TR::NodeChecklist &visitedNodes)
    {
    MultiplyReferencedNode * found;
    if (node->getReferenceCount() > 1 && (found = find(node)))
@@ -3067,12 +3038,12 @@ TR_HandleInjectedBasicBlock::replaceNodesReferencedFromAbove(
       }
    else
       {
-      if (visitCount == node->getVisitCount())
+      if (visitedNodes.contains(node))
          return;
-      node->setVisitCount(visitCount);
+      visitedNodes.add(node);
 
       for (int32_t i = 0; i < node->getNumChildren(); ++i)
-         replaceNodesReferencedFromAbove(tt, node->getChild(i), node, i, visitCount);
+         replaceNodesReferencedFromAbove(tt, node->getChild(i), node, i, visitedNodes);
       }
    }
 
@@ -3182,7 +3153,7 @@ TR_HandleInjectedBasicBlock::find(TR::Node * node)
 
 TR_HandleInjectedBasicBlock::MultiplyReferencedNode::MultiplyReferencedNode(TR::Node *node, TR::TreeTop *tt, uint32_t refsToBeFound,bool symCanBeReloaded) :
       _node(node),_treeTop(tt),_referencesToBeFound(refsToBeFound),_symbolCanBeReloaded(symCanBeReloaded),
-      _replacementSymRef(0), _replacementSymRef2(0), _replacementSymRef3(0), _isConst(false)
+      _replacementSymRef(0), _isConst(false)
    {
 
    }
@@ -4584,9 +4555,11 @@ void TR_InlinerBase::inlineFromGraph(TR_CallStack *prevCallStack, TR_CallTarget 
           tt->getNode()->getChild(0)->getVisitCount() != _visitCount &&
           tt->getNode()->getChild(0)->getInlinedSiteIndex() == thisSiteIndex &&
           !tt->getNode()->getChild(0)->getSymbolReference()->getSymbol()->castToMethodSymbol()->isInlinedByCG() &&
+          !tt->getNode()->getChild(0)->isPotentialOSRPointHelperCall() &&
+          !tt->getNode()->getChild(0)->isOSRFearPointHelperCall() &&
           //induceOSR has the same bcIndex and caller index of the call that follows it
           //the following conditions allows up to skip it
-          tt->getNode()->getChild(0)->getSymbolReference() != comp()->getSymRefTab()->element(TR_induceOSRAtCurrentPC)
+          !tt->getNode()->getChild(0)->getSymbolReference()->isOSRInductionHelper()
          )
          {
          TR::Node * node = parent->getChild(0);
@@ -5007,6 +4980,7 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
    //
    TR::Block * firstCalleeBlock = calleeSymbol->getFirstTreeTop()->getNode()->getBlock();
    TR::Block * lastCalleeBlock = 0;
+   bool treesAfterCallMergedIntoLastCalleeBlock = false;
    if (tif->firstBBEnd())
       {
       // hook up the previous BBStart in the caller with the first BBEnd in the callee
@@ -5023,6 +4997,7 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
       lastCalleeBlock = tif->lastMainLineTreeTop()->getNode()->getBlock();
       nextBBEndInCaller->getNode()->setBlock(lastCalleeBlock);
       lastCalleeBlock->setExit(nextBBEndInCaller);
+      treesAfterCallMergedIntoLastCalleeBlock = true;
       }
 
    // merge cfgs
@@ -5112,22 +5087,50 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
             _disableTailRecursion = true;
          }
       }
-   else if (comp()->getOption(TR_EnableOSR) && tif->crossedBasicBlock() && !comp()->osrInfrastructureRemoved()
-       && (tif->resultNode() == NULL || tif->resultNode()->getReferenceCount() == 0))
+   else if (treesAfterCallMergedIntoLastCalleeBlock && comp()->getOption(TR_EnableOSR) && !comp()->osrInfrastructureRemoved())
       {
-      /**
-       * In OSR, we need to split block even for cases without virtual guard. This is
-       * because in OSR a block with OSR point must have an exception edge to the osrCatchBlock
-       * of correct callerIndex. Split the block here so that the OSR points from callee
-       * and from caller are separated.
-       *
-       * This will not uncommon the return value if the block is split, instead it expects a temporary
-       * to have been generated so that nothing is commoned. This is valid under the current
-       * inliner behaviour, as the existance of a catch block will result in the required temporary being created.
-       */
-      TR::Block * blockOfCaller = previousBBStartInCaller->getNode()->getBlock();
-      TR::Block * blockOfCallerInCalleeCFG = nextBBEndInCaller->getNode()->getBlock()->split(callNodeTreeTop, callerCFG);
-      callerCFG->copyExceptionSuccessors(blockOfCaller, blockOfCallerInCalleeCFG);
+      // No guard is generated, caller's trees immediately after the call node is merged into inlined callee's last block.
+      // The OSR exception edge from block containing the call hasn't been copied onto the callee's last block.
+      // Check if the block has to be splitted for distinct exception edges.
+      //
+      TR::Block * mergedBlock = lastCalleeBlock;
+      TR_OSRMethodData *osrMethodData = comp()->getOSRCompilationData()->findOSRMethodData(comp()->getCurrentInlinedSiteIndex(), calleeSymbol);
+
+      if (osrMethodData && osrMethodData->getOSRCatchBlock())
+         {
+         /**
+          * In OSR, we need to split block even for cases without virtual guard. This is
+          * because in OSR a block with OSR point must have an exception edge to the osrCatchBlock
+          * of correct callerIndex. Split the block here so that the OSR points from callee
+          * and from caller are separated.
+          *
+          * This will not uncommon the return value if the block is split, instead it expects a temporary
+          * to have been generated so that nothing is commoned. This is valid under the current
+          * inliner behaviour, as the existance of a catch block will result in the required temporary being created.
+          */
+
+
+         debugTrace(tracer(), "Splitting block_%d to have distint exception edges for callee %d", mergedBlock->getNumber(), comp()->getCurrentInlinedSiteIndex());
+         // mergedBlock may have exception successors from the callee and non-OSR exception successors from the caller, after split,
+         // `blockOfTreesAfterTheCall` only contains trees from the caller, should not have exception successors from the callee.
+         TR::Block* blockOfTreesAfterTheCall = mergedBlock->split(callNodeTreeTop, callerCFG, false/*fixupCommoning*/, false/*copyExceptionSuccessors*/);
+         callerCFG->copyExceptionSuccessors(blockContainingTheCall, blockOfTreesAfterTheCall);
+         debugTrace(tracer(), "block_%d is generated as a result of split", blockOfTreesAfterTheCall->getNumber());
+         }
+      else
+         {
+         for (auto e1 = mergedBlock->getExceptionSuccessors().begin(); e1 != mergedBlock->getExceptionSuccessors().end(); ++e1)
+            {
+            TR_ASSERT_FATAL(!succIsOSRCatchBlock(*e1), "Mismatch between OSR meta data and CFG\n");
+            }
+
+         debugTrace(tracer(), "Copy OSR exception edge from caller block_%d to block_%d", blockContainingTheCall->getNumber(), mergedBlock->getNumber());
+
+         // The inlined callee has no OSR point, but the trees after the call from caller may have OSR points. Have to
+         // copy the exception edge from caller block containing the call to the merged block, otherwise OSR points
+         // from the caller will become invalid.
+         callerCFG->copyExceptionSuccessors(blockContainingTheCall, mergedBlock, succIsOSRCatchBlock);
+         }
       }
 
    // move the NULLCHK to before the inlined code

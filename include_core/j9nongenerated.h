@@ -212,4 +212,22 @@ typedef struct J9MemorySegmentList {
 	uintptr_t flags;
 } J9MemorySegmentList;
 
+#if defined(OMR_GC_REALTIME)
+
+typedef struct MM_GCRememberedSet {
+	uintptr_t globalFragmentIndex;
+	uintptr_t preservedGlobalFragmentIndex;
+} MM_GCRememberedSet;
+
+typedef struct MM_GCRememberedSetFragment {
+	uintptr_t** fragmentAlloc;
+	uintptr_t** fragmentTop;
+	void* fragmentStorage;
+	uintptr_t localFragmentIndex;
+	uintptr_t preservedLocalFragmentIndex;
+	struct MM_GCRememberedSet* fragmentParent;
+} MM_GCRememberedSetFragment;
+
+#endif /* defined(OMR_GC_REALTIME) */
+
 #endif /* j9nongenerated_h */

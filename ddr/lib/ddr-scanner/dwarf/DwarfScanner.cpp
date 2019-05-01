@@ -673,7 +673,7 @@ DwarfScanner::addDieToIR(Dwarf_Die die, Dwarf_Half tag, NamespaceUDT *outerUDT, 
 
 	rc = getOrCreateNewType(die, tag, &newType, outerUDT, &isNewType);
 
-	if ((DDR_RC_OK == rc) && isNewType && NULL == outerUDT) {
+	if ((DDR_RC_OK == rc) && isNewType && (NULL == outerUDT)) {
 		rc = blackListedDie(die, &dieBlackListed);
 	}
 
@@ -1182,15 +1182,21 @@ DwarfScanner::addClassField(Dwarf_Die die, ClassType *newClass, const string &fi
 
 		if (!newField->_isStatic) {
 			/* Get the offset (member_location) attribute. */
-			Dwarf_Bool hasAttr = false;
-			if (DW_DLV_ERROR == dwarf_hasattr(die, DW_AT_data_member_location, &hasAttr, &error)) {
+			Dwarf_Bool hasAttrBytes = false;
+			if (DW_DLV_ERROR == dwarf_hasattr(die, DW_AT_data_member_location, &hasAttrBytes, &error)) {
 				ERRMSG("Checking if die has offset attribute: %s\n", dwarf_errmsg(error));
 				goto AddUDTFieldDone;
 			}
-			if (hasAttr) {
+			Dwarf_Bool hasAttrBits = false;
+			if (DW_DLV_ERROR == dwarf_hasattr(die, DW_AT_data_bit_offset, &hasAttrBits, &error)) {
+				ERRMSG("Checking if die has bit offset attribute: %s\n", dwarf_errmsg(error));
+				goto AddUDTFieldDone;
+			}
+			if (hasAttrBytes || hasAttrBits) {
 				Dwarf_Attribute attr = NULL;
 				Dwarf_Unsigned offset = 0;
-				if (DW_DLV_ERROR == dwarf_attr(die, DW_AT_data_member_location, &attr, &error)) {
+				Dwarf_Half attrType = hasAttrBytes ? DW_AT_data_member_location : DW_AT_data_bit_offset;
+				if (DW_DLV_ERROR == dwarf_attr(die, attrType, &attr, &error)) {
 					ERRMSG("Getting offset attribute: %s\n", dwarf_errmsg(error));
 					goto AddUDTFieldDone;
 				}
@@ -1200,7 +1206,7 @@ DwarfScanner::addClassField(Dwarf_Die die, ClassType *newClass, const string &fi
 					ERRMSG("Getting value of offset attribute: %s\n", dwarf_errmsg(error));
 					goto AddUDTFieldDone;
 				}
-				newField->_offset = offset;
+				newField->_offset = hasAttrBytes ? offset : (offset / 8);
 			} else if ("union" != newClass->getSymbolKindName()) {
 				ERRMSG("Missing offset attribute for %s.%s\n", newClass->_name.c_str(), fieldName.c_str());
 				goto AddUDTFieldDone;

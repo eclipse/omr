@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,10 +21,10 @@
 
 #include "infra/BitVector.hpp"
 
-#include <stdint.h>                   // for int32_t, uint32_t
-#include <stdio.h>                    // for sprintf
-#include "compile/Compilation.hpp"    // for Compilation
-#include "ras/Debug.hpp"              // for TR_DebugBase
+#include <stdint.h>
+#include <stdio.h>
+#include "compile/Compilation.hpp"
+#include "ras/Debug.hpp"
 
 // Number of bits set in a byte containing the index value
 //

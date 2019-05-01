@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,8 +31,8 @@ namespace OMR { struct MethodMetaDataPOD; }
 namespace OMR { typedef OMR::MethodMetaDataPOD MethodMetaDataPODConnector; }
 #endif
 
-#include <stdint.h>               // for uintptr_t
-#include "infra/Annotations.hpp"  // for OMR_EXTENSIBLE
+#include <stdint.h>
+#include "infra/Annotations.hpp"
 
 /*
  * This structure describes the shape of the method meta data information.

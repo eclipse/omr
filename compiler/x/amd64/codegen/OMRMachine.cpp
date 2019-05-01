@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,9 +21,9 @@
 
 #include "x/amd64/codegen/OMRMachine.hpp"
 
-#include <stdint.h>                   // for uint8_t
-#include "codegen/CodeGenerator.hpp"  // for CodeGenerator
-#include "compile/Compilation.hpp"    // for Compilation
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 

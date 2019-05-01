@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,66 +19,67 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <algorithm>                                  // for std::min
-#include <assert.h>                                   // for assert
-#include <stdint.h>                                   // for uint8_t, etc
-#include <stdlib.h>                                   // for NULL, atoi
-#include <string.h>                                   // for strstr
-#include "codegen/CodeGenerator.hpp"                  // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                       // for TR_FrontEnd, etc
-#include "codegen/Instruction.hpp"                    // for Instruction
-#include "codegen/Linkage.hpp"                        // for Linkage, etc
+#include <algorithm>
+#include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
-#include "codegen/Machine.hpp"                        // for Machine
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"                   // for RealRegister, etc
+#include "codegen/RealRegister.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#include "codegen/Register.hpp"                       // for Register
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterPair.hpp"                   // for RegisterPair
+#include "codegen/RegisterPair.hpp"
 #include "codegen/RegisterRematerializationInfo.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/Compilation.hpp"                    // for Compilation, etc
+#include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                                 // for POINTER_PRINTF_FORMAT
-#include "env/ObjectModel.hpp"                        // for ObjectModel
-#include "env/TRMemory.hpp"                           // for TR_HeapMemory, etc
-#include "env/jittypes.h"                             // for uintptrj_t, intptrj_t
-#include "il/Block.hpp"                               // for Block, etc
-#include "il/DataTypes.hpp"                           // for DataTypes, TR::DataType, etc
+#include "env/IO.hpp"
+#include "env/ObjectModel.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                               // for ILOpCode
-#include "il/Node.hpp"                                // for Node, etc
-#include "il/Node_inlines.hpp"                        // for Node::getChild, etc
-#include "il/Symbol.hpp"                              // for Symbol, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                             // for TreeTop
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/AutomaticSymbol.hpp"
 #include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"                 // for MethodSymbol
-#include "infra/Assert.hpp"                           // for TR_ASSERT
-#include "infra/Bit.hpp"                              // for leadingZeroes
-#include "infra/List.hpp"                             // for List, etc
-#include "infra/CfgEdge.hpp"                          // for CFGEdge
-#include "ras/Debug.hpp"                              // for TR_DebugBase
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "ras/Debug.hpp"
 #include "ras/DebugCounter.hpp"
 #include "runtime/Runtime.hpp"
 #ifdef J9_PROJECT_SPECIFIC
 #include "runtime/J9Profiler.hpp"
-#include "runtime/J9ValueProfiler.hpp"         // for TR_ValueInfo
+#include "runtime/J9ValueProfiler.hpp"
 #endif
 #include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/OutlinedInstructions.hpp"
 #include "x/codegen/RegisterRematerialization.hpp"
 #include "x/codegen/X86Evaluator.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                       // for ::LABEL, etc
+#include "x/codegen/X86Ops.hpp"
 #include "x/codegen/BinaryCommutativeAnalyser.hpp"
 #include "x/codegen/SubtractAnalyser.hpp"
 
@@ -806,6 +807,37 @@ TR::Register *OMR::X86::TreeEvaluator::lrdbarEvaluator(TR::Node *node, TR::CodeG
    return TR::TreeEvaluator::lloadEvaluator(node, cg);
    }
 
+
+TR::Register *OMR::X86::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::istoreEvaluator(node,cg);
+   }
+
+TR::Register *OMR::X86::TreeEvaluator::fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
+   }
+
+TR::Register *OMR::X86::TreeEvaluator::bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::bstoreEvaluator(node, cg);
+   }
+
+TR::Register *OMR::X86::TreeEvaluator::swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::sstoreEvaluator(node, cg);
+   }
+
+TR::Register *OMR::X86::TreeEvaluator::lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   }
+
 // cloadEvaluator handled by sloadEvaluator
 
 // iiload handled by iloadEvaluator
@@ -1451,24 +1483,6 @@ TR::Register *OMR::X86::TreeEvaluator::SSE2ArraycmpLenEvaluator(TR::Node *node, 
    return resultReg;
    }
 
-void genCodeToPerformLeftToRightAndBlockConcurrentOpIfNeeded(
-   TR::Node *node,
-   TR::MemoryReference *memRef,
-   TR::Register *vReg,
-   TR::Register *tempReg,
-   TR::Register *tempReg1,
-   TR::Register *tempReg2,
-   TR::LabelSymbol * nonLockedOpLabel,
-   TR::LabelSymbol *&opDoneLabel,
-   TR::RegisterDependencyConditions *&deps,
-   uint8_t size,
-   TR::CodeGenerator* cg,
-   bool isLoad,
-   bool genOutOfline,
-   bool keepValueRegAlive,
-   TR::LabelSymbol *startControlFlowLabel)
-   {
-   }
 
 bool OMR::X86::TreeEvaluator::stopUsingCopyRegAddr(TR::Node* node, TR::Register*& reg, TR::CodeGenerator* cg)
    {
@@ -2249,39 +2263,29 @@ static void arraycopyForShortConstArrayWithoutDirection(TR::Node* node, TR::Regi
 
 TR::Register *OMR::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (node->isReferenceArrayCopy() && !node->isNoArrayStoreCheckArrayCopy())
-      {
-      return TR::TreeEvaluator::VMarrayStoreCheckArrayCopyEvaluator(node, cg);
-      }
-   // There are two cases.
-   // In the first case we know that a simple memmove or memcpy operation can
-   // be done. For this case there are 3 children:
-   //    1) The byte source pointer
-   //    2) The byte destination pointer
-   //    3) The byte count
+   // There are two variants of TR::arraycopy: one has 5 children, the other has 3 children. Details can be found from
+   // compiler/il/ILOpCodeProperties.hpp
    //
-   // In the second case we must generate run-time tests to see if a simple
-   // byte copy can be done or if an element-by-element copy is needed.
-   // For this case there are 5 children:
-   //    1) The original source object reference
-   //    2) The original destination object reference
-   //    3) The byte source pointer
-   //    4) The byte destination pointer
-   //    5) The byte count
+   // In most, if not all, cases, the 5-child variant requires language specific semantics, which OMR is not aware of. The fact
+   // that a 5-child arraycopy is generated indicates at least one of the first two children must be needed when performing the
+   // copy; otherwise a 3-child arraycopy should be generated instead. Interpreting the meanings of the first two children
+   // definitely requires language specific semantics. For example, the first two children may be for dealing with an arraycopy
+   // where the Garbage Collector may need to be notified about the copy or something to that affect.
    //
+   // Therefore, this OMR evaluator only handles the 3-child variant, is an operation equivalent to C++'s std::memmove().
+   // Should a downstream project need the 5-child variant evaluator, it needs to override this evaluator in its own TreeEvaluator,
+   // and delegates the 3-child variant back to this evaluator by calling OMR::TreeEvaluatorConnector::arraycopyEvaluator.
+
+   TR_ASSERT_FATAL(node->getNumChildren() == 3, "This evaluator is for the 3-child variant of arraycopy.");
 
    // ALL nodes need be evaluated to comply argument evaluation order;
    // since size node is the last node, its evaluation can be delayed for further optimization
-   TR::Node* sizeNode = node->getLastChild();
-   for (int32_t i = 0; i < node->getNumChildren()-1; i++)
-      {
-      cg->evaluate(node->getChild(i));
-      }
+   TR::Node* srcNode  = node->getChild(0); // the address of memory to copy from
+   TR::Node* dstNode  = node->getChild(1); // the address of memory to copy to
+   TR::Node* sizeNode = node->getChild(2); // the size of memory to copy, in bytes
 
-   TR::Register* srcReg = cg->allocateRegister();
-   TR::Register* dstReg = cg->allocateRegister();
-   generateRegRegInstruction(MOVRegReg(), node, srcReg, node->getChild(node->getNumChildren() - 3)->getRegister(), cg);
-   generateRegRegInstruction(MOVRegReg(), node, dstReg, node->getChild(node->getNumChildren() - 2)->getRegister(), cg);
+   TR::Register* srcReg = cg->gprClobberEvaluate(srcNode, MOVRegReg());
+   TR::Register* dstReg = cg->gprClobberEvaluate(dstNode, MOVRegReg());
 
    TR::DataType dt = node->getArrayCopyElementType();
    uint32_t elementSize = 1;
@@ -2327,8 +2331,9 @@ TR::Register *OMR::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Co
       }
    else
       {
-      TR::Register* sizeReg = TR::TreeEvaluator::intOrLongClobberEvaluate(sizeNode, TR::TreeEvaluator::getNodeIs64Bit(sizeNode, cg), cg);
-      if (TR::Compiler->target.is64Bit() && !TR::TreeEvaluator::getNodeIs64Bit(sizeNode, cg))
+      bool isSize64Bit = TR::TreeEvaluator::getNodeIs64Bit(sizeNode, cg);
+      TR::Register* sizeReg = cg->gprClobberEvaluate(sizeNode, MOVRegReg(isSize64Bit));
+      if (TR::Compiler->target.is64Bit() && !isSize64Bit)
          {
          generateRegRegInstruction(MOVZXReg8Reg4, node, sizeReg, sizeReg, cg);
          }
@@ -2350,16 +2355,8 @@ TR::Register *OMR::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Co
 
    cg->stopUsingRegister(dstReg);
    cg->stopUsingRegister(srcReg);
-#ifdef J9_PROJECT_SPECIFIC
-   if (node->isReferenceArrayCopy())
-      {
-      TR::TreeEvaluator::generateWrtbarForArrayCopy(node, cg);
-      }
-#endif
-   for (int32_t i = 0; i < node->getNumChildren()-1; i++)
-      {
-      cg->decReferenceCount(node->getChild(i));
-      }
+   cg->decReferenceCount(dstNode);
+   cg->decReferenceCount(srcNode);
    return NULL;
    }
 
@@ -3037,6 +3034,96 @@ static TR::Register* inlineAtomicMemoryUpdate(TR::Node* node, TR_X86OpCodes op, 
    return value;
    }
 
+/** \brief
+ *    Generate instructions to do atomic compare and 64-bit memory update on X86-32.
+ *
+ *  \param node
+ *     The tree node
+ *
+ *  \param returnValue
+ *     Indicate whether the result is the old memory value or the status of memory update
+ *
+ *  \param cg
+ *     The code generator
+ */
+static TR::Register* inline64BitAtomicCompareAndMemoryUpdateOn32Bit(TR::Node* node, bool returnValue, TR::CodeGenerator* cg)
+   {
+   TR_ASSERT(TR::Compiler->target.is32Bit(), "32-bit only");
+   TR::Register* address  = cg->evaluate(node->getChild(0));
+   TR::Register* oldvalue = cg->longClobberEvaluate(node->getChild(1));
+   TR::Register* newvalue = cg->evaluate(node->getChild(2));
+
+   TR::RegisterDependencyConditions* deps = generateRegisterDependencyConditions((uint8_t)4, (uint8_t)4, cg);
+   deps->addPreCondition(oldvalue->getLowOrder(),  TR::RealRegister::eax, cg);
+   deps->addPreCondition(oldvalue->getHighOrder(), TR::RealRegister::edx, cg);
+   deps->addPreCondition(newvalue->getLowOrder(),  TR::RealRegister::ebx, cg);
+   deps->addPreCondition(newvalue->getHighOrder(), TR::RealRegister::ecx, cg);
+   deps->addPostCondition(oldvalue->getLowOrder(),  TR::RealRegister::eax, cg);
+   deps->addPostCondition(oldvalue->getHighOrder(), TR::RealRegister::edx, cg);
+   deps->addPostCondition(newvalue->getLowOrder(),  TR::RealRegister::ebx, cg);
+   deps->addPostCondition(newvalue->getHighOrder(), TR::RealRegister::ecx, cg);
+
+   generateMemInstruction(LCMPXCHG8BMem, node, generateX86MemoryReference(address, 0, cg), deps, cg);
+   if (!returnValue)
+      {
+      cg->stopUsingRegister(oldvalue->getHighOrder());
+      oldvalue = oldvalue->getLowOrder();
+      generateRegInstruction(SETE1Reg, node, oldvalue, cg);
+      generateRegRegInstruction(MOVZXReg4Reg1, node, oldvalue, oldvalue, cg);
+      }
+
+   node->setRegister(oldvalue);
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+   return oldvalue;
+   }
+
+/** \brief
+ *    Generate instructions to do atomic compare and memory update.
+ *
+ *  \param node
+ *     The tree node
+ *
+ *  \param op
+ *     The instruction op code to perform the memory update
+ *
+ *  \param returnValue
+ *     Indicate whether the result is the old memory value or the status of memory update
+ *
+ *  \param cg
+ *     The code generator
+ */
+static TR::Register* inlineAtomicCompareAndMemoryUpdate(TR::Node* node, bool returnValue, TR::CodeGenerator* cg)
+   {
+   bool isNode64Bit = node->getChild(1)->getDataType().isInt64();
+   if (TR::Compiler->target.is32Bit() && isNode64Bit)
+      {
+      return inline64BitAtomicCompareAndMemoryUpdateOn32Bit(node, returnValue, cg);
+      }
+
+   TR::Register* address  = cg->evaluate(node->getChild(0));
+   TR::Register* oldvalue = cg->gprClobberEvaluate(node->getChild(1), MOVRegReg());
+   TR::Register* newvalue = cg->evaluate(node->getChild(2));
+
+   TR::RegisterDependencyConditions* deps = generateRegisterDependencyConditions((uint8_t)1, (uint8_t)1, cg);
+   deps->addPreCondition(oldvalue, TR::RealRegister::eax, cg);
+   deps->addPostCondition(oldvalue, TR::RealRegister::eax, cg);
+
+   generateMemRegInstruction(LCMPXCHGMemReg(isNode64Bit), node, generateX86MemoryReference(address, 0, cg), newvalue, deps, cg);
+   if (!returnValue)
+      {
+      generateRegInstruction(SETE1Reg, node, oldvalue, cg);
+      generateRegRegInstruction(MOVZXReg4Reg1, node, oldvalue, oldvalue, cg);
+      }
+
+   node->setRegister(oldvalue);
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+   return oldvalue;
+   }
+
 // TR::icall, TR::acall, TR::lcall, TR::fcall, TR::dcall, TR::call handled by directCallEvaluator
 TR::Register *OMR::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -3084,6 +3171,14 @@ TR::Register *OMR::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::C
       if (op != BADIA32Op)
          {
          return inlineAtomicMemoryUpdate(node, op, cg);
+         }
+      if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicCompareAndSwapReturnStatusSymbol))
+         {
+         return inlineAtomicCompareAndMemoryUpdate(node, false, cg);
+         }
+      if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicCompareAndSwapReturnValueSymbol))
+         {
+         return inlineAtomicCompareAndMemoryUpdate(node, true, cg);
          }
       }
 
@@ -3427,7 +3522,7 @@ TR::Register *OMR::X86::TreeEvaluator::BBStartEvaluator(TR::Node *node, TR::Code
       if (node->getNumChildren() > 0)
          inst = generateLabelInstruction(LABEL, node, label, node->getFirstChild(), &popRegisters, cg);
       else
-         inst = generateLabelInstruction(LABEL, node, node->getLabel(), true, cg);
+         inst = generateLabelInstruction(LABEL, node, node->getLabel(), cg);
 
       if (inst->getDependencyConditions())
          inst->getDependencyConditions()->setMayNeedToPopFPRegisters(true);
@@ -3456,7 +3551,7 @@ TR::Register *OMR::X86::TreeEvaluator::BBStartEvaluator(TR::Node *node, TR::Code
    if (comp->getOption(TR_BreakBBStart))
       {
       TR::Machine *machine = cg->machine();
-      generateRegImmInstruction(TEST4RegImm4, node, machine->getX86RealRegister(TR::RealRegister::esp), block->getNumber(), cg);
+      generateRegImmInstruction(TEST4RegImm4, node, machine->getRealRegister(TR::RealRegister::esp), block->getNumber(), cg);
       generateInstruction(BADIA32Op, node, cg);
       }
 
@@ -3509,14 +3604,12 @@ TR::Register *OMR::X86::TreeEvaluator::BBEndEvaluator(TR::Node *node, TR::CodeGe
          machine->createRegisterAssociationDirective(cg->getAppendInstruction());
          }
 
-      bool needVMThreadDep = true;
-
       // This label is also used by RegisterDependency to detect the end of a block.
       TR::Instruction *labelInst = NULL;
       if (node->getNumChildren() > 0)
          labelInst = generateLabelInstruction(LABEL, node, generateLabelSymbol(cg), node->getFirstChild(), NULL, cg);
       else
-         labelInst = generateLabelInstruction(LABEL, node, generateLabelSymbol(cg), needVMThreadDep, cg);
+         labelInst = generateLabelInstruction(LABEL, node, generateLabelSymbol(cg), cg);
 
        node->getBlock()->setLastInstruction(labelInst);
 
@@ -3809,15 +3902,6 @@ TR::Register *OMR::X86::TreeEvaluator::PrefetchEvaluator(TR::Node *node, TR::Cod
    return NULL;
    }
 
-
-void
-TR_X86ComputeCC::bitwise32(TR::Node *node, TR::Register *ccReg, TR::Register *target,
-                             TR::CodeGenerator *cg)
-   {
-   generateRegInstruction(SETNE1Reg, node, ccReg, cg);
-   target->setCCRegister(ccReg);
-   }
-
 bool
 TR_X86ComputeCC::setCarryBorrow(TR::Node *flagNode, bool invertValue, TR::CodeGenerator *cg)
    {
@@ -4079,12 +4163,6 @@ OMR::X86::TreeEvaluator::tabortEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return NULL;
    }
 
-TR::Register *
-OMR::X86::TreeEvaluator::VMarrayStoreCheckArrayCopyEvaluator(TR::Node*, TR::CodeGenerator*)
-   {
-   return 0;
-   }
-
 bool
 OMR::X86::TreeEvaluator::VMinlineCallEvaluator(TR::Node*, bool, TR::CodeGenerator*)
    {
@@ -4225,7 +4303,8 @@ TR::Register* OMR::X86::TreeEvaluator::FloatingPointAndVectorBinaryArithmeticEva
 
    if (useRegMemForm)
       {
-      if (operandNode1->getReferenceCount() != 1 ||
+      if (operandNode1->getRegister()                               ||
+          operandNode1->getReferenceCount() != 1                    ||
           operandNode1->getOpCodeValue() != MemoryLoadOpCodes[type] ||
           BinaryArithmeticOpCodesForMem[type][arithmetic] == BADIA32Op)
          {

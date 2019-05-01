@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,8 +118,6 @@ class TR_S390RegisterDependencyGroup
       _dependencies[index].assignFlags(flag);
       _dependencies[index].setRealRegister(rr);
       if (vr) vr->setDependencySet(true);
-      if (vr != NULL)
-         vr->setIsNotHighWordUpgradable(true);
       }
 
    TR::Register *searchForRegister(TR::Register* vr, uint8_t flag, uint32_t numberOfRegisters, TR::CodeGenerator *cg)
@@ -158,18 +156,6 @@ class TR_S390RegisterDependencyGroup
       {
       _dependencies[index].setRealRegister(regNum);
       }
-
-   void checkRegisterPairSufficiencyAndHPRAssignment(TR::CodeGenerator *cg,
-                                     TR::Instruction  *currentInstruction,
-                                     const uint32_t availableGPRMap,
-                                     uint32_t numOfDependencies);
-
-   void checkRegisterDependencyDuplicates(TR::CodeGenerator* cg,
-                                          const uint32_t numOfDependencies);
-
-   uint32_t checkDependencyGroup(TR::CodeGenerator *cg,
-                                 TR::Instruction  *currentInstruction,
-                                 uint32_t numOfDependencies);
 
    void assignRegisters(TR::Instruction  *currentInstruction,
                         TR_RegisterKinds kindToBeAssigned,
@@ -211,14 +197,6 @@ class TR_S390RegisterDependencyGroup
             cg->stopUsingRegister(depReg);
          }
       }
-
-   void set64BitRegisters(uint32_t numberOfRegisters, TR::CodeGenerator *cg)
-         {
-         for (int32_t i=0; i<numberOfRegisters; i++)
-            {
-            _dependencies[i].getRegister()->setIs64BitReg(true);
-            }
-         }
 
    int8_t getNumUses() {return _numUses;}
    void incNumUses(int8_t n=1) { _numUses+=n;}
@@ -459,11 +437,6 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
          _cg->comp()->failCompilation<TR::CompilationException>("addPostCondition list overflow, abort compilation\n");
          }
       _postConditions->setDependencyInfo(_addCursorForPost++, vr, rr, flag);
-      if((flag & DefinesDependentRegister) != 0)
-        {
-        bool redefined=(vr->getStartOfRange() != NULL);
-        vr->setRedefined(redefined);
-        }
       }
 
    void assignPreConditionRegisters(TR::Instruction *currentInstruction, TR_RegisterKinds kindToBeAssigned, TR::CodeGenerator *cg)
@@ -552,18 +525,6 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
    bool doesConditionExist( TR_S390RegisterDependencyGroup * regDepArr, TR::Register * vr, TR::RealRegister::RegNum rr, uint32_t flag, uint32_t numberOfRegisters, bool overwriteAssignAny = false );
    bool doesPreConditionExist( TR::Register * vr, TR::RealRegister::RegNum rr, uint32_t flag, bool overwriteAssignAny = false );
    bool doesPostConditionExist( TR::Register * vr, TR::RealRegister::RegNum rr, uint32_t flag, bool overwriteAssignAny = false );
-
-   void set64BitRegisters()
-     {
-     if (_preConditions != NULL)
-        {
-        _preConditions->set64BitRegisters(_addCursorForPre, _cg);
-        }
-     if (_postConditions != NULL)
-        {
-        _postConditions->set64BitRegisters(_addCursorForPost, _cg);
-        }
-     }
 
    TR::CodeGenerator *cg()   { return _cg; }
    };

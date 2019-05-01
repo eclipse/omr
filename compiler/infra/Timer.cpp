@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,14 +27,14 @@
 
 #include "infra/Timer.hpp"
 
-#include <stdint.h>              // for uint32_t
-#include <stdio.h>               // for sprintf, NULL
-#include <string.h>              // for strcpy, strlen
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
-#include "env/TRMemory.hpp"      // for TR_Memory
-#include "infra/Array.hpp"       // for TR_Array
+#include "env/TRMemory.hpp"
+#include "infra/Array.hpp"
 
 void TR_SingleTimer::initialize(const char *title, TR_Memory * trMemory)
    {

@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2018 IBM Corp. and others
+Copyright (c) 2016, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,26 +89,50 @@ A subset of the labels are documented below.
 * [**`license`**](https://github.com/eclipse/omr/labels/license) labels are
   used to annotate issues concerning the source code license.
 
-* [**`test`**](https://github.com/eclipse/omr/labels/test) labels are for
-  issues relating to the unit test framework and the unit tests themselves
-  found in the fvtest directory.
+* [**`meeting`**](https://github.com/eclipse/omr/labels/meeting) labels are
+  used to annotate issues pertaining to project meeting agendas or minutes.
 
 * [**`tooling`**](https://github.com/eclipse/omr/labels/tooling) labels are for
   issues concerning support tooling needed to support any of the code or
   processes within the project.
 
 Labels are also used to classify issues and pull requests by the dominant
-Eclipse OMR technology component they affect. For instance:
+Eclipse OMR technology component they affect.  For instance,
 
-* **`compiler`**
-* **`gc`**
-* **`glue`**
-* **`jitbuilder`**
-* **`port`**
-* **`ras`**
-* **`thread`**
-* **`tril`**
-* **`utilities`**
+| Label | Component | Principal Directories |
+| :---- | :---- | :---- |
+[**`comp:compiler`**](https://github.com/eclipse/omr/labels/comp%3Acompiler) | Compiler | `compiler`
+[**`comp:core`**](https://github.com/eclipse/omr/labels/comp%3Acore) | Core OMR functionality | `include_code`, `omr`
+[**`comp:diagnostic`**](https://github.com/eclipse/omr/labels/comp%3Adiagnostic) | Diagnostic services | `ddr`
+[**`comp:doc`**](https://github.com/eclipse/omr/labels/comp%3Adoc) | OMR documentation | `doc`
+[**`comp:gc`**](https://github.com/eclipse/omr/labels/comp%3Agc) | Garbage collector | `gc`
+[**`comp:glue`**](https://github.com/eclipse/omr/labels/comp%3Aglue) | Glue code | `glue`
+[**`comp:jitbuilder`**](https://github.com/eclipse/omr/labels/comp%3Ajitbuilder) | JitBuilder | `jitbuilder`
+[**`comp:port`**](https://github.com/eclipse/omr/labels/comp%3Aport) | Port library | `port`
+[**`comp:test`**](https://github.com/eclipse/omr/labels/comp%3Atest) | Unit tests and testing framework | `fvtest`
+[**`comp:thread`**](https://github.com/eclipse/omr/labels/comp%3Athread) | Thread library | `thread`
+[**`comp:tril`**](https://github.com/eclipse/omr/labels/comp%3Atril) | Tril infrastructure and tests | `fvtest/tril`
+[**`comp:utilities`**](https://github.com/eclipse/omr/labels/comp%3Autil) | OMR utilities | `util`
+
+Further classification by processor architecture, operating system, and bitness
+can be achieved with the following labels:
+
+* [**`arch:aarch32`**](https://github.com/eclipse/omr/labels/arch%3Aaarch32)
+* [**`arch:aarch64`**](https://github.com/eclipse/omr/labels/arch%3Aaarch64)
+* [**`arch:power`**](https://github.com/eclipse/omr/labels/arch%3Apower)
+* [**`arch:x86`**](https://github.com/eclipse/omr/labels/arch%3Ax86)
+* [**`arch:z`**](https://github.com/eclipse/omr/labels/arch%3Az)
+<br/>
+
+* [**`os:aix`**](https://github.com/eclipse/omr/labels/os%3Aaix)
+* [**`os:linux`**](https://github.com/eclipse/omr/labels/os%3Alinux)
+* [**`os:macos`**](https://github.com/eclipse/omr/labels/os%3Amacos)
+* [**`os:windows`**](https://github.com/eclipse/omr/labels/os%3Awindows)
+* [**`os:zos`**](https://github.com/eclipse/omr/labels/os%3Azos)
+<br/>
+
+* [**`bits:32`**](https://github.com/eclipse/omr/labels/bits%3A32)
+* [**`bits:64`**](https://github.com/eclipse/omr/labels/bits%3A64)
 
 ## Submitting a contribution
 
@@ -129,7 +153,8 @@ Following these guidelines will help us to merge your pull requests smoothly:
    copyright/license requirements outlined below.
 
 4. For each file that you modify, ensure that the current copyright year in the
-   header at the top of the file is up-to-date with the current year.
+   header at the top of the file is up-to-date with the current year.  Note that
+   renaming, moving, or copying a file does not require a copyright change.
 
 5. Follow the coding style and format of the code you are modifying (see the
    [coding standards](doc/CodingStandard.md)). The code base is yet to be unified

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,6 +43,10 @@
  * \def TR_ASSERT               a macro that defines an assertion which is compiled out
  *                              (including format strings) during production builds
  *
+ * \def TR_UNIMPLEMENTED        a macro that expands into an unconditional assertion
+ *                              failure. Used to indicate that a function has not been
+ *                              implemented and may not be called.
+ *
  * We also provide Expect and Ensure, based on the developing C++ Core guidelines [1].
  *
  * \def Expect                  Precondition macro, only defined for DEBUG and
@@ -66,6 +70,9 @@
 
 #include "infra/Annotations.hpp"                // OMR_NORETURN
 #include "compile/CompilationException.hpp"
+
+#include <cstddef>
+
 namespace TR
    {
    void OMR_NORETURN trap();
@@ -99,6 +106,9 @@ namespace TR
 
 #define TR_ASSERT_FATAL(condition, format, ...) \
          do { (condition) ? (void)0 : TR::fatal_assertion(__FILE__, __LINE__, #condition, format, ##__VA_ARGS__); } while(0)
+
+#define TR_UNIMPLEMENTED() \
+         ::TR::fatal_assertion(__FILE__, __LINE__, NULL, "Unimplemented function: %s", __FUNCTION__)
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,44 +21,44 @@
 
 #include "optimizer/CompactLocals.hpp"
 
-#include <stdint.h>                                 // for int32_t, int64_t
-#include <stdlib.h>                                 // for NULL, atoi
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                     // for feGetEnv
-#include "compile/Compilation.hpp"                  // for Compilation
-#include "compile/CompilationTypes.hpp"             // for TR_Hotness
-#include "compile/Method.hpp"                       // for mcount_t
+#include <stdint.h>
+#include <stdlib.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "cs2/sparsrbit.h"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                         // for SparseBitVector, etc
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                             // for Block, toBlock
-#include "il/DataTypes.hpp"                         // for etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                             // for ILOpCode
-#include "il/Node.hpp"                              // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "il/TreeTop.hpp"                           // for TreeTop
-#include "il/TreeTop_inlines.hpp"                   // for TreeTop::getNode, etc
-#include "il/symbol/AutomaticSymbol.hpp"            // for AutomaticSymbol
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Array.hpp"                          // for TR_Array
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/BitVector.hpp"                      // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                            // for CFG
-#include "infra/HashTab.hpp"                        // for TR_HashTabInt, etc
-#include "infra/IGNode.hpp"                         // for IGNodeDegree
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/HashTab.hpp"
+#include "infra/IGNode.hpp"
 #include "infra/InterferenceGraph.hpp"
-#include "infra/List.hpp"                           // for ListIterator, etc
-#include "infra/CfgEdge.hpp"                        // for CFGEdge
-#include "optimizer/Optimization.hpp"               // for Optimization
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/DataFlowAnalysis.hpp"           // for TR_Liveness
+#include "optimizer/DataFlowAnalysis.hpp"
 
 
 #define MAX_NUMBER_OF_LOCALS 2000

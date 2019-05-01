@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef BACKINGSTORE_INCL
 #define BACKINGSTORE_INCL
 
-#include <stdint.h>                    // for int32_t, uint8_t, int8_t
-#include "compile/Compilation.hpp"     // for Compilation, comp
-#include "env/TRMemory.hpp"            // for TR_Memory, etc
-#include "il/SymbolReference.hpp"      // for SymbolReference
-#include "infra/Flags.hpp"             // for flags8_t
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Flags.hpp"
 
 namespace TR { class Symbol; }
 namespace TR { class SymbolReferenceTable; }

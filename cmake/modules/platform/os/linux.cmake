@@ -48,7 +48,8 @@ elseif(OMR_HOST_ARCH STREQUAL "s390")
 	)
 endif()
 
-# Check that we need to pull librt to get clock_gettime/settime family of functions
+# Check if OMR need to use librt.  This variable is used by containing projects
+# properly link against OMR.
 if(NOT DEFINED OMR_NEED_LIBRT)
 	check_symbol_exists(clock_gettime time.h OMR_LIBC_HAS_CLOCK_GETTIME)
 	if(OMR_LIBC_HAS_CLOCK_GETTIME)

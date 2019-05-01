@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,12 +26,10 @@
 #include "env/ProcessorInfo.hpp"
 #include "x/runtime/X86Runtime.hpp"
 
+
 TR_X86CPUIDBuffer *
-OMR::X86::CPU::queryX86TargetCPUID(TR::Compilation *comp)
+OMR::X86::CPU::queryX86TargetCPUID()
    {
-#ifdef J9_PROJECT_SPECIFIC
-   return NULL;
-#else
    static TR_X86CPUIDBuffer *buf = NULL;
    auto jitConfig = TR::JitConfig::instance();
 
@@ -70,49 +68,47 @@ OMR::X86::CPU::queryX86TargetCPUID(TR::Compilation *comp)
       }
 
    return buf;
-#endif
    }
 
-
 const char *
-OMR::X86::CPU::getX86ProcessorVendorId(TR::Compilation *comp)
+OMR::X86::CPU::getX86ProcessorVendorId()
    {
    static char buf[13];
 
    // Terminate the vendor ID with NULL before returning.
    //
-   strncpy(buf, self()->queryX86TargetCPUID(comp)->_vendorId, 12);
+   strncpy(buf, self()->queryX86TargetCPUID()->_vendorId, 12);
    buf[12] = '\0';
 
    return buf;
    }
 
 uint32_t
-OMR::X86::CPU::getX86ProcessorSignature(TR::Compilation *comp)
+OMR::X86::CPU::getX86ProcessorSignature()
    {
-   return self()->queryX86TargetCPUID(comp)->_processorSignature;
+   return self()->queryX86TargetCPUID()->_processorSignature;
    }
 
 uint32_t
-OMR::X86::CPU::getX86ProcessorFeatureFlags(TR::Compilation *comp)
+OMR::X86::CPU::getX86ProcessorFeatureFlags()
    {
-   return self()->queryX86TargetCPUID(comp)->_featureFlags;
+   return self()->queryX86TargetCPUID()->_featureFlags;
    }
 
 uint32_t
-OMR::X86::CPU::getX86ProcessorFeatureFlags2(TR::Compilation *comp)
+OMR::X86::CPU::getX86ProcessorFeatureFlags2()
    {
-   return self()->queryX86TargetCPUID(comp)->_featureFlags2;
+   return self()->queryX86TargetCPUID()->_featureFlags2;
    }
 
 uint32_t
-OMR::X86::CPU::getX86ProcessorFeatureFlags8(TR::Compilation *comp)
+OMR::X86::CPU::getX86ProcessorFeatureFlags8()
    {
-   return self()->queryX86TargetCPUID(comp)->_featureFlags8;
+   return self()->queryX86TargetCPUID()->_featureFlags8;
    }
 
 bool
-OMR::X86::CPU::testOSForSSESupport(TR::Compilation *comp)
+OMR::X86::CPU::testOSForSSESupport()
    {
    return false;
    }

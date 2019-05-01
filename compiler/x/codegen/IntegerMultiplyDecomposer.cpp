@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,21 +21,21 @@
 
 #include "x/codegen/IntegerMultiplyDecomposer.hpp"
 
-#include <stddef.h>                                 // for NULL
-#include <stdint.h>                                 // for int32_t, int64_t, etc
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                     // for feGetEnv
-#include "codegen/LiveRegister.hpp"                 // for TR_LiveRegisters
-#include "codegen/Machine.hpp"                      // for Machine
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/LiveRegister.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "compile/Compilation.hpp"                  // for comp, etc
-#include "il/Node.hpp"                              // for Node
+#include "compile/Compilation.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/Bit.hpp"                            // for trailingZeroes, etc
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                     // for ADDRegReg, etc
+#include "x/codegen/X86Ops.hpp"
 #include "env/CompilerEnv.hpp"
 
 namespace TR { class Register; }

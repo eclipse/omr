@@ -48,4 +48,11 @@ typedef enum {
 
 } // TR
 
+/**
+ * @brief Returns inverted condition code
+ * @param[in] cc : condition code
+ * @return inverted condition code
+ */
+inline TR::ARM64ConditionCode cc_invert(TR::ARM64ConditionCode cc) { return (TR::ARM64ConditionCode)(cc ^ 1); }
+
 #endif

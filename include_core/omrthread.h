@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,6 +102,7 @@ or omrthread priority value.
 #define J9THREAD_LIB_FLAG_JLM_INIT_DATA_STRUCTURES  (J9THREAD_LIB_FLAG_JLM_ENABLED|J9THREAD_LIB_FLAG_JLM_INFO_SAMPLING_ENABLED|J9THREAD_LIB_FLAG_CUSTOM_ADAPTIVE_SPIN_ENABLED)
 #define J9THREAD_LIB_FLAG_DESTROY_MUTEX_ON_MONITOR_FREE  0x400000
 #define J9THREAD_LIB_FLAG_ENABLE_CPU_MONITOR  0x800000
+#define J9THREAD_LIB_FLAG_NO_DEFAULT_AFFINITY  0x1000000
 
 #define J9THREAD_LIB_YIELD_ALGORITHM_SCHED_YIELD  0
 #define J9THREAD_LIB_YIELD_ALGORITHM_CONSTANT_USLEEP  2

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,14 +29,16 @@
 #include "codegen/CallSnippet.hpp"
 #endif
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
 #include "codegen/RegisterPair.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/VirtualGuard.hpp"               // for TR_VirtualGuard
-#include "env/jittypes.h"                         // for intptrj_t
+#include "compile/VirtualGuard.hpp"
+#include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
@@ -483,8 +485,8 @@ TR::Register *OMR::ARM::TreeEvaluator::lloadEvaluator(TR::Node *node, TR::CodeGe
 
       generateTrg1MemInstruction(cg, ARMOp_add, node, bigEndian ? highReg: lowReg, tempMR);
       TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-      addDependency(deps, lowReg, bigEndian ? TR::RealRegister::gr1 : TR::RealRegister::gr0, TR_GPR, cg);
-      addDependency(deps, highReg, bigEndian ? TR::RealRegister::gr0 : TR::RealRegister::gr1, TR_GPR, cg);
+      TR::addDependency(deps, lowReg, bigEndian ? TR::RealRegister::gr1 : TR::RealRegister::gr0, TR_GPR, cg);
+      TR::addDependency(deps, highReg, bigEndian ? TR::RealRegister::gr0 : TR::RealRegister::gr1, TR_GPR, cg);
 
       generateImmSymInstruction(cg, ARMOp_bl,
                                 node, (uintptr_t)vrlRef->getMethodAddress(),
@@ -543,7 +545,7 @@ TR::Register *OMR::ARM::TreeEvaluator::commonLoadEvaluator(TR::Node *node,  TR_A
    }
 
 #if J9_PROJECT_SPECIFIC
-TR::Register *OMR::ARM::TreeEvaluator::wrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *OMR::ARM::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::MemoryReference *tempMR              = new (cg->trHeapMemory()) TR::MemoryReference(node, 4, cg);
    TR::Register            *destinationRegister = cg->evaluate(node->getSecondChild());
@@ -589,7 +591,7 @@ TR::Register *OMR::ARM::TreeEvaluator::wrtbarEvaluator(TR::Node *node, TR::CodeG
    return NULL;
    }
 
-TR::Register *OMR::ARM::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *OMR::ARM::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::MemoryReference *tempMR              = new (cg->trHeapMemory()) TR::MemoryReference(node, 4, cg);
    TR::Register            *destinationRegister = cg->evaluate(node->getChild(2));
@@ -662,9 +664,9 @@ TR::Register *OMR::ARM::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR::CodeG
 
       generateTrg1MemInstruction(cg, ARMOp_add, node, addrReg, tempMR);
       TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
-      addDependency(deps, addrReg, TR::RealRegister::gr0, TR_GPR, cg);
-      addDependency(deps, valueReg->getLowOrder(), TR::RealRegister::gr1, TR_GPR, cg);
-      addDependency(deps, valueReg->getHighOrder(), TR::RealRegister::gr2, TR_GPR, cg);
+      TR::addDependency(deps, addrReg, TR::RealRegister::gr0, TR_GPR, cg);
+      TR::addDependency(deps, valueReg->getLowOrder(), TR::RealRegister::gr1, TR_GPR, cg);
+      TR::addDependency(deps, valueReg->getHighOrder(), TR::RealRegister::gr2, TR_GPR, cg);
 
       generateImmSymInstruction(cg, ARMOp_bl,
                                 node, (uintptr_t)vwlRef->getMethodAddress(),
@@ -758,50 +760,50 @@ TR::Register *OMR::ARM::TreeEvaluator::monexitfenceEvaluator(TR::Node *node, TR:
    return NULL;         //this op code does not evaluate to anything
    }
 
-TR::Register *OMR::ARM::TreeEvaluator::integerHighestOneBit(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::integerLowestOneBit(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::integerNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::integerNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::integerBitCount(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::longHighestOneBit(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::longLowestOneBit(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::longNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::longNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::longBitCount(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::integerHighestOneBit(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::integerLowestOneBit(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::integerNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::integerNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::integerBitCount(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::longHighestOneBit(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::longLowestOneBit(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::longNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::longNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::longBitCount(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
 
 TR::Register *OMR::ARM::TreeEvaluator::reverseLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "reverseLoad not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::reverseStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "reverseStore not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::arraytranslateAndTestEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "arraytranslateAndTest not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "arraytranslate not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "arrayset not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::arraycmpEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "arraycmp not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
@@ -847,10 +849,10 @@ static void constLengthArrayCopyEvaluator(TR::Node *node, int32_t byteLen, TR::R
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(7,7, cg->trMemory());
 
-   addDependency(deps, src, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, src, TR::RealRegister::NoReg, TR_GPR, cg);
    deps->getPreConditions()->getRegisterDependency(0)->setExcludeGPR0();
    deps->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
-   addDependency(deps, dst, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, dst, TR::RealRegister::NoReg, TR_GPR, cg);
    deps->getPreConditions()->getRegisterDependency(1)->setExcludeGPR0();
    deps->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0();
 
@@ -861,15 +863,15 @@ static void constLengthArrayCopyEvaluator(TR::Node *node, int32_t byteLen, TR::R
       }
 
    regs[0] = cg->allocateRegister(TR_GPR); //as byteLen > 0 here, will need at least one register
-   addDependency(deps, regs[0], TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, regs[0], TR::RealRegister::NoReg, TR_GPR, cg);
    if (groups != 0)
       {
       regs[1] = cg->allocateRegister(TR_GPR);
       regs[2] = cg->allocateRegister(TR_GPR);
       regs[3] = cg->allocateRegister(TR_GPR);
-      addDependency(deps, regs[1], TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(deps, regs[2], TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(deps, regs[3], TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, regs[1], TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, regs[2], TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, regs[3], TR::RealRegister::NoReg, TR_GPR, cg);
 
       TR::Register *countReg = cg->allocateRegister();
       if (groups <= UPPER_IMMED12)
@@ -970,9 +972,9 @@ TR::Register *OMR::ARM::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Co
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3,3, cg->trMemory());
    // Build up the dependency conditions
    // r0 is length in bytes, r1 is srcAddr, r2 is dstAddr
-   addDependency(deps, lengthReg, TR::RealRegister::gr0, TR_GPR, cg);
-   addDependency(deps, srcAddrReg, TR::RealRegister::gr1, TR_GPR, cg);
-   addDependency(deps, dstAddrReg, TR::RealRegister::gr2, TR_GPR, cg);
+   TR::addDependency(deps, lengthReg, TR::RealRegister::gr0, TR_GPR, cg);
+   TR::addDependency(deps, srcAddrReg, TR::RealRegister::gr1, TR_GPR, cg);
+   TR::addDependency(deps, dstAddrReg, TR::RealRegister::gr2, TR_GPR, cg);
 
    arrayCopyHelper = cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMarrayCopy, false, false, false);
 
@@ -1362,8 +1364,10 @@ TR::Register *OMR::ARM::TreeEvaluator::BBStartEvaluator(TR::Node *node, TR::Code
    TR::Node * fenceNode = TR::Node::createRelative32BitFenceNode(node, &block->getInstructionBoundaries()._startPC);
    TR::Instruction * fence = generateAdminInstruction(cg, ARMOp_fence, node, deps, fenceNode);
 
-   if (block->isCatchBlock() && comp->getOption(TR_FullSpeedDebug))
-      fence->setNeedsGCMap(); // a catch entry is a gc point in FSD mode
+   if (block->isCatchBlock())
+      {
+      cg->generateCatchBlockBBStartPrologue(node, fence);
+      }
 
    return NULL;
    }

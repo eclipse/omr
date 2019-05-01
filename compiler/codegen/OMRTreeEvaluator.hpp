@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,10 +31,10 @@ namespace OMR { class TreeEvaluator; }
 namespace OMR { typedef OMR::TreeEvaluator TreeEvaluatorConnector; }
 #endif
 
-#include <stddef.h>               // for NULL
-#include <stdint.h>               // for int32_t, etc
-#include "infra/Annotations.hpp"  // for OMR_EXTENSIBLE
-#include "il/Node.hpp"            // for vcount_t
+#include <stddef.h>
+#include <stdint.h>
+#include "infra/Annotations.hpp"
+#include "il/Node.hpp"
 
 class TR_OpaqueClassBlock;
 namespace TR { class SymbolReference; }

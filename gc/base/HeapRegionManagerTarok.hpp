@@ -56,6 +56,11 @@ public:
 	MM_HeapRegionManagerTarok(MM_EnvironmentBase *env, uintptr_t regionSize, uintptr_t tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor);
 
 	/**
+	 * return true if there are free regions for the numa node
+	 */
+	bool areFreeRegionsForNode(MM_EnvironmentBase *env, uintptr_t numaNode);
+
+	/**
 	 * Returns a region within the heap's contiguous region table, attached to subSpace, and describing one region size
 	 * bytes of the heap.
 	 *

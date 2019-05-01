@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,47 +19,48 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>                                   // for int32_t, etc
-#include <stdio.h>                                    // for NULL, printf, etc
-#include <string.h>                                   // for memcpy, memset
-#include <algorithm>                                  // for std::find
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <algorithm>
 #include "codegen/BackingStore.hpp"
-#include "codegen/CodeGenerator.hpp"                  // for CodeGenerator
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"                       // for TR::IO::fprintf, etc
-#include "codegen/Instruction.hpp"                    // for Instruction
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
-#include "codegen/Machine.hpp"                        // for MachineBase, etc
+#include "codegen/Machine.hpp"
 #include "codegen/Machine_inlines.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"                   // for RealRegister, etc
-#include "codegen/Register.hpp"                       // for Register
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/RegisterRematerializationInfo.hpp"
-#include "codegen/RegisterUsage.hpp"                  // for RegisterUsage
-#include "codegen/TreeEvaluator.hpp"                  // for TreeEvaluator
-#include "compile/Compilation.hpp"                    // for Compilation, etc
+#include "codegen/RegisterUsage.hpp"
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"                // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                                 // for IO
-#include "env/ObjectModel.hpp"                        // for ObjectModel
+#include "env/IO.hpp"
+#include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
-#include "il/Block.hpp"                               // for Block
-#include "il/DataTypes.hpp"                           // for DataTypes, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                               // for ILOpCode
-#include "il/Node.hpp"                                // for Node
-#include "il/Symbol.hpp"                              // for Symbol
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "infra/Assert.hpp"                           // for TR_ASSERT
-#include "infra/List.hpp"                             // for List, etc
-#include "ras/Debug.hpp"                              // for TR_DebugBase
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
 #include "x/codegen/OutlinedInstructions.hpp"
 #include "codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                       // for TR_X86OpCodes, etc
+#include "x/codegen/X86Ops.hpp"
 #include "x/codegen/X86Register.hpp"
 
 extern bool existsNextInstructionToTestFlags(TR::Instruction *startInstr,
@@ -505,7 +506,7 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
          continue;
          }
 
-      realReg = self()->getX86RealRegister((TR::RealRegister::RegNum)i);
+      realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
 
       if (realReg->getState() == TR::RealRegister::Assigned)
          {
@@ -775,23 +776,11 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
                    self()->getDebug()->getName(bestDiscardableRegister));
 
             tempMR->setBaseRegister(info->getBaseRegister()->getAssignedRegister());
-#ifdef DEBUG
-            self()->cg()->incNumRematerializedIndirects();
-#endif
             }
-#ifdef DEBUG
-         else if (tempMR->getSymbolReference().getSymbol()->isStatic())
-            self()->cg()->incNumRematerializedStatics();
-         else
-            self()->cg()->incNumRematerializedLocals();
-#endif
 
          if (info->getDataType() == TR_RematerializableFloat)
             {
             instr = generateRegMemInstruction(currentInstruction, MOVSSRegMem, best, tempMR, self()->cg());
-#ifdef DEBUG
-            self()->cg()->incNumRematerializedXMMRs();
-#endif
             }
          else
             {
@@ -802,9 +791,6 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
          {
          TR::MemoryReference  *tempMR = generateX86MemoryReference(info->getSymbolReference(), self()->cg());
          instr = generateRegMemInstruction(currentInstruction, LEARegMem(), best, tempMR, self()->cg());
-#ifdef DEBUG
-         self()->cg()->incNumRematerializedAddresses();
-#endif
          }
       else
          {
@@ -812,17 +798,11 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
             {
             TR::MemoryReference* tempMR = generateX86MemoryReference(self()->cg()->findOrCreate4ByteConstant(currentInstruction->getNode(), info->getConstant()), self()->cg());
             instr = generateRegMemInstruction(currentInstruction, MOVSSRegMem, best, tempMR, self()->cg());
-#ifdef DEBUG
-            self()->cg()->incNumRematerializedXMMRs();
-#endif
             }
          else
             {
             instr = TR::TreeEvaluator::insertLoadConstant(0, best, info->getConstant(), info->getDataType(), self()->cg(), currentInstruction);
             }
-#ifdef DEBUG
-         self()->cg()->incNumRematerializedConstants();
-#endif
          }
 
       self()->cg()->traceRAInstruction(instr);
@@ -959,9 +939,6 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
 
       self()->cg()->traceRegFreed(bestRegister, best);
       self()->cg()->traceRAInstruction(instr);
-#ifdef DEBUG
-      self()->cg()->incNumSpilledRegisters();
-#endif
       }
 
    if (enableRematerialisation)
@@ -1434,8 +1411,8 @@ void OMR::X86::Machine::swapGPRegisters(TR::Instruction          *currentInstruc
                                     TR::RealRegister::RegNum  regNum1,
                                     TR::RealRegister::RegNum  regNum2)
    {
-   TR::RealRegister *realReg1 = self()->getX86RealRegister(regNum1);
-   TR::RealRegister *realReg2 = self()->getX86RealRegister(regNum2);
+   TR::RealRegister *realReg1 = self()->getRealRegister(regNum1);
+   TR::RealRegister *realReg2 = self()->getRealRegister(regNum2);
    TR::Instruction *instr = new (self()->cg()->trHeapMemory()) TR::X86RegRegInstruction(currentInstruction, XCHGRegReg(), realReg1, realReg2, self()->cg());
 
    TR::Register *virtReg1 = realReg1->getAssignedRegister();
@@ -1490,7 +1467,7 @@ void OMR::X86::Machine::setGPRWeightsFromAssociations()
       {
       // Skip non-assignable registers
       //
-      if (self()->getX86RealRegister((TR::RealRegister::RegNum)i)->getState() == TR::RealRegister::Locked)
+      if (self()->getRealRegister((TR::RealRegister::RegNum)i)->getState() == TR::RealRegister::Locked)
          continue;
 
       TR::Register *assocReg = _registerAssociations[i];
@@ -1543,7 +1520,7 @@ OMR::X86::Machine::createRegisterAssociationDirective(TR::Instruction *cursor)
 
       // Skip non-assignable registers
       //
-      if (self()->getX86RealRegister(regNum)->getState() == TR::RealRegister::Locked)
+      if (self()->getRealRegister(regNum)->getState() == TR::RealRegister::Locked)
          continue;
 
       associations->addPostCondition(self()->getVirtualAssociatedWithReal(regNum),
@@ -1733,11 +1710,11 @@ OMR::X86::Machine::cloneRegisterFile(TR::RealRegister **registerFile, TR_Allocat
    for (i = TR::RealRegister::FirstGPR; i <= endReg; i = ((i==TR::RealRegister::LastAssignableGPR) ? TR::RealRegister::FirstXMMR : i+1))
       {
       registerFileClone[i] = (TR::RealRegister *)self()->cg()->trMemory()->allocateMemory(sizeof(TR::RealRegister), allocKind);
-      memcpy(registerFileClone[i], registerFile[i], sizeof(TR::RealRegister));
+      *registerFileClone[i] = *registerFile[i];
       }
 
    // the vfp entry is a real register and it must always point to the same _frameRegister pointer so the memRef assignRegisters check
-   // if (_baseRegister == cg()->machine()->getX86RealRegister(TR::RealRegister::vfp)
+   // if (_baseRegister == cg()->machine()->getRealRegister(TR::RealRegister::vfp)
    // works correctly
    registerFileClone[TR::RealRegister::vfp] = self()->cg()->getFrameRegister();
 
@@ -1762,7 +1739,7 @@ TR::RegisterDependencyConditions * OMR::X86::Machine::createDepCondForLiveGPRs()
    //
    for (i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastXMMR; i = ((i==TR::RealRegister::LastAssignableGPR) ? TR::RealRegister::FirstXMMR : i+1))
       {
-      TR::RealRegister *realReg = self()->getX86RealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
       if (realReg->getState() == TR::RealRegister::Assigned ||
           realReg->getState() == TR::RealRegister::Free ||
           realReg->getState() == TR::RealRegister::Blocked)
@@ -1776,7 +1753,7 @@ TR::RegisterDependencyConditions * OMR::X86::Machine::createDepCondForLiveGPRs()
       deps = generateRegisterDependencyConditions(0, c, self()->cg());
       for (i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastXMMR; i = ((i==TR::RealRegister::LastAssignableGPR) ? TR::RealRegister::FirstXMMR : i+1))
          {
-         TR::RealRegister *realReg = self()->getX86RealRegister((TR::RealRegister::RegNum)i);
+         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
          if (realReg->getState() == TR::RealRegister::Assigned ||
              realReg->getState() == TR::RealRegister::Free ||
              realReg->getState() == TR::RealRegister::Blocked)
@@ -1819,7 +1796,7 @@ TR::RegisterDependencyConditions * OMR::X86::Machine::createCondForLiveAndSpille
       endReg = TR::RealRegister::LastXMMR;
    for (i = TR::RealRegister::FirstGPR; i <= endReg; i = ((i==TR::RealRegister::LastAssignableGPR) ? TR::RealRegister::FirstXMMR : i+1))
       {
-      TR::RealRegister *realReg = self()->getX86RealRegister((TR::RealRegister::RegNum)i);
+      TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
       TR_ASSERT(realReg->getState() == TR::RealRegister::Assigned ||
               realReg->getState() == TR::RealRegister::Free ||
               realReg->getState() == TR::RealRegister::Locked,
@@ -1837,7 +1814,7 @@ TR::RegisterDependencyConditions * OMR::X86::Machine::createCondForLiveAndSpille
       deps = generateRegisterDependencyConditions(0, c, self()->cg());
       for (i = TR::RealRegister::FirstGPR; i <= endReg; i = ((i==TR::RealRegister::LastAssignableGPR) ? TR::RealRegister::FirstXMMR : i+1))
          {
-         TR::RealRegister *realReg = self()->getX86RealRegister((TR::RealRegister::RegNum)i);
+         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
          if (realReg->getState() == TR::RealRegister::Assigned)
             {
             TR::Register *virtReg = realReg->getAssignedRegister();
@@ -1882,12 +1859,12 @@ TR::RealRegister **OMR::X86::Machine::captureRegisterFile()
       {
       registerFileClone[i] =
          (TR::RealRegister *)self()->cg()->trMemory()->allocateMemory(sizeof(TR::RealRegister), heapAlloc);
-      memcpy(registerFileClone[i], _registerFile[i], sizeof(TR::RealRegister));
+      *registerFileClone[i] = *_registerFile[i];
       }
 
    registerFileClone[TR::RealRegister::vfp] =
       (TR::RealRegister *)self()->cg()->trMemory()->allocateMemory(sizeof(TR::RealRegister), heapAlloc);
-   memcpy(registerFileClone[TR::RealRegister::vfp], _registerFile[TR::RealRegister::vfp], sizeof(TR::RealRegister));
+   *registerFileClone[TR::RealRegister::vfp] = *_registerFile[TR::RealRegister::vfp];
 
    return registerFileClone;
    }
@@ -1925,7 +1902,7 @@ void OMR::X86::Machine::installRegisterFile(TR::RealRegister **registerFileCopy)
       //
       bool wasAssigned = _registerFile[i]->getHasBeenAssignedInMethod();
 
-      memcpy(_registerFile[i], registerFileCopy[i], sizeof(TR::RealRegister));
+      *_registerFile[i] = *registerFileCopy[i];
 
       // Copy the sticky bits.
       //
@@ -1942,7 +1919,7 @@ void OMR::X86::Machine::installRegisterFile(TR::RealRegister **registerFileCopy)
          }
       }
 
-   memcpy(_registerFile[TR::RealRegister::vfp], registerFileCopy[TR::RealRegister::vfp], sizeof(TR::RealRegister));
+   *_registerFile[TR::RealRegister::vfp] = *registerFileCopy[TR::RealRegister::vfp];
    }
 
 TR::Register **OMR::X86::Machine::captureRegisterAssociations()
@@ -1959,7 +1936,7 @@ TR::Register **OMR::X86::Machine::captureRegisterAssociations()
          {
          registerAssociationsClone[i] =
             (TR::Register *)self()->cg()->trMemory()->allocateMemory(sizeof(TR::Register), heapAlloc);
-         memcpy(registerAssociationsClone[i], _registerAssociations[i], sizeof(TR::Register));
+         *registerAssociationsClone[i] = *_registerAssociations[i];
          }
       else
          {
@@ -1971,7 +1948,7 @@ TR::Register **OMR::X86::Machine::captureRegisterAssociations()
       {
       registerAssociationsClone[TR::RealRegister::vfp] =
          (TR::Register *)self()->cg()->trMemory()->allocateMemory(sizeof(TR::Register), heapAlloc);
-      memcpy(registerAssociationsClone[TR::RealRegister::vfp], _registerAssociations[TR::RealRegister::vfp], sizeof(TR::Register));
+      *registerAssociationsClone[TR::RealRegister::vfp] = *_registerAssociations[TR::RealRegister::vfp];
       }
    else
       {
@@ -2846,9 +2823,6 @@ TR::Instruction *OMR::X86::Machine::fpSpillFPR(TR::Instruction *prevInstruction,
                                               isFloat ? FSTPMemReg : DSTPMemReg,
                                               tempMR,
                                               self()->fpMapToStackRelativeRegister(vreg), self()->cg());
-#ifdef DEBUG
-      self()->cg()->incNumSpilledRegisters();
-#endif
       }
 
    self()->fpStackPop();

@@ -203,17 +203,29 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainStore,           // TR::fstore
    constrainStore,           // TR::dstore
    constrainAstore,          // TR::astore
-   constrainWrtBar,          // TR::wrtbar
    constrainIntStore,        // TR::bstore
    constrainIntStore,        // TR::sstore
+   constrainIntStore,        // TR::iwrtbar
+   constrainLongStore,       // TR::lwrtbar
+   constrainStore,           // TR::fwrtbar
+   constrainStore,           // TR::dwrtbar
+   constrainWrtBar,          // TR::awrtbar
+   constrainIntStore,        // TR::bwrtbar
+   constrainIntStore,        // TR::swrtbar
    constrainStore,           // TR::lstorei
    constrainStore,           // TR::fstorei
    constrainStore,           // TR::dstorei
    constrainAstore,          // TR::astorei
-   constrainWrtBar,          // TR::wrtbari
    constrainStore,           // TR::bstorei
    constrainStore,           // TR::sstorei
    constrainStore,           // TR::istorei
+   constrainStore,           // TR::lwrtbari
+   constrainStore,           // TR::fwrtbari
+   constrainStore,           // TR::dwrtbari
+   constrainWrtBar,          // TR::awrtbari
+   constrainStore,           // TR::bwrtbari
+   constrainStore,           // TR::swrtbari
+   constrainStore,           // TR::iwrtbari
    constrainGoto,            // TR::Goto
    constrainReturn,          // TR::ireturn
    constrainReturn,          // TR::lreturn
@@ -1357,12 +1369,8 @@ const ValuePropagationPtr constraintHandlers[] =
 
    constrainChildren,           // TR::pdshrSetSign
    constrainChildren,           // TR::pdshlSetSign
-   constrainChildren,           // TR::pdshrPreserveSign
-   constrainChildren,           // TR::pdshlPreserveSign
    constrainChildren,           // TR::pdshlOverflow
-//#if defined(TR_TARGET_S390)
    constrainChildren,           // TR::pdchk
-//#endif
    constrainBCDToIntegral,      // TR::pd2i
    constrainChildren,           // TR::pd2iOverflow
    constrainBCDToIntegral,      // TR::pd2iu
@@ -1385,20 +1393,11 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,           // TR::pdcmpgt
    constrainChildren,           // TR::pdcmple
 
-   constrainChildren,           // TR::pdcheck
-   constrainChildren,           // TR::pdfix
-
    constrainChildren,           // TR::pdclean
-
-   constrainChildren,           // TR::pdexp
-   constrainChildren,           // TR::pduexp
-
    constrainChildren,           // TR::pdclear
    constrainChildren,           // TR::pdclearSetSign
 
    constrainChildren,           // TR::pdSetSign
-
-   constrainChildren,           // TR::pddivrem
 
    constrainChildren,           // TR::pdModifyPrecision
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,11 +29,13 @@
 #ifdef J9_PROJECT_SPECIFIC
 #include "codegen/CallSnippet.hpp"
 #endif
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
 #include "codegen/RegisterPair.hpp"
@@ -82,10 +84,10 @@ void OMR::ARM::Linkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbo
 TR::Instruction *OMR::ARM::Linkage::saveArguments(TR::Instruction *cursor)
    {
    TR::CodeGenerator     *codeGen    = self()->cg();
-   TR::Machine           *machine    = codeGen->machine();
-   TR::RealRegister      *stackPtr   = machine->getARMRealRegister(self()->getProperties().getStackPointerRegister());
-   TR::ResolvedMethodSymbol   *bodySymbol = codeGen->comp()->getJittedMethodSymbol();
-   TR::Node                 *firstNode  = codeGen->comp()->getStartTree()->getNode();
+   TR::Machine           *machine    = self()->machine();
+   TR::RealRegister      *stackPtr   = machine->getRealRegister(self()->getProperties().getStackPointerRegister());
+   TR::ResolvedMethodSymbol   *bodySymbol = self()->comp()->getJittedMethodSymbol();
+   TR::Node                 *firstNode  = self()->comp()->getStartTree()->getNode();
 
    const TR::ARMLinkageProperties& properties = self()->getProperties();
 
@@ -122,7 +124,7 @@ TR::Instruction *OMR::ARM::Linkage::saveArguments(TR::Instruction *cursor)
             case TR::Address:
                if (hasToBeOnStack)
                   {
-                  argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
+                  argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
                   cursor = generateMemSrc1Instruction(codeGen, ARMOp_str, firstNode, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, codeGen), argRegister, cursor);
                   }
                numIntArgs++;
@@ -132,11 +134,11 @@ TR::Instruction *OMR::ARM::Linkage::saveArguments(TR::Instruction *cursor)
             case TR::Int64:
             	if (hasToBeOnStack)
                   {
-                  argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
+                  argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
                   cursor = generateMemSrc1Instruction(codeGen, ARMOp_str, firstNode, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, codeGen), argRegister, cursor);
                   if (numIntArgs < properties.getNumIntArgRegs()-1)
                      {
-                     argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs+1));
+                     argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs+1));
                      cursor = generateMemSrc1Instruction(codeGen, ARMOp_str, firstNode, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset+4, codeGen), argRegister, cursor);
                      }
                   }
@@ -151,10 +153,10 @@ TR::Instruction *OMR::ARM::Linkage::saveArguments(TR::Instruction *cursor)
 TR::Instruction *OMR::ARM::Linkage::loadUpArguments(TR::Instruction *cursor)
    {
    TR::CodeGenerator     *codeGen    = self()->cg();
-   TR::Machine           *machine    = codeGen->machine();
-   TR::RealRegister      *stackPtr   = machine->getARMRealRegister(self()->getProperties().getStackPointerRegister());
-   TR::ResolvedMethodSymbol   *bodySymbol = codeGen->comp()->getJittedMethodSymbol();
-   TR::Node                 *firstNode  = codeGen->comp()->getStartTree()->getNode();
+   TR::Machine           *machine    = self()->machine();
+   TR::RealRegister      *stackPtr   = machine->getRealRegister(self()->getProperties().getStackPointerRegister());
+   TR::ResolvedMethodSymbol   *bodySymbol = self()->comp()->getJittedMethodSymbol();
+   TR::Node                 *firstNode  = self()->comp()->getStartTree()->getNode();
    ListIterator<TR::ParameterSymbol>   paramIterator(&(bodySymbol->getParameterList()));
    TR::ParameterSymbol      *paramCursor = paramIterator.getFirst();
    uint32_t                 numIntArgs = 0;
@@ -176,7 +178,7 @@ TR::Instruction *OMR::ARM::Linkage::loadUpArguments(TR::Instruction *cursor)
             if (hasToLoadFromStack &&
                 numIntArgs<properties.getNumIntArgRegs())
                {
-               argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
+               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
                cursor = generateTrg1MemInstruction(codeGen, ARMOp_ldr, firstNode, argRegister, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, codeGen), cursor);
                }
             numIntArgs++;
@@ -184,7 +186,7 @@ TR::Instruction *OMR::ARM::Linkage::loadUpArguments(TR::Instruction *cursor)
          case TR::Address:
              if (numIntArgs<properties.getNumIntArgRegs())
                 {
-                argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
+                argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
                 cursor = generateTrg1MemInstruction(codeGen, ARMOp_ldr, firstNode, argRegister, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, codeGen), cursor);
                 }
              numIntArgs++;
@@ -195,11 +197,11 @@ TR::Instruction *OMR::ARM::Linkage::loadUpArguments(TR::Instruction *cursor)
             if (hasToLoadFromStack &&
                 numIntArgs<properties.getNumIntArgRegs())
                {
-               argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
+               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
                cursor = generateTrg1MemInstruction(codeGen, ARMOp_ldr, firstNode, argRegister, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, codeGen), cursor);
                if (numIntArgs < properties.getNumIntArgRegs()-1)
                   {
-                  argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs+1));
+                  argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs+1));
                   cursor = generateTrg1MemInstruction(codeGen, ARMOp_ldr, firstNode, argRegister, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset + 4, codeGen), cursor);
                   }
                }
@@ -214,10 +216,10 @@ TR::Instruction *OMR::ARM::Linkage::loadUpArguments(TR::Instruction *cursor)
 TR::Instruction *OMR::ARM::Linkage::flushArguments(TR::Instruction *cursor)
    {
    TR::CodeGenerator     *codeGen    = self()->cg();
-   TR::Machine           *machine    = codeGen->machine();
-   TR::RealRegister      *stackPtr   = machine->getARMRealRegister(self()->getProperties().getStackPointerRegister());
-   TR::ResolvedMethodSymbol   *bodySymbol = codeGen->comp()->getJittedMethodSymbol();
-   TR::Node                 *firstNode  = codeGen->comp()->getStartTree()->getNode();
+   TR::Machine           *machine    = self()->machine();
+   TR::RealRegister      *stackPtr   = machine->getRealRegister(self()->getProperties().getStackPointerRegister());
+   TR::ResolvedMethodSymbol   *bodySymbol = self()->comp()->getJittedMethodSymbol();
+   TR::Node                 *firstNode  = self()->comp()->getStartTree()->getNode();
    ListIterator<TR::ParameterSymbol>   paramIterator(&(bodySymbol->getParameterList()));
    TR::ParameterSymbol      *paramCursor = paramIterator.getFirst();
    uint32_t                 numIntArgs = 0;
@@ -239,7 +241,7 @@ TR::Instruction *OMR::ARM::Linkage::flushArguments(TR::Instruction *cursor)
             if (hasToSaveToStack &&
                 numIntArgs<properties.getNumIntArgRegs())
                {
-               argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
+               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
                cursor = generateMemSrc1Instruction(codeGen, ARMOp_str, firstNode, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, codeGen), argRegister, cursor);
                }
             numIntArgs++;
@@ -247,7 +249,7 @@ TR::Instruction *OMR::ARM::Linkage::flushArguments(TR::Instruction *cursor)
          case TR::Address:
              if (numIntArgs<properties.getNumIntArgRegs())
                 {
-                argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
+                argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
                 cursor = generateMemSrc1Instruction(codeGen, ARMOp_str, firstNode, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, codeGen), argRegister, cursor);
                 }
              numIntArgs++;
@@ -258,11 +260,11 @@ TR::Instruction *OMR::ARM::Linkage::flushArguments(TR::Instruction *cursor)
             if (hasToSaveToStack &&
                 numIntArgs<properties.getNumIntArgRegs())
                {
-               argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
+               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
                cursor = generateMemSrc1Instruction(codeGen, ARMOp_str, firstNode, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, codeGen), argRegister, cursor);
                if (numIntArgs < properties.getNumIntArgRegs()-1)
                   {
-                  argRegister = machine->getARMRealRegister(properties.getIntegerArgumentRegister(numIntArgs+1));
+                  argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs+1));
                   cursor = generateMemSrc1Instruction(codeGen, ARMOp_str, firstNode, new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset + 4, codeGen), argRegister, cursor);
                   }
                }
@@ -353,8 +355,8 @@ TR::Register *OMR::ARM::Linkage::pushJNIReferenceArg(TR::Node *child)
             generateTrg1ImmInstruction(self()->cg(), ARMOp_mov, child, pushReg, 0, 0);
 
             TR::RegisterDependencyConditions *deps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, self()->trMemory());
-            addDependency(deps, pushReg, TR::RealRegister::NoReg, TR_GPR, self()->cg());
-            addDependency(deps, objReg,  TR::RealRegister::NoReg, TR_GPR, self()->cg());
+            TR::addDependency(deps, pushReg, TR::RealRegister::NoReg, TR_GPR, self()->cg());
+            TR::addDependency(deps, objReg,  TR::RealRegister::NoReg, TR_GPR, self()->cg());
 
             generateLabelInstruction(self()->cg(), ARMOp_label, child, doneLabel, deps);
             self()->cg()->decReferenceCount(child);
@@ -532,10 +534,10 @@ int32_t OMR::ARM::Linkage::buildARMLinkageArgs(TR::Node                         
          vftReg = self()->cg()->evaluate(child);
          self()->cg()->decReferenceCount(child);
          }
-      addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, self()->cg());  // dep 0
+      TR::addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, self()->cg());  // dep 0
 
 #ifndef LOCK_R14
-      addDependency(dependencies, NULL, TR::RealRegister::gr14, TR_GPR, cg());  // dep 2
+      TR::addDependency(dependencies, NULL, TR::RealRegister::gr14, TR_GPR, cg());  // dep 2
 #endif
       }
 
@@ -562,10 +564,10 @@ int32_t OMR::ARM::Linkage::buildARMLinkageArgs(TR::Node                         
 #endif
       }
 
-   //TODO move the addDependency(gr11) to the latter part of the method
+   //TODO move the TR::addDependency(gr11) to the latter part of the method
    if (isVirtual && (specialArgReg != TR::RealRegister::gr11))
       {
-      addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, self()->cg());  // dep 1
+      TR::addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, self()->cg());  // dep 1
       }
 
    if (specialArgReg != TR::RealRegister::NoReg)
@@ -574,7 +576,7 @@ int32_t OMR::ARM::Linkage::buildARMLinkageArgs(TR::Node                         
          {
          traceMsg(comp, "Special arg %s in %s\n",
             comp->getDebug()->getName(callNode->getChild(from)),
-            comp->getDebug()->getName(self()->cg()->machine()->getARMRealRegister(specialArgReg)));
+            comp->getDebug()->getName(self()->machine()->getRealRegister(specialArgReg)));
          }
       // Skip the special arg in the first loop
       from += step;
@@ -692,7 +694,7 @@ printf("%s: numIntegerArgs %d numMemArgs %d\n", sig,  numIntegerArgs, numMemArgs
                   }
                else
                   {
-                  addDependency(dependencies, reg, specialArgReg, TR_GPR, self()->cg());
+                  TR::addDependency(dependencies, reg, specialArgReg, TR_GPR, self()->cg());
                   }
                }
             else
@@ -735,7 +737,7 @@ printf("%s: numIntegerArgs %d numMemArgs %d\n", sig,  numIntegerArgs, numMemArgs
                      }
                   else
                      {
-                     addDependency(dependencies, reg, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, self()->cg());
+                     TR::addDependency(dependencies, reg, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, self()->cg());
                      }
                   }
                else
@@ -782,7 +784,7 @@ printf("pushing 32-bit arg %d %d %d %d\n", numIntegerArgs, memArg, totalSize, ar
                   }
                else
                   {
-                  addDependency(dependencies, specialArgRegister, specialArgReg, TR_GPR, self()->cg());
+                  TR::addDependency(dependencies, specialArgRegister, specialArgReg, TR_GPR, self()->cg());
                   }
                }
             else
@@ -868,7 +870,7 @@ printf("pushing 64-bit arg %d %d %d %d\n", numIntegerArgs, memArg, totalSize, ar
                   generateTrg1Src1Instruction(cg(), reg, tempReg, ARMOp_fmr);
                   reg = tempReg;
                   }
-               addDependency(dependencies, reg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
+               TR::addDependency(dependencies, reg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
                }
             else
                {
@@ -890,7 +892,7 @@ printf("pushing 64-bit arg %d %d %d %d\n", numIntegerArgs, memArg, totalSize, ar
                   generateTrg1Src1Instruction(cg(), reg, tempReg, ARMOp_fmr);
                   reg = tempReg;
                   }
-               addDependency(dependencies, reg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
+               TR::addDependency(dependencies, reg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
                }
             else
                {
@@ -935,7 +937,7 @@ printf("pushing 64-bit arg %d %d %d %d\n", numIntegerArgs, memArg, totalSize, ar
             }
          else
             {
-            addDependency(dependencies, NULL, realReg, TR_GPR, self()->cg());
+            TR::addDependency(dependencies, NULL, realReg, TR_GPR, self()->cg());
             }
          }
       }
@@ -944,7 +946,7 @@ printf("pushing 64-bit arg %d %d %d %d\n", numIntegerArgs, memArg, totalSize, ar
    /* D0 - D7 are volatile. TODO: live register. */
    for (i = 0; i < 8 /*properties.getNumFloatArgRegs()*/; i++)
       {
-      addDependency(dependencies, NULL, (TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::fp0 + i), TR_FPR, self()->cg());
+      TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::fp0 + i), TR_FPR, self()->cg());
       }
 #endif
    // add dependencies for other volatile registers; for virtual calls,
@@ -953,16 +955,16 @@ printf("pushing 64-bit arg %d %d %d %d\n", numIntegerArgs, memArg, totalSize, ar
       {
       case TR_Private:
          if ((!isVirtual) && (specialArgReg != TR::RealRegister::gr11))
-            addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, self()->cg());
+            TR::addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, self()->cg());
          // deliberate fall-through
       case TR_Helper:
-         addDependency(dependencies, NULL, TR::RealRegister::gr4, TR_GPR, self()->cg());
-         addDependency(dependencies, NULL, TR::RealRegister::gr5, TR_GPR, self()->cg());
+         TR::addDependency(dependencies, NULL, TR::RealRegister::gr4, TR_GPR, self()->cg());
+         TR::addDependency(dependencies, NULL, TR::RealRegister::gr5, TR_GPR, self()->cg());
          // deliberate fall-through
       case TR_System:
 #ifndef LOCK_R14
          if (!isVirtual)
-            addDependency(dependencies, NULL, TR::RealRegister::gr14, TR_GPR, cg());
+            TR::addDependency(dependencies, NULL, TR::RealRegister::gr14, TR_GPR, cg());
 #endif
          break;
       }
@@ -1006,21 +1008,10 @@ printf("done\n"); fflush(stdout);
    return totalSize;
    }
 
-TR_HeapMemory OMR::ARM::Linkage::trHeapMemory()
-   {
-   return self()->trMemory();
-   }
-
-TR_StackMemory OMR::ARM::Linkage::trStackMemory()
-   {
-   return self()->trMemory();
-   }
 
 TR::Register *OMR::ARM::Linkage::buildARMLinkageDirectDispatch(TR::Node *callNode, bool isSystem)
    {
-   TR::CodeGenerator *codeGen    = self()->cg();
-   TR::SymbolReference *callSymRef = callNode->getSymbolReference();
-   TR::MethodSymbol     *callSymbol = callSymRef->getSymbol()->castToMethodSymbol();
+   TR::CodeGenerator *codeGen = self()->cg();
 
    const TR::ARMLinkageProperties &pp = self()->getProperties();
    TR::RegisterDependencyConditions *dependencies =
@@ -1031,20 +1022,19 @@ TR::Register *OMR::ARM::Linkage::buildARMLinkageDirectDispatch(TR::Node *callNod
    int32_t argSize = self()->buildArgs(callNode, dependencies, vftReg, false);
    dependencies->stopAddingConditions();
 
-   TR::ResolvedMethodSymbol *sym = callSymbol->getResolvedMethodSymbol();
-   TR_ResolvedMethod     *vmm = (sym == NULL) ? NULL : sym->getResolvedMethod();
-   bool isMyself;
+   TR::SymbolReference *callSymRef = callNode->getSymbolReference();
+   TR::MethodSymbol *callSymbol = callSymRef->getSymbol()->castToMethodSymbol();
 
-   isMyself = (vmm != NULL) && vmm->isSameMethod(codeGen->comp()->getCurrentMethod()) && !codeGen->comp()->isDLT();
+   bool isMyself = self()->comp()->isRecursiveMethodTarget(callSymbol);
 
    if (callSymRef->getReferenceNumber() >= TR_ARMnumRuntimeHelpers)
-      codeGen->comp()->fe()->reserveTrampolineIfNecessary(codeGen->comp(), callSymRef, false);
+      self()->fe()->reserveTrampolineIfNecessary(self()->comp(), callSymRef, false);
 
    TR::Instruction *gcPoint;
    TR::Register    *returnRegister;
 
    if ((callSymbol->isJITInternalNative() ||
-        (!callSymRef->isUnresolved() && !callSymbol->isInterpreted() && ((codeGen->comp()->compileRelocatableCode() && callSymbol->isHelper()) || !codeGen->comp()->compileRelocatableCode()))))
+        (!callSymRef->isUnresolved() && !callSymbol->isInterpreted() && ((self()->comp()->compileRelocatableCode() && callSymbol->isHelper()) || !self()->comp()->compileRelocatableCode()))))
       {
       gcPoint = generateImmSymInstruction(codeGen,
                                           ARMOp_bl,
@@ -1059,7 +1049,7 @@ TR::Register *OMR::ARM::Linkage::buildARMLinkageDirectDispatch(TR::Node *callNod
       TR::LabelSymbol *label = generateLabelSymbol(codeGen);
       TR::Snippet     *snippet;
 
-      if (callSymRef->isUnresolved() || codeGen->comp()->compileRelocatableCode())
+      if (callSymRef->isUnresolved() || self()->comp()->compileRelocatableCode())
          {
          snippet = new (self()->trHeapMemory()) TR::ARMUnresolvedCallSnippet(codeGen, callNode, label, argSize);
          }
@@ -1074,14 +1064,14 @@ TR::Register *OMR::ARM::Linkage::buildARMLinkageDirectDispatch(TR::Node *callNod
                                           callNode,
                                           0,
                                           dependencies,
-                                          new (self()->trHeapMemory()) TR::SymbolReference(codeGen->comp()->getSymRefTab(), label),
+                                          new (self()->trHeapMemory()) TR::SymbolReference(self()->comp()->getSymRefTab(), label),
                                           snippet);
 #else
       TR_ASSERT(false, "Attempting to handle Java in non-Java project");
 #endif
       }
    gcPoint->ARMNeedsGCMap(pp.getPreservedRegisterMapForGC());
-   codeGen->machine()->setLinkRegisterKilled(true);
+   self()->machine()->setLinkRegisterKilled(true);
    codeGen->setHasCall();
    TR::DataType resType = callNode->getType();
 

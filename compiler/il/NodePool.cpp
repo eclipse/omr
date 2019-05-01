@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,12 +21,12 @@
 
 #include "il/NodePool.hpp"
 
-#include <stddef.h>                 // for NULL
-#include "compile/Compilation.hpp"  // for comp
-#include "il/ILOps.hpp"             // for ILOpCode
-#include "il/Node.hpp"              // for Node
-#include "il/Node_inlines.hpp"      // for Node::getNodePoolIndex, etc
-#include "infra/Assert.hpp"         // for TR_ASSERT
+#include <stddef.h>
+#include "compile/Compilation.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "infra/Assert.hpp"
 
 #define OPT_DETAILS_NODEPOOL "O^O NODEPOOL :"
 

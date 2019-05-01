@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,73 +51,11 @@ replaceAll(string str, const string &subStr, const string &newStr)
 }
 
 JavaSupersetGenerator::JavaSupersetGenerator(bool printEmptyTypes)
-	: _baseTypedefSet()
-	, _baseTypedefMap()
-	, _baseTypedefReplace()
-	, _file(0)
+	: _file(0)
 	, _portLibrary(NULL)
 	, _printEmptyTypes(printEmptyTypes)
 	, _pendingTypeHeading()
 {
-	initBaseTypedefSet();
-}
-
-void
-JavaSupersetGenerator::initBaseTypedefSet()
-{
-	_baseTypedefSet.insert("unsigned char");
-	_baseTypedefSet.insert("uint8_t");
-	_baseTypedefSet.insert("__uint8_t");
-	_baseTypedefSet.insert("signed char");
-	_baseTypedefSet.insert("char");
-	_baseTypedefSet.insert("int8_t");
-	_baseTypedefSet.insert("__int8_t");
-
-	_baseTypedefSet.insert("unsigned short int");
-	_baseTypedefSet.insert("short unsigned int");
-	_baseTypedefSet.insert("uint16_t");
-	_baseTypedefSet.insert("__uint16_t");
-	_baseTypedefSet.insert("signed short int");
-	_baseTypedefSet.insert("short signed int");
-	_baseTypedefSet.insert("short int");
-	_baseTypedefSet.insert("int16_t");
-	_baseTypedefSet.insert("__int16_t");
-
-	_baseTypedefSet.insert("unsigned int");
-	_baseTypedefSet.insert("uint32_t");
-	_baseTypedefSet.insert("__uint32_t");
-	_baseTypedefSet.insert("signed int");
-	_baseTypedefSet.insert("int");
-	_baseTypedefSet.insert("int32_t");
-	_baseTypedefSet.insert("__int32_t");
-
-	_baseTypedefSet.insert("long unsigned int");
-	_baseTypedefSet.insert("unsigned long int");
-	_baseTypedefSet.insert("long long unsigned int");
-	_baseTypedefSet.insert("unsigned long long int");
-	_baseTypedefSet.insert("uint64_t");
-	_baseTypedefSet.insert("long signed int");
-	_baseTypedefSet.insert("signed long int");
-	_baseTypedefSet.insert("long long signed int");
-	_baseTypedefSet.insert("signed long long int");
-	_baseTypedefSet.insert("long int");
-	_baseTypedefSet.insert("long long int");
-	_baseTypedefSet.insert("int64_t");
-
-	_baseTypedefMap["intptr_t"] = "IDATA";
-	_baseTypedefMap["uintptr_t"] = "UDATA";
-	_baseTypedefMap["char"] = "U8";
-
-	_baseTypedefReplace["U_8"] = "U8";
-	_baseTypedefReplace["U_16"] = "U16";
-	_baseTypedefReplace["U_32"] = "U32";
-	_baseTypedefReplace["U_64"] = "U64";
-	_baseTypedefReplace["U_128"] = "U128";
-	_baseTypedefReplace["I_8"] = "I8";
-	_baseTypedefReplace["I_16"] = "I16";
-	_baseTypedefReplace["I_32"] = "I32";
-	_baseTypedefReplace["I_64"] = "I64";
-	_baseTypedefReplace["I_128"] = "I128";
 }
 
 void
@@ -125,37 +63,42 @@ JavaSupersetGenerator::convertJ9BaseTypedef(Type *type, string *typeName)
 {
 	string name = type->getFullName();
 
-	/* Convert int types to J9 base typedefs. */
-	if (_baseTypedefMap.find(name) != _baseTypedefMap.end()) {
-		name = _baseTypedefMap[name];
-	} else if (_baseTypedefSet.find(name) != _baseTypedefSet.end()) {
-		stringstream ss;
-		ss << ((string::npos == name.find_first_of('u')) ? "I" : "U")
-		   << (type->_sizeOf * 8);
-		name = ss.str();
-	} else {
-		replaceBaseTypedef(type, &name);
-	}
+	replaceBaseTypedef(type, &name);
+
 	*typeName = name;
 }
 
 void
 JavaSupersetGenerator::replaceBaseTypedef(Type *type, string *name)
 {
-	/* In both the first and second printed type name in the superset,
-	 * types such as "U_32" are replaced with "U32" and function pointers
-	 * are replaced with "void*".
-	 */
-	unordered_map<string, string>::const_iterator it = _baseTypedefReplace.find(*name);
-	if (it != _baseTypedefReplace.end()) {
-		*name = it->second;
+	string::size_type start = name->rfind('(');
+
+	if (string::npos == start) {
+		start = 0;
 	} else {
-		for (it = _baseTypedefReplace.begin(); it != _baseTypedefReplace.end(); ++it) {
-			size_t index = name->find(it->first);
-			if (string::npos != index) {
-				name->replace(index, it->first.length(), it->second);
-			}
-		}
+		start += 1;
+	}
+
+	string::size_type end = name->find_first_of("*[)", start);
+
+	if (string::npos == end) {
+		end = name->length();
+	}
+
+	string::size_type length = end - start;
+	bool isSigned = false;
+	size_t bitWidth = 0;
+
+	/*
+	 * In both the first and second printed type names in the superset,
+	 * types such as "U_32" are replaced with "U32".
+	 */
+	if (Type::isStandardType(name->c_str() + start, (size_t)length, &isSigned, &bitWidth)) {
+		stringstream ss;
+
+		ss << (isSigned ? "I" : "U") << bitWidth;
+
+		name->replace(start, length, ss.str());
 	}
 }
 

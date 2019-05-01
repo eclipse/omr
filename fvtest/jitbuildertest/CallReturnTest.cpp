@@ -62,10 +62,10 @@ DEFINE_BUILDER(TestInt64ReturnType,
                   1,
                   Int64);
 
-   TR::IlValue *param = Load("param");
-   TR::IlValue *int64Result = Call("testInt64", 1, param);
-   TR::IlValue *int64Val = ConstInt64(1);
-   TR::IlValue *result = Add(int64Result, int64Val);
+   OMR::JitBuilder::IlValue *param = Load("param");
+   OMR::JitBuilder::IlValue *int64Result = Call("testInt64", 1, param);
+   OMR::JitBuilder::IlValue *int64Val = ConstInt64(1);
+   OMR::JitBuilder::IlValue *result = Add(int64Result, int64Val);
 
    Return(result);
 
@@ -84,10 +84,10 @@ DEFINE_BUILDER(TestInt32ReturnType,
                   1,
                   Int32);
 
-   TR::IlValue *param = Load("param");
-   TR::IlValue *int32Result = Call("testInt32", 1, param);
-   TR::IlValue *int32Val = ConstInt32(1);
-   TR::IlValue *result = Add(int32Result, int32Val);
+   OMR::JitBuilder::IlValue *param = Load("param");
+   OMR::JitBuilder::IlValue *int32Result = Call("testInt32", 1, param);
+   OMR::JitBuilder::IlValue *int32Val = ConstInt32(1);
+   OMR::JitBuilder::IlValue *result = Add(int32Result, int32Val);
 
    Return(result);
 
@@ -106,10 +106,10 @@ DEFINE_BUILDER(TestInt16ReturnType,
                   1,
                   Int16);
 
-   TR::IlValue *param = Load("param");
-   TR::IlValue *int16Result = Call("testInt16", 1, param);
-   TR::IlValue *int16Val = ConstInt16(1);
-   TR::IlValue *result = Add(int16Result, int16Val);
+   OMR::JitBuilder::IlValue *param = Load("param");
+   OMR::JitBuilder::IlValue *int16Result = Call("testInt16", 1, param);
+   OMR::JitBuilder::IlValue *int16Val = ConstInt16(1);
+   OMR::JitBuilder::IlValue *result = Add(int16Result, int16Val);
 
    Return(result);
 
@@ -128,10 +128,10 @@ DEFINE_BUILDER(TestInt8ReturnType,
                   1,
                   Int8);
 
-   TR::IlValue *param = Load("param");
-   TR::IlValue *int8Result = Call("testInt8", 1, param);
-   TR::IlValue *int8Val = ConstInt8(1);
-   TR::IlValue *result = Add(int8Result, int8Val);
+   OMR::JitBuilder::IlValue *param = Load("param");
+   OMR::JitBuilder::IlValue *int8Result = Call("testInt8", 1, param);
+   OMR::JitBuilder::IlValue *int8Val = ConstInt8(1);
+   OMR::JitBuilder::IlValue *result = Add(int8Result, int8Val);
 
    Return(result);
 
@@ -144,7 +144,7 @@ typedef int64_t (*Int64ReturnType)(int64_t);
 TEST_F(ReturnTypeTest, Int64_Test)
    {
    Int64ReturnType testFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, TestInt64ReturnType, testFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, TestInt64ReturnType, testFunction);
    ASSERT_EQ(testFunction(0), 1);
    ASSERT_EQ(testFunction(INT64_MAX - 1), INT64_MAX);
    ASSERT_EQ(testFunction(-1), 0);
@@ -155,7 +155,7 @@ typedef int32_t (*Int32ReturnType)(int32_t);
 TEST_F(ReturnTypeTest, Int32_Test)
    {
    Int32ReturnType testFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, TestInt32ReturnType, testFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, TestInt32ReturnType, testFunction);
    ASSERT_EQ(testFunction(0), 1);
    ASSERT_EQ(testFunction(INT32_MAX - 1), INT32_MAX);
    ASSERT_EQ(testFunction(-1), 0);
@@ -166,7 +166,7 @@ typedef int16_t (*Int16ReturnType)(int16_t);
 TEST_F(ReturnTypeTest, Int16_Test)
    {
    Int16ReturnType testFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, TestInt16ReturnType, testFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, TestInt16ReturnType, testFunction);
    ASSERT_EQ(testFunction(0), 1);
    ASSERT_EQ(testFunction(INT16_MAX - 1), INT16_MAX);
    ASSERT_EQ(testFunction(-1), 0);
@@ -177,7 +177,7 @@ typedef int8_t (*Int8ReturnType)(int8_t);
 TEST_F(ReturnTypeTest, Int8_Test)
    {
    Int8ReturnType testFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, TestInt8ReturnType, testFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, TestInt8ReturnType, testFunction);
    ASSERT_EQ(testFunction(0), 1);
    ASSERT_EQ(testFunction(INT8_MAX - 1), INT8_MAX);
    ASSERT_EQ(testFunction(-1), 0);

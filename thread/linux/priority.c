@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -413,7 +413,8 @@ set_priority_spread(void)
 	if (dups < 0) {
 		dups = 0;
 	}
-	for (i = J9THREAD_PRIORITY_NORMAL - dups - 1, j = prio; i >= J9THREAD_PRIORITY_USER_MIN; i--, j) {
+
+	for (i = J9THREAD_PRIORITY_NORMAL - dups - 1, j = prio; i >= J9THREAD_PRIORITY_USER_MIN; i--) {
 		priority_map[i] = --j + PRIORITY_MAP_ADJUSTED_POLICY(policy_regular_thread);
 	}
 	lowerBoundRegularMapped = j;

@@ -24,9 +24,7 @@
 
 #include "gtest/gtest.h"
 
-#include "Jit.hpp"
-#include "ilgen/TypeDictionary.hpp"
-#include "ilgen/MethodBuilder.hpp"
+#include "JitBuilder.hpp"
 
 #include <vector>
 #include <utility>
@@ -46,13 +44,13 @@
  *       }
  */
 #define DEFINE_TYPES(name) \
-   struct name : public TR::TypeDictionary { name(); }; \
-   inline name::name() : TR::TypeDictionary()
+   struct name : public OMR::JitBuilder::TypeDictionary { name(); }; \
+   inline name::name() : OMR::JitBuilder::TypeDictionary()
 
 /*
  * A convenience macro for declaring a MethodBuilder class. `name` is the name
  * of the class that will be created. The macro will ensure the class inherits
- * from `TR::MethodBuilder` and that the constructor and `buildIL()` method are
+ * from `OMR::JitBuilder::MethodBuilder` and that the constructor and `buildIL()` method are
  * declared. A ';' is required at the end of the macro invocation.
  *
  * Example use:
@@ -60,9 +58,9 @@
  *    DECLARE_BUILDER(MyFunctionBuilder);
  */
 #define DECLARE_BUILDER(name) \
-   class name : public TR::MethodBuilder { \
+   class name : public OMR::JitBuilder::MethodBuilder { \
       public: \
-      name(TR::TypeDictionary *); \
+      name(OMR::JitBuilder::TypeDictionary *); \
       virtual bool buildIL(); \
    }
 
@@ -87,7 +85,7 @@
  *       }
  */
 #define DEFINE_BUILDER_CTOR(name) \
-   inline name::name(TR::TypeDictionary *types) : TR::MethodBuilder(types)
+   inline name::name(OMR::JitBuilder::TypeDictionary *types) : OMR::JitBuilder::MethodBuilder(types)
 
 /*
  * A convenience macro for defining the `buildIL()` function of a declared
@@ -127,12 +125,12 @@
  * will be constructed. This is also used as the name of the method built by the
  * class.
  *
- * The second argument is an instance of `TR::IlValue *` that represents the
+ * The second argument is an instance of `OMR::JitBuilder::IlValue *` that represents the
  * return type of the method.
  *
  * The following variadic argument are pairs with a `const char *` component
- * and a `TR::IlValue *` component. The first component is the name of parameter
- * and the second is a `TR::IlValue` instance representing the parameter's type.
+ * and a `OMR::JitBuilder::IlValue *` component. The first component is the name of parameter
+ * and the second is a `OMR::JitBuilder::IlValue` instance representing the parameter's type.
  * The `PARAM` macro should be used when defining these pairs because simple
  * brace initializers cannot be used when invoking a macro.
  *
@@ -140,19 +138,19 @@
  * the `buildIL()` function.
  *
  * Because the arguments to the macro are used within the scope of the class
- * definition, the services provided by `TR::MethodBuilder` are available for
+ * definition, the services provided by `OMR::JitBuilder::MethodBuilder` are available for
  * use (e.g. `typeDictionary()` can be used when defining types).
  *
- * For convenience, the following methods from `TR::TypeDictionary` are also
+ * For convenience, the following methods from `OMR::JitBuilder::TypeDictionary` are also
  * made available:
  *
  *    toIlType<T>()
  *    LookupStruct(const char *name)
  *    LookupUnion(const char *name)
- *    PointerTo(TR::IlType *type)
+ *    PointerTo(OMR::JitBuilder::IlType *type)
  *    PointerTo(const char *structName)
- *    PointerTo(TR::DataType type)
- *    PrimitiveType(TR::DataType type)
+ *    PointerTo(OMR::JitBuilder::DataType type)
+ *    PrimitiveType(OMR::JitBuilder::DataType type)
  *    GetFieldType(const char *structName, const char *fieldName)
  *    UnionFieldType(const char *unionName, const char *fieldName)
  *
@@ -169,37 +167,35 @@
  *       }
  */
 #define DEFINE_BUILDER(name, returnType, ...) \
-   struct name : public TR::MethodBuilder \
+   struct name : public OMR::JitBuilder::MethodBuilder \
       { \
-      name(TR::TypeDictionary *types) : TR::MethodBuilder(types) \
+      name(OMR::JitBuilder::TypeDictionary *types) : OMR::JitBuilder::MethodBuilder(types) \
          { \
          DefineLine(LINETOSTR(__LINE__)); \
          DefineFile(__FILE__); \
          DefineName(#name); \
          DefineReturnType(returnType); \
-         std::vector<std::pair<const char *, TR::IlType *> > args = {__VA_ARGS__}; \
+         std::vector<std::pair<const char *, OMR::JitBuilder::IlType *> > args = {__VA_ARGS__}; \
          for (int i = 0, s = args.size(); i < s; ++i) \
             { \
             DefineParameter(args[i].first, args[i].second); \
             } \
          } \
       bool buildIL(); \
-      template <typename T> TR::IlType * toIlType() { return typeDictionary()->toIlType<T>(); } \
-      TR::IlType * LookupStruct(const char *name) { return typeDictionary()->LookupStruct(name); } \
-      TR::IlType * LookupUnion(const char *name) { return typeDictionary()->LookupUnion(name); } \
-      TR::IlType * PointerTo(TR::IlType *type) { return typeDictionary()->PointerTo(type); } \
-      TR::IlType * PointerTo(const char *structName) { return typeDictionary()->PointerTo(structName); } \
-      TR::IlType * PointerTo(TR::DataType type) { return typeDictionary()->PointerTo(type); } \
-      TR::IlType * PrimitiveType(TR::DataType type) { return typeDictionary()->PrimitiveType(type); } \
-      TR::IlType * GetFieldType(const char *structName, const char *fieldName) { return typeDictionary()->GetFieldType(structName, fieldName); } \
-      TR::IlType * UnionFieldType(const char *unionName, const char *fieldName) { return typeDictionary()->UnionFieldType(unionName, fieldName); } \
+      template <typename T> OMR::JitBuilder::IlType * toIlType() { return typeDictionary()->toIlType<T>(); } \
+      OMR::JitBuilder::IlType * LookupStruct(const char *name) { return typeDictionary()->LookupStruct(name); } \
+      OMR::JitBuilder::IlType * LookupUnion(const char *name) { return typeDictionary()->LookupUnion(name); } \
+      OMR::JitBuilder::IlType * PointerTo(OMR::JitBuilder::IlType *type) { return typeDictionary()->PointerTo(type); } \
+      OMR::JitBuilder::IlType * PointerTo(const char *structName) { return typeDictionary()->PointerTo(structName); } \
+      OMR::JitBuilder::IlType * GetFieldType(const char *structName, const char *fieldName) { return typeDictionary()->GetFieldType(structName, fieldName); } \
+      OMR::JitBuilder::IlType * UnionFieldType(const char *unionName, const char *fieldName) { return typeDictionary()->UnionFieldType(unionName, fieldName); } \
       }; \
    inline bool name::buildIL()
 
 /*
  * A convenience macro for defining MethodBuilder parameter pairs. The first
  * argument to the macro is the name of the parameter, the second is the the
- * `TR::IlType` instance representing the type of the parameter.
+ * `OMR::JitBuilder::IlType` instance representing the type of the parameter.
  */
 #define PARAM(name, type) {name, type}
 
@@ -235,11 +231,11 @@ class JitBuilderTest : public ::testing::Test
  *
  * The first template argument (`TypeDictionary`) is the class type that should
  * be passed to construct the MethodBuilder instance. The specified type *must*
- * inherit from `TR::TypeDictionary`.
+ * inherit from `OMR::JitBuilder::TypeDictionary`.
  *
  * The second template argument (`MethodBuilder`) is the class type of the
  * MethodBuilder instance that should be constructed. The specified type *must*
- * inherit from `TR::MethodBuilder`.
+ * inherit from `OMR::JitBuilder::MethodBuilder`.
  *
  * The last template argument (`Function`) is the type of the function pointer
  * that should be used to store the address of the entry point to the compiled
@@ -275,9 +271,9 @@ void try_compile(Function& f)
    {
    TypeDictionary types;
    MethodBuilder builder(&types);
-   uint8_t *entry;
+   void *entry;
    int32_t rc = compileMethodBuilder(&builder, &entry);
-   ASSERT_EQ(0, rc) << "Failed to compile method " << builder.getMethodName();
+   ASSERT_EQ(0, rc) << "Failed to compile method " << builder.GetMethodName();
    f = (Function)entry;
    }
 

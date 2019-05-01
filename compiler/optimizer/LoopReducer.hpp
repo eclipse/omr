@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,13 @@
 #ifndef LRA_INCL
 #define LRA_INCL
 
-#include <stdint.h>                           // for int32_t
-#include "il/ILOpCodes.hpp"                   // for ILOpCodes
-#include "il/Node.hpp"                        // for Node, vcount_t
-#include "infra/List.hpp"                     // for List
-#include "infra/TreeServices.hpp"             // for TR_AddressTree
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
-#include "optimizer/LoopCanonicalizer.hpp"    // for TR_LoopTransformer
+#include <stdint.h>
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "infra/List.hpp"
+#include "infra/TreeServices.hpp"
+#include "optimizer/OptimizationManager.hpp"
+#include "optimizer/LoopCanonicalizer.hpp"
 
 class TR_ArrayLoop;
 class TR_InductionVariable;

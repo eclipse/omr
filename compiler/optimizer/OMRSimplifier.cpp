@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,60 +25,59 @@
 #include "optimizer/OMRSimplifierHandlers.hpp"
 #include "optimizer/SimplifierTable.hpp"
 
-#include <limits.h>                            // for SCHAR_MAX, SHRT_MAX, etc
-#include <math.h>                              // for fabs
-#include <stddef.h>                            // for size_t
-#include <stdint.h>                            // for int32_t, int64_t, etc
-#include <stdio.h>                             // for sprintf
-#include <stdlib.h>                            // for abs
-#include <string.h>                            // for NULL, strlen, strcmp, etc
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
-#include "codegen/Linkage.hpp"                 // for Linkage
+#include <limits.h>
+#include <math.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "codegen/StorageInfo.hpp"
-#include "codegen/TreeEvaluator.hpp"           // for TreeEvaluator
-#include "compile/Compilation.hpp"             // for Compilation, comp
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "cs2/sparsrbit.h"
-#include "env/IO.hpp"                          // for POINTER_PRINTF_FORMAT
-#include "env/ObjectModel.hpp"                 // for ObjectModel
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
+#include "env/IO.hpp"
+#include "env/ObjectModel.hpp"
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for DataTypes, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::lconst, etc
-#include "il/ILOps.hpp"                        // for ILOpCode, TR::ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "il/symbol/LabelSymbol.hpp"           // for LabelSymbol
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Bit.hpp"                       // for trailingZeroes, etc
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                       // for CFG
-#include "infra/Link.hpp"                      // for TR_LinkHead1
-#include "infra/List.hpp"                      // for List, ListElement, etc
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/CfgNode.hpp"                   // for CFGNode
-#include "compiler/il/ILOpCodes.hpp"           // for ILOpCodes
-#include "optimizer/Optimization.hpp"          // for Optimization
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "compiler/il/ILOpCodes.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/OptimizationManager.hpp"   // for OptimizationManager
+#include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/Structure.hpp"             // for TR_BlockStructure, etc
-#include "optimizer/TransformUtil.hpp"         // for TransformUtil
-#include "ras/Debug.hpp"                       // for TR_DebugBase, etc
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
+#include "optimizer/TransformUtil.hpp"
+#include "ras/Debug.hpp"
 
 extern const SimplifierPtr simplifierOpts[];
 

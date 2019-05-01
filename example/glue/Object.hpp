@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 
 typedef uint8_t ObjectFlags;
 
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 typedef uint32_t RawObjectHeader;
 typedef uint32_t ObjectSize;
 #else

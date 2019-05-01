@@ -76,8 +76,8 @@ public:
    static TR::Register *cloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *aloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *istoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *wrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *dstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);

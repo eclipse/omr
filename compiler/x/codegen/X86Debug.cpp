@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,47 +19,47 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>                              // for int32_t, uint8_t, etc
-#include <stdio.h>                               // for NULL, sprintf
-#include <string.h>                              // for memset
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator, etc
-#include "codegen/GCRegisterMap.hpp"             // for GCRegisterMap
-#include "codegen/Instruction.hpp"               // for Instruction, etc
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/GCRegisterMap.hpp"
+#include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
-#include "codegen/Machine.hpp"                   // for MachineBase, etc
-#include "codegen/MemoryReference.hpp"           // for MemoryReference
-#include "codegen/RealRegister.hpp"              // for RealRegister, etc
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/RegisterDependencyStruct.hpp"
-#include "codegen/Snippet.hpp"                   // for commentString, etc
-#include "compile/Compilation.hpp"               // for Compilation
+#include "codegen/Snippet.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/IO.hpp"                            // for IO
-#include "env/jittypes.h"                        // for intptrj_t
-#include "il/Block.hpp"                          // for Block
-#include "il/DataTypes.hpp"                      // for DataTypes::Double, etc
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes::BBStart, etc
-#include "il/Node.hpp"                           // for Node
-#include "il/Node_inlines.hpp"                   // for Node::getDataType, etc
-#include "il/Symbol.hpp"                         // for Symbol
-#include "il/SymbolReference.hpp"                // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"             // for LabelSymbol
-#include "il/symbol/MethodSymbol.hpp"            // for MethodSymbol
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/List.hpp"                        // for ListIterator, List
-#include "ras/Debug.hpp"                         // for TR_Debug, etc
-#include "x/codegen/DataSnippet.hpp"             // for TR::X86DataSnippet
+#include "env/IO.hpp"
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
+#include "x/codegen/DataSnippet.hpp"
 #include "x/codegen/OutlinedInstructions.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                  // for TR_X86OpCode, etc
+#include "x/codegen/X86Ops.hpp"
 #include "x/codegen/X86Register.hpp"
 #include "env/CompilerEnv.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
-#include "x/codegen/CallSnippet.hpp"             // for TR::X86CallSnippet
-#include "x/codegen/WriteBarrierSnippet.hpp"
+#include "x/codegen/CallSnippet.hpp"
 #endif
 
 namespace TR { class Register; }
@@ -262,7 +262,7 @@ TR_Debug::printDependencyConditions(
          }
       else
          {
-         len = sprintf(cursor, "%s", getName(_cg->machine()->getX86RealRegister(r)));
+         len = sprintf(cursor, "%s", getName(_cg->machine()->getRealRegister(r)));
         }
 
       *(cursor+len)=')';
@@ -336,7 +336,7 @@ TR_Debug::dumpDependencyGroup(TR::FILE *                         pOutFile,
         else if (r == TR::RealRegister::SpilledReg)
            trfprintf(pOutFile, "SpilledReg]");
         else
-           trfprintf(pOutFile, "%s]", getName(_cg->machine()->getX86RealRegister(r)));
+           trfprintf(pOutFile, "%s]", getName(_cg->machine()->getRealRegister(r)));
         }
 
       foundDep = true;
@@ -1783,7 +1783,7 @@ TR_Debug::printX86GCRegisterMap(TR::FILE *pOutFile, TR::GCRegisterMap * map)
    for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i)
       {
       if (map->getMap() & (1 << (i-1))) // TODO:AMD64: Use the proper mask value
-         trfprintf(pOutFile,"%s ", getName(machine->getX86RealRegister((TR::RealRegister::RegNum)i)));
+         trfprintf(pOutFile,"%s ", getName(machine->getRealRegister((TR::RealRegister::RegNum)i)));
       }
 
    trfprintf(pOutFile,"}\n");
@@ -2306,7 +2306,7 @@ TR_Debug::printArgumentFlush(TR::FILE *              pOutFile,
                opCodeName = "mov";
                modrmOffset = 1;
                TR::RealRegister::RegNum reg = linkageProperties.getIntegerArgumentRegister(numGPArgs);
-               regName = getName(_cg->machine()->getX86RealRegister(reg));
+               regName = getName(_cg->machine()->getRealRegister(reg));
                }
             numGPArgs++;
             break;
@@ -2317,7 +2317,7 @@ TR_Debug::printArgumentFlush(TR::FILE *              pOutFile,
                opCodeName = "mov";
                modrmOffset = 2;
                TR::RealRegister::RegNum reg = linkageProperties.getIntegerArgumentRegister(numGPArgs);
-               regName = getName(_cg->machine()->getX86RealRegister(reg), TR_DoubleWordReg);
+               regName = getName(_cg->machine()->getRealRegister(reg), TR_DoubleWordReg);
                }
             numGPArgs++;
             break;
@@ -2327,7 +2327,7 @@ TR_Debug::printArgumentFlush(TR::FILE *              pOutFile,
                opCodeName = "movss";
                modrmOffset = 3;
                TR::RealRegister::RegNum reg = linkageProperties.getFloatArgumentRegister(numFPArgs);
-               regName = getName(_cg->machine()->getX86RealRegister(reg), TR_QuadWordReg);
+               regName = getName(_cg->machine()->getRealRegister(reg), TR_QuadWordReg);
                }
             numFPArgs++;
             break;
@@ -2337,7 +2337,7 @@ TR_Debug::printArgumentFlush(TR::FILE *              pOutFile,
                opCodeName = "movsd";
                modrmOffset = 3;
                TR::RealRegister::RegNum reg = linkageProperties.getFloatArgumentRegister(numFPArgs);
-               regName = getName(_cg->machine()->getX86RealRegister(reg), TR_QuadWordReg);
+               regName = getName(_cg->machine()->getRealRegister(reg), TR_QuadWordReg);
                }
             numFPArgs++;
             break;
@@ -2381,244 +2381,6 @@ TR_Debug::printArgumentFlush(TR::FILE *              pOutFile,
       }
    return bufferPos;
    }
-
-#ifdef J9_PROJECT_SPECIFIC
-uint8_t*
-TR_Debug::printArgs(TR::FILE *pOutFile,
-                    TR::AMD64WriteBarrierSnippet * snippet,
-                    bool restoreRegs,
-                    uint8_t *bufferPos)
-   {
-   TR::CodeGenerator *cg = snippet->cg();
-   TR::Linkage *linkage = cg->getLinkage();
-   TR::RegisterDependencyConditions *deps = snippet->getDependencies();
-
-   TR::RealRegister *r1Real = toRealRegister(snippet->getDestOwningObjectRegister());
-   TR::RealRegister::RegNum r1 = r1Real->getRegisterNumber();
-   TR::RealRegister *r2Real = NULL;
-   TR::RealRegister::RegNum r2 = TR::RealRegister::NoReg;
-
-   if (deps->getNumPostConditions() > 1)
-      {
-      r2Real = toRealRegister(snippet->getSourceRegister());
-      r2 = r2Real->getRegisterNumber();
-      }
-
-   // Fast path the single argument case.  Presently, only a batch arraycopy write barrier applies.
-   //
-   if (deps->getNumPostConditions() == 1)
-      {
-      if (r1 != TR::RealRegister::eax)
-         {
-         // Register is not in RAX so exchange it.  This applies to both building and restoring args.
-         //
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trax, %s", getName(r1, TR_DoubleWordReg));
-         bufferPos+=2;
-         }
-      return bufferPos;
-      }
-
-   int8_t action = 0;
-
-   action = (restoreRegs ? 32 : 0) |
-            (r1 == TR::RealRegister::eax ? 16 : 0) |
-            (r1 == TR::RealRegister::esi ? 8 : 0) |
-            (r2 == TR::RealRegister::esi ? 4 : 0) |
-            (r2 == TR::RealRegister::eax ? 2 : 0) |
-            (r1 == r2 ? 1 : 0);
-
-   switch (action)
-      {
-      case 0:
-      case 32:
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trax, %s",  getName(r1, TR_DoubleWordReg));
-         bufferPos+=2;
-
-         printPrefix(pOutFile, NULL, bufferPos, 3);
-         trfprintf(pOutFile, "xchg\t\trsi, %s", getName(r2, TR_DoubleWordReg));
-         bufferPos+=3;
-         break;
-
-      case 1:
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "push\t\trsi");
-         bufferPos+=2;
-
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trax, %s", getName(r1, TR_DoubleWordReg));
-         bufferPos+=2;
-
-         printPrefix(pOutFile, NULL, bufferPos, 3);
-         trfprintf(pOutFile, "mov\t\trsi, rax");
-         bufferPos+=3;
-         break;
-
-      case 2:
-
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trax, rsi");
-         bufferPos+=2;
-
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trax, %s", getName(r1, TR_DoubleWordReg));
-         bufferPos+=2;
-         break;
-
-      case 4:
-      case 36:
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trax, %s", getName(r1, TR_DoubleWordReg));
-         bufferPos+=2;
-         break;
-
-      case 8:
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trsi, rax");
-         bufferPos+=2;
-
-         printPrefix(pOutFile, NULL, bufferPos, 3);
-         trfprintf(pOutFile, "xchg\t\trsi, %s", getName(r2, TR_DoubleWordReg));
-         bufferPos+=3;
-         break;
-
-      case 10:
-      case 42:
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trsi, rax");
-         bufferPos+=2;
-         break;
-
-      case 13:
-         printPrefix(pOutFile, NULL, bufferPos, 1);
-         trfprintf(pOutFile, "push\t\trax");
-         bufferPos+=1;
-
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "mov\t\trax, rsi");
-         bufferPos+=2;
-         break;
-
-      case 16:
-      case 48:
-         printPrefix(pOutFile, NULL, bufferPos, 3);
-         trfprintf(pOutFile, "xchg\t\trsi, %s", getName(r2, TR_DoubleWordReg));
-         bufferPos+=3;
-         break;
-
-      case 19:
-         printPrefix(pOutFile, NULL, bufferPos, 1);
-         trfprintf(pOutFile, "push\t\trsi");
-         bufferPos+=1;
-
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "mov\t\trsi, rax");
-         bufferPos+=2;
-         break;
-
-      case 33:
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trax, %s", getName(r1, TR_DoubleWordReg));
-         bufferPos+=2;
-
-         printPrefix(pOutFile, NULL, bufferPos, 1);
-         trfprintf(pOutFile, "pop rsi");
-         bufferPos+=1;
-         break;
-
-      case 34:
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trax, %s", getName(r1, TR_DoubleWordReg));
-         bufferPos+=2;
-
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "xchg\t\trsi, rax");
-         bufferPos+=2;
-         break;
-
-      case 40:
-         printPrefix(pOutFile, NULL, bufferPos, 3);
-         trfprintf(pOutFile, "xchg\t\trsi, %s", getName(r2, TR_DoubleWordReg));
-         bufferPos+=3;
-
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         bufferPos+=2;
-         trfprintf(pOutFile, "xchg\t\trsi, rax");
-         break;
-
-      case 45:
-         printPrefix(pOutFile, NULL, bufferPos, 1);
-         trfprintf(pOutFile, "pop\t\trax");
-         bufferPos+=1;
-         break;
-
-      case 51:
-         printPrefix(pOutFile, NULL, bufferPos, 1);
-         trfprintf(pOutFile, "pop\t\trsi");
-         bufferPos+=1;
-         break;
-      }
-
-   return bufferPos;
-
-   }
-
-static uint8_t *
-estimateJumpSize(TR::AMD64WriteBarrierSnippet * snippet,
-                 uint8_t * bufferPos)
-   {
-   TR::LabelSymbol *restartLabel = snippet->getRestartLabel();
-   uint8_t        *destination = restartLabel->getCodeLocation();
-   intptrj_t  distance    = destination - (bufferPos + 2);
-
-   if (snippet->getForceLongRestartJump())
-      {
-         return bufferPos += 5;
-      }
-   else
-      {
-         if (distance >= -128 && distance <= 127)
-            {
-            return bufferPos += 2;
-            }
-         else
-            {
-            return bufferPos += 5;
-            }
-
-      }
-   }
-
-void
-TR_Debug::print(TR::FILE *pOutFile, TR::AMD64WriteBarrierSnippet * snippet)
-   {
-   if (pOutFile == NULL)
-      return;
-
-   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
-
-   bufferPos = printArgs(pOutFile, snippet, false, bufferPos);
-   printPrefix(pOutFile, NULL, bufferPos, 5);
-   trfprintf(pOutFile, "call\t\tjitWriteBarrierStoreGenerational");
-   bufferPos += 5;
-   bufferPos = printArgs(pOutFile, snippet, true, bufferPos);
-
-   printRestartJump(pOutFile, snippet, bufferPos);
-   bufferPos = estimateJumpSize(snippet, bufferPos);
-
-   bufferPos = printArgs(pOutFile, snippet, false, bufferPos);
-   printPrefix(pOutFile, NULL, bufferPos, 5);
-   trfprintf(pOutFile, "call\t\tjitWriteBarrierStoreGenerationalAndConcurrentMark");
-   bufferPos += 5;
-   bufferPos = printArgs(pOutFile, snippet, true, bufferPos);
-
-   printRestartJump(pOutFile, snippet, bufferPos);
-   bufferPos = estimateJumpSize(snippet, bufferPos);
-
-   }
-#endif
 
 #endif
 

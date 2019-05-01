@@ -38,6 +38,12 @@
 #include "omrportpriv.h"
 #include "omrportpg.h"
 #endif
+
+#if defined(OSX)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
+
 #if (__IBMC__ || __IBMCPP__)
 void dcbf(unsigned char *);
 void dcbst(unsigned char *);
@@ -192,14 +198,24 @@ int32_t
 omrcpu_get_cache_line_size(struct OMRPortLibrary *portLibrary, int32_t *lineSize)
 {
 	int32_t rc = OMRPORT_ERROR_NOT_SUPPORTED_ON_THIS_PLATFORM;
+	if (NULL == lineSize) {
+		rc = OMRPORT_ERROR_INVALID_ARGUMENTS;
+	} else {
 #if defined(RS6000) || defined (LINUXPPC) || defined (PPC)
-	if (NULL != lineSize) {
 		*lineSize = PPG_mem_ppcCacheLineSize;
 		rc = 0;
-	} else {
-		rc = OMRPORT_ERROR_INVALID_ARGUMENTS;
+#elif defined (OSX)
+		int queryPath[] = {CTL_HW, HW_CACHELINE};
+		int64_t result = 0;
+		size_t resultSize = sizeof(result);
+		if (0 != sysctl(queryPath, 2, &result, &resultSize, NULL, 0)) {
+			rc = OMRPORT_ERROR_SYSINFO_OPFAILED;
+		} else {
+			*lineSize = (int32_t) result;
+			rc = 0;
+		}
+#endif /* defined(OSX) */
 	}
-#endif /* defined(RS6000) || defined (LINUXPPC) || defined (PPC) */
 	return rc;
 }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef OSRDEFANALYSIS_INCL
 #define OSRDEFANALYSIS_INCL
 
-#include <stdint.h>                           // for int32_t
-#include "il/Node.hpp"                        // for Node, vcount_t
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
-#include "optimizer/UseDefInfo.hpp"  // for TR_UseDefInfo
+#include <stdint.h>
+#include "il/Node.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
+#include "optimizer/UseDefInfo.hpp"
 
 class TR_BitVector;
 class TR_Liveness;

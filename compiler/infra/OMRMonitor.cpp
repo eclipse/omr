@@ -66,9 +66,12 @@ bool
 OMR::Monitor::init(char *name)
    {
    _name = name;
+#if defined(OMR_OS_WINDOWS)
    MUTEX_INIT(_monitor);
+#else
    bool rc = MUTEX_INIT(_monitor);
    TR_ASSERT(rc == true, "error initializing monitor\n");
+#endif /* defined(OMR_OS_WINDOWS) */
    return true;
    }
 

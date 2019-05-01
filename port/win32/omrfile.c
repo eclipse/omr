@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,8 +35,6 @@
 #include "portnls.h"
 #include "ut_omrport.h"
 #include "omrfilehelpers.h"
-
-static wchar_t *file_get_unicode_path(OMRPortLibrary *portLibrary, const char *utf8Path, wchar_t *unicodeBuffer, uintptr_t unicodeBufferSize);
 
 #define J9FILE_UNC_EXTENDED_LENGTH_PREFIX (L"\\\\?\\")
 #define J9FILE_UNC_EXTENDED_LENGTH_PREFIX_NETWORK (L"\\\\?\\UNC")
@@ -98,11 +96,11 @@ fromHandle(OMRPortLibrary *portLibrary, HANDLE handle)
  *
  * @return 		NULL on failure
  * 			 	otherwise the converted string.
- * 					If the return value is not the same as @ref unicodeBuffer, file_get_unicode_path had to allocate memory to hold the
+ * 					If the return value is not the same as @ref unicodeBuffer, port_file_get_unicode_path had to allocate memory to hold the
  * 					unicode path - the caller is responsible for freeing this memory by calling @ref omrmem_free_memory on the returned value.
  */
-static wchar_t *
-file_get_unicode_path(OMRPortLibrary *portLibrary, const char *utf8Path, wchar_t *unicodeBuffer, uintptr_t unicodeBufferSize)
+wchar_t *
+port_file_get_unicode_path(OMRPortLibrary *portLibrary, const char *utf8Path, wchar_t *unicodeBuffer, uintptr_t unicodeBufferSize)
 {
 	wchar_t *unicodePath;
 	wchar_t *pathName;
@@ -205,7 +203,7 @@ omrfile_attr(struct OMRPortLibrary *portLibrary, const char *path)
 	Trc_PRT_file_attr_Entry(path);
 
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePath) {
 		return -1;
 	}
@@ -245,7 +243,7 @@ omrfile_chmod(struct OMRPortLibrary *portLibrary, const char *path, int32_t mode
 
 	Trc_PRT_file_chmod_Entry(path, mode);
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePath) {
 		Trc_PRT_file_chmod_Exit(-1);
 		return -1;
@@ -349,7 +347,7 @@ omrfile_findfirst(struct OMRPortLibrary *portLibrary, const char *path, char *re
 	strcat(newPath, "*");
 
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, newPath, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, newPath, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePath) {
 		Trc_PRT_file_findfirst_ExitFail(-1);
 		return (uintptr_t)-1;
@@ -399,12 +397,12 @@ omrfile_lastmod(struct OMRPortLibrary *portLibrary, const char *path)
 	Trc_PRT_file_lastmod_Entry(path);
 
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL != unicodePath) {
 		WIN32_FILE_ATTRIBUTE_DATA myStat;
 		if (0 == GetFileAttributesExW(unicodePath, GetFileExInfoStandard, &myStat)) {
 			int32_t error = GetLastError();
-			result = portLibrary->error_set_last_error(portLibrary, error, findError(error));
+			portLibrary->error_set_last_error(portLibrary, error, findError(error));
 		} else {
 			/*
 			 * Search MSDN for 'Converting a time_t Value to a File Time' for following implementation.
@@ -431,7 +429,7 @@ omrfile_length(struct OMRPortLibrary *portLibrary, const char *path)
 	Trc_PRT_file_length_Entry(path);
 
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL != unicodePath) {
 		WIN32_FILE_ATTRIBUTE_DATA myStat;
 		if (0 == GetFileAttributesExW(unicodePath, GetFileExInfoStandard, &myStat)) {
@@ -478,7 +476,7 @@ omrfile_mkdir(struct OMRPortLibrary *portLibrary, const char *path)
 
 	Trc_PRT_file_mkdir_entry2(path);
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePath) {
 		result = -1;
 	} else {
@@ -506,11 +504,11 @@ omrfile_move(struct OMRPortLibrary *portLibrary, const char *pathExist, const ch
 	BOOL result;
 
 	/* Convert the filenames from UTF8 to Unicode */
-	unicodePathExist = file_get_unicode_path(portLibrary, pathExist, unicodeBufferExist, UNICODE_BUFFER_SIZE);
+	unicodePathExist = port_file_get_unicode_path(portLibrary, pathExist, unicodeBufferExist, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePathExist) {
 		return -1;
 	}
-	unicodePathNew = file_get_unicode_path(portLibrary, pathNew, unicodeBufferNew, UNICODE_BUFFER_SIZE);
+	unicodePathNew = port_file_get_unicode_path(portLibrary, pathNew, unicodeBufferNew, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePathNew) {
 		if (unicodeBufferExist != unicodePathExist) {
 			portLibrary->mem_free_memory(portLibrary, unicodePathExist);
@@ -546,7 +544,7 @@ omrfile_open(struct OMRPortLibrary *portLibrary, const char *path, int32_t flags
 	Trc_PRT_file_open_Entry(path, flags, mode);
 
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePath) {
 		return -1;
 	}
@@ -776,7 +774,7 @@ omrfile_unlink(struct OMRPortLibrary *portLibrary, const char *path)
 	BOOL result;
 
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePath) {
 		return -1;
 	}
@@ -807,7 +805,7 @@ omrfile_unlinkdir(struct OMRPortLibrary *portLibrary, const char *path)
 	BOOL result;
 
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePath) {
 		return -1;
 	}
@@ -995,7 +993,7 @@ omrfile_stat(struct OMRPortLibrary *portLibrary, const char *path, uint32_t flag
 	memset(buf, 0, sizeof(*buf));
 
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePath) {
 		return -1;
 	}
@@ -1067,7 +1065,7 @@ omrfile_stat_filesystem(struct OMRPortLibrary *portLibrary, const char *path, ui
 	}
 
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(portLibrary, path, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePath) {
 		return -1;
 	}

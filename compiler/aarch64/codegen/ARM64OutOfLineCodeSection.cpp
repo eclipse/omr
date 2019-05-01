@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,10 +34,10 @@ TR_ARM64OutOfLineCodeSection::TR_ARM64OutOfLineCodeSection(TR::Node *callNode,
 
 void TR_ARM64OutOfLineCodeSection::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   TR_ASSERT(false, "Not implemented yet.");
+   TR_UNIMPLEMENTED();
    }
 
 void TR_ARM64OutOfLineCodeSection::generateARM64OutOfLineCodeSectionDispatch()
    {
-   TR_ASSERT(false, "Not implemented yet.");
+   TR_UNIMPLEMENTED();
    }

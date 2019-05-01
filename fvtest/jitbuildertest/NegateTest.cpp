@@ -27,8 +27,8 @@ DEFINE_BUILDER(TestInt64Negate,
                Int64,
                PARAM("param", Int64))
    {
-   TR::IlValue *param = Load("param");
-   TR::IlValue *result = Negate(param);
+   OMR::JitBuilder::IlValue *param = Load("param");
+   OMR::JitBuilder::IlValue *result = Negate(param);
    Return(result);
    return true;
    }
@@ -37,8 +37,8 @@ DEFINE_BUILDER(TestInt32Negate,
                Int32,
                PARAM("param", Int32))
    {
-   TR::IlValue *param = Load("param");
-   TR::IlValue *result = Negate(param);
+   OMR::JitBuilder::IlValue *param = Load("param");
+   OMR::JitBuilder::IlValue *result = Negate(param);
    Return(result);
    return true;
    }
@@ -47,8 +47,8 @@ DEFINE_BUILDER(TestInt16Negate,
                Int16,
                PARAM("param", Int16))
    {
-   TR::IlValue *param = Load("param");
-   TR::IlValue *result = Negate(param);
+   OMR::JitBuilder::IlValue *param = Load("param");
+   OMR::JitBuilder::IlValue *result = Negate(param);
    Return(result);
    return true;
    }
@@ -57,8 +57,8 @@ DEFINE_BUILDER(TestInt8Negate,
                Int8,
                PARAM("param", Int8))
    {
-   TR::IlValue *param = Load("param");
-   TR::IlValue *result = Negate(param);
+   OMR::JitBuilder::IlValue *param = Load("param");
+   OMR::JitBuilder::IlValue *result = Negate(param);
    Return(result);
    return true;
    }
@@ -67,8 +67,8 @@ DEFINE_BUILDER(TestFloatNegate,
                Float,
                PARAM("param", Float))
    {
-   TR::IlValue *param = Load("param");
-   TR::IlValue *result = Negate(param);
+   OMR::JitBuilder::IlValue *param = Load("param");
+   OMR::JitBuilder::IlValue *result = Negate(param);
    Return(result);
    return true;
    }
@@ -77,8 +77,8 @@ DEFINE_BUILDER(TestDoubleNegate,
                Double,
                PARAM("param", Double))
    {
-   TR::IlValue *param = Load("param");
-   TR::IlValue *result = Negate(param);
+   OMR::JitBuilder::IlValue *param = Load("param");
+   OMR::JitBuilder::IlValue *result = Negate(param);
    Return(result);
    return true;
    }
@@ -89,7 +89,7 @@ typedef int64_t (*Int64ReturnType)(int64_t);
 TEST_F(NegateTest, Int64_Test)
    {
    Int64ReturnType testFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, TestInt64Negate, testFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, TestInt64Negate, testFunction);
    ASSERT_EQ(testFunction(0), 0);
    ASSERT_EQ(testFunction(1), -1);
    ASSERT_EQ(testFunction(-1), 1);
@@ -102,7 +102,7 @@ typedef int32_t (*Int32ReturnType)(int32_t);
 TEST_F(NegateTest, Int32_Test)
    {
    Int32ReturnType testFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, TestInt32Negate, testFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, TestInt32Negate, testFunction);
    ASSERT_EQ(testFunction(0), 0);
    ASSERT_EQ(testFunction(1), -1);
    ASSERT_EQ(testFunction(-1), 1);
@@ -115,7 +115,7 @@ typedef int16_t (*Int16ReturnType)(int16_t);
 TEST_F(NegateTest, Int16_Test)
    {
    Int16ReturnType testFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, TestInt16Negate, testFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, TestInt16Negate, testFunction);
    ASSERT_EQ(testFunction(0), 0);
    ASSERT_EQ(testFunction(1), -1);
    ASSERT_EQ(testFunction(-1), 1);
@@ -128,7 +128,7 @@ typedef int8_t (*Int8ReturnType)(int8_t);
 TEST_F(NegateTest, Int8_Test)
    {
    Int8ReturnType testFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, TestInt8Negate, testFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, TestInt8Negate, testFunction);
    ASSERT_EQ(testFunction(0), 0);
    ASSERT_EQ(testFunction(1), -1);
    ASSERT_EQ(testFunction(-1), 1);
@@ -141,7 +141,7 @@ typedef float (*FloatReturnType)(float);
 TEST_F(NegateTest, Float_Test)
    {
    FloatReturnType testFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, TestFloatNegate, testFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, TestFloatNegate, testFunction);
    ASSERT_EQ(testFunction(0), 0);
    ASSERT_EQ(testFunction(1), -1);
    ASSERT_EQ(testFunction(-1), 1);
@@ -153,7 +153,7 @@ typedef double (*DoubleReturnType)(double);
 TEST_F(NegateTest, Double_Test)
    {
    DoubleReturnType testFunction;
-   ASSERT_COMPILE(TR::TypeDictionary, TestDoubleNegate, testFunction);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, TestDoubleNegate, testFunction);
    ASSERT_EQ(testFunction(0), 0);
    ASSERT_EQ(testFunction(1), -1);
    ASSERT_EQ(testFunction(-1), 1);

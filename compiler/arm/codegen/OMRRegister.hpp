@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,24 +64,7 @@ class OMR_EXTENSIBLE Register: public OMR::Register
    uint64_t setInterference(uint64_t i) {return (_liveRegisterInfo._interference = i);}
 
 
-   /*
-    * Method for manipulating flags
-    */
-   bool isFlippedCCR()  {return _flags.testAny(FlipBranchOffThisCCR);}
-   void setFlippedCCR() {_flags.set(FlipBranchOffThisCCR);}
-   void resetFlippedCCR() {_flags.reset(FlipBranchOffThisCCR);}
-
-
    private:
-
-/* @@@@ copied from p/codegen/register/OMRRegister.hpp @@@@ */
-/* May need to be modified for ARM */
-
-   enum
-      {
-      FlipBranchOffThisCCR          = 0x4000, // PPC may have swapped register positions in compare
-      };
-
    // Both x and z also have this union but ppc uses uint64_t instead of uint32_t
    union
       {

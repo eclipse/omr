@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
 #ifndef TIMER_INCL
 #define TIMER_INCL
 
-#include <stdint.h>          // for uint32_t, uint64_t
+#include <stdint.h>
 #include "env/IO.hpp"
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
-#include "infra/Array.hpp"   // for TR_Array
+#include "env/TRMemory.hpp"
+#include "infra/Array.hpp"
 
 #include "infra/HashTab.hpp"
 

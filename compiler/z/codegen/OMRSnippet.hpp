@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,10 +35,10 @@ namespace OMR { typedef OMR::Z::Snippet SnippetConnector; }
 
 #include "compiler/codegen/OMRSnippet.hpp"
 
-#include <stdint.h>                // for uint8_t, int32_t, etc
-#include "codegen/InstOpCode.hpp"  // for InstOpCode, etc
-#include "env/jittypes.h"          // for intptrj_t
-#include "infra/Flags.hpp"         // for flags16_t
+#include <stdint.h>
+#include "codegen/InstOpCode.hpp"
+#include "env/jittypes.h"
+#include "infra/Flags.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class LabelSymbol; }

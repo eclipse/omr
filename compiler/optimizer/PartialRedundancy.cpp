@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,55 +21,54 @@
 
 #include "optimizer/PartialRedundancy.hpp"
 
-#include <limits.h>                                 // for USHRT_MAX
-#include <stddef.h>                                 // for size_t
-#include <stdint.h>                                 // for int32_t
-#include <stdlib.h>                                 // for atoi
-#include <string.h>                                 // for NULL, memset
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                     // for TR_FrontEnd, etc
-#include "codegen/Linkage.hpp"                      // for Linkage
-#include "compile/Compilation.hpp"                  // for Compilation
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"              // for TR::Options, etc
-#include "control/Recompilation.hpp"                // for TR_Recompilation
+#include "control/Options_inlines.hpp"
+#include "control/Recompilation.hpp"
 #include "cs2/bitvectr.h"
 #include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
-#include "env/TRMemory.hpp"                         // for TR_Memory, etc
-#include "env/jittypes.h"                           // for TR_ByteCodeInfo
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                             // for Block
-#include "il/DataTypes.hpp"                         // for TR::DataType, etc
-#include "il/ILOps.hpp"                             // for TR::ILOpCode, etc
-#include "il/Node.hpp"                              // for Node, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "il/TreeTop.hpp"                           // for TreeTop
-#include "il/TreeTop_inlines.hpp"                   // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"               // for MethodSymbol
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/BitVector.hpp"                      // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                            // for CFG
-#include "infra/Link.hpp"                           // for TR_LinkHead
-#include "infra/List.hpp"                           // for ListElement, etc
-#include "infra/CfgEdge.hpp"                        // for CFGEdge
-#include "infra/CfgNode.hpp"                        // for CFGNode
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"
-#include "optimizer/InductionVariable.hpp"          // for TR_PrimaryInductionVariable
+#include "optimizer/InductionVariable.hpp"
 #include "optimizer/LocalAnalysis.hpp"
-#include "optimizer/Optimization.hpp"               // for Optimization
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"                  // for Optimizer
+#include "optimizer/Optimizer.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
-#include "ras/Debug.hpp"                            // for TR_DebugBase
+#include "ras/Debug.hpp"
 #ifdef J9_PROJECT_SPECIFIC
-#include "runtime/J9Profiler.hpp"                   // for TR_ValueProfiler
+#include "runtime/J9Profiler.hpp"
 #endif
 
 
@@ -190,7 +189,6 @@ bool TR_PartialRedundancy::ignoreNode (TR::Node *node)
    {
    TR::ILOpCodes        op      = node->getOpCodeValue();
    TR::CodeGenerator   *cg      = comp()->cg();
-   TR::Linkage         *linkage = cg->getLinkage();
    TR::SymbolReference *symRef  = node->getOpCode().hasSymbolReference()?node->getSymbolReference():NULL;
 
    TR::SparseBitVector seenNodes(comp()->allocator());
@@ -228,6 +226,14 @@ int32_t TR_PartialRedundancy::perform()
    // of blocks and temps this configuration creates. Disabling it
    // won't affect performance if there are no profilings allowed.
    if (comp()->getProfilingMode() == JitProfiling && comp()->getHCRMode() != TR::none && _numProfilingsAllowed == 0)
+      return 0;
+
+   // Need to confirm places calling opCodeFor* APIs are doing the right
+   // thing for readbar and wrtbar. All the transformations applied to normal
+   // load/store s should be applied to rd/wrtbar s. However, we need to be
+   // careful about the difference in the shape of the trees and the
+   // mapping relationship between different loads and stores.
+   if (comp()->incompleteOptimizerSupportForReadWriteBarriers())
       return 0;
 
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
@@ -810,12 +816,6 @@ bool TR_PartialRedundancy::isNodeAnImplicitNoOp(TR::Node *node)
 
    if (TR::ILOpCode::isOpCodeAnImplicitNoOp(node->getOpCode())) //FIXME: disables 190546!!!
       return true;
-
-   // loads and stores of structures that cannot fit into register
-   if (!node->canEvaluate() &&
-       (node->getOpCode().isLoad() || node->getOpCode().isStore()))
-      return true;
-
 
    if (node->getType().isAggregate() && node->getSize() > 8)
       {
@@ -3925,7 +3925,7 @@ bool TR_ExceptionCheckMotion::includeRelevantNodes(TR::Node *node, vcount_t visi
 
    int32_t rhsChild = -1;
    if (node->getOpCode().isStore())
-      rhsChild = (node->getNumChildren() - ((node->getOpCode().isWrtBar()) ? 2 : 1));
+      rhsChild = node->getOpCode().isStoreDirect() ? 0 : 1;
 
    bool childRelevant = false, containsIndirectAccess = false, containsArrayAccess = false, containsDivide = false, containsUnresolvedAccess = false;
    int32_t i;

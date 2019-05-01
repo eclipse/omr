@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,30 +21,30 @@
 
 #include "optimizer/AsyncCheckInsertion.hpp"
 
-#include <limits.h>                            // for INT_MAX
-#include <stdlib.h>                            // for atoi
-#include <string.h>                            // for strncmp, memset, NULL
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
-#include "control/Recompilation.hpp"           // for TR_Recompilation
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "control/Recompilation.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/jittypes.h"                      // for TR_ByteCodeInfo, etc
-#include "il/Block.hpp"                        // for Block, toBlock
-#include "il/DataTypes.hpp"                    // for getMaxSigned, etc
-#include "il/ILOps.hpp"                        // for ILOpCode, TR::ILOpCode
-#include "il/Node.hpp"                         // for Node
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/CfgNode.hpp"                   // for CFGNode
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/Optimizer.hpp"             // for Optimizer
+#include "optimizer/Optimizer.hpp"
 
 
 #define NUMBER_OF_NODES_IN_LARGE_METHOD 2000

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,20 +19,20 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>                     // for int32_t, uint32_t, etc
-#include <string.h>                     // for memset, NULL
+#include <stdint.h>
+#include <string.h>
 #include "codegen/FrontEnd.hpp"
-#include "compile/Compilation.hpp"      // for Compilation
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "infra/deque.hpp"              // for TR::deque
-#include "env/TRMemory.hpp"             // for Allocator
-#include "il/Block.hpp"                 // for Block
-#include "infra/Assert.hpp"             // for TR_ASSERT
-#include "infra/Flags.hpp"              // for flags8_t
-#include "infra/Link.hpp"               // for TR_Link, TR_LinkHead, etc
-#include "infra/Stack.hpp"              // for TR_Stack
-#include "optimizer/Optimizations.hpp"  // for Optimizations::inlining
+#include "infra/deque.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/Stack.hpp"
+#include "optimizer/Optimizations.hpp"
 #include "env/IO.hpp"
 
 namespace TR { class ResolvedMethodSymbol; }

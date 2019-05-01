@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,32 +21,32 @@
 
 #include "x/codegen/BinaryCommutativeAnalyser.hpp"
 
-#include <stddef.h>                                 // for NULL
-#include <stdint.h>                                 // for uint8_t, int32_t
-#include "codegen/Analyser.hpp"                     // for NUM_ACTIONS
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                     // for feGetEnv
-#include "codegen/Machine.hpp"                      // for Machine
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/Analyser.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/Register.hpp"                     // for Register
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterPair.hpp"                 // for RegisterPair
-#include "codegen/TreeEvaluator.hpp"                // for TreeEvaluator, etc
+#include "codegen/RegisterPair.hpp"
+#include "codegen/TreeEvaluator.hpp"
 #include "codegen/X86Evaluator.hpp"
-#include "compile/Compilation.hpp"                  // for Compilation, etc
-#include "env/IO.hpp"                               // for POINTER_PRINTF_FORMAT
+#include "compile/Compilation.hpp"
+#include "env/IO.hpp"
 #include "env/CompilerEnv.hpp"
-#include "il/ILOpCodes.hpp"                         // for ILOpCodes::lushr, etc
-#include "il/ILOps.hpp"                             // for ILOpCode
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
 #include "il/ILProps.hpp"
-#include "il/Node.hpp"                              // for Node
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "infra/Assert.hpp"                         // for TR_ASSERT
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                     // for ::MOV4RegReg, etc
+#include "x/codegen/X86Ops.hpp"
 
 static void
 zeroExtendTo32BitRegister(TR::Node          *node,

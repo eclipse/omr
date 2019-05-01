@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef OMR_TREETOP_INLINE_INCL
 #define OMR_TREETOP_INLINE_INCL
 
-#include "il/ILOps.hpp"          // for ILOpCode
-#include "il/Node.hpp"           // for Node
-#include "il/OMRTreeTop.hpp"     // for TreeTop
-#include "il/TreeTop.hpp"        // for TreeTop
-#include "infra/Assert.hpp"      // for TR_ASSERT
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/OMRTreeTop.hpp"
+#include "il/TreeTop.hpp"
+#include "infra/Assert.hpp"
 
 namespace TR { class Block; }
 

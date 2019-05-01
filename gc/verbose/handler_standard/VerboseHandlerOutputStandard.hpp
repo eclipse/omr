@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,6 +129,7 @@ public:
 	 * @param eventData hook specific event data.
 	 */
 	void handleScavengeEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData);
+	void handleScavengeEndNoLock(J9HookInterface** hook, uintptr_t eventNum, void* eventData);
 
 	/**
 	 * Write verbose stanza for a percolate event.

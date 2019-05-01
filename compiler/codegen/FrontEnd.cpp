@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,121 +21,80 @@
 
 #include "codegen/FrontEnd.hpp"
 
-#include <stdarg.h>                            // for va_end, va_list, etc
-#include <stdint.h>                            // for int32_t
-#include "env/KnownObjectTable.hpp"        // for KnownObjectTable, etc
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/CompilationTypes.hpp"        // for TR_CallingContext
-#include "compile/Method.hpp"                  // for TR_Method
+#include <stdarg.h>
+#include <stdint.h>
+#include "env/KnownObjectTable.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
 #include "control/Options.hpp"
 #include "control/OptionsUtil.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/CPU.hpp"                         // for Cpu
-#include "env/jittypes.h"                      // for uintptrj_t, etc
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
+#include "env/CPU.hpp"
+#include "env/jittypes.h"
+#include "env/PersistentInfo.hpp"
 
 #if defined(LINUX) || defined(OSX)
-#include <unistd.h>                 // for getpid, intptr_t, pid_t
+#include <unistd.h>
 #endif
-
-
-#define notImplemented(A) TR_ASSERT(0, "TR_FrontEnd::%s is undefined", (A) )
-
 
 TR_ResolvedMethod *
 TR_FrontEnd::createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod *, TR_OpaqueClassBlock *)
    {
-   notImplemented("createResolvedMethod");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 uint32_t
 TR_FrontEnd::offsetOfIsOverriddenBit()
    {
-   notImplemented("offsetOfIsOverriddenBit");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 TR_Debug *
 TR_FrontEnd::createDebug(TR::Compilation *comp)
    {
-   notImplemented("createDebug");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 void
 TR_FrontEnd::acquireLogMonitor()
    {
-   notImplemented("acquireLogMonitor");
+   TR_UNIMPLEMENTED();
    }
 
 void
 TR_FrontEnd::releaseLogMonitor()
    {
-   notImplemented("releaseLogMonitor");
+   TR_UNIMPLEMENTED();
    }
 
 bool
 TR_FrontEnd::classHasBeenExtended(TR_OpaqueClassBlock *)
    {
-   notImplemented("classHasBeenExtended");
+   TR_UNIMPLEMENTED();
    return false;
    }
 
 bool
 TR_FrontEnd::classHasBeenReplaced(TR_OpaqueClassBlock *)
    {
-   notImplemented("classHasBeenReplaced");
+   TR_UNIMPLEMENTED();
    return false;
-   }
-
-uint8_t *
-TR_FrontEnd::allocateCodeMemory(TR::Compilation *, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t ** coldCode, bool isMethodHeaderNeeded)
-   {
-   notImplemented("allocateCodeMemory");
-   return 0;
-   }
-
-void
-TR_FrontEnd::resizeCodeMemory(TR::Compilation *, uint8_t *, uint32_t numBytes)
-   {
-   notImplemented("resizeCodeMemory");
-   }
-
-/*
- * Return conservative approximation of code-cache base.
- */
-uint8_t * TR_FrontEnd::getCodeCacheBase()                          { return 0; }
-uint8_t * TR_FrontEnd::getCodeCacheBase(TR::CodeCache *codeCache)  { return 0; }
-
-/*
- * Return conservative approximation of code cache top.
- */
-uint8_t * TR_FrontEnd::getCodeCacheTop()                           { return (uint8_t*)(~0); }
-uint8_t * TR_FrontEnd::getCodeCacheTop(TR::CodeCache *codeCache)   { return (uint8_t*)(~0); }
-
-void
-TR_FrontEnd::releaseCodeMemory(void *, uint8_t)
-   {
-   notImplemented("releaseCodeMemory");
    }
 
 uint8_t *
 TR_FrontEnd::allocateRelocationData(TR::Compilation * comp, uint32_t numBytes)
    {
-   notImplemented("allocateRelocationData");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 bool
-TR_FrontEnd::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-   return false;
-   }
-
-bool
-TR_FrontEnd::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
+TR_FrontEnd::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    {
    return false;
    }
@@ -143,36 +102,36 @@ TR_FrontEnd::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
 int32_t
 TR_FrontEnd::getArraySpineShift(int32_t)
    {
-   notImplemented("getArraySpineShift");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 int32_t
 TR_FrontEnd::getArrayletMask(int32_t)
    {
-   notImplemented("getArrayletMask");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 int32_t
 TR_FrontEnd::getArrayletLeafIndex(int32_t, int32_t)
    {
-   notImplemented("getArrayletLeafIndex");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 
-uintptrj_t TR_FrontEnd::getObjectHeaderSizeInBytes()              { notImplemented("getObjectHeaderSizeInBytes"); return 0; }
-uintptrj_t TR_FrontEnd::getOffsetOfContiguousArraySizeField()     { notImplemented("getOffsetOfContiguousArraySizeField"); return 0; }
-uintptrj_t TR_FrontEnd::getOffsetOfDiscontiguousArraySizeField()  { notImplemented("getOffsetOfDiscontiguousArraySizeField"); return 0; }
+uintptrj_t TR_FrontEnd::getObjectHeaderSizeInBytes()              { TR_UNIMPLEMENTED(); return 0; }
+uintptrj_t TR_FrontEnd::getOffsetOfContiguousArraySizeField()     { TR_UNIMPLEMENTED(); return 0; }
+uintptrj_t TR_FrontEnd::getOffsetOfDiscontiguousArraySizeField()  { TR_UNIMPLEMENTED(); return 0; }
 
-uintptrj_t TR_FrontEnd::getOffsetOfIndexableSizeField()           { notImplemented("getOffsetOfIndexableSizeField"); return 0; }
+uintptrj_t TR_FrontEnd::getOffsetOfIndexableSizeField()           { TR_UNIMPLEMENTED(); return 0; }
 
 
 int32_t
 TR_FrontEnd::getObjectAlignmentInBytes()
    {
-   notImplemented("getObjectAlignmentInBytes");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
@@ -205,17 +164,11 @@ TR_FrontEnd::getFormattedName(
 
    }
 
-uintptrj_t
-TR_FrontEnd::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
-   {
-   notImplemented("getClassDepthAndFlagsValue");
-   return 0;
-   }
 
 TR_OpaqueMethodBlock*
-TR_FrontEnd::getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
+TR_FrontEnd::getMethodFromName(char * className, char *methodName, char *signature)
    {
-   notImplemented("getMethodFromName");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
@@ -223,7 +176,7 @@ TR_FrontEnd::getMethodFromName(char * className, char *methodName, char *signatu
 TR_OpaqueClassBlock *
 TR_FrontEnd::getClassOfMethod(TR_OpaqueMethodBlock *method)
    {
-   notImplemented("getClassOfMethod");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
@@ -231,28 +184,28 @@ TR_FrontEnd::getClassOfMethod(TR_OpaqueMethodBlock *method)
 TR_OpaqueClassBlock *
 TR_FrontEnd::getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass)
    {
-   notImplemented("getComponentClassFromArrayClass");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 TR_OpaqueClassBlock *
 TR_FrontEnd::getArrayClassFromComponentClass(TR_OpaqueClassBlock * componentClass)
    {
-   notImplemented("getArrayClassFromComponentClass");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 TR_OpaqueClassBlock *
 TR_FrontEnd::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass)
    {
-   notImplemented("getLeafComponentClassFromArrayClass");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 int32_t
 TR_FrontEnd::getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz)
    {
-   notImplemented("getNewArrayTypeFromClass");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
@@ -270,14 +223,14 @@ TR_FrontEnd::getClassFromNewArrayType(int32_t arrayType)
 TR_OpaqueClassBlock *
 TR_FrontEnd::getClassFromSignature(const char * sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT)
    {
-   notImplemented("getClassFromSignature");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 TR_OpaqueClassBlock *
 TR_FrontEnd::getClassFromSignature(const char * sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT)
    {
-   notImplemented("getClassFromSignature");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
@@ -285,7 +238,7 @@ TR_FrontEnd::getClassFromSignature(const char * sig, int32_t length, TR_OpaqueMe
 TR_YesNoMaybe
 TR_FrontEnd::isInstanceOf(TR_OpaqueClassBlock *instanceClass, TR_OpaqueClassBlock * castClass, bool instanceIsFixed, bool castIsFixed, bool optimizeForAOT)
    {
-   notImplemented("isInstanceOf");
+   TR_UNIMPLEMENTED();
    return TR_maybe;
    }
 
@@ -293,21 +246,21 @@ TR_FrontEnd::isInstanceOf(TR_OpaqueClassBlock *instanceClass, TR_OpaqueClassBloc
 TR_OpaqueClassBlock *
 TR_FrontEnd::getSuperClass(TR_OpaqueClassBlock * classPointer)
    {
-   notImplemented("getSuperClass");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 bool
 TR_FrontEnd::isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *)
    {
-   notImplemented("isUnloadAssumptionRequired");
+   TR_UNIMPLEMENTED();
    return true;
    }
 
 const char *
 TR_FrontEnd::sampleSignature(TR_OpaqueMethodBlock * aMethod, char * bug, int32_t bufLen, TR_Memory *memory)
    {
-   notImplemented("sampleSignature");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
@@ -327,28 +280,21 @@ TR_FrontEnd::getInlinedCallSiteMethod(TR_InlinedCallSite *ics)
 TR_OpaqueClassBlock *
 TR_FrontEnd::getClassFromMethodBlock(TR_OpaqueMethodBlock *mb)
    {
-   notImplemented("getClassFromMethodBlock");
+   TR_UNIMPLEMENTED();
    return NULL;
-   }
-
-int32_t
-TR_FrontEnd::getStringLength(uintptrj_t objectPointer)
-   {
-   notImplemented("getStringLength");
-   return 0;
    }
 
 intptrj_t
 TR_FrontEnd::getStringUTF8Length(uintptrj_t objectPointer)
    {
-   notImplemented("getStringUTF8Length");
+   TR_UNIMPLEMENTED();
    return -1;
    }
 
 char *
 TR_FrontEnd::getStringUTF8(uintptrj_t objectPointer, char *buffer, intptrj_t bufferSize)
    {
-   notImplemented("getStringUTF8");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
@@ -357,35 +303,19 @@ TR_FrontEnd::getStringUTF8(uintptrj_t objectPointer, char *buffer, intptrj_t buf
 TR_OpaqueClassBlock *
 TR_FrontEnd::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
    {
-   notImplemented("getClassClassPointer");
+   TR_UNIMPLEMENTED();
    return 0;
    }
-
-
-TR::CodeCache *
-TR_FrontEnd::getDesignatedCodeCache(TR::Compilation *comp)
-   {
-   notImplemented("getDesignatedCodeCache");
-   return 0;
-   }
-
 
 void
 TR_FrontEnd::reserveTrampolineIfNecessary(TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding)
    {
-   notImplemented("reserveTrampolineIfNecessary");
+   TR_UNIMPLEMENTED();
    }
 
 intptrj_t
 TR_FrontEnd::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference *symRef, void * callSite)
    {
-   notImplemented("methodTrampolineLookup");
-   return 0;
-   }
-
-intptrj_t
-TR_FrontEnd::indexedTrampolineLookup(int32_t helperIndex, void * callSite)
-   {
-   notImplemented("indexedTrampolineLookup");
+   TR_UNIMPLEMENTED();
    return 0;
    }

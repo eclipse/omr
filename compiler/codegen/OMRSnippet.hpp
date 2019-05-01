@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,11 +31,11 @@ namespace OMR { class Snippet; }
 namespace OMR { typedef OMR::Snippet SnippetConnector; }
 #endif
 
-#include <stdint.h>                 // for int32_t, uint8_t, uint32_t
-#include "env/FilePointerDecl.hpp"  // for FILE
-#include "env/TRMemory.hpp"         // for TR_Memory, etc
+#include <stdint.h>
+#include "env/FilePointerDecl.hpp"
+#include "env/TRMemory.hpp"
 #include "infra/Flags.hpp"
-#include "infra/Annotations.hpp"    // for OMR_EXTENSIBLE
+#include "infra/Annotations.hpp"
 #include "codegen/SnippetGCMap.hpp"
 
 class TR_Debug;

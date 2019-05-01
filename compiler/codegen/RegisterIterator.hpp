@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,20 +22,61 @@
 #ifndef TR_REGISTER_ITERATOR_INCL
 #define TR_REGISTER_ITERATOR_INCL
 
-#include "codegen/RegisterConstants.hpp"
-#include "codegen/OMRRegisterIterator.hpp"
+#include "env/TRMemory.hpp"
 
 namespace TR { class Machine; }
+namespace TR { class Register; }
 
 namespace TR
 {
 
-class OMR_EXTENSIBLE RegisterIterator : public OMR::RegisterIteratorConnector
+/**
+ * \brief
+ * An implementation of the iterator pattern to allow users (for example RAS)
+ * to traverse the platform-specific list of a certain kind of registers (GPR,
+ * FPR, VRF, etc.)
+ */
+class RegisterIterator
    {
    public:
+   TR_ALLOC(TR_Memory::RegisterIterator)
 
-   RegisterIterator(TR::Machine *machine, TR_RegisterKinds kind): OMR::RegisterIteratorConnector(machine, kind) {}
+   /**
+    * @brief
+    * Constructor of the register iterator. The iterator traverses registers
+    * from \p firstRegIndex till \p lastRegIndex.
+    *
+    * @param[in] machine : an instance of the target machine representation
+    * @param[in] firstRegIndex : the index of the first available register
+    * @param[in] lastRegIndex : the index of the last available register
+    */
+   RegisterIterator(TR::Machine *machine, int32_t firstRegIndex, int32_t lastRegIndex):
+      _machine(machine),
+      _firstRegIndex(firstRegIndex),
+      _lastRegIndex(lastRegIndex),
+      _cursor(firstRegIndex)
+      {};
 
+   /**
+    * @return the pointer to the first available register
+    */
+   TR::Register *getFirst();
+
+   /**
+    * @return the pointer to the current (from the iterator's point of view) register
+    */
+   TR::Register *getCurrent();
+
+   /**
+    * @return the pointer to the next (from the iterator's point of view) register
+    */
+   TR::Register *getNext();
+
+   private:
+   TR::Machine *_machine;
+   int32_t _firstRegIndex;
+   int32_t _lastRegIndex;
+   int32_t _cursor;
    };
 
 }

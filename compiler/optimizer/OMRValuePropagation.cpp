@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,67 +22,67 @@
 #include "optimizer/OMRValuePropagation.hpp"
 #include "optimizer/GlobalValuePropagation.hpp"
 
-#include <algorithm>                            // for std::find, etc
-#include <stddef.h>                             // for size_t
-#include <stdint.h>                             // for int32_t, uint64_t, etc
-#include <stdio.h>                              // for printf
-#include <stdlib.h>                             // for atoi
-#include <string.h>                             // for NULL, strncmp, etc
-#include "codegen/CodeGenerator.hpp"            // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                 // for TR_FrontEnd, etc
+#include <algorithm>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#include "compile/Compilation.hpp"              // for Compilation, etc
+#include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"           // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"     // for SymbolReferenceTable
-#include "compile/VirtualGuard.hpp"             // for TR_VirtualGuard
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "compile/VirtualGuard.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/bitvectr.h"                       // for ABitVector<>::Cursor, etc
+#include "cs2/bitvectr.h"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
-#include "env/PersistentInfo.hpp"               // for PersistentInfo
+#include "env/PersistentInfo.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                         // for Block, toBlock, etc
-#include "il/DataTypes.hpp"                     // for DataTypes, etc
-#include "il/ILOpCodes.hpp"                     // for ILOpCodes::aload, etc
-#include "il/ILOps.hpp"                         // for ILOpCode, etc
-#include "il/Node.hpp"                          // for Node, etc
-#include "il/Node_inlines.hpp"                  // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                        // for Symbol
-#include "il/SymbolReference.hpp"               // for SymbolReference
-#include "il/TreeTop.hpp"                       // for TreeTop
-#include "il/TreeTop_inlines.hpp"               // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"           // for MethodSymbol, etc
-#include "il/symbol/ParameterSymbol.hpp"        // for ParameterSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"   // for ResolvedMethodSymbol
-#include "infra/Array.hpp"                      // for TR_Array
-#include "infra/Assert.hpp"                     // for TR_ASSERT
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
-#include "infra/BitVector.hpp"                  // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                        // for CFG, etc
-#include "infra/Link.hpp"                       // for TR_LinkHead, TR_Pair
-#include "infra/List.hpp"                       // for ListIterator, List, etc
-#include "infra/CfgEdge.hpp"                    // for CFGEdge
-#include "infra/CfgNode.hpp"                    // for CFGNode
-#include "optimizer/Inliner.hpp"                // for TR_InlineCall, etc
-#include "optimizer/Optimization.hpp"           // for Optimization
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "optimizer/Inliner.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"              // for Optimizer
+#include "optimizer/Optimizer.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/Reachability.hpp"
-#include "optimizer/UseDefInfo.hpp"             // for TR_UseDefInfo, etc
-#include "optimizer/VPConstraint.hpp"           // for TR::VPConstraint, etc
+#include "optimizer/UseDefInfo.hpp"
+#include "optimizer/VPConstraint.hpp"
 #include "optimizer/TransformUtil.hpp"
-#include "ras/Debug.hpp"                        // for TR_DebugBase
+#include "ras/Debug.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
-#include "env/ClassTableCriticalSection.hpp"    // for ClassTableCriticalSection
-#include "env/CHTable.hpp"                      // for TR_CHTable, etc
-#include "env/PersistentCHTable.hpp"            // for TR_PersistentCHTable
+#include "env/ClassTableCriticalSection.hpp"
+#include "env/CHTable.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
@@ -1848,6 +1848,15 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
    {
    isGlobal = true; // Will be reset if local constraints found
 
+   if (_defMergedNodes->get(node->getGlobalIndex()))
+      {
+      if (trace())
+         traceMsg(comp(), "Node n%dn has already been processed by mergeDefConstraints - returning NULL\n", node->getGlobalIndex());
+      return NULL;
+      }
+
+   _defMergedNodes->set(node->getGlobalIndex());
+
    // If the node is a use node, look at its def points and merge constraints
    // from them.
    //
@@ -1963,6 +1972,16 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
             continue;
 
          defValueNumber = getValueNumber(defNode);
+         // before we can look at def nodes to build up a set of contraints we had better know that set of defs
+         // dominates the use we are considering - if not we treat the use as an unknown
+         if (node->getSymbol()->isAutoOrParm()
+             && _curDefinedOnAllPaths
+             && !_curDefinedOnAllPaths->get(node->getSymbolReference()->getReferenceNumber()))
+            {
+            if (trace())
+               traceMsg(comp(), "symRef %d is not stored on all paths - treating as unknown\n", defNode->getSymbolReference()->getReferenceNumber());
+            unseenDefsFound = true;
+            }
 
          // Only consider def nodes that are stores; other def nodes
          // (e.g. calls) will make this value unconstrained.
@@ -2293,6 +2312,13 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
          }
       }
 
+   if (relative != AbsoluteConstraint)
+      {
+      if (trace())
+         traceMsg(comp(), "we are processing a relative constraint and merging with backedge constraints is not supported\n");
+      return NULL;
+      }
+
    // Now go through the defs again and look for back-edge constraints on
    // the unseen def nodes
    //
@@ -2311,8 +2337,14 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
 
       sym = defNode->getSymbol();
       defValueNumber = getValueNumber(defNode);
-      if (!hasBeenStored(defValueNumber, sym, _curConstraints))
+      // if we haven't seen a def on this iteration along all paths we must consider the backedge constraints
+      if (node->getSymbol()->isAutoOrParm()
+          && !unseenDefsFound
+          && !_curDefinedOnAllPaths->get(defNode->getSymbolReference()->getReferenceNumber()))
          {
+         if (trace())
+            traceMsg(comp(), "symref %d is not defined on all paths - consulting backedge constraints\n", node->getSymbolReference()->getReferenceNumber());
+
          // this def is unseen
          unseenDefsFound = true;
          LoopInfo *loopInfo;
@@ -2324,11 +2356,17 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
             // See if the unseen def was seen on a path to this back edge.
             //
             if (!loopInfo ||
-                !loopInfo->_backEdgeConstraints ||
-                !hasBeenStored(defValueNumber, sym, loopInfo->_backEdgeConstraints->valueConstraints))
+                !loopInfo->_backEdgeConstraints)
                {
                if (trace())
                   traceMsg(comp(), "not seen on this back edge, ignored\n");
+               continue;
+               }
+
+            if (!hasBeenStored(defValueNumber, sym, loopInfo->_backEdgeConstraints->valueConstraints))
+               {
+               if (trace())
+                  traceMsg(comp(), "no backedge constraint, ignored\n");
                continue;
                }
 
@@ -4282,6 +4320,7 @@ void TR::GlobalValuePropagation::processStructure(TR_StructureSubGraphNode *node
    TR_RegionStructure *region = node->getStructure()->asRegion();
    if (region)
       {
+      _defMergedNodes->empty();
       if (region->isAcyclic())
          {
          processAcyclicRegion(node, lastTimeThrough, insideLoop);
@@ -4341,6 +4380,14 @@ void TR::GlobalValuePropagation::processNaturalLoop(TR_StructureSubGraphNode *no
 
       _visitCount--;
       processRegionSubgraph(node, false, true, true);
+
+      // having processed the loop the first time we want to make sure to wipe out any
+      // seenOnAllPaths information on the back edges - we use this notion only for the current iteration
+      for (auto itr = region->getEntry()->getPredecessors().begin(), end = region->getEntry()->getPredecessors().end(); itr != end; ++itr)
+         {
+         (*_definedOnAllPaths)[*itr] = NULL;
+         }
+
       if (_reachedMaxRelationDepth)
         {
         _loopInfo = parentLoopInfo;
@@ -4395,10 +4442,79 @@ void TR::GlobalValuePropagation::processNaturalLoop(TR_StructureSubGraphNode *no
       collectInductionVariableEntryConstraints();
 
    processRegionSubgraph(node, lastTimeThrough, true, true);
+
+   // having processed the loop again we again clear out any seenOnAllPaths information on the back edges
+   for (auto itr = region->getEntry()->getPredecessors().begin(), end = region->getEntry()->getPredecessors().end(); itr != end; ++itr)
+      {
+      (*_definedOnAllPaths)[*itr] = NULL;
+      }
+
    if (_reachedMaxRelationDepth)
       {
       _loopInfo = parentLoopInfo;
       return;
+      }
+
+   // we now compute the definedOnAllPaths information for the exit edges
+   // the exit edge is a union of the exit edge seenOnAllPaths and the intersection of the entry
+   // seen on all paths
+   TR_BitVector *inboundDefinedOnAllPaths = mergeDefinedOnAllPaths(node);
+
+   // we treat exceptions conservatively for now - we know nothing
+   // this could be improved in the future
+   if (!node->getExceptionPredecessors().empty())
+      inboundDefinedOnAllPaths->empty();
+
+   if (trace())
+      {
+      traceMsg(comp(), "   defined on all paths for entry of loop %d", region->getNumber());
+      inboundDefinedOnAllPaths->print(comp());
+      traceMsg(comp(), "\n");
+      }
+
+   ListIterator<TR::CFGEdge> it(&region->getExitEdges());
+   for (TR::CFGEdge *edge = it.getFirst(); edge; edge = it.getNext())
+      {
+      if (trace())
+         traceMsg(comp(), "   defined on all paths for exit %d->%d:", edge->getFrom()->getNumber(), edge->getTo()->getNumber());
+
+      if ((*_definedOnAllPaths)[edge])
+         {
+         if (trace())
+            {
+            ((*_definedOnAllPaths)[edge])->print(comp());
+            traceMsg(comp(), "\n");
+            }
+         (*(*_definedOnAllPaths)[edge]) |= *inboundDefinedOnAllPaths;
+         }
+      else
+         {
+         if (trace())
+            traceMsg(comp(), " NULL\n");
+         (*_definedOnAllPaths)[edge] = inboundDefinedOnAllPaths;
+         }
+
+      // the exit edges in the natural loop region do not connect to the parent's nodes
+      // so we now find the matching exit edge in the parent region and copy the defined on all paths
+      // information onto those edges
+      for (auto itr = node->getSuccessors().begin(), end = node->getSuccessors().end(); itr != end; ++itr)
+         {
+         if ((*itr)->getTo()->getNumber() == edge->getTo()->getNumber())
+            {
+            TR_BitVector *parentEdgeDefinedOnAllPaths = (*_definedOnAllPaths)[*itr];
+            if (parentEdgeDefinedOnAllPaths != NULL)
+               {
+               *parentEdgeDefinedOnAllPaths &= (*(*_definedOnAllPaths)[edge]);
+               }
+            else
+               {
+               parentEdgeDefinedOnAllPaths = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
+               (*_definedOnAllPaths)[*itr] = parentEdgeDefinedOnAllPaths;
+               *parentEdgeDefinedOnAllPaths = (*(*_definedOnAllPaths)[edge]);
+               }
+            break;
+            }
+         }
       }
 
    // Back edge constraints have now been accumulated into a separate list of
@@ -4692,6 +4808,38 @@ void TR::GlobalValuePropagation::processRegionNode(TR_StructureSubGraphNode *nod
    processStructure(node, lastTimeThrough, insideLoop);
    }
 
+TR_BitVector *TR::GlobalValuePropagation::mergeDefinedOnAllPaths(TR_StructureSubGraphNode *node)
+   {
+   TR_BitVector *mergeResult = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
+
+   if (!node->getExceptionPredecessors().empty())
+      return mergeResult;
+
+   bool first = true;
+   for (auto itr = node->getPredecessors().begin(), end = node->getPredecessors().end(); itr != end; ++itr)
+      {
+      TR_BitVector *predDefinedOnAllPaths = (*_definedOnAllPaths)[*itr];
+      if (trace())
+         {
+         traceMsg(comp(), "   inbound seenOnAllpaths for edge %d->%d", (*itr)->getFrom()->getNumber(), (*itr)->getTo()->getNumber());
+         if (predDefinedOnAllPaths)
+            predDefinedOnAllPaths->print(comp());
+         else
+            traceMsg(comp(), "NULL");
+         traceMsg(comp(), "\n");
+         }
+
+      if (predDefinedOnAllPaths == NULL)
+         mergeResult->empty();
+      else if (first)
+         (*mergeResult) = *predDefinedOnAllPaths;
+      else
+         (*mergeResult) &= *predDefinedOnAllPaths;
+
+      first = false;
+      }
+   return mergeResult;
+   }
 
 void TR::GlobalValuePropagation::processBlock(TR_StructureSubGraphNode *node, bool lastTimeThrough, bool insideLoop)
    {
@@ -4713,6 +4861,21 @@ void TR::GlobalValuePropagation::processBlock(TR_StructureSubGraphNode *node, bo
    if (trace())
       {
       traceMsg(comp(), "GVP: Processing block_%i\n", _curBlock->getNumber());
+      }
+
+   // inside of a loop we track the defined on all paths bitvector so we know when a merge of def constraints
+   // may need to consider the backedge - here we compute the block's inbound seen on all paths set by intersecting
+   // the sets on the inbound edges
+   if (insideLoop)
+      {
+      _curDefinedOnAllPaths = mergeDefinedOnAllPaths(node);
+      }
+
+   if (insideLoop && trace())
+      {
+      traceMsg(comp(), "   defined on all paths for entry of block %d", block->getNumber());
+      _curDefinedOnAllPaths->print(comp());
+      traceMsg(comp(), "\n");
       }
 
 #if DEBUG
@@ -4779,6 +4942,22 @@ void TR::GlobalValuePropagation::processBlock(TR_StructureSubGraphNode *node, bo
    processTrees(startTree, endTree);
    if (_reachedMaxRelationDepth)
       return;
+
+   // inside a loop we will now propagate the seen on all paths definitions computed through the block onto
+   // the exit edges
+   if (insideLoop)
+      {
+      for (auto itr = node->getSuccessors().begin(), end = node->getSuccessors().end(); itr != end; ++itr)
+         {
+         if (trace())
+            {
+            traceMsg(comp(), "   outbound seenOnAllpaths for edge %d->%d", (*itr)->getFrom()->getNumber(), (*itr)->getTo()->getNumber());
+            _curDefinedOnAllPaths->print(comp());
+            traceMsg(comp(), "\n");
+            }
+         (*_definedOnAllPaths)[*itr] = _curDefinedOnAllPaths;
+         }
+      }
 
    if (!isUnreachablePath(_curConstraints))
       {
@@ -7165,6 +7344,19 @@ void OMR::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
    }
 
 
+/** \brief
+ *     Extension point for language specific optimizations on direct load
+ *
+ * \parm node
+ *     The direct load node to be constrained
+ *
+ * \return
+ *     True if node is transformed, false otherwise
+ */
+bool OMR::ValuePropagation::transformDirectLoad(TR::Node *node)
+   {
+   return TR::TransformUtil::transformDirectLoad(comp(), node);
+   }
 
 bool OMR::ValuePropagation::checkAllUnsafeReferences(TR::Node *node, vcount_t visitCount)
    {
@@ -7281,15 +7473,15 @@ void OMR::ValuePropagation::doDelayedTransformations()
    _objectCloneTypes.deleteAll();
 
    ListIterator<TR::TreeTop> arrayCloneIt(&_arrayCloneCalls);
-   ListIterator<TR_OpaqueClassBlock> arrayCloneTypeIt(&_arrayCloneTypes);
+   ListIterator<ArrayCloneInfo> arrayCloneTypeIt(&_arrayCloneTypes);
       {
       TR::TreeTop *callTree = arrayCloneIt.getFirst();
-      TR_OpaqueClassBlock *clazz = arrayCloneTypeIt.getFirst();
-      while (callTree && clazz)
+      ArrayCloneInfo *cloneInfo = arrayCloneTypeIt.getFirst();
+      while (callTree && cloneInfo)
          {
-         transformArrayCloneCall(callTree, clazz);
+         transformArrayCloneCall(callTree, cloneInfo);
          callTree = arrayCloneIt.getNext();
-         clazz = arrayCloneTypeIt.getNext();
+         cloneInfo = arrayCloneTypeIt.getNext();
          }
       }
    _arrayCloneCalls.deleteAll();
@@ -8207,3 +8399,332 @@ OMR::ValuePropagation::VirtualGuardInfo::VirtualGuardInfo(OMR::ValuePropagation 
 OMR::ValuePropagation::ClassInitInfo::ClassInitInfo(OMR::ValuePropagation * vp, char * sig, int32_t len)
    : _tt(vp->_curTree), _block(vp->_curBlock), _sig(sig), _len(len)
    {}
+
+
+#ifdef J9_PROJECT_SPECIFIC
+void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, TR::SymbolReference *&getHelpersSymRef, TR::SymbolReference *&helperSymRef, char *helperSig, int32_t helperSigLen, TR::MethodSymbol::Kinds helperCallKind)
+   {
+   //Function to retrieve the JITHelpers.getHelpers and JITHelpers.<helperSig> method symbol references.
+   //
+   TR_OpaqueClassBlock *jitHelpersClass = vp->comp()->getJITHelpersClassPointer();
+
+   //If we can't find the helper class, or it isn't initalized, return.
+   //
+   if (!jitHelpersClass || !TR::Compiler->cls.isClassInitialized(vp->comp(), jitHelpersClass))
+      return;
+
+   TR_ScratchList<TR_ResolvedMethod> helperMethods(vp->trMemory());
+   vp->comp()->fej9()->getResolvedMethods(vp->trMemory(), jitHelpersClass, &helperMethods);
+   ListIterator<TR_ResolvedMethod> it(&helperMethods);
+
+   //Find the symRefs
+   //
+   for (TR_ResolvedMethod *m = it.getCurrent(); m; m = it.getNext())
+      {
+      char *sig = m->nameChars();
+      //printf("Here is the sig %s and the passed in %s \n", sig,helperSig);
+      if (!strncmp(sig, helperSig, helperSigLen))
+         {
+         if (TR::MethodSymbol::Virtual == helperCallKind)
+            {
+            //REVISIT FOR IMPL HASH CODE***
+            //
+            helperSymRef = vp->comp()->getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, m, TR::MethodSymbol::Virtual);
+            helperSymRef->setOffset(TR::Compiler->cls.vTableSlot(vp->comp(), m->getPersistentIdentifier(), jitHelpersClass));
+            }
+         else
+            {
+            helperSymRef = vp->comp()->getSymRefTab()->findOrCreateMethodSymbol(curCallNode->getSymbolReference()->getOwningMethodIndex(), -1, m, helperCallKind);
+            }
+         //printf("found gethelpers, 0x%x \n", helperSymRef);
+         }
+      else if (!strncmp(sig, "jitHelpers", 10))
+         {
+         //printf("found helpers");
+         getHelpersSymRef = vp->comp()->getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, m, TR::MethodSymbol::Static);
+         }
+      }
+   }
+#endif
+
+
+#ifdef J9_PROJECT_SPECIFIC
+void transformToOptimizedCloneCall(OMR::ValuePropagation *vp, TR::Node *node, bool isDirectCall)
+   {
+   TR::SymbolReference *getHelpersSymRef = NULL;
+   TR::SymbolReference *optimizedCloneSymRef = NULL;
+
+   getHelperSymRefs(vp, node, getHelpersSymRef, optimizedCloneSymRef, "optimizedClone", 14, TR::MethodSymbol::Special);
+
+   //printf("helper sym 0x%x, optsym 0x%x \n", getHelpersSymRef, optimizedCloneSymRef);
+
+   if (optimizedCloneSymRef && getHelpersSymRef && performTransformation(vp->comp(), "%sChanging call to new optimizedClone at node [%p]\n", OPT_DETAILS, node))
+        {
+        //FIXME: add me to the list of calls to be inlined
+        //
+        TR_Method *method = optimizedCloneSymRef->getSymbol()->castToMethodSymbol()->getMethod();
+        TR::Node *helpersCallNode = TR::Node::createWithSymRef(node, method->directCallOpCode(), 0, getHelpersSymRef);
+        TR::TreeTop *helpersCallTT = TR::TreeTop::create(vp->comp(), TR::Node::create(TR::treetop, 1, helpersCallNode));
+        vp->_curTree->insertBefore(helpersCallTT);
+
+        method = optimizedCloneSymRef->getSymbol()->castToMethodSymbol()->getMethod();
+        TR::Node::recreate(node, method->directCallOpCode());
+        TR::Node *firstChild = node->getFirstChild();
+        firstChild->decReferenceCount();
+        node->setNumChildren(2);
+        node->setAndIncChild(0, helpersCallNode);
+        node->setAndIncChild(1, firstChild);
+        node->setSymbolReference(optimizedCloneSymRef);
+        vp->invalidateUseDefInfo();
+        vp->invalidateValueNumberInfo();
+        }
+//printf("TRANSFORMED \n");
+   }
+#endif
+
+
+#ifdef J9_PROJECT_SPECIFIC
+TR::Node *setCloneClassInNode(OMR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint, bool isGlobal)
+   {
+
+   // If the child is a resolved class type, hide the class pointer in the
+   // second child
+   //
+
+   if(!node->isProcessedByCallCloneConstrain())
+      {
+      node->setSecond(NULL);
+      node->setProcessedByCallCloneConstrain();
+      }
+
+   if (constraint && constraint->getClass())
+      {
+      TR_OpaqueClassBlock *clazz = constraint->getClass();
+      if (constraint->isClassObject() == TR_yes)
+         clazz = vp->fe()->getClassClassPointer(clazz);
+
+      if (clazz && (TR::Compiler->cls.classDepthOf(clazz) == 0) &&
+          !constraint->isFixedClass())
+         clazz = NULL;
+
+      if (node->getCloneClassInNode() &&
+          clazz &&
+          (node->getCloneClassInNode() != clazz))
+         {
+         TR_YesNoMaybe answer = vp->fe()->isInstanceOf(clazz, node->getCloneClassInNode(), true, true);
+         if (answer != TR_yes)
+            clazz = node->getCloneClassInNode();
+         }
+      if (performTransformation(vp->comp(), "%sSetting type on Object.Clone acall node [%p] to [%p]\n", OPT_DETAILS, node, clazz))
+         node->setSecond((TR::Node*)clazz);
+      }
+   return node;
+   }
+#endif
+
+
+TR::Node *
+OMR::ValuePropagation::innerConstrainAcall(TR::Node *node)
+   {
+   // This node can be constrained by the return type of the method.
+   //
+   TR::VPConstraint *constraint = NULL;
+   TR::SymbolReference * symRef = node->getSymbolReference();
+   TR::ResolvedMethodSymbol *method = symRef->getSymbol()->getResolvedMethodSymbol();
+
+#ifdef J9_PROJECT_SPECIFIC
+   // For the special case of a direct call to Object.clone() the return type
+   // will be the same as the type of the "this" argument, which may be more
+   // precise than the declared return type of "Object".
+   //
+   if (method)
+      {
+      if (!node->getOpCode().isIndirect())
+         {
+         static char *enableDynamicObjectClone = feGetEnv("TR_enableDynamicObjectClone");
+         // Dynamic cloning kicks in when we attempt to make direct call to Object.clone
+         // or J9VMInternals.primitiveClone where the cloned object is an array.
+         if (method->getRecognizedMethod() == TR::java_lang_Object_clone
+             || method->getRecognizedMethod() == TR::java_lang_J9VMInternals_primitiveClone)
+            {
+            bool isGlobal;
+            if (method->getRecognizedMethod() == TR::java_lang_Object_clone)
+              constraint = getConstraint(node->getFirstChild(), isGlobal);
+            else
+              constraint = getConstraint(node->getLastChild(), isGlobal);
+
+            TR::VPResolvedClass *newTypeConstraint = NULL;
+            if (constraint)
+               {
+               // Do nothing if the class of the object doesn't implement Cloneable
+               if (constraint->getClass() && !comp()->fej9()->isCloneable(constraint->getClass()))
+                  {
+                  if (trace())
+                     traceMsg(comp(), "Object Clone: Class of node %p is not cloneable, quit\n", node);
+
+                  TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "inlineClone/unsuitable/(%s)/%s/block_%d", comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), _curTree->getEnclosingBlock()->getNumber()));
+
+                  return node;
+                  }
+               if ( constraint->isFixedClass() )
+                  {
+                  newTypeConstraint = TR::VPFixedClass::create(this, constraint->getClass());
+
+                  if (!comp()->compileRelocatableCode())
+                     {
+                     if (constraint->getClassType()
+                         && constraint->getClassType()->isArray() == TR_no
+                         && !_objectCloneCalls.find(_curTree))
+                        {
+                        _objectCloneCalls.add(_curTree);
+                        _objectCloneTypes.add(new (trStackMemory()) OMR::ValuePropagation::ObjCloneInfo(constraint->getClass(), true));
+                        }
+                     else if (constraint->getClassType()
+                              && constraint->getClassType()->isArray() == TR_yes
+                              && !_arrayCloneCalls.find(_curTree))
+                        {
+                        _arrayCloneCalls.add(_curTree);
+                        _arrayCloneTypes.add(new (trStackMemory()) OMR::ValuePropagation::ArrayCloneInfo(constraint->getClass(), true));
+                        }
+                     }
+                  }
+               // Dynamic object clone is enabled only with FLAGS_IN_CLASS_SLOT and LOCK_NURSERY enabled
+               // as currenty codegen anewarray evaluator only supports this case for object header initialization.
+               // Even though all existing supported build config has these 2 falgs set, this ifdef serves as a safety precaution.
+#if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT) && defined(J9VM_THR_LOCK_NURSERY)
+               else if ( constraint->getClassType()
+                         && constraint->getClassType()->asResolvedClass() )
+                  {
+                  newTypeConstraint = TR::VPResolvedClass::create(this, constraint->getClass());
+                  if (trace())
+                     traceMsg(comp(), "Object Clone: Resolved Class of node %p \n", node);
+                  if (enableDynamicObjectClone
+                      && constraint->getClassType()->isArray() == TR_no
+                      && !_objectCloneCalls.find(_curTree))
+                     {
+                     if (trace())
+                        traceMsg(comp(), "Object Clone: Resolved Class of node %p object clone\n", node);
+                     _objectCloneCalls.add(_curTree);
+                     _objectCloneTypes.add(new (trStackMemory()) OMR::ValuePropagation::ObjCloneInfo(constraint->getClass(), false));
+                     }
+                  // Currently enabled for X86 as the required codegen support is implemented on X86 only.
+                  // Remove the condition as other platforms receive support.
+                  else if (comp()->cg()->getSupportsDynamicANewArray()
+                      && constraint->getClassType()->isArray() == TR_yes
+                      && !_arrayCloneCalls.find(_curTree)
+                      && !comp()->generateArraylets())
+                     {
+                     if (trace())
+                        traceMsg(comp(), "Object Clone: Resolved Class of node %p array clone\n", node);
+                     _arrayCloneCalls.add(_curTree);
+                     _arrayCloneTypes.add(new (trStackMemory()) OMR::ValuePropagation::ArrayCloneInfo(constraint->getClass(), false));;
+                     }
+                  }
+#endif
+               }
+
+            if (!constraint || (!constraint->isFixedClass()
+                && (enableDynamicObjectClone && !(constraint->getClassType() && constraint->getClassType()->asResolvedClass() && constraint->getClassType()->isArray() == TR_no))))
+               TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "inlineClone/miss/(%s)/%s/block_%d", comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), _curTree->getEnclosingBlock()->getNumber()));
+            else
+               TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "inlineClone/hit/(%s)/%s/block_%d", comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), _curTree->getEnclosingBlock()->getNumber()));
+
+            TR::VPClassPresence *cloneResultNonNull = TR::VPNonNullObject::create(this);
+            TR::VPObjectLocation *cloneResultOnHeap = TR::VPObjectLocation::create(this, TR::VPObjectLocation::HeapObject);
+            TR::VPArrayInfo *cloneResultArrayInfo = NULL;
+            if (constraint)
+               cloneResultArrayInfo = constraint->getArrayInfo();
+            TR::VPConstraint *newConstraint = TR::VPClass::create(this, newTypeConstraint, cloneResultNonNull, NULL, cloneResultArrayInfo, cloneResultOnHeap);
+
+            // This constraint can be global because the result of the clone call
+            // needs to have its own value number.
+            addGlobalConstraint(node, newConstraint);
+
+            if (method->getRecognizedMethod() == TR::java_lang_Object_clone
+                && (constraint && !constraint->isFixedClass()))
+               node = setCloneClassInNode(this, node, newConstraint, isGlobal);
+
+            // OptimizedClone
+            if(comp()->getOption(TR_EnableJITHelpersoptimizedClone) && newTypeConstraint)
+               transformToOptimizedCloneCall(this, node, true);
+            return node;
+            }
+         else if (method->getRecognizedMethod() == TR::java_math_BigDecimal_valueOf)
+            {
+            TR_ResolvedMethod *owningMethod = symRef->getOwningMethod(comp());
+            TR_OpaqueClassBlock *classObject = fe()->getClassFromSignature("java/math/BigDecimal", 20, owningMethod);
+            if (classObject)
+               {
+               constraint = TR::VPFixedClass::create(this, classObject);
+               addGlobalConstraint(node, constraint);
+               addGlobalConstraint(node, TR::VPNonNullObject::create(this));
+               }
+            }
+         }
+      else
+         {
+         if ((method->getRecognizedMethod() == TR::java_math_BigDecimal_add) ||
+             (method->getRecognizedMethod() == TR::java_math_BigDecimal_subtract) ||
+             (method->getRecognizedMethod() == TR::java_math_BigDecimal_multiply))
+            {
+            bool isGlobal;
+            constraint = getConstraint(node->getSecondChild(), isGlobal);
+            TR_ResolvedMethod *owningMethod = symRef->getOwningMethod(comp());
+            TR_OpaqueClassBlock * bigDecimalClass = fe()->getClassFromSignature("java/math/BigDecimal", 20, owningMethod);
+            //traceMsg(comp(), "child %p big dec class %p\n", constraint, bigDecimalClass);
+            if (constraint && bigDecimalClass &&
+                constraint->isFixedClass() &&
+                (bigDecimalClass == constraint->getClass()))
+               {
+               TR::VPConstraint *newConstraint = TR::VPFixedClass::create(this, bigDecimalClass);
+               addBlockOrGlobalConstraint(node, newConstraint,isGlobal);
+               addGlobalConstraint(node, TR::VPNonNullObject::create(this));
+               return node;
+               }
+            }
+         }
+      }
+#endif
+
+   // The rest of the code seems to be Java specific
+   if (!comp()->getCurrentMethod()->isJ9())
+      return node;
+
+   int32_t len = 0;
+   const char * sig = symRef->getTypeSignature(len);
+
+   if (sig == NULL)  // helper
+       return node;
+
+   TR_ASSERT(sig[0] == 'L' || sig[0] == '[', "Ref call return type is not a class");
+
+   TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
+   TR_ResolvedMethod *owningMethod = symRef->getOwningMethod(comp());
+   TR_OpaqueClassBlock *classBlock = fe()->getClassFromSignature(sig, len, owningMethod);
+   if (  classBlock
+      && TR::Compiler->cls.isInterfaceClass(comp(), classBlock)
+      && !comp()->getOption(TR_TrustAllInterfaceTypeInfo))
+      {
+      // Can't trust interface type info coming from method return value
+      classBlock = NULL;
+      }
+   if (classBlock)
+      {
+      TR_OpaqueClassBlock *jlClass = fe()->getClassClassPointer(classBlock);
+      if (jlClass)
+         {
+         if (classBlock != jlClass)
+            constraint = TR::VPClassType::create(this, sig, len, owningMethod, false, classBlock);
+         else
+            constraint = TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject);
+         addGlobalConstraint(node, constraint);
+         }
+      }
+   else if (symRef->isUnresolved() && symbol && !symbol->isInterface())
+      {
+      TR::VPConstraint *constraint = TR::VPUnresolvedClass::create(this, sig, len, owningMethod);
+      addGlobalConstraint(node, constraint);
+      }
+
+   return node;
+   }

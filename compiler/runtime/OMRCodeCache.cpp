@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,31 +21,32 @@
 
 #include "runtime/OMRCodeCache.hpp"
 
-#include <algorithm>                    // for std::max, etc
-#include <stddef.h>                     // for size_t
-#include <stdint.h>                     // for uint8_t, int32_t, uint32_t, etc
-#include <stdio.h>                      // for fprintf, stderr, printf, etc
-#include <string.h>                     // for memcpy, strcpy, memset, etc
-#include "codegen/FrontEnd.hpp"         // for TR_VerboseLog, etc
+#include <algorithm>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"  // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                   // for POINTER_PRINTF_FORMAT
-#include "env/defines.h"                // for HOST_OS, OMR_LINUX
-#include "env/jittypes.h"               // for FLUSH_MEMORY
-#include "il/DataTypes.hpp"             // for TR_YesNoMaybe::TR_yes, etc
-#include "infra/Assert.hpp"             // for TR_ASSERT
-#include "infra/CriticalSection.hpp"    // for CriticalSection
-#include "infra/Monitor.hpp"            // for Monitor
-#include "runtime/CodeCache.hpp"        // for CodeCache
-#include "runtime/CodeCacheManager.hpp" // for CodeCache Manager
-#include "runtime/CodeCacheMemorySegment.hpp" // for CodeCacheMemorySegment
-#include "runtime/CodeCacheConfig.hpp"  // for CodeCacheConfig, etc
+#include "env/IO.hpp"
+#include "env/defines.h"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
+#include "infra/CriticalSection.hpp"
+#include "infra/Monitor.hpp"
+#include "omrformatconsts.h"
+#include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheManager.hpp"
+#include "runtime/CodeCacheMemorySegment.hpp"
+#include "runtime/CodeCacheConfig.hpp"
 #include "runtime/Runtime.hpp"
 
 #ifdef LINUX
-#include <elf.h>                        // for EV_CURRENT, SHT_STRTAB, etc
-#include <unistd.h>                     // for getpid, pid_t
+#include <elf.h>
+#include <unistd.h>
 #endif
 
 namespace TR { class CodeGenerator; }
@@ -197,42 +198,40 @@ OMR::CodeCache::writeMethodHeader(void *freeBlock, size_t size, bool isCold)
    }
 
 
-// Resize code memory within a code cache
-//
 bool
-OMR::CodeCache::resizeCodeMemory(void *memoryBlock, size_t newSize)
+OMR::CodeCache::trimCodeMemoryAllocation(void *codeMemoryStart, size_t actualSizeInBytes)
    {
-   if (newSize == 0) return false; // nothing to resize, just return
+   if (actualSizeInBytes == 0) return false; // nothing to resize, just return
 
    TR::CodeCacheConfig & config = _manager->codeCacheConfig();
    size_t round = config.codeCacheAlignment() - 1;
 
-   memoryBlock = (uint8_t *) memoryBlock - sizeof(CodeCacheMethodHeader); // Do we always have a header?
-   newSize     = (newSize + sizeof(CodeCacheMethodHeader) + round) & ~round;
+   codeMemoryStart = (uint8_t *) codeMemoryStart - sizeof(CodeCacheMethodHeader); // Do we always have a header?
+   actualSizeInBytes = (actualSizeInBytes + sizeof(CodeCacheMethodHeader) + round) & ~round;
 
-   CodeCacheMethodHeader *cacheHeader = (CodeCacheMethodHeader *) memoryBlock;
+   CodeCacheMethodHeader *cacheHeader = (CodeCacheMethodHeader *) codeMemoryStart;
 
    // sanity check, the eyecatcher must be there
-   TR_ASSERT(cacheHeader->_eyeCatcher[0] == config.warmEyeCatcher()[0], "Missing eyecatcher during resizeCodeMemory");
+   TR_ASSERT(cacheHeader->_eyeCatcher[0] == config.warmEyeCatcher()[0], "Missing eyecatcher during trimCodeMemoryAllocation");
 
    size_t oldSize = cacheHeader->_size;
 
-   if (newSize >= oldSize)
+   if (actualSizeInBytes >= oldSize)
       return false;
 
-   size_t shrinkage = oldSize - newSize;
+   size_t shrinkage = oldSize - actualSizeInBytes;
 
-   uint8_t *expectedHeapAlloc = (uint8_t *) memoryBlock + oldSize;
+   uint8_t *expectedHeapAlloc = (uint8_t *) codeMemoryStart + oldSize;
    if (config.verboseReclamation())
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,"--resizeCodeMemory-- CC=%p cacheHeader=%p oldSize=%u newSize=%d shrinkage=%u", this, cacheHeader, oldSize, newSize, shrinkage);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,"--trimCodeMemoryAllocation-- CC=%p cacheHeader=%p oldSize=%u actualSizeInBytes=%d shrinkage=%u", this, cacheHeader, oldSize, actualSizeInBytes, shrinkage);
       }
 
    if (expectedHeapAlloc == _warmCodeAlloc)
       {
       _manager->increaseFreeSpaceInCodeCacheRepository(shrinkage);
       _warmCodeAlloc -= shrinkage;
-      cacheHeader->_size = newSize;
+      cacheHeader->_size = actualSizeInBytes;
       return true;
       }
    else // the allocation could have been from a free block or from the cold portion
@@ -241,155 +240,16 @@ OMR::CodeCache::resizeCodeMemory(void *memoryBlock, size_t newSize)
          {
          // addFreeBlock needs to be done with VM access because the GC may also
          // change the list of free blocks
-         if (self()->addFreeBlock2((uint8_t *) memoryBlock+newSize, (uint8_t *)expectedHeapAlloc))
+         if (self()->addFreeBlock2((uint8_t *) codeMemoryStart+actualSizeInBytes, (uint8_t *)expectedHeapAlloc))
             {
             //fprintf(stderr, "---ccr--- addFreeBlock due to shrinkage\n");
             }
-         cacheHeader->_size = newSize;
+         cacheHeader->_size = actualSizeInBytes;
          return true;
          }
       }
    //fprintf(stderr, "--ccr-- shrink code by %d\n", shrinkage);
    return false;
-   }
-
-
-// Initialize a code cache
-//
-bool
-OMR::CodeCache::initialize(TR::CodeCacheManager *manager,
-                         TR::CodeCacheMemorySegment *codeCacheSegment,
-                         size_t codeCacheSizeAllocated,
-                         CodeCacheHashEntrySlab *hashEntrySlab)
-   {
-   _manager = manager;
-
-   // heapSize can be calculated as (codeCache->helperTop - codeCacheSegment->heapBase), which is equal to segmentSize
-   // If codeCachePadKB is set, this will make the system believe that we allocated segmentSize bytes,
-   // instead of _jitConfig->codeCachePadKB * 1024 bytes
-   // If codeCachePadKB is not set, heapSize is segmentSize anyway
-   _segment = codeCacheSegment;
-
-   // helperTop is heapTop, usually
-   // When codeCachePadKB > segmentSize, the helperTop is not at the very end of the segemnt
-   _helperTop = _segment->segmentBase() + codeCacheSizeAllocated;
-
-   _hashEntrySlab = hashEntrySlab;
-   TR::CodeCacheConfig &config = manager->codeCacheConfig();
-
-   // FIXME: try to provide different names to the mutex based on the codecache
-   if (!(_mutex = TR::Monitor::create("JIT-CodeCacheMonitor-??")))
-      return false;
-
-   _hashEntryFreeList = NULL;
-   _freeBlockList     = NULL;
-   _flags = 0;
-   _CCPreLoadedCodeInitialized = false;
-   self()->unreserve();
-   _almostFull = TR_no;
-   _sizeOfLargestFreeColdBlock = 0;
-   _sizeOfLargestFreeWarmBlock = 0;
-   _lastAllocatedBlock = NULL; // MP
-
-   *((TR::CodeCache **)(_segment->segmentBase())) = self(); // Write a pointer to this cache at the beginning of the segment
-   _warmCodeAlloc = _segment->segmentBase() + sizeof(this);
-
-   _warmCodeAlloc = align(_warmCodeAlloc, config.codeCacheAlignment() -  1);
-
-   if (!config.trampolineCodeSize())
-      {
-      // _helperTop is heapTop
-      _trampolineBase = _helperTop;
-      _helperBase = _helperTop;
-      _trampolineReservationMark = _trampolineAllocationMark = _trampolineBase;
-
-      // set the pre loaded per Cache Helper slab
-      _CCPreLoadedCodeTop = (uint8_t *)(((size_t)_trampolineBase) & (~config.codeCacheHelperAlignmentMask()));
-      _CCPreLoadedCodeBase = _CCPreLoadedCodeTop - config.ccPreLoadedCodeSize();
-      TR_ASSERT( (((size_t)_CCPreLoadedCodeBase) & config.codeCacheHelperAlignmentMask()) == 0, "Per-code cache helper sizes do not account for alignment requirements." );
-      _coldCodeAlloc = _CCPreLoadedCodeBase;
-      _trampolineSyncList = NULL;
-
-      return true;
-      }
-
-   // Helpers are located at the top of the code cache (offset N), growing down towards the base (offset 0)
-   size_t trampolineSpaceSize = config.trampolineCodeSize() * config.numRuntimeHelpers();
-   // _helperTop is heapTop
-   _helperBase = _helperTop - trampolineSpaceSize;
-   _helperBase = (uint8_t *)(((size_t)_helperBase) & (~config.codeCacheTrampolineAlignmentBytes()));
-
-   if (!config.needsMethodTrampolines())
-      {
-      // There is no need in method trampolines when there is going to be
-      // only one code cache segment
-      //
-      _trampolineBase = _helperBase;
-      _tempTrampolinesMax = 0;
-      }
-   else
-      {
-      // _helperTop is heapTop
-      // (_helperTop - segment->heapBase) is heapSize
-
-      _trampolineBase = _helperBase -
-                        ((_helperBase - _segment->segmentBase())*config.trampolineSpacePercentage()/100);
-
-      // Grab the configuration details from the JIT platform code
-      //
-      // (_helperTop - segment->heapBase) is heapSize
-      config.mccCallbacks().codeCacheConfig((_helperTop - _segment->segmentBase()), &_tempTrampolinesMax);
-      }
-
-   mcc_printf("mcc_initialize: trampoline base %p\n",  _trampolineBase);
-
-   // set the temporary trampoline slab right under the helper trampolines, should be already aligned
-   _tempTrampolineTop  = _helperBase;
-   _tempTrampolineBase = _tempTrampolineTop - (config.trampolineCodeSize() * _tempTrampolinesMax);
-   _tempTrampolineNext = _tempTrampolineBase;
-
-   // Check if we have enough space in the code cache to contain the trampolines
-   if (_trampolineBase >= _tempTrampolineNext && config.needsMethodTrampolines())
-      return false;
-
-   // set the allocation pointer to right after the temporary trampolines
-   _trampolineAllocationMark  = _tempTrampolineBase;
-   _trampolineReservationMark = _trampolineAllocationMark;
-
-   // set the pre loaded per Cache Helper slab
-   _CCPreLoadedCodeTop = (uint8_t *)(((size_t)_trampolineBase) & (~config.codeCacheHelperAlignmentMask()));
-   _CCPreLoadedCodeBase = _CCPreLoadedCodeTop - config.ccPreLoadedCodeSize();
-   TR_ASSERT( (((size_t)_CCPreLoadedCodeBase) & config.codeCacheHelperAlignmentMask()) == 0, "Per-code cache helper sizes do not account for alignment requirements." );
-   _coldCodeAlloc = _CCPreLoadedCodeBase;
-
-   // Set helper trampoline table available
-   //
-   config.mccCallbacks().createHelperTrampolines((uint8_t *)_helperBase, config.numRuntimeHelpers());
-
-   _trampolineSyncList = NULL;
-   if (_tempTrampolinesMax)
-      {
-      // Initialize temporary trampoline synchronization list
-      if (!self()->allocateTempTrampolineSyncBlock())
-         return false;
-      }
-
-   if (config.needsMethodTrampolines())
-      {
-      // Initialize hashtables to hold trampolines for resolved and unresolved methods
-      _resolvedMethodHT   = CodeCacheHashTable::allocate(manager);
-      _unresolvedMethodHT = CodeCacheHashTable::allocate(manager);
-      if (_resolvedMethodHT==NULL || _unresolvedMethodHT==NULL)
-         return false;
-      }
-
-   // Before returning, let's adjust the free space seen by VM.
-   // Usable space is between _warmCodeAlloc and _trampolineBase. Everything else is overhead
-   // Only relevant if code cache repository is used
-   size_t spaceLost = (_warmCodeAlloc - _segment->segmentBase()) + (_segment->segmentTop() - _trampolineBase);
-   _manager->decreaseFreeSpaceInCodeCacheRepository(spaceLost);
-
-   return true;
    }
 
 
@@ -598,34 +458,50 @@ OMR::CodeCache::allocateTempTrampoline()
    return freeTrampolineSlot;
    }
 
-// Reserve space for a trampoline
-//
-// The returned trampoline pointer is meaningless, ie should not be used to
-// create trampoline code in just yet.
-//
-OMR::CodeCacheTrampolineCode *
-OMR::CodeCache::reserveTrampoline()
+
+OMR::CodeCacheErrorCode::ErrorCode
+OMR::CodeCache::reserveSpaceForTrampoline_bridge(int32_t numTrampolines)
    {
-   TR::CodeCacheConfig &config = _manager->codeCacheConfig();
-
-   // see if we are hitting against the method body allocation pointer
-   // indicating that there is no more free space left in this code cache
-   if (_trampolineReservationMark < _trampolineBase + config.trampolineCodeSize())
-      {
-      // no free trampoline space
-      return NULL;
-      }
-
-   // advance the reservation mark
-   _trampolineReservationMark -= config.trampolineCodeSize();
-
-   return (CodeCacheTrampolineCode *) _trampolineReservationMark;
+   return self()->reserveSpaceForTrampoline(numTrampolines);
    }
 
-// Cancel a reservation for a trampoline
-//
+
+OMR::CodeCacheErrorCode::ErrorCode
+OMR::CodeCache::reserveSpaceForTrampoline(int32_t numTrampolines)
+   {
+   CacheCriticalSection ReserveSpaceForTrampoline(self());
+
+   CodeCacheErrorCode::ErrorCode status = CodeCacheErrorCode::ERRORCODE_SUCCESS;
+
+   TR::CodeCacheConfig &config = _manager->codeCacheConfig();
+   size_t size = numTrampolines * config.trampolineCodeSize();
+
+   if (size)
+      {
+      // See if we are hitting against the method body allocation pointer
+      // indicating that there is no more free space left in this code cache
+      //
+      if (_trampolineReservationMark >= _trampolineBase + size)
+         {
+         _trampolineReservationMark -= size;
+         }
+      else
+         {
+         status = CodeCacheErrorCode::ERRORCODE_INSUFFICIENTSPACE;
+         _almostFull = TR_yes;
+         if (config.verboseCodeCache())
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "CodeCache %p marked as full in reserveSpaceForTrampoline", self());
+            }
+         }
+      }
+
+   return status;
+   }
+
+
 void
-OMR::CodeCache::unreserveTrampoline()
+OMR::CodeCache::unreserveSpaceForTrampoline()
    {
    // sanity check, should never have the reservation mark dip past the
    // allocation mark
@@ -662,27 +538,19 @@ OMR::CodeCache::reserveResolvedTrampoline(TR_OpaqueMethodBlock *method,
       CodeCacheHashEntry *entry = _resolvedMethodHT->findResolvedMethod(method);
       if (!entry)
          {
-         // reserve a new trampoline since we got no active reservation for given method */
-         CodeCacheTrampolineCode *trampoline = self()->reserveTrampoline();
-         if (trampoline)
+         // Reserve a new trampoline since there is not an active reservation for given method
+         //
+         retValue = self()->reserveSpaceForTrampoline();
+         if (retValue == OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS)
             {
             // add hashtable entry
             if (!self()->addResolvedMethod(method))
                retValue = CodeCacheErrorCode::ERRORCODE_FATALERROR; // couldn't allocate memory from VM
             }
-         else // no space in this code cache; must allocate a new one
-            {
-            _almostFull = TR_yes;
-            retValue = CodeCacheErrorCode::ERRORCODE_INSUFFICIENTSPACE;
-            if (config.verboseCodeCache())
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "CodeCache %p marked as full in reserveResolvedTrampoline", this);
-               }
-            }
          }
       }
 
-      return retValue;
+   return retValue;
    }
 
 
@@ -747,52 +615,40 @@ OMR::CodeCache::replaceTrampoline(TR_OpaqueMethodBlock *method,
    //suspicious that this assertion is commented out...
    //TR_ASSERT(entry);
 
-   if (needSync)
+   if (oldTrampoline == NULL)
       {
-      // Trampoline CANNOT be safely modified in place
-      // We have to allocate a new temporary trampoline
-      // and rely on the sync later on to update the old one using the
-      // temporary data
-      if (oldTrampoline != NULL)
+      // A trampoline has not been created.  Simply allocate a new one.
+      //
+      trampoline = self()->allocateTrampoline();
+      entry->_info._resolved._currentTrampoline = trampoline;
+      }
+   else
+      {
+      if (needSync)
          {
+         // Trampoline CANNOT be safely modified in place
+         // We have to allocate a new temporary trampoline
+         // and rely on the sync later on to update the old one using the
+         // temporary data
+         //
          // A permanent trampoline already exists, create a temporary one,
-         // might fail due to lack of free slots
+         // This might fail due to lack of free slots
+         //
          trampoline = self()->allocateTempTrampoline();
 
          // Save the temporary trampoline entry for future temp->parm synchronization
          self()->saveTempTrampoline(entry);
 
          if (!trampoline)
-            // Unable to fullful the replacement request, no temp space left
+            {
+            // Unable to fulfill the replacement request, no temp space left
             return NULL;
-
+            }
          }
-      else
-         {
-         // No oldTrampoline present, ie its a new trampoline creation request
-         trampoline = self()->allocateTrampoline();
-
-         entry->_info._resolved._currentTrampoline = trampoline;
-         }
-
-      // update the hash entry for this method
-      entry->_info._resolved._currentStartPC = newTargetPC;
-
       }
-   else
-      {
-      // Trampoline CAN be safely to modified in place
-      if (oldTrampoline == NULL)
-         {
-         // no old trampoline present, simply allocate a new one
-         trampoline = self()->allocateTrampoline();
 
-         entry->_info._resolved._currentTrampoline = trampoline;
-         }
-
-      // update the hash entry for this method
-      entry->_info._resolved._currentStartPC = newTargetPC;
-      }
+   // update the hash entry for this method
+   entry->_info._resolved._currentStartPC = newTargetPC;
 
    return trampoline;
    }
@@ -1418,8 +1274,8 @@ void
 OMR::CodeCache::dumpCodeCache()
    {
    printf("Code Cache @%p\n", this);
-   printf("  |-- warmCodeAlloc          = 0x%08x\n", _warmCodeAlloc );
-   printf("  |-- coldCodeAlloc          = 0x%08x\n", _coldCodeAlloc );
+   printf("  |-- warmCodeAlloc          = 0x%08" OMR_PRIxPTR "\n", (uintptr_t)_warmCodeAlloc );
+   printf("  |-- coldCodeAlloc          = 0x%08" OMR_PRIxPTR "\n", (uintptr_t)_coldCodeAlloc );
    printf("  |-- tempTrampsMax          = %d\n",     _tempTrampolinesMax );
    printf("  |-- flags                  = %d\n",     _flags );
    printf("  |-- next                   = 0x%p\n",   _next );
@@ -1430,18 +1286,18 @@ void
 OMR::CodeCache::printOccupancyStats()
    {
    fprintf(stderr, "Code Cache @%p flags=0x%x almostFull=%d\n", this, _flags, _almostFull);
-   fprintf(stderr, "   cold-warm hole size        = %8u bytes\n", self()->getFreeContiguousSpace());
+   fprintf(stderr, "   cold-warm hole size        = %8" OMR_PRIuSIZE " bytes\n", self()->getFreeContiguousSpace());
    fprintf(stderr, "   warmCodeAlloc=%p coldCodeAlloc=%p\n", (void*)_warmCodeAlloc, (void*)_coldCodeAlloc);
    if (_freeBlockList)
       {
-      fprintf(stderr, "   sizeOfLargestFreeColdBlock = %8d bytes\n", _sizeOfLargestFreeColdBlock);
-      fprintf(stderr, "   sizeOfLargestFreeWarmBlock = %8d bytes\n", _sizeOfLargestFreeWarmBlock);
+      fprintf(stderr, "   sizeOfLargestFreeColdBlock = %8" OMR_PRIuSIZE " bytes\n", _sizeOfLargestFreeColdBlock);
+      fprintf(stderr, "   sizeOfLargestFreeWarmBlock = %8" OMR_PRIuSIZE " bytes\n", _sizeOfLargestFreeWarmBlock);
       fprintf(stderr, "   reclaimed sizes:");
       // scope for critical section
          {
          CacheCriticalSection resolveAndCreateTrampoline(self());
          for (CodeCacheFreeCacheBlock *currLink = _freeBlockList; currLink; currLink = currLink->_next)
-            fprintf(stderr, " %u", currLink->_size);
+            fprintf(stderr, " %" OMR_PRIuSIZE, currLink->_size);
          }
       fprintf(stderr, "\n");
       }
@@ -1554,12 +1410,12 @@ OMR::CodeCache::checkForErrors()
             } // end for
          if (_sizeOfLargestFreeWarmBlock != maxFreeWarmSize)
             {
-            fprintf(stderr, "checkForErrors cache %p: Error: _sizeOfLargestFreeWarmBlock(%d) != maxFreeWarmSize(%d)\n", this, _sizeOfLargestFreeWarmBlock, maxFreeWarmSize);
+            fprintf(stderr, "checkForErrors cache %p: Error: _sizeOfLargestFreeWarmBlock(%" OMR_PRIuSIZE ") != maxFreeWarmSize(%" OMR_PRIuSIZE ")\n", this, _sizeOfLargestFreeWarmBlock, maxFreeWarmSize);
             doCrash = true;
             }
          if (_sizeOfLargestFreeColdBlock != maxFreeColdSize)
             {
-            fprintf(stderr, "checkForErrors cache %p: Error: _sizeOfLargestFreeColdBlock(%d) != maxFreeColdSize(%d)\n", this, _sizeOfLargestFreeColdBlock, maxFreeColdSize);
+            fprintf(stderr, "checkForErrors cache %p: Error: _sizeOfLargestFreeColdBlock(%" OMR_PRIuSIZE ") != maxFreeColdSize(%" OMR_PRIuSIZE ")\n", this, _sizeOfLargestFreeColdBlock, maxFreeColdSize);
             doCrash = true;
             }
 
@@ -1802,36 +1658,6 @@ OMR::CodeCache::getCCPreLoadedCodeAddress(TR_CCPreLoadedCode h, TR::CodeGenerato
    }
 
 
-OMR::CodeCacheErrorCode::ErrorCode
-OMR::CodeCache::reserveNTrampolines(int64_t n)
-   {
-   CacheCriticalSection updatingCodeCache(self());
-   CodeCacheErrorCode::ErrorCode status = CodeCacheErrorCode::ERRORCODE_SUCCESS;
-   TR::CodeCacheConfig &config = _manager->codeCacheConfig();
-   size_t size = n * config.trampolineCodeSize();
-
-   if (size)
-      {
-      if (_trampolineReservationMark >= _trampolineBase + size)
-         {
-         _trampolineReservationMark -= size;
-         }
-      else
-         {
-         status = CodeCacheErrorCode::ERRORCODE_INSUFFICIENTSPACE;
-         _almostFull = TR_yes;
-         self()->unreserve();
-         if (config.verboseCodeCache())
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "CodeCache %p marked as full in reserveNTrampoline", this);
-            }
-         }
-      }
-
-   return status;
-   }
-
-
 // Allocate and initialize a new code cache
 // If reservingCompThreadID >= -1, then the new code codecache will be reserved
 // A value of -1 for this parameter means that an application thread is requesting the reservation
@@ -1843,52 +1669,5 @@ OMR::CodeCache::allocate(TR::CodeCacheManager *manager,
                          size_t segmentSize,
                          int32_t reservingCompThreadID)
    {
-   TR::CodeCacheConfig & config = manager->codeCacheConfig();
-   bool verboseCodeCache = config.verboseCodeCache();
-
-   size_t codeCacheSizeAllocated;
-   TR::CodeCacheMemorySegment *codeCacheSegment = manager->getNewCacheMemorySegment(segmentSize, codeCacheSizeAllocated);
-
-   if (codeCacheSegment)
-      {
-      TR::CodeCache *codeCache = manager->allocateCodeCacheObject(codeCacheSegment,
-                                                                  codeCacheSizeAllocated);
-
-      if (codeCache)
-         {
-         // If we wanted to reserve this code cache, then mark it as reserved now
-         if (reservingCompThreadID >= -1)
-            {
-            codeCache->reserve(reservingCompThreadID);
-            }
-
-         // Add it to our list of code caches
-         manager->addCodeCache(codeCache);
-
-         if (verboseCodeCache)
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "CodeCache allocated %p @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT " HelperBase:" POINTER_PRINTF_FORMAT, codeCache, codeCache->getCodeBase(), codeCache->getCodeTop(), codeCache->_helperBase);
-            }
-
-         return codeCache;
-         }
-
-      // Free code cache segment
-      if (manager->usingRepository())
-         {
-         // return back the portion we carved
-         manager->undoCarvingFromRepository(codeCacheSegment);
-         }
-      else
-         {
-         manager->freeMemorySegment(codeCacheSegment);
-         }
-      }
-
-   if (verboseCodeCache)
-      {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "CodeCache maximum allocated");
-      }
-
-   return NULL;
+   return manager->allocateCodeCacheFromNewSegment(segmentSize, reservingCompThreadID);
    }

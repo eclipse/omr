@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,8 +35,8 @@ namespace OMR { typedef OMR::X86::RegisterDependencyExt RegisterDependency; }
 
 #include "compiler/codegen/OMRRegisterDependencyStruct.hpp"
 
-#include <stdint.h>                  // for int32_t, uint32_t
-#include "codegen/RealRegister.hpp"  // for TR::RealRegister::RegNum
+#include <stdint.h>
+#include "codegen/RealRegister.hpp"
 
 #define GlobalRegisterFPDependency    0x04
 

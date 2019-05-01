@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,11 +33,11 @@ namespace OMR { typedef OMR::X86::TreeEvaluator TreeEvaluatorConnector; }
 
 #include "compiler/codegen/OMRTreeEvaluator.hpp"
 
-#include <stddef.h>                       // for NULL
-#include <stdint.h>                       // for int32_t, etc
+#include <stddef.h>
+#include <stdint.h>
 #include "codegen/RegisterConstants.hpp"
-#include "env/jittypes.h"                 // for intptrj_t
-#include "il/ILOpCodes.hpp"               // for ILOpCodes
+#include "env/jittypes.h"
+#include "il/ILOpCodes.hpp"
 #include "runtime/Runtime.hpp"
 #include "x/codegen/X86Ops.hpp"
 
@@ -84,6 +84,11 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *istoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *sstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -306,7 +311,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
 
    // VM dependent routines
    static TR::Register *VMmergenewEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *VMarrayStoreCheckArrayCopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static bool VMinlineCallEvaluator(TR::Node *node, bool isIndirect, TR::CodeGenerator *cg);
    static TR::Instruction *VMtestForReferenceArray(TR::Node *, TR::Register *objectReg, TR::CodeGenerator *cg);
    static bool genNullTestSequence(TR::Node *node, TR::Register *opReg, TR::Register *targetReg, TR::CodeGenerator *cg);

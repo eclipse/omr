@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,16 +23,16 @@
 
 #include "optimizer/DominatorsChk.hpp"
 
-#include <stdint.h>                     // for int32_t
-#include <string.h>                     // for NULL, memset
-#include "compile/Compilation.hpp"      // for Compilation
+#include <stdint.h>
+#include <string.h>
+#include "compile/Compilation.hpp"
 #include "env/TRMemory.hpp"
-#include "il/Block.hpp"                 // for Block
-#include "infra/Array.hpp"              // for TR_Array
-#include "infra/BitVector.hpp"          // for TR_BitVector
-#include "infra/Cfg.hpp"                // for CFG
-#include "infra/List.hpp"               // for ListElement, List, etc
-#include "infra/CfgEdge.hpp"            // for CFGEdge
+#include "il/Block.hpp"
+#include "infra/Array.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
 
 TR_DominatorsChk::TR_DominatorsChk(TR::Compilation *c)
    : _compilation(c)

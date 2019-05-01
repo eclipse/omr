@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -479,6 +479,8 @@ extern J9_CFUNC void
 omrsysinfo_shutdown(struct OMRPortLibrary *portLibrary);
 extern J9_CFUNC intptr_t
 omrsysinfo_get_groupname(struct OMRPortLibrary *portLibrary, char *buffer, uintptr_t length);
+extern J9_CFUNC intptr_t
+omrsysinfo_get_hostname(struct OMRPortLibrary *portLibrary, char *buffer, size_t length);
 extern J9_CFUNC uintptr_t
 omrsysinfo_get_pid(struct OMRPortLibrary *portLibrary);
 extern J9_CFUNC uintptr_t
@@ -533,12 +535,20 @@ extern J9_CFUNC int32_t
 omrsysinfo_cgroup_get_memlimit(struct OMRPortLibrary *portLibrary, uint64_t *limit);
 extern J9_CFUNC BOOLEAN
 omrsysinfo_cgroup_is_memlimit_set(struct OMRPortLibrary *portLibrary);
-extern J9_CFUNC intptr_t
-omrsysinfo_cgroup_get_handle_subsystem_file(struct OMRPortLibrary *portLibrary,  uint64_t subsystemFlag, const char *fileName);
 extern J9_CFUNC struct OMRCgroupEntry *
 omrsysinfo_get_cgroup_subsystem_list(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC BOOLEAN
+omrsysinfo_is_running_in_container(struct OMRPortLibrary *portLibrary);
 extern J9_CFUNC int32_t
-omrsysinfo_is_running_in_container(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer);
+omrsysinfo_cgroup_subsystem_iterator_init(struct OMRPortLibrary *portLibrary, uint64_t subsystem, struct OMRCgroupMetricIteratorState *state);
+extern J9_CFUNC BOOLEAN
+omrsysinfo_cgroup_subsystem_iterator_hasNext(struct OMRPortLibrary *portLibrary, const struct OMRCgroupMetricIteratorState *state);
+extern J9_CFUNC int32_t
+omrsysinfo_cgroup_subsystem_iterator_metricKey(struct OMRPortLibrary *portLibrary, const struct OMRCgroupMetricIteratorState *state, const char **metricKey);
+extern J9_CFUNC int32_t
+omrsysinfo_cgroup_subsystem_iterator_next(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state, struct OMRCgroupMetricElement *metricElement);
+extern J9_CFUNC void
+omrsysinfo_cgroup_subsystem_iterator_destroy(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state);
 
 /* J9SourceJ9Signal*/
 extern J9_CFUNC int32_t
@@ -671,6 +681,8 @@ extern J9_CFUNC void *
 omrvmem_reserve_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr_t byteAmount, struct J9PortVmemIdentifier *identifier, uintptr_t mode, uintptr_t pageSize, uint32_t category);
 extern J9_CFUNC void *
 omrvmem_reserve_memory_ex(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier, struct J9PortVmemParams *params);
+extern J9_CFUNC void *
+omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category);
 extern J9_CFUNC uintptr_t
 omrvmem_get_page_size(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier);
 extern J9_CFUNC uintptr_t

@@ -165,6 +165,83 @@ void TR::ARM64Trg1Src2Instruction::assignRegisters(TR_RegisterKinds kindToBeAssi
    setSource2Register(assignedSource2Register);
    }
 
+// TR::ARM64Trg1Src3Instruction:: member functions
+
+bool TR::ARM64Trg1Src3Instruction::refsRegister(TR::Register *reg)
+   {
+   return (reg == getTargetRegister() ||
+           reg == getSource1Register() ||
+           reg == getSource2Register() ||
+           reg == getSource3Register());
+   }
+
+bool TR::ARM64Trg1Src3Instruction::usesRegister(TR::Register *reg)
+   {
+   return (reg == getSource1Register() || reg == getSource2Register() || reg == getSource3Register());
+   }
+
+bool TR::ARM64Trg1Src3Instruction::defsRegister(TR::Register *reg)
+   {
+   return (reg == getTargetRegister());
+   }
+
+bool TR::ARM64Trg1Src3Instruction::defsRealRegister(TR::Register *reg)
+   {
+   return (reg == getTargetRegister()->getAssignedRegister());
+   }
+
+void TR::ARM64Trg1Src3Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
+   {
+   TR::Machine *machine = cg()->machine();
+   TR::Register *target1Virtual = getTargetRegister();
+   TR::Register *source1Virtual = getSource1Register();
+   TR::Register *source2Virtual = getSource2Register();
+   TR::Register *source3Virtual = getSource3Register();
+
+   if (getDependencyConditions())
+      getDependencyConditions()->assignPostConditionRegisters(this, kindToBeAssigned, cg());
+
+   source2Virtual->block();
+   source1Virtual->block();
+   target1Virtual->block();
+   TR::RealRegister *assignedSource3Register = machine->assignOneRegister(this, source3Virtual);
+   target1Virtual->unblock();
+   source1Virtual->unblock();
+   source2Virtual->unblock();
+
+   source3Virtual->block();
+   source1Virtual->block();
+   target1Virtual->block();
+   TR::RealRegister *assignedSource2Register = machine->assignOneRegister(this, source2Virtual);
+   target1Virtual->unblock();
+   source1Virtual->unblock();
+   source3Virtual->unblock();
+
+   source3Virtual->block();
+   source2Virtual->block();
+   target1Virtual->block();
+   TR::RealRegister *assignedSource1Register = machine->assignOneRegister(this, source1Virtual);
+   target1Virtual->unblock();
+   source2Virtual->unblock();
+   source3Virtual->unblock();
+
+   source3Virtual->block();
+   source2Virtual->block();
+   source1Virtual->block();
+   TR::RealRegister *assignedTarget1Register = machine->assignOneRegister(this, target1Virtual);
+   source1Virtual->unblock();
+   source2Virtual->unblock();
+   source3Virtual->unblock();
+
+   if (getDependencyConditions())
+      getDependencyConditions()->assignPreConditionRegisters(this->getPrev(), kindToBeAssigned, cg());
+
+   setTargetRegister(assignedTarget1Register);
+   setSource1Register(assignedSource1Register);
+   setSource2Register(assignedSource2Register);
+   setSource3Register(assignedSource3Register);
+   }
+
 // TR::ARM64MemSrc1Instruction:: member functions
 
 bool TR::ARM64MemSrc1Instruction::refsRegister(TR::Register *reg)
@@ -207,12 +284,6 @@ void TR::ARM64MemSrc1Instruction::assignRegisters(TR_RegisterKinds kindToBeAssig
       assignedRegister = machine->assignOneRegister(this, sourceVirtual);
       }
    mref->unblockRegisters();
-
-   if (sourceVirtual->decFutureUseCount() == 0)
-      {
-      sourceVirtual->setAssignedRegister(NULL);
-      assignedRegister->setState(TR::RealRegister::Unlatched);
-      }
 
    setSource1Register(assignedRegister);
 
@@ -261,4 +332,88 @@ void TR::ARM64Trg1MemInstruction::assignRegisters(TR_RegisterKinds kindToBeAssig
 
    if (getDependencyConditions())
       getDependencyConditions()->assignPreConditionRegisters(this->getPrev(), kindToBeAssigned, cg());
+   }
+
+// TR::ARM64Src1Instruction:: member functions
+
+bool TR::ARM64Src1Instruction::refsRegister(TR::Register *reg)
+   {
+   return (reg == getSource1Register());
+   }
+
+bool TR::ARM64Src1Instruction::usesRegister(TR::Register *reg)
+   {
+   return (reg == getSource1Register());
+   }
+
+bool TR::ARM64Src1Instruction::defsRegister(TR::Register *reg)
+   {
+   return false;
+   }
+
+bool TR::ARM64Src1Instruction::defsRealRegister(TR::Register *reg)
+   {
+   return false;
+   }
+
+void TR::ARM64Src1Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
+   {
+   TR::Machine *machine = cg()->machine();
+   TR::Register *source1Virtual = getSource1Register();
+
+   if (getDependencyConditions())
+      getDependencyConditions()->assignPostConditionRegisters(this, kindToBeAssigned, cg());
+
+   TR::RealRegister *assignedSource1Register = machine->assignOneRegister(this, source1Virtual);
+
+   if (getDependencyConditions())
+      getDependencyConditions()->assignPreConditionRegisters(this->getPrev(), kindToBeAssigned, cg());
+
+   setSource1Register(assignedSource1Register);
+   }
+
+// TR::ARM64Src2Instruction:: member functions
+
+bool TR::ARM64Src2Instruction::refsRegister(TR::Register *reg)
+   {
+   return (reg == getSource1Register() || reg == getSource2Register());
+   }
+
+bool TR::ARM64Src2Instruction::usesRegister(TR::Register *reg)
+   {
+   return (reg == getSource1Register() || reg == getSource2Register());
+   }
+
+bool TR::ARM64Src2Instruction::defsRegister(TR::Register *reg)
+   {
+   return false;
+   }
+
+bool TR::ARM64Src2Instruction::defsRealRegister(TR::Register *reg)
+   {
+   return false;
+   }
+
+void TR::ARM64Src2Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
+   {
+   TR::Machine *machine = cg()->machine();
+   TR::Register *source1Virtual = getSource1Register();
+   TR::Register *source2Virtual = getSource2Register();
+
+   if (getDependencyConditions())
+      getDependencyConditions()->assignPostConditionRegisters(this, kindToBeAssigned, cg());
+
+   source1Virtual->block();
+   TR::RealRegister *assignedSource2Register = machine->assignOneRegister(this, source2Virtual);
+   source1Virtual->unblock();
+
+   source2Virtual->block();
+   TR::RealRegister *assignedSource1Register = machine->assignOneRegister(this, source1Virtual);
+   source2Virtual->unblock();
+
+   if (getDependencyConditions())
+      getDependencyConditions()->assignPreConditionRegisters(this->getPrev(), kindToBeAssigned, cg());
+
+   setSource1Register(assignedSource1Register);
+   setSource2Register(assignedSource2Register);
    }

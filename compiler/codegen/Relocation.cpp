@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,23 +21,22 @@
 
 #include "codegen/Relocation.hpp"
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for uint8_t, uintptr_t, etc
-#include "codegen/AheadOfTimeCompile.hpp"   // for AheadOfTimeCompile
-#include "codegen/CodeGenerator.hpp"        // for CodeGenerator
-#include "codegen/Instruction.hpp"          // for Instruction
-#include "codegen/Linkage.hpp"              // for Linkage
-#include "compile/Compilation.hpp"          // for Compilation
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/AheadOfTimeCompile.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Instruction.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                       // for POINTER_PRINTF_FORMAT
-#include "env/TRMemory.hpp"                 // for TR_Link::operator new
-#include "env/jittypes.h"                   // for intptrj_t
-#include "il/symbol/LabelSymbol.hpp"        // for LabelSymbol
-#include "infra/Assert.hpp"                 // for TR_ASSERT
-#include "infra/Flags.hpp"                  // for flags8_t
-#include "infra/Link.hpp"                   // for TR_LinkHead, TR_Link
+#include "env/IO.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
 #include "runtime/Runtime.hpp"
 
 void TR::Relocation::apply(TR::CodeGenerator *codeGen)
@@ -132,19 +131,7 @@ uint8_t TR::ExternalRelocation::collectModifier()
    {
    TR::Compilation *comp = TR::comp();
    uint8_t * relocatableMethodCodeStart = (uint8_t *)comp->getRelocatableMethodCodeStart();
-   uint8_t * updateLocation;
-
-   if (TR::Compiler->target.cpu.isPower() &&
-          (_kind == TR_ArrayCopyHelper || _kind == TR_ArrayCopyToc || _kind == TR_RamMethod || _kind == TR_GlobalValue || _kind == TR_BodyInfoAddressLoad || _kind == TR_DataAddress || _kind == TR_JNISpecialTargetAddress || _kind == TR_JNIStaticTargetAddress || _kind == TR_JNIVirtualTargetAddress
-                || _kind == TR_StaticRamMethodConst || _kind == TR_VirtualRamMethodConst || _kind == TR_SpecialRamMethodConst || _kind == TR_DebugCounter))
-      {
-      TR::Instruction *instr = (TR::Instruction *)getUpdateLocation();
-      updateLocation = instr->getBinaryEncoding();
-      }
-   else
-      {
-      updateLocation = getUpdateLocation();
-      }
+   uint8_t * updateLocation = getUpdateLocation();
 
    int32_t distanceFromStartOfBuffer = updateLocation - relocatableMethodCodeStart;
    int32_t distanceFromStartOfMethod = updateLocation - comp->cg()->getCodeStart();
@@ -162,7 +149,7 @@ void TR::ExternalRelocation::addExternalRelocation(TR::CodeGenerator *codeGen)
 
    TR::Compilation *comp = codeGen->comp();
    AOTcgDiag0(comp, "TR::ExternalRelocation::addExternalRelocation\n");
-  
+
    TR_LinkHead<TR::IteratedExternalRelocation>& aot = codeGen->getAheadOfTimeCompile()->getAOTRelocationTargets();
    uint32_t narrowSize = getNarrowSize();
    uint32_t wideSize = getWideSize();
@@ -245,7 +232,7 @@ void TR::ExternalRelocation::addExternalRelocation(TR::CodeGenerator *codeGen)
       AOTcgDiag5(comp, "temp=" POINTER_PRINTF_FORMAT " full=%x target=" POINTER_PRINTF_FORMAT " kind=%x modifier=%x\n",
          temp, temp->full(), temp->getTargetAddress(), temp->getTargetKind(), temp->getModifierValue());
    AOTcgDiag2(comp, "#sites=%x size=%x\n", temp->getNumberOfRelocationSites(), temp->getSizeOfRelocationData());
-      
+
    }
 
 void TR::ExternalRelocation::apply(TR::CodeGenerator *codeGen)
@@ -460,6 +447,9 @@ const char *TR::ExternalRelocation::_externalRelocationTargetKindNames[TR_NumExt
    "TR_ValidateMethodFromSingleAbstractImplementer (96)",
    "TR_ValidateImproperInterfaceMethodFromCP (97)",
    "TR_SymbolFromManager (98)",
+   "TR_MethodCallAddress (99)",
+   "TR_DiscontiguousSymbolFromManager (100)",
+   "TR_ResolvedTrampolines (101)",
    };
 
 uintptr_t TR::ExternalRelocation::_globalValueList[TR_NumGlobalValueItems] =

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,11 +69,8 @@ class FEBase : public FECommon
    public:
    // Define our types in terms of the Traits
    typedef typename TR::FETraits<Derived>::JitConfig        JitConfig;
-   typedef typename TR::FETraits<Derived>::CodeCacheManager CodeCacheManager;
-   typedef typename TR::FETraits<Derived>::CodeCache        CodeCache;
 
    private:
-   uint64_t             _start_time;
    JitConfig            _config;
    TR::CodeCacheManager _codeCacheManager;
 
@@ -85,7 +82,6 @@ class FEBase : public FECommon
       : FECommon(),
       _config(),
       _codeCacheManager(TR::Compiler->rawAllocator),
-      _start_time(TR::Compiler->vm.getUSecClock()),
       _persistentMemory(jitConfig(), TR::Compiler->persistentAllocator())
       {
       ::trPersistentMemory = &_persistentMemory;
@@ -96,22 +92,11 @@ class FEBase : public FECommon
    JitConfig *jitConfig() { return &_config; }
    TR::CodeCacheManager &codeCacheManager() { return _codeCacheManager; }
 
-   virtual TR::CodeCache *getDesignatedCodeCache(TR::Compilation *);
-
-   virtual uint8_t *allocateCodeMemory(TR::Compilation *comp, uint32_t warmCodeSize, uint32_t coldCodeSize,
-                                       uint8_t **coldCode, bool isMethodHeaderNeeded);
-   virtual void resizeCodeMemory(TR::Compilation * comp, uint8_t *bufferStart, uint32_t numBytes);
    virtual uint8_t * allocateRelocationData(TR::Compilation* comp, uint32_t size);
-
-   virtual intptrj_t indexedTrampolineLookup(int32_t helperIndex, void * callSite);
 
    virtual TR_PersistentMemory       * persistentMemory() { return &_persistentMemory; }
    virtual TR::PersistentInfo * getPersistentInfo() { return _persistentMemory.getPersistentInfo(); }
 
-   uint64_t getStartTime() { return _start_time; }
-
-   private:
-   virtual void switchCodeCache(TR::CodeCache *newCache);
    };
 
 } /* namespace TR */

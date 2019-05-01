@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,40 +22,40 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 
-#include <limits.h>                                 // for INT_MAX
-#include <stddef.h>                                 // for NULL
-#include <stdint.h>                                 // for int32_t, int64_t
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                     // for feGetEnv
-#include "codegen/Machine.hpp"                      // for Machine
-#include "codegen/RealRegister.hpp"                 // for RealRegister, etc
-#include "codegen/RecognizedMethods.hpp"            // for RecognizedMethod, etc
-#include "codegen/Register.hpp"                     // for Register
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/RecognizedMethods.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/RegisterPair.hpp"                 // for RegisterPair
-#include "codegen/TreeEvaluator.hpp"                // for TreeEvaluator, etc
-#include "compile/Compilation.hpp"                  // for Compilation
+#include "codegen/RegisterPair.hpp"
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"              // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "env/TRMemory.hpp"
-#include "il/Block.hpp"                             // for Block
-#include "il/DataTypes.hpp"                         // for TR::DataType, etc
-#include "il/ILOpCodes.hpp"                         // for ILOpCodes::d2l, etc
-#include "il/ILOps.hpp"                             // for ILOpCode
-#include "il/Node.hpp"                              // for Node, vcount_t
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/BitVector.hpp"                      // for TR_BitVector, etc
-#include "infra/Link.hpp"                           // for TR_LinkHead
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Link.hpp"
 #include "optimizer/RegisterCandidate.hpp"
 #include "optimizer/Structure.hpp"
 #include "x/codegen/IntegerMultiplyDecomposer.hpp"
 #include "x/codegen/X86Evaluator.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                     // for ::MOV4RegReg
+#include "x/codegen/X86Ops.hpp"
 
 OMR::X86::I386::CodeGenerator::CodeGenerator() :
    OMR::X86::CodeGenerator()
@@ -90,7 +90,7 @@ OMR::X86::I386::CodeGenerator::CodeGenerator() :
          }
       self()->setSupportsDivCheck();
       self()->setJNILinkageCalleeCleanup();
-      self()->setRealVMThreadRegister(self()->machine()->getX86RealRegister(TR::RealRegister::ebp));
+      self()->setRealVMThreadRegister(self()->machine()->getRealRegister(TR::RealRegister::ebp));
       }
    else if (TR::Compiler->target.isLinux())
       {
@@ -106,7 +106,7 @@ OMR::X86::I386::CodeGenerator::CodeGenerator() :
          self()->setHasResumableTrapHandler();
          self()->setEnableImplicitDivideCheck();
          }
-      self()->setRealVMThreadRegister(self()->machine()->getX86RealRegister(TR::RealRegister::ebp));
+      self()->setRealVMThreadRegister(self()->machine()->getRealRegister(TR::RealRegister::ebp));
       self()->setSupportsDivCheck();
       }
    else

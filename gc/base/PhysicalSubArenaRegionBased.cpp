@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -191,16 +191,44 @@ MM_PhysicalSubArenaRegionBased::doExpandInSubSpace(MM_EnvironmentBase *env, uint
 	MM_HeapRegionManagerTarok *manager = MM_HeapRegionManagerTarok::getHeapRegionManager(_heap);
 	uintptr_t regionSize = manager->getRegionSize();
 
+	/*
+	 due to heap address for each numa node has to alignment with region size and page size, free region count might be not distributed evenly among numa nodes.
+	 use numaNodeCountWithFreeRegions and areFreeRegionsForNode() to inflate all available regions from numa nodes round robin until reaching expanded size.
+	 */
+	uintptr_t numaNodeCountWithFreeRegions = 0;
+#if defined (OMR_GC_VLHGC)
+	numaNodeCountWithFreeRegions = _affinityLeaderCount;
+	for (uintptr_t idx=0; idx<_affinityLeaderCount; idx++) {
+		if (!manager->areFreeRegionsForNode(env, _affinityLeaders[idx].j9NodeNumber)) {
+			numaNodeCountWithFreeRegions -= 1;
+		}
+	}
+#endif
+
 	/* we expand one region size at a time */
 	while (didExpandBy < expandSize) {
 		uintptr_t formerNodeIndex = _nextNUMAIndex;
 		uintptr_t numaNode = getNextNumaNode();
+		if ((0 != numaNode) && (!manager->areFreeRegionsForNode(env, numaNode))) {
+			if (0 != numaNodeCountWithFreeRegions) {
+				continue;
+			} else {
+				_nextNUMAIndex = formerNodeIndex;
+				break;
+			}
+		}
+
 		MM_HeapRegionDescriptor *newRegion = manager->acquireSingleTableRegion(env, subspace, numaNode);
+		if ((0 != numaNode) && (!manager->areFreeRegionsForNode(env, numaNode))) {
+			numaNodeCountWithFreeRegions -= 1;
+		}
 
 		if (NULL == newRegion) {
+			Assert_MM_true(0 == numaNode);
 			_nextNUMAIndex = formerNodeIndex;
 			break;
 		}
+
 		Assert_MM_true(newRegion->getNumaNode() == numaNode);
 		if (!newRegion->allocateSupportingResources(env)
 			|| !_heap->commitMemory(newRegion->getLowAddress(), regionSize)

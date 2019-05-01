@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2018 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,8 +51,8 @@ GLOBAL_CPPFLAGS+=-D_MT
 # This protects us in case <windows.h> is inadvertently included before <winsock2.h>.
 GLOBAL_CPPFLAGS+=-D_WINSOCKAPI_ 
 
-# Set minimum required system to Win XP
-OMR_MK_WINVER=0x0501
+# Set minimum required system to Win 7, so we can use GetCurrentProcessorNumberEx
+OMR_MK_WINVER=0x0601
 GLOBAL_CPPFLAGS+=-D_WIN32_IE=0x0500 -DWINVER=$(OMR_MK_WINVER)
 GLOBAL_CPPFLAGS+=-D_WIN32_WINNT=$(OMR_MK_WINVER)
 

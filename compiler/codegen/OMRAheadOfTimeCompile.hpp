@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,13 +28,13 @@ namespace OMR { class AheadOfTimeCompile; }
 namespace OMR { typedef OMR::AheadOfTimeCompile AheadOfTimeCompileConnector; }
 #endif // OMR_AHEADOFTIMECOMPILE_CONNECTOR
 
-#include <stddef.h>                 // for NULL
-#include <stdint.h>                 // for uint32_t, uint8_t, int32_t
-#include "compile/Compilation.hpp"  // for Compilation
-#include "env/TRMemory.hpp"         // for TR_Memory, etc
-#include "infra/Link.hpp"           // for TR_LinkHead
-#include "infra/Annotations.hpp"    // for OMR_EXTENSIBLE
-#include "runtime/Runtime.hpp"      // for TR_ExternalRelocationTargetKind
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "infra/Link.hpp"
+#include "infra/Annotations.hpp"
+#include "runtime/Runtime.hpp"
 
 class TR_Debug;
 namespace TR { class ExternalRelocation; }

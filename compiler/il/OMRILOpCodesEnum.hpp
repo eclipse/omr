@@ -85,25 +85,47 @@
    fstore,   // store float
    dstore,   // store double
    astore,   // store address
-   wrtbar,   // direct write barrier store checks for new space in old space reference store
-                // the first child is the value as in astore.  The second child is
-                // the address of the object that must be checked for old space
-                // the symbol reference holds addresses, flags and offsets as in astore
    bstore,   // store byte
    sstore,   // store short integer
+   // direct write barrier represent both the write and side effects of
+   // the write like checks for GC, debugging etc.
+   //
+   // In case of GC checks, write barrier checks for new space in old
+   // space reference store. The first child is the value as in astore.
+   // The second child is the address of the object that must be checked
+   // for old space the symbol reference holds addresses, flags and offsets
+   // as in astore
+   iwrtbar,  // write barrier for store direct integer
+   lwrtbar,  // write barrier for store direct long integer
+   fwrtbar,  // write barrier for store direct float
+   dwrtbar,  // write barrier for store direct double
+   awrtbar,  // write barrier for store direct address
+   bwrtbar,  // write barrier for store direct byte
+   swrtbar,  // write barrier for store direct short integer
    lstorei,  // store indirect long integer           (child1 a, child2 l)
    fstorei,  // store indirect float                  (child1 a, child2 f)
    dstorei,  // store indirect double                 (child1 a, child2 d)
    astorei,  // store indirect address                (child1 a dest, child2 a value)
-   wrtbari,  // indirect write barrier store checks for new space in old space reference store
-                // The first two children are as in astorei.  The third child is address
-                // of the beginning of the destination object.  For putfield this will often
-                // be the same as the first child (when the offset is on the symbol reference.
-                // But for array references, children 1 and 3 will be quite different although
-                // child 1's subtree will contain a reference to child 3's subtree
    bstorei,  // store indirect byte                   (child1 a, child2 b)
    sstorei,  // store indirect short integer          (child1 a, child2 s)
    istorei,  // store indirect integer                (child1 a, child2 i)
+   // indirect write barrier represent both the write and side effects of
+   // the write like checks for GC, debugging etc.
+   //
+   // In case of GC checks, indirect write barrier store checks for new space
+   // in old space reference store.
+   // The first two children are as in astorei.  The third child is address
+   // of the beginning of the destination object.  For putfield this will often
+   // be the same as the first child (when the offset is on the symbol reference.
+   // But for array references, children 1 and 3 will be quite different although
+   // child 1's subtree will contain a reference to child 3's subtree
+   lwrtbari, // write barrier for store indirect long integer
+   fwrtbari, // write barrier for store indirect float
+   dwrtbari, // write barrier for store indirect double
+   awrtbari, // write barrier for store indirect address
+   bwrtbari, // write barrier for store indirect byte
+   swrtbari, // write barrier for store indirect short integer
+   iwrtbari, // write barrier for store indirect integer
    Goto,     // goto label address
    ireturn,  // return an integer
    lreturn,  // return a long integer

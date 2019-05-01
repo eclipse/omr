@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,9 +32,18 @@ add_tracegen(common/omrport.tdf)
 # Logic below will set the target_includes, and supplement the
 # target_sources
 add_library(omrport_obj OBJECT
-	ut_omrport.c
+	${CMAKE_CURRENT_BINARY_DIR}/ut_omrport.c
 )
 
+target_include_directories(omrport_obj
+	PUBLIC
+		$<TARGET_PROPERTY:omr_base,INTERFACE_INCLUDE_DIRECTORIES>
+)
+
+target_compile_definitions(omrport_obj
+	PUBLIC
+		$<TARGET_PROPERTY:omr_base,INTERFACE_COMPILE_DEFINITIONS>
+)
 
 if(OMR_HOST_OS STREQUAL "aix")
 	list(APPEND OBJECTS omrgetsp.s)
@@ -176,7 +185,7 @@ if(OMR_HOST_OS STREQUAL win)
 	enable_language(RC)
 	add_custom_command(
 		OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/win32/omrsyslogmessages.rc
-		COMMAND mc  ${CMAKE_CURRENT_SOURCE_DIR}/win32/omrsyslogmessages.mc
+		COMMAND ${CMAKE_MC_COMPILER}  ${CMAKE_CURRENT_SOURCE_DIR}/win32/omrsyslogmessages.mc
 		DEPENDS win32/omrsyslogmessages.mc
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/win32
 	)
@@ -331,16 +340,12 @@ omr_find_files(resolvedPaths
 	FILES ${OBJECTS}
 )
 
-
 if(OMR_HOST_OS STREQUAL "win")
 	list(APPEND resolvedPaths win32/omrsyslogmessages.rc)
 endif()
 
 target_sources(omrport_obj PRIVATE ${resolvedPaths})
 
-add_library(omrport STATIC
-	$<TARGET_OBJECTS:omrport_obj>
-)
 
 if(OMR_WARNINGS_AS_ERRORS)
 	target_compile_options(omrport_obj PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
@@ -350,14 +355,6 @@ if(OMR_ENHANCED_WARNINGS)
 	target_compile_options(omrport_obj PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 
-target_link_libraries(omrport
-	PRIVATE
-	j9avl
-	j9hashtable
-	j9pool
-	${OMR_THREAD_LIB}
-)
-
 target_include_directories(omrport_obj PRIVATE
 	../nls
 )
@@ -365,7 +362,40 @@ target_include_directories(omrport_obj PRIVATE
 # This flag indicates that we are compiling the port library
 target_compile_definitions(omrport_obj PRIVATE -DOMRPORT_LIBRARY_DEFINE)
 
+omr_add_exports(omrport_obj
+	omrport_allocate_library
+	omrport_create_library
+	omrport_getSize
+	omrport_getVersion
+	omrport_init_library
+	omrport_isCompatible
+	omrport_startup_library
 
+)
+
+target_enable_ddr(omrport_obj "${OMR_DDR_SET}")
+
+add_library(omrport STATIC
+	$<TARGET_OBJECTS:omrport_obj>
+)
+
+###
+### omrport static lib
+###
+
+target_link_libraries(omrport
+	PUBLIC
+		omr_base
+	PRIVATE
+		j9avl
+		j9hashtable
+		j9pool
+		${OMR_THREAD_LIB}
+)
+
+if(OMR_HOST_OS STREQUAL "linux")
+    target_link_libraries(omrport PRIVATE rt)
+endif()
 
 #TODO hack to get to compile. Need platform checks
 if(NOT OMR_HOST_OS STREQUAL "win")

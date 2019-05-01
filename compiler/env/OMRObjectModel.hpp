@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,8 +31,9 @@ namespace OMR { class ObjectModel; }
 namespace OMR { typedef OMR::ObjectModel ObjectModelConnector; }
 #endif
 
-#include <stdint.h>        // for int32_t, int64_t, uint32_t
-#include "env/jittypes.h"  // for uintptrj_t, intptrj_t
+#include <stdint.h>
+#include "omrgcconsts.h"
+#include "env/jittypes.h"
 #include "il/DataTypes.hpp"
 
 class TR_OpaqueClassBlock;
@@ -111,9 +112,14 @@ class ObjectModel
    uintptrj_t offsetOfIndexableSizeField() { return 0; }
 
    /**
-   * @brief: Returns true if concurrent scavenging enabled in the VM's GC
+   * @brief: Returns the read barrier type of VM's GC
    */
-   bool shouldGenerateReadBarriersForFieldLoads() { return false; };
+   MM_GCReadBarrierType  readBarrierType()  { return gc_modron_readbar_none; }
+
+   /**
+   * @brief: Returns the write type kind of VM's GC
+   */
+   MM_GCWriteBarrierType writeBarrierType() { return gc_modron_wrtbar_none;  }
 
    /**
    * @brief: Returns true if option for software read barriers is enabled in the VM's GC

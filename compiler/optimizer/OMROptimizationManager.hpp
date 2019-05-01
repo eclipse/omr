@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,18 +31,18 @@ namespace OMR { class OptimizationManager; }
 namespace OMR { typedef OMR::OptimizationManager OptimizationManagerConnector; }
 #endif
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for int32_t
-#include "compile/Compilation.hpp"          // for Compilation
-#include "env/TRMemory.hpp"                 // for Allocator, Allocatable, etc
-#include "infra/Flags.hpp"                  // for flags32_t
-#include "infra/List.hpp"                   // for List
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "infra/Flags.hpp"
+#include "infra/List.hpp"
 #include "optimizer/OptimizationData.hpp"
 #include "optimizer/OptimizationPolicy.hpp"
 #include "optimizer/OptimizationUtil.hpp"
-#include "optimizer/Optimizations.hpp"  // for Optimizations
-#include "optimizer/Optimizer.hpp"      // for Optimizer
-#include "infra/Annotations.hpp"        // for OMR_EXTENSIBLE
+#include "optimizer/Optimizations.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "infra/Annotations.hpp"
 
 class TR_Debug;
 class TR_FrontEnd;

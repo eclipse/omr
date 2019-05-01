@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2016 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -241,7 +241,7 @@ public:
 	 * of getNextSlotMap(uintptr_t &, uintptr_t &, bool &). This method is called to
 	 * obtain a bit map of the contained leaf slots conforming to the reference slot
 	 * map. An initial leaf map is provided to the GC_ObjectScanner constructor and
-	 * it is refreshed when required from getNextSlot(bool &).
+	 * it is refreshed when required.
 	 */
 
 #if defined(OMR_GC_LEAF_BITS)
@@ -261,11 +261,11 @@ public:
 	/**
 	 * Get the next object slot if one is available.
 	 *
-	 * @param[out] *isLeafPointer will be true if the slot refers to a leaf object
+	 * @param[out] *isLeafSlot will be true if the slot refers to a leaf object
 	 * @return a pointer to a slot object encapsulating the next object slot, or NULL if no next object slot
 	 */
 	MMINLINE GC_SlotObject *
-	getNextSlot(bool &isLeafSlot)
+	getNextSlot(bool* isLeafSlot)
 	{
 		while (NULL != _scanPtr) {
 			/* while there is at least one bit-mapped slot, advance scan ptr to a non-NULL slot or end of map */
@@ -277,7 +277,7 @@ public:
 			if (0 != _scanMap) {
 				/* set up to return slot object for non-NULL slot at scan ptr and advance scan ptr */
 				_slotObject.writeAddressToSlot(_scanPtr);
-				isLeafSlot = (0 != (1 & _leafMap));
+				*isLeafSlot = (0 != (1 & _leafMap));
 				_scanPtr += 1;
 				_scanMap >>= 1;
 				_leafMap >>= 1;
@@ -297,7 +297,7 @@ public:
 			}
 		}
 
-		isLeafSlot = true;
+		*isLeafSlot = true;
 		return NULL;
 	}
 #endif /* defined(OMR_GC_LEAF_BITS) */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,69 +25,69 @@
 //
 // ***************************************************************************
 
-#include <stddef.h>                                // for NULL, size_t
-#include <stdint.h>                                // for int32_t, uint8_t, etc
-#include <stdlib.h>                                // for atoi
-#include <string.h>                                // for strncmp, memset, etc
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                    // for TR_FrontEnd, etc
-#include "codegen/RecognizedMethods.hpp"           // for RecognizedMethod, etc
-#include "compile/Compilation.hpp"                 // for Compilation, comp
-#include "compile/Method.hpp"                      // for TR_Method
-#include "compile/ResolvedMethod.hpp"              // for TR_ResolvedMethod
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/RecognizedMethods.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"             // for TR::Options, etc
-#include "control/Recompilation.hpp"               // for TR_Recompilation
-#include "cs2/hashtab.h"                           // for HashTable, etc
+#include "control/Options_inlines.hpp"
+#include "control/Recompilation.hpp"
+#include "cs2/hashtab.h"
 #include "env/CompilerEnv.hpp"
-#include "env/ObjectModel.hpp"                     // for ObjectModel
-#include "env/TRMemory.hpp"                        // for Allocator, etc
+#include "env/ObjectModel.hpp"
+#include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "optimizer/TransformUtil.hpp"
-#include "il/Block.hpp"                            // for Block, etc
-#include "il/DataTypes.hpp"                        // for TR::DataType, etc
-#include "il/ILOpCodes.hpp"                        // for ILOpCodes::iconst, etc
-#include "il/ILOps.hpp"                            // for ILOpCode
-#include "il/Node.hpp"                             // for Node, etc
-#include "il/Node_inlines.hpp"                     // for Node::getChild, etc
-#include "il/Symbol.hpp"                           // for Symbol, etc
-#include "il/SymbolReference.hpp"                  // for SymbolReference
-#include "il/TreeTop.hpp"                          // for TreeTop
-#include "il/TreeTop_inlines.hpp"                  // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"              // for MethodSymbol, etc
-#include "il/symbol/ParameterSymbol.hpp"           // for ParameterSymbol
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"              // for StaticSymbol
-#include "infra/Array.hpp"                         // for TR_Array
-#include "infra/Assert.hpp"                        // for TR_ASSERT
-#include "infra/BitVector.hpp"                     // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                           // for CFG, etc
-#include "infra/Link.hpp"                          // for TR_LinkHead, etc
-#include "infra/List.hpp"                          // for List, ListElement, etc
-#include "infra/Stack.hpp"                         // for TR_Stack
-#include "infra/Statistics.hpp"                    // for TR_Stats
-#include "infra/CfgEdge.hpp"                       // for CFGEdge
-#include "infra/Timer.hpp"                         // for TR_SingleTimer
-#include "optimizer/Inliner.hpp"                   // for TR_InlineCall
-#include "optimizer/Optimization.hpp"              // for Optimization
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/Stack.hpp"
+#include "infra/Statistics.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/Timer.hpp"
+#include "optimizer/Inliner.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"                 // for Optimizer
-#include "optimizer/Structure.hpp"                 // for TR_BlockStructure
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
-#include "optimizer/UseDefInfo.hpp"                // for TR_UseDefInfo
+#include "optimizer/UseDefInfo.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
-#include "optimizer/VPConstraint.hpp"              // for TR::VPConstraint, etc
+#include "optimizer/VPConstraint.hpp"
 #include "optimizer/OMRValuePropagation.hpp"
 #include "optimizer/LocalValuePropagation.hpp"
-#include "ras/Debug.hpp"                           // for TR_DebugBase
+#include "ras/Debug.hpp"
 #include "ras/DebugCounter.hpp"
 #include "env/IO.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
 #include "env/VMJ9.h"
-#include "optimizer/IdiomRecognitionUtils.hpp"     // for createTableLoad
+#include "optimizer/IdiomRecognitionUtils.hpp"
 #endif
 
 namespace TR { class CFGNode; }
@@ -252,6 +252,12 @@ void OMR::ValuePropagation::initialize()
 
    _edgesToBeRemoved = new (trStackMemory()) TR_Array<TR::CFGEdge *>(trMemory(), 8, false, stackAlloc);
    _blocksToBeRemoved = new (trStackMemory()) TR_Array<TR::CFGNode*>(trMemory(), 8, false, stackAlloc);
+   _curDefinedOnAllPaths = NULL;
+   if (_isGlobalPropagation)
+      _definedOnAllPaths = new (trStackMemory()) DefinedOnAllPathsMap(std::less<TR::CFGEdge *>(), trMemory()->currentStackRegion());
+   else
+      _definedOnAllPaths = NULL;
+   _defMergedNodes = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
    _vcHandler.setRoot(_curConstraints, NULL);
 
    _relationshipCache.setFirst(NULL);
@@ -1069,6 +1075,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
    bool needArrayCheck = true;
    bool needArrayStoreCheck = true;
    bool needWriteBarrier = true;
+   bool needReadBarrier = TR::Compiler->om.readBarrierType() != gc_modron_readbar_none;
 
    bool primitiveTransform = cg()->getSupportsPrimitiveArrayCopy();
    bool referenceTransform = cg()->getSupportsReferenceArrayCopy();
@@ -1096,12 +1103,29 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
    if (srcVN == dstVN)
       {
       needArrayStoreCheck = false;
-      if (!comp()->getOptions()->gcIsUsingConcurrentMark())
-         needWriteBarrier = false;
+      switch (TR::Compiler->om.writeBarrierType())
+         {
+         case gc_modron_wrtbar_cardmark:
+         case gc_modron_wrtbar_cardmark_and_oldcheck:
+         case gc_modron_wrtbar_cardmark_incremental:
+            break;
+         default:
+            needWriteBarrier = false;
+            break;
+         }
       }
 
-   if (!comp()->getOptions()->needWriteBarriers())
-      needWriteBarrier = false;
+   switch (TR::Compiler->om.writeBarrierType())
+      {
+      case gc_modron_wrtbar_oldcheck:
+      case gc_modron_wrtbar_cardmark:
+      case gc_modron_wrtbar_cardmark_and_oldcheck:
+      case gc_modron_wrtbar_cardmark_incremental:
+         break;
+      default:
+         needWriteBarrier = false;
+         break;
+      }
 
    TR::VPArrayInfo *srcArrayInfo;
    TR::VPArrayInfo *dstArrayInfo;
@@ -1267,7 +1291,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
                // Array types are different types so the arraycopy will fail
                transformTheCall = false;
                }
-            else if (comp()->getOptions()->alwaysCallWriteBarrier())
+            else if (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_always)
                {
                transformTheCall = false;
                }
@@ -1833,7 +1857,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
       // -------------------------------------------------------------------
       // Check and transform the existing array copy node to a primitive
       // arraycopy if neither an arraystore check nor a write barrier are
-      // required.
+      // required. Also does not transform if a read barrier is required.
       // -------------------------------------------------------------------
 
       bool changeExistingNodeToPrimitiveCopy = false;
@@ -1854,7 +1878,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
             }
          else
             {
-            if (needWriteBarrier)
+            if (needWriteBarrier || needReadBarrier)
                {
                node->setNoArrayStoreCheckArrayCopy(true);
                }
@@ -3530,7 +3554,7 @@ void OMR::ValuePropagation::transformObjectCloneCall(TR::TreeTop *callTree, OMR:
    return;
    }
 
-void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, TR_OpaqueClassBlock *j9arrayClass)
+void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, OMR::ValuePropagation::ArrayCloneInfo *cloneInfo)
    {
    static char *disableArrayCloneOpt = feGetEnv("TR_disableFastArrayClone");
    if (disableArrayCloneOpt || TR::Compiler->om.canGenerateArraylets())
@@ -3547,6 +3571,9 @@ void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, TR_Op
 
    if (!performTransformation(comp(), "%sInlining array clone call [%p] as new array and arraycopy\n", OPT_DETAILS, callNode))
       return;
+
+   TR_OpaqueClassBlock *j9arrayClass = cloneInfo->_clazz;
+   bool isFixedClass = cloneInfo->_isFixed;
 
    TR_OpaqueClassBlock *j9class = comp()->fe()->getComponentClassFromArrayClass(j9arrayClass);
 
@@ -3587,9 +3614,19 @@ void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, TR_Op
       }
    else
       {
-      TR::Node *loadaddr = TR::Node::createWithSymRef(callNode, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateClassSymbol(callNode->getSymbolReference()->getOwningMethodSymbol(comp()), 0, j9class));
+      TR::Node *classNode;
+      if (isFixedClass)
+         {
+         classNode = TR::Node::createWithSymRef(callNode, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateClassSymbol(callNode->getSymbolReference()->getOwningMethodSymbol(comp()), 0, j9class));
+         }
+      else
+         {
+         // Load the component class of the cloned array as 2nd child of anewarray as expected by the opcode.
+         TR::Node * arrayClassNode = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, objNode, comp()->getSymRefTab()->findOrCreateVftSymbolRef());
+         classNode = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, arrayClassNode, comp()->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef());
+         }
       TR::SymbolReference *symRef = comp()->getSymRefTab()->findOrCreateANewArraySymbolRef(objNode->getSymbolReference()->getOwningMethodSymbol(comp()));
-      TR::Node::recreateWithoutProperties(callNode, TR::anewarray, 2, lenNode, loadaddr, symRef);
+      TR::Node::recreateWithoutProperties(callNode, TR::anewarray, 2, lenNode, classNode, symRef);
       }
    TR::Node *newArray = callNode;
    newArray->setIsNonNull(true);

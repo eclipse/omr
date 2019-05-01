@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,38 +21,36 @@
 
 #include "z/codegen/BinaryCommutativeAnalyser.hpp"
 
-#include <stddef.h>                                 // for NULL
-#include <stdint.h>                                 // for uint16_t, etc
-#include "codegen/Analyser.hpp"                     // for NUM_ACTIONS
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
-#include "codegen/InstOpCode.hpp"                   // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                  // for Instruction
-#include "codegen/MemoryReference.hpp"              // for MemoryReference, etc
-#include "codegen/RealRegister.hpp"                 // for RealRegister, etc
-#include "codegen/Register.hpp"                     // for Register
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/Analyser.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterPair.hpp"                 // for RegisterPair
-#include "codegen/TreeEvaluator.hpp"                // for lloadHelper, etc
-#include "compile/Compilation.hpp"                  // for Compilation
+#include "codegen/RegisterPair.hpp"
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
-#include "il/DataTypes.hpp"                         // for DataTypes::Int32, etc
-#include "il/ILOpCodes.hpp"                         // for ILOpCodes::land, etc
-#include "il/ILOps.hpp"                             // for ILOpCode
-#include "il/Node.hpp"                              // for Node
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"                // for LabelSymbol
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "ras/Debug.hpp"                            // for TR_DebugBase
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
-
-#define ENABLE_ZARCH_FOR_32    1
 
 void
 TR_S390BinaryCommutativeAnalyser::remapInputs(TR::Node * firstChild, TR::Register *firstRegister,
@@ -122,14 +120,11 @@ TR_S390BinaryCommutativeAnalyser::remapInputs(TR::Node * firstChild, TR::Registe
 TR::Register *
 TR_S390BinaryCommutativeAnalyser::allocateAddSubRegister(TR::Node * node, TR::Register * src1Reg)
    {
-   TR::Register * trgReg;
+   TR::Register* trgReg = NULL;
 
    if (src1Reg->containsInternalPointer() || !src1Reg->containsCollectedReference())
       {
-      if ((node->getType().isInt64() || src1Reg->getKind() == TR_GPR64) && cg()->use64BitRegsOn32Bit())
-         trgReg = cg()->allocate64bitRegister();
-      else
-         trgReg = cg()->allocateRegister();
+      trgReg = cg()->allocateRegister();
 
       if (src1Reg->containsInternalPointer())
          {
@@ -251,7 +246,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
    bool isLoadNodeNested = false;
 
    // TODO: add MH and MHY here; outside of the z14 if check.
-   if(TR::Compiler->target.cpu.getS390SupportsZ14())
+   if(cg()->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z14))
       {
       bool isSetReg2Mem1 = false;
 
@@ -345,7 +340,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
          }
       else
          {
-         if(TR::Compiler->target.cpu.getS390SupportsZ14())
+         if(cg()->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z14))
             {
             // Check for multiplications on z14
             TR::InstOpCode::Mnemonic z14OpCode = TR::InstOpCode::BAD;
@@ -368,7 +363,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
             if(z14OpCode != TR::InstOpCode::BAD)
                {
                bool isCanClobberFirstReg = cg()->canClobberNodesRegister(firstChild);
-               nodeReg = isCanClobberFirstReg ? firstRegister : cg()->allocate64bitRegister();
+               nodeReg = isCanClobberFirstReg ? firstRegister : cg()->allocateRegister();
                generateRRFInstruction(cg(), z14OpCode, root, nodeReg, firstRegister, secondRegister, 0, 0);
                }
             }
@@ -382,7 +377,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
             if ( opcTmp.setsCompareFlag() && comp->getOption(TR_EnableEBBCCInfo) &&
                  cg()->isActiveCompareCC(regToRegOpCode, firstRegister, secondRegister) &&
                  performTransformation(comp, "O^O BinaryCommunicativeAnalyser case 3 RR Compare [%s\t %s, %s]: reuse CC from ccInst [%p].",
-                                       debugObj->getOpCodeName(&ccInst->getOpCode()),
+                                       ccInst->getOpCode().getMnemonicName(),
                                        debugObj->getName(firstRegister),
                                        debugObj->getName(secondRegister),
                                        ccInst))
@@ -392,7 +387,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
             else if (opcTmp.setsCompareFlag() && comp->getOption(TR_EnableEBBCCInfo) &&
                      cg()->isActiveCompareCC(regToRegOpCode, secondRegister, firstRegister) &&
                      performTransformation(comp, "O^O BinaryCommunicativeAnalyser case 4 RR Compare [%s\t %s, %s]: reuse CC from ccInst [%p].",
-                                           debugObj->getOpCodeName(&ccInst->getOpCode()),
+                                           ccInst->getOpCode().getMnemonicName(),
                                            debugObj->getName(firstRegister),
                                            debugObj->getName(secondRegister),
                                            ccInst))
@@ -427,13 +422,13 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
          TR::InstOpCode opcTmp = TR::InstOpCode(regToRegOpCode);
          if ( opcTmp.setsCompareFlag() && comp->getOption(TR_EnableEBBCCInfo) &&
               cg()->isActiveCompareCC(regToRegOpCode, firstRegister, secondRegister) &&
-              performTransformation(comp, "O^O BinaryCommunicativeAnalyser case 5 RR Compare [%s\t %s, %s]: reuse CC from ccInst [%p].", debugObj->getOpCodeName(&ccInst->getOpCode()), debugObj->getName(firstRegister),debugObj->getName(secondRegister),ccInst) )
+              performTransformation(comp, "O^O BinaryCommunicativeAnalyser case 5 RR Compare [%s\t %s, %s]: reuse CC from ccInst [%p].", ccInst->getOpCode().getMnemonicName(), debugObj->getName(firstRegister),debugObj->getName(secondRegister),ccInst) )
             {
             nodeReg = firstRegister; // CCInfo already exists; don't generate compare op any more;
             }
          else if (opcTmp.setsCompareFlag() && comp->getOption(TR_EnableEBBCCInfo) &&
                   cg()->isActiveCompareCC(regToRegOpCode, secondRegister, firstRegister) &&
-                  performTransformation(comp, "O^O BinaryCommunicativeAnalyser case 6 RR Compare [%s\t %s, %s]: reuse CC from ccInst [%p].", debugObj->getOpCodeName(&ccInst->getOpCode()), debugObj->getName(firstRegister),debugObj->getName(secondRegister),ccInst) )
+                  performTransformation(comp, "O^O BinaryCommunicativeAnalyser case 6 RR Compare [%s\t %s, %s]: reuse CC from ccInst [%p].", ccInst->getOpCode().getMnemonicName(), debugObj->getName(firstRegister),debugObj->getName(secondRegister),ccInst) )
             {
             nodeReg = secondRegister;
             notReversedOperands(); // CCInfo already exists; don't generate compare op any more;
@@ -448,17 +443,25 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
       }
    else if (getCopyReg1())
       {
-      if (secondRegister->getKind() == TR_GPR64)
+      switch (firstRegister->getKind())
          {
-         nodeReg = cg()->allocate64bitRegister();
-         }
-      else if (secondRegister->getKind() != TR_FPR && secondRegister->getKind() != TR_VRF)
-         {
-         nodeReg = allocateAddSubRegister(root, firstRegister);
-         }
-      else
-         {
-         nodeReg = cg()->allocateRegister(TR_FPR);
+         case TR_RegisterKinds::TR_GPR:
+            {
+            nodeReg = allocateAddSubRegister(root, firstRegister);
+            break;
+            }
+
+         case TR_RegisterKinds::TR_FPR:
+            {
+            nodeReg = cg()->allocateRegister(TR_FPR);
+            break;
+            }
+
+         default:
+            {
+            TR_ASSERT_FATAL(false, "Generic binary commutative analyser for register kind (%d) is unimplemented", firstRegister->getKind());
+            break;
+            }
          }
 
       cursor = generateRRInstruction(cg(), copyOpCode, root, nodeReg, firstRegister);
@@ -475,17 +478,20 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
       }
    else if (getCopyReg2())
       {
-      if (secondRegister->getKind() == TR_GPR64)
+      switch (secondRegister->getKind())
          {
-         nodeReg = cg()->allocate64bitRegister();
-         }
-      else if (secondRegister->getKind() != TR_FPR && secondRegister->getKind() != TR_VRF)
-         {
-         nodeReg = cg()->allocateRegister();
-         }
-      else
-         {
-         nodeReg = cg()->allocateRegister(TR_FPR);
+         case TR_RegisterKinds::TR_GPR:
+         case TR_RegisterKinds::TR_FPR:
+            {
+            nodeReg = cg()->allocateRegister(secondRegister->getKind());
+            break;
+            }
+
+         default:
+            {
+            TR_ASSERT_FATAL(false, "Generic binary commutative analyser for register kind (%d) is unimplemented", secondRegister->getKind());
+            break;
+            }
          }
 
       cursor = generateRRInstruction(cg(), copyOpCode, root, nodeReg, secondRegister);
@@ -505,17 +511,25 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
       nodeReg = firstRegister;
       if (getOpReg3Mem2())
          {
-         if (firstRegister->getKind() == TR_GPR64)
+         switch (firstRegister->getKind())
             {
-            nodeReg = cg()->allocate64bitRegister();
-            }
-         else if (firstRegister->getKind() != TR_FPR && firstRegister->getKind() != TR_VRF)
-            {
-            nodeReg = allocateAddSubRegister(root, firstRegister);
-            }
-         else
-            {
-            nodeReg = cg()->allocateRegister(TR_FPR);
+            case TR_RegisterKinds::TR_GPR:
+               {
+               nodeReg = allocateAddSubRegister(root, firstRegister);
+               break;
+               }
+
+            case TR_RegisterKinds::TR_FPR:
+               {
+               nodeReg = cg()->allocateRegister(TR_FPR);
+               break;
+               }
+
+            default:
+               {
+               TR_ASSERT_FATAL(false, "Generic binary commutative analyser for register kind (%d) is unimplemented", firstRegister->getKind());
+               break;
+               }
             }
 
          cursor = generateRRInstruction(cg(), copyOpCode, root, nodeReg, firstRegister);
@@ -532,7 +546,18 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
          tempMR->addToOffset(4);
          tempMR->setDispAdjusted();
          }
-      generateRXInstruction(cg(), memToRegOpCode, root, nodeReg, tempMR);
+
+      auto instructionFormat = TR::InstOpCode(memToRegOpCode).getInstructionFormat();
+
+      if (instructionFormat == RXE_FORMAT)
+         {
+         generateRXEInstruction(cg(), memToRegOpCode, root, nodeReg, tempMR, 0);
+         }
+      else
+         {
+         generateRXInstruction(cg(), memToRegOpCode, root, nodeReg, tempMR);
+         }
+
       tempMR->stopUsingMemRefRegister(cg());
       }
    else // OpReg2Mem1
@@ -542,17 +567,25 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
       nodeReg = secondRegister;
       if (getOpReg3Mem1())
          {
-         if (secondRegister->getKind() == TR_GPR64)
+         switch (secondRegister->getKind())
             {
-            nodeReg = cg()->allocate64bitRegister();
-            }
-         else if (secondRegister->getKind() != TR_FPR && secondRegister->getKind() != TR_VRF)
-            {
-            nodeReg = allocateAddSubRegister(root, secondRegister);
-            }
-         else
-            {
-            nodeReg = cg()->allocateRegister(TR_FPR);
+            case TR_RegisterKinds::TR_GPR:
+               {
+               nodeReg = allocateAddSubRegister(root, secondRegister);
+               break;
+               }
+
+            case TR_RegisterKinds::TR_FPR:
+               {
+               nodeReg = cg()->allocateRegister(TR_FPR);
+               break;
+               }
+
+            default:
+               {
+               TR_ASSERT_FATAL(false, "Generic binary commutative analyser for register kind (%d) is unimplemented", secondRegister->getKind());
+               break;
+               }
             }
 
          cursor = generateRRInstruction(cg(), copyOpCode, root, nodeReg, secondRegister);
@@ -573,7 +606,17 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
          tempMR->setDispAdjusted();
          }
 
-      generateRXInstruction(cg(), memToRegOpCode, root, nodeReg, tempMR);
+      auto instructionFormat = TR::InstOpCode(memToRegOpCode).getInstructionFormat();
+
+      if (instructionFormat == RXE_FORMAT)
+         {
+         generateRXEInstruction(cg(), memToRegOpCode, root, nodeReg, tempMR, 0);
+         }
+      else
+         {
+         generateRXInstruction(cg(), memToRegOpCode, root, nodeReg, tempMR);
+         }
+
       if (!tempMR->getPseudoLive())
          {
          tempMR->stopUsingMemRefRegister(cg());
@@ -611,602 +654,6 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
    if (!finalInstr && targetLabel != NULL)
       {
       generateS390BranchInstruction(cg(), TR::InstOpCode::BRC, getReversedOperands()?rBranchOpCond:fBranchOpCond , root, targetLabel);
-      }
-
-   return;
-   }
-
-
-void
-TR_S390BinaryCommutativeAnalyser::genericLongAnalyser(TR::Node * root, TR::InstOpCode::Mnemonic lowRegToRegOpCode,
-   TR::InstOpCode::Mnemonic highRegToRegOpCode, TR::InstOpCode::Mnemonic lowMemToRegOpCode, TR::InstOpCode::Mnemonic highMemToRegOpCode, TR::InstOpCode::Mnemonic copyOpCode)
-   {
-   TR::Node * firstChild;
-   TR::Node * secondChild;
-   TR::Instruction * cursor = NULL;
-   TR::RegisterDependencyConditions * dependencies = NULL;
-   TR::Register * twoLow;
-   TR::Register * twoHigh;
-   TR::Register * oneLow;
-   TR::Register * oneHigh;
-   TR::Node * initFirstChild = NULL;
-   TR::Node * initSecondChild = NULL;
-   bool      needsRegPairDep = true;
-
-   char * CLOBBER_EVAL = "LR=Clobber_eval";
-   TR_Debug * debugObj = cg()->getDebug();
-
-   if (cg()->whichChildToEvaluate(root) == 0)
-      {
-      firstChild = root->getFirstChild();
-      secondChild = root->getSecondChild();
-      setReversedOperands(false);
-      }
-   else
-      {
-      setReversedOperands(true);
-      firstChild = root->getSecondChild();
-      secondChild = root->getFirstChild();
-      }
-   TR::Register * firstRegister = firstChild->getRegister();
-   TR::Register * secondRegister = secondChild->getRegister();
-
-   if (root->getOpCodeValue() == TR::land  ||
-       root->getOpCodeValue() == TR::lor   ||
-       root->getOpCodeValue() == TR::lxor  )
-      {
-      needsRegPairDep = false;
-      }
-
-   bool firstHighZero = false;
-   bool secondHighZero = false;
-   bool useFirstHighOrder = false;
-   bool useSecondHighOrder = false;
-
-   if (firstChild->isHighWordZero())
-      {
-      firstHighZero = true;
-      TR::ILOpCodes firstOp = firstChild->getOpCodeValue();
-      if (firstChild->getReferenceCount() == 1 && firstRegister == 0)
-         {
-         // bu2l, su2l, c2l need sign-extention
-         if (firstOp ==
-            TR::iu2l ||
-            (firstOp == TR::lushr &&
-            firstChild->getSecondChild()->getOpCodeValue() == TR::iconst &&
-            (firstChild->getSecondChild()->getInt() & LONG_SHIFT_MASK) == 32))
-            {
-            firstChild = firstChild->getFirstChild();
-            initFirstChild = firstChild;
-            firstRegister = firstChild->getRegister();
-            if (firstOp == TR::lushr)
-               {
-               useFirstHighOrder = true;
-               }
-            }
-         }
-      }
-
-   if (secondChild->isHighWordZero())
-      {
-      secondHighZero = true;
-      TR::ILOpCodes secondOp = secondChild->getOpCodeValue();
-      if (secondChild->getReferenceCount() == 1 && secondRegister == 0)
-         {
-         // bu2l, su2l, c2l need sign-extention
-         if (secondOp ==
-            TR::iu2l ||
-            (secondOp == TR::lushr &&
-            secondChild->getSecondChild()->getOpCodeValue() == TR::iconst &&
-            (secondChild->getSecondChild()->getInt() & LONG_SHIFT_MASK) == 32))
-            {
-            secondChild = secondChild->getFirstChild();
-            initSecondChild = secondChild;
-            secondRegister = secondChild->getRegister();
-            if (secondOp == TR::lushr)
-               {
-               useSecondHighOrder = true;
-               }
-            }
-         }
-      }
-
-   setInputs(firstChild, firstRegister, secondChild, secondRegister,
-             false, false, cg()->comp());
-
-   if (getEvalChild1())
-      {
-      firstRegister = cg()->evaluate(firstChild);
-      }
-
-   if (getEvalChild2())
-      {
-      secondRegister = cg()->evaluate(secondChild);
-      }
-
-   remapInputs(firstChild, firstRegister, secondChild, secondRegister);
-
-   if (firstHighZero && firstRegister && firstRegister->getRegisterPair())
-      {
-      if (!useFirstHighOrder)
-         {
-         firstRegister = firstRegister->getLowOrder();
-         }
-      else
-         {
-         firstRegister = firstRegister->getHighOrder();
-         }
-      }
-   if (secondHighZero && secondRegister && secondRegister->getRegisterPair())
-      {
-      if (!useSecondHighOrder)
-         {
-         secondRegister = secondRegister->getLowOrder();
-         }
-      else
-         {
-         secondRegister = secondRegister->getHighOrder();
-         }
-      }
-
-   if (getOpReg1Reg2())
-      {
-      //diagnostic("\nOpReg1Reg2\n");
-      if (!firstHighZero)
-         {
-         oneLow = firstRegister->getLowOrder();
-         oneHigh = firstRegister->getHighOrder();
-         }
-      else
-         {
-         oneLow = firstRegister;
-         oneHigh = cg()->allocateRegister();;
-         }
-
-      if (!secondHighZero)
-         {
-         twoLow = secondRegister->getLowOrder();
-         twoHigh = secondRegister->getHighOrder();
-         }
-      else
-         {
-         twoLow = secondRegister;
-         twoHigh = 0;
-         }
-
-      TR::RegisterPair * tempReg = cg()->allocateConsecutiveRegisterPair(oneLow, oneHigh);
-
-      if (needsRegPairDep)
-         {
-         dependencies = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg());
-         dependencies->addPostCondition(tempReg, TR::RealRegister::EvenOddPair);
-         dependencies->addPostCondition(oneHigh, TR::RealRegister::LegalEvenOfPair);
-         dependencies->addPostCondition(oneLow, TR::RealRegister::LegalOddOfPair);
-         }
-
-      cursor = generateRRInstruction(cg(), lowRegToRegOpCode, root, oneLow, twoLow);
-
-      if (firstHighZero)
-         {
-         if (secondHighZero || root->getOpCodeValue() == TR::land)
-            {
-            cursor = generateRRInstruction(cg(), TR::InstOpCode::XR, root, oneHigh, oneHigh);
-            }
-         else
-            {
-            cursor = generateRRInstruction(cg(), copyOpCode, root, oneHigh, twoHigh);
-            }
-         }
-      else if (secondHighZero)
-         {
-         if (root->getOpCodeValue() == TR::land)
-            {
-            cursor = generateRRInstruction(cg(), TR::InstOpCode::XR, root, oneHigh, oneHigh);
-            }
-         }
-      else
-         {
-         cursor = generateRRInstruction(cg(), highRegToRegOpCode, root, oneHigh, twoHigh);
-         }
-
-      root->setRegister(tempReg);
-      }
-   else if (getOpReg2Reg1())
-      {
-      //diagnostic("\nOpReg2Reg1\n");
-      if (!firstHighZero)
-         {
-         oneLow = firstRegister->getLowOrder();
-         oneHigh = firstRegister->getHighOrder();
-         }
-      else
-         {
-         oneLow = firstRegister;
-         oneHigh = 0;
-         }
-
-      if (!secondHighZero)
-         {
-         twoLow = secondRegister->getLowOrder();
-         twoHigh = secondRegister->getHighOrder();
-         }
-      else
-         {
-         twoLow = secondRegister;
-         twoHigh = cg()->allocateRegister();
-         }
-
-      TR::RegisterPair * tempReg = cg()->allocateConsecutiveRegisterPair(twoLow, twoHigh);
-
-      if (needsRegPairDep)
-         {
-         dependencies = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg());
-         dependencies->addPostCondition(tempReg, TR::RealRegister::EvenOddPair);
-         dependencies->addPostCondition(twoHigh, TR::RealRegister::LegalEvenOfPair);
-         dependencies->addPostCondition(twoLow, TR::RealRegister::LegalOddOfPair);
-         }
-
-      cursor = generateRRInstruction(cg(), lowRegToRegOpCode, root, twoLow, oneLow);
-
-      if (secondHighZero)
-         {
-         if (firstHighZero || root->getOpCodeValue() == TR::land)
-            {
-            cursor = generateRRInstruction(cg(), TR::InstOpCode::XR, root, twoHigh, twoHigh);
-            }
-         else
-            {
-            cursor = generateRRInstruction(cg(), copyOpCode, root, twoHigh, oneHigh);
-            }
-         }
-      else if (firstHighZero)
-         {
-         if (root->getOpCodeValue() == TR::land)
-            {
-            cursor = generateRRInstruction(cg(), TR::InstOpCode::XR, root, twoHigh, twoHigh);
-            }
-         }
-      else
-         {
-         cursor = generateRRInstruction(cg(), highRegToRegOpCode, root, twoHigh, oneHigh);
-         }
-
-      root->setRegister(tempReg);
-      notReversedOperands();
-      }
-   else if (getCopyRegs())
-      {
-      //diagnostic("\nCopyRegs\n");
-
-      TR::Register * lowRegister = cg()->allocateRegister();
-      TR::Register * highRegister = cg()->allocateRegister();
-
-      TR::RegisterPair * tempReg = cg()->allocateConsecutiveRegisterPair(lowRegister, highRegister);
-
-      if (needsRegPairDep)
-         {
-         dependencies = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg());
-         dependencies->addPostCondition(tempReg, TR::RealRegister::EvenOddPair);
-         dependencies->addPostCondition(highRegister, TR::RealRegister::LegalEvenOfPair);
-         dependencies->addPostCondition(lowRegister, TR::RealRegister::LegalOddOfPair);
-         }
-
-      if (!firstHighZero)
-         {
-         oneLow = firstRegister->getLowOrder();
-         oneHigh = firstRegister->getHighOrder();
-         }
-      else
-         {
-         oneLow = firstRegister;
-         oneHigh = 0;
-         }
-
-      if (!secondHighZero)
-         {
-         twoLow = secondRegister->getLowOrder();
-         twoHigh = secondRegister->getHighOrder();
-         }
-      else
-         {
-         twoLow = secondRegister;
-         twoHigh = 0;
-         }
-
-      generateRRInstruction(cg(), copyOpCode, root, lowRegister, oneLow);
-
-      if (firstHighZero)
-         {
-         if (secondHighZero || root->getOpCodeValue() == TR::land)
-            {
-            generateRRInstruction(cg(), TR::InstOpCode::XR, root, highRegister, highRegister);
-            }
-         else
-            {
-            generateRRInstruction(cg(), copyOpCode, root, highRegister, twoHigh);
-            }
-         }
-      else if (secondHighZero)
-         {
-         if (root->getOpCodeValue() == TR::land)
-            {
-            generateRRInstruction(cg(), TR::InstOpCode::XR, root, highRegister, highRegister);
-            }
-         else
-            {
-            generateRRInstruction(cg(), copyOpCode, root, highRegister, oneHigh);
-            }
-         }
-      else
-         {
-         generateRRInstruction(cg(), copyOpCode, root, highRegister, oneHigh);
-         generateRRInstruction(cg(), highRegToRegOpCode, root, highRegister, twoHigh);
-         }
-
-      cursor = generateRRInstruction(cg(), lowRegToRegOpCode, root, lowRegister, twoLow);
-
-
-      root->setRegister(tempReg);
-      }
-   else // RX instruction
-      {
-      TR_ASSERT(!getInvalid(), "TR_S390CommutativeBinaryAnalyser::invalid case\n");
-
-      //diagnostic("\nOpMem\n");
-
-      TR::MemoryReference * lowMR = NULL;
-      TR::MemoryReference * highMR = NULL;
-      TR::Register * targetReg;
-      TR::Register * targetLow;
-      TR::Register * targetHigh;
-
-      bool targetHighZero;
-      bool memHighZero;
-      bool useMemHighOrder;
-
-      bool secondOperandIsInRegister = false;
-      TR::Register * longRegister = NULL;
-      bool createdClobberPair = false;
-
-      if (getOpReg1Mem2() || getOpReg3Mem2())
-         {
-         if (!secondHighZero && secondChild->getSymbolReference()->isUnresolved())
-            {
-            secondOperandIsInRegister = true;
-            lloadHelper(secondChild, cg(), NULL);
-            longRegister = secondChild->getRegister();
-            }
-         else
-            {
-
-/*
- *
- [0x65cd0c08] (  1)    lor (in GPR_0x78e6b5f8:GPR_0x78e6b5bc)
- [0x65cd0bd0] (  0)      lushr
- [0x65cd0b60] (  0)        ilload #496[0x6b699868]+8  final Shadow[java/util/UUID.mostSigBits J]
-              (  0)          ==>aRegLoad at [0x789ae4e8] (in &GPR_0x78e6ae4c)
- [0x65cd0b98] (  1)        iconst 32
- [0x65cd0af0] (  0)      lor (in GPR_0x78e6b5f8:GPR_0x78e6b5bc)
-...
-For trees with one of the children having lushr by 32 bits and in highWordZero when useSecondHighOrder or useFirstHighOrder are set
-and that child is a mem ref, we need to use high order
- */
-            highMR = generateS390MemoryReference(secondChild, cg(), true /*canUseRX*/);
-            if (!secondHighZero || (secondChild->getType().isInt64() && !useSecondHighOrder))
-               {
-               lowMR = generateS390MemoryReference(*highMR, 4, cg());
-               }
-            else
-               {
-               lowMR = highMR;
-               }
-            }
-
-         if (getOpReg3Mem2())
-            {
-            if (firstHighZero)
-               {
-               targetReg = allocateAddSubRegister(root, firstRegister);
-               generateRRInstruction(cg(), copyOpCode, root, targetReg, firstRegister);
-               }
-            else
-               {
-               createdClobberPair = true;
-               TR::Register * lowRegister = allocateAddSubRegister(root, firstRegister->getLowOrder());
-               TR::Register * highRegister = allocateAddSubRegister(root, firstRegister->getHighOrder());
-               targetReg = cg()->allocateConsecutiveRegisterPair(lowRegister, highRegister);
-               cursor = generateRRInstruction(cg(), copyOpCode, root,
-                                      targetReg->getLowOrder(), firstRegister->getLowOrder());
-               if (debugObj)
-                  {
-                  debugObj->addInstructionComment(toS390RRInstruction(cursor), CLOBBER_EVAL);
-                  }
-
-               cursor = generateRRInstruction(cg(), copyOpCode, root,
-                                      targetReg->getHighOrder(), firstRegister->getHighOrder());
-               if (debugObj)
-                  {
-                  debugObj->addInstructionComment(toS390RRInstruction(cursor), CLOBBER_EVAL);
-                  }
-               }
-            }
-         else
-            {
-            targetReg = firstRegister;
-            }
-
-         targetHighZero = firstHighZero;
-         memHighZero = secondHighZero;
-         useMemHighOrder = useSecondHighOrder;
-         }
-      else
-         {
-         if (!firstHighZero && firstChild->getSymbolReference()->isUnresolved())
-            {
-            secondOperandIsInRegister = true;
-            lloadHelper(firstChild, cg(), NULL);
-            longRegister = firstChild->getRegister();
-            }
-         else
-            {
-            /*
-             * need to use !useFirstHighOrder (see the comment above)
-             */
-            highMR = generateS390MemoryReference(firstChild, cg(), true /*canUseRX*/);
-            if (!firstHighZero || (firstChild->getType().isInt64() && !useFirstHighOrder))
-               {
-               lowMR = generateS390MemoryReference(*highMR, 4, cg());
-               }
-            else
-               {
-               lowMR = highMR;
-               }
-            }
-
-         if (getOpReg3Mem1())
-            {
-            if (secondHighZero)
-               {
-               targetReg = allocateAddSubRegister(root, secondRegister);
-               generateRRInstruction(cg(), copyOpCode, root, targetReg, secondRegister);
-               }
-            else
-               {
-               createdClobberPair = true;
-               TR::Register * lowRegister = allocateAddSubRegister(root, secondRegister->getLowOrder());
-               TR::Register * highRegister = allocateAddSubRegister(root, secondRegister->getHighOrder());
-               targetReg = cg()->allocateConsecutiveRegisterPair(lowRegister, highRegister);
-               cursor = generateRRInstruction(cg(), copyOpCode, root,
-                                      targetReg->getLowOrder(), secondRegister->getLowOrder());
-               if (debugObj)
-                  {
-                  debugObj->addInstructionComment(toS390RRInstruction(cursor), CLOBBER_EVAL);
-                  }
-
-               cursor = generateRRInstruction(cg(), copyOpCode, root,
-                                      targetReg->getHighOrder(), secondRegister->getHighOrder());
-               if (debugObj)
-                  {
-                  debugObj->addInstructionComment(toS390RRInstruction(cursor), CLOBBER_EVAL);
-                  }
-               }
-            }
-         else
-            {
-            targetReg = secondRegister;
-            }
-
-         targetHighZero = secondHighZero;
-         memHighZero = firstHighZero;
-         useMemHighOrder = useFirstHighOrder;
-         }
-
-      if (targetHighZero)
-         {
-         targetLow = targetReg;
-         targetHigh = cg()->allocateRegister();
-         }
-      else
-         {
-         targetLow = targetReg->getLowOrder();
-         targetHigh = targetReg->getHighOrder();
-         }
-
-      TR::RegisterPair * tempReg = NULL;
-      if (createdClobberPair)
-         {
-         tempReg = (TR::RegisterPair *) targetReg;
-         }
-      else
-         {
-         tempReg = cg()->allocateConsecutiveRegisterPair(targetLow, targetHigh);
-         }
-
-      dependencies = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg());
-      if (needsRegPairDep)
-         {
-         dependencies->addPostCondition(tempReg, TR::RealRegister::EvenOddPair);
-         dependencies->addPostCondition(targetHigh, TR::RealRegister::LegalEvenOfPair);
-         dependencies->addPostCondition(targetLow, TR::RealRegister::LegalOddOfPair);
-         }
-
-      if (highMR)
-         {
-         dependencies->addAssignAnyPostCondOnMemRef(highMR);
-         }
-
-      if (secondOperandIsInRegister)
-         {
-         cursor = generateRRInstruction(cg(), lowRegToRegOpCode, root, targetLow, longRegister->getLowOrder());
-         }
-      else
-         {
-         cursor = generateRXInstruction(cg(), lowMemToRegOpCode, root, targetLow, lowMR);
-         }
-
-      if (memHighZero)
-         {
-         if (root->getOpCodeValue() == TR::land || targetHighZero)
-            {
-            cursor = generateRRInstruction(cg(), TR::InstOpCode::XR, root, targetHigh, targetHigh);
-            }
-         }
-      else if (targetHighZero)
-         {
-         if (root->getOpCodeValue() == TR::land)
-            {
-            cursor = generateRRInstruction(cg(), TR::InstOpCode::XR, root, targetHigh, targetHigh);
-            }
-         else
-            {
-            if (secondOperandIsInRegister)
-               {
-               cursor = generateRRInstruction(cg(), copyOpCode, root, targetHigh, longRegister->getHighOrder());
-               }
-            else
-               {
-               cursor = generateRXInstruction(cg(), TR::InstOpCode::L, root, targetHigh, highMR);
-               }
-            }
-         }
-      else
-         {
-         if (secondOperandIsInRegister)
-            {
-            cursor = generateRRInstruction(cg(), highRegToRegOpCode, root, targetHigh, longRegister->getHighOrder());
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg(), highMemToRegOpCode, root, targetHigh, highMR);
-            }
-         }
-
-      root->setRegister(tempReg);
-
-      if (!secondOperandIsInRegister)
-         {
-         highMR->stopUsingMemRefRegister(cg());
-         }
-
-      if (!getOpReg1Mem2())
-         {
-         notReversedOperands();
-         }
-      }
-
-   if (needsRegPairDep)
-      {
-      generateS390PseudoInstruction(cg(), TR::InstOpCode::DEPEND, root, dependencies);
-      }
-
-   if ( initFirstChild )
-      {
-      cg()->decReferenceCount(initFirstChild);
-      }
-
-   if ( initSecondChild )
-      {
-      cg()->decReferenceCount(initSecondChild);
       }
 
    return;
@@ -1292,7 +739,7 @@ TR_S390BinaryCommutativeAnalyser::integerAddAnalyser(TR::Node * root, TR::InstOp
       }
 
    /**  Attempt to use AGH to add halfworf from memory */
-   if (TR::Compiler->target.cpu.getS390SupportsZ14() &&
+   if (cg()->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z14) &&
        secondChild->getOpCodeValue() == TR::s2l &&
        secondChild->getFirstChild()->getOpCodeValue() == TR::sloadi &&
        secondChild->isSingleRefUnevaluated() &&
@@ -1370,26 +817,11 @@ TR_S390BinaryCommutativeAnalyser::integerAddAnalyser(TR::Node * root, TR::InstOp
 
       if (!done)
          {
-         if (firstRegister->getKind() == TR_GPR64 ||
-             ((firstChild->getType().isInt64() || TR::Compiler->target.is64Bit()) && cg()->use64BitRegsOn32Bit()))
-            {
-            cursor = generateRRInstruction(cg(), TR::InstOpCode::LGR, root, tempReg, firstRegister);
-            }
-         else
-            {
-            if (cg()->supportsHighWordFacility() && !comp->getOption(TR_DisableHighWordRA))
-               {
-               cursor = generateRRInstruction(cg(), TR::InstOpCode::getLoadRegOpCodeFromNode(cg(), root), root, tempReg, firstRegister);
-               }
-            else
-               {
-               cursor = generateRRInstruction(cg(), TR::InstOpCode::getLoadRegOpCode(), root, tempReg, firstRegister);
-               }
-            }
-         if (debugObj)
-            {
-            debugObj->addInstructionComment(toS390RRInstruction(cursor), CLOBBER_EVAL);
-            }
+         auto mnemonic = firstRegister->is64BitReg() ?
+            TR::InstOpCode::LGR :
+            TR::InstOpCode::LR;
+
+         generateRRInstruction(cg(), mnemonic, root, tempReg, firstRegister);
          generateRRInstruction(cg(), regToRegOpCode, root, tempReg, secondRegister);
          }
       }
@@ -1399,17 +831,25 @@ TR_S390BinaryCommutativeAnalyser::integerAddAnalyser(TR::Node * root, TR::InstOp
 
       if (getOpReg3Mem2())
          {
-         if (firstRegister->getKind() == TR_GPR64)
+         switch (firstRegister->getKind())
             {
-            tempReg = cg()->allocate64bitRegister();
-            }
-         else if (firstRegister->getKind() != TR_FPR && firstRegister->getKind() != TR_VRF)
-            {
-            tempReg = allocateAddSubRegister(root, firstRegister);
-            }
-         else
-            {
-            tempReg = cg()->allocateRegister(TR_FPR);
+            case TR_RegisterKinds::TR_GPR:
+               {
+               tempReg = allocateAddSubRegister(root, firstRegister);
+               break;
+               }
+
+            case TR_RegisterKinds::TR_FPR:
+               {
+               tempReg = cg()->allocateRegister(TR_FPR);
+               break;
+               }
+
+            default:
+               {
+               TR_ASSERT_FATAL(false, "Generic binary commutative analyser for register kind (%d) is unimplemented", firstRegister->getKind());
+               break;
+               }
             }
 
          cursor = generateRRInstruction(cg(), copyOpCode, root, tempReg, firstRegister);
@@ -1431,17 +871,25 @@ TR_S390BinaryCommutativeAnalyser::integerAddAnalyser(TR::Node * root, TR::InstOp
 
       if (getOpReg3Mem1())
          {
-         if (secondRegister->getKind() == TR_GPR64)
+         switch (secondRegister->getKind())
             {
-            tempReg = cg()->allocate64bitRegister();
-            }
-         else if (secondRegister->getKind() != TR_FPR && secondRegister->getKind() != TR_VRF)
-            {
-            tempReg = allocateAddSubRegister(root, secondRegister);
-            }
-         else
-            {
-            tempReg = cg()->allocateRegister(TR_FPR);
+            case TR_RegisterKinds::TR_GPR:
+               {
+               tempReg = allocateAddSubRegister(root, secondRegister);
+               break;
+               }
+
+            case TR_RegisterKinds::TR_FPR:
+               {
+               tempReg = cg()->allocateRegister(TR_FPR);
+               break;
+               }
+
+            default:
+               {
+               TR_ASSERT_FATAL(false, "Generic binary commutative analyser for register kind (%d) is unimplemented", secondRegister->getKind());
+               break;
+               }
             }
 
          cursor = generateRRInstruction(cg(), copyOpCode, root, tempReg, secondRegister);
@@ -1457,609 +905,6 @@ TR_S390BinaryCommutativeAnalyser::integerAddAnalyser(TR::Node * root, TR::InstOp
 
    //if (hasCompressedPointers)
    //   generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, root, skipAdd);
-
-   cg()->decReferenceCount(firstChild);
-   cg()->decReferenceCount(secondChild);
-
-   return;
-   }
-
-void
-TR_S390BinaryCommutativeAnalyser::longAddAnalyser(TR::Node * root, TR::InstOpCode::Mnemonic copyOpCode)
-   {
-   TR_ASSERT(TR::Compiler->target.is32Bit(), " should call integerAddAnalyser() for 64Bit code-gen!");
-   TR::Node * firstChild;
-   TR::Node * secondChild;
-   TR::Register * highSum = NULL;
-   TR::LabelSymbol * doneLAdd = TR::LabelSymbol::create(cg()->trHeapMemory(),cg());
-   TR::Instruction * cursor = NULL;
-   TR::RegisterDependencyConditions * dependencies = NULL;
-   TR::Register * twoLow;
-   TR::Register * twoHigh;
-   TR::Register * oneLow;
-   TR::Register * oneHigh;
-   TR::InstOpCode::Mnemonic regToRegOpCode = TR::InstOpCode::ALR;
-   TR::InstOpCode::Mnemonic memToRegOpCode = TR::InstOpCode::AL;
-   bool setsOrReadsCC = NEED_CC(root) || (root->getOpCodeValue() == TR::luaddc);
-   TR::Compilation *comp = cg()->comp();
-
-   char * CLOBBER_EVAL = "LR=Clobber_eval";
-   TR_Debug * debugObj = cg()->getDebug();
-
-   if (cg()->whichChildToEvaluate(root) == 0)
-      {
-      firstChild = root->getFirstChild();
-      secondChild = root->getSecondChild();
-      setReversedOperands(false);
-      }
-   else
-      {
-      firstChild = root->getSecondChild();
-      secondChild = root->getFirstChild();
-      setReversedOperands(true);
-      }
-   TR::Register * firstRegister = firstChild->getRegister();
-   TR::Register * secondRegister = secondChild->getRegister();
-
-   bool firstHighZero = false;
-   bool secondHighZero = false;
-   bool useFirstHighOrder = false;
-   bool useSecondHighOrder = false;
-   bool zArchTrexSupported = performTransformation(comp, "O^O Use AL/ALC for long add.");
-
-   // Can generate better code for long adds when one or more children have a high order zero word
-   // can avoid the evaluation when we don't need the result of such nodes for another parent.
-   //
-
-   setInputs(firstChild, firstRegister, secondChild, secondRegister,
-             false, false, comp);
-
-   if (getEvalChild1())
-      {
-      firstRegister = cg()->evaluate(firstChild);
-      }
-
-   if (getEvalChild2())
-      {
-      secondRegister = cg()->evaluate(secondChild);
-      }
-
-   remapInputs(firstChild, firstRegister, secondChild, secondRegister);
-
-   if (firstHighZero && firstRegister && firstRegister->getRegisterPair())
-      {
-      if (!useFirstHighOrder)
-         {
-         firstRegister = firstRegister->getLowOrder();
-         }
-      else
-         {
-         firstRegister = firstRegister->getHighOrder();
-         }
-      }
-   if (secondHighZero && secondRegister && secondRegister->getRegisterPair())
-      {
-      if (!useSecondHighOrder)
-         {
-         secondRegister = secondRegister->getLowOrder();
-         }
-      else
-         {
-         secondRegister = secondRegister->getHighOrder();
-         }
-      }
-
-   if (root->getOpCodeValue() == TR::luaddc &&
-       TR_S390ComputeCC::setCarryBorrow(root->getChild(2), false, cg()))
-      {
-      // use ALCR rather than ALR
-      //     ALC rather than AL
-      regToRegOpCode = TR::InstOpCode::ALCR;
-      memToRegOpCode = TR::InstOpCode::ALC;
-      }
-
-   if (getOpReg1Reg2())
-      {
-      if (!firstHighZero)
-         {
-         oneLow = firstRegister->getLowOrder();
-         oneHigh = firstRegister->getHighOrder();
-         }
-      else
-         {
-         oneLow = firstRegister;
-         oneHigh = cg()->allocateRegister();
-         }
-
-      if (!secondHighZero)
-         {
-         twoLow = secondRegister->getLowOrder();
-         twoHigh = secondRegister->getHighOrder();
-         }
-      else
-         {
-         twoLow = secondRegister;
-         twoHigh = 0;
-         }
-
-      if ((ENABLE_ZARCH_FOR_32 && zArchTrexSupported) || setsOrReadsCC)
-         {
-         // However carry bits are difficult to handle without using add with carry
-         // instructions and hence code has been re-enabled for handling luaddc and luadd under computeCC.
-         //
-         generateRRInstruction(cg(), regToRegOpCode, root, oneLow, twoLow);
-         if (firstHighZero)
-            {
-            if (secondHighZero)
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::XR, root, oneHigh, oneHigh);
-               }
-            else
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::LR, root, oneHigh, twoHigh);
-               }
-            }
-         else
-            {
-            if (secondHighZero)
-               {
-                 //            generateRIInstruction(cg(), TR::InstOpCode::AHI, root, oneHigh, 0);
-               }
-            else
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::ALCR, root, oneHigh, twoHigh);
-               }
-            }
-         }
-      else
-         {
-         if (firstHighZero)
-            {
-            if (secondHighZero)
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::XR, root, oneHigh, oneHigh);
-               }
-            else
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::LR, root, oneHigh, twoHigh);
-               }
-            }
-         else
-            {
-            if (secondHighZero)
-               {
-               //            generateRIInstruction(cg(), TR::InstOpCode::AHI, root, oneHigh, 0);
-               }
-            else
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::AR, root, oneHigh, twoHigh);
-               }
-            }
-         }
-      TR::RegisterPair * tempReg = cg()->allocateConsecutiveRegisterPair(oneLow, oneHigh);
-
-      dependencies = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg());
-      dependencies->addPostCondition(tempReg, TR::RealRegister::EvenOddPair);
-      dependencies->addPostCondition(oneHigh, TR::RealRegister::LegalEvenOfPair);
-      dependencies->addPostCondition(oneLow, TR::RealRegister::LegalOddOfPair);
-
-      if (!((ENABLE_ZARCH_FOR_32 && zArchTrexSupported) || setsOrReadsCC))
-         {
-         cursor = generateRRInstruction(cg(), TR::InstOpCode::ALR, root, oneLow, twoLow);
-         }
-
-      highSum = oneHigh;
-      root->setRegister(tempReg);
-      }
-   else if (getOpReg2Reg1())
-      {
-      if (!firstHighZero)
-         {
-         oneLow = firstRegister->getLowOrder();
-         oneHigh = firstRegister->getHighOrder();
-         }
-      else
-         {
-         oneLow = firstRegister;
-         oneHigh = 0;
-         }
-
-      if (!secondHighZero)
-         {
-         twoLow = secondRegister->getLowOrder();
-         twoHigh = secondRegister->getHighOrder();
-         }
-      else
-         {
-         twoLow = secondRegister;
-         twoHigh = cg()->allocateRegister();
-         }
-
-      if ((ENABLE_ZARCH_FOR_32 && zArchTrexSupported) || setsOrReadsCC)
-         {
-         generateRRInstruction(cg(), regToRegOpCode, root, twoLow, oneLow);
-         if (firstHighZero)
-            {
-            if (secondHighZero)
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::XR, root, twoHigh, twoHigh);
-               }
-            }
-         else
-            {
-            if (secondHighZero)
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::LR, root, twoHigh, oneHigh);
-               }
-            else
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::ALCR, root, twoHigh, oneHigh);
-               }
-            }
-         }
-      else
-         {
-
-         if (firstHighZero)
-            {
-            if (secondHighZero)
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::XR, root, twoHigh, twoHigh);
-               }
-            }
-         else
-            {
-            if (secondHighZero)
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::LR, root, twoHigh, oneHigh);
-               }
-            else
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::AR, root, twoHigh, oneHigh);
-               }
-            }
-         }
-
-      TR::RegisterPair * tempReg = cg()->allocateConsecutiveRegisterPair(twoLow, twoHigh);
-
-      dependencies = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg());
-      dependencies->addPostCondition(tempReg, TR::RealRegister::EvenOddPair);
-      dependencies->addPostCondition(twoHigh, TR::RealRegister::LegalEvenOfPair);
-      dependencies->addPostCondition(twoLow, TR::RealRegister::LegalOddOfPair);
-
-      if (!((ENABLE_ZARCH_FOR_32 && zArchTrexSupported) || setsOrReadsCC))
-         {
-         cursor = generateRRInstruction(cg(), TR::InstOpCode::ALR, root, twoLow, oneLow);
-         }
-
-      highSum = twoHigh;
-      root->setRegister(tempReg);
-      notReversedOperands();
-      }
-   else if (getCopyRegs())
-      {
-      TR::Register * lowRegister = cg()->allocateRegister();
-      TR::Register * highRegister = cg()->allocateRegister();
-
-      TR::RegisterPair * tempReg = cg()->allocateConsecutiveRegisterPair(lowRegister, highRegister);
-
-      highSum = highRegister;
-
-      dependencies = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg());
-      dependencies->addPostCondition(tempReg, TR::RealRegister::EvenOddPair);
-      dependencies->addPostCondition(highRegister, TR::RealRegister::LegalEvenOfPair);
-      dependencies->addPostCondition(lowRegister, TR::RealRegister::LegalOddOfPair);
-
-      if (!firstHighZero)
-         {
-         oneLow = firstRegister->getLowOrder();
-         oneHigh = firstRegister->getHighOrder();
-         }
-      else
-         {
-         oneLow = firstRegister;
-         oneHigh = 0;
-         }
-
-      if (!secondHighZero)
-         {
-         twoLow = secondRegister->getLowOrder();
-         twoHigh = secondRegister->getHighOrder();
-         }
-      else
-         {
-         twoLow = secondRegister;
-         twoHigh = 0;
-         }
-
-      if ((ENABLE_ZARCH_FOR_32 && zArchTrexSupported) || setsOrReadsCC)
-         {
-         generateRRInstruction(cg(), TR::InstOpCode::LR, root, lowRegister, oneLow);
-         generateRRInstruction(cg(), regToRegOpCode, root, lowRegister, twoLow);
-
-         if (!firstHighZero)
-            {
-            generateRRInstruction(cg(), TR::InstOpCode::LR, root, highRegister, oneHigh);
-            }
-         else
-            {
-            generateRRInstruction(cg(), TR::InstOpCode::XR, root, highRegister, highRegister);
-            }
-
-         if (secondHighZero)
-            {
-            //         generateRIInstruction(cg(), TR::InstOpCode::AHI, root, highRegister, 0);
-            }
-         else
-            {
-            generateRRInstruction(cg(), TR::InstOpCode::ALCR, root, highRegister, twoHigh);
-            }
-         }
-      else
-         {
-         generateRRInstruction(cg(), TR::InstOpCode::LR, root, lowRegister, oneLow);
-
-         if (!firstHighZero)
-            {
-            generateRRInstruction(cg(), TR::InstOpCode::LR, root, highRegister, oneHigh);
-            }
-         else
-            {
-            generateRRInstruction(cg(), TR::InstOpCode::XR, root, highRegister, highRegister);
-            }
-
-         if (secondHighZero)
-            {
-            //         generateRIInstruction(cg(), TR::InstOpCode::AHI, root, highRegister, 0);
-            }
-         else
-            {
-            generateRRInstruction(cg(), TR::InstOpCode::AR, root, highRegister, twoHigh);
-            }
-
-         cursor = generateRRInstruction(cg(), TR::InstOpCode::ALR, root, lowRegister, twoLow);
-
-         highSum = highRegister;
-         }
-
-      root->setRegister(tempReg);
-      }
-   else // RX instruction
-      {
-      TR_ASSERT(!getInvalid(), "TR_S390CommutativeBinaryAnalyser::invalid case\n");
-
-      TR::MemoryReference * lowMR = NULL;
-      TR::MemoryReference * highMR = NULL;
-      TR::Register * targetReg;
-      TR::Register * targetLow;
-      TR::Register * targetHigh;
-
-      bool targetHighZero;
-      bool memHighZero;
-      bool useMemHighOrder;
-
-      bool secondOperandIsInRegister = false;
-      TR::Register * longRegister = NULL;
-      bool createdClobberPair = false;
-
-      if (getOpReg1Mem2() || getOpReg3Mem2())
-         {
-         if (!secondHighZero && secondChild->getSymbolReference()->isUnresolved())
-            {
-            secondOperandIsInRegister = true;
-            lloadHelper(secondChild, cg(), NULL);
-            longRegister = secondChild->getRegister();
-            }
-         else
-            {
-            highMR = generateS390MemoryReference(secondChild, cg());
-            if (!secondHighZero || (secondChild->getType().isInt64()))
-               {
-               lowMR = generateS390MemoryReference(*highMR, 4, cg());
-               }
-            else
-               {
-               lowMR = highMR;
-               }
-            }
-
-         if (getOpReg3Mem2())
-            {
-            if (firstHighZero)
-               {
-               targetReg = allocateAddSubRegister(root, firstRegister);
-               generateRRInstruction(cg(), copyOpCode, root, targetReg, firstRegister);
-               }
-            else
-               {
-               createdClobberPair = true;
-               TR::Register * lowRegister = allocateAddSubRegister(root, firstRegister->getLowOrder());
-               TR::Register * highRegister = allocateAddSubRegister(root, firstRegister->getHighOrder());
-               targetReg = cg()->allocateConsecutiveRegisterPair(lowRegister, highRegister);
-               cursor = generateRRInstruction(cg(), copyOpCode, root,
-                                      targetReg->getLowOrder(), firstRegister->getLowOrder());
-               if (debugObj)
-                  {
-                  debugObj->addInstructionComment(toS390RRInstruction(cursor), CLOBBER_EVAL);
-                  }
-
-               cursor = generateRRInstruction(cg(), copyOpCode, root,
-                                      targetReg->getHighOrder(), firstRegister->getHighOrder());
-               if (debugObj)
-                  {
-                  debugObj->addInstructionComment(toS390RRInstruction(cursor), CLOBBER_EVAL);
-                  }
-               }
-            }
-         else
-            {
-            targetReg = firstRegister;
-            }
-
-         targetHighZero = firstHighZero;
-         memHighZero = secondHighZero;
-         useMemHighOrder = useSecondHighOrder;
-         }
-      else
-         {
-         if (!firstHighZero && firstChild->getSymbolReference()->isUnresolved())
-            {
-            secondOperandIsInRegister = true;
-            lloadHelper(firstChild, cg(), NULL);
-            longRegister = firstChild->getRegister();
-            }
-         else
-            {
-            highMR = generateS390MemoryReference(firstChild, cg());
-            if (!firstHighZero || (firstChild->getType().isInt64()))
-               {
-               lowMR = generateS390MemoryReference(*highMR, 4, cg());
-               }
-            else
-               {
-               lowMR = highMR;
-               }
-            }
-
-         if (getOpReg3Mem1())
-            {
-            if (secondHighZero)
-               {
-               targetReg = allocateAddSubRegister(root, secondRegister);
-               generateRRInstruction(cg(), copyOpCode, root, targetReg, secondRegister);
-               }
-            else
-               {
-               createdClobberPair = true;
-               TR::Register * lowRegister = allocateAddSubRegister(root, secondRegister->getLowOrder());
-               TR::Register * highRegister = allocateAddSubRegister(root, secondRegister->getHighOrder());
-               targetReg = cg()->allocateConsecutiveRegisterPair(lowRegister, highRegister);
-               cursor = generateRRInstruction(cg(), copyOpCode, root,
-                                      targetReg->getLowOrder(), secondRegister->getLowOrder());
-               if (debugObj)
-                  {
-                  debugObj->addInstructionComment(toS390RRInstruction(cursor), CLOBBER_EVAL);
-                  }
-
-               cursor = generateRRInstruction(cg(), copyOpCode, root,
-                                      targetReg->getHighOrder(), secondRegister->getHighOrder());
-               if (debugObj)
-                  {
-                  debugObj->addInstructionComment(toS390RRInstruction(cursor), CLOBBER_EVAL);
-                  }
-               }
-            }
-         else
-            {
-            targetReg = secondRegister;
-            }
-
-         targetHighZero = secondHighZero;
-         memHighZero = firstHighZero;
-         useMemHighOrder = useFirstHighOrder;
-         }
-
-      if (targetHighZero)
-         {
-         targetLow = targetReg;
-         targetHigh = cg()->allocateRegister();
-         generateRRInstruction(cg(), TR::InstOpCode::XR, root, targetHigh, targetHigh);
-         }
-      else
-         {
-         targetLow = targetReg->getLowOrder();
-         targetHigh = targetReg->getHighOrder();
-         }
-
-      TR::RegisterPair * tempReg = NULL;
-      if (createdClobberPair)
-         {
-         tempReg = (TR::RegisterPair *)targetReg;
-         }
-      else
-         {
-         tempReg = cg()->allocateConsecutiveRegisterPair(targetLow, targetHigh);
-         }
-
-      dependencies = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg());
-      dependencies->addPostCondition(tempReg, TR::RealRegister::EvenOddPair);
-      dependencies->addPostCondition(targetHigh, TR::RealRegister::LegalEvenOfPair);
-      dependencies->addPostCondition(targetLow, TR::RealRegister::LegalOddOfPair);
-
-      if (highMR)
-         {
-         dependencies->addAssignAnyPostCondOnMemRef(highMR);
-         }
-
-      if ((ENABLE_ZARCH_FOR_32 && zArchTrexSupported) || setsOrReadsCC)
-         {
-         if (secondOperandIsInRegister)
-            {
-            generateRRInstruction(cg(), regToRegOpCode, root, targetLow, longRegister->getLowOrder());
-            }
-         else
-            {
-            generateRXInstruction(cg(), memToRegOpCode, root, targetLow, lowMR);
-            }
-
-         if (secondOperandIsInRegister)
-            {
-            cursor = generateRRInstruction(cg(), TR::InstOpCode::ALCR, root, targetHigh, longRegister->getHighOrder());
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg(), TR::InstOpCode::ALC, root, targetHigh, highMR);
-            }
-         }
-      else
-         {
-         if (!memHighZero)
-            {
-            if (secondOperandIsInRegister)
-               {
-               generateRRInstruction(cg(), TR::InstOpCode::AR, root, targetHigh, longRegister->getHighOrder());
-               }
-            else
-               {
-               generateRXInstruction(cg(), TR::InstOpCode::A, root, targetHigh, highMR);
-               }
-            }
-
-         if (secondOperandIsInRegister)
-            {
-            cursor = generateRRInstruction(cg(), TR::InstOpCode::ALR, root, targetLow, longRegister->getLowOrder());
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg(), TR::InstOpCode::AL, root, targetLow, lowMR);
-            }
-         }
-
-      highSum = targetHigh;
-
-      root->setRegister(tempReg);
-
-      if (!secondOperandIsInRegister)
-         {
-         highMR->stopUsingMemRefRegister(cg());
-         }
-
-      if (!getOpReg1Mem2())
-         {
-         notReversedOperands();
-         }
-      }
-
-      if (!((ENABLE_ZARCH_FOR_32 && zArchTrexSupported) || setsOrReadsCC))
-      {
-      // Check for overflow in LS int. If overflow, increment MS int.
-      generateS390BranchInstruction(cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK12, root, doneLAdd);
-
-      // Increment MS int due to overflow in LS int
-      generateRIInstruction(cg(), TR::InstOpCode::AHI, root, highSum, 1);
-
-      generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, root, doneLAdd, dependencies);
-      }
 
    cg()->decReferenceCount(firstChild);
    cg()->decReferenceCount(secondChild);

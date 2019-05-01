@@ -180,6 +180,13 @@ MM_GCExtensionsBase::initialize(MM_EnvironmentBase* env)
 		goto failed;
 	}
 
+#if defined(OMR_GC_REALTIME)
+	_omrVM->_gcCycleOn = 0;
+	if (omrthread_monitor_init_with_name(&_omrVM->_gcCycleOnMonitor, 0, "gcCycleOn")) {
+		goto failed;
+	}
+#endif /* defined(OMR_GC_REALTIME) */
+
 	return true;
 
 failed:
@@ -209,6 +216,13 @@ MM_GCExtensionsBase::tearDown(MM_EnvironmentBase* env)
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	rememberedSet.tearDown(env);
 #endif /* OMR_GC_MODRON_SCAVENGER */
+
+#if defined(OMR_GC_REALTIME)
+	if (_omrVM->_gcCycleOnMonitor) {
+		omrthread_monitor_destroy(_omrVM->_gcCycleOnMonitor);
+		_omrVM->_gcCycleOnMonitor = (omrthread_monitor_t) NULL;
+	}
+#endif /* defined(OMR_GC_REALTIME) */
 
 	objectModel.tearDown(this);
 	mixedObjectModel.tearDown(this);

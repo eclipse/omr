@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,10 +21,10 @@
 
 #include "il/symbol/OMRMethodSymbol.hpp"
 
-#include "compile/Method.hpp"                  // for TR_Method
+#include "compile/Method.hpp"
 #include "env/TRMemory.hpp"
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol, etc
-#include "infra/Flags.hpp"                     // for flags32_t
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/Flags.hpp"
 
 OMR::MethodSymbol::MethodSymbol(TR_LinkageConventions lc, TR_Method * m) :
    TR::Symbol(),

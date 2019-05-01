@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,32 +21,32 @@
 
 #include "ras/DebugCounter.hpp"
 
-#include <stdarg.h>                          // for va_list
-#include <stdio.h>                           // for sprintf
-#include <string.h>                          // for strlen, memset, strncpy
-#include <math.h>                            // for log, pow
-#include "codegen/FrontEnd.hpp"              // for TR_FrontEnd
-#include "compile/Compilation.hpp"           // for Compilation
-#include "compile/SymbolReferenceTable.hpp"  // for SymbolReferenceTable
-#include "codegen/CodeGenerator.hpp"         // for CodeGenerator
-#include "codegen/Relocation.hpp"            // for Relocation
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Relocation.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"       // for TR::Options, etc
-#include "env/PersistentInfo.hpp"            // for PersistentInfo
-#include "env/jittypes.h"                    // for TR_ByteCodeInfo, etc
+#include "control/Options_inlines.hpp"
+#include "env/PersistentInfo.hpp"
+#include "env/jittypes.h"
 #include "env/StackMemoryRegion.hpp"
-#include "il/DataTypes.hpp"                  // for DataTypes::Int32
-#include "il/ILOpCodes.hpp"                  // for ILOpCodes::iadd, etc
-#include "il/Node.hpp"                       // for Node
-#include "il/Node_inlines.hpp"               // for Node::createWithSymRef
-#include "il/SymbolReference.hpp"            // for SymbolReference
-#include "il/symbol/StaticSymbol.hpp"        // for StaticSymbol
-#include "infra/Assert.hpp"                  // for TR_ASSERT
-#include "ras/Debug.hpp"                     // for TR_Debug
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
 #include "infra/SimpleRegex.hpp"
 #include "infra/Assert.hpp"
-#include "infra/Monitor.hpp"                 // for createCounter race conditions
-#include "infra/CriticalSection.hpp"         // for createCounter race conditions
+#include "infra/Monitor.hpp"
+#include "infra/CriticalSection.hpp"
 #include "infra/Bit.hpp"
 
 #if defined(_MSC_VER)

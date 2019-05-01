@@ -1,5 +1,5 @@
 #################################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,10 +37,11 @@ compiler_library(aarch64
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRMemoryReference.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRealRegister.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRegisterDependency.cpp
-	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRegisterIterator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRSnippet.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRTreeEvaluator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OpBinary.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/UnaryEvaluator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/env/OMRCPU.cpp
 	${CMAKE_CURRENT_LIST_DIR}/env/OMRDebugEnv.cpp
+	${CMAKE_CURRENT_LIST_DIR}/runtime/CodeSync.cpp
 )

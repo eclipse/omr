@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,19 +22,19 @@
 #ifndef VIRTUALGUARDCOALESCER_HPP
 #define VIRTUALGUARDCOALESCER_HPP
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for uint32_t, int32_t, etc
-#include "compile/Method.hpp"                 // for MAX_SCOUNT
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "il/Block.hpp"                       // for Block
-#include "il/Node.hpp"                        // for Node
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Method.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/TreeTop.hpp"                     // for TreeTop
-#include "il/TreeTop_inlines.hpp"             // for TreeTop::getNode
-#include "infra/BitVector.hpp"                // for TR_BitVector
-#include "infra/List.hpp"                     // for List
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 #define MALFORMED_GUARD MAX_SCOUNT
 

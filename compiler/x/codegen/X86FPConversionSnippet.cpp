@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,27 +21,30 @@
 
 #include "x/codegen/X86FPConversionSnippet.hpp"
 
-#include <stddef.h>                              // for NULL
-#include <stdint.h>                              // for uint8_t, int32_t, etc
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                  // for TR_FrontEnd
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "codegen/Linkage.hpp"
-#include "codegen/Machine.hpp"                   // for Machine
-#include "codegen/RealRegister.hpp"              // for RealRegister, etc
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/Snippet.hpp"                   // for commentString, etc
+#include "codegen/Snippet.hpp"
 #include "codegen/SnippetGCMap.hpp"
-#include "compile/Compilation.hpp"               // for Compilation
+#include "compile/Compilation.hpp"
+#include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
-#include "env/jittypes.h"                        // for intptrj_t
-#include "il/DataTypes.hpp"                      // for FLOAT_NAN
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes::f2i, etc
-#include "il/Node.hpp"                           // for Node
-#include "il/SymbolReference.hpp"                // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"             // for LabelSymbol
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "ras/Debug.hpp"                         // for TR_Debug
-#include "runtime/Runtime.hpp"                   // for ::TR_HelperAddress
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
+#include "runtime/CodeCacheManager.hpp"
+#include "runtime/Runtime.hpp"
 #include "x/codegen/X86Instruction.hpp"
 
 uint8_t *TR::X86FPConversionSnippet::emitSnippetBody()
@@ -54,15 +57,20 @@ uint8_t *TR::X86FPConversionSnippet::emitSnippetBody()
 
 uint8_t *TR::X86FPConversionSnippet::emitCallToConversionHelper(uint8_t *buffer)
    {
+   intptrj_t callInstructionAddress = (intptrj_t)buffer;
+   intptrj_t nextInstructionAddress = callInstructionAddress+5;
+
    *buffer++ = 0xe8;      // CallImm4
 
    intptrj_t helperAddress = (intptrj_t)getHelperSymRef()->getMethodAddress();
-   if (NEEDS_TRAMPOLINE(helperAddress, buffer+4, cg()))
+   if (cg()->directCallRequiresTrampoline(helperAddress, callInstructionAddress))
       {
-      helperAddress = cg()->fe()->indexedTrampolineLookup(getHelperSymRef()->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT(IS_32BIT_RIP(helperAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
+      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(getHelperSymRef()->getReferenceNumber(), (void *)buffer);
+
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinRIPRange(helperAddress, nextInstructionAddress),
+                      "Local helper trampoline must be reachable directly");
       }
-   *(int32_t *)buffer = (int32_t)(helperAddress - (intptrj_t)(buffer+4));
+   *(int32_t *)buffer = (int32_t)(helperAddress - nextInstructionAddress);
    cg()->addProjectSpecializedRelocation(buffer, (uint8_t *)getHelperSymRef(), NULL, TR_HelperAddress,
                                                          __FILE__, __LINE__, getNode());
    buffer += 4;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4748,7 +4748,6 @@ X86OpCodesTest::UnsupportedOpCodesTests()
    addUnsupportedOpCodeTest(_numberOfBinaryArgs, TR::ldiv, "lDiv", _argTypesBinaryLong, TR::Int64);
    addUnsupportedOpCodeTest(_numberOfBinaryArgs, TR::lrem, "lRem", _argTypesBinaryLong, TR::Int64);
    addUnsupportedOpCodeTest(_numberOfUnaryArgs, TR::l2a, "l2a", _argTypesUnaryLong, TR::Address);
-   addUnsupportedOpCodeTest(_numberOfTernaryArgs, TR::aternary, "aternary", _argTypesTernaryAddress, TR::Address);
 
 #endif
 

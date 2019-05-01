@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,6 +72,16 @@ addDependency(
    }
 
 namespace TR {
+
+class ARM64MemoryArgument
+   {
+   public:
+   // @@ TR_ALLOC(TR_Memory::ARM64MemoryArgument)
+
+   TR::Register *argRegister;
+   TR::MemoryReference *argMemory;
+   TR::InstOpCode::Mnemonic opCode;
+   };
 
 // linkage properties
 #define CallerCleanup       0x01
@@ -264,13 +274,9 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
 
    /**
     * @brief Constructor
-    */
-   Linkage () : OMR::Linkage() {}
-   /**
-    * @brief Constructor
     * @param[in] cg : CodeGenerator
     */
-   Linkage (TR::CodeGenerator *cg) : _cg(cg) {}
+   Linkage (TR::CodeGenerator *cg) : OMR::Linkage(cg) {}
 
    /**
     * @brief Parameter has to be on stack or not
@@ -293,6 +299,16 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
     * @brief Initializes ARM64 RealRegister linkage
     */
    virtual void initARM64RealRegisterLinkage();
+
+   /**
+    * @brief Returns a MemoryReference for an outgoing argument
+    * @param[in] argMemReg : register pointing to address for the outgoing argument
+    * @param[in] argReg : register for the argument
+    * @param[in] opCode : instruction OpCode for store to memory
+    * @param[out] memArg : struct holding memory argument information
+    * @return MemoryReference for the argument
+    */
+   virtual TR::MemoryReference *getOutgoingArgumentMemRef(TR::Register *argMemReg, TR::Register *argReg, TR::InstOpCode::Mnemonic opCode, TR::ARM64MemoryArgument &memArg);
 
    /**
     * @brief Saves arguments
@@ -374,41 +390,6 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
     */
    virtual TR::Register *buildIndirectDispatch(TR::Node *callNode) = 0;
 
-   /**
-    * @brief Gets the CodeGenerator
-    * @return CodeGenerator
-    */
-   TR::CodeGenerator *cg() {return _cg;}
-   /**
-    * @brief Gets the Compilation
-    * @return Compilation
-    */
-   TR::Compilation *comp() {return _cg->comp();}
-   /**
-    * @brief Gets the FrontEnd
-    * @return FrontEnd
-    */
-   TR_FrontEnd *fe() {return _cg->fe();}
-
-   /**
-    * @brief Gets the TR_Memory
-    * @return TR_Memory
-    */
-   TR_Memory *trMemory() {return _cg->trMemory();}
-   /**
-    * @brief Gets the Heap Memory
-    * @return Heap Memory
-    */
-   TR_HeapMemory trHeapMemory();
-   /**
-    * @brief Gets the Stack Memory
-    * @return Stack Memory
-    */
-   TR_StackMemory trStackMemory();
-
-   protected:
-
-   TR::CodeGenerator*_cg;
    };
 } // ARM64
 } // TR

@@ -23,6 +23,10 @@
 #define OMR_VIRTUALMACHINEREGISTERINSTRUCT_INCL
 
 #include "ilgen/VirtualMachineRegister.hpp"
+#include "ilgen/VirtualMachineRegisterInStruct.hpp"
+#include "ilgen/IlBuilder.hpp"
+
+namespace TR { class VirtualMachineRegisterInStruct; }
 
 namespace OMR
 {
@@ -87,6 +91,24 @@ class VirtualMachineRegisterInStruct : public TR::VirtualMachineRegister
       }
 
    /**
+    * @brief public constructor used to create a virtual machine state variable from struct
+    * @param structName the name of the struct type that holds the virtual machine state variable
+    * @param localNameHoldingStructAddress is the name of a local variable holding the struct base address; it must have been stored in this name before control will reach the builder "b"
+    * @param fieldName name of the field in "structName" that holds the virtual machine state variable
+    * @param localName the name of the local variable where the simulated value is to be stored
+    */
+   VirtualMachineRegisterInStruct(const char * const structName,
+                                  const char * const localNameHoldingStructAddress,
+                                  const char * const fieldName,
+                                  const char * const localName) :
+      TR::VirtualMachineRegister(localName),
+      _structName(structName),
+      _fieldName(fieldName),
+      _localNameHoldingStructAddress(localNameHoldingStructAddress)
+      {
+      }
+
+   /**
     * @brief write the simulated register value to the proper field in the struct
     * @param b a builder object where the operations to do the write will be inserted
     */
@@ -108,11 +130,43 @@ class VirtualMachineRegisterInStruct : public TR::VirtualMachineRegister
       b->      Load(_localNameHoldingStructAddress)));
       }
 
-   private:
+   /**
+    * @brief create an identical copy of the current object.
+    * @returns the copy of the current object
+    */
+   virtual TR::VirtualMachineState *MakeCopy();
 
-   const char * const _structName;
-   const char * const _fieldName;
-   const char * const _localNameHoldingStructAddress;
+   /**
+    * @brief returns the client object associated with this object
+    */
+   virtual void *client();
+
+   /**
+    * @brief Set the Client Allocator function
+    */
+   static void setClientAllocator(ClientAllocator allocator)
+      {
+      _clientAllocator = allocator;
+      }
+
+   /**
+    * @brief Set the Get Impl function
+    *
+    * @param getter function pointer to the impl getter
+    */
+   static void setGetImpl(ImplGetter getter)
+      {
+      _getImpl = getter;
+      }
+
+   protected:
+   const char * const   _structName;
+   const char * const   _fieldName;
+   const char * const   _localNameHoldingStructAddress;
+
+private:
+   static ClientAllocator _clientAllocator;
+   static ImplGetter _getImpl;
    };
 }
 

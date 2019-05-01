@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,13 +20,32 @@
  *******************************************************************************/
 
 #include "omrTest.h"
+#include "JitTest.hpp"
 
 extern "C" {
 int omr_main_entry(int argc, char **argv, char **envp);
 }
 
+OMRPortLibrary TRTest::TestWithPortLib::PortLib;
+omrthread_t TRTest::TestWithPortLib::current_thread = NULL;
+
+/**
+ * @brief Global test environment to initialize and shutdown the port library
+ */
+class JitTestEnvironment: public ::testing::Environment {
+   public:
+   virtual void SetUp() {
+      TRTest::TestWithPortLib::initPortLib();
+   }
+
+   virtual void TearDown() {
+      TRTest::TestWithPortLib::shutdownPortLib();
+   }
+};
+
 int omr_main_entry(int argc, char **argv, char **envp) {
    ::testing::InitGoogleTest(&argc, argv);
    OMREventListener::setDefaultTestListener();
+   ::testing::AddGlobalTestEnvironment(new JitTestEnvironment);
    return RUN_ALL_TESTS();
 }

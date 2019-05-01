@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,27 +19,27 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                        // for NULL
-#include <stdint.h>                        // for int32_t, etc
-#include "codegen/FrontEnd.hpp"            // for TR_FrontEnd
-#include "compile/Compilation.hpp"         // for Compilation, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/bitvectr.h"                  // for ABitVector
-#include "env/TRMemory.hpp"                // for TR_Memory
-#include "il/Block.hpp"                    // for Block
-#include "il/ILOpCodes.hpp"                // for ILOpCodes::BBEnd, etc
-#include "il/ILOps.hpp"                    // for ILOpCode, etc
-#include "il/Node.hpp"                     // for Node, scount_t
-#include "il/Node_inlines.hpp"             // for Node::getChild, etc
-#include "il/Symbol.hpp"                   // for Symbol
-#include "il/SymbolReference.hpp"          // for SymbolReference
-#include "il/TreeTop.hpp"                  // for TreeTop
-#include "il/TreeTop_inlines.hpp"          // for TreeTop::getNode, etc
-#include "infra/BitVector.hpp"             // for TR_BitVector
-#include "infra/Cfg.hpp"                   // for CFG
+#include "cs2/bitvectr.h"
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"
-#include "optimizer/UseDefInfo.hpp"        // for TR_UseDefInfo, etc
+#include "optimizer/UseDefInfo.hpp"
 
 class TR_BlockStructure;
 class TR_Structure;

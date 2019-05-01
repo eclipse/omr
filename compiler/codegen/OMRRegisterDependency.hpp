@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
    namespace OMR { typedef OMR::RegisterDependencyConditions RegisterDependencyConditionsConnector; }
 #endif
 
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
+#include "env/TRMemory.hpp"
 #include "codegen/RegisterDependencyStruct.hpp"
 
 namespace OMR

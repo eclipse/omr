@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
 #ifndef LIST_INCL
 #define LIST_INCL
 
-#include <stddef.h>          // for NULL, size_t
-#include <stdint.h>          // for int32_t
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
-#include "infra/Assert.hpp"  // for TR_ASSERT
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "infra/Assert.hpp"
 
 template <class T> class List;
 template <class T> class ListAppender;
@@ -653,7 +653,7 @@ template <class T> class TR_Queue : public TR_ScratchList<T>
 
    ListElement<T> *getLastElement()      { return getListTail(); }
 
-   T *remove(T *elem) { TR_ASSERT(0, "remove is not implemented for ListHeadAndTail"); }
+   T *remove(T *elem) { TR_UNIMPLEMENTED(); }
    };
 
 

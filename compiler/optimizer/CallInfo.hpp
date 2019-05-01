@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,17 +28,17 @@
 #ifndef CALLGRAPH_INCL
 #define CALLGRAPH_INCL
 
-#include <stddef.h>                            // for NULL
-#include <stdint.h>                            // for int32_t
-#include "compile/Compilation.hpp"             // for Compilation
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/Node.hpp"                         // for vcount_t
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
+#include "il/Node.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/Assert.hpp"
 #include "infra/deque.hpp"
-#include "infra/Link.hpp"                      // for TR_LinkHead, TR_Link
-#include "infra/List.hpp"                      // for List, etc
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
 #include "optimizer/InlinerFailureReason.hpp"
 
 namespace TR { class CompilationFilters;}

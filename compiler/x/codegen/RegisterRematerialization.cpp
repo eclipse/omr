@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,21 +21,21 @@
 
 #include "x/codegen/RegisterRematerialization.hpp"
 
-#include <stddef.h>                                   // for NULL
-#include "codegen/CodeGenerator.hpp"                  // for CodeGenerator
-#include "compile/Compilation.hpp"                    // for Compilation
+#include <stddef.h>
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/Register.hpp"                       // for Register
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterRematerializationInfo.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                             // for intptrj_t
-#include "il/ILOps.hpp"                               // for ILOpCode
-#include "il/Node.hpp"                                // for Node
+#include "env/jittypes.h"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                              // for Symbol
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "infra/Assert.hpp"                           // for TR_ASSERT
+#include "infra/Assert.hpp"
 
 namespace TR { class Instruction; }
 

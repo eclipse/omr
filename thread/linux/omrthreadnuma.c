@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,14 +50,18 @@ typedef struct {
 } cpu_set_t[CPU_SETSIZE];
 #endif
 
+static BOOLEAN isNumaAvailable = FALSE;
+static uintptr_t numNodes = 0;
+
+#if defined(OMR_PORT_NUMA_SUPPORT)
+
 static uintptr_t cpuset_subset_or_equal(cpu_set_t *subset, cpu_set_t *superset);
 static void cpuset_logical_or(cpu_set_t *destination, const cpu_set_t *source);
 #undef OMR_VERBOSE_NUMA_NODE_DATA
 #ifdef OMR_VERBOSE_NUMA_NODE_DATA
  void dumpNumaInfo();
 #endif
-static BOOLEAN isNumaAvailable = FALSE;
-static uintptr_t numNodes = 0;
+
 static cpu_set_t defaultAffinityMask = {{0}};
 
 /* A table of data about each NUMA node. Node 0 is the synthetic node which includes all resources. */
@@ -122,8 +126,6 @@ cpuset_logical_and(cpu_set_t *destination, const cpu_set_t *source)
 	}
 }
 
-
-#if defined(OMR_PORT_NUMA_SUPPORT)
 static uintptr_t
 countNumaNodes(void)
 {
@@ -262,8 +264,8 @@ initializeNumaNodeData(omrthread_library_t threadLibrary, uintptr_t numNodes)
 
 	return result;
 }
-#endif /* defined(OMR_PORT_NUMA_SUPPORT) */
 
+#endif /* defined(OMR_PORT_NUMA_SUPPORT) */
 
 /**
  * Initializes NUMA data by parsing the /sys/devices/system/node/ directory.
@@ -436,10 +438,11 @@ intptr_t
 omrthread_numa_get_node_affinity(omrthread_t thread, uintptr_t *numaNodes, uintptr_t *nodeCount)
 {
 	intptr_t result = 0;
-	uintptr_t incomingListSize = *nodeCount;
 	uintptr_t nodesSoFar = 0;
 
 #if defined(OMR_PORT_NUMA_SUPPORT)
+	uintptr_t incomingListSize = *nodeCount;
+
 	if (isNumaAvailable && (NULL != thread)) {
 		uintptr_t threadIsStarted = 0;
 

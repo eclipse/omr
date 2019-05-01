@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,26 +21,26 @@
 
 #include "z/codegen/S390OutOfLineCodeSection.hpp"
 
-#include <stddef.h>                                // for NULL
-#include <stdint.h>                                // for int32_t
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator
-#include "codegen/InstOpCode.hpp"                  // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                 // for Instruction
-#include "codegen/Machine.hpp"                     // for Machine
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/OutOfLineCodeSection.hpp"
-#include "codegen/RealRegister.hpp"                // for RealRegister, etc
-#include "codegen/Register.hpp"                    // for Register
-#include "codegen/RegisterConstants.hpp"           // for TR_RegisterKinds
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterPair.hpp"                // for RegisterPair
-#include "codegen/TreeEvaluator.hpp"               // for TreeEvaluator
-#include "compile/Compilation.hpp"                 // for Compilation
+#include "codegen/RegisterPair.hpp"
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
-#include "il/ILOpCodes.hpp"                        // for ILOpCodes
-#include "il/ILOps.hpp"                            // for ILOpCode
-#include "il/Node.hpp"                             // for Node
-#include "il/Node_inlines.hpp"                     // for Node::getChild
-#include "ras/Debug.hpp"                           // for TR_DebugBase
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "ras/Debug.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 
 namespace TR { class LabelSymbol; }
@@ -171,7 +171,7 @@ void TR_S390OutOfLineCodeSection::assignRegisters(TR_RegisterKinds kindsToBeAssi
       return;
 
    // nested internal control flow assert:
-   _cg->setInternalControlFlowSafeNestingDepth(_cg->_internalControlFlowNestingDepth);
+   _cg->setInternalControlFlowSafeNestingDepth(_cg->internalControlFlowNestingDepth());
 
    // Create a dependency list on the first instruction in this stream that captures all current real register associations.
    // This is necessary to get the register assigner back into its original state before the helper stream was processed.

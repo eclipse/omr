@@ -25,19 +25,12 @@
 #include <sys/ucontext.h>
 #include "omrsignal_context.h"
 
-
-#ifdef PPC64
-#define J9SIG_VALUE_UDATA OMRPORT_SIG_VALUE_64
-#else
-#define J9SIG_VALUE_UDATA OMRPORT_SIG_VALUE_32
-#endif
-
 #define NGPRS 32
 
 void
-fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *j9Info)
+fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *signalInfo)
 {
-	j9Info->platformSignalInfo.context = (ucontext_t *)contextInfo;
+	signalInfo->platformSignalInfo.context = (ucontext_t *)contextInfo;
 	/* module info is filled on demand */
 }
 

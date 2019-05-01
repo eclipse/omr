@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,21 +31,21 @@ namespace OMR { class Node; }
 namespace OMR { typedef OMR::Node NodeConnector; }
 #endif
 
-#include <limits.h>                       // for UINT_MAX, USHRT_MAX
-#include <stddef.h>                       // for size_t
-#include <stdint.h>                       // for uint16_t, int32_t, int64_t
-#include <string.h>                       // for memset
-#include "codegen/RegisterConstants.hpp"  // for TR_GlobalRegisterNumber
-#include "cs2/hashtab.h"                  // for HashTable
-#include "env/TRMemory.hpp"               // for TR_ArenaAllocator
-#include "il/DataTypes.hpp"               // for DataTypes, etc
-#include "il/ILOpCodes.hpp"               // for ILOpCodes
-#include "il/ILOps.hpp"                   // for ILOpCode
-#include "il/NodeUnions.hpp"              // for UnionedWithChildren
-#include "infra/Annotations.hpp"          // for OMR_EXTENSIBLE
-#include "infra/Assert.hpp"               // for TR_ASSERT
-#include "infra/Flags.hpp"                // for flags32_t
-#include "infra/TRlist.hpp"               // for TR::list
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include "codegen/RegisterConstants.hpp"
+#include "cs2/hashtab.h"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/NodeUnions.hpp"
+#include "infra/Annotations.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "infra/TRlist.hpp"
 
 class TR_BitVector;
 class TR_Debug;
@@ -67,6 +67,7 @@ namespace TR { class Symbol; }
 namespace TR { class SymbolReference; }
 namespace TR { class TreeTop; }
 namespace TR { class NodeExtension; }
+namespace TR { class NodeChecklist; }
 template <class T> class List;
 
 #define NUM_DEFAULT_CHILDREN    2
@@ -266,6 +267,37 @@ public:
    static TR::Node *createArraycopy();
    static TR::Node *createArraycopy(TR::Node *first, TR::Node *second, TR::Node *third);
    static TR::Node *createArraycopy(TR::Node *first, TR::Node *second, TR::Node *third, TR::Node *fourth, TR::Node *fifth);
+
+   /**
+    * \brief
+    *    Create a call to potentialOSRPointHelperSymbol, only to be used during ILGen
+    *
+    * \parm originatingByteCodeNode
+    *    The node whose bytecode info is used to create the call.
+    *
+    * \parm osrInductionOffset
+    *    The offset to be added to the originatingByteCodeNode's bytecode index to get the
+    *    target bytecode index. This is to be stored in _unionBase._osrInductionOffset
+    *
+    * \note
+    *    One can not create a potentialOSRPointHelper call and stick it to anywhere in the trees
+    *    without the right exception setup and without the right bookkeeping being in place for
+    *    the call. Preventative checks are required to avoid potential misuses. Due the fact that
+    *    during ILGen the OSR infrastructure may be incomplete, the checks can be done in ILGen are
+    *    different than checks needed after ILGen.
+    *
+    *    This API does checks required to create the helper in ILGen, thus it is only to be used in
+    *    ILGen.
+    */
+   static TR::Node *createPotentialOSRPointHelperCallInILGen(TR::Node* originatingByteCodeNode, int32_t offset);
+   /**
+    * \brief
+    *    Create a call to osrFearPointHelperSymbol
+    *
+    * \parm originatingByteCodeNode  The node whose bytecode info is used to create the call
+    *
+    */
+   static TR::Node *createOSRFearPointHelperCall(TR::Node* originatingByteCodeNode);
 
    static TR::Node *createLoad(TR::SymbolReference * symRef);
    static TR::Node *createLoad(TR::Node *originatingByteCodeNode, TR::SymbolReference *);
@@ -484,8 +516,6 @@ public:
 
    bool                   isRematerializable(TR::Node *parent, bool onlyConsiderOpCode);
 
-   bool                   canEvaluate();
-
    bool                   isDoNotPropagateNode();
    bool                   containsDoNotPropagateNode(vcount_t vc);
 
@@ -498,6 +528,22 @@ public:
    bool                   isPureCall();
 
    bool                   isClassUnloadingConst();
+
+   /**
+    * \brief
+    *    Return true if the node is a load of static final field
+    */
+   bool                   isLoadOfStaticFinalField();
+   /**
+    * \brief
+    *    Return true if the node is a call with osrFearPointHelperSymbol
+    */
+   bool                   isOSRFearPointHelperCall();
+   /**
+    * \brief
+    *    Return true if the node is a call with potentialOSRPointHelperSymbol
+    */
+   bool                   isPotentialOSRPointHelperCall();
 
    // A common query used by the optimizer
    inline bool            isSingleRef();
@@ -779,6 +825,9 @@ public:
     */
 
    // These three methods should be used only if you're sure you can't use one of the other ones.
+   inline int32_t          getOSRInductionOffset();
+   inline int32_t          setOSRInductionOffset(int32_t offset);
+
    inline int64_t          getConstValue();
    inline uint64_t         getUnsignedConstValue();
    inline void             setConstValue(int64_t val);
@@ -975,13 +1024,6 @@ public:
    bool isInvalid8BitGlobalRegister();
    void setIsInvalid8BitGlobalRegister(bool v);
    const char * printIsInvalid8BitGlobalRegister();
-
-   // 390 zGryphon Highword register GRA
-   bool getIsHPREligible() { return _flags.testAny(isHPREligible); }
-   void setIsHPREligible() { _flags.set(isHPREligible); }
-   void resetIsHPREligible() { _flags.reset(isHPREligible); }
-   const char * printIsHPREligible();
-   bool isEligibleForHighWordOpcode();
 
    // Result of this node is being stored into the same location as its left child
    bool isDirectMemoryUpdate();
@@ -1238,7 +1280,7 @@ public:
    bool chkArrayChkReferenceArray2();
    const char * printIsArrayChkReferenceArray2();
 
-   // Flags used by TR::wrtbar and TR::iwrtbar
+   // Flags used by TR::awrtbar and TR::awrtbari
    bool skipWrtBar();
    void setSkipWrtBar(bool v);
    bool chkSkipWrtBar();
@@ -1665,6 +1707,16 @@ protected:
       float     _fpConstValue;
       double    _dpConstValue;
 
+      // Used only on potentialOSRPointHelper call, which has no children.
+      //
+      // In post-execution OSR, transition occurs after the OSR point has
+      // been evaluated. The intepreter will resume the execution at a bytecode
+      // index after the bytecode index of the OSR point. The target bytecode
+      // index can be calculated by offsetting the OSR point's bytecode index
+      // by the size of the bytecode. This size is stored in _osrInductionOffset.
+      //
+      int32_t _osrInductionOffset;
+
       //intToFloat returns a bag of bits in a uint32_t
       int32_t   _fpConstValueBits;
 
@@ -1772,6 +1824,7 @@ protected:
 // Private functionality.
 private:
    TR::Node * getExtendedChild(int32_t c);
+   TR_YesNoMaybe computeIsCollectedReferenceImpl(TR::NodeChecklist &processedNodesCollected, TR::NodeChecklist &processedNodesNotCollected);
 
    friend class ::TR_DebugExt;
    friend class TR::NodePool;
@@ -1799,7 +1852,6 @@ protected:
       nodePointsToNonNull                   = 0x00000004,
       nodeContainsCall                      = 0x00000008, ///< Only used during local analysis
       invalid8BitGlobalRegister             = 0x00000010, ///< value is in a global register which cannot be used on an 8 bit instruction
-      isHPREligible                         = 0x00000010, ///< 390 zGryphon Highword register GRA
       nodeHasExtension                      = 0x00000020,
       directMemoryUpdate                    = 0x00000040, ///< Result of this node is being stored into the same
                                                           ///< location as its left child

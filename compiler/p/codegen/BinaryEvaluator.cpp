@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,40 +19,41 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>                            // for int32_t, int64_t, etc
-#include <stdlib.h>                            // for NULL, abs
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                // for feGetEnv
-#include "codegen/InstOpCode.hpp"              // for InstOpCode, etc
-#include "codegen/Linkage.hpp"                 // for addDependency
-#include "codegen/Machine.hpp"                 // for LOWER_IMMED, etc
-#include "codegen/RealRegister.hpp"            // for RealRegister, etc
-#include "codegen/Register.hpp"                // for Register
+#include <stdint.h>
+#include <stdlib.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterPair.hpp"            // for RegisterPair
-#include "codegen/TreeEvaluator.hpp"           // for TreeEvaluator, etc
+#include "codegen/RegisterPair.hpp"
+#include "codegen/TreeEvaluator.hpp"
 #include "codegen/PPCEvaluator.hpp"
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/Processors.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                      // for uintptrj_t
-#include "il/DataTypes.hpp"                    // for CONSTANT64, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes, etc
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/symbol/AutomaticSymbol.hpp"       // for AutomaticSymbol
-#include "il/symbol/LabelSymbol.hpp"           // for generateLabelSymbol, etc
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Bit.hpp"                       // for intParts, etc
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 #include "p/codegen/PPCInstruction.hpp"
-#include "runtime/Runtime.hpp"                 // for TR_RuntimeHelper, etc
+#include "runtime/Runtime.hpp"
 
 extern TR::Register *addConstantToInteger(TR::Node * node, TR::Register *srcReg, int32_t value, TR::CodeGenerator *cg);
 extern TR::Register *addConstantToLong(TR::Node * node, TR::Register *srcReg, int64_t value, TR::Register *trgReg, TR::CodeGenerator *cg);
@@ -64,8 +65,6 @@ extern TR::Register *inlineLongRotateLeft(TR::Node *node, TR::CodeGenerator *cg)
 
 static TR::Register *ldiv64Evaluator(TR::Node *node, TR::CodeGenerator *cg);
 static TR::Register *lrem64Evaluator(TR::Node *node, TR::CodeGenerator *cg);
-
-TR::Register *computeCC_bitwise(TR::CodeGenerator *cg, TR::Node *node, TR::Register *targetReg, bool needsZeroExtension = true);
 
 void generateZeroExtendInstruction(TR::Node *node,
                                    TR::Register *trgReg,
@@ -105,37 +104,6 @@ void generateSignExtendInstruction(TR::Node *node,
    generateTrg1Src1Instruction(cg, signExtendOp, node, trgReg, srcReg);
    }
 
-TR::Register *computeCC_setNotZero(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ccReg, TR::Register *testReg, bool needsZeroExtension)
-   {
-   if (ccReg == NULL)
-      ccReg = cg->allocateRegister();
-   int32_t size = node->getOpCode().getSize();
-
-   if (size < 8 && needsZeroExtension)
-      {
-      // this sequence doesn't work if there is any garbage in the top part of the testReg
-      generateZeroExtendInstruction(node, ccReg, testReg, size*8, cg);
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addic, node, ccReg, ccReg, -1);
-      }
-   else
-      {
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addic, node, ccReg, testReg, -1);
-      }
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, ccReg, 0);
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::addze, node, ccReg, ccReg);
-
-   return ccReg;
-   }
-
-TR::Register *computeCC_bitwise(TR::CodeGenerator *cg, TR::Node *node, TR::Register *testReg, bool needsZeroExtension)
-   {
-   // Condition code settings:
-   // 0 - Result is zero
-   // 1 - Result is not zero
-   TR::Register *ccReg = computeCC_setNotZero(cg, node, NULL, testReg, needsZeroExtension);
-   testReg->setCCRegister(ccReg);
-   return ccReg;
-   }
 
 // Do the work for evaluating integer or and exclusive or
 // Also called for long or and exclusive or when the upper
@@ -2161,23 +2129,23 @@ strengthReducingLongDivideOrRemainder32BitMode(TR::Node *node,      TR::CodeGene
       }
    *dr_highReg = dr_h; *dr_lowReg = dr_l;
 
-   addDependency(dependencies, dd_h, TR::RealRegister::gr3, TR_GPR, cg);
-   addDependency(dependencies, dd_l, TR::RealRegister::gr4, TR_GPR, cg);
-   addDependency(dependencies, dr_h, TR::RealRegister::gr5, TR_GPR, cg);
-   addDependency(dependencies, dr_l, TR::RealRegister::gr6, TR_GPR, cg);
-   addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg);
+   TR::addDependency(dependencies, dd_h, TR::RealRegister::gr3, TR_GPR, cg);
+   TR::addDependency(dependencies, dd_l, TR::RealRegister::gr4, TR_GPR, cg);
+   TR::addDependency(dependencies, dr_h, TR::RealRegister::gr5, TR_GPR, cg);
+   TR::addDependency(dependencies, dr_l, TR::RealRegister::gr6, TR_GPR, cg);
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg);
    tmp1Reg = cg->allocateRegister();
-   addDependency(dependencies, tmp1Reg, TR::RealRegister::gr7, TR_GPR, cg);
+   TR::addDependency(dependencies, tmp1Reg, TR::RealRegister::gr7, TR_GPR, cg);
    tmp2Reg = cg->allocateRegister();
-   addDependency(dependencies, tmp2Reg, TR::RealRegister::gr8, TR_GPR, cg);
-   addDependency(dependencies, NULL, TR::RealRegister::gr9, TR_GPR, cg);
-   addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, cg);
+   TR::addDependency(dependencies, tmp2Reg, TR::RealRegister::gr8, TR_GPR, cg);
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr9, TR_GPR, cg);
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, cg);
    cr0Reg = cg->allocateRegister(TR_CCR);
-   addDependency(dependencies, cr0Reg, TR::RealRegister::cr0, TR_CCR, cg);
-   addDependency(dependencies, NULL, TR::RealRegister::cr1, TR_CCR, cg);
-   addDependency(dependencies, NULL, TR::RealRegister::cr5, TR_CCR, cg);
-   addDependency(dependencies, NULL, TR::RealRegister::cr6, TR_CCR, cg);
-   addDependency(dependencies, NULL, TR::RealRegister::cr7, TR_CCR, cg);
+   TR::addDependency(dependencies, cr0Reg, TR::RealRegister::cr0, TR_CCR, cg);
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr1, TR_CCR, cg);
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr5, TR_CCR, cg);
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr6, TR_CCR, cg);
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr7, TR_CCR, cg);
 
    // Trivial cases are caught by Simplifier or ValuePropagation. Runtime test is needed at this stage.
    int64_t ddConst = firstChild->getLongInt(), drConst = secondChild->getLongInt();

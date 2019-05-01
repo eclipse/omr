@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,17 @@ set(VPATH "")
 add_tracegen(utilcore.tdf j9utilcore)
 
 add_library(omrutil_obj OBJECT
-	ut_j9utilcore.c
+	${CMAKE_CURRENT_BINARY_DIR}/ut_j9utilcore.c
+)
+
+target_include_directories(omrutil_obj
+	PUBLIC
+		$<TARGET_PROPERTY:omr_base,INTERFACE_INCLUDE_DIRECTORIES>
+)
+
+target_compile_definitions(omrutil_obj
+	PUBLIC
+		$<TARGET_PROPERTY:omr_base,INTERFACE_COMPILE_DEFINITIONS>
 )
 
 list(APPEND VPATH .)
@@ -153,6 +163,9 @@ target_sources(omrutil_obj PRIVATE ${resolvedPaths})
 target_sources(omrutil_obj PRIVATE $<TARGET_PROPERTY:${OMR_UTIL_GLUE_TARGET},INTERFACE_SOURCES>)
 target_include_directories(omrutil_obj PUBLIC $<TARGET_PROPERTY:${OMR_UTIL_GLUE_TARGET},INTERFACE_INCLUDE_DIRECTORIES>)
 
+
+target_enable_ddr(omrutil_obj "${OMR_DDR_SET}")
+
 add_library(omrutil STATIC
 	$<TARGET_OBJECTS:omrutil_obj>
 )
@@ -169,8 +182,10 @@ if(OMR_ENHANCED_WARNINGS)
 	target_compile_options(omrutil_obj PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 
-target_link_libraries(omrutil PUBLIC
-	j9hashtable
+target_link_libraries(omrutil
+	PUBLIC
+		omr_base
+		j9hashtable
 )
 
 set_target_properties(omrutil_obj omrutil PROPERTIES FOLDER util)

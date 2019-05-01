@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,46 +21,46 @@
 
 #include "optimizer/LoopReducer.hpp"
 
-#include <stddef.h>                              // for NULL
-#include <stdint.h>                              // for int32_t, uint16_t, etc
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                  // for TR_FrontEnd
-#include "compile/Compilation.hpp"               // for Compilation
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"           // for TR::Options
+#include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                            // for POINTER_PRINTF_FORMAT
+#include "env/IO.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                      // for TR_Memory, etc
-#include "env/jittypes.h"                        // for intptrj_t
-#include "il/Block.hpp"                          // for Block, toBlock
-#include "il/DataTypes.hpp"                      // for DataTypes::Int32, etc
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes, etc
-#include "il/ILOps.hpp"                          // for ILOpCode, etc
-#include "il/Node.hpp"                           // for Node, etc
-#include "il/NodeUtils.hpp"                      // for TR_ParentOfChildNode
-#include "il/Node_inlines.hpp"                   // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                         // for Symbol
-#include "il/SymbolReference.hpp"                // for SymbolReference
-#include "il/TreeTop.hpp"                        // for TreeTop
-#include "il/TreeTop_inlines.hpp"                // for TreeTop::getNode, etc
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/NodeUtils.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/Cfg.hpp"                         // for CFG, etc
-#include "infra/List.hpp"                        // for TR_ScratchList, etc
-#include "infra/CfgEdge.hpp"                     // for CFGEdge
-#include "infra/CfgNode.hpp"                     // for CFGNode
-#include "infra/TreeServices.hpp"                // for TR_AddressTree
-#include "optimizer/LoopCanonicalizer.hpp"       // for TR_LoopTransformer, etc
+#include "infra/Assert.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "infra/TreeServices.hpp"
+#include "optimizer/LoopCanonicalizer.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"               // for Optimizer
+#include "optimizer/Optimizer.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/TranslateTable.hpp"
-#include "optimizer/VPConstraint.hpp"            // for TR::VPConstraint
-#include "ras/Debug.hpp"                         // for TR_DebugBase
+#include "optimizer/VPConstraint.hpp"
+#include "ras/Debug.hpp"
 
 #define OPT_DETAILS "O^O LOOP TRANSFORMATION: "
 
@@ -303,7 +303,7 @@ TR_Arrayset::checkArrayStore(TR::Node * storeNode)
 bool
 TR_Arraycopy::checkArrayStore(TR::Node * storeNode)
    {
-   if (!storeNode->getOpCode().isStoreIndirect() && !(storeNode->getOpCodeValue() == TR::treetop && storeNode->getFirstChild()->getOpCodeValue() == TR::wrtbari))
+   if (!storeNode->getOpCode().isStoreIndirect() && !(storeNode->getOpCodeValue() == TR::treetop && storeNode->getFirstChild()->getOpCodeValue() == TR::awrtbari))
       {
       dumpOptDetails(comp(), "arraycopy arraystore tree does not have an indirect store as root\n");
       return false;
@@ -968,7 +968,18 @@ TR_LoopReducer::generateArraycopy(TR_InductionVariable * indVar, TR::Block * loo
       return false;
       }
 
-   bool needWriteBarrier = comp()->getOptions()->needWriteBarriers();;
+   bool needWriteBarrier = false;
+   switch (TR::Compiler->om.writeBarrierType())
+      {
+      case gc_modron_wrtbar_oldcheck:
+      case gc_modron_wrtbar_cardmark:
+      case gc_modron_wrtbar_cardmark_and_oldcheck:
+      case gc_modron_wrtbar_cardmark_incremental:
+         needWriteBarrier = true;
+         break;
+      default:
+         break;
+      }
    //FUTURE: can eliminate wrtbar when src and dest are equal. Currently we don't reduce arraycopy like this.
    if (arraycopyLoop.hasWriteBarrier() && needWriteBarrier && !comp()->cg()->getSupportsReferenceArrayCopy())
       {

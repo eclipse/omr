@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,18 +22,18 @@
 #ifndef LCA_INCL
 #define LCA_INCL
 
-#include <stdint.h>                           // for int32_t, int64_t, etc
-#include <string.h>                           // for NULL, memset
-#include "compile/Compilation.hpp"            // for Compilation
-#include "compile/SymbolReferenceTable.hpp"   // for SymbolReferenceTable
-#include "cs2/bitvectr.h"                     // for ABitVector
-#include "env/TRMemory.hpp"                   // for BitVector, TR_Memory, etc
-#include "il/Node.hpp"                        // for vcount_t
-#include "infra/Assert.hpp"                   // for TR_ASSERT
-#include "infra/BitVector.hpp"                // for TR_BitVector, etc
+#include <stdint.h>
+#include <string.h>
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "cs2/bitvectr.h"
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
 #include "infra/List.hpp"
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 class TR_LoopCanonicalizer;
 class TR_LoopPredictor;

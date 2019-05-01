@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,6 @@
 ###############################################################################
 
 # Ensure the source tree hasn't been used for building before.
-message(STATUS "SRC = ${CMAKE_SOURCE_DIR}")
 if(EXISTS "${omr_SOURCE_DIR}/include_core/omrcfg.h")
 	message(FATAL_ERROR "An existing omrcfg.h has been detected in the source tree. This causes unexpected errors when compiling. Please build from a clean source tree.")
 endif()

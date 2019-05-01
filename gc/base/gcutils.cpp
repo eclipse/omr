@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,6 +153,12 @@ getPercolateReasonAsString(PercolateReason mode)
 		return "Active JNI critical regions";
 	case ABORTED_SCAVENGE:
 		return "previous scavenge aborted";
+	case CONCURRENT_MARK_EXHAUSTED:
+		return "concurrent mark exhausted";
+	case PREVENT_TENURE_EXPAND:
+		return "prevent tenure expand";
+	case MET_PROJECTED_TENURE_MAX_FREE:
+		return "met projected tenure max free";
 	case NONE_SET:
 	default:
 		return "unknown";
@@ -205,6 +211,8 @@ getExpandReasonAsString(ExpandReason reason)
 		return "satisfy allocation request";
 	case FORCED_NURSERY_EXPAND:
 		return "forced nursery expand";
+	case HINT_PREVIOUS_RUNS:
+		return "hint from previous runs";
 	default:
 		return "unknown";
 	}

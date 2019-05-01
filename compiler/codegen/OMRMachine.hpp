@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,12 +31,12 @@ namespace OMR { class Machine; }
 namespace OMR { typedef OMR::Machine MachineConnector; }
 #endif
 
-#include <stddef.h>                            // for NULL
-#include <stdint.h>                            // for uint8_t, uint32_t
+#include <stddef.h>
+#include <stdint.h>
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RealRegister.hpp"
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
-#include "infra/Annotations.hpp"               // for OMR_EXTENSIBLE
+#include "env/TRMemory.hpp"
+#include "infra/Annotations.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Machine; }
@@ -48,7 +48,6 @@ class OMR_EXTENSIBLE Machine
    {
 
    int16_t numLockedGPRs;
-   int16_t numLockedHPRs;
    int16_t numLockedFPRs;
    int16_t numLockedVRFs;
 
@@ -60,13 +59,22 @@ class OMR_EXTENSIBLE Machine
       :
       _cg(cg),
       numLockedGPRs(-1),
-      numLockedHPRs(-1),
       numLockedFPRs(-1),
       numLockedVRFs(-1)
       {
       }
 
    inline TR::Machine * self();
+
+   /**
+    * @brief Converts RegNum to RealRegister
+    * @param[in] regNum : register number
+    * @return RealRegister for specified register number
+    */
+   TR::RealRegister *getRealRegister(TR::RealRegister::RegNum regNum)
+      {
+      return _registerFile[regNum];
+      }
 
    /**
     * \return : the cached TR::CodeGenerator object
@@ -91,7 +99,6 @@ class OMR_EXTENSIBLE Machine
       switch (kind)
          {
          case TR_GPR: numLockedGPRs = numLocked; return numLockedGPRs;
-         case TR_HPR: numLockedHPRs = numLocked; return numLockedHPRs;
          case TR_FPR: numLockedFPRs = numLocked; return numLockedFPRs;
          case TR_VRF: numLockedVRFs = numLocked; return numLockedVRFs;
          default:
@@ -114,7 +121,6 @@ class OMR_EXTENSIBLE Machine
       switch (kind)
          {
          case TR_GPR: TR_ASSERT(numLockedGPRs >= 0, "Expecting number of locked registers to be >= 0"); return numLockedGPRs;
-         case TR_HPR: TR_ASSERT(numLockedHPRs >= 0, "Expecting number of locked registers to be >= 0"); return numLockedHPRs;
          case TR_FPR: TR_ASSERT(numLockedFPRs >= 0, "Expecting number of locked registers to be >= 0"); return numLockedFPRs;
          case TR_VRF: TR_ASSERT(numLockedVRFs >= 0, "Expecting number of locked registers to be >= 0"); return numLockedVRFs;
          default:

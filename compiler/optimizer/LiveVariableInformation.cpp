@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,37 +19,37 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                                 // for NULL
-#include <stdint.h>                                 // for int32_t, etc
-#include "compile/Compilation.hpp"                  // for Compilation, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/allocator.h"                          // for shared_allocator
+#include "cs2/allocator.h"
 #include "cs2/sparsrbit.h"
-#include "env/TRMemory.hpp"                         // for SparseBitVector, etc
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                             // for Block
-#include "il/DataTypes.hpp"                         // for TR::DataType, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                             // for ILOpCode
-#include "il/Node.hpp"                              // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "il/TreeTop.hpp"                           // for TreeTop
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"            // for AutomaticSymbol
-#include "il/symbol/ParameterSymbol.hpp"            // for ParameterSymbol
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/BitVector.hpp"                      // for TR_BitVector
-#include "infra/Cfg.hpp"                            // for CFG
-#include "infra/List.hpp"                           // for ListIterator, etc
-#include "infra/CfgNode.hpp"                        // for CFGNode
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"
-#include "ras/Debug.hpp"                            // for TR_DebugBase
+#include "ras/Debug.hpp"
 
 class TR_Structure;
 namespace TR { class Optimizer; }

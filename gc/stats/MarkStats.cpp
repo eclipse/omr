@@ -40,7 +40,7 @@ MM_MarkStats::clear()
 	_syncStallCount = 0;
 	_syncStallTime = 0;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
-};
+}
 
 void
 MM_MarkStats::merge(MM_MarkStats *statsToMerge)
@@ -56,6 +56,6 @@ MM_MarkStats::merge(MM_MarkStats *statsToMerge)
 	_syncStallCount += statsToMerge->_syncStallCount;
 	_syncStallTime += statsToMerge->_syncStallTime;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
-};
+}
 
 #endif /* OMR_GC_MODRON_STANDARD || OMR_GC_REALTIME */

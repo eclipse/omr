@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 #ifndef STRUCTURALANALYSIS_INCL
 #define STRUCTURALANALYSIS_INCL
 
-#include <stdint.h>                 // for int32_t
-#include "compile/Compilation.hpp"  // for Compilation
-#include "env/TRMemory.hpp"         // for Allocator, TR_Memory, etc
-#include "il/Block.hpp"             // for Block
-#include "infra/Cfg.hpp"            // for CFG
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "infra/Cfg.hpp"
 #include "infra/deque.hpp"
 
 class TR_Dominators;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,16 +21,16 @@
 
 #include "infra/SimpleRegex.hpp"
 
-#include <ctype.h>                     // for tolower, toupper
-#include <stdio.h>                     // for sprintf
-#include <string.h>                    // for NULL, strlen
-#include "codegen/FrontEnd.hpp"        // for TR_VerboseLog
-#include "compile/Compilation.hpp"     // for Compilation, comp
-#include "compile/ResolvedMethod.hpp"  // for TR_ResolvedMethod
+#include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "il/DataTypes.hpp"            // for CONSTANT64
-#include "ras/Debug.hpp"               // for TR_Debug
-#include "ras/IgnoreLocale.hpp"        // for tolower_ignore_locale
+#include "il/DataTypes.hpp"
+#include "ras/Debug.hpp"
+#include "ras/IgnoreLocale.hpp"
 
 
 /***

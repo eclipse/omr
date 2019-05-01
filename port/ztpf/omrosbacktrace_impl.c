@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,8 @@
 #include <dlfcn.h>
 
 #include "omrintrospect.h"
+
+#include <atoe.h>
 
 uintptr_t protectedBacktrace(struct OMRPortLibrary *port, void *arg);
 uintptr_t backtrace_sigprotect(struct OMRPortLibrary *portLibrary,
@@ -149,6 +151,12 @@ omrintrospect_backtrace_thread_raw(struct OMRPortLibrary *portLibrary,
 	ret = backtrace_sigprotect(portLibrary, threadInfo, addresses,
 		sizeof(addresses) / sizeof(void*));
 
+	/*
+	 * z/TPF Stack grows down.  The top-of-stack has a dummy frame which should be ignored.
+	 * Therefore reducing stack frame count by one.
+	 */
+	ret--;
+
 	nextFrame = &threadInfo->callstack;
 	for (i = 0; i < ret; i++) {
 		if (heap != NULL) {
@@ -246,6 +254,8 @@ omrintrospect_backtrace_symbols_raw(struct OMRPortLibrary *portLibrary,
 		uintptr_t symbol_offset = 0;
 		uintptr_t module_offset = 0;
 		const char *symbol_name = "";
+		char asciiSymbolBuffer[512];
+		char asciiModuleBuffer[512];
 		const char *module_name = "<unknown>";
 		short symbol_length = 0;
 
@@ -285,9 +295,10 @@ omrintrospect_backtrace_symbols_raw(struct OMRPortLibrary *portLibrary,
 
 		/* symbol_name+offset (id, instruction_pointer [module+offset]) */
 		if (symbol_length > 0) {
+			e2a_len(symbol_name, asciiSymbolBuffer, symbol_length+1);
 			cursor += omrstr_printf(portLibrary, cursor,
 				sizeof(output_buf) - (cursor - output_buf), "%.*s",
-				symbol_length, symbol_name);
+				symbol_length, asciiSymbolBuffer);
 			cursor += omrstr_printf(portLibrary, cursor,
 				sizeof(output_buf) - (cursor - output_buf), "+0x%x ",
 				symbol_offset);
@@ -296,9 +307,10 @@ omrintrospect_backtrace_symbols_raw(struct OMRPortLibrary *portLibrary,
 			sizeof(output_buf) - (cursor - output_buf), "(0x%p",
 			frame->instruction_pointer);
 		if (module_name[0] != '\0') {
+			e2a_len(module_name, asciiModuleBuffer, strlen(module_name)+1);
 			cursor += omrstr_printf(portLibrary, cursor,
 				sizeof(output_buf) - (cursor - output_buf), " [%s+0x%x]",
-				module_name, module_offset);
+				asciiModuleBuffer, module_offset);
 		}
 		*(cursor++) = ')';
 		*cursor = 0;

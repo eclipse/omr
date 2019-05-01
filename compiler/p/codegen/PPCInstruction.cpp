@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,29 +21,29 @@
 
 #include "p/codegen/PPCInstruction.hpp"
 
-#include <stddef.h>                               // for NULL
-#include <stdint.h>                               // for int32_t, uint32_t, etc
-#include "codegen/CodeGenerator.hpp"              // for CodeGenerator, etc
-#include "codegen/InstOpCode.hpp"                 // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                // for Instruction
-#include "codegen/Machine.hpp"                    // for Machine, etc
-#include "codegen/MemoryReference.hpp"            // for MemoryReference
-#include "codegen/RealRegister.hpp"               // for RealRegister, etc
-#include "codegen/Register.hpp"                   // for Register
-#include "codegen/RegisterConstants.hpp"          // for TR_RegisterKinds, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterDependencyStruct.hpp"   // for RegisterDependency
-#include "compile/Compilation.hpp"                // for Compilation
+#include "codegen/RegisterDependencyStruct.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/Processors.hpp"
 #include "env/TRMemory.hpp"
-#include "il/DataTypes.hpp"                       // for CONSTANT64
-#include "il/ILOps.hpp"                           // for ILOpCode
-#include "il/Node.hpp"                            // for Node
-#include "il/symbol/LabelSymbol.hpp"              // for LabelSymbol
-#include "infra/Assert.hpp"                       // for TR_ASSERT
+#include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 #include "p/codegen/PPCOpsDefines.hpp"
 #include "p/codegen/PPCOutOfLineCodeSection.hpp"
@@ -440,7 +440,7 @@ void TR::PPCTrg1Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned, 
    TR::Instruction::assignRegisters( kindToBeAssigned );
 
    if (excludeGPR0 && (assignedRegister != NULL) &&
-       (toRealRegister(assignedRegister) == machine->getPPCRealRegister(TR::RealRegister::gr0)))
+       (toRealRegister(assignedRegister) == machine->getRealRegister(TR::RealRegister::gr0)))
       {
       TR::RealRegister    *alternativeRegister;
 
@@ -552,7 +552,7 @@ void TR::PPCTrg1Src1Instruction::assignRegisters(TR_RegisterKinds kindToBeAssign
    targetVirtual->block();
    assignedRegister = sourceVirtual->getAssignedRealRegister();
    if (excludeGPR0 && (assignedRegister != NULL) &&
-       (toRealRegister(assignedRegister) == machine->getPPCRealRegister(TR::RealRegister::gr0)))
+       (toRealRegister(assignedRegister) == machine->getRealRegister(TR::RealRegister::gr0)))
       {
       TR::RealRegister    *alternativeRegister;
 
@@ -908,7 +908,7 @@ void TR::PPCMemSrc1Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigne
    mref->blockRegisters();
    assignedRegister = sourceVirtual->getAssignedRealRegister();
    if (excludeGPR0 && (assignedRegister != NULL) &&
-       (toRealRegister(assignedRegister) == machine->getPPCRealRegister(TR::RealRegister::gr0)))
+       (toRealRegister(assignedRegister) == machine->getRealRegister(TR::RealRegister::gr0)))
       {
       TR::RealRegister    *alternativeRegister;
 
@@ -953,7 +953,7 @@ TR::Register *TR::PPCMemSrc1Instruction::getSourceRegisterForStmw(uint32_t i)
    if (rrWant <= TR::RealRegister::LastGPR)
        {
       TR::Machine *machine = cg()->machine();
-       return machine->getPPCRealRegister(rrWant);
+       return machine->getRealRegister(rrWant);
        }
    return NULL;
    }
@@ -1066,7 +1066,7 @@ TR::Register *TR::PPCTrg1MemInstruction::getTargetRegisterForLmw(uint32_t i)
    if (rrWant <= TR::RealRegister::LastGPR)
        {
       TR::Machine *machine = cg()->machine();
-       return machine->getPPCRealRegister(rrWant);
+       return machine->getRealRegister(rrWant);
        }
    return NULL;
    }
@@ -1571,16 +1571,43 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
          {
          cg()->traceRAInstruction(cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, currentNode, getTargetRegister(0), getSourceRegister(0), 0, cursor));
 
-         cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction   (cg(), getOpCode2Value(), currentNode, getTargetRegister(1), getSourceRegister(1), cursor));
+         if (useRegPairForResult())
+            {
+            cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction   (cg(), getOpCode2Value(), currentNode, getTargetRegister(1), getSourceRegister(1), cursor));
+            cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction   (cg(), getOpCode2Value(), currentNode, getTargetRegister(2), getSourceRegister(2), cursor));
+            }
+         else
+            {
+            cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction   (cg(), getOpCode2Value(), currentNode, getTargetRegister(1), getSourceRegister(1), cursor));
+            }
          cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, currentNode, label2, getTargetRegister(0), cursor));
 
-         if (getNumSources() == 4)
+         if (useRegPairForResult())
             {
-            cg()->traceRAInstruction(cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, currentNode, getTargetRegister(0), getSourceRegister(3), 0, cursor));
-            cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, currentNode, label2, getTargetRegister(0), cursor));
+            if (useRegPairForCond())
+               {
+               cg()->traceRAInstruction(cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, currentNode, getTargetRegister(0), getSourceRegister(5), 0, cursor));
+               cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, currentNode, label2, getTargetRegister(0), cursor));
+               }
+            }
+         else
+            {
+            if (useRegPairForCond())
+               {
+               cg()->traceRAInstruction(cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, currentNode, getTargetRegister(0), getSourceRegister(3), 0, cursor));
+               cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, currentNode, label2, getTargetRegister(0), cursor));
+               }
             }
 
-         cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction   (cg(), getOpCode2Value(), currentNode, getTargetRegister(1), getSourceRegister(2), cursor));
+         if (useRegPairForResult())
+            {
+            cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction   (cg(), getOpCode2Value(), currentNode, getTargetRegister(1), getSourceRegister(3), cursor));
+            cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction   (cg(), getOpCode2Value(), currentNode, getTargetRegister(2), getSourceRegister(4), cursor));
+            }
+         else
+            {
+            cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction   (cg(), getOpCode2Value(), currentNode, getTargetRegister(1), getSourceRegister(2), cursor));
+            }
          cg()->traceRAInstruction(cursor = generateLabelInstruction      (cg(), TR::InstOpCode::label,currentNode, label2, cursor));
          }
          break;

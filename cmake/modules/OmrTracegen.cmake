@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,10 +29,9 @@ set_property(TARGET run_tracegen PROPERTY FOLDER tracegen)
 
 # Setup a default trace root if one has not alreay been set
 if(NOT DEFINED OMR_TRACE_ROOT)
-	message(WARNING "OMR: No trace root has been set. Defaulting to '${CMAKE_CURRENT_BINARY_DIR}'")
 	set(OMR_TRACE_ROOT "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
-
+message(STATUS "OMR: trace root is '${OMR_TRACE_ROOT}'")
 
 # Process an <input> tracegen file to produce trace headers, sources, and pdat files.
 # Usage: omr_add_tracegen(<input> [<output>])
@@ -65,7 +64,7 @@ function(omr_add_tracegen input)
 
 	add_custom_command(
 		OUTPUT "${generated_filename}.c" "${generated_filename}.h" "${generated_filename}.pdat"
-		COMMAND tracegen -w2cd -treatWarningAsError -generatecfiles -threshold 1 -file ${CMAKE_CURRENT_SOURCE_DIR}/${input}
+		COMMAND ${OMR_EXE_LAUNCHER} $<TARGET_FILE:tracegen> -w2cd -treatWarningAsError -generatecfiles -threshold 1 -file ${CMAKE_CURRENT_SOURCE_DIR}/${input}
 		DEPENDS ${input} tracegen  # adding tracegen as a dependency should be automatic, but for some reason doesnt happen on ninja generators
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
@@ -82,7 +81,7 @@ endmacro(add_tracegen)
 # However this is really only a build order dependency in cmake. In order to have proper dependency tracking
 # based on the output .pdat files we use the generator expression.
 add_custom_command(OUTPUT tracemerge.stamp
-	COMMAND tracemerge -majorversion 5 -minorversion 1 -root ${OMR_TRACE_ROOT}
+	COMMAND ${OMR_EXE_LAUNCHER} $<TARGET_FILE:tracemerge> -majorversion 5 -minorversion 1 -root ${OMR_TRACE_ROOT}
 	COMMAND ${CMAKE_COMMAND} -E touch tracemerge.stamp
 	DEPENDS run_tracegen $<TARGET_PROPERTY:run_tracegen,OMR_TRACE_PDATS>
 	WORKING_DIRECTORY ${OMR_TRACE_ROOT}

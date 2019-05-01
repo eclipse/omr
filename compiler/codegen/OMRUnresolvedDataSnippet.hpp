@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,9 +33,9 @@ namespace OMR { typedef OMR::UnresolvedDataSnippet UnresolvedDataSnippetConnecto
 
 #include "codegen/Snippet.hpp"
 
-#include <stddef.h>         // for NULL
-#include <stdint.h>         // for uint8_t, int32_t
-#include "infra/Flags.hpp"  // for flag32_t
+#include <stddef.h>
+#include <stdint.h>
+#include "infra/Flags.hpp"
 
 namespace TR { class SymbolReference; }
 namespace TR { class CodeGenerator; }

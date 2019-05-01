@@ -52,6 +52,7 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 	BOOLEAN decorate = OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_DECORATE);
 	BOOLEAN openExec = OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_OPEN_EXECUTABLE);
 	uintptr_t pathLength = 0;
+	uintptr_t dirNameLength = 0;
 
 	Trc_PRT_sl_open_shared_library_Entry(name, flags);
 
@@ -60,7 +61,8 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 		char *p = strrchr(name, '/');
 		if (p) {
 			/* the names specifies a path */
-			pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "%.*slib%s.so", (uintptr_t)p + 1 - (uintptr_t)name, name, p + 1);
+			dirNameLength = (uintptr_t)p + 1 - (uintptr_t)name;
+			pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "%.*slib%s.so", dirNameLength, name, p + 1);
 		} else {
 			pathLength = portLibrary->str_printf(portLibrary, mangledName, (EsMaxPath + 1), "lib%s.so", name);
 		}
@@ -78,6 +80,17 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 	 * mode), which anyway is required for enabling symbol resolution.
 	 */
 	handle = dllload(openName);
+
+	if ((NULL == handle) && !openExec && decorate && (0 != dirNameLength)) {
+		/* z/OS doesn't support dladdr so we can't search the dir of the portLib for the dll
+		 * as is the case on linux and macos. Instead, attempt to load the DLL with just its
+		 * name and not the full path. dllload will search the filesystem for the library */
+		openName +=  dirNameLength;
+
+		Trc_PRT_sl_open_shared_library_Event2(openName);
+		handle = dllload(openName);
+	}
+
 	if (NULL == handle) {
 		getDLError(portLibrary, errBuf, sizeof(errBuf));
 		Trc_PRT_sl_open_shared_library_Event2(errBuf);

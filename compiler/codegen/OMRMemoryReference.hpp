@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,8 +31,8 @@ namespace OMR { class MemoryReference; }
 namespace OMR { typedef OMR::MemoryReference MemoryReferenceConnector; }
 #endif
 
-#include "env/TRMemory.hpp"       // for TR_Memory, etc
-#include "infra/Annotations.hpp"  // for OMR_EXTENSIBLE
+#include "env/TRMemory.hpp"
+#include "infra/Annotations.hpp"
 
 namespace TR { class MemoryReference; }
 

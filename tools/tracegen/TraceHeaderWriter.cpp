@@ -58,9 +58,6 @@ const char *UT_H_FILE_HEADER_TEMPLATE =
 "#ifndef UTE_%s_MODULE_HEADER\n"
 "#define UTE_%s_MODULE_HEADER\n"
 "#include \"ute_module.h\"\n"
-"#if !defined(UT_DIRECT_TRACE_REGISTRATION)\n"
-"#include \"jni.h\"\n"
-"#endif /* !defined(UT_DIRECT_TRACE_REGISTRATION) */\n"
 "#ifndef UT_TRACE_OVERHEAD\n"
 "#define UT_TRACE_OVERHEAD %u\n"
 "#endif\n"
@@ -81,21 +78,12 @@ const char *UT_H_FILE_HEADER_TEMPLATE =
 "#define Trace_Unreachable()\n"
 "#endif\n"
 "\n"
-"#if defined(UT_DIRECT_TRACE_REGISTRATION)\n"
 "int32_t register%sWithTrace(UtInterface * utIntf, UtModuleInfo* containerName);\n"
 "int32_t deregister%sWithTrace(UtInterface * utIntf);\n"
 "#define UT_MODULE_LOADED(utIntf) register%sWithTrace((utIntf), NULL);\n"
 "#define UT_MODULE_UNLOADED(utIntf) deregister%sWithTrace((utIntf));\n"
 "#define UT_%s_MODULE_LOADED(utIntf) register%sWithTrace((utIntf), NULL);\n"
 "#define UT_%s_MODULE_UNLOADED(utIntf) deregister%sWithTrace((utIntf));\n"
-"#else /* defined(UT_DIRECT_TRACE_REGISTRATION) */\n"
-"int32_t register%sWithTrace(JavaVM * vm, UtModuleInfo* containerName);\n"
-"int32_t deregister%sWithTrace(JavaVM * vm);\n"
-"#define UT_MODULE_LOADED(vm) register%sWithTrace((JavaVM *)(vm), NULL);\n"
-"#define UT_MODULE_UNLOADED(vm) deregister%sWithTrace((JavaVM *)(vm));\n"
-"#define UT_%s_MODULE_LOADED(vm) register%sWithTrace((JavaVM *)(vm), NULL);\n"
-"#define UT_%s_MODULE_UNLOADED(vm) deregister%sWithTrace((JavaVM *)(vm));\n"
-"#endif /* defined(UT_DIRECT_TRACE_REGISTRATION) */\n"
 "\n";
 
 const char *TP_ASSERT_TEMPLATE =
@@ -153,12 +141,14 @@ TraceHeaderWriter::writeOutputFiles(J9TDFOptions *options, J9TDFFile *tdf)
 	time_t targetFileMtime = FileUtils::getMtime(fileName);
 
 	if (false == options->force && targetFileMtime > sourceFileMtime) {
-		printf("Header file is already up-to-date: %s\n", fileName);
+		if (options->verboseOutput) {
+			printf("Header file is already up-to-date: %s\n", fileName);
+		}
 		Port::omrmem_free((void **)&fileName);
 		return RC_OK;
 	}
 
-	if (true == options->verboseOutput) {
+	if (options->verboseOutput) {
 		printf("Creating header file: %s\n", fileName);
 	}
 

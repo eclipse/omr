@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,14 +22,14 @@
 #ifndef RELOCATION_INCL
 #define RELOCATION_INCL
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for uint8_t, uint32_t, etc
-#include "env/TRMemory.hpp"                 // for TR_Memory, etc
-#include "infra/Assert.hpp"                 // for TR_ASSERT
-#include "infra/Flags.hpp"                  // for flags8_t
-#include "infra/Link.hpp"                   // for TR_Link
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
 #include "runtime/Runtime.hpp"
-#include "ras/DebugCounter.hpp"             // for TR::DebugCounter
+#include "ras/DebugCounter.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Compilation; }
@@ -111,7 +111,6 @@ class Relocation
    /**dumps a trace of the internals - override as required */
    virtual void trace(TR::Compilation* comp);
 
-   virtual void addAOTRelocation(TR::CodeGenerator *codeGen) {addExternalRelocation(codeGen);}
    virtual void addExternalRelocation(TR::CodeGenerator *codeGen) {}
 
    virtual void apply(TR::CodeGenerator *codeGen);
@@ -416,7 +415,6 @@ class ExternalRelocation : public TR::Relocation
 
    void trace(TR::Compilation* comp);
 
-   void addAOTRelocation(TR::CodeGenerator *codeGen) {addExternalRelocation(codeGen);}
    void addExternalRelocation(TR::CodeGenerator *codeGen);
    virtual uint8_t collectModifier();
    virtual uint32_t getNarrowSize() {return 2;}

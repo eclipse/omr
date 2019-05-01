@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,28 +21,28 @@
 
 #include "optimizer/DebuggingCounters.hpp"
 
-#include <stdint.h>                    // for int32_t
-#include <stdio.h>                     // for fprintf, NULL, fflush, fclose, etc
-#include <string.h>                    // for strncmp, strcpy, strlen, etc
-#include "codegen/FrontEnd.hpp"        // for TR_FrontEnd
-#include "compile/Compilation.hpp"     // for Compilation
-#include "compile/Method.hpp"          // for TR_Method
-#include "compile/SymbolReferenceTable.hpp"       // for SymbolReferenceTable
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options
+#include "control/Options_inlines.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"              // for TR_ByteCodeInfo
-#include "il/Block.hpp"                // for Block
-#include "il/DataTypes.hpp"            // for DataTypes::Int32
-#include "il/ILOpCodes.hpp"            // for ILOpCodes::BBStart, etc
-#include "il/ILOps.hpp"                // for ILOpCode
-#include "il/Node.hpp"                 // for Node
-#include "il/Node_inlines.hpp"         // for Node::createWithSymRef, etc
-#include "il/Symbol.hpp"               // for Symbol
-#include "il/TreeTop.hpp"              // for TreeTop
-#include "il/TreeTop_inlines.hpp"      // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"  // for MethodSymbol
-#include "limits.h"                    // for INT_MAX
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "limits.h"
 #ifdef J9_PROJECT_SPECIFIC
 #include "env/VMJ9.h"
 #endif

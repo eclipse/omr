@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,8 @@ list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
 	-qalias=noansi
 	-qxflag=LTOL:LTOL0
 )
+
+list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qlanglvl=extended0x)
 
 if(OMR_ENV_DATA64)
 	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
@@ -81,17 +83,6 @@ list(APPEND TR_COMPILE_OPTIONS
 	-qfuncsect
 	-qsuppress=1540-1087:1540-1088:1540-1090:1540-029:1500-029
 	-qdebug=nscrep
-)
-
-# TR_CXX_COMPILE_OPTIONS are appended to CMAKE_CXX_FLAGS, and so apply only to
-# C++ file compilation
-list(APPEND TR_CXX_COMPILE_OPTIONS
-	-qlanglvl=extended0x
-)
-
-# TR_C_COMPILE_OPTIONS are appended to CMAKE_C_FLAGS, and so apply only to
-# C file compilation
-list(APPEND TR_C_COMPILE_OPTIONS
 )
 
 set(SPP_CMD ${CMAKE_C_COMPILER})

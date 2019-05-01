@@ -49,6 +49,8 @@ OMR::ARM64::Instruction::Instruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnem
      _conditions(cond)
    {
    self()->setBlockIndex(cg->getCurrentBlockIndex());
+   if (cond)
+      cond->incRegisterTotalUseCounts(cg);
    }
 
 
@@ -57,6 +59,8 @@ OMR::ARM64::Instruction::Instruction(TR::CodeGenerator *cg, TR::Instruction *pre
      _conditions(cond)
    {
    self()->setBlockIndex(cg->getCurrentBlockIndex());
+   if (cond)
+      cond->incRegisterTotalUseCounts(cg);
    }
 
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,31 +22,30 @@
 #include "optimizer/OMROptimization.hpp"
 
 
-#include <stddef.h>                            // for NULL
-#include <stdint.h>                            // for int32_t, uint32_t
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
-#include "codegen/Linkage.hpp"                 // for Linkage
-#include "compile/Compilation.hpp"             // for Compilation
-#include "cs2/allocator.h"                     // for allocator
-#include "env/IO.hpp"                          // for POINTER_PRINTF_FORMAT
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for TR::DataType
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "cs2/allocator.h"
+#include "env/IO.hpp"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                        // for ILOpCode, TR::ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getChild, etc
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Cfg.hpp"                       // for CFG, TR_SuccessorIterator
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "optimizer/OptimizationManager.hpp"   // for OptimizationManager
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/CfgEdge.hpp"
+#include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimization_inlines.hpp"  // for Optimization::self
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/Simplifier.hpp"            // for TR::Simplifier
-#include "optimizer/TransformUtil.hpp"         // for TransformUtil
+#include "optimizer/Optimization_inlines.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Simplifier.hpp"
+#include "optimizer/TransformUtil.hpp"
 
 #define MAX_DEPTH_FOR_SMART_ANCHORING 3
 

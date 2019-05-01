@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 #include "arm/codegen/ARMInstruction.hpp"
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Machine.hpp"
@@ -462,7 +463,7 @@ static TR::Register *callDouble2LongHelper(TR::Node *node, TR::CodeGenerator *cg
       dependencies->addPostCondition(trgReg->getHighOrder(), TR::RealRegister::gr0);
       dependencies->addPostCondition(trgReg->getLowOrder(), TR::RealRegister::gr1);
       }
-   addDependency(dependencies, NULL, TR::RealRegister::gr2, TR_GPR, cg); // Block r2
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr2, TR_GPR, cg); // Block r2
    dependencies->stopAddingConditions();
 
    generateImmSymInstruction(cg, ARMOp_bl,
@@ -549,7 +550,7 @@ static TR::Register *callFloat2LongHelper(TR::Node *node, TR::CodeGenerator *cg)
       dependencies->addPostCondition(trgReg->getHighOrder(), TR::RealRegister::gr0);
       dependencies->addPostCondition(trgReg->getLowOrder(), TR::RealRegister::gr1);
       }
-   addDependency(dependencies, NULL, TR::RealRegister::gr2, TR_GPR, cg); // Block r2
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr2, TR_GPR, cg); // Block r2
    dependencies->stopAddingConditions();
 
    generateImmSymInstruction(cg, ARMOp_bl,
@@ -621,8 +622,8 @@ static TR::Register *callDoubleRemainderHelper(TR::Node *node, TR::CodeGenerator
       {
       /* Little Endian */
 #if defined(__ARM_PCS_VFP)
-      addDependency(dependencies, NULL, TR::RealRegister::gr1, TR_GPR, cg);
-      addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg);
+      TR::addDependency(dependencies, NULL, TR::RealRegister::gr1, TR_GPR, cg);
+      TR::addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg);
 
       dependencies->addPreCondition(src1Reg, TR::RealRegister::fp0);
       dependencies->addPreCondition(src2Reg, TR::RealRegister::fp1);
@@ -630,7 +631,7 @@ static TR::Register *callDoubleRemainderHelper(TR::Node *node, TR::CodeGenerator
       for (i = 2; i < 8; i++)
          {
          TR::RealRegister::RegNum realReg = (TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::fp0 + i);
-         addDependency(dependencies, NULL, realReg, TR_FPR, cg);
+         TR::addDependency(dependencies, NULL, realReg, TR_FPR, cg);
          }
       dependencies->addPostCondition(trgReg, TR::RealRegister::fp0);
       dependencies->addPostCondition(cg->allocateRegister(TR_FPR), TR::RealRegister::fp1);//TODO live register
@@ -638,8 +639,8 @@ static TR::Register *callDoubleRemainderHelper(TR::Node *node, TR::CodeGenerator
       dependencies->addPreCondition(src1Reg->getHighOrder(), TR::RealRegister::gr1);
       dependencies->addPreCondition(src1Reg->getLowOrder(), TR::RealRegister::gr0);
 
-      addDependency(dependencies, src2Reg->getLowOrder(), TR::RealRegister::gr2, TR_GPR, cg);
-      addDependency(dependencies, src2Reg->getHighOrder(), TR::RealRegister::gr3, TR_GPR, cg);
+      TR::addDependency(dependencies, src2Reg->getLowOrder(), TR::RealRegister::gr2, TR_GPR, cg);
+      TR::addDependency(dependencies, src2Reg->getHighOrder(), TR::RealRegister::gr3, TR_GPR, cg);
 
       dependencies->addPostCondition(highReg, TR::RealRegister::gr1);
       dependencies->addPostCondition(lowReg, TR::RealRegister::gr0);
@@ -649,8 +650,8 @@ static TR::Register *callDoubleRemainderHelper(TR::Node *node, TR::CodeGenerator
       {
       /* Big Endian */
 #if defined(__ARM_PCS_VFP)
-      addDependency(dependencies, NULL, TR::RealRegister::gr1, TR_GPR, cg);
-      addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg);
+      TR::addDependency(dependencies, NULL, TR::RealRegister::gr1, TR_GPR, cg);
+      TR::addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg);
 
       dependencies->addPreCondition(src1Reg, TR::RealRegister::fp0);
       dependencies->addPreCondition(src2Reg, TR::RealRegister::fp1);
@@ -658,7 +659,7 @@ static TR::Register *callDoubleRemainderHelper(TR::Node *node, TR::CodeGenerator
       for (i = 2; i < 8; i++)
          {
          TR::RealRegister::RegNum realReg = (TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::fp0 + i);
-         addDependency(dependencies, NULL, realReg, TR_FPR, cg);
+         TR::addDependency(dependencies, NULL, realReg, TR_FPR, cg);
          }
       dependencies->addPostCondition(trgReg, TR::RealRegister::fp0);
       dependencies->addPostCondition(cg->allocateRegister(TR_FPR), TR::RealRegister::fp1);//TODO live register
@@ -666,8 +667,8 @@ static TR::Register *callDoubleRemainderHelper(TR::Node *node, TR::CodeGenerator
       dependencies->addPreCondition(src1Reg->getHighOrder(), TR::RealRegister::gr0);
       dependencies->addPreCondition(src1Reg->getLowOrder(), TR::RealRegister::gr1);
 
-      addDependency(dependencies, src2Reg->getHighOrder(), TR::RealRegister::gr2, TR_GPR, cg);
-      addDependency(dependencies, src2Reg->getLowOrder(), TR::RealRegister::gr3, TR_GPR, cg);
+      TR::addDependency(dependencies, src2Reg->getHighOrder(), TR::RealRegister::gr2, TR_GPR, cg);
+      TR::addDependency(dependencies, src2Reg->getLowOrder(), TR::RealRegister::gr3, TR_GPR, cg);
 
       dependencies->addPostCondition(highReg, TR::RealRegister::gr0);
       dependencies->addPostCondition(lowReg, TR::RealRegister::gr1);
@@ -758,14 +759,14 @@ static TR::Register *callFloatRemainderHelper(TR::Node *node, TR::CodeGenerator 
          }
       }
 
-   addDependency(dependencies, NULL, TR::RealRegister::gr1, TR_GPR, cg);
-   addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg);
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr1, TR_GPR, cg);
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg);
    dependencies->addPreCondition(src1Reg, TR::RealRegister::fp0);
    dependencies->addPreCondition(src2Reg, TR::RealRegister::fs1);
    for (i = 1; i < 8; i++)
       {
       TR::RealRegister::RegNum realReg = (TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::fp0 + i);
-      addDependency(dependencies, NULL, realReg, TR_FPR, cg);
+      TR::addDependency(dependencies, NULL, realReg, TR_FPR, cg);
       }
    dependencies->addPostCondition(trgReg, TR::RealRegister::fp0);
 #else
@@ -1025,14 +1026,14 @@ TR::Register *OMR::ARM::TreeEvaluator::fconstEvaluator(TR::Node *node, TR::CodeG
    float value = node->getFloat();
    uint32_t i32 = *(int32_t *)(&value);
    TR::Compilation *comp = cg->comp();
-   TR::RealRegister *machineIPReg = cg->machine()->getARMRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *machineIPReg = cg->machine()->getRealRegister(TR::RealRegister::gr15);
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
 
    traceMsg(comp, "In fconstEvaluator %x\n", i32);
-   addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
    if(!noFPRA)
       {
-      addDependency(deps, floatTrgReg, TR::RealRegister::NoReg, TR_FPR, cg);
+      TR::addDependency(deps, floatTrgReg, TR::RealRegister::NoReg, TR_FPR, cg);
       }
    deps->stopAddingConditions();
 
@@ -1085,14 +1086,14 @@ TR::Register *OMR::ARM::TreeEvaluator::dconstEvaluator(TR::Node *node, TR::CodeG
    double value = node->getDouble();
    uint64_t i64 = (*(int64_t *)&value);
    TR::Compilation *comp = cg->comp();
-   TR::RealRegister *machineIPReg = cg->machine()->getARMRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *machineIPReg = cg->machine()->getRealRegister(TR::RealRegister::gr15);
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
 
    traceMsg(comp, "In dconstEvaluator %x\n", i64);
-   addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
    if(!noFPRA)
       {
-      addDependency(deps, doubleTrgReg, TR::RealRegister::NoReg, TR_FPR, cg);
+      TR::addDependency(deps, doubleTrgReg, TR::RealRegister::NoReg, TR_FPR, cg);
       }
    deps->stopAddingConditions();
 
@@ -1516,12 +1517,12 @@ TR::Register *OMR::ARM::TreeEvaluator::freturnEvaluator(TR::Node *node, TR::Code
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
    if (returnRegister->getKind() == TR_GPR)
       {
-      addDependency(deps, returnRegister, cg->getProperties().getIntegerReturnRegister(), TR_GPR, cg);
+      TR::addDependency(deps, returnRegister, cg->getProperties().getIntegerReturnRegister(), TR_GPR, cg);
       }
    else if (returnRegister->getKind() == TR_FPR)
       {
       TR::Register *temp = moveFromFloatRegister(node, returnRegister, cg);
-      addDependency(deps, temp, cg->getProperties().getIntegerReturnRegister(), TR_GPR, cg);
+      TR::addDependency(deps, temp, cg->getProperties().getIntegerReturnRegister(), TR_GPR, cg);
       }
    else
       TR_ASSERT(0, "Unknown register type\n");
@@ -1537,14 +1538,14 @@ TR::Register *OMR::ARM::TreeEvaluator::dreturnEvaluator(TR::Node *node, TR::Code
 
    if (returnRegister->getKind() == TR_GPR)
       {
-      addDependency(deps, returnRegister->getLowOrder(), cg->getProperties().getLongLowReturnRegister(), TR_GPR, cg);
-      addDependency(deps, returnRegister->getHighOrder(), cg->getProperties().getLongHighReturnRegister(), TR_GPR, cg);
+      TR::addDependency(deps, returnRegister->getLowOrder(), cg->getProperties().getLongLowReturnRegister(), TR_GPR, cg);
+      TR::addDependency(deps, returnRegister->getHighOrder(), cg->getProperties().getLongHighReturnRegister(), TR_GPR, cg);
       }
    else if (returnRegister->getKind() == TR_FPR)
       {
       TR::Register *temp = moveFromDoubleRegister(node, returnRegister, cg);
-      addDependency(deps, temp->getLowOrder(), cg->getProperties().getLongLowReturnRegister(), TR_GPR, cg);
-      addDependency(deps, temp->getHighOrder(), cg->getProperties().getLongHighReturnRegister(), TR_GPR, cg);
+      TR::addDependency(deps, temp->getLowOrder(), cg->getProperties().getLongLowReturnRegister(), TR_GPR, cg);
+      TR::addDependency(deps, temp->getHighOrder(), cg->getProperties().getLongHighReturnRegister(), TR_GPR, cg);
       }
    else
       TR_ASSERT(0, "Unknown register type\n");

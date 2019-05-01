@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -294,7 +294,7 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
    {
    public:
 
-   Linkage (TR::CodeGenerator *cg) : _cg(cg) {}
+   Linkage (TR::CodeGenerator *cg) : OMR::Linkage(cg) {}
 
    virtual bool hasToBeOnStack(TR::ParameterSymbol *parm);
    virtual void mapStack(TR::ResolvedMethodSymbol *method);
@@ -330,14 +330,6 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
    virtual TR::Register *buildDirectDispatch(TR::Node *callNode) = 0;
    virtual TR::Register *buildIndirectDispatch(TR::Node *callNode) = 0;
 
-   TR_Debug        *getDebug()         {return _cg->getDebug();}
-   TR::CodeGenerator *cg()               {return _cg;}
-   TR::Compilation      *comp()             {return _cg->comp();}
-   TR_FrontEnd         *fe()               {return _cg->fe();}
-   TR_Memory *          trMemory()         {return _cg->trMemory(); }
-   TR_HeapMemory        trHeapMemory();
-   TR_StackMemory       trStackMemory();
-
    protected:
 
    TR::Register *buildARMLinkageDirectDispatch(TR::Node *callNode, bool isSystem = false);
@@ -351,10 +343,6 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
                                TR::Register*                       &vftReg,
                                TR_LinkageConventions               conventions,
                                bool                                isVirtualOrJNI);
-
-protected:
-
-   TR::CodeGenerator*_cg;
    };
 }
 }

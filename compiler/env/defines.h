@@ -186,6 +186,5 @@
    If these are permanently enabled, the ifdefs should be removed
    and the guarded code permanently enabled */
 #define BITVECTOR_BIT_NUMBERING_MSB   1
-#define DUT_DIRECT_TRACE_REGISTRATION 1
 
 #endif /* OMR_DEFINES_H */

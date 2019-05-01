@@ -89,10 +89,9 @@ MM_Dispatcher::cleanupAfterTask(MM_EnvironmentBase *env)
 void
 MM_Dispatcher::run(MM_EnvironmentBase *env, MM_Task *task, uintptr_t newThreadCount)
 {
+	uintptr_t activeThreads = recomputeActiveThreadCountForTask(env, task, newThreadCount);
 	task->masterSetup(env);
-	prepareThreadsForTask(env, task, newThreadCount);
-	/* todo: remove this API once downstream OMR projects transition to the API with threadCount argument */
-	prepareThreadsForTask(env, task);
+	prepareThreadsForTask(env, task, activeThreads);
 	acceptTask(env);
 	task->run(env);
 	completeTask(env);
@@ -109,4 +108,10 @@ MM_Dispatcher::startUpThreads()
 void 
 MM_Dispatcher::shutDownThreads() 
 {
+}
+
+uintptr_t
+MM_Dispatcher::recomputeActiveThreadCountForTask(MM_EnvironmentBase *env, MM_Task *task, uintptr_t newThreadCount)
+{
+	return 1;
 }

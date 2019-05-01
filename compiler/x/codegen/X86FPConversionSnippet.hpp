@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,13 @@
 #ifndef IA32FPCONVERSIONSNIPPET_INCL
 #define IA32FPCONVERSIONSNIPPET_INCL
 
-#include <stdint.h>                      // for uint8_t, int32_t, uint32_t
-#include "codegen/RealRegister.hpp"      // for toRealRegister
-#include "codegen/Snippet.hpp"           // for TR::X86Snippet::Kind, etc
-#include "il/SymbolReference.hpp"        // for SymbolReference
-#include "infra/Assert.hpp"              // for TR_ASSERT
-#include "x/codegen/RestartSnippet.hpp"  // for TR::X86RestartSnippet
-#include "codegen/X86Instruction.hpp"  // for TR::X86RegInstruction, etc
+#include <stdint.h>
+#include "codegen/RealRegister.hpp"
+#include "codegen/Snippet.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
+#include "x/codegen/RestartSnippet.hpp"
+#include "codegen/X86Instruction.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class LabelSymbol; }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,10 +21,10 @@
 
 #ifdef DEBUG
 
-#include "codegen/CodeGenerator.hpp"  // for CodeGenerator
-#include "compile/Compilation.hpp"    // for Compilation
-#include "ras/Debug.hpp"              // for TR_DebugBase
-#include "x/codegen/X86Ops.hpp"       // for TR_X86OpCode
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
+#include "ras/Debug.hpp"
+#include "x/codegen/X86Ops.hpp"
 
 const char *
 TR_X86OpCode::getOpCodeName(TR::CodeGenerator *cg)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,13 +21,13 @@
 
 #include "optimizer/TranslateTable.hpp"
 
-#include <stdint.h>                 // for uint8_t, uint16_t, uint32_t, etc
-#include <string.h>                 // for memcmp, memcpy
-#include "compile/Compilation.hpp"  // for Compilation
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include <stdint.h>
+#include <string.h>
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "env/TRMemory.hpp"
-#include "il/DataTypes.hpp"         // for DataTypes::Address
-#include "infra/Assert.hpp"         // for TR_ASSERT
+#include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
 
 namespace TR { class SymbolReference; }
 

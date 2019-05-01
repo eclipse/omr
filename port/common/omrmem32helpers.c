@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -418,7 +418,7 @@ void *
 allocate_memory32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite)
 {
 	void *returnPtr = NULL;
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	BOOLEAN useMalloc31 = FALSE;
 #elif defined(OMRZTPF)
 	/* malloc on z/TPF is 32 bits */
@@ -426,7 +426,7 @@ allocate_memory32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, cons
 #endif
 
 	Trc_PRT_mem_allocate_memory32_Entry(byteAmount);
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	if (OMRPORT_DISABLE_ENSURE_CAP32 == portLibrary->portGlobals->disableEnsureCap32) {
 		useMalloc31 = TRUE;
 	}
@@ -453,7 +453,7 @@ allocate_memory32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, cons
 		}
 
 		omrthread_monitor_exit(PPG_mem_mem32_subAllocHeapMem32.monitor);
-#if (defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)) || defined(OMRZTPF)
+#if (defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)) || defined(OMRZTPF)
 	}
 #endif
 
@@ -477,7 +477,7 @@ ensure_capacity32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount)
 
 	Trc_PRT_mem_ensure_capacity32_Entry(byteAmount);
 
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	if (OMRPORT_DISABLE_ENSURE_CAP32 == portLibrary->portGlobals->disableEnsureCap32) {
 		Trc_PRT_mem_ensure_capacity32_NotRequired_Exit();
 		return OMRPORT_ENSURE_CAPACITY_NOT_REQUIRED;
@@ -670,7 +670,7 @@ free_memory32(struct OMRPortLibrary *portLibrary, void *memoryPointer)
 #endif
 	Trc_PRT_mem_free_memory32_Entry(memoryPointer);
 
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	if (OMRPORT_DISABLE_ENSURE_CAP32 == portLibrary->portGlobals->disableEnsureCap32) {
 		free(memoryPointer);
 	} else {
@@ -720,7 +720,7 @@ free_memory32(struct OMRPortLibrary *portLibrary, void *memoryPointer)
 
 		omrthread_monitor_exit(PPG_mem_mem32_subAllocHeapMem32.monitor);
 
-#if (defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)) || defined(OMRZTPF)
+#if (defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)) || defined(OMRZTPF)
 	}
 #endif
 

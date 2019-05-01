@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,24 +21,24 @@
 
 #include "optimizer/CatchBlockRemover.hpp"
 
-#include <stddef.h>                              // for NULL
-#include <stdint.h>                              // for int32_t, uint32_t
+#include <stddef.h>
+#include <stdint.h>
 #include "env/StackMemoryRegion.hpp"
-#include "compile/Compilation.hpp"               // for Compilation
-#include "env/TRMemory.hpp"                      // for TR_Memory
-#include "il/Block.hpp"                          // for Block, toBlock, etc
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes::monent, etc
-#include "il/Node.hpp"                           // for Node, vcount_t
-#include "il/TreeTop.hpp"                        // for TreeTop
-#include "il/TreeTop_inlines.hpp"                // for TreeTop::getNode, etc
-#include "infra/Cfg.hpp"                         // for CFG
-#include "infra/List.hpp"                        // for List, ListIterator, etc
-#include "infra/CfgEdge.hpp"                     // for CFGEdge
-#include "infra/CfgNode.hpp"                     // for CFGNode
-#include "optimizer/Optimization.hpp"            // for Optimization
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/Optimizer.hpp"               // for Optimizer
+#include "optimizer/Optimizer.hpp"
 
 
 TR_CatchBlockRemover::TR_CatchBlockRemover(TR::OptimizationManager *manager)

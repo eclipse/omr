@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 1998, 2018 IBM Corp. and others
+// Copyright (c) 1998, 2019 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -898,3 +898,21 @@ TraceEntry=Trc_MM_MSSGenerational_allocationRequestFailed_entry Overhead=1 Level
 TraceEvent=Trc_MM_MSSGenerational_allocationRequestFailed1 Overhead=1 Level=1 Group=allocate Template="MSSGenerational::allocationRequestFailed size %zu prev != new %llx, allocate from old %llx"
 TraceEvent=Trc_MM_MSSGenerational_allocationRequestFailed Overhead=1 Level=1 Group=allocate Template="MSSGenerational::allocationRequestFailed size %zu event %u"
 TraceExit=Trc_MM_MSSGenerational_allocationRequestFailed_exit Overhead=1 Level=1 Group=allocate Template="MSSGenerational::allocationRequestFailed size %zu exit %zu result %llx"
+
+TraceEvent=Trc_MM_LOAResize_initialize Overhead=1 Level=1 Group=loaresize Template="LOA Initialize: SOA subpool %p LOA subpool %p"
+TraceEvent=Trc_MM_LOAResize_resizeLOA1 Overhead=1 Level=1 Group=loaresize Template="post GC resize LOA: newLOAsize %zu"
+TraceEvent=Trc_MM_LOAResize_resizeLOA2 Overhead=1 Level=1 Group=loaresize Template="newLOAsize adjusted by LOA occupnacy %zu"
+TraceEvent=Trc_MM_LOAResize_resizeLOA3 Overhead=1 Level=1 Group=loaresize Template="newLOAsize adjusted min LOA ratio %zu"
+TraceEvent=Trc_MM_LOAResize_resizeLOA4 Overhead=1 Level=1 Group=loaresize Template="LOA Rebalanced to meet minimum SOA requirements: LOA ratio has decreased from %.3f --> %.3f"
+TraceEvent=Trc_MM_LOAResize_calculateTargetLOARatio Overhead=1 Level=1 Group=loaresize Template="LOA Calculate target ratio: ratio has %s from  %.3f --> %.3f"
+TraceEvent=Trc_MM_LOAResize_resetTargetLOARatio Overhead=1 Level=1 Group=loaresize Template="LOA Reset target ratio: ratio reset from %.3f to minimum size of %.3f"
+TraceEvent=Trc_MM_LOAResize_resetLOASize Overhead=1 Level=1 Group=loaresize Template="Reset LOA Size: LOA Base is now %p"
+TraceEvent=Trc_MM_LOAResize_expandWithRange1 Overhead=1 Level=1 Group=loaresize Template="LOA Initial Allocation: heapSize %zu, Initial LOA ratio is %.3f --> LOA base is %p initial LOA size %zu"
+TraceEvent=Trc_MM_LOAResize_expandWithRange2 Overhead=1 Level=1 Group=loaresize Template="LOA resized on heap expansion: heapSize %zu,  LOA ratio is %.3f --> LOA base is now %p LOA size %zu"
+TraceEvent=Trc_MM_LOAResize_contractWithRange Overhead=1 Level=1 Group=loaresize Template="LOA resized on heap contraction: heapSize %zu,  LOA ratio is %.3f --> LOA base is now %p LOA size %zu"
+
+TraceEvent=Trc_MM_Scavenger_percolate_concurrentMarkExhausted Overhead=1 Level=1 Group=percolate Template="Percolating due to exhausted Concurrent Mark"
+TraceEvent=Trc_MM_Scavenger_percolate_preventTenureExpand Overhead=1 Level=1 Group=percolate Template="Percolating to prevent Tenure expand"
+TraceEvent=Trc_MM_Scavenger_percolate_tenureMaxFree Overhead=1 Level=1 Group=percolate Template="Percolating due to meeting Tenure max free"
+
+TraceAssert=Assert_MM_double_map_unreachable noEnv Overhead=1 Level=1 Assert="(false)"

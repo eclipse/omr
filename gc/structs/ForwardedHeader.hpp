@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,9 +33,9 @@
 #include "HeapLinkedFreeHeader.hpp"
 
 
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) != defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) != defined(OMR_GC_COMPRESSED_POINTERS)
 #error "MutableHeaderFields requires sizeof(fomrobject_t) == sizeof(j9objectclass_t)"
-#endif /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) != defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) != defined(OMR_GC_COMPRESSED_POINTERS) */
 
 /* Source object header bits */
 #define OMR_FORWARDED_TAG 4
@@ -97,10 +97,10 @@ private:
 		/* first slot must be always aligned as for an object slot */
 		fomrobject_t slot;
 
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 		/* this field must be here to reserve space if slots are 4 bytes long (extend to 8 bytes starting from &MutableHeaderFields.clazz) */
 		uint32_t overlap;
-#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 	};
 
 	omrobjectptr_t _objectPtr;					/**< the object on which to act */
@@ -124,11 +124,11 @@ private:
 	MMINLINE_DEBUG static fomrobject_t
 	lockCompareExchangeObjectHeader(volatile fomrobject_t *address, fomrobject_t oldValue, fomrobject_t newValue)
 	{
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		return MM_AtomicOperations::lockCompareExchangeU32((volatile uint32_t*)address, oldValue, newValue);
-#else /* OMR_INTERP_COMPRESSED_OBJECT_HEADER */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 		return MM_AtomicOperations::lockCompareExchange((volatile uintptr_t*)address, oldValue, newValue);
-#endif /* OMR_INTERP_COMPRESSED_OBJECT_HEADER */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 	}
 	
 	/**
@@ -253,9 +253,9 @@ public:
 		/* copy preserved flags, and keep the rest (which should be all 0s) */
 		newHeader->slot = (_preserved.slot & ~_copyProgressInfoMask) | _beingCopiedTag;
 
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 		newHeader->overlap = _preserved.overlap;
-#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 	}	
 	
 	/**
@@ -333,7 +333,7 @@ public:
 		return _preserved.slot;
 	}
 
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 	/**
 	 * This method will assert if the object has been forwarded. Use isForwardedPointer() to test before calling.
 	 *
@@ -368,7 +368,7 @@ public:
 	{
 		restoreDestroyedOverlap(((MutableHeaderFields *)((fomrobject_t *)getForwardedObject() + _forwardingSlotOffset))->overlap);
 	}
-#endif /* defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	/**
 	 * Update the new version of this object after it has been copied. This undoes any damaged caused
@@ -384,9 +384,9 @@ public:
 	{
 		MutableHeaderFields* newHeader = (MutableHeaderFields *)((fomrobject_t *)destinationObjectPtr + _forwardingSlotOffset);
 		newHeader->slot = _preserved.slot;
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 		newHeader->overlap = _preserved.overlap;
-#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 	}
 	
 	/**

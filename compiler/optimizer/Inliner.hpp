@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,28 +32,28 @@
 
 #include "optimizer/CallInfo.hpp"
 
-#include <stddef.h>                            // for NULL
-#include <stdint.h>                            // for int32_t, uint32_t, etc
-#include "env/KnownObjectTable.hpp"        // for KnownObjectTable, etc
-#include "codegen/RecognizedMethods.hpp"       // for RecognizedMethod
-#include "compile/Compilation.hpp"             // for Compilation
+#include <stddef.h>
+#include <stdint.h>
+#include "env/KnownObjectTable.hpp"
+#include "codegen/RecognizedMethods.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
+#include "control/Options_inlines.hpp"
+#include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/DataTypes.hpp"                    // for DataTypes
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes
-#include "il/Node.hpp"                         // for vcount_t, rcount_t
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Flags.hpp"                     // for flags16_t
-#include "infra/Link.hpp"                      // for TR_LinkHead, TR_Link
-#include "infra/List.hpp"                      // for List, etc
-#include "infra/Random.hpp"                    // for TR_HasRandomGenerator
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/Random.hpp"
 #include "optimizer/InlinerFailureReason.hpp"
-#include "optimizer/Optimization.hpp"          // for Optimization
-#include "optimizer/OptimizationManager.hpp"   // for OptimizationManager
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "ras/LogTracer.hpp"                   // for TR_LogTracer
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "ras/LogTracer.hpp"
 
 
 #define MIN_PROFILED_CALL_FREQUENCY (.65f) // lowered this from .80f since opportunities were being missed in WAS; in those cases getting rid of the call even in 65% of the cases was beneficial probably due to the improved icache impact
@@ -372,7 +372,7 @@ class TR_InlinerBase: public TR_HasRandomGenerator
       TR::Node * createVirtualGuard(TR::Node *, TR::ResolvedMethodSymbol *, TR::TreeTop *, int16_t, TR_OpaqueClassBlock *, bool, TR_VirtualGuardSelection *);
    private:
 
-      void replaceCallNodeReferences(TR::Node *, TR::Node *, uint32_t, TR::Node *, TR::Node *, rcount_t &);
+      void replaceCallNodeReferences(TR::Node *, TR::Node *, uint32_t, TR::Node *, TR::Node *, rcount_t &, TR::NodeChecklist &visitedNodes);
       void cloneChildren(TR::Node *, TR::Node *, uint32_t);
 
    protected:
@@ -446,16 +446,13 @@ class TR_InlineCall : public TR_DumbInliner
 struct TR_ParameterMapping : TR_Link<TR_ParameterMapping>
    {
    TR_ParameterMapping(TR::ParameterSymbol * ps)
-      : _parmSymbol(ps), _replacementSymRef(0), _replacementSymRef2(0),
-         _parameterNode(0),_replacementSymRef3(0),
-        _parmIsModified(false), _addressTaken(false), _isConst(false)
+      : _parmSymbol(ps), _replacementSymRef(0), _parameterNode(0),
+       _parmIsModified(false), _addressTaken(false), _isConst(false)
       { }
 
    TR::ParameterSymbol * _parmSymbol;
    TR::SymbolReference * _replacementSymRef;
    TR::Node *            _parameterNode;                 //The Node under the call which matches the argument at argIndex
-   TR::SymbolReference * _replacementSymRef2;
-   TR::SymbolReference * _replacementSymRef3;
    uint32_t             _argIndex;
    bool                 _parmIsModified;
    bool                 _isConst;
@@ -674,7 +671,7 @@ class TR_TransformInlinedFunction
       TR_HeapMemory  trHeapMemory()             { return trMemory(); }
 
    protected:
-      void                 transformNode(TR::Node *, TR::Node *, uint32_t);
+      void                 transformNode(TR::Node *, TR::Node *, uint32_t, TR::NodeChecklist &visitedNodes);
       void                 transformReturn(TR::Node *, TR::Node *);
 
       TR::Compilation *               _comp;
@@ -724,8 +721,8 @@ class TR_HandleInjectedBasicBlock
    private:
       void printNodesWithMultipleReferences();
       void collectNodesWithMultipleReferences(TR::TreeTop *, TR::Node *, TR::Node *);
-      void replaceNodesReferencedFromAbove(TR::Block *, vcount_t);
-      void replaceNodesReferencedFromAbove(TR::TreeTop *, TR::Node *, TR::Node *, uint32_t, vcount_t);
+      void replaceNodesReferencedFromAbove(TR::Block *, TR::NodeChecklist &visitedNodes);
+      void replaceNodesReferencedFromAbove(TR::TreeTop *, TR::Node *, TR::Node *, uint32_t, TR::NodeChecklist &visitedNodes);
       void createTemps(bool);
 
       struct MultiplyReferencedNode : TR_Link<MultiplyReferencedNode>
@@ -734,8 +731,6 @@ class TR_HandleInjectedBasicBlock
          TR::Node *                _node;
          TR::TreeTop *             _treeTop;
          TR::SymbolReference *     _replacementSymRef;
-         TR::SymbolReference *     _replacementSymRef2;
-         TR::SymbolReference *     _replacementSymRef3;
          uint32_t                 _referencesToBeFound;
          bool                     _isConst;
          bool                     _symbolCanBeReloaded;

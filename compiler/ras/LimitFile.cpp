@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,29 +19,29 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <ctype.h>                            // for isdigit
-#include <limits.h>                           // for INT_MAX
-#include <stddef.h>                           // for size_t
-#include <stdint.h>                           // for int32_t, uint32_t
-#include <stdio.h>                            // for sscanf, fgets, fopen, etc
-#include <stdlib.h>                           // for atoi
-#include <string.h>                           // for strncmp, NULL, strchr, etc
-#include "codegen/FrontEnd.hpp"               // for TR_VerboseLog
-#include "compile/Compilation.hpp"            // for Compilation, comp
-#include "compile/Method.hpp"                 // for TR_Method, etc
-#include "compile/ResolvedMethod.hpp"         // for TR_ResolvedMethod
+#include <ctype.h>
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/OptionsUtil.hpp"
-#include "control/Options_inlines.hpp"        // for TR_FilterBST, etc
+#include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/PersistentInfo.hpp"
-#include "env/TRMemory.hpp"                   // for TR_PersistentMemory, etc
-#include "env/jittypes.h"                     // for intptrj_t
-#include "infra/Assert.hpp"                   // for TR_ASSERT
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
-#include "optimizer/Optimizations.hpp"        // for Optimizations::numOpts, etc
-#include "optimizer/Optimizer.hpp"            // for Optimizer
-#include "ras/Debug.hpp"                      // for TR_Debug
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "infra/Assert.hpp"
+#include "optimizer/OptimizationManager.hpp"
+#include "optimizer/Optimizations.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "ras/Debug.hpp"
 #include "infra/SimpleRegex.hpp"
 
 #define PSEUDO_RANDOM_NUMBER_PREFIX "#num"

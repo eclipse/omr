@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,69 +22,69 @@
 #include "compile/SymbolReferenceTable.hpp"
 #include "compile/Compilation.hpp"
 
-#include <stddef.h>                            // for NULL, size_t
-#include <stdint.h>                            // for intptr_t, uint8_t, etc
-#include <stdio.h>                             // for sprintf
-#include <string.h>                            // for strlen, strncmp, etc
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, feGetEnv
-#include "env/KnownObjectTable.hpp"            // for KnownObjectTable, etc
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "env/KnownObjectTable.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
-#include "codegen/Machine.hpp"                 // for Machine
-#include "codegen/RealRegister.hpp"            // for RealRegister
-#include "codegen/RecognizedMethods.hpp"       // for RecognizedMethod, etc
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/RecognizedMethods.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "compile/Compilation.hpp"             // for Compilation, comp, etc
-#include "compile/Method.hpp"                  // for TR_Method, etc
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
-#include "cs2/allocator.h"                     // for shared_allocator
-#include "cs2/bitvectr.h"                      // for ABitVector, etc
-#include "cs2/hashtab.h"                       // for HashTable<>::Cursor, etc
+#include "cs2/allocator.h"
+#include "cs2/bitvectr.h"
+#include "cs2/hashtab.h"
 #include "cs2/sparsrbit.h"
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
+#include "env/PersistentInfo.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                    // for TR_HeapMemory, etc
-#include "env/jittypes.h"                      // for intptrj_t, uintptrj_t
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                        // for Block, toBlock
-#include "il/DataTypes.hpp"                    // for DataTypes::Address, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::New, etc
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                       // for Symbol, etc
-#include "il/SymbolReference.hpp"              // for SymbolReference, etc
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "il/symbol/AutomaticSymbol.hpp"       // for AutomaticSymbol
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol, etc
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/RegisterMappedSymbol.hpp"  // for RegisterMappedSymbol, etc
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol, etc
-#include "ilgen/IlGen.hpp"                     // for TR_IlGenerator
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                       // for CFG, TR_SuccessorIterator, etc
-#include "infra/Flags.hpp"                     // for flags8_t
-#include "infra/Link.hpp"                      // for TR_LinkHead, TR_Pair
-#include "infra/List.hpp"                      // for List, ListIterator, etc
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/CfgNode.hpp"                   // for CFGNode
-#include "ras/Debug.hpp"                       // for TR_DebugBase
-#include "runtime/Runtime.hpp"                 // for TR_RuntimeHelper, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "ilgen/IlGen.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "ras/Debug.hpp"
+#include "runtime/Runtime.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/CHTable.hpp"
-#include "env/PersistentCHTable.hpp"           // for TR_PersistentCHTable
-#include "env/VMJ9.h"                          // for TR_J9VMBase
+#include "env/PersistentCHTable.hpp"
+#include "env/VMJ9.h"
 #endif
 
 class TR_OpaqueClassBlock;
@@ -349,6 +349,18 @@ OMR::SymbolReferenceTable::findOrCreateOSRReturnAddressSymbolRef()
    return element(osrReturnAddressSymbol);
    }
 
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateInduceOSRSymbolRef(TR_RuntimeHelper induceOSRHelper)
+   {
+   TR_ASSERT(induceOSRHelper == TR_induceOSRAtCurrentPC || induceOSRHelper == TR_induceOSRAtCurrentPCAndRecompile, "unexpected helper index when creating induce OSR helper symbol reference");
+   TR::SymbolReference *induceOSRSymRef = findOrCreateRuntimeHelper(induceOSRHelper,
+                                                                    true /* canGCandReturn */,
+                                                                    true /* canGCandExcept */,
+                                                                    true /* preservesAllRegisters */);
+   // treat jitInduceOSR like an interpreted call so that each platform's codegen generates a snippet for it
+   induceOSRSymRef->getSymbol()->getMethodSymbol()->setInterpreted();
+   return induceOSRSymRef;
+   }
 
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateArrayletShadowSymbolRef(TR::DataType type)
@@ -682,7 +694,7 @@ OMR::SymbolReferenceTable::createKnownStaticDataSymbolRef(void *dataAddress, TR:
    }
 
 TR::SymbolReference *
-OMR::SymbolReferenceTable::createKnownStaticRefereneceSymbolRef(void *dataAddress, TR::KnownObjectTable::Index knownObjectIndex)
+OMR::SymbolReferenceTable::createKnownStaticReferenceSymbolRef(void *dataAddress, TR::KnownObjectTable::Index knownObjectIndex)
    {
    char *name = "<known-static-reference>";
    if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
@@ -943,7 +955,7 @@ OMR::SymbolReferenceTable::methodSymRefFromName(TR::ResolvedMethodSymbol * ownin
    // No existing symref.  Create a new one.
    //
 
-   TR_OpaqueMethodBlock *method = fe()->getMethodFromName(className, methodName, methodSignature, comp()->getCurrentMethod()->getNonPersistentIdentifier());
+   TR_OpaqueMethodBlock *method = fe()->getMethodFromName(className, methodName, methodSignature);
    TR_ASSERT(method, "methodSymRefFromName: method must exist: %s.%s%s", className, methodName, methodSignature);
    TR_ASSERT(kind != TR::MethodSymbol::Virtual, "methodSymRefFromName doesn't support virtual methods"); // Until we're able to look up vtable index
 
@@ -977,30 +989,50 @@ OMR::SymbolReferenceTable::findOrCreateSymRefWithKnownObject(TR::SymbolReference
    }
 
 TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, TR::KnownObjectTable::Index objectIndex)
+OMR::SymbolReferenceTable::findTempSymRefWithKnownObject(TR::KnownObjectTable::Index knownObjectIndex)
    {
-   TR_BitVector *bucket = _knownObjectSymrefsByObjectIndex[objectIndex];
+   return findSymRefWithKnownObject(NULL, knownObjectIndex);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findSymRefWithKnownObject(TR::Symbol *symbol, TR::KnownObjectTable::Index knownObjectIndex)
+   {
+   TR_BitVector *bucket = _knownObjectSymrefsByObjectIndex[knownObjectIndex];
    if (!bucket)
-      {
-      bucket = new (trHeapMemory()) TR_BitVector(baseArray.size(), trMemory(), heapAlloc, growable, TR_MemoryBase::SymbolReference);
-      _knownObjectSymrefsByObjectIndex[objectIndex] = bucket;
-      }
+      return NULL;
 
    TR_BitVectorIterator bvi(*bucket);
    while (bvi.hasMoreElements())
       {
       TR::SymbolReference *symRef = getSymRef(bvi.getNextElement());
-      if (symRef->getSymbol() == original->getSymbol())
+      if (symbol && symRef->getSymbol() == symbol)
+         return symRef;
+      if (!symbol && symRef->getSymbol()->isAuto()) //For temp, symbol can be NULL. Find any temp with the given knownObjectIndex.
          return symRef;
       }
+   return NULL;
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateSymRefWithKnownObject(TR::SymbolReference *originalSymRef, TR::KnownObjectTable::Index knownObjectIndex)
+   {
+   TR::SymbolReference *symRef = findSymRefWithKnownObject(originalSymRef->getSymbol(), knownObjectIndex);
+   if (symRef)
+      return symRef;
 
    // Need a new one
-   TR::SymbolReference *result = new (trHeapMemory()) TR::SymbolReference(self(), *original, 0, objectIndex);
+   TR_BitVector *bucket = _knownObjectSymrefsByObjectIndex[knownObjectIndex];
+   if (!bucket)
+      {
+      bucket = new (trHeapMemory()) TR_BitVector(baseArray.size(), trMemory(), heapAlloc, growable, TR_MemoryBase::SymbolReference);
+      _knownObjectSymrefsByObjectIndex[knownObjectIndex] = bucket;
+      }
+   TR::SymbolReference *result = new (trHeapMemory()) TR::SymbolReference(self(), *originalSymRef, 0, knownObjectIndex);
    bucket->set(result->getReferenceNumber());
 
    // If the known object symref is created for an immutable array shadow, it should be aliased to other array shadows as well
    // Put the symRef in arrayElementSymRefs so that its alias set can be built correctly
-   if (isImmutableArrayShadow(original))
+   if (isImmutableArrayShadow(originalSymRef))
       {
       result->setReallySharesSymbol();
       int32_t index = result->getReferenceNumber();
@@ -1011,6 +1043,20 @@ OMR::SymbolReferenceTable::findOrCreateSymRefWithKnownObject(TR::SymbolReference
    return result;
    }
 
+TR::SymbolReference *
+OMR::SymbolReferenceTable::createTempSymRefWithKnownObject(TR::Symbol *symbol, mcount_t owningMethodIndex, int32_t slot, TR::KnownObjectTable::Index knownObjectIndex)
+   {
+   TR_ASSERT_FATAL(symbol->isAutoOrParm(), "createTempSymRefWithKnownObject can only be called for temp symbol %p", symbol);
+   TR_BitVector *bucket = _knownObjectSymrefsByObjectIndex[knownObjectIndex];
+   if (!bucket)
+      {
+      bucket = new (trHeapMemory()) TR_BitVector(baseArray.size(), trMemory(), heapAlloc, growable, TR_MemoryBase::SymbolReference);
+      _knownObjectSymrefsByObjectIndex[knownObjectIndex] = bucket;
+      }
+   TR::SymbolReference * symRef = new (trHeapMemory()) TR::SymbolReference(self(), symbol, owningMethodIndex, slot, 0 /*unresolvedIndex*/, knownObjectIndex);
+   bucket->set(symRef->getReferenceNumber());
+   return symRef;
+   }
 
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateMonitorExitSymbolRef(TR::ResolvedMethodSymbol *)
@@ -1041,14 +1087,7 @@ OMR::SymbolReferenceTable::findOrCreateTransactionExitSymbolRef(TR::ResolvedMeth
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateAsyncCheckSymbolRef(TR::ResolvedMethodSymbol *)
    {
-#ifdef RUBY_PROJECT_SPECIFIC
-   return self()->findOrCreateRubyHelperSymbolRef(RubyHelper_rb_threadptr_execute_interrupts,
-                                          true,    /*canGCandReturn*/
-                                          true,    /*canGCandExcept*/
-                                          false);  /*preservesAllRegisters*/
-#else
    return findOrCreateRuntimeHelper(TR_asyncCheck, true, false, true);
-#endif
    }
 
 TR::SymbolReference *
@@ -1056,8 +1095,6 @@ OMR::SymbolReferenceTable::findOrCreateReportMethodEnterSymbolRef(TR::ResolvedMe
    {
    return findOrCreateRuntimeHelper(TR_reportMethodEnter, true, false, true);
    }
-
-
 
 bool OMR::SymbolReferenceTable::shouldMarkBlockAsCold(TR_ResolvedMethod * owningMethod, bool isUnresolvedInCP)
    {
@@ -1493,10 +1530,14 @@ OMR::SymbolReferenceTable::findOrCreateMethodSymbol(
    return symRef;
    }
 
-
-
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateAutoSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType type, bool isReference, bool isInternalPointer, bool reuseAuto, bool isAdjunct, size_t size)
+   {
+   return findOrCreateAutoSymbolImpl(owningMethodSymbol, slot, type, isReference, isInternalPointer, reuseAuto, isAdjunct, size, TR::KnownObjectTable::UNKNOWN);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateAutoSymbolImpl(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType type, bool isReference, bool isInternalPointer, bool reuseAuto, bool isAdjunct, size_t size, TR::KnownObjectTable::Index knownObjectIndex)
    {
    mcount_t owningMethodIndex = owningMethodSymbol->getResolvedMethodIndex();
    int32_t numberOfParms = owningMethodSymbol->getNumParameterSlots();
@@ -1627,7 +1668,11 @@ OMR::SymbolReferenceTable::findOrCreateAutoSymbol(TR::ResolvedMethodSymbol * own
             sym->setGCMapIndex(-1);
          }
 
-      symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodIndex, slot);
+      if (knownObjectIndex == TR::KnownObjectTable::UNKNOWN)
+         symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodIndex, slot);
+      else
+         symRef = createTempSymRefWithKnownObject(sym, owningMethodIndex, slot, knownObjectIndex);
+
       if (isAdjunct)
          symRef->setIsAdjunct();
 
@@ -1668,6 +1713,7 @@ OMR::SymbolReferenceTable::findAvailableAuto(List<TR::SymbolReference> & availab
          if (type == a->getSymbol()->getDataType() &&
              !notSharing &&
              !a->getSymbol()->holdsMonitoredObject() &&
+             !a->hasKnownObjectIndex() &&
              (a->isAdjunct() == isAdjunct) &&
              (comp()->cg()->getSupportsJavaFloatSemantics() ||
               (type != TR::Float && type != TR::Double) ||
@@ -1693,11 +1739,16 @@ OMR::SymbolReferenceTable::makeAutoAvailableForIlGen(TR::SymbolReference * a)
 
 TR::ParameterSymbol *
 OMR::SymbolReferenceTable::createParameterSymbol(
-   TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType type)
+   TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType type, TR::KnownObjectTable::Index knownObjectIndex)
    {
    TR::ParameterSymbol * sym = TR::ParameterSymbol::create(trHeapMemory(),type,slot);
 
-   TR::SymbolReference *symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), slot);
+   TR::SymbolReference *symRef = NULL;
+   if (knownObjectIndex == TR::KnownObjectTable::UNKNOWN)
+      symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), slot);
+   else
+      symRef = createTempSymRefWithKnownObject(sym, owningMethodSymbol->getResolvedMethodIndex(), slot, knownObjectIndex);
+
    owningMethodSymbol->setParmSymRef(slot, symRef);
    owningMethodSymbol->getAutoSymRefs(slot).add(symRef);
 
@@ -1713,6 +1764,23 @@ OMR::SymbolReferenceTable::createTemporary(TR::ResolvedMethodSymbol * owningMeth
 #endif
 
    return findOrCreateAutoSymbol(owningMethodSymbol, owningMethodSymbol->incTempIndex(fe()), type, true, isInternalPointer, false, false, size);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateTemporaryWithKnowObjectIndex(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::KnownObjectTable::Index knownObjectIndex)
+   {
+   TR::SymbolReference *symRef = findTempSymRefWithKnownObject(knownObjectIndex);
+   if (symRef)
+      return symRef;
+   return findOrCreateAutoSymbolImpl(owningMethodSymbol,
+                                 owningMethodSymbol->incTempIndex(fe()),
+                                 TR::Address,
+                                 true /* isReference */,
+                                 false /* isInternalPointer*/,
+                                 false /* reuseAuto */,
+                                 false /* isAdjunct */,
+                                 0 /*size*/,
+                                 knownObjectIndex);
    }
 
 TR::SymbolReference *
@@ -1845,6 +1913,27 @@ bool OMR::SymbolReferenceTable::isNonHelper(int32_t ref, CommonNonhelperSymbol s
       }
    }
 
+bool OMR::SymbolReferenceTable::isNonHelper(TR::SymbolReference *symRef)
+   {
+   return isNonHelper(symRef->getReferenceNumber());
+   }
+
+bool OMR::SymbolReferenceTable::isNonHelper(int32_t ref)
+   {
+   return (ref >= _numHelperSymbols && ref < _numHelperSymbols + getLastCommonNonhelperSymbol());
+   }
+
+OMR::SymbolReferenceTable::CommonNonhelperSymbol OMR::SymbolReferenceTable::getNonHelperSymbol(TR::SymbolReference *symRef)
+   {
+   return getNonHelperSymbol(symRef->getReferenceNumber());
+   }
+
+OMR::SymbolReferenceTable::CommonNonhelperSymbol OMR::SymbolReferenceTable::getNonHelperSymbol(int32_t ref)
+   {
+   return isNonHelper(ref) ? (CommonNonhelperSymbol) (ref - _numHelperSymbols)
+                           : getLastCommonNonhelperSymbol();
+   }
+
 int32_t OMR::SymbolReferenceTable::getNonhelperIndex(CommonNonhelperSymbol s)
    {
    TR_ASSERT(s <= getLastCommonNonhelperSymbol(), "assertion failure");
@@ -1926,4 +2015,30 @@ TR_BitVector *OMR::SymbolReferenceTable::getSharedAliases(TR::SymbolReference *s
       }
 
    return NULL;
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreatePotentialOSRPointHelperSymbolRef()
+   {
+   if (!element(potentialOSRPointHelperSymbol))
+      {
+      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(), TR_None);
+      sym->setHelper();
+      TR::SymbolReference* symRef = new (trHeapMemory()) TR::SymbolReference(self(), potentialOSRPointHelperSymbol, sym);
+      element(potentialOSRPointHelperSymbol) = symRef;
+      }
+   return element(potentialOSRPointHelperSymbol);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateOSRFearPointHelperSymbolRef()
+   {
+   if (!element(osrFearPointHelperSymbol))
+      {
+      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(), TR_None);
+      sym->setHelper();
+      TR::SymbolReference* symRef = new (trHeapMemory()) TR::SymbolReference(self(), osrFearPointHelperSymbol, sym);
+      element(osrFearPointHelperSymbol) = symRef;
+      }
+   return element(osrFearPointHelperSymbol);
    }

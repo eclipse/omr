@@ -21,6 +21,8 @@
 
 #include "ddr/ir/ClassType.hpp"
 
+#include "ddr/ir/Symbol_IR.hpp"
+
 ClassType::ClassType(size_t size, unsigned int lineNumber)
 	: NamespaceUDT(lineNumber)
 	, _isComplete(false)

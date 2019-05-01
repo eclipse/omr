@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,25 +21,25 @@
 
 #include "x/codegen/FPCompareAnalyser.hpp"
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for uint8_t
-#include "codegen/CodeGenerator.hpp"        // for CodeGenerator
-#include "codegen/Instruction.hpp"          // for Instruction
-#include "codegen/Machine.hpp"              // for Machine
-#include "codegen/MemoryReference.hpp"      // for MemoryReference, etc
-#include "codegen/Register.hpp"             // for Register
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/TreeEvaluator.hpp"        // for TreeEvaluator
-#include "compile/Compilation.hpp"          // for Compilation
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "il/ILOpCodes.hpp"                 // for ILOpCodes, etc
-#include "il/ILOps.hpp"                     // for ILOpCode, TR::ILOpCode
-#include "il/Node.hpp"                      // for Node, etc
-#include "il/Node_inlines.hpp"              // for Node::getFirstChild, etc
-#include "x/codegen/FPTreeEvaluator.hpp"    // for IEEE_DOUBLE_NEGATIVE_0_0
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "x/codegen/FPTreeEvaluator.hpp"
 #include "codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"             // for TR_X86OpCodes, etc
+#include "x/codegen/X86Ops.hpp"
 
 static bool isUnevaluatedZero(TR::Node *child)
    {

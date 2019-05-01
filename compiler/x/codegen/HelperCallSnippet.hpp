@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
 #ifndef X86HELPERCALLSNIPPET_INCL
 #define X86HELPERCALLSNIPPET_INCL
 
-#include <stdint.h>                      // for int32_t, uint8_t, uint32_t
-#include "codegen/Snippet.hpp"           // for TR::X86Snippet::Kind, etc
-#include "il/Node.hpp"                   // for Node
-#include "x/codegen/RestartSnippet.hpp"  // for TR::X86RestartSnippet
+#include <stdint.h>
+#include "codegen/Snippet.hpp"
+#include "il/Node.hpp"
+#include "x/codegen/RestartSnippet.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class LabelSymbol; }
@@ -66,7 +66,7 @@ class X86HelperCallSnippet : public TR::X86RestartSnippet
    TR::SymbolReference *setDestination(TR::SymbolReference *s) {return (_destination = s);}
    int32_t             getStackPointerAdjustment()           {return _stackPointerAdjustment;}
 
-   static int32_t branchDisplacementToHelper(uint8_t *nextInstructionAddress, TR::SymbolReference *helper, TR::CodeGenerator *cg);
+   static int32_t branchDisplacementToHelper(uint8_t *callInstructionAddress, TR::SymbolReference *helper, TR::CodeGenerator *cg);
 
    int32_t getOffset() {return _offset;}
 
@@ -84,23 +84,6 @@ class X86HelperCallSnippet : public TR::X86RestartSnippet
    private:
 
    int32_t _offset; // special field for the jitReportMethodEnter helper
-   };
-
-
-class X86CheckAsyncMessagesSnippet : public TR::X86HelperCallSnippet
-   {
-   public:
-
-   X86CheckAsyncMessagesSnippet(
-      TR::Node            *node,
-      TR::LabelSymbol      *restartLabel,
-      TR::LabelSymbol      *snippetLabel,
-      TR::CodeGenerator   *cg) :
-         TR::X86HelperCallSnippet(cg, node, restartLabel, snippetLabel, node->getSymbolReference())
-      {
-      }
-
-   virtual uint8_t *genHelperCall(uint8_t *buffer);
    };
 
 }

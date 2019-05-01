@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,15 +22,15 @@
 #ifndef OSRDATA_INCL
 #define OSRDATA_INCL
 
-#include <stdint.h>                         // for int32_t, uint32_t, etc
+#include <stdint.h>
 #include <map>
-#include "cs2/hashtab.h"                    // for HashTable
-#include "env/TRMemory.hpp"                 // for TR_Memory, etc
-#include "env/jittypes.h"                   // for TR_ByteCodeInfo
-#include "infra/Array.hpp"                  // for TR_Array
-#include "infra/deque.hpp"                  // for TR_Array
-#include "infra/Checklist.hpp"              // for TR::NodeCheckList
-#include "infra/vector.hpp"                 // for TR::vector
+#include "cs2/hashtab.h"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "infra/Array.hpp"
+#include "infra/deque.hpp"
+#include "infra/Checklist.hpp"
+#include "infra/vector.hpp"
 
 class TR_BitVector;
 class TR_OSRMethodData;

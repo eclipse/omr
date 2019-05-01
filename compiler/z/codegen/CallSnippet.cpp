@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,33 +21,34 @@
 
 #include "z/codegen/CallSnippet.hpp"
 
-#include <stddef.h>                          // for NULL
-#include <stdint.h>                          // for int32_t, uint8_t, uint32_t, etc
-#include "codegen/CodeGenerator.hpp"         // for CodeGenerator
-#include "codegen/FrontEnd.hpp"              // for TR_FrontEnd
-#include "codegen/InstOpCode.hpp"            // for InstOpCode, etc
-#include "codegen/Instruction.hpp"           // for Instruction
-#include "codegen/Linkage.hpp"               // for Linkage
-#include "codegen/Machine.hpp"               // for Machine
-#include "codegen/RealRegister.hpp"          // for RealRegister
-#include "compile/Compilation.hpp"           // for Compilation
-#include "compile/SymbolReferenceTable.hpp"  // for SymbolReferenceTable
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
-#include "env/jittypes.h"                    // for intptrj_t, uintptrj_t
-#include "il/DataTypes.hpp"                  // for DataTypes::Address, etc
-#include "il/Node.hpp"                       // for Node
-#include "il/Node_inlines.hpp"               // for Node::getDataType, etc
-#include "il/Symbol.hpp"                     // for Symbol
-#include "il/SymbolReference.hpp"            // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"         // for LabelSymbol
-#include "il/symbol/MethodSymbol.hpp"        // for MethodSymbol
-#include "infra/Assert.hpp"                  // for TR_ASSERT
-#include "ras/Debug.hpp"                     // for TR_Debug
-#include "runtime/Runtime.hpp"               // for TR_RuntimeHelper, etc
-#include "z/codegen/S390Instruction.hpp"     // for toS390Cursor
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
+#include "runtime/Runtime.hpp"
+#include "z/codegen/S390Instruction.hpp"
 
 #define TR_S390_ARG_SLOT_SIZE 4
 
@@ -75,7 +76,7 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
    int32_t argStart = callNode->getFirstArgumentIndex();
    bool rightToLeft = linkage->getRightToLeft() &&
 	  //we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
-      callNode->getSymbolReference() != cg->symRefTab()->element(TR_induceOSRAtCurrentPC);
+      !callNode->getSymbolReference()->isOSRInductionHelper();
    if (rightToLeft)
       {
       offset = linkage->getOffsetToFirstParm();
@@ -100,7 +101,7 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
             if (intArgNum < linkage->getNumIntegerArgumentRegisters())
                {
                buffer = storeArgumentItem(TR::InstOpCode::ST, buffer,
-                           machine->getS390RealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
+                           machine->getRealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
 
@@ -117,7 +118,7 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
             if (intArgNum < linkage->getNumIntegerArgumentRegisters())
                {
                buffer = storeArgumentItem(TR::InstOpCode::getStoreOpCode(), buffer,
-                           machine->getS390RealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
+                           machine->getRealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
 
@@ -137,16 +138,16 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
                if (TR::Compiler->target.is64Bit())
                   {
                   buffer = storeArgumentItem(TR::InstOpCode::STG, buffer,
-                              machine->getS390RealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
+                              machine->getRealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
                   }
                else
                   {
                   buffer = storeArgumentItem(TR::InstOpCode::ST, buffer,
-                              machine->getS390RealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
+                              machine->getRealRegister(linkage->getIntegerArgumentRegister(intArgNum)), offset, cg);
                   if (intArgNum < linkage->getNumIntegerArgumentRegisters() - 1)
                      {
                      buffer = storeArgumentItem(TR::InstOpCode::ST, buffer,
-                                 machine->getS390RealRegister(linkage->getIntegerArgumentRegister(intArgNum + 1)), offset + 4, cg);
+                                 machine->getRealRegister(linkage->getIntegerArgumentRegister(intArgNum + 1)), offset + 4, cg);
                      }
                   }
                }
@@ -165,7 +166,7 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
             if (floatArgNum < linkage->getNumFloatArgumentRegisters())
                {
                buffer = storeArgumentItem(TR::InstOpCode::STE, buffer,
-                           machine->getS390RealRegister(linkage->getFloatArgumentRegister(floatArgNum)), offset, cg);
+                           machine->getRealRegister(linkage->getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
             if (rightToLeft)
@@ -182,7 +183,7 @@ TR::S390CallSnippet::S390flushArgumentsToStack(uint8_t * buffer, TR::Node * call
             if (floatArgNum < linkage->getNumFloatArgumentRegisters())
                {
                buffer = storeArgumentItem(TR::InstOpCode::STD, buffer,
-                           machine->getS390RealRegister(linkage->getFloatArgumentRegister(floatArgNum)), offset, cg);
+                           machine->getRealRegister(linkage->getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
             if (rightToLeft)
@@ -376,12 +377,12 @@ TR_RuntimeHelper TR::S390CallSnippet::getInterpretedDispatchHelper(
    TR::MethodSymbol * methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
    bool isJitInduceOSRCall = false;
    if (methodSymbol->isHelper() &&
-       methodSymRef == cg()->symRefTab()->element(TR_induceOSRAtCurrentPC))
+       methodSymRef->isOSRInductionHelper())
       {
       isJitInduceOSRCall = true;
       }
 
-   if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
+   if (methodSymRef->isUnresolved() || (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager)))
       {
       TR_ASSERT(!isJitInduceOSRCall || !comp->compileRelocatableCode(), "calling jitInduceOSR is not supported yet under AOT\n");
       if (methodSymbol->isSpecial())
@@ -392,7 +393,7 @@ TR_RuntimeHelper TR::S390CallSnippet::getInterpretedDispatchHelper(
          return TR_S390interpreterUnresolvedDirectVirtualGlue;
       }
    else if (isJitInduceOSRCall)
-      return TR_induceOSRAtCurrentPC;
+      return (TR_RuntimeHelper) methodSymRef->getReferenceNumber();
    else
       return getHelper(methodSymbol, type, cg());
    }
@@ -440,7 +441,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390CallSnippet * snippet)
 
    bufferPos = printS390ArgumentsFlush(pOutFile, callNode, bufferPos, snippet->getSizeOfArguments());
 
-   if (methodSymRef->isUnresolved() || _comp->compileRelocatableCode())
+   if (methodSymRef->isUnresolved() || (_comp->compileRelocatableCode() && !_comp->getOption(TR_UseSymbolValidationManager)))
       {
       if (methodSymbol->isSpecial())
          {

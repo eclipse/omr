@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2016 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -489,7 +489,7 @@ MM_LargeObjectAllocateStats::newInstance(MM_EnvironmentBase *env, uint16_t maxAl
 	largeObjectAllocateStats = (MM_LargeObjectAllocateStats *)env->getForge()->allocate(sizeof(MM_LargeObjectAllocateStats), OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
 
 	if(NULL != largeObjectAllocateStats) {
-		new(largeObjectAllocateStats) MM_LargeObjectAllocateStats();
+		new(largeObjectAllocateStats) MM_LargeObjectAllocateStats(env);
 
 		if(!largeObjectAllocateStats->initialize(env, maxAllocateSizes, largeObjectThreshold, veryLargeObjectThreshold, sizeClassRatio, maxHeapSize, tlhMaximumSize, tlhMinimumSize, factorVeryLargeEntryPool)) {
 			largeObjectAllocateStats->kill(env);
@@ -503,7 +503,7 @@ MM_LargeObjectAllocateStats::newInstance(MM_EnvironmentBase *env, uint16_t maxAl
 bool
 MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAllocateSizes, uintptr_t largeObjectThreshold, uintptr_t veryLargeObjectThreshold, float sizeClassRatio, uintptr_t maxHeapSize, uintptr_t tlhMaximumSize, uintptr_t tlhMinimumSize, uintptr_t factorVeryLargeEntryPool)
 {
-	_portLibrary = env->getPortLibrary();
+	OMRPortLibrary *portLibrary = env->getPortLibrary();
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 	_tlhMaximumSize = tlhMaximumSize;
 	_tlhMinimumSize = tlhMinimumSize;
@@ -516,23 +516,23 @@ MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAll
 
 	/* To accurately maintain for stats for top _maxAllocateSizes different sizes,
 	 * we'll actually maintain stats for 2x more, and discard info for lower 1/2 */
-	if (NULL == (_spaceSavingSizes = spaceSavingNew(_portLibrary, _maxAllocateSizes * 2))) {
+	if (NULL == (_spaceSavingSizes = spaceSavingNew(portLibrary, _maxAllocateSizes * 2))) {
 		return false;
 	}
 
-	if (NULL == (_spaceSavingSizeClasses = spaceSavingNew(_portLibrary, _maxAllocateSizes * 2))) {
+	if (NULL == (_spaceSavingSizeClasses = spaceSavingNew(portLibrary, _maxAllocateSizes * 2))) {
 		return false;
 	}
 
-	if (NULL == (_spaceSavingSizesAveragePercent = spaceSavingNew(_portLibrary, _maxAllocateSizes * 2))) {
+	if (NULL == (_spaceSavingSizesAveragePercent = spaceSavingNew(portLibrary, _maxAllocateSizes * 2))) {
 		return false;
 	}
 
-	if (NULL == (_spaceSavingSizeClassesAveragePercent = spaceSavingNew(_portLibrary, _maxAllocateSizes * 2))) {
+	if (NULL == (_spaceSavingSizeClassesAveragePercent = spaceSavingNew(portLibrary, _maxAllocateSizes * 2))) {
 		return false;
 	}
 
-	if (NULL == (_spaceSavingTemp = spaceSavingNew(_portLibrary, _maxAllocateSizes * 2))) {
+	if (NULL == (_spaceSavingTemp = spaceSavingNew(portLibrary, _maxAllocateSizes * 2))) {
 		return false;
 	}
 
@@ -1553,16 +1553,15 @@ MM_LargeObjectAllocateStats::getSizeClassIndex(uintptr_t size)
 	 * a Linux kernel on problematic machine
 	 */
 
-	/* the logarithm for integer can not be negative! */
-	Assert_MM_true(logValue >= 0.0);
-
-	/* CMVC 194170 (remove when resolved) */
-    Assert_MM_true(0.0 != _sizeClassRatioLog);
+	/* the logarithm can not be negative! */
+	Assert_GC_true_with_message2(_env, (logValue >= 0.0), "Error calculation log(), passed %zu, returned %f\n", size, logValue);
+	Assert_GC_true_with_message(_env, (_sizeClassRatioLog > 0.0), "_sizeClassRatioLog is %f but must be larger then zero\n", _sizeClassRatioLog);
 
 	uintptr_t result = (uintptr_t)(logValue / _sizeClassRatioLog);
 
 	/* the logarithm value is larger then we can accept - probably larger then log(UDATA_MAX) */
-	Assert_MM_true((_freeEntrySizeClassStats._maxSizeClasses == 0) || (result < _freeEntrySizeClassStats._maxSizeClasses));
+	Assert_GC_true_with_message2(_env, ((_freeEntrySizeClassStats._maxSizeClasses == 0) || (result < _freeEntrySizeClassStats._maxSizeClasses)),
+			"Calculated value of getSizeClassIndex() %zu can not be larger then maximum %zu\n", result, _freeEntrySizeClassStats._maxSizeClasses);
 
 	return result;
 }

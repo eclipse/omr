@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@ namespace OMR { typedef OMR::X86::CPU CPUConnector; }
 
 #include <stdint.h>
 #include "compiler/env/OMRCPU.hpp"
+#include "env/jittypes.h"
 
 struct TR_X86CPUIDBuffer;
 namespace TR { class Compilation; }
@@ -54,14 +55,30 @@ protected:
 
 public:
 
-   TR_X86CPUIDBuffer *queryX86TargetCPUID(TR::Compilation *comp);
-   const char *getX86ProcessorVendorId(TR::Compilation *comp);
-   uint32_t getX86ProcessorSignature(TR::Compilation *comp);
-   uint32_t getX86ProcessorFeatureFlags(TR::Compilation *comp);
-   uint32_t getX86ProcessorFeatureFlags2(TR::Compilation *comp);
-   uint32_t getX86ProcessorFeatureFlags8(TR::Compilation *comp);
+   TR_X86CPUIDBuffer *queryX86TargetCPUID();
+   const char *getX86ProcessorVendorId();
+   uint32_t getX86ProcessorSignature();
+   uint32_t getX86ProcessorFeatureFlags();
+   uint32_t getX86ProcessorFeatureFlags2();
+   uint32_t getX86ProcessorFeatureFlags8();
 
-   bool testOSForSSESupport(TR::Compilation *comp);
+   bool testOSForSSESupport();
+
+   /**
+    * @brief Answers whether the distance between a target and source address
+    *        is within the reachable RIP displacement range.
+    *
+    * @param[in] : targetAddress : the address of the target
+    *
+    * @param[in] : sourceAddress : the address of the instruction following the
+    *                 branch instruction.
+    *
+    * @return true if the target is within range; false otherwise.
+    */
+   bool isTargetWithinRIPRange(intptrj_t targetAddress, intptrj_t sourceAddress)
+      {
+      return targetAddress == sourceAddress + (int32_t)(targetAddress - sourceAddress);
+      }
 
    };
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,9 @@
 #ifndef STACK_INCL
 #define STACK_INCL
 
-#include <stdint.h>          // for int32_t, uint32_t
-#include "env/TRMemory.hpp"  // for TR_AllocationKind, etc
-#include "infra/Array.hpp"   // for TR_Array
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "infra/Array.hpp"
 
 // TR_Stack use TR_Array as a stack
 //

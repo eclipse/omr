@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@
 #include "codegen/GCStackMap.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
@@ -112,11 +113,11 @@ OMR::ARM::CodeGenerator::CodeGenerator()
       }
 
    if (!debug("hasFramePointer"))
-      self()->setFrameRegister(self()->machine()->getARMRealRegister(_linkageProperties->getStackPointerRegister()));
+      self()->setFrameRegister(self()->machine()->getRealRegister(_linkageProperties->getStackPointerRegister()));
    else
-      self()->setFrameRegister(self()->machine()->getARMRealRegister(_linkageProperties->getFramePointerRegister()));
+      self()->setFrameRegister(self()->machine()->getRealRegister(_linkageProperties->getFramePointerRegister()));
 
-   self()->setMethodMetaDataRegister(self()->machine()->getARMRealRegister(_linkageProperties->getMethodMetaDataRegister()));
+   self()->setMethodMetaDataRegister(self()->machine()->getRealRegister(_linkageProperties->getMethodMetaDataRegister()));
 
    // Tactical GRA settings
 #if 1 // PPC enables below, but seem no longer used?
@@ -219,8 +220,8 @@ OMR::ARM::CodeGenerator::CodeGenerator()
 
    if (self()->comp()->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
       {
-      self()->setGPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR_GPR));
-      self()->setFPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR_FPR));
+      self()->setGPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstGPR, TR::RealRegister::LastGPR));
+      self()->setFPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstFPR, TR::RealRegister::LastFPR));
       }
 
 
@@ -280,8 +281,8 @@ directToInterpreterHelper(TR::ResolvedMethodSymbol *methodSymbol, TR::CodeGenera
 TR::Instruction *OMR::ARM::CodeGenerator::generateSwitchToInterpreterPrePrologue(TR::Instruction *cursor, TR::Node *node)
    {
    TR::Compilation *comp = self()->comp();
-   TR::Register   *gr4 = self()->machine()->getARMRealRegister(TR::RealRegister::gr4);
-   TR::Register   *lr = self()->machine()->getARMRealRegister(TR::RealRegister::gr14); // link register
+   TR::Register   *gr4 = self()->machine()->getRealRegister(TR::RealRegister::gr4);
+   TR::Register   *lr = self()->machine()->getRealRegister(TR::RealRegister::gr14); // link register
    TR::ResolvedMethodSymbol *methodSymbol = comp->getJittedMethodSymbol();
    TR::SymbolReference    *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMrevertToInterpreterGlue, false, false, false);
    uintptrj_t             ramMethod = (uintptrj_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
@@ -325,7 +326,7 @@ static void removeGhostRegistersFromGCMaps(TR::CodeGenerator *cg, TR::Instructio
             uint32_t regMask = cg->registerBitMask(regNum);
             if (map->getRegisterMap() & regMask)
                {
-               TR::RealRegister *regInRegMap = cg->machine()->getARMRealRegister((TR::RealRegister::RegNum)regNum);
+               TR::RealRegister *regInRegMap = cg->machine()->getRealRegister((TR::RealRegister::RegNum)regNum);
                if (regInRegMap->getState() == TR::RealRegister::Free)
                   {
                   // This register is unassigned, check if it was defined before the GC point.
@@ -638,7 +639,7 @@ void OMR::ARM::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap *map)
    for (int i=TR::RealRegister::FirstGPR;
             i<=TR::RealRegister::LastGPR; i++)
       {
-      TR::RealRegister *realReg = self()->machine()->getARMRealRegister(
+      TR::RealRegister *realReg = self()->machine()->getRealRegister(
                              (TR::RealRegister::RegNum)i);
       if (realReg->getHasBeenAssignedInMethod())
          {
@@ -821,5 +822,13 @@ bool OMR::ARM::CodeGenerator::shouldValueBeInACommonedNode(int64_t value)
 
 bool OMR::ARM::CodeGenerator::isGlobalRegisterAvailable(TR_GlobalRegisterNumber i, TR::DataType dt)
    {
-   return self()->machine()->getARMRealRegister((TR::RealRegister::RegNum)self()->getGlobalRegister(i))->getState() == TR::RealRegister::Free;
+   return self()->machine()->getRealRegister((TR::RealRegister::RegNum)self()->getGlobalRegister(i))->getState() == TR::RealRegister::Free;
+   }
+
+bool
+OMR::ARM::CodeGenerator::directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress)
+   {
+   return
+      !TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(targetAddress, sourceAddress) ||
+      self()->comp()->getOption(TR_StressTrampolines);
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,8 +24,8 @@
 
 #include "codegen/Linkage.hpp"
 
-#include <stdint.h>                         // for uint32_t, uintptr_t, etc
-#include "codegen/Register.hpp"             // for Register
+#include <stdint.h>
+#include "codegen/Register.hpp"
 
 namespace TR { class AutomaticSymbol; }
 namespace TR { class CodeGenerator; }

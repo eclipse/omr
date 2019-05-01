@@ -39,6 +39,13 @@ class VirtualMachineRegister : public OMR::VirtualMachineRegister
       : OMR::VirtualMachineRegister(b, localName, pointerToRegisterType, adjustByStep, addressOfRegister)
       { }
 
+   VirtualMachineRegister(const char * const localName,
+                          TR::IlType * pointerToRegisterType,
+                          uint32_t adjustByStep,
+                          TR::IlValue * addressOfRegister)
+      : OMR::VirtualMachineRegister(localName, pointerToRegisterType, adjustByStep, addressOfRegister)
+      { }
+
    protected:
    VirtualMachineRegister(const char * const localName)
       : OMR::VirtualMachineRegister(localName)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,9 +24,9 @@
 
 #include "codegen/OutOfLineCodeSection.hpp"
 
-#include "codegen/InstOpCode.hpp"         // for InstOpCode, etc
-#include "codegen/RegisterConstants.hpp"  // for TR_RegisterKinds
-#include "il/ILOpCodes.hpp"               // for ILOpCodes
+#include "codegen/InstOpCode.hpp"
+#include "codegen/RegisterConstants.hpp"
+#include "il/ILOpCodes.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class LabelSymbol; }

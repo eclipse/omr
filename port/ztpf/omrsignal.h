@@ -31,23 +31,23 @@
  *	possibly unique to z/TPF at some later time.
  */
 
-struct J9SignalHandlerRecord {
-	struct J9SignalHandlerRecord *previous;
+struct OMRSignalHandlerRecord {
+	struct OMRSignalHandlerRecord *previous;
 	struct OMRPortLibrary *portLibrary;
 	omrsig_handler_fn handler;
 	void *handler_arg;
 	jmp_buf	mark;			
 	uint32_t flags;
-};
+} OMRSignalHandlerRecord;
 
-typedef struct J9CurrentSignal {
+typedef struct OMRCurrentSignal {
 	int	signal;
 	siginfo_t *sigInfo;
 	void *contextInfo;
 	uintptr_t breakingEventAddr;
 	uint32_t portLibSignalType;
 	DIB	*ptrDIB;
-} J9CurrentSignal;
+} OMRCurrentSignal;
 
 void masterSynchSignalHandler(int signal, siginfo_t * sigInfo, void *contextInfo, uintptr_t breakingEventAddr);
 

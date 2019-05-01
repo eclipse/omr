@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,8 @@
 #ifndef OMR_REGISTER_USAGE_INCL
 #define OMR_REGISTER_USAGE_INCL
 
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
-#include "il/Node.hpp"       // for ncount_t
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
 
 namespace TR { class Register; }
 

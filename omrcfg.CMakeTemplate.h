@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
  */
 
 #cmakedefine OMR_GC
-#cmakedefine OMR_JIT
+#cmakedefine OMR_COMPILER
 #cmakedefine OMR_JITBUILDER
 #cmakedefine OMR_TEST_COMPILER
 #cmakedefine OMR_PORT
@@ -48,6 +48,8 @@
 #cmakedefine OMR_GC_COMBINATION_SPEC
 #cmakedefine OMR_GC_CONCURRENT_SWEEP
 #cmakedefine OMR_GC_DEBUG_ASSERTS
+#cmakedefine OMR_GC_EXPERIMENTAL_CONTEXT
+#cmakedefine OMR_GC_EXPERIMENTAL_OBJECT_SCANNER
 #cmakedefine OMR_GC_HEAP_CARD_TABLE
 #cmakedefine OMR_GC_IDLE_HEAP_MANAGER
 #cmakedefine OMR_GC_LARGE_OBJECT_AREA
@@ -138,14 +140,8 @@
 #cmakedefine OMR_GC_HYBRID_ARRAYLETS
 #cmakedefine OMR_GC_OBJECT_MAP
 #cmakedefine OMR_GC_REALTIME
-#cmakedefine OMR_GC_STACCATO
 #cmakedefine OMR_GC_TLH_PREFETCH_FTA
 #cmakedefine OMR_GC_VLHGC
-
-/**
- * Flag to indicate that on 64-bit platforms, the monitor slot and class slot in object headers are U32 rather than UDATA.
- */
-#cmakedefine OMR_INTERP_COMPRESSED_OBJECT_HEADER
 
 /**
  * Flag to indicate that on 64-bit platforms, the monitor slot in object headers is a U32 rather than a UDATA.

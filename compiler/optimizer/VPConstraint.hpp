@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,15 +22,15 @@
 #ifndef VPCONSTRAINT_INCL
 #define VPCONSTRAINT_INCL
 
-#include <stdint.h>                      // for int32_t, int16_t, int64_t, etc
-#include <string.h>                      // for NULL, strncmp
-#include "env/KnownObjectTable.hpp"  // for KnownObjectTable, etc
-#include "env/TRMemory.hpp"              // for TR_Memory, etc
-#include "env/jittypes.h"                // for uintptrj_t
-#include "il/DataTypes.hpp"              // for DataTypes, DataTypes::Int16, etc
-#include "infra/Assert.hpp"              // for TR_ASSERT
-#include "infra/Bit.hpp"                 // for getPrecisionFromValue, etc
-#include "infra/List.hpp"                // for TR_ScratchList, ListElement
+#include <stdint.h>
+#include <string.h>
+#include "env/KnownObjectTable.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
+#include "infra/List.hpp"
 
 class TR_FrontEnd;
 class TR_OpaqueClassBlock;

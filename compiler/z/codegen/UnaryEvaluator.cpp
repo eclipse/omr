@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,80 +19,45 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                                // for NULL, size_t
-#include <stdint.h>                                // for int32_t, uint32_t, etc
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                    // for TR_FrontEnd
-#include "codegen/InstOpCode.hpp"                  // for InstOpCode, etc
-#include "codegen/Instruction.hpp"                 // for Instruction
-#include "codegen/MemoryReference.hpp"             // for MemoryReference, etc
-#include "codegen/RealRegister.hpp"                // for RealRegister, etc
-#include "codegen/Register.hpp"                    // for Register
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterPair.hpp"                // for RegisterPair
-#include "codegen/TreeEvaluator.hpp"               // for TreeEvaluator, etc
-#include "compile/Compilation.hpp"                 // for Compilation
-#include "compile/ResolvedMethod.hpp"              // for TR_ResolvedMethod
+#include "codegen/RegisterPair.hpp"
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/TRMemory.hpp"                        // for TR_HeapMemory, etc
-#include "il/DataTypes.hpp"                        // for TR::DataType, etc
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                            // for ILOpCode
-#include "il/Node.hpp"                             // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"           // for AutomaticSymbol
-#include "il/symbol/LabelSymbol.hpp"               // for LabelSymbol
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/LabelSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                        // for TR_ASSERT
-#include "infra/Bit.hpp"                           // for trailingZeroes, etc
-#include "ras/Debug.hpp"                           // for TR_DebugBase
-#include "ras/Delimiter.hpp"                       // for Delimiter
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
+#include "ras/Debug.hpp"
+#include "ras/Delimiter.hpp"
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
-#include "z/codegen/S390Register.hpp"              // for TR_PseudoRegister, etc
+#include "z/codegen/S390Register.hpp"
 #endif
 
 namespace TR { class SymbolReference; }
-
-//#define TRACE_EVAL
-#if defined(TRACE_EVAL)
-#define EVAL_BLOCK
-#if defined (EVAL_BLOCK)
-#define PRINT_ME(string,node,cg) TR::Delimiter evalDelimiter(cg->comp(),cg->comp()->getOption(TR_TraceCG),"EVAL", string)
-#else
-extern void PRINT_ME(char * string, TR::Node * node, TR::CodeGenerator * cg);
-#endif
-#else
-#define PRINT_ME(string,node,cg)
-#endif
-
-/**
- * 32bit version lconstHelper: load long integer constant (64-bit signed 2's complement)
- */
-TR::Register *
-lconstHelper(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR_ASSERT(TR::Compiler->target.is32Bit(), "lconstHelper() is for 32bit only!");
-   TR::Register * lowRegister = cg->allocateRegister();
-   TR::Register * highRegister = cg->allocateRegister();
-
-   TR::RegisterPair * longRegister = cg->allocateConsecutiveRegisterPair(lowRegister, highRegister);
-
-   node->setRegister(longRegister);
-
-   int32_t highValue = node->getLongIntHigh();
-   int32_t lowValue = node->getLongIntLow();
-
-   generateLoad32BitConstant(cg, node, lowValue, lowRegister, true);
-   generateLoad32BitConstant(cg, node, highValue, highRegister, true);
-
-   return longRegister;
-   }
 
 /**
  * 64bit version lconstHelper: load long integer constant (64-bit signed 2's complement)
@@ -101,18 +66,10 @@ TR::Register *
 lconstHelper64(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR_ASSERT(TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit(),
-      "lconstHelper64() is for 64bit only!");
-   TR::Register * longRegister = cg->allocate64bitRegister();
+   TR::Register * longRegister = cg->allocateRegister();
    node->setRegister(longRegister);
    int64_t longValue = node->getLongInt();
    genLoadLongConstant(cg, node, longValue, longRegister);
-
-   // on 64bit, lconst returns 64bit registers
-   if (cg->supportsHighWordFacility() && !comp->getOption(TR_DisableHighWordRA) && TR::Compiler->target.is64Bit())
-      {
-      longRegister->setIs64BitReg(true);
-      }
 
    return longRegister;
    }
@@ -124,7 +81,6 @@ lconstHelper64(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::iconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("iconst", node, cg);
    TR::Register * tempReg = node->setRegister(cg->allocateRegister());
    generateLoad32BitConstant(cg, node, node->getInt(), tempReg, true);
    return tempReg;
@@ -136,7 +92,6 @@ OMR::Z::TreeEvaluator::iconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::aconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("aconst", node, cg);
    TR::Register* targetRegister = cg->allocateRegister();
 
    node->setRegister(targetRegister);
@@ -152,16 +107,7 @@ OMR::Z::TreeEvaluator::aconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lconst", node, cg);
-   TR::Register * longRegister;
-   if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
-      {
-      return lconstHelper64(node, cg);
-      }
-   else
-      {
-      return lconstHelper(node, cg);
-      }
+   return lconstHelper64(node, cg);
    }
 
 /**
@@ -170,7 +116,6 @@ OMR::Z::TreeEvaluator::lconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::bconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("bconst", node, cg);
    TR::Register * tempReg = node->setRegister(cg->allocateRegister());
    if (node->getOpCodeValue() == TR::buconst)
       generateLoad32BitConstant(cg, node, node->getByte() & 0xFF, tempReg, true);
@@ -188,7 +133,6 @@ OMR::Z::TreeEvaluator::bconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::sconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("sconst", node, cg);
    TR::Register * tempReg = node->setRegister(cg->allocateRegister());
    int32_t value = node->isUnsigned() ? node->getConst<uint16_t>() : node->getShortInt();
    generateLoad32BitConstant(cg, node, value, tempReg, true);
@@ -201,133 +145,10 @@ OMR::Z::TreeEvaluator::sconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::cconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("cconst", node, cg);
    TR::Register * tempReg = node->setRegister(cg->allocateRegister());
    generateLoad32BitConstant(cg, node, node->getConst<uint16_t>(), tempReg, true);
    return tempReg;
    }
-
-#ifdef J9_PROJECT_SPECIFIC
-TR::Register *
-OMR::Z::TreeEvaluator::o2xEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   PRINT_ME("o2x", node, cg);
-   cg->traceBCDEntry("o2x",node);
-   int32_t destSize = node->getSize();
-
-   TR::Node *srcNode = node->getFirstChild();
-   TR::Register *srcReg = cg->evaluate(srcNode);
-   TR_OpaquePseudoRegister *srcAggrReg = srcReg->getOpaquePseudoRegister();
-   TR_ASSERT(srcAggrReg,"srcAggrReg is not an opaque register for srcNode %p\n",srcNode);
-   size_t srcSize = srcAggrReg->getSize();
-
-   if (cg->traceBCDCodeGen())
-      traceMsg(cg->comp(),"\to2xEval : %s (%p) srcReg->aggrSize = %d, destSize = %d\n",node->getOpCode().getName(),node,srcSize,node->getSize());
-
-   TR::Register *targetReg = cg->evaluateAggregateToGPR(destSize, srcNode, srcAggrReg, NULL); // srcMR = NULL
-
-   cg->decReferenceCount(srcNode);
-   node->setRegister(targetReg);
-   cg->traceBCDExit("o2x",node);
-   return targetReg;
-   }
-
-TR::Register *
-OMR::Z::TreeEvaluator::x2oEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   PRINT_ME("x2o", node, cg);
-
-   cg->traceBCDEntry("x2o",node);
-   TR::Node *srcNode = node->getFirstChild();
-   TR::Register *srcReg = cg->evaluate(srcNode);
-   size_t dstAggrSize = 0;
-
-   TR_OpaquePseudoRegister *targetReg = cg->allocateOpaquePseudoRegister(node->getDataType());
-   TR::Compilation *comp = cg->comp();
-
-   TR_StorageReference *hint = node->getStorageReferenceHint();
-   TR_StorageReference *targetStorageReference = NULL;
-   if (hint)
-      targetStorageReference = hint;
-   else
-      targetStorageReference = TR_StorageReference::createTemporaryBasedStorageReference(dstAggrSize, comp);
-   targetReg->setStorageReference(targetStorageReference, node);
-
-   TR::MemoryReference *destMR = generateS390MemRefFromStorageRef(node, targetStorageReference, cg, false); // enforceSSLimits=false
-
-   if (cg->traceBCDCodeGen())
-      traceMsg(comp,"\tx2oEval : %s (%p) srcSize = %d (srcAddrPrec %d), destNode->aggrSize = %d\n",
-         node->getOpCode().getName(),node,srcNode->getSize(),srcNode->getType().isAddress() ? (TR::Compiler->target.is64Bit() ? 8 : 4 ) : -1, dstAggrSize);
-
-   bool srcIsRegPair = srcReg->getRegisterPair();
-   TR::Register * srcRegLow = NULL;
-   TR::Register * srcRegHi  = NULL;
-   TR::Register * srcReg64  = NULL;
-   if (srcIsRegPair)
-      {
-      srcRegLow = srcReg->getLowOrder();
-      srcRegHi  = srcReg->getHighOrder();
-      }
-   else
-      {
-      srcReg64 = srcReg;
-      }
-
-   size_t srcSize = srcNode->getSize();
-   size_t storeSize = dstAggrSize;
-   if (storeSize > srcSize)
-      {
-      int64_t bytesToClear = storeSize - srcSize;
-      if (cg->traceBCDCodeGen())
-         traceMsg(comp,"\tisWidening=true : clear upper %lld bytes, set storeSize to %d, add %lld to destMR offset (dstAggrSize %d > srcIntSize %d)\n",
-            bytesToClear,srcSize,bytesToClear,dstAggrSize,srcSize);
-      cg->genMemClear(destMR, node, bytesToClear);
-      storeSize = srcSize;
-      destMR = reuseS390MemoryReference(destMR, bytesToClear, node, cg, true); // enforceSSLimits=true
-      }
-
-   switch (storeSize)
-      {
-      case 1:
-         generateRXInstruction(cg, TR::InstOpCode::STC, node, srcIsRegPair ? srcRegLow : srcReg64, destMR);
-         break;
-      case 2:
-         generateRXInstruction(cg, TR::InstOpCode::STH, node, srcIsRegPair ? srcRegLow : srcReg64, destMR);
-         break;
-      case 3:
-         generateRSInstruction(cg, TR::InstOpCode::STCM, node, srcIsRegPair ? srcRegLow : srcReg64, (uint32_t)0x7, destMR);
-         break;
-      case 4:
-         generateRXInstruction(cg, TR::InstOpCode::ST, node, srcIsRegPair ? srcRegLow : srcReg64, destMR);
-         break;
-      case 5:
-      case 6:
-      case 7:
-         generateRSYInstruction(cg, srcIsRegPair ? TR::InstOpCode::STCM : TR::InstOpCode::STCMH, node, srcIsRegPair ? srcRegHi : srcReg64, (uint32_t)((1 << (dstAggrSize-4)) - 1), destMR);
-         generateRXInstruction(cg, TR::InstOpCode::ST, node, srcIsRegPair ? srcRegLow : srcReg64, generateS390MemoryReference(*destMR, dstAggrSize-4, cg));
-         break;
-      case 8:
-         if (srcIsRegPair)
-            {
-            generateRXInstruction(cg, TR::InstOpCode::ST, node, srcRegHi, destMR);
-            generateRXInstruction(cg, TR::InstOpCode::ST, node, srcRegLow, generateS390MemoryReference(*destMR, 4, cg));
-            }
-         else
-            {
-            generateRXInstruction(cg, TR::InstOpCode::STG, node, srcReg64, destMR);
-            }
-         break;
-      default:
-         TR_ASSERT(false,"unexpected dstAggrSize %d on node %p\n", dstAggrSize,node);
-      }
-
-   targetReg->setIsInitialized();
-   cg->decReferenceCount(srcNode);
-   node->setRegister(targetReg);
-   cg->traceBCDExit("x2o",node);
-   return targetReg;
-   }
-#endif
 
 /**
  * labsEvaluator -
@@ -335,28 +156,10 @@ OMR::Z::TreeEvaluator::x2oEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::labsEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("labs", node, cg);
    TR::Node * firstChild = node->getFirstChild();
-   TR::Register * targetRegister;
-   if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
-      {
-      TR::Register * sourceRegister = cg->evaluate(firstChild);
-      targetRegister = cg->allocate64bitRegister();
-      generateRRInstruction(cg, TR::InstOpCode::LPGR, node, targetRegister, sourceRegister);
-      }
-   else
-      {
-      targetRegister = cg->gprClobberEvaluate(firstChild);
-      TR_ASSERT(targetRegister->getRegisterPair() != NULL, "in 32-bit mode, a 64-bit value is not in a register pair");
-      TR::Register *tempReg = cg->allocateRegister();
-      generateRRInstruction(cg, TR::InstOpCode::LR, node, tempReg, targetRegister->getHighOrder());
-      generateRSInstruction(cg, TR::InstOpCode::SRA, node, tempReg, 31);
-      generateRRInstruction(cg, TR::InstOpCode::XR, node, targetRegister->getHighOrder(), tempReg);
-      generateRRInstruction(cg, TR::InstOpCode::XR, node, targetRegister->getLowOrder(), tempReg);
-      generateRRInstruction(cg, TR::InstOpCode::SLR, node, targetRegister->getLowOrder(), tempReg);
-      generateRRInstruction(cg, TR::InstOpCode::SLBR, node, targetRegister->getHighOrder(), tempReg);
-      cg->stopUsingRegister(tempReg);
-      }
+   TR::Register * targetRegister = cg->allocateRegister();;
+   TR::Register * sourceRegister = cg->evaluate(firstChild);
+   generateRRInstruction(cg, TR::InstOpCode::LPGR, node, targetRegister, sourceRegister);
    node->setRegister(targetRegister);
    cg->decReferenceCount(firstChild);
    return targetRegister;
@@ -368,7 +171,6 @@ OMR::Z::TreeEvaluator::labsEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::iabsEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("iabs", node, cg);
    TR::Node * firstChild = node->getFirstChild();
    TR::Compilation *comp = cg->comp();
 
@@ -472,7 +274,6 @@ OMR::Z::TreeEvaluator::l2aEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    //      iiload f
    //         aload O
    //
-   PRINT_ME("l2a", node, cg);
    TR::Node *firstChild = node->getFirstChild();
    // after remat changes, this assume is no longer valid
    //

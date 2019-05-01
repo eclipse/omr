@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2018 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,13 @@ endif
 ###
 
 GLOBAL_CPPFLAGS += -DLINUX -D_REENTRANT -D_FILE_OFFSET_BITS=64
+ifeq (gcc,$(OMR_TOOLCHAIN))
+	GLOBAL_CFLAGS+=-fno-strict-aliasing
+	GLOBAL_CXXFLAGS+=-fno-strict-aliasing -std=c++0x
+endif
+ifeq (xlc,$(OMR_TOOLCHAIN))
+    GLOBAL_CXXFLAGS+= -qlanglvl=extended0x
+endif
 
 ifeq (s390,$(OMR_HOST_ARCH))
     GLOBAL_CXXFLAGS+=$(J9M31)

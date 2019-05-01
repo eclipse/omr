@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,39 +21,39 @@
 
 #include "infra/OMRCfg.hpp"
 
-#include <algorithm>                           // for std::find, etc
-#include <limits.h>                            // for SHRT_MAX, UCHAR_MAX
-#include <stdio.h>                             // for NULL, sprintf
-#include <stdint.h>                            // for int32_t, uint32_t
-#include <string.h>                            // for NULL, memset
-#include "compile/Compilation.hpp"             // for Compilation
+#include <algorithm>
+#include <limits.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/TRMemory.hpp"                    // for Allocator, etc
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
-#include "il/Block.hpp"                        // for Block
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::athrow, etc
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, vcount_t
-#include "il/Node_inlines.hpp"                 // for Node::getBranchDestination
-#include "il/Symbol.hpp"                       // for Symbol
+#include "env/TRMemory.hpp"
+#include "env/PersistentInfo.hpp"
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"           // for LabelSymbol
+#include "il/symbol/LabelSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Cfg.hpp"                       // for CFG
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Cfg.hpp"
 #include "infra/deque.hpp"
-#include "infra/Link.hpp"                      // for TR_LinkHead1
-#include "infra/List.hpp"                      // for ListIterator, List
-#include "infra/Stack.hpp"                     // for TR_Stack
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/CfgNode.hpp"                   // for CFGNode
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/Structure.hpp"             // for TR_StructureSubGraphNode, etc
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/Stack.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
 #include "optimizer/StructuralAnalysis.hpp"
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "ras/Debug.hpp"
 
 #ifdef __MVS__
 #include <stdlib.h>

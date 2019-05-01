@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,9 +31,9 @@ namespace OMR { class IlGeneratorMethodDetails; }
 namespace OMR { typedef OMR::IlGeneratorMethodDetails IlGeneratorMethodDetailsConnector; }
 #endif
 
-#include <stddef.h>               // for size_t
-#include "env/FilePointerDecl.hpp"  // for FILE
-#include "infra/Annotations.hpp"  // for OMR_EXTENSIBLE
+#include <stddef.h>
+#include "env/FilePointerDecl.hpp"
+#include "infra/Annotations.hpp"
 
 class TR_FrontEnd;
 class TR_ResolvedMethod;

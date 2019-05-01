@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,10 +32,10 @@ namespace OMR { class CodeCacheConfig; }
 namespace OMR { typedef CodeCacheConfig CodeCacheConfigConnector; }
 #endif
 
-#include "infra/Annotations.hpp"  // for OMR_EXTENSIBLE
+#include "infra/Annotations.hpp"
 
-#include <stddef.h>  // for size_t
-#include <stdint.h>  // for int32_t, uint32_t, uint8_t
+#include <stddef.h>
+#include <stdint.h>
 
 class TR_OpaqueMethodBlock;
 namespace TR { class CodeCacheConfig; }

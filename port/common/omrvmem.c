@@ -201,6 +201,25 @@ omrvmem_reserve_memory_ex(struct OMRPortLibrary *portLibrary, struct J9PortVmemI
 }
 
 /**
+ * Maps a contiguous region of memory to double map addresses[] passed in.
+ *
+ * @param OMRPortLibrary       *portLibrary            [in] The portLibrary object
+ * @param void*                addressesOffeset[]      [in] Addresses to be double mapped
+ * @param uintptr_t            byteAmount              [in] Total size to allocate for contiguous block of memory
+ * @param struct J9PortVmemIdentifier *oldIdentifier   [in]  old Identifier containing file descriptor
+ * @param struct J9PortVmemIdentifier *newIdentifier   [out] new Identifier for new block of memory. The structure to be updated
+ * @param uintptr_t            mode,           [in] Access Mode
+ * @paramuintptr_t             pageSize,       [in] onstant describing pageSize
+ * @param OMRMemCategory       *category       [in] Memory allocation category
+ */
+
+void *
+omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
+{
+	return NULL;
+}
+
+/**
  * Get the page size used to back a region of virtual memory.
  *
  * @param[in] portLibrary The port library.

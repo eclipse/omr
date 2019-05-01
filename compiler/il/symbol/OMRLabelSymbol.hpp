@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,10 +33,10 @@ namespace OMR { typedef OMR::LabelSymbol LabelSymbolConnector; }
 
 #include "il/Symbol.hpp"
 
-#include <stdint.h>          // for int32_t, intptr_t, etc
-#include <stdlib.h>          // for malloc, NULL
-#include <string.h>          // for strcpy, strlen
-#include "infra/Assert.hpp"  // for TR_ASSERT
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include "infra/Assert.hpp"
 
 class TR_Debug;
 namespace TR { class Block; }

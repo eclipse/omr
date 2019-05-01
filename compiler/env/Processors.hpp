@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,8 +78,8 @@ enum TR_Processor
    TR_s370gp11,
    TR_s370gp12,
    TR_s370gp13,
-
-   TR_Last390Processor = TR_s370gp13,
+   TR_s370gp14,
+   TR_Last390Processor = TR_s370gp14,
 
    // ARM Processors
    TR_FirstARMProcessor,

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,13 @@
 #include "ParallelHeapWalker.hpp"
 #include "ParallelSweepScheme.hpp"
 
+/* Declaration of "C" style Read Barrier Verifier specific methods */
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
+void poisonReferenceSlots(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region, omrobjectptr_t object, void *userData);
+void poisonReferenceSlot(MM_EnvironmentBase *env, GC_SlotObject *slotObject);
+void healReferenceSlot(MM_EnvironmentBase *env, GC_SlotObject *slotObject);
+void healReferenceSlots(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region, omrobjectptr_t object, void *userData);
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 
 class MM_CollectionStatisticsStandard;
 class MM_CompactScheme;
@@ -260,6 +267,11 @@ public:
 
 	virtual bool collectorStartup(MM_GCExtensionsBase* extensions);
 	virtual void collectorShutdown(MM_GCExtensionsBase *extensions);
+
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
+	void poisonHeap(MM_EnvironmentBase *env);
+	void healHeap(MM_EnvironmentBase *env);
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 
 	/**
 	 *  Fixes up all unloaded objects so that the heap can be walked and only live objects returned

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,10 +23,10 @@
 #define COMPILATION_DATATYPES_INCL
 
 #include <stdint.h>
-#include "infra/Link.hpp"               // for TR_Link
-#include "infra/List.hpp"               // for List, ListHeadAndTail, etc
-#include "infra/Stack.hpp"              // for TR_Stack
-#include "optimizer/Optimizations.hpp"  // for Optimizations::numOpts
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/Stack.hpp"
+#include "optimizer/Optimizations.hpp"
 
 class TR_BitVector;
 class TR_OpaqueClassBlock;
@@ -46,7 +46,6 @@ enum TR_Hotness
    warm,
    hot,
    lastOMRStrategy      = hot,  // currently used to test available omr optimizations
-   lastRubyStrategy     = hot,
    veryHot,
    scorching,
    minHotness           = noOpt,

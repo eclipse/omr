@@ -21,9 +21,6 @@
 
 #include "JBTestUtil.hpp"
 
-#include "ilgen/BytecodeBuilder.hpp"
-#include "ilgen/VirtualMachineState.hpp"
-
 #define EXPECT_BCIEQ(expected_index, actual_index) do {\
    EXPECT_EQ((expected_index), (actual_index)) << "Unexpected bytecode index (implies bytecode was either missed or erroneously added in worklist)."; \
    } while (0)
@@ -113,11 +110,11 @@ DEFINE_BUILDER( WorklistTestMethod,
       "bc0",  "bc1",  "bc2",  "bc3",  "bc4",  "bc5",  "bc6",  "bc7",  "bc8",  "bc9",
       "bc10", "bc11", "bc12", "bc13", "bc14", "bc15", "bc16", "bc17", "bc18", "bc19" };
 
-   TR::BytecodeBuilder *builders[20];
+   OMR::JitBuilder::BytecodeBuilder *builders[20];
    for (int32_t i=0;i < 20;i++)
       builders[i] = OrphanBytecodeBuilder(i, (char *)bcName[i]);
 
-   TR::VirtualMachineState *vmState = new TR::VirtualMachineState();
+   OMR::JitBuilder::VirtualMachineState *vmState = new OMR::JitBuilder::VirtualMachineState();
    setVMState(vmState);
 
    Store("result",
@@ -126,7 +123,7 @@ DEFINE_BUILDER( WorklistTestMethod,
    // should add 0 to the worklist
    AppendBuilder(builders[0]);
 
-   TR::BytecodeBuilder *b;
+   OMR::JitBuilder::BytecodeBuilder *b;
 
    // BCI 0
    int32_t bci = GetNextBytecodeFromWorklist();
@@ -269,7 +266,7 @@ class WorklistTest : public JitBuilderTest {};
 TEST_F(WorklistTest, test)
    {
    WorklistTestMethodFunction worklistTestMethod;
-   ASSERT_COMPILE(TR::TypeDictionary, WorklistTestMethod, worklistTestMethod);
+   ASSERT_COMPILE(OMR::JitBuilder::TypeDictionary, WorklistTestMethod, worklistTestMethod);
 
    for (int32_t p=0;p < 20;p++)
       {

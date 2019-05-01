@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,12 +19,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                         // for NULL
-#include <stdint.h>                         // for int32_t, uint32_t, etc
-#include "codegen/InstOpCode.hpp"           // for InstOpCode, etc
-#include "codegen/Instruction.hpp"          // for Instruction
-#include "codegen/Snippet.hpp"              // for Snippet
-#include "env/jittypes.h"                   // for intptrj_t, uintptrj_t
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Snippet.hpp"
+#include "env/jittypes.h"
 #include "runtime/Runtime.hpp"
 
 class TR_VirtualGuardSite;
@@ -344,7 +344,9 @@ TR::Instruction *generateControlFlowInstruction(
                    TR::InstOpCode::Mnemonic                       op,
                    TR::Node                            *n,
                    TR::RegisterDependencyConditions *deps=NULL,
-                   TR::Instruction                     *preced = 0);
+                   TR::Instruction                     *preced = 0,
+                   bool                                useRegPairForResult = false,
+                   bool                                useRegPairForCond = false);
 
 TR::Instruction *generateAdminInstruction(
                    TR::CodeGenerator      *cg,

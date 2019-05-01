@@ -1,7 +1,7 @@
 #!/bin/perl
 
 ###############################################################################
-# Copyright (c) 2000, 2016 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,9 +62,9 @@ END
 
    print PROPSFILE <<END;
 $warning
-#include <stdint.h>                     // for uint32_t
-#include "codegen/InstOpCode.hpp"       // for InstOpCode, etc
-#include "p/codegen/PPCOpsDefines.hpp"  // for PPCOpProp_SyncSideEffectFree, etc
+#include <stdint.h>
+#include "codegen/InstOpCode.hpp"
+#include "p/codegen/PPCOpsDefines.hpp"
 
 const uint32_t OMR::Power::InstOpCode::properties[PPCNumOpCodes] =
    {
@@ -72,7 +72,7 @@ END
 
    print BINARYFILE <<END;
 $warning
-#include "codegen/InstOpCode.hpp"  // for InstOpCode, etc
+#include "codegen/InstOpCode.hpp"
 
 const TR_PPCOpCodeBinaryEntry OMR::Power::InstOpCode::binaryEncodings[PPCNumOpCodes] =
    {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,53 +21,53 @@
 
 #include "il/OMRBlock.hpp"
 
-#include <limits.h>                            // for INT_MAX
-#include <stdint.h>                            // for int32_t, uint32_t, etc
-#include <string.h>                            // for NULL, strncmp
-#include <stdio.h>                             // for sprintf
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/CompilationTypes.hpp"        // for TR_Hotness
-#include "compile/Method.hpp"                  // for TR_Method
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include <limits.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
-#include "env/TRMemory.hpp"                    // for SparseBitVector, etc
-#include "env/jittypes.h"                      // for TR_ByteCodeInfo, etc
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                        // for Block
-#include "il/Block_inlines.hpp"                // for Block::self
-#include "il/DataTypes.hpp"                    // for DataTypes::NoType, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference, etc
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "il/symbol/LabelSymbol.hpp"           // for LabelSymbol
-#include "il/symbol/RegisterMappedSymbol.hpp"  // for RegisterMappedSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector
-#include "infra/Cfg.hpp"                       // for CFG, MAX_BLOCK_COUNT, etc
-#include "infra/Flags.hpp"                     // for flags32_t
-#include "infra/Link.hpp"                      // for TR_LinkHeadAndTail, etc
-#include "infra/List.hpp"                      // for ListIterator, List, etc
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/CfgNode.hpp"                   // for CFGNode
+#include "il/Block.hpp"
+#include "il/Block_inlines.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/Inliner.hpp"
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/RegisterCandidate.hpp"     // for TR_GlobalRegister
-#include "optimizer/Structure.hpp"             // for TR_BlockStructure, etc
-#include "optimizer/TransformUtil.hpp"         // for TransformUtil
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/RegisterCandidate.hpp"
+#include "optimizer/Structure.hpp"
+#include "optimizer/TransformUtil.hpp"
+#include "ras/Debug.hpp"
 
 class TR_Memory;
 namespace TR { class DebugCounterAggregation; }
@@ -1739,7 +1739,7 @@ OMR::Block::verifyOSRInduceBlock(TR::Compilation *comp)
       {
       TR::Node *node = cursor->getNode();
       if (node->getOpCodeValue() == TR::treetop && node->getFirstChild()->getOpCode().hasSymbolReference()
-          && node->getFirstChild()->getSymbolReference() == comp->getSymRefTab()->element(TR_induceOSRAtCurrentPC))
+          && node->getFirstChild()->getSymbolReference()->isOSRInductionHelper())
          {
          foundOSRInduceCall = true;
          break;

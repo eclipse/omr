@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,29 +21,30 @@
 
 #include "codegen/IA32SystemLinkage.hpp"
 
-#include <stdio.h>                         // for NULL, printf
-#include "codegen/CodeGenerator.hpp"       // for CodeGenerator
-#include "codegen/IA32LinkageUtils.hpp"    // for IA32LinkageUtils
-#include "codegen/Linkage.hpp"             // for TR::X86LinkageProperties, etc
-#include "codegen/Machine.hpp"             // for Machine
-#include "codegen/RealRegister.hpp"        // for TR::RealRegister::RegNum, etc
-#include "codegen/RegisterConstants.hpp"   // for TR_RegisterKinds::TR_X87
+#include <stdio.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/IA32LinkageUtils.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "compile/Compilation.hpp"         // for Compilation
-#include "compile/Method.hpp"              // for TR_Method
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "il/ILOpCodes.hpp"                // for ILOpCodes
-#include "il/Node.hpp"                     // for Node
-#include "il/Node_inlines.hpp"             // for Node::getDataType, etc
-#include "il/Symbol.hpp"                   // for Symbol
-#include "il/symbol/LabelSymbol.hpp"       // for generateLabelSymbol, etc
-#include "il/symbol/MethodSymbol.hpp"      // for MethodSymbol
-#include "il/symbol/ParameterSymbol.hpp"   // for ParameterSymbol
-#include "infra/Assert.hpp"                // for TR_ASSERT
-#include "ras/Debug.hpp"                   // for TR_DebugBase
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
 #include "codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"            // for ::ADD4RegImm4, etc
+#include "x/codegen/X86Ops.hpp"
 
 namespace TR { class SymbolReference; }
 namespace TR { class MemoryReference; }
@@ -361,7 +362,7 @@ int32_t TR::IA32SystemLinkage::buildArgs(
 
 TR::Register *TR::IA32SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPRegs)
    {
-   TR::RealRegister    *stackPointerReg = machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister    *stackPointerReg = machine()->getRealRegister(TR::RealRegister::esp);
    TR::SymbolReference *methodSymRef    = callNode->getSymbolReference();
    TR::MethodSymbol    *methodSymbol    = callNode->getSymbol()->castToMethodSymbol();
    TR::ILOpCodes        callOpCodeValue = callNode->getOpCodeValue();

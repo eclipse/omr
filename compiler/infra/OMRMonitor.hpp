@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,14 +28,11 @@ namespace OMR { class Monitor; }
 namespace OMR { typedef OMR::Monitor MonitorConnector; }
 #endif
 
-#include <stdint.h>          // for int32_t, int64_t
-#include "infra/Assert.hpp"  // for TR_ASSERT
-#include "omrmutex.h"        // for MUTEX
+#include <stdint.h>
+#include "infra/Assert.hpp"
+#include "omrmutex.h"
 
 namespace TR { class Monitor; }
-
-#define NOT_IMPL { TR_ASSERT(false, "not implemented by project"); return 0; }
-#define NOT_IMPL_VOID { TR_ASSERT(false, "not implemented by project"); }
 
 namespace OMR
 {
@@ -50,14 +47,14 @@ class Monitor
    static TR::Monitor *create(char *name);
    static void destroy(TR::Monitor *monitor);
    void enter();
-   int32_t try_enter() NOT_IMPL;
+   int32_t try_enter() { TR_UNIMPLEMENTED(); }
    int32_t exit(); // returns 0 on success
    void destroy();
-   void wait() NOT_IMPL_VOID;
-   intptr_t wait_timed(int64_t millis, int32_t nanos) NOT_IMPL;
-   void notify() NOT_IMPL_VOID;
-   void notifyAll() NOT_IMPL_VOID;
-   int32_t num_waiting() NOT_IMPL;
+   void wait() { TR_UNIMPLEMENTED(); }
+   intptr_t wait_timed(int64_t millis, int32_t nanos) { TR_UNIMPLEMENTED(); }
+   void notify() { TR_UNIMPLEMENTED(); }
+   void notifyAll() { TR_UNIMPLEMENTED(); }
+   int32_t num_waiting() { TR_UNIMPLEMENTED(); }
    char const *getName();
    bool init(char *name);
 
@@ -71,8 +68,5 @@ class Monitor
    };
 
 }
-
-#undef NOT_IMPL
-#undef NOT_IMPL_VOID
 
 #endif

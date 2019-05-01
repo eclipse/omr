@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #ifndef OMR_FLAGS_INCL
 #define OMR_FLAGS_INCL
 
-#include <stdint.h>  // for uint16_t, uint32_t, uint64_t, uint8_t
+#include <stdint.h>
 
 
 #define TO_MASK8(b) (1<<(uint8_t)b)

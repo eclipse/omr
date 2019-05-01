@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,21 +22,21 @@
 #ifndef LOOPVERSIONER_INCL
 #define LOOPVERSIONER_INCL
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for int32_t
-#include "compile/Compilation.hpp"            // for Compilation
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "il/ILOps.hpp"                       // for ILOpCode
-#include "il/Node.hpp"                        // for Node, vcount_t
-#include "il/Node_inlines.hpp"                // for Node::getFirstChild, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/TreeTop.hpp"                     // for TreeTop
-#include "il/TreeTop_inlines.hpp"             // for TreeTop::getNode
-#include "infra/BitVector.hpp"                // for TR_BitVector
-#include "infra/Link.hpp"                     // for TR_Link, etc
-#include "infra/List.hpp"                     // for List, etc
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
-#include "optimizer/LoopCanonicalizer.hpp"    // for TR_LoopTransformer
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "optimizer/OptimizationManager.hpp"
+#include "optimizer/LoopCanonicalizer.hpp"
 
 class TR_PostDominators;
 class TR_RegionStructure;
@@ -209,7 +209,7 @@ class TR_LoopVersioner : public TR_LoopTransformer
    bool detectInvariantBoundChecks(List<TR::TreeTop> *);
    bool detectInvariantSpineChecks(List<TR::TreeTop> *);
    bool detectInvariantDivChecks(List<TR::TreeTop> *);
-   bool detectInvariantIwrtbars(List<TR::TreeTop> *);
+   bool detectInvariantAwrtbaris(List<TR::TreeTop> *);
    bool detectInvariantTrees(TR_RegionStructure *whileLoop, List<TR::TreeTop> *, bool, bool *, SharedSparseBitVector &reverseBranchInLoops);
    bool detectInvariantNodes(List<TR_NodeParentSymRef> *invariantNodes, List<TR_NodeParentSymRefWeightTuple> *invariantTranslationNodes);
    bool detectInvariantSpecializedExprs(List<TR::Node> *);
@@ -232,7 +232,7 @@ class TR_LoopVersioner : public TR_LoopTransformer
    void buildBoundCheckComparisonsTree(List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *,List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::Node> *, TR::Block *, bool);
    void buildSpineCheckComparisonsTree(List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::Node> *, TR::Block *);
    void buildDivCheckComparisonsTree(List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::Node> *, TR::Block *);
-   void buildIwrtbarComparisonsTree(List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::Node> *, TR::Block *);
+   void buildAwrtbariComparisonsTree(List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::Node> *, TR::Block *);
    void buildCheckCastComparisonsTree(List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::Node> *, TR::Block *);
    void buildConditionalTree(List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::Node> *, TR::Block *, SharedSparseBitVector &reverseBranchInLoops);
    void buildArrayStoreCheckComparisonsTree(List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::TreeTop> *, List<TR::Node> *, TR::Block *);
@@ -286,6 +286,7 @@ class TR_LoopVersioner : public TR_LoopTransformer
 
    TR_PostDominators *_postDominators;
    bool _loopTransferDone;
+   bool _skipWrtbarVersion;
    };
 
 

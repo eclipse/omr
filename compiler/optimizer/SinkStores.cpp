@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,47 +21,47 @@
 
 #include "optimizer/SinkStores.hpp"
 
-#include <stdint.h>                                 // for int32_t, etc
-#include <stdlib.h>                                 // for atoi
-#include <string.h>                                 // for NULL, memset
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                     // for feGetEnv, etc
-#include "compile/Compilation.hpp"                  // for Compilation, etc
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/allocator.h"                          // for shared_allocator
-#include "cs2/sparsrbit.h"                          // for ASparseBitVector, etc
-#include "env/IO.hpp"                               // for POINTER_PRINTF_FORMAT
+#include "cs2/allocator.h"
+#include "cs2/sparsrbit.h"
+#include "env/IO.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                         // for SparseBitVector, etc
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                             // for Block, toBlock
+#include "il/Block.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                             // for ILOpCode
-#include "il/Node.hpp"                              // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "il/TreeTop.hpp"                           // for TreeTop
-#include "il/TreeTop_inlines.hpp"                   // for TreeTop::getNode, etc
-#include "il/symbol/AutomaticSymbol.hpp"            // for AutomaticSymbol
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/BitVector.hpp"                      // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                            // for CFG
-#include "infra/HashTab.hpp"                        // for TR_HashTab, etc
-#include "infra/List.hpp"                           // for List, etc
-#include "infra/CfgEdge.hpp"                        // for CFGEdge
-#include "infra/CfgNode.hpp"                        // for CFGNode
-#include "optimizer/DataFlowAnalysis.hpp"           // for TR_Liveness, etc
-#include "optimizer/Optimization.hpp"               // for Optimization
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/HashTab.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "optimizer/DataFlowAnalysis.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"                  // for Optimizer
+#include "optimizer/Optimizer.hpp"
 #include "optimizer/Structure.hpp"
 
 #define OPT_DETAILS "O^O SINK STORES: "

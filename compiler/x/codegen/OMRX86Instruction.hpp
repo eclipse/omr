@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,29 +22,29 @@
 #ifndef OMR_X86INSTRUCTION_INCL
 #define OMR_X86INSTRUCTION_INCL
 
-#include <stddef.h>                                   // for NULL
-#include <stdint.h>                                   // for int32_t, etc
-#include "codegen/CodeGenerator.hpp"                  // for CodeGenerator, etc
-#include "codegen/Instruction.hpp"                    // for Instruction, etc
-#include "codegen/Machine.hpp"                        // for Machine
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "codegen/RealRegister.hpp"                   // for RealRegister, etc
-#include "codegen/Register.hpp"                       // for Register
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/RegisterRematerializationInfo.hpp"
-#include "codegen/Snippet.hpp"                        // for Snippet
-#include "compile/Compilation.hpp"                    // for Compilation
+#include "codegen/Snippet.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/TRMemory.hpp"
-#include "il/ILOpCodes.hpp"                           // for ILOpCodes
-#include "il/Node.hpp"                                // for ncount_t
-#include "il/symbol/LabelSymbol.hpp"                  // for LabelSymbol
-#include "infra/Assert.hpp"                           // for TR_ASSERT
-#include "infra/List.hpp"                             // for List
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
 #include "runtime/Runtime.hpp"
-#include "x/codegen/X86Ops.hpp"                       // for TR_X86OpCodes, etc
+#include "x/codegen/X86Ops.hpp"
 #include "env/CompilerEnv.hpp"
 
 namespace TR { class LabelRelocation; }
@@ -307,58 +307,14 @@ class X86LabelInstruction : public TR::Instruction
    bool _needToClearFPStack;
    uint8_t _reloType;
    bool _permitShortening;
+   void initialize(TR::LabelSymbol *sym, bool b);
 
    public:
 
-   X86LabelInstruction(TR::LabelSymbol *sym, TR::Node * node, TR_X86OpCodes op, TR::CodeGenerator *cg, bool b = false)
-     : TR::Instruction(node, op, cg), _symbol(sym), _needToClearFPStack(b), _reloType(TR_NoRelocation),
-       _permitShortening(true)
-      {
-      if (sym && op == LABEL)
-         sym->setInstruction(this);
-      else if (sym)
-         sym->setDirectlyTargeted();
-      }
-
-   X86LabelInstruction(TR::LabelSymbol *sym,
-                          TR_X86OpCodes op,
-                          TR::Instruction *precedingInstruction,
-                          TR::CodeGenerator *cg,
-                          bool b = false)
-      : TR::Instruction(op, precedingInstruction, cg),
-        _symbol(sym),
-        _needToClearFPStack(b),
-        _outlinedInstructionBranch(NULL),
-        _reloType(TR_NoRelocation),
-        _permitShortening(true)
-      {
-      if (sym && op == LABEL)
-         sym->setInstruction(this);
-      else if (sym)
-         sym->setDirectlyTargeted();
-      }
-
    X86LabelInstruction(TR_X86OpCodes op, TR::Node * node, TR::LabelSymbol *sym, TR::CodeGenerator *cg, bool b = false);
-
-   X86LabelInstruction(TR::Instruction *precedingInstruction,
-                          TR_X86OpCodes op,
-                          TR::LabelSymbol *sym,
-                          TR::CodeGenerator *cg,
-                          bool b = false);
-
-   X86LabelInstruction(TR_X86OpCodes op,
-                          TR::Node *node,
-                          TR::LabelSymbol *sym,
-                          TR::RegisterDependencyConditions *cond,
-                          TR::CodeGenerator *cg,
-                          bool b = false);
-
-   X86LabelInstruction(TR::Instruction *precedingInstruction,
-                          TR_X86OpCodes op,
-                          TR::LabelSymbol *sym,
-                          TR::RegisterDependencyConditions *cond,
-                          TR::CodeGenerator *cg,
-                          bool b = false);
+   X86LabelInstruction(TR::Instruction *precedingInstruction, TR_X86OpCodes op, TR::LabelSymbol *sym, TR::CodeGenerator *cg, bool b = false);
+   X86LabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg, bool b = false);
+   X86LabelInstruction(TR::Instruction *precedingInstruction, TR_X86OpCodes op, TR::LabelSymbol *sym, TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg, bool b = false);
 
    void prohibitShortening() { _permitShortening = false; }
 
@@ -386,7 +342,7 @@ class X86LabelInstruction : public TR::Instruction
 
    virtual void addMetaDataForCodeAddress(uint8_t *cursor);
 
-   virtual TR::X86LabelInstruction  *getIA32LabelInstruction();
+   virtual TR::X86LabelInstruction  *getX86LabelInstruction();
 
    void assignOutlinedInstructions(TR_RegisterKinds kindsToBeAssigned, TR::X86LabelInstruction *labelInstruction);
    void addPostDepsToOutlinedInstructionsBranch();
@@ -662,7 +618,7 @@ class X86ImmInstruction : public TR::Instruction
    // The following safe virtual downcast method is used under debug only
    // for assertion checking.
    //
-   virtual X86ImmInstruction  *getIA32ImmInstruction();
+   virtual X86ImmInstruction  *getX86ImmInstruction();
 #endif
 
    virtual void adjustVFPState(TR_VFPState *state, TR::CodeGenerator *cg){ adjustVFPStateForCall(state, _adjustsFramePointerBy, cg); }
@@ -866,7 +822,7 @@ class X86RegInstruction : public TR::Instruction
 
    virtual Kind getKind() { return IsReg; }
 
-   virtual TR::X86RegInstruction  *getIA32RegInstruction();
+   virtual TR::X86RegInstruction  *getX86RegInstruction();
 
    virtual TR::X86RegRegInstruction  *getIA32RegRegInstruction() {return NULL;}
 
@@ -928,10 +884,6 @@ class X86RegInstruction : public TR::Instruction
 #ifdef DEBUG
    virtual uint32_t getNumOperandReferencedGPRegisters() { return 1; };
 #endif
-
-   protected:
-
-   void aboutToAssignTargetRegister(){ aboutToAssignRegister(getTargetRegister(), TR_ifUses64bitTarget, TR_ifModifies32or64bitTarget); }
 
    };
 
@@ -1066,11 +1018,6 @@ class X86RegRegInstruction : public TR::X86RegInstruction
 #ifdef DEBUG
    virtual uint32_t getNumOperandReferencedGPRegisters() { return 2; }
 #endif
-
-   protected:
-
-   void aboutToAssignSourceRegister() { aboutToAssignRegister(getSourceRegister(), TR_if64bitSource, TR_ifModifies32or64bitSource); }
-
    };
 
 
@@ -1362,11 +1309,6 @@ class X86RegRegRegInstruction : public TR::X86RegRegInstruction
 #ifdef DEBUG
    virtual uint32_t getNumOperandReferencedGPRegisters() { return 3; }
 #endif
-
-   protected:
-
-   void aboutToAssignSource2ndRegister() { aboutToAssignRegister(getSource2ndRegister(), TR_if64bitSource, TR_never); }
-
    };
 
 
@@ -1828,11 +1770,6 @@ class X86MemRegInstruction : public TR::X86MemInstruction
          ;
       }
 #endif
-
-   protected:
-
-   void aboutToAssignSourceRegister(){ aboutToAssignRegister(getSourceRegister(), TR_if64bitSource, TR_ifModifies32or64bitSource); }
-
    };
 
 
@@ -2107,11 +2044,6 @@ class X86RegRegMemInstruction : public TR::X86RegMemInstruction
 #ifdef DEBUG
    virtual uint32_t getNumOperandReferencedGPRegisters() { return 2 + getMemoryReference()->getNumMRReferencedGPRegisters(); }
 #endif
-
-   protected:
-
-   void aboutToAssignSource2ndRegister() { aboutToAssignRegister(getSource2ndRegister(), TR_if64bitSource, TR_never); }
-
    };
 
 
@@ -2842,7 +2774,7 @@ class X86VFPDedicateInstruction : public TR::X86RegMemInstruction
       // returns [vfp+0].
       //
       TR::Machine *machine = cg->machine();
-      return generateX86MemoryReference(machine->getX86RealRegister(TR::RealRegister::vfp), 0, cg);
+      return generateX86MemoryReference(machine->getRealRegister(TR::RealRegister::vfp), 0, cg);
       }
 
    public:
@@ -2953,7 +2885,7 @@ class X86VFPCallCleanupInstruction : public TR::Instruction
 
 inline TR::X86ImmInstruction  * toIA32ImmInstruction(TR::Instruction *i)
    {
-   TR_ASSERT(i->getIA32ImmInstruction() != NULL,
+   TR_ASSERT(i->getX86ImmInstruction() != NULL,
           "trying to downcast to an IA32ImmInstruction");
    return (TR::X86ImmInstruction  *)i;
    }
@@ -2985,6 +2917,7 @@ TR::X86RegRegInstruction  * generateRegRegInstruction(TR::Instruction *, TR_X86O
 
 TR::Instruction  * generateInstruction(TR_X86OpCodes, TR::Node *, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
 TR::Instruction  * generateInstruction(TR_X86OpCodes op, TR::Node * node, TR::CodeGenerator *cg);
+TR::Instruction  * generateInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::CodeGenerator *cg);
 
 TR::X86ImmInstruction  * generateImmInstruction(TR_X86OpCodes op, TR::Node * node, int32_t imm, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
 TR::X86ImmInstruction  * generateImmInstruction(TR_X86OpCodes op, TR::Node * node, int32_t imm, TR::CodeGenerator *cg, int32_t reloKind=TR_NoRelocation);
@@ -2996,9 +2929,6 @@ TR::X86RegInstruction  * generateRegInstruction(TR_X86OpCodes op, TR::Node *, TR
 
 TR::X86MemImmSymInstruction  * generateMemImmSymInstruction(TR_X86OpCodes op, TR::Node *, TR::MemoryReference  * mr, int32_t imm, TR::SymbolReference *sr, TR::CodeGenerator *cg);
 
-TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
-TR::X86LabelInstruction  * generateLabelInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
-
 TR::X86PaddingInstruction  * generatePaddingInstruction(uint8_t length, TR::Node * node, TR::CodeGenerator *cg);
 TR::X86PaddingInstruction  * generatePaddingInstruction(TR::Instruction *precedingInstruction, uint8_t length, TR::CodeGenerator *cg);
 
@@ -3009,29 +2939,17 @@ TR::X86AlignmentInstruction  * generateAlignmentInstruction(TR::Node * node, uin
 TR::X86AlignmentInstruction  * generateAlignmentInstruction(TR::Instruction *precedingInstruction, uint8_t boundary, TR::CodeGenerator *cg);
 TR::X86AlignmentInstruction  * generateAlignmentInstruction(TR::Instruction *precedingInstruction, uint8_t boundary, uint8_t margin, TR::CodeGenerator *cg);
 
+TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
+TR::X86LabelInstruction  * generateLabelInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
 TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, TR::CodeGenerator *cg);
-inline TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, bool needsVMThreadRegister, TR::CodeGenerator *cg)
-   { return generateLabelInstruction(op, node, sym, cg); }
-
 TR::X86LabelInstruction  * generateLabelInstruction(TR::Instruction *i, TR_X86OpCodes op, TR::LabelSymbol *sym, TR::CodeGenerator *cg);
-inline TR::X86LabelInstruction  * generateLabelInstruction(TR::Instruction *i, TR_X86OpCodes op, TR::LabelSymbol *sym, bool needsVMThreadRegister, TR::CodeGenerator *cg)
-   { return generateLabelInstruction(i, op, sym, cg); }
-
-
-TR::X86LabelInstruction  * generateLongLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
-TR::X86LabelInstruction  * generateLongLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::CodeGenerator *cg);
-
-TR::X86LabelInstruction  * generateLongLabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, bool needsVMThreadRegister, TR::CodeGenerator *cg);
-
-
 TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::Node * glRegDep, List<TR::Register> *popRegs, bool evaluateGlRegDeps, TR::CodeGenerator *cg);
-
 inline TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, TR::Node * glRegDep, List<TR::Register> *popRegs, TR::CodeGenerator *cg)
    { return generateLabelInstruction(op, node, sym, glRegDep, popRegs, true, cg); }
-
 inline TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, TR::Node * glRegDep, TR::CodeGenerator *cg)
    { return generateLabelInstruction(op, node, sym, glRegDep, 0, true, cg); }
-
+TR::X86LabelInstruction  * generateLongLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
+TR::X86LabelInstruction  * generateLongLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::CodeGenerator *cg);
 
 TR::X86LabelInstruction  * generateJumpInstruction(TR_X86OpCodes op, TR::Node * jumpNode, TR::CodeGenerator *cg, bool needsVMThreadRegister = false, bool evaluateGlRegDeps = true);
 

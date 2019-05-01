@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ compiler_library(env
 	${CMAKE_CURRENT_LIST_DIR}/OMRClassEnv.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRDebugEnv.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRVMEnv.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRVMMethodEnv.cpp
 	${CMAKE_CURRENT_LIST_DIR}/SegmentAllocator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/SegmentProvider.cpp
 	${CMAKE_CURRENT_LIST_DIR}/SystemSegmentProvider.cpp

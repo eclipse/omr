@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,14 +22,14 @@
 #ifndef LLRREDUC_INCL
 #define LLRREDUC_INCL
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for int32_t
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "il/Node.hpp"                        // for Node, vcount_t
-#include "infra/BitVector.hpp"                // for TR_BitVector
-#include "infra/List.hpp"                     // for List
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 class DepPair;
 class TR_TreeRefInfo;

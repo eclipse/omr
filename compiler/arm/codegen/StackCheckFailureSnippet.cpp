@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,13 +26,15 @@
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/StackCheckFailureSnippet.hpp"
 #include "codegen/SnippetGCMap.hpp"
 #include "codegen/GCStackAtlas.hpp" /* @@ */
 
 uint8_t *storeArgumentItem(TR_ARMOpCodes op, uint8_t *buffer, TR::RealRegister *reg, int32_t offset, TR::CodeGenerator *cg)
    {
-   TR::RealRegister *stackPtr = cg->machine()->getARMRealRegister(cg->getLinkage()->getProperties().getStackPointerRegister());
+   TR::RealRegister *stackPtr = cg->machine()->getRealRegister(cg->getLinkage()->getProperties().getStackPointerRegister());
    TR_ARMOpCode       opCode(op);
    opCode.copyBinaryToBuffer(buffer);
    reg->setRegisterFieldRD(toARMCursor(buffer));
@@ -47,7 +49,7 @@ uint8_t *storeArgumentItem(TR_ARMOpCodes op, uint8_t *buffer, TR::RealRegister *
 uint8_t *loadArgumentItem(TR_ARMOpCodes op, uint8_t *buffer, TR::RealRegister *reg, int32_t offset, TR::CodeGenerator *cg)
    {
    TR_ASSERT(0, "fix loadArgumentItem");
-   TR::RealRegister *stackPtr = cg->machine()->getARMRealRegister(cg->getLinkage()->getProperties().getStackPointerRegister());
+   TR::RealRegister *stackPtr = cg->machine()->getRealRegister(cg->getLinkage()->getProperties().getStackPointerRegister());
    TR_ARMOpCode       opCode(op);
    opCode.copyBinaryToBuffer(buffer);
    reg->setRegisterFieldRT(toARMCursor(buffer));

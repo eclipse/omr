@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,7 @@
 
 #include "OpCodeTest.hpp"
 #include "default_compiler.hpp"
+#include "omrformatconsts.h"
 
 int32_t imax(int32_t l, int32_t r) {
   return std::max(l,r);
@@ -48,8 +49,8 @@ TEST_P(Int32MaxMin, UsingConst) {
         "  (block"
         "    (ireturn"
         "      (%s"
-        "        (iconst %lld)"
-        "        (iconst %lld))"
+        "        (iconst %" OMR_PRId32 ")"
+        "        (iconst %" OMR_PRId32 "))"
         ")))",
         param.opcode.c_str(),
         param.lhs,
@@ -109,8 +110,8 @@ TEST_P(Int64MaxMin, UsingConst) {
         "  (block"
         "    (lreturn"
         "      (%s"
-        "        (lconst %lld)"
-        "        (lconst %lld))"
+        "        (lconst %" OMR_PRId64 ")"
+        "        (lconst %" OMR_PRId64 "))"
         ")))",
         param.opcode.c_str(),
         param.lhs,

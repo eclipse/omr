@@ -57,3 +57,17 @@ Possible values for `<option>`:
 ### Properties files
 
 ### Blacklisting Sources
+## DDR & CMake
+
+### New Terms
++ *DDR set* - the output of a single run of ddrgen (ie the blob and superset)
+
+### Internals
+For every target added to a ddr set a text file is generated which holds info which includes
++ source directory of the target
++ list of source files in the target
++ include path used when building the target
++ Pre processor defines which are set when building the target
+
+For each ddr set a CMakeLists.txt file is generated which will process the target information text files, and do appropriate procesing to get the macro list needed for ddrgen.
+In addition rules will be added to run cmake and run make on the generated output as part of the build

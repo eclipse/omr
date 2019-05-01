@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,12 @@ set(j9avl_public_headers
 
 add_library(j9avl STATIC
 	avlsup.c
-	ut_avl.c
+	${CMAKE_CURRENT_BINARY_DIR}/ut_avl.c
+)
+
+target_link_libraries(j9avl
+	PUBLIC
+		omr_base
 )
 
 target_include_directories(j9avl
@@ -59,3 +64,5 @@ install(
 	ARCHIVE DESTINATION ${OMR_INSTALL_ARCHIVE_DIR}/
 	LIBRARY DESTINATION ${OMR_INSTALL_LIB_DIR}/
 )
+
+target_enable_ddr(j9avl "${OMR_DDR_SET}")

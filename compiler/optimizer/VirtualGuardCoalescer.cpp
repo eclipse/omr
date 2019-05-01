@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,35 +21,35 @@
 
 #include "optimizer/VirtualGuardCoalescer.hpp"
 
-#include <stdio.h>                                 // for printf
-#include <stdlib.h>                                // for atof
-#include <string.h>                                // for memset
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "env/StackMemoryRegion.hpp"
-#include "codegen/FrontEnd.hpp"                    // for feGetEnv
-#include "compile/Compilation.hpp"                 // for Compilation
-#include "compile/VirtualGuard.hpp"                // for TR_VirtualGuard
-#include "cs2/sparsrbit.h"                         // for ASparseBitVector
-#include "env/jittypes.h"                          // for TR_ByteCodeInfo, etc
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/VirtualGuard.hpp"
+#include "cs2/sparsrbit.h"
+#include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                            // for toBlock, etc
+#include "il/Block.hpp"
 #include "il/DataTypes.hpp"
-#include "il/ILOps.hpp"                            // for ILOpCode, etc
-#include "il/ILOpCodes.hpp"                        // for ILOpCodes::Goto, etc
-#include "il/Node.hpp"                             // for Node
-#include "il/Node_inlines.hpp"                     // for Node::getChild, etc
-#include "il/Symbol.hpp"                           // for Symbol
-#include "il/SymbolReference.hpp"                  // for SymbolReference
-#include "il/TreeTop.hpp"                          // for TreeTop
-#include "il/TreeTop_inlines.hpp"                  // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"                        // for TR_ASSERT
-#include "infra/Cfg.hpp"                           // for CFG
-#include "infra/CfgEdge.hpp"                       // for CFGEdge
-#include "infra/CfgNode.hpp"                       // for CFGNode
+#include "il/ILOps.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"                 // for Optimizer
-#include "optimizer/Structure.hpp"                 // for TR_BlockStructure, etc
-#include "optimizer/TransformUtil.hpp"             // for TransformUtil
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
+#include "optimizer/TransformUtil.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
 #include "optimizer/LocalOpts.hpp"
 #ifdef J9_PROJECT_SPECIFIC

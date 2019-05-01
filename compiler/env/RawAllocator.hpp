@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,9 +30,9 @@ namespace OMR { class RawAllocator; }
 namespace TR { typedef OMR::RawAllocator RawAllocator; }
 #endif
 
-#include <stddef.h>  // for size_t
-#include <cstdlib>   // for free, malloc
-#include <new>       // for bad_alloc, nothrow, nothrow_t
+#include <stddef.h>
+#include <cstdlib>
+#include <new>
 #include "env/TypedAllocator.hpp"
 
 namespace OMR {

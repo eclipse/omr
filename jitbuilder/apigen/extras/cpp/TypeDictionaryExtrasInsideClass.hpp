@@ -51,8 +51,8 @@
     */
    template <typename T>
    struct is_supported {
-      static const bool value =  std::is_arithmetic<T>::value // note: is_arithmetic = is_integral || is_floating_point
-                              || std::is_void<T>::value;
+      static const bool value =  OMR::IsArithmetic<T>::VALUE // note: IsArithmetic = IsIntegral || IsFloatingPoint
+                              || OMR::IsVoid<T>::VALUE;
    };
    template <typename T>
    struct is_supported<T*> {
@@ -104,14 +104,14 @@
     * rules that a type must follow to match a given function implementation.
     *
     * For integer and floating point types, the type traits library is used to
-    * identify the "family" of the specified type. For example, `std::is_integral<>`
+    * identify the "family" of the specified type. For example, `OMR::IsIntegral<>`
     * is used to identify all the integer types. The `sizeof` operator is then used
     * to determine the size of the specified type. The combination of the type's
     * family and size is used to select the function that gets selected.
     *
     * For types that do not belong to a family (e.g. `void`), the size is not needed.
     *
-    * For pointer types, `std::remove_pointer<>` is used to get the type being
+    * For pointer types, `OMR::RemovePointer<>` is used to get the type being
     * pointed to. Iff `is_supported<>::value` evaluates to true for this type,
     * then `toIlType<>()` is recursively called on it.
     *
@@ -121,15 +121,15 @@
     * ### Rule definition
     *
     * The rules for enable a template overload (described above) are defined
-    * using `std::enable_if<>`, where conditional enabling is achieved using
-    * SFINAE. The field `std::enable_if<>::type` is used as the type of the
+    * using `OMR::EnableIf<>`, where conditional enabling is achieved using
+    * SFINAE. The field `OMR::EnableIf<>::Type` is used as the type of the
     * anonymous argument in `toIlType<>()`.
     *
     * All definitions take the following form:
     *
     * ```c++
     * template <typename T>
-    * void toIlType(typename std::enable_if<THE CONDITION>::type* = 0) {...}
+    * void toIlType(typename OMR::EnableIf<THE CONDITION>::Type* = 0) {...}
     * ```
     *
     * and have the same signature: `void(void*)`. Calls to `toIlType<>()`
@@ -168,29 +168,29 @@
 
    // integral
    template <typename T>
-   IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 1)>::type* = 0) { return Int8; }
+   IlType* toIlType(typename OMR::EnableIf<OMR::IsIntegral<T>::VALUE && (sizeof(T) == 1)>::Type* = 0) { return Int8; }
    template <typename T>
-   IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 2)>::type* = 0) { return Int16; }
+   IlType* toIlType(typename OMR::EnableIf<OMR::IsIntegral<T>::VALUE && (sizeof(T) == 2)>::Type* = 0) { return Int16; }
    template <typename T>
-   IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 4)>::type* = 0) { return Int32; }
+   IlType* toIlType(typename OMR::EnableIf<OMR::IsIntegral<T>::VALUE && (sizeof(T) == 4)>::Type* = 0) { return Int32; }
    template <typename T>
-   IlType* toIlType(typename std::enable_if<std::is_integral<T>::value && (sizeof(T) == 8)>::type* = 0) { return Int64; }
+   IlType* toIlType(typename OMR::EnableIf<OMR::IsIntegral<T>::VALUE && (sizeof(T) == 8)>::Type* = 0) { return Int64; }
 
    // floating point
    template <typename T>
-   IlType* toIlType(typename std::enable_if<std::is_floating_point<T>::value && (sizeof(T) == 4)>::type* = 0) { return Float; }
+   IlType* toIlType(typename OMR::EnableIf<OMR::IsFloatingPoint<T>::VALUE && (sizeof(T) == 4)>::Type* = 0) { return Float; }
    template <typename T>
-   IlType* toIlType(typename std::enable_if<std::is_floating_point<T>::value && (sizeof(T) == 8)>::type* = 0) { return Double; }
+   IlType* toIlType(typename OMR::EnableIf<OMR::IsFloatingPoint<T>::VALUE && (sizeof(T) == 8)>::Type* = 0) { return Double; }
 
    // void
    template <typename T>
-   IlType* toIlType(typename std::enable_if<std::is_void<T>::value>::type* = 0) { return NoType; }
+   IlType* toIlType(typename OMR::EnableIf<OMR::IsVoid<T>::VALUE>::Type* = 0) { return NoType; }
 
    // pointer
    template <typename T>
-   IlType* toIlType(typename std::enable_if<std::is_pointer<T>::value && is_supported<typename std::remove_pointer<T>::type>::value>::type* = 0)
+   IlType* toIlType(typename OMR::EnableIf<OMR::IsPointer<T>::VALUE && is_supported<typename OMR::RemovePointer<T>::Type>::value>::Type* = 0)
       {
-      return PointerTo(toIlType<typename std::remove_pointer<T>::type>());
+      return PointerTo(toIlType<typename OMR::RemovePointer<T>::Type>());
       }
 
 #endif // !defined(TYPEDICTIONARY_EXTRAS_INSIDE_CLASS_INCL)

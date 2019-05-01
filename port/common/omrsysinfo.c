@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -373,6 +373,7 @@ omrsysinfo_shutdown(struct OMRPortLibrary *portLibrary)
 int32_t
 omrsysinfo_startup(struct OMRPortLibrary *portLibrary)
 {
+	PPG_isRunningInContainer = FALSE;
 	return 0;
 }
 
@@ -413,6 +414,24 @@ omrsysinfo_get_username(struct OMRPortLibrary *portLibrary, char *buffer, uintpt
 */
 intptr_t
 omrsysinfo_get_groupname(struct OMRPortLibrary *portLibrary, char *buffer, uintptr_t length)
+{
+	return -1;
+}
+
+/**
+ * Query the operating system for the name of the current host
+*
+* @param[in] portLibrary The port Library
+* @param[out] buffer Buffer for the name
+* @param[in,out] length The length of the buffer
+*
+* @return 0 on success, number of bytes required to hold the
+* information if the output buffer was too small, -1 on failure.
+*
+* @note buffer is undefined on error or when supplied buffer was too small.
+*/
+intptr_t
+omrsysinfo_get_hostname(struct OMRPortLibrary *portLibrary, char *buffer, uintptr_t length)
 {
 	return -1;
 }
@@ -468,6 +487,8 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
  *          Operating system specific core information
  *            On AIX this attempts to set the sys_parm fullcore value to limit (requires root to successfully change)
  *            No effect on other operating systems
+ *   OMRPORT_RESOURCE_FILE_DESCRIPTORS
+ *   		Sets the maximum number of file descriptors that can opened in a process.
  *
  * resourceID may be bit-wise or'ed with one of:
  *    OMRPORT_LIMIT_SOFT
@@ -938,24 +959,6 @@ omrsysinfo_cgroup_is_memlimit_set(struct OMRPortLibrary *portLibrary)
 }
 
 /**
- * Gets the file descriptor by opening the file passed as a param fileName with PortLibrary file_open API.
- * Caller should be using "omrfile_close" (Port Library API) to close the file descriptor after calling this API.
- *
- * @param[in] portLibrary pointer to OMRPortLibrary
- *
- * @param[in] subsystemFlag for checking the index of the subsystem
- *
- * @param[in] fileName pointer to cgroup subsystem filename
- *
- * @return file descriptor of file on success and OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM on failure
- */
-intptr_t
-omrsysinfo_cgroup_get_handle_subsystem_file(struct OMRPortLibrary *portLibrary,  uint64_t subsystemFlag, const char *fileName)
-{
-	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
-}
-
-/**
  * Gets the list of subsystems available
  *
  * @param[in] portLibrary pointer to OMRPortLibrary
@@ -969,16 +972,96 @@ omrsysinfo_get_cgroup_subsystem_list(struct OMRPortLibrary *portLibrary)
 }
 
 /**
- * States if JVM is running in a container
+ * States if Runtime is running in a container
  *
  * @param[in] portLibrary pointer to OMRPortLibrary
  *
- * @param[in] inContainer BOOLEAN pointer to state running in container or not
+ * @return TRUE if Runtime is running in a container and FALSE if not or if an error occurs
+ */
+BOOLEAN
+omrsysinfo_is_running_in_container(struct OMRPortLibrary *portLibrary)
+{
+	return PPG_isRunningInContainer;
+}
+
+/**
+ * Initiates the iterator to get cgroup metric values based on the cgroup subsystem
  *
- * @return 0 on success and OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM on failure
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ *
+ * @param[in] subsystem flag of type OMR_CGROUP_SUBSYSTEMS_* representing the cgroup subsystem
+ *
+ * @param[in] state Pointer to the `OMRCgroupMetricIteratorState` struct
+ *
+ * @return 0 on success and error code on failure
  */
 int32_t
-omrsysinfo_is_running_in_container(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer)
+omrsysinfo_cgroup_subsystem_iterator_init(struct OMRPortLibrary *portLibrary, uint64_t subsystem, struct OMRCgroupMetricIteratorState *state)
 {
 	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
+}
+
+/**
+ * Checks if there are any cgroup metrics in the subsystem to iterated over
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ *
+ * @param[in] state Pointer to the `OMRCgroupMetricIteratorState` struct
+ *
+ * @return TRUE if any cgroup metric available else FALSE
+ */
+BOOLEAN
+omrsysinfo_cgroup_subsystem_iterator_hasNext(struct OMRPortLibrary *portLibrary, const struct OMRCgroupMetricIteratorState *state)
+{
+	return FALSE;
+}
+
+/**
+ * Sends the metric key at a given state of cgroup metric iterator
+ * should be used after the omrsysinfo_cgroup_subsystem_iterator_hasNext check
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ *
+ * @param[in] state Pointer to the `OMRCgroupMetricIteratorState` struct
+ *
+ * @param[in/out] gets the metric key from the state of iterator
+ *
+ * @return 0 if any cgroup metric available else error code
+ */
+int32_t
+omrsysinfo_cgroup_subsystem_iterator_metricKey(struct OMRPortLibrary *portLibrary, const struct OMRCgroupMetricIteratorState *state, const char **metricKey)
+{
+	return OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_METRIC_NOT_AVAILABLE;
+}
+
+/**
+ * Reads the next cgroup metric and sets the value to return 
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ *
+ * @param[in] state Pointer to the `OMRCgroupMetricIteratorState` struct
+ *
+ * @param[in] metricElement Pointer to the `OMRCgroupMetricElement` struct
+ *
+ * @param[in/out] printUnits Pointer to a BOOLEAN which states if the metric has units
+ *
+ * @return 0 on success and error code on failure
+ */
+int32_t
+omrsysinfo_cgroup_subsystem_iterator_next(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state, struct OMRCgroupMetricElement *metricElement)
+{
+	return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;	
+}
+
+/**
+ * Free the memory allocated to the elements in the iterator
+ *
+ * @param[in] portLibrary pointer to OMRPortLibrary
+ *
+ * @param[in] state Pointer to the `OMRCgroupMetricIteratorState` struct
+ */
+void
+omrsysinfo_cgroup_subsystem_iterator_destroy(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state)
+{
+	return;
 }

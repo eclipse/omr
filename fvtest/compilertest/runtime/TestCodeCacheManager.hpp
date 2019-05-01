@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,11 @@ public:
    TR::CodeCacheMemorySegment *allocateCodeCacheSegment(size_t segmentSize,
                                                         size_t &codeCacheSizeToAllocate,
                                                         void *preferredStartAddress);
+
+   /**
+    * @brief Override of OMR::freeCodeCacheSegment that actually frees memory.
+    */
+   void freeCodeCacheSegment(TR::CodeCacheMemorySegment * memSegment);
 
 private :
    static TR::CodeCacheManager *_codeCacheManager;

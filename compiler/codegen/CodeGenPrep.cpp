@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,70 +26,68 @@
 
 #include "codegen/OMRCodeGenerator.hpp" // IWYU pragma: keep
 
-#include <stddef.h>                            // for NULL, size_t
-#include <stdint.h>                            // for int64_t, uint16_t, etc
-#include <stdio.h>                             // for sprintf
-#include <string.h>                            // for strcmp, strstr, etc
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include <algorithm>                           // For std::find
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, feGetEnv
-#include "codegen/Linkage.hpp"                 // for TR::Linkage
-#include "codegen/LinkageConventionsEnum.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/TreeEvaluator.hpp"           // for TreeEvaluator
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/Method.hpp"                  // for TR_Method, etc
-#include "compile/OSRData.hpp"                 // for TR_OSRMethodData, etc
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
-#include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/OSRData.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "compile/VirtualGuard.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
-#include "cs2/hashtab.h"                       // for HashTable, etc
+#include "cs2/hashtab.h"
 #include "il/AliasSetInterface.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/ObjectModel.hpp"                 // for ObjectModel
+#include "env/ObjectModel.hpp"
 #ifdef J9_PROJECT_SPECIFIC
 #include "runtime/RuntimeAssumptions.hpp"
-#include "env/PersistentCHTable.hpp"           // for TR_PersistentCHTable
+#include "env/PersistentCHTable.hpp"
 #endif
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
-#include "env/TRMemory.hpp"                    // for SparseBitVector, etc
-#include "env/jittypes.h"                      // for TR_ByteCodeInfo, etc
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for DataTypes, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::treetop, etc
-#include "il/ILOps.hpp"                        // for ILOpCode, TR::ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference, etc
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "il/symbol/AutomaticSymbol.hpp"       // for AutomaticSymbol
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/RegisterMappedSymbol.hpp"  // for RegisterMappedSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                       // for CFG, MAX_COLD_BLOCK_COUNT
-#include "infra/HashTab.hpp"                   // for TR_HashTabInt
-#include "infra/IGNode.hpp"                    // for IGNodeColour, etc
-#include "infra/InterferenceGraph.hpp"         // for TR_InterferenceGraph
-#include "infra/Link.hpp"                      // for TR_Pair
-#include "infra/List.hpp"                      // for List, ListIterator, etc
-#include "infra/CfgEdge.hpp"                   // for CFGEdge
-#include "infra/CfgNode.hpp"                   // for CFGNode
-#include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc
-#include "ras/Debug.hpp"                       // for TR_Debug
-#include "ras/DebugCounter.hpp"                // for TR::DebugCounter, etc
-#include "ras/Delimiter.hpp"                   // for Delimiter
+#include "env/PersistentInfo.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/HashTab.hpp"
+#include "infra/IGNode.hpp"
+#include "infra/InterferenceGraph.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/CfgEdge.hpp"
+#include "infra/CfgNode.hpp"
+#include "optimizer/Structure.hpp"
+#include "ras/Debug.hpp"
+#include "ras/DebugCounter.hpp"
+#include "ras/Delimiter.hpp"
 #include "runtime/Runtime.hpp"
 
 #define OPT_DETAILS "O^O CODE GENERATION: "

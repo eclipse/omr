@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,61 +19,62 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                                 // for NULL
-#include <stdint.h>                                 // for int32_t, etc
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator, etc
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"                     // for TR_FrontEnd, etc
-#include "codegen/Instruction.hpp"                  // for Instruction
-#include "codegen/Linkage.hpp"                      // for Linkage, etc
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
-#include "codegen/LiveRegister.hpp"                 // for TR_LiveRegisters
-#include "codegen/Machine.hpp"                      // for Machine
+#include "codegen/LiveRegister.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#include "codegen/Register.hpp"                     // for Register
+#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/RegisterDependencyStruct.hpp"
-#include "codegen/RegisterPair.hpp"                 // for RegisterPair
+#include "codegen/RegisterPair.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/Compilation.hpp"                  // for Compilation, etc
+#include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
-#include "compile/VirtualGuard.hpp"                 // for TR_VirtualGuard
+#include "compile/VirtualGuard.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #ifdef J9_PROJECT_SPECIFIC
-#include "env/CHTable.hpp"                          // for TR_AOTGuardSite, etc
+#include "env/CHTable.hpp"
 #endif
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                           // for intptrj_t
-#include "il/Block.hpp"                             // for Block
-#include "il/DataTypes.hpp"                         // for DataTypes::Int32, etc
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                             // for ILOpCode, etc
-#include "il/Node.hpp"                              // for Node
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/TreeTop.hpp"                           // for TreeTop
-#include "il/TreeTop_inlines.hpp"                   // for TreeTop::getNode
-#include "il/symbol/LabelSymbol.hpp"                // for LabelSymbol, etc
-#include "il/symbol/MethodSymbol.hpp"               // for MethodSymbol
+#include "il/Symbol.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                         // for TR_ASSERT
-#include "infra/Bit.hpp"                            // for isPowerOf2
-#include "infra/List.hpp"                           // for List, etc
-#include "ras/Debug.hpp"                            // for TR_DebugBase
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
 #include "runtime/Runtime.hpp"
 #include "x/codegen/BinaryCommutativeAnalyser.hpp"
 #include "x/codegen/CompareAnalyser.hpp"
 #include "x/codegen/FPTreeEvaluator.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"                     // for TR_X86OpCodes, etc
+#include "x/codegen/X86Ops.hpp"
 
 class TR_OpaqueClassBlock;
 class TR_OpaqueMethodBlock;
@@ -180,7 +181,7 @@ bool isConditionCodeSetForCompareToZero(TR::Node *node, bool justTestZeroFlag)
         prevInstr;
         prevInstr = prevInstr->getPrev())
       {
-      prevRegInstr = prevInstr->getIA32RegInstruction();
+      prevRegInstr = prevInstr->getX86RegInstruction();
 
       // The register must be equal and the node size must be equal in order to
       // insure the instruction is setting the condition code based on the
@@ -462,30 +463,52 @@ TR::Register *OMR::X86::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGe
          cg->evaluate(secondChild->getFirstChild()); // evaluate the glRegDeps
       }
 
-   TR::MemoryReference *tempMR = generateX86MemoryReference((TR::Register *)NULL,
-                                                            selectorReg,
-                                                            (uint8_t)(TR::Compiler->target.is64Bit()? 3 : 2),
-                                                            (intptrj_t)branchTable, cg);
-
-   tempMR->setNeedsCodeAbsoluteExternalRelocation();
-
-   TR::X86MemTableInstruction *jmpTableInstruction = NULL;
-
-   if (cg->getLinkage()->getProperties().getMethodMetaDataRegister() != TR::RealRegister::NoReg)
+   TR::MemoryReference *jumpMR = NULL;
+   TR::Register *branchTableReg = NULL;
+   if (TR::Compiler->target.is64Bit() && cg->comp()->compileRelocatableCode())
       {
-      TR::RegisterDependencyConditions *deps = NULL;
-
-      if (secondChild->getNumChildren() > 0)
-         {
-         deps = generateRegisterDependencyConditions(secondChild->getFirstChild(), cg, 0, NULL);
-         deps->stopAddingConditions();
-         }
-
-      jmpTableInstruction = generateMemTableInstruction(JMPMem, node, tempMR, numBranchTableEntries, deps, cg);
+      // Generate position-independent code so that no (external) relocation is
+      // necessary:
+      //
+      //    lea rBranchTable, [rip + OFFSET_TO_JUMP_TABLE]
+      //    jmp qword ptr [rBranchTable + 8*rIndex]
+      //
+      TR::LabelSymbol *label = generateLabelSymbol(cg);
+      label->setCodeLocation(reinterpret_cast<uint8_t*>(branchTable));
+      TR::MemoryReference *branchTableLeaMR = generateX86MemoryReference(label, cg);
+      branchTableReg = cg->allocateRegister();
+      generateRegMemInstruction(LEA8RegMem, node, branchTableReg, branchTableLeaMR, cg);
+      jumpMR = generateX86MemoryReference(branchTableReg, selectorReg, 3, cg);
       }
    else
       {
-      generateMemInstruction(JMPMem, node, tempMR, cg);
+      jumpMR = generateX86MemoryReference(
+         (TR::Register *)NULL,
+         selectorReg,
+         (uint8_t)(TR::Compiler->target.is64Bit()? 3 : 2),
+         (intptrj_t)branchTable, cg);
+
+      jumpMR->setNeedsCodeAbsoluteExternalRelocation();
+      }
+
+   TR::X86MemTableInstruction *jmpTableInstruction = NULL;
+   TR::RegisterDependencyConditions *deps = NULL;
+
+   // Add GlRegDep dependencies to indirect jump
+   //
+   if (secondChild->getNumChildren() > 0)
+      {
+      deps = generateRegisterDependencyConditions(secondChild->getFirstChild(), cg, 0, NULL);
+      deps->stopAddingConditions();
+      }
+
+   if (cg->getLinkage()->getProperties().getMethodMetaDataRegister() != TR::RealRegister::NoReg)
+      {
+      jmpTableInstruction = generateMemTableInstruction(JMPMem, node, jumpMR, numBranchTableEntries, deps, cg);
+      }
+   else
+      {
+      generateMemInstruction(JMPMem, node, jumpMR, deps, cg);
       }
 
    for (i = 2; i < node->getNumChildren(); ++i)
@@ -499,6 +522,9 @@ TR::Register *OMR::X86::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGe
       {
       cg->decReferenceCount(node->getChild(i));
       }
+
+   if (branchTableReg != NULL)
+      cg->stopUsingRegister(branchTableReg);
 
    return NULL;
    }
@@ -1274,11 +1300,15 @@ TR::Register *OMR::X86::TreeEvaluator::iternaryEvaluator(TR::Node *node, TR::Cod
    TR::Register *falseReg = cg->evaluate(falseVal);
    bool trueValIs64Bit = TR::TreeEvaluator::getNodeIs64Bit(trueVal, cg);
    TR::Register *trueReg  = TR::TreeEvaluator::intOrLongClobberEvaluate(trueVal, trueValIs64Bit, cg);
+   if (!node->isNotCollected())
+      trueReg->setContainsCollectedReference();
 
    // don't need to test if we're already using a compare eq or compare ne
    auto conditionOp = condition->getOpCode();
+   bool longCompareOn32bit = (TR::Compiler->target.is32Bit() && conditionOp.isBooleanCompare() &&
+         condition->getFirstChild()->getOpCode().isLong());
    //if ((conditionOp == TR::icmpeq) || (conditionOp == TR::icmpne) || (conditionOp == TR::lcmpeq) || (conditionOp == TR::lcmpne))
-   if (conditionOp.isCompareForEquality())
+   if (!longCompareOn32bit && conditionOp.isCompareForEquality() && condition->getFirstChild()->getOpCode().isIntegerOrAddress())
       {
       TR::TreeEvaluator::compareIntegersForEquality(condition, cg);
       //if ((conditionOp == TR::icmpeq) || (conditionOp == TR::lcmpeq))
@@ -1286,6 +1316,13 @@ TR::Register *OMR::X86::TreeEvaluator::iternaryEvaluator(TR::Node *node, TR::Cod
          generateRegRegInstruction(CMOVNERegReg(trueValIs64Bit), node, trueReg, falseReg, cg);
       else
          generateRegRegInstruction(CMOVERegReg(trueValIs64Bit), node, trueReg, falseReg, cg);
+      }
+   else if (!longCompareOn32bit && conditionOp.isCompareForOrder() && condition->getFirstChild()->getOpCode().isIntegerOrAddress())
+      {
+      TR::TreeEvaluator::compareIntegersForOrder(condition, cg);
+      generateRegRegInstruction((conditionOp.isCompareTrueIfEqual()) ?
+                   ((conditionOp.isCompareTrueIfGreater()) ? CMOVLRegReg(trueValIs64Bit) : CMOVGRegReg(trueValIs64Bit)) :
+                   ((conditionOp.isCompareTrueIfGreater()) ? CMOVLERegReg(trueValIs64Bit) : CMOVGERegReg(trueValIs64Bit)), node, trueReg, falseReg, cg);
       }
    else
       {
@@ -2263,11 +2300,7 @@ static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
       }
 
    TR_VirtualGuardSite *site = NULL;
-   if (node->isSideEffectGuard())
-      {
-      site = comp->addSideEffectNOPSite();
-      }
-   else if (cg->needClassAndMethodPointerRelocations())
+   if (cg->needClassAndMethodPointerRelocations())
       {
       site = (TR_VirtualGuardSite *)comp->addAOTNOPSite();
       TR_AOTGuardSite *aotSite = (TR_AOTGuardSite *)site;
@@ -2280,10 +2313,9 @@ static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
          case TR_DirectMethodGuard:
          case TR_NonoverriddenGuard:
          case TR_InterfaceGuard:
-         case TR_AbstractGuard:
          case TR_MethodEnterExitGuard:
          case TR_HCRGuard:
-         //case TR_AbstractGuard:
+         case TR_AbstractGuard:
             aotSite->setGuard(virtualGuard);
             break;
 
@@ -2291,13 +2323,17 @@ static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
             break;
 
          default:
-            TR_ASSERT(0, "AOT guard in node but not one of known guards supported for AOT. Guard: %d", reloKind);
+            TR_ASSERT_FATAL(0, "AOT guard in node but not one of known guards supported for AOT. Guard: %d", reloKind);
             break;
          }
       }
-   else
+   else if (!node->isSideEffectGuard())
       {
       site = virtualGuard->addNOPSite();
+      }
+   else
+      {
+      site = comp->addSideEffectNOPSite();
       }
 
    List<TR::Register> popRegisters(cg->trMemory());

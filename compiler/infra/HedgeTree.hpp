@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,13 @@
 #ifndef HEDGETREE_INCL
 #define HEDGETREE_INCL
 
-#include <stdint.h>                 // for int32_t
-#include <string.h>                 // for NULL, memset
+#include <stdint.h>
+#include <string.h>
 #include "codegen/FrontEnd.hpp"     // TR_FrontEnd (ptr only)
-#include "compile/Compilation.hpp"  // for Compilation
-#include "env/IO.hpp"               // for IO
-#include "env/TRMemory.hpp"         // for TR_Memory, etc
-#include "infra/Assert.hpp"         // for TR_ASSERT
+#include "compile/Compilation.hpp"
+#include "env/IO.hpp"
+#include "env/TRMemory.hpp"
+#include "infra/Assert.hpp"
 
 // Implementation of Symmetric Binary B-Trees
 //    (also called "hedge trees")

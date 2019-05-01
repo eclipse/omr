@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,17 +33,17 @@ namespace OMR { typedef OMR::ResolvedMethodSymbol ResolvedMethodSymbolConnector;
 
 #include "il/symbol/MethodSymbol.hpp"
 
-#include <stddef.h>                    // for NULL
-#include <stdint.h>                    // for int32_t, etc
-#include "codegen/FrontEnd.hpp"        // for TR_FrontEnd
-#include "compile/Method.hpp"          // for mcount_t
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
-#include "il/Node.hpp"                 // for ncount_t
-#include "infra/Array.hpp"             // for TR_Array
-#include "infra/Assert.hpp"            // for TR_ASSERT
-#include "infra/Flags.hpp"             // for flags32_t
-#include "infra/List.hpp"              // for List, etc
-#include "infra/TRlist.hpp"            // for TR::list
+#include "il/Node.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "infra/List.hpp"
+#include "infra/TRlist.hpp"
 
 class TR_BitVector;
 class TR_ExtraLinkageInfo;
@@ -170,6 +170,7 @@ public:
    bool canInjectInduceOSR(TR::Node* node);
 
    bool induceOSRAfter(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder, int32_t offset, TR::TreeTop ** lastTreeTop = NULL);
+   bool induceOSRAfterAndRecompile(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder, int32_t offset, TR::TreeTop ** lastTreeTop);
    TR::TreeTop *induceImmediateOSRWithoutChecksBefore(TR::TreeTop *insertionPoint);
 
    int32_t incTempIndex(TR_FrontEnd * fe);
@@ -297,8 +298,6 @@ public:
    int32_t getTempIndex() { return _tempIndex; }
    int32_t getArrayCopyTempSlot(TR_FrontEnd * fe);
 
-   TR::SymbolReference *getPythonConstsSymbolRef() { return _pythonConstsSymRef; }
-
    int32_t getProfilingByteCodeIndex(int32_t bytecodeIndex);
    void addProfilingOffsetInfo(int32_t startBCI, int32_t endBCI);
    void setProfilerFrequency(int32_t bytecodeIndex, int32_t frequency);
@@ -375,11 +374,7 @@ private:
 
    int32_t  _throwCount;
 
-   //once we expand PyTuple_GetItem we'll want this
-   //TR_Array<TR::SymbolReference>   _pythonConstantSymRefs;
-   TR::SymbolReference           * _pythonConstsSymRef;
-   uint32_t                         _pythonNumLocalVars;
-   TR::SymbolReference          ** _pythonLocalVarSymRefs;
+   TR::TreeTop *induceOSRAfterImpl(TR::TreeTop *insertionPoint, TR_ByteCodeInfo induceBCI, TR::TreeTop* branch, bool extendRemainder, int32_t offset, TR::TreeTop ** lastTreeTop = NULL);
 
 /*-- TR_JittedMethodSymbol --------------------------------*/
 public:

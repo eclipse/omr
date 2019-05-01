@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,11 +41,11 @@ MM_ForwardedHeader::Assert(bool condition, const char *assertion, const char *fi
 void
 MM_ForwardedHeader::ForwardedHeaderDump(omrobjectptr_t destinationObjectPtr)
 {
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 	fprintf(stderr, "MM_ForwardedHeader@%p[%p(%p):%x:%x] -> %p(%p)\n", this, _objectPtr, (uintptr_t*)(*_objectPtr), _preserved.slot, _preserved.overlap, destinationObjectPtr, (uintptr_t*)(*destinationObjectPtr));
-#else /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#else /* defined (OMR_GC_COMPRESSED_POINTERS) */
 	fprintf(stderr, "MM_ForwardedHeader@%p[%p(%p):%x] -> %p(%p)\n", this, _objectPtr, (uintptr_t*)(*_objectPtr), _preserved.slot, destinationObjectPtr, (uintptr_t*)(*destinationObjectPtr));
-#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 }
 #endif /* defined(FORWARDEDHEADER_DEBUG) */
 
@@ -66,13 +66,13 @@ MM_ForwardedHeader::setForwardedObjectInternal(omrobjectptr_t destinationObjectP
 	uintptr_t oldValue = *(uintptr_t *)&_preserved.slot;
 
 	/* Forwarded tag should be in low bits of the pointer and at the same time be in forwarding slot */
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN)
+#if defined (OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN)
 	/* To get it for compressed big endian just swap halves of pointer */
 	uintptr_t newValue = (((uintptr_t)destinationObjectPtr | forwardedTag) << 32) | (((uintptr_t)destinationObjectPtr >> 32) & 0xffffffff);
-#else /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN) */
+#else /* defined (OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN) */
 	/* For little endian or not compressed write uintptr_t bytes straight */
 	uintptr_t newValue = (uintptr_t)destinationObjectPtr | forwardedTag;
-#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN) */
 
 	if (MM_AtomicOperations::lockCompareExchange((volatile uintptr_t*)&objectHeader->slot, oldValue, newValue) != oldValue) {
 		/* If we lost forwarding it, return where we are really forwarded. Another thread could raced us to forward on another location
@@ -102,15 +102,15 @@ MM_ForwardedHeader::getForwardedObject()
 	uintptr_t forwardedTag = _forwardedTag;
 	if (isForwardedPointer()) {
 #endif
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN)
+#if defined (OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN)
 		/* Compressed big endian - read two halves separately */
 		uint32_t hi = (uint32_t)_preserved.overlap;
 		uint32_t lo = (uint32_t)_preserved.slot & ~forwardedTag;
 		uintptr_t restoredForwardingSlotValue = (((uintptr_t)hi) <<32 ) | ((uintptr_t)lo);
-#else /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN) */
+#else /* defined (OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN) */
 		/* Little endian or not compressed - read all uintptr_t bytes at once */
 		uintptr_t restoredForwardingSlotValue = *(uintptr_t *)(&_preserved.slot) & ~forwardedTag;
-#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN) */
 
 		forwardedObject = (omrobjectptr_t)(restoredForwardingSlotValue);
 	}
@@ -131,15 +131,15 @@ MM_ForwardedHeader::getNonStrictForwardedObject()
 	uintptr_t forwardedTag = _forwardedTag;
 	if (isForwardedPointer()) {
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN)
+#if defined (OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN)
 		/* Compressed big endian - read two halves separately */
 		uint32_t hi = (uint32_t)_preserved.overlap;
 		uint32_t lo = (uint32_t)_preserved.slot & ~forwardedTag;
 		uintptr_t restoredForwardingSlotValue = (((uintptr_t)hi) <<32 ) | ((uintptr_t)lo);
-#else /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN) */
+#else /* defined (OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN) */
 		/* Little endian or not compressed - read all uintptr_t bytes at once */
 		uintptr_t restoredForwardingSlotValue = *(uintptr_t *)(&_preserved.slot) & ~forwardedTag;
-#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(OMR_ENV_LITTLE_ENDIAN) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN) */
 
 		forwardedObject = (omrobjectptr_t)(restoredForwardingSlotValue);
 	}
@@ -174,7 +174,11 @@ MM_ForwardedHeader::copySetup(omrobjectptr_t destinationObjectPtr, uintptr_t *re
 
 	/* set the remaining length to copy */
 	objectHeader->slot = (fomrobject_t)(*remainingSizeToCopy | (0 << OUTSTANDING_COPIES_SHIFT)) | _beingCopiedTag;
-	/* write sync not necessary (atomic in follow-up set forward is an implicit barrier) */
+	/* Make sure that destination object header is visible to other potential participating threads.
+	 * About to be executed atomic as part of forwarding operation is executed on source object header,
+	 * hence it will not synchronize memory in the destination object header.
+	 */
+	MM_AtomicOperations::storeSync();
 
 	return sizeToCopy;
 #else
@@ -281,7 +285,8 @@ MM_ForwardedHeader::copyOrWaitOutline(omrobjectptr_t destinationObjectPtr)
 
 			if (0 == remainingSizeToCopy) {
 				if (participatingInCopy) {
-					fomrobject_t newValue = ((outstandingCopies - 1) << OUTSTANDING_COPIES_SHIFT) | _beingCopiedTag;
+					MM_AtomicOperations::storeSync();
+					fomrobject_t newValue = (fomrobject_t)(((outstandingCopies - 1) << OUTSTANDING_COPIES_SHIFT) | _beingCopiedTag);
 					if (oldValue != lockCompareExchangeObjectHeader(&objectHeader->slot, oldValue, newValue)) {
 						continue;
 					}

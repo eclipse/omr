@@ -22,7 +22,7 @@
 #include "ddr/macros/MacroTool.hpp"
 
 #include "ddr/ir/NamespaceUDT.hpp"
-#include "ddr/std/unordered_map.hpp"
+#include "ddr/ir/Symbol_IR.hpp"
 
 #include <fstream>
 #include <iostream>

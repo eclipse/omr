@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,40 +22,41 @@
 #include "control/CompileMethod.hpp"
 
 #if defined(OMR_OS_WINDOWS)
-#include <process.h>                           // for _getpid
+#include <process.h>
 #else
-#include <unistd.h>                            // for getpid, intptr_t, etc
+#include <unistd.h>
 #endif
-#include <exception>                           // for exception
-#include <stdint.h>                            // for int32_t, uint8_t, etc
-#include <stdio.h>                             // for NULL, fprintf, fflush, etc
-#include <string.h>                            // for strlen
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_VerboseLog, etc
+#include <exception>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
-#include "compile/Compilation.hpp"             // for Compilation, comp
-#include "compile/CompilationTypes.hpp"        // for TR_Hotness
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "control/OptimizationPlan.hpp"        // for TR_OptimizationPlan, etc
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "control/OptimizationPlan.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
-#include "env/CPU.hpp"                         // for Cpu
+#include "control/Options_inlines.hpp"
+#include "env/CPU.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/ConcreteFE.hpp"                  // for FrontEnd
-#include "env/IO.hpp"                          // for IO
+#include "env/ConcreteFE.hpp"
+#include "env/IO.hpp"
 #include "env/JitConfig.hpp"
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
+#include "env/PersistentInfo.hpp"
 #include "env/Processors.hpp"
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
-#include "env/defines.h"                       // for TR_HOST_64BIT, etc
-#include "env/jittypes.h"                      // for uintptrj_t
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "ilgen/IlGenRequest.hpp"              // for CompileIlGenRequest
+#include "env/TRMemory.hpp"
+#include "env/defines.h"
+#include "env/jittypes.h"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "ras/Debug.hpp"                       // for createDebugObject, etc
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
+#include "omrformatconsts.h"
 #include "runtime/CodeCacheManager.hpp"
 
 #if defined (_MSC_VER) && _MSC_VER < 1900
@@ -80,7 +81,7 @@ writePerfToolEntry(void *start, uint32_t size, const char *name)
       static const int maxPerfFilenameSize = 15 + sizeof(jvmPid)* 3; // "/tmp/perf-%ld.map"
       char perfFilename[maxPerfFilenameSize] = { 0 };
 
-      int numCharsWritten = snprintf(perfFilename, maxPerfFilenameSize, "/tmp/perf-%ld.map", jvmPid);
+      int numCharsWritten = snprintf(perfFilename, maxPerfFilenameSize, "/tmp/perf-%" OMR_PRId64 ".map", static_cast<int64_t>(jvmPid));
       if (numCharsWritten > 0 && numCharsWritten < maxPerfFilenameSize)
          {
          perfFile = fopen(perfFilename, "a");
@@ -184,7 +185,7 @@ int32_t init_options(TR::JitConfig *jitConfig, char *cmdLineOptions)
 
    if (cmdLineOptions)
       {
-      // The callers (ruby/python) guarantee that we have at least -Xjit in cmdline options
+      // The callers must guarantee that we have at least -Xjit in cmdline options
       //
       cmdLineOptions += 5; // skip the leading -Xjit
       if (*cmdLineOptions == ':') cmdLineOptions++; // also skip :
@@ -405,7 +406,7 @@ compileMethodFromDetails(
             }
 
          if (
-               compiler.getOption(TR_PerfTool) 
+               compiler.getOption(TR_PerfTool)
             || compiler.getOption(TR_EmitExecutableELFFile)
             || compiler.getOption(TR_EmitRelocatableELFFile)
             )
@@ -454,7 +455,7 @@ compileMethodFromDetails(
 #else
       printCompFailureInfo(jitConfig, &compiler, exception.what());
 #endif
-      } 
+      }
    catch (const std::exception &exception)
       {
       // failed! :-(
@@ -472,7 +473,8 @@ compileMethodFromDetails(
    // TR::Compilation. We'll need exceptions working instead of setjmp
    // before we can get working, and we need to make sure the other
    // frontends are properly calling the destructor
-   TR::CodeCacheManager::instance()->unreserveCodeCache(compiler.getCurrentCodeCache());
+   TR::CodeCache *codeCache = compiler.cg() ? compiler.cg()->getCodeCache() : NULL;
+   TR::CodeCacheManager::instance()->unreserveCodeCache(codeCache);
 
    TR_OptimizationPlan::freeOptimizationPlan(plan);
 

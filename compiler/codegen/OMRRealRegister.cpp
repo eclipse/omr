@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,15 +19,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/OMRRealRegister.hpp"  // for RealRegister, etc
+#include "codegen/OMRRealRegister.hpp"
 
-#include <stddef.h>                              // for NULL
-#include <stdint.h>                              // for uint16_t, int32_t, etc
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator
-#include "codegen/RealRegister.hpp"              // for RealRegister
-#include "codegen/Register.hpp"                  // for Register
-#include "codegen/RegisterConstants.hpp"         // for TR_RegisterKinds, etc
-#include "infra/Flags.hpp"                       // for flags8_t
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
+#include "infra/Flags.hpp"
 
 OMR::RealRegister::RealRegister(TR::CodeGenerator *cg, RegNum n) :
                                        TR::Register(),
