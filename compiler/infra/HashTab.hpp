@@ -56,7 +56,23 @@ class TR_HashTabIterator
    void *getCurrent ();
 
    void *getFirst() { _curHashIndex = 0; return getCurrent(); }
+
+   void *getFirst(TR_HashId& hashId)
+      {
+      _curHashIndex = 0;
+      void *result = getCurrent();
+      hashId = result ? _curHashIndex : 0;
+      return result;
+      }
+
    void *getNext() { ++_curHashIndex; return getCurrent(); }
+   void *getNext(TR_HashId& hashId)
+      {
+      ++_curHashIndex;
+      void *result = getCurrent();
+      hashId = result ? _curHashIndex : 0;
+      return result;
+      }
    void reset() { _curHashIndex = 0; }
    bool atEnd();
 
@@ -122,6 +138,7 @@ class TR_HashTab
       _table[id]->_data = data;
       return;
       }
+   void *getKey(TR_HashId id);
    void setKey(TR_HashId id, void* key) { _table[id]->_key = key;return; } ;
 
  /**

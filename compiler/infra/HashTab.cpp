@@ -65,6 +65,15 @@ void * TR_HashTab::getData(TR_HashId id)
    }
 
 
+void * TR_HashTab::getKey(TR_HashId id)
+   {
+   TR_HashTableEntry * entry = _table[id];
+   TR_ASSERT(id < _tableSize,"%d >= %d\n",id,_tableSize);
+   TR_ASSERT(entry,"entry is null for id %d\n",id);
+   return entry->_key;
+   }
+
+
 // will allocate table on demand
 void TR_HashTab::init(uint32_t newSize, bool growth)
    {
