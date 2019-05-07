@@ -725,7 +725,6 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 	size_t totalArrayletSize = 0;
 	/* In OpenJ9 we must malloc the leaves addresses, so we test it here as well */
 	uintptr_t *arrayletLeaveAddrs = (uintptr_t *)malloc(ARRAYLET_COUNT * sizeof(uintptr_t));
-	BOOLEAN shouldDealocateAddrs = TRUE;
 
 	reportTestEntry(OMRPORTLIB, testName);
 
@@ -735,7 +734,6 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 	uintptr_t systemGranularity = pageSize;
 
 	if(arrayletLeaveAddrs == NULL) {
-		shouldDealocateAddrs = FALSE;
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Unable to malloc and commit 0x%zx bytes with page size 0x%zx.\n", HEAP_SIZE, pageSize);
 		goto exit;
         }
@@ -911,7 +909,7 @@ J9ZOS390_exit:
 #endif /* J9ZOS390 */
 	portTestEnv->changeIndent(-1);
 exit:
-	if (shouldDealocateAddrs) {
+	if (NULL == arrayletLeaveAddrs) {
 		free((void *)arrayletLeaveAddrs);
 	}
 	reportTestExit(OMRPORTLIB, testName);

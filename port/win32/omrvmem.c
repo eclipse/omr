@@ -818,7 +818,7 @@ getMemoryInRange(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier
 			0,
 			(DWORD)byteAmount,
 			NULL);
-		if (fd == NULL) {
+		if (NULL == fd) {
 			Trc_PRT_vmem_omrvmem_reserve_memory_ex_file_handle_failed(byteAmount);
 			update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, NULL, NULL);
 			Trc_PRT_vmem_omrvmem_reserve_memory_failure();
@@ -1672,7 +1672,7 @@ omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, uintptr
 
 
 	/* Perform double mapping  */
-	if(contiguousMap != NULL) {
+	if(NULL != contiguousMap) {
 		SIZE_T i;
 		fd = oldIdentifier->fd;
 #if defined(OMRVMEM_DEBUG)
@@ -1694,7 +1694,7 @@ omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, uintptr
 				addressSize,		/* number of bytes to map */
 				(LPVOID)nextAddress);	/* address in contiguous region to be mapped */
 
-			if (address == NULL) {
+			if (NULL == address) {
 				successfulContiguousMap = FALSE;
 				portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_VMEM_OPFAILED, "Failed to double map.");
 #if defined(OMRVMEM_DEBUG)
