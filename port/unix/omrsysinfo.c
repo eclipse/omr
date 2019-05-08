@@ -67,6 +67,11 @@
 #include <nl_types.h>
 #include <langinfo.h>
 #if !defined(USER_HZ) && !defined(OMRZTPF)
+#if defined(MUSL)
+#ifndef HZ
+#define HZ 100
+#endif
+#endif /* defined(MUSL) */
 #define USER_HZ HZ
 #endif /* !defined(USER_HZ) && !defined(OMRZTPF) */
 
