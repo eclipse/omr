@@ -3773,6 +3773,18 @@ omrsysinfo_get_os_description(struct OMRPortLibrary *portLibrary, struct OMROSDe
 }
 
 BOOLEAN
+omrsysinfo_get_memory_allocation_hint_supported(struct OMRPortLibrary *portLibrary)
+{
+#if defined(J9ZOS39064)
+    return retrieveZOSIARV64InOriginSupported(portLibrary);
+#elif defined(J9ZOS390)
+    return FALSE;
+#else
+    return TRUE;
+#endif
+}
+
+BOOLEAN
 omrsysinfo_os_has_feature(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc, uint32_t feature)
 {
 	BOOLEAN rc = FALSE;

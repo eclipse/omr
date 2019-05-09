@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #include "omrport.h"
 
 #define J9BYTES_PER_PAGE            4096		/* Size of main storage frame/virtual storage page/auxiliary storage slot */
+#define RCE_FLAGS2_INORIGIN_BIT     0x04
 
 #if defined(__cplusplus)
 extern "C" {
@@ -52,6 +53,9 @@ retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
  */
 int32_t
 retrieveZOSProcessorStats(struct OMRPortLibrary *portLibrary, struct J9ProcessorInfos *procInfo);
+
+BOOLEAN
+retrieveZOSIARV64InOriginSupported(struct OMRPortLibrary *portLibrary);
 
 #if defined(__cplusplus)
 } /* extern "C" */

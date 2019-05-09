@@ -166,7 +166,7 @@ get_ipt_ttoken(struct OMRPortLibrary *portLibrary,
 
 /* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_1M_fixed_pages,OS_NOSTACK)
-void *omrallocate_1M_fixed_pages(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char *ttkn);
+void *omrallocate_1M_fixed_pages(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char *ttkn, void* startAddress);
 
 /* omrvmem_support_above_bar.s */
 #pragma linkage(omrfree_memory_above_bar,OS_NOSTACK)
@@ -174,19 +174,19 @@ int omrfree_memory_above_bar(void *address, const char *ttkn);
 
 /* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_4K_pages_above_bar,OS_NOSTACK)
-void *omrallocate_4K_pages_above_bar(int numMBSegments, const char *ttkn);
+void *omrallocate_4K_pages_above_bar(int numMBSegments, const char *ttkn, void* startAddress);
 
 /* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_4K_pages_in_userExtendedPrivateArea,OS_NOSTACK)
-void * omrallocate_4K_pages_in_userExtendedPrivateArea(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char * ttkn);
+void * omrallocate_4K_pages_in_userExtendedPrivateArea(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char * ttkn, void* startAddress);
 
 /* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_1M_pageable_pages_above_bar,OS_NOSTACK)
-void *omrallocate_1M_pageable_pages_above_bar(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char *ttkn);
+void *omrallocate_1M_pageable_pages_above_bar(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char *ttkn,void* startAddress);
 
 /* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_2G_pages,OS_NOSTACK)
-void *omrallocate_2G_pages(int num2GBUnits, int userExtendedPrivateAreaMemoryType, const char *ttkn);
+void *omrallocate_2G_pages(int num2GBUnits, int userExtendedPrivateAreaMemoryType, const char *ttkn, void* startAddress);
 
 #pragma linkage(omrdiscard_data,OS_NOSTACK)
 int omrdiscard_data(void *address, int numFrames);
@@ -510,16 +510,24 @@ reserve1MPageableBelowBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifi
  * @return NULL on failure, otherwise pointer to the memory that was allocated.
  */
 static void *
-reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *identifier, uintptr_t mode, uintptr_t byteAmount, uintptr_t pageSize, uintptr_t pageFlags, uintptr_t options, OMRMemCategory *category)
+reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *identifier, struct J9PortVmemParams *params, OMRMemCategory *category)
 {
 	/* The maximum amount of memory that can be allocated with userExtendedPrivateAreaMemoryType detected for 2To32G and 2To64 */
 #define MAX_2TO32G_MEMORY_IN_MB ((UDATA)30*1024)	/* unit is MB i.e. 30*1024 MB = 30 GB */
 #define MAX_2TO64G_MEMORY_IN_MB ((UDATA)62*1024)	/* unit is MB i.e. 62*1024 MB = 62 GB */
 
-	void *ptr = NULL;
+    uintptr_t mode       = params->mode;
+    uintptr_t byteAmount = params->byteAmount;
+    uintptr_t pageSize   = params->pageSize;
+    uintptr_t pageFlags  = params->pageFlags;
+    uintptr_t options    = params->options;
+    void* startAddress   = (void*)params->startAddress;
+
+    printf("reserve pages above bar start addr string %p\n", startAddress);
+
+    void *ptr = NULL;
 	uintptr_t numSegments = 0;
 	uintptr_t numUnits = 0;
-	uintptr_t actualSize = byteAmount;
 	uintptr_t allocator = OMRPORT_VMEM_RESERVE_USED_INVALID;
 	uintptr_t actualPageSize = 0;
 	uintptr_t actualPageFlags = OMRPORT_VMEM_PAGE_FLAG_NOT_USED;
@@ -551,8 +559,8 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 
 	Trc_PRT_vmem_reservePagesAboveBar_Entry(byteAmount, pageSize, pageFlags, options, userExtendedPrivateAreaMemoryType);
 
-	LP_DEBUG_PRINTF5("\t reservePagesAboveBar byteAmount=0x%zx, pageSize=x%zx, pageFlags=0x%zx, useStrictPageSize=0x%x, userExtendedPrivateAreaMemoryType=0x%x\n", \
-					 byteAmount, pageSize, pageFlags, useStrictPageSize, userExtendedPrivateAreaMemoryType);
+    LP_DEBUG_PRINTF5("\t reservePagesAboveBar startAddress=0x%zx, byteAmount=0x%zx, pageSize=x%zx, pageFlags=0x%zx, useStrictPageSize=0x%x, userExtendedPrivateAreaMemoryType=0x%x\n", \
+                     startAddress, byteAmount, pageSize, pageFlags, useStrictPageSize, userExtendedPrivateAreaMemoryType);
 
 	/* determine number of 1MB segments required */
 	numSegments = ((byteAmount + ONE_M - 1) & (~(ONE_M - 1))) / ONE_M;
@@ -579,7 +587,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 
 		Trc_PRT_vmem_reservePagesAboveBar_allocate_4K_pages_in_2to32G_area(numSegments);
 		allocator = OMRPORT_VMEM_RESERVE_USED_J9ALLOCATE_4K_PAGES_IN_2TO32G_AREA;
-		ptr = omrallocate_4K_pages_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+        ptr = omrallocate_4K_pages_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn, startAddress);
 
 		LP_DEBUG_PRINTF2("\t omrallocate_4K_pages_in_userExtendedPrivateArea(0x%zx) returned 0x%zx\n", \
 						 numSegments, ptr);
@@ -611,7 +619,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 				LP_DEBUG_PRINTF2("\t reservePagesAboveBar calling omrallocate_2G_pages(0x%zx, 0x%x)\n", \
 								 numUnits, userExtendedPrivateAreaMemoryType);
 				Trc_PRT_vmem_reservePagesAboveBar_allocate_large_2G_pages(numUnits, userExtendedPrivateAreaMemoryType);
-				ptr = omrallocate_2G_pages(numUnits, userExtendedPrivateAreaMemoryType, ttkn);
+                ptr = omrallocate_2G_pages(numUnits, userExtendedPrivateAreaMemoryType, ttkn, startAddress);
 
 				LP_DEBUG_PRINTF3("\t omrallocate_2G_pages(0x%zx, 0x%x) returned 0x%zx\n", \
 								 numUnits, userExtendedPrivateAreaMemoryType, ptr);
@@ -636,7 +644,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 				LP_DEBUG_PRINTF2("\t reservePagesAboveBar calling omrallocate_1M_fixed_pages(0x%zx, 0x%x)\n", \
 								 numSegments, userExtendedPrivateAreaMemoryType);
 				Trc_PRT_vmem_reservePagesAboveBar_allocate_large_pages(numSegments, userExtendedPrivateAreaMemoryType);
-				ptr = omrallocate_1M_fixed_pages(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+                ptr = omrallocate_1M_fixed_pages(numSegments, userExtendedPrivateAreaMemoryType, ttkn, startAddress);
 
 				LP_DEBUG_PRINTF3("\t omrallocate_1M_fixed_pages(0x%zx, 0x%x) returned 0x%zx\n", \
 								 numSegments, userExtendedPrivateAreaMemoryType, ptr);
@@ -661,7 +669,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 				LP_DEBUG_PRINTF2("\t reservePagesAboveBar calling omrallocate_1M_pageable_pages_above_bar(0x%zx, 0x%x)\n", \
 								 numSegments, userExtendedPrivateAreaMemoryType);
 				Trc_PRT_vmem_reservePagesAboveBar_allocate_large_pageable_pages_above_bar(numSegments, userExtendedPrivateAreaMemoryType);
-				ptr = omrallocate_1M_pageable_pages_above_bar(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+                ptr = omrallocate_1M_pageable_pages_above_bar(numSegments, userExtendedPrivateAreaMemoryType, ttkn, startAddress);
 
 				LP_DEBUG_PRINTF3("\t omrallocate_1M_pageable_pages_above_bar(0x%zx, 0x%x) returned 0x%zx\n", \
 								 numSegments, userExtendedPrivateAreaMemoryType, ptr);
@@ -1074,7 +1082,7 @@ reservePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *id
 		 * Else fail.
 		 */
 		if (TRUE == use2To32GArea) {
-			baseAddress = reservePagesAboveBar(portLibrary, identifier, params->mode, params->byteAmount, params->pageSize, params->pageFlags, params->options, category);
+            baseAddress = reservePagesAboveBar(portLibrary, identifier, params, category);
 			if ((NULL != baseAddress) &&
 				(TRUE == isStrictAndOutOfRange(params, baseAddress))
 			) {
@@ -1097,11 +1105,11 @@ reservePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *id
 				/* Allocating memory using large pages above bar is guaranteed not to return memory in low memory range.
 				 * Therefore, this can be done only if strict address flag is not set.
 				 */
-				baseAddress = reservePagesAboveBar(portLibrary, identifier, params->mode, params->byteAmount, params->pageSize, params->pageFlags, params->options, category);
+                baseAddress = reservePagesAboveBar(portLibrary, identifier, params, category);
 			}
 		}
 	} else {
-		baseAddress = reservePagesAboveBar(portLibrary, identifier, params->mode, params->byteAmount, params->pageSize, params->pageFlags, params->options, category);
+        baseAddress = reservePagesAboveBar(portLibrary, identifier, params, category);
 #else /* OMR_ENV_DATA64 */
 	} else {
 		baseAddress = reserve1MPageableBelowBar(portLibrary, identifier, params->mode, params->byteAmount, category);
@@ -1179,7 +1187,7 @@ reserve4KPages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *
 #if defined(OMR_ENV_DATA64)
 	} else {
 		/* use the 2to32GArea */
-		baseAddress = reservePagesAboveBar(portLibrary, identifier, params->mode, params->byteAmount, FOUR_K, OMRPORT_VMEM_PAGE_FLAG_PAGEABLE, params->options, category);
+        baseAddress = reservePagesAboveBar(portLibrary, identifier, params, category);
 	}
 #endif /* OMR_ENV_DATA64 */
 

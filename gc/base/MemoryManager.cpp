@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,6 +74,7 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 	Assert_MM_true(0 != pageSize);
 
 	uintptr_t allocateSize = size;
+    omrtty_printf("Memory allocation hint support %d, preferredAddress %p\n", isMemoryAllocationHintSupported(env), preferredAddress);
 
 	uintptr_t concurrentScavengerPageSize = 0;
 	if (extensions->isConcurrentScavengerHWSupported()) {
@@ -583,6 +584,13 @@ MM_MemoryManager::decommitMemory(MM_MemoryHandle* handle, void* address, uintptr
 	MM_VirtualMemory* memory = handle->getVirtualMemory();
 	Assert_MM_true(NULL != memory);
 	return memory->decommitMemory(address, size, lowValidAddress, highValidAddress);
+}
+
+bool
+MM_MemoryManager::isMemoryAllocationHintSupported(MM_EnvironmentBase* env)
+{
+    OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+    return omrsysinfo_get_memory_allocation_hint_supported() ;
 }
 
 bool

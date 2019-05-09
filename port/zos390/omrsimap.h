@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,6 +127,8 @@ typedef _Packed struct J9RCE {
 	int32_t rcepool;                 /**< 4:4 No of frames currently available to system */
 	uint8_t rceFiller1[128];          /**< 8:128 Ignore fields not relevant to current implementation */
 	int32_t rceafc;                  /**< 136:4 Total no of frames currently on all available frame queues */
+    uint8_t unused[192];             /**< 140:192 Unused by the port library yet */
+    uint8_t rceFlags[4];             /**< 332:4 RCEFLAGS1 to RCEFLAGS4 */
 	/**< Ignore rest of the RCE */
 } J9RCE;
 

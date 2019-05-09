@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,LGETSTOR)":"DS"(lgetstor));
  *
  * @return pointer to memory allocated, NULL on failure.
  */
-void * omrallocate_1M_fixed_pages(int *numMBSegments, int *userExtendedPrivateAreaMemoryType, const char * ttkn) {
+void * omrallocate_1M_fixed_pages(int *numMBSegments, int *userExtendedPrivateAreaMemoryType, const char * ttkn, void* startAddress) {
 	long segments;
 	long origin;
 	long useMemoryType = *userExtendedPrivateAreaMemoryType;
@@ -78,20 +78,20 @@ void * omrallocate_1M_fixed_pages(int *numMBSegments, int *userExtendedPrivateAr
 	switch (useMemoryType) {
 	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
-				"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	case ZOS64_VMEM_2_TO_32G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\
 				"CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
-				"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	case ZOS64_VMEM_2_TO_64G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\
 				"CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
-				"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	}
 
@@ -115,7 +115,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,NGETSTOR)":"DS"(ngetstor));
  *
  * @return pointer to memory allocated, NULL on failure.
  */
-void * omrallocate_1M_pageable_pages_above_bar(int *numMBSegments, int *userExtendedPrivateAreaMemoryType, const char * ttkn) {
+void * omrallocate_1M_pageable_pages_above_bar(int *numMBSegments, int *userExtendedPrivateAreaMemoryType, const char * ttkn, void* startAddress) {
 	long segments;
 	long origin;
 	long useMemoryType = *userExtendedPrivateAreaMemoryType;
@@ -130,20 +130,20 @@ void * omrallocate_1M_pageable_pages_above_bar(int *numMBSegments, int *userExte
 	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,"\
 				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
-				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	case ZOS64_VMEM_2_TO_32G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO32G=YES,"\
 				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
-				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	case ZOS64_VMEM_2_TO_64G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO64G=YES,"\
 				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
-				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	}
 
@@ -167,7 +167,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,OGETSTOR)":"DS"(ogetstor));
  *
  * @return pointer to memory allocated, NULL on failure.
  */
-void * omrallocate_2G_pages(int *num2GBUnits, int *userExtendedPrivateAreaMemoryType, const char * ttkn) {
+void * omrallocate_2G_pages(int *num2GBUnits, int *userExtendedPrivateAreaMemoryType, const char * ttkn, void* startAddress) {
 	long units;
 	long origin;
 	long useMemoryType = *userExtendedPrivateAreaMemoryType;
@@ -182,20 +182,20 @@ void * omrallocate_2G_pages(int *num2GBUnits, int *userExtendedPrivateAreaMemory
 	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,"\
 				"PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
-				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn));
+                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	case ZOS64_VMEM_2_TO_32G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO32G=YES,"\
 				"PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
-				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn));
+                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	case ZOS64_VMEM_2_TO_64G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO64G=YES,"\
 				"PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
-				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn));
+                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	}
 
@@ -219,7 +219,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,MGETSTOR)":"DS"(mgetstor));
  *
  * @return pointer to memory allocated, NULL on failure.
  */
-void * omrallocate_4K_pages_in_userExtendedPrivateArea(int *numMBSegments, int *userExtendedPrivateAreaMemoryType, const char * ttkn) {
+void * omrallocate_4K_pages_in_userExtendedPrivateArea(int *numMBSegments, int *userExtendedPrivateAreaMemoryType, const char * ttkn, void* startAddress) {
 	long segments;
 	long origin;
 	long useMemoryType = *userExtendedPrivateAreaMemoryType;
@@ -236,14 +236,14 @@ void * omrallocate_4K_pages_in_userExtendedPrivateArea(int *numMBSegments, int *
 	case ZOS64_VMEM_2_TO_32G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\
 				"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
-				"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	case ZOS64_VMEM_2_TO_64G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\
 				"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
-				"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 		break;
 	}
 
@@ -266,7 +266,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(rgetstor));
  *
  * @return pointer to memory allocated, NULL on failure.
  */
-void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char * ttkn) {
+void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char * ttkn, void* startAddress) {
 	long segments;
 	long origin;
 	int  iarv64_rc = 0;
@@ -278,8 +278,8 @@ void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char * ttkn) {
 
 	__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\
 			"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
-			"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-			::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+            "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+            ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
 
 	if (0 != iarv64_rc) {
 		return (void *)0;
@@ -308,8 +308,8 @@ int omrfree_memory_above_bar(void *address, const char * ttkn){
 	xmemobjstart = address;
 	wgetstor = pgetstor;
 
-	__asm(" IARV64 REQUEST=DETACH,COND=YES,MEMOBJSTART=(%2),TTOKEN=(%3),RETCODE=%0,MF=(E,(%1))"\
-			::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(ttkn));
+    __asm(" IARV64 REQUEST=DETACH,COND=YES,MEMOBJSTART=(%2),TTOKEN=(%3),RETCODE=%0,MF=(E,(%1))"\
+            ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(ttkn));
 	return iarv64_rc;
 }
 

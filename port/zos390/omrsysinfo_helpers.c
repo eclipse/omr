@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,4 +104,16 @@ retrieveZOSProcessorStats(struct OMRPortLibrary *portLibrary, struct J9Processor
 
 	Trc_PRT_retrieveZOSProcessorStats_Exit(0);
 	return 0;
+}
+
+/*
+ * Function retrieves IARV64 INORIGIN support on a z/OS platform.
+ * INORIGIN adds the capability of specifying a preferred start address when allocating memory.
+*/
+BOOLEAN
+retrieveZOSIARV64InOriginSupported(struct OMRPortLibrary *portLibrary)
+{
+   J9CVT *__ptr32 cvtp = ((J9PSA * __ptr32)0)->flccvt;
+   J9RCE *__ptr32 rcep = cvtp->cvtrcep;
+   return (rcep->rceFlags[1] & RCE_FLAGS2_INORIGIN_BIT) != 0;
 }

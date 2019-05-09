@@ -798,6 +798,12 @@ omrsysinfo_get_os_description(struct OMRPortLibrary *portLibrary, struct OMROSDe
 	return rc;
 }
 
+BOOLEAN
+omrsysinfo_get_memory_allocation_hint_supported(struct OMRPortLibrary *portLibrary)
+{
+    return TRUE;
+}
+
 /**
  * Determine OS has a feature enabled.
  *
