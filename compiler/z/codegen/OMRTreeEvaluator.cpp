@@ -114,7 +114,7 @@
 
 
 #ifdef J9_PROJECT_SPECIFIC
-TR::Instruction *
+TR::Instruction*
 generateS390PackedCompareAndBranchOps(TR::Node * node,
                                       TR::CodeGenerator * cg,
                                       TR::InstOpCode::S390BranchCondition fBranchOpCond,
