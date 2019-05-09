@@ -175,6 +175,18 @@ const char *TR_PPCCallStackIterator::getProcedureName()
 #include <execinfo.h>
 #include <cxxabi.h>
 
+#if defined(MUSL)
+char ** backtrace_symbols(void *const *trace, int size)
+{
+	return NULL;
+}
+
+int backtrace(void **trace, int size)
+{
+	return 0;
+}
+#endif
+
 void TR_LinuxCallStackIterator::printSymbol(int32_t frame, char *sig, TR::Compilation *comp)
    {
    char lib[256];
