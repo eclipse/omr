@@ -36,6 +36,13 @@ extern "C" {
 #define __THROW
 #endif /* defined(OSX) */
 
+#if defined(OMR_MUSL_CLIB)
+#ifndef __THROW
+#define __THROW
+#endif
+typedef sighandler_t __sighandler_t;
+#endif
+
 #if defined(LINUXPPC)
 typedef __sighandler_t sighandler_t;
 #elif defined(LINUX) || defined(OSX)
