@@ -14,19 +14,7 @@ pipeline {
         stage('Build') {
             steps {
                 timestamps {
-                    echo 'Output CCACHE stats before running and clear them'
-                    sh '''ccache -s -z'''
-                    
-                    dir('build') {
-                        echo 'Configure...'
-                        sh '''cmake -Wdev -C../cmake/caches/Travis.cmake ..''' 
-                       
-                        echo 'Compile...'
-                        sh '''make -j4'''
-                    }
-                    
-                    echo 'Output CCACHE stats after running'
-                    sh '''ccache -s'''
+                    echo 'Success: Fake build!'
                 }
             }
         }
@@ -34,8 +22,7 @@ pipeline {
             steps {
                 timestamps {
                     dir('build') {
-                        echo "Sanity Test..."
-                        sh'''ctest -V'''
+                        echo 'Success: Fake test!'
                     }
                 }
             }
