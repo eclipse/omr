@@ -69,7 +69,7 @@ typedef void* WRAPPER_ARG;
 #define WRAPPER_RETURN() return NULL
 typedef WRAPPER_TYPE (*WRAPPER_FUNC)(WRAPPER_ARG);
 
-#if defined(OMR_USE_POSIX_SEMAPHORES)
+#if defined(OMR_USE_POSIX_SEMAPHORES) || defined(MUSL)
 #include <semaphore.h>
 typedef sem_t OSSEMAPHORE;
 #elif defined(OMR_USE_OSX_SEMAPHORES) /* defined(OMR_USE_POSIX_SEMAPHORES) */
@@ -332,7 +332,7 @@ extern pthread_condattr_t *defaultCondAttr;
 #define SEM_CREATE(threadLibrary, initValue) omrthread_allocate_memory(threadLibrary, sizeof(OSSEMAPHORE), OMRMEM_CATEGORY_THREADS)
 #define	SEM_FREE(lib, s)  	omrthread_free_memory(lib, s);
 
-#if defined(OMR_USE_POSIX_SEMAPHORES)
+#if defined(OMR_USE_POSIX_SEMAPHORES) || defined(MUSL)
 #define SEM_INIT(sm, pshrd, inval) (sem_init((sem_t *)(sm), pshrd, inval))
 #define SEM_DESTROY(sm) (sem_destroy((sem_t *)(sm)))
 #define SEM_POST(smP) (sem_post((sem_t *)(smP)))
