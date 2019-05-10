@@ -42,6 +42,13 @@
 uintptr_t protectedBacktrace(struct OMRPortLibrary *port, void *arg);
 uintptr_t backtrace_sigprotect(struct OMRPortLibrary *portLibrary, J9PlatformThread *threadInfo, void **address_array, int capacity);
 
+#if defined(MUSL)
+int backtrace(void **trace, int size)
+{
+	return 0;
+}
+#endif
+
 struct frameData {
 	void **address_array;
 	unsigned int capacity;
