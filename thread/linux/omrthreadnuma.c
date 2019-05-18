@@ -290,6 +290,9 @@ omrthread_numa_init(omrthread_library_t threadLibrary)
 	}
 	/* find our current affinity mask since we will need it when removing any affinity binding from threads, later (since we still want to honour restrictions we inherited from the environment) */
 	CPU_ZERO(&defaultAffinityMask);
+#if defined(OMR_MUSL_CLIB)
+	if (0 != sched_getaffinity(0, sizeof(cpu_set_t), &defaultAffinityMask))
+#else
 #if __GLIBC_PREREQ(2,4) || defined(LINUXPPC)
 	/*
 	 * LIR 902 : On Linux PPC, rolling up tool chain level to VAC 8 on RHEL 4.
@@ -300,6 +303,7 @@ omrthread_numa_init(omrthread_library_t threadLibrary)
 #else
 	if (0 != sched_getaffinity(0, &defaultAffinityMask))
 #endif
+#endif /* defined(OMR_MUSL_CLIB) */
 	{
 		/* we failed to check our affinity so we shouldn't try to use the affinity APIs */
 		isNumaAvailable = FALSE;
@@ -389,6 +393,9 @@ omrthread_numa_set_node_affinity_nolock(omrthread_t thread, const uintptr_t *nod
 			memcpy(&affinityCPUs, &defaultAffinityMask, sizeof(cpu_set_t));
 		}
 		if ((threadIsStarted) && (0 == result)) {
+#if defined(OMR_MUSL_CLIB)
+			if (0 != sched_setaffinity(thread->tid, sizeof(cpu_set_t), &affinityCPUs))
+#else
 #if __GLIBC_PREREQ(2,4) || defined(LINUXPPC)
 			/*
 			 * LIR 902 : On Linux PPC, rolling up tool chain level to VAC 8 on RHEL 4.
@@ -399,6 +406,7 @@ omrthread_numa_set_node_affinity_nolock(omrthread_t thread, const uintptr_t *nod
 #else
 			if (0 != sched_setaffinity(thread->tid, &affinityCPUs))
 #endif
+#endif /* defined(OMR_MUSL_CLIB) */
 			{
 				result = J9THREAD_NUMA_ERR;
 			}
@@ -457,7 +465,9 @@ omrthread_numa_get_node_affinity(omrthread_t thread, uintptr_t *numaNodes, uintp
 			 * the thread->numaAffinity field, since it's possible for the affinity to be changed
 			 * by an external program (see: http://www.linuxjournal.com/article/6799)
 			 */
-
+#if defined(OMR_MUSL_CLIB)
+			if (0 == sched_getaffinity(thread->tid, sizeof(cpu_set_t), &affinityCPUs))
+#else
 #if __GLIBC_PREREQ(2,4) || defined(LINUXPPC)
 			/*
 			 * LIR 902 : On Linux PPC, rolling up tool chain level to VAC 8 on RHEL 4.
@@ -468,6 +478,7 @@ omrthread_numa_get_node_affinity(omrthread_t thread, uintptr_t *numaNodes, uintp
 #else /* defined(LINUXPPC) */
 			if (0 == sched_getaffinity(thread->tid, &affinityCPUs))
 #endif /* defined(LINUXPPC) */
+#endif /* defined(OMR_MUSL_CLIB) */
 			{
 				/* Now try matching it up with CPUs from known NUMA nodes */
 				uintptr_t node = 1;
