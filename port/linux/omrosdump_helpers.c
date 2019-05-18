@@ -25,7 +25,9 @@
  * @ingroup Port
  * @brief Dump formatting
  */
-
+#if defined(OMR_MUSL_CLIB)
+#define _GNU_SOURCE
+#endif
 
 
 #include <sys/mman.h>

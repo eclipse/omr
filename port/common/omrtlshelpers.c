@@ -35,6 +35,10 @@
  * Only the function @omrport_tls_free is available via the port library function table.  The rest of
  * the functions are helpers for the port library only.
  */
+#if defined(OMR_MUSL_CLIB)
+#define _GNU_SOURCE
+#endif
+
 #include <string.h>
 #include "omrport.h"
 #include "omrportpriv.h"

@@ -25,6 +25,9 @@
  * @ingroup Port
  * @brief file
  */
+#if defined(OMR_MUSL_CLIB)
+#define _GNU_SOURCE
+#endif
 
 #include <nl_types.h>
 #include <langinfo.h>

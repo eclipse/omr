@@ -25,6 +25,10 @@
  * @ingroup Port
  * @brief Port Library
  */
+#if defined(OMR_MUSL_CLIB)
+#define _GNU_SOURCE
+#endif
+
 #include <string.h>
 #include "omrport.h"
 #include "omrportpriv.h"

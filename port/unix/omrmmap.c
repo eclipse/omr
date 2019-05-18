@@ -33,7 +33,9 @@
  * memory mapping facilites do not exist at all. On these platforms the API will
  * still be available, but will simply read the file into allocated memory.
  */
-
+#if defined(OMR_MUSL_CLIB)
+#define _GNU_SOURCE
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>

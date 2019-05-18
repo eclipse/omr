@@ -25,7 +25,9 @@
  * @ingroup Port
  * @brief Memory Utilities
  */
-
+#if defined(OMR_MUSL_CLIB)
+#define _GNU_SOURCE
+#endif
 
 /*
  * This file contains code for the portability library memory management.

@@ -26,6 +26,9 @@
  * @brief Native language support helpers
  */
 
+#if defined(OMR_MUSL_CLIB)
+#define _GNU_SOURCE
+#endif
 
 #include <unistd.h>
 #include <sys/types.h>

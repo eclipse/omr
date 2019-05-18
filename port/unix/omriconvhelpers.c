@@ -25,6 +25,9 @@
  * @ingroup Port
  * @brief iconv support helpers
  */
+#if defined(OMR_MUSL_CLIB)
+#define _GNU_SOURCE
+#endif
 
 /* Use the version of nl_langinfo() that returns an EBCDIC string */
 #define J9_USE_ORIG_EBCDIC_LANGINFO 1
