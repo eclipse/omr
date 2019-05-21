@@ -105,7 +105,6 @@ OMR::ResolvedMethodSymbol::initForCompilation(TR::Compilation *comp)
    self()->getAutomaticList().setRegion(heapRegion);
 
    self()->getVariableSizeSymbolList().setRegion(heapRegion);
-   self()->getTrivialDeadTreeBlocksList().setRegion(heapRegion);
    }
 
 
@@ -128,7 +127,6 @@ OMR::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod * method, TR::
      _parameterList(comp->trMemory()),
      _variableSizeSymbolList(comp->trMemory()),
      _methodMetaDataList(comp->trMemory()),
-     _trivialDeadTreeBlocksList(comp->trMemory()),
      _comp(comp),
      _firstJitTempIndex(-1),
      _cannotAttemptOSR(NULL),
@@ -2040,13 +2038,6 @@ OMR::ResolvedMethodSymbol::addMethodMetaDataSymbol(TR::RegisterMappedSymbol *s)
    TR_ASSERT(!s || s->isMethodMetaData(), "should be method metadata");
    if (!_methodMetaDataList.find(s))
       _methodMetaDataList.add(s);
-   }
-
-void
-OMR::ResolvedMethodSymbol::addTrivialDeadTreeBlock(TR::Block *b)
-   {
-   if (!_trivialDeadTreeBlocksList.find(b))
-      _trivialDeadTreeBlocksList.add(b);
    }
 
 // get/setTempIndex is called from TR_ResolvedMethod::makeParameterList
