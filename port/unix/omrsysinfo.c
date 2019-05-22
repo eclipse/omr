@@ -31,7 +31,9 @@
 #endif
 
 #if defined(LINUX) && !defined(OMRZTPF)
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #elif defined(OSX)
 #define _XOPEN_SOURCE
 #include <libproc.h>

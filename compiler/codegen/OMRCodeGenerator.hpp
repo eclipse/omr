@@ -419,7 +419,6 @@ class OMR_EXTENSIBLE CodeGenerator
    void identifyUnneededByteConvNodes(TR::Node*, TR::TreeTop *, vcount_t, TR::DataType);
    void identifyUnneededByteConvNodes();
 
-   bool afterRA() { return _afterRA; }
    TR::CodeGenPhase& getCodeGeneratorPhase() {return _codeGenPhase;}
 
    void prepareNodeForInstructionSelection(TR::Node*node);
@@ -1932,8 +1931,6 @@ class OMR_EXTENSIBLE CodeGenerator
    uint8_t _globalGPRPartitionLimit;
    uint8_t _globalFPRPartitionLimit;
    flags16_t _enabledFlags;
-
-   bool _afterRA;
 
    // MOVE TO J9 Z CodeGenerator
    // isTemporaryBased storageReferences just have a symRef but some other routines expect a node so use the below to fill in this symRef on this node

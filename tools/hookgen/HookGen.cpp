@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -528,8 +528,8 @@ RCType
 HookGen::parseOptions(int argc, char *argv[])
 {
 	for (int i = 1; i < argc; i++) {
-		printf("%d: %s", i, argv[i]);
-		if(0 == strcmp(argv[i], "-v")) {
+		printf("%d: %s\n", i, argv[i]);
+		if (0 == strcmp(argv[i], "-v")) {
 			_verbose = true;
 		} else {
 			if (NULL != _fileName) {
@@ -546,7 +546,6 @@ HookGen::parseOptions(int argc, char *argv[])
 		displayUsage();
 		return RC_FAILED;
 	}
-
 
 	return RC_OK;
 }
@@ -577,7 +576,7 @@ startHookGen(int argc, char *argv[])
 		goto finish;
 	}
 
-	if(hookGen.isVerbose()) {
+	if (hookGen.isVerbose()) {
 		fprintf(stderr, "Processed %s to create public header %s and private header %s\n", hookGen.getFileName(), hookGen.getPublicFileName(), hookGen.getPrivateFileName());
 	}
 

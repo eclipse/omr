@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,7 +108,6 @@ EXE_EXTENSION_CHAR: the executable has a delimiter that we want to stop at as pa
 
 */
 
-
 /* Linux ANSI compiler (gcc) and OSX (clang). */
 #if defined(LINUX) || defined (OSX)
 
@@ -146,7 +145,6 @@ typedef double SYS_FLOAT;
 /* no priorities on Linux */
 #define J9_PRIORITY_MAP {0,0,0,0,0,0,0,0,0,0,0,0}
 
-
 #if (defined(LINUXPPC) && !defined(LINUXPPC64)) || defined(S390) || defined(J9HAMMER)
 #define VA_PTR(valist) ((va_list*)&valist[0])
 #endif
@@ -176,7 +174,6 @@ typedef double SYS_FLOAT;
 
 #endif /* defined(LINUX) || defined (OSX) */
 
-
 /* MVS compiler */
 #ifdef MVS
 typedef double 					SYS_FLOAT;
@@ -194,7 +191,6 @@ typedef long double				FLOAT_EXTENDED;
 #include "esmap.h"
 
 #endif /* MVS */
-
 
 #define GLOBAL_DATA(symbol) ((void*)&(symbol))
 #define GLOBAL_TABLE(symbol) GLOBAL_DATA(symbol)
@@ -235,7 +231,6 @@ typedef double SYS_FLOAT;
 #else /* not i5/OS */
 #define J9_PRIORITY_MAP  { 40,41,43,45,47,49,51,53,55,57,59,60 }
 #endif /* J9OS_I5 checks */
-
 
 #if defined(__xlC__)
 /*
@@ -318,12 +313,13 @@ typedef struct {
 	void *rawFnAddress;
 } J9FunctionDescriptor_T;
 
-// Set the Address Enviroment pointer.  Same for all routines from
-// same library, so doesn't matter which routine, but currently only
-// used when calling jitProfile* in zOS, so use one of them
+/*
+ * Set the Address Enviroment pointer.  Same for all routines from
+ * same library, so doesn't matter which routine, but currently only
+ * used when calling jitProfile* in zOS, so use one of them
+ */
 #define TOC_UNWRAP_ENV(wrappedPointer) (wrappedPointer ? ((J9FunctionDescriptor_T *) (wrappedPointer))->ada : NULL)
 #define TOC_UNWRAP_ADDRESS(wrappedPointer) (wrappedPointer ? ((J9FunctionDescriptor_T *)(uintptr_t)(wrappedPointer))->rawFnAddress : NULL)
-
 
 #if defined(__cplusplus)
 

@@ -238,7 +238,6 @@ OMR::CodeGenerator::CodeGenerator() :
      _internalControlFlowSafeNestingDepth(0),
      _stackOfArtificiallyInflatedNodes(self()->comp() ? self()->comp()->trMemory() : 0, 16),
      _stackOfMemoryReferencesCreatedDuringEvaluation(self()->comp() ? self()->comp()->trMemory() : 0, 16),
-     _afterRA(false),
      randomizer(self()->comp()),
      _outOfLineColdPathNestedDepth(0),
      _codeGenPhase(self()),

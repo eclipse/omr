@@ -597,6 +597,8 @@ omrvmem_startup(struct OMRPortLibrary *portLibrary)
 		portLibrary->portGlobals->platformGlobals.vmem_initialized = TRUE;
 		/* set default value to advise OS about vmem that is no longer needed */
 		portLibrary->portGlobals->vmemAdviseOSonFree = 1;
+		/* set default value to advise OS about vmem to consider for Transparent HugePage (Only for Linux) */
+		portLibrary->portGlobals->vmemEnableMadvise = 0;
 	}
 
 	return returnValue;

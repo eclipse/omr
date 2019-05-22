@@ -424,7 +424,8 @@ OMR::Z::CodeGenerator::CodeGenerator()
      _previouslyAssignedTo(self()->comp()->allocator("LocalRA")),
      _firstTimeLiveOOLRegisterList(NULL),
      _methodBegin(NULL),
-     _methodEnd(NULL)
+     _methodEnd(NULL),
+     _afterRA(false)
    {
    TR::Compilation *comp = self()->comp();
    _cgFlags = 0;

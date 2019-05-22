@@ -74,6 +74,10 @@ MM_GCExtensionsBase::initialize(MM_EnvironmentBase* env)
 
 	_omrVM = env->getOmrVM();
 
+	if (compressObjectReferences()) {
+		heapCeiling = LOW_MEMORY_HEAP_CEILING; /* By default, compressed pointers builds run in the low 64GiB */
+	}
+
 #if defined(OMR_GC_MODRON_STANDARD)
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	configurationOptions._gcPolicy = gc_policy_gencon;

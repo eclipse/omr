@@ -2498,19 +2498,6 @@ OMR::ResolvedMethodSymbol::setUsesSinglePrecisionMode(bool b)
    _methodFlags.set(SinglePrecisionMode, b);
    }
 
-bool
-OMR::ResolvedMethodSymbol::isNoTemps()
-   {
-   TR_ASSERT(self()->isJittedMethod(), "Should have been created as a jitted method.");
-   return _methodFlags.testAny(NoTempsSet);
-   }
-void
-OMR::ResolvedMethodSymbol::setNoTemps(bool b)
-   {
-   TR_ASSERT(self()->isJittedMethod(), "Should have been created as a jitted method.");
-   _methodFlags.set(NoTempsSet, b);
-   }
-
 /**
  * \brief Returns the bytecode that represents the start of the ilgen created basic block
  *

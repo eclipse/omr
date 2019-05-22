@@ -1274,11 +1274,6 @@ void OMR::Compilation::performOptimizations()
 
    _optimizer = TR::Optimizer::createOptimizer(self(), self()->getJittedMethodSymbol(), false);
 
-   if (_methodSymbol->hasUnkilledTemps())
-      {
-      ((TR::Optimizer*)(_optimizer))->setRequestOptimization(OMR::globalDeadStoreElimination);
-      }
-
    if (_optimizer)
       _optimizer->optimize();
    }

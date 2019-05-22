@@ -850,13 +850,9 @@ generateS390ImmOp(TR::CodeGenerator * cg,  TR::InstOpCode::Mnemonic memOp, TR::N
                else
                   {
                   // testing register pressure
-                  if (!comp->getJittedMethodSymbol()->isNoTemps())
-                     {
-                     if (!targetRegister)
-                        targetRegister = sourceRegister;
-                     break;
-                     }
-                  constReg = cg->allocateRegister();
+                  if (!targetRegister)
+                     targetRegister = sourceRegister;
+                  break;
                   }
 
                if (cond)

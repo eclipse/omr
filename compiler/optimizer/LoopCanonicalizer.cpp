@@ -2535,16 +2535,6 @@ bool TR_LoopCanonicalizer::examineTreeForInductionVariableUse(TR::Block *loopInv
       }
 
    if (node->getOpCode().hasSymbolReference() &&
-       !node->getOpCode().isStore() &&
-       node->getSymbolReference() == _symRefBeingReplaced &&
-       comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-              comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "Skipping transformation under NOTEMPS\n");
-      return false;
-      }
-
-   if (node->getOpCode().hasSymbolReference() &&
        !node->getOpCode().isStore())
       {
       if ((node->getSymbolReference() == _symRefBeingReplaced) &&

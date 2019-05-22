@@ -29,17 +29,27 @@ set(DDR_INPUTS
 	$<JOIN:$<TARGET_PROPERTY:@DDR_TARGET_NAME@,INPUT_TARGETS>,
 	>
 )
+set(DDR_BLACKLIST "$<TARGET_PROPERTY:@DDR_TARGET_NAME@,BLACKLIST>")
+set(DDR_OVERRIDES_FILE "$<TARGET_PROPERTY:@DDR_TARGET_NAME@,OVERRIDES_FILE>")
+set(DDR_BLOB "$<TARGET_PROPERTY:@DDR_TARGET_NAME@,BLOB>")
+set(DDR_SUPERSET "$<TARGET_PROPERTY:@DDR_TARGET_NAME@,SUPERSET>")
 
 include("@DDR_TOOLS_EXPORT@")
 
+# If not provided, set default values for superset and blob outputs
+if(NOT DDR_BLOB)
+	set(DDR_BLOB "${CMAKE_CURRENT_BINARY_DIR}/blob.dat")
+endif()
+
+if(NOT DDR_SUPERSET)
+	set(DDR_SUPERSET "${CMAKE_CURRENT_BINARY_DIR}/superset.out")
+endif()
 
 function(get_relative_path output filename base)
 	get_filename_component(temp "${filename}" ABSOLUTE BASE_DIR "${base}")
 	file(RELATIVE_PATH temp "${temp}" "${base}")
 	set("${output}" "${temp}" PARENT_SCOPE)
 endfunction()
-
-
 
 function(add_filename_extension output filename prefix)
 	get_filename_component(extension "${filename}" EXT)
@@ -175,10 +185,28 @@ add_custom_command(
 	COMMAND cat ${annotated_files} > macroList
 )
 
+set(EXTRA_DDRGEN_OPTIONS "")
+if(DDR_BLACKLIST)
+	list(APPEND EXTRA_DDRGEN_OPTIONS "--blacklist" "${DDR_BLACKLIST}")
+endif()
+if(DDR_OVERRIDES_FILE)
+	# Because ddr overrides files specify relative paths, we need to run ddrgen
+	# in the same directory as the overrides files.
+	get_filename_component(override_dir "${DDR_OVERRIDES_FILE}" DIRECTORY)
+
+	list(APPEND EXTRA_DDRGEN_OPTIONS "--overrides" "${DDR_OVERRIDES_FILE}" WORKING_DIRECTORY "${override_dir}")
+endif()
+
 add_custom_command(
-	OUTPUT blob.dat superset.out
+	OUTPUT ${DDR_BLOB} ${DDR_SUPERSET}
 	DEPENDS macroList
-	COMMAND omr_ddrgen ${target_files} -e --macrolist macroList --blob blob.dat --superset superset.out
+	COMMAND omr_ddrgen
+		${target_files}
+		-e
+		--macrolist macroList
+		--blob ${DDR_BLOB}
+		--superset ${DDR_SUPERSET}
+		${EXTRA_DDRGEN_OPTIONS}
 )
 
-add_custom_target(ddrgen ALL DEPENDS blob.dat)
+add_custom_target(ddrgen ALL DEPENDS ${DDR_BLOB})

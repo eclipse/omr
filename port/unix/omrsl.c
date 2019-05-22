@@ -29,7 +29,9 @@
 #if defined(LINUX) && !defined(OMRZTPF)
 
 /* defining _GNU_SOURCE allows the use of dladdr() in dlfcn.h */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #elif defined(OSX)
 #define _XOPEN_SOURCE
 #endif /* defined(LINUX)  && !defined(OMRZTPF) */

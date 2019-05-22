@@ -1612,11 +1612,7 @@ public:
 		, lowAllocationThreshold(UDATA_MAX)
 		, highAllocationThreshold(UDATA_MAX)
 		, disableInlineCacheForAllocationThreshold(false)
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		, heapCeiling(LOW_MEMORY_HEAP_CEILING) /* By default, compressed pointers builds run in the low 64GiB */
-#else /* OMR_GC_COMPRESSED_POINTERS */
 		, heapCeiling(0) /* default for normal platforms is 0 (i.e. no ceiling) */
-#endif /* OMR_GC_COMPRESSED_POINTERS */
 		, heapInitializationFailureReason(HEAP_INITIALIZATION_FAILURE_REASON_NO_ERROR)
 		, scavengerAlignHotFields(true) /* VM Design 1774: hot field alignment is on by default */
 		, suballocatorInitialSize(SUBALLOCATOR_INITIAL_SIZE) /* default for J9Heap suballocator initial size is 200 MB */

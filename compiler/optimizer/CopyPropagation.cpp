@@ -840,17 +840,6 @@ int32_t TR_CopyPropagation::perform()
          bool baseAddrAvail = false;
          TR::Node * baseAddr = NULL;
 
-         // Bail out if we're in a NOTEMPS method and we're going to create a temp.  This conditional should match
-         // the conditional that covers the anchoring code below.
-         if (!isRegLoad &&
-                         (loadNode->getOpCodeValue() != TR::loadaddr) &&                   // loadaddr doesn't need to be anchored
-                         (loadNode->getOpCode().hasSymbolReference()) &&
-                         (loadNode->getSymbolReference() == copySymbolReference) &&
-                         (rhsOfStoreDefNode != loadNode) &&
-                         comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-                         comp()->getJittedMethodSymbol()->isNoTemps())
-            continue;
-
          if (performTransformation(comp(), "%s   Copy2 Propagation replacing Copy symRef #%d \n",OPT_DETAILS, copySymbolReference->getReferenceNumber()))
             {
             comp()->setOsrStateIsReliable(false); // could check if the propagation was done to a child of the OSR helper call here

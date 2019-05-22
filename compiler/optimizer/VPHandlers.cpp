@@ -8186,13 +8186,6 @@ void replaceWithSmallerType(OMR::ValuePropagation *vp, TR::Node *node)
    if (node->getReferenceCount() > 1)
       return;
 
-   if (vp->comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-       vp->comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(vp->comp(), "replaceWithSmallerType not safe to perform when NOTEMPS enabled\n");
-      return;
-      }
-
    TR::DataType newType = node->getDataType();
    TR::Node *load = node->getFirstChild();
 

@@ -78,9 +78,11 @@ function write_flag_defined(macro_name) {
 }
 
 function define_flag_macro(macro_name) {
-	# TODO if not include guard
-	write_flag_macro(macro_name);
-	write_flag_defined(macro_name);
+	# Don't process any include guard macros
+	if(match(macro_name, /_[Hh]([Pp]{2})?_?$/) == 0){
+		write_flag_macro(macro_name);
+		write_flag_defined(macro_name);
+	}
 }
 
 function undef_flag_macro(macro_name) {
