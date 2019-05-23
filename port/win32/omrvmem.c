@@ -230,7 +230,7 @@ omrvmem_free_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr_t
 			ret = 0; /* Means it failed */
 		}
 	} else {
-		ret = (int32_t) ((LPVOID)address, (size_t)0, MEM_RELEASE);
+		ret = (int32_t)VirtualFree((LPVOID)address, (size_t)0, MEM_RELEASE);
 	}
 
 	if (ret != 0) {
