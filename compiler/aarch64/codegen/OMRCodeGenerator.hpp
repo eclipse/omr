@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@ namespace OMR { typedef OMR::ARM64::CodeGenerator CodeGeneratorConnector; }
 #include "compiler/codegen/OMRCodeGenerator.hpp"
 
 #include "codegen/RegisterConstants.hpp"
+#include "il/SymbolReference.hpp"
 #include "infra/Annotations.hpp"
 
 class TR_ARM64OutOfLineCodeSection;
