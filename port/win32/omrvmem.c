@@ -229,6 +229,13 @@ omrvmem_free_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr_t
 		} else {
 			ret = 0; /* Means it failed */
 		}
+	} else if (mode & OMRPORT_VMEM_MEMORY_MODE_CONTIGUOUS_MEM) {
+		retUnmap = UnmapViewOfFile(address);
+		if(retUnmap != 0) {
+			ret = 1;
+		} else {
+			ret = 0; /* Means it failed */
+		}
 	} else {
 		ret = (int32_t)VirtualFree((LPVOID)address, (size_t)0, MEM_RELEASE);
 	}
