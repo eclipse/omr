@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -238,7 +238,7 @@ void (__cdecl * __cdecl
 signal(_In_ int signum, _In_opt_ void (__cdecl * handler)(int)))(int)
 #else /* defined(OMR_OS_WINDOWS) */
 sighandler_t
-signal(int signum, sighandler_t handler) __THROW
+signal(int signum, sighandler_t handler) OMR_NOTHROW
 #endif /* defined(OMR_OS_WINDOWS) */
 {
 	return omrsig_signal_internal(signum, handler);
@@ -290,7 +290,7 @@ omrsig_signal_internal(int signum, sighandler_t handler)
 
 #if defined(POSIX_SIGNAL)
 int
-sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) __THROW
+sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) OMR_NOTHROW
 {
 	return omrsig_sigaction_internal(signum, act, oldact, false);
 }
@@ -462,13 +462,13 @@ omrsig_sigaction_internal(int signum, const struct sigaction *act, struct sigact
 #if defined(LINUX)
 
 __sighandler_t
-__sysv_signal(int sig, __sighandler_t handler) __THROW
+__sysv_signal(int sig, __sighandler_t handler) OMR_NOTHROW
 {
 	return omrsig_signal_internal(sig, handler);
 }
 
 sighandler_t
-ssignal(int sig, sighandler_t handler) __THROW
+ssignal(int sig, sighandler_t handler) OMR_NOTHROW
 {
 	return omrsig_signal_internal(sig, handler);
 }
@@ -572,7 +572,7 @@ failed:
 #if !defined(OMR_OS_WINDOWS)
 
 sighandler_t
-sigset(int sig, sighandler_t disp) __THROW
+sigset(int sig, sighandler_t disp) OMR_NOTHROW
 {
 	sighandler_t ret = SIG_ERR;
 #if defined(OSX) || defined(OMRZTPF)
@@ -620,7 +620,7 @@ sigset(int sig, sighandler_t disp) __THROW
 }
 
 int
-sigignore(int sig) __THROW
+sigignore(int sig) OMR_NOTHROW
 {
 	/* Unregister the secondary handler for sig if there is one. */
 	SIGLOCK(sigMutex);
@@ -631,7 +631,7 @@ sigignore(int sig) __THROW
 }
 
 sighandler_t
-bsd_signal(int signum, sighandler_t handler) __THROW
+bsd_signal(int signum, sighandler_t handler) OMR_NOTHROW
 {
 	struct sigaction act = {{0}};
 	struct sigaction oldact = {{0}};
@@ -652,7 +652,7 @@ bsd_signal(int signum, sighandler_t handler) __THROW
 #if !defined(J9ZOS390)
 
 sighandler_t
-sysv_signal(int signum, sighandler_t handler) __THROW
+sysv_signal(int signum, sighandler_t handler) OMR_NOTHROW
 {
 	return omrsig_signal_internal(signum, handler);
 }

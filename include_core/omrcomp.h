@@ -598,4 +598,14 @@ typedef struct U_128 {
 #define J9VM_ENV_DIRECT_FUNCTION_POINTERS
 #define J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING
 
+
+#ifdef __cplusplus
+#if __cplusplus >= 201103L
+#define OMR_NOTHROW noexcept()
+#else
+#define OMR_NOTHROW throw()
+#endif
+#else
+#define OMR_NOTHROW
+#endif
 #endif /* OMRCOMP_H */

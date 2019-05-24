@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,22 +32,16 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#if defined(OSX)
-#define __THROW
-#endif /* defined(OSX) */
-
 #if defined(LINUXPPC)
 typedef __sighandler_t sighandler_t;
 #elif defined(LINUX) || defined(OSX)
 typedef void (*sighandler_t)(int sig);
 #elif defined(J9ZOS390) || defined(AIXPPC)
 typedef void (*sighandler_t)(int sig);
-#define __THROW
 #elif defined(OMR_OS_WINDOWS)
 /* Use sig_handler_t instead of sighandler_t for Windows. Define it for compatibility. */
 #define sig_handler_t sighandler_t
 typedef void (__cdecl *sighandler_t)(int signum);
-#define __THROW
 #endif /* defined(OMR_OS_WINDOWS) */
 
 #define OMRSIG_RC_ERROR -1
@@ -99,18 +93,18 @@ _CRTIMP void (__cdecl * __cdecl signal(_In_ int _SigNum, _In_opt_ void (__cdecl 
  */
 int omrsig_primary_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
 
-int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) __THROW;
-sighandler_t signal(int signum, sighandler_t handler) __THROW;
+int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) OMR_NOTHROW;
+sighandler_t signal(int signum, sighandler_t handler) OMR_NOTHROW;
 
-sighandler_t sigset(int sig, sighandler_t disp) __THROW;
-int sigignore(int sig) __THROW;
-sighandler_t bsd_signal(int signum, sighandler_t handler) __THROW;
+sighandler_t sigset(int sig, sighandler_t disp) OMR_NOTHROW;
+int sigignore(int sig) OMR_NOTHROW;
+sighandler_t bsd_signal(int signum, sighandler_t handler) OMR_NOTHROW;
 #if !defined(J9ZOS390)
-sighandler_t sysv_signal(int signum, sighandler_t handler) __THROW;
+sighandler_t sysv_signal(int signum, sighandler_t handler) OMR_NOTHROW;
 #endif /* !defined(J9ZOS390) */
 #if defined(LINUX)
-__sighandler_t __sysv_signal(int sig, __sighandler_t handler) __THROW;
-sighandler_t ssignal(int sig, sighandler_t handler) __THROW;
+__sighandler_t __sysv_signal(int sig, __sighandler_t handler) OMR_NOTHROW;
+sighandler_t ssignal(int sig, sighandler_t handler) OMR_NOTHROW;
 #endif /* defined(LINUX) */
 
 
