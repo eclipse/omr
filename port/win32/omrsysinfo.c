@@ -1650,6 +1650,12 @@ omrsysinfo_get_os_description(struct OMRPortLibrary *portLibrary, struct OMROSDe
 }
 
 BOOLEAN
+omrsysinfo_get_memory_allocation_hint_supported(struct OMRPortLibrary *portLibrary)
+{
+    return TRUE;
+}
+
+BOOLEAN
 omrsysinfo_os_has_feature(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc, uint32_t feature)
 {
 	BOOLEAN rc = FALSE;

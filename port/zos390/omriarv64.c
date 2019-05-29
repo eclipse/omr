@@ -75,25 +75,48 @@ void * omrallocate_1M_fixed_pages(int *numMBSegments, int *userExtendedPrivateAr
 	segments = *numMBSegments;
 	wgetstor = lgetstor;
 
-	switch (useMemoryType) {
-	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
-                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	case ZOS64_VMEM_2_TO_32G:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\
-				"CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
-                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	case ZOS64_VMEM_2_TO_64G:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\
-				"CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
-                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	}
+    if (startAddress == (void*)0) {
+        switch (useMemoryType) {
+        case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
+                    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+            break;
+        case ZOS64_VMEM_2_TO_32G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\
+                    "CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
+                    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+            break;
+        case ZOS64_VMEM_2_TO_64G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\
+                    "CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
+                    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+            break;
+        }
+
+    } else {
+        switch (useMemoryType) {
+        case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
+                    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        case ZOS64_VMEM_2_TO_32G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\
+                    "CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
+                    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        case ZOS64_VMEM_2_TO_64G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\
+                    "CONTROL=UNAUTH,PAGEFRAMESIZE=1MEG,"\
+                    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        }
+    }
 
 	if (0 != iarv64_rc) {
 		return (void *)0;
@@ -126,26 +149,50 @@ void * omrallocate_1M_pageable_pages_above_bar(int *numMBSegments, int *userExte
 	segments = *numMBSegments;
 	wgetstor = ngetstor;
 
-	switch (useMemoryType) {
-	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,"\
-				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
-                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	case ZOS64_VMEM_2_TO_32G:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO32G=YES,"\
-				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
-                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	case ZOS64_VMEM_2_TO_64G:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO64G=YES,"\
-				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
-                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	}
+    if (startAddress == (void*)0) {
+        switch (useMemoryType) {
+        case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,"\
+                    "PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+            break;
+        case ZOS64_VMEM_2_TO_32G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO32G=YES,"\
+                    "PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+            break;
+        case ZOS64_VMEM_2_TO_64G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO64G=YES,"\
+                    "PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+            break;
+        }
+    } else {
+        switch (useMemoryType) {
+        case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,"\
+                    "PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        case ZOS64_VMEM_2_TO_32G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO32G=YES,"\
+                    "PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        case ZOS64_VMEM_2_TO_64G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO64G=YES,"\
+                    "PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        }
+    }
+
 
 	if (0 != iarv64_rc) {
 		return (void *)0;
@@ -178,26 +225,50 @@ void * omrallocate_2G_pages(int *num2GBUnits, int *userExtendedPrivateAreaMemory
 	units = *num2GBUnits;
 	wgetstor = ogetstor;
 
-	switch (useMemoryType) {
-	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,"\
-				"PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
-                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	case ZOS64_VMEM_2_TO_32G:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO32G=YES,"\
-				"PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
-                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	case ZOS64_VMEM_2_TO_64G:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO64G=YES,"\
-				"PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
-                "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	}
+    if (startAddress == (void*)0) {
+        switch (useMemoryType) {
+        case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,"\
+                    "PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn));
+            break;
+        case ZOS64_VMEM_2_TO_32G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO32G=YES,"\
+                    "PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn));
+            break;
+        case ZOS64_VMEM_2_TO_64G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO64G=YES,"\
+                    "PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn));
+            break;
+        }
+    } else {
+        switch (useMemoryType) {
+        case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,"\
+                    "PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        case ZOS64_VMEM_2_TO_32G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO32G=YES,"\
+                    "PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        case ZOS64_VMEM_2_TO_64G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO64G=YES,"\
+                    "PAGEFRAMESIZE=2G,TYPE=FIXED,UNITSIZE=2G,UNITS=(%2),"\
+                    "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&units),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        }
+
+    }
 
 	if (0 != iarv64_rc) {
 		return (void *)0;
@@ -230,22 +301,42 @@ void * omrallocate_4K_pages_in_userExtendedPrivateArea(int *numMBSegments, int *
 	segments = *numMBSegments;
 	wgetstor = mgetstor;
 
-	switch (useMemoryType) {
-	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
-		break;
-	case ZOS64_VMEM_2_TO_32G:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\
-				"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
-                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	case ZOS64_VMEM_2_TO_64G:
-		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\
-				"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
-                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
-		break;
-	}
+    if (startAddress == (void*)0) {
+        switch (useMemoryType) {
+        case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+            break;
+        case ZOS64_VMEM_2_TO_32G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\
+                    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
+                    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+            break;
+        case ZOS64_VMEM_2_TO_64G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\
+                    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
+                    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+            break;
+        }
+    } else {
+        switch (useMemoryType) {
+        case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+            break;
+        case ZOS64_VMEM_2_TO_32G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\
+                    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
+                    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        case ZOS64_VMEM_2_TO_64G:
+            __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\
+                    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
+                    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+            break;
+        }
+    }
+
 
 	if (0 != iarv64_rc) {
 		return (void *)0;
@@ -276,10 +367,17 @@ void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char * ttkn, voi
 	segments = *numMBSegments;
 	wgetstor = rgetstor;
 
-	__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\
-			"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
-            "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
-            ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+    if (startAddress == (void*)0) {
+        __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\
+                "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
+                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+    } else {
+        __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\
+                "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
+                "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3)),INORIGIN=(%5)"\
+                ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&startAddress));
+    }
 
 	if (0 != iarv64_rc) {
 		return (void *)0;
