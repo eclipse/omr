@@ -127,8 +127,8 @@ typedef _Packed struct J9RCE {
 	int32_t rcepool;                 /**< 4:4 No of frames currently available to system */
 	uint8_t rceFiller1[128];          /**< 8:128 Ignore fields not relevant to current implementation */
 	int32_t rceafc;                  /**< 136:4 Total no of frames currently on all available frame queues */
-    uint8_t unused[192];             /**< 140:192 Unused by the port library yet */
-    uint8_t rceFlags[4];             /**< 332:4 RCEFLAGS1 to RCEFLAGS4 */
+	uint8_t unused[192];             /**< 140:192 Unused by the port library yet */
+	uint8_t rceFlags[4];             /**< 332:4 RCEFLAGS1 to RCEFLAGS4 */
 	/**< Ignore rest of the RCE */
 } J9RCE;
 

@@ -113,7 +113,7 @@ retrieveZOSProcessorStats(struct OMRPortLibrary *portLibrary, struct J9Processor
 BOOLEAN
 retrieveZOSIARV64InOriginSupported(struct OMRPortLibrary *portLibrary)
 {
-   J9CVT *__ptr32 cvtp = ((J9PSA * __ptr32)0)->flccvt;
-   J9RCE *__ptr32 rcep = cvtp->cvtrcep;
-   return (rcep->rceFlags[1] & RCE_FLAGS2_INORIGIN_BIT) != 0;
+	J9CVT *__ptr32 cvtp = ((J9PSA * __ptr32)0)->flccvt;
+	J9RCE *__ptr32 rcep = cvtp->cvtrcep;
+	return (rcep->rceFlags[1] & RCE_FLAGS2_INORIGIN_BIT) != 0;
 }

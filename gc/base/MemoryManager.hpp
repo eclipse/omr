@@ -102,7 +102,6 @@ private:
 	 * @return true if page size is larger then default
 	 */
 	bool isLargePage(MM_EnvironmentBase* env, uintptr_t pageSize);
-    bool isMemoryAllocationHintSupported(MM_EnvironmentBase* env);
 
 protected:
 	/**

@@ -1538,8 +1538,8 @@ typedef struct OMRPortLibrary {
 	int32_t (*sysinfo_get_open_file_count)(struct OMRPortLibrary *portLibrary, uint64_t *count) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_get_os_description "omrsysinfo_get_os_description"*/
 	intptr_t  ( *sysinfo_get_os_description)(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc) ;
-    /** see @ref omrsysinfo.c::omrsysinfo_get_memory_allocation_hint_supported "omrsysinfo_get_memory_allocation_hint_supported"*/
-    BOOLEAN  ( *sysinfo_get_memory_allocation_hint_supported)(struct OMRPortLibrary *portLibrary) ;
+	/** see @ref omrsysinfo.c::omrsysinfo_get_memory_allocation_hint_supported "omrsysinfo_get_memory_allocation_hint_supported"*/
+	BOOLEAN  ( *sysinfo_get_memory_allocation_hint_supported)(struct OMRPortLibrary *portLibrary) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_os_has_feature "omrsysinfo_os_has_feature"*/
 	BOOLEAN  ( *sysinfo_os_has_feature)(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc, uint32_t feature) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_os_kernel_info "omrsysinfo_os_kernel_info"*/
