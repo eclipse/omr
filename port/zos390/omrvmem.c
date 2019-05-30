@@ -500,11 +500,7 @@ reserve1MPageableBelowBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifi
  *
  * @params[in] portLibrary the portLibrary
  * @params[out] identifier the vmem identifier to be updated with the results of the allocation attempt
- * @params[in] mode the mode
- * @params[in] byteAmount the size to allocate
- * @params[in] pageSize the pageSize to request
- * @params[in] pageFlags flags indicating type of page to be used
- * @params[in] options flags to indicate allocation strategy
+ * @params[in] params contains the memory reservation parameters including mode, byteAmount, pageSize, pageFlags, options, and etc.
  * @params[in] category Memory category
  *
  * @return NULL on failure, otherwise pointer to the memory that was allocated.
@@ -1185,6 +1181,9 @@ reserve4KPages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *
 #if defined(OMR_ENV_DATA64)
 	} else {
 		/* use the 2to32GArea */
+		params->pageSize = FOUR_K;
+		params->pageFlags = OMRPORT_VMEM_PAGE_FLAG_PAGEABLE;
+		
 		baseAddress = reservePagesAboveBar(portLibrary, identifier, params, category);
 	}
 #endif /* OMR_ENV_DATA64 */
