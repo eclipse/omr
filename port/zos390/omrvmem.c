@@ -553,8 +553,8 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 
 	Trc_PRT_vmem_reservePagesAboveBar_Entry(byteAmount, pageSize, pageFlags, options, userExtendedPrivateAreaMemoryType);
 
-	LP_DEBUG_PRINTF5("\t reservePagesAboveBar startAddress=0x%zx, byteAmount=0x%zx, pageSize=x%zx, pageFlags=0x%zx, useStrictPageSize=0x%x, userExtendedPrivateAreaMemoryType=0x%x\n", \
-					startAddress, byteAmount, pageSize, pageFlags, useStrictPageSize, userExtendedPrivateAreaMemoryType);
+	LP_DEBUG_PRINTF5("\t reservePagesAboveBar byteAmount=0x%zx, pageSize=x%zx, pageFlags=0x%zx, useStrictPageSize=0x%x, userExtendedPrivateAreaMemoryType=0x%x\n", \
+					byteAmount, pageSize, pageFlags, useStrictPageSize, userExtendedPrivateAreaMemoryType);
 
 	/* determine number of 1MB segments required */
 	numSegments = ((byteAmount + ONE_M - 1) & (~(ONE_M - 1))) / ONE_M;
