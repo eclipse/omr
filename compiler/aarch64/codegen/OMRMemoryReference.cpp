@@ -36,6 +36,9 @@ OMR::ARM64::MemoryReference::MemoryReference(
    _baseNode(NULL),
    _indexRegister(NULL),
    _indexNode(NULL),
+#ifdef J9_PROJECT_SPECIFIC
+   _modBase(NULL),
+#endif
    _unresolvedSnippet(NULL),
    _flag(0),
    _length(0),
@@ -54,6 +57,9 @@ OMR::ARM64::MemoryReference::MemoryReference(
    _baseNode(NULL),
    _indexRegister(ir),
    _indexNode(NULL),
+#ifdef J9_PROJECT_SPECIFIC
+   _modBase(NULL),
+#endif
    _unresolvedSnippet(NULL),
    _flag(0),
    _length(0),
@@ -72,6 +78,9 @@ OMR::ARM64::MemoryReference::MemoryReference(
    _baseNode(NULL),
    _indexRegister(NULL),
    _indexNode(NULL),
+#ifdef J9_PROJECT_SPECIFIC
+   _modBase(NULL),
+#endif
    _unresolvedSnippet(NULL),
    _flag(0),
    _length(0),
@@ -90,6 +99,9 @@ OMR::ARM64::MemoryReference::MemoryReference(
    _baseNode(NULL),
    _indexRegister(NULL),
    _indexNode(NULL),
+#ifdef J9_PROJECT_SPECIFIC
+   _modBase(NULL),
+#endif
    _unresolvedSnippet(NULL),
    _flag(0),
    _length(len),
@@ -146,6 +158,9 @@ OMR::ARM64::MemoryReference::MemoryReference(
    _baseNode(NULL),
    _indexRegister(NULL),
    _indexNode(NULL),
+#ifdef J9_PROJECT_SPECIFIC
+   _modBase(NULL),
+#endif
    _unresolvedSnippet(NULL),
    _flag(0),
    _length(len),
@@ -155,6 +170,14 @@ OMR::ARM64::MemoryReference::MemoryReference(
    {
    TR_UNIMPLEMENTED();
    }
+
+
+#ifdef J9_PROJECT_SPECIFIC
+void OMR::ARM64::MemoryReference::adjustForResolution(TR::CodeGenerator *cg)
+   {
+   _modBase = cg->allocateRegister();
+   }
+#endif
 
 
 bool OMR::ARM64::MemoryReference::useIndexedForm()
@@ -276,6 +299,11 @@ void OMR::ARM64::MemoryReference::decNodeReferenceCounts(TR::CodeGenerator *cg)
       else
          cg->stopUsingRegister(_indexRegister);
       }
+
+#ifdef J9_PROJECT_SPECIFIC
+   if (_modBase != NULL)
+      cg->stopUsingRegister(_modBase);
+#endif
    }
 
 
@@ -490,6 +518,12 @@ void OMR::ARM64::MemoryReference::incRegisterTotalUseCounts(TR::CodeGenerator * 
       {
       _indexRegister->incTotalUseCount();
       }
+#ifdef J9_PROJECT_SPECIFIC
+   if (_modBase != NULL)
+      {
+      _modBase->incTotalUseCount();
+      }
+#endif
    }
 
 
@@ -498,6 +532,9 @@ void OMR::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstru
    TR::Machine *machine = cg->machine();
    TR::RealRegister *assignedBaseRegister;
    TR::RealRegister *assignedIndexRegister;
+#ifdef J9_PROJECT_SPECIFIC
+   TR::RealRegister *assignedModBaseRegister;
+#endif
 
    if (_baseRegister != NULL)
       {
@@ -506,6 +543,12 @@ void OMR::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstru
          {
          _indexRegister->block();
          }
+#ifdef J9_PROJECT_SPECIFIC
+      if (_modBase != NULL)
+         {
+         _modBase->block();
+         }
+#endif
 
       if (assignedBaseRegister == NULL)
          {
@@ -529,6 +572,12 @@ void OMR::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstru
          {
          _indexRegister->unblock();
          }
+#ifdef J9_PROJECT_SPECIFIC
+      if (_modBase != NULL)
+         {
+         _modBase->unblock();
+         }
+#endif
       }
 
    if (_indexRegister != NULL)
@@ -537,6 +586,12 @@ void OMR::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstru
          {
          _baseRegister->block();
          }
+#ifdef J9_PROJECT_SPECIFIC
+      if (_modBase != NULL)
+         {
+         _modBase->block();
+         }
+#endif
 
       assignedIndexRegister = _indexRegister->getAssignedRealRegister();
       if (assignedIndexRegister == NULL)
@@ -561,7 +616,60 @@ void OMR::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstru
          {
          _baseRegister->unblock();
          }
+#ifdef J9_PROJECT_SPECIFIC
+      if (_modBase != NULL)
+         {
+         _modBase->unblock();
+         }
+#endif
       }
+
+#ifdef J9_PROJECT_SPECIFIC
+   if (_modBase != NULL)
+      {
+      assignedModBaseRegister = _modBase->getAssignedRealRegister();
+      if (_baseRegister != NULL)
+         {
+         _baseRegister->block();
+         }
+      if (_indexRegister != NULL)
+         {
+         _indexRegister->block();
+         }
+
+      if (assignedModBaseRegister == NULL)
+         {
+         if (_modBase->getTotalUseCount() == _modBase->getFutureUseCount())
+            {
+            if ((assignedModBaseRegister = machine->findBestFreeRegister(TR_GPR, true)) == NULL)
+               {
+               assignedModBaseRegister = machine->freeBestRegister(currentInstruction, _modBase);
+               }
+            }
+         else
+            {
+            assignedModBaseRegister = machine->reverseSpillState(currentInstruction, _modBase);
+            }
+         _modBase->setAssignedRegister(assignedModBaseRegister);
+         assignedModBaseRegister->setAssignedRegister(_modBase);
+         assignedModBaseRegister->setState(TR::RealRegister::Assigned);
+         }
+
+      if (_baseRegister != NULL)
+         {
+         _baseRegister->unblock();
+         }
+      if (_indexRegister != NULL)
+         {
+         _indexRegister->unblock();
+         }
+
+      //////////////////////////////////////
+      // _modBase has to be freed outside.//
+      //////////////////////////////////////
+      _modBase = assignedModBaseRegister;
+      }
+#endif // J9_PROJECT_SPECIFIC
 
    if (_baseRegister != NULL)
       {

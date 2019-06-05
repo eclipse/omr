@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,6 +59,9 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
    TR::Node *_baseNode;
    TR::Register *_indexRegister;
    TR::Node *_indexNode;
+#ifdef J9_PROJECT_SPECIFIC
+   TR::Register *_modBase;
+#endif
    int32_t _offset;
 
    TR::UnresolvedDataSnippet *_unresolvedSnippet;
@@ -185,6 +188,20 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
     */
    TR::Node *setIndexNode(TR::Node *in) {return (_indexNode = in);}
 
+#ifdef J9_PROJECT_SPECIFIC
+   /**
+    * @brief Gets modBase register
+    * @return modBase register
+    */
+   TR::Register *getModBase() {return _modBase;}
+   /**
+    * @brief Sets modBase register
+    * @param[in] mbr : modBase register
+    * @return modBase register
+    */
+   TR::Register *setModBase(TR::Register *mbr) {return (_modBase = mbr);}
+#endif
+
    /**
     * @brief Gets length
     * @return length
@@ -253,8 +270,12 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
     */
    bool refsRegister(TR::Register *reg)
       {
-      return (reg == _baseRegister ||
-              reg == _indexRegister);
+      return (reg == _baseRegister
+              || reg == _indexRegister
+#ifdef J9_PROJECT_SPECIFIC
+              || reg == _modBase
+#endif
+              );
       }
 
    /**
@@ -270,6 +291,12 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
          {
          _indexRegister->block();
          }
+#ifdef J9_PROJECT_SPECIFIC
+      if (_modBase != NULL)
+         {
+         _modBase->block();
+         }
+#endif
       }
 
    /**
@@ -285,6 +312,12 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
          {
          _indexRegister->unblock();
          }
+#ifdef J9_PROJECT_SPECIFIC
+      if (_modBase != NULL)
+         {
+         _modBase->unblock();
+         }
+#endif
       }
 
    /**
@@ -355,6 +388,14 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
     * @param[in] cg : CodeGenerator
     */
    void addToOffset(TR::Node *node, intptrj_t amount, TR::CodeGenerator *cg);
+
+#ifdef J9_PROJECT_SPECIFIC
+   /**
+    * @brief Allocates modBase register for UnresolvedSnippet
+    * @param[in] cg : CodeGenerator
+    */
+   void adjustForResolution(TR::CodeGenerator *cg);
+#endif
 
    /**
     * @brief Decrements node reference counts
