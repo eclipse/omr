@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,7 +192,6 @@ OpIlInjector::setDataType()
          case TR::bcmpge:
          case TR::bcmpgt:
          case TR::bcmple:
-         case TR::bucmpeq:
          case TR::bucmpne:
          case TR::bucmplt:
          case TR::bucmpge:
@@ -204,7 +203,6 @@ OpIlInjector::setDataType()
          case TR::ifbcmpge:
          case TR::ifbcmpgt:
          case TR::ifbcmple:
-         case TR::ifbucmpeq:
          case TR::ifbucmpne:
          case TR::ifbucmplt:
          case TR::ifbucmpge:

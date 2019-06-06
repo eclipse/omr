@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2301,7 +2301,6 @@ S390OpCodesTest::compileDisabledCompareOpCodesTestMethods()
    compileOpCodeMethod(_iuCmpne, _numberOfBinaryArgs, TR::iucmpne, "iuCmpne", _argTypesBinaryInt, TR::Int32, rc);
    compileOpCodeMethod(_iuCmpge, _numberOfBinaryArgs, TR::iucmpge, "iuCmpge", _argTypesBinaryInt, TR::Int32, rc);
 
-   compileOpCodeMethod(_buCmpeq, _numberOfBinaryArgs, TR::bucmpeq, "buCmpeq", _argTypesBinaryByte, TR::Int32, rc);
    compileOpCodeMethod(_buCmpne, _numberOfBinaryArgs, TR::bucmpne, "buCmpne", _argTypesBinaryByte, TR::Int32, rc);
 
    compileOpCodeMethod(_suCmpeq, _numberOfBinaryArgs, TR::sucmpeq, "suCmpeq", _argTypesBinaryShort, TR::Int32, rc);
@@ -2327,7 +2326,7 @@ S390OpCodesTest::compileDisabledCompareOpCodesTestMethods()
    compileOpCodeMethod(_ifBcmpge, _numberOfBinaryArgs, TR::ifbcmpge, "ifBcmpge", _argTypesBinaryByte, TR::Int32, rc);
    compileOpCodeMethod(_ifBcmple, _numberOfBinaryArgs, TR::ifbcmple, "ifBcmple", _argTypesBinaryByte, TR::Int32, rc);
 
-   compileOpCodeMethod(_ifBuCmpeq, _numberOfBinaryArgs, TR::ifbucmpeq, "ifBuCmpeq", _argTypesBinaryByte, TR::Int32, rc);
+
    compileOpCodeMethod(_ifBuCmpne, _numberOfBinaryArgs, TR::ifbucmpne, "ifBuCmpne", _argTypesBinaryByte, TR::Int32, rc);
    compileOpCodeMethod(_ifBuCmplt, _numberOfBinaryArgs, TR::ifbucmplt, "ifBuCmplt", _argTypesBinaryByte, TR::Int32, rc);
    compileOpCodeMethod(_ifBuCmpge, _numberOfBinaryArgs, TR::ifbucmpge, "ifBuCmpge", _argTypesBinaryByte, TR::Int32, rc);
@@ -2429,14 +2428,6 @@ S390OpCodesTest::invokeDisabledCompareOpCodesTests()
          UINT_POS, UINT_MINIMUM,
          UINT_MINIMUM, UINT_POS
          };
-   uint8_t buCmpeqDataArr[][2] =
-         {
-         UBYTE_POS, UBYTE_MINIMUM,
-         UBYTE_MINIMUM, UBYTE_POS,
-         UBYTE_MAXIMUM, UBYTE_MINIMUM,
-         UBYTE_MINIMUM, UBYTE_MAXIMUM,
-         UBYTE_MAXIMUM, UBYTE_MAXIMUM
-         };
    uint8_t buCmpneDataArr[][2] =
          {
          UBYTE_MAXIMUM, UBYTE_POS,
@@ -2504,14 +2495,6 @@ S390OpCodesTest::invokeDisabledCompareOpCodesTests()
          {
          BYTE_MINIMUM, BYTE_NEG,
          BYTE_NEG, BYTE_MINIMUM
-         };
-   uint8_t ifBuCmpeqDataArr[][2] =
-         {
-         UBYTE_POS, UBYTE_MINIMUM,
-         UBYTE_MINIMUM, UBYTE_POS,
-         UBYTE_MAXIMUM, UBYTE_MINIMUM,
-         UBYTE_MINIMUM, UBYTE_MAXIMUM,
-         UBYTE_MAXIMUM, UBYTE_MAXIMUM
          };
    uint8_t ifBuCmpneDataArr[][2] =
          {
@@ -2939,28 +2922,6 @@ S390OpCodesTest::invokeDisabledCompareOpCodesTests()
       OMR_CT_EXPECT_EQ(iuCompareConst, compareGE(iuCmpgeDataArr[i][0], iuCmpgeDataArr[i][1]), iuCompareConst(iuCmpgeDataArr[i][0], INT_PLACEHOLDER_2));
       }
 
-   //buCompare
-   testCaseNum = sizeof(buCmpeqDataArr) / sizeof(buCmpeqDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_buCmpeq, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), _buCmpeq(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "buCmpeqConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst, 
-            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(buCmpeqDataArr[i][0]), 2, &(buCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
-
-      sprintf(resolvedMethodName, "buCmpeqConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst, 
-            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(buCmpeqDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, buCmpeqDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "buCmpeqConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst, 
-            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(buCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), buCompareConst(buCmpeqDataArr[i][0], BYTE_PLACEHOLDER_2));
-      }
-
    testCaseNum = sizeof(buCmpneDataArr) / sizeof(buCmpneDataArr[0]);
    for(uint32_t i = 0; i < testCaseNum; ++i)
       {
@@ -3361,28 +3322,6 @@ S390OpCodesTest::invokeDisabledCompareOpCodesTests()
       compileOpCodeMethod(bCompareConst, 
             _numberOfBinaryArgs, TR::ifbcmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBcmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(bCompareConst, compareLE(ifBcmpleDataArr[i][0], ifBcmpleDataArr[i][1]), bCompareConst(ifBcmpleDataArr[i][0], BYTE_PLACEHOLDER_2));
-      }
-
-   //ifBuCompare
-   testCaseNum = sizeof(ifBuCmpeqDataArr) / sizeof(ifBuCmpeqDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_ifBuCmpeq, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), _ifBuCmpeq(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "ifBuCmpeqConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst, 
-            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpeqDataArr[i][0]), 2, &(ifBuCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
-
-      sprintf(resolvedMethodName, "ifBuCmpeqConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst, 
-            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpeqDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, ifBuCmpeqDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "ifBuCmpeqConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst, 
-            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), buCompareConst(ifBuCmpeqDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
    testCaseNum = sizeof(ifBuCmpneDataArr) / sizeof(ifBuCmpneDataArr[0]);

@@ -241,7 +241,10 @@ public:
 
 typedef enum {
    useDefAliasSet,
-   UseOnlyAliasSet
+   UseOnlyAliasSet,
+   //TR_NodeAliasSetType
+   mayUseAliasSet,
+   mayKillAliasSet
 } TR_AliasSetType;
 
 template <uint32_t _aliasSetType>
@@ -249,7 +252,14 @@ class TR_SymAliasSetInterface : public TR_AliasSetInterface<TR_SymAliasSetInterf
 public:
   TR_SymAliasSetInterface(TR::SymbolReference *symRef, bool isDirectCall = false, bool includeGCSafePoint = false) :
     TR_AliasSetInterface<TR_SymAliasSetInterface<_aliasSetType> >(isDirectCall, includeGCSafePoint),
-    _symbolReference(symRef) {}
+    _symbolReference(symRef),
+    _node(NULL) {}
+
+//Node aliasing
+  TR_SymAliasSetInterface(TR::Node *node, bool isDirectCall = false, bool includeGCSafePoint = false) :
+   TR_AliasSetInterface<TR_SymAliasSetInterface<_aliasSetType> >(isDirectCall, includeGCSafePoint),
+      _symbolReference(NULL),
+      _node(node) {}
 
    TR_BitVector *getTRAliases_impl(bool isDirectCall, bool includeGCSafePoint);
 
@@ -290,6 +300,8 @@ private:
     static void setSymRef1KillsSymRef2Asymmetrically(TR::SymbolReference *symRef1, TR::SymbolReference *symRef2, bool includeGCSafePoint, bool value);
 
   TR::SymbolReference *_symbolReference;
+  //node aliasing
+  TR::Node *_node;
 };
 
 struct TR_UseDefAliasSetInterface : public TR_SymAliasSetInterface<useDefAliasSet> {
@@ -306,6 +318,23 @@ struct TR_UseOnlyAliasSetInterface: public TR_SymAliasSetInterface<UseOnlyAliasS
                               bool includeGCSafePoint = false) :
   TR_SymAliasSetInterface<UseOnlyAliasSet>
     (symRef, isDirectCall, includeGCSafePoint) {}
+};
+
+//From Node Aliasing
+struct TR_NodeUseAliasSetInterface: public TR_SymAliasSetInterface<mayUseAliasSet> {
+  TR_NodeUseAliasSetInterface(TR::Node *node,
+                              bool isDirectCall = false,
+                              bool includeGCSafePoint = false) :
+  TR_SymAliasSetInterface<mayUseAliasSet>
+    (node, isDirectCall, includeGCSafePoint) {}
+};
+
+struct TR_NodeKillAliasSetInterface: public TR_SymAliasSetInterface<mayKillAliasSet> {
+  TR_SymAliasSetInterface(TR::Node *node,
+                               bool isDirectCall = false,
+                               bool includeGCSafePoint = false) :
+    TR_NodeAliasSetInterface<mayKillAliasSet>
+     (node, isDirectCall, includeGCSafePoint) {}
 };
 
 template <uint32_t _aliasSetType> inline
@@ -445,7 +474,7 @@ void CountUseDefAliases( T& t, const TR::SparseBitVector &syms)
 
 ////NODE ALIASING
 
-typedef enum {
+/* typedef enum {
    mayUseAliasSet,
    mayKillAliasSet
 } TR_NodeAliasSetType;
@@ -512,7 +541,7 @@ struct TR_NodeKillAliasSetInterface: public TR_NodeAliasSetInterface<mayKillAlia
     TR_NodeAliasSetInterface<mayKillAliasSet>
      (node, isDirectCall, includeGCSafePoint) {}
 };
-
+ */
 
 ///////////////////////////////////////
 

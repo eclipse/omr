@@ -1670,7 +1670,7 @@ TR::Register *OMR::X86::TreeEvaluator::unsignedIntegerIfCmpleEvaluator(TR::Node 
    }
 
 
-// also handles ifbcmpne, ifbucmpeq, ifbucmpne
+// also handles ifbcmpne, ifbucmpne
 TR::Register *OMR::X86::TreeEvaluator::ifbcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
 
@@ -1754,7 +1754,7 @@ TR::Register *OMR::X86::TreeEvaluator::ifbcmpeqEvaluator(TR::Node *node, TR::Cod
       }
 
    TR_X86OpCodes opCode;
-   if (node->getOpCodeValue() == TR::ifbcmpeq || node->getOpCodeValue() == TR::ifbucmpeq)
+   if (node->getOpCodeValue() == TR::ifbcmpeq)
       opCode = reverseBranch ? JNE4 : JE4;
    else
       opCode = reverseBranch ? JE4 : JNE4;
@@ -1765,7 +1765,6 @@ TR::Register *OMR::X86::TreeEvaluator::ifbcmpeqEvaluator(TR::Node *node, TR::Cod
 
 // ifbcmpneEvaluator handled by ifbcmpeqEvaluator
 // ifbucmpneEvaluator handled by ifbcmpeqEvaluator
-// ifbucmpeqEvaluator handled by ifbcmpeqEvaluator
 
 TR::Register *OMR::X86::TreeEvaluator::ifbcmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -2072,7 +2071,7 @@ TR::Register *OMR::X86::TreeEvaluator::bcmpeqEvaluator(TR::Node *node, TR::CodeG
       TR_X86CompareAnalyser  temp(cg);
       temp.integerCompareAnalyser(node, CMP1RegReg, CMP1RegMem, CMP1MemReg);
       }
-   bool isEq = node->getOpCodeValue() == TR::bcmpeq || node->getOpCodeValue() == TR::bucmpeq;
+   bool isEq = node->getOpCodeValue() == TR::bcmpeq;
    generateRegInstruction(isEq ? SETE1Reg : SETNE1Reg,
                           node, targetRegister, cg);
    generateRegRegInstruction(MOVZXReg4Reg1, node, targetRegister, targetRegister, cg);

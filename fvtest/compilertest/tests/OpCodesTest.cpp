@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -398,7 +398,6 @@ unsignedCompareSignatureCharJJ_I_testMethodType  * OpCodesTest::_luCmplt = 0;
 unsignedCompareSignatureCharJJ_I_testMethodType  * OpCodesTest::_luCmpge = 0;
 unsignedCompareSignatureCharJJ_I_testMethodType  * OpCodesTest::_luCmpgt = 0;
 unsignedCompareSignatureCharJJ_I_testMethodType  * OpCodesTest::_luCmple = 0;
-unsignedCompareSignatureCharBB_I_testMethodType  * OpCodesTest::_buCmpeq = 0;
 unsignedCompareSignatureCharBB_I_testMethodType  * OpCodesTest::_buCmpne = 0;
 unsignedCompareSignatureCharBB_I_testMethodType  * OpCodesTest::_buCmplt = 0;
 unsignedCompareSignatureCharBB_I_testMethodType  * OpCodesTest::_buCmpge = 0;
@@ -466,7 +465,6 @@ unsignedCompareSignatureCharJJ_I_testMethodType * OpCodesTest::_ifLuCmplt = 0;
 unsignedCompareSignatureCharJJ_I_testMethodType * OpCodesTest::_ifLuCmpge = 0;
 unsignedCompareSignatureCharJJ_I_testMethodType * OpCodesTest::_ifLuCmpgt = 0;
 unsignedCompareSignatureCharJJ_I_testMethodType * OpCodesTest::_ifLuCmple = 0;
-unsignedCompareSignatureCharBB_I_testMethodType * OpCodesTest::_ifBuCmpeq = 0;
 unsignedCompareSignatureCharBB_I_testMethodType * OpCodesTest::_ifBuCmpne = 0;
 unsignedCompareSignatureCharBB_I_testMethodType * OpCodesTest::_ifBuCmplt = 0;
 unsignedCompareSignatureCharBB_I_testMethodType * OpCodesTest::_ifBuCmpge = 0;

@@ -14011,7 +14011,6 @@ TR::Node *ifCmpWithEqualitySimplifier(TR::Node * node, TR::Block * block, TR::Si
       switch (opCode)
          {
          case TR::ifbcmpeq:
-         case TR::ifbucmpeq:
          case TR::ifscmpeq:
          case TR::ifsucmpeq:
             takeBranch = firstChild->get64bitIntegralValue() == secondChild->get64bitIntegralValue();
