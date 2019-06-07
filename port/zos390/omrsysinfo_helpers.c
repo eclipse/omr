@@ -38,7 +38,7 @@
 
 /* Function retrieves and populates memory usage statistics on a z/OS platform. */
 int32_t
-retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
+retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 	uint64_t userCacheUsed = 0;
 	uint64_t bufferCacheSize = 0;
@@ -52,19 +52,35 @@ retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
 
 	Trc_PRT_retrieveZOSMemoryStats_Entered();
 	Assert_PRT_true(NULL != memInfo);
-	memInfo->totalPhysical = ((uint64_t)rcep->rcepool * J9BYTES_PER_PAGE);
-	memInfo->availPhysical = ((uint64_t)rcep->rceafc * J9BYTES_PER_PAGE);
-	memInfo->totalSwap = ((uint64_t)asmvtp->asmslots * J9BYTES_PER_PAGE);
-	memInfo->availSwap = ((uint64_t)(asmvtp->asmslots - (asmvtp->asmvsc + asmvtp->asmnvsc
-									 + asmvtp->asmerrs)) * J9BYTES_PER_PAGE);
-	rc = getZFSUserCacheUsed(&userCacheUsed);
-	if (0 == rc) {
-		memInfo->cached = userCacheUsed;
+	if (0 != (OMR_SYSINFO_TOTAL_PHYSICAL & memoryFlags)) {
+		memInfo->totalPhysical = ((uint64_t)rcep->rcepool * J9BYTES_PER_PAGE);
 	}
-
-	rc = getZFSMetaCacheSize(&bufferCacheSize);
-	if (0 == rc) {
-		memInfo->buffered = bufferCacheSize;
+	memoryFlags = memoryFlags >> 1;
+	if (0 != (OMR_SYSINFO_AVAIL_PHYSICAL & memoryFlags)) {
+		memInfo->availPhysical = ((uint64_t)rcep->rceafc * J9BYTES_PER_PAGE);
+	}
+	memoryFlags = memoryFlags >> 1;
+	if (0 != (OMR_SYSINFO_BUFFERED & memoryFlags)) {
+		rc = getZFSMetaCacheSize(&bufferCacheSize);
+		if (0 == rc) {
+			memInfo->buffered = bufferCacheSize;
+		}
+	}
+	memoryFlags = memoryFlags >> 1;
+	if (0 != (OMR_SYSINFO_CACHED & memoryFlags)) {
+		rc = getZFSUserCacheUsed(&userCacheUsed);
+		if (0 == rc) {
+			memInfo->cached = userCacheUsed;
+		}
+	}
+	memoryFlags = memoryFlags >> 1;
+	if (0 != (OMR_SYSINFO_TOTAL_SWAP & memoryFlags)) {
+		memInfo->totalSwap = ((uint64_t)asmvtp->asmslots * J9BYTES_PER_PAGE);
+	}
+	memoryFlags = memoryFlags >> 1;
+	if (0 != (OMR_SYSINFO_AVAIL_SWAP & memoryFlags)) {
+		memInfo->availSwap = ((uint64_t)(asmvtp->asmslots - (asmvtp->asmvsc + asmvtp->asmnvsc
+									 + asmvtp->asmerrs)) * J9BYTES_PER_PAGE);
 	}
 
 	memInfo->hostAvailPhysical = memInfo->availPhysical;

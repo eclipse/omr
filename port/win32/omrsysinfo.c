@@ -28,6 +28,7 @@
 #include <pdh.h>
 #include <pdhmsg.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <windows.h>
 #include <WinSDKVer.h>
 /* Undefine the winsockapi because winsock2 defines it.  Removes warnings. */
@@ -684,7 +685,7 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 #define MEMORY_CACHE_BYTES_COUNTER_PATH         "\\Memory\\Cache Bytes"
 
 int32_t
-omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, ...)
+omrsysinfo_get_required_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 	int32_t rc = -1;
 
@@ -724,79 +725,86 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 	}
 
-	memInfo->totalPhysical = (uint64_t)aMemStatusEx.ullTotalPhys;
-	memInfo->availPhysical = (uint64_t)aMemStatusEx.ullAvailPhys;
+	if (0 == (OMR_SYSINFO_TOTAL_MEMORY & memoryFlags)) {
+		memInfo->totalPhysical = (uint64_t)aMemStatusEx.ullTotalPhys;
+	}
+	if (0 == (OMR_SYSINFO_AVAIL_MEMORY & memoryFlags)) {
+		memInfo->availPhysical = (uint64_t)aMemStatusEx.ullAvailPhys;
+	}
 	memInfo->totalVirtual = (uint64_t)aMemStatusEx.ullTotalVirtual;
 	memInfo->availVirtual = (uint64_t)aMemStatusEx.ullAvailVirtual;
 
-	/* Create pdh handle for managing the performance data collection. */
-	status = PdhOpenQuery(NULL, (DWORD_PTR)NULL, (PDH_HQUERY *)&statsHandle);
-	if (ERROR_SUCCESS != status) {
-		Trc_PRT_sysinfo_get_memory_info_pdhOpenQueryFailed(status);
-		Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
-		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
-	}
+	/* TODO Manage the flags */
+	if (0 == ((OMR_SYSINFO_TOTAL_SWAP | OMR_SYSINFO_AVAIL_SWAP | OMR_SYSINFO_CACHED) & memoryFlags)) {
+		/* Create pdh handle for managing the performance data collection. */
+		status = PdhOpenQuery(NULL, (DWORD_PTR)NULL, (PDH_HQUERY *)&statsHandle);
+		if (ERROR_SUCCESS != status) {
+			Trc_PRT_sysinfo_get_memory_info_pdhOpenQueryFailed(status);
+			Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
+			return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+		}
 
-	status = PdhAddCounter(statsHandle,
-						   MEMORY_COMMIT_LIMIT_COUNTER_PATH,
-						   (DWORD_PTR)NULL,
-						   &memoryCommitLimitCounter);
-	if (ERROR_SUCCESS != status) {
-		Trc_PRT_sysinfo_get_memory_info_failedAddingCounter("Commit Limit", status);
-		Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
-		PdhCloseQuery(statsHandle);
-		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
-	}
+		status = PdhAddCounter(statsHandle,
+							   MEMORY_COMMIT_LIMIT_COUNTER_PATH,
+							   (DWORD_PTR)NULL,
+							   &memoryCommitLimitCounter);
+		if (ERROR_SUCCESS != status) {
+			Trc_PRT_sysinfo_get_memory_info_failedAddingCounter("Commit Limit", status);
+			Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
+			PdhCloseQuery(statsHandle);
+			return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+		}
 
-	status = PdhAddCounter(statsHandle,
-						   MEMORY_COMMITTED_BYTES_COUNTER_PATH,
-						   (DWORD_PTR)NULL,
-						   &memoryCommittedBytesCounter);
-	if (ERROR_SUCCESS != status) {
-		Trc_PRT_sysinfo_get_memory_info_failedAddingCounter("Committed Bytes", status);
-		Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
-		PdhCloseQuery(statsHandle);
-		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
-	}
+		status = PdhAddCounter(statsHandle,
+							   MEMORY_COMMITTED_BYTES_COUNTER_PATH,
+							   (DWORD_PTR)NULL,
+							   &memoryCommittedBytesCounter);
+		if (ERROR_SUCCESS != status) {
+			Trc_PRT_sysinfo_get_memory_info_failedAddingCounter("Committed Bytes", status);
+			Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
+			PdhCloseQuery(statsHandle);
+			return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+		}
 
-	status = PdhAddCounter(statsHandle,
-						   MEMORY_CACHE_BYTES_COUNTER_PATH,
-						   (DWORD_PTR)NULL,
-						   &memoryCacheBytesCounter);
-	if (ERROR_SUCCESS != status) {
-		Trc_PRT_sysinfo_get_memory_info_failedAddingCounter("Cache Bytes", status);
-		Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
-		PdhCloseQuery(statsHandle);
-		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
-	}
+		status = PdhAddCounter(statsHandle,
+							   MEMORY_CACHE_BYTES_COUNTER_PATH,
+							   (DWORD_PTR)NULL,
+							   &memoryCacheBytesCounter);
+		if (ERROR_SUCCESS != status) {
+			Trc_PRT_sysinfo_get_memory_info_failedAddingCounter("Cache Bytes", status);
+			Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
+			PdhCloseQuery(statsHandle);
+			return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+		}
 
-	/* Collect the current raw data value for all counters in the usage stats query. */
-	status = PdhCollectQueryData(statsHandle);
-	if (ERROR_SUCCESS != status) {
-		Trc_PRT_sysinfo_get_memory_info_dataQueryFailed();
-		Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
-		PdhCloseQuery(statsHandle);
-		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
-	}
+		/* Collect the current raw data value for all counters in the usage stats query. */
+		status = PdhCollectQueryData(statsHandle);
+		if (ERROR_SUCCESS != status) {
+			Trc_PRT_sysinfo_get_memory_info_dataQueryFailed();
+			Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
+			PdhCloseQuery(statsHandle);
+			return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+		}
 
-	status = PdhGetRawCounterValue(memoryCommitLimitCounter, (LPDWORD)NULL, &counterValue);
-	if ((ERROR_SUCCESS == status) && ((PDH_CSTATUS_VALID_DATA == counterValue.CStatus) ||
-									  (PDH_CSTATUS_NEW_DATA == counterValue.CStatus))) {
-		memInfo->totalSwap = counterValue.FirstValue;
-	}
+		status = PdhGetRawCounterValue(memoryCommitLimitCounter, (LPDWORD)NULL, &counterValue);
+		if ((ERROR_SUCCESS == status) && ((PDH_CSTATUS_VALID_DATA == counterValue.CStatus) ||
+										  (PDH_CSTATUS_NEW_DATA == counterValue.CStatus))) {
+			memInfo->totalSwap = counterValue.FirstValue;
+		}
 
-	status = PdhGetRawCounterValue(memoryCommittedBytesCounter, (LPDWORD)NULL, &counterValue);
-	if ((ERROR_SUCCESS == status) && ((PDH_CSTATUS_VALID_DATA == counterValue.CStatus) ||
-									  (PDH_CSTATUS_NEW_DATA == counterValue.CStatus))) {
-		memInfo->availSwap = (memInfo->totalSwap - counterValue.FirstValue);
-	}
+		status = PdhGetRawCounterValue(memoryCommittedBytesCounter, (LPDWORD)NULL, &counterValue);
+		if ((ERROR_SUCCESS == status) && ((PDH_CSTATUS_VALID_DATA == counterValue.CStatus) ||
+										  (PDH_CSTATUS_NEW_DATA == counterValue.CStatus))) {
+			memInfo->availSwap = (memInfo->totalSwap - counterValue.FirstValue);
+		}
 
-	status = PdhGetRawCounterValue(memoryCacheBytesCounter, (LPDWORD)NULL, &counterValue);
-	if ((ERROR_SUCCESS == status) && ((PDH_CSTATUS_VALID_DATA == counterValue.CStatus) ||
-									  (PDH_CSTATUS_NEW_DATA == counterValue.CStatus))) {
-		memInfo->cached = counterValue.FirstValue;
+		status = PdhGetRawCounterValue(memoryCacheBytesCounter, (LPDWORD)NULL, &counterValue);
+		if ((ERROR_SUCCESS == status) && ((PDH_CSTATUS_VALID_DATA == counterValue.CStatus) ||
+										  (PDH_CSTATUS_NEW_DATA == counterValue.CStatus))) {
+			memInfo->cached = counterValue.FirstValue;
+		}
+		/* Note that Windows does not have 'buffered memory' and hence, memInfo->buffered remains -1. */
 	}
-	/* Note that Windows does not have 'buffered memory' and hence, memInfo->buffered remains -1. */
 
 	memInfo->timestamp = (portLibrary->time_nano_time(portLibrary) / NANOSECS_PER_USEC);
 
@@ -807,6 +815,12 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 	Trc_PRT_sysinfo_get_memory_info_Exit(0);
 	PdhCloseQuery(statsHandle);
 	return 0;
+}
+
+int32_t
+omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, ...)
+{
+	return omrsysinfo_get_required_memory_info(OMR_SYSINFO_FETCH_ALL);
 }
 
 uint64_t

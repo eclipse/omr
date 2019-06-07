@@ -51,6 +51,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include <limits.h>
@@ -417,7 +418,7 @@ static int32_t getCgroupMemoryLimit(struct OMRPortLibrary *portLibrary, uint64_t
 #if defined(LINUX)
 static int32_t retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
 static int32_t retrieveLinuxCgroupMemoryStats(struct OMRPortLibrary *portLibrary, struct OMRCgroupMemoryInfo *cgroupMemInfo);
-static int32_t retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
+static int32_t retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, va_list varargs);
 #elif defined(OSX)
 static int32_t retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
 #elif defined(AIXPPC)
@@ -1470,7 +1471,7 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
  * @return 0 on success and negative error code on failure.
  */
 static int32_t
-retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
+retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memFlags)
 {
 	int32_t rc = 0;
 	FILE *memStatFs = NULL;
@@ -1498,6 +1499,11 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 		/* Get the various fields that we are interested in and extract the corresponding value. */
 		if (0 == strncmp(tmpPtr, MEMTOTAL_PREFIX, MEMTOTAL_PREFIX_SZ)) {
+			/* Check if we are interested in the field */
+			if (0 == ( OMR_SYSINFO_TOTAL_PHYSICAL & memFlags) ) {
+				memFlags = memFlags >> 1;
+				continue;
+			}
 			/* Now obtain the MemTotal value. */
 			tmpPtr += MEMTOTAL_PREFIX_SZ;
 			memInfo->totalPhysical = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1510,7 +1516,13 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->totalPhysical *= ONE_K;
+			memFlags = memFlags >> 1;
 		} else if (0 == strncmp(tmpPtr, MEMFREE_PREFIX, MEMFREE_PREFIX_SZ)) {
+			/* Check if we are interested in the field */
+			if (0 == ( OMR_SYSINFO_AVAIL_PHYSICAL & memFlags) ) {
+				memFlags = memFlags >> 1;
+				continue;
+			}
 			/* Skip the whitespaces until we hit the MemFree value. */
 			tmpPtr += MEMFREE_PREFIX_SZ;
 			memInfo->availPhysical = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1523,7 +1535,13 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->availPhysical *= ONE_K;
+			memFlags = memFlags >> 1;
 		} else if (0 == strncmp(tmpPtr, SWAPTOTAL_PREFIX, SWAPTOTAL_PREFIX_SZ)) {
+			/* Check if we are interested in the field */
+			if (0 == ( OMR_SYSINFO_TOTAL_SWAP & memFlags) ) {
+				memFlags = memFlags >> 1;
+				continue;
+			}
 			/* Skip the whitespaces until we hit the SwapTotal value. */
 			tmpPtr += SWAPTOTAL_PREFIX_SZ;
 			memInfo->totalSwap = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1536,7 +1554,13 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->totalSwap *= ONE_K;
+			memFlags = memFlags >> 1;
 		} else if (0 == strncmp(tmpPtr, SWAPFREE_PREFIX, SWAPFREE_PREFIX_SZ)) {
+			/* Check if we are interested in the field */
+			if (0 == ( OMR_SYSINFO_AVAIL_SWAP & memFlags) ) {
+				memFlags = memFlags >> 1;
+				continue;
+			}
 			/* Skip the whitespaces until we get to the SwapFree value. */
 			tmpPtr += SWAPFREE_PREFIX_SZ;
 			memInfo->availSwap = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1549,7 +1573,13 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->availSwap *= ONE_K;
+			memFlags = memFlags >> 1;
 		} else if (0 == strncmp(tmpPtr, CACHED_PREFIX, CACHED_PREFIX_SZ)) {
+			/* Check if we are interested in the field */
+			if (0 == ( OMR_SYSINFO_CACHED & memFlags) ) {
+				memFlags = memFlags >> 1;
+				continue;
+			}
 			/* Skip the whitespaces until we hit the Cached area size. */
 			tmpPtr += CACHED_PREFIX_SZ;
 			memInfo->cached = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1562,7 +1592,13 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->cached *= ONE_K;
+			memFlags = memFlags >> 1;
 		} else if (0 == strncmp(tmpPtr, BUFFERS_PREFIX, BUFFERS_PREFIX_SZ)) {
+			/* Check if we are interested in the field */
+			if (0 == ( OMR_SYSINFO_BUFFERED & memFlags) ) {
+				memFlags = memFlags >> 1;
+				continue;
+			}
 			/* Skip the whitespaces until we hit the Buffered memory area size. */
 			tmpPtr += BUFFERS_PREFIX_SZ;
 			memInfo->buffered = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1575,6 +1611,7 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->buffered *= ONE_K;
+			memFlags = memFlags >> 1;
 		} /* end if else-if */
 	} /* end while() */
 
@@ -1711,7 +1748,7 @@ _exit:
  * @return 0 on success and -1 on failure.
  */
 static int32_t
-retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
+retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 	int32_t rc = 0;
 	uint64_t maxVirtual = 0;
@@ -1728,7 +1765,7 @@ retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo
 		memInfo->totalVirtual = maxVirtual;
 	}
 
-	rc = retrieveLinuxMemoryStatsFromProcFS(portLibrary, memInfo);
+	rc = retrieveLinuxMemoryStatsFromProcFS(portLibrary, memInfo, memoryFlags);
 	if (0 != rc) {
 		goto _exit;
 	}
@@ -1804,57 +1841,87 @@ _exit:
  * @return 0 on success and -1 on failure.
  */
 static int32_t
-retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
+retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 	int32_t ret = 0;
 
 	/* Get total physical memory. */
-	int name[2] = {CTL_HW, HW_MEMSIZE};
-	uint64_t memsize = 0;
-	size_t len = sizeof(memsize);
-
-	if (0 == sysctl(name, 2, &memsize, &len, NULL, 0)) {
-		memInfo->totalPhysical = memsize;
-	} else {
-		ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	if ( 0 != (OMR_SYSINFO_TOTAL_PHYSICAL & memoryFlags)) {
+		int name[2] = {CTL_HW, HW_MEMSIZE};
+		uint64_t memsize = 0;
+		size_t len = sizeof(memsize);
+	
+		if (0 == sysctl(name, 2, &memsize, &len, NULL, 0)) {
+				memInfo->totalPhysical = memsize;
+		} else {
+			ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+		}
 	}
+
+	memoryFlags = memoryFlags >> 1;
 
 	/* Get free physical memory */
-	if (0 == ret) {
-		vm_statistics_data_t vmStatData;
-		mach_msg_type_number_t msgTypeNumber = sizeof(vmStatData) / sizeof(natural_t);
-		if (KERN_SUCCESS == host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmStatData, &msgTypeNumber)) {
-			memInfo->availPhysical = vm_page_size * vmStatData.free_count;
-		} else {
-			ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	if ( 0 != (OMR_SYSINFO_AVAIL_PHYSICAL & memoryFlags)) {
+		if (0 == ret) {
+			vm_statistics_data_t vmStatData;
+			mach_msg_type_number_t msgTypeNumber = sizeof(vmStatData) / sizeof(natural_t);
+			if (KERN_SUCCESS == host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmStatData, &msgTypeNumber)) {
+				memInfo->availPhysical = vm_page_size * vmStatData.free_count;
+			} else {
+				ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+			}
 		}
 	}
 
+	/* Buffered and Cached are not available on OSX, so skip those flags. */
+	memoryFlags = memoryFlags >> 3;
+
 	/* Get total used and free swap memory. */
-	if (0 == ret) {
-		struct xsw_usage vmusage = {0};
-		size_t size = sizeof(vmusage);
-		if (0 == sysctlbyname("vm.swapusage", &vmusage, &size, NULL, 0))
-		{
-			memInfo->totalSwap = vmusage.xsu_total;
-			memInfo->availSwap = vmusage.xsu_avail;
-		} else {
-			ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	if ( 0 != ((OMR_SYSINFO_TOTAL_SWAP | OMR_SYSINFO_AVAIL_SWAP) & memoryFlags)) {
+		if (0 == ret) {
+			struct xsw_usage vmusage = {0};
+			size_t size = sizeof(vmusage);
+			if (0 == sysctlbyname("vm.swapusage", &vmusage, &size, NULL, 0))
+			{
+				if ( 0 != (OMR_SYSINFO_TOTAL_SWAP & memoryFlags)) {
+					memInfo->totalSwap = vmusage.xsu_total;
+				}	
+				memoryFlags = memoryFlags >> 1;
+
+				if ( 0 != (OMR_SYSINFO_AVAIL_SWAP & memoryFlags)) {
+					memInfo->availSwap = vmusage.xsu_avail;
+				}
+				memoryFlags = memoryFlags >> 1;
+			} else {
+				ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+			}
 		}
+	} else {
+		memoryFlags = memoryFlags >> 2;
 	}
 
 	/* Get virtual memory used by current process. */
-	if (0 == ret) {
-		struct task_basic_info taskInfo;
-		mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
-
-		if (KERN_SUCCESS == task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&taskInfo, &t_info_count)) {
-			memInfo->totalVirtual = taskInfo.virtual_size;
-			memInfo->availVirtual = taskInfo.virtual_size - taskInfo.resident_size;
-
-		} else {
-			ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	if ( 0 != ((OMR_SYSINFO_TOTAL_VIRTUAL | OMR_SYSINFO_AVAIL_VIRTUAL) & memoryFlags)) {
+		if (0 == ret) {
+			struct task_basic_info taskInfo;
+			mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+	
+			if (KERN_SUCCESS == task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&taskInfo, &t_info_count)) {
+				if (0 != (OMR_SYSINFO_TOTAL_VIRTUAL & memoryFlags)) {
+					memInfo->totalVirtual = taskInfo.virtual_size;
+				}
+				memoryFlags = memoryFlags >> 1;
+				if (0 != (OMR_SYSINFO_AVAIL_VIRTUAL & memoryFlags)) {
+					memInfo->availVirtual = taskInfo.virtual_size - taskInfo.resident_size;
+				}
+				memoryFlags = memoryFlags >> 1;
+	
+			} else {
+				ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+			}
 		}
+	} else {
+		memoryFlags = memoryFlags >> 2;
 	}
 
 	/* The amount of RAM used for cache memory and file buffers is not available on OSX. */
@@ -1879,7 +1946,7 @@ retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
  * @return 0 on success and -1 on failure.
  */
 static int32_t
-retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
+retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 #if !defined(J9OS_I5)
 	int32_t rc = 0;
@@ -1898,11 +1965,27 @@ retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
 	}
 
 	/* AIX returns these quantities in number of regular sized (4K) pages. */
-	memInfo->totalPhysical = aixMemoryInfo.real_total * page_size;
-	memInfo->availPhysical = aixMemoryInfo.real_free * page_size;
-	memInfo->totalSwap = aixMemoryInfo.pgsp_total * page_size;
-	memInfo->availSwap = aixMemoryInfo.pgsp_free * page_size;
-	memInfo->cached = aixMemoryInfo.numperm * page_size;
+	if (0 != (memoryFlags & OMR_SYSINFO_TOTAL_MEMORY)) {
+		memInfo->totalPhysical = aixMemoryInfo.real_total * page_size;
+	}
+	memoryFlags = memoryFlags >> 1;
+       	if (0 != (memoryFlags & OMR_SYSINFO_AVAIL_MEMORY)) {
+		memInfo->availPhysical = aixMemoryInfo.real_free * page_size;
+	}
+	/* AIX does not define buffers, so skip the flag. */
+	memoryFlags = memoryFlags >> 2;
+	if (0 != (memoryFlags & OMR_SYSINFO_CACHED)) {
+		memInfo->cached = aixMemoryInfo.numperm * page_size;
+	}
+	memoryFlags = memoryFlags >> 1;
+	if (0 != (memoryFlags & OMR_SYSINFO_TOTAL_SWAP)) {
+		memInfo->totalSwap = aixMemoryInfo.pgsp_total * page_size;
+	}
+	memoryFlags = memoryFlags >> 1;
+	if (0 != (memoryFlags & OMR_SYSINFO_AVAIL_SWAP)) {
+		memInfo->availSwap = aixMemoryInfo.pgsp_free * page_size;
+	}
+	memoryFlags = memoryFlags >> 1;
 	/* AIX does not define buffers, so: memInfo->buffered = OMRPORT_MEMINFO_NOT_AVAILABLE; */
 
 	memInfo->hostAvailPhysical = memInfo->availPhysical;
@@ -1923,7 +2006,7 @@ retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
 #endif /* end OS specific guards */
 
 int32_t
-omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, ...)
+omrsysinfo_get_required_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 	int32_t rc = -1;
 
@@ -1949,19 +2032,26 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 	memInfo->hostBuffered = OMRPORT_MEMINFO_NOT_AVAILABLE;
 
 #if defined(LINUX)
-	rc = retrieveLinuxMemoryStats(portLibrary, memInfo);
+	rc = retrieveLinuxMemoryStats(portLibrary, memInfo, memoryFlags);
 #elif defined(OSX)
-	rc = retrieveOSXMemoryStats(portLibrary, memInfo);
+	rc = retrieveOSXMemoryStats(portLibrary, memInfo, memoryFlags);
 #elif defined(AIXPPC)
-	rc = retrieveAIXMemoryStats(portLibrary, memInfo);
+	rc = retrieveAIXMemoryStats(portLibrary, memInfo, memoryFlags);
 #elif defined(J9ZOS390)
-	rc = retrieveZOSMemoryStats(portLibrary, memInfo);
+	rc = retrieveZOSMemoryStats(portLibrary, memInfo, memoryFlags);
 #endif
 
 	memInfo->timestamp = (portLibrary->time_nano_time(portLibrary) / NANOSECS_PER_USEC);
 
 	Trc_PRT_sysinfo_get_memory_info_Exit(rc);
 	return rc;
+}
+	
+
+int32_t
+omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, ...)
+{
+	return omrsysinfo_get_required_memory_info(portLibrary, memInfo, OMR_SYSINFO_FETCH_ALL);
 }
 
 uint64_t

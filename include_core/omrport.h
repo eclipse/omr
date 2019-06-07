@@ -284,6 +284,30 @@
 #define ROUND_UP_TO_POWEROF2(value, powerof2) (((value) + ((powerof2) - 1)) & (UDATA)~((powerof2) - 1))
 #define ROUND_DOWN_TO_POWEROF2(value, powerof2) ((value) & (UDATA)~((powerof2) - 1))
 
+/**
+ * @name Memory Info Types
+ * Constants used to denote memory types.
+ * @{
+ */
+#define OMR_SYSINFO_TOTAL_PHYSICAL        1
+#define OMR_SYSINFO_AVAIL_PHYSICAL        2
+#define OMR_SYSINFO_BUFFERED              4
+#define OMR_SYSINFO_CACHED                8
+#define OMR_SYSINFO_TOTAL_SWAP           16
+#define OMR_SYSINFO_AVAIL_SWAP           32
+#define OMR_SYSINFO_TOTAL_VIRTUAL        64
+#define OMR_SYSINFO_AVAIL_VIRTUAL       128
+#define OMR_SYSINFO_FETCH_ALL           255
+/** @} */
+
+/**
+ * @name Varags end of arguments
+ * Constant used to denote end of arguments when varargs are given
+ * @{
+ */
+#define OMR_VARARGS_END_OF_ARGUMENTS 255
+/** @} */
+
 typedef struct J9Permission {
 	uint32_t isUserWriteable : 1;
 	uint32_t isUserReadable : 1;
