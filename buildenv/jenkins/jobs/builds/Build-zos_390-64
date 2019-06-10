@@ -11,8 +11,12 @@ def setBuildStatus(String message, String state, String sha) {
     ]);
 }
 
+LABEL = (params.LABEL) ? "${params.LABEL}" : "zOS && 390"
+REPO = (params.OMR_REPO) ? "${params.OMR_REPO}" : "https://github.com/eclipse/omr.git"
+BRANCH = (params.OMR_BRANCH) ? "${params.OMR_BRANCH}" : ((params.MERGE_COMMIT) ? "${MERGE_COMMIT}" : "refs/heads/master")
+
 pipeline {
-    agent{label 'zOS && 390'}
+    agent{label "${LABEL}"}
     environment {
         PATH = "/u/open1/rocket/bin:$PATH"
     }
@@ -20,9 +24,12 @@ pipeline {
         stage('Get Sources') {
             steps {
                 timestamps {
-                    checkout([$class: 'GitSCM', branches: [[name: '${MERGE_COMMIT}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'git://github.com/eclipse/omr.git']]])
-                    
-                    setBuildStatus("In Progress","PENDING","${MERGE_COMMIT}")
+                    checkout([$class: 'GitSCM', branches: [[name: "${BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: "${REPO}"]]])
+                    script {
+                        if(params.MERGE_COMMIT){
+                            setBuildStatus("In Progress","PENDING","${MERGE_COMMIT}")
+                        }
+                    }
                 }
             }
         }
@@ -55,10 +62,18 @@ pipeline {
     }
     post {
         success {
-            setBuildStatus("Complete","SUCCESS","${MERGE_COMMIT}")
+            script {
+                if(params.MERGE_COMMIT){
+                    setBuildStatus("Complete","SUCCESS","${MERGE_COMMIT}")
+                }
+            }
         }
         failure {
-            setBuildStatus("Complete","FAILURE","${MERGE_COMMIT}")
+            script {
+                if(params.MERGE_COMMIT){
+                    setBuildStatus("Complete","FAILURE","${MERGE_COMMIT}")
+                }
+            }
         }
         always {
             echo 'Cleanup workspace'

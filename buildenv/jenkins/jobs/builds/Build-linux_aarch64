@@ -11,8 +11,12 @@ def setBuildStatus(String message, String state, String sha) {
     ]);
 }
 
+LABEL = (params.LABEL) ? "${params.LABEL}" : "Linux && x86 && compile:aarch64"
+REPO = (params.OMR_REPO) ? "${params.OMR_REPO}" : "https://github.com/eclipse/omr.git"
+BRANCH = (params.OMR_BRANCH) ? "${params.OMR_BRANCH}" : ((params.MERGE_COMMIT) ? "${MERGE_COMMIT}" : "refs/heads/master")
+
 pipeline {
-    agent{label 'Linux && x86 && compile:aarch64'}
+    agent{label "${LABEL}"}
     environment {
         PATH = "/usr/lib/ccache/:/home/jenkins/aarch64/toolchain/bin:$PATH"
         PLATFORM = "aarch64-linux-gcc"
@@ -22,9 +26,12 @@ pipeline {
         stage('Get Sources') {
             steps {
                 timestamps {
-                    checkout([$class: 'GitSCM', branches: [[name: '${MERGE_COMMIT}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/eclipse/omr.git']]])
-                    
-                    setBuildStatus("In Progress","PENDING","${MERGE_COMMIT}")
+                    checkout([$class: 'GitSCM', branches: [[name: "${BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: "${REPO}"]]])
+                    script {
+                        if(params.MERGE_COMMIT){
+                            setBuildStatus("In Progress","PENDING","${MERGE_COMMIT}")
+                        }
+                    }
                 }
             }
         }
@@ -32,7 +39,7 @@ pipeline {
             steps {
                 timestamps {
                     echo 'Output CCACHE stats before running and clear them'
-                    sh '''ccache -s -z'''
+                    sh '''(ccache --version &>/dev/null && ccache -s -z) || echo "Warning: ccache not found"'''
                     
                     echo 'Configure...'
                     sh '''make -f run_configure.mk OMRGLUE=./example/glue SPEC=linux_aarch64'''
@@ -41,7 +48,7 @@ pipeline {
                     sh '''make -j4'''
                     
                     echo 'Output CCACHE stats after running'
-                    sh '''ccache -s'''
+                    sh '''(ccache --version &>/dev/null && ccache -s) || echo "Warning: ccache not found"'''
                 }
             }
         }
@@ -55,10 +62,18 @@ pipeline {
     }
     post {
         success {
-            setBuildStatus("Complete","SUCCESS","${MERGE_COMMIT}")
+            script {
+                if(params.MERGE_COMMIT){
+                    setBuildStatus("Complete","SUCCESS","${MERGE_COMMIT}")
+                }
+            }
         }
         failure {
-            setBuildStatus("Complete","FAILURE","${MERGE_COMMIT}")
+            script {
+                if(params.MERGE_COMMIT){
+                    setBuildStatus("Complete","FAILURE","${MERGE_COMMIT}")
+                }
+            }
         }
         always {
             echo 'Cleanup workspace'
