@@ -295,7 +295,7 @@ MM_Configuration::initializeRunTimeObjectAlignmentAndCRShift(MM_EnvironmentBase*
 			Assert_MM_unreachable();
 			return false;
 		}
-#if !defined(S390) && !defined(J9ZOS390)
+#if !defined(S390) && !(HOST_OS == OMR_ZOS)
 		/* s390 benefits from smaller shift values but other platforms don't so just force the shift to 3 if it was not 0 to save
 		 * on testing resources.
 		 * (still honour the "canChangeShift" flag, though, since we want our testing options to still work)

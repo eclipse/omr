@@ -24,7 +24,7 @@
 
 #include "ddr/config.hpp"
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 
 #include <ctype.h>
 #undef toupper
@@ -35,8 +35,8 @@
 #define toupper(c)     (islower(c) ? (c & _XUPPER_ASCII) : c)
 #define tolower(c)     (isupper(c) ? (c | _XLOWER_ASCII) : c)
 
-#else /* defined(J9ZOS390) */
+#else /* (HOST_OS == OMR_ZOS) */
 #include <string>
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 #endif /* STRING_HPP */

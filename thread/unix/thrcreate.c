@@ -41,7 +41,7 @@ osthread_create(struct J9Thread *self, OSTHREAD *handle, const omrthread_attr_t 
 	retCode = DEBUG_SYSCALL(pthread_create(handle, &ux->pattr, entrypoint, entryarg));
 	if (retCode != 0) {
 		if (self) {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 			/* z stores the error code in errno and errno2, not in the return value from pthread_create() */
 			self->os_errno = errno;
 			self->os_errno2 = __errno2();

@@ -26,14 +26,14 @@
 #include "env/jittypes.h"
 #include "infra/Assert.hpp"
 
-#if defined(LINUX) || defined(AIXPPC)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX)
 #include <signal.h>
 #endif
 
 void
 OMR::DebugEnv::breakPoint()
    {
-#if defined(LINUX) || defined(AIXPPC)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX)
    raise(SIGTRAP);
 #else
    TR_UNIMPLEMENTED();

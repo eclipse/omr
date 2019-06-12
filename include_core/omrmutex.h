@@ -24,8 +24,8 @@
 
 #include "omrcomp.h"
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include "win/omrmutex.h"
 #else
 #include "unix/omrmutex.h"
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */

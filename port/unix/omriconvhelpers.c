@@ -35,23 +35,23 @@
 #include "omrportptb.h"
 #include "omrportpriv.h"
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #pragma convlit(suspend)
 #endif
 const char *utf8 = "UTF-8";
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 const char *utf16 = "01200"; /* z/OS does not accept "UTF-16" */
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 const char *utf16 = "UTF-16LE";
 #else
 const char *utf16 = "UTF-16";
 #endif
 const char *ebcdic = "IBM-1047";
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #pragma convlit(resume)
 #endif
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /*
  * Open a convertor object and update the table if successful.
  * @note use only the const strings above to denote UTF-8, UTF-16, and EBCDIC
@@ -105,7 +105,7 @@ int32_t
 iconv_global_init(struct OMRPortLibrary *portLibrary)
 {
 	int32_t rc = 0;
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	iconv_t *globalConverter = PPG_global_converter;
 	MUTEX *globalConverterMutex = PPG_global_converter_mutex;
 	uint32_t initializedConvertors = 0;
@@ -146,7 +146,7 @@ iconv_global_init(struct OMRPortLibrary *portLibrary)
 void
 iconv_global_destroy(struct OMRPortLibrary *portLibrary)
 {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	if (PPG_global_converter_enabled) {
 		iconv_t *globalConverter = PPG_global_converter;
 		MUTEX *globalConverterMutex = PPG_global_converter_mutex;
@@ -182,7 +182,7 @@ iconv_get(struct OMRPortLibrary *portLibrary, J9IconvName converterName, const c
 	 */
 	PortlibPTBuffers_t ptBuffer = NULL;
 	iconv_t converter = J9VM_INVALID_ICONV_DESCRIPTOR;
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 
 	if (PPG_global_converter_enabled) {
 		/* NOTE: using original nl_langinfo implementation that returns an EBCDIC string
@@ -249,7 +249,7 @@ iconv_get(struct OMRPortLibrary *portLibrary, J9IconvName converterName, const c
 void
 iconv_free(struct OMRPortLibrary *portLibrary, J9IconvName converterName, iconv_t converter)
 {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 
 	if (PPG_global_converter_enabled) {
 		iconv_t *globalConverter = PPG_global_converter;

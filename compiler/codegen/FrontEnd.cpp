@@ -35,7 +35,7 @@
 #include "env/jittypes.h"
 #include "env/PersistentInfo.hpp"
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 #include <unistd.h>
 #endif
 
@@ -145,7 +145,7 @@ TR_FrontEnd::getFormattedName(
       bool suffix)
    {
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
    // FIXME: TODO: This is a temporary implementation -- we ignore the suffix format and
    // use the pid only
 

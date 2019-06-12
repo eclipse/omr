@@ -24,22 +24,22 @@
 #include "omrTest.h"
 #include "testHelper.hpp"
 
-#if !defined(OMR_OS_WINDOWS) && !defined(J9ZOS390)
+#if !(HOST_OS == OMR_WINDOWS) && !(HOST_OS == OMR_ZOS)
 #include <pthread.h>
 #include <stdlib.h>
-#endif /* !defined(OMR_OS_WINDOWS) && !defined(J9ZOS390) */
+#endif /* !(HOST_OS == OMR_WINDOWS) && !(HOST_OS == OMR_ZOS) */
 
 extern ThreadTestEnvironment *omrTestEnv;
 
 class KeyDestructorTest: public ::testing::Test {
 public:
 	static bool completed;
-#if !defined(OMR_OS_WINDOWS) && !defined(J9ZOS390)
+#if !(HOST_OS == OMR_WINDOWS) && !(HOST_OS == OMR_ZOS)
 	static pthread_key_t key;
 
 	static void detachThread(void *p);
 	static void *threadproc(void *p);
-#endif /* !defined(OMR_OS_WINDOWS) && !defined(J9ZOS390) */
+#endif /* !(HOST_OS == OMR_WINDOWS) && !(HOST_OS == OMR_ZOS) */
 protected:
 
 	static void
@@ -50,7 +50,7 @@ protected:
 
 bool KeyDestructorTest::completed = false;
 
-#if !defined(OMR_OS_WINDOWS) && !defined(J9ZOS390)
+#if !(HOST_OS == OMR_WINDOWS) && !(HOST_OS == OMR_ZOS)
 pthread_key_t KeyDestructorTest::key;
 
 void
@@ -94,11 +94,11 @@ KeyDestructorTest::threadproc(void *p)
 	/* will never get here.  Just to stop compiler warning */
 	return NULL;
 }
-#endif /* !defined(OMR_OS_WINDOWS) && !defined(J9ZOS390) */
+#endif /* !(HOST_OS == OMR_WINDOWS) && !(HOST_OS == OMR_ZOS) */
 
 TEST_F(KeyDestructorTest, KeyDestructor)
 {
-#if defined(OMR_OS_WINDOWS) || defined(J9ZOS390)
+#if (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_ZOS)
 	completed = true;
 #else
 	pthread_t thread;
@@ -114,6 +114,6 @@ TEST_F(KeyDestructorTest, KeyDestructor)
 
 	rc = pthread_key_delete(key);
 	ASSERT_EQ(0, rc);
-#endif /* defined(OMR_OS_WINDOWS) || defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_ZOS) */
 	ASSERT_TRUE(completed);
 }

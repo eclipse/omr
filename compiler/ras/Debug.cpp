@@ -116,7 +116,7 @@
 #include <netdb.h>
 #endif
 
-#if defined(J9ZOS390) || defined(AIXPPC) || defined(LINUX)
+#if (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 #include <unistd.h>
 #endif
 
@@ -161,7 +161,7 @@ TR_Debug * createDebugObject(TR::Compilation * comp)
 
 
 
-#if defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_WINDOWS)
 static void stopOnCreate()
    {
    static int first = 1;
@@ -172,7 +172,7 @@ static void stopOnCreate()
       first = 0;
       }
    }
-#endif /* defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_WINDOWS) */
 
 
 void
@@ -203,10 +203,10 @@ TR_Debug::debugOnCreate()
    {
 #if defined(TR_HOST_X86)
    TR::Compiler->debug.breakPoint();
-#elif defined(AIXPPC)
+#elif (HOST_OS == OMR_AIX)
    setupDebugger((void *) *((long*)&(stopOnCreate)));
    stopOnCreate();
-#elif defined(LINUX) || defined(J9ZOS390) || (defined(OMR_OS_WINDOWS))
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_ZOS) || ((HOST_OS == OMR_WINDOWS))
    setupDebugger((void *) &stopOnCreate,(void *) &stopOnCreate,true);
    stopOnCreate();
 #endif /* defined(TR_HOST_X86) */
@@ -4884,7 +4884,7 @@ TR_Debug::traceRegisterWeight(TR::Register *realReg, uint32_t weight)
    trfflush(_file);
    }
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #if !defined(J9OS_I5)
 #include <unistd.h>
 extern "C" void yield(void);
@@ -4954,7 +4954,7 @@ void TR_Debug::setupDebugger(void *addr)
 
 #endif
 
-#elif defined(LINUX)
+#elif (HOST_OS == OMR_LINUX)
 void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
    {
    static bool started = false;
@@ -5027,7 +5027,7 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
    started = true;
    }
 
-#elif defined(J9ZOS390)
+#elif (HOST_OS == OMR_ZOS)
 #include <spawn.h>
 #include <unistd.h>
 void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
@@ -5122,7 +5122,7 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
          else printf("Could not open %s, skipping break !\n",cfname);
          }
    }
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
 #ifndef WINDOWS_API_INCLUDED
 extern "C"
    {
@@ -5187,7 +5187,7 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
       started = true;
       }
    }
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */
 
 void TR_Debug::setSingleAllocMetaData(bool usesSingleAllocMetaData)
    {

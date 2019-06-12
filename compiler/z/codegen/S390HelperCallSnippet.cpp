@@ -111,7 +111,7 @@ TR::S390HelperCallSnippet::emitSnippetBody()
    intptrj_t destAddr = (intptrj_t)(helperSymRef->getSymbol()->castToMethodSymbol()->getMethodAddress());
 
 #if defined(TR_TARGET_64BIT)
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
    if (cg()->comp()->getOption(TR_EnableRMODE64))
 #endif
       {

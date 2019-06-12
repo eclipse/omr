@@ -611,11 +611,11 @@ public:
    const char * getName(TR::RealRegister *, TR_RegisterSizes size = TR_WordReg);
 #endif
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
    virtual void setupDebugger(void *);
-#elif defined(LINUX) || defined(J9ZOS390) || defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_WINDOWS)
    virtual void setupDebugger(void *, void *, bool);
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */
 
    virtual void setSingleAllocMetaData(bool usesSingleAllocMetaData);
 

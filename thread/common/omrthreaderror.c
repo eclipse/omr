@@ -47,7 +47,7 @@ omrthread_get_os_errno(void)
 	return os_errno;
 }
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /**
  * Retrieve the os_errno2 saved in the current omrthread_t.
  * @return ZOS-specific error code. Default value is 0.

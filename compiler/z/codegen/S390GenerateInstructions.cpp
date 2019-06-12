@@ -2139,7 +2139,7 @@ generateDirectCall(TR::CodeGenerator * cg, TR::Node * callNode, bool myself, TR:
    // Direct calls on 64-bit systems may require a trampoline. As the trampoline will kill the EP register we should
    // always see the EP register defined in the post-dependencies of such calls.
 #if defined(TR_TARGET_64BIT)
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
    if (comp->getOption(TR_EnableRMODE64))
 #endif
       {
@@ -2179,7 +2179,7 @@ generateDirectCall(TR::CodeGenerator * cg, TR::Node * callNode, bool myself, TR:
       }
    else // address known
       {
-#if !defined(TR_TARGET_64BIT) || (defined(TR_TARGET_64BIT) && defined(J9ZOS390))
+#if !defined(TR_TARGET_64BIT) || (defined(TR_TARGET_64BIT) && (HOST_OS == OMR_ZOS))
       if (cg->canUseRelativeLongInstructions(imm) || isHelper || comp->getOption(TR_EnableRMODE64))
 #endif
          {
@@ -2206,8 +2206,8 @@ generateDirectCall(TR::CodeGenerator * cg, TR::Node * callNode, bool myself, TR:
             tempInst = (new (INSN_HEAP) TR::S390RILInstruction(TR::InstOpCode::BRASL, callNode, RegRA, reinterpret_cast<void*>(imm), callSymRef, cg));
             }
 #endif
-#if !defined(TR_TARGET_64BIT) || (defined(TR_TARGET_64BIT) && defined(J9ZOS390))
-#if (defined(TR_TARGET_64BIT) && defined(J9ZOS390))
+#if !defined(TR_TARGET_64BIT) || (defined(TR_TARGET_64BIT) && (HOST_OS == OMR_ZOS))
+#if (defined(TR_TARGET_64BIT) && (HOST_OS == OMR_ZOS))
          if (!comp->getOption(TR_EnableRMODE64))
 #endif
 
@@ -2222,7 +2222,7 @@ generateDirectCall(TR::CodeGenerator * cg, TR::Node * callNode, bool myself, TR:
          AOTcgDiag1(comp, "\ntempInst=%x\n", tempInst);
          return tempInst;
          }
-#if !defined(TR_TARGET_64BIT) || (defined(TR_TARGET_64BIT) && defined(J9ZOS390))
+#if !defined(TR_TARGET_64BIT) || (defined(TR_TARGET_64BIT) && (HOST_OS == OMR_ZOS))
       else
          {
          genLoadAddressConstant(cg, callNode, imm, RegEP, preced, cond);

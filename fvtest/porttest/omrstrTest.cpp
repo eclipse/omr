@@ -36,9 +36,9 @@
  * @note port library string operations are not optional in the port library table.
  *
  */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <windows.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -646,7 +646,7 @@ TEST(PortStrTest, str_test4)
 			char expected[J9STR_BUFFER_SIZE];
 			const char *default_tokens[] = { " %pid", " %home", " %last", " %seq"
 									   , " %uid"
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 									   , "%job"
 #endif
 									 };
@@ -809,7 +809,7 @@ static const U_16 utf16Data[] = {
 };
 static const char *utf16String = (const char *)utf16Data;
 static const uint32_t utf16StringLength = sizeof(utf16Data);
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #pragma convlit(suspend)
 #endif
 static const char platformString[] = {
@@ -819,7 +819,7 @@ static const char platformString[] = {
 };
 
 static const uint32_t platformStringLength = sizeof(platformString) - 1;
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #pragma convlit(resume)
 #endif
 
@@ -1416,22 +1416,22 @@ TEST(PortStrTest, str_WinacpToMutf8)
 		'\x1', '\x2', '\x3', '\x4', '\x5', '\x6', '\x7', '\x8',
 		'\x81', '\x91', '\xa1', '\xb1', '\xc1', '\xd1', '\xe1', '\xf1'
 	};
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	char expectedMutf8[] = {
 		'\x1', '\x2', '\x3', '\x4', '\x5', '\x6', '\x7', '\x8',
 		'\xc2', '\x81', '\xe2', '\x80', '\x98', '\xc2', '\xa1', '\xc2', '\xb1', '\xc3', '\x81', '\xc3', '\x91', '\xc3', '\xa1', '\xc3', '\xb1'
 	};
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	const char *testName = "omrstr_WinacpToMutf8";
 	char outBuff[TEST_BUF_LEN];
 	int32_t originalStringLength = sizeof(winacpData);
 	int32_t convertedStringLength = 0;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	int32_t expectedStringLength = sizeof(expectedMutf8);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	reportTestEntry(OMRPORTLIB, testName);
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	{
 		uint32_t defaultACP = GetACP();
 		if (1252 != defaultACP) {
@@ -1439,11 +1439,11 @@ TEST(PortStrTest, str_WinacpToMutf8)
 			reportTestExit(OMRPORTLIB, testName);
 		}
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	memset(outBuff, 0, sizeof(outBuff));
 	convertedStringLength = omrstr_convert(J9STR_CODE_WINDEFAULTACP, J9STR_CODE_MUTF8,
 										   winacpData, originalStringLength,  outBuff, sizeof(outBuff));
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (convertedStringLength != expectedStringLength) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "buffer length wrong.  Expected %d actual %d\n", expectedStringLength, convertedStringLength);
 	}
@@ -1454,11 +1454,11 @@ TEST(PortStrTest, str_WinacpToMutf8)
 	if (OMRPORT_ERROR_STRING_UNSUPPORTED_ENCODING != convertedStringLength) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Failed to detect invalid conversion");
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	reportTestExit(OMRPORTLIB, testName);
 }
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /**
  * Check whether a null/non-null terminated string is properly handled by fstring().
  * It calls atoe_vsnprintf() to verify the functionalities.
@@ -1569,4 +1569,4 @@ TEST(PortStrTest, str_test_atoe_vsnprintf)
 	portTestEnv->log("\n");
 	reportTestExit(OMRPORTLIB, testName);
 }
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */

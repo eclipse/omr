@@ -177,7 +177,7 @@ MM_ConcurrentGCIncrementalUpdate::createCardTable(MM_EnvironmentBase *env)
 	Assert_MM_true(NULL == _cardTable);
 	Assert_MM_true(NULL == _extensions->cardTable);
 
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
 	if ((uintptr_t)omrsysinfo_get_number_CPUs_by_type(OMRPORT_CPU_ONLINE) > 1 ) {

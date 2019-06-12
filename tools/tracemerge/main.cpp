@@ -23,23 +23,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
+#if (HOST_OS == OMR_ZOS) && !defined(OMR_EBCDIC)
 #include "atoe.h"
-#endif /* defined(J9ZOS390)  && !defined(OMR_EBCDIC) */
+#endif /* (HOST_OS == OMR_ZOS)  && !defined(OMR_EBCDIC) */
 
 #include "DATMerge.hpp"
 #include "FileUtils.hpp"
 #include "Port.hpp"
 
 int
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 translated_main(int argc, char **argv, char **envp)
 #else
 main(int argc, char **argv, char **envp)
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 {
 	RCType rc = RC_OK;
-#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
+#if (HOST_OS == OMR_ZOS) && !defined(OMR_EBCDIC)
 	int i = 0;
 	if (-1 != iconv_init()) {
 		/* translate argv strings to ascii */
@@ -55,14 +55,14 @@ main(int argc, char **argv, char **envp)
 		FileUtils::printError("failed to initialize iconv\n");
 		rc = RC_FAILED;
 	}
-#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
+#endif /* (HOST_OS == OMR_ZOS) && !defined(OMR_EBCDIC) */
 	if (RC_OK == rc) {
 		rc = startTraceMerge(argc, argv);
 	}
 	return (RC_OK == rc) ? 0 : -1;
 }
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 int
 wmain(int argc, wchar_t **argv, wchar_t **envp)
 {
@@ -125,4 +125,4 @@ wmain(int argc, wchar_t **argv, wchar_t **envp)
 
 	return rc;
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */

@@ -2274,7 +2274,7 @@ inline bool IsXDigit(wchar_t ch) {
   return ch == low_byte && isxdigit(low_byte) != 0;
 }
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /* We need to define tolower and toupper macros for ToLower/ToUpper to use a2e tolower/toupper.
  */
 #define toupper(c)     (islower(c) ? (c & _XUPPER_ASCII) : c)
@@ -2288,7 +2288,7 @@ inline char ToUpper(char ch) {
   return static_cast<char>(toupper(static_cast<unsigned char>(ch)));
 }
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /* We need to undefine the macros in order to avoid function definitions for tolower and toupper in xlocale.
  */
 #undef toupper

@@ -24,7 +24,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #include "atoe.h"
 #endif
 #include <stdio.h>
@@ -34,13 +34,13 @@
 #include "omrthread.h"
 #include "omrport.h"
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #define SPEC_WIN_API
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
-#if defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_OSX)
 #define SPEC_PTHREAD_API
-#endif /* defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_OSX) */
 
 #ifndef ASSERT
 #define ASSERT(x) assert(x)
@@ -50,7 +50,7 @@
 #define PTHREAD_VERBOSE(x) pthread_verboseCall(#x, (x))
 
 /* OS-specific values */
-#if defined(AIXPPC) || defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 #define OS_PTHREAD_INHERIT_SCHED PTHREAD_INHERIT_SCHED
 #define OS_PTHREAD_EXPLICIT_SCHED PTHREAD_EXPLICIT_SCHED
 #define OS_PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_SYSTEM
@@ -58,7 +58,7 @@
 #define OS_SCHED_RR SCHED_RR
 #define OS_SCHED_FIFO SCHED_FIFO
 
-#else /* defined(AIXPPC) || defined(LINUX) || defined(OSX) */
+#else /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 #define OS_PTHREAD_INHERIT_SCHED (-1)
 #define OS_PTHREAD_EXPLICIT_SCHED (-2)
@@ -66,9 +66,9 @@
 #define OS_SCHED_OTHER (-1)
 #define OS_SCHED_RR (-2)
 #define OS_SCHED_FIFO (-3)
-#endif /* defined(AIXPPC) || defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define OS_MEDIUM_WEIGHT __MEDIUM_WEIGHT
 #define OS_HEAVY_WEIGHT __HEAVY_WEIGHT
 #else
@@ -101,13 +101,13 @@
 /* ospriority.c */
 extern void initPrioMap(void);
 extern const char *mapOSPolicy(intptr_t policy);
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 extern void initRealtimePrioMap(void);
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 extern int getRTPolicy(omrthread_prio_t priority);
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 typedef int osprio_t;
 extern osprio_t getOsPriority(omrthread_prio_t priority);

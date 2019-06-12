@@ -28,7 +28,7 @@
 
 #include "omrcomp.h"
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #include "unix/zos/edcwccwi.h"
 #else
 #error Only legal on ZOS

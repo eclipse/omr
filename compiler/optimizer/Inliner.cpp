@@ -912,7 +912,7 @@ TR_CallStack::~TR_CallStack()
    {
    //::commit is supposed to clear up the lists after everything has been propagated to a caller
    //if there are still some residual symRefs left it means that we missed a call to commit somewhere
-#if !defined(AIXPPC)
+#if !(HOST_OS == OMR_AIX)
    TR_ASSERT(std::uncaught_exception() || (_autos.isEmpty() && _temps.isEmpty() && _injectedBasicBlockTemps.isEmpty()), "lists should have been emptied by TR_CallStack::commit");
 #endif
    }

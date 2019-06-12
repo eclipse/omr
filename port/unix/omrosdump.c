@@ -27,7 +27,7 @@
  */
 
 #include <sys/types.h>
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #include <sys/proc.h>
 #endif
 #include <unistd.h>
@@ -54,7 +54,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 /* **********
 These definitions were copied from /usr/include/sys/proc.h in AIX 6.1, because this functionality does not
 exist on AIX 5.3. The code that uses these definitions does a runtime lookup to see if the
@@ -105,7 +105,7 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 	char *lastSep = NULL;
 	intptr_t pid = 0;
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	struct vario myvar;
 
 	/* check to see if full core dumps are enabled */
@@ -140,15 +140,15 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 	if (0 == pid) {
 		/* in the child process */
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 		/*
 		 * on Linux, shared library pages don't appear in core files by default.
 		 * Mark all pages writable to force these pages to appear
 		 */
 		markAllPagesWritable(portLibrary);
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 		/* On AIX we need to ask sigaction for full dumps */
 		{
 			struct sigaction act;
@@ -157,16 +157,16 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 			sigfillset(&act.sa_mask);
 			sigaction(SIGIOT, &act, 0);
 		}
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */
 
 		/*
 		 * CMVC 95748: don't use abort() after fork() on Linux as this seems to upset certain levels of glibc
 		 */
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 #define J9_DUMP_SIGNAL  SIGSEGV
-#else /* defined(LINUX) || defined(OSX) */
+#else /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 #define J9_DUMP_SIGNAL  SIGABRT
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 		/* Ensure we get default action (core) - reset primary&app handlers */
 		OMRSIG_SIGNAL(J9_DUMP_SIGNAL, SIG_DFL);
@@ -184,9 +184,9 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 			}
 		}
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 		pthread_kill(pthread_self(), J9_DUMP_SIGNAL);
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 		abort();
 	} /* end of child process */
@@ -197,7 +197,7 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 		return 1;
 	}
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 
 	if (NULL != filename) {
 		/* Wait for child process that is generating core file to finish */
@@ -208,7 +208,7 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 		return 1;
 	}
 
-#elif defined(AIXPPC) /* defined(LINUX) || defined(OSX) */
+#elif (HOST_OS == OMR_AIX) /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 	if (filename && filename[0] != '\0') {
 		char corepath[EsMaxPath] = "";
@@ -258,11 +258,11 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 
 	return 0;
 
-#else /* defined(LINUX) || defined(OSX) */
+#else /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 #error "This platform doesn't have an implementation of omrdump_create"
 
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 #else /* J9OS_I5 */
 
@@ -320,7 +320,7 @@ unlimitCoreFileSize(struct OMRPortLibrary *portLibrary)
 int32_t
 omrdump_startup(struct OMRPortLibrary *portLibrary)
 {
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	uintptr_t handle = 0;
 
 	portLibrary->error_set_last_error(portLibrary, 0, 0);
@@ -360,7 +360,7 @@ omrdump_startup(struct OMRPortLibrary *portLibrary)
 		}
 		portLibrary->sl_close_shared_library(portLibrary, handle);
 	}
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */
 
 	/* We can only get here omrdump_startup completed successfully */
 

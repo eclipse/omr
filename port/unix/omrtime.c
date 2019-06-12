@@ -26,10 +26,10 @@
  * @brief Timer utilities
  */
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 #include <mach/clock.h>
 #include <mach/mach.h>
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 #include <time.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -40,11 +40,11 @@
 
 #define OMRTIME_NANOSECONDS_PER_SECOND J9CONST_I64(1000000000)
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 static clock_serv_t cs_t;
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 static const clockid_t OMRTIME_NANO_CLOCK = CLOCK_MONOTONIC;
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 
 /**
@@ -88,21 +88,21 @@ uint64_t
 omrtime_current_time_nanos(struct OMRPortLibrary *portLibrary, uintptr_t *success)
 {
 	uint64_t nsec = 0;
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	struct timeval ts;
 	*success = 0;
 	if (0 == gettimeofday(&ts, NULL)) {
 		nsec = ((uint64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (uint64_t)(ts.tv_usec * 1000);
 		*success = 1;
 	}
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 	struct timespec ts;
 	*success = 0;
 	if (0 == clock_gettime(CLOCK_REALTIME, &ts)) {
 		nsec = ((uint64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (uint64_t)ts.tv_nsec;
 		*success = 1;
 	}
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 	return nsec;
 }
 
@@ -110,18 +110,18 @@ int64_t
 omrtime_nano_time(struct OMRPortLibrary *portLibrary)
 {
 	int64_t hiresTime = 0;
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	mach_timespec_t mt;
 	if (KERN_SUCCESS == clock_get_time(cs_t, &mt)) {
 		hiresTime = ((int64_t)mt.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (int64_t)mt.tv_nsec;
 	}
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 	struct timespec ts;
 
 	if (0 == clock_gettime(OMRTIME_NANO_CLOCK, &ts)) {
 		hiresTime = ((int64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (int64_t)ts.tv_nsec;
 	}
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 	return hiresTime;
 }
@@ -224,9 +224,9 @@ omrtime_hires_delta(struct OMRPortLibrary *portLibrary, uint64_t startTime, uint
 void
 omrtime_shutdown(struct OMRPortLibrary *portLibrary)
 {
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	mach_port_deallocate(mach_task_self(), cs_t);
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 }
 /**
  * PortLibrary startup.
@@ -246,20 +246,18 @@ int32_t
 omrtime_startup(struct OMRPortLibrary *portLibrary)
 {
 	int32_t rc = 0;
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	if (KERN_SUCCESS != host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cs_t)) {
 		rc = OMRPORT_ERROR_STARTUP_TIME;
 	}
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 	struct timespec ts;
 
 	/* check if the clock is available */
 	if (0 != clock_getres(OMRTIME_NANO_CLOCK, &ts)) {
 		rc = OMRPORT_ERROR_STARTUP_TIME;
 	}
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 	return rc;
 }
-
-

@@ -33,18 +33,18 @@
 #include <string.h>
 #include <stdio.h>
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #include <sys/types.h>
 #include <sys/var.h>
 #endif
 
 #include <signal.h>
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* for getcwd() */
 #include <direct.h>
 #define getcwd _getcwd
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "testHelpers.hpp"
 #include "omrport.h"
@@ -67,7 +67,7 @@ removeDump(OMRPortLibrary *portLib, const char *filename, const char *testName)
 	portTestEnv->changeIndent(1);
 
 	/* Delete the file if possible. */
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	char deleteCore[EsMaxPath] = {0};
 	sprintf(deleteCore, "tso delete %s", (strstr(filename, ".") + 1));
 
@@ -78,11 +78,11 @@ removeDump(OMRPortLibrary *portLib, const char *filename, const char *testName)
 	if (-1 == system(deleteCore)) {
 		removeDumpSucceeded = false;
 	}
-#else /* defined(J9ZOS390) */
+#else /* (HOST_OS == OMR_ZOS) */
 	if (0 != remove(filename)) {
 		removeDumpSucceeded = false;
 	}
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 	if (removeDumpSucceeded) {
 		portTestEnv->log("removed: %s\n", filename);
 	} else {
@@ -121,7 +121,7 @@ TEST(PortDumpTest, dump_test_create_dump_with_NO_name)
 	uintptr_t rc = 99;
 	char coreFileName[EsMaxPath];
 	BOOLEAN doFileVerification = FALSE;
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	struct vario myvar;
 	int sys_parmRC;
 #endif
@@ -138,7 +138,7 @@ TEST(PortDumpTest, dump_test_create_dump_with_NO_name)
 	/* try out a more sane NULL test */
 	portTestEnv->log("calling omrdump_create with empty filename\n");
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	rc = omrdump_create(coreFileName, "IEATDUMP", NULL);
 #else
 	rc = omrdump_create(coreFileName, NULL, NULL);
@@ -150,7 +150,7 @@ TEST(PortDumpTest, dump_test_create_dump_with_NO_name)
 		portTestEnv->log("omrdump_create claims to have written a core file to: %s\n", coreFileName);
 
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 		/* We defer to fork abort on AIX machines that don't have "Enable full CORE dump" enabled in smit,
 		 * in which case omrdump_create will not return the filename.
 		 * So, only check for a specific filename if we are getting full core dumps */
@@ -160,9 +160,9 @@ TEST(PortDumpTest, dump_test_create_dump_with_NO_name)
 
 			doFileVerification = TRUE;
 		}
-#else /* defined(AIXPPC) */
+#else /* (HOST_OS == OMR_AIX) */
 		doFileVerification = TRUE;
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */
 		if (doFileVerification) {
 			verifyFileRC = verifyFileExists(PORTTEST_ERROR_ARGS, coreFileName);
 			if (verifyFileRC == 0) {
@@ -192,7 +192,7 @@ TEST(PortDumpTest, dump_test_create_dump_with_name)
 
 	reportTestEntry(OMRPORTLIB, testName);
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	coreFileName = atoe_getcwd(buff, EsMaxPath);
 #else
 	coreFileName = getcwd(buff, EsMaxPath);
@@ -202,7 +202,7 @@ TEST(PortDumpTest, dump_test_create_dump_with_name)
 	strncat(coreFileName, testName, EsMaxPath);
 
 	portTestEnv->log("calling omrdump_create with filename: %s\n", coreFileName);
-#if !defined(J9ZOS390)
+#if !(HOST_OS == OMR_ZOS)
 	rc = omrdump_create(coreFileName, NULL, NULL);
 #else
 	rc = omrdump_create(coreFileName, "IEATDUMP", NULL);
@@ -240,7 +240,7 @@ TEST(PortDumpTest, dump_test_create_dump_from_signal_handler)
 	simpleHandlerInfo handlerInfo;
 	uint32_t sig_protectFlags;
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	coreFileName = atoe_getcwd(buff, EsMaxPath);
 #else
 	coreFileName = getcwd(buff, EsMaxPath);
@@ -282,7 +282,7 @@ simpleHandlerFunction(struct OMRPortLibrary *portLibrary, uint32_t gpType, void 
 
 	portTestEnv->log("calling omrdump_create with filename: %s\n", info->coreFileName);
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	rc = omrdump_create(info->coreFileName, "IEATDUMP", NULL);
 #else
 	rc = omrdump_create(info->coreFileName, NULL, NULL);

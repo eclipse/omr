@@ -31,7 +31,7 @@
 /* Reducing the TLS slots from 127 to 123 on ZOS and from 128 to 124 on the rest
  * to compensate for adding thread category related functionality
  */
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define J9THREAD_MAX_TLS_KEYS 123   /* One of the TLS slots is replaced by os_errno2 on ZOS */
 #else /* !J9ZOS390 */
 #define J9THREAD_MAX_TLS_KEYS 124

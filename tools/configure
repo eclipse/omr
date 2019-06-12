@@ -3831,7 +3831,7 @@ fi
 	if test "x$OMR_BUILD_TOOLCHAIN" = "x"; then :
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#if !(defined(__xlC__) || (defined(__MVS__) && defined(__COMPILER_VER__)))
+#if !(defined(__xlC__) || ((HOST_OS == OMR_ZOS) && defined(__COMPILER_VER__)))
 #error not an xlc compiler
 #endif
 int

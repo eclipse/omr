@@ -997,7 +997,7 @@ TR_Debug::formattedString(char *buf, uint32_t bufLen, const char *format, va_lis
    va_list args_copy;
    va_copy(args_copy, args);
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
    // vsnprintf returns -1 on zos when buffer is too small
    char s[VSNPRINTF_BUFFER_SIZE];
    int resultLen = vsnprintf(s, VSNPRINTF_BUFFER_SIZE, format, args_copy);

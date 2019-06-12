@@ -23,15 +23,15 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #include <stdlib.h> /* for abs */
 #include <string.h> /* for strlen, strcpy */
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 #include "omrtrace_internal.h"
 #include "thread_api.h"
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #include "atoe.h"
 #endif
 
@@ -56,7 +56,7 @@ twThreadSelf(void)
 omr_error_t
 twE2A(char *str)
 {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	long length = (long)strlen(str);
 	if (length > 0) {
 		char *abuf;
@@ -66,6 +66,6 @@ twE2A(char *str)
 			free(abuf);
 		}
 	}
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 	return OMR_ERROR_NONE;
 }

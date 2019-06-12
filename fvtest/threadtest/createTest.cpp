@@ -19,18 +19,18 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX)
+#if (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX)
 #include <pthread.h>
 #include <limits.h>	/* for PTHREAD_STACK_MIN */
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 #include <unistd.h> /* required for the _SC_PAGESIZE  constant */
-#endif /* defined(LINUX) || defined(OSX) */
-#endif /* defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
+#endif /* (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX) */
 #include "createTestHelper.h"
 #include "common/omrthreadattr.h"
-#if defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_OSX)
 #include "unix/unixthreadattr.h"
-#endif /* defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OSX) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_OSX) */
 #include "thread_api.h"
 #include "thrdsup.h"
 #include "omrTest.h"
@@ -53,7 +53,7 @@ omrthread_verboseCall(const char *func, intptr_t retVal)
         if (retVal != J9THREAD_SUCCESS) {
                 intptr_t errnoSet = retVal & J9THREAD_ERR_OS_ERRNO_SET;
                 omrthread_os_errno_t os_errno = J9THREAD_INVALID_OS_ERRNO;
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
                 omrthread_os_errno_t os_errno2 = omrthread_get_os_errno2();
 #endif /* J9ZOS390 */
 
@@ -64,7 +64,7 @@ omrthread_verboseCall(const char *func, intptr_t retVal)
 
                 if (retVal == J9THREAD_ERR_UNSUPPORTED_ATTR) {
                         if (errnoSet) {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
                                 omrTestEnv->log(LEVEL_ERROR, "%s unsupported: retVal %zd (%zx) : errno %zd (%zx) %s, errno2 %zd (%zx)\n", func, retVal, retVal, os_errno, os_errno, strerror((int)os_errno), os_errno2, os_errno2);
 #else /* !J9ZOS390 */
                                 omrTestEnv->log(LEVEL_ERROR, "%s unsupported: retVal %zd (%zx) : errno %zd %s\n", func, retVal, retVal, os_errno, strerror((int)os_errno));
@@ -74,7 +74,7 @@ omrthread_verboseCall(const char *func, intptr_t retVal)
                         }
                 } else {
                         if (errnoSet) {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
                                 omrTestEnv->log(LEVEL_ERROR, "%s failed: retVal %zd (%zx) : errno %zd (%zx) %s, errno2 %zd (%zx)\n", func, retVal, retVal, os_errno, os_errno, strerror((int)os_errno), os_errno2, os_errno2);
 #else /* !J9ZOS390 */
                                 omrTestEnv->log(LEVEL_ERROR, "%s failed: retVal %zd (%zx) : errno %zd %s\n", func, retVal, retVal, os_errno, strerror((int)os_errno));
@@ -110,7 +110,7 @@ protected:
 	SetUpTestCase()
 	{
 		portLib = omrTestEnv->getPortLibrary();
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 		if (omrTestEnv->realtime) {
 			omrthread_lib_control(J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING, J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING_ENABLED);
 		}
@@ -121,7 +121,7 @@ protected:
 		}
 #else
 		initPrioMap();
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 	}
 };
 
@@ -203,7 +203,7 @@ mapOSInherit(intptr_t policy)
 static int
 threadmain(void *arg)
 {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	/* Threads are detached. It isn't safe to access data in this thread. */
 	return 0;
 #else
@@ -231,7 +231,7 @@ threadmain(void *arg)
 
 		if (osPolicy != expected->osPolicy) {
 			printMismatchS("child thread policy", mapOSPolicy(expected->osPolicy), mapOSPolicy(osPolicy));
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 			/* bug? Some Linux PPC versions create the thread with the wrong policy.
 			 * Warn, but don't flag this as an error. The parent thread has already
 			 * checked for errors in the pthread_attr_t.
@@ -270,7 +270,7 @@ canCreateThread(const create_attr_t *expected, const omrthread_attr_t attr)
 		omrthread_resume(handle);
 
 #if defined(SPEC_PTHREAD_API)
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 		/* bug? Linux can return a success code, but still fail to create the thread.
 		 * NOTE: It is not guaranteed that tid 0 is invalid in all pthread implementations.
 		 */
@@ -279,13 +279,13 @@ canCreateThread(const create_attr_t *expected, const omrthread_attr_t attr)
 			status |= CREATE_FAILED;
 			return status;
 		}
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 		/* this may fail because omrthreads detach themselves upon exiting */
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 		/* OSX TODO: Why do the tests segfault in child thread when accessing &data on OSX without a 1ms sleep? */
 		omrthread_sleep(10);
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 		PTHREAD_VERBOSE(pthread_join(tid, NULL));
 		status |= data.status;
 
@@ -351,9 +351,9 @@ isAttrOk(const create_attr_t *expected, const omrthread_attr_t actual)
 		int osPolicy;
 		int osInheritsched;
 #endif
-#if defined(AIXPPC) || defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 		int osScope;
-#endif /* defined(AIXPPC) || defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 #ifdef J9ZOS390
 		int osThreadweight;
 		int osDetachstate;
@@ -368,7 +368,7 @@ isAttrOk(const create_attr_t *expected, const omrthread_attr_t actual)
 #ifndef J9ZOS390
 
 		PTHREAD_VERBOSE(pthread_attr_getschedpolicy(attr, &osPolicy));
-#if (defined(AIXPPC) || defined(LINUX) || defined(OSX))
+#if ((HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX))
 		/* aix and linux bug - need to set the schedpolicy to OTHER if inheritsched used */
 		if (J9THREAD_SCHEDPOLICY_INHERIT == expected->policy) {
 			if (osPolicy != OS_SCHED_OTHER) {
@@ -377,7 +377,7 @@ isAttrOk(const create_attr_t *expected, const omrthread_attr_t actual)
 			}
 		}
 		else
-#endif /* (defined(AIXPPC) || defined(LINUX) || defined(OSX)) */
+#endif /* ((HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)) */
 		{
 			if (osPolicy != expected->osPolicy) {
 				printMismatchS("os schedpolicy", mapOSPolicy(expected->osPolicy), mapOSPolicy(osPolicy));
@@ -398,13 +398,13 @@ isAttrOk(const create_attr_t *expected, const omrthread_attr_t actual)
 		}
 #endif /* not J9ZOS390 */
 
-#if defined(AIXPPC) || defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 		PTHREAD_VERBOSE(pthread_attr_getscope(attr, &osScope));
 		if (osScope != expected->osScope) {
 			printMismatchI("os scope", expected->osScope, osScope);
 			status |= WRONG_OS_SCOPE;
 		}
-#endif /* defined(AIXPPC) || defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 #ifdef J9ZOS390
 		osThreadweight = pthread_attr_getweight_np(attr);
@@ -431,7 +431,7 @@ isAttrOk(const create_attr_t *expected, const omrthread_attr_t actual)
 static void
 getCurrentOsSched(int *priority, int *policy)
 {
-#if defined(SPEC_PTHREAD_API) && !defined(J9ZOS390)
+#if defined(SPEC_PTHREAD_API) && !(HOST_OS == OMR_ZOS)
 	OSTHREAD tid = pthread_self();
 	struct sched_param param;
 
@@ -472,12 +472,12 @@ getOsPolicy(omrthread_schedpolicy_t policy, omrthread_prio_t priority)
 	}
 #endif /* defined(SPEC_PTHREAD_API) */
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	/* overwrite the ospolicy on LINUX if we're using realtime scheduling */
 	if (omrthread_lib_use_realtime_scheduling()) {
 		ospolicy = getRTPolicy(priority);
 	}
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 	return ospolicy;
 }
@@ -489,7 +489,7 @@ getOsStacksize(size_t stacksize)
 		stacksize = STACK_DEFAULT_SIZE;
 	}
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	/* Linux allocates 2MB if you ask for a stack smaller than STACK_MIN */
 	{
 		size_t pageSafeMinimumStack = 2 * sysconf(_SC_PAGESIZE);
@@ -501,7 +501,7 @@ getOsStacksize(size_t stacksize)
 			stacksize = pageSafeMinimumStack;
 		}
 	}
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 	return stacksize;
 }
@@ -732,10 +732,10 @@ TEST_F(ThreadCreateTest, SetAttrPolicy)
 		status |= EXPECTED_VALID;
 	}
 	status |= isAttrOk(&expected, attr);
-#if (defined(LINUX) || defined(AIXPPC))
+#if ((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX))
 	omrTestEnv->log(LEVEL_ERROR, "  ignoring omrthread_create failure\n");
 	status &= ~CREATE_FAILED;
-#endif /* (defined(LINUX) || defined(AIXPPC)) */
+#endif /* ((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX)) */
 	END_IF_FAILED(status);
 
 	expected.policy = J9THREAD_SCHEDPOLICY_FIFO;
@@ -747,10 +747,10 @@ TEST_F(ThreadCreateTest, SetAttrPolicy)
 		status |= EXPECTED_VALID;
 	}
 	status |= isAttrOk(&expected, attr);
-#if (defined(LINUX) || defined(AIXPPC))
+#if ((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX))
 	omrTestEnv->log(LEVEL_ERROR, "  ignoring omrthread_create failure\n");
 	status &= ~CREATE_FAILED;
-#endif /* (defined(LINUX) || defined(AIXPPC)) */
+#endif /* ((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX)) */
 	END_IF_FAILED(status);
 
 	expected.policy = J9THREAD_SCHEDPOLICY_INHERIT;

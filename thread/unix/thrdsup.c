@@ -29,10 +29,10 @@
 #include "threaddef.h"
 #include "thread_internal.h"
 
-#if defined(LINUX) && !defined(OMRZTPF)
+#if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
 #include <sys/prctl.h>
 #include <linux/prctl.h>
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #if defined(OMRZTPF)
 #include <tpf/c_eb0eb.h>
@@ -40,9 +40,9 @@
 #include <tpf/tpfapi.h>
 #endif /* if defined(OMRZTPF) */
 
-#if (defined(LINUX) || defined(OSX)) && defined(J9X86)
+#if ((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)) && defined(J9X86)
 #include <fpu_control.h>
-#endif /* (defined(LINUX) || defined(OSX)) && defined(J9X86) */
+#endif /* ((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)) && defined(J9X86) */
 
 #if J9THREAD_USE_MONOTONIC_COND_CLOCK
 /*
@@ -87,11 +87,11 @@ call_omrthread_init(void)
 {
 	omrthread_library_t lib = GLOBAL_DATA(default_library);
 
-#if defined(LINUX) || !defined(J9_PRIORITY_MAP) || defined(J9OS_I5) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || !defined(J9_PRIORITY_MAP) || defined(J9OS_I5) || (HOST_OS == OMR_OSX)
 	if (initialize_priority_map()) {
 		goto thread_init_error;
 	}
-#endif /* defined(LINUX) || !defined(J9_PRIORITY_MAP) || defined(J9OS_I5) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || !defined(J9_PRIORITY_MAP) || defined(J9OS_I5) || (HOST_OS == OMR_OSX) */
 
 #ifdef J9ZOS390
 	zos_init_yielding();
@@ -120,7 +120,7 @@ init_thread_library(void)
 	return lib->initStatus != 1;
 }
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 intptr_t
 set_pthread_name(pthread_t self, pthread_t thread, const char *name)
 {
@@ -128,7 +128,7 @@ set_pthread_name(pthread_t self, pthread_t thread, const char *name)
 		/* for Linux and OSX, the thread being named must be the current thread */
 		return -1;
 	}
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 #ifndef PR_SET_NAME
 #define PR_SET_NAME 15
 #endif
@@ -136,24 +136,24 @@ set_pthread_name(pthread_t self, pthread_t thread, const char *name)
 	prctl(PR_SET_NAME, name);
 #endif
 	/* we ignore the return value of prctl, since naming is not supported on some older linux distributions */
-#else /* defined(LINUX) */
+#else /* (HOST_OS == OMR_LINUX) */
 	pthread_setname_np(name);
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 	return 0;
 }
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 intptr_t
 osthread_join(omrthread_t self, omrthread_t threadToJoin)
 {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	intptr_t j9thrRc = J9THREAD_SUCCESS;
 	if (0 != pthread_join(threadToJoin->handle, NULL)) {
 		self->os_errno = errno;
 		j9thrRc = J9THREAD_ERR | J9THREAD_ERR_OS_ERRNO_SET;
 	}
 	return j9thrRc;
-#else /* defined(J9ZOS390) */
+#else /* (HOST_OS == OMR_ZOS) */
 	intptr_t j9thrRc = J9THREAD_SUCCESS;
 	int rc = pthread_join(threadToJoin->handle, NULL);
 	if (0 != rc) {
@@ -161,10 +161,10 @@ osthread_join(omrthread_t self, omrthread_t threadToJoin)
 		j9thrRc = J9THREAD_ERR | J9THREAD_ERR_OS_ERRNO_SET;
 	}
 	return j9thrRc;
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 }
 
-#if defined(LINUX) && defined(J9X86)
+#if (HOST_OS == OMR_LINUX) && defined(J9X86)
 int
 linux_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime)
 {
@@ -182,7 +182,7 @@ linux_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, const
 }
 #endif
 
-#if defined(J9ZOS390) && defined(OMR_INTERP_HAS_SEMAPHORES)
+#if (HOST_OS == OMR_ZOS) && defined(OMR_INTERP_HAS_SEMAPHORES)
 
 intptr_t
 sem_init_zos(j9sem_t s, int pShared, int initValue)
@@ -318,7 +318,7 @@ ztpf_init_proc()
 }
 #endif /* defined(OMRZTPF) */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /**
  * We have to tell the z/OS LE that we want a specific kind of yielding threshold,
  * not the default kind.

@@ -321,11 +321,11 @@ DwarfScanner::getName(Dwarf_Die die, string *name, Dwarf_Off *dieOffset)
 				}
 				Dwarf_Die spec = NULL;
 				if (
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 					DW_DLV_ERROR == dwarf_offdie(_debug, offset, &spec, &err)
-#else /* defined(J9ZOS390) */
+#else /* (HOST_OS == OMR_ZOS) */
 					DW_DLV_ERROR == dwarf_offdie_b(_debug, offset, 1, &spec, &err)
-#endif /* !defined(J9ZOS390) */
+#endif /* !(HOST_OS == OMR_ZOS) */
 				) {
 					ERRMSG("Getting die from specification offset: %s\n", dwarf_errmsg(err));
 					rc = DDR_RC_ERROR;
@@ -337,9 +337,9 @@ DwarfScanner::getName(Dwarf_Die die, string *name, Dwarf_Off *dieOffset)
 			}
 		}
 		if ((NULL == dieName)
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 			|| ((0 == strncmp(dieName, "__", 2)) && (strlen(dieName + 2) == strspn(dieName + 2, "0123456789")))
-#endif /* defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_LINUX) */
 			|| (0 == strncmp(dieName, "<anonymous", 10)))
 		{
 			*name = "";
@@ -577,12 +577,12 @@ DwarfScanner::getTypeTag(Dwarf_Die die, Dwarf_Die *typeDie, Dwarf_Half *tag)
 		/* Use the offset to get the Die containing the type tag. */
 		Dwarf_Die newDie = NULL;
 		if (
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 			/* z/OS dwarf library doesn't have dwarf_offdie_b, only dwarf_offdie. */
 			DW_DLV_ERROR == dwarf_offdie(_debug, offset, &newDie, &err)
-#else /* defined(J9ZOS390) */
+#else /* (HOST_OS == OMR_ZOS) */
 			DW_DLV_ERROR == dwarf_offdie_b(_debug, offset, 1, &newDie, &err)
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 		) {
 			ERRMSG("Getting typedie from type offset: %s\n", dwarf_errmsg(err));
 			goto getTypeDone;
@@ -818,9 +818,9 @@ DwarfScanner::createNewType(Dwarf_Die die, Dwarf_Half tag, const char *dieName, 
 	default:
 		{
 			const char *tagName = NULL;
-#if !defined(J9ZOS390)
+#if !(HOST_OS == OMR_ZOS)
 			dwarf_get_TAG_name(tag, &tagName);
-#endif /* !defined(J9ZOS390) */
+#endif /* !(HOST_OS == OMR_ZOS) */
 			ERRMSG("Symbol with name '%s' has unknown symbol type: %s (%d)\n", dieName, tagName, tag);
 			rc = DDR_RC_ERROR;
 		}
@@ -940,7 +940,7 @@ isVtablePointer(const char *fieldName)
 {
 #if defined(__GNUC__)
 	return 0 == strncmp(fieldName, "_vptr.", 6);
-#elif defined(AIXPPC) || defined(LINUXPPC)
+#elif (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 	return 0 == strcmp(fieldName, "__vfp");
 #else
 	return false;

@@ -97,7 +97,7 @@ extern "C" {
 /* assert() and abort() are a bit useless on Windows - they
  * just print a message. Force a GPF instead.
  */
-#if defined(OMR_OS_WINDOWS) && !defined(__clang__)
+#if (HOST_OS == OMR_WINDOWS) && !defined(__clang__)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -109,12 +109,12 @@ extern "C" {
 		} \
 	} while (0)
 
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 
 #include <assert.h>
 #define UT_ASSERT(expr) assert(expr)
 
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #define DBG_ASSERT(expr) \
 	if (OMR_TRACEGLOBAL(traceDebug) > 0) { \

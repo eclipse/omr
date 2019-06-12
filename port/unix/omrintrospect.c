@@ -26,10 +26,10 @@
  * @brief process introspection support
  */
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 /* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
 #define _GNU_SOURCE
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #include <pthread.h>
 #include <ucontext.h>
@@ -44,17 +44,17 @@
 #include <time.h>
 #include <fcntl.h>
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 #include <dirent.h>
 #include <dlfcn.h>
 #include <sys/utsname.h>
 #include <inttypes.h>
-#elif defined(AIXPPC)
+#elif (HOST_OS == OMR_AIX)
 #include <sys/ldr.h>
 #include <sys/debug.h>
 #include <procinfo.h>
 #include <sys/thread.h>
-#elif defined(J9ZOS390)
+#elif (HOST_OS == OMR_ZOS)
 #include <stdlib.h>
 #endif
 
@@ -81,10 +81,10 @@
  * timeout to poll calls whether or not we have a deadline so we have a sample based scheduler visible
  * spinlock.
  */
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 /* poll timeout in milliseconds */
 #define POLL_RETRY_INTERVAL 100
-#elif defined(AIXPPC)
+#elif (HOST_OS == OMR_AIX)
 /* AIX close call blocks until all other calls using the file descriptor return to user
  * space so we need to spin reasonably quickly or we'll not resume until the timeout in
  * error cases.
@@ -311,7 +311,7 @@ barrier_release_r(barrier_r *barrier, uintptr_t seconds)
 		return -1;
 	}
 
-#if !defined(J9ZOS390) && !defined(AIXPPC)
+#if !(HOST_OS == OMR_ZOS) && !(HOST_OS == OMR_AIX)
 	/* On AIX it is not legal to call fdatasync() inside a signal handler */
 	fdatasync(barrier->descriptor_pair[1]);
 #endif
@@ -431,7 +431,7 @@ barrier_destroy_r(barrier_r *barrier, int block)
 		rc = -1;
 	}
 
-#if !defined(J9ZOS390) && !defined(AIXPPC)
+#if !(HOST_OS == OMR_ZOS) && !(HOST_OS == OMR_AIX)
 	/* On AIX it is not legal to call fdatasync() inside a signal handler */
 	fdatasync(barrier->descriptor_pair[1]);
 #endif
@@ -608,7 +608,7 @@ sem_post_r(sem_t_r *sem)
 	if (write(sem->descriptor_pair[1], &byte, 1) != 1) {
 		return -1;
 	}
-#if !defined(J9ZOS390) && !defined(AIXPPC)
+#if !(HOST_OS == OMR_ZOS) && !(HOST_OS == OMR_AIX)
 	/* On AIX it is not legal to call fdatasync() inside a signal handler */
 	fdatasync(sem->descriptor_pair[1]);
 #endif
@@ -842,7 +842,7 @@ upcall_handler(int signal, siginfo_t *siginfo, void *context_arg)
  * @param data - the platform specific data, ignored on everything but AIX
  * @return number of threads in the process
  */
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 static int
 count_threads(struct PlatformWalkData *data)
 {
@@ -905,7 +905,7 @@ count_threads(struct PlatformWalkData *data)
 
 	return thread_count;
 }
-#elif defined(AIXPPC)
+#elif (HOST_OS == OMR_AIX)
 static int
 count_threads(struct PlatformWalkData *data)
 {
@@ -928,7 +928,7 @@ count_threads(struct PlatformWalkData *data)
 
 	return count;
 }
-#elif defined(J9ZOS390)
+#elif (HOST_OS == OMR_ZOS)
 static int
 count_threads(struct PlatformWalkData *data)
 {
@@ -1096,7 +1096,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 					/* there is a suspend signal pending so swallow it */
 					sigemptyset(&set);
 					sigaddset(&set, SUSPEND_SIG);
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 					sigwait(&set);
 #else
 					sigwait(&set, &sig);
@@ -1294,7 +1294,7 @@ resume_all_preempted(struct PlatformWalkData *data)
 			 */
 			sigemptyset(&set);
 			sigaddset(&set, SUSPEND_SIG);
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 			sigwait(&set);
 #else
 			/* the pending signal may have been dispatched to another thread since we made the sigpending() call above,
@@ -1483,7 +1483,7 @@ setup_native_thread(J9ThreadWalkState *state, thread_context *sigContext, int he
 static uintptr_t
 sigqueue_is_reliable(void)
 {
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 	struct utsname sysinfo;
 	uintptr_t release_major = 0;
 	uintptr_t release_minor = 0;
@@ -1497,13 +1497,13 @@ sigqueue_is_reliable(void)
 
 	/* sigqueue() is sufficiently reliable on newer Linux kernels (version 3.11 and later). */
 	return (3 < release_major) || ((3 == release_major) && (11 <= release_minor));
-#elif defined(AIXPPC) || defined(J9ZOS390)
+#elif (HOST_OS == OMR_AIX) || (HOST_OS == OMR_ZOS)
 	/* The controller can't use sem_timedwait_r on AIX or z/OS. */
 	return 0;
 #else
 	/* Other platforms can use sem_timedwait_r. */
 	return 1;
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 }
 
 /*

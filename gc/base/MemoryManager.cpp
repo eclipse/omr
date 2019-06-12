@@ -213,13 +213,13 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 				if (requestedTopAddress <= ceiling) {
 					bool allocationTopDown = true;
 					/* define the scan direction when reserving the GC heap in the range of (4G, 32G) */
-#if defined(S390) || defined(J9ZOS390)
+#if defined(S390) || (HOST_OS == OMR_ZOS)
 					/* s390 benefits from smaller shift values so allocate direction is bottom up */
 					options |= OMRPORT_VMEM_ALLOC_DIR_BOTTOM_UP;
 					allocationTopDown = false;
-#else /* defined(S390) || defined(J9ZOS390) */
+#else /* defined(S390) || (HOST_OS == OMR_ZOS) */
 					options |= OMRPORT_VMEM_ALLOC_DIR_TOP_DOWN;
-#endif /* defined(S390) || defined(J9ZOS390) */
+#endif /* defined(S390) || (HOST_OS == OMR_ZOS) */
 
 					if (allocationTopDown && extensions->shouldForceSpecifiedShiftingCompression) {
 						/* force to allocate heap top-down from correspondent to shift address */

@@ -108,7 +108,7 @@ class OMR_EXTENSIBLE CodeCacheConfig
          _emitExecutableELF(false),
          _emitRelocatableELF(false)
       {
-      #if defined(J9ZOS390)     // EBCDIC
+      #if (HOST_OS == OMR_ZOS)     // EBCDIC
       _warmEyeCatcher[0] = '\xD1';
       _warmEyeCatcher[1] = '\xC9';
       _warmEyeCatcher[2] = '\xE3';

@@ -24,7 +24,7 @@
 
 #include "omrcfg.h"
 
-#if !defined(J9ZOS390)
+#if !(HOST_OS == OMR_ZOS)
 #define J9_POSIX_THREADS
 #endif
 
@@ -37,13 +37,13 @@
 #include "omrcomp.h"
 #include "omrutilbase.h"
 
-#if (defined(LINUX) || defined(OSX) || defined(MVS) || defined(J9ZOS390) || defined(OMRZTPF))
+#if ((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) || (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_ZOS) || defined(OMRZTPF))
 #include <sys/time.h>
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 #include <mach/clock.h>
 #include <mach/mach.h>
-#endif /* defined(OSX) */
-#endif /* defined(LINUX) || defined(OSX) || defined(MVS) || defined(J9ZOS390) || defined(OMRZTPF) */
+#endif /* (HOST_OS == OMR_OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) || (HOST_OS == OMR_ZOS) || (HOST_OS == OMR_ZOS) || defined(OMRZTPF) */
 
 
 #include "omrmutex.h"
@@ -80,7 +80,7 @@ typedef struct zos_sem_t {
 	struct J9ThreadMonitor *monitor;
 } zos_sem_t;
 typedef zos_sem_t OSSEMAPHORE;
-#endif /* defined(LINUX) || defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) */
 
 
 #include "thrtypes.h"
@@ -127,11 +127,11 @@ extern int priority_map[];
  *
  * CMVC 199234 - use CLOCK_MONOTONIC also on Linux
  */
-#if (defined(AIXPPC) && !defined(J9OS_I5)) || (defined(LINUX) && !defined(OMRZTPF))
+#if ((HOST_OS == OMR_AIX) && !defined(J9OS_I5)) || ((HOST_OS == OMR_LINUX) && !defined(OMRZTPF))
 #define J9THREAD_USE_MONOTONIC_COND_CLOCK 1
-#else /* (defined(AIXPPC) && !defined(J9OS_I5)) || (defined(LINUX) && !defined(OMRZTPF) */
+#else /* ((HOST_OS == OMR_AIX) && !defined(J9OS_I5)) || ((HOST_OS == OMR_LINUX) && !defined(OMRZTPF) */
 #define J9THREAD_USE_MONOTONIC_COND_CLOCK 0
-#endif /* (defined(AIXPPC) && !defined(J9OS_I5)) || (defined(LINUX) && !defined(OMRZTPF) */
+#endif /* ((HOST_OS == OMR_AIX) && !defined(J9OS_I5)) || ((HOST_OS == OMR_LINUX) && !defined(OMRZTPF) */
 
 #if J9THREAD_USE_MONOTONIC_COND_CLOCK
 #define TIMEOUT_CLOCK timeoutClock
@@ -141,7 +141,7 @@ extern pthread_condattr_t *defaultCondAttr;
 #define TIMEOUT_CLOCK CLOCK_REALTIME
 #endif /* J9THREAD_USE_MONOTONIC_COND_CLOCK */
 
-#if (defined(MVS) || defined(J9ZOS390) || defined(OMRZTPF))
+#if ((HOST_OS == OMR_ZOS) || (HOST_OS == OMR_ZOS) || defined(OMRZTPF))
 #define SETUP_TIMEOUT(ts_, millis, nanos) {								\
 		struct timeval tv_;											\
 		J9DIV_T secs_ = J9DIV(millis, 1000);					\
@@ -155,7 +155,7 @@ extern pthread_condattr_t *defaultCondAttr;
 			ts_.tv_sec = tv_.tv_sec + secs_.quot;			\
 			ts_.tv_nsec = nanos_;								\
 		} }
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 #define SETUP_TIMEOUT(ts_, millis, nanos) {						\
 		J9DIV_T secs_ = J9DIV(millis, 1000);					\
 		int nanos_ = secs_.rem * 1000000 + nanos;				\
@@ -166,7 +166,7 @@ extern pthread_condattr_t *defaultCondAttr;
 			ts_.tv_sec = secs_.quot;							\
 			ts_.tv_nsec = nanos_;								\
 		} }
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 #define SETUP_TIMEOUT(ts_, millis, nanos) {								\
 		J9DIV_T secs_ = J9DIV(millis, 1000);					\
 		int nanos_ = secs_.rem * 1000000 + nanos;				\
@@ -179,7 +179,7 @@ extern pthread_condattr_t *defaultCondAttr;
 			ts_.tv_sec += secs_.quot;							\
 			ts_.tv_nsec = nanos_;								\
 		} }
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 /* COND_DESTROY */
 
 #define COND_DESTROY(cond) pthread_cond_destroy(&(cond))
@@ -201,7 +201,7 @@ extern pthread_condattr_t *defaultCondAttr;
 
 /* THREAD_YIELD */
 
-#if (defined(LINUX) || defined(AIXPPC) || defined(OSX))
+#if ((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX))
 #define THREAD_YIELD() (sched_yield())
 
 #ifdef OMR_THR_YIELD_ALG
@@ -228,13 +228,13 @@ extern pthread_condattr_t *defaultCondAttr;
 	}\
 }
 #endif
-#else /* (defined(LINUX) || defined(AIXPPC) || defined(OSX)) */
+#else /* ((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX)) */
 #ifdef OMR_THR_YIELD_ALG
 #error 'OMR_THR_YIELD_ALG' is not supported on this platform
 #endif
-#endif /* (defined(LINUX) || defined(AIXPPC) || defined(OSX)) */
+#endif /* ((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX)) */
 
-#if defined(MVS) || defined (J9ZOS390)
+#if (HOST_OS == OMR_ZOS) || defined (J9ZOS390)
 #define THREAD_YIELD() (pthread_yield(0))
 #endif
 
@@ -264,15 +264,15 @@ extern pthread_condattr_t *defaultCondAttr;
 
 /* NOTE: the calling thread must already own the mutex! */
 
-#if defined(LINUX) && defined(J9X86)
+#if (HOST_OS == OMR_LINUX) && defined(J9X86)
 #define PTHREAD_COND_TIMEDWAIT(x,y,z) linux_pthread_cond_timedwait(x,y,z)
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 #define PTHREAD_COND_TIMEDWAIT(x,y,z) pthread_cond_timedwait_relative_np(x,y,z)
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 #define PTHREAD_COND_TIMEDWAIT(x,y,z) pthread_cond_timedwait(x,y,z)
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define COND_WAIT_RC_TIMEDOUT -1
 #else
 #define COND_WAIT_RC_TIMEDOUT ETIMEDOUT
@@ -301,18 +301,18 @@ extern pthread_condattr_t *defaultCondAttr;
 
 /* THREAD_DETACH */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define THREAD_DETACH(thread) pthread_detach(&(thread))
 #else
 #define THREAD_DETACH(thread) pthread_detach(thread)
 #endif
 
 /* THREAD_SET_NAME */
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 #define THREAD_SET_NAME(self, thread, name) set_pthread_name((self), (thread), (name))
-#else /* defined(LINUX) || defined(OSX) */
+#else /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 #define THREAD_SET_NAME(self, thread, name) 0 /* not implemented */
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 /* THREAD_SET_PRIORITY */
 #define THREAD_SET_PRIORITY(thread, priority) set_pthread_priority((thread), (priority))
@@ -322,7 +322,7 @@ extern pthread_condattr_t *defaultCondAttr;
 #define TLS_ALLOC_WITH_DESTRUCTOR(key, destructor) (pthread_key_create(&(key), (destructor)))
 #define TLS_DESTROY(key) (pthread_key_delete(key))
 #define TLS_SET(key, value) (pthread_setspecific(key, value))
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define TLS_GET(key) (pthread_getspecific_d8_np(key))
 #else
 #define TLS_GET(key) (pthread_getspecific(key))

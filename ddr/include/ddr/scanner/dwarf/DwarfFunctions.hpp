@@ -32,11 +32,11 @@
 #include <vector>
 #include <errno.h>
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 #include <sys/fcntl.h>
 #endif /* OSX */
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -175,7 +175,7 @@ struct Dwarf_Die_s
 	Dwarf_Half _tag;
 	Dwarf_Die_s *_parent;
 	Dwarf_Die_s *_sibling;
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	Dwarf_Die_s *_previous;
 #endif /* defined (AIXPPC) */
 	Dwarf_Die_s *_child;

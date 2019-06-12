@@ -32,7 +32,7 @@
 /* NOTE:  omrportlib.h include is at the bottom of this file until its dependencies on this file can be relaxed */
 
 /* fix for linux s390 32bit stdint vs unistd.h definition of intptr_t (see CMVC 73850) */
-#if defined(LINUX) && defined(S390)
+#if (HOST_OS == OMR_LINUX) && defined(S390)
 #include <stdint.h>
 #endif
 
@@ -50,11 +50,11 @@
 #include "omrgcconsts.h"
 #endif /* defined(OMRZTPF) */
 
-#if (defined(LINUX) || defined(RS6000) || defined (OSX))
+#if ((HOST_OS == OMR_LINUX) || defined(RS6000) || defined (OSX))
 #include <unistd.h>
-#endif /* (defined(LINUX) || defined(RS6000) || defined (OSX)) */
+#endif /* ((HOST_OS == OMR_LINUX) || defined(RS6000) || defined (OSX)) */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define PORT_ABEND_CODE	0xDED
 #define PORT_ABEND_REASON_CODE 20
 #define PORT_ABEND_CLEANUP_CODE 1 	/* allow for normal enclave termination/cleanup processing */
@@ -240,7 +240,7 @@
 #define OMRPORT_TIME_DELTA_IN_NANOSECONDS ((uint64_t) 1000000000)
 /** @} */
 
-#if defined(S390) || defined(J9ZOS390)
+#if defined(S390) || (HOST_OS == OMR_ZOS)
 /**
  * @name Constants to calculate time from high-resolution timer
  * @anchor hiresConstants
@@ -258,19 +258,19 @@
 #define OMRPORT_TIME_HIRES_MILLITIME_DIVISOR ((uint64_t) 2048000)
 #define OMRTIME_HIRES_CLOCK_FREQUENCY ((uint64_t) 2048000000) /* Frequency is microseconds / second */
 
-#else /* defined(S390) || defined(J9ZOS390) */
+#else /* defined(S390) || (HOST_OS == OMR_ZOS) */
 
 #define OMRPORT_TIME_HIRES_NANOTIME_NUMERATOR ((uint64_t) 0)
 #define OMRPORT_TIME_HIRES_NANOTIME_DENOMINATOR ((uint64_t) 0)
 #define OMRPORT_TIME_HIRES_MICROTIME_DIVISOR ((uint64_t) 0)
 #define OMRPORT_TIME_HIRES_MILLITIME_DIVISOR ((uint64_t) 0)
 
-#endif /* defined(S390) || defined(J9ZOS390) */
+#endif /* defined(S390) || (HOST_OS == OMR_ZOS) */
 /** @} */
 
-#if defined(LINUX) && !defined(OMRZTPF)
+#if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
 #define OMR_CONFIGURABLE_SUSPEND_SIGNAL
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 /**
  * @name Time Unit Conversion
@@ -398,7 +398,7 @@ typedef enum J9VMemMemoryQuery {
 	OMRPORT_VMEM_PROCESS_EnsureWideEnum = 0x1000000
 } J9VMemMemoryQuery;
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 
 typedef struct OMRCgroupEntry {
 	int32_t hierarchyId; /**< cgroup hierarch ID*/
@@ -408,7 +408,7 @@ typedef struct OMRCgroupEntry {
 	struct OMRCgroupEntry *next; /**< pointer to next OMRCgroupEntry*/
 } OMRCgroupEntry;
 
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 typedef struct OMRCgroupMetricElement {
 	const char *units;
@@ -445,12 +445,12 @@ typedef struct OMRCgroupMetricIteratorState {
  * highest memory address on platform
  *
  */
-#if defined(J9ZOS390) && !defined(OMR_ENV_DATA64)
+#if (HOST_OS == OMR_ZOS) && !defined(OMR_ENV_DATA64)
 /* z/OS 31-bit uses signed pointer comparison so this UDATA_MAX maximum address becomes -1 which is less than the minimum address of 0 so use IDATA_MAX instead */
 #define OMRPORT_VMEM_MAX_ADDRESS ((void *) IDATA_MAX)
-#else /* defined(J9ZOS390) && !defined(OMR_ENV_DATA64) */
+#else /* (HOST_OS == OMR_ZOS) && !defined(OMR_ENV_DATA64) */
 #define OMRPORT_VMEM_MAX_ADDRESS ((void *) UDATA_MAX)
-#endif /* defined(J9ZOS390) && !defined(OMR_ENV_DATA64) */
+#endif /* (HOST_OS == OMR_ZOS) && !defined(OMR_ENV_DATA64) */
 
 /**
  * @name Memory Tagging
@@ -480,7 +480,7 @@ typedef struct J9MemTag {
 #endif
 } J9MemTag;
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 /**
  * @name Linux OS Dump Eyecatcher
  *
@@ -492,7 +492,7 @@ typedef struct J9MemTag {
 #else
 #define J9OSDUMP_SIZE	(128 * 1024)
 #endif
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 /* omrfile_chown takes unsigned arguments for user/group IDs, but uses -1 to indicate that group/user id are not to be changed */
 #define OMRPORT_FILE_IGNORE_ID UDATA_MAX
@@ -758,11 +758,11 @@ typedef struct J9ProcessorInfos {
 #define OMRPORT_SIG_FLAG_SIGABEND  0x80
 #define OMRPORT_SIG_FLAG_SIGPIPE  0x100
 #define OMRPORT_SIG_FLAG_SIGALRM  0x200
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define OMRPORT_SIG_FLAG_SIGALLSYNC  (OMRPORT_SIG_FLAG_SIGSEGV | OMRPORT_SIG_FLAG_SIGBUS | OMRPORT_SIG_FLAG_SIGILL | OMRPORT_SIG_FLAG_SIGFPE | OMRPORT_SIG_FLAG_SIGTRAP | OMRPORT_SIG_FLAG_SIGABEND)
 #else
 #define OMRPORT_SIG_FLAG_SIGALLSYNC  (OMRPORT_SIG_FLAG_SIGSEGV | OMRPORT_SIG_FLAG_SIGBUS | OMRPORT_SIG_FLAG_SIGILL | OMRPORT_SIG_FLAG_SIGFPE | OMRPORT_SIG_FLAG_SIGTRAP)
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 #define OMRPORT_SIG_FLAG_SIGQUIT  0x400
 #define OMRPORT_SIG_FLAG_SIGABRT  0x800
 #define OMRPORT_SIG_FLAG_SIGTERM  0x1000
@@ -932,21 +932,21 @@ typedef struct J9ProcessorInfos {
 /* Windows current thread ANSI code page */
 #define J9STR_CODE_WINTHREADACP 8
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /*
  * OMR on z/OS translates the output of certain system calls such as getenv to ASCII using functions in atoe.c; see stdlib.h for a list.
  * Use J9STR_CODE_PLATFORM_OMR_INTERNAL to when processing the output of these calls.  Otherwise, use J9STR_CODE_PLATFORM_RAW.
  */
 #define J9STR_CODE_PLATFORM_OMR_INTERNAL J9STR_CODE_LATIN1
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
 /*
  * Most system calls on Windows use the "wide" versions which return UTF-16, which OMR then converts to UTF-8.
  */
 #define J9STR_CODE_PLATFORM_OMR_INTERNAL J9STR_CODE_UTF8
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 /* on other platforms the internal encoding is the actual operating system encoding */
 #define J9STR_CODE_PLATFORM_OMR_INTERNAL J9STR_CODE_PLATFORM_RAW
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 #define UNICODE_REPLACEMENT_CHARACTER 0xFFFD
 #define MAX_STRING_TERMINATOR_LENGTH 4
@@ -989,17 +989,17 @@ typedef struct J9MmapHandle {
 #include "omrcuda.h"
 #endif /* OMR_OPT_CUDA */
 
-#if !defined(OMR_OS_WINDOWS)
-#if defined(OSX)
+#if !(HOST_OS == OMR_WINDOWS)
+#if (HOST_OS == OMR_OSX)
 #define _XOPEN_SOURCE
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 #include <ucontext.h>
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 #undef _XOPEN_SOURCE
 #endif /* OSX */
 #endif /* !OMR_OS_WINDOWS */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 struct __mcontext;
 #endif /* J9ZOS390 */
 
@@ -1020,9 +1020,9 @@ typedef struct J9PlatformThread {
 	uintptr_t stack_base;
 	uintptr_t stack_end;
 	uintptr_t priority;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	void *context;
-#elif defined(J9ZOS390)
+#elif (HOST_OS == OMR_ZOS)
 	/* This should really be 'struct __mcontext*' however DDR cannot parse the zos system header
 	 * that we carry as part of portlib. DDR runs on a linux machine and the defines required by the edcwccwi.h
 	 * header are set by both VAC and other zos system headers that DDR has no access to.
@@ -1032,7 +1032,7 @@ typedef struct J9PlatformThread {
 	ucontext_t *context;
 #endif
 	struct J9PlatformStackFrame *callstack;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	void *sigmask;
 #else /* OMR_OS_WINDOWS */
 	sigset_t *sigmask;

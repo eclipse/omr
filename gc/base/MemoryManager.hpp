@@ -58,16 +58,16 @@ private:
 	{
 		bool result = true;
 
-#if (defined(AIXPPC) && !defined(PPC64))
+#if ((HOST_OS == OMR_AIX) && !defined(PPC64))
 		result = false;
-#elif(defined(AIXPPC) && defined(OMR_GC_REALTIME))
+#elif((HOST_OS == OMR_AIX) && defined(OMR_GC_REALTIME))
 		MM_GCExtensionsBase* extensions = env->getExtensions();
 		if (extensions->isMetronomeGC()) {
 			result = false;
 		}
 #elif defined(J9ZOS39064)
 		result = false;
-#endif /* (defined(AIXPPC) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) */
+#endif /* ((HOST_OS == OMR_AIX) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) */
 
 		return result;
 	}
@@ -84,12 +84,12 @@ private:
 	{
 		uintptr_t result = 0;
 
-#if (defined(AIXPPC) && defined(PPC64))
+#if ((HOST_OS == OMR_AIX) && defined(PPC64))
 		/*
 		 * AIX-64 memory segment size is 256M
 		 */
 		result = (uintptr_t)256 * 1024 * 1024;
-#endif /* (defined(AIXPPC) && defined(PPC64)) */
+#endif /* ((HOST_OS == OMR_AIX) && defined(PPC64)) */
 
 		return result;
 	}

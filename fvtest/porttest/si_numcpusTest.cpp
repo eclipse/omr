@@ -240,7 +240,7 @@ TEST(PortSysinfoTest, sysinfo_numcpus_runTime)
 	EXPECT_TRUE(TEST_PASS == omrsysinfo_numcpus_runTime(OMRPORTLIB, OMRPORT_CPU_BOUND)) << "Test failed.";
 }
 
-#if !defined(J9ZOS390)
+#if !(HOST_OS == OMR_ZOS)
 /**
  * @internal
  * Internal function: Counts up the number of processors that are online as per the
@@ -369,4 +369,4 @@ _cleanup:
 	omrsysinfo_destroy_processor_info(&procInfo);
 	reportTestExit(OMRPORTLIB, testName);
 }
-#endif /* !defined(J9ZOS390) */
+#endif /* !(HOST_OS == OMR_ZOS) */

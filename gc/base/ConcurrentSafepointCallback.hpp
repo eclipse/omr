@@ -46,11 +46,11 @@ private:
 protected:
 
 public:
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 	virtual void registerCallback(MM_EnvironmentBase *env, SafepointCallbackHandler handler, void *userData, bool cancelAfterGC = false);
 #else
 	virtual void registerCallback(MM_EnvironmentBase *env,  SafepointCallbackHandler handler, void *userData);
-#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) */
 
 	virtual void requestCallback(MM_EnvironmentBase *env);
 

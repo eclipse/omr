@@ -49,7 +49,7 @@ extern PortTestEnvironment *portTestEnv;
 
 #define allocNameSize 64 /**< @internal buffer size for name function */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define MEM32_LIMIT 0X7FFFFFFF
 #else
 #define MEM32_LIMIT 0xFFFFFFFF

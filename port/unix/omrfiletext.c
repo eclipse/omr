@@ -38,11 +38,11 @@
 
 /* __STDC_ISO_10646__ indicates that the platform wchar_t encoding is Unicode */
 /* but older versions of libc fail to set the flag, even though they are Unicode */
-#if (defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX)) && !defined(OMRZTPF)
+#if (defined(__STDC_ISO_10646__) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)) && !defined(OMRZTPF)
 #define J9VM_USE_WCTOMB
-#else /* (defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX)) && !defined(OMRZTPF) */
+#else /* (defined(__STDC_ISO_10646__) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)) && !defined(OMRZTPF) */
 #include "omriconvhelpers.h"
-#endif /* (defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX)) && !defined(OMRZTPF) */
+#endif /* (defined(__STDC_ISO_10646__) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)) && !defined(OMRZTPF) */
 
 /* Some older platforms (Netwinder) don't declare CODESET */
 #ifndef CODESET
@@ -50,7 +50,7 @@
 #endif
 
 /* a2e overrides nl_langinfo to return ASCII strings. We need the native EBCDIC string */
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #include "atoe.h"
 #if defined (nl_langinfo)
 #undef nl_langinfo
@@ -83,7 +83,7 @@ omrfile_write_text(struct OMRPortLibrary *portLibrary, intptr_t fd, const char *
 #pragma convlit(resume)
 #endif
 
-#if defined(J9ZOS390) || defined(OMRZTPF)
+#if (HOST_OS == OMR_ZOS) || defined(OMRZTPF)
 	/* z/OS and z/TPF always needs to translate to EBCDIC */
 	requiresTranslation = 1;
 #else
@@ -404,12 +404,12 @@ file_write_using_iconv(struct OMRPortLibrary *portLibrary, intptr_t fd, const ch
 char *
 omrfile_read_text(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, intptr_t nbytes)
 {
-#if (defined(J9ZOS390))
+#if ((HOST_OS == OMR_ZOS))
 	const char eol = a2e_tab['\n'];
 	char *tempStr = NULL;
 #else
 	const static char eol = '\n';
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 	char temp[64];
 	char *cursor = buf;
 	BOOLEAN foundEOL = FALSE;
@@ -451,7 +451,7 @@ omrfile_read_text(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, in
 	}
 
 	*cursor = '\0';
-#if (defined(J9ZOS390))
+#if ((HOST_OS == OMR_ZOS))
 	tempStr = e2a_string(buf);
 	if (NULL == tempStr) {
 		return NULL;
@@ -459,7 +459,7 @@ omrfile_read_text(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, in
 
 	memcpy(buf, tempStr, strlen(buf));
 	free(tempStr);
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 	return buf;
 }
 

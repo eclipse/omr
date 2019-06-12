@@ -185,7 +185,7 @@ internal_compileMethodBuilder(TR::MethodBuilder *m, void **entry)
    {
    auto rc = m->Compile(entry);
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
    struct FunctionDescriptor
    {
       uint64_t environment;

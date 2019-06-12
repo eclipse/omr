@@ -35,10 +35,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <direct.h>
 #include <windows.h> /* for MAX_PATH */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "omrcfg.h"
 #include "omrport.h"
@@ -49,9 +49,9 @@
  * CRLFNEWLINES will be defined when we require changing newlines from '\n' to '\r\n'
  */
 #undef CRLFNEWLINES
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #define CRLFNEWLINES
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 /**
  * Write all data in the buffer. Will write in a loop until all data is sent. If an error occurs,
@@ -759,10 +759,10 @@ TEST(PortFileStreamTest, omrfilestream_test_open_permission_flags)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_close() returned %d expected %d\n", rc, 0);
 	}
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/*The mode param is ignored by omrfilestream_open, so omrfile_chmod() is called*/
 	omrfile_chmod(filename, 0666);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	omrfile_stat(filename, 0, &stat);
 
 	if (stat.perm.isUserWriteable != 1) {
@@ -771,7 +771,7 @@ TEST(PortFileStreamTest, omrfilestream_test_open_permission_flags)
 	if (stat.perm.isUserReadable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isUserReadable != 1'\n");
 	}
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (stat.perm.isGroupWriteable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isGroupWriteable != 1'\n");
 	}
@@ -784,9 +784,9 @@ TEST(PortFileStreamTest, omrfilestream_test_open_permission_flags)
 	if (stat.perm.isOtherReadable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isOtherReadable != 1'\n");
 	}
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	/*umask vary so we can't test 'isGroupWriteable', 'isGroupReadable', 'isOtherWriteable', or 'isOtherReadable'*/
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	rc = omrfile_unlink(filename);
 	if (0 != rc) {
@@ -816,10 +816,10 @@ readOnlyTest:
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_close() returned %d expected %d\n", rc, 0);
 	}
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/*The mode param is ignored by omrfile_open, so omrfile_chmod() is called*/
 	omrfile_chmod(filename, 0444);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	omrfile_stat(filename, 0, &stat);
 
 	if (stat.perm.isUserWriteable != 0) {
@@ -828,7 +828,7 @@ readOnlyTest:
 	if (stat.perm.isUserReadable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isUserReadable != 1'\n");
 	}
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (stat.perm.isGroupWriteable != 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isGroupWriteable != 0'\n");
 	}
@@ -841,9 +841,9 @@ readOnlyTest:
 	if (stat.perm.isOtherReadable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isOtherReadable != 1'\n");
 	}
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	/*umask vary so we can't test 'isGroupWriteable', 'isGroupReadable', 'isOtherWriteable', or 'isOtherReadable'*/
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	rc = omrfile_unlink(filename);
 	if (0 != rc) {
@@ -865,27 +865,27 @@ writeOnlyTest:
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_close() returned %d expected %d\n", rc, 0);
 	}
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/*The mode param is ignored by omrfile_open, so omrfile_chmod() is called*/
 	omrfile_chmod(filename, 0222);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	omrfile_stat(filename, 0, &stat);
 
 	if (stat.perm.isUserWriteable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isUserWriteable != 1'\n");
 	}
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/*On windows if a file is write-able, then it is also read-able*/
 	if (stat.perm.isUserReadable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isUserReadable != 1'\n");
 	}
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	if (stat.perm.isUserReadable != 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isUserReadable != 0'\n");
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (stat.perm.isGroupWriteable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isGroupWriteable != 1'\n");
 	}
@@ -900,9 +900,9 @@ writeOnlyTest:
 	if (stat.perm.isOtherReadable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.perm.isOtherReadable != 1'\n");
 	}
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	/*umask vary so we can't test 'isGroupWritable', 'isGroupReadable', 'isOtherWritable', or 'isOtherReadable'*/
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	rc = omrfile_unlink(filename);
 	if (0 != rc) {
@@ -915,7 +915,7 @@ exit:
 }
 
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /**
  * Test a very long file name. For both relative and absolute paths, build up a directory hierarchy
  * that is greater than the system defined MAX_PATH.
@@ -1054,7 +1054,7 @@ unlinkFile:
 
 	reportTestExit(OMRPORTLIB, testName);
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 /**
  * Verify flush.  Check to make sure that a flush will write all data to the file.
@@ -2415,7 +2415,7 @@ TEST(PortFileStreamTest, omrfilestream_test_invalid_filestream_access)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfilestream_close() returned negative error code %d\n", rc);
 		goto unlinkFiles;
 	}
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	/* This test has different behavior on windows, and it will allow you to open files even if you
 	 * do not have the correct permissions.
 	 */
@@ -2423,7 +2423,7 @@ TEST(PortFileStreamTest, omrfilestream_test_invalid_filestream_access)
 	if (NULL != noAccessStream) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfilestream_open() returned valid file handle, expected NULL\n");
 	}
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 
 	/*

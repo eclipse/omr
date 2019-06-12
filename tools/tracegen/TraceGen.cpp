@@ -24,13 +24,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/types.h>
 #include <unistd.h>
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 #include "ArgParser.hpp"
 #include "CFileWriter.hpp"

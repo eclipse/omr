@@ -1230,7 +1230,7 @@ TR::VPClassType *TR::VPClassType::create(OMR::ValuePropagation *vp, const char *
    }
 
 //Workaround for zOS V1R11 bug
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #pragma noinline(TR::VPResolvedClass::VPResolvedClass(TR_OpaqueClassBlock *,TR::Compilation *))
 #pragma noinline(TR::VPResolvedClass::VPResolvedClass(TR_OpaqueClassBlock *, TR::Compilation *, int32_t))
 #endif

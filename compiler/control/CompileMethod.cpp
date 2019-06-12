@@ -21,7 +21,7 @@
 
 #include "control/CompileMethod.hpp"
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <process.h>
 #else
 #include <unistd.h>
@@ -73,7 +73,7 @@ writePerfToolEntry(void *start, uint32_t size, const char *name)
    if (firstAttempt)
       {
       firstAttempt = false;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
       int jvmPid = _getpid();
 #else
       pid_t jvmPid = getpid();
@@ -448,7 +448,7 @@ compileMethodFromDetails(
    catch (const TR::ILValidationFailure &exception)
       {
       rc = COMPILATION_IL_VALIDATION_FAILURE;
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
       // Compiling with -Wc,lp64 results in a crash on z/OS when trying
       // to call the what() virtual method of the exception.
       printCompFailureInfo(jitConfig, &compiler, "");
@@ -460,7 +460,7 @@ compileMethodFromDetails(
       {
       // failed! :-(
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
       // Compiling with -Wc,lp64 results in a crash on z/OS when trying
       // to call the what() virtual method of the exception.
       printCompFailureInfo(jitConfig, &compiler, "");

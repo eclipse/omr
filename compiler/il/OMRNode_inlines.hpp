@@ -56,7 +56,7 @@ OMR::Node::self()
  * Node constructors
  */
 
-#if !defined(_MSC_VER) && !defined(LINUXPPC)
+#if !defined(_MSC_VER) && !(HOST_OS == OMR_LINUX)
 /*
  * These are defined for compilers that support variadic templates
  * XLC (but not on LINUX PPC) and GCC support C++11 variadic templates

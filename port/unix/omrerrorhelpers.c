@@ -68,7 +68,7 @@ errorMessage(struct OMRPortLibrary *portLibrary, int32_t errorCode)
 		ptBuffers->errorMessageBufferSize = J9ERROR_DEFAULT_BUFFER_SIZE;
 	}
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	/* On AIX, strerror() returns an error string based on current locale encoding. When printing out the error message in file_write_using_iconv(),
 	 * The NLS message (UTF-8) + the error string is converted from UTF-8 to locale encoding. So non-UTF-8 error string needs to be converted to UTF-8 here.
 	 */
@@ -81,7 +81,7 @@ errorMessage(struct OMRPortLibrary *portLibrary, int32_t errorCode)
 			errString = stackBuf;
 		}
 	}
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */
 
 	/* Copy from OS to ptBuffers */
 	portLibrary->str_printf(portLibrary, ptBuffers->errorMessageBuffer, ptBuffers->errorMessageBufferSize, "%s", errString);

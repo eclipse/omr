@@ -39,7 +39,7 @@
 #include "portnls.h"
 #include "ut_omrport.h"
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /* Needed for a translation table from ascii -> ebcdic */
 #include "atoe.h"
 
@@ -50,16 +50,16 @@
 #undef nl_langinfo
 #endif
 
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 
 /**
  * CRLFNEWLINES will be defined when we require changing newlines from '\n' to '\r\n'
  */
 #undef CRLFNEWLINES
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #define CRLFNEWLINES
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 static intptr_t
 write_all(struct OMRPortLibrary *portLibrary, OMRFileStream *fileStream, const char *buf, intptr_t nbytes);

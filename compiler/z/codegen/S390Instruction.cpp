@@ -2363,7 +2363,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
          i2 = (int32_t)((getTargetPtr() - (uintptrj_t)cursor) / 2);
 
 #if defined(TR_TARGET_64BIT)
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
         if (comp->getOption(TR_EnableRMODE64))
 #endif
             {
@@ -2387,7 +2387,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
       // zLinux 64 bit we only allow atomic patching on a 4 byte boundary as we use Multi-Code Caches and
       // require trampolines.
 
-#if defined(J9ZOS390) || !defined(TR_TARGET_64BIT)
+#if (HOST_OS == OMR_ZOS) || !defined(TR_TARGET_64BIT)
       // Address must not cross an 8 byte boundary for atomic patching
       int32_t padSize = ((uintptrj_t) (cursor + 4) % 8) == 0 ? 2 : 0;
 #else
@@ -2401,7 +2401,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
          cursor += 2;
          }
 #if defined(TR_TARGET_64BIT)
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
       if (comp->getOption(TR_EnableRMODE64))
 #endif
          {
@@ -2469,7 +2469,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
                i2 = (int32_t)(((uintptrj_t)(callSymbol->getMethodAddress()) - (uintptrj_t)cursor) / 2);
                }
 #if defined(TR_TARGET_64BIT)
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
             if (comp->getOption(TR_EnableRMODE64))
 #endif
                {

@@ -868,7 +868,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
                                  SET_OPTION_BIT(TR_IProfilerPerformTimestampCheck), "F"},
    {"iprofilerVerbose",          "O\tEnable Interpreter Profiling output messages",           SET_OPTION_BIT(TR_VerboseInterpreterProfiling), "F"},
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
    {"j2prof",             "D\tenable profiling",
         SET_OPTION_BIT(TR_CreatePCMaps), "F" },
 #endif
@@ -2167,7 +2167,7 @@ OMR::Options::jitLatePostProcess(TR::OptionSet *optionSet, void * jitConfig)
          self()->setOption(TR_ConservativeCompilation, true);
 
       if (TR::Options::isQuickstartDetected()
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
          || sharedClassCache()  // Disable GCR for zOS if SharedClasses/AOT is used
 #endif
          )
@@ -2655,16 +2655,16 @@ OMR::Options::jitPreProcess()
    #endif
 
    #if defined(TR_TARGET_32BIT) && defined(PROD_WITH_ASSUMES)
-      #if defined(LINUX)
+      #if (HOST_OS == OMR_LINUX)
          #if defined(S390)
             _userSpaceVirtualMemoryMB = 2048; // 2 GB = 2048 MB
          #else
             _userSpaceVirtualMemoryMB = 3072; // 3 GB = 3072 MB
          #endif //#if defined(S390)
-      #elif defined(J9ZOS390)
+      #elif (HOST_OS == OMR_ZOS)
          _userSpaceVirtualMemoryMB = -1; // Compute userspace dynamically on z/OS
-      #endif //#if defined(LINUX)
-   #elif !defined(OMR_OS_WINDOWS)
+      #endif //#if (HOST_OS == OMR_LINUX)
+   #elif !(HOST_OS == OMR_WINDOWS)
       _userSpaceVirtualMemoryMB = 0; // Disabled for 64 bit or non-windows production
    #endif //#if defined(TR_TARGET_32BIT) && defined(PROD_WITH_ASSUMES)
 
@@ -2720,7 +2720,7 @@ OMR::Options::jitPreProcess()
 
       // Enable upgrade hints only if we have an SMP
       if (TR::Compiler->target.numberOfProcessors() > 1
-   #if defined(J9ZOS390) // do not enable upgrade hints, hot/scorching hints on zOS because of compilation costs
+   #if (HOST_OS == OMR_ZOS) // do not enable upgrade hints, hot/scorching hints on zOS because of compilation costs
           && _quickstartDetected
    #endif
           )
@@ -3696,7 +3696,7 @@ OMR::Options::jitPostProcess()
       self()->setOption(TR_EnableLargeCodePages);
       }
 
-#if defined(TR_TARGET_64BIT) && defined(J9ZOS390)
+#if defined(TR_TARGET_64BIT) && (HOST_OS == OMR_ZOS)
    // We allocate code cache memory on z/OS by asking the port library for typically small (~2MB) code cache chunks.
    // This is done because the port library can typically only allocate executable memory (code caches) below the
    // 2GB bar. When RMODE(64) is enabled however we are able to allocate executable memory above the 2GB bar. This

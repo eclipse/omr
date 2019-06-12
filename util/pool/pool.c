@@ -917,7 +917,7 @@ pool_includesElement(J9Pool *pool, void *anElement)
 	return FALSE;
 }
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /* Temporary hack to resolve ZOS linking problems.
  * Functions in pool_cap.c are not getting short-names properly without this fix.  */
 void

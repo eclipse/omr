@@ -27,12 +27,12 @@
 #include <utility>
 #include <vector>
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* windows.h defined uintptr_t.  Ignore its definition */
 #define UDATA UDATA_win_
 #include "dia2.h"
 #undef UDATA	/* this is safe because our UDATA is a typedef, not a macro */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "ddr/ir/ClassUDT.hpp"
 #include "ddr/ir/EnumUDT.hpp"

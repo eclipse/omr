@@ -1214,7 +1214,7 @@ enum TR_ProcessOptionsFlags
 
 #define TRIVIAL_INLINER_MAX_SIZE           25
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define DEFAULT_WAIT_TIME_TO_EXIT_STARTUP_MODE 5500 // ms
 #else
 #define DEFAULT_WAIT_TIME_TO_EXIT_STARTUP_MODE 2500 // ms
@@ -1234,7 +1234,7 @@ enum TR_ProcessOptionsFlags
 #define DEFAULT_SCRATCH_SPACE_LIMIT_KB (256*1024)
 #define DEFAULT_SCRATCH_SPACE_LOWER_BOUND_KB (32*1024)
 
-#if defined(J9ZOS390) && defined(TR_TARGET_32BIT)
+#if (HOST_OS == OMR_ZOS) && defined(TR_TARGET_32BIT)
 #define JSR292_SCRATCH_SPACE_FACTOR 1 // 1.5GB on 31-bit z/OS is too much
 #elif defined(TR_HOST_ARM)
 #define JSR292_SCRATCH_SPACE_FACTOR 2 // 1.5GB on 32-bit ARM is too much

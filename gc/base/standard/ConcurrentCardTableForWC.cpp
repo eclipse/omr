@@ -22,7 +22,7 @@
 
 #include "omrcfg.h"
 
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
 

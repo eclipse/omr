@@ -1102,7 +1102,7 @@ OMR::X86::CodeGenerator::getNanoTimeTemp()
    if (_nanoTimeTemp == NULL)
       {
       TR::AutomaticSymbol *sym;
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
       sym = TR::AutomaticSymbol::create(self()->trHeapMemory(),TR::Aggregate,sizeof(struct timeval));
 #else
       sym = TR::AutomaticSymbol::create(self()->trHeapMemory(),TR::Aggregate,8);

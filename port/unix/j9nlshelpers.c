@@ -49,7 +49,7 @@ nls_tolower(char toConvert)
 {
 	char lower;
 
-#if !defined(J9ZOS390)
+#if !(HOST_OS == OMR_ZOS)
 	lower = j9_ascii_tolower(toConvert);
 #else
 	/* check to see if it is an uppercase character, and if so, return the corresponding lowercase char */
@@ -78,10 +78,10 @@ nls_determine_locale(struct OMRPortLibrary *portLibrary)
 	char regionProp[4] = "US";
 	char *lang = NULL;
 	int langlen = 0;
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	intptr_t result;
 	char langProp[24];
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 	intptr_t countryStart = 2;
 
 	/* Get the language */
@@ -90,7 +90,7 @@ nls_determine_locale(struct OMRPortLibrary *portLibrary)
 	 * that the locale is not installed OR not selected & generated (see /etc/locale.gen) */
 	setlocale(LC_ALL, "");
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	lang = setlocale(LC_CTYPE, NULL);
 	/* set lang for later usage, we cannot use the return of setlocale(LC_ALL, "") as its not
 	 * the correct interface to retrieve it (lang/region) */
@@ -103,7 +103,7 @@ nls_determine_locale(struct OMRPortLibrary *portLibrary)
 			lang = langProp;
 		}
 	}
-#else /* defined(LINUX) || defined(OSX) */
+#else /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 	/* Query locale data */
 	lang = setlocale(LC_CTYPE, NULL);
 #if defined (J9ZOS390)
@@ -116,7 +116,7 @@ nls_determine_locale(struct OMRPortLibrary *portLibrary)
 		}
 	}
 #endif /* defined (J9ZOS390) */
-#endif  /* defined(LINUX) || defined(OSX) */
+#endif  /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 	if (lang != NULL && strcmp(lang, "POSIX") && strcmp(lang, "C"))
 		if (lang != NULL && (langlen = strlen(lang)) >= 2) {
 			/* copy the language, stopping at '_'

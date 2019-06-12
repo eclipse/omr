@@ -40,7 +40,7 @@ void TR_CallStackIterator::printStackBacktrace(TR::Compilation *comp)
       }
    }
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #include <demangle.h>
 #include <sys/debug.h>
 
@@ -171,7 +171,7 @@ const char *TR_PPCCallStackIterator::getProcedureName()
       }
    }
 
-#elif defined(LINUX)
+#elif (HOST_OS == OMR_LINUX)
 #include <execinfo.h>
 #include <cxxabi.h>
 
@@ -230,7 +230,7 @@ void TR_LinuxCallStackIterator::printStackBacktrace(TR::Compilation *comp)
    free(symbols);
    }
 
-#elif defined(J9ZOS390)
+#elif (HOST_OS == OMR_ZOS)
 
 #include <unistd.h>
 #include <ceeedcct.h>
@@ -300,7 +300,7 @@ bool TR_MvsCallStackIterator::callTraceback()
    // Null-terminate the string.
    _proc_name[_parms.__tf_entry_name.__tf_bufflen] = 0;
 
-#if defined(J9ZOS390) && defined(J9_PROJECT_SPECIFIC)
+#if (HOST_OS == OMR_ZOS) && defined(J9_PROJECT_SPECIFIC)
    // On Java zOS, we need to convert the ebcdic string to ascii
    __e2a_l( _proc_name, (int32_t) _parms.__tf_entry_name.__tf_bufflen);
 #endif
@@ -327,7 +327,7 @@ bool TR_MvsCallStackIterator::getNext ()
    return true;
    }
 
-#elif defined(OMR_OS_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT)
+#elif (HOST_OS == OMR_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT)
 
 #include "ras/CallStack.hpp"
 #include <windows.h>
@@ -497,6 +497,6 @@ bool TR_WinCallStackIterator::getNext()
    return !_done;
    }
 
-#elif !(defined(OMR_OS_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT))
+#elif !((HOST_OS == OMR_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT))
 
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */

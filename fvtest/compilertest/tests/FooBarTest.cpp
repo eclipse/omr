@@ -131,7 +131,7 @@ FooBarTest::invokeTests()
 // "test/env/FrontEnd.cpp"  TestCompiler::FrontEnd::methodTrampolineLookup is "methodTrampolineLookup not implemented yet".
 // This test also failed intermittent (segfault) on PPCLE, temporarily disabled this test on PPCLE, under track of Work Item
 // Please remove this #ifdef after those functions are implemented.
-#if defined(TR_TARGET_X86) || defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT) && !defined(J9ZOS390)
+#if defined(TR_TARGET_X86) || defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT) && !(HOST_OS == OMR_ZOS)
 TEST(JITTest, FooBarTest)
    {
    ::TestCompiler::FooBarTest _fooBarTest;

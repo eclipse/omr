@@ -29,11 +29,11 @@
 
 /* __STDC_ISO_10646__ indicates that the platform wchar_t encoding is Unicode */
 /* but older versions of libc fail to set the flag, even though they are Unicode */
-#if (!defined(__STDC_ISO_10646__) && !defined(LINUX) && !defined(OSX)) || defined(OMRZTPF)
+#if (!defined(__STDC_ISO_10646__) && !(HOST_OS == OMR_LINUX) && !(HOST_OS == OMR_OSX)) || defined(OMRZTPF)
 #define J9VM_USE_ICONV
-#endif /* !defined(__STDC_ISO_10646__) && !defined(LINUX) && !defined(OSX) */
+#endif /* !defined(__STDC_ISO_10646__) && !(HOST_OS == OMR_LINUX) && !(HOST_OS == OMR_OSX) */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define J9VM_CACHE_ICONV_DESC
 #include "atoe.h"
 #endif
@@ -53,7 +53,7 @@
  */
 
 typedef enum {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	J9NLS_ICONV_DESCRIPTOR,
 #endif /* J9ZOS390 */
 	J9FILETEXT_ICONV_DESCRIPTOR,

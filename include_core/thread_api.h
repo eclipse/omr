@@ -629,11 +629,11 @@ omrthread_lib_clear_flags(uintptr_t flags);
 
 #define J9THREAD_LIB_CONTROL_GET_MEM_CATEGORIES "get_mem_categories"
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 #define J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING "use_realtime_scheduling"
 #define J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING_ENABLED ((uintptr_t) J9THREAD_LIB_FLAG_REALTIME_SCHEDULING_ENABLED)
 #define J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING_DISABLED ((uintptr_t) 0)
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 /**
 * @brief Control the thread library.
@@ -1358,7 +1358,7 @@ omrthread_get_errordesc(intptr_t err);
 omrthread_os_errno_t
 omrthread_get_os_errno(void);
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /**
  * @brief
  * @return omrthread_os_errno_t

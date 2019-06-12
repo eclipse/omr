@@ -23,8 +23,8 @@
 
 TR_RuntimeHelperTable runtimeHelpers;
 
-#if (defined(__IBMCPP__) || defined(__IBMC__) && !defined(MVS)) && !defined(LINUXPPC64)
- #if defined(AIXPPC)
+#if (defined(__IBMCPP__) || defined(__IBMC__) && !(HOST_OS == OMR_ZOS)) && !defined(LINUXPPC64)
+ #if (HOST_OS == OMR_AIX)
   #define JIT_HELPER(x) extern "C" void *x
  #else
   #define JIT_HELPER(x) extern "C" __cdecl x()
@@ -32,7 +32,7 @@ TR_RuntimeHelperTable runtimeHelpers;
 #else
  #if defined(LINUXPPC64)
   #define JIT_HELPER(x) extern "C" void *x
- #elif defined(LINUX)
+ #elif (HOST_OS == OMR_LINUX)
   #define JIT_HELPER(x) extern "C" void x()
  #else
   #define JIT_HELPER(x) extern "C" x()

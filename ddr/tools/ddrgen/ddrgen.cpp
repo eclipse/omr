@@ -19,17 +19,17 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(AIXPPC) || defined(J9ZOS390)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_ZOS)
 #define __IBMCPP_TR1__ 1
-#endif /* defined(AIXPPC) || defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_ZOS) */
 
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #include "atoe.h"
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 #include "omrport.h"
 #include "thread_api.h"
@@ -93,7 +93,7 @@ main(int argc, char *argv[])
 
 	DDR_RC rc = DDR_RC_OK;
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	/* Convert EBCDIC to UTF-8 (ASCII) */
 	if (-1 != iconv_init()) {
 		/* translate argv strings to ASCII */
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "failed to initialize iconv\n");
 		rc = DDR_RC_ERROR;
 	}
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 	/* Get options. */
 	Options options;

@@ -22,7 +22,7 @@
 #include "runtime/OMRRuntimeAssumptions.hpp"
 #include "env/jittypes.h"
 
-#if defined(__IBMCPP__) && !defined(AIXPPC) && !defined(LINUXPPC)
+#if defined(__IBMCPP__) && !(HOST_OS == OMR_AIX) && !(HOST_OS == OMR_LINUX)
 #define ASM_CALL __cdecl
 #else
 #define ASM_CALL

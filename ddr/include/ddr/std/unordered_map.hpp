@@ -24,11 +24,11 @@
 
 #include "ddr/config.hpp"
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #include <ctype.h>
 #undef toupper
 #undef tolower
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 #if defined(OMR_HAVE_CXX11)
 #include <unordered_map>
@@ -41,9 +41,9 @@ using std::tr1::unordered_map;
 #error "Need std::unordered_map defined in TR1 or C++11."
 #endif /* defined(OMR_HAVE_CXX11) */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #define toupper(c)     (islower(c) ? (c & _XUPPER_ASCII) : c)
 #define tolower(c)     (isupper(c) ? (c | _XLOWER_ASCII) : c)
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 #endif /* DDR_UNORDERED_MAP */

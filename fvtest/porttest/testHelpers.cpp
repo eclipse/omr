@@ -295,7 +295,7 @@ verifyFileExists(struct OMRPortLibrary *portLibrary, const char *pltestFileName,
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 	portTestEnv->changeIndent(1);
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	char dumpName[EsMaxPath] = {0};
 
 	/* Replace trailing ".X&DS" on 64bit and add required "//" prefix */
@@ -315,7 +315,7 @@ verifyFileExists(struct OMRPortLibrary *portLibrary, const char *pltestFileName,
 		fclose(file);
 		rc = 0;
 	}
-#else /* defined(J9ZOS390) */
+#else /* (HOST_OS == OMR_ZOS) */
 	J9FileStat fileStat;
 	int32_t fileStatRC = 99;
 
@@ -333,7 +333,7 @@ verifyFileExists(struct OMRPortLibrary *portLibrary, const char *pltestFileName,
 		/* error in file_stat */
 		outputErrorMessage(OMRPORTLIB, pltestFileName, lineNumber, testName, "\nomrfile_stat call in verifyFileExists() returned %i: %s\n", fileStatRC, omrerror_last_error_message());
 	}
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 	portTestEnv->changeIndent(-1);
 	return rc;
@@ -449,7 +449,7 @@ raiseSEGV(OMRPortLibrary *portLibrary, void *arg)
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 	const char *testName = (const char *)arg;
 
-#if defined(OMR_OS_WINDOWS) || defined (J9ZOS390)
+#if (HOST_OS == OMR_WINDOWS) || defined (J9ZOS390)
 	/*
 	 * - Windows structured exception handling doesn't interact with raise().
 	 * - z/OS doesn't provide a value for the psw1 (PC) register when you use raise()
@@ -459,7 +459,7 @@ raiseSEGV(OMRPortLibrary *portLibrary, void *arg)
 	*ptr = -1;
 #else
 	raise(SIGSEGV);
-#endif /* defined(OMR_OS_WINDOWS) || defined (J9ZOS390) */
+#endif /* (HOST_OS == OMR_WINDOWS) || defined (J9ZOS390) */
 
 	outputErrorMessage(PORTTEST_ERROR_ARGS, "unexpectedly continued execution");
 

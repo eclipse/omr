@@ -30,18 +30,18 @@
  * correctly when it is located in a library.
  */
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <windows.h>
 #endif
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #include "atoe.h"
 #endif
 
 /* Define a macro for the name of the main function that takes char args */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #define CHARMAIN translated_main
 #else
 #define CHARMAIN main
@@ -52,7 +52,7 @@ extern "C" int omr_main_entry(int argc, char **argv, char **envp);
 int
 CHARMAIN(int argc, char **argv, char **envp)
 {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	/* translate argv strings to ascii */
 	iconv_init();
 	{
@@ -61,12 +61,12 @@ CHARMAIN(int argc, char **argv, char **envp)
 			argv[i] = e2a_string(argv[i]);
 		}
 	}
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 	return omr_main_entry(argc, argv, envp);
 }
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 int
 wmain(int argc, wchar_t **argv, wchar_t **envp)
 {
@@ -129,4 +129,4 @@ wmain(int argc, wchar_t **argv, wchar_t **envp)
 
 	return rc;
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */

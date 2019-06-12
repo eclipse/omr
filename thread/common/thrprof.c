@@ -44,22 +44,22 @@
 #include "ut_j9thr.h"
 
 /* for syscall getrusage() used in omrthread_get_process_times */
-#if defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || defined (J9ZOS390) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX)
 #include <errno.h> /* Examine errno codes. */
 #include <sys/time.h> /* Portability */
 #include <sys/resource.h>
-#endif /* defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || defined (J9ZOS390) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX) */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #include "omrgetthent.h"
 
 #define I32MAXVAL	0x7FFFFFFF
 #endif
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 /* pthread_getcpuclockid() is not always declared in pthread.h */
 extern int pthread_getcpuclockid(pthread_t thread_id, clockid_t *clock_id);
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #define STACK_PATTERN 0xBAADF00D
 
@@ -113,7 +113,7 @@ omrthread_get_cpu_time_ex(omrthread_t thread, int64_t *cpuTime)
 		return J9THREAD_ERR_NO_SUCH_THREAD;
 	}
 
-#if defined(OMR_OS_WINDOWS) && !defined(BREW)
+#if (HOST_OS == OMR_WINDOWS) && !defined(BREW)
 	{
 		intptr_t ret = 0;
 		FILETIME creationTime, exitTime, kernelTime, userTime;
@@ -144,7 +144,7 @@ omrthread_get_cpu_time_ex(omrthread_t thread, int64_t *cpuTime)
 		ret |= J9THREAD_ERR;
 		return ret;
 	}
-#endif	/* defined(OMR_OS_WINDOWS) && !defined(BREW) */
+#endif	/* (HOST_OS == OMR_WINDOWS) && !defined(BREW) */
 
 #ifdef AIXPPC
 	{
@@ -175,7 +175,7 @@ omrthread_get_cpu_time_ex(omrthread_t thread, int64_t *cpuTime)
 	}
 #endif
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 	{
 		intptr_t ret = 0;
 		int result;
@@ -208,9 +208,9 @@ omrthread_get_cpu_time_ex(omrthread_t thread, int64_t *cpuTime)
 		ret |= J9THREAD_ERR;
 		return ret;
 	}
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	{
 		intptr_t ret = 0;
 		struct j9pg_thread_data threadData;
@@ -311,7 +311,7 @@ omrthread_get_cpu_time_ex(omrthread_t thread, int64_t *cpuTime)
 	}
 #endif
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	{
 		mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
 		thread_basic_info_t tbi;
@@ -329,7 +329,7 @@ omrthread_get_cpu_time_ex(omrthread_t thread, int64_t *cpuTime)
 
 		return J9THREAD_SUCCESS;
 	}
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 	return J9THREAD_ERR;
 }
@@ -347,7 +347,7 @@ omrthread_get_self_cpu_time(omrthread_t self)
 {
 	ASSERT(omrthread_self() == self);
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	{
 		uint64_t time = 0;
 
@@ -369,7 +369,7 @@ omrthread_get_self_cpu_time(omrthread_t self)
 	 * Testing on various x86 and PPC Linuxes shows some improvement on RHEL5
 	 * and no noticeable degradation on older Linuxes.
 	 */
-#if defined(LINUX) && defined(CLOCK_THREAD_CPUTIME_ID)
+#if (HOST_OS == OMR_LINUX) && defined(CLOCK_THREAD_CPUTIME_ID)
 	{
 		struct timespec time;
 
@@ -377,7 +377,7 @@ omrthread_get_self_cpu_time(omrthread_t self)
 			return ((int64_t)time.tv_sec * 1000 * 1000 * 1000) + time.tv_nsec;
 		}
 	}
-#endif /* defined(LINUX) && defined(CLOCK_THREAD_CPUTIME_ID) */
+#endif /* (HOST_OS == OMR_LINUX) && defined(CLOCK_THREAD_CPUTIME_ID) */
 
 	return omrthread_get_cpu_time(self);
 }
@@ -396,7 +396,7 @@ omrthread_get_self_cpu_time(omrthread_t self)
 int64_t
 omrthread_get_user_time(omrthread_t thread)
 {
-#if defined(OMR_OS_WINDOWS) && !defined(BREW)
+#if (HOST_OS == OMR_WINDOWS) && !defined(BREW)
 
 	/* In Windows, the time spent in user mode is easily acquired.
 	 * Note that this function is not supported in Win95.
@@ -415,9 +415,9 @@ omrthread_get_user_time(omrthread_t thread)
 		return totalTime * 100;
 	}
 
-#endif	/* defined(OMR_OS_WINDOWS) && !defined(BREW) */
+#endif	/* (HOST_OS == OMR_WINDOWS) && !defined(BREW) */
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 
 	/* AIX provides a function call that returns an entire structure of
 	 * information about the thread.
@@ -462,7 +462,7 @@ omrthread_get_self_user_time(omrthread_t self)
 uintptr_t
 omrthread_get_handle(omrthread_t thread)
 {
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	/* Hack!! - If we do the simple cast (in the #else case) we get the following
 		compiler error in z/OS:
 			"ERROR CBC3117 ./thrprof.c:79    Operand must be a scalar type."
@@ -487,10 +487,10 @@ omrthread_get_handle(omrthread_t thread)
 void
 omrthread_enable_stack_usage(uintptr_t enable)
 {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	omrthread_library_t lib = GLOBAL_DATA(default_library);
 	lib->stack_usage = enable;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 }
 
 
@@ -506,9 +506,9 @@ omrthread_enable_stack_usage(uintptr_t enable)
 uintptr_t
 omrthread_get_stack_usage(omrthread_t thread)
 {
-#if defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || defined (J9ZOS390) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX)
 	return 0;
-#else /* defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX) */
+#else /* (HOST_OS == OMR_LINUX) || defined (J9ZOS390) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX) */
 	uintptr_t *tos = thread->tos;
 	uintptr_t count = thread->stacksize;
 
@@ -525,7 +525,7 @@ omrthread_get_stack_usage(omrthread_t thread)
 	}
 
 	return count;
-#endif /* defined(LINUX) || defined (J9ZOS390) || defined(AIXPPC) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || defined (J9ZOS390) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX) */
 }
 
 
@@ -544,7 +544,7 @@ void
 paint_stack(omrthread_t thread)
 {
 	/* Only supported on Windows */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	MEMORY_BASIC_INFORMATION memInfo;
 	SYSTEM_INFO sysInfo;
 	uintptr_t *curr;
@@ -567,7 +567,7 @@ paint_stack(omrthread_t thread)
 	/* Round up to the system page size. */
 	GetSystemInfo(&sysInfo);
 	thread->stacksize = ((uintptr_t)stack - (uintptr_t)thread->tos + sysInfo.dwPageSize) & ~((uintptr_t)sysInfo.dwPageSize - 1);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 }
 
 
@@ -617,7 +617,7 @@ omrthread_get_os_priority(omrthread_t thread, intptr_t *policy, intptr_t *priori
 		*policy = osPolicy;
 	}
 
-#elif defined(OMR_OS_WINDOWS) && !defined(BREW)
+#elif (HOST_OS == OMR_WINDOWS) && !defined(BREW)
 
 	*priority = GetThreadPriority(thread->handle);
 	if (*priority == THREAD_PRIORITY_ERROR_RETURN) {
@@ -645,7 +645,7 @@ omrthread_get_os_priority(omrthread_t thread, intptr_t *policy, intptr_t *priori
 		*policy = 0;
 		*priority = taskPriority;
 	}
-#elif defined(J9ZOS390)
+#elif (HOST_OS == OMR_ZOS)
 	*priority = 0;
 	*policy = 0;
 #else
@@ -666,7 +666,7 @@ omrthread_get_os_priority(omrthread_t thread, intptr_t *policy, intptr_t *priori
 int64_t
 omrthread_get_process_cpu_time(void)
 {
-#if defined(OMR_OS_WINDOWS) && !defined(BREW)
+#if (HOST_OS == OMR_WINDOWS) && !defined(BREW)
 	FILETIME creationTime, exitTime, kernelTime, userTime;
 	int64_t totalTime;
 
@@ -677,7 +677,7 @@ omrthread_get_process_cpu_time(void)
 		/* totalTime is in 100's of nanos.  Convert to nanos */
 		return totalTime * GET_PROCESS_TIMES_IN_NANO;
 	}
-#endif	/* defined(OMR_OS_WINDOWS) && !defined(BREW) */
+#endif	/* (HOST_OS == OMR_WINDOWS) && !defined(BREW) */
 
 	return -1;
 
@@ -692,7 +692,7 @@ intptr_t
 omrthread_get_process_times(omrthread_process_time_t *processTime)
 {
 	if (processTime != NULL) {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 
 		/* We don't use creationTime and exitTime but GetProcessTimes() needs them */
 		FILETIME creationTime;
@@ -719,9 +719,9 @@ omrthread_get_process_times(omrthread_process_time_t *processTime)
 			Trc_THR_ThreadGetProcessTimes_GetProcessTimesFailed(GetLastError());
 			return -2;
 		}
-#endif	/* defined(OMR_OS_WINDOWS) */
+#endif	/* (HOST_OS == OMR_WINDOWS) */
 
-#if defined(LINUX) || defined(AIXPPC) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX)
 		struct rusage rUsage;
 		memset(&rUsage, 0, sizeof(rUsage));
 
@@ -737,7 +737,7 @@ omrthread_get_process_times(omrthread_process_time_t *processTime)
 			Trc_THR_ThreadGetProcessTimes_getrusageFailed(errno);
 			return -2;
 		}
-#endif /* defined(LINUX) || defined(AIXPPC) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX) */
 
 #if defined (J9ZOS390)
 		/* Input buffer, pointer to buffer, and size of the buffer area. */
@@ -823,7 +823,7 @@ omrthread_get_process_times(omrthread_process_time_t *processTime)
 uint64_t
 omrthread_get_hires_clock(void)
 {
-#if defined(LINUX) && (defined(J9HAMMER) || defined(J9X86))
+#if (HOST_OS == OMR_LINUX) && (defined(J9HAMMER) || defined(J9X86))
 #define J9TIME_NANOSECONDS_PER_SECOND	J9CONST_U64(1000000000)
 	struct timespec ts;
 	uint64_t hiresTime = 0;
@@ -833,7 +833,7 @@ omrthread_get_hires_clock(void)
 	}
 
 	return hiresTime;
-#elif defined(OMR_OS_WINDOWS) /* defined(LINUX) && (defined(J9HAMMER) || defined(J9X86)) */
+#elif (HOST_OS == OMR_WINDOWS) /* (HOST_OS == OMR_LINUX) && (defined(J9HAMMER) || defined(J9X86)) */
 	LARGE_INTEGER i;
 
 	if (QueryPerformanceCounter(&i)) {
@@ -841,7 +841,7 @@ omrthread_get_hires_clock(void)
 	} else {
 		return (uint64_t)GetTickCount();
 	}
-#elif defined(OSX) /* defined(OMR_OS_WINDOWS) */
+#elif (HOST_OS == OMR_OSX) /* (HOST_OS == OMR_WINDOWS) */
 #define J9TIME_NANOSECONDS_PER_SECOND	J9CONST_U64(1000000000)
 	omrthread_library_t lib = GLOBAL_DATA(default_library);
 	mach_timespec_t mt;
@@ -854,9 +854,9 @@ omrthread_get_hires_clock(void)
 	}
 
 	return hiresTime;
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 	return GET_HIRES_CLOCK();
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 }
 
 #define THREAD_WALK_RESOURCE_USAGE_MUTEX_HELD	0x1

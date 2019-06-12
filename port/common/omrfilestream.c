@@ -41,7 +41,7 @@
 #include "ut_omrport.h"
 
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /* Needed for a translation table from ascii -> ebcdic */
 #include "atoe.h"
 
@@ -56,7 +56,7 @@
 #undef fread
 #endif
 
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 /**
  * @internal
@@ -94,12 +94,12 @@ EsTranslateOpenFlags(int32_t flags)
 	/* Ignore all other flags: they are taken care of earlier */
 	flags &= (EsOpenWrite | EsOpenRead | EsOpenAppend);
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	/* On Z/OS, stdio functions are shadowed to take ASCII strings, and turn them into EBCDIC.
 	 * Since fdopen is a POSIX function, it needs EBCDIC strings.
 	 */
 #pragma convlit(suspend)
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 	switch (flags) {
 	case (EsOpenWrite):
@@ -118,9 +118,9 @@ EsTranslateOpenFlags(int32_t flags)
 		return NULL;
 	}
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #pragma convlit(resume)
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 }
 

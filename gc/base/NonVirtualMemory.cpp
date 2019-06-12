@@ -53,7 +53,7 @@ MM_NonVirtualMemory::newInstance(MM_EnvironmentBase* env, uintptr_t heapAlignmen
 	return vmem;
 }
 
-#if (defined(AIXPPC) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF)
+#if ((HOST_OS == OMR_AIX) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF)
 /**
  * Allocate a chunk of memory.
  * @param size The number of bytes to allocate.
@@ -114,4 +114,4 @@ MM_NonVirtualMemory::setNumaAffinity(uintptr_t numaNode, void* address, uintptr_
 	return true;
 }
 
-#endif /* (defined(AIXPPC) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF) */
+#endif /* ((HOST_OS == OMR_AIX) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF) */

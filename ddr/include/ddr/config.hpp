@@ -27,20 +27,20 @@
 
 /* Enable standard limit macros on z/OS. */
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /* We need to define these for the limit macros to get defined in z/OS */
 #define _ISOC99_SOURCE 1
 #define __STDC_LIMIT_MACROS 1
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 /* C++ TR1 support */
 
-#if defined(AIXPPC) || defined(J9ZOS390)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_ZOS)
 #define __IBMCPP_TR1__ 1
 #define OMR_HAVE_TR1 1
 #else
 #define OMR_HAVE_CXX11 1
-#endif /* !defined(AIXPPC) && !defined(J9ZOS390) */
+#endif /* !(HOST_OS == OMR_AIX) && !(HOST_OS == OMR_ZOS) */
 
 /* Why is this disabled? */
 

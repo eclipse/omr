@@ -262,7 +262,7 @@
 	#define J9_BP r15
 	#define J9VM_STRUCT r13
 	#define J9SP r14
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 	#define RTOC r12
 #else
 	#define RTOC r2

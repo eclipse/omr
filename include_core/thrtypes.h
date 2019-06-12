@@ -37,10 +37,10 @@ typedef struct J9Thread {
 	J9OSCond condition;
 	J9OSMutex mutex;
 	uintptr_t stacksize;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	uintptr_t *tos;
 #endif /* OMR_OS_WINDOWS */
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 	void *jumpBuffer;
 #endif /* LINUX */
 #if defined(OMR_PORT_NUMA_SUPPORT)
@@ -48,10 +48,10 @@ typedef struct J9Thread {
 #endif /* OMR_PORT_NUMA_SUPPORT */
 	struct J9ThreadMonitor *destroyed_monitor_head;
 	struct J9ThreadMonitor *destroyed_monitor_tail;
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 	omrthread_os_errno_t os_errno2;
 #endif   /* J9ZOS390 */
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	uintptr_t key_deletion_attempts;
 #endif /* !OMR_OS_WINDOWS */
 } J9Thread;
@@ -94,7 +94,7 @@ typedef struct J9ThreadLibrary {
 	struct J9ThreadMonitorPool *monitor_pool;
 	struct J9Pool *thread_pool;
 	uintptr_t threadCount;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	uintptr_t stack_usage;
 #endif /* OMR_OS_WINDOWS */
 	intptr_t initStatus;
@@ -148,9 +148,9 @@ typedef struct J9ThreadLibrary {
 	struct J9Pool *rwmutexPool;
 #endif /* defined(OMR_THR_FORK_SUPPORT) */
 	omrthread_attr_t systemThreadAttr;
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	clock_serv_t clockService;
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 } J9ThreadLibrary;
 
 /*

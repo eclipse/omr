@@ -63,15 +63,15 @@ class MM_MemorySubSpace;
 #define LOA_EXPAND_TRIGGER2 ((double)0.50)
 #define LOA_EXPAND_TRGGER3 5
 
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 #if defined(OMR_ENV_DATA64)
 #define LOA_EMPTY ((void*)0x7FFFFFFFFFFFFFFF)
 #else /* !OMR_ENV_DATA64 */
 #define LOA_EMPTY ((void*)0x7FFFFFFF)
 #endif /* OMR_ENV_DATA64 */
-#else /* !defined(J9ZOS390)*/
+#else /* !(HOST_OS == OMR_ZOS)*/
 #define LOA_EMPTY ((void*)-1)
-#endif /* !defined(J9ZOS390) */
+#endif /* !(HOST_OS == OMR_ZOS) */
 
 /**
  * @todo Provide class documentation

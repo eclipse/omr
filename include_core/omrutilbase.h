@@ -140,7 +140,7 @@ subtractAtomic(volatile uintptr_t *address, uintptr_t value);
 uintptr_t setAtomic(volatile uintptr_t *address, uintptr_t value);
 
 /* ---------------- cas8help.s ---------------- */
-#if !defined(OMR_ENV_DATA64) && (defined(AIXPPC) || defined(LINUXPPC))
+#if !defined(OMR_ENV_DATA64) && ((HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX))
 
 /**
  * @brief Perform a compare and swap of a 64-bit value on a 32-bit system.
@@ -172,7 +172,7 @@ uint64_t
 getTimebase(void);
 
 /* ---------------- zbarrier.s ---------------- */
-#if defined(J9ZOS390)
+#if (HOST_OS == OMR_ZOS)
 /**
  * @brief zOS Read-write barrier.
  *
@@ -182,7 +182,7 @@ getTimebase(void);
  */
 void
 J9ZOSRWB(void);
-#endif /* defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_ZOS) */
 
 #if defined(__cplusplus)
 } /* extern "C" */

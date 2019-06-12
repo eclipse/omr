@@ -379,7 +379,7 @@ void arm64CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t
 #endif /* TR_TARGET_ARM64 */
 
 
-#if defined(J9ZOS390) && defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT)
+#if (HOST_OS == OMR_ZOS) && defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT)
 
 //-----------------------------------------------------------------------------
 //   zOS 31 Bit - "plain" Multi Code Cache Support
@@ -398,7 +398,7 @@ void s390zOS31CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int
    *numHelpers = 0;
    }
 
-#elif defined(J9ZOS390) && defined(TR_TARGET_64BIT) && defined(TR_TARGET_S390)
+#elif (HOST_OS == OMR_ZOS) && defined(TR_TARGET_64BIT) && defined(TR_TARGET_S390)
 
 //-----------------------------------------------------------------------------
 //   zOS 64 Bit - "plain" Multi Code Cache Support
@@ -419,7 +419,7 @@ void s390zOS64CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int
    }
 
 
-#elif !defined(J9ZOS390) && defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT)
+#elif !(HOST_OS == OMR_ZOS) && defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT)
 
 //-----------------------------------------------------------------------------
 //   zLinux 31 Bit - "plain" Multi Code Cache Support
@@ -438,7 +438,7 @@ void s390zLinux31CodeCacheParameters(int32_t *trampolineSize, void **callBacks, 
    *numHelpers = 0;
    }
 
-#elif defined(TR_TARGET_S390) && defined(TR_TARGET_64BIT) && !defined(J9ZOS390)
+#elif defined(TR_TARGET_S390) && defined(TR_TARGET_64BIT) && !(HOST_OS == OMR_ZOS)
 
 // Size of a Trampoline (Padded to be 8-byte aligned)
 #define TRAMPOLINE_SIZE 24
@@ -572,7 +572,7 @@ void setupCodeCacheParameters(int32_t *trampolineSize, OMR::CodeCacheCodeGenCall
       }
 #endif
 
-#if defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT) && defined(J9ZOS390)
+#if defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT) && (HOST_OS == OMR_ZOS)
    // zOS 31 code cache support.
    if (TR::Compiler->target.cpu.isZ())
       {
@@ -580,7 +580,7 @@ void setupCodeCacheParameters(int32_t *trampolineSize, OMR::CodeCacheCodeGenCall
       }
 #endif
 
-#if defined(TR_TARGET_S390) && defined(TR_TARGET_64BIT) && defined(J9ZOS390)
+#if defined(TR_TARGET_S390) && defined(TR_TARGET_64BIT) && (HOST_OS == OMR_ZOS)
    // zOS 64 code cache support.
    if (TR::Compiler->target.cpu.isZ())
       {
@@ -588,7 +588,7 @@ void setupCodeCacheParameters(int32_t *trampolineSize, OMR::CodeCacheCodeGenCall
       }
 #endif
 
-#if defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT) && !defined(J9ZOS390)
+#if defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT) && !(HOST_OS == OMR_ZOS)
    // zLinux 31 code cache support.
    if (TR::Compiler->target.cpu.isZ())
       {
@@ -596,7 +596,7 @@ void setupCodeCacheParameters(int32_t *trampolineSize, OMR::CodeCacheCodeGenCall
       }
 #endif
 
-#if defined(TR_TARGET_S390) && defined(TR_TARGET_64BIT) && !defined(J9ZOS390)
+#if defined(TR_TARGET_S390) && defined(TR_TARGET_64BIT) && !(HOST_OS == OMR_ZOS)
    // zLinux 64 code cache support.
    if (TR::Compiler->target.cpu.isZ())
       {

@@ -69,7 +69,7 @@ OMRAgent_OnLoad(OMR_TI const *ti, OMR_VM *vm, char const *options, OMR_AgentCall
 			omrtty_printf("%s: BindCurrentThread passed, vmThread=0x%p\n", agentName, vmThread);
 		}
 	}
-#if !defined(J9ZOS390)
+#if !(HOST_OS == OMR_ZOS)
 	/**
 	 * Exclude z/OS when testing GetProcessCpuLoad() and GetSystemCpuLoad(). Existing implementation of
 	 * omrsysinfo_get_CPU_utilization(), which the two APIs rely on, is problematic on z/OS. (details see JAZZ103 53507)
@@ -77,7 +77,7 @@ OMRAgent_OnLoad(OMR_TI const *ti, OMR_VM *vm, char const *options, OMR_AgentCall
 	if (OMR_ERROR_NONE == rc) {
 		rc = OMRTEST_PRINT_ERROR(testTICpuLoad(vmThread, ti));
 	}
-#endif /* !defined(J9ZOS390) */
+#endif /* !(HOST_OS == OMR_ZOS) */
 	if (OMR_ERROR_NONE == rc) {
 		rc = ti->UnbindCurrentThread(vmThread);
 		if (OMR_ERROR_NONE != rc) {
@@ -441,11 +441,11 @@ systemTimeCPUBurn(void)
 	FILE *tempFile = NULL;
 
 	for (j = 0; j < NUM_ITERATIONS_SYSTEM_CPU_BURN; j++) {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 		tempFile = fopen("nul", "w");
 #else
 		tempFile = fopen("/dev/null", "w");
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 		fwrite("garbage", 1, sizeof("garbage"), tempFile);
 		fclose(tempFile);
 	}
