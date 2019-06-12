@@ -50,8 +50,8 @@
 #ifndef OMR_ZOS
 #  define OMR_ZOS     204
 #endif
-#ifndef OMR_OSX
-#  define OMR_OSX     205
+#ifndef OMR_MACOS
+#  define OMR_MACOS     205
 #endif
 
 /* Architectures */
@@ -103,7 +103,7 @@
 #elif defined(__MVS__)
 #  define HOST_OS OMR_ZOS
 #elif defined(__APPLE__) && defined(__MACH__)
-#  define HOST_OS OMR_OSX
+#  define HOST_OS OMR_MACOS
 #else
 #  error "defines.h: unknown OS"
 #endif
