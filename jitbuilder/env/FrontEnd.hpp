@@ -68,33 +68,6 @@ class FrontEnd : public TR::FEBase<FrontEnd>
                                             TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance);
 
 
-   void encodeStackMap(
-      TR_GCStackMap *map,
-      uint8_t *location,
-      bool encodeFourByteOffsets,
-      uint32_t bytesPerStackMap,
-      TR::Compilation *comp);
-
-   bool mapsAreIdentical(
-      TR_GCStackMap *mapCursor,
-      TR_GCStackMap *nextMapCursor,
-      TR::GCStackAtlas *stackAtlas,
-      TR::Compilation *comp);
-
-   uint8_t *createStackAtlas(
-      bool encodeFourByteOffsets,
-      uint32_t numberOfSlotsMapped,
-      uint32_t bytesPerStackMap,
-      uint8_t *encodedAtlasBaseAddress,
-      uint32_t atlasSizeInBytes,
-      TR::Compilation *comp);
-
-   uint32_t
-      calculateSizeOfStackAtlas(
-      bool encodeFourByteOffsets,
-      uint32_t numberOfSlotsMapped,
-      uint32_t bytesPerStackMap,
-      TR::Compilation *comp);
 
    };
 
