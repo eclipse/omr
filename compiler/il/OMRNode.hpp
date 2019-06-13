@@ -191,7 +191,7 @@ public:
    static TR::Node *createWithSymRef(TR::ILOpCodes op, uint16_t numChildren, TR::SymbolReference * symRef);
    static TR::Node *createWithSymRef(TR::ILOpCodes op, uint16_t numChildren, TR::SymbolReference * symRef, uintptr_t extraChildrenForFixup);
 
-#if defined(_MSC_VER) || defined(LINUXPPC)
+#if defined(_MSC_VER) || (HOST_OS == OMR_LINUX)
 private:
    static TR::Node *recreateWithoutSymRef_va_args(TR::Node *originalNode, TR::ILOpCodes op, uint16_t numChildren, uint16_t numChildArgs, va_list &args);
    static TR::Node *createWithoutSymRef(TR::ILOpCodes op, uint16_t numChildren, uint16_t numChildArgs, ...);

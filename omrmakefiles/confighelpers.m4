@@ -72,7 +72,7 @@ AC_DEFUN([OMRCFG_CATEGORIZE_TOOLCHAIN],
 #error not an msvc compiler
 #endif]])], [$1=msvc]))
 	AS_IF([test "x$$1" = "x"],
-		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if !(defined(__xlC__) || (defined(__MVS__) && defined(__COMPILER_VER__)))
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if !(defined(__xlC__) || (defined(__MVC__) && defined(__COMPILER_VER__)))
 #error not an xlc compiler
 #endif]])], [$1=xlc]))
 	AS_IF([test "x$$1" = "x"],

@@ -22,13 +22,13 @@
 #include "omrcfg.h"
 
 #include <limits.h>
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* Undefine the winsockapi because winsock2 defines it.  Removes warnings. */
 #if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
 #undef _WINSOCKAPI_
 #endif
 #include <winsock2.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 #include "omrTest.h"
 #include "omrport.h"
 #include "portTestHelpers.hpp"
@@ -40,13 +40,13 @@ protected:
 	SetUp()
 	{
 		::testing::Test::SetUp();
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 		/* initialize sockets so that we can use gethostname() */
 		WORD wsaVersionRequested = MAKEWORD(2, 2);
 		WSADATA wsaData;
 		int wsaErr = WSAStartup(wsaVersionRequested, &wsaData);
 		ASSERT_EQ(0, wsaErr);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 		/* generate machine specific file name to prevent conflict between multiple tests running on shared drive */
 		OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
@@ -65,9 +65,9 @@ protected:
 		omrfile_unlink(fileName);
 		delete[] fileName;
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 		WSACleanup();
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 		::testing::Test::TearDown();
 	}
 

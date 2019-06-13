@@ -40,7 +40,7 @@
 #include <builtins.h>
 #endif
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #if defined(__xlC__)
 #include <builtins.h>
 /* 
@@ -62,9 +62,9 @@
 /* Bytecode for: nop */
 #pragma mc_func __ppc_nop  {"60000000"}
 #endif /* #if defined(__xlC__) */
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */
 
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 #if defined(__xlC__)
 #include <builtins.h>
 /* 
@@ -86,7 +86,7 @@
 /* Bytecode for: nop */
 #pragma mc_func __ppc_nop  {"60000000"}
 #endif /* #if defined(__xlC__) */
-#endif /* defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #if defined(_MSC_VER)
 #include <intrin.h>
@@ -103,7 +103,7 @@
  * Do not call directly, use the methods from VM_AtomicSupport.
  */
 #if !defined(ATOMIC_SUPPORT_STUB)
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 /* The default hardware priorities on AIX is MEDIUM(4).
  * For AIX, dropSMT should drop to LOW(2) and 
  * restoreSMT should raise back to MEDIUM(4)
@@ -115,7 +115,7 @@
 		inline void __dropSMT() {  __asm__ volatile ("or 1,1,1"); }
 		inline void __restoreSMT() {  __asm__ volatile ("or 2,2,2"); }
 #endif
-#elif defined(LINUXPPC) /* defined(AIXPPC) */
+#elif (HOST_OS == OMR_LINUX) /* (HOST_OS == OMR_AIX) */
 /* The default hardware priorities on LINUXPPC is MEDIUM-LOW(3).
  * For LINUXPPC, dropSMT should drop to VERY-LOW(1) and 
  * restoreSMT should raise back to MEDIUM-LOW(3)
@@ -138,7 +138,7 @@
 
 #if defined(_MSC_VER)
 		/* use compiler intrinsic */
-#elif defined(LINUXPPC) || defined(AIXPPC)
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX)
 #if defined(__xlC__)
 		/* XL compiler complained about generated assembly, use machine code instead. */
 		inline void __nop() { __ppc_nop(); }
@@ -147,7 +147,7 @@
 		inline void __nop() { __asm__ volatile ("nop"); }
 		inline void __yield() { __asm__ volatile ("or 27,27,27"); }
 #endif
-#elif defined(LINUX) && (defined(S390) || defined(S39064))
+#elif (HOST_OS == OMR_LINUX) && (defined(S390) || defined(S39064))
 		/*
 		 * nop instruction requires operand https://bugzilla.redhat.com/show_bug.cgi?id=506417
 		 */
@@ -156,7 +156,7 @@
 		inline void __nop() { __asm__ volatile ("nop"); }
 #endif
 
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 #if defined(__GNUC__) && !defined(__clang__)
 	/* GCC compiler does not provide the same intrinsics. */
 
@@ -252,7 +252,7 @@ public:
 	readWriteBarrier()
 	{
 #if !defined(ATOMIC_SUPPORT_STUB)
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 		__sync();
 #elif defined(_MSC_VER)
 		_ReadWriteBarrier();
@@ -281,7 +281,7 @@ public:
 		__fence();
 		J9ZOSRWB();
 		__fence();
-#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) */
 #endif /* !defined(ATOMIC_SUPPORT_STUB) */
 	}
 
@@ -297,7 +297,7 @@ public:
 	{
 	/* Neither x86 nor S390 require a write barrier - the compiler fence is sufficient */
 #if !defined(ATOMIC_SUPPORT_STUB)
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 		__lwsync();
 #elif defined(_MSC_VER)
 		_ReadWriteBarrier();
@@ -311,7 +311,7 @@ public:
 #endif /* defined(ARM) */
 #elif defined(J9ZOS390)
 		__fence();
-#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) */
 #endif /* !defined(ATOMIC_SUPPORT_STUB) */
 	}
 
@@ -327,7 +327,7 @@ public:
 	{
 	/* Neither x86 nor S390 require a read barrier - the compiler fence is sufficient */
 #if !defined(ATOMIC_SUPPORT_STUB)
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 		__isync();
 #elif defined(_MSC_VER)
 		_ReadWriteBarrier();
@@ -341,7 +341,7 @@ public:
 #endif /* defined(ARM) */
 #elif defined(J9ZOS390)
 		__fence();
-#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) */
 #endif /* !defined(ATOMIC_SUPPORT_STUB) */
 	}
 
@@ -359,11 +359,11 @@ public:
 	VMINLINE static void
 	monitorEnterBarrier()
 	{
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 		readWriteBarrier();
-#else /* defined(AIXPPC) || defined(LINUXPPC) */
+#else /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) */
 		readBarrier();
-#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) */
 	}
 
 	/**
@@ -858,9 +858,9 @@ public:
 	dropSMTThreadPriority()
 	{
 #if !defined(ATOMIC_SUPPORT_STUB)
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 		__dropSMT();
-#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) */
 #endif /* !defined(ATOMIC_SUPPORT_STUB) */
 	}
 
@@ -871,9 +871,9 @@ public:
 	restoreSMTThreadPriority()
 	{
 #if !defined(ATOMIC_SUPPORT_STUB)
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 		__restoreSMT();
-#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) */
 #endif /* !defined(ATOMIC_SUPPORT_STUB) */
 	}
 

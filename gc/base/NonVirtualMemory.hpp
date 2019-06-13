@@ -64,16 +64,16 @@ protected:
 	{
 		_typeId = __FUNCTION__;
 	};
-#if (defined(AIXPPC) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF)
+#if ((HOST_OS == OMR_AIX) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF)
 	virtual void tearDown(MM_EnvironmentBase* env);
 	virtual void* reserveMemory(J9PortVmemParams* params);
-#endif /* (defined(AIXPPC) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF) */
+#endif /* ((HOST_OS == OMR_AIX) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF) */
 public:
-#if (defined(AIXPPC) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF)
+#if ((HOST_OS == OMR_AIX) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF)
 	virtual bool commitMemory(void* address, uintptr_t size);
 	virtual bool decommitMemory(void* address, uintptr_t size, void* lowValidAddress, void* highValidAddress);
 	virtual bool setNumaAffinity(uintptr_t numaNode, void* address, uintptr_t byteAmount);
-#endif /* (defined(AIXPPC) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF) */
+#endif /* ((HOST_OS == OMR_AIX) && (!defined(PPC64) || defined(OMR_GC_REALTIME))) || defined(J9ZOS39064) || defined(OMRZTPF) */
 
 public:
 /*

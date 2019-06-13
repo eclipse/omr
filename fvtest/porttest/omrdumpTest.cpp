@@ -33,18 +33,18 @@
 #include <string.h>
 #include <stdio.h>
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #include <sys/types.h>
 #include <sys/var.h>
 #endif
 
 #include <signal.h>
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* for getcwd() */
 #include <direct.h>
 #define getcwd _getcwd
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "testHelpers.hpp"
 #include "omrport.h"
@@ -121,7 +121,7 @@ TEST(PortDumpTest, dump_test_create_dump_with_NO_name)
 	uintptr_t rc = 99;
 	char coreFileName[EsMaxPath];
 	BOOLEAN doFileVerification = FALSE;
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	struct vario myvar;
 	int sys_parmRC;
 #endif
@@ -150,7 +150,7 @@ TEST(PortDumpTest, dump_test_create_dump_with_NO_name)
 		portTestEnv->log("omrdump_create claims to have written a core file to: %s\n", coreFileName);
 
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 		/* We defer to fork abort on AIX machines that don't have "Enable full CORE dump" enabled in smit,
 		 * in which case omrdump_create will not return the filename.
 		 * So, only check for a specific filename if we are getting full core dumps */
@@ -160,9 +160,9 @@ TEST(PortDumpTest, dump_test_create_dump_with_NO_name)
 
 			doFileVerification = TRUE;
 		}
-#else /* defined(AIXPPC) */
+#else /* (HOST_OS == OMR_AIX) */
 		doFileVerification = TRUE;
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */
 		if (doFileVerification) {
 			verifyFileRC = verifyFileExists(PORTTEST_ERROR_ARGS, coreFileName);
 			if (verifyFileRC == 0) {

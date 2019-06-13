@@ -104,14 +104,14 @@ omrport_control(struct OMRPortLibrary *portLibrary, const char *key, uintptr_t v
 		return 0;
 	}
 
-#if defined(OMR_OS_WINDOWS) && !defined(OMR_ENV_DATA64)
+#if (HOST_OS == OMR_WINDOWS) && !defined(OMR_ENV_DATA64)
 	if (!strcmp("SIG_INTERNAL_HANDLER", key)) {
 		/* used by optimized code to implement fast signal handling on Windows */
 		extern int structuredExceptionHandler(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, void *handler_arg, uint32_t flags, EXCEPTION_POINTERS *exceptionInfo);
 		*(int (**)(struct OMRPortLibrary *, omrsig_handler_fn, void *, uint32_t, EXCEPTION_POINTERS *))value = structuredExceptionHandler;
 		return 0;
 	}
-#endif /* defined(OMR_OS_WINDOWS) && !defined(OMR_ENV_DATA64) */
+#endif /* (HOST_OS == OMR_WINDOWS) && !defined(OMR_ENV_DATA64) */
 
 #if defined(OMR_PORT_ZOS_CEEHDLRSUPPORT)
 	if (!strcmp("SIG_INTERNAL_HANDLER", key)) {
@@ -265,7 +265,7 @@ omrport_control(struct OMRPortLibrary *portLibrary, const char *key, uintptr_t v
 		}
 	}
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	/* OMRPORT_CTLDATA_AIX_PROC_ATTR key is used only on AIX systems */
 	if (0 == strcmp(OMRPORT_CTLDATA_AIX_PROC_ATTR, key)) {
 		return (int32_t)portLibrary->portGlobals->control.aix_proc_attr;

@@ -21,13 +21,13 @@
 
 #include "omrcfg.h"
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* Undefine the winsockapi because winsock2 defines it.  Removes warnings. */
 #if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
 #undef _WINSOCKAPI_
 #endif
 #include <winsock2.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "omrport.h"
 #include "omr.h"
@@ -44,21 +44,21 @@ protected:
 	SetUp()
 	{
 		OMRTEST_ASSERT_ERROR_NONE(omrTestVMInit(&testVM, rasTestEnv->getPortLibrary()));
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 		/* initialize sockets so that we can use gethostname() */
 		WORD wsaVersionRequested = MAKEWORD(2, 2);
 		WSADATA wsaData;
 		int wsaErr = WSAStartup(wsaVersionRequested, &wsaData);
 		ASSERT_EQ(0, wsaErr);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	}
 
 	virtual void
 	TearDown()
 	{
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 		WSACleanup();
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 		OMRTEST_ASSERT_ERROR_NONE(omrTestVMFini(&testVM));
 	}
 
@@ -170,13 +170,13 @@ TEST_F(RASAgentNegativeTest, CorruptedAgent)
 	 *  for Unix, fileName = libcorruptedAgent_<hostname>.so
 	 *  for OSX, fileName = libcorruptedAgent_<hostname>.dylib
 	 */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	omrstr_printf(fileName, sizeof(fileName), "%s.dll", agentName);
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 	omrstr_printf(fileName, sizeof(fileName), "lib%s.dylib", agentName);
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 	omrstr_printf(fileName, sizeof(fileName), "lib%s.so", agentName);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	/* create the empty agent file with permission 751*/
 	fileDescriptor = omrfile_open(fileName, EsOpenCreate | EsOpenWrite, 0751);

@@ -34,8 +34,8 @@
 
 #if defined(SUPPORTS_THREAD_LOCAL)
 
-#if defined(OMR_OS_WINDOWS) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(AIXPPC)
- #if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS) || ((HOST_OS == OMR_LINUX) && !defined(OMRZTPF)) || (HOST_OS == OMR_OSX) || (HOST_OS == OMR_AIX)
+ #if (HOST_OS == OMR_WINDOWS)
   #include "windows.h"
   #define tlsDeclare(type, variable) extern DWORD variable
   #define tlsDefine(type, variable) DWORD variable = TLS_OUT_OF_INDEXES
@@ -43,15 +43,15 @@
   #define tlsFree(variable)  (TlsFree(variable))
   #define tlsSet(variable, value) TlsSetValue((variable), value)
   #define tlsGet(variable, type) ((type)TlsGetValue(variable))
- #else /* if defined(LINUX) || defined(AIXPPC) */
+ #else /* if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) */
   #define tlsDeclare(type, variable) extern __thread type variable
   #define tlsDefine(type, variable) __thread type variable = NULL
   #define tlsAlloc(variable) // not required on win, linux or AIX
   #define tlsFree(variable)  // not required on win, linux or AIX
   #define tlsSet(variable, value) variable = value
   #define tlsGet(variable, type) (variable)
- #endif /* defined(OMR_OS_WINDOWS) */
-#else /* !(defined(OMR_OS_WINDOWS) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(AIXPPC)) */  /* Mainly for defined(OMRZTPF) or defined(J9ZOS390) */
+ #endif /* (HOST_OS == OMR_WINDOWS) */
+#else /* !((HOST_OS == OMR_WINDOWS) || ((HOST_OS == OMR_LINUX) && !defined(OMRZTPF)) || (HOST_OS == OMR_OSX) || (HOST_OS == OMR_AIX)) */  /* Mainly for defined(OMRZTPF) or defined(J9ZOS390) */
  #include <pthread.h>
 
  #define tlsDeclare(type, variable) extern pthread_key_t variable
@@ -64,7 +64,7 @@
  #else
   #define tlsGet(variable, type) ((type) pthread_getspecific(variable))
  #endif
-#endif /* defined(OMR_OS_WINDOWS) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_WINDOWS) || ((HOST_OS == OMR_LINUX) && !defined(OMRZTPF)) || (HOST_OS == OMR_OSX) || (HOST_OS == OMR_AIX) */
 
 #else /* !defined(SUPPORTS_THREAD_LOCAL) */
  #define tlsDeclare(type, variable) extern type variable

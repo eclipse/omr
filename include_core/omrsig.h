@@ -21,34 +21,34 @@
  *******************************************************************************/
 
 #include <signal.h>
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* windows.h defined UDATA.  Ignore its definition */
 #define UDATA UDATA_win32_
 #include <windows.h>
 #undef UDATA	/* this is safe because our UDATA is a typedef, not a macro */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 #define __THROW
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 typedef __sighandler_t sighandler_t;
-#elif defined(LINUX) || defined(OSX)
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 typedef void (*sighandler_t)(int sig);
-#elif defined(J9ZOS390) || defined(AIXPPC)
+#elif defined(J9ZOS390) || (HOST_OS == OMR_AIX)
 typedef void (*sighandler_t)(int sig);
 #define __THROW
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
 /* Use sig_handler_t instead of sighandler_t for Windows. Define it for compatibility. */
 #define sig_handler_t sighandler_t
 typedef void (__cdecl *sighandler_t)(int signum);
 #define __THROW
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #define OMRSIG_RC_ERROR -1
 #define OMRSIG_RC_SIGNAL_HANDLED 0
@@ -80,11 +80,11 @@ int omrsig_handler(int sig, void *siginfo, void *uc);
  */
 sighandler_t omrsig_primary_signal(int signum, sighandler_t handler);
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 
 _CRTIMP void (__cdecl * __cdecl signal(_In_ int _SigNum, _In_opt_ void (__cdecl * _Func)(int)))(int);
 
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 
 /**
  * Register a primary signal handler function, emulating the behavior, parameters, and return of sigaction().
@@ -108,13 +108,13 @@ sighandler_t bsd_signal(int signum, sighandler_t handler) __THROW;
 #if !defined(J9ZOS390)
 sighandler_t sysv_signal(int signum, sighandler_t handler) __THROW;
 #endif /* !defined(J9ZOS390) */
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 __sighandler_t __sysv_signal(int sig, __sighandler_t handler) __THROW;
 sighandler_t ssignal(int sig, sighandler_t handler) __THROW;
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 #if defined(J9ZOS390)
 int __sigactionset(size_t newct, const __sigactionset_t newsets[], size_t *oldct, __sigactionset_t oldsets[], int options);

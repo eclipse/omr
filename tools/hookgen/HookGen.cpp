@@ -25,10 +25,10 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <windows.h>
 #define strdup _strdup
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "HookGen.hpp"
 #include "pugixml.hpp"
@@ -335,7 +335,7 @@ char *
 HookGen::getAbsolutePath(const char *filename)
 {
 	char *absolutePath = NULL;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	char PATH_SEPARATOR = '\\';
 	char resolved_path[MAX_PATH];
 	DWORD retval = 0;
@@ -352,7 +352,7 @@ HookGen::getAbsolutePath(const char *filename)
 	if (NULL == realpath(filename, resolved_path)) {
 		return absolutePath;
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	char *chopped = strrchr(resolved_path, PATH_SEPARATOR);
 	if (NULL != chopped) {

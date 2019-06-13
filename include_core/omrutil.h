@@ -143,7 +143,7 @@ uintptr_t findSmallestPrimeGreaterThanOrEqualTo(uintptr_t number);
  */
 uintptr_t getSupportedBiggestNumberByPrimeNumberHelper(void);
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* ---------------- omrgetdbghelp.c ---------------- */
 
 /**
@@ -165,7 +165,7 @@ uintptr_t omrgetdbghelp_getDLL(void);
 */
 void omrgetdbghelp_freeDLL(uintptr_t dbgHelpDLL);
 
-#endif  /* defined(OMR_OS_WINDOWS) */
+#endif  /* (HOST_OS == OMR_WINDOWS) */
 
 /* ---------------- stricmp.c ---------------- */
 
@@ -265,7 +265,7 @@ uintptr_t try_scan(char **scan_start, const char *search_string);
 
 
 /* ---------------- detectVMDirectory.c ---------------- */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /**
  * @brief Detect the directory where the VM library or executable resides.
  *
@@ -279,7 +279,7 @@ uintptr_t try_scan(char **scan_start, const char *search_string);
  * @return OMR_ERROR_NONE on success, an OMR error code otherwise.
  */
 omr_error_t detectVMDirectory(wchar_t *vmDirectory, size_t vmDirectoryLength, wchar_t **vmDirectoryEnd);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #if defined(J9ZOS390)
 /* ---------------- getstoragekey.c ---------------- */

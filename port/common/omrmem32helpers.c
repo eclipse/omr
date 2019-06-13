@@ -51,7 +51,7 @@ struct {
  * We use a 8MB heap to give us more room in case an application loads a larger amount of classes than usual.
  * For testing purposes, this value is mirrored in port library test. If we tune this value, we should also adjust it in omrmemTest.cpp
  */
-#if defined(AIXPPC) && defined(OMR_GC_COMPRESSED_POINTERS)
+#if (HOST_OS == OMR_AIX) && defined(OMR_GC_COMPRESSED_POINTERS)
 /* virtual memory is allocated in 256M segments on AIX, so grab the whole segment */
 #define HEAP_SIZE_BYTES 256*1024*1024
 #else

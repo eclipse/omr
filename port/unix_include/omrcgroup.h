@@ -22,7 +22,7 @@
 #ifndef omrcgroup_h
 #define omrcgroup_h
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 
 /**
  * Stores memory usage statistics of the cgroup. These stats are collected from the files present
@@ -39,6 +39,6 @@ typedef struct OMRCgroupMemoryInfo {
 	uint64_t cached; /**< page cache memory (as in memory.stat file)*/
 } OMRCgroupMemoryInfo;
 
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #endif /* omrcgroup_h */

@@ -20,13 +20,13 @@
  *******************************************************************************/
 
 #include "gcTestHelpers.hpp"
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* windows.h defined uintptr_t.  Ignore its definition */
 #define UDATA UDATA_win_
 #include <windows.h>
 #undef UDATA	/* this is safe because our UDATA is a typedef, not a macro */
 #include <psapi.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 void
 GCTestEnvironment::initParams()
@@ -96,13 +96,13 @@ GCTestEnvironment::GCTestTearDown()
 void
 printMemUsed(const char *where, OMRPortLibrary *portLib)
 {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	OMRPORT_ACCESS_FROM_OMRPORT(portLib);
 	PROCESS_MEMORY_COUNTERS_EX pmc;
 	GetProcessMemoryInfo(GetCurrentProcess(), (PPROCESS_MEMORY_COUNTERS)&pmc, sizeof(pmc));
 	/* result in bytes */
 	gcTestEnv->log(LEVEL_VERBOSE, "%s: phys: %ld; virt: %ld\n", where, pmc.WorkingSetSize, pmc.PrivateUsage);
-#elif defined(LINUX)
+#elif (HOST_OS == OMR_LINUX)
 	OMRPORT_ACCESS_FROM_OMRPORT(portLib);
 	const char *statm_path = "/proc/self/statm";
 	intptr_t fileDescriptor = omrfile_open(statm_path, EsOpenRead, 0444);
@@ -129,5 +129,5 @@ printMemUsed(const char *where, OMRPortLibrary *portLib)
 	omrfile_close(fileDescriptor);
 #else
 	/* memory info not supported */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 }

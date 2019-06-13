@@ -24,21 +24,21 @@
 #define _UNIX03_SOURCE
 #endif /* defined(J9ZOS390) */
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 #define __STDC_FORMAT_MACROS
 #include <stdint.h>
 #include <inttypes.h>
 #include <pthread.h>
 #include <dlfcn.h>
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 #include <errno.h>
 #include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 #include <unistd.h>
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 #include "omrthread.h"
 #include "omrTest.h"
@@ -50,23 +50,23 @@
 #include "sigTestHelpers.hpp"
 
 enum TestAction {
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	test_sigaction,
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 	test_signal,
 	test_omrsig_handler,
 	test_omrsig_primary_signal,
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	test_omrsig_primary_sigaction
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 };
 
 #if !defined(PRId64)
-#if defined(OMR_OS_WINDOWS) || defined(J9ZOS390)
+#if (HOST_OS == OMR_WINDOWS) || defined(J9ZOS390)
 #define PRId64 "I64d"
 #else
 #error no value for PRId64
-#endif /* defined(OMR_OS_WINDOWS) || defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_WINDOWS) || defined(J9ZOS390) */
 #endif
 
 static jmp_buf env;
@@ -76,24 +76,24 @@ static void handlerPrimaryInstaller(int sig);
 static void handlerSecondary(int sig);
 static void handlerSecondaryInstaller(int sig);
 static void handlerTertiaryInstaller(int sig);
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #define sigsetjmp(env, savesigs) setjmp(env)
 #define siglongjmp(env, val) longjmp(env, val)
 static int signumOptions[] = {SIGABRT, 10000};
 #define NUM_TEST_CONDITIONS (2*2*4*2)
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 static int signalRaisingThread(void *entryArg);
 static volatile bool primaryMasked;
 static volatile bool secondaryMasked;
 static int signumOptions[] = {
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	/* On AIX, calls to sigaltstack() fail after siglongjmp out of a handler,
 	 * so cannot test SIGABRT effectively.
 	 */
 	SIGURG,
-#else /* defined(AIXPPC) */
+#else /* (HOST_OS == OMR_AIX) */
 	SIGABRT,
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */
 	10000, SIGCHLD, SIGCONT
 };
 #define THREADING_TEST_ITERATIONS 200
@@ -108,16 +108,16 @@ extern int sigactionOS(int, const struct sigaction *, struct sigaction *);
 #else
 static SIGACTION sigactionOS = NULL;
 #endif /* defined(J9ZOS390) */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 static sighandler_t handlerOptions[] = {SIG_DFL, SIG_IGN, NULL, handlerPrimary, handlerSecondary};
 
 static omr_error_t test(TestAction testFunc);
 static omr_error_t setupExistingHandlerConditions(bool existingPrimary, bool existingSecondary, bool onStack, int signum);
 static bool checkPreviousHandler(int signum, TestAction testFunc, sighandler_t expectedPreviousHandler, sighandler_t previousHandler);
 static omr_error_t performTestAndCheck(int expectedHandlerCalls, bool onStackCondition, bool testingSecondaryHandler, int signum);
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 static omr_error_t runTest(bool existingPrimary, bool existingSecondary, sighandler_t action, int signum, TestAction testFunc);
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 static void checkSignalMask(int signum, bool expected, bool checkingPrimary);
 typedef void (*sigaction_t)(int sig, siginfo_t *siginfo, void *uc);
 static omr_error_t runTest(bool existingPrimary, bool existingSecondary, struct sigaction *action, bool onStack, int signum, TestAction testFunc);
@@ -125,7 +125,7 @@ static omr_error_t runSigactionTest(int *expectedHandlerCalls, bool existingPrim
 									int signum, struct sigaction *act, sighandler_t *expectedPreviousHandler, sighandler_t *previousHandler);
 static omr_error_t runPrimarySigactionTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSecondary,
 		int signum, struct sigaction *act, sighandler_t *expectedPreviousHandler, sighandler_t *previousHandler);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 static omr_error_t runSignalTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSecondary,
 								 int signum, sighandler_t action, sighandler_t *expectedPreviousHandler, sighandler_t *previousHandler);
 static omr_error_t runHandlerTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSecondary,
@@ -133,12 +133,12 @@ static omr_error_t runHandlerTest(int *expectedHandlerCalls, bool existingPrimar
 static omr_error_t runPrimarySignalTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSecondary,
 										int signum, sighandler_t action, sighandler_t *expectedPreviousHandler, sighandler_t *previousHandler);
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 TEST(OmrSigTest, sigactionTest)
 {
 	EXPECT_TRUE(OMR_ERROR_NONE == test(test_sigaction)) << "sigaction() test failed.";
 }
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 TEST(OmrSigTest, signalTest)
 {
@@ -155,7 +155,7 @@ TEST(OmrSigTest, omrsig_primary_signalTest)
 	EXPECT_TRUE(OMR_ERROR_NONE == test(test_omrsig_primary_signal)) << "omrsig_primary_signal() test failed.";
 }
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 TEST(OmrSigTest, omrsig_primary_sigactionTest)
 {
 	EXPECT_TRUE(OMR_ERROR_NONE == test(test_omrsig_primary_sigaction)) << "omrsig_primary_sigaction() test failed.";
@@ -208,16 +208,16 @@ TEST(OmrSigTest, omrsigReentrancyTest)
 	}
 }
 
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 TEST(OmrSigTest, handlerInstallingHandlerTest)
 {
 	/* Test using a signal handler which installs a handler and raises a signal. */
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	sigset_t mask;
 	sigemptyset(&mask);
 	pthread_sigmask(SIG_SETMASK, &mask, NULL);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	omrsig_primary_signal(SIGABRT, handlerPrimaryInstaller);
 	signal(SIGABRT, handlerSecondaryInstaller);
@@ -231,7 +231,7 @@ TEST(OmrSigTest, handlerInstallingHandlerTest)
 			<< "Expected 4 handler calls, got " << handlerCalls << ".";
 }
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 static int
 signalRaisingThread(void *entryArg)
 {
@@ -256,7 +256,7 @@ signalRaisingThread(void *entryArg)
 	}
 	return 0;
 }
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 /* Iterate through all possible test conditions and run the tests. */
 static omr_error_t
@@ -277,14 +277,14 @@ test(TestAction testFunc)
 		/* Select handler function. */
 		int handlerIndex = ((i & 12) >> 2);
 		if ((3 == handlerIndex)
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 			&& (testFunc != test_omrsig_primary_sigaction)
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 			&& (testFunc != test_omrsig_primary_signal)) {
 			handlerIndex += 1;
 		}
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 		struct sigaction act = {{0}};
 		act.sa_flags = 0;
 		if ((test_sigaction == testFunc) || (test_omrsig_primary_sigaction == testFunc)) {
@@ -305,7 +305,7 @@ test(TestAction testFunc)
 			act.sa_handler = handlerOptions[handlerIndex];
 		}
 		sigemptyset(&act.sa_mask);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 		int signum = signumOptions[(i & 48) >> 4];
 		bool onStack = (i & 64) != 0;
@@ -315,19 +315,19 @@ test(TestAction testFunc)
 		if (OMR_ERROR_NONE != runTest(
 				existingPrimary,
 				existingSecondary,
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 				handlerOptions[handlerIndex],
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 				&act,
 				onStack,
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 				signum,
 				testFunc)) {
 
 			int64_t flags = 0;
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 			flags = act.sa_flags;
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 			rc = OMR_ERROR_INTERNAL;
 
 			printf("Test %d:%d failed at %s:%d. Conditions: %sexisting primary, %sexisting secondary, flags = %" PRId64 ", signum is %d, handler is 0x%p, %salt signal stack.\n",
@@ -345,27 +345,27 @@ test(TestAction testFunc)
 }
 
 /* Setup the specified test conditions, run the test, and check the result. */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 static omr_error_t
 runTest(bool existingPrimary, bool existingSecondary, sighandler_t act, int signum, TestAction testFunc)
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 static omr_error_t
 runTest(bool existingPrimary, bool existingSecondary, struct sigaction *act, bool onStack, int signum, TestAction testFunc)
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 {
 	omr_error_t rc = OMR_ERROR_NONE;
 	int expectedHandlerCalls = 0;
 	handlerCalls = 0;
 	sighandler_t expectedPreviousHandler = SIG_DFL;
 	sighandler_t previousHandler = SIG_DFL;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	sighandler_t action = act;
 	bool onStack = false;
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	sighandler_t action = act->sa_handler;
 	primaryMasked = false;
 	secondaryMasked = false;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	if (signum != signumOptions[1]) {
 		rc = setupExistingHandlerConditions(existingPrimary, existingSecondary, onStack, signum);
@@ -374,11 +374,11 @@ runTest(bool existingPrimary, bool existingSecondary, struct sigaction *act, boo
 	/* Calculate the expected number of signal handler calls and call the test function. */
 	if (OMR_ERROR_NONE == rc) {
 		switch (testFunc) {
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 		case test_sigaction:
 			rc = runSigactionTest(&expectedHandlerCalls, existingPrimary, existingSecondary, signum, act, &expectedPreviousHandler, &previousHandler);
 			break;
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 		case test_signal:
 			rc = runSignalTest(&expectedHandlerCalls, existingPrimary, existingSecondary, signum, action, &expectedPreviousHandler, &previousHandler);
 			break;
@@ -388,11 +388,11 @@ runTest(bool existingPrimary, bool existingSecondary, struct sigaction *act, boo
 		case test_omrsig_primary_signal:
 			rc = runPrimarySignalTest(&expectedHandlerCalls, existingPrimary, existingSecondary, signum, action, &expectedPreviousHandler, &previousHandler);
 			break;
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 		case test_omrsig_primary_sigaction:
 			rc = runPrimarySigactionTest(&expectedHandlerCalls, existingPrimary, existingSecondary, signum, act, &expectedPreviousHandler, &previousHandler);
 			break;
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 		}
 	}
 	if (OMR_ERROR_NONE == rc) {
@@ -409,25 +409,25 @@ runTest(bool existingPrimary, bool existingSecondary, struct sigaction *act, boo
 		}
 		rc = performTestAndCheck(
 				 expectedHandlerCalls,
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 				 false,
 				 false,
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 				 onStack && (SA_ONSTACK & act->sa_flags) && handlerIsFunction(action)
 				 && ((testFunc == test_sigaction) || (testFunc == test_omrsig_primary_sigaction)),
 				 testFunc == test_sigaction,
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 				 signum);
 	}
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	/* Cleanup alternate stack if it exists. */
 	if (onStack && (signum != signumOptions[1])) {
 		stack_t stack;
 		sigaltstack(NULL, &stack);
 		free(stack.ss_sp);
 	}
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 	return rc;
 }
@@ -455,7 +455,7 @@ setupExistingHandlerConditions(bool existingPrimary, bool existingSecondary, boo
 	/* Setup existing primary handler condition. */
 	if (OMR_ERROR_NONE == rc) {
 		if (existingPrimary) {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 			if (SIG_ERR == omrsig_primary_signal(signum, handlerPrimary)) {
 				rc = OMR_ERROR_INTERNAL;
 			}
@@ -467,7 +467,7 @@ setupExistingHandlerConditions(bool existingPrimary, bool existingSecondary, boo
 			if (0 != omrsig_primary_sigaction(signum, &act, NULL)) {
 				rc = OMR_ERROR_INTERNAL;
 			}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 		} else {
 			if (SIG_ERR == omrsig_primary_signal(signum, SIG_IGN)) {
 				rc = OMR_ERROR_INTERNAL;
@@ -494,7 +494,7 @@ setupExistingHandlerConditions(bool existingPrimary, bool existingSecondary, boo
 		}
 	}
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	/* Setup signal stack condition. */
 	if (OMR_ERROR_NONE == rc) {
 		stack_t stack;
@@ -513,14 +513,14 @@ setupExistingHandlerConditions(bool existingPrimary, bool existingSecondary, boo
 			printf("sigaltstack() failed with error code %d in setting test conditions at %s:%d.\n", errno, __FILE__, __LINE__);
 		}
 	}
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 	handlerCalls = 0;
 
 	return rc;
 }
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 static omr_error_t
 runPrimarySigactionTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSecondary,
 						int signum, struct sigaction *act, sighandler_t *expectedPreviousHandler, sighandler_t *previousHandler)
@@ -553,17 +553,17 @@ runPrimarySigactionTest(int *expectedHandlerCalls, bool existingPrimary, bool ex
 	secondaryMasked = false;
 	return rc;
 }
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 static omr_error_t
 runPrimarySignalTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSecondary,
 					 int signum, sighandler_t action, sighandler_t *expectedPreviousHandler, sighandler_t *previousHandler)
 {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	*expectedHandlerCalls = 1;
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	*expectedHandlerCalls = 2;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	if (existingSecondary) {
 		*expectedHandlerCalls += 1;
 	}
@@ -587,7 +587,7 @@ runHandlerTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSec
 {
 	omr_error_t rc = OMR_ERROR_NONE;
 	*expectedHandlerCalls = 0;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/* On Windows, primary is reset after first signal, but jump from handler prevents the
 	 * reset of the secondary when it is called here.
 	 */
@@ -597,14 +597,14 @@ runHandlerTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSec
 	if (existingSecondary) {
 		*expectedHandlerCalls += 2;
 	}
-#else /* !defined(OMR_OS_WINDOWS) */
+#else /* !(HOST_OS == OMR_WINDOWS) */
 	if (existingPrimary) {
 		*expectedHandlerCalls = 2;
 	}
 	if (existingSecondary) {
 		*expectedHandlerCalls += 1;
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	if (0 == setjmp(env) && (signum != signumOptions[1])) {
 		int ret = omrsig_handler(signum, NULL, NULL);
 		if ((OMRSIG_RC_SIGNAL_HANDLED != ret)
@@ -617,13 +617,13 @@ runHandlerTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSec
 		}
 	}
 	*previousHandler = SIG_DFL;
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	primaryMasked = existingPrimary;
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 	return rc;
 }
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 static omr_error_t
 runSigactionTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSecondary,
 				 int signum, struct sigaction *act, sighandler_t *expectedPreviousHandler, sighandler_t *previousHandler)
@@ -656,13 +656,13 @@ runSigactionTest(int *expectedHandlerCalls, bool existingPrimary, bool existingS
 	}
 	primaryMasked = existingPrimary;
 	secondaryMasked = (!(act->sa_flags & SA_NODEFER)
-#if (defined(AIXPPC) || defined(J9ZOS390))
+#if ((HOST_OS == OMR_AIX) || defined(J9ZOS390))
 					   && !(act->sa_flags & SA_RESETHAND)
-#endif /* (defined(AIXPPC) || defined(J9ZOS390)) */
+#endif /* ((HOST_OS == OMR_AIX) || defined(J9ZOS390)) */
 					   && handlerIsFunction(act));
 	return rc;
 }
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 static omr_error_t
 runSignalTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSecondary,
@@ -670,18 +670,18 @@ runSignalTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSeco
 {
 	*expectedHandlerCalls = 1;
 	if (existingPrimary) {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 		*expectedHandlerCalls = 2;
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 		*expectedHandlerCalls = 3;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	}
 	if (!handlerIsFunction(action)) {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 		*expectedHandlerCalls = existingPrimary ? 1 : 0;
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 		*expectedHandlerCalls = existingPrimary ? 2 : 0;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	}
 	*previousHandler = signal(signum, action);
 	if (existingSecondary) {
@@ -691,10 +691,10 @@ runSignalTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSeco
 	} else {
 		*expectedPreviousHandler = SIG_IGN;
 	}
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	primaryMasked = existingPrimary;
 	secondaryMasked = false;
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 	return OMR_ERROR_NONE;
 }
 
@@ -717,7 +717,7 @@ performTestAndCheck(int expectedHandlerCalls, bool onStackCondition, bool testin
 {
 	omr_error_t rc = OMR_ERROR_NONE;
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	if (signum != signumOptions[1]) {
 #if !defined(J9ZOS390)
 		/* Find the system implementation of sigaction on first call. */
@@ -764,7 +764,7 @@ performTestAndCheck(int expectedHandlerCalls, bool onStackCondition, bool testin
 	sigset_t mask;
 	sigemptyset(&mask);
 	pthread_sigmask(SIG_SETMASK, &mask, NULL);
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 	/* Perform the signal test and check the expected number of calls. */
 	for (int i = 0; i < 2; i += 1) {
@@ -790,7 +790,7 @@ performTestAndCheck(int expectedHandlerCalls, bool onStackCondition, bool testin
 	return rc;
 }
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 static void
 checkSignalMask(int signum, bool expected, bool checkingPrimary)
 {
@@ -804,15 +804,15 @@ checkSignalMask(int signum, bool expected, bool checkingPrimary)
 			   __FILE__, __LINE__);
 	}
 }
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 static void
 handlerPrimary(int sig)
 {
 	handlerCalls += 1;
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	checkSignalMask(sig, primaryMasked, true);
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 	if ((OMRSIG_RC_SIGNAL_HANDLED != omrsig_handler(sig, NULL, NULL)) && (SIGABRT == sig)) {
 		siglongjmp(env, handlerCalls);
 	}
@@ -822,15 +822,15 @@ static void
 handlerSecondary(int sig)
 {
 	handlerCalls += 1;
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	checkSignalMask(sig, secondaryMasked, false);
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 	if (SIGABRT == sig) {
 		siglongjmp(env, handlerCalls);
 	}
 }
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 static void
 handlerPrimaryInfo(int sig, siginfo_t *siginfo, void *uc)
 {
@@ -850,7 +850,7 @@ handlerSecondaryInfo(int sig, siginfo_t *siginfo, void *uc)
 		siglongjmp(env, handlerCalls);
 	}
 }
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 static void
 handlerPrimaryInstaller(int sig)

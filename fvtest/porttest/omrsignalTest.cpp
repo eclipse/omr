@@ -35,9 +35,9 @@
  *
  */
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 #include <signal.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #if defined(J9ZOS390)
 #include "atoe.h"
@@ -54,9 +54,9 @@
 #include "testProcessHelpers.hpp"
 #include "omrport.h"
 
-#if !defined(OMR_OS_WINDOWS) && defined(OMR_PORT_ASYNC_HANDLER)
+#if !(HOST_OS == OMR_WINDOWS) && defined(OMR_PORT_ASYNC_HANDLER)
 #define J9SIGNAL_TEST_RUN_ASYNC_UNIX_TESTS
-#endif /* !defined(OMR_OS_WINDOWS) && defined(OMR_PORT_ASYNC_HANDLER) */
+#endif /* !(HOST_OS == OMR_WINDOWS) && defined(OMR_PORT_ASYNC_HANDLER) */
 
 #define SIG_TEST_SIZE_EXENAME 1024
 
@@ -74,7 +74,7 @@ struct PortSigMap testSignalMap[] = {
 	{OMRPORT_SIG_FLAG_SIGQUIT, "OMRPORT_SIG_FLAG_SIGQUIT", SIGQUIT, "SIGQUIT"}
 	, {OMRPORT_SIG_FLAG_SIGABRT, "OMRPORT_SIG_FLAG_SIGABRT", SIGABRT, "SIGABRT"}
 	, {OMRPORT_SIG_FLAG_SIGTERM, "OMRPORT_SIG_FLAG_SIGTERM", SIGTERM, "SIGTERM"}
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	, {OMRPORT_SIG_FLAG_SIGRECONFIG, "OMRPORT_SIG_FLAG_SIGRECONFIG", SIGRECONFIG, "SIGRECONFIG"}
 #endif
 	/* {OMRPORT_SIG_FLAG_SIGINT, "OMRPORT_SIG_FLAG_SIGINT", SIGINT, "SIGINT"} */
@@ -931,7 +931,7 @@ TEST(PortSigTest, sig_test6)
 		 * to run this test you need to port/unix/omrsignal.c (remove static from declaration of tlsKeyCurrentSignal)
 		 * and add "<export name="tlsKeyCurrentSignal" />" to port/module.xml, to export tlsKeyCurrentSignal.
 		 */
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 		{
 			extern omrthread_tls_key_t tlsKeyCurrentSignal;
 			int signo = (int)(uintptr_t)omrthread_tls_get(omrthread_self(), tlsKeyCurrentSignal);
@@ -942,7 +942,7 @@ TEST(PortSigTest, sig_test6)
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "currentSignal corrupt -- got: %d expected: %d\n", signo, expectedSigno);
 			}
 		}
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 #endif
 
 	}
@@ -1065,7 +1065,7 @@ TEST(PortSigTest, sig_test8)
 							flags,
 							&result);
 		portTestEnv->log("omrsig_test8 protectResult=%d\n", protectResult);
-#if defined(OMR_OS_WINDOWS) && defined(OMR_ENV_DATA64)
+#if (HOST_OS == OMR_WINDOWS) && defined(OMR_ENV_DATA64)
 		if (protectResult != OMRPORT_SIG_EXCEPTION_CONTINUE_SEARCH) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->sig_protect -- expected OMRPORT_SIG_EXCEPTION_CONTINUE_SEARCH in protectResult\n");
 		}
@@ -1073,7 +1073,7 @@ TEST(PortSigTest, sig_test8)
 		if (protectResult != OMRPORT_SIG_EXCEPTION_OCCURRED) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->sig_protect -- expected OMRPORT_SIG_EXCEPTION_CONTINUE_SEARCH in protectResult\n");
 		}
-#endif /* defined(OMR_OS_WINDOWS) && defined(OMR_ENV_DATA64) */
+#endif /* (HOST_OS == OMR_WINDOWS) && defined(OMR_ENV_DATA64) */
 		if (result != 0) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->sig_protect -- expected 0 in *result\n");
 		}
@@ -1126,7 +1126,7 @@ TEST(PortSigTest, sig_test_async_unix_handler)
 		goto exit;
 	}
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	setAsyncRC = omrsig_set_async_signal_handler(asyncTestHandler, &handlerInfo, OMRPORT_SIG_FLAG_SIGRECONFIG);
 	if (setAsyncRC == OMRPORT_SIG_ERROR) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsig_set_async_signal_handler returned: OMRPORT_SIG_ERROR\n");

@@ -52,7 +52,7 @@ namespace OMR { typedef OMR::IO IOConnector; }
 #ifdef _MSC_VER
    #define POINTER_PRINTF_FORMAT "0x%p"
 #else
-   #if defined(LINUX) || defined(OSX)
+   #if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
       #ifdef TR_HOST_64BIT
          #ifdef TR_TARGET_X86
             #define POINTER_PRINTF_FORMAT "%12p"

@@ -78,7 +78,7 @@
 # define GTEST_OS_ZOS 1
 #elif defined(__sun) && defined(__SVR4)
 # define GTEST_OS_SOLARIS 1
-#elif defined(_AIX)
+#elif (HOST_OS == OMR_AIX)
 # define GTEST_OS_AIX 1
 #elif defined(__hpux)
 # define GTEST_OS_HPUX 1

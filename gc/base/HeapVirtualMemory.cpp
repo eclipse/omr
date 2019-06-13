@@ -87,7 +87,7 @@ MM_HeapVirtualMemory::initialize(MM_EnvironmentBase* env, uintptr_t size)
 
 	/* Under -Xaggressive ensure a full page of padding -- see JAZZ103 45254 */
 	if (extensions->padToPageSize) {
-#if (defined(AIXPPC) && !defined(PPC64))
+#if ((HOST_OS == OMR_AIX) && !defined(PPC64))
 		/*
 		 * An attempt to allocate heap with top at 0xffffffff
 		 * In this case extra padding is not required because of overflow protection padding can be used instead
@@ -100,7 +100,7 @@ MM_HeapVirtualMemory::initialize(MM_EnvironmentBase* env, uintptr_t size)
 			/* overflow protection must be there to play role of padding even top is not so close to the end of the memory */
 			forcedOverflowProtection = true;
 		} else
-#endif /* (defined(AIXPPC) && !defined(PPC64)) */
+#endif /* ((HOST_OS == OMR_AIX) && !defined(PPC64)) */
 		{
 			/* Ignore extra full page padding if page size is too large (hard coded here for 1G or larger) */
 #define ONE_GB ((uintptr_t)1 * 1024 * 1024 * 1024)

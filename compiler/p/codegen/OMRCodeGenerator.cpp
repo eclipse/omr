@@ -102,7 +102,7 @@
 #include "ras/DebugCounter.hpp"
 #include "runtime/Runtime.hpp"
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #include <sys/debug.h>
 #endif
 
@@ -1559,7 +1559,7 @@ void OMR::Power::CodeGenerator::doPeephole()
 
       if ((TR::Compiler->target.cpu.id() == TR_PPCp6) && instructionCursor->isTrap())
          {
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
          trapPeephole(self(),instructionCursor);
 #endif
          }
@@ -2572,7 +2572,7 @@ void OMR::Power::CodeGenerator::addRealRegisterInterference(TR::Register    *reg
    reg->getLiveRegisterInfo()->addInterference(realReg->getRealRegisterMask());
    }
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #include <unistd.h>
 class  TR_Method;
 FILE                     *j2Profile;

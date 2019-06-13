@@ -40,7 +40,7 @@ void TR_CallStackIterator::printStackBacktrace(TR::Compilation *comp)
       }
    }
 
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #include <demangle.h>
 #include <sys/debug.h>
 
@@ -171,7 +171,7 @@ const char *TR_PPCCallStackIterator::getProcedureName()
       }
    }
 
-#elif defined(LINUX)
+#elif (HOST_OS == OMR_LINUX)
 #include <execinfo.h>
 #include <cxxabi.h>
 
@@ -327,7 +327,7 @@ bool TR_MvsCallStackIterator::getNext ()
    return true;
    }
 
-#elif defined(OMR_OS_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT)
+#elif (HOST_OS == OMR_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT)
 
 #include "ras/CallStack.hpp"
 #include <windows.h>
@@ -497,6 +497,6 @@ bool TR_WinCallStackIterator::getNext()
    return !_done;
    }
 
-#elif !(defined(OMR_OS_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT))
+#elif !((HOST_OS == OMR_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT))
 
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */

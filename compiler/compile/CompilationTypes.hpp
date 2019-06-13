@@ -36,7 +36,7 @@ namespace TR { class Node; }
 namespace TR { class TreeTop; }
 
 enum TR_Hotness
-#if !defined(LINUXPPC) || defined(__LITTLE_ENDIAN__)
+#if !(HOST_OS == OMR_LINUX) || defined(__LITTLE_ENDIAN__)
    : int8_t // use only 8 bits to save space; The ifdef is needed because xlC BE compiler does not accept the syntax
 #endif
    {

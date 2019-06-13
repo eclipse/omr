@@ -108,9 +108,9 @@
 /* VM Design 1774: Ideally we would pull these cache line values from the port library but this will suffice for
  * a quick implementation
  */
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 #define CACHE_LINE_SIZE 128
-#elif defined(J9ZOS390) || (defined(LINUX) && defined(S390))
+#elif defined(J9ZOS390) || ((HOST_OS == OMR_LINUX) && defined(S390))
 #define CACHE_LINE_SIZE 256
 #else
 #define CACHE_LINE_SIZE 64

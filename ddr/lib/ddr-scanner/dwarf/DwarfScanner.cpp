@@ -337,9 +337,9 @@ DwarfScanner::getName(Dwarf_Die die, string *name, Dwarf_Off *dieOffset)
 			}
 		}
 		if ((NULL == dieName)
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 			|| ((0 == strncmp(dieName, "__", 2)) && (strlen(dieName + 2) == strspn(dieName + 2, "0123456789")))
-#endif /* defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_LINUX) */
 			|| (0 == strncmp(dieName, "<anonymous", 10)))
 		{
 			*name = "";
@@ -940,7 +940,7 @@ isVtablePointer(const char *fieldName)
 {
 #if defined(__GNUC__)
 	return 0 == strncmp(fieldName, "_vptr.", 6);
-#elif defined(AIXPPC) || defined(LINUXPPC)
+#elif (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 	return 0 == strcmp(fieldName, "__vfp");
 #else
 	return false;

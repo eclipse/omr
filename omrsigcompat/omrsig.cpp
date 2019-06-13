@@ -25,18 +25,18 @@
 #define _UNIX03_SOURCE
 #endif /* defined(J9ZOS390) */
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* windows.h defined UDATA.  Ignore its definition */
 #define UDATA UDATA_win32_
 #include <windows.h>
 #undef UDATA	/* this is safe because our UDATA is a typedef, not a macro */
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 #include <dlfcn.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 #include <errno.h>
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 #include <pthread.h>
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 #include <string.h>
 
 #include "omrsig.h"
@@ -52,7 +52,7 @@ static int omrsig_sigaction_internal(int signum, const struct sigaction *act, st
 static bool validSignalNum(int signum, bool nullAction);
 static bool handlerIsFunction(const struct sigaction *act);
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 
 typedef void (__cdecl * (__cdecl *SIGNAL)(_In_ int _SigNum, _In_opt_ void (__cdecl * _Func)(int)))(int);
 static SIGNAL signalOS = NULL;
@@ -93,7 +93,7 @@ handlerIsFunction(const struct sigaction *act)
 static bool
 validSignalNum(int signum, bool nullAction)
 {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	return (SIGABRT == signum) || (SIGFPE == signum) || (SIGILL == signum) || (SIGINT == signum)
 		|| (SIGSEGV == signum) || (SIGTERM == signum) || (SIGBREAK == signum);
 #elif defined(J9ZOS390)
@@ -120,11 +120,11 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 
 		if (handlerIsFunction(&handlerSlot.secondaryAction)) {
 #if defined(POSIX_SIGNAL)
-#if defined(OSX) || defined(OMRZTPF)
+#if (HOST_OS == OMR_OSX) || defined(OMRZTPF)
 			sigset_t oldMask = {0};
-#else /* defined(OSX) || defined(OMRZTPF)  */
+#else /* (HOST_OS == OMR_OSX) || defined(OMRZTPF)  */
 			sigset_t oldMask = {{0}};
-#endif /* defined(OSX) || defined(OMRZTPF)  */
+#endif /* (HOST_OS == OMR_OSX) || defined(OMRZTPF)  */
 			sigset_t usedMask = handlerSlot.secondaryAction.sa_mask;
 			sigaddset(&usedMask, sig);
 			int ec = pthread_sigmask(SIG_BLOCK, &usedMask, &oldMask);
@@ -134,16 +134,16 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 			 * entry to the signal handler.
 			 */
 			if ((0 == ec) && ((handlerSlot.secondaryAction.sa_flags & SA_NODEFER)
-#if (defined(AIXPPC) || defined(J9ZOS390))
+#if ((HOST_OS == OMR_AIX) || defined(J9ZOS390))
 				/* Only AIX and zos respects that SA_RESETHAND behaves like SA_NODEFER by POSIX spec. */
 				|| (handlerSlot.secondaryAction.sa_flags & SA_RESETHAND)
-#endif /* (defined(AIXPPC) || defined(J9ZOS390)) */
+#endif /* ((HOST_OS == OMR_AIX) || defined(J9ZOS390)) */
 				)) {
-#if defined(OSX) || defined(OMRZTPF)
+#if (HOST_OS == OMR_OSX) || defined(OMRZTPF)
 				sigset_t mask = {0};
-#else /* defined(OSX) || defined(OMRZTPF) */
+#else /* (HOST_OS == OMR_OSX) || defined(OMRZTPF) */
 				sigset_t mask = {{0}};
-#endif /* defined(OSX) || defined(OMRZTPF) */
+#endif /* (HOST_OS == OMR_OSX) || defined(OMRZTPF) */
 				sigemptyset(&mask);
 				sigaddset(&mask, sig);
 				ec = pthread_sigmask(SIG_UNBLOCK, &mask, NULL);
@@ -226,7 +226,7 @@ omrsig_primary_sigaction(int signum, const struct sigaction *act, struct sigacti
 }
 #endif /* defined(POSIX_SIGNAL) */
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-dllimport"
@@ -236,20 +236,20 @@ omrsig_primary_sigaction(int signum, const struct sigaction *act, struct sigacti
 #endif /* defined (__clang__) */
 void (__cdecl * __cdecl
 signal(_In_ int signum, _In_opt_ void (__cdecl * handler)(int)))(int)
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 sighandler_t
 signal(int signum, sighandler_t handler) __THROW
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 {
 	return omrsig_signal_internal(signum, handler);
 }
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #else
 #pragma warning(pop)
 #endif /* defined (__clang__) */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 static sighandler_t
 omrsig_signal_internal(int signum, sighandler_t handler)
@@ -268,7 +268,7 @@ omrsig_signal_internal(int signum, sighandler_t handler)
 #endif /* defined(POSIX_SIGNAL) */
 
 	sighandler_t ret = SIG_DFL;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (SIG_GET == handler) {
 		if (0 == omrsig_sigaction_internal(signum, NULL, &oldact, false)) {
 			ret = oldact.sa_handler;
@@ -276,15 +276,15 @@ omrsig_signal_internal(int signum, sighandler_t handler)
 			ret = SIG_ERR;
 		}
 	} else {
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 		if (0 == omrsig_sigaction_internal(signum, &act, &oldact, false)) {
 			ret = oldact.sa_handler;
 		} else {
 			ret = SIG_ERR;
 		}
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	return ret;
 }
 
@@ -325,16 +325,16 @@ omrsig_signalOS_internal(int signum, const struct sigaction *act, struct sigacti
 		sigactionOS = (SIGACTION)dlsym(RTLD_NEXT, "sigaction");
 		if (NULL == sigactionOS) {
 			char *lib = NULL;
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 #if defined(OMR_ENV_DATA64)
 			lib = "/usr/lib/libc.a(shr_64.o)";
 #else /* defined(OMR_ENV_DATA64) */
 			lib = "/usr/lib/libc.a(shr.o)";
 #endif /* defined(OMR_ENV_DATA64) */
 			void *handle = dlopen(lib, RTLD_LAZY | RTLD_MEMBER);
-#else /* defined(AIXPPC) */
+#else /* (HOST_OS == OMR_AIX) */
 			void *handle = dlopen(lib, RTLD_LAZY);
-#endif /* defined(AIXPPC) */
+#endif /* (HOST_OS == OMR_AIX) */
 			sigactionOS = (SIGACTION)dlsym(handle, "sigaction");
 		}
 	}
@@ -459,7 +459,7 @@ omrsig_sigaction_internal(int signum, const struct sigaction *act, struct sigact
 	return rc;
 }
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 
 __sighandler_t
 __sysv_signal(int sig, __sighandler_t handler) __THROW
@@ -473,7 +473,7 @@ ssignal(int sig, sighandler_t handler) __THROW
 	return omrsig_signal_internal(sig, handler);
 }
 
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #if defined(J9ZOS390)
 
@@ -569,19 +569,19 @@ failed:
 
 #endif /* defined(J9ZOS390) */
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 
 sighandler_t
 sigset(int sig, sighandler_t disp) __THROW
 {
 	sighandler_t ret = SIG_ERR;
-#if defined(OSX) || defined(OMRZTPF)
+#if (HOST_OS == OMR_OSX) || defined(OMRZTPF)
 	sigset_t mask = {0};
 	sigset_t oldmask = {0};
-#else /* defined(OSX) || defined(OMRZTPF) */
+#else /* (HOST_OS == OMR_OSX) || defined(OMRZTPF) */
 	sigset_t mask = {{0}};
 	sigset_t oldmask = {{0}};
-#endif /* defined(OSX) || defined(OMRZTPF) */
+#endif /* (HOST_OS == OMR_OSX) || defined(OMRZTPF) */
 	struct sigaction oldact = {{0}};
 
 	if (SIG_HOLD == disp) {
@@ -658,6 +658,6 @@ sysv_signal(int signum, sighandler_t handler) __THROW
 }
 
 #endif /* !defined(J9ZOS390) */
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 } /* extern "C" { */

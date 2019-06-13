@@ -1271,9 +1271,9 @@ port_numa_interleave_memory(struct OMRPortLibrary *portLibrary, void  *start, ui
 void
 omrvmem_default_large_page_size_ex(struct OMRPortLibrary *portLibrary, uintptr_t mode, uintptr_t *pageSize, uintptr_t *pageFlags)
 {
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 	if (OMRPORT_VMEM_MEMORY_MODE_EXECUTE != (OMRPORT_VMEM_MEMORY_MODE_EXECUTE & mode))
-#endif /* defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_LINUX) */
 	{
 		/* Note that the PPG_vmem_pageSize is a null-terminated list of page sizes.
 		 * There will always be the 0 element (default page size),
@@ -1287,7 +1287,7 @@ omrvmem_default_large_page_size_ex(struct OMRPortLibrary *portLibrary, uintptr_t
 			*pageFlags = PPG_vmem_pageFlags[1];
 		}
 	}
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 	else {
 		if (NULL != pageSize) {
 			/* Return the same page size as used by JIT code cache */
@@ -1302,7 +1302,7 @@ omrvmem_default_large_page_size_ex(struct OMRPortLibrary *portLibrary, uintptr_t
 			}
 		}
 	}
-#endif /* defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 	return;
 }
@@ -1318,7 +1318,7 @@ omrvmem_find_valid_page_size(struct OMRPortLibrary *portLibrary, uintptr_t mode,
 	Assert_PRT_true_wrapper(OMRPORT_VMEM_PAGE_FLAG_NOT_USED == validPageFlags);
 
 	if (0 != validPageSize) {
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 		/* On Linux PPC, for executable pages, search through the list of supported page sizes only if
 		 * - request is for 16M pages, and
 		 * - 64 bit system OR (32 bit system AND CodeCacheConsolidation is enabled)
@@ -1341,7 +1341,7 @@ omrvmem_find_valid_page_size(struct OMRPortLibrary *portLibrary, uintptr_t mode,
 		if ((OMRPORT_VMEM_MEMORY_MODE_EXECUTE != (OMRPORT_VMEM_MEMORY_MODE_EXECUTE & mode)) ||
 			(codeCacheConsolidationEnabled && (SIXTEEN_M == validPageSize)))
 #endif /* defined(OMR_ENV_DATA64) */
-#endif /* defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_LINUX) */
 		{
 			uintptr_t pageIndex = 0;
 			uintptr_t *supportedPageSizes = portLibrary->vmem_supported_page_sizes(portLibrary);
@@ -1362,12 +1362,12 @@ omrvmem_find_valid_page_size(struct OMRPortLibrary *portLibrary, uintptr_t mode,
 		validPageSize = defaultLargePageSize;
 		validPageFlags = defaultLargePageFlags;
 	} else {
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 		if (OMRPORT_VMEM_MEMORY_MODE_EXECUTE == (OMRPORT_VMEM_MEMORY_MODE_EXECUTE & mode)) {
 			validPageSize = (uintptr_t)sysconf(_SC_PAGESIZE);
 			validPageFlags = OMRPORT_VMEM_PAGE_FLAG_NOT_USED;
 		} else
-#endif /* defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_LINUX) */
 		{
 			validPageSize = PPG_vmem_pageSize[0];
 			validPageFlags = PPG_vmem_pageFlags[0];

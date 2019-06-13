@@ -46,11 +46,11 @@ MM_ConcurrentSafepointCallback::kill(MM_EnvironmentBase *env)
 }
 
 void
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX)
 MM_ConcurrentSafepointCallback::registerCallback(MM_EnvironmentBase *env, SafepointCallbackHandler handler, void *userData, bool cancelAfterGC)
 #else
 MM_ConcurrentSafepointCallback::registerCallback(MM_EnvironmentBase *env, SafepointCallbackHandler handler, void *userData)
-#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_AIX) || (HOST_OS == OMR_LINUX) */
 {
 	/* To facilitate simple Card Table logic treat registerCallback as a no-op */
 }

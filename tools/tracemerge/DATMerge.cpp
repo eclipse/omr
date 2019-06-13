@@ -24,12 +24,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <dirent.h>
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 #include "DATMerge.hpp"
 #include "ArgParser.hpp"

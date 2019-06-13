@@ -19,9 +19,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(AIXPPC) || defined(J9ZOS390)
+#if (HOST_OS == OMR_AIX) || defined(J9ZOS390)
 #define __IBMCPP_TR1__ 1
-#endif /* defined(AIXPPC) || defined(J9ZOS390) */
+#endif /* (HOST_OS == OMR_AIX) || defined(J9ZOS390) */
 
 #include <stdlib.h>
 #include <string.h>

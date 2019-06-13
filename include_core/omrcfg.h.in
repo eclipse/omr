@@ -260,9 +260,9 @@
  * Note: these are determined at configure time with cmake.
  * For the autoconf builds, we just hard code them based on platform
  */
-#if defined(LINUX) || defined(AIXPPC)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX)
 #define OMR_USE_POSIX_SEMAPHORES
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 #define OMR_USE_OSX_SEMAPHORES
 #elif defined(J9ZOS390)
 #define OMR_USE_ZOS_SEMAPHORES

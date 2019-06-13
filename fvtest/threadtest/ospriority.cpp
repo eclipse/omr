@@ -19,15 +19,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <windows.h>
-#endif /* defined(OMR_OS_WINDOWS) */
-#if defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX)
+#endif /* (HOST_OS == OMR_WINDOWS) */
+#if defined(J9ZOS390) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX)
 #include <pthread.h>
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 #include <mach/mach_host.h>
-#endif /* defined(OSX) */
-#endif /* defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
+#endif /* defined(J9ZOS390) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_AIX) || (HOST_OS == OMR_OSX) */
 #include "createTestHelper.h"
 #include "omrutil.h"
 #include "omrutilbase.h"
@@ -75,7 +75,7 @@ mapOSPolicy(intptr_t policy)
 	}
 }
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 
 void
 initPrioMap(void)
@@ -83,13 +83,13 @@ initPrioMap(void)
 	uintptr_t i;
 	osprio_t defaultPriority = 0;
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	host_priority_info_data_t priorityInfoData;
 	mach_msg_type_number_t msgTypeNumber = HOST_PRIORITY_INFO_COUNT;
 	host_flavor_t flavor = HOST_PRIORITY_INFO;
 	host_info(mach_host_self(), flavor, (host_info_t)&priorityInfoData, &msgTypeNumber);
 	defaultPriority = priorityInfoData.user_priority;
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 	for (i = 0; i <= VM_PRIO_MAX; i++) {
 		VMToOSPrioMap[i] = defaultPriority;
@@ -238,7 +238,7 @@ initRealtimePrioMap(void)
 	printMap();
 }
 
-#elif defined(AIXPPC)
+#elif (HOST_OS == OMR_AIX)
 
 #if defined(J9OS_I5)
 
@@ -263,7 +263,7 @@ initPrioMap(void)
 }
 #endif /* defined(J9OS_I5) */
 
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
 
 void
 initPrioMap(void)
@@ -298,4 +298,4 @@ initPrioMap(void)
 
 #else
 #error "unsupported platform"
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */

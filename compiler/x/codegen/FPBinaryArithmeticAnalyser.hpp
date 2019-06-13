@@ -35,7 +35,7 @@ namespace TR { class Register; }
 //
 // DOUBLE_EXPONENT_SCALE = -(16383-1023)
 //
-#if !defined(_LONG_LONG) && !defined(LINUX)
+#if !defined(_LONG_LONG) && !(HOST_OS == OMR_LINUX)
 #define DOUBLE_EXPONENT_SCALE 0xc0ce000000000000L
 #else
 #define DOUBLE_EXPONENT_SCALE 0xc0ce000000000000LL

@@ -32,12 +32,12 @@ void dcbz(char *);
 #pragma reg_killed_by dcbz
 #endif
 
-#if (defined(LINUX) && defined(S390))
+#if ((HOST_OS == OMR_LINUX) && defined(S390))
 /* _j9Z10Zero() is defined in j9memclrz10_31.s and j9memclrz10_64.s */
 extern void _j9Z10Zero(void *ptr, uintptr_t length);
 #endif
 
-#if defined(AIXPPC) || defined (LINUXPPC)
+#if (HOST_OS == OMR_AIX) || defined (LINUXPPC)
 static uintptr_t cacheLineSize = 0;
 #endif
 
@@ -57,17 +57,17 @@ static int isZ10orGreater = -1;
 void
 OMRZeroMemory(void *ptr, uintptr_t length)
 {
-#if defined(AIXPPC) || defined (LINUXPPC)
+#if (HOST_OS == OMR_AIX) || defined (LINUXPPC)
 	char *addr = ptr;
 	char *limit;
 	uintptr_t localCacheLineSize;
 
-#if defined(LINUXPPC)
+#if (HOST_OS == OMR_LINUX)
 	if (length < 2048) {
 		memset(ptr, 0, (size_t)length);
 		return;
 	}
-#endif /* defined(LINUXPPC) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 	/* one-time-only calculation of cache line size */
 	if (0 == cacheLineSize) {
@@ -116,7 +116,7 @@ OMRZeroMemory(void *ptr, uintptr_t length)
 		*((uintptr_t *)addr) = 0;
 	}
 
-#elif defined(OMR_OS_WINDOWS) && !defined(OMR_ENV_DATA64)
+#elif (HOST_OS == OMR_WINDOWS) && !defined(OMR_ENV_DATA64)
 #if defined(REENABLE_WHEN_THIS_WORKS)
 	/* NOTE: memset on WIN64 (AMD64) seems to do a fine job all on its own,
 	 * so we don't use our own SSE2 code there
@@ -186,7 +186,7 @@ OMRZeroMemory(void *ptr, uintptr_t length)
 uintptr_t
 getCacheLineSize(void)
 {
-#if defined(AIXPPC) || defined (LINUXPPC)
+#if (HOST_OS == OMR_AIX) || defined (LINUXPPC)
 	char buf[1024];
 	uintptr_t i, ppcCacheLineSize;
 

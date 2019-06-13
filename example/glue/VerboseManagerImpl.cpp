@@ -29,9 +29,9 @@
 
 #include "VerboseHandlerOutputStandard.hpp"
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #define snprintf _snprintf
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 MM_VerboseManagerImpl *
 MM_VerboseManagerImpl::newInstance(MM_EnvironmentBase *env, OMR_VM* vm)

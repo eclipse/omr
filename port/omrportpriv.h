@@ -53,7 +53,7 @@ typedef struct J9PortControlData {
 	uintptr_t sig_flags;
 	OMRMemCategorySet language_memory_categories;
 	OMRMemCategorySet omr_memory_categories;
-#if defined(AIXPPC)
+#if (HOST_OS == OMR_AIX)
 	uintptr_t aix_proc_attr;
 #endif
 } J9PortControlData;

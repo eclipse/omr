@@ -772,7 +772,7 @@ OMR::Node::createWithSymRef(TR::ILOpCodes op, uint16_t numChildren, TR::SymbolRe
  * These are defined for compilers that do not support variadic templates
  * Otherwise the definitions are in il/OMRNode_inlines.hpp
  */
-#if defined(_MSC_VER) || defined(LINUXPPC)
+#if defined(_MSC_VER) || (HOST_OS == OMR_LINUX)
 TR::Node *
 OMR::Node::recreateWithoutSymRef_va_args(TR::Node *originalNode, TR::ILOpCodes op,
                                               uint16_t numChildren, uint16_t numChildArgs,
