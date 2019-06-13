@@ -430,7 +430,8 @@ typedef enum
    fixedSequence3 = 3,
    fixedSequence4 = 4,
    fixedSequence5 = 5,
-   fixedSequence6 = 6
+   fixedSequence6 = 6,
+   fixedSequence7 = 7
    } TR_FixedSequenceKind;
 
 
