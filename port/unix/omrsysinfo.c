@@ -416,14 +416,14 @@ static int32_t getCgroupMemoryLimit(struct OMRPortLibrary *portLibrary, uint64_t
 
 #if defined(LINUX)
 static int32_t retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
-static int32_t retrieveLinuxCgroupMemoryStats(struct OMRPortLibrary *portLibrary, struct OMRCgroupMemoryInfo *cgroupMemInfo);
-static int32_t retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
+static int32_t retrieveLinuxCgroupMemoryStats(struct OMRPortLibrary *portLibrary, struct OMRCgroupMemoryInfo *cgroupMemInfo, int8_t memoryFlags);
+static int32_t retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags);
 #elif defined(OSX)
-static int32_t retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
+static int32_t retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags);
 #elif defined(AIXPPC)
-static int32_t retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
+static int32_t retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags);
 #elif defined(J9ZOS390)
-static int32_t retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
+static int32_t retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags);
 #endif
 
 /**
@@ -1476,7 +1476,7 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
  * @return 0 on success and negative error code on failure.
  */
 static int32_t
-retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
+retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 	int32_t rc = 0;
 	FILE *memStatFs = NULL;
@@ -1503,7 +1503,8 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 		tmpPtr = (char *)lineString;
 
 		/* Get the various fields that we are interested in and extract the corresponding value. */
-		if (0 == strncmp(tmpPtr, MEMTOTAL_PREFIX, MEMTOTAL_PREFIX_SZ)) {
+		if (0 == strncmp(tmpPtr, MEMTOTAL_PREFIX, MEMTOTAL_PREFIX_SZ) 
+		    && (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_PHYSICAL))) {
 			/* Now obtain the MemTotal value. */
 			tmpPtr += MEMTOTAL_PREFIX_SZ;
 			memInfo->totalPhysical = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1516,7 +1517,8 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->totalPhysical *= ONE_K;
-		} else if (0 == strncmp(tmpPtr, MEMFREE_PREFIX, MEMFREE_PREFIX_SZ)) {
+		} else if (0 == strncmp(tmpPtr, MEMFREE_PREFIX, MEMFREE_PREFIX_SZ)
+			   && (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_AVAIL_PHYSICAL))) {
 			/* Skip the whitespaces until we hit the MemFree value. */
 			tmpPtr += MEMFREE_PREFIX_SZ;
 			memInfo->availPhysical = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1529,7 +1531,8 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->availPhysical *= ONE_K;
-		} else if (0 == strncmp(tmpPtr, SWAPTOTAL_PREFIX, SWAPTOTAL_PREFIX_SZ)) {
+		} else if (0 == strncmp(tmpPtr, SWAPTOTAL_PREFIX, SWAPTOTAL_PREFIX_SZ)
+			   && (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_SWAP))) {
 			/* Skip the whitespaces until we hit the SwapTotal value. */
 			tmpPtr += SWAPTOTAL_PREFIX_SZ;
 			memInfo->totalSwap = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1542,7 +1545,8 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->totalSwap *= ONE_K;
-		} else if (0 == strncmp(tmpPtr, SWAPFREE_PREFIX, SWAPFREE_PREFIX_SZ)) {
+		} else if (0 == strncmp(tmpPtr, SWAPFREE_PREFIX, SWAPFREE_PREFIX_SZ)
+			   && (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_AVAIL_SWAP))) {
 			/* Skip the whitespaces until we get to the SwapFree value. */
 			tmpPtr += SWAPFREE_PREFIX_SZ;
 			memInfo->availSwap = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1555,7 +1559,8 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->availSwap *= ONE_K;
-		} else if (0 == strncmp(tmpPtr, CACHED_PREFIX, CACHED_PREFIX_SZ)) {
+		} else if (0 == strncmp(tmpPtr, CACHED_PREFIX, CACHED_PREFIX_SZ)
+			   && (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_CACHED))) {
 			/* Skip the whitespaces until we hit the Cached area size. */
 			tmpPtr += CACHED_PREFIX_SZ;
 			memInfo->cached = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1568,7 +1573,8 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 			/* The values are in Kb. */
 			memInfo->cached *= ONE_K;
-		} else if (0 == strncmp(tmpPtr, BUFFERS_PREFIX, BUFFERS_PREFIX_SZ)) {
+		} else if (0 == strncmp(tmpPtr, BUFFERS_PREFIX, BUFFERS_PREFIX_SZ)
+			   && (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_BUFFERED))) {
 			/* Skip the whitespaces until we hit the Buffered memory area size. */
 			tmpPtr += BUFFERS_PREFIX_SZ;
 			memInfo->buffered = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
@@ -1618,82 +1624,100 @@ _cleanup:
  * @return 0 on success and negative error code on failure.
  */
 static int32_t
-retrieveLinuxCgroupMemoryStats(struct OMRPortLibrary *portLibrary, struct OMRCgroupMemoryInfo *cgroupMemInfo)
+retrieveLinuxCgroupMemoryStats(struct OMRPortLibrary *portLibrary, struct OMRCgroupMemoryInfo *cgroupMemInfo, int8_t memoryFlags)
 {
 	int32_t rc = 0;
 	FILE *memStatFs = NULL;
 	int32_t numItemsToRead = 1;
+	uint64_t memoryAndSwapLimit;
+	uint64_t memoryAndSwapUsage;
 
 	Assert_PRT_true(NULL != cgroupMemInfo);
 
 	cgroupMemInfo->memoryLimit = OMRPORT_MEMINFO_NOT_AVAILABLE;
 	cgroupMemInfo->memoryUsage = OMRPORT_MEMINFO_NOT_AVAILABLE;
-	cgroupMemInfo->memoryAndSwapLimit = OMRPORT_MEMINFO_NOT_AVAILABLE;
-	cgroupMemInfo->memoryAndSwapUsage = OMRPORT_MEMINFO_NOT_AVAILABLE;
+	cgroupMemInfo->swapLimit = OMRPORT_MEMINFO_NOT_AVAILABLE;
+	cgroupMemInfo->swapUsage = OMRPORT_MEMINFO_NOT_AVAILABLE;
 	cgroupMemInfo->cached = OMRPORT_MEMINFO_NOT_AVAILABLE;
 
-	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_LIMIT_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryLimit);
-	if (0 != rc) {
-		goto _exit;
-	}
-	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_USAGE_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryUsage);
-	if (0 != rc) {
-		goto _exit;
-	}
-	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAP_LIMIT_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryAndSwapLimit);
-	if (0 != rc) {
-		if (OMRPORT_ERROR_FILE_NOENT == rc) {
-			/* It is possible file memory.memsw.limit_in_bytes is not present if
-			 * swap space is not configured. In such cases, set memoryAndSwapLimit to same as memoryLimit.
-			 */
-			cgroupMemInfo->memoryAndSwapLimit = cgroupMemInfo->memoryLimit;
-			rc = 0;
-		} else {
+
+	/* memoryLimit is required to get both total physical and total swap */
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_PHYSICAL | OMR_SYSINFO_TOTAL_SWAP | OMR_SYSINFO_AVAIL_PHYSICAL)) {
+		rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_LIMIT_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryLimit);
+		if (0 != rc) {
 			goto _exit;
 		}
 	}
-	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAP_USAGE_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryAndSwapUsage);
-	if (0 != rc) {
-		if (OMRPORT_ERROR_FILE_NOENT == rc) {
-			/* It is possible file memory.memsw.usage_in_bytes is not present if
-			 * swap space is not configured. In such cases, set memoryAndSwapUsage to memoryUsage.
-			 */
-			cgroupMemInfo->memoryAndSwapUsage = cgroupMemInfo->memoryUsage;
-			rc = 0;
-		} else {
+	
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_AVAIL_PHYSICAL | OMR_SYSINFO_AVAIL_SWAP)) {
+		rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_USAGE_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryUsage);
+		if (0 != rc) {
 			goto _exit;
 		}
 	}
-
-	/* Read value of page cache memory from memory.stat file */
-	rc = getHandleOfCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_STAT_FILE, &memStatFs);
-	if (0 != rc) {
-		goto _exit;
-	}
-
-	Assert_PRT_true(NULL != memStatFs);
-
-	while (0 == feof(memStatFs)) {
-		char statEntry[MAX_LINE_LENGTH] = {0};
-		char *tmpPtr = NULL;
-
-		if (NULL == fgets((char *)statEntry, MAX_LINE_LENGTH, memStatFs)) {
-			break;
-		}
-		tmpPtr = (char *)statEntry;
-
-		/* Extract "cache" value */
-		if (0 == strncmp(tmpPtr, CGROUP_MEMORY_STAT_CACHE, CGROUP_MEMORY_STAT_CACHE_SZ)) {
-			tmpPtr += CGROUP_MEMORY_STAT_CACHE_SZ;
-			rc = sscanf(tmpPtr, "%" SCNu64, &cgroupMemInfo->cached);
-			if (1 != rc) {
-				Trc_PRT_retrieveLinuxCgroupMemoryStats_invalidValue(CGROUP_MEMORY_STAT_CACHE, CGROUP_MEMORY_STAT_FILE);
-				rc = portLibrary->error_set_last_error_with_message_format(portLibrary, OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_FILE_INVALID_VALUE, "invalid value for field %s in file %s", CGROUP_MEMORY_STAT_CACHE, CGROUP_MEMORY_STAT_FILE);
-			} else {
-				/* reset 'rc' to success code */
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_SWAP)) {
+		rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAP_LIMIT_IN_BYTES_FILE, numItemsToRead, "%lu", &memoryAndSwapLimit);
+		if (0 != rc) {
+			if (OMRPORT_ERROR_FILE_NOENT == rc) {
+				/* It is possible file memory.memsw.limit_in_bytes is not present if
+				 * swap space is not configured. In such cases, set memoryAndSwapLimit to same as memoryLimit.
+				 */
+				memoryAndSwapLimit = cgroupMemInfo->memoryLimit;
 				rc = 0;
+			} else {
+				goto _exit;
 			}
-			break;
+		}
+		cgroupMemInfo->swapLimit = memoryAndSwapLimit - cgroupMemInfo->memoryLimit;
+	}
+
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_AVAIL_SWAP)) {
+		rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAP_USAGE_IN_BYTES_FILE, numItemsToRead, "%lu", &memoryAndSwapUsage);
+		if (0 != rc) {
+			if (OMRPORT_ERROR_FILE_NOENT == rc) {
+				/* It is possible file memory.memsw.usage_in_bytes is not present if
+				 * swap space is not configured. In such cases, set memoryAndSwapUsage to memoryUsage.
+				 */
+				memoryAndSwapUsage = cgroupMemInfo->memoryUsage;
+				rc = 0;
+			} else {
+				goto _exit;
+			}
+		}
+		cgroupMemInfo->swapUsage = memoryAndSwapUsage - cgroupMemInfo->memoryusage;
+	}
+
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_CACHED)) {
+		/* Read value of page cache memory from memory.stat file */
+		rc = getHandleOfCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_STAT_FILE, &memStatFs);
+		if (0 != rc) {
+			goto _exit;
+		}
+	
+		Assert_PRT_true(NULL != memStatFs);
+	
+		while (0 == feof(memStatFs)) {
+			char statEntry[MAX_LINE_LENGTH] = {0};
+			char *tmpPtr = NULL;
+	
+			if (NULL == fgets((char *)statEntry, MAX_LINE_LENGTH, memStatFs)) {
+				break;
+			}
+			tmpPtr = (char *)statEntry;
+	
+			/* Extract "cache" value */
+			if (0 == strncmp(tmpPtr, CGROUP_MEMORY_STAT_CACHE, CGROUP_MEMORY_STAT_CACHE_SZ)) {
+				tmpPtr += CGROUP_MEMORY_STAT_CACHE_SZ;
+				rc = sscanf(tmpPtr, "%" SCNu64, &cgroupMemInfo->cached);
+				if (1 != rc) {
+					Trc_PRT_retrieveLinuxCgroupMemoryStats_invalidValue(CGROUP_MEMORY_STAT_CACHE, CGROUP_MEMORY_STAT_FILE);
+					rc = portLibrary->error_set_last_error_with_message_format(portLibrary, OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_FILE_INVALID_VALUE, "invalid value for field %s in file %s", CGROUP_MEMORY_STAT_CACHE, CGROUP_MEMORY_STAT_FILE);
+				} else {
+					/* reset 'rc' to success code */
+					rc = 0;
+				}
+				break;
+			}
 		}
 	}
 
@@ -1717,7 +1741,7 @@ _exit:
  * @return 0 on success and -1 on failure.
  */
 static int32_t
-retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
+retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 	int32_t rc = 0;
 	uint64_t maxVirtual = 0;
@@ -1734,7 +1758,7 @@ retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo
 		memInfo->totalVirtual = maxVirtual;
 	}
 
-	rc = retrieveLinuxMemoryStatsFromProcFS(portLibrary, memInfo);
+	rc = retrieveLinuxMemoryStatsFromProcFS(portLibrary, memInfo, memoryFlags);
 	if (0 != rc) {
 		goto _exit;
 	}
@@ -1749,7 +1773,7 @@ retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo
 		goto _exit;
 	}
 
-	rc = retrieveLinuxCgroupMemoryStats(portLibrary, &cgroupMemInfo);
+	rc = retrieveLinuxCgroupMemoryStats(portLibrary, &cgroupMemInfo, memoryFlags);
 	if (0 != rc) {
 		Trc_PRT_retrieveLinuxMemoryStats_CgroupMemoryStatsFailed(rc);
 		/* If we failed to retrieve memory stats for cgroup, just use values for the host; don't consider it as failure */
@@ -1771,16 +1795,14 @@ retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo
 		memInfo->availPhysical = OMRPORT_MEMINFO_NOT_AVAILABLE;
 	}
 
-	swapLimit = cgroupMemInfo.memoryAndSwapLimit - cgroupMemInfo.memoryLimit;
-	if (swapLimit < memInfo->totalSwap) {
-		memInfo->totalSwap = swapLimit;
+	if (cgroupMemInfo.swapLimit < memInfo->totalSwap) {
+		memInfo->totalSwap = cgroupMemInfo.swapLimit;
 		isCgroupMemAndSwapLimitValid = TRUE;
 	}
 
 	if (isCgroupMemUsageValid && isCgroupMemAndSwapLimitValid) {
-		if (cgroupMemInfo.memoryAndSwapUsage < cgroupMemInfo.memoryAndSwapLimit) {
-			memInfo->availSwap = memInfo->totalSwap - (cgroupMemInfo.memoryAndSwapUsage - cgroupMemInfo.memoryUsage);
-		} else {
+		if ((cgroupMemInfo.memoryUsage + cgroupMemInfo.swapUsage) > 
+			(cgroupMemInfo.memoryLimit + cgroupMemInfo.swapLimit)) {
 			memInfo->availSwap = OMRPORT_MEMINFO_NOT_AVAILABLE;
 		}
 	}
@@ -1810,56 +1832,73 @@ _exit:
  * @return 0 on success and -1 on failure.
  */
 static int32_t
-retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
+retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 	int32_t ret = 0;
 
 	/* Get total physical memory. */
-	int name[2] = {CTL_HW, HW_MEMSIZE};
-	uint64_t memsize = 0;
-	size_t len = sizeof(memsize);
-
-	if (0 == sysctl(name, 2, &memsize, &len, NULL, 0)) {
-		memInfo->totalPhysical = memsize;
-	} else {
-		ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_PHYSICAL)) {
+		int name[2] = {CTL_HW, HW_MEMSIZE};
+		uint64_t memsize = 0;
+		size_t len = sizeof(memsize);
+	
+		if (0 == sysctl(name, 2, &memsize, &len, NULL, 0)) {
+				memInfo->totalPhysical = memsize;
+		} else {
+			ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+		}
 	}
 
 	/* Get free physical memory */
-	if (0 == ret) {
-		vm_statistics_data_t vmStatData;
-		mach_msg_type_number_t msgTypeNumber = sizeof(vmStatData) / sizeof(natural_t);
-		if (KERN_SUCCESS == host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmStatData, &msgTypeNumber)) {
-			memInfo->availPhysical = vm_page_size * vmStatData.free_count;
-		} else {
-			ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_AVAIL_PHYSICAL)) {
+		if (0 == ret) {
+			vm_statistics_data_t vmStatData;
+			mach_msg_type_number_t msgTypeNumber = sizeof(vmStatData) / sizeof(natural_t);
+			if (KERN_SUCCESS == host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmStatData, &msgTypeNumber)) {
+				memInfo->availPhysical = vm_page_size * vmStatData.free_count;
+			} else {
+				ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+			}
 		}
 	}
 
 	/* Get total used and free swap memory. */
-	if (0 == ret) {
-		struct xsw_usage vmusage = {0};
-		size_t size = sizeof(vmusage);
-		if (0 == sysctlbyname("vm.swapusage", &vmusage, &size, NULL, 0))
-		{
-			memInfo->totalSwap = vmusage.xsu_total;
-			memInfo->availSwap = vmusage.xsu_avail;
-		} else {
-			ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_SWAP | OMR_SYSINFO_AVAIL_SWAP)) {
+		if (0 == ret) {
+			struct xsw_usage vmusage = {0};
+			size_t size = sizeof(vmusage);
+			if (0 == sysctlbyname("vm.swapusage", &vmusage, &size, NULL, 0))
+			{
+				if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_SWAP)) {
+					memInfo->totalSwap = vmusage.xsu_total;
+				}	
+
+				if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_AVAIL_SWAP)) {
+					memInfo->availSwap = vmusage.xsu_avail;
+				}
+			} else {
+				ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+			}
 		}
 	}
 
 	/* Get virtual memory used by current process. */
-	if (0 == ret) {
-		struct task_basic_info taskInfo;
-		mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
-
-		if (KERN_SUCCESS == task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&taskInfo, &t_info_count)) {
-			memInfo->totalVirtual = taskInfo.virtual_size;
-			memInfo->availVirtual = taskInfo.virtual_size - taskInfo.resident_size;
-
-		} else {
-			ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_VIRTUAL | OMR_SYSINFO_AVAIL_VIRTUAL)) {
+		if (0 == ret) {
+			struct task_basic_info taskInfo;
+			mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+	
+			if (KERN_SUCCESS == task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&taskInfo, &t_info_count)) {
+				if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_VIRTUAL)) {
+					memInfo->totalVirtual = taskInfo.virtual_size;
+				}
+				if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_AVAIL_VIRTUAL)) {
+					memInfo->availVirtual = taskInfo.virtual_size - taskInfo.resident_size;
+				}
+	
+			} else {
+				ret = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+			}
 		}
 	}
 
@@ -1885,7 +1924,7 @@ retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
  * @return 0 on success and -1 on failure.
  */
 static int32_t
-retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
+retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 #if !defined(J9OS_I5)
 	int32_t rc = 0;
@@ -1904,11 +1943,21 @@ retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
 	}
 
 	/* AIX returns these quantities in number of regular sized (4K) pages. */
-	memInfo->totalPhysical = aixMemoryInfo.real_total * page_size;
-	memInfo->availPhysical = aixMemoryInfo.real_free * page_size;
-	memInfo->totalSwap = aixMemoryInfo.pgsp_total * page_size;
-	memInfo->availSwap = aixMemoryInfo.pgsp_free * page_size;
-	memInfo->cached = aixMemoryInfo.numperm * page_size;
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_MEMORY)) {
+		memInfo->totalPhysical = aixMemoryInfo.real_total * page_size;
+	}
+       	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_AVAIL_MEMORY)) {
+		memInfo->availPhysical = aixMemoryInfo.real_free * page_size;
+	}
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_CACHED)) {
+		memInfo->cached = aixMemoryInfo.numperm * page_size;
+	}
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_TOTAL_SWAP)) {
+		memInfo->totalSwap = aixMemoryInfo.pgsp_total * page_size;
+	}
+	if (OMR_ARE_ANY_BITS_SET(memoryFlags, OMR_SYSINFO_AVAIL_SWAP)) {
+		memInfo->availSwap = aixMemoryInfo.pgsp_free * page_size;
+	}
 	/* AIX does not define buffers, so: memInfo->buffered = OMRPORT_MEMINFO_NOT_AVAILABLE; */
 
 	memInfo->hostAvailPhysical = memInfo->availPhysical;
@@ -1929,7 +1978,7 @@ retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
 #endif /* end OS specific guards */
 
 int32_t
-omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, ...)
+omrsysinfo_get_required_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags)
 {
 	int32_t rc = -1;
 
@@ -1955,19 +2004,26 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 	memInfo->hostBuffered = OMRPORT_MEMINFO_NOT_AVAILABLE;
 
 #if defined(LINUX)
-	rc = retrieveLinuxMemoryStats(portLibrary, memInfo);
+	rc = retrieveLinuxMemoryStats(portLibrary, memInfo, memoryFlags);
 #elif defined(OSX)
-	rc = retrieveOSXMemoryStats(portLibrary, memInfo);
+	rc = retrieveOSXMemoryStats(portLibrary, memInfo, memoryFlags);
 #elif defined(AIXPPC)
-	rc = retrieveAIXMemoryStats(portLibrary, memInfo);
+	rc = retrieveAIXMemoryStats(portLibrary, memInfo, memoryFlags);
 #elif defined(J9ZOS390)
-	rc = retrieveZOSMemoryStats(portLibrary, memInfo);
+	rc = retrieveZOSMemoryStats(portLibrary, memInfo, memoryFlags);
 #endif
 
 	memInfo->timestamp = (portLibrary->time_nano_time(portLibrary) / NANOSECS_PER_USEC);
 
 	Trc_PRT_sysinfo_get_memory_info_Exit(rc);
 	return rc;
+}
+	
+
+int32_t
+omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, ...)
+{
+	return omrsysinfo_get_required_memory_info(portLibrary, memInfo, OMR_SYSINFO_FETCH_ALL);
 }
 
 uint64_t

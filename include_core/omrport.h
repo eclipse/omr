@@ -284,6 +284,22 @@
 #define ROUND_UP_TO_POWEROF2(value, powerof2) (((value) + ((powerof2) - 1)) & (UDATA)~((powerof2) - 1))
 #define ROUND_DOWN_TO_POWEROF2(value, powerof2) ((value) & (UDATA)~((powerof2) - 1))
 
+/**
+ * @name Memory Info Types
+ * Constants used to denote memory types.
+ * @{
+ */
+#define OMR_SYSINFO_TOTAL_PHYSICAL	0x00000001
+#define OMR_SYSINFO_AVAIL_PHYSICAL	0x00000010 
+#define OMR_SYSINFO_BUFFERED	0x00000100 
+#define OMR_SYSINFO_CACHED	0x00001000
+#define OMR_SYSINFO_TOTAL_SWAP	0x00010000
+#define OMR_SYSINFO_AVAIL_SWAP	0x00100000
+#define OMR_SYSINFO_TOTAL_VIRTUAL	0x01000000 
+#define OMR_SYSINFO_AVAIL_VIRTUAL	0x10000000
+#define OMR_SYSINFO_FETCH_ALL	0x11111111
+/** @} */
+
 typedef struct J9Permission {
 	uint32_t isUserWriteable : 1;
 	uint32_t isUserReadable : 1;
@@ -1154,6 +1170,8 @@ typedef struct OMRPortLibrary {
 	uintptr_t (*sysinfo_get_ppid)(struct OMRPortLibrary *portLibrary) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_get_memory_info "omrsysinfo_get_memory_info"*/
 	int32_t (*sysinfo_get_memory_info)(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, ...) ;
+	/** see @ref omrsysinfo.c::omrsysinfo_get_required_memory_info "omrsysinfo_get_required_memory_info"*/
+	int32_t (*sysinfo_get_required_memory_info)(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags);
 	/** see @ref omrsysinfo.c::omrsysinfo_get_processor_info "omrsysinfo_get_processor_info"*/
 	int32_t (*sysinfo_get_processor_info)(struct OMRPortLibrary *portLibrary, struct J9ProcessorInfos *procInfo) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_destroy_processor_info "omrsysinfo_destroy_processor_info"*/

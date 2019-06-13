@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,8 +34,8 @@
 typedef struct OMRCgroupMemoryInfo {
 	uint64_t memoryLimit; /**< memory limit in bytes (as in memory.limit_in_bytes file)*/
 	uint64_t memoryUsage; /**< current memory usage in bytes (as in memory.usage_in_bytes file)*/
-	uint64_t memoryAndSwapLimit; /**< memory + swap limit in bytes (as in memory.memsw.limit_in_bytes file)*/
-	uint64_t memoryAndSwapUsage; /**< current memory + swap usage in bytes (as in memory.memsw.usage_in_bytes file) */
+	uint64_t swapLimit; /**< memory + swap limit in bytes (as in memory.memsw.limit_in_bytes file)*/
+	uint64_t swapUsage; /**< current memory + swap usage in bytes (as in memory.memsw.usage_in_bytes file) */
 	uint64_t cached; /**< page cache memory (as in memory.stat file)*/
 } OMRCgroupMemoryInfo;
 

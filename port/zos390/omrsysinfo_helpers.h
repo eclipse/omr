@@ -42,7 +42,7 @@ extern "C" {
  * @return                 0 on success; negative value on failure.
  */
 int32_t
-retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
+retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo, int8_t memoryFlags);
 
 /**
  * Function retrieves and populates processor usage statistics on a z/OS platform.
