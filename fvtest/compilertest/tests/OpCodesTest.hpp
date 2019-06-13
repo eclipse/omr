@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,6 +45,12 @@
 #include "tests/injectors/TernaryOpIlInjector.hpp"
 #include "tests/injectors/UnaryOpIlInjector.hpp"
 
+#if defined(J9ZOS390)
+namespace std
+{
+   using ::isnan;
+}
+#endif
 
 namespace TR { class ResolvedMethod; }
 
@@ -712,26 +718,19 @@ class OpCodesTest : public TestDriver
    static signatureCharSS_I_testMethodType *_sCmpge;
    static signatureCharBB_I_testMethodType *_bCmpge;
 
-   static unsignedCompareSignatureCharII_I_testMethodType *_iuCmpeq;
-   static unsignedCompareSignatureCharII_I_testMethodType *_iuCmpne;
    static unsignedCompareSignatureCharII_I_testMethodType *_iuCmplt;
    static unsignedCompareSignatureCharII_I_testMethodType *_iuCmpge;
    static unsignedCompareSignatureCharII_I_testMethodType *_iuCmpgt;
    static unsignedCompareSignatureCharII_I_testMethodType *_iuCmple;
-   static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmpeq;
-   static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmpne;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmplt;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmpge;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmpgt;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmple;
-   static unsignedCompareSignatureCharBB_I_testMethodType *_buCmpeq;
-   static unsignedCompareSignatureCharBB_I_testMethodType *_buCmpne;
    static unsignedCompareSignatureCharBB_I_testMethodType *_buCmplt;
    static unsignedCompareSignatureCharBB_I_testMethodType *_buCmpge;
    static unsignedCompareSignatureCharBB_I_testMethodType *_buCmpgt;
    static unsignedCompareSignatureCharBB_I_testMethodType *_buCmple;
-   static unsignedCompareSignatureCharSS_I_testMethodType *_suCmpeq;
-   static unsignedCompareSignatureCharSS_I_testMethodType *_suCmpne;
+
    static unsignedCompareSignatureCharSS_I_testMethodType *_suCmplt;
    static unsignedCompareSignatureCharSS_I_testMethodType *_suCmpge;
    static unsignedCompareSignatureCharSS_I_testMethodType *_suCmpgt;
@@ -780,26 +779,18 @@ class OpCodesTest : public TestDriver
    static signatureCharBB_I_testMethodType *_ifBcmplt;
    static signatureCharBB_I_testMethodType *_ifBcmpge;
    static signatureCharBB_I_testMethodType *_ifBcmple;
-   static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmpeq;
-   static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmpne;
    static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmplt;
    static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmpge;
    static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmpgt;
    static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmple;
-   static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmpeq;
-   static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmpne;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmplt;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmpge;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmpgt;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmple;
-   static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmpeq;
-   static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmpne;
    static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmplt;
    static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmpge;
    static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmpgt;
    static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmple;
-   static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmpeq;
-   static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmpne;
    static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmplt;
    static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmpge;
    static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmpgt;

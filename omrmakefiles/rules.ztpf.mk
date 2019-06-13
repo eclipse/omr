@@ -96,7 +96,7 @@ endif
 ifeq (s390,$(OMR_HOST_ARCH))
     GLOBAL_CFLAGS+=$(J9M31) -fno-strict-aliasing
     GLOBAL_CXXFLAGS+=$(J9M31) -fno-strict-aliasing
-    GLOBAL_CPPFLAGS+=-DS390 -D_LONG_LONG -DJ9VM_TIERED_CODE_CACHE
+    GLOBAL_CPPFLAGS+=-DS390 -D_LONG_LONG
     ifeq (1,$(OMR_ENV_DATA64))
         GLOBAL_CPPFLAGS+=-DS39064
     endif
@@ -108,7 +108,7 @@ ifneq (,$(findstring executable,$(ARTIFACT_TYPE)))
     GLOBAL_LDFLAGS+=$(DEFAULT_LIBS)
 endif
 
-TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /ztpf/svtcur/gnu/all /ztpf/commit
+TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /zbld/svtcur/gnu/all /ztpf/commit
 
 ###
 ### Shared Libraries

@@ -379,3 +379,16 @@ TR::Instruction *generateTrg1Instruction(
                    TR::Node        *n,
                    TR::Register    *trg,
                    TR::Instruction *preced = 0);
+
+void generateZeroExtendInstruction(
+                   TR::Node *node, 
+                   TR::Register *trgReg, 
+                   TR::Register *srcReg, 
+                   int32_t bitsInTarget, 
+                   TR::CodeGenerator *cg);
+
+void generateSignExtendInstruction(
+                   TR::Node *node,
+                   TR::Register *trgReg,
+                   TR::Register *srcReg,
+                   TR::CodeGenerator *cg);

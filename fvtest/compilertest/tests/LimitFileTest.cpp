@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if defined(GTEST_HAS_DEATH_TEST)
 #include "tests/LimitFileTest.hpp"
 
 #include <fstream>
@@ -250,8 +251,10 @@ TEST_F(LimitFileTest, UseLimitFileRangeTest)
    int iNegLine;
    createAndCheckVLog(limitFile, NULL, &iNegLine);
 
-   // Note VC++ 2010 doesn't support std::to_string(int).
-   std::string iNegLineStr = std::to_string(static_cast<long long>(iNegLine));
+   std::ostringstream ss;
+   ss << static_cast<long long>(iNegLine);
+
+   std::string iNegLineStr = ss.str();
    std::string limitArg = std::string("(") + limitFile + "," + iNegLineStr + "," + iNegLineStr + ")";
    createVLog(vlog, limitArg.c_str());
 
@@ -270,9 +273,14 @@ TEST_F(LimitFileTest, UseLimitFileBoundTest)
    createAndCheckVLog(limitFile, NULL, &iNegLine);
 
    iNegLine++; // Start at line after iNeg.
-   std::string limitArg = std::string("(") + limitFile + "," + std::to_string(static_cast<long long>(iNegLine)) + ")";
+
+   std::ostringstream ss;
+   ss << static_cast<long long>(iNegLine);
+
+   std::string limitArg = std::string("(") + limitFile + "," + ss.str() + ")";
    createVLog(vlog, limitArg.c_str());
    checkVLogForMethod(vlog, "iNeg", NULL);
    }
 
 }
+#endif /* defined(GTEST_HAS_DEATH_TEST) */

@@ -78,9 +78,11 @@ function write_flag_defined(macro_name) {
 }
 
 function define_flag_macro(macro_name) {
-	# TODO if not include guard
-	write_flag_macro(macro_name);
-	write_flag_defined(macro_name);
+	# Don't process any include guard macros
+	if(match(macro_name, /_[Hh]([Pp]{2})?_?$/) == 0){
+		write_flag_macro(macro_name);
+		write_flag_defined(macro_name);
+	}
 }
 
 function undef_flag_macro(macro_name) {
@@ -108,7 +110,8 @@ function begin_file(filename){
 	}
 	if(filename) { print "DDRFILE_BEGIN " filename }
 	current_file = filename
-	add_values = 0;
+
+	add_values = 1;
 	add_flags = 0;
 }
 
@@ -127,13 +130,12 @@ END {
 }
 
 NR == 1 {
-	print "DDRFILE_BEGIN " FILENAME
+	begin_file(FILENAME);
 }
 
 /@ddr_options: *valuesonly/ { add_values = 1; add_flags = 0}
 /@ddr_options: *buildflagsonly/ { add_values = 0; add_flags = 1;}
-/@ddr_namespace: *(default|map_to_type=)/ { add_values = 1; add_flags = 0; }
-
+/@ddr_options: *valuesandbuildflags/ { add_values = 1; add_flags = 1;}
 
 /@ddr_namespace: *default/ {set_default_namespaces();}
 /@ddr_namespace: *map_to_type=/ {set_map_to_type_namespaces();}

@@ -98,43 +98,6 @@ inline bool movedStorePinsCommonedSymbols()
    #endif
    }
 
-// The bitvectors used to track commoned loads (savedLiveCommonedLoads,killedLiveCommonedLoads,myCommonedLoads etc)
-// are not precise enough to deal with some cases where a particular store contains the same commoned symbol under different
-// loads, for example:
-//    treetop
-//       iload sym1 <a>
-//    treetop
-//       ior
-//          iload sym1 <b>
-//          iconst
-//    ...
-//    istore
-//       iand
-//          =>ior
-//          =>iload sym1 <a>
-//
-// The bitvectors alone only provides the info that the istore contains sym1 as a commoned load but not how many times it contains sym1.
-// This is a problem because then detecting when a particular sym1 reference is killed by another store or when the first reference to a particular
-// symbol is impossible using the bitvectors alone.
-// While the bitvectors are useful as a hint to the commoned symbols a more precise mechanism is required to track exactly what commoned references
-// a particular store contains.
-// Each movable store will contain a list of commoned loads beneath it. The loads will be wrapped in a class to mark the load as satisfied and/or killed and
-// the symIdx that the load references.
-// A commoned load is satisifed when the first reference to this load has been seen (regardless of whether the store has been killed first).
-// A commoned load is killed when a store to this symbol is seen before the load has been satisified.
-// After visiting all the nodes every commoned load will have been satisfied and some may have been killed.
-// The savedLiveCommoned bitvector can be more precisely refined to removed symbols when no active movable store contains a particular
-// symbol as an unsatisfied commoned load.
-// This refinement will cause fewer walks of the movable stores to occur.
-
-// Currently under testing in trivialStoreSinking...
-inline bool TR_SinkStores::enablePreciseSymbolTracking()
-   {
-   if (comp()->getOption(TR_EnableTrivialStoreSinking))
-      return true;
-   else
-      return false;
-   }
 
 TR_LiveOnNotAllPaths::TR_LiveOnNotAllPaths(TR::Compilation * c, TR_Liveness * liveOnSomePaths, TR_LiveOnAllPaths * liveOnAllPaths)
    : _comp(c)
@@ -314,182 +277,14 @@ TR_MovableStore::TR_MovableStore(TR_SinkStores *s, TR_UseOrKillInfo *useOrKillIn
                    _symIdx(symIdx),
                    _commonedLoadsUnderTree(commonedLoadsUnderTree),
                    _commonedLoadsAfter(commonedLoadsAfter),
-                   _commonedLoadsList(NULL),
-                   _commonedLoadsCount(0),
-                   _satisfiedCommonedLoadsCount(0),
                    _depth(depth),
                    _needTempForCommonedLoads(needTempForCommonedLoads),
                    _movable(true),
                    _isLoadStatic(false)
    {
    _useOrKillInfo->_movableStore = this;
-   if (_s->enablePreciseSymbolTracking() && _commonedLoadsUnderTree && !_commonedLoadsUnderTree->isEmpty())
-      {
-      _commonedLoadsList = new (trStackMemory()) List<TR_CommonedLoad>(trMemory());
-      if (_s->trace())
-         traceMsg(comp(),"      calling findCommonedLoads for node %p with visitCount %d\n",_useOrKillInfo->_tt->getNode(),comp()->getVisitCount()+1);
-      _commonedLoadsCount = initCommonedLoadsList(_useOrKillInfo->_tt->getNode()->getFirstChild(),comp()->incVisitCount());
-      if (_s->trace())
-         traceMsg(comp(),"      found %d unique commonedLoads (_commonedLoadsUnderTree->elementCount() = %d\n",_commonedLoadsCount,_commonedLoadsUnderTree->elementCount());
-      // A single symbol may be found in more than one load therefore commonedLoadsFound should be greater or equal to the number of
-      // symbols set in _commonedLoadsUnderTree
-      // NOTE: _commonedLoadsCount < _commonedLoadsUnderTree->elementCount() when a node is commoned within the tree but not outside of it
-      // istore
-      //   ixor
-      //      iload sym1
-      //      =>iload sym1
-      // In this case the futureUseCount on the node is 0 so it isn't added to the _commonedLoadsList
-      //TR_ASSERT(_commonedLoadsCount >= _commonedLoadsUnderTree->elementCount(),"did not find the right number of commonedLoads (found %d, actual %d)\n",_commonedLoadsCount,_commonedLoadsUnderTree->elementCount());
-      ListIterator<TR_CommonedLoad> it(_commonedLoadsList);
-      TR_CommonedLoad *load;
-      if (_s->trace())
-         {
-         traceMsg(comp(),"      for store %p found the commoned load nodes\n",_useOrKillInfo->_tt->getNode());
-         for (load=it.getFirst(); load != NULL; load = it.getNext())
-            {
-            traceMsg(comp(),"         load = %p with symIdx %d\n",load->getNode(),_s->getSinkableSymbol(load->getNode())->getLiveLocalIndex());
-            }
-         }
-      }
-   }
-int32_t
-TR_MovableStore::initCommonedLoadsList(TR::Node *node, vcount_t visitCount)
-   {
-   int32_t increment = 0;
-   vcount_t oldVisitCount = node->getVisitCount();
-   if (oldVisitCount == visitCount)
-      return increment;
-   node->setVisitCount(visitCount);
-
-   if (node->getOpCode().isLoadVarDirect() && node->getOpCode().hasSymbolReference())
-      {
-      TR::RegisterMappedSymbol *local = _s->getSinkableSymbol(node);
-      //TR_ASSERT(local,"invalid local symbol\n");
-      if (!local)
-         return increment;
-      int32_t symIdx = local->getLiveLocalIndex();
-
-      if (node->getFutureUseCount() > 0 && symIdx != INVALID_LIVENESS_INDEX)
-         {
-         TR_ASSERT(_commonedLoadsUnderTree->isSet(symIdx),"symIdx %d should be set in _commonedLoadsUnderTree\n",symIdx);
-         _commonedLoadsList->add(new (trStackMemory()) TR_CommonedLoad(node, symIdx));
-         increment++;
-         }
-      }
-
-   for (int32_t i = node->getNumChildren()-1; i >= 0; i--)
-      {
-      increment+=initCommonedLoadsList(node->getChild(i),visitCount);
-      }
-   return increment;
    }
 
-bool
-TR_MovableStore::containsKilledCommonedLoad(TR::Node *node)
-   {
-   if (!_commonedLoadsList)
-      return false;
-//   TR_ASSERT(_commonedLoadsList,"_commonedLoadsList is NULL\n");
-   for (ListElement<TR_CommonedLoad> *le = _commonedLoadsList->getListHead(); le; le = le->getNextElement())
-      if (node == le->getData()->getNode() && le->getData()->isKilled())
-         return true;
-   return false;
-   }
-bool
-TR_MovableStore::containsSatisfiedAndNotKilledCommonedLoad(TR::Node *node)
-   {
-   TR_ASSERT(_commonedLoadsList,"_commonedLoadsList is NULL\n");
-   for (ListElement<TR_CommonedLoad> *le = _commonedLoadsList->getListHead(); le; le = le->getNextElement())
-      //if (node == le->getData()->getNode() && le->getData()->isSatisfied())
-      if (node == le->getData()->getNode() && le->getData()->isSatisfied() && !le->getData()->isKilled())
-         return true;
-   return false;
-   }
-bool
-TR_MovableStore::containsCommonedLoad(TR::Node *node)
-   {
-   if (!_commonedLoadsList)
-      return false;
-   for (ListElement<TR_CommonedLoad> *le = _commonedLoadsList->getListHead(); le; le = le->getNextElement())
-      if (node == le->getData()->getNode())
-         return true;
-   return false;
-   }
-
-TR_CommonedLoad*
-TR_MovableStore::getCommonedLoad(TR::Node *node)
-   {
-   TR_ASSERT(_commonedLoadsList,"_commonedLoadsList is NULL\n");
-   for (ListElement<TR_CommonedLoad> *le = _commonedLoadsList->getListHead(); le; le = le->getNextElement())
-      if (node == le->getData()->getNode())
-         return le->getData();
-   return NULL;
-   }
-
-bool
-TR_MovableStore::satisfyCommonedLoad(TR::Node *node)
-   {
-   if (areAllCommonedLoadsSatisfied())
-      return false;
-   for (ListElement<TR_CommonedLoad> *le = _commonedLoadsList->getListHead(); le; le = le->getNextElement())
-      {
-      TR_CommonedLoad *commonedLoad = le->getData();
-      if ((node == commonedLoad->getNode()) && !commonedLoad->isSatisfied())
-         {
-         if (_s->trace())
-            traceMsg(comp(),"      satisfyCommonedLoad (store %p) symIdx %d setting commonedLoad %p with node %p satisfied (isKilled = %d, isSatisfied = %d)\n",this->_useOrKillInfo->_tt->getNode(),commonedLoad->getSymIdx(),commonedLoad,commonedLoad->getNode(),commonedLoad->isKilled(),commonedLoad->isSatisfied());
-         commonedLoad->setIsSatisfied();
-         _satisfiedCommonedLoadsCount++;
-         return true;
-         }
-      }
-   return false;
-   }
-
-bool
-TR_MovableStore::areAllCommonedLoadsSatisfied()
-   {
-   // should never have satisfied more commoned loads then exist under the store, must have made too many calls to satisfyCommonedLoad
-   TR_ASSERT(_satisfiedCommonedLoadsCount <= _commonedLoadsCount,"_satisfiedCommonedLoadsCount (%d) > _commonedLoadsCount (%d)\n",_satisfiedCommonedLoadsCount,_commonedLoadsCount);
-   return (_satisfiedCommonedLoadsCount == _commonedLoadsCount);
-   }
-
-bool
-TR_MovableStore::killCommonedLoadFromSymbol(int32_t symIdx)
-   {
-   if (areAllCommonedLoadsSatisfied())
-      return false;
-   bool foundSymbol = false;
-   for (ListElement<TR_CommonedLoad> *le = _commonedLoadsList->getListHead(); le; le = le->getNextElement())
-      {
-      TR_CommonedLoad *commonedLoad = le->getData();
-      if (!commonedLoad->isSatisfied() && (commonedLoad->getSymIdx() == symIdx))
-         {
-         if (_s->trace())
-            traceMsg(comp(),"      killCommonedLoadFromSymbol (store %p) symIdx %d setting commonedLoad %p with node %p killed\n",this->_useOrKillInfo->_tt->getNode(),symIdx,commonedLoad,commonedLoad->getNode());
-         commonedLoad->setIsKilled();
-         foundSymbol = true;
-         }
-      }
-   return foundSymbol;
-   }
-
-bool
-TR_MovableStore::containsUnsatisfedLoadFromSymbol(int32_t symIdx)
-   {
-   if (areAllCommonedLoadsSatisfied())
-      return false;
-
-   for (ListElement<TR_CommonedLoad> *le = _commonedLoadsList->getListHead(); le; le = le->getNextElement())
-      {
-      TR_CommonedLoad *commonedLoad = le->getData();
-      if (!commonedLoad->isSatisfied() && (commonedLoad->getSymIdx() == symIdx))
-         {
-         return true;
-         }
-      }
-   return false;
-   }
 
 TR_SinkStores::TR_SinkStores(TR::OptimizationManager *manager)
    : TR::Optimization(manager),
@@ -531,22 +326,10 @@ TR_SinkStores::TR_SinkStores(TR::OptimizationManager *manager)
       }
    }
 
-TR_TrivialSinkStores::TR_TrivialSinkStores(TR::OptimizationManager *manager)
-   : TR_SinkStores(manager)
-   {
-   setUsesDataFlowAnalysis(false);
-   setSinkMethodMetaDataStores(true);
-   setSinkStoresWithIndirectLoads(true);
-   setExceptionFlagIsSticky(false);
-   setSinkStoresWithStaticLoads(false);
-   _nodesClonedForSideExitDuplication = new (trStackMemory()) TR_HashTab(comp()->trMemory(), stackAlloc, comp()->getFlowGraph()->getNextNodeNumber()/4);
-   }
-
 TR_GeneralSinkStores::TR_GeneralSinkStores(TR::OptimizationManager *manager)
    : TR_SinkStores(manager)
    {
    setUsesDataFlowAnalysis(true);
-   setSinkMethodMetaDataStores(false);
    setSinkStoresWithIndirectLoads(false);
    setExceptionFlagIsSticky(true);
    setSinkStoresWithStaticLoads(true);
@@ -726,13 +509,6 @@ void TR_SinkStores::recordPlacementForDefInBlock(TR_BlockStorePlacement *blockPl
       }
    }
 
-int32_t TR_TrivialSinkStores::perform()
-   {
-   if (!comp()->getOption(TR_EnableTrivialStoreSinking))
-      return 0;
-   return performStoreSinking();
-   }
-
 int32_t TR_GeneralSinkStores::perform()
    {
    if (comp()->getOption(TR_DisableStoreSinking))
@@ -741,6 +517,7 @@ int32_t TR_GeneralSinkStores::perform()
       }
    return performStoreSinking();
    }
+
 int32_t TR_SinkStores::performStoreSinking()
    {
    if (0 && trace())
@@ -790,30 +567,15 @@ int32_t TR_SinkStores::performStoreSinking()
                                                                    rootStructure,
                                                                    false, /* !splitLongs */
                                                                    true,  /* includeParms */
-                                                                   sinkMethodMetaDataStores());
+                                                                   false);
 
    if (_liveVarInfo->numLocals() == 0)
       {
       return 1;
       }
 
-   if (trace() && sinkMethodMetaDataStores())
-      {
-      ListIterator<TR::RegisterMappedSymbol> methodMetaDataSymbols(&comp()->getMethodSymbol()->getMethodMetaDataList());
-      int32_t localCount = 0;
-      for (auto *m = methodMetaDataSymbols.getFirst(); m != NULL; m = methodMetaDataSymbols.getNext())
-         {
-         TR_ASSERT(m->isMethodMetaData(), "should be method meta data");
-         // If this assume fires than the order the method meta symbols were added in LiveVariableInformation has changed and
-         // the mapping of live index to symbol name given below is wrong
-         TR_ASSERT(m->getLiveLocalIndex() == localCount,"Index mismatch for MethodMetaDataSymbol therefore this tracing output is wrong\n");
-         traceMsg(comp(), "Local #%2d is MethodMetaData symbol at %p : %s\n",localCount++,m,m->getName());
-         }
-      }
-
    _liveVarInfo->createGenAndKillSetCaches();
-   if (!enablePreciseSymbolTracking())
-      _liveVarInfo->trackLiveCommonedLoads();
+   _liveVarInfo->trackLiveCommonedLoads();
 
    if (usesDataFlowAnalysis())
       {
@@ -1037,10 +799,9 @@ void TR_SinkStores::lookForSinkableStores()
                foundException = true;
                }
 
-            if (!enablePreciseSymbolTracking())
-               (*savedLiveCommonedLoads) = (*_liveVarInfo->liveCommonedLoads());
+            (*savedLiveCommonedLoads) = (*_liveVarInfo->liveCommonedLoads());
 
-         if (trace())
+            if (trace())
                {
                traceMsg(comp(), "      savedLiveCommonedLoads: ");
                savedLiveCommonedLoads->print(comp());
@@ -1051,41 +812,13 @@ void TR_SinkStores::lookForSinkableStores()
             TR_BitVector *killedSymbols = new (trStackMemory()) TR_BitVector(numLocals, trMemory());
             // remove any commoned loads where the first reference to the load has been seen (it is 'satisfied')
             // satisfiedLiveCommonedLoads was initialized, if required, on the previous node examined
-         if (enablePreciseSymbolTracking())
-            {
-            if (trace())
-               {
-               traceMsg(comp(), "      savedLiveCommonedLoads before refining: ");
-               savedLiveCommonedLoads->print(comp());
-               traceMsg(comp(), "\n");
-               }
-            if (trace())
-               {
-               traceMsg(comp(), "      satisfiedLiveCommonedLoads: ");
-               satisfiedLiveCommonedLoads->print(comp());
-               traceMsg(comp(), "\n");
-               }
-            (*savedLiveCommonedLoads) -= (*satisfiedLiveCommonedLoads);
-            if (trace())
-               {
-               traceMsg(comp(), "      savedLiveCommonedLoads after refining: ");
-               savedLiveCommonedLoads->print(comp());
-               traceMsg(comp(), "\n");
-               }
-            // must or in treeCommonedLoads *after* subtracting out satisfiedLiveCommonedLoads in case this store
-            // contains both a first use and a commoned load from the same symbol
-            (*savedLiveCommonedLoads) |= (*treeCommonedLoads);
-            satisfiedLiveCommonedLoads->empty();
-            }
-         else
-            {
+
             // remember the currently live commoned loads so that we can figure out later if we can move this store
             (*savedLiveCommonedLoads) = (*_liveVarInfo->liveCommonedLoads());
-            }
 
             treeCommonedLoads->empty();
             if (trace())
-            traceMsg(comp(),"      calling findLocalUses on node %p with treeVisitCount %d\n",tt->getNode(),treeVisitCount);
+               traceMsg(comp(),"      calling findLocalUses on node %p with treeVisitCount %d\n",tt->getNode(),treeVisitCount);
             _liveVarInfo->findLocalUsesInBackwardsTreeWalk(tt->getNode(), blockNumber,
                                                            usedSymbols, killedSymbols,
                                                            treeCommonedLoads, treeVisitCount);
@@ -1124,61 +857,6 @@ void TR_SinkStores::lookForSinkableStores()
                   }
                }
 
-            // TR_MethodMetaData symbols are thread local and may be killed/used by any arbitrary symRef
-            else if (sinkMethodMetaDataStores() &&
-                     (node->getOpCode().isCallDirect() || node->getOpCode().isStore()) &&
-                     node->getOpCode().hasSymbolReference())
-               {
-               TR::SymbolReference *symRef = node->getSymbolReference();
-
-               TR::SparseBitVector usedef(comp()->allocator());
-               symRef->getUseDefAliases(node->getOpCode().isCallDirect()).getAliases(usedef);
-
-               if (!usedef.IsZero())
-                  {
-                  if  (trace())
-                     {
-                     traceMsg(comp(),"       usedef:  ");
-                     (*comp()) << usedef << "\n";
-                     }
-                  if (1)
-                     {
-                     TR::SparseBitVector tmp(comp()->allocator());
-                     usedef &= tmp; // TODO: avoid tmp
-                     if (trace())
-                        {
-                        traceMsg(comp(),"       symRef [%d] on node " POINTER_PRINTF_FORMAT " implicitly kills symrefs:  ",symRef->getReferenceNumber(),node);
-                        (*comp()) << usedef << "\n";
-                        }
-                     TR::SparseBitVector::Cursor aliasesCursor(usedef);
-                     for (aliasesCursor.SetToFirstOne(); aliasesCursor.Valid(); aliasesCursor.SetToNextOne())
-                        {
-                        TR::SymbolReference *killedSymRef = comp()->getSymRefTab()->getSymRef(aliasesCursor);
-                        TR::RegisterMappedSymbol *killedSymbol = killedSymRef->getSymbol()->getMethodMetaDataSymbol();
-                        if (killedSymbol->getLiveLocalIndex() < numLocals && killedSymbol->getLiveLocalIndex() != INVALID_LIVENESS_INDEX)
-                           {
-                           if (trace())
-                              traceMsg(comp(),"       setting symIdx %d (from symRef %d) on killedSymbols\n",killedSymbol->getLiveLocalIndex(),killedSymRef->getReferenceNumber());
-                           killedSymbols->set(killedSymbol->getLiveLocalIndex());
-                           if (savedLiveCommonedLoads->get(killedSymbol->getLiveLocalIndex()))
-                           {
-                              if (trace())
-                                 traceMsg(comp(),"      updating killedLiveCommonedLoads with savedLiveCommonedLoads, setting index %d\n",
-                                                       killedSymbol->getLiveLocalIndex());
-                              killedLiveCommonedLoads->set(killedSymbol->getLiveLocalIndex());
-                           }
-                           if (node->getOpCode().isCallDirect())
-                              {
-                              if (trace())
-                                 traceMsg(comp(),"       setting symIdx %d (from symRef %d) on usedSymbols\n",killedSymbol->getLiveLocalIndex(),killedSymRef->getReferenceNumber());
-                              usedSymbols->set(killedSymbol->getLiveLocalIndex());
-                              }
-                           }
-                        }
-                     }
-                  // else if {} add intersections for other TR_MethodMetaData symbols here as needed
-                  }
-               }
             if (local &&
                (savedLiveCommonedLoads->get(symIdx)))
                {
@@ -1230,21 +908,19 @@ void TR_SinkStores::lookForSinkableStores()
                             store->_commonedLoadsUnderTree &&
                             store->_commonedLoadsUnderTree->get(killedSymIdx))
                            {
-                           traceMsg(comp(),"            store->containsUnsatisfedLoadFromSymbol(%d) = %d so %s temp\n",killedSymIdx,store->containsUnsatisfedLoadFromSymbol(killedSymIdx),store->containsUnsatisfedLoadFromSymbol(killedSymIdx) ? "needs":"doesn't need");
+                           traceMsg(comp(), "            killedSymIdx = %d and temp is not needed\n", killedSymIdx);
                            }
                         }
                      if (store->_movable &&
                          store->_commonedLoadsUnderTree &&
-                         store->_commonedLoadsUnderTree->get(killedSymIdx) &&
-                         (!enablePreciseSymbolTracking() || store->killCommonedLoadFromSymbol(killedSymIdx)))
+                         store->_commonedLoadsUnderTree->get(killedSymIdx))
                         {
                         if (store->_depth >= MIN_TREE_DEPTH_TO_MOVE)
                            {
                            if (!store->_needTempForCommonedLoads)
                               store->_needTempForCommonedLoads = new (trStackMemory()) TR_BitVector(numLocals, trMemory());
                            store->_needTempForCommonedLoads->set(killedSymIdx);
-                           if (!enablePreciseSymbolTracking())
-                              store->_commonedLoadsUnderTree->reset(killedSymIdx);
+                           store->_commonedLoadsUnderTree->reset(killedSymIdx);
                            }
                         else
                            store->_movable = false;
@@ -1260,194 +936,52 @@ void TR_SinkStores::lookForSinkableStores()
                         storeElement = storeElement->getNextElement();
                      }
                   }
-            //
-            //b1:
-            //  treetop
-            //    iload sym1 <a>
-            //
-            //b2:
-            //  istore sym1
-            //
-            //b3:
-            //  treetop
-            //     ior
-            //       iload sym1 <b>
-            //b4:
-            //  istore sym2
-            //     =>iload sym1 <a>
-            //
-            //
-            // The goal of the code below is to identify cases like the above where the iload sym1 in b1 is the first use the commoned
-            // sym1 in b4 (and to know that the iload sym1 in b3 is *not* the first use)
-            // Precise first reference locations are required in case an anchor needs be created when replicating the istore in b4
-            // to a location outside the current EBB.
-            // The anchored value of sym1 must be from just above the iload reference in b1 because an incorrect anchor in b3 would cause
-            // the wrong value to be used in the replicated store.
-            //
 
-            if (enablePreciseSymbolTracking() && usedSymbols->intersects(*savedLiveCommonedLoads))
+            // When the commoned symbols are tracked precisely it is enough to run the above code that intersects used
+            // with savedLiveCommonedLoads to find the first uses of symbols
+            // With this information an anchor or temp store can be created when/if it is actually needed in during
+            // sinkStorePlacement()
+            bool usedSymbolKilledBelow = usedSymbols->intersects(*killedLiveCommonedLoads);
+            if (usedSymbolKilledBelow)
                {
-               TR_BitVector *firstRefsToCommonedSymbols = new (trStackMemory()) TR_BitVector(*usedSymbols);
-               (*firstRefsToCommonedSymbols) &= (*savedLiveCommonedLoads);
+               TR_BitVector *firstRefsToKilledSymbols = new (trStackMemory()) TR_BitVector(*usedSymbols);
+               (*firstRefsToKilledSymbols) &= (*killedLiveCommonedLoads);
                if (trace())
                   {
-                  traceMsg(comp(), "         firstRefsToCommonedSymbols: ");
-                  firstRefsToCommonedSymbols->print(comp());
+                  traceMsg(comp(), "         (non-commoned) uses of killed symbols: ");
+                  firstRefsToKilledSymbols->print(comp());
                   traceMsg(comp(), "\n");
                   }
-               if (!firstRefsToCommonedSymbols->isEmpty())
+               ListElement<TR_MovableStore> *storeElement=potentiallyMovableStores.getListHead();
+               while (storeElement != NULL)
                   {
-                  ListElement<TR_MovableStore> *storeElement=potentiallyMovableStores.getListHead();
-                  _searchMarkWalks++;
-                  TR_BitVectorIterator firstRefsItBefore(*firstRefsToCommonedSymbols);
-                  // initialize the symbols indicies we care about to 0
-                  while (firstRefsItBefore.hasMoreElements())
-                     satisfiedCommonedSymCount[firstRefsItBefore.getNextElement()] = 0;
-                  int32_t storeCount = 0;
-                  while (storeElement != NULL)
+                  TR_MovableStore *store = storeElement->getData();
+
+                  if (store->_movable &&
+                      store->_needTempForCommonedLoads)
                      {
-                     TR_MovableStore *store = storeElement->getData();
-                     if (store->_movable &&
-                         store->_commonedLoadsUnderTree &&
-                         store->_commonedLoadsUnderTree->intersects(*firstRefsToCommonedSymbols))
+                     if (store->_needTempForCommonedLoads->intersects(*firstRefsToKilledSymbols))
                         {
+                        // looking at bit vectors alone may not be enough to guarantee that a temp should actually be placed here see
+                        // the comment in isCorrectCommonedLoad for more information
+                        TR_BitVector *commonedLoadsUsedAboveStore = new (trStackMemory()) TR_BitVector(*(store->_needTempForCommonedLoads));
+                        (*commonedLoadsUsedAboveStore) &= (*firstRefsToKilledSymbols);
                         if (trace())
-                           traceMsg(comp(), "            examining store for first uses [" POINTER_PRINTF_FORMAT "]\n",store->_useOrKillInfo->_tt->getNode());
-                        TR_BitVector *firstRefsOfCommonedSymbolsUnderThisStore = new (trStackMemory()) TR_BitVector(*store->_commonedLoadsUnderTree);
-                        (*firstRefsOfCommonedSymbolsUnderThisStore) &= (*firstRefsToCommonedSymbols);
-                        _searchMarkCalls++;
-                        searchAndMarkFirstUses(node,
-                                               tt,
-                                               store,
-                                               block,
-                                               firstRefsOfCommonedSymbolsUnderThisStore);
-
-                        TR_BitVectorIterator bvi(*firstRefsOfCommonedSymbolsUnderThisStore);
-                        while (bvi.hasMoreElements())
                            {
-                           int32_t firstRefSymIdx = bvi.getNextElement();
-                           if (!store->containsUnsatisfedLoadFromSymbol(firstRefSymIdx))
-                              {
-                              if (trace())
-                                 traceMsg(comp(),"            symIdx %d now satisfied increment satisfiedCommonedSymCount %d -> %d\n",
-                                    firstRefSymIdx,satisfiedCommonedSymCount[firstRefSymIdx],satisfiedCommonedSymCount[firstRefSymIdx]+1);
-                              satisfiedCommonedSymCount[firstRefSymIdx]++;
-                              }
-                           else if (trace())
-                              {
-                              traceMsg(comp(),"            symIdx %d is not yet satisfied do increment satisfiedCommonedSymCount %d\n",
-                                 firstRefSymIdx,satisfiedCommonedSymCount[firstRefSymIdx]);
-                              }
+                           traceMsg(comp(),"            found store [" POINTER_PRINTF_FORMAT "] below that may require a temp\n",store->_useOrKillInfo->_tt->getNode());
+                           traceMsg(comp(),"               killed live commoned loads used above store:");
+                           commonedLoadsUsedAboveStore->print(comp());
+                           traceMsg(comp(),"\n");
                            }
-                        if ((*firstRefsOfCommonedSymbolsUnderThisStore) != (*firstRefsToCommonedSymbols))
-                           {
-                           TR_BitVector *firstRefsOfCommonedSymbolsNotUnderThisStore = new (trStackMemory()) TR_BitVector(*firstRefsToCommonedSymbols);
-                           (*firstRefsOfCommonedSymbolsNotUnderThisStore) -= (*firstRefsOfCommonedSymbolsUnderThisStore);
-                           TR_BitVectorIterator bvi(*firstRefsOfCommonedSymbolsNotUnderThisStore);
-                           // any firstRef symbols not under this store as a commoned load are trivially satisfied
-                           while (bvi.hasMoreElements())
-                              {
-                              int32_t firstRefSymIdx = bvi.getNextElement();
-                              if (trace())
-                                 traceMsg(comp(),"            symIdx %d not under this store increment satisfiedCommonedSymCount %d -> %d\n",
-                                    firstRefSymIdx,satisfiedCommonedSymCount[firstRefSymIdx],satisfiedCommonedSymCount[firstRefSymIdx]+1);
-                              satisfiedCommonedSymCount[firstRefSymIdx]++;
-                              }
-                           }
+                        genStoreToTempSyms(tt,
+                                           node,
+                                           commonedLoadsUsedAboveStore,
+                                           killedLiveCommonedLoads,
+                                           store->_useOrKillInfo->_tt->getNode(),
+                                           potentiallyMovableStores);
                         }
-                     else
-                        {
-                        // any firstRef symbols not under this store as a commoned load are trivially satisfied
-                        TR_BitVectorIterator bvi(*firstRefsToCommonedSymbols);
-                        while (bvi.hasMoreElements())
-                           {
-                           int32_t firstRefSymIdx = bvi.getNextElement();
-                           if (trace())
-                              traceMsg(comp(),"            symIdx %d not at all under this store increment satisfiedCommonedSymCount %d -> %d\n",
-                                 firstRefSymIdx,satisfiedCommonedSymCount[firstRefSymIdx],satisfiedCommonedSymCount[firstRefSymIdx]+1);
-                           satisfiedCommonedSymCount[firstRefSymIdx]++;
-                           }
-                        }
-                     storeElement = storeElement->getNextElement();
-                     storeCount++;
-                     } // end while
-                  // A symIdx can be removed from the savedLiveCommonedLoads bitvector (using satisfiedLiveCommonedLoads)
-                  // when it no longer appears as unsatisfied in *any* store
-                  // searchAndMarkFirstUses increments satisfiedCommonedSymCount[symIdx] in two cases:
-                  // 1. a store does not contain any commoned reference to a particular symIdx
-                  // 2. a store does contain a commoned reference to a particular symIdx but does not contain
-                  //    any unsatisfied commoned loads from this symIdx
-                  // If, after processing all the stores, a symIdx has been found satisfied (or not found at all)
-                  // then set this symIdx in satisfiedLiveCommonedLoads. Before looking at the next treetop
-                  // savedLiveCommonedLoads is refined by subtracting (taking the set difference) of satisfiedLiveCommonedLoads
-                  // from savedLiveCommonedLoads
-                  TR_BitVectorIterator firstRefsItAfter(*firstRefsToCommonedSymbols);
-                  while (firstRefsItAfter.hasMoreElements())
-                     {
-                     int32_t firstRefSymIdx = firstRefsItAfter.getNextElement();
-                     if (satisfiedCommonedSymCount[firstRefSymIdx] == storeCount)
-                        {
-                        if (trace())
-                           traceMsg(comp(),"            satisfiedCommonedSymCount[%d] = storeCount = %d set in satisfiedLiveCommonedLoads\n",firstRefSymIdx,storeCount);
-                        satisfiedLiveCommonedLoads->set(firstRefSymIdx);
-                        }
-                     else if (trace())
-                        {
-                        traceMsg(comp(),"            satisfiedCommonedSymCount[%d] = %d and storeCount = %d do not set in satisfiedLiveCommonedLoads\n",firstRefSymIdx,satisfiedCommonedSymCount[firstRefSymIdx],storeCount);
-                        }
-
                      }
-                  }
-               }
-
-            if (!enablePreciseSymbolTracking())
-               {
-               // When the commoned symbols are tracked precisely it is enough to run the above code that intersects used
-               // with savedLiveCommonedLoads to find the first uses of symbols
-               // With this information an anchor or temp store can be created when/if it is actually needed in during
-               // sinkStorePlacement()
-               bool usedSymbolKilledBelow = usedSymbols->intersects(*killedLiveCommonedLoads);
-               if (usedSymbolKilledBelow)
-                  {
-                  TR_BitVector *firstRefsToKilledSymbols = new (trStackMemory()) TR_BitVector(*usedSymbols);
-                  (*firstRefsToKilledSymbols) &= (*killedLiveCommonedLoads);
-                  if (trace())
-                     {
-                     traceMsg(comp(), "         (non-commoned) uses of killed symbols: ");
-                     firstRefsToKilledSymbols->print(comp());
-                     traceMsg(comp(), "\n");
-                     }
-                  ListElement<TR_MovableStore> *storeElement=potentiallyMovableStores.getListHead();
-                  while (storeElement != NULL)
-                     {
-                     TR_MovableStore *store = storeElement->getData();
-
-                     if (store->_movable &&
-                         store->_needTempForCommonedLoads)
-                        {
-                        if (store->_needTempForCommonedLoads->intersects(*firstRefsToKilledSymbols))
-                           {
-                           // looking at bit vectors alone may not be enough to guarantee that a temp should actually be placed here see
-                           // the comment in isCorrectCommonedLoad for more information
-                           TR_BitVector *commonedLoadsUsedAboveStore = new (trStackMemory()) TR_BitVector(*(store->_needTempForCommonedLoads));
-                           (*commonedLoadsUsedAboveStore) &= (*firstRefsToKilledSymbols);
-                           if (trace())
-                              {
-                              traceMsg(comp(),"            found store [" POINTER_PRINTF_FORMAT "] below that may require a temp\n",store->_useOrKillInfo->_tt->getNode());
-                              traceMsg(comp(),"               killed live commoned loads used above store:");
-                              commonedLoadsUsedAboveStore->print(comp());
-                              traceMsg(comp(),"\n");
-                              }
-                           genStoreToTempSyms(tt,
-                                              node,
-                                              commonedLoadsUsedAboveStore,
-                                              killedLiveCommonedLoads,
-                                              store->_useOrKillInfo->_tt->getNode(),
-                                              potentiallyMovableStores);
-                           }
-                        }
-                     storeElement = storeElement->getNextElement();
-                     }
+                  storeElement = storeElement->getNextElement();
                   }
                }
 
@@ -1460,17 +994,11 @@ void TR_SinkStores::lookForSinkableStores()
                 node->getOpCode().isStoreDirect())
                {
                TR::RegisterMappedSymbol *sym =  node->getSymbolReference()->getSymbol()->getMethodMetaDataSymbol();
-               bool sinkWithIndirectLoads = sym && comp()->getOption(TR_SinkAllStores) && sinkStoresWithIndirectLoads();
-                  canMoveStore = true;
-               if (comp()->getOption(TR_SinkOnlyCCStores) && sym)
-                  {
-                 	if (trace())
-                 	   traceMsg(comp(), "         only sinking cc stores and this store is to a %s symbol\n",sym->castToMethodMetaDataSymbol()->getName());
-                  canMoveStore = false;
-                  }
+               canMoveStore = true;
+
                // TODO use aliasing to block sinking AR symbol stores
                // It is not legal to sink AR symbols as exceptions points are implicit uses of these symbols
-               else if (sym && sym->isMethodMetaData() && sym->castToMethodMetaDataSymbol()->getMethodMetaDataType() == TR_MethodMetaDataType_AR)
+               if (sym && sym->isMethodMetaData() && sym->castToMethodMetaDataSymbol()->getMethodMetaDataType() == TR_MethodMetaDataType_AR)
                   {
                   if (trace())
                      traceMsg(comp(),"         not sinking the AR symbol %s\n",sym->castToMethodMetaDataSymbol()->getName());
@@ -1478,11 +1006,11 @@ void TR_SinkStores::lookForSinkableStores()
                   }
                else if (foundException)
                   {
-                 	if (trace())
-                 	   traceMsg(comp(), "         can't move store with side effect\n");
+                  if (trace())
+                     traceMsg(comp(), "         can't move store with side effect\n");
                   canMoveStore = false;
                   }
-               else if (!storeIsSinkingCandidate(block, node, symIdx, sinkWithIndirectLoads, indirectLoadCount, treeDepth, isLoadStatic, treeVisitCount,highestVisitCount))   // treeDepth is initialized when call return
+               else if (!storeIsSinkingCandidate(block, node, symIdx, false, indirectLoadCount, treeDepth, isLoadStatic, treeVisitCount,highestVisitCount))   // treeDepth is initialized when call return
                   {
                   if (trace())
                      traceMsg(comp(), "         can't move store because it fails sinking candidate test\n");
@@ -1556,44 +1084,13 @@ void TR_SinkStores::lookForSinkableStores()
                if (trace())
                   traceMsg(comp(), "      store is potentially movable, collecting commoned loads and adding to list\n");
                TR_BitVector *myCommonedLoads = treeCommonedLoads->isEmpty() ? 0 : new (trStackMemory()) TR_BitVector(*treeCommonedLoads);
-               if (!enablePreciseSymbolTracking() && myCommonedLoads && moveStoreWithTemps)
+               if (myCommonedLoads && moveStoreWithTemps)
                   (*myCommonedLoads) -= (*moveStoreWithTemps);
                TR_BitVector *commonedLoadsAfter = 0;
                if (!savedLiveCommonedLoads->isEmpty() && movedStorePinsCommonedSymbols())
                   {
                   commonedLoadsAfter = new (trStackMemory()) TR_BitVector(*savedLiveCommonedLoads);
                   (*commonedLoadsAfter) &= (*usedSymbols);
-                  }
-               if (enablePreciseSymbolTracking() && myCommonedLoads)
-                  {
-                  if (trace())
-                     {
-                     traceMsg(comp(), "      myCommonedLoads: ");
-                     myCommonedLoads->print(comp());
-                     traceMsg(comp(), "\n");
-                     traceMsg(comp(), "      myCommonedLoads->isSet(%d) = %d\n",symIdx,myCommonedLoads->isSet(symIdx));
-                     }
-                  if (myCommonedLoads->isSet(symIdx))
-                     {
-                     // The current store contains the symbol it is storing to as a commmoned load
-                     // therefore it must be marked as needing a temp store
-
-                     if (!moveStoreWithTemps)
-                        moveStoreWithTemps = new (trStackMemory()) TR_BitVector(numLocals, trMemory());
-                     if (trace())
-                        traceMsg(comp(), "      store kills its own commoned symbol (%d), mark the store as needing a temp load\n",symIdx);
-                     moveStoreWithTemps->set(symIdx);
-                     killedLiveCommonedLoads->set(symIdx); // otherwise the anchor/temp store is never created when the first ref is found
-                     }
-                  if (myCommonedLoads && !myCommonedLoads->isEmpty())
-                     {
-                     // The TR_MovableStore ctor populates its commonedLoadsList when myCommonedLoads is
-                     // not empty. This travesal will alter the visit counts of the nodes it visits.
-                     // So the tree walk above to discover nodes does not skip any nodes that were visited by TR_MovableStore ctor
-                     // increment treeVisitCount and highestVisitCount here.
-                     treeVisitCount++;
-                     highestVisitCount++;
-                     }
                   }
 
                movableStore = new (trStackMemory()) TR_MovableStore(this,
@@ -1867,55 +1364,6 @@ bool TR_SinkStores::performThisTransformation()
 
    }
 
-void TR_SinkStores::searchAndMarkFirstUses(TR::Node *node,
-                                           TR::TreeTop *tt,
-                                           TR_MovableStore *movableStore,
-                                           TR::Block *currentBlock,
-                                            TR_BitVector *firstRefsOfCommonedSymbolsForThisStore)
-   {
-   if (0 && trace())
-      traceMsg(comp(),"      node %p, futureUseCount %d, refCount %d\n",node,node->getFutureUseCount(),node->getReferenceCount());
-   if (node->getOpCode().isLoadVarDirect() && node->getOpCode().hasSymbolReference())
-      {
-      TR::RegisterMappedSymbol *local = getSinkableSymbol(node);
-      if (!local)
-         return;
-      int32_t symIdx = local->getLiveLocalIndex();
-
-      if (symIdx != INVALID_LIVENESS_INDEX && firstRefsOfCommonedSymbolsForThisStore->isSet(symIdx))
-         {
-         TR_CommonedLoad *commonedLoad = movableStore->getCommonedLoad(node);
-         if (trace() && commonedLoad)
-            traceMsg(comp(),"      movableStore %p containsCommonedLoad (node %p, symIdx %d, isSatisfied = %d, isKilled = %d)\n",movableStore->_useOrKillInfo->_tt->getNode(),commonedLoad->getNode(),commonedLoad->getSymIdx(),commonedLoad->isSatisfied(),commonedLoad->isKilled());
-         else if (trace())
-            traceMsg(comp(),"      commonedLoad is NULL for node %p with symIdx %d\n",node, symIdx);
-         if ((node->getFutureUseCount() == 0) &&
-             movableStore->satisfyCommonedLoad(node))
-            {
-            if (0 && trace())
-               traceMsg(comp(),"      node %p, futureUseCount %d, refCount %d\n",node,node->getFutureUseCount(),node->getReferenceCount());
-            if (!findFirstUseOfLoad(node))
-               {
-               TR_FirstUseOfLoad *firstUse = new (trStackMemory()) TR_FirstUseOfLoad(node, tt, currentBlock->getNumber());
-               TR_HashId addID = 0;
-               _firstUseOfLoadMap->add(node, addID, firstUse);
-               if (trace())
-               traceMsg(comp(),"      searchAndMarkFirstUses creating and adding firstUse %p with node %p and anchor treetop %p to hash\n",firstUse,node,tt->getNode());
-               }
-            }
-         }
-      }
-
-   for (int32_t i = node->getNumChildren()-1; i >= 0; i--)
-      {
-      TR::Node *child = node->getChild(i);
-      // If futureUseCount > 0 then this subtree is commoned in from an earlier treetop, in which case it will not
-      // contain any first uses -- that earlier treetop will be the first uses.
-      //
-      if (child->getFutureUseCount() == 0)
-         searchAndMarkFirstUses(child, tt, movableStore, currentBlock, firstRefsOfCommonedSymbolsForThisStore);
-      }
-   }
 
 void TR_SinkStores::coalesceSimilarEdgePlacements()
    {
@@ -2338,21 +1786,14 @@ TR::RegisterMappedSymbol *
 TR_SinkStores::getSinkableSymbol(TR::Node *node)
    {
    TR::Symbol *symbol = node->getSymbolReference()->getSymbol();
-   if (symbol->isAutoOrParm() ||
-      (sinkMethodMetaDataStores() && symbol->isMethodMetaData()))
+   if (symbol->isAutoOrParm())
       return symbol->castToRegisterMappedSymbol();
    else
       return NULL;
    }
 bool TR_SinkStores::treeIsSinkableStore(TR::Node *node, bool sinkIndirectLoads, uint32_t &indirectLoadCount, int32_t &depth, bool &isLoadStatic, vcount_t visitCount)
    {
-   if (enablePreciseSymbolTracking())
-      {
-      if (node->getVisitCount() == visitCount)
-         return true;
-      node->setVisitCount(visitCount);
-      }
-   else if (depth > 8)
+   if (depth > 8)
       {
       // if expression tree is too deep, not likely we'll be able to move it
       //      but we'll waste a lot of time looking at it
@@ -2498,20 +1939,6 @@ bool TR_SinkStores::treeIsSinkableStore(TR::Node *node, bool sinkIndirectLoads, 
    return true;
    }
 
-bool TR_TrivialSinkStores::storeIsSinkingCandidate(TR::Block *block, TR::Node *node, int32_t symIdx, bool sinkIndirectLoads, uint32_t &indirectLoadCount, int32_t &depth, bool &isLoadStatic, vcount_t &treeVisitCount, vcount_t &highVisitCount)
-   {
-   vcount_t newVisitCount =  comp()->incVisitCount();
-   treeVisitCount++;
-   highVisitCount++;
-   int32_t b = block->getNumber();
-   comp()->setCurrentBlock(block);
-
-   return (symIdx >= 0 &&
-           block->getNextBlock() &&
-           block->getNextBlock()->isExtensionOfPreviousBlock() &&
-           treeIsSinkableStore(node, sinkIndirectLoads, indirectLoadCount, depth, isLoadStatic, newVisitCount));
-   }
-
 bool TR_GeneralSinkStores::storeIsSinkingCandidate(TR::Block *block, TR::Node *node, int32_t symIdx, bool sinkIndirectLoads, uint32_t &indirectLoadCount, int32_t &depth , bool &isLoadStatic, vcount_t &treeVisitCount, vcount_t &highVisitCount)
    {
    int32_t b = block->getNumber();
@@ -2519,19 +1946,10 @@ bool TR_GeneralSinkStores::storeIsSinkingCandidate(TR::Block *block, TR::Node *n
    // need to disable for privatized stores for virtual guards and versioning tests
    // for now, just try to push any store we can...in future, might want to limit candidates somewhat
 
-   // treeIsSinkable store checks the visitCount as part of the enablePreciseSymbolTracking work so when this is enabled then
-   // the call below must pass in comp()->incVisitCount() instead of comp()->getVisitCount() and treeVisitCount and highVisitCount
-   // must be incremented
-   if (enablePreciseSymbolTracking())
-      {
-      treeVisitCount++;
-      highVisitCount++;
-      }
-   TR_ASSERT(!enablePreciseSymbolTracking(),"visitCount arg treeIsSinkableStore is ignored, should use incVisitCount() instead\n");
    comp()->setCurrentBlock(block);
    return (symIdx >= 0 &&
            _liveOnNotAllPaths->_outSetInfo[b]->get(symIdx) &&
-           treeIsSinkableStore(node, sinkIndirectLoads, indirectLoadCount, depth, isLoadStatic, enablePreciseSymbolTracking() ? comp()->incVisitCount() : comp()->getVisitCount()));
+           treeIsSinkableStore(node, sinkIndirectLoads, indirectLoadCount, depth, isLoadStatic, comp()->getVisitCount()));
    }
 
 const char *
@@ -3072,24 +2490,8 @@ TR_SinkStores::insertAnchoredNodes(TR_MovableStore *store,
       TR_ASSERT(local,"invalid local symbol\n");
       int32_t symIdx = local->getLiveLocalIndex();
       TR_FirstUseOfLoad *firstUseOfLoad = NULL;
-      // Only need an anchor for killedCommoned loads when calling this function for sideExit store trees (when nodeCopy == NULL)
-      // In the case where the current store is the one being moved to the lowest fall through path we are not duplicating and therefore no uncommoning
-      // takes place and therefore no temp anchor is required as the original, naturally anchored, load will be used.
-      if (nodeCopy && needTempForCommonedLoads && needTempForCommonedLoads->isSet(symIdx) && store->containsKilledCommonedLoad(nodeOrig))
-         {
-         firstUseOfLoad = findFirstUseOfLoad(nodeOrig);
-         TR_ASSERT(firstUseOfLoad,"killedCommoned case: firstUseOfLoad should already exist\n");
-         if (trace())
-            traceMsg(comp(),"      insertAnchoredNodes needTemp for symIdx %d found firstUse %p with node %p and anchor treetop %p\n",symIdx,firstUseOfLoad,nodeOrig,firstUseOfLoad->getAnchorLocation());
-         }
-      else if (blockingCommonedSymbols && blockingCommonedSymbols->isSet(symIdx) && store->containsSatisfiedAndNotKilledCommonedLoad(nodeOrig))
-         {
-         firstUseOfLoad = findFirstUseOfLoad(nodeOrig);
-         TR_ASSERT(firstUseOfLoad,"commonedBlocked case: firstUseOfLoad should already exist\n");
-         if (trace())
-            traceMsg(comp(),"      insertAnchoredNodes commonedBlocked for symIdx %d found firstUse %p with node %p and anchor treetop %p\n",symIdx,firstUseOfLoad,nodeOrig,firstUseOfLoad->getAnchorLocation());
-         }
-      else if (blockingUsedSymbols && blockingUsedSymbols->isSet(symIdx) && !store->containsCommonedLoad(nodeOrig))
+
+      if (blockingUsedSymbols && blockingUsedSymbols->isSet(symIdx))
          {
          firstUseOfLoad = findFirstUseOfLoad(nodeOrig);
          // A first use may already exist for a blocking used symbol load if this node itself is commoned somewhere below
@@ -3161,14 +2563,6 @@ TR_SinkStores::insertAnchoredNodes(TR_MovableStore *store,
    return increment;
    }
 
-// TR_TrivialSinkStores is less restrictive in its conditions below as it allows a used symbol to interfere with a killed
-// symbol below. In this an anchor to the symbol will be created above its first use.
-bool TR_TrivialSinkStores::storeCanMoveThroughBlock(TR_BitVector *blockKilledSet, TR_BitVector *blockUsedSet, int symIdx)
-   {
-   return (blockKilledSet == NULL || !blockKilledSet->get(symIdx))
-          &&
-          (blockUsedSet == NULL || (!blockUsedSet->intersects(*_killedSymbolsToMove) && !blockUsedSet->get(symIdx)));
-   }
 
 bool TR_SinkStores::storeCanMoveThroughBlock(TR_BitVector *blockKilledSet, TR_BitVector *blockUsedSet, int symIdx, TR_BitVector *allBlockUsedSymbols, TR_BitVector *allBlockKilledSymbols)
    {
@@ -3186,681 +2580,6 @@ bool TR_SinkStores::storeCanMoveThroughBlock(TR_BitVector *blockKilledSet, TR_Bi
       }
 
    return canMove;
-   }
-
-
-TR::TreeTop *TR_TrivialSinkStores::genSideExitTree(TR::TreeTop *storeTree, TR::Block *exitBlock, bool isFirstGen)
-   {
-   TR::Node *storeNode = storeTree->getNode();
-   TR_ASSERT(storeNode->getFirstChild()->getOpCodeValue() == TR::computeCC,"only TR::computeCC currently supported by genSideExitTree\n");
-   TR::Node *opNode = storeNode->getFirstChild()->getFirstChild();
-   if (isFirstGen)
-      {
-      // Anchor only the first time a sideExitTree is being generated for a particular store
-      // It is necessary to anchor the grandchildren of the computeCC instead of just the child because lowerTrees will uncommon
-      // the computeCC node anyway as cc computations require that the opNode operation is done right before the cc sequence is
-      // generated. Therefore the grandchildren must be anchored.
-      // bustore      <- storeNode
-      //   computeCC
-      //     opNode (iadd/isub/iand... etc)
-      //       child1   <- anchor this node (except for const nodes, these are uncommoned -- duplicated in the sideExitTree)
-      //       child2   <- anchor this node (except for const nodes, these are uncommoned -- duplicated in the sideExitTree)
-      for (int32_t i = 0; i < opNode->getNumChildren(); i++)
-         {
-         if (!opNode->getChild(i)->getOpCode().isLoadConst())
-            {
-            TR::Node *anchoredNode =  TR::Node::create(TR::treetop, 1, opNode->getChild(i));
-            if (trace())
-              traceMsg(comp(),"      genSideExitTree anchoring computeCC grandchild %p in new node %p before node %p\n",opNode->getChild(i),anchoredNode,storeTree->getNode());
-            TR_ASSERT(false /*cg()->useBroaderEBBDefinition()*/, "expected EnableBroaderEBBDefinition to be set");
-            TR::TreeTop *anchoredTT = TR::TreeTop::create(comp(), anchoredNode);
-            storeTree->insertBefore(anchoredTT);
-            }
-         else if (trace())
-            {
-            traceMsg(comp(),"      genSideExitTree not anchoring const computeCC grandchild %p\n",opNode->getChild(i));
-            }
-         }
-      }
-
-   TR::Node *opNodeClone = TR::Node::copy(opNode);
-   for (int32_t i = 0; i < opNode->getNumChildren(); i++)
-      {
-      TR::Node *child = opNode->getChild(i);
-      if (child->getOpCode().isLoadConst())
-         {
-         TR::Node *constClone = TR::Node::copy(child);
-         opNodeClone->setChild(i,constClone);
-         constClone->setReferenceCount(1);
-         }
-      else
-         {
-         opNodeClone->setAndIncChild(i, opNode->getChild(i));
-         }
-      }
-   TR::Node *computeCCNode = TR::Node::create(TR::computeCC, 1, opNodeClone);
-   opNodeClone->setReferenceCount(1);
-   if (trace())
-      traceMsg(comp(),"      genSideExitTree creating opNodeClone %p (refCount = %d) from opNode %p (refCount = %d)\n",opNodeClone,opNodeClone->getReferenceCount(),opNode,opNode->getReferenceCount());
-   return TR::TreeTop::create(comp(),  exitBlock->getEntry(), TR::Node::createWithSymRef(storeNode->getOpCodeValue(), 1, 1, computeCCNode, storeNode->getSymbolReference()));
-   }
-
-bool TR_TrivialSinkStores::passesAnchoringTest(TR_MovableStore *store, bool storeChildIsAnchored, bool nextStoreWasMoved)
-   {
-   // The test below is trying to catch the very common case:
-   // bustore cc
-   //   computeCC
-   //     opNode (iadd/isub/iand... etc)
-   //       iload sym1
-   //       =>iiload
-   // istore sym1
-   //   =>opNode
-   // In this case the istore sym1 will not be sunk but we do want to sink the bustore cc. Because the bustore contains both an indirectLoad and
-   // a used sym that is killed below (sym1) two anchors are required.
-   // Instead we might as well just anchor the two children of the opNode to better deal with the case where they are more complex expressions.
-   // Blindly duplicating the entire tree and just inserting the minimally required anchors will cause lots of uncommoning to occur as a result
-   // of the duplication.
-   TR::TreeTop *storeTree = store->_useOrKillInfo->_tt;
-   TR::Node *storeNode = storeTree->getNode();
-
-   if (!comp()->getOption(TR_DisableStoreAnchoring) &&
-       store->_useOrKillInfo->_indirectLoadCount &&                           // if it contains an indirectLoad will need at least one anchor
-       !storeChildIsAnchored &&                                               // only do this the once for a particular store
-       !nextStoreWasMoved &&                                                  // is next treetop anchored?
-       storeTree->getNextTreeTop()->getNode()->getOpCode().isStoreDirect() &&
-       storeNode->getFirstChild()->getOpCodeValue() == TR::computeCC &&
-       storeTree->getNextTreeTop()->getNode()->containsNode(storeNode->getFirstChild()->getFirstChild(),comp()->incVisitCount()))
-      {
-      return true;
-      }
-   else
-      {
-      return false;
-      }
-   }
-
-TR::TreeTop *
-TR_TrivialSinkStores::duplicateTreeForSideExit(TR::TreeTop *tree)
-   {
-   _nodesClonedForSideExitDuplication->clear();
-   return TR::TreeTop::create(comp(),
-                             duplicateNodeForSideExit(tree->getNode()),
-                             tree->getPrevTreeTop(),
-                             tree->getNextTreeTop());
-   }
-
-TR::Node *
-TR_TrivialSinkStores::duplicateNodeForSideExit(TR::Node *node)
-   {
-   if (0 && trace())
-      traceMsg(comp(),"dupTree node %p\n",node);
-
-   TR_HashId id;
-   if (_nodesClonedForSideExitDuplication->locate(node, id))
-   {
-      if (trace())
-         traceMsg(comp(),"  found node cloned already %p\n",_nodesClonedForSideExitDuplication->getData(id));
-      return (TR::Node*) _nodesClonedForSideExitDuplication->getData(id);
-   }
-
-   int32_t numChildren = node->getNumChildren();
-
-   TR::Node * newRoot = TR::Node::copy(node);
-   _nodesClonedForSideExitDuplication->add(node, id, newRoot);
-
-   if (node->getOpCode().hasSymbolReference())
-     newRoot->setSymbolReference(node->getSymbolReference());
-   newRoot->setReferenceCount(0);
-
-   // indirect loads will always be anchored on the mainline path so no point in duplicating below them
-   // In all cases for a sideExitStoreTree insertAnchoredNodes will replace newRoot with a reference to an anchored mainline node
-   if (node->getOpCode().isLoadIndirect())
-      {
-      if (0 && trace())
-         traceMsg(comp(),"  found indirect load return newRoot %p\n",newRoot);
-      return newRoot;
-      }
-
-   for (int i = 0; i < numChildren; i++)
-      {
-      TR::Node* child = node->getChild(i);
-      if (child)
-         {
-         if (0 && trace())
-            traceMsg(comp(),"  no indirect load found so recurse on child %p\n",child);
-         TR::Node * newChild = duplicateNodeForSideExit(child);
-         newRoot->setAndIncChild(i, newChild);
-         }
-      }
-   if (0 && trace())
-      traceMsg(comp(),"  base case return newRoot %p\n",newRoot);
-   return newRoot;
-   }
-
-bool TR_TrivialSinkStores::sinkStorePlacement(TR_MovableStore *store,
-                                              bool nextStoreWasMoved)
-
-   {
-   TR::Block *sourceBlock = store->_useOrKillInfo->_block;
-   if (trace() || comp()->getOption(TR_TraceOptDetails))
-      traceMsg(comp(), "            Start block is %d\n", sourceBlock->getNumber());
-   int32_t sourceBlockNumber = sourceBlock->getNumber();
-   TR::Block *currentBlock = sourceBlock;
-   int32_t currentBlockNumber = sourceBlockNumber;
-   TR::Block *fallThroughBlock = currentBlock->getNextBlock();
-
-   bool sunkStore = false;
-   bool canMoveToAllPaths = false;
-
-   vcount_t visitCount = comp()->incVisitCount();
-   TR_BitVector *allUsedSymbols;
-
-   // allUsedSymbols will include the ones that are commoned if temp is not used; this is used for dataflow analysis
-   // when the store is attempted to be sunk out of ebb
-   TR_BitVector *usedSymbols = store->_useOrKillInfo->_usedSymbols;
-   TR_BitVector *commonedSymbols = store->_commonedLoadsUnderTree;
-   if (commonedSymbols)
-      {
-      if (trace())
-         traceMsg(comp(),"         commonedSymbols = true so set allUsedSymbols to usedSymbols | commonedSymbols\n");
-      allUsedSymbols = new (trStackMemory()) TR_BitVector(*usedSymbols);
-      (*allUsedSymbols) |= (*commonedSymbols);
-      }
-   else
-      {
-      if (trace())
-         traceMsg(comp(),"         commonedSymbols = false so set allUsedSymbols to usedSymbols\n");
-      allUsedSymbols = usedSymbols;
-      }
-
-   sourceBlock->setVisitCount(visitCount);
-   _usedSymbolsToMove = allUsedSymbols;
-   TR_BitVector *killedCommonedSymbols = NULL;
-   if (commonedSymbols && store->_needTempForCommonedLoads && !store->_needTempForCommonedLoads->isEmpty())
-      killedCommonedSymbols = store->_needTempForCommonedLoads;
-   if (trace())
-      {
-      traceMsg(comp(),"         usedSymbols:  ");
-      usedSymbols->print(comp());
-      traceMsg(comp(),"\n");
-      traceMsg(comp(),"         allUsedSymbols:  ");
-      allUsedSymbols->print(comp());
-      traceMsg(comp(),"\n");
-      traceMsg(comp(),"         _usedSymbolsToMove:  ");
-      _usedSymbolsToMove->print(comp());
-      traceMsg(comp(),"\n");
-      traceMsg(comp(),"         commonedSymbols:  ");
-      if (commonedSymbols) commonedSymbols->print(comp());
-      traceMsg(comp(),"\n");
-      traceMsg(comp(),"         killedCommonedSymbols:  ");
-      if (killedCommonedSymbols) killedCommonedSymbols->print(comp());
-      traceMsg(comp(),"\n");
-      traceMsg(comp(),"         _killedSymbolsToMove:  ");
-      _killedSymbolsToMove->print(comp());
-      traceMsg(comp(),"\n");
-      }
-
-   if (trace())
-      {
-      traceMsg(comp(),"         source blockNumber %d symbols killed:  ",sourceBlockNumber);
-      _symbolsKilledInBlock[sourceBlockNumber]->print(comp());
-      traceMsg(comp(),"\n");
-      traceMsg(comp(),"         source blockNumber %d symbols used:  ",sourceBlockNumber);
-      _symbolsUsedInBlock[sourceBlockNumber]->print(comp());
-      traceMsg(comp(),"\n");
-      }
-
-   bool isFirstMoveOfThisStore = true;
-   TR_BlockStorePlacementList blockPlacementsForThisStore(trMemory());
-   List<TR_IndirectLoadAnchor> *indirectLoadAnchorsForThisStore = new (trStackMemory()) List<TR_IndirectLoadAnchor>(trMemory());
-   bool storeChildIsAnchored = false;
-   bool anchoredByBranch = false;
-   TR::Node *anchoredByBranchNode = NULL;
-   bool anchoredByStore = false;
-   int32_t symIdx = store->_symIdx;
-   TR_BitVector *blockingCommonedSymbols = NULL;
-   TR_BitVector *blockingUsedSymbols = NULL;
-   TR::TreeTop *storeTree = store->_useOrKillInfo->_tt;
-   uint32_t indirectLoadCount = store->_useOrKillInfo->_indirectLoadCount;
-   while (fallThroughBlock && fallThroughBlock->isExtensionOfPreviousBlock())
-      {
-      int32_t currentBlockNumber = currentBlock->getNumber();
-      if (trace())
-         {
-         traceMsg(comp(),"         blockNumber %d symbols killed:  ",currentBlockNumber);
-         _symbolsKilledInBlock[currentBlockNumber]->print(comp());
-         traceMsg(comp(),"\n");
-         traceMsg(comp(),"         blockNumber %d symbols used:  ",currentBlockNumber);
-         _symbolsUsedInBlock[currentBlockNumber]->print(comp());
-         traceMsg(comp(),"\n");
-         traceMsg(comp(),"         blockKilledSet->intersects(*usedSymbols) = %d\n",_symbolsKilledInBlock[currentBlockNumber]->intersects(*usedSymbols));
-         if (commonedSymbols)
-            traceMsg(comp(),"         blockKilledSet->intersects(*commonedSymbols) = %d\n",_symbolsKilledInBlock[currentBlockNumber]->intersects(*commonedSymbols));
-         else
-            traceMsg(comp(),"         commonedSymbols is NULL\n");
-         traceMsg(comp(),"         Four storeCanMoveThroughBlock conditions, if any are true then the store cannot be sunk:\n");
-         if (_symbolsKilledInBlock[currentBlockNumber])
-            {
-            traceMsg(comp(),"         blockKilledSet->intersects(*_usedSymbolsToMove) = %d\n",_symbolsKilledInBlock[currentBlockNumber]->intersects(*_usedSymbolsToMove));
-            traceMsg(comp(),"         blockKilledSet->get(%d) = %d\n",symIdx,_symbolsKilledInBlock[currentBlockNumber]->get(symIdx));
-            }
-         else
-            traceMsg(comp(),"         blockKilledSet is NULL\n");
-         if (_symbolsUsedInBlock[currentBlockNumber])
-            {
-            traceMsg(comp(),"         blockUsedSet->intersects(*_killedSymbolsToMove) = %d\n",_symbolsUsedInBlock[currentBlockNumber]->intersects(*_killedSymbolsToMove));
-            traceMsg(comp(),"         blockUsedSet->get(%d) = %d\n",symIdx,_symbolsUsedInBlock[currentBlockNumber]->get(symIdx));
-            }
-         else
-            traceMsg(comp(),"         blockUsedSet is NULL\n");
-         }
-      if (storeCanMoveThroughBlock(_symbolsKilledInBlock[currentBlockNumber], _symbolsUsedInBlock[currentBlockNumber], symIdx))
-         {
-         TR::Node *storeNode  = storeTree->getNode();
-         TR::RegisterMappedSymbol *sym = storeNode->getSymbolReference()->getSymbol()->getRegisterMappedSymbol();
-         if (_symbolsKilledInBlock[currentBlockNumber]->intersects(*usedSymbols))
-            {
-            //if (comp()->getOption(TR_SinkAllStores) || comp()->getOption(TR_SinkAllBlockedStores))
-            if (comp()->getOption(TR_SinkAllStores) || 1)
-               {
-               TR_BitVector *blockingUsedSymbolsForThisBlock = new (trStackMemory()) TR_BitVector(*_symbolsKilledInBlock[currentBlockNumber]);
-               (*blockingUsedSymbolsForThisBlock) &= (*usedSymbols);
-               if (blockingUsedSymbols)
-                  (*blockingUsedSymbols) |= (*blockingUsedSymbolsForThisBlock);
-               else
-                  blockingUsedSymbols = new (trStackMemory()) TR_BitVector(*blockingUsedSymbolsForThisBlock);
-             if (trace())
-                  {
-                  traceMsg(comp(), "         blockingUsedSymbols: ");
-                  blockingUsedSymbols->print(comp());
-                  traceMsg(comp(), "\n");
-                  }
-               }
-            else
-               {
-               if (trace())
-                  traceMsg(comp(),"         not sinking store %p any further as it is not a cc and there are blocking used symbols\n",storeNode);
-               break;
-               }
-            }
-
-         if (commonedSymbols && _symbolsKilledInBlock[currentBlockNumber]->intersects(*commonedSymbols))
-            {
-            if (comp()->getOption(TR_SinkAllStores) || comp()->getOption(TR_SinkAllBlockedStores))
-            //if (comp()->getOption(TR_SinkAllStores) || 1)
-               {
-               TR_BitVector *blockingCommonedSymbolsForThisBlock = new (trStackMemory()) TR_BitVector(*_symbolsKilledInBlock[currentBlockNumber]);
-               (*blockingCommonedSymbolsForThisBlock) &= (*commonedSymbols);
-               if (blockingCommonedSymbols)
-                  (*blockingCommonedSymbols) |= (*blockingCommonedSymbolsForThisBlock);
-               else
-                  blockingCommonedSymbols = new (trStackMemory()) TR_BitVector(*blockingCommonedSymbolsForThisBlock);
-             if (trace())
-                  {
-                  traceMsg(comp(), "         blockingCommonedSymbols: ");
-                  blockingCommonedSymbols->print(comp());
-                  traceMsg(comp(), "\n");
-                  }
-               }
-            else
-               {
-               if (trace())
-                  traceMsg(comp(),"         not sinking store %p any further as it is not a cc and there are blocking commoned symbols\n",store);
-               break;
-               }
-            }
-
-         if (trace() || comp()->getOption(TR_TraceOptDetails))
-            traceMsg(comp(), "            Pushed sym %d to end of current block_%d\n", symIdx, currentBlockNumber);
-         TR::TreeTop *lastTree = currentBlock->getLastRealTreeTop();
-         TR::Block *exitBlock = NULL;
-         bool copyStore = true;  // when the store is going sunk to the side exit should it be copied first and then sunk or just sunk
-         TR::TreeTop *sideExitStoreTree = NULL;
-
-         if (!(currentBlock->getSuccessors().size() == 1))
-            {
-            exitBlock = lastTree->getNode()->getBranchDestination()->getNode()->getBlock();
-            if (lastTree->getNode()->getOpCode().isBranch())
-               {
-               if (trace())
-                  traceMsg(comp(),"               found branch node [" POINTER_PRINTF_FORMAT "] as last node in block_%d\n",lastTree->getNode(),currentBlock->getNumber());
-               // test !anchoredByBranch below instead of !storeChildIsAnchored to catch this case
-               // S
-               // ST
-               // BC
-               // if !storeChildIsAnchored is used then the cc computation is duplicated on the BC side exit instead of being anchored above the branch
-               if (passesAnchoringTest(store, storeChildIsAnchored, nextStoreWasMoved))
-                  {
-                  copyStore = false;
-                  canMoveToAllPaths = true;
-                  storeChildIsAnchored = anchoredByStore = true;
-                  sideExitStoreTree = genSideExitTree(storeTree, exitBlock, true);
-                  if (trace())
-                     traceMsg(comp(), "                  store anchor branch first - create new store %p with commoned store->firstGrandChild %p on sideExit block_%d\n",
-                        sideExitStoreTree->getNode(),storeNode->getFirstChild()->getFirstChild(),exitBlock->getNumber());
-                  }
-               else if (!storeChildIsAnchored && indirectLoadCount)
-                  {
-                  sideExitStoreTree = storeTree;
-                  canMoveToAllPaths = true;
-                  if (trace())
-                     traceMsg(comp(), "                  store has %d indirect load%s\n", indirectLoadCount, indirectLoadCount > 1 ? "s":"");
-                  }
-               else
-                  {
-                  canMoveToAllPaths = true;
-                  if (trace())
-                     traceMsg(comp(), "               store child %p is not anchored under the branch or a subsequent store\n",storeNode->getFirstChild());
-                  if (anchoredByBranch)
-                     {
-                     if (trace())
-                        traceMsg(comp(), "                  cc child already anchored\n");
-                     copyStore = false;
-                     TR_ASSERT(anchoredByBranchNode,"anchoredByBranchNode should have been created already when anchoredByBranch was set to true\n");
-                     sideExitStoreTree = TR::TreeTop::create(comp(),  exitBlock->getEntry(), TR::Node::createWithSymRef(storeNode->getOpCodeValue(), 1, 1, storeNode->getFirstChild(), storeNode->getSymbolReference()));
-                     if (trace())
-                        traceMsg(comp(), "                  branch anchor next - create new store %p with commoned store->firstChild %p on sideExit block_%d\n",
-                              sideExitStoreTree->getNode(),storeNode->getFirstChild(),exitBlock->getNumber());
-                     }
-                  else if(anchoredByStore)
-                     {
-                     if (trace())
-                        traceMsg(comp(), "                  cc grand child already anchored\n");
-                     copyStore = false;
-                     sideExitStoreTree = genSideExitTree(storeTree, exitBlock, false);
-                     if (trace())
-                        traceMsg(comp(), "                  store anchor branch next - create new store %p with commoned store->firstChild %p on sideExit block_%d\n",
-                           sideExitStoreTree->getNode(),storeNode->getFirstChild(),exitBlock->getNumber());
-                     }
-                  else
-                     {
-                     sideExitStoreTree = storeTree;
-                     if (trace())
-                        {
-                        traceMsg(comp(), "                  cc child is not already anchored and should not be anchored here\n");
-                        traceMsg(comp(), "                  create copy of storeTree %p on side exit\n",storeTree->getNode());
-                        }
-                     }
-                  }
-               }
-            else
-               {
-               // add support for other block ending opcodes as needed
-               }
-            if ((trace() || comp()->getOption(TR_TraceOptDetails)) && canMoveToAllPaths)
-               traceMsg(comp(), "               Replicate to branch side exit block_%d\n", exitBlock->getNumber());
-            }
-         else if (!currentBlock->getExceptionSuccessors().empty())
-            {
-            if (trace())
-               traceMsg(comp(),"               found exception node [" POINTER_PRINTF_FORMAT "] as last node in block_%d\n",lastTree->getNode(),currentBlock->getNumber());
-            // For now just support a single exception successor.
-            if (currentBlock->getExceptionSuccessors().size() == 1)
-               {
-               // If the last node of an exception throwing block is not the one and only node that raises the exception
-               // then we will have to split the block as the store may not be live on all exception paths out of the block
-               // For now just require that an exception raising node must end a block. This is the excepted behaviour in zEmulator
-               // control flow graphs.
-               TR::TreeTop *tt = currentBlock->getFirstRealTreeTop();
-               int32_t exceptingNodes = 0;
-               for (; tt != lastTree->getNextTreeTop(); tt = tt->getNextRealTreeTop())
-                  {
-                  if (tt->getNode()->exceptionsRaised())
-                     exceptingNodes++;
-                  }
-               if (exceptingNodes == 1)
-                  {
-                  exitBlock = currentBlock->getExceptionSuccessors().front()->getTo()->asBlock();
-                  if (passesAnchoringTest(store, storeChildIsAnchored, nextStoreWasMoved))
-                     {
-                     copyStore = false;
-                     canMoveToAllPaths = true;
-                     storeChildIsAnchored = anchoredByStore = true;
-                     sideExitStoreTree = genSideExitTree(storeTree, exitBlock, true);
-
-                     if (trace())
-                        traceMsg(comp(), "                  store anchor exception first - create new store %p with commoned store->firstGrandChild %p on sideExit block_%d\n",
-                           sideExitStoreTree->getNode(),storeNode->getFirstChild()->getFirstChild(),exitBlock->getNumber());
-                     }
-                  else if (!storeChildIsAnchored && indirectLoadCount)
-                     {
-                     sideExitStoreTree = storeTree;
-                     canMoveToAllPaths = true;
-                     if (trace())
-                        traceMsg(comp(), "                  store has %d indirect load%s\n", indirectLoadCount, indirectLoadCount > 1 ? "s":"");
-                      }
-                  else
-                     {
-                     canMoveToAllPaths = true;
-                     if (anchoredByBranch)
-                        {
-                        if (trace())
-                           traceMsg(comp(), "                  cc child already anchored\n");
-                        copyStore = false;
-                        TR_ASSERT(anchoredByBranchNode,"anchoredByBranchNode should have been created already when anchoredByBranch was set to true\n");
-                        sideExitStoreTree = TR::TreeTop::create(comp(),
-                                                               exitBlock->getEntry(),
-                                                               TR::Node::createWithSymRef(storeNode->getOpCodeValue(), 1, 1,
-                                                                               storeNode->getFirstChild(), storeNode->getSymbolReference()));
-                        if (trace())
-                           traceMsg(comp(), "                  create new store %p with commoned store->firstChild %p on sideExit block_%d\n",
-                              sideExitStoreTree->getNode(),storeNode->getFirstChild(),exitBlock->getNumber());
-                        }
-                     else if (anchoredByStore)
-                        {
-                        if (trace())
-                           traceMsg(comp(), "                  cc grand child already anchored\n");
-                        copyStore = false;
-                        sideExitStoreTree = genSideExitTree(storeTree, exitBlock, false);
-                        if (trace())
-                           traceMsg(comp(), "                  store anchor exception next - create new store %p with commoned store->firstChild %p on sideExit block_%d\n",
-                                   sideExitStoreTree->getNode(),storeNode->getFirstChild(),exitBlock->getNumber());
-                        }
-                     else
-                        {
-                        sideExitStoreTree = storeTree;
-                        if (trace())
-                           {
-                           traceMsg(comp(), "                  cc child is not already anchored and should not be anchored here\n");
-                           traceMsg(comp(), "                  create copy of storeTree %p on side exit\n",storeTree->getNode());
-                           }
-                        }
-                     }
-                  }
-               else
-                  {
-                  if (trace() || comp()->getOption(TR_TraceOptDetails))
-                     traceMsg(comp(), "            missed a store sinking opportunity as a current block_%d with a single exception succ does not have exactly 1 excepting node (%d excepting nodes)\n",currentBlock->getNumber(),exceptingNodes);
-                  }
-               if ((trace() || comp()->getOption(TR_TraceOptDetails)) && canMoveToAllPaths)
-                  traceMsg(comp(), "               Replicate to exception side exit block_%d\n", exitBlock->getNumber());
-               }
-            else
-               {
-               if (trace() || comp()->getOption(TR_TraceOptDetails))
-                  traceMsg(comp(),"            not sinking store as there is > 1 exception successor for current block_%d\n",currentBlock->getNumber());
-               }
-            }
-         else
-            {
-            canMoveToAllPaths = true; // can always move to only successor block (the fallThroughBlock)
-            }
-
-         // must be able to copy/move to all paths in order to move to any of them
-         if (canMoveToAllPaths)
-            {
-            if (trace())
-               traceMsg(comp(), "            Can sink this store [" POINTER_PRINTF_FORMAT "] !\n", storeTree->getNode());
-            if (sideExitStoreTree)
-               {
-               TR_StoreInformation *storeInfo = new (trStackMemory()) TR_StoreInformation(sideExitStoreTree, copyStore);
-               if (copyStore && store->_depth > MAX_TREE_DEPTH_TO_DUP)
-                  {
-                  if (trace())
-                     traceMsg(comp(),            "no anchor found and depth %d is > than max duplication depth of %d so do not sink this store\n",store->_depth,MAX_TREE_DEPTH_TO_DUP);
-                  break;
-                  }
-               if (copyStore &&
-                   (indirectLoadCount || killedCommonedSymbols || blockingUsedSymbols || blockingCommonedSymbols))
-                  {
-                  storeInfo->_storeTemp = duplicateTreeForSideExit(sideExitStoreTree);
-                  storeInfo->_needsDuplication = false;
-                  if (trace())
-                     traceMsg(comp(),"                  call insertAnchoredNodes dupTree is %p, copyStore = %d, indirectLoadCount = %d, killedCommonedSymbols = %p, blockingUsedSymbols = %p, blockingCommonedSymbols = %p\n",
-                             storeInfo->_storeTemp->getNode(),copyStore,indirectLoadCount,killedCommonedSymbols,blockingUsedSymbols,blockingCommonedSymbols);
-                  uint32_t indirectLoadsReplaced = insertAnchoredNodes(store, storeInfo->_storeTemp->getNode()->getFirstChild(), // copy
-                                                                       sideExitStoreTree->getNode()->getFirstChild(),     // original
-                                                                       storeInfo->_storeTemp->getNode(),                  // parent node of copy
-                                                                       0,                                                 // child index of copy
-                                                                       killedCommonedSymbols,
-                                                                       blockingUsedSymbols,
-                                                                       blockingCommonedSymbols,
-                                                                       currentBlock,
-                                                                       indirectLoadAnchorsForThisStore,
-                                                                       comp()->incVisitCount());
-
-                   // replaced must be >= count because indirectLoadCount is the unique count of indirect loads but the tree
-                   // might contain multiple references to the same indirect load and they all must be replaced
-                   TR_ASSERT(indirectLoadsReplaced >= indirectLoadCount,"did not find and replace all the indirect loads (replaced %d, found %d)\n",indirectLoadsReplaced,indirectLoadCount);
-                  }
-               else
-                  {
-                  storeInfo->_storeTemp = sideExitStoreTree;
-                  if (trace())
-                     traceMsg(comp(),"                  do not call insertAnchoredNodes dupTree is %p, copyStore = %d, indirectLoadCount = %d, killedCommonedSymbols = %p, blockingUsedSymbols = %p, blockingCommonedSymbols = %p\n",storeInfo->_storeTemp->getNode(),copyStore,indirectLoadCount,killedCommonedSymbols,blockingUsedSymbols,blockingCommonedSymbols);
-                  }
-               // exitBlock is NULL when the currentBlock does not contain any fork due to a branch or exception
-               if (exitBlock)
-                  {
-                  TR_BlockStorePlacement *newBlockPlacement = new (trStackMemory()) TR_BlockStorePlacement(storeInfo, exitBlock, trMemory());
-                  blockPlacementsForThisStore.add(newBlockPlacement);
-                  }
-               }
-            currentBlock = fallThroughBlock;
-            fallThroughBlock = currentBlock->getNextBlock();
-            isFirstMoveOfThisStore = false;
-            sunkStore = true;
-            }
-         else
-            {
-            fallThroughBlock = 0;
-            }
-         }
-      else
-         {
-         if (trace() || comp()->getOption(TR_TraceOptDetails))
-            traceMsg(comp(), "            Can't push sym %d to end of current block_%d\n", symIdx, currentBlockNumber);
-         fallThroughBlock = 0;
-         }
-      } // end while
-
-      if ((trace() || comp()->getOption(TR_TraceOptDetails)) && fallThroughBlock &&  !fallThroughBlock->isExtensionOfPreviousBlock())
-         traceMsg(comp(),"            fallThroughBlock %d is not part of same superblock as currentBlock %d so will not try to sink further\n",fallThroughBlock->getNumber(),currentBlock->getNumber());
-
-      // have we made any progress in pushing this block
-      if (sourceBlock != currentBlock)
-         {
-         if ((trace() || comp()->getOption(TR_TraceOptDetails)) && canMoveToAllPaths)
-            traceMsg(comp(), "               Move to lowest fall through block_%d\n", currentBlock->getNumber());
-         TR_StoreInformation *storeInfo = new (trStackMemory()) TR_StoreInformation(storeTree, false /*!copyStore*/);
-         storeInfo->_storeTemp = storeTree;
-         bool anchorIndirectLoads = (indirectLoadCount != 0);
-         // indirect loads have to be anchored right at their original location otherwise if the parent node is swung down
-         // then the indirect load may get moved passed a store to the same memory location (or loads will get reordered which
-         // is also not allowed). This happens, among other places, in the IL for TS where the iiload under the bustore cc gets
-         // swung below the iistore to the same memory location.
-         if (anchorIndirectLoads || blockingUsedSymbols || blockingCommonedSymbols)
-            {
-            if (trace())
-               traceMsg(comp(),"                  call insertAnchoredNodes !storeChildisAnchored = %d, indirectLoadCount = %d, killedCommonedSymbols = %p, blockingUsedSymbols = %p, blockingCommonedSymbols = %p\n",
-                       !storeChildIsAnchored,indirectLoadCount,killedCommonedSymbols,blockingUsedSymbols,blockingCommonedSymbols);
-            // The fall through store only needs to have anchors created for blocked symbols (and
-            // not for indirect loads) and the store tree itself does not need to be modified
-            // so pass in NULL for the nodeCopy and nodeParentCopy
-            uint32_t indirectLoadsReplaced = insertAnchoredNodes(store,
-                                                                 NULL,                                      // copy
-                                                                 storeTree->getNode()->getFirstChild(),     // original
-                                                                 NULL,
-                                                                 0,                                         // child index of copy
-                                                                 killedCommonedSymbols,
-                                                                 blockingUsedSymbols,
-                                                                 blockingCommonedSymbols,
-                                                                 currentBlock,
-                                                                 anchorIndirectLoads ? indirectLoadAnchorsForThisStore : NULL,
-                                                                 comp()->incVisitCount());
-
-            // replaced must be >= count because indirectLoadCount is the unique count of indirect loads but the tree
-            // might contain multiple references to the same indirect load and they all must be replaced
-            if (anchorIndirectLoads)
-               TR_ASSERT(indirectLoadsReplaced >= indirectLoadCount,"did not find and replace all the indirect loads (replaced %d, found %d)\n",indirectLoadsReplaced,indirectLoadCount);
-            else
-               TR_ASSERT(indirectLoadsReplaced == 0,"the fall through store should not replace any indirect loads\n");
-            }
-         else
-            {
-            if (trace())
-               traceMsg(comp(),"                  do not call insertAnchoredNodes !storeChildisAnchored = %d, indirectLoadCount = %d, killedCommonedSymbols = %p, blockingUsedSymbols = %p, blockingCommonedSymbols = %p\n",
-                       !storeChildIsAnchored,indirectLoadCount,killedCommonedSymbols,blockingUsedSymbols,blockingCommonedSymbols);
-            }
-         TR_BlockStorePlacement *newBlockPlacement = new (trStackMemory()) TR_BlockStorePlacement(storeInfo, currentBlock, trMemory());
-         blockPlacementsForThisStore.add(newBlockPlacement);
-         sunkStore = true;
-         }
-
-      // transfer our block placements to _placementsInBlock and _allBlockPlacements
-      ListIterator<TR_BlockStorePlacement> blockIt(&blockPlacementsForThisStore);
-      for (TR_BlockStorePlacement *blockPlacement=blockIt.getFirst();
-           blockPlacement != NULL;
-           blockPlacement = blockIt.getNext())
-         {
-         recordPlacementForDefInBlock(blockPlacement);
-         }
-
-      // The stores are examined in reverse order but the exit blocks are encountered in forward order as the store is pushed
-      // down. So for the program order stores (S) and exits (E)
-      // S_a
-      // E_1a
-      // E_2a
-      // E_3a
-      // S_b
-      // E_1b
-      // E_2b
-      // E_3b
-      // The stores are visited in the order S_b, S_a but for each store the exit blocks are visited in the order E_1,E_2,E_3.
-      // So the futureUseCounts will work correctly so the indirect load is anchored before its first use we want the master list of
-      // _indirectLoadAnchors to be in reverse order (the first loadAnchor in program order is the last one dealt with in doSinking)
-      //
-      // This ordering is accomplished by the following algorithm:
-      // The indirectLoadAnchorsForThisStore are added to the *head* of the list so at the end it is in this order
-      // where L_1a is the reference to an anchored load for the pair S_a and E_1a.
-      // for S_a
-      // L_3a,L_2a,L_1a
-      // and for S_b
-      // L_3b,L_2b,L_1b
-      //
-      // The loop below *appends* indirectLoadAnchorsForThisStore to the master list.
-      // Before the indirectLoadAnchorsForThisStore for S_b are added the master list is empty and after they are appended the master list is:
-      // L_3b,L_2b,L_1b
-      // And after the indirectLoadAnchorsForThisStore for S_a are appended to the master list:
-      // L_3b,L_2b,L_1b,L_3a,L_2a,L_1a
-      // and this list is now in the reverse order we need for the futureUseCounts to work correctly in doSinking.
-      //
-      // How doSinking uses the futureUseCounts:
-      // Assuming each side exit tree references the same indirect load anchor then after all the exits have been seen the futureUseCount will
-      // be 6. When doSinking processes the list it will decrement the futureUseCount each time it encounters a regStore and then
-      // finally anchor it when the futureUseCount has reached zero.  Because L_1a shows up last in the list doSinking will correctly
-      // anchor the indirect load before this location
-
-      while (!indirectLoadAnchorsForThisStore->isEmpty())
-         _indirectLoadAnchors->append(indirectLoadAnchorsForThisStore->popHead());
-
-      return sunkStore;
-   }
-
-const char *
-TR_TrivialSinkStores::optDetailString() const throw()
-   {
-   return "O^O TRIVIAL SINK STORES: ";
    }
 
 

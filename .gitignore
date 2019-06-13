@@ -94,6 +94,7 @@ OMRTraceFormat.dat
 /tracegen
 /tracemerge
 *.pdat
+*.tracesentinel
 ut_*.c
 ut_*.h
 ut_*.inc

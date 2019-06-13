@@ -403,7 +403,7 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
     * @param[in] ci : current instruction
     * @param[in] cursor : instruction cursor
     * @param[in] cg : CodeGenerator
-    * @return estimated binary length
+    * @return instruction cursor after encoding
     */
    uint8_t *generateBinaryEncoding(TR::Instruction *ci, uint8_t *cursor, TR::CodeGenerator *cg);
    };

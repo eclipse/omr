@@ -195,3 +195,13 @@ MM_ScavengerStats::clear(bool firstIncrement)
 	memset(_copy_distance_counts, 0, sizeof(_copy_distance_counts));
 	memset(_copy_cachesize_counts, 0, sizeof(_copy_cachesize_counts));
 }
+
+bool
+MM_ScavengerStats::isAvailable(MM_EnvironmentBase *env) {
+	if (env->getExtensions()->isConcurrentScavengerEnabled()) {
+		/* with CS, we count STW increments (2 per each cycle) */
+		return (_gcCount > 1);
+	} else {
+		return (_gcCount > 0);
+	}
+}

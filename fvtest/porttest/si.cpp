@@ -2059,11 +2059,11 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 	} else {
 		portTestEnv->log("mkdir %s\n", utf8);
 	}
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	rc = atoe_chdir(utf8);
-#else
+#else /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	rc = chdir(utf8);
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	if (0 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "cd %s failed rc: %d\n", utf8, rc);
 	} else {
@@ -2087,7 +2087,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 
 #if (HOST_OS == OMR_WINDOWS)
 	_chdir(orig_cwd); /* we need to exit current directory before deleting it*/
-#elif defined(J9ZOS390)
+#elif defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	atoe_chdir(orig_cwd);
 #else /* (HOST_OS == OMR_WINDOWS) */
 	rc = chdir(orig_cwd);

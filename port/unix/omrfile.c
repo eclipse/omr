@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -345,7 +345,7 @@ omrfile_open(struct OMRPortLibrary *portLibrary, const char *path, int32_t flags
 		}
 	}
 
-#ifdef J9ZOS390
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	/* On zOS use the non-tagging version of atoe_open for VM generated files that are always platform
 	 * encoded (EBCDIC), e.g. javacore dumps. See CMVC 199888
 	 */
@@ -354,9 +354,9 @@ omrfile_open(struct OMRPortLibrary *portLibrary, const char *path, int32_t flags
 	} else {
 		fd = open(path, realFlags, mode);
 	}
-#else
+#else /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	fd = open(path, realFlags, mode);
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 	if (-1 == fd) {
 		Trc_PRT_file_open_Exception2(path, errno, findError(errno));

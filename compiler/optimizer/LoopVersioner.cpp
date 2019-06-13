@@ -3451,7 +3451,7 @@ bool TR_LoopVersioner::detectChecksToBeEliminated(TR_RegionStructure *whileLoop,
                   if (!comp()->fe()->isUnloadAssumptionRequired((TR_OpaqueClassBlock*)clazz, comp()->getCurrentMethod()))
                      {
                      checkCastTrees->add(currentTree);
-   
+
                      if (dupOfThisBlockAlreadyExecutedBeforeLoop)
                         _checksInDupHeader.add(currentTree);
                      }
@@ -4911,7 +4911,7 @@ void TR_LoopVersioner::versionNaturalLoop(TR_RegionStructure *whileLoop, List<TR
 
          for (auto changedSuccEdge = succNode->getSuccessors().begin(); changedSuccEdge != succNode->getSuccessors().end(); ++changedSuccEdge)
             {
-            // 
+            //
             // Watch for any edge from the original loop to the invariant
             // block - it will now refer to the proper region node, and
             // must be discarded from the list of predecessors of the
@@ -5448,13 +5448,6 @@ bool TR_LoopVersioner::buildLoopInvariantTree(List<TR::TreeTop> *nullCheckTrees,
                                                List<TR_NodeParentSymRefWeightTuple> *invariantTranslationNodesList,
                                                TR::Block *exitGotoBlock, TR::Block *loopInvariantBlock)
    {
-
-   if (comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-       comp()->getJittedMethodSymbol()->isNoTemps())
-       {
-       dumpOptDetails(comp(), "buildLoopInvariantTree not safe to perform when NOTEMPS enabled\n");
-       return false;
-       }
    TR::TreeTop *placeHolderTree = loopInvariantBlock->getLastRealTreeTop();
    TR::Node *placeHolderNode = placeHolderTree->getNode();
    int dumped = 0;
@@ -5654,13 +5647,6 @@ bool TR_LoopVersioner::buildSpecializationTree(List<TR::TreeTop> *nullCheckTrees
    {
    if (!comp()->getRecompilationInfo())
      return false;
-
-   if (comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-       comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "buildSpecializationTree not safe to perform when NOTEMPS enabled\n");
-      return false;
-      }
 
    bool specializedLong = false;
 

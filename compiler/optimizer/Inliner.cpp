@@ -684,7 +684,7 @@ TR_InlinerBase::exceedsSizeThreshold(TR_CallSite *callsite, int bytecodeSize, TR
 void
 TR_InlinerBase::createParmMap(TR::ResolvedMethodSymbol *calleeSymbol, TR_LinkHead<TR_ParameterMapping> &map)
    {
-   ListIterator<TR::ParameterSymbol> parms(&calleeSymbol->getLogicalParameterList(comp()));
+   ListIterator<TR::ParameterSymbol> parms(&calleeSymbol->getParameterList());
 
    for (TR::ParameterSymbol * p = parms.getFirst(); p; p = parms.getNext())
       {

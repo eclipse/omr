@@ -29,6 +29,8 @@ include(OmrUtility)
 include(ExternalProject)
 
 set(OMR_MODULES_DIR ${CMAKE_CURRENT_LIST_DIR})
+set(DDR_INFO_DIR "${CMAKE_BINARY_DIR}/ddr_info")
+
 
 function(make_ddr_set set_name)
 	# if DDR is not enabled, just skip
@@ -36,9 +38,8 @@ function(make_ddr_set set_name)
 	if((OMR_HOST_OS STREQUAL "win") OR (NOT OMR_DDR))
 		return()
 	endif()
-	set(DDR_TARGET_NAME "${set_name}_ddr")
+	set(DDR_TARGET_NAME "${set_name}")
 	set(DDR_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/${DDR_TARGET_NAME}")
-	set(DDR_TARGETS_LIST "${DDR_BIN_DIR}/targets.list")
 	set(DDR_MACRO_INPUTS_FILE "${DDR_BIN_DIR}/macros.list")
 	set(DDR_TOOLS_EXPORT "${omr_BINARY_DIR}/ddr/tools/DDRTools.cmake")
 	set(DDR_CONFIG_STAMP "${DDR_BIN_DIR}/config.stamp")
@@ -54,34 +55,66 @@ function(make_ddr_set set_name)
 		COMMAND ${CMAKE_COMMAND} --build "${DDR_BIN_DIR}"
 	)
 	set_property(TARGET "${DDR_TARGET_NAME}" PROPERTY DDR_BIN_DIR "${DDR_BIN_DIR}")
+	set_property(TARGET "${DDR_TARGET_NAME}" PROPERTY DDR_SET TRUE)
 
 	file(READ ${OMR_MODULES_DIR}/ddr/DDRSetStub.cmake.in cmakelist_template)
 	string(CONFIGURE "${cmakelist_template}" cmakelist_template @ONLY)
 	file(GENERATE OUTPUT ${DDR_BIN_DIR}/CMakeLists.txt CONTENT "${cmakelist_template}")
+
+	# Note: DDR sets have themselves as targets to process
+	# This is so that you can process misc headers which don't logically belong to any other target
+	target_enable_ddr(${DDR_TARGET_NAME})
+	set_property(TARGET "${DDR_TARGET_NAME}" APPEND PROPERTY DDR_TARGETS "${DDR_TARGET_NAME}")
 endfunction(make_ddr_set)
 
-
-function(target_enable_ddr tgt ddr_set)
+function(ddr_set_add_targets ddr_set)
 	if((OMR_HOST_OS STREQUAL "win") OR (NOT OMR_DDR))
 		return()
 	endif()
 
-	set(opt_EARLY_SOURCE_EVAL )
-	set(opt_UNPARSED_ARGUMENTS )
-	cmake_parse_arguments(opt "EARLY_SOURCE_EVAL" "" "" ${ARGN})
+	omr_assert(FATAL_ERROR TEST TARGET "${ddr_set}" MESSAGE "ddrset_add_targets called on non-existent ddr-set ${ddr_set}")
+	get_target_property(is_ddrset "${ddr_set}" DDR_SET)
+	omr_assert(FATAL_ERROR TEST is_ddrset MESSAGE "ddrset_add_targets called on ddr-set ${ddr_set}, which is not a ddr set")
+	foreach(tgt IN LISTS ARGN)
+		# Check if the target we are adding is itself a DDR set
+		get_target_property(tgt_is_ddr_set ${tgt} DDR_SET)
+		if(tgt_is_ddr_set)
+			set_property(TARGET ${ddr_set} APPEND PROPERTY DDR_SUBSETS ${tgt})
+		else()
+			set_property(TARGET ${ddr_set} APPEND PROPERTY DDR_TARGETS ${tgt})
+		endif()
+		add_dependencies(${ddr_set} ${tgt})
+	endforeach()
+endfunction(ddr_set_add_targets)
+
+function(target_enable_ddr tgt)
+	if((OMR_HOST_OS STREQUAL "win") OR (NOT OMR_DDR))
+		return()
+	endif()
+
+	omr_assert(FATAL_ERROR TEST TARGET ${tgt} MESSAGE "target_enable_ddr called on non-existent target ${tgt}")
+
+	set(options
+		EARLY_SOURCE_EVAL
+		GLOB_HEADERS
+		GLOB_HEADERS_RECURSIVE
+	)
+	set(oneValueArgs "")
+	set(multiValueArgs "")
+
+	# Clear variables
+	foreach(opt_name IN LISTS options oneValueArgs multiValueArgs)
+		set(opt_${opt_name} )
+	endforeach()
+
+
+	cmake_parse_arguments(opt "${options}" "${oneValueArgs}" "${multiValueArgs}"  ${ARGN})
 	omr_assert(FATAL_ERROR TEST NOT opt_UNPARSED_ARGUMENTS MESSAGE "target_enable_ddr: unrecognized options ${opt_UNPARSED_ARGUMENTS}")
-
-
-	set(DDR_SET_TARGET "${ddr_set}_ddr")
-	omr_assert(FATAL_ERROR TEST TARGET ${tgt} MESSAGE "target_enable_ddr called on non-existant target ${tgt}")
-	omr_assert(FATAL_ERROR TEST TARGET "${DDR_SET_TARGET}" MESSAGE "target_enable_ddr called on non-existant ddr_set ${ddr_set}")
 
 	get_target_property(target_type "${tgt}" TYPE)
 	if(target_type MATCHES "INTERFACE_LIBRARY")
 		message(FATAL_ERROR "Cannot call enable_ddr on interface libraries")
 	endif()
-
-	get_property(DDR_BIN_DIR TARGET "${DDR_SET_TARGET}" PROPERTY DDR_BIN_DIR)
 
 	if(opt_EARLY_SOURCE_EVAL)
 		set(source_property "DDR_EVAL_SOURCE")
@@ -109,6 +142,28 @@ function(target_enable_ddr tgt ddr_set)
 		set(MAGIC_TEMPLATE "OUTPUT_FILE\n$<TARGET_FILE:${tgt}>\n${MAGIC_TEMPLATE}")
 	endif()
 
-	file(GENERATE OUTPUT "${DDR_BIN_DIR}/${tgt}.txt" CONTENT "${MAGIC_TEMPLATE}\n")
-	set_property(TARGET ${DDR_SET_TARGET} APPEND PROPERTY INPUT_TARGETS ${tgt})
+	file(GENERATE OUTPUT "${DDR_INFO_DIR}/targets/${tgt}.txt" CONTENT "${MAGIC_TEMPLATE}\n")
+
+	if(opt_GLOB_HEADERS OR opt_GLOB_HEADERS_RECURSIVE)
+		get_target_property(source_dir ${tgt} SOURCE_DIR)
+		if(opt_GLOB_HEADERS_RECURSIVE)
+			set(glob  GLOB_RECURSE)
+		else()
+			set(glob GLOB)
+		endif()
+		file(${glob} c_headers "${source_dir}/*.h")
+		file(${glob} cpp_headers "${source_dir}/*.hpp")
+		ddr_add_headers(${tgt}
+			${c_headers}
+			${cpp_headers}
+		)
+
+	endif()
 endfunction(target_enable_ddr)
+
+function(ddr_add_headers tgt)
+	if(NOT OMR_DDR)
+		return()
+	endif()
+	set_property(TARGET ${tgt} APPEND PROPERTY DDR_HEADERS ${ARGN})
+endfunction(ddr_add_headers)

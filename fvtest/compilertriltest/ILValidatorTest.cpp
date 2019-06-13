@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ TEST_P(IllformedTrees, FailCompilation) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(compiler.compile(), COMPILATION_IL_VALIDATION_FAILURE)  
             << "Compilation did not fail due to ill-formed input trees";
@@ -65,7 +65,7 @@ TEST_P(WellformedTrees, CompileOnly) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly";
 }
@@ -102,7 +102,7 @@ TEST_P(CommoningTest, CommoningUnderSameTree)
    auto ast = parseString(tril);
    ASSERT_NOTNULL(ast) << "Parsing failed unexpectedly";
 
-   Tril::DefaultCompiler compiler{ast};
+   Tril::DefaultCompiler compiler(ast);
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly";
 
    auto entry_point = compiler.getEntryPoint<int32_t (*)(int32_t, int32_t)>();
@@ -131,7 +131,7 @@ TEST_P(CommoningTest, CommoningWithinBlock)
    auto ast = parseString(tril);
    ASSERT_NOTNULL(ast) << "Parsing failed unexpectedly";
 
-   Tril::DefaultCompiler compiler{ast};
+   Tril::DefaultCompiler compiler(ast);
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly";
 
    auto entry_point = compiler.getEntryPoint<int32_t (*)(int32_t, int32_t)>();
@@ -166,7 +166,7 @@ TEST_F(InvalidCommoningTest, CommoningAcrossBlock)
    auto ast = parseString(tril);
    ASSERT_NOTNULL(ast) << "Parsing failed unexpectedly";
 
-   Tril::DefaultCompiler compiler{ast};
+   Tril::DefaultCompiler compiler(ast);
 
    ASSERT_EQ(compiler.compile(), COMPILATION_IL_VALIDATION_FAILURE)
       << "Compilation did not fail due to ill-formed input trees";

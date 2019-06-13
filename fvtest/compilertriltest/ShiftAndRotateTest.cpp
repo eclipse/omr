@@ -101,7 +101,7 @@ TEST_P(Int32ShiftAndRotate, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -118,7 +118,7 @@ TEST_P(Int32ShiftAndRotate, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -128,9 +128,10 @@ TEST_P(Int32ShiftAndRotate, UsingLoadParam) {
 
 INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int32ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<int32_t, int32_t>> (*) (void) > (test_input_values)()),
-    ::testing::Values( std::make_tuple("ishl", static_cast<int32_t(*)(int32_t, int32_t)>(shift_left)),
-                       std::make_tuple("ishr", static_cast<int32_t(*)(int32_t, int32_t)>(shift_right)),
-                       std::make_tuple("irol", static_cast<int32_t(*)(int32_t, int32_t)>(rotate)) )));
+    ::testing::Values(std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("ishl", static_cast<int32_t(*)(int32_t, int32_t)>(shift_left)),
+                      std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("ishr", static_cast<int32_t(*)(int32_t, int32_t)>(shift_right)),
+                      std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("irol", static_cast<int32_t(*)(int32_t, int32_t)>(rotate))
+    )));
 
 class Int64ShiftAndRotate : public ShiftAndRotateArithmetic<int64_t> {};
 
@@ -143,7 +144,7 @@ TEST_P(Int64ShiftAndRotate, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -160,7 +161,7 @@ TEST_P(Int64ShiftAndRotate, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -170,9 +171,10 @@ TEST_P(Int64ShiftAndRotate, UsingLoadParam) {
 
 INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int64ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<int64_t, int32_t>> (*) (void) > (test_input_values)()),
-    ::testing::Values( std::make_tuple("lshl", static_cast<int64_t(*)(int64_t, int32_t)>(shift_left)),
-                       std::make_tuple("lshr", static_cast<int64_t(*)(int64_t, int32_t)>(shift_right)),
-                       std::make_tuple("lrol", static_cast<int64_t(*)(int64_t,int32_t)>(rotate)) )));
+    ::testing::Values(std::make_tuple<const char*, int64_t(*)(int64_t, int32_t)>("lshl", static_cast<int64_t(*)(int64_t, int32_t)>(shift_left)),
+                      std::make_tuple<const char*, int64_t(*)(int64_t, int32_t)>("lshr", static_cast<int64_t(*)(int64_t, int32_t)>(shift_right)),
+                      std::make_tuple<const char*, int64_t(*)(int64_t, int32_t)>("lrol", static_cast<int64_t(*)(int64_t,int32_t)>(rotate))
+    )));
 
 class Int8ShiftAndRotate : public ShiftAndRotateArithmetic<int8_t> {};
 
@@ -185,7 +187,7 @@ TEST_P(Int8ShiftAndRotate, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -208,7 +210,7 @@ TEST_P(Int8ShiftAndRotate, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -218,8 +220,9 @@ TEST_P(Int8ShiftAndRotate, UsingLoadParam) {
 
 INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int8ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<int8_t, int32_t>> (*) (void) > (test_input_values)()),
-    ::testing::Values( std::make_tuple("bshl", static_cast<int8_t(*)(int8_t, int32_t)>(shift_left)),
-                       std::make_tuple("bshr", static_cast<int8_t(*)(int8_t, int32_t)>(shift_right)) )));
+    ::testing::Values(std::make_tuple<const char*, int8_t(*)(int8_t, int32_t)>("bshl", static_cast<int8_t(*)(int8_t, int32_t)>(shift_left)),
+                      std::make_tuple<const char*, int8_t(*)(int8_t, int32_t)>("bshr", static_cast<int8_t(*)(int8_t, int32_t)>(shift_right))
+    )));
 
 class Int16ShiftAndRotate : public ShiftAndRotateArithmetic<int16_t> {};
 
@@ -232,7 +235,7 @@ TEST_P(Int16ShiftAndRotate, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -254,7 +257,7 @@ TEST_P(Int16ShiftAndRotate, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -265,9 +268,9 @@ TEST_P(Int16ShiftAndRotate, UsingLoadParam) {
 
 INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int16ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<int16_t, int32_t>> (*) (void) > (test_input_values)()),
-    ::testing::Values( std::make_tuple("sshl", static_cast<int16_t(*)(int16_t, int32_t)>(shift_left)),
-                       std::make_tuple("sshr", static_cast<int16_t(*)(int16_t, int32_t)>(shift_right))
-                     )));
+    ::testing::Values(std::make_tuple<const char*, int16_t(*)(int16_t, int32_t)>("sshl", static_cast<int16_t(*)(int16_t, int32_t)>(shift_left)),
+                      std::make_tuple<const char*, int16_t(*)(int16_t, int32_t)>("sshr", static_cast<int16_t(*)(int16_t, int32_t)>(shift_right))
+    )));
 
 class UInt32ShiftAndRotate : public ShiftAndRotateArithmetic<uint32_t> {};
 
@@ -280,7 +283,7 @@ TEST_P(UInt32ShiftAndRotate, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -297,7 +300,7 @@ TEST_P(UInt32ShiftAndRotate, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -306,8 +309,9 @@ TEST_P(UInt32ShiftAndRotate, UsingLoadParam) {
 }
 
 INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt32ShiftAndRotate, ::testing::Combine(
-    ::testing::ValuesIn(static_cast< std::vector<std::tuple<uint32_t, int32_t>> (*) (void) > (test_input_values)()),
-    ::testing::Values( std::make_tuple("iushr", static_cast< uint32_t (*) (uint32_t, int32_t) > (shift_right)) )));
+    ::testing::ValuesIn(static_cast< std::vector<std::tuple<uint32_t, int32_t>> (*) (void)>(test_input_values)()),
+    ::testing::Values(std::make_tuple<const char*, uint32_t (*) (uint32_t, int32_t)>("iushr", static_cast<uint32_t (*) (uint32_t, int32_t)>(shift_right))
+    )));
 
 class UInt64ShiftAndRotate : public ShiftAndRotateArithmetic<uint64_t> {};
 
@@ -320,7 +324,7 @@ TEST_P(UInt64ShiftAndRotate, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -337,7 +341,7 @@ TEST_P(UInt64ShiftAndRotate, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -346,8 +350,9 @@ TEST_P(UInt64ShiftAndRotate, UsingLoadParam) {
 }
 
 INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt64ShiftAndRotate, ::testing::Combine(
-    ::testing::ValuesIn(static_cast< std::vector<std::tuple<uint64_t, int32_t>> (*) (void) > (test_input_values)()),
-    ::testing::Values( std::make_tuple("lushr", static_cast< uint64_t (*) (uint64_t, int32_t) > (shift_right)) )));
+    ::testing::ValuesIn(static_cast< std::vector<std::tuple<uint64_t, int32_t>> (*) (void)>(test_input_values)()),
+    ::testing::Values(std::make_tuple<const char*, uint64_t (*) (uint64_t, int32_t)>("lushr", static_cast<uint64_t (*) (uint64_t, int32_t)>(shift_right))
+    )));
 
 class UInt8ShiftAndRotate : public ShiftAndRotateArithmetic<uint8_t> {};
 
@@ -360,7 +365,7 @@ TEST_P(UInt8ShiftAndRotate, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -381,7 +386,7 @@ TEST_P(UInt8ShiftAndRotate, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -390,8 +395,9 @@ TEST_P(UInt8ShiftAndRotate, UsingLoadParam) {
 }
 
 INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt8ShiftAndRotate, ::testing::Combine(
-    ::testing::ValuesIn( static_cast< std::vector<std::tuple<uint8_t, int32_t>> (*) (void) > (test_input_values)()),
-    ::testing::Values( std::make_tuple("bushr", static_cast<uint8_t (*) (uint8_t, int32_t)>(shift_right)) )));
+    ::testing::ValuesIn(static_cast< std::vector<std::tuple<uint8_t, int32_t>> (*) (void) > (test_input_values)()),
+    ::testing::Values(std::make_tuple<const char*, uint8_t (*) (uint8_t, int32_t)>("bushr", static_cast<uint8_t (*) (uint8_t, int32_t)>(shift_right))
+    )));
 
 class UInt16ShiftAndRotate : public ShiftAndRotateArithmetic<uint16_t> {};
 
@@ -404,7 +410,7 @@ TEST_P(UInt16ShiftAndRotate, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -427,7 +433,7 @@ TEST_P(UInt16ShiftAndRotate, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -437,4 +443,5 @@ TEST_P(UInt16ShiftAndRotate, UsingLoadParam) {
 
 INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt16ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<uint16_t, int32_t>> (*) (void) >(test_input_values)()),
-    ::testing::Values( std::make_tuple("sushr", static_cast<uint16_t (*) (uint16_t, int32_t)>(shift_right)) )));
+    ::testing::Values(std::make_tuple<const char*, uint16_t (*) (uint16_t, int32_t)>("sushr", static_cast<uint16_t (*) (uint16_t, int32_t)>(shift_right))
+    )));

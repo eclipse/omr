@@ -50,8 +50,6 @@ class PPCSystemLinkage : public TR::Linkage
    PPCSystemLinkage(TR::CodeGenerator *cg);
 
    virtual const TR::PPCLinkageProperties& getProperties();
-   virtual uintptr_t calculateActualParameterOffset(uintptr_t, TR::ParameterSymbol&);
-   virtual uintptr_t calculateParameterRegisterOffset(uintptr_t, TR::ParameterSymbol&);
 
    virtual uint32_t getRightToLeft();
    virtual bool hasToBeOnStack(TR::ParameterSymbol *parm);

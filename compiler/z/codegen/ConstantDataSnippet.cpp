@@ -281,17 +281,6 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
       }
 
 #ifdef J9_PROJECT_SPECIFIC
-   // Check if this is a jni method address, and if so, register assumption
-   for (auto it = comp->getSnippetsToBePatchedOnRegisterNative()->begin(); it != comp->getSnippetsToBePatchedOnRegisterNative()->end(); ++it)
-      {
-      TR::Snippet *s = (*it)->getKey();
-      if (this == s)
-         {
-         TR_OpaqueMethodBlock *method = (*it)->getValue()->getPersistentIdentifier();
-         TR_PatchJNICallSite::make(cg()->fe(), cg()->trPersistentMemory(), (uintptrj_t) method, cursor, comp->getMetadataAssumptionList());
-         }
-      }
-
    // For Unresolved Data Calls, we need to insert the address of this literal
    // pool reference, so that the PICbuilder code can patch the resolved address
    if (getUnresolvedDataSnippet() != NULL)

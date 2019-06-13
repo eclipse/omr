@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,15 +46,27 @@ endif()
 
 target_include_directories(j9a2e
 	PUBLIC
+		$<BUILD_INTERFACE:${OMR_SOURCE_DIR}/include_core>
+		$<INSTALL_INTERFACE:${OMR_INSTALL_INC_DIR}>
+	PRIVATE
 		.
 )
 
 add_custom_command(TARGET j9a2e
 	POST_BUILD
-	COMMAND mv j9a2e.x ${CMAKE_BINARY_DIR}/j9a2e.x
+	COMMAND cp -f libj9a2e.x ${CMAKE_BINARY_DIR}/libj9a2e.x
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+install(
+	TARGETS j9a2e
+	EXPORT OmrTargets
+	PUBLIC_HEADER DESTINATION ${OMR_INSTALL_INC_DIR}/
+	ARCHIVE DESTINATION ${OMR_INSTALL_ARCHIVE_DIR}/
+	LIBRARY DESTINATION ${OMR_INSTALL_LIB_DIR}/
 )
 
 set_property(TARGET j9a2e PROPERTY FOLDER util)
 
-target_enable_ddr(j9a2e "${OMR_DDR_SET}")
+target_enable_ddr(j9a2e)
+ddr_set_add_targets(omrddr j9a2e)

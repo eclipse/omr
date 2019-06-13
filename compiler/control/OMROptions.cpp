@@ -518,8 +518,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableSIMDUTF16BEEncoder",           "M\tdisable inlining of SIMD UTF16 Big Endian encoder", SET_OPTION_BIT(TR_DisableSIMDUTF16BEEncoder), "F"},
    {"disableSIMDUTF16LEEncoder",           "M\tdisable inlining of SIMD UTF16 Little Endian encoder", SET_OPTION_BIT(TR_DisableSIMDUTF16LEEncoder), "F"},
    {"disableSmartPlacementOfCodeCaches",   "O\tdisable placement of code caches in memory so they are near each other and the DLLs",  SET_OPTION_BIT(TR_DisableSmartPlacementOfCodeCaches), "F", NOT_IN_SUBSET},
-   {"disableStoreAnchoring",              "O\tin trivialStoreSinking disable store child anchoring and therefore more aggressively duplicate trees",
-                                          SET_OPTION_BIT(TR_DisableStoreAnchoring), "F"},
+   {"disableStaticFinalFieldFolding",      "O\tdisable generic static final field folding",                        TR::Options::disableOptimization, staticFinalFieldFolding, 0, "P"},
    {"disableStoreOnCondition",                 "O\tdisable store on condition (STOC) code gen",                         SET_OPTION_BIT(TR_DisableStoreOnCondition), "F"},
    {"disableStoreSinking",                 "O\tdisable store sinking",                         SET_OPTION_BIT(TR_DisableStoreSinking), "F"},
    {"disableStringBuilderTransformer",     "O\tenable transforming StringBuilder constructor to preallocate a buffer for String concatenation operations", SET_OPTION_BIT(TR_DisableStringBuilderTransformer), "F"},
@@ -547,7 +546,6 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableTrivialBlockExtension",       "O\tdisable trivial block extension",                TR::Options::disableOptimization, trivialBlockExtension, 0, "P"},
    {"disableTrivialDeadBlockRemoval", "O\tdisable trivial dead block removal ",   SET_OPTION_BIT(TR_DisableTrivialDeadBlockRemover), "F"},
    {"disableTrivialDeadTreeRemoval",      "O\tdisable trivial dead tree removal",              TR::Options::disableOptimization, trivialDeadTreeRemoval, 0, "P"},
-   {"disableTrivialStoreSinking",         "O\tdisable trivial store sinking", RESET_OPTION_BIT(TR_EnableTrivialStoreSinking), "F"},
    {"disableUncountedUnrolls",            "O\tdisable GLU from unrolling uncoutned loops ",SET_OPTION_BIT(TR_DisableUncountedUnrolls), "F"},
    {"disableUnsafe",                      "O\tdisable code to inline Unsafe natives",          SET_OPTION_BIT(TR_DisableUnsafe), "F"},
    {"disableUnsafeFastPath",              "O\tdisable unsafe fast path",               TR::Options::disableOptimization, unsafeFastPath, 0, "P"},  // Java specific option
@@ -749,7 +747,6 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"enableThisLiveRangeExtension",       "R\tenable this live range extesion to the end of the method", SET_OPTION_BIT(TR_EnableThisLiveRangeExtension), "F"},
    {"enableTraps",                        "C\tenable trap instructions",                     RESET_OPTION_BIT(TR_DisableTraps), "F"},
    {"enableTreePatternMatching",          "O\tEnable opts that use the TR_Pattern framework", RESET_OPTION_BIT(TR_DisableTreePatternMatching), "F"},
-   {"enableTrivialStoreSinking",          "O\tenable trivial store sinking", SET_OPTION_BIT(TR_EnableTrivialStoreSinking), "F"},
    {"enableUpgradesByJitSamplingWhenHWProfilingEnabled", "O\tAllow Jit Sampling to upgrade cold compilations when HW Profiling is on",
                                           SET_OPTION_BIT(TR_EnableJitSamplingUpgradesDuringHWProfiling), "F", NOT_IN_SUBSET},
    {"enableUpgradingAllColdCompilations", "O\ttry to upgrade to warm all cold compilations", SET_OPTION_BIT(TR_EnableUpgradingAllColdCompilations), "F"},
@@ -868,10 +865,6 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
                                  SET_OPTION_BIT(TR_IProfilerPerformTimestampCheck), "F"},
    {"iprofilerVerbose",          "O\tEnable Interpreter Profiling output messages",           SET_OPTION_BIT(TR_VerboseInterpreterProfiling), "F"},
 
-#if defined(AIXPPC)
-   {"j2prof",             "D\tenable profiling",
-        SET_OPTION_BIT(TR_CreatePCMaps), "F" },
-#endif
    {"jitAllAtMain",          "D\tjit all loaded methods when main is called", SET_OPTION_BIT(TR_jitAllAtMain), "F" },
 
    {"jitMethodEntryAlignmentBoundary=",      "C<nnn>\tAlignment boundary (in bytes) for JIT method entry",
@@ -1062,12 +1055,6 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
                                          TR::Options::setStaticNumericKBAdjusted, (intptrj_t)&OMR::Options::_scratchSpaceLowerBound, 0, " %d (KB)"},
    {"searchCount=",      "O<nnn>\tcount of the max search to perform",
         TR::Options::set32BitSignedNumeric, offsetof(OMR::Options,_lastSearchCount), 0, "F%d"},
-   {"sinkAllBlockedStores",               "O\tin trivialStoreSinking sink all stores that are blocked by a killed sym by creating an anchor",
-                                          SET_OPTION_BIT(TR_SinkAllBlockedStores), "F"},
-   {"sinkAllStores",                      "O\tin trivialStoreSinking sink all stores possible by agressively creating anchors for indirect loads and killed syms",
-                                          SET_OPTION_BIT(TR_SinkAllStores), "F"},
-   {"sinkOnlyCCStores",                   "O\tin trivialStoreSinking only sink stores that are to the psw.cc symbol",
-                                          SET_OPTION_BIT(TR_SinkOnlyCCStores), "F"},
    {"slipTrap=",                          "O{regex}\trecord entry/exit for slit/trap for methods listed",
                                           TR::Options::setRegex, offsetof(OMR::Options, _slipTrap), 0, "P"},
    {"softFailOnAssume",   "M\tfail the compilation quietly and use the interpreter if an assume fails", SET_OPTION_BIT(TR_SoftFailOnAssume), "P"},
@@ -1247,6 +1234,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
         TR::Options::setBitsFromStringSet, offsetof(OMR::Options, _traceSpillCosts), TR_TraceSpillCostsBasic, "F"},
    {"traceSpillCosts=",                "L{regex}\tlist of additional spill costs options: basic, results, build, details",
         TR::Options::setBitsFromStringSet, offsetof(OMR::Options, _traceSpillCosts), 0, "P"},
+   {"traceStaticFinalFieldFolding",     "L\ttrace generic static final field folding",             TR::Options::traceOptimization, staticFinalFieldFolding, 0, "P"},
    {"traceStringBuilderTransformer",    "L\ttrace StringBuilder tranfsofermer optimization", TR::Options::traceOptimization, stringBuilderTransformer, 0, "P"},
    {"traceStringPeepholes",             "L\ttrace string peepholes",                       TR::Options::traceOptimization, stringPeepholes, 0, "P"},
    {"traceStripMining",                 "L\ttrace strip mining",                           TR::Options::traceOptimization, stripMining, 0, "P"},
@@ -1262,7 +1250,6 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
          TR::Options::setBitsFromStringSet, offsetof(OMR::Options, _traceSimplifier), 0, "P"},
    {"traceTrivialBlockExtension",       "L\ttrace trivial block extension",                TR::Options::traceOptimization, trivialBlockExtension, 0, "P"},
    {"traceTrivialDeadTreeRemoval",      "L\ttrace trivial dead tree removal", SET_OPTION_BIT(TR_TraceTrivialDeadTreeRemoval), "P"},
-   {"traceTrivialStoreSinking",         "L\ttrace trivial store sinking",                  TR::Options::traceOptimization, trivialStoreSinking, 0, "P"},
    {"traceUnsafeFastPath",              "L\ttrace unsafe fast path",                       TR::Options::traceOptimization, unsafeFastPath, 0, "P"},  // Java specific option
    {"traceUnsafeInlining",              "L\ttrace unsafe inlining",                        SET_OPTION_BIT(TR_TraceUnsafeInlining), "F"},
    {"traceUseDefs",                     "L\ttrace use def info",                           SET_OPTION_BIT(TR_TraceUseDefs), "F"},
@@ -2006,8 +1993,8 @@ OMR::Options::jitLatePostProcess(TR::OptionSet *optionSet, void * jitConfig)
    if (_sampleInterval == 0) // sampleInterval==0 does make much sense
       _sampleInterval = 1;
 
-#if defined(TR_HOST_ARM)
-   // OSR is not available for ARM yet
+#if defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
+   // OSR is not available for ARM or AArch64 yet
    self()->setOption(TR_DisableOSR);
    self()->setOption(TR_EnableOSR, false);
    self()->setOption(TR_EnableOSROnGuardFailure, false);

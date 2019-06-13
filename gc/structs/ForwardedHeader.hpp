@@ -33,10 +33,6 @@
 #include "HeapLinkedFreeHeader.hpp"
 
 
-#if defined(OMR_GC_COMPRESSED_POINTERS) != defined(OMR_GC_COMPRESSED_POINTERS)
-#error "MutableHeaderFields requires sizeof(fomrobject_t) == sizeof(j9objectclass_t)"
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) != defined(OMR_GC_COMPRESSED_POINTERS) */
-
 /* Source object header bits */
 #define OMR_FORWARDED_TAG 4
 /* If 'being copied hint' is set, it hints that destination might still be being copied (although it might have just completed).

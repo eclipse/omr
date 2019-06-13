@@ -246,7 +246,6 @@ OMR::Compilation::Compilation(
    _snippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(self()->allocator())),
    _methodSnippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(self()->allocator())),
    _snippetsToBePatchedOnClassRedefinition(getTypedAllocator<TR::Snippet*>(self()->allocator())),
-   _snippetsToBePatchedOnRegisterNative(getTypedAllocator<TR_Pair<TR::Snippet,TR_ResolvedMethod> *>(self()->allocator())),
    _genILSyms(getTypedAllocator<TR::ResolvedMethodSymbol*>(self()->allocator())),
    _noEarlyInline(true),
    _returnInfo(TR_VoidReturn),
@@ -1273,20 +1272,6 @@ void OMR::Compilation::performOptimizations()
    {
 
    _optimizer = TR::Optimizer::createOptimizer(self(), self()->getJittedMethodSymbol(), false);
-
-   // This opt is needed if certain ilgen input is seen but there is no optimizer created at this point.
-   // So the block are tracked during ilgen and the opt is turned on here.
-   //
-   ListIterator<TR::Block> listIt(&_methodSymbol->getTrivialDeadTreeBlocksList());
-   for (TR::Block *block = listIt.getFirst(); block; block = listIt.getNext())
-      {
-      ((TR::Optimizer*)(_optimizer))->setRequestOptimization(OMR::trivialDeadTreeRemoval, true, block);
-      }
-
-   if (_methodSymbol->hasUnkilledTemps())
-      {
-      ((TR::Optimizer*)(_optimizer))->setRequestOptimization(OMR::globalDeadStoreElimination);
-      }
 
    if (_optimizer)
       _optimizer->optimize();

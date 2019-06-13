@@ -55,6 +55,10 @@ target_link_libraries(comptest
 	tril
 )
 
+if(OMR_HOST_OS STREQUAL "zos")
+	target_link_libraries(comptest j9a2e)
+endif()
+
 set_property(TARGET comptest PROPERTY FOLDER fvtest)
 
 add_test(

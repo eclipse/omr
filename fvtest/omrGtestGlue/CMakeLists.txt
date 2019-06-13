@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,14 @@ target_include_directories(omrGtest
 		${PROJECT_SOURCE_DIR}/third_party/gtest-1.8.0/include
 )
 
+if(OMR_OS_ZOS)
+	if(OMR_TOOLS_USE_NATIVE_ENCODING)
+		target_link_libraries(omrGtest PUBLIC omr_ebcdic)
+	else()
+		target_link_libraries(omrGtest PUBLIC omr_ascii)
+	endif()
+endif()
+
 add_library(omrGtestGlue INTERFACE)
 
 target_include_directories(omrGtestGlue
@@ -51,5 +59,19 @@ if(NOT OMR_HOST_OS STREQUAL "win")
 	endif()
 endif()
 #target_link_libraries(omrGtest INTERFACE omrGtestGlue)
+
+if(OMR_HOST_OS STREQUAL "zos")
+	list(APPEND OMR_GTEST_DEFINITIONS
+		-DGTEST_ENV_HAS_STD_TUPLE_
+		-D__IBMCPP_TR1__
+	)
+endif()
+
+target_compile_options(omrGtest
+	PUBLIC
+		${OMR_GTEST_DEFINITIONS}
+		$<$<COMPILE_LANGUAGE:CXX>:${OMR_GTEST_DEFINITIONS}>
+		$<$<COMPILE_LANGUAGE:C>:${OMR_GTEST_DEFINITIONS}>
+)
 
 set_property(TARGET omrGtest PROPERTY FOLDER fvtest)

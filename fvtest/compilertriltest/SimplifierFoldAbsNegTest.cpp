@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,16 +40,35 @@ template <> char* nameForType<int64_t>() { return "Int64" ; }
 template <> char* nameForType<  float>() { return "Float" ; }
 template <> char* nameForType< double>() { return "Double"; }
 
-std::vector<int32_t> iTestData = { 0, 1, 2, -1, -2, 99999, -99999, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min() };
-std::vector<int64_t> lTestData = { 0, 1, 2, -1, -2, 99999, -99999, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min() };
-std::vector<  float> fTestData = { 0, 1, 2, -1, -2, 3.14F, -3.14F, std::numeric_limits<float>::min(), std::numeric_limits<float>::min() };
-std::vector< double> dTestData = { 0, 1, 2, -1, -2, 3.14, -3.14, std::numeric_limits<double>::min(), std::numeric_limits<double>::min() };
-
 template <typename T> std::vector<T> dataForType();
-template <> std::vector<int32_t> dataForType<int32_t>() { return iTestData; }
-template <> std::vector<int64_t> dataForType<int64_t>() { return lTestData; }
-template <> std::vector<  float> dataForType<  float>() { return fTestData; }
-template <> std::vector< double> dataForType< double>() { return dTestData; }
+
+template <> std::vector<int32_t> dataForType<int32_t>()
+   {
+   static int32_t values[] = { 0, 1, 2, -1, -2, 99999, -99999, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min() };
+
+   return std::vector<int32_t>(values, values + sizeof(values) / sizeof(int32_t));
+   }
+
+template <> std::vector<int64_t> dataForType<int64_t>()
+   {
+   static int64_t values[] = { 0, 1, 2, -1, -2, 99999, -99999, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min() };
+
+   return std::vector<int64_t>(values, values + sizeof(values) / sizeof(int64_t));
+   }
+
+template <> std::vector<float> dataForType<float>()
+   {
+   static float values[] = { 0, 1, 2, -1, -2, 3.14F, -3.14F, std::numeric_limits<float>::min(), std::numeric_limits<float>::min() };
+
+   return std::vector<float>(values, values + sizeof(values) / sizeof(float));
+   }
+
+template <> std::vector<double> dataForType<double>()
+   {
+   static double values[] = { 0, 1, 2, -1, -2, 3.14F, -3.14F, std::numeric_limits<double>::min(), std::numeric_limits<double>::min() };
+
+   return std::vector<double>(values, values + sizeof(values) / sizeof(double));
+   }
 
 class SimplifierFoldAbsNegTestIlVerifierBase : public TR::IlVerifier
    {
@@ -121,7 +140,7 @@ TYPED_TEST(SimplifierFoldAbsNegTest, FoldAbsAbs) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     NoAbsAbsIlVerifier verifier;
 
     ASSERT_EQ(0, compiler.compileWithVerifier(&verifier)) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
@@ -129,9 +148,11 @@ TYPED_TEST(SimplifierFoldAbsNegTest, FoldAbsAbs) {
     auto entry_point = compiler.getEntryPoint<TypeParam(*)(TypeParam)>();
 
     // Invoke the compiled method, and assert the output is correct.
-    for (auto test : dataForType<TypeParam>()) {
-        EXPECT_EQ(std::abs(test), entry_point(test));
-    }
+    auto values = dataForType<TypeParam>();
+    for (auto it = values.begin(); it != values.end(); ++it)
+       {
+       EXPECT_EQ(std::abs(*it), entry_point(*it));
+       }
 }
 
 
@@ -162,7 +183,7 @@ TYPED_TEST(SimplifierFoldAbsNegTest, FoldAbsNeg) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     NoAbsNegIlVerifier verifier;
 
     ASSERT_EQ(0, compiler.compileWithVerifier(&verifier)) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
@@ -170,9 +191,11 @@ TYPED_TEST(SimplifierFoldAbsNegTest, FoldAbsNeg) {
     auto entry_point = compiler.getEntryPoint<TypeParam(*)(TypeParam)>();
 
     // Invoke the compiled method, and assert the output is correct.
-    for (auto test : dataForType<TypeParam>()) {
-        EXPECT_EQ(std::abs(test), entry_point(test));
-    }
+    auto values = dataForType<TypeParam>();
+    for (auto it = values.begin(); it != values.end(); ++it)
+       {
+       EXPECT_EQ(std::abs(*it), entry_point(*it));
+       }
 }
 
 
@@ -203,7 +226,7 @@ TYPED_TEST(SimplifierFoldAbsNegTest, FoldNegNeg) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     NoNegNegIlVerifier verifier;
 
     ASSERT_EQ(0, compiler.compileWithVerifier(&verifier)) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
@@ -211,7 +234,9 @@ TYPED_TEST(SimplifierFoldAbsNegTest, FoldNegNeg) {
     auto entry_point = compiler.getEntryPoint<TypeParam(*)(TypeParam)>();
 
     // Invoke the compiled method, and assert the output is correct.
-    for (auto test : dataForType<TypeParam>()) {
-        EXPECT_EQ(test, entry_point(test));
-    }
+    auto values = dataForType<TypeParam>();
+    for (auto it = values.begin(); it != values.end(); ++it)
+       {
+       EXPECT_EQ(*it, entry_point(*it));
+       }
 }

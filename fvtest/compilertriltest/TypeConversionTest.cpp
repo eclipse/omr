@@ -24,6 +24,13 @@
 
 #include <cmath>
 
+#if defined(J9ZOS390)
+namespace std
+{
+   using ::isnan;
+}
+#endif
+
 int32_t b2i(int8_t x) {
     return static_cast<int32_t>(x);
 }
@@ -81,7 +88,7 @@ TEST_P(Int8ToInt32, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -108,7 +115,7 @@ TEST_P(Int8ToInt32, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -121,7 +128,8 @@ TEST_P(Int8ToInt32, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int8ToInt32, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int8_t>()),
     ::testing::Values(
-        std::make_tuple("b2i", b2i) )));
+        std::make_tuple<const char*, int32_t(*)(int8_t)>("b2i", b2i)
+    )));
 
 class UInt8ToInt32 : public TRTest::UnaryOpTest<int32_t,uint8_t> {};
 
@@ -140,7 +148,7 @@ TEST_P(UInt8ToInt32, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -167,7 +175,7 @@ TEST_P(UInt8ToInt32, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -180,7 +188,8 @@ TEST_P(UInt8ToInt32, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, UInt8ToInt32, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<uint8_t>()),
     ::testing::Values(
-        std::make_tuple("bu2i", bu2i) )));
+        std::make_tuple<const char*, int32_t(*)(uint8_t)>("bu2i", bu2i)
+    )));
 
 class Int8ToInt64 : public TRTest::UnaryOpTest<int64_t,int8_t> {};
 
@@ -199,7 +208,7 @@ TEST_P(Int8ToInt64, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -226,7 +235,7 @@ TEST_P(Int8ToInt64, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -239,7 +248,8 @@ TEST_P(Int8ToInt64, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int8ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int8_t>()),
     ::testing::Values(
-        std::make_tuple("b2l", b2l) )));
+        std::make_tuple<const char*, int64_t(*)(int8_t)>("b2l", b2l)
+    )));
 
 class UInt8ToInt64 : public TRTest::UnaryOpTest<int64_t,uint8_t> {};
 
@@ -258,7 +268,7 @@ TEST_P(UInt8ToInt64, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -285,7 +295,7 @@ TEST_P(UInt8ToInt64, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -298,7 +308,8 @@ TEST_P(UInt8ToInt64, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, UInt8ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<uint8_t>()),
     ::testing::Values(
-        std::make_tuple("bu2l", bu2l) )));
+        std::make_tuple<const char*, int64_t(*)(uint8_t)>("bu2l", bu2l)
+    )));
 
 class Int16ToInt32 : public TRTest::UnaryOpTest<int32_t,int16_t> {};
 
@@ -317,7 +328,7 @@ TEST_P(Int16ToInt32, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -344,7 +355,7 @@ TEST_P(Int16ToInt32, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -357,7 +368,8 @@ TEST_P(Int16ToInt32, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int16ToInt32, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int16_t>()),
     ::testing::Values(
-        std::make_tuple("s2i", s2i) )));
+        std::make_tuple<const char*, int32_t(*)(int16_t)>("s2i", s2i)
+    )));
 
 class UInt16ToInt32 : public TRTest::UnaryOpTest<int32_t,uint16_t> {};
 
@@ -376,7 +388,7 @@ TEST_P(UInt16ToInt32, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -403,7 +415,7 @@ TEST_P(UInt16ToInt32, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -416,7 +428,8 @@ TEST_P(UInt16ToInt32, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, UInt16ToInt32, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<uint16_t>()),
     ::testing::Values(
-        std::make_tuple("su2i", su2i) )));
+        std::make_tuple<const char*, int32_t(*)(uint16_t)>("su2i", su2i)
+    )));
 
 class Int16ToInt64 : public TRTest::UnaryOpTest<int64_t,int16_t> {};
 
@@ -435,7 +448,7 @@ TEST_P(Int16ToInt64, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -462,7 +475,7 @@ TEST_P(Int16ToInt64, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -475,7 +488,8 @@ TEST_P(Int16ToInt64, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int16ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int16_t>()),
     ::testing::Values(
-        std::make_tuple("s2l", s2l) )));
+        std::make_tuple<const char*, int64_t(*)(int16_t)>("s2l", s2l)
+    )));
 
 class UInt16ToInt64 : public TRTest::UnaryOpTest<int64_t,uint16_t> {};
 
@@ -494,7 +508,7 @@ TEST_P(UInt16ToInt64, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -521,7 +535,7 @@ TEST_P(UInt16ToInt64, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -534,7 +548,8 @@ TEST_P(UInt16ToInt64, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, UInt16ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<uint16_t>()),
     ::testing::Values(
-        std::make_tuple("su2l", su2l) )));
+        std::make_tuple<const char*, int64_t(*)(uint16_t)>("su2l", su2l)
+    )));
 
 class Int32ToInt64 : public TRTest::UnaryOpTest<int64_t,int32_t> {};
 
@@ -553,7 +568,7 @@ TEST_P(Int32ToInt64, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -576,7 +591,7 @@ TEST_P(Int32ToInt64, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -589,7 +604,8 @@ TEST_P(Int32ToInt64, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int32ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int32_t>()),
     ::testing::Values(
-        std::make_tuple("i2l", i2l) )));
+        std::make_tuple<const char*, int64_t(*)(int32_t)>("i2l", i2l)
+    )));
 
 class UInt32ToInt64 : public TRTest::UnaryOpTest<int64_t,uint32_t> {};
 
@@ -608,7 +624,7 @@ TEST_P(UInt32ToInt64, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -631,7 +647,7 @@ TEST_P(UInt32ToInt64, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -644,7 +660,8 @@ TEST_P(UInt32ToInt64, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, UInt32ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<uint32_t>()),
     ::testing::Values(
-        std::make_tuple("iu2l", iu2l) )));
+        std::make_tuple<const char*, int64_t(*)(uint32_t)>("iu2l", iu2l)
+    )));
 
 int32_t l2i(int64_t x) {
     return static_cast<int32_t>(x);
@@ -667,7 +684,7 @@ TEST_P(Int64ToInt32, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -690,7 +707,7 @@ TEST_P(Int64ToInt32, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -703,7 +720,8 @@ TEST_P(Int64ToInt32, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int64ToInt32, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int64_t>()),
     ::testing::Values(
-        std::make_tuple("l2i", l2i) )));
+        std::make_tuple<const char*, int32_t(*)(int64_t)>("l2i", l2i)
+    )));
 
 #ifndef TR_TARGET_POWER
 float i2f(int32_t x) {
@@ -739,7 +757,7 @@ TEST_P(Int32ToFloat, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -762,7 +780,7 @@ TEST_P(Int32ToFloat, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -775,7 +793,8 @@ TEST_P(Int32ToFloat, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int32ToFloat, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int32_t>()),
     ::testing::Values(
-        std::make_tuple("i2f", i2f) )));
+        std::make_tuple<const char*, float(*)(int32_t)>("i2f", i2f)
+    )));
 
 class Int64ToFloat : public TRTest::UnaryOpTest<float,int64_t> {};
 
@@ -794,7 +813,7 @@ TEST_P(Int64ToFloat, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -817,7 +836,7 @@ TEST_P(Int64ToFloat, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -830,7 +849,8 @@ TEST_P(Int64ToFloat, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int64ToFloat, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int64_t>()),
     ::testing::Values(
-        std::make_tuple("l2f", l2f) )));
+        std::make_tuple<const char*, float(*)(int64_t)>("l2f", l2f)
+    )));
 
 class Int32ToDouble : public TRTest::UnaryOpTest<double,int32_t> {};
 
@@ -849,7 +869,7 @@ TEST_P(Int32ToDouble, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -872,7 +892,7 @@ TEST_P(Int32ToDouble, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -885,7 +905,8 @@ TEST_P(Int32ToDouble, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int32ToDouble, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int32_t>()),
     ::testing::Values(
-        std::make_tuple("i2d", i2d) )));
+        std::make_tuple<const char*, double(*)(int32_t)>("i2d", i2d)
+    )));
 
 class Int64ToDouble : public TRTest::UnaryOpTest<double,int64_t> {};
 
@@ -904,7 +925,7 @@ TEST_P(Int64ToDouble, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -927,7 +948,7 @@ TEST_P(Int64ToDouble, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -940,7 +961,8 @@ TEST_P(Int64ToDouble, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int64ToDouble, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int64_t>()),
     ::testing::Values(
-        std::make_tuple("l2d", l2d) )));
+        std::make_tuple<const char*, double(*)(int64_t)>("l2d", l2d)
+    )));
 #endif
 
 template <typename F, typename I>
@@ -990,7 +1012,7 @@ TEST_P(FloatToInt32, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1018,7 +1040,7 @@ TEST_P(FloatToInt32, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1032,7 +1054,8 @@ INSTANTIATE_TEST_CASE_P(TypeConversionTest, FloatToInt32, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<float>(), fp_filter<float, int32_t>)),
     ::testing::Values(
-        std::make_tuple("f2i", f2i) )));
+        std::make_tuple<const char*, int32_t(*)(float)>("f2i", f2i)
+    )));
 
 class FloatToInt64 : public TRTest::UnaryOpTest<int64_t,float> {};
 
@@ -1051,7 +1074,7 @@ TEST_P(FloatToInt64, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1074,7 +1097,7 @@ TEST_P(FloatToInt64, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1088,7 +1111,8 @@ INSTANTIATE_TEST_CASE_P(TypeConversionTest, FloatToInt64, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<float>(), fp_filter<float, int64_t>)),
     ::testing::Values(
-        std::make_tuple("f2l", f2l) )));
+        std::make_tuple<const char*, int64_t(*)(float)>("f2l", f2l)
+    )));
 
 class DoubleToInt32 : public TRTest::UnaryOpTest<int32_t,double> {};
 
@@ -1107,7 +1131,7 @@ TEST_P(DoubleToInt32, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1130,7 +1154,7 @@ TEST_P(DoubleToInt32, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1144,7 +1168,8 @@ INSTANTIATE_TEST_CASE_P(TypeConversionTest, DoubleToInt32, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<double>(), fp_filter<double, int32_t>)),
     ::testing::Values(
-        std::make_tuple("d2i", d2i) )));
+        std::make_tuple<const char*, int32_t(*)(double)>("d2i", d2i)
+    )));
 
 class DoubleToInt64 : public TRTest::UnaryOpTest<int64_t,double> {};
 
@@ -1163,7 +1188,7 @@ TEST_P(DoubleToInt64, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1186,7 +1211,7 @@ TEST_P(DoubleToInt64, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1200,7 +1225,8 @@ INSTANTIATE_TEST_CASE_P(TypeConversionTest, DoubleToInt64, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<double>(), fp_filter<double, int64_t>)),
     ::testing::Values(
-        std::make_tuple("d2l", d2l) )));
+        std::make_tuple<const char*, int64_t(*)(double)>("d2l", d2l)
+    )));
 
 template <typename T>
 bool smallFp_filter(T a)
@@ -1234,7 +1260,7 @@ TEST_P(FloatToDouble, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1261,7 +1287,7 @@ TEST_P(FloatToDouble, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1279,7 +1305,8 @@ INSTANTIATE_TEST_CASE_P(TypeConversionTest, FloatToDouble, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<float>(), smallFp_filter<float>)),
     ::testing::Values(
-        std::make_tuple("f2d", f2d) )));
+        std::make_tuple<const char*, double(*)(float)>("f2d", f2d)
+    )));
 
 class DoubleToFloat : public TRTest::UnaryOpTest<float,double> {};
 
@@ -1298,7 +1325,7 @@ TEST_P(DoubleToFloat, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1325,7 +1352,7 @@ TEST_P(DoubleToFloat, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1343,4 +1370,5 @@ INSTANTIATE_TEST_CASE_P(TypeConversionTest, DoubleToFloat, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<double>(), smallFp_filter<double>)),
     ::testing::Values(
-        std::make_tuple("d2f", d2f) )));
+        std::make_tuple<const char*, float(*)(double)>("d2f", d2f)
+    )));

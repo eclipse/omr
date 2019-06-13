@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ class MethodInfo {
          * @brief Constructs a MethodInfo object from a Tril AST node
          * @param methodNode is the Tril AST node
          */
-        explicit MethodInfo(const ASTNode* methodNode) : _methodNode{methodNode} {
+        explicit MethodInfo(const ASTNode* methodNode) : _methodNode(methodNode) {
             auto returnTypeArg = _methodNode->getArgByName("return");
             _returnType = getTRDataTypes(returnTypeArg->getValue()->getString());
             _argTypes = parseArgTypes(_methodNode); 

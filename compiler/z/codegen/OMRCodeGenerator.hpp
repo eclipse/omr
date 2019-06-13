@@ -299,11 +299,6 @@ public:
 
    bool supportsLengthMinusOneForMemoryOpts() {return true;}
 
-   bool supportsTrapsInTMRegion()
-      {
-      return TR::Compiler->target.isZOS();
-      }
-
    bool inlineNDmemcpyWithPad(TR::Node * node, int64_t * maxLengthPtr = NULL);
    bool codegenSupportsLoadlessBNDCheck() {return TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12);}
    TR::Register *evaluateLengthMinusOneForMemoryOps(TR::Node *,  bool , bool &lenMinusOne);
@@ -544,6 +539,8 @@ public:
    bool canUseImmedInstruction(int64_t v);
 
    virtual bool isAddMemoryUpdate(TR::Node * node, TR::Node * valueChild);
+
+   bool afterRA() { return _afterRA; }
 
 #ifdef DEBUG
    void dumpPreGPRegisterAssignment(TR::Instruction *);
@@ -795,9 +792,6 @@ public:
    // LL: move to .cpp
    bool bitwiseOpNeedsLiteralFromPool(TR::Node *parent, TR::Node *child);
 
-   bool bndsChkNeedsLiteralFromPool(TR::Node *child);
-
-   bool constLoadNeedsLiteralFromPool(TR::Node *node);
    virtual bool isDispInRange(int64_t disp);
 
    bool getSupportsOpCodeForAutoSIMD(TR::ILOpCode, TR::DataType);
@@ -876,6 +870,8 @@ private:
    CS2::HashTable<ncount_t, bool, TR::Allocator> _nodesToBeEvaluatedInRegPairs;
 
 protected:
+
+   bool _afterRA;
    flags32_t  _cgFlags;
 
    /** Miscellaneous S390CG boolean flags. */

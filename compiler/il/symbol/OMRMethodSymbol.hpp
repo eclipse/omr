@@ -105,7 +105,7 @@ public:
       MayHaveLongOps               = 0x00040000, ///< this group is only used by resolved method symbols
       MayHaveLoops                 = 0x00080000,
       MayHaveNestedLoops           = 0x00100000,
-      NoTempsSet                   = 0x00200000,
+      // AVAILABLE                 = 0x00200000,
       MayHaveInlineableCall        = 0x00400000,
       IlGenSuccess                 = 0x00800000,
       MayContainMonitors           = 0x01000000,

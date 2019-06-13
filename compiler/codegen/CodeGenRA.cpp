@@ -1107,10 +1107,9 @@ static bool blockIsMuchColderThanContainingLoop(TR::Block *block, TR::CodeGenera
 
 static bool blockIsIgnorablyCold(TR::Block *block, TR::CodeGenerator *cg)
    {
-   bool cannotSpillInBlock = cg->comp()->getJittedMethodSymbol()->isNoTemps();
    if (block->isCold() && cg->traceSimulateTreeEvaluation())
       traceMsg(cg->comp(), "            Block %d is cold\n", block->getNumber());
-   return !cannotSpillInBlock && (block->isCold() || blockIsMuchColderThanContainingLoop(block, cg));
+   return (block->isCold() || blockIsMuchColderThanContainingLoop(block, cg));
    }
 
 void

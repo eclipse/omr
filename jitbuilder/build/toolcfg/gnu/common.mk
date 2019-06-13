@@ -164,12 +164,12 @@ ifeq ($(PLATFORM),ppc64le-linux64-gcc)
 endif
 
 ifeq ($(PLATFORM),s390-linux-gcc)
-    CX_DEFINES+=J9VM_TIERED_CODE_CACHE MAXMOVE S390 FULL_ANSI
+    CX_DEFINES+=S390 FULL_ANSI
     CX_FLAGS+=-m31 -fPIC -fno-strict-aliasing -mtune=z10 -march=z9-109 -mzarch
 endif
 
 ifeq ($(PLATFORM),s390-linux64-gcc)
-    CX_DEFINES+=S390 S39064 FULL_ANSI MAXMOVE J9VM_TIERED_CODE_CACHE
+    CX_DEFINES+=S390 FULL_ANSI S39064
     CX_FLAGS+=-fPIC -fno-strict-aliasing -mtune=z10 -march=z9-109 -mzarch
 endif
 
@@ -280,17 +280,13 @@ ifeq ($(HOST_ARCH),z)
     M4_INCLUDES=$(PRODUCT_INCLUDES)
     M4_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES) $(M4_DEFINES_EXTRA)
     
-    ifeq ($(PLATFORM),s390-linux-gcc)
-        M4_DEFINES+=J9VM_TIERED_CODE_CACHE
-        
+    ifeq ($(PLATFORM),s390-linux-gcc)        
         ifneq (,$(shell grep 'define J9VM_JIT_32BIT_USES64BIT_REGISTERS' $(J9SRC)/include/j9cfg.h))
             M4_DEFINES+=J9VM_JIT_32BIT_USES64BIT_REGISTERS
         endif
     endif
     
-    ifeq ($(PLATFORM),s390-linux64-gcc)
-        M4_DEFINES+=J9VM_TIERED_CODE_CACHE
-        
+    ifeq ($(PLATFORM),s390-linux64-gcc)        
         ifneq (,$(shell grep 'define J9VM_INTERP_COMPRESSED_OBJECT_HEADER' $(J9SRC)/include/j9cfg.h))
             M4_DEFINES+=J9VM_INTERP_COMPRESSED_OBJECT_HEADER
         endif

@@ -294,6 +294,13 @@ omrport_control(struct OMRPortLibrary *portLibrary, const char *key, uintptr_t v
 		return 0;
 	}
 
+	if (0 == strcmp(OMRPORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, key)) {
+#if defined(LINUX)
+		/* set value to advise OS about vmem to consider for Transparent HugePage (Only for Linux) */
+		portLibrary->portGlobals->vmemEnableMadvise &= value;
+#endif
+		return 0;
+	}
 	return 1;
 }
 

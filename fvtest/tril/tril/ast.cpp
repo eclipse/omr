@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,23 +25,23 @@
 #include <string>
 
 ASTNode* createNode(const char * name, ASTNodeArg* args, ASTNode* children,  ASTNode* next) {
-    return new ASTNode{name, args, children, next};
+    return new ASTNode(name, args, children, next);
 }
 
 ASTNodeArg* createNodeArg(const char * name, ASTValue* value,  ASTNodeArg* next) {
-    return new ASTNodeArg{name, value, next};
+    return new ASTNodeArg(name, value, next);
 }
 
 ASTValue* createIntegerValue(uint64_t val) {
-    return new ASTValue{val};
+    return new ASTValue(val);
 }
 
 ASTValue* createFloatingPointValue(double val) {
-    return new ASTValue{val};
+    return new ASTValue(val);
 }
 
 ASTValue* createStrValue(const char* val) {
-    return new ASTValue{val};
+    return new ASTValue(val);
 }
 
 void appendSiblingNode(ASTNode* list, ASTNode* newNode) {

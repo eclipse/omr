@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -175,8 +175,9 @@
          DefineFile(__FILE__); \
          DefineName(#name); \
          DefineReturnType(returnType); \
-         std::vector<std::pair<const char *, OMR::JitBuilder::IlType *> > args = {__VA_ARGS__}; \
-         for (int i = 0, s = args.size(); i < s; ++i) \
+         std::pair<const char *, OMR::JitBuilder::IlType *> argsArray[] = {std::pair<const char *, OMR::JitBuilder::IlType *>("", NULL), __VA_ARGS__}; \
+         std::vector<std::pair<const char *, OMR::JitBuilder::IlType *> > args(argsArray, argsArray + sizeof(argsArray)/sizeof(std::pair<const char *, OMR::JitBuilder::IlType *>)); \
+         for (int i = 1, s = args.size(); i < s; ++i) \
             { \
             DefineParameter(args[i].first, args[i].second); \
             } \
@@ -197,7 +198,7 @@
  * argument to the macro is the name of the parameter, the second is the the
  * `OMR::JitBuilder::IlType` instance representing the type of the parameter.
  */
-#define PARAM(name, type) {name, type}
+#define PARAM(name, type) std::pair<const char *, OMR::JitBuilder::IlType *>(name, type)
 
 /**
  * @brief The JitBuilderTest class is a basic test fixture for JitBuilder test cases.

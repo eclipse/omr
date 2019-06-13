@@ -216,31 +216,45 @@ TR::Register *
 OMR::ARM64::TreeEvaluator::imulEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *firstChild = node->getFirstChild();
-   TR::Register *src1Reg = cg->evaluate(firstChild);
    TR::Node *secondChild = node->getSecondChild();
-   TR::Register *trgReg;
+   TR::Register *src1Reg = cg->evaluate(firstChild);
+   TR::Register *src2Reg = NULL;
+   TR::Register *trgReg = NULL;
+   int32_t value = 0;
 
    if (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)
       {
-      int32_t value = secondChild->getInt();
+      value = secondChild->getInt();
       if (value > 0 && cg->convertMultiplyToShift(node))
          {
-         // The multiply has been converted to a shift.
          trgReg = cg->evaluate(node);
          return trgReg;
          }
-      else
-         {
-         trgReg = cg->allocateRegister();
+      }
+
+   if(1 == firstChild->getReferenceCount())
+      {
+      trgReg = src1Reg;
+      }
+   else if(1 == secondChild->getReferenceCount() && (src2Reg = secondChild->getRegister()) != NULL)
+      {
+      trgReg = src2Reg;
+      }
+   else
+      {
+      trgReg = cg->allocateRegister();
+      }
+
+   if (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)
+      {
          mulConstant32(node, trgReg, src1Reg, value, cg);
-         }
       }
    else
       {
       TR::Register *src2Reg = cg->evaluate(secondChild);
-      trgReg = cg->allocateRegister();
       generateMulInstruction(cg, node, trgReg, src1Reg, src2Reg);
       }
+
    firstChild->decReferenceCount();
    secondChild->decReferenceCount();
    node->setRegister(trgReg);

@@ -159,7 +159,6 @@ OMR::CodeGenerator::CodeGenerator() :
       _implicitExceptionPoint(0),
       _localsThatAreStored(NULL),
       _numLocalsWhenStoreAnalysisWasDone(-1),
-      _uncommmonedNodes(self()->comp()->trMemory(), stackAlloc),
       _ialoadUnneeded(self()->comp()->trMemory()),
      _symRefTab(self()->comp()->getSymRefTab()),
      _vmThreadRegister(NULL),
@@ -200,12 +199,10 @@ OMR::CodeGenerator::CodeGenerator() :
      _codeCache(0),
      _committedToCodeCache(false),
      _codeCacheSwitched(false),
-     _dummyTempStorageRefNode(NULL),
      _blockRegisterPressureCache(NULL),
      _simulatedNodeStates(NULL),
      _availableSpillTemps(getTypedAllocator<TR::SymbolReference*>(TR::comp()->allocator())),
      _counterBlocks(getTypedAllocator<TR::Block*>(TR::comp()->allocator())),
-     _compressedRefs(getTypedAllocator<TR::Node*>(TR::comp()->allocator())),
      _liveReferenceList(getTypedAllocator<TR_LiveReference*>(TR::comp()->allocator())),
      _snippetList(getTypedAllocator<TR::Snippet*>(TR::comp()->allocator())),
      _registerArray(self()->comp()->trMemory()),
@@ -219,14 +216,12 @@ OMR::CodeGenerator::CodeGenerator() :
      _variableSizeSymRefFreeList(getTypedAllocator<TR::SymbolReference*>(TR::comp()->allocator())),
      _variableSizeSymRefAllocList(getTypedAllocator<TR::SymbolReference*>(TR::comp()->allocator())),
      _accumulatorNodeUsage(0),
-     _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(TR::comp()->allocator())),
      _collectedSpillList(getTypedAllocator<TR_BackingStore*>(TR::comp()->allocator())),
      _allSpillList(getTypedAllocator<TR_BackingStore*>(TR::comp()->allocator())),
      _relocationList(getTypedAllocator<TR::Relocation*>(TR::comp()->allocator())),
      _externalRelocationList(getTypedAllocator<TR::Relocation*>(TR::comp()->allocator())),
      _staticRelocationList(_compilation->allocator()),
      _breakPointList(getTypedAllocator<uint8_t*>(TR::comp()->allocator())),
-     _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(TR::comp()->allocator())),
      _preJitMethodEntrySize(0),
      _jitMethodEntryPaddingSize(0),
      _lastInstructionBeforeCurrentEvaluationTreeTop(NULL),
@@ -238,7 +233,6 @@ OMR::CodeGenerator::CodeGenerator() :
      _internalControlFlowSafeNestingDepth(0),
      _stackOfArtificiallyInflatedNodes(self()->comp() ? self()->comp()->trMemory() : 0, 16),
      _stackOfMemoryReferencesCreatedDuringEvaluation(self()->comp() ? self()->comp()->trMemory() : 0, 16),
-     _afterRA(false),
      randomizer(self()->comp()),
      _outOfLineColdPathNestedDepth(0),
      _codeGenPhase(self()),
@@ -1290,27 +1284,6 @@ bool OMR::CodeGenerator::areAssignableGPRsScarce()
    if (c1)
       threshold = atoi(c1);
       return (self()->getMaximumNumbersOfAssignableGPRs() <= threshold);
-   }
-
-// J9
-//
-TR::Node *
-OMR::CodeGenerator::createOrFindClonedNode(TR::Node *node, int32_t numChildren)
-   {
-   TR_HashId index;
-   if (!_uncommmonedNodes.locate(node->getGlobalIndex(), index))
-      {
-      // has not been uncommoned already, clone and store for later
-      TR::Node *clone = TR::Node::copy(node, numChildren);
-      _uncommmonedNodes.add(node->getGlobalIndex(), index, clone);
-      node = clone;
-      }
-   else
-      {
-      // found previously cloned node
-      node = (TR::Node *) _uncommmonedNodes.getData(index);
-      }
-   return node;
    }
 
 

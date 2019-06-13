@@ -28,31 +28,10 @@
 namespace OMR {
 namespace GC {
 
-struct MemoryHeader {
-	uintptr_t allocatedBytes;
-	OMR::GC::AllocationCategory::Enum category;
-};
-
-union AlignedMemoryHeader {
-	double forAlignment;
-	MemoryHeader header;
-};
-
 bool
 Forge::initialize(OMRPortLibrary* port)
 {
 	_portLibrary = port;
-
-	if (0 != omrthread_monitor_init_with_name(&_mutex, 0, "OMR::GC::Forge")) {
-		return false;
-	}	
-
-	for (uintptr_t i = 0; i < OMR::GC::AllocationCategory::CATEGORY_COUNT; i++) {
-		_statistics[i].category = (OMR::GC::AllocationCategory::Enum) i;
-		_statistics[i].allocated = 0;
-		_statistics[i].highwater = 0;
-	}
-	
 	return true;
 }
 
@@ -60,11 +39,6 @@ void
 Forge::tearDown()
 {
 	_portLibrary = NULL;
-	
-	if (NULL != _mutex) {
-		omrthread_monitor_destroy(_mutex);
-		_mutex = NULL;
-	}
 }
 
 /**
@@ -79,25 +53,7 @@ Forge::tearDown()
 void* 
 Forge::allocate(std::size_t bytesRequested, OMR::GC::AllocationCategory::Enum category, const char* callsite)
 {
-	AlignedMemoryHeader* memoryPointer;
-
-	memoryPointer = (AlignedMemoryHeader *) _portLibrary->mem_allocate_memory(_portLibrary, bytesRequested + sizeof(AlignedMemoryHeader), callsite, OMRMEM_CATEGORY_MM);
-	if (NULL != memoryPointer) {
-		memoryPointer->header.allocatedBytes = bytesRequested;
-		memoryPointer->header.category = category;
-
-		omrthread_monitor_enter(_mutex);
-
-		_statistics[category].allocated += bytesRequested;
-		if (_statistics[category].allocated > _statistics[category].highwater) {
-			_statistics[category].highwater = _statistics[category].allocated; 
-		}
-
-		omrthread_monitor_exit(_mutex);
-		memoryPointer += 1;
-	}
-	
-	return memoryPointer;
+	return _portLibrary->mem_allocate_memory(_portLibrary, bytesRequested, callsite, OMRMEM_CATEGORY_MM);
 }
 
 /**
@@ -112,29 +68,9 @@ Forge::free(void* memoryPointer)
 	if (NULL == memoryPointer) {
 		return;
 	}
-
-	AlignedMemoryHeader* alignedHeader = (AlignedMemoryHeader *) memoryPointer;
-	alignedHeader -= 1;
-
-
-	omrthread_monitor_enter(_mutex);
-	_statistics[alignedHeader->header.category].allocated -= alignedHeader->header.allocatedBytes; 
-	omrthread_monitor_exit(_mutex);
 	
 	OMRPORT_ACCESS_FROM_OMRPORT(_portLibrary);
-	omrmem_free_memory(alignedHeader);
-}
-
-/**
- * Returns the current memory usage statistics for the garbage collector.  Each entry in the array corresponds to a memory usage category type.
- * To locate memory usage statistics for a particular category, use the enumeration value as the array index (e.g. stats[REFERENCES]).
- *
- * @return an array of memory usage statistics indexed using the OMR::GC::AllocationCategory enumeration
- */
-OMR_GC_MemoryStatistics*
-Forge::getCurrentStatistics()
-{
-	return _statistics;
+	omrmem_free_memory(memoryPointer);
 }
 
 } // namespace GC

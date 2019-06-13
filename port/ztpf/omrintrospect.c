@@ -1167,7 +1167,7 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 			} else if (timedOut(data->state->deadline1) || data->error) {
 				break;
 			} else {
-				sigval_t val;
+				union sigval val;
 				val.sival_ptr = data;
 
 				/*

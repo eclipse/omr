@@ -32,11 +32,6 @@ TEST(PtrTest, AssertNotNullWithNonNullValue)
    ASSERT_NOTNULL(reinterpret_cast<void*>(0x1)) << "This should always pass.";
    }
 
-TEST(PtrTest, AssertNullWithNonNullValue)
-   {
-   EXPECT_FATAL_FAILURE(ASSERT_NULL(reinterpret_cast<void*>(0x1)), "");
-   }
-
 TEST(PtrTest, AssertNotNullWithNullValue)
    {
    EXPECT_FATAL_FAILURE(ASSERT_NOTNULL(NULL), "");
@@ -52,11 +47,6 @@ TEST(PtrTest, ExpectNotNullWithNonNullValue)
    EXPECT_NOTNULL(reinterpret_cast<void*>(0x1)) << "This should always pass.";
    }
 
-TEST(PtrTest, ExpectNullWithNonNullValue)
-   {
-   EXPECT_NONFATAL_FAILURE(EXPECT_NULL(reinterpret_cast<void*>(0x1)), "");
-   }
-
 TEST(PtrTest, ExpectNotNullWithNullValue)
    {
    EXPECT_NONFATAL_FAILURE(EXPECT_NOTNULL(NULL), "");
@@ -66,7 +56,7 @@ TEST(PtrTest, ExpectNotNullWithNullValue)
 TEST(TRTestCombineVectorTest, CombineEmptyVectorsOfSameType)
    {
    using namespace std;
-   auto v = TRTest::combine(vector<int>{}, vector<int>{});
+   auto v = TRTest::combine(vector<int>(), vector<int>());
    ::testing::StaticAssertTypeEq<vector<tuple<int,int>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining two empty vectors should always result in another empty vector.";
@@ -75,7 +65,7 @@ TEST(TRTestCombineVectorTest, CombineEmptyVectorsOfSameType)
 TEST(TRTestCombineVectorTest, CombineEmptyVectorsOfDifferentTypes)
    {
    using namespace std;
-   auto v = TRTest::combine(vector<long>{}, vector<char>{});
+   auto v = TRTest::combine(vector<long>(), vector<char>());
    ::testing::StaticAssertTypeEq<vector<tuple<long,char>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining two empty vectors should always result in another empty vector.";
@@ -85,7 +75,7 @@ TEST(TRTestCombineVectorTest, CombineEmptyAndNonEmptyVectorsOfSameType)
    {
    using namespace std;
    int test_array[3] = {1, 2 ,3};
-   auto v = TRTest::combine(vector<int>{}, vector<int> (test_array, test_array+3));
+   auto v = TRTest::combine(vector<int>(), vector<int> (test_array, test_array + 3));
    ::testing::StaticAssertTypeEq<vector<tuple<int,int>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining any vector with an empty vector should always result in another empty vector.";
@@ -94,7 +84,8 @@ TEST(TRTestCombineVectorTest, CombineEmptyAndNonEmptyVectorsOfSameType)
 TEST(TRTestCombineVectorTest, CombineEmptyAndNonEmptyVectorsOfDifferentTypes)
    {
    using namespace std;
-   auto v = TRTest::combine(vector<long>{}, vector<char>{'a', 'b', 'c'});
+   char test_array[3] = {'a', 'b', 'c'};
+   auto v = TRTest::combine(vector<long>(), vector<char>(test_array, test_array + 3));
    ::testing::StaticAssertTypeEq<vector<tuple<long,char>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining any vector with an empty vector should always result in another empty vector.";
@@ -104,7 +95,7 @@ TEST(TRTestCombineVectorTest, CombineNonEmptyAndEmptyVectorsOfSameType)
    {
    using namespace std;
    int test_array[] = {1, 2, 3};
-   auto v = TRTest::combine(vector<int> (test_array, test_array+3), vector<int>{});
+   auto v = TRTest::combine(vector<int> (test_array, test_array + 3), vector<int>());
    ::testing::StaticAssertTypeEq<vector<tuple<int,int>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining any vector with an empty vector should always result in another empty vector.";
@@ -114,7 +105,7 @@ TEST(TRTestCombineVectorTest, CombineNonEmptyAndEmptyVectorsOfDifferentTypes)
    {
    using namespace std;
    long test_array[] = {1, 2 ,3};
-   auto v = TRTest::combine(vector<long>(test_array, test_array+3), vector<char>{});
+   auto v = TRTest::combine(vector<long>(test_array, test_array + 3), vector<char>());
    ::testing::StaticAssertTypeEq<vector<tuple<long,char>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining any vector with an empty vector should always result in another empty vector.";
@@ -139,7 +130,7 @@ TEST(TRTestCombineVectorTest, CombineNonEmptyVectorsOfDifferentTypes)
    long test_array1[3] = {1, 2, 3};
    char test_array2[2] = {'a', 'b'};
    auto v1 = vector<long> (test_array1, test_array1 + 3);
-   auto v2 = vector<char> (test_array1, test_array1 + 3);
+   auto v2 = vector<char> (test_array2, test_array2 + 2);
    auto v = TRTest::combine(v1, v2);
    ::testing::StaticAssertTypeEq<vector<tuple<long,char>>, decltype (v)>();
    ASSERT_EQ(v1.size() * v2.size(), v.size())
@@ -149,7 +140,9 @@ TEST(TRTestCombineVectorTest, CombineNonEmptyVectorsOfDifferentTypes)
 TEST(TRTestCombineBraceInitTest, CombineEmptyListsOfSameType)
    {
    using namespace std;
-   auto v = TRTest::combine<int, int>({}, {});
+   auto v1 = vector<int> ();
+   auto v2 = vector<int> ();
+   auto v = TRTest::combine(v1, v2);
    ::testing::StaticAssertTypeEq<vector<tuple<int,int>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining two empty lists should always result in an empty vector.";
@@ -158,7 +151,9 @@ TEST(TRTestCombineBraceInitTest, CombineEmptyListsOfSameType)
 TEST(TRTestCombineBraceInitTest, CombineEmptyListsOfDifferentTypes)
    {
    using namespace std;
-   auto v = TRTest::combine<long, char>({}, {});
+   auto v1 = vector<long> ();
+   auto v2 = vector<char> ();
+   auto v = TRTest::combine(v1, v2);
    ::testing::StaticAssertTypeEq<vector<tuple<long,char>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining two empty lists should always result in an empty vector.";
@@ -167,7 +162,10 @@ TEST(TRTestCombineBraceInitTest, CombineEmptyListsOfDifferentTypes)
 TEST(TRTestCombineBraceInitTest, CombineEmptyAndNonEmptyListsOfSameType)
    {
    using namespace std;
-   auto v = TRTest::combine<int, int>({}, {1, 2, 3});
+   int test_array2[3] = {1, 2, 3};
+   auto v1 = vector<int> ();
+   auto v2 = vector<int> (test_array2, test_array2 + 3);
+   auto v = TRTest::combine(v1, v2);
    ::testing::StaticAssertTypeEq<vector<tuple<int,int>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining any list with an empty list should always result in another empty vector.";
@@ -176,7 +174,10 @@ TEST(TRTestCombineBraceInitTest, CombineEmptyAndNonEmptyListsOfSameType)
 TEST(TRTestCombineBraceInitTest, CombineEmptyAndNonEmptyListsOfDifferentTypes)
    {
    using namespace std;
-   auto v = TRTest::combine<long, char>({}, {'a', 'b', 'c'});
+   char test_array2[3] = {'a', 'b', 'c'};
+   auto v1 = vector<long> ();
+   auto v2 = vector<char> (test_array2, test_array2 + 3);
+   auto v = TRTest::combine(v1, v2);
    ::testing::StaticAssertTypeEq<vector<tuple<long,char>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining any list with an empty list should always result in another empty vector.";
@@ -185,7 +186,10 @@ TEST(TRTestCombineBraceInitTest, CombineEmptyAndNonEmptyListsOfDifferentTypes)
 TEST(TRTestCombineBraceInitTest, CombineNonEmptyAndEmptyListsOfSameType)
    {
    using namespace std;
-   auto v = TRTest::combine<int, int>({1, 2, 3}, {});
+   int test_array1[3] = {1, 2, 3};
+   auto v1 = vector<int> (test_array1, test_array1 + 3);
+   auto v2 = vector<int> ();
+   auto v = TRTest::combine(v1, v2);
    ::testing::StaticAssertTypeEq<vector<tuple<int,int>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining any list with an empty list should always result in another empty vector.";
@@ -194,7 +198,10 @@ TEST(TRTestCombineBraceInitTest, CombineNonEmptyAndEmptyListsOfSameType)
 TEST(TRTestCombineBraceInitTest, CombineNonEmptyAndEmptyListsOfDifferentTypes)
    {
    using namespace std;
-   auto v = TRTest::combine<long, char>({1, 2, 3}, {});
+   long test_array1[3] = {1, 2, 3};
+   auto v1 = vector<long> (test_array1, test_array1 + 3);
+   auto v2 = vector<char> ();
+   auto v = TRTest::combine(v1, v2);
    ::testing::StaticAssertTypeEq<vector<tuple<long,char>>, decltype (v)>();
    ASSERT_TRUE(v.empty())
          << "Combining any list with an empty list should always result in another empty vector.";
@@ -203,7 +210,11 @@ TEST(TRTestCombineBraceInitTest, CombineNonEmptyAndEmptyListsOfDifferentTypes)
 TEST(TRTestCombineBraceInitTest, CombineNonEmptyListsOfSameType)
    {
    using namespace std;
-   auto v = TRTest::combine<int, int>({1, 2, 3}, {4, 5});
+   int test_array1[] = {1, 2, 3};
+   int test_array2[] = {4, 5};
+   auto v1 = vector<int> (test_array1, test_array1 + 3);
+   auto v2 = vector<int> (test_array2, test_array2 + 2);
+   auto v = TRTest::combine(v1, v2);
    ::testing::StaticAssertTypeEq<vector<tuple<int,int>>, decltype (v)>();
    ASSERT_EQ(3*2, v.size())
          << "Size of combined lists should be the product of the sizes of the two individual lists.";
@@ -212,7 +223,11 @@ TEST(TRTestCombineBraceInitTest, CombineNonEmptyListsOfSameType)
 TEST(TRTestCombineBraceInitTest, CombineNonEmptyListsOfDifferentTypes)
    {
    using namespace std;
-   auto v = TRTest::combine<long, char>({1, 2, 3}, {'a', 'b'});
+   long test_array1[3] = {1, 2, 3};
+   char test_array2[2] = {'a', 'b'};
+   auto v1 = vector<long> (test_array1, test_array1 + 3);
+   auto v2 = vector<char> (test_array2, test_array2 + 2);
+   auto v = TRTest::combine(v1, v2);
    ::testing::StaticAssertTypeEq<vector<tuple<long,char>>, decltype (v)>();
    ASSERT_EQ(3*2, v.size())
          << "Size of combined lists should be the product of the sizes of the two individual lists.";
@@ -229,28 +244,30 @@ bool returnTrue(char c) {
 
 TEST(TRTestFilter, FilterNothingFromEmptyVector)
    {
-   auto v_in = std::vector<char>{};
+   auto v_in = std::vector<char>();
    auto v_out = TRTest::filter(v_in, returnFalse); // should filter nothing
    ASSERT_TRUE(v_out.empty()) << "Filtering an empty vector should result in another empty vector.";
    }
 
 TEST(TRTestFilter, FilterEverythingFromEmptyVector)
    {
-   auto v_in = std::vector<char>{};
+   auto v_in = std::vector<char>();
    auto v_out = TRTest::filter(v_in, returnTrue); // should filter everything
    ASSERT_TRUE(v_out.empty()) << "Filtering an empty vector should result in another empty vector.";
    }
 
 TEST(TRTestFilter, FilterNothingFromVector)
    {
-   auto v_in = std::vector<char>{'a', 'b', 'c'};
+   char test_array[3] = {'a', 'b', 'c'};
+   auto v_in = std::vector<char>(test_array, test_array + 3);
    auto v_out = TRTest::filter(v_in, returnFalse); // should filter nothing
    ASSERT_EQ(v_in, v_out) << "Filtering nothing should just return the vector unchanged.";
    }
 
 TEST(TRTestFilter, FilterEverythingFromVector)
    {
-   auto v_in = std::vector<char>{'a', 'b', 'c'};
+   char test_array[3] = {'a', 'b', 'c'};
+   auto v_in = std::vector<char>(test_array, test_array + 3);
    auto v_out = TRTest::filter(v_in, returnTrue); // should filter everything
    ASSERT_TRUE(v_out.empty()) << "Filtering everything from vector should result in an empty vector.";
    }
@@ -261,27 +278,30 @@ bool isChar_c(char l) {
 
 TEST(TRTestFilter, FilterVectorWithNoOccurrences)
    {
-   auto v_in = std::vector<char>{'a', 'b', 'd', 'e'};
+   char test_array[4] = {'a', 'b', 'd', 'e'};
+   auto v_in = std::vector<char>(test_array, test_array + 4);
    auto v_out = TRTest::filter(v_in, isChar_c);
    ASSERT_EQ(v_in, v_out)
          << "Filtering a vector that doesn't contain elements matching the predicate should just return the same vector.";
-   ASSERT_EQ(0, std::count_if(v_out.cbegin(), v_out.cend(), isChar_c))
+   ASSERT_EQ(0, std::count_if(v_out.begin(), v_out.end(), isChar_c))
          << "Filtering should leave no elements matching the filter predicate.";
    }
 
 TEST(TRTestFilter, FilterVectorWithOneOccurrence)
    {
-   auto v_in = std::vector<char>{'a', 'b', 'c', 'd', 'e'};
+   char test_array[5] = {'a', 'b', 'c', 'd', 'e'};
+   auto v_in = std::vector<char>(test_array, test_array + 5);
    auto v_out = TRTest::filter(v_in, isChar_c);
-   ASSERT_EQ(0, std::count_if(v_out.cbegin(), v_out.cend(), isChar_c))
+   ASSERT_EQ(0, std::count_if(v_out.begin(), v_out.end(), isChar_c))
          << "Filtering should leave no elements matching the filter predicate.";
    }
 
 TEST(TRTestFilter, FilterVectorWithManyOccurrences)
    {
-   auto v_in = std::vector<char>{'a', 'c', 'b', 'c', 'c', 'd', 'c', 'e', 'c'};
+   char test_array[9] = {'a', 'c', 'b', 'c', 'c', 'd', 'c', 'e', 'c'};
+   auto v_in = std::vector<char>(test_array, test_array + 9);
    auto v_out = TRTest::filter(v_in, isChar_c);
-   ASSERT_EQ(0, std::count_if(v_out.cbegin(), v_out.cend(), isChar_c))
+   ASSERT_EQ(0, std::count_if(v_out.begin(), v_out.end(), isChar_c))
          << "Filtering should leave no elements matching the filter predicate.";
    }
 

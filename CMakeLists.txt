@@ -84,6 +84,24 @@ target_include_directories(omr_base
 		$<INSTALL_INTERFACE:${OMR_INSTALL_INC_DIR}>
 )
 
+if(OMR_OS_ZOS)
+	if(OMR_USE_NATIVE_ENCODING)
+		target_link_libraries(omr_base INTERFACE omr_ebcdic)
+		target_compile_definitions(omr_base
+			INTERFACE
+				-DOMR_EBCDIC
+		)
+		install(TARGETS omr_ebcdic
+			EXPORT OmrTargets
+		)
+	else()
+		target_link_libraries(omr_base INTERFACE omr_ascii)
+		install(TARGETS omr_ascii
+			EXPORT OmrTargets
+		)
+	endif()
+endif()
+
 install(
 	TARGETS omr_base
 	EXPORT OmrTargets
@@ -114,11 +132,7 @@ configure_file(./omrversionstrings.CMakeTemplate.h omrversionstrings.h)
 ###
 include(OmrDDRSupport)
 
-if(NOT DEFINED OMR_DDR_SET)
-	set(OMR_DDR_SET "omr")
-	make_ddr_set(${OMR_DDR_SET})
-endif()
-
+make_ddr_set(omrddr)
 
 ###
 ### Native Tooling

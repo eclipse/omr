@@ -31,6 +31,7 @@
 
 #if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
 #include <sys/prctl.h>
+
 #include <linux/prctl.h>
 #endif /* (HOST_OS == OMR_LINUX) */
 

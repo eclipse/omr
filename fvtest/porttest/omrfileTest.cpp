@@ -4798,7 +4798,7 @@ TEST_F(PortFileTest2, lastmod_failedToFindFile)
 	const char *fileName = "lastmod_failedToFindFile.tst";
 	omrfile_unlink(fileName);
 
-	int rc = omrfile_lastmod(fileName);
+	int64_t rc = omrfile_lastmod(fileName);
 	if (rc != -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_lastmod() did not return -1 on an invalid file.");
 	}

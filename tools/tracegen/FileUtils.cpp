@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2016 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +21,9 @@
  *******************************************************************************/
 #if defined(J9ZOS390)
 /* needed to expose snprintf() */
-#define _ISOC99_SOURCE
+#if !defined(_ISOC99_SOURCE)
+#define _ISOC99_SOURCE 1
+#endif
 #endif
 
 #include <stdarg.h>

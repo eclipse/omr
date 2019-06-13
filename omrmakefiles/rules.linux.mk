@@ -241,7 +241,7 @@ else
             ifeq (s390,$(OMR_HOST_ARCH))
                 GLOBAL_CFLAGS+=$(J9M31) -fno-strict-aliasing
                 GLOBAL_CXXFLAGS+=$(J9M31) -fno-strict-aliasing
-                GLOBAL_CPPFLAGS+=-DS390 -D_LONG_LONG -DJ9VM_TIERED_CODE_CACHE
+                GLOBAL_CPPFLAGS+=-DS390 -D_LONG_LONG
                 ifeq (1,$(OMR_ENV_DATA64))
                     GLOBAL_CPPFLAGS+=-DS39064
                 endif

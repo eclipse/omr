@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,17 +89,27 @@ getZFSClientCacheSize(uint64_t *clientCacheSizePtr)
 
 	/* Initialize the configuration option fields */
 	memset(configOptionPtr, 0, sizeof(J9ZFSConfigOption));
+#if !defined(OMR_EBCDIC)
 	cfgoEye = a2e(J9CFGO_EYE, sizeof(configOptionPtr->co_eye));
+#else /* !defined(OMR_EBCDIC) */
+	cfgoEye = J9CFGO_EYE;
+#endif /* !defined(OMR_EBCDIC) */
 	if (NULL == cfgoEye) {
 		Trc_PRT_getZFSClientCacheSize_MallocFailure();
 		return -1;
 	}
 	memcpy(configOptionPtr->co_eye, cfgoEye, sizeof(configOptionPtr->co_eye));
+#if !defined(OMR_EBCDIC)
 	free(cfgoEye);
+#endif /* !defined(OMR_EBCDIC) */
 	configOptionPtr->co_ver = J9CO_VER_INITIAL;
 	configOptionPtr->co_len = (int16_t)sizeof(J9ZFSConfigOption);
 
+#if!defined(OMR_EBCDIC)
 	fsName = a2e(J9ZFSNAME, strlen(J9ZFSNAME));
+#else /* !defined(OMR_EBCDIC) */
+	fsName = J9ZFSNAME;
+#endif /* !defined(OMR_EBCDIC) */
 	if (NULL == fsName) {
 		Trc_PRT_getZFSClientCacheSize_MallocFailure();
 		return -1;
@@ -122,7 +132,9 @@ getZFSClientCacheSize(uint64_t *clientCacheSizePtr)
 			&bpxrc,
 			&bpxrs);
 #endif /* defined(_LP64) */
+#if !defined(OMR_EBCDIC)
 	free(fsName);
+#endif /* !defined(OMR_EBCDIC) */
 
 	/* Check pfsctl() service return value */
 	if (0 > bpxrv) {
@@ -131,7 +143,11 @@ getZFSClientCacheSize(uint64_t *clientCacheSizePtr)
 	}
 
 	/* The sizes are suffixed with 'G', 'M' or 'K'. Convert to bytes. */
+#if !defined(OMR_EBCDIC)
 	ascName = e2a_func(configParam.configOption.co_string, strlen(configParam.configOption.co_string));
+#else /* !defined(OMR_EBCDIC) */
+   ascName = configParam.configOption.co_string;
+#endif /* !defined(OMR_EBCDIC) */
 	if (NULL == ascName) {
 		Trc_PRT_getZFSClientCacheSize_MallocFailure();
 		return -1;
@@ -144,7 +160,9 @@ getZFSClientCacheSize(uint64_t *clientCacheSizePtr)
 	} else if (('k' == *endPtr) || ('K' == *endPtr)) {
 		clientCacheSize *= J9K_TO_BYTES_CONVERSION_FACTOR;
 	}
+#if !defined(OMR_EBCDIC)
 	free(ascName);
+#endif /* !defined(OMR_EBCDIC) */
 
 	/* Set the returned parameter */
 	*clientCacheSizePtr = clientCacheSize;
@@ -184,18 +202,28 @@ getZFSUserCacheUsed(uint64_t *userCacheUsedPtr)
 
 	/* Initialize the statistics API query control fields */
 	memset(statApiPtr, 0, sizeof(J9ZFSStatApi));
+#if !defined(OMR_EBCDIC)
 	saEye = a2e(J9SA_EYE, sizeof(statApiPtr->sa_eye));
+#else /* !defined(OMR_EBCDIC) */
+	saEye = J9SA_EYE;
+#endif /* !defined(OMR_EBCDIC) */
 	if (NULL == saEye) {
 		Trc_PRT_getZFSUserCacheUsed_MallocFailure();
 		return -1;
 	}
 	memcpy(statApiPtr->sa_eye, saEye, sizeof(statApiPtr->sa_eye));
+#if !defined(OMR_EBCDIC)
 	free(saEye);
+#endif /* !defined(OMR_EBCDIC) */
 
 	statApiPtr->sa_ver = J9SA_VER_INITIAL;
 	statApiPtr->sa_len = (int32_t)sizeof(J9ZFSStatUserCache);
-
+   
+#if !defined(OMR_EBCDIC)
 	fsName = a2e(J9ZFSNAME, strlen(J9ZFSNAME));
+#else /* !defined(OMR_EBCDIC) */
+	fsName = J9ZFSNAME;
+#endif /* !defined(OMR_EBCDIC) */
 	if (NULL == fsName) {
 		Trc_PRT_getZFSUserCacheUsed_MallocFailure();
 		return -1;
@@ -218,7 +246,9 @@ getZFSUserCacheUsed(uint64_t *userCacheUsedPtr)
 			&bpxrc,
 			&bpxrs);
 #endif /* defined(_LP64) */
+#if !defined(OMR_EBCDIC)
 	free(fsName);
+#endif /* !defined(OMR_EBCDIC) */
 
 	/* Check pfsctl() service return value */
 	if (0 > bpxrv) {
@@ -277,17 +307,27 @@ getZFSMetaCacheSize(uint64_t *bufferCacheSizePtr)
 
 	/* Initialize the statistics API query control fields */
 	memset(statApiPtr, 0, sizeof(J9ZFSStatApi));
+#if !defined(OMR_EBCDIC)
 	saEye = a2e(J9SA_EYE, sizeof(statApiPtr->sa_eye));
+#else /* !defined(OMR_EBCDIC) */
+	saEye = J9SA_EYE;
+#endif /* !defined(OMR_EBCDIC) */
 	if (NULL == saEye) {
 		Trc_PRT_getZFSMetaCacheSize_MallocFailure();
 		return -1;
 	}
 	memcpy(statApiPtr->sa_eye, saEye, sizeof(statApiPtr->sa_eye));
+#if !defined(OMR_EBCDIC)
 	free(saEye);
+#endif /* !defined(OMR_EBCDIC) */
 	statApiPtr->sa_ver = J9SA_VER_INITIAL;
 	statApiPtr->sa_len = (int32_t)sizeof(J9ZFSAPIMetaStats);
 
+#if !defined(OMR_EBCDIC)
 	fsName = a2e(J9ZFSNAME, strlen(J9ZFSNAME));
+#else /* !defined(OMR_EBCDIC) */
+	fsName = J9ZFSNAME;
+#endif /* !defined(OMR_EBCDIC) */
 	if (NULL == fsName) {
 		Trc_PRT_getZFSMetaCacheSize_MallocFailure();
 		return -1;
@@ -310,7 +350,9 @@ getZFSMetaCacheSize(uint64_t *bufferCacheSizePtr)
 			&bpxrc,
 			&bpxrs);
 #endif /* defined(_LP64) */
+#if !defined(OMR_EBCDIC)
 	free(fsName);
+#endif /* !defined(OMR_EBCDIC) */
 
 	/* Check pfsctl() service return value */
 	if (0 > bpxrv) {

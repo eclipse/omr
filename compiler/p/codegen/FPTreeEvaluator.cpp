@@ -567,20 +567,6 @@ TR::Register *OMR::Power::TreeEvaluator::dloadEvaluator(TR::Node *node, TR::Code
    return TR::TreeEvaluator::dloadHelper(node, cg, tempReg, TR::InstOpCode::lfd);
    }
 
-TR::Register *OMR::Power::TreeEvaluator::frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::floadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::dloadEvaluator(node, cg);
-   }
-
 TR::Register *OMR::Power::TreeEvaluator::vsplatsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *child = node->getFirstChild();

@@ -90,15 +90,10 @@ public:
    void setParameterList()                                                    { _resolvedMethod->makeParameterList(self()); }
    List<TR::ParameterSymbol>& getParameterList()                               { return _parameterList; }
 
-   /// With zOS type 1 linkage, the parameters in the parameter list
-   /// don't look at all like the source level (logical) parameters.
-   List<TR::ParameterSymbol>& getLogicalParameterList(TR::Compilation *comp);
    ListBase<TR::AutomaticSymbol>& getAutomaticList()                           { return _automaticList;}
    void setAutomaticList(List<TR::AutomaticSymbol> list)                       { _automaticList = list; };
 
-   List<TR::Block>& getTrivialDeadTreeBlocksList()                             { return _trivialDeadTreeBlocksList;}
    List<TR::AutomaticSymbol>& getVariableSizeSymbolList()                      { return _variableSizeSymbolList;}
-   ListBase<TR::RegisterMappedSymbol>& getMethodMetaDataList()                 { return _methodMetaDataList;}
 
    void removeUnusedLocals();
 
@@ -133,9 +128,7 @@ public:
 
    void addAutomatic(TR::AutomaticSymbol *p);
 
-   void addTrivialDeadTreeBlock(TR::Block *b);
    void addVariableSizeSymbol(TR::AutomaticSymbol *s);
-   void addMethodMetaDataSymbol(TR::RegisterMappedSymbol*s);
 
    mcount_t            getResolvedMethodIndex() { return _methodIndex; }
    TR_ResolvedMethod * getResolvedMethod()      { return _resolvedMethod; }
@@ -270,9 +263,6 @@ public:
    bool hasSnapshots()                       { return _properties.testAny(HasSnapshots); }
    void setHasSnapshots(bool v=true)         { _properties.set(HasSnapshots,v); }
 
-   bool hasUnkilledTemps()                   { return _properties.testAny(HasUnkilledTemps); }
-   void setHasUnkilledTemps(bool v=true)     { _properties.set(HasUnkilledTemps,v); }
-
    bool detectInternalCycles(TR::CFG *cfg, TR::Compilation *comp);
    bool catchBlocksHaveRealPredecessors(TR::CFG *cfg, TR::Compilation *comp);
 
@@ -316,7 +306,7 @@ protected:
       CanSkipZeroInitializationOnNewarrays      = 1 << 5,
       CanSkipArrayStoreChecks                   = 1 << 6,
       HasSnapshots                              = 1 << 7,
-      HasUnkilledTemps                          = 1 << 8,
+      // AVAILABLE                              = 1 << 8,
       CanDirectNativeCall                       = 1 << 9,
       CanReplaceWithHWInstr                     = 1 << 10,
       IsSideEffectFree                          = 1 << 12,
@@ -336,9 +326,7 @@ private:
    TR_ResolvedMethod *                       _resolvedMethod;
    List<TR::AutomaticSymbol>                  _automaticList;
    List<TR::ParameterSymbol>                  _parameterList;
-   List<TR::Block>                            _trivialDeadTreeBlocksList;
    List<TR::AutomaticSymbol>                  _variableSizeSymbolList;
-   List<TR::RegisterMappedSymbol>             _methodMetaDataList;
    TR_Array<List<TR::SymbolReference> >     * _autoSymRefs;
    TR_Array<List<TR::SymbolReference> >     * _pendingPushSymRefs;
    TR_Array<TR::SymbolReference*>           * _parmSymRefs;
@@ -402,9 +390,6 @@ public:
 
    bool        usesSinglePrecisionMode();
    void        setUsesSinglePrecisionMode(bool b);
-
-   bool        isNoTemps();
-   void        setNoTemps(bool b=true);
 
 private:
    uint32_t                                  _localMappingCursor;

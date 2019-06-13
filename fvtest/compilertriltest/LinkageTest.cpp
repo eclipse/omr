@@ -68,7 +68,7 @@ TYPED_TEST(LinkageTest, InvalidLinkageTest) {
     auto trees = parseString(inputTrees);
     ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     ASSERT_NE(0, compiler.compile()) << "Compilation succeeded unexpectedly\n" << "Input trees: " << inputTrees;
 }
 
@@ -93,13 +93,13 @@ TYPED_TEST(LinkageTest, SystemLinkageParameterPassingSingleArg) {
 
     ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
     auto entry_point = compiler.getEntryPoint<TypeParam (*)(TypeParam)>();
 
     auto inputs = TRTest::const_values<TypeParam>();
-    for (auto i = inputs.cbegin(); i != inputs.cend(); ++i) {
+    for (auto i = inputs.begin(); i != inputs.end(); ++i) {
         SCOPED_TRACE(*i);
         EXPECT_EQ(static_cast<TypeParam>(*i), entry_point(*i))  << "Input Trees: " << inputTrees;
     }
@@ -143,13 +143,13 @@ TYPED_TEST(LinkageTest, SystemLinkageParameterPassingFourArg) {
 
     ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
     auto entry_point = compiler.getEntryPoint<TypeParam (*)(TypeParam,TypeParam,TypeParam,TypeParam)>();
 
     auto inputs = TRTest::const_values<TypeParam>();
-    for (auto i = inputs.cbegin(); i != inputs.cend(); ++i) {
+    for (auto i = inputs.begin(); i != inputs.end(); ++i) {
         SCOPED_TRACE(*i);
         EXPECT_EQ(static_cast<TypeParam>(*i), entry_point(0,0,0, *i))  << "Input Trees: " << inputTrees;
     }
@@ -176,7 +176,7 @@ T (*get_fourth_arg_from_callee())(T,T,T,T) {
         return NULL;
     }
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     if (compiler.compile() != 0) {
         return NULL;
     }
@@ -227,13 +227,13 @@ TYPED_TEST(LinkageTest, SystemLinkageJitedToJitedParameterPassingFourArg) {
 
     ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
     auto entry_point = compiler.getEntryPoint<TypeParam (*)(TypeParam,TypeParam,TypeParam,TypeParam)>();
 
     auto inputs = TRTest::const_values<TypeParam>();
-    for (auto i = inputs.cbegin(); i != inputs.cend(); ++i) {
+    for (auto i = inputs.begin(); i != inputs.end(); ++i) {
         SCOPED_TRACE(*i);
         EXPECT_EQ(static_cast<TypeParam>(*i), entry_point(0,0,0, *i))  << "Input Trees: " << inputTrees;
     }
@@ -286,13 +286,13 @@ TYPED_TEST(LinkageTest, SystemLinkageParameterPassingFiveArg) {
 
     ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
     auto entry_point = compiler.getEntryPoint<TypeParam (*)(TypeParam,TypeParam,TypeParam,TypeParam,TypeParam)>();
 
     auto inputs = TRTest::const_values<TypeParam>();
-    for (auto i = inputs.cbegin(); i != inputs.cend(); ++i) {
+    for (auto i = inputs.begin(); i != inputs.end(); ++i) {
         SCOPED_TRACE(*i);
         EXPECT_EQ(static_cast<TypeParam>(*i), entry_point(0,0,0,0, *i))  << "Input Trees: " << inputTrees;
     }
@@ -360,7 +360,7 @@ TYPED_TEST(LinkageTest, SystemLinkageParameterPassingFiveArgToStackUser) {
 
     ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
     auto entry_point = compiler.getEntryPoint<TypeParam (*)(TypeParam,TypeParam,TypeParam,TypeParam,TypeParam)>();
@@ -402,13 +402,13 @@ TEST_F(LinkageWithMixedTypesTest, SystemLinkageParameterPassingFourArgWithMixedT
     auto trees = parseString(inputTrees);
     ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
     auto entry_point = compiler.getEntryPoint<FourMixedArgumentFunction>();
 
     auto inputs = TRTest::const_values<int32_t>();
-    for (auto i = inputs.cbegin(); i != inputs.cend(); ++i) {
+    for (auto i = inputs.begin(); i != inputs.end(); ++i) {
         SCOPED_TRACE(*i);
         EXPECT_EQ(*i, entry_point(0.0,0,0.0, *i))  << "Input Trees: " << inputTrees;
     }
@@ -439,13 +439,13 @@ TEST_F(LinkageWithMixedTypesTest, SystemLinkageParameterPassingFiveArgWithMixedT
     auto trees = parseString(inputTrees);
     ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
     auto entry_point = compiler.getEntryPoint<FiveMixedArgumentFunction>();
 
     auto inputs = TRTest::const_values<double>();
-    for (auto i = inputs.cbegin(); i != inputs.cend(); ++i) {
+    for (auto i = inputs.begin(); i != inputs.end(); ++i) {
         SCOPED_TRACE(*i);
         EXPECT_DOUBLE_EQ(*i, entry_point(0.0,0,0.0,0, *i))  << "Input Trees: " << inputTrees;
     }

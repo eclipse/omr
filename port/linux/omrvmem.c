@@ -27,7 +27,9 @@
  */
 
 /* for syscall */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #include "omrport.h"
 #include "omrportpriv.h"
@@ -42,12 +44,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
+
+#include <sys/mman.h>
+/* MADV_HUGEPAGE is not defined in <sys/mman.h> in RHEL 6 & CentOS 6 */
+#if !defined(MADV_HUGEPAGE)
+#define MADV_HUGEPAGE 14
+#endif /* MADV_HUGEPAGE */
 
 #if defined(OMR_PORT_NUMA_SUPPORT)
 #include <numaif.h>
@@ -74,11 +81,15 @@
 #define VMEM_PROC_MEMINFO_FNAME	"/proc/meminfo"
 #define VMEM_PROC_MAPS_FNAME	"/proc/self/maps"
 
+#define VMEM_TRANSPARENT_HUGEPAGE_FNAME "/sys/kernel/mm/transparent_hugepage/enabled"
+#define VMEM_TRANSPARENT_HUGEPAGE_MADVISE "always [madvise] never"
+#define VMEM_TRANSPARENT_HUGEPAGE_MADVISE_LENGTH 22
+
 typedef struct vmem_hugepage_info_t {
-	uintptr_t	enabled; /*!< boolean enabling j9 large page support */
-	uintptr_t	pages_total; /*!< total number of pages maintained by the kernel */
-	uintptr_t	pages_free; /*!< number of free pages that may be allocated by us */
-	uintptr_t	page_size;	 /*!< page size in bytes */
+	uintptr_t	enabled;		/*!< boolean enabling j9 large page support */
+	uintptr_t	pages_total;	/*!< total number of pages maintained by the kernel */
+	uintptr_t	pages_free;		/*!< number of free pages that may be allocated by us */
+	uintptr_t	page_size;		/*!< page size in bytes */
 } vmem_hugepage_info_t;
 
 typedef void *ADDRESS;
@@ -121,6 +132,7 @@ static void *allocateMemoryForLargePages(struct OMRPortLibrary *portLibrary, str
 static BOOLEAN isStrictAndOutOfRange(void *memoryPointer, void *startAddress, void *endAddress, uintptr_t vmemOptions);
 static BOOLEAN rangeIsValid(struct J9PortVmemIdentifier *identifier, void *address, uintptr_t byteAmount);
 static void *reserveLargePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier, OMRMemCategory *category, uintptr_t byteAmount, void *startAddress, void *endAddress, uintptr_t pageSize, uintptr_t alignmentInBytes, uintptr_t vmemOptions, uintptr_t mode);
+static uintptr_t adviseHugepage(struct OMRPortLibrary *portLibrary, void* address, uintptr_t byteAmount);
 
 static void *default_pageSize_reserve_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr_t byteAmount, struct J9PortVmemIdentifier *identifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category);
 #if defined(OMR_PORT_NUMA_SUPPORT)
@@ -128,6 +140,7 @@ static void port_numa_interleave_memory(struct OMRPortLibrary *portLibrary, void
 #endif /* OMR_PORT_NUMA_SUPPORT */
 static void update_vmemIdentifier(J9PortVmemIdentifier *identifier, void *address, void *handle, uintptr_t byteAmount, uintptr_t mode, uintptr_t pageSize, uintptr_t pageFlags, uintptr_t allocator, OMRMemCategory *category, int fd);
 static uintptr_t get_hugepages_info(struct OMRPortLibrary *portLibrary, vmem_hugepage_info_t *page_info);
+static uintptr_t get_transparent_hugepage_info(struct OMRPortLibrary *portLibrary);
 static int get_protectionBits(uintptr_t mode);
 
 #if defined(OMR_PORT_NUMA_SUPPORT)
@@ -582,6 +595,9 @@ omrvmem_startup(struct OMRPortLibrary *portLibrary)
 	/* set default value to advise OS about vmem that is no longer needed */
 	portLibrary->portGlobals->vmemAdviseOSonFree = 1;
 
+	/* set value to advise OS about vmem to consider for Transparent HugePage (Only for Linux) */
+	portLibrary->portGlobals->vmemEnableMadvise = get_transparent_hugepage_info(portLibrary);
+
 	return 0;
 }
 
@@ -876,6 +892,41 @@ reserveLargePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifie
 	return memoryPointer;
 }
 
+/**
+ * Advise memory to enable use of Transparent HugePages (THP) (Linux Only)
+ *
+ * Notify kernel that the virtual memory region specified by address and byteAmount should be labelled
+ * with MADV_HUGEPAGE, where the khugepage process could promote to THP when possible.
+ *
+ * @param[in] portLibrary The port library.
+ * @param[in] address The starting virtual address.
+ * @param[in] byteAmount The amount of bytes after address to map to hugepage.
+ *
+ * @return 0 on success, OMRPORT_ERROR_VMEM_OPFAILED if an error occurred, or OMRPORT_ERROR_VMEM_NOT_SUPPORTED.
+ */
+static uintptr_t
+adviseHugepage(struct OMRPortLibrary *portLibrary, void* address, uintptr_t byteAmount)
+{
+#if defined(MAP_ANON) || defined(MAP_ANONYMOUS)
+	if (portLibrary->portGlobals->vmemEnableMadvise) {
+		uintptr_t start = (uintptr_t)address;
+		uintptr_t end = (uintptr_t)address + byteAmount;
+
+		/* Align start and end to be page-size aligned */
+		start = start + ((start % PPG_vmem_pageSize[0]) ? (PPG_vmem_pageSize[0] - (start % PPG_vmem_pageSize[0])) : 0);
+		end = end - (end % PPG_vmem_pageSize[0]);
+		if (start < end) {
+			if (0 != madvise((void *)start, end - start, MADV_HUGEPAGE)) {
+				return OMRPORT_ERROR_VMEM_OPFAILED;
+			}
+		}
+	}
+	return 0;
+#else /* defined(MAP_ANON) || defined(MAP_ANONYMOUS) */
+	return OMRPORT_ERROR_VMEM_NOT_SUPPORTED;
+#endif /* defined(MAP_ANON) || defined(MAP_ANONYMOUS) */
+}
+
 uintptr_t
 omrvmem_get_page_size(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier)
 {
@@ -898,6 +949,42 @@ uintptr_t *
 omrvmem_supported_page_flags(struct OMRPortLibrary *portLibrary)
 {
 	return PPG_vmem_pageFlags;
+}
+
+/* Get the state of Transparent HugePage (THP) from OS
+ *
+ * return 0 if THP is set to never/always
+ * 		- (always will handled by OS automatically, treat same as never)
+ * retrun 1 if THP is set to madvise
+ */
+static uintptr_t
+get_transparent_hugepage_info(struct OMRPortLibrary *portLibrary)
+{
+	int fd;
+	int bytes_read;
+	char read_buf[VMEM_MEMINFO_SIZE_MAX];
+
+	fd = omrfile_open(portLibrary, VMEM_TRANSPARENT_HUGEPAGE_FNAME, EsOpenRead, 0);
+	if (fd < 0) {
+		return 0;
+	}
+
+	bytes_read = omrfile_read(portLibrary, fd, read_buf, VMEM_MEMINFO_SIZE_MAX - 1);
+
+	omrfile_close(portLibrary, fd);
+
+	if (bytes_read <= 0) {
+		return 0;
+	}
+
+	/* make sure its null terminated */
+	read_buf[bytes_read] = 0;
+
+	if (!strncmp(read_buf, VMEM_TRANSPARENT_HUGEPAGE_MADVISE, VMEM_TRANSPARENT_HUGEPAGE_MADVISE_LENGTH)) {
+		return 1;
+	}
+
+	return 0;
 }
 
 static uintptr_t
@@ -1478,6 +1565,8 @@ allocAnywhere:
 		Trc_PRT_vmem_omrvmem_reserve_memory_ex_UnableToAllocateWithinSpecifiedRange(byteAmount, startAddress, endAddress);
 
 		memoryPointer = NULL;
+	} else {
+		adviseHugepage(portLibrary, memoryPointer, byteAmount);
 	}
 
 	return memoryPointer;

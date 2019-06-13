@@ -52,13 +52,13 @@
    TR::TreeEvaluator::bloadEvaluator,                   // TR::bloadi
    TR::TreeEvaluator::sloadEvaluator,                   // TR::sloadi
    TR::TreeEvaluator::lloadEvaluator,                   // TR::lloadi
-   TR::TreeEvaluator::irdbarEvaluator,                  // TR::irdbari
-   TR::TreeEvaluator::frdbarEvaluator,                  // TR::frdbari
-   TR::TreeEvaluator::drdbarEvaluator,                  // TR::drdbari
-   TR::TreeEvaluator::ardbarEvaluator,                  // TR::ardbari
-   TR::TreeEvaluator::brdbarEvaluator,                  // TR::brdbari
-   TR::TreeEvaluator::srdbarEvaluator,                  // TR::srdbari
-   TR::TreeEvaluator::lrdbarEvaluator,                  // TR::lrdbari
+   TR::TreeEvaluator::irdbariEvaluator,                 // TR::irdbari
+   TR::TreeEvaluator::frdbariEvaluator,                 // TR::frdbari
+   TR::TreeEvaluator::drdbariEvaluator,                 // TR::drdbari
+   TR::TreeEvaluator::ardbariEvaluator,                 // TR::ardbari
+   TR::TreeEvaluator::brdbariEvaluator,                 // TR::brdbari
+   TR::TreeEvaluator::srdbariEvaluator,                 // TR::srdbari
+   TR::TreeEvaluator::lrdbariEvaluator,                 // TR::lrdbari
    TR::TreeEvaluator::istoreEvaluator,                  // TR::istore
    TR::TreeEvaluator::lstoreEvaluator,                  // TR::lstore
    TR::TreeEvaluator::fstoreEvaluator,                  // TR::fstore

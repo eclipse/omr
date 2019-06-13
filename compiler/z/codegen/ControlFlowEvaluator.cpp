@@ -825,7 +825,6 @@ static inline void generateMergedGuardCodeIfNeeded(TR::Node *node, TR::CodeGener
 
          TR_VirtualGuardSite *site = virtualGuard->addNOPSite();
          if (node->getOpCodeValue() == TR::ificmpeq ||
-               node->getOpCodeValue() == TR::ifiucmpeq ||
                node->getOpCodeValue() == TR::ifacmpeq ||
                node->getOpCodeValue() == TR::iflcmpeq )
 
@@ -941,8 +940,7 @@ OMR::Z::TreeEvaluator::ificmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg
       }
 #endif
 
-   if (node->getOpCodeValue() == TR::ificmpeq ||
-         node->getOpCodeValue() == TR::ifiucmpeq ||
+   if (node->getOpCodeValue() == TR::ificmpeq||
          node->getOpCodeValue() == TR::ifacmpeq)
       {
       reg = generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, TR::InstOpCode::COND_BE);
@@ -1155,7 +1153,7 @@ OMR::Z::TreeEvaluator::ifacmpneEvaluator(TR::Node * node, TR::CodeGenerator * cg
 TR::Register *
 OMR::Z::TreeEvaluator::ifbcmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   if (node->getOpCodeValue() == TR::ifbcmpeq || node->getOpCodeValue() == TR::ifbucmpeq)
+   if (node->getOpCodeValue() == TR::ifbcmpeq)
       {
       return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, TR::InstOpCode::COND_BE);
       }
@@ -1321,7 +1319,6 @@ TR::Register *
 OMR::Z::TreeEvaluator::icmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    if (node->getOpCodeValue() == TR::icmpeq ||
-         node->getOpCodeValue() == TR::iucmpeq ||
          node->getOpCodeValue() == TR::acmpeq)
       {
       // RXSBG only supported on z10+
@@ -1523,7 +1520,7 @@ OMR::Z::TreeEvaluator::acmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::bcmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   if (node->getOpCodeValue() == TR::bcmpeq || node->getOpCodeValue() == TR::bucmpeq)
+   if (node->getOpCodeValue() == TR::bcmpeq)
       {
       return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, TR::InstOpCode::COND_BE);
       }
@@ -1629,14 +1626,7 @@ OMR::Z::TreeEvaluator::scmpleEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::sucmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   if (node->getOpCodeValue() == TR::sucmpeq)
-      {
-      return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, TR::InstOpCode::COND_BE);
-      }
-   else
-      {
       return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, TR::InstOpCode::COND_BNE);
-      }
    }
 
 /**
@@ -2437,7 +2427,8 @@ TR::Register *OMR::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node
       TR::Node *n = NULL;
       n = reference->getFirstChild();
       TR::ILOpCodes loadOp = comp->il.opCodeForIndirectLoad(TR::Int32);
-      while (n->getOpCodeValue() != loadOp)
+      TR::ILOpCodes rdbarOp = comp->il.opCodeForIndirectReadBarrier(TR::Int32);
+      while (n->getOpCodeValue() != loadOp && n->getOpCodeValue() != rdbarOp)
          {
          n->setIsNonZero(true);
          n = n->getFirstChild();
@@ -2830,19 +2821,15 @@ TR::InstOpCode::S390BranchCondition OMR::Z::TreeEvaluator::getBranchConditionFro
    switch (opCode)
       {
       case TR::icmpeq:
-      case TR::iucmpeq:
       case TR::acmpeq:
       case TR::lcmpeq:
-      case TR::lucmpeq:
          {
          return TR::InstOpCode::COND_BE;
          }
          break;
       case TR::icmpne:
-      case TR::iucmpne:
       case TR::acmpne:
       case TR::lcmpne:
-      case TR::lucmpne:
          {
          return TR::InstOpCode::COND_BNE;
          }

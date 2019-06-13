@@ -52,16 +52,16 @@
 #include "z/codegen/S390OutOfLineCodeSection.hpp"
 #include "z/codegen/SystemLinkage.hpp"
 
-TR_S390Peephole::TR_S390Peephole(TR::Compilation* comp, TR::CodeGenerator *cg)
+TR_S390Peephole::TR_S390Peephole(TR::Compilation* comp)
    : _fe(comp->fe()),
      _outFile(comp->getOutFile()),
-     _cursor(cg->getFirstInstruction()),
-     _cg(cg)
+     _cursor(comp->cg()->getFirstInstruction()),
+     _cg(comp->cg())
    {
    }
 
-TR_S390PreRAPeephole::TR_S390PreRAPeephole(TR::Compilation* comp, TR::CodeGenerator *cg)
-   : TR_S390Peephole(comp, cg)
+TR_S390PreRAPeephole::TR_S390PreRAPeephole(TR::Compilation* comp)
+   : TR_S390Peephole(comp)
    {
    }
 
@@ -261,8 +261,8 @@ TR::Instruction* realInstructionWithLabelsAndRET(TR::Instruction* inst, bool for
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TR_S390PostRAPeephole::TR_S390PostRAPeephole(TR::Compilation* comp, TR::CodeGenerator *cg)
-   : TR_S390Peephole(comp, cg)
+TR_S390PostRAPeephole::TR_S390PostRAPeephole(TR::Compilation* comp)
+   : TR_S390Peephole(comp)
    {
    }
 

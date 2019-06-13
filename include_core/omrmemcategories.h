@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2016 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,6 +115,9 @@ typedef struct OMRMemCategorySet {
 #define OMRMEM_CATEGORY_8_CHILDREN(description, code, c1, c2, c3, c4, c5, c6, c7, c8) \
 	static uint32_t _omrmem_##code##_child_categories[] = {c1, c2, c3, c4, c5, c6, c7, c8}; \
 	static OMRMemCategory _omrmem_category_##code = {description, code, 0, 0, 8, _omrmem_##code##_child_categories}
+#define OMRMEM_CATEGORY_9_CHILDREN(description, code, c1, c2, c3, c4, c5, c6, c7, c8, c9) \
+	static uint32_t _omrmem_##code##_child_categories[] = {c1, c2, c3, c4, c5, c6, c7, c8, c9}; \
+	static OMRMemCategory _omrmem_category_##code = {description, code, 0, 0, 9, _omrmem_##code##_child_categories}
 
 #define CATEGORY_TABLE_ENTRY(name) &_omrmem_category_##name
 

@@ -42,14 +42,11 @@ OMR::VirtualMachineRegister::VirtualMachineRegister(
    _integerTypeForAdjustments = pointerToRegisterType->baseType();
    if (_integerTypeForAdjustments->isPointer())
       {
-      _integerTypeForAdjustments = _integerTypeForAdjustments->baseType();
-      if (_integerTypeForAdjustments->isPointer())
-         {
-         _integerTypeForAdjustments = b->typeDictionary()->getWord();
-         }
-      TR_ASSERT(adjustByStep == _integerTypeForAdjustments->getSize(),
+      TR::IlType *baseType = _integerTypeForAdjustments->baseType();
+      _integerTypeForAdjustments = b->typeDictionary()->getWord();
+      TR_ASSERT(adjustByStep == baseType->getSize(),
             "VirtualMachineRegister for %s adjustByStep (%u) != size represented by pointerToRegisterType (%u)",
-            localName, _adjustByStep, _integerTypeForAdjustments->getSize());
+            localName, _adjustByStep, baseType->getSize());
       _isAdjustable = true;
       }
    else

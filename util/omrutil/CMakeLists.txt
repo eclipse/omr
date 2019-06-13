@@ -27,16 +27,6 @@ omr_assert(
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-#TODO port following vpath code:
-#ifeq (zos,$(OMR_HOST_OS))
-	#OBJECTS += zbarrier$(OBJEXT)
-	#ifeq (0,$(OMR_ENV_DATA64))
-		#vpath zbarrier.s unix/zos/31
-	#else
-		#vpath zbarrier.s unix/zos/64
-	#endif
-#endif
-
 include(OmrFindFiles)
 
 set(OBJECTS "")
@@ -65,12 +55,14 @@ if(OMR_ARCH_S390)
 		if(OMR_ENV_DATA64)
 			list(APPEND OBJECTS j9memclrz10_64.s)
 			list(APPEND OBJECTS omrget_userExtendedPrivateAreaMemoryType.s)
+			list(APPEND OBJECTS zbarrier.s)
 
 			list(APPEND VPATH unix/zos/64)
 			target_include_directories(omrutil_obj PRIVATE unix/zos/64)
 		else()
-			list(APPEND OBJECTS omrceetbck.s)
 			list(APPEND OBJECTS j9memclrz10_31.s)
+			list(APPEND OBJECTS omrceetbck.s)
+			list(APPEND OBJECTS zbarrier.s)
 
 			list(APPEND VPATH unix/zos/31)
 			target_include_directories(omrutil_obj PRIVATE unix/zos/31)
@@ -164,7 +156,8 @@ target_sources(omrutil_obj PRIVATE $<TARGET_PROPERTY:${OMR_UTIL_GLUE_TARGET},INT
 target_include_directories(omrutil_obj PUBLIC $<TARGET_PROPERTY:${OMR_UTIL_GLUE_TARGET},INTERFACE_INCLUDE_DIRECTORIES>)
 
 
-target_enable_ddr(omrutil_obj "${OMR_DDR_SET}")
+target_enable_ddr(omrutil_obj)
+ddr_set_add_targets(omrddr omrutil_obj)
 
 add_library(omrutil STATIC
 	$<TARGET_OBJECTS:omrutil_obj>

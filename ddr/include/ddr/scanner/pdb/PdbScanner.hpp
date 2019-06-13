@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,6 @@
 #include "ddr/ir/Symbol_IR.hpp"
 
 using std::hash;
-using std::ifstream;
 using std::map;
 using std::pair;
 using std::set;

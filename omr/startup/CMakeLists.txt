@@ -51,4 +51,5 @@ if(OMR_GC)
 	)
 endif()
 
-target_enable_ddr(omrvmstartup "${OMR_DDR_SET}")
+target_enable_ddr(omrvmstartup)
+ddr_set_add_targets(omrddr omrvmstartup)

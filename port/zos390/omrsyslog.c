@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,11 +95,15 @@ writeToZOSLog(const char *message)
 	unsigned int routeCodes[2] = {2, 0}; /* routing code 2 = Operator Information */
 	unsigned int descCodes[2] = {12, 0}; /* descriptor code 12 = Important Information, no operator action reqd */
 
+#if !defined(OMR_EBCDIC)
 	/* Convert from the internal ascii format to ebcdic */
 	ebcdicbuf = a2e_func((char *) message, strlen(message));
 	if (ebcdicbuf == NULL) {
 		return FALSE;
 	}
+#else
+   ebcdicbuf = message;
+#endif /* !defined(OMR_EBCDIC) */
 
 	/* Re-implemented using _console2() instead of WTO, to provided proper multi-line messages. See
 	 * http://publib.boulder.ibm.com/infocenter/zos/v1r9/index.jsp?topic=/com.ibm.zos.r9.bpxbd00/consol2.htm
@@ -117,7 +121,9 @@ writeToZOSLog(const char *message)
 
 	rc = __console2(&cons, NULL, &modcmd);
 
+#if !defined(OMR_EBCDIC)
 	free(ebcdicbuf);
+#endif /* !defined(OMR_EBCDIC) */
 
 	if (0 == rc) {
 		return TRUE;

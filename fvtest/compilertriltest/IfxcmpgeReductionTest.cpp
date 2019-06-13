@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,7 +117,7 @@ TEST_P(Int8ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -161,7 +161,7 @@ TEST_P(UInt8ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -205,7 +205,7 @@ TEST_P(Int16ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -249,7 +249,7 @@ TEST_P(UInt16ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -292,7 +292,7 @@ TEST_P(Int32ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -335,7 +335,7 @@ TEST_P(UInt32ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -378,7 +378,7 @@ TEST_P(Int64ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -421,7 +421,7 @@ TEST_P(UInt64ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 

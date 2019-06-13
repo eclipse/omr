@@ -45,4 +45,5 @@ endif()
 
 set_property(TARGET j9pool PROPERTY FOLDER util)
 
-target_enable_ddr(j9pool "${OMR_DDR_SET}")
+target_enable_ddr(j9pool)
+ddr_set_add_targets(omrddr j9pool)

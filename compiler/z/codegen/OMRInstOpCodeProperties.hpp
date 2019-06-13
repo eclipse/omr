@@ -1033,7 +1033,7 @@
    /* .description = */ "BRANCH ON CONDITION",
    /* .opcode[0]   = */ 0x47,
    /* .opcode[1]   = */ 0x00,
-   /* .format      = */ RXb_FORMAT,
+   /* .format      = */ RXa_FORMAT,
    /* .minimumALS  = */ CPU::Architecture::z900,
    /* .properties  = */ S390OpProp_BranchOp |
                         S390OpProp_ReadsCC |

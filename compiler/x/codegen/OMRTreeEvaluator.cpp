@@ -758,84 +758,28 @@ TR::Register *OMR::X86::TreeEvaluator::sloadEvaluator(TR::Node *node, TR::CodeGe
    return reg;
    }
 
-TR::Register *OMR::X86::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *
+OMR::X86::TreeEvaluator::fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::iloadEvaluator(node,cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::aloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::floadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::dloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::bloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::sloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::lloadEvaluator(node, cg);
-   }
-
-
-TR::Register *OMR::X86::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
-   return TR::TreeEvaluator::istoreEvaluator(node,cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
    return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
    }
 
-TR::Register *OMR::X86::TreeEvaluator::bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *
+OMR::X86::TreeEvaluator::fwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
-   return TR::TreeEvaluator::bstoreEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
-   return TR::TreeEvaluator::sstoreEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
-   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
    }
 
 // cloadEvaluator handled by sloadEvaluator

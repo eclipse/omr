@@ -1628,7 +1628,7 @@ Optional Features:
 
   --enable-OMR_GC_CONCURRENT_SWEEP
 
-  --enable-OMR_GC_HYBRID_ARRAYLETS
+  --disable-OMR_GC_HYBRID_ARRAYLETS
 
   --enable-OMR_GC_LEAF_BITS
 
@@ -6026,7 +6026,9 @@ else
 
 fi
 else
-  OMR_GC_HYBRID_ARRAYLETS=0
+  OMR_GC_HYBRID_ARRAYLETS=1
+
+   $as_echo "#define OMR_GC_HYBRID_ARRAYLETS 1" >>confdefs.h
 
 
 fi

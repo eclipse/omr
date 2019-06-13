@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,12 +20,15 @@
 #############################################################################
 
 list(APPEND OMR_PLATFORM_DEFINITIONS
-	-DJ9ZOS390
-	-DLONGLONG
 	-D_ALL_SOURCE
-	-D_XOPEN_SOURCE_EXTENDED
-	-DIBM_ATOE
+	-D_OPEN_THREADS=2
 	-D_POSIX_SOURCE
+	-D_XOPEN_SOURCE_EXTENDED
+	-D_ISOC99_SOURCE
+	-DLONGLONG
+	-DJ9ZOS390
+	-DSUPPORTS_THREAD_LOCAL
+	-DZOS
 )
 
 list(APPEND OMR_PLATFORM_INCLUDE_DIRECTORIES
@@ -34,52 +37,14 @@ list(APPEND OMR_PLATFORM_INCLUDE_DIRECTORIES
 	/usr/include
 )
 
-list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
-	"\"-Wc,xplink\""               # link with xplink calling convention
-	"\"-Wc,convlit(ISO8859-1)\""   # convert all string literals to a codepage
-	"\"-Wc,rostring\""             # place string literals in read only storage
-	"\"-Wc,FLOAT(IEEE,FOLD,AFP)\"" # Use IEEE (instead of IBM Hex Format) style floats
-	"\"-Wc,enum(4)\""              # Specifies how many bytes of storage enums occupy
-	"\"-Wa,goff\""                 # Assemble into GOFF object files
-	"\"-Wc,NOANSIALIAS\""          # Do not generate ALIAS binger control statements
-	"\"-Wc,TARGET(zOSV1R13)\""     # Generate code for the target operating system
-)
+# Create helper targets for specifying ascii/ebcdic options
+add_library(omr_ascii INTERFACE)
+target_compile_definitions(omr_ascii INTERFACE -DIBM_ATOE)
+target_compile_options(omr_ascii INTERFACE "-Wc,convlit(ISO8859-1)")
+target_link_libraries(omr_ascii INTERFACE j9a2e)
 
-list(APPEND OMR_PLATFORM_C_COMPILE_OPTIONS
-	"\"-Wc,ARCH(7)\""
-	"\"-Wc,langlvl(extc99)\""
-	"\"-qnosearch\""
-)
-
-list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS
-	"\"-Wc,ARCH(7)\""
-	"\"-Wc,langlvl(extended)\""
-	"\"-qnosearch\""
-)
-
-list(APPEND OMR_PLATFORM_SHARED_COMPILE_OPTIONS
-	"\"-Wc,DLL\""
-	"\"-Wc,EXPORTALL\""
-)
-
-list(APPEND OMR_PLATFORM_SHARED_LINKER_OPTIONS
-	"\"-Wl,xplink\""
-	"\"-Wl,dll\""
-)
-
-if(OMR_ENV_DATA64)
-	list(APPEND OMR_PLATFORM_DEFINITIONS
-		-DJ9ZOS39064
-	)
-	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
-		\"-Wc,lp64\"
-		\"-Wa,SYSPARM(BIT64)\"
-	)
-else()
-	list(APPEND OMR_PLATFORM_DEFINITIONS
-		-D_LARGE_FILES
-	)
-endif()
+add_library(omr_ebcdic INTERFACE)
+target_compile_definitions(omr_ebcdic INTERFACE -DOMR_EBCDIC)
 
 macro(omr_os_global_setup)
 

@@ -237,11 +237,10 @@ MM_RegionPoolSegregated::moveInUseToSweep(MM_EnvironmentBase *env)
 }
 
 void
-MM_RegionPoolSegregated::countFreeRegions(uintptr_t *singleFree, uintptr_t *multiFree, uintptr_t *maxMultiFree, uintptr_t *coalesceFree)
+MM_RegionPoolSegregated::countFreeRegions(uintptr_t *singleFree, uintptr_t *multiFree, uintptr_t *coalesceFree)
 {
 	*singleFree = _singleFreeList->getTotalRegions();
 	*multiFree = _multiFreeList->getTotalRegions();
-	*maxMultiFree = _multiFreeList->getMaxRegions();
 	*coalesceFree = _coalesceFreeList->getTotalRegions();
 }
 

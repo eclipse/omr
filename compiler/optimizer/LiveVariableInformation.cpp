@@ -59,7 +59,6 @@ TR_LiveVariableInformation::TR_LiveVariableInformation(TR::Compilation   *c,
 			                               TR_Structure     *rootStructure,
 			                               bool              splitLongs,
 			                               bool              includeParms,
-                                                       bool              includeMethodMetaDataSymbols,
                                                        bool              ignoreOSRUses)
    : _compilation(c), _trMemory(c->trMemory()), _ignoreOSRUses(ignoreOSRUses)
    {
@@ -73,7 +72,6 @@ TR_LiveVariableInformation::TR_LiveVariableInformation(TR::Compilation   *c,
    _numLocals = 0;
    _includeParms = includeParms;
    _splitLongs = splitLongs;
-   _includeMethodMetaDataSymbols = includeMethodMetaDataSymbols;
 
    if (includeParms)
       {
@@ -109,26 +107,6 @@ TR_LiveVariableInformation::TR_LiveVariableInformation(TR::Compilation   *c,
       else
          p->setLiveLocalIndex(_numLocals++, comp()->fe());
       }
-
-   if (includeMethodMetaDataSymbols)
-      {
-      ListIterator<TR::RegisterMappedSymbol> methodMetaDataSymbols(&comp()->getMethodSymbol()->getMethodMetaDataList());
-      for (auto m = methodMetaDataSymbols.getFirst(); m != NULL; m = methodMetaDataSymbols.getNext())
-         {
-         TR_ASSERT(m->isMethodMetaData(), "Should be method metadata");
-         if (traceLiveVarInfo())
-            traceMsg(comp(), "Local #%2d is MethodMetaData symbol at %p : %s\n",_numLocals,m,m->getName());
-
-         if (m->getType().isInt64() && splitLongs)
-            {
-            m->setLiveLocalIndex(_numLocals, comp()->fe());
-            _numLocals += 2;
-            }
-         else
-            m->setLiveLocalIndex(_numLocals++, comp()->fe());
-         }
-      }
-
 
     if (traceLiveVarInfo())
       traceMsg(comp(), "Finished collecting live variable information: %d locals found\n", _numLocals);
@@ -267,8 +245,6 @@ void TR_LiveVariableInformation::initializeGenAndKillSetInfo(TR_BitVector **regu
          TR::RegisterMappedSymbol *local = node->getSymbolReference()->getSymbol()->getAutoSymbol();
          if (!local && _includeParms)
             local = node->getSymbolReference()->getSymbol()->getParmSymbol();
-         if (!local && _includeMethodMetaDataSymbols)
-            local = node->getSymbolReference()->getSymbol()->getMethodMetaDataSymbol();
 
          if (local)
             {
@@ -444,30 +420,11 @@ void TR_LiveVariableInformation::visitTreeForLocals(TR::Node *node, TR_BitVector
       local = node->getSymbolReference()->getSymbol()->getAutoSymbol();
       if (!local && _includeParms)
          local = node->getSymbolReference()->getSymbol()->getParmSymbol();
-      if (!local && _includeMethodMetaDataSymbols)
-         local = node->getSymbolReference()->getSymbol()->getMethodMetaDataSymbol();
       if (local)
          {
          localIndex = local->getLiveLocalIndex();
          if (localIndex == INVALID_LIVENESS_INDEX)
             local = NULL; // don't analyze this local if localIndex == INVALID_LIVENESS_INDEX
-         }
-      }
-   else if (!belowCommonedNode &&
-            _includeMethodMetaDataSymbols &&
-            node->getOpCode().isLoadIndirect() &&
-            node->getSymbolReference()
-            // && symRef->getSymbol()->isMethodMetaData()
-            )
-      {
-      if (traceLiveVarInfo())
-         traceMsg(comp(),"           found indirect methodMetaData on node %p (belowCommonedNode = %d)\n",node,belowCommonedNode);
-
-      node->mayKill(true).getAliases(indirectMethodMetaUses);
-      if (!indirectMethodMetaUses.IsZero() && traceLiveVarInfo())
-         {
-         traceMsg(comp(),"           indirectMethodMetaUses:\n");
-         (*comp()) << indirectMethodMetaUses << "\n";
          }
       }
    // if local != NULL at this point, then we have a load of a local with index in localIndex
@@ -638,7 +595,7 @@ void TR_LiveVariableInformation::visitTreeForLocals(TR::Node *node, TR_BitVector
  * Solve gen set for a given node. If the node is an OSR point, consider the symbols that are alive if the
  * program is interpreted. Add those symbols to the basic gen set.
  */
-void 
+void
 TR_OSRLiveVariableInformation::findUseOfLocal(TR::Node *node, int32_t blockNum,
                                                 TR_BitVector **genSetInfo, TR_BitVector **killSetInfo,
                                                 TR_BitVector *commonedLoads, bool movingForwardThroughTrees, vcount_t visitCount)
@@ -669,7 +626,7 @@ TR_OSRLiveVariableInformation::findUseOfLocal(TR::Node *node, int32_t blockNum,
 
 /*
  * \brief Calculate live symbols for a BCI for a method based on OSRLiveRangeInfo
- * 
+ *
  * @param osrMethodData
  * @param byteCodeIndex BCI of the OSRPoint
  * @param liveLocals The bit vector keeping liveness info
@@ -683,7 +640,7 @@ TR_OSRLiveVariableInformation::buildLiveSymbolsBitVector(TR_OSRMethodData *osrMe
       return;
    TR_BitVector *deadSymRefs = osrMethodData->getLiveRangeInfo(byteCodeIndex);
    TR_BitVector *liveSymRefs = new (comp()->trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
-  
+
    *liveSymRefs |= *osrMethodData->getSymRefs();
    if (deadSymRefs != NULL)
       *liveSymRefs -= *deadSymRefs;
@@ -693,9 +650,9 @@ TR_OSRLiveVariableInformation::buildLiveSymbolsBitVector(TR_OSRMethodData *osrMe
    while (liveSymRefIt.hasMoreElements())
       {
       int32_t symRefNumber = liveSymRefIt.getNextElement();
-      //if the symbol can't be found in definigMap don't need to set any gen set bit 
+      //if the symbol can't be found in definigMap don't need to set any gen set bit
       //because it must be defined by a constant
-      if (definingMap->find(symRefNumber) == definingMap->end()) 
+      if (definingMap->find(symRefNumber) == definingMap->end())
          continue;
       TR_BitVector *definingSymbols = (*definingMap)[symRefNumber];
       if (comp()->getOption(TR_TraceOSR))
@@ -707,7 +664,7 @@ TR_OSRLiveVariableInformation::buildLiveSymbolsBitVector(TR_OSRMethodData *osrMe
       TR_BitVectorIterator it(*definingSymbols);
       while (it.hasMoreElements())
          {
-         int32_t definingSymRefNumber = it.getNextElement();   
+         int32_t definingSymRefNumber = it.getNextElement();
          int32_t liveLocalIndex = INVALID_LIVENESS_INDEX;
          TR::Symbol *symbol = comp()->getSymRefTab()->getSymRef(definingSymRefNumber)->getSymbol();
          TR::RegisterMappedSymbol *local = NULL;
@@ -767,12 +724,11 @@ TR_OSRLiveVariableInformation::TR_OSRLiveVariableInformation (TR::Compilation   
                                                               TR_Structure     *rootStructure,
                                                               bool              splitLongs,
                                                               bool              includeParms,
-                                                              bool              includeMethodMetaDataSymbols,
                                                               bool              ignoreOSRUses)
-   :TR_LiveVariableInformation(c, optimizer, rootStructure, splitLongs, includeParms, includeMethodMetaDataSymbols, ignoreOSRUses)
+   :TR_LiveVariableInformation(c, optimizer, rootStructure, splitLongs, includeParms, ignoreOSRUses)
    {
    int32_t numOfMethods = comp()->getNumInlinedCallSites()+1;
    bcLiveSymbolMaps = (TR_BCLiveSymbolsMap **)comp()->trMemory()->allocateHeapMemory( numOfMethods * sizeof (TR_BCLiveSymbolsMap*));
    memset(bcLiveSymbolMaps, 0x00, numOfMethods * sizeof (TR_BCLiveSymbolsMap *));
    }
-    
+

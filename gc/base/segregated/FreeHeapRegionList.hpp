@@ -94,8 +94,6 @@ public:
 		}
 		return region;
 	}
-
-	virtual uintptr_t getMaxRegions() = 0;
 		
 	/* Methods inherited from HeapRegionList */
 	virtual bool isEmpty() { return 0 == _length; }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -620,7 +620,7 @@ OMR::MethodBuilder::getParameterTypes()
       TR_ASSERT_FATAL(symNamesIterator != _symbolNameFromSlot.end(), "No symbol found in slot %d", p);
       const char *name = symNamesIterator->second;
 
-      std::map<const char *, TR::IlType *, StrComparator>::iterator symTypesIterator = _symbolTypes.find(name);
+      auto symTypesIterator = _symbolTypes.find(name);
       TR_ASSERT_FATAL(symTypesIterator != _symbolTypes.end(), "No matching symbol type for parameter '%s'", name);
       paramTypesArray[p] = symTypesIterator->second;
       }

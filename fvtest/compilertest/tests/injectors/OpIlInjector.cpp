@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,8 +52,6 @@ OpIlInjector::setDataType()
          case TR::icmpge:
          case TR::icmpgt:
          case TR::icmple:
-         case TR::iucmpeq:
-         case TR::iucmpne:
          case TR::iucmplt:
          case TR::iucmpge:
          case TR::iucmpgt:
@@ -64,8 +62,6 @@ OpIlInjector::setDataType()
          case TR::ificmpge:
          case TR::ificmpgt:
          case TR::ificmple:
-         case TR::ifiucmpeq:
-         case TR::ifiucmpne:
          case TR::ifiucmplt:
          case TR::ifiucmpge:
          case TR::ifiucmpgt:
@@ -87,8 +83,6 @@ OpIlInjector::setDataType()
          case TR::lcmpge:
          case TR::lcmpgt:
          case TR::lcmple:
-         case TR::lucmpeq:
-         case TR::lucmpne:
          case TR::lucmplt:
          case TR::lucmpge:
          case TR::lucmpgt:
@@ -100,8 +94,6 @@ OpIlInjector::setDataType()
          case TR::iflcmpge:
          case TR::iflcmpgt:
          case TR::iflcmple:
-         case TR::iflucmpeq:
-         case TR::iflucmpne:
          case TR::iflucmplt:
          case TR::iflucmpge:
          case TR::iflucmpgt:
@@ -192,8 +184,6 @@ OpIlInjector::setDataType()
          case TR::bcmpge:
          case TR::bcmpgt:
          case TR::bcmple:
-         case TR::bucmpeq:
-         case TR::bucmpne:
          case TR::bucmplt:
          case TR::bucmpge:
          case TR::bucmpgt:
@@ -204,8 +194,6 @@ OpIlInjector::setDataType()
          case TR::ifbcmpge:
          case TR::ifbcmpgt:
          case TR::ifbcmple:
-         case TR::ifbucmpeq:
-         case TR::ifbucmpne:
          case TR::ifbucmplt:
          case TR::ifbucmpge:
          case TR::ifbucmpgt:
@@ -229,8 +217,6 @@ OpIlInjector::setDataType()
          case TR::scmpge:
          case TR::scmpgt:
          case TR::scmple:
-         case TR::sucmpeq:
-         case TR::sucmpne:
          case TR::sucmplt:
          case TR::sucmpge:
          case TR::sucmpgt:
@@ -241,8 +227,6 @@ OpIlInjector::setDataType()
          case TR::ifscmpge:
          case TR::ifscmpgt:
          case TR::ifscmple:
-         case TR::ifsucmpeq:
-         case TR::ifsucmpne:
          case TR::ifsucmplt:
          case TR::ifsucmpge:
          case TR::ifsucmpgt:

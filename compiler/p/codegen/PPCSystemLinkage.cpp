@@ -436,46 +436,6 @@ TR::PPCSystemLinkage::hasToBeOnStack(TR::ParameterSymbol *parm)
    }
 
 
-uintptr_t
-TR::PPCSystemLinkage::calculateActualParameterOffset(
-      uintptr_t o,
-      TR::ParameterSymbol& p)
-   {
-   TR::ResolvedMethodSymbol    * bodySymbol = comp()->getJittedMethodSymbol();
-#ifndef TR_TARGET_64BIT
-   uint32_t bound = sizeof(uint32_t);
-#else
-   size_t bound = sizeof(uint64_t);
-#endif
-   if (1 || (p.getDataType() == TR::Aggregate) || (p.getSize() >= bound))
-      {
-      return o;
-      }
-   else
-      {
-      return o + bound - p.getSize();
-      }
-   }
-
-
-uintptr_t TR::PPCSystemLinkage::calculateParameterRegisterOffset(uintptr_t o, TR::ParameterSymbol& p)
-   {
-   TR::ResolvedMethodSymbol    * bodySymbol = comp()->getJittedMethodSymbol();
-   if (1 || (p.getDataType() == TR::Aggregate) || (p.getSize() >= sizeof(uint64_t)))
-      {
-      return o;
-      }
-   else
-      {
-#ifdef TR_TARGET_64BIT
-      return o & (~(uint64_t) 7);
-#else
-      return o & (~(uint32_t) 3);
-#endif
-      }
-   }
-
-
 void
 TR::PPCSystemLinkage::mapParameters(
       TR::ResolvedMethodSymbol *method,
@@ -503,9 +463,9 @@ TR::PPCSystemLinkage::mapParameters(
       while (parmCursor != NULL)
          {
          if (saveParmsInLocalArea)
-            parmCursor->setParameterOffset(calculateActualParameterOffset(offset_from_top + stackIndex, *parmCursor));
+            parmCursor->setParameterOffset(offset_from_top + stackIndex);
          else
-            parmCursor->setParameterOffset(calculateActualParameterOffset(offset_from_top + offsetToFirstParm + stackIndex, *parmCursor));
+            parmCursor->setParameterOffset(offset_from_top + offsetToFirstParm + stackIndex);
          offset_from_top += (parmCursor->getSize() + slot_size - 1) & (~(slot_size - 1));
          parmCursor = parameterIterator.getNext();
          }
@@ -625,6 +585,13 @@ TR::PPCSystemLinkage::mapSingleAutomatic(
 void
 TR::PPCSystemLinkage::createPrologue(TR::Instruction *cursor)
    {
+   TR::Node *firstNode = comp()->getStartTree()->getNode();
+
+   if (comp()->getOption(TR_EntryBreakPoints))
+      {
+      cursor = generateInstruction(cg(), TR::InstOpCode::bad, firstNode, cursor);
+      }
+
    createPrologue(cursor, comp()->getJittedMethodSymbol()->getParameterList());
    }
 

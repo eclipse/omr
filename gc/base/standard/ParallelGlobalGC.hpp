@@ -240,6 +240,12 @@ protected:
 	 */
 	virtual void processLargeAllocateStatsAfterSweep(MM_EnvironmentBase *env);
 
+	/**
+	 * compaction would change freeEntries stats, merge FreeEntryAllocateStats after compaction.
+	 * currently processLargeAllocateStatsAfterCompact() is same as processLargeAllocateStatsAfterSweep()
+	 */
+	void processLargeAllocateStatsAfterCompact(MM_EnvironmentBase *env);
+
 	virtual void postMark(MM_EnvironmentBase *env);
 
 	MM_ParallelSweepScheme*

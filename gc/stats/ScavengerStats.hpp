@@ -224,6 +224,12 @@ public:
 	}
 
 	void clear(bool firstIncrement);
+	
+	/**
+	 * @return true if at least one full Scavenge cycle is complete (stats are calculated once, at the end of each cycle)
+	 */
+	bool isAvailable(MM_EnvironmentBase *env);
+	
 	MM_ScavengerStats();
 
 	struct FlipHistory* getFlipHistory(uintptr_t lookback);

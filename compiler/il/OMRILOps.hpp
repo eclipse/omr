@@ -294,8 +294,6 @@ public:
              (getOpCodeValue() == TR::lcmpgt)  ||
              (getOpCodeValue() == TR::lcmple)  ||
              (getOpCodeValue() == TR::lucmp)   ||
-             (getOpCodeValue() == TR::lucmpeq) ||
-             (getOpCodeValue() == TR::lucmpne) ||
              (getOpCodeValue() == TR::lucmplt) ||
              (getOpCodeValue() == TR::lucmpge) ||
              (getOpCodeValue() == TR::lucmpgt) ||
@@ -621,12 +619,9 @@ public:
          {
          case TR::ificmpeq:
          case TR::iflcmpeq:
-         case TR::ifiucmpeq:
-         case TR::iflucmpeq:
          case TR::ifacmpeq:
          case TR::ifbcmpeq:
          case TR::ifscmpeq:
-         case TR::ifsucmpeq:
          case TR::iffcmpeq:
          case TR::ifdcmpeq:
             return true;
@@ -641,12 +636,9 @@ public:
          {
          case TR::ificmpne:
          case TR::iflcmpne:
-         case TR::ifiucmpne:
-         case TR::iflucmpne:
          case TR::ifacmpne:
          case TR::ifbcmpne:
          case TR::ifscmpne:
-         case TR::ifsucmpne:
          case TR::iffcmpne:
          case TR::ifdcmpne:
             return true;

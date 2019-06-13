@@ -76,7 +76,6 @@ TR_Liveness::TR_Liveness(TR::Compilation           *comp,
    if (liveVariableInfo == NULL)
       // can be re-used by the caller because it's allocated in caller's stack
       _liveVariableInfo = new (trStackMemory()) TR_LiveVariableInformation(comp, optimizer, rootStructure, splitLongs, includeParms,
-                                                                           false,
                                                                            ignoreOSRUses);
    else
       _liveVariableInfo = liveVariableInfo;

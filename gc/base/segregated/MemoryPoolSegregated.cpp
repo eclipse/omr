@@ -329,10 +329,9 @@ MM_MemoryPoolSegregated::getActualFreeMemorySize()
 {
 	uintptr_t single = 0;
 	uintptr_t multi = 0;
-	uintptr_t maxMulti = 0;
 	uintptr_t coalesce = 0;
 	
-	_regionPool->countFreeRegions(&single, &multi, &maxMulti, &coalesce);
+	_regionPool->countFreeRegions(&single, &multi, &coalesce);
 	
 	return (single + multi + coalesce) * _extensions->getHeap()->getHeapRegionManager()->getRegionSize();
 }

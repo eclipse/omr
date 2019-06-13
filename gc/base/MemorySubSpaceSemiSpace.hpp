@@ -81,6 +81,8 @@ private:
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	uintptr_t _bytesAllocatedDuringConcurrent;
 	uintptr_t _avgBytesAllocatedDuringConcurrent;
+	float _deviationBytesAllocatedDuringConcurrent;
+	float _avgDeviationBytesAllocatedDuringConcurrent;
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 	MM_LargeObjectAllocateStats *_largeObjectAllocateStats; /**< Approximate allocation profile for large objects. Struct to keep merged stats from two allocate pools */
@@ -192,6 +194,8 @@ public:
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)		
 		,_bytesAllocatedDuringConcurrent(0)
 		,_avgBytesAllocatedDuringConcurrent(0)
+		,_deviationBytesAllocatedDuringConcurrent(0)
+		,_avgDeviationBytesAllocatedDuringConcurrent(0)
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */ 		
 	{
 		_typeId = __FUNCTION__;

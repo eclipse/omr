@@ -25,6 +25,7 @@
 #include "codegen/ARM64SystemLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
+#include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
@@ -218,6 +219,13 @@ OMR::ARM64::CodeGenerator::doBinaryEncoding()
 
    self()->getLinkage()->createPrologue(cursorInstruction);
 
+   TR::Instruction *prologueCursor = self()->getFirstInstruction();
+   for (TR::Instruction *gcMapCursor = prologueCursor; NULL!= gcMapCursor; gcMapCursor = gcMapCursor->getNext())
+      {
+      if (gcMapCursor->needsGCMap())
+         gcMapCursor->setGCMap(self()->getStackAtlas()->getParameterMap()->clone(self()->trMemory()));
+      }
+
    bool skipOneReturn = false;
    while (cursorInstruction)
       {
@@ -337,12 +345,41 @@ TR::Register *OMR::ARM64::CodeGenerator::gprClobberEvaluate(TR::Node *node)
       }
    }
 
+static uint32_t registerBitMask(int32_t reg)
+   {
+   return 1 << (reg-1);
+   }
 
 void OMR::ARM64::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap *map)
    {
-   TR_UNIMPLEMENTED();
-   }
+   TR_InternalPointerMap * internalPtrMap = NULL;
+   TR::GCStackAtlas *atlas = self()->getStackAtlas();
+   //
+   // Build the register map
+   //
+   for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i)
+      {
+      TR::RealRegister * reg = self()->machine()->getRealRegister((TR::RealRegister::RegNum)i);
+      if (reg->getHasBeenAssignedInMethod())
+         {
+         TR::Register *virtReg = reg->getAssignedRegister();
+         if (virtReg)
+            {
+            if (virtReg->containsInternalPointer())
+               {
+               if (!internalPtrMap)
+                  internalPtrMap = new (self()->trHeapMemory()) TR_InternalPointerMap(self()->trMemory());
+               internalPtrMap->addInternalPointerPair(virtReg->getPinningArrayPointer(), i);
+               atlas->addPinningArrayPtrForInternalPtrReg(virtReg->getPinningArrayPointer());
+               }
+            else if (virtReg->containsCollectedReference())
+               map->setRegisterBits(registerBitMask(i));
+            }
+         }
+      }
 
+   map->setInternalPointerMap(internalPtrMap);
+   }
 
 TR_GlobalRegisterNumber OMR::ARM64::CodeGenerator::pickRegister(TR_RegisterCandidate *regCan,
                                                           TR::Block **barr,

@@ -250,7 +250,7 @@ class JitOptTest : public JitTest
 template <typename L, typename R>
 std::vector<std::tuple<typename L::value_type, typename R::value_type>> combine(L l, R r)
    {
-   auto v = std::vector<std::tuple<typename L::value_type, typename R::value_type>>{};
+   auto v = std::vector<std::tuple<typename L::value_type, typename R::value_type>>();
    v.reserve((l.end() - l.begin())*(r.end() - r.begin()));
    for (auto i = l.begin(); i != l.end(); ++i)
       for (auto j = r.begin(); j != r.end(); ++j)
@@ -276,9 +276,9 @@ std::vector<std::tuple<typename L::value_type, typename R::value_type>> combine(
  *
  */
 template <typename L, typename R>
-std::vector<std::tuple<L, R>> combine(std::initializer_list<L> l, std::initializer_list<R> r)
+std::vector<std::tuple<L, R>> combine(std::vector<L> l, std::vector<R> r)
    {
-   auto v = std::vector<std::tuple<L, R>>{};
+   auto v = std::vector<std::tuple<L, R>>();
    v.reserve((l.end() - l.begin())*(r.end() - r.begin()));
    for (auto i = l.begin(); i != l.end(); ++i)
       for (auto j = r.begin(); j != r.end(); ++j)

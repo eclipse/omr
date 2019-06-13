@@ -74,14 +74,6 @@
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/Runtime.hpp"
 
-
-extern TR::Register *addConstantToInteger(TR::Node * node, TR::Register *srcReg, int32_t value, TR::CodeGenerator *cg);
-extern TR::Register *addConstantToInteger(TR::Node * node, TR::Register *trgReg, TR::Register *srcReg, int32_t value, TR::CodeGenerator *cg);
-extern TR::Register *addConstantToLong(TR::Node * node, TR::Register *srcReg, int64_t value, TR::Register *trgReg, TR::CodeGenerator *cg);
-extern TR::Register *addConstantToLong(TR::Node *node, TR::Register *srcHigh, TR::Register *srcLow, int32_t valHigh, int32_t valLow, TR::CodeGenerator *cg);
-extern void generateZeroExtendInstruction(TR::Node *node, TR::Register *trgReg, TR::Register *srcReg, int32_t bitsInTarget, TR::CodeGenerator *cg);
-extern void generateSignExtendInstruction(TR::Node *node, TR::Register *trgReg, TR::Register *srcReg, TR::CodeGenerator *cg);
-
 static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg);
 static void switchDispatch(TR::Node *node, bool fromTableEval, TR::CodeGenerator *cg);
 static bool isGlDepsUnBalanced(TR::Node *node, TR::CodeGenerator *cg);
@@ -89,7 +81,6 @@ static void lookupScheme1(TR::Node *node, bool unbalanced, bool fromTableEval, T
 static void lookupScheme2(TR::Node *node, bool unbalanced, bool fromTableEval, TR::CodeGenerator *cg);
 static void lookupScheme3(TR::Node *node, bool unbalanced, TR::CodeGenerator *cg);
 static void lookupScheme4(TR::Node *node, TR::CodeGenerator *cg);
-
 
 extern TR::Register *
 generateZeroExtendedTempRegister(TR::Node *node, TR::CodeGenerator *cg)
@@ -154,6 +145,7 @@ generateSignExtendedTempRegister(TR::Node *node, TR::CodeGenerator *cg)
 
    return srcReg;
    }
+
 
 static void computeCC_xcmpStrengthReducedCC(TR::Node *node,
                                              TR::Register *trgReg,
@@ -238,8 +230,6 @@ static void computeCC_xcmpStrengthReducedCC(TR::Node *node,
       }
    }
 
-
-
 TR::Register *computeCC_compareUnsigned(TR::Node *node,
                                         TR::Register *trgReg,
                                         TR::Register *src1Reg,
@@ -257,6 +247,71 @@ bool skipCompare (TR::Node *node)
    TR::Node     *secondChild = node->getSecondChild();
    return false;
    }
+
+TR::Register *OMR::Power::TreeEvaluator::ifacmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (TR::Compiler->target.is64Bit())
+      return TR::TreeEvaluator::iflucmpltEvaluator(node, cg);
+   else
+      return TR::TreeEvaluator::ifiucmpltEvaluator(node, cg);
+   }
+
+TR::Register *OMR::Power::TreeEvaluator::ifacmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (TR::Compiler->target.is64Bit())
+      return TR::TreeEvaluator::iflucmpgeEvaluator(node, cg);
+   else
+      return TR::TreeEvaluator::ifiucmpgeEvaluator(node, cg);
+   }
+
+TR::Register *OMR::Power::TreeEvaluator::ifacmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (TR::Compiler->target.is64Bit())
+      return TR::TreeEvaluator::iflucmpgtEvaluator(node, cg);
+   else
+      return TR::TreeEvaluator::ifiucmpgtEvaluator(node, cg);
+   }
+
+TR::Register *OMR::Power::TreeEvaluator::ifacmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (TR::Compiler->target.is64Bit())
+      return TR::TreeEvaluator::iflucmpleEvaluator(node, cg);
+   else
+      return TR::TreeEvaluator::ifiucmpleEvaluator(node, cg);
+   }
+
+TR::Register *OMR::Power::TreeEvaluator::acmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (TR::Compiler->target.is64Bit())
+      return TR::TreeEvaluator::lucmpltEvaluator(node, cg);
+   else
+      return TR::TreeEvaluator::iucmpltEvaluator(node, cg);
+   }
+
+TR::Register *OMR::Power::TreeEvaluator::acmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (TR::Compiler->target.is64Bit())
+      return TR::TreeEvaluator::lucmpgeEvaluator(node, cg);
+   else
+      return TR::TreeEvaluator::iucmpgeEvaluator(node, cg);
+   }
+
+TR::Register *OMR::Power::TreeEvaluator::acmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (TR::Compiler->target.is64Bit())
+      return TR::TreeEvaluator::lucmpgtEvaluator(node, cg);
+   else
+      return TR::TreeEvaluator::iucmpgtEvaluator(node, cg);
+   }
+
+TR::Register *OMR::Power::TreeEvaluator::acmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (TR::Compiler->target.is64Bit())
+      return TR::TreeEvaluator::lucmpleEvaluator(node, cg);
+   else
+      return TR::TreeEvaluator::iucmpleEvaluator(node, cg);
+   }
+
 
 TR::Register *OMR::Power::TreeEvaluator::compareIntsForOrder(TR::InstOpCode::Mnemonic branchOp, TR::LabelSymbol *dstLabel, TR::Node *node, TR::CodeGenerator *cg, bool isSigned, bool isHint, bool likeliness)
    {
@@ -901,27 +956,21 @@ static TR::InstOpCode::Mnemonic cmp2branch(TR::ILOpCodes op, TR::CodeGenerator *
     switch (op)
        {
        case TR::icmpeq:
-       case TR::iucmpeq:
        case TR::acmpeq:
        case TR::lcmpeq:
-       case TR::lucmpeq:
        case TR::fcmpeq:
        case TR::dcmpeq:
        case TR::fcmpequ:
        case TR::dcmpequ:
-       case TR::bucmpeq:
        case TR::bcmpeq:
           return TR::InstOpCode::beq;
        case TR::icmpne:
-       case TR::iucmpne:
        case TR::acmpne:
        case TR::lcmpne:
-       case TR::lucmpne:
        case TR::fcmpne:
        case TR::dcmpne:
        case TR::fcmpneu:
        case TR::dcmpneu:
-       case TR::bucmpne:
        case TR::bcmpne:
           return TR::InstOpCode::bne;
        case TR::icmplt:
@@ -997,14 +1046,10 @@ static TR::InstOpCode::Mnemonic cmp2cmp(TR::ILOpCodes op, TR::CodeGenerator *cg)
        case TR::bcmpgt:
        case TR::bcmple:
           return TR::InstOpCode::cmp4;
-       case TR::iucmpeq:
-       case TR::iucmpne:
        case TR::iucmplt:
        case TR::iucmpge:
        case TR::iucmpgt:
        case TR::iucmple:
-       case TR::bucmpeq:
-       case TR::bucmpne:
        case TR::bucmplt:
        case TR::bucmpge:
        case TR::bucmpgt:
@@ -1017,8 +1062,6 @@ static TR::InstOpCode::Mnemonic cmp2cmp(TR::ILOpCodes op, TR::CodeGenerator *cg)
        case TR::lcmpgt:
        case TR::lcmple:
           return TR::Compiler->target.is64Bit() ? TR::InstOpCode::cmp8 : TR::InstOpCode::cmp4;
-       case TR::lucmpeq:
-       case TR::lucmpne:
        case TR::lucmplt:
        case TR::lucmpge:
        case TR::lucmpgt:
@@ -1054,14 +1097,10 @@ static TR::InstOpCode::Mnemonic cmp2cmpi(TR::ILOpCodes op, TR::CodeGenerator *cg
        case TR::bcmpgt:
        case TR::bcmple:
           return TR::InstOpCode::cmpi4;
-       case TR::iucmpeq:
-       case TR::iucmpne:
        case TR::iucmplt:
        case TR::iucmpge:
        case TR::iucmpgt:
        case TR::iucmple:
-       case TR::bucmpeq:
-       case TR::bucmpne:
        case TR::bucmplt:
        case TR::bucmpge:
        case TR::bucmpgt:
@@ -1074,8 +1113,6 @@ static TR::InstOpCode::Mnemonic cmp2cmpi(TR::ILOpCodes op, TR::CodeGenerator *cg
        case TR::lcmpgt:
        case TR::lcmple:
           return TR::Compiler->target.is64Bit() ? TR::InstOpCode::cmpi8 : TR::InstOpCode::cmpi4;
-       case TR::lucmpeq:
-       case TR::lucmpne:
        case TR::lucmplt:
        case TR::lucmpge:
        case TR::lucmpgt:
@@ -1375,9 +1412,9 @@ if (cg->profiledPointersRequireRelocation() && secondChild->getOpCodeValue() == 
 
       conditions->addPostCondition(condReg, TR::RealRegister::cr0);
 
-      TR::InstOpCode::Mnemonic opCode = (node->getOpCodeValue() == TR::ificmpeq || node->getOpCodeValue() == TR::ifiucmpeq ||
-                              node->getOpCodeValue() == TR::ifscmpeq || node->getOpCodeValue() == TR::ifsucmpeq ||
-                              node->getOpCodeValue() == TR::ifbcmpeq || node->getOpCodeValue() == TR::ifbucmpeq)
+      TR::InstOpCode::Mnemonic opCode = (node->getOpCodeValue() == TR::ificmpeq ||
+                              node->getOpCodeValue() == TR::ifscmpeq ||
+                              node->getOpCodeValue() == TR::ifbcmpeq)
          ? TR::InstOpCode::beq : TR::InstOpCode::bne;
       TR::LabelSymbol *label = node->getBranchDestination()->getNode()->getLabel();
 
@@ -1474,25 +1511,7 @@ if (cg->profiledPointersRequireRelocation() && secondChild->getOpCodeValue() == 
              TR::Register *tReg = NULL;
              bool newReg = false;
              uint64_t value = secondChild->get64bitIntegralValue();
-
-             if (node->getOpCodeValue() == TR::ifbucmpne || node->getOpCodeValue() == TR::ifbucmpeq)
-                {
-                tReg = cg->allocateRegister();
-                newReg = true;
-                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tReg, src1Reg, 0, 0xff);
-                value &= 0xff;
-                }
-             else if (node->getOpCodeValue() == TR::ifsucmpne || node->getOpCodeValue() == TR::ifsucmpeq)
-                {
-                tReg = cg->allocateRegister();
-                newReg = true;
-                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tReg, src1Reg, 0, 0xffff);
-                value &= 0xffff;
-                }
-             else
-                {
-                tReg = src1Reg;
-                }
+             tReg = src1Reg;
 
              generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, condReg, tReg, value);
 
@@ -1504,27 +1523,8 @@ if (cg->profiledPointersRequireRelocation() && secondChild->getOpCodeValue() == 
              TR::Register *tReg = NULL;
              bool newReg = false;
              TR::Register *secondReg = NULL;
-             if (node->getOpCodeValue() == TR::ifbucmpne || node->getOpCodeValue() == TR::ifbucmpeq)
-                {
-                tReg = cg->allocateRegister();
-                newReg = true;
-                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tReg, src1Reg, 0, 0xff);
-                secondReg = cg->gprClobberEvaluate(secondChild);
-                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, secondReg, secondReg, 0, 0xff);
-                }
-             else if (node->getOpCodeValue() == TR::ifsucmpne || node->getOpCodeValue() == TR::ifsucmpeq)
-                {
-                tReg = cg->allocateRegister();
-                newReg = true;
-                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tReg, src1Reg, 0, 0xffff);
-                secondReg = cg->gprClobberEvaluate(secondChild);
-                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, secondReg, secondReg, 0, 0xffff);
-                }
-             else
-                {
-                tReg = src1Reg;
-                secondReg = cg->evaluate(secondChild);
-                }
+             tReg = src1Reg;
+             secondReg = cg->evaluate(secondChild);
 
              generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, tReg, secondReg);
 
@@ -1939,7 +1939,7 @@ TR::Register *handleSkipCompare(TR::Node * node, TR::InstOpCode::Mnemonic opcode
 
 
 // also handles acmpeq in 32-bit mode
-// and also: bcmpeq, bucmpeq, scmpeq, sucmpeq, iucmpeq
+// and also: bcmpeq, scmpeq
 TR::Register *OMR::Power::TreeEvaluator::icmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    if (skipCompare(node))
@@ -2001,7 +2001,7 @@ TR::Register *OMR::Power::TreeEvaluator::icmpeqEvaluator(TR::Node *node, TR::Cod
    }
 
 // also handles acmpne in 32-bit mode
-// and also: bcmpne, bucmpne, scmpne, sucmpne, iucmpne
+// and also: bcmpne, scmpne
 TR::Register *OMR::Power::TreeEvaluator::icmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    if (skipCompare(node))

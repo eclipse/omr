@@ -83,6 +83,10 @@ getCompactionReasonAsString(CompactReason reason)
 			return "previous scavenge aborted";
 		case COMPACT_CONTRACT:
 			return "compact to aid heap contraction";
+		case COMPACT_PAGE:
+			return "page granularity fragmentation";	
+		case COMPACT_MICRO_FRAG:
+			return "micro fragmentation";	
 		default:
 			return "unknown";
 	}

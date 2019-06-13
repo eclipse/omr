@@ -63,7 +63,7 @@ A subset of the labels are documented below.
   request testing (e.g., Jenkins, Travis, AppVeyor, etc.)
 
 * [**`cmake`**](https://github.com/eclipse/omr/labels/cmake) labels are similar
-  to build/configure but they apply specifically to the Cmake configuration.
+  to build/configure but they apply specifically to the CMake configuration.
 
 * [**`compiler arch review`**](https://github.com/eclipse/omr/labels/compiler%20arch%20review)
   labels are used to indicate a review of this issue or pull request at the
@@ -91,6 +91,13 @@ A subset of the labels are documented below.
 
 * [**`meeting`**](https://github.com/eclipse/omr/labels/meeting) labels are
   used to annotate issues pertaining to project meeting agendas or minutes.
+
+* [**`toolchain bug`**](https://github.com/eclipse/omr/labels/toolchain%20bug)
+  labels are used to document issues or pull requests that describe or implement
+  a workaround to a bug in the development toolchain (such as the compiler) used
+  to build OMR.  Toolchain workarounds should be temporary in nature, and the
+  intention of this label is to make such workarounds easy to discover in the
+  future lest they be lost in the code.
 
 * [**`tooling`**](https://github.com/eclipse/omr/labels/tooling) labels are for
   issues concerning support tooling needed to support any of the code or

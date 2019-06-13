@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if defined(GTEST_HAS_DEATH_TEST)
 #include "tests/LogFileTest.hpp"
 
 #include <stdio.h>
@@ -74,7 +75,7 @@ TestCompiler::LogFileTest::fileExists(std::string name)
 bool
 TestCompiler::LogFileTest::fileIsNotEmpty(std::string logFile)
    {
-   std::ifstream logFileStream(logFile);
+   std::ifstream logFileStream(logFile.c_str());
    return logFileStream.peek() != std::ifstream::traits_type::eof();
    }
 
@@ -88,7 +89,7 @@ TestCompiler::LogFileTest::fileIsNotEmpty(std::string logFile)
  */
 
 std::map<const char*, bool>
-TestCompiler::LogFileTest::buildKeywordMap(std::initializer_list <const char*> inputs)
+TestCompiler::LogFileTest::buildKeywordMap(std::vector<const char*> inputs)
    {
    std::map<const char*, bool> keywords;
    for (auto w = inputs.begin(); w != inputs.end(); w++)
@@ -247,16 +248,20 @@ TEST_F(LogFileTest, EmptyTFLogTest)
 TEST_F(LogFileTest, KeywordsLogTest)
    {
    std::map<const char*, std::map<const char*, bool>> logFileChecks;
+
    
    /* Additional pairs of log types and keywords to look for can be added to
       logFileChecks like this. A failure is asserted if any of the keywords
       cannot be found in the associated log type.
    */
+   const char* keywordsTraceFull[] = { "<jitlog", "<ilgen", "<trees", "</trees>", "BBStart", "BBEnd", "<block_" };
    logFileChecks.insert(std::pair<const char*, std::map<const char*, bool>>
-      ("traceFull", buildKeywordMap({"<jitlog", "<ilgen", "<trees", "</trees>", "BBStart", "BBEnd", "<block_"})));
+      ("traceFull", buildKeywordMap(std::vector<const char*>(keywordsTraceFull, keywordsTraceFull + sizeof(keywordsTraceFull) / sizeof(const char*)))));
+   const char* keywordsTraceCG[] = { "<codegen" };
    logFileChecks.insert(std::pair<const char*, std::map<const char*, bool>>
-      ("traceCG", buildKeywordMap({"<codegen"})));
+      ("traceCG", buildKeywordMap(std::vector<const char*>(keywordsTraceCG, keywordsTraceCG + sizeof(keywordsTraceCG) / sizeof(const char*)))));
 
    runKeywordTests(logFileChecks);
    }
 }
+#endif /* defined(GTEST_HAS_DEATH_TEST) */

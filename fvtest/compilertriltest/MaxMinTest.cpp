@@ -59,7 +59,7 @@ TEST_P(Int32MaxMin, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -84,7 +84,7 @@ TEST_P(Int32MaxMin, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -96,8 +96,8 @@ TEST_P(Int32MaxMin, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(MaxMin, Int32MaxMin, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int32_t, int32_t>()),
     ::testing::Values(
-        std::make_tuple("imax", imax),
-        std::make_tuple("imin", imin))));
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("imax", imax),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("imin", imin))));
 
 class Int64MaxMin : public TRTest::BinaryOpTest<int64_t> {};
 
@@ -120,7 +120,7 @@ TEST_P(Int64MaxMin, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -145,7 +145,7 @@ TEST_P(Int64MaxMin, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -157,5 +157,5 @@ TEST_P(Int64MaxMin, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(MaxMin, Int64MaxMin, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int64_t, int64_t>()),
     ::testing::Values(
-        std::make_tuple("lmax", lmax),
-        std::make_tuple("lmin", lmin))));
+        std::make_tuple<const char*, int64_t(*)(int64_t, int64_t)>("lmax", lmax),
+        std::make_tuple<const char*, int64_t(*)(int64_t, int64_t)>("lmin", lmin))));

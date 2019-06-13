@@ -30,9 +30,13 @@
 #define ENV_DEBUG
 #endif
 
+
 #if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #elif (HOST_OS == OMR_OSX)
+
+
 #define _XOPEN_SOURCE
 #include <libproc.h>
 #include <mach/mach.h>
@@ -66,9 +70,6 @@
 #include <sys/resource.h>
 #include <nl_types.h>
 #include <langinfo.h>
-#if !defined(USER_HZ) && !defined(OMRZTPF)
-#define USER_HZ HZ
-#endif /* !defined(USER_HZ) && !defined(OMRZTPF) */
 
 #if defined(J9ZOS390)
 #include "omrsimap.h"
@@ -851,7 +852,11 @@ find_executable_name(struct OMRPortLibrary *portLibrary, char **result)
 	}
 	while ((token = w_getpsent(token, &buf, sizeof(buf))) > 0) {
 		if (buf.ps_pid == mypid) {
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 			e2aName = e2a_func(buf.ps_pathptr, strlen(buf.ps_pathptr) + 1);
+#else /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
+			e2aName = buf.ps_pathptr;
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 			break;
 		}
 	}
@@ -867,7 +872,9 @@ find_executable_name(struct OMRPortLibrary *portLibrary, char **result)
 	if (currentPath) {
 		strcpy(currentPath, e2aName);
 	}
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	free(e2aName);
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 #else
 	char *execName = NULL;
 
@@ -2576,7 +2583,8 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	 * ~70.  Allocate 128 bytes to give lots of margin.
 	 */
 	char buf[128];
-	const uintptr_t NS_PER_HZ = 1000000000 / USER_HZ;
+	const uintptr_t CLK_HZ = sysconf(_SC_CLK_TCK); /* i.e. USER_HZ */
+	const uintptr_t NS_PER_CLK = 1000000000 / CLK_HZ;
 	intptr_t fd = portLibrary->file_open(portLibrary, "/proc/stat", EsOpenRead, 0);
 	if (-1 == fd) {
 		int32_t portableError = portLibrary->error_last_error_number(portLibrary);
@@ -2601,7 +2609,7 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 		if (0 == sscanf(buf, "cpu  %" SCNd64 " %" SCNd64 " %" SCNd64, &userTime, &niceTime, &systemTime)) {
 			return OMRPORT_ERROR_SYSINFO_GET_STATS_FAILED;
 		}
-		cpuTime->cpuTime = (userTime + niceTime + systemTime) * NS_PER_HZ;
+		cpuTime->cpuTime = (userTime + niceTime + systemTime) * NS_PER_CLK;
 		cpuTime->numberOfCpus = portLibrary->sysinfo_get_number_CPUs_by_type(portLibrary, OMRPORT_CPU_ONLINE);
 		status = 0;
 	}

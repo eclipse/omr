@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ class LogFileTest : public ::testing::Test
    void checkLogForKeywords(std::map<const char*, bool> keywords, const char *logFile);
    void runKeywordTests(std::map<const char*, std::map<const char*, bool>> logFileChecks);
    bool fileIsNotEmpty(std::string logFile);
-   std::map<const char*, bool> buildKeywordMap(std::initializer_list <const char*> inputs);
+   std::map<const char*, bool> buildKeywordMap(std::vector<const char*> inputs);
 
    private:
    std::vector<std::string> _logFiles;

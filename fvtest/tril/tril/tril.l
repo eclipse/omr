@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,58 +24,56 @@
     #include "ast.h"
     #include "tril.parser.h"
     #include <stdio.h>
-
-    void yyerror(char *s);
 %}
 
 %%
 
 @?[a-zA-Z][a-zA-Z0-9]* {
-                          char* name = (char*)malloc(yyleng*sizeof(char) + 1);
-                          snprintf(name, yyleng + 1, "%s", yytext);
-                          yylval.str = name;
-                          return IDENTIFIER;
+                           char* name = (char*)malloc(yyleng*sizeof(char) + 1);
+                           snprintf(name, yyleng + 1, "%s", yytext);
+                           yylval.str = name;
+                           return IDENTIFIER;
                        };
 
-[-]?[0-9]+      {
-                yylval.integer = strtoull(yytext, NULL, 10);
-                return INTEGER;
-            };
+[-]?[0-9]+             {
+                           yylval.integer = strtoull(yytext, NULL, 10);
+                           return INTEGER;
+                       };
 
-[-]?0x[0-9a-fA-F]+      {
-                yylval.integer = strtoull(yytext, NULL, 16);
-                return INTEGER;
-            }
+[-]?0x[0-9a-fA-F]+     {
+                           yylval.integer = strtoull(yytext, NULL, 16);
+                           return INTEGER;
+                       };
 
+[-]?[0-9]+[.][0-9]+    {
+                           yylval.f64 = strtod(yytext, NULL);
+                           return DOUBLE;
+                       };
 
-[-]?[0-9]+[.][0-9]+      {
-                yylval.f64 = strtod(yytext, NULL);
-                return DOUBLE;
-            }
+;[^\n]*                ; /* ignore comment */
 
-;[^\n]*     ; /* ignore comment */
+\"[^"]*\"              {
+                           char* val = (char*)malloc(yyleng*sizeof(char) + 1);
+                           snprintf(val, yyleng - 1, "%s", yytext + 1);
+                           yylval.str = val;
+                           return STRING;
+                       };
 
-\"[^"]*\"   {
-                char* val = (char*)malloc(yyleng*sizeof(char) + 1);
-                snprintf(val, yyleng - 1, "%s", yytext + 1); // remove surrounding "
-                yylval.str = val;
-                return STRING;
-            };
+[()[\]=,]              return *yytext;
 
-[()[\]=,]      return *yytext;
+[ \t\n]                ; /* ignore white space */
 
-[ \t\n]     ; /* ignore white space */
-
-.           fprintf(stderr, "Invalid character '%s'\n", yytext);
+.                      fprintf(stderr, "Invalid character '%s'\n", yytext);
 
 %%
 
-void set_input_string(const char* in) {
-    yy_scan_string(in);
+void set_input_file(FILE* in) {
+    yyin = in;
 }
 
-void end_lexical_scan(void) {
-    yy_delete_buffer(YY_CURRENT_BUFFER);
+int yyerror(char *s, ...) {
+    fprintf(stderr, "Tril lexer error on line %d: %s\n", yylineno, s);
+	return 1;
 }
 
 int yywrap(void) {

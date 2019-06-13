@@ -14,41 +14,23 @@ pipeline {
         stage('Build') {
             steps {
                 timestamps {
-                    //echo 'Output CCACHE stats before running and clear them'
-                    //echo '''ccache -s -z'''
-                    
-                    echo 'Configure...'
-                    sh'''make -f run_configure.mk OMRGLUE=./example/glue SPEC=zos_390-64'''
-                    
-                    echo 'Convert HDF files to EBCDIC'
-                    //sh'''for file in `find . -name '*.hdf'`;do;mv "$file" "$file.iso88591";iconv -f ISO8859-1 -t IBM-1047 "$file.iso88591" >"$file" && chtag -tc IBM-1047 "$file";done'''
-                    //sh'''for file in `find . -name '*.hdf'`;do; chtag -p "$file" | grep -q "ISO8859-1"; if [[ $? == 0 ]]; then; mv "$file" "$file.iso88591";iconv -f ISO8859-1 -t IBM-1047 "$file.iso88591" >"$file" && chtag -tc IBM-1047 "$file"; fi; done'''
-                    sh'''for file in `find . -name '*.hdf'`;do; chtag -p "$file" | grep -q "ISO8859-1"; if [ $? -eq 0 ]; then; mv "$file" "$file.iso88591";iconv -f ISO8859-1 -t IBM-1047 "$file.iso88591" >"$file" && chtag -tc IBM-1047 "$file"; fi; done'''
-                    
-                    echo 'Convert TDF files to EBCDIC'
-                    //sh'''for file in `find . -name '*.tdf'`;do;mv "$file" "$file.iso88591";iconv -f ISO8859-1 -t IBM-1047 "$file.iso88591" >"$file" && chtag -tc IBM-1047 "$file";done'''
-                    //sh'''for file in `find . -name '*.tdf'`;do; chtag -p "$file" | grep -q "ISO8859-1"; if [[ $? == 0 ]]; then; mv "$file" "$file.iso88591";iconv -f ISO8859-1 -t IBM-1047 "$file.iso88591" >"$file" && chtag -tc IBM-1047 "$file"; fi; done
-                    sh'''for file in `find . -name '*.tdf'`;do; chtag -p "$file" | grep -q "ISO8859-1"; if [ $? -eq 0 ]; then; mv "$file" "$file.iso88591";iconv -f ISO8859-1 -t IBM-1047 "$file.iso88591" >"$file" && chtag -tc IBM-1047 "$file"; fi; done'''
-                    
-                    echo 'Compile...'
-                    sh'''make -j4'''
-                    
-                    //echo 'Output CCACHE stats after running'
-                    //echo '''ccache -s'''
+                    dir('build') {
+                        echo 'Configure...'
+                        sh '''cmake -Wdev -C../cmake/caches/Travis.cmake -DCMAKE_C_COMPILER=/bin/c89 -DCMAKE_CXX_COMPILER=/bin/xlc -DOMR_DDR=0 -DOMR_THR_FORK_SUPPORT=0 ..''' 
+                       
+                        echo 'Compile...'
+                        sh '''make -j4'''
+                    }
                 }
             }
         }
         stage('Test') {
             steps {
                 timestamps {
-                    echo "Sanity Test..."
-                    
-                    // Workaround: Convert XML files to EBCDIC 
-                    //sh'''for file in `find . -name '*.xml'`;do;mv "$file" "$file.iso88591";iconv -f ISO8859-1 -t IBM-1047 "$file.iso88591" >"$file" && chtag -tc IBM-1047 "$file";done'''
-                    sh'''for file in `find . -name '*.xml'`;do; chtag -p "$file" | grep -q "ISO8859-1"; if [ $? -eq 0 ]; then; mv "$file" "$file.iso88591";iconv -f ISO8859-1 -t IBM-1047 "$file.iso88591" >"$file" && chtag -tc IBM-1047 "$file"; fi; done'''
-                    
-                    // Perform a subset of the testing until while we resolve the issues with the other tests
-                    sh'''set; make -f fvtest/omrtest.mk -j1 SPEC=zos_390-64 omr_algotest omr_vmtest omr_utiltest omr_sigtest omr_rastest'''
+                    dir('build') {
+                        echo "Sanity Test..."
+                        sh'''./omralgotest -avltest:fvtest/algotest/avltest.lst && ./omrvmtest && ./omrutiltest && ./omrsigtest && ./omrrastest && ./omrsubscribertest && ./omrtraceoptiontest'''
+                    }
                 }
             }
         }

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2017 IBM Corp. and others
+# Copyright (c) 2016, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,5 +39,19 @@ endif
 
 OBJECTS = \
   blob_reader$(OBJEXT)
+
+MODULE_STATIC_LIBS += omrstatic
+
+ifeq (aix,$(OMR_HOST_OS))
+  MODULE_SHARED_LIBS += iconv perfstat
+else ifeq (osx,$(OMR_HOST_OS))
+  MODULE_SHARED_LIBS += iconv
+else ifeq (win,$(OMR_HOST_OS))
+  MODULE_SHARED_LIBS += ws2_32 shell32 Iphlpapi psapi pdh
+endif
+
+ifeq (1,$(OMRPORT_OMRSIG_SUPPORT))
+  MODULE_SHARED_LIBS += omrsig
+endif
 
 include $(top_srcdir)/omrmakefiles/rules.mk

@@ -84,4 +84,5 @@ if(OMR_GC)
 	)
 endif(OMR_GC)
 
-target_enable_ddr(omrcore "${OMR_DDR_SET}")
+target_enable_ddr(omrcore)
+ddr_set_add_targets(omrddr omrcore)

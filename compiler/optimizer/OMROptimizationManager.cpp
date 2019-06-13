@@ -72,7 +72,7 @@ OMR::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFact
          _flags.set(doesNotRequireAliasSets | canAddSymbolReference | verifyTrees | verifyBlocks | checkTheCFG | requiresAccurateNodeCount);
          break;
       case OMR::CFGSimplification:
-         _flags.set(verifyTrees | verifyBlocks | checkTheCFG);
+         _flags.set(verifyTrees | verifyBlocks | checkTheCFG | supportsIlGenOptLevel);
          break;
       case OMR::basicBlockExtension:
          _flags.set(requiresStructure);

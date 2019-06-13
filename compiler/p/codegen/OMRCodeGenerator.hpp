@@ -413,8 +413,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    static uint32_t registerBitMask(int32_t reg);
 
-   int32_t getInternalPtrMapBit() { return 18;}
-
    int32_t getMaximumNumbersOfAssignableGPRs();
    int32_t getMaximumNumbersOfAssignableFPRs();
    int32_t getMaximumNumbersOfAssignableVRs();
@@ -572,5 +570,48 @@ class TR_PPCScratchRegisterManager : public TR_ScratchRegisterManager
    using TR_ScratchRegisterManager::addScratchRegistersToDependencyList;
    void addScratchRegistersToDependencyList(TR::RegisterDependencyConditions *deps, bool excludeGPR0);
    };
+
+   void mulConstant(
+      TR::Node *,
+      TR::Register *trgReg,
+      TR::Register *sourceReg,
+      int32_t value,
+      TR::CodeGenerator *cg);
+                   
+   void mulConstant(
+      TR::Node *,
+      TR::Register *trgReg,
+      TR::Register *sourceReg,
+      int64_t value,
+      TR::CodeGenerator *cg);
+   
+   
+   TR::Register *addConstantToLong(
+      TR::Node * node,
+      TR::Register *srcReg,
+      int64_t value,
+      TR::Register *trgReg,
+      TR::CodeGenerator *cg);
+
+   TR::Register *addConstantToLong(
+      TR::Node *node,
+      TR::Register *srcHigh,
+      TR::Register *srcLow,
+      int32_t valHigh,
+      int32_t valLow,
+      TR::CodeGenerator *cg);
+   
+   TR::Register *addConstantToInteger(
+      TR::Node * node,
+      TR::Register *srcReg,
+      int32_t value,
+      TR::CodeGenerator *cg);
+
+   TR::Register *addConstantToInteger(
+      TR::Node * node,
+      TR::Register *trgReg,
+      TR::Register *srcReg,
+      int32_t value,
+      TR::CodeGenerator *cg);
 
 #endif

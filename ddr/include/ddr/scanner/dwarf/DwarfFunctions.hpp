@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,18 +59,29 @@ using std::runtime_error;
 using std::tuple;
 #endif /* OMR_HAVE_TR1 */
 
-typedef /*struct Dwarf_Debug_s*/ void *Dwarf_Debug;
+struct Dwarf_Attribute_s;
+struct Dwarf_Debug_s;
+struct Dwarf_Die_s;
+struct Dwarf_Error_s;
+
+typedef struct Dwarf_Debug_s *Dwarf_Debug;
 typedef struct Dwarf_Die_s *Dwarf_Die;
 typedef struct Dwarf_Error_s *Dwarf_Error;
 typedef struct Dwarf_Attribute_s *Dwarf_Attribute;
 
+typedef unsigned char Dwarf_Small;
 typedef int Dwarf_Bool;
 typedef unsigned long long Dwarf_Off;
 typedef unsigned long long Dwarf_Unsigned;
 typedef unsigned short Dwarf_Half;
 typedef signed long long Dwarf_Signed;
 typedef unsigned long long Dwarf_Addr;
-typedef signed long Dwarf_Sword;
+
+struct Dwarf_Block
+{
+	Dwarf_Small *bl_data;
+	Dwarf_Unsigned bl_len;
+};
 
 typedef void *Dwarf_Ptr;
 typedef void (*Dwarf_Handler)(Dwarf_Error error, Dwarf_Ptr errarg);
@@ -109,12 +120,14 @@ typedef vector<string> str_vect;
 #define DW_AT_external 0x0c
 #define DW_AT_data_member_location 0xd
 #define DW_AT_data_bit_offset 0x0e
+#define DW_AT_declaration 0x0f
 
 #define DW_DLA_ATTR 0x01
 #define DW_DLA_DIE 0x02
 #define DW_DLA_ERROR 0x03
 #define DW_DLA_LIST 0x04
 #define DW_DLA_STRING 0x05
+#define DW_DLA_BLOCK 0x06
 
 #define DW_FORM_unknown 0x00
 #define DW_FORM_ref1 0x01
@@ -125,6 +138,41 @@ typedef vector<string> str_vect;
 #define DW_FORM_sdata 0x06
 #define DW_FORM_string 0x07
 #define DW_FORM_flag 0x0c
+#define DW_FORM_exprloc 0x18
+
+#define DW_OP_plus_uconst 0x23
+#define DW_OP_lit0 0x30
+#define DW_OP_lit1 0x31
+#define DW_OP_lit2 0x32
+#define DW_OP_lit3 0x33
+#define DW_OP_lit4 0x34
+#define DW_OP_lit5 0x35
+#define DW_OP_lit6 0x36
+#define DW_OP_lit7 0x37
+#define DW_OP_lit8 0x38
+#define DW_OP_lit9 0x39
+#define DW_OP_lit10 0x3a
+#define DW_OP_lit11 0x3b
+#define DW_OP_lit12 0x3c
+#define DW_OP_lit13 0x3d
+#define DW_OP_lit14 0x3e
+#define DW_OP_lit15 0x3f
+#define DW_OP_lit16 0x40
+#define DW_OP_lit17 0x41
+#define DW_OP_lit18 0x42
+#define DW_OP_lit19 0x43
+#define DW_OP_lit20 0x44
+#define DW_OP_lit21 0x45
+#define DW_OP_lit22 0x46
+#define DW_OP_lit23 0x47
+#define DW_OP_lit24 0x48
+#define DW_OP_lit25 0x49
+#define DW_OP_lit26 0x4a
+#define DW_OP_lit27 0x4b
+#define DW_OP_lit28 0x4c
+#define DW_OP_lit29 0x4d
+#define DW_OP_lit30 0x4e
+#define DW_OP_lit31 0x4f
 
 #define DW_TAG_unknown 0x00
 #define DW_TAG_array_type 0x01
@@ -149,6 +197,7 @@ typedef vector<string> str_vect;
 #define DW_TAG_typedef 0x14
 #define DW_TAG_union_type 0x15
 #define DW_TAG_volatile_type 0x16
+#define DW_TAG_unspecified_type 0x17
 
 struct Dwarf_Error_s
 {
@@ -226,6 +275,8 @@ int dwarf_formstring(Dwarf_Attribute attr, char **returned_string, Dwarf_Error *
 void dwarf_dealloc(Dwarf_Debug dbg, void *space, Dwarf_Unsigned type);
 
 int dwarf_hasattr(Dwarf_Die die, Dwarf_Half attr, Dwarf_Bool *returned_bool, Dwarf_Error *error);
+
+int dwarf_formblock(Dwarf_Attribute attr, Dwarf_Block **returned_block, Dwarf_Error *error);
 
 int dwarf_formflag(Dwarf_Attribute attr, Dwarf_Bool *returned_flag, Dwarf_Error *error);
 

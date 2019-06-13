@@ -423,16 +423,6 @@ TR_GlobalRegisterAllocator::perform()
                ++numLocals;
             }
 
-         ListIterator<TR::RegisterMappedSymbol> methodMetaDataSymbols(&comp()->getMethodSymbol()->getMethodMetaDataList());
-         if (comp()->allocateAtThisOptLevel())
-            {
-            for (auto mds = methodMetaDataSymbols.getFirst(); mds != NULL; mds = methodMetaDataSymbols.getNext())
-               {
-               TR_ASSERT(mds->isMethodMetaData(), "Should be method meta data");
-               ++numLocals;
-               }
-            }
-
          const uint64_t MAX_BITVECTOR_MEMORY_USAGE = 1000000000;
          uint64_t bitvectorMemoryUsage = numLocals * comp()->getFlowGraph()->getNextNodeNumber();
 

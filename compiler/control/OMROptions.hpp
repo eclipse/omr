@@ -325,7 +325,7 @@ enum TR_CompilationOptions
    TR_DisableTOCForConsts                 = 0x08000000 + 7,
    TR_UseLowPriorityQueueDuringCLP        = 0x10000000 + 7,
    TR_DisableVectorBCD                    = 0x20000000 + 7,
-   TR_EnableTrivialStoreSinking           = 0x40000000 + 7,
+   // Available                           = 0x40000000 + 7,
    TR_DisableTraps                        = 0x80000000 + 7,
 
    // Option word 8
@@ -385,9 +385,9 @@ enum TR_CompilationOptions
    TR_DisableNoServerDuringStartup        = 0x04000000 + 9,  // set TR_NoOptServer during startup and insert GCR trees
    TR_BreakOnNew                          = 0x08000000 + 9,
    // Available                           = 0x10000000 + 9,
-   TR_SinkAllStores                       = 0x20000000 + 9,
-   TR_SinkAllBlockedStores                = 0x40000000 + 9,
-   TR_DisableStoreAnchoring               = 0x80000000 + 9,
+   // Available                           = 0x20000000 + 9,
+   // Available                           = 0x40000000 + 9,
+   // Available                           = 0x80000000 + 9,
 
    // Option word 10
    //
@@ -572,7 +572,7 @@ enum TR_CompilationOptions
    // Available                                       = 0x00000400 + 16,
    // Available                                       = 0x00000800 + 16,
    TR_DisableEmptyPreHeaderCheck                      = 0x00001000 + 16,
-   TR_SinkOnlyCCStores                                = 0x00002000 + 16,
+   // Available                                       = 0x00002000 + 16,
    TR_EnableDeterministicOrientedCompilation          = 0x00004000 + 16,
    // Available                                       = 0x00008000 + 16,
    TR_EnableAOTStats                                  = 0x00010000 + 16,

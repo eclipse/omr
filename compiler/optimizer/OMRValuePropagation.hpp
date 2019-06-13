@@ -649,7 +649,7 @@ class ValuePropagation : public TR::Optimization
     *
     * @return Resulting node with constraints applied.
     */
-   virtual TR::Node *innerConstrainAcall(TR::Node *node);
+   virtual TR::Node *innerConstrainAcall(TR::Node *node) { return node; }
 
    void printStructureInfo(TR_Structure *structure, bool starting, bool lastTimeThrough);
    void printParentStructure(TR_Structure *structure);

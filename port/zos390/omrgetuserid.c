@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,11 @@ omrget_userid(char *userid, uintptr_t length)
 	if (tmp_userid) {
 		memset(tmp_userid, '\0', J9_MAX_USERID);
 		_USERID(tmp_userid);  /* requires <31bit address */
+#if !defined(OMR_EBCDIC)
 		ascname = e2a_func(tmp_userid, strlen(tmp_userid));
+#else /* !defined(OMR_EBCDIC) */
+		ascname = tmp_userid;
+#endif /* !defined(OMR_EBCDIC) */
 
 		if (ascname) {
 			width = strcspn(ascname, " ");
@@ -72,7 +76,9 @@ omrget_userid(char *userid, uintptr_t length)
 				 */
 				result = width;
 			}
+#if !defined(OMR_EBCDIC)
 			free(ascname);
+#endif /* !defined(OMR_EBCDIC) */
 		}
 		free(tmp_userid);
 	}

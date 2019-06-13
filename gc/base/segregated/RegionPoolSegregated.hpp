@@ -181,7 +181,7 @@ public:
  	 * region lists to "sweep" region lists.
  	 */
 	void moveInUseToSweep(MM_EnvironmentBase *env);
-	void countFreeRegions(uintptr_t *singleFree, uintptr_t *multiFree, uintptr_t *maxMultiFree, uintptr_t *coalesceFree);
+	void countFreeRegions(uintptr_t *singleFree, uintptr_t *multiFree, uintptr_t *coalesceFree);
 	void addFreeRange(void *lowAddress, void *highAddress);
 	void addFreeRegion(MM_EnvironmentBase *env, MM_HeapRegionDescriptorSegregated *region, bool alreadyFree = false);
 	void addSingleFree(MM_EnvironmentBase *env, MM_HeapRegionQueue *regionQueue);

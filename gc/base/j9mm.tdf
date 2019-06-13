@@ -916,3 +916,5 @@ TraceEvent=Trc_MM_Scavenger_percolate_preventTenureExpand Overhead=1 Level=1 Gro
 TraceEvent=Trc_MM_Scavenger_percolate_tenureMaxFree Overhead=1 Level=1 Group=percolate Template="Percolating due to meeting Tenure max free"
 
 TraceAssert=Assert_MM_double_map_unreachable noEnv Overhead=1 Level=1 Assert="(false)"
+
+TraceEvent=Trc_ParallelGlobalGC_shouldCompactThisCycle Overhead=1 Level=1 Group=compact Template="Current page granularity fragmented ratio: %f  Threshold: %f"

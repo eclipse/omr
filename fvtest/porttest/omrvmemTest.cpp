@@ -805,14 +805,14 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 			/* Initialize arraylet offsets to different ranges */
 			long arrayLetOffsets[ARRAYLET_COUNT];
 			/* Must be multiple of pagesize: sysconf(_SC_PAGE_SIZE) 	Simulates the order of arraylet leaves in an array */
-			arrayLetOffsets[0] = 0;								/* 1 */
-			arrayLetOffsets[1] = (HEAP_SIZE / 2) + (HEAP_SIZE / 8);				/* 6 */
-			arrayLetOffsets[2] = HEAP_SIZE / 4;						/* 3 */
-			arrayLetOffsets[3] = (HEAP_SIZE / 4) + (HEAP_SIZE / 8);				/* 4 */
-			arrayLetOffsets[4] = HEAP_SIZE / 2;						/* 5 */
-			arrayLetOffsets[5] = (HEAP_SIZE / 2) + (HEAP_SIZE / 4) + (HEAP_SIZE / 8);	/* 8 */
-			arrayLetOffsets[6] = (HEAP_SIZE / 8);						/* 2 */
-			arrayLetOffsets[7] = (HEAP_SIZE / 2) + (HEAP_SIZE / 4);				/* 7 */
+			arrayLetOffsets[0] = 0;                                                             /* 1 */
+			arrayLetOffsets[1] = (long)((HEAP_SIZE / 2) + (HEAP_SIZE / 8));	                    /* 6 */
+			arrayLetOffsets[2] = (long)(HEAP_SIZE / 4);                                         /* 3 */
+			arrayLetOffsets[3] = (long)((HEAP_SIZE / 4) + (HEAP_SIZE / 8));                     /* 4 */
+			arrayLetOffsets[4] = (long)(HEAP_SIZE / 2);                                         /* 5 */
+			arrayLetOffsets[5] = (long)((HEAP_SIZE / 2) + (HEAP_SIZE / 4) + (HEAP_SIZE / 8));   /* 8 */
+			arrayLetOffsets[6] = (long)(HEAP_SIZE / 8);                                         /* 2 */
+			arrayLetOffsets[7] = (long)((HEAP_SIZE / 2) + (HEAP_SIZE / 4));                     /* 7 */
 
 			size_t i = 0;
 			for(; i < ARRAYLET_COUNT; i++) {

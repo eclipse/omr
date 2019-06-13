@@ -47,7 +47,8 @@ target_link_libraries(omrtrace
 		omrutil
 )
 
-target_enable_ddr(omrtrace "${OMR_DDR_SET}")
+target_enable_ddr(omrtrace)
+ddr_set_add_targets(omrddr omrtrace)
 
 #TODO: check if following makefile fragment still required:
 #ifeq (gcc,$(OMR_TOOLCHAIN))

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,33 +26,61 @@ add_library(bindthreadagent SHARED
 	bindthreadagent.c
 	omragent.def
 )
+
 target_link_libraries(bindthreadagent PUBLIC omrtestutil)
+
+omr_add_exports(bindthreadagent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
 
 add_library(memorycategoriesagent SHARED
 	memorycategoriesagent.c
 	omragent.def
 )
+
 target_link_libraries(memorycategoriesagent PRIVATE omrtestutil)
+
+omr_add_exports(memorycategoriesagent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
 
 add_library(traceagent SHARED
 	traceagent.c
 	omragent.def
 )
+
 target_link_libraries(traceagent PRIVATE omrtestutil)
+
+omr_add_exports(traceagent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
 
 add_library(traceNotStartedAgent SHARED
 	traceNotStartedAgent.c
 	omragent.def
 )
+
 target_link_libraries(traceNotStartedAgent PRIVATE omrtestutil)
 
-
+omr_add_exports(traceNotStartedAgent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
 
 add_library(cpuLoadAgent SHARED
 	cpuLoadAgent.c
 	omragent.def
 )
+
 target_link_libraries(cpuLoadAgent PUBLIC omrtestutil)
+
+omr_add_exports(cpuLoadAgent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
 
 add_library(invalidAgentMissingOnLoad SHARED
 	invalidAgentMissingOnLoad.c
@@ -61,12 +89,20 @@ add_library(invalidAgentMissingOnLoad SHARED
 
 target_link_libraries(invalidAgentMissingOnLoad PUBLIC omr_base)
 
+omr_add_exports(invalidAgentMissingOnLoad
+	OMRAgent_OnUnload
+)
+
 add_library(invalidAgentMissingOnUnload SHARED
 	invalidAgentMissingOnUnload.c
 	invalidAgentMissingOnUnload.def
 )
 
 target_link_libraries(invalidAgentMissingOnUnload PUBLIC omr_base)
+
+omr_add_exports(invalidAgentMissingOnUnload
+	OMRAgent_OnLoad
+)
 
 add_library(invalidAgentReturnError SHARED
 	invalidAgentReturnError.c
@@ -75,6 +111,11 @@ add_library(invalidAgentReturnError SHARED
 
 target_link_libraries(invalidAgentReturnError PUBLIC omr_base)
 
+omr_add_exports(invalidAgentReturnError
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
 add_library(sampleSubscriber SHARED
 	sampleSubscriber.c
 	omragent.def
@@ -82,17 +123,32 @@ add_library(sampleSubscriber SHARED
 
 target_link_libraries(sampleSubscriber PUBLIC omr_base)
 
+omr_add_exports(sampleSubscriber
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
 add_library(subscriberAgent SHARED
 	subscriberAgent.c
 	omragent.def
 )
 target_link_libraries(subscriberAgent PRIVATE omrtestutil)
 
+omr_add_exports(subscriberAgent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
 add_library(subscriberAgentWithJ9thread SHARED
 	subscriberAgentWithJ9thread.c
 	omragent.def
 )
 target_link_libraries(subscriberAgentWithJ9thread PRIVATE omrtestutil)
+
+omr_add_exports(subscriberAgentWithJ9thread
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
 
 add_library(traceOptionAgent SHARED
 	traceOptionAgent.c
@@ -102,6 +158,11 @@ add_library(traceOptionAgent SHARED
 target_link_libraries(traceOptionAgent
 	PUBLIC
 		omr_base
+)
+
+omr_add_exports(traceOptionAgent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
 )
 
 add_executable(omrrastest

@@ -107,8 +107,6 @@ OMR::ILOpCode::compareOpCode(TR::DataType dt,
             {
             switch(ct)
                {
-               case TR_cmpEQ: return TR::bucmpeq;
-               case TR_cmpNE: return TR::bucmpne;
                case TR_cmpLT: return TR::bucmplt;
                case TR_cmpLE: return TR::bucmple;
                case TR_cmpGT: return TR::bucmpgt;
@@ -121,8 +119,6 @@ OMR::ILOpCode::compareOpCode(TR::DataType dt,
             {
             switch(ct)
                {
-               case TR_cmpEQ: return TR::sucmpeq;
-               case TR_cmpNE: return TR::sucmpne;
                case TR_cmpLT: return TR::sucmplt;
                case TR_cmpLE: return TR::sucmple;
                case TR_cmpGT: return TR::sucmpgt;
@@ -135,8 +131,6 @@ OMR::ILOpCode::compareOpCode(TR::DataType dt,
             {
             switch(ct)
                {
-               case TR_cmpEQ: return TR::iucmpeq;
-               case TR_cmpNE: return TR::iucmpne;
                case TR_cmpLT: return TR::iucmplt;
                case TR_cmpLE: return TR::iucmple;
                case TR_cmpGT: return TR::iucmpgt;
@@ -149,8 +143,6 @@ OMR::ILOpCode::compareOpCode(TR::DataType dt,
             {
             switch(ct)
                {
-               case TR_cmpEQ: return TR::lucmpeq;
-               case TR_cmpNE: return TR::lucmpne;
                case TR_cmpLT: return TR::lucmplt;
                case TR_cmpLE: return TR::lucmple;
                case TR_cmpGT: return TR::lucmpgt;

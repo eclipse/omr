@@ -351,6 +351,9 @@ public:
 	uintptr_t heapAlignment;
 	uintptr_t absoluteMinimumOldSubSpaceSize;
 	uintptr_t absoluteMinimumNewSubSpaceSize;
+	
+	float darkMatterCompactThreshold; /**< Value used to trigger compaction when dark matter ratio reaches this percentage of memory pools memory*/
+	
 	uintptr_t parSweepChunkSize;
 	uintptr_t heapExpansionMinimumSize;
 	uintptr_t heapExpansionMaximumSize;
@@ -365,6 +368,7 @@ public:
 
 	float heapSizeStartupHintConservativeFactor; /**< Use only a fraction of hints stored in SC */
 	float heapSizeStartupHintWeightNewValue;		/**< Learn slowly by historic averaging of stored hints */	
+	bool useGCStartupHints; /**< Enabled/disable usage of heap sizing startup hints from Shared Cache */
 
 	uintptr_t workpacketCount; /**< this value is ONLY set if -Xgcworkpackets is specified - otherwise the workpacket count is determined heuristically */
 	uintptr_t packetListSplit; /**< the number of ways to split packet lists, set by -XXgc:packetListLockSplit=, or determined heuristically based on the number of GC threads */
@@ -453,6 +457,7 @@ public:
 	uintptr_t concurrentScavengerBackgroundThreads; /**< number of background GC threads during concurrent phase of Scavenge */
 	bool concurrentScavengerBackgroundThreadsForced; /**< true if concurrentScavengerBackgroundThreads set via command line option */
 	uintptr_t concurrentScavengerSlack; /**< amount of bytes added on top of avearge allocated bytes during concurrent cycle, in calcualtion for survivor size */
+	float concurrentScavengerAllocDeviationBoost; /**< boost factor for allocate rate and its deviation, used for tilt calcuation in Concurrent Scavenger */
 #endif	/* OMR_GC_CONCURRENT_SCAVENGER */
 	uintptr_t scavengerFailedTenureThreshold;
 	uintptr_t maxScavengeBeforeGlobal;
@@ -769,6 +774,7 @@ public:
 	uintptr_t lastGCFreeBytes;  /**< records the free memory size from last Global GC cycle */
 	bool gcOnIdle; /**< Enables releasing free heap pages if true while systemGarbageCollect invoked with IDLE GC code, default is false */
 	bool compactOnIdle; /**< Forces compaction if global GC executed while VM Runtime State set to IDLE, default is false */
+	float gcOnIdleCompactThreshold; /**< Enables compaction when fragmented memory and dark matter exceed this limit. The larger this number, the more memory can be fragmented before compact is triggered **/
 #endif
 
 #if defined(OMR_VALGRIND_MEMCHECK)
@@ -820,6 +826,10 @@ public:
 	 */
 	MMINLINE OMR::GC::Forge* getForge() { return &_forge; }
 
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
 	MMINLINE bool compressObjectReferences() {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 #if defined(OMR_GC_FULL_POINTERS)
@@ -1124,6 +1134,11 @@ public:
 		return objectModel.getObjectAlignmentInBytes();
 	}
 
+	MMINLINE float
+	getDarkMatterCompactThreshold() {
+		return darkMatterCompactThreshold;
+	}
+
 	/**
 	 * Set Tenure address range
 	 * @param base low address of Old subspace range
@@ -1375,6 +1390,7 @@ public:
 		, heapAlignment(HEAP_ALIGNMENT)
 		, absoluteMinimumOldSubSpaceSize(MINIMUM_OLD_SPACE_SIZE)
 		, absoluteMinimumNewSubSpaceSize(MINIMUM_NEW_SPACE_SIZE)
+		, darkMatterCompactThreshold((float)0.20)
 		, parSweepChunkSize(0)
 		, heapExpansionMinimumSize(1024 * 1024)
 		, heapExpansionMaximumSize(0)
@@ -1387,7 +1403,8 @@ public:
 		, heapExpansionStabilizationCount(0)
 		, heapContractionStabilizationCount(3)
 		, heapSizeStartupHintConservativeFactor((float)0.7)
-		, heapSizeStartupHintWeightNewValue((float)0.0)		
+		, heapSizeStartupHintWeightNewValue((float)0.8)	
+		, useGCStartupHints(false)	
 		, workpacketCount(0) /* only set if -Xgcworkpackets specified */
 		, packetListSplit(0)
 		, cacheListSplit(0)
@@ -1460,6 +1477,7 @@ public:
 		, concurrentScavengerBackgroundThreads(1)
 		, concurrentScavengerBackgroundThreadsForced(false)
 		, concurrentScavengerSlack(0)
+		, concurrentScavengerAllocDeviationBoost(2.0)
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 		, scavengerFailedTenureThreshold(0)
 		, maxScavengeBeforeGlobal(0)
@@ -1612,11 +1630,7 @@ public:
 		, lowAllocationThreshold(UDATA_MAX)
 		, highAllocationThreshold(UDATA_MAX)
 		, disableInlineCacheForAllocationThreshold(false)
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		, heapCeiling(LOW_MEMORY_HEAP_CEILING) /* By default, compressed pointers builds run in the low 64GiB */
-#else /* OMR_GC_COMPRESSED_POINTERS */
 		, heapCeiling(0) /* default for normal platforms is 0 (i.e. no ceiling) */
-#endif /* OMR_GC_COMPRESSED_POINTERS */
 		, heapInitializationFailureReason(HEAP_INITIALIZATION_FAILURE_REASON_NO_ERROR)
 		, scavengerAlignHotFields(true) /* VM Design 1774: hot field alignment is on by default */
 		, suballocatorInitialSize(SUBALLOCATOR_INITIAL_SIZE) /* default for J9Heap suballocator initial size is 200 MB */
@@ -1707,6 +1721,7 @@ public:
 		, lastGCFreeBytes(0)
 		, gcOnIdle(false)
 		, compactOnIdle(false)
+		, gcOnIdleCompactThreshold((float)0.25)
 #endif /* defined(OMR_GC_IDLE_HEAP_MANAGER) */
 #if defined(OMR_VALGRIND_MEMCHECK)
 		, valgrindMempoolAddr(0)

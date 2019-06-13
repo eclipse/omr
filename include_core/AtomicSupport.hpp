@@ -108,7 +108,7 @@
  * For AIX, dropSMT should drop to LOW(2) and 
  * restoreSMT should raise back to MEDIUM(4)
  */
-#if defined(__xlC__)
+#if defined(__xlC__) && !defined(__GNUC__)
 		inline void __dropSMT() { __ppc_dropSMT(); }
 		inline void __restoreSMT() { __ppc_restoreSMT(); }
 #else
@@ -120,7 +120,7 @@
  * For LINUXPPC, dropSMT should drop to VERY-LOW(1) and 
  * restoreSMT should raise back to MEDIUM-LOW(3)
  */
-#if defined(__xlC__)
+#if defined(__xlC__) && !defined(__GNUC__)
 		inline void __dropSMT() { __ppc_dropSMT(); }
 		inline void __restoreSMT() { __ppc_restoreSMT(); }
 #else
@@ -139,7 +139,7 @@
 #if defined(_MSC_VER)
 		/* use compiler intrinsic */
 #elif defined(LINUXPPC) || defined(AIXPPC)
-#if defined(__xlC__)
+#if defined(__xlC__) && !defined(__GNUC__)
 		/* XL compiler complained about generated assembly, use machine code instead. */
 		inline void __nop() { __ppc_nop(); }
 		inline void __yield() { __ppc_yield(); }
@@ -394,9 +394,12 @@ public:
 		}
 #endif /* defined(ATOMIC_ALLOW_PRE_READ) */
 #if defined(OMRZTPF)
-        cs((cs_t *)&oldValue, (cs_t *)address, (cs_t)newValue);
-        return oldValue;
-#elif defined(__GNUC__) /* defined(OMRZTPF) */ 
+		cs((cs_t *)&oldValue, (cs_t *)address, (cs_t)newValue);
+		return oldValue;
+#elif defined(__xlC__) /* defined(OMRZTPF) */
+		__compare_and_swap((volatile int*)address, (int*)&oldValue, (int)newValue);
+		return oldValue;
+#elif defined(__GNUC__)  /* defined(__xlC__) */
 		/* Assume GCC >= 4.2 */
 		return __sync_val_compare_and_swap(address, oldValue, newValue);
 #elif defined(_MSC_VER) /* defined(__GNUC__) */
@@ -407,10 +410,7 @@ public:
 		/* 390 cs() function defined in <stdlib.h>, doesn't expand properly to __cs1() which correctly deals with aliasing */
 		__cs1((uint32_t *)&old, (uint32_t *)address, (uint32_t *)&newValue);
 		return old;
-#elif defined(__xlC__) /* defined(J9ZOS390) */
-		__compare_and_swap((volatile int*)address, (int*)&oldValue, (int)newValue);
-		return oldValue;
-#else /* defined(__xlC__) */
+#else /* defined(J9ZOS390) */
 #error "lockCompareExchangeU32(): unsupported platform!"
 #endif /* defined(__xlC__) */
 #endif /* defined(ATOMIC_SUPPORT_STUB) */
@@ -453,7 +453,10 @@ public:
 #elif defined(OMRZTPF) /* defined(OMR_ARCH_POWER) && !defined(OMR_ENV_DATA64) */
 		csg((csg_t *)&oldValue, (csg_t *)address, (csg_t)newValue);
 		return oldValue;
-#elif defined(__GNUC__) /* defined(OMRZTPF) */
+#elif defined(__xlC__) /* defined(OMRZTPF) */
+		__compare_and_swaplp((volatile long*)address, (long*)&oldValue, (long)newValue);
+		return oldValue;
+#elif defined(__GNUC__) /* defined(__xlC__) */
 		/* Assume GCC >= 4.2 */
 		return __sync_val_compare_and_swap(address, oldValue, newValue);
 #elif defined(_MSC_VER) /* defined(__GNUC__) */
@@ -470,10 +473,7 @@ public:
 		cds((cds_t*)&old, (cds_t*)address, *(cds_t*)&newValue);
 		return old;
 #endif /* defined(OMR_ENV_DATA64) */
-#elif defined(__xlC__) /* defined(J9ZOS390) */
-		__compare_and_swaplp((volatile long*)address, (long*)&oldValue, (long)newValue);
-		return oldValue;
-#else /* defined(__xlC__) */
+#else /* defined(J9ZOS390) */
 #error "lockCompareExchangeU64(): unsupported platform!"
 #endif /* defined(__xlC__) */
 #endif /* defined(ATOMIC_SUPPORT_STUB) */

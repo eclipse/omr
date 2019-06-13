@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,7 +75,7 @@ TEST(ASTValueTest, CreateValueList) {
     v = v->next;
     ASSERT_EQ(ASTValue::String, v->getType());
     ASSERT_STREQ(stringBaseValue, v->getString());
-    ASSERT_EQ(NULL, v->next);
+    ASSERT_EQ(reinterpret_cast<ASTValue*>(NULL), v->next);
 }
 
 /*
@@ -190,7 +190,7 @@ TEST(ASTNodeArgumentTest, CreateNodeArgumentWithJustInt64Value) {
 
    ASSERT_STREQ(NULL, arg->getName());
    ASSERT_EQ(value, arg->getValue());
-   ASSERT_EQ(NULL, arg->next);
+   ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ASTNodeArgumentTest, CreateNodeArgumentWithJustFloat64Value) {
@@ -200,7 +200,7 @@ TEST(ASTNodeArgumentTest, CreateNodeArgumentWithJustFloat64Value) {
 
    ASSERT_STREQ(NULL, arg->getName());
    ASSERT_EQ(value, arg->getValue());
-   ASSERT_EQ(NULL, arg->next);
+   ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ASTNodeArgumentTest, CreateNodeArgumentWithJustStringValue) {
@@ -210,7 +210,7 @@ TEST(ASTNodeArgumentTest, CreateNodeArgumentWithJustStringValue) {
 
    ASSERT_STREQ(NULL, arg->getName());
    ASSERT_EQ(value, arg->getValue());
-   ASSERT_EQ(NULL, arg->next);
+   ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ASTNodeArgumentTest, CreateNodeArgumentWithNameAndInt64Value) {
@@ -221,7 +221,7 @@ TEST(ASTNodeArgumentTest, CreateNodeArgumentWithNameAndInt64Value) {
 
    ASSERT_STREQ(argName, arg->getName());
    ASSERT_EQ(value, arg->getValue());
-   ASSERT_EQ(NULL, arg->next);
+   ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ASTNodeArgumentTest, CreateListFrom2SingleNodeArguments) {
@@ -241,7 +241,7 @@ TEST(ASTNodeArgumentTest, CreateListFrom2SingleNodeArguments) {
 
    ASSERT_STREQ(argName_1, arg_1->getName());
    ASSERT_EQ(value_1, arg_1->getValue());
-   ASSERT_EQ(NULL, arg_1->next);
+   ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg_1->next);
 }
 
 TEST(ASTNodeArgumentTest, Concatenate2SingleNodeArguments) {
@@ -263,7 +263,7 @@ TEST(ASTNodeArgumentTest, Concatenate2SingleNodeArguments) {
 
    ASSERT_STREQ(argName_1, arg_1->getName());
    ASSERT_EQ(value_1, arg_1->getValue());
-   ASSERT_EQ(NULL, arg_1->next);
+   ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg_1->next);
 }
 
 TEST(ASTNodeArgumentTest, CreateListFromListOf2AndSingleArgument) {
@@ -294,7 +294,7 @@ TEST(ASTNodeArgumentTest, CreateListFromListOf2AndSingleArgument) {
 
    ASSERT_STREQ(argName_2, arg_2->getName());
    ASSERT_EQ(value_2, arg_2->getValue());
-   ASSERT_EQ(NULL, arg_2->next);
+   ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg_2->next);
 }
 
 TEST(ASTNodeArgumentTest, CreateListFrom3SingleArguments) {
@@ -326,7 +326,7 @@ TEST(ASTNodeArgumentTest, CreateListFrom3SingleArguments) {
 
    ASSERT_STREQ(argName_2, arg_2->getName());
    ASSERT_EQ(value_2, arg_2->getValue());
-   ASSERT_EQ(NULL, arg_2->next);
+   ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg_2->next);
 }
 
 TEST(ASTNodeArgumentTest, CompareArgumentsWithSelf) {
@@ -390,9 +390,9 @@ TEST(ASTNodeTest, CreateNullNode) {
    auto node = createNode(NULL, NULL, NULL, NULL);
 
    ASSERT_STREQ(NULL, node->getName());
-   ASSERT_EQ(NULL, node->getArgs());
-   ASSERT_EQ(NULL, node->getChildren());
-   ASSERT_EQ(NULL, node->next);
+   ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), node->getArgs());
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node->getChildren());
+   ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), node->next);
 }
 
 TEST(ASTNodeTest, CreateNodeWithJustName) {
@@ -400,9 +400,9 @@ TEST(ASTNodeTest, CreateNodeWithJustName) {
    auto node = createNode(nodeName, NULL, NULL, NULL);
 
    ASSERT_STREQ(nodeName, node->getName());
-   ASSERT_EQ(NULL, node->getArgs());
-   ASSERT_EQ(NULL, node->getChildren());
-   ASSERT_EQ(NULL, node->next);
+   ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), node->getArgs());
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node->getChildren());
+   ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), node->next);
 }
 
 TEST(ASTNodeTest, CreateNodeWithJust1Argument) {
@@ -412,8 +412,8 @@ TEST(ASTNodeTest, CreateNodeWithJust1Argument) {
 
    ASSERT_STREQ(NULL, node->getName());
    ASSERT_EQ(nodeArg, node->getArgs());
-   ASSERT_EQ(NULL, node->getChildren());
-   ASSERT_EQ(NULL, node->next);
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node->getChildren());
+   ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), node->next);
 }
 
 ASTNodeArg* getNodeArgList() {
@@ -436,8 +436,8 @@ TEST(ASTNodeTest, CreateNodeWithJustArgumentList) {
    ASSERT_EQ(argList->next, node->getArgs()->next);
    ASSERT_EQ(argList->next->next, node->getArgs()->next->next);
    ASSERT_EQ(argList->next->next->next, node->getArgs()->next->next->next);
-   ASSERT_EQ(NULL, node->getChildren());
-   ASSERT_EQ(NULL, node->next);
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node->getChildren());
+   ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), node->next);
 }
 
 TEST(ASTNodeTest, CreateListFrom2SingleNodes) {
@@ -452,13 +452,13 @@ TEST(ASTNodeTest, CreateListFrom2SingleNodes) {
 
    ASSERT_STREQ(nodeName_0, node_0->getName());
    ASSERT_EQ(argList_0, node_0->getArgs());
-   ASSERT_EQ(NULL, node_0->getChildren());
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node_0->getChildren());
    ASSERT_EQ(node_1, node_0->next);
 
    ASSERT_STREQ(nodeName_1, node_1->getName());
    ASSERT_EQ(argList_1, node_1->getArgs());
-   ASSERT_EQ(NULL, node_1->getChildren());
-   ASSERT_EQ(NULL, node_1->next);
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node_1->getChildren());
+   ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), node_1->next);
 }
 
 TEST(ASTNodeTest, Concatenate2SingleNodes)  {
@@ -471,13 +471,13 @@ TEST(ASTNodeTest, Concatenate2SingleNodes)  {
 
    ASSERT_STREQ(nodeName_0, node_0->getName());
    ASSERT_EQ(argList_0, node_0->getArgs());
-   ASSERT_EQ(NULL, node_0->getChildren());
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node_0->getChildren());
    ASSERT_EQ(node_1, node_0->next);
 
    ASSERT_STREQ(nodeName_1, node_1->getName());
    ASSERT_EQ(argList_1, node_1->getArgs());
-   ASSERT_EQ(NULL, node_1->getChildren());
-   ASSERT_EQ(NULL, node_1->next);
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node_1->getChildren());
+   ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), node_1->next);
 }
 
 TEST(ASTNodeTest, CreateListFromListOf2AndSingleNode) {
@@ -496,18 +496,18 @@ TEST(ASTNodeTest, CreateListFromListOf2AndSingleNode) {
 
    ASSERT_STREQ(nodeName_0, node_0->getName());
    ASSERT_EQ(argList_0, node_0->getArgs());
-   ASSERT_EQ(NULL, node_0->getChildren());
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node_0->getChildren());
    ASSERT_EQ(node_1, node_0->next);
 
    ASSERT_STREQ(nodeName_1, node_1->getName());
    ASSERT_EQ(argList_1, node_1->getArgs());
-   ASSERT_EQ(NULL, node_1->getChildren());
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node_1->getChildren());
    ASSERT_EQ(node_2, node_1->next);
 
    ASSERT_STREQ(nodeName_2, node_2->getName());
    ASSERT_EQ(argList_2, node_2->getArgs());
-   ASSERT_EQ(NULL, node_2->getChildren());
-   ASSERT_EQ(NULL, node_2->next);
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node_2->getChildren());
+   ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), node_2->next);
 }
 
 TEST(ASTNodeTest, Concatenate3SingleNodes)  {
@@ -525,18 +525,18 @@ TEST(ASTNodeTest, Concatenate3SingleNodes)  {
 
    ASSERT_STREQ(nodeName_0, node_0->getName());
    ASSERT_EQ(argList_0, node_0->getArgs());
-   ASSERT_EQ(NULL, node_0->getChildren());
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node_0->getChildren());
    ASSERT_EQ(node_1, node_0->next);
 
    ASSERT_STREQ(nodeName_1, node_1->getName());
    ASSERT_EQ(argList_1, node_1->getArgs());
-   ASSERT_EQ(NULL, node_1->getChildren());
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node_1->getChildren());
    ASSERT_EQ(node_2, node_1->next);
 
    ASSERT_STREQ(nodeName_2, node_2->getName());
    ASSERT_EQ(argList_2, node_2->getArgs());
-   ASSERT_EQ(NULL, node_2->getChildren());
-   ASSERT_EQ(NULL, node_2->next);
+   ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), node_2->getChildren());
+   ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), node_2->next);
 }
 
 ASTNodeArg* getMixedArgumentList() {

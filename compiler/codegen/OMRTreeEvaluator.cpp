@@ -51,6 +51,249 @@
 #include "infra/TreeServices.hpp"
 #include "ras/Debug.hpp"
 
+TR::Register *
+OMR::TreeEvaluator::brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The direct rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the load operation to the load evaluator.
+   return TR::TreeEvaluator::bloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::brdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The indirect rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node (first child), so we delegate
+   // evaluation to the load evaluator (which will evaluate the first child as well).
+   return TR::TreeEvaluator::bloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The direct rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the load operation to the load evaluator.
+   return TR::TreeEvaluator::sloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::srdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The indirect rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node (first child), so we delegate
+   // evaluation to the load evaluator (which will evaluate the first child as well).
+   return TR::TreeEvaluator::sloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The direct rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the load operation to the load evaluator.
+   return TR::TreeEvaluator::iloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::irdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The indirect rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node (first child), so we delegate
+   // evaluation to the load evaluator (which will evaluate the first child as well).
+   return TR::TreeEvaluator::iloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The direct rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the load operation to the load evaluator.
+   return TR::TreeEvaluator::lloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::lrdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The indirect rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node (first child), so we delegate
+   // evaluation to the load evaluator (which will evaluate the first child as well).
+   return TR::TreeEvaluator::lloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The direct rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the load operation to the load evaluator.
+   return TR::TreeEvaluator::aloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The indirect rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node (first child), so we delegate
+   // evaluation to the load evaluator (which will evaluate the first child as well).
+   return TR::TreeEvaluator::aloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The direct rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the load operation to the load evaluator.
+   return TR::TreeEvaluator::floadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::frdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The indirect rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node (first child), so we delegate
+   // evaluation to the load evaluator (which will evaluate the first child as well).
+   return TR::TreeEvaluator::floadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The direct rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the load operation to the load evaluator.
+   return TR::TreeEvaluator::dloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::drdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The indirect rdbar IL represents a load with side effects.
+   // Currently we don't use the side effect node (first child), so we delegate
+   // evaluation to the load evaluator (which will evaluate the first child as well).
+   return TR::TreeEvaluator::dloadEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::bstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::bwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::bstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::sstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::swrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::sstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::istoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::iwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::istoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::TreeEvaluator::lwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   }
+
 bool OMR::TreeEvaluator::isStaticClassSymRef(TR::SymbolReference * symRef)
    {
    return (symRef && symRef->getSymbol() && symRef->getSymbol()->isStatic() && symRef->getSymbol()->isClassObject());

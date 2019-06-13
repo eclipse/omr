@@ -130,6 +130,7 @@ typedef struct OMRPortLibraryGlobalData {
 #if defined(OMR_OPT_CUDA)
 	J9CudaGlobalData cudaGlobals;
 #endif /* OMR_OPT_CUDA */
+	uintptr_t vmemEnableMadvise;					/* madvise to use Transparent HugePage (THP) for Virtual memory allocated by mmap */
 } OMRPortLibraryGlobalData;
 
 /* J9SourceJ9CPUControl*/

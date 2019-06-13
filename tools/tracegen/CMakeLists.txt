@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,8 +49,12 @@ target_include_directories(trace
 		./
 )
 
-if(OMR_HOST_OS STREQUAL "zos")
-	target_link_libraries(trace j9a2e)
+if(OMR_OS_ZOS)
+	if(OMR_TOOLS_USE_NATIVE_ENCODING)
+		target_link_libraries(trace PUBLIC omr_ebcdic)
+	else()
+		target_link_libraries(trace PUBLIC omr_ascii)
+	endif()
 endif()
 
 set_target_properties(trace tracegen PROPERTIES FOLDER tools)

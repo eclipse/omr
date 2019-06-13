@@ -744,7 +744,6 @@ class TR_LiveVariableInformation
                               TR_Structure *,
                               bool splitLongs = false,
                               bool includeParms = false,
-                              bool includeMethodMetaDataSymbols = false,
                               bool ignoreOSRUses = false);
 
    bool traceLiveVarInfo()           { return _traceLiveVariableInfo; }
@@ -758,7 +757,6 @@ class TR_LiveVariableInformation
    int32_t numLocals()                 { return _numLocals; }
    bool includeParms()                 { return _includeParms; }
    bool splitLongs()                   { return _splitLongs; }
-   bool includeMethodMetaDataSymbols() { return _includeMethodMetaDataSymbols; }
 
    int32_t numNodes()                { return _numNodes; }
 
@@ -790,7 +788,6 @@ class TR_LiveVariableInformation
    TR_Memory *     _trMemory;
    int32_t         _numLocals;
    bool            _includeParms;
-   bool            _includeMethodMetaDataSymbols;
    bool            _splitLongs;
    bool            _traceLiveVariableInfo;
    bool            _ignoreOSRUses;
@@ -824,7 +821,6 @@ class TR_OSRLiveVariableInformation : public TR_LiveVariableInformation
                               TR_Structure *,
                               bool splitLongs = false,
                               bool includeParms = false,
-                              bool includeMethodMetaDataSymbols = false,
                               bool ignoreOSRUses = false);
 
    private:

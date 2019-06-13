@@ -58,7 +58,12 @@ class Monitor
    char const *getName();
    bool init(char *name);
 
+#if defined(J9ZOS390)
+   // xlc cannot handle private delete operator
+   public:
+#else
    private:
+#endif
 
    void *operator new(size_t size);
    void operator delete(void *p);

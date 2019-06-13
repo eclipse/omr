@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -142,15 +142,13 @@ ifeq ($(HOST_ARCH),p)
 endif
 
 ifeq ($(HOST_ARCH),z)
-    ifeq ($(HOST_BITS),32)
-        CX_DEFINES+=J9VM_TIERED_CODE_CACHE MAXMOVE S390 FULL_ANSI
+    ifeq ($(HOST_BITS),64)
+        CX_DEFINES+=S390 FULL_ANSI S39064
+        CX_FLAGS+=-fPIC -fno-strict-aliasing -mtune=z10 -march=z9-109 -mzarch
+    else
+        CX_DEFINES+=S390 FULL_ANSI
         CX_FLAGS+=-m31 -fPIC -fno-strict-aliasing -mtune=z10 -march=z9-109 -mzarch
         CX_FLAGS_DEBUG+=-gdwarf-2
-    endif
-    
-    ifeq ($(HOST_BITS),64)
-        CX_DEFINES+=S390 S39064 FULL_ANSI MAXMOVE J9VM_TIERED_CODE_CACHE
-        CX_FLAGS+=-fPIC -fno-strict-aliasing -mtune=z10 -march=z9-109 -mzarch
     endif
 endif
 
@@ -321,7 +319,7 @@ ifeq ($(HOST_ARCH),z)
     M4_CMD?=$(M4_PATH)
 
     M4_INCLUDES=$(PRODUCT_INCLUDES)
-    M4_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES) J9VM_TIERED_CODE_CACHE
+    M4_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES)
     
     M4_DEFINES+=$(M4_DEFINES_EXTRA)
     M4_FLAGS+=$(M4_FLAGS_EXTRA)

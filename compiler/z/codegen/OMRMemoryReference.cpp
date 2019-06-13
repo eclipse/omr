@@ -1274,7 +1274,7 @@ void ArtificiallyInflateReferenceCountWhenNecessary(TR::MemoryReference * mr, co
             cg->incReferenceCount(nodeArray[i]);
 
             // Reference count is now 2.
-            cg->incRefCountForOpaquePseudoRegister(nodeArray[i], cg, comp);
+            cg->incRefCountForOpaquePseudoRegister(nodeArray[i]);
             }
          else
             {

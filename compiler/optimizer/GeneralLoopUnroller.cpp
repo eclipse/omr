@@ -942,26 +942,12 @@ void TR_LoopUnroller::modifyOriginalLoop(TR_RegionStructure *loop, TR_StructureS
          else
             TR::Node::recreate(branch, TR::ificmpgt);
          }
-      else  if (branch->getOpCodeValue() == TR::ifiucmpne)
-         {
-         if (isIncreasingLoop())
-            TR::Node::recreate(branch, TR::ifiucmplt);
-         else
-            TR::Node::recreate(branch, TR::ifiucmpgt);
-         }
       else if (branch->getOpCodeValue() == TR::iflcmpne)
          {
          if (isIncreasingLoop())
             TR::Node::recreate(branch, TR::iflcmplt);
          else
             TR::Node::recreate(branch, TR::iflcmpgt);
-         }
-      else if (branch->getOpCodeValue() == TR::iflucmpne)
-         {
-         if (isIncreasingLoop())
-            TR::Node::recreate(branch, TR::iflucmplt);
-         else
-            TR::Node::recreate(branch, TR::iflucmpgt);
          }
       }
    else if (_unrollKind == CompleteUnroll) /*GGLU*/

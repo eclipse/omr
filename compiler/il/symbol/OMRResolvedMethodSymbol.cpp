@@ -105,7 +105,6 @@ OMR::ResolvedMethodSymbol::initForCompilation(TR::Compilation *comp)
    self()->getAutomaticList().setRegion(heapRegion);
 
    self()->getVariableSizeSymbolList().setRegion(heapRegion);
-   self()->getTrivialDeadTreeBlocksList().setRegion(heapRegion);
    }
 
 
@@ -127,8 +126,6 @@ OMR::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod * method, TR::
      _automaticList(comp->trMemory()),
      _parameterList(comp->trMemory()),
      _variableSizeSymbolList(comp->trMemory()),
-     _methodMetaDataList(comp->trMemory()),
-     _trivialDeadTreeBlocksList(comp->trMemory()),
      _comp(comp),
      _firstJitTempIndex(-1),
      _cannotAttemptOSR(NULL),
@@ -171,117 +168,19 @@ OMR::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod * method, TR::
          self()->setMethodAddress(_resolvedMethod->startAddressForJittedMethod());
       }
 
-#ifdef J9_PROJECT_SPECIFIC
-   if ((TR::Compiler->target.cpu.getSupportsHardwareRound() &&
-        ((_resolvedMethod->getRecognizedMethod() == TR::java_lang_Math_floor) ||
-         (_resolvedMethod->getRecognizedMethod() == TR::java_lang_StrictMath_floor) ||
-         (_resolvedMethod->getRecognizedMethod() == TR::java_lang_Math_ceil) ||
-         (_resolvedMethod->getRecognizedMethod() == TR::java_lang_StrictMath_ceil))) ||
-       (TR::Compiler->target.cpu.getSupportsHardwareSQRT() &&
-        ((_resolvedMethod->getRecognizedMethod() == TR::java_lang_Math_sqrt) ||
-         (_resolvedMethod->getRecognizedMethod() == TR::java_lang_StrictMath_sqrt))) ||
-       (TR::Compiler->target.cpu.getSupportsHardwareCopySign() &&
-        ((_resolvedMethod->getRecognizedMethod() == TR::java_lang_Math_copySign_F) ||
-         (_resolvedMethod->getRecognizedMethod() == TR::java_lang_Math_copySign_D))))
+   if (!_resolvedMethod->isJNINative())
       {
-      self()->setCanReplaceWithHWInstr(true);
-      }
-
-   if (_resolvedMethod->isJNINative())
-      {
-      self()->setJNI();
-#if defined(TR_TARGET_POWER)
-      switch(_resolvedMethod->getRecognizedMethod())
-         {
-         case TR::java_lang_Math_acos:
-         case TR::java_lang_Math_asin:
-         case TR::java_lang_Math_atan:
-         case TR::java_lang_Math_atan2:
-         case TR::java_lang_Math_cbrt:
-         case TR::java_lang_Math_ceil:
-         case TR::java_lang_Math_copySign_F:
-         case TR::java_lang_Math_copySign_D:
-         case TR::java_lang_Math_cos:
-         case TR::java_lang_Math_cosh:
-         case TR::java_lang_Math_exp:
-         case TR::java_lang_Math_expm1:
-         case TR::java_lang_Math_floor:
-         case TR::java_lang_Math_hypot:
-         case TR::java_lang_Math_IEEEremainder:
-         case TR::java_lang_Math_log:
-         case TR::java_lang_Math_log10:
-         case TR::java_lang_Math_log1p:
-         case TR::java_lang_Math_max_F:
-         case TR::java_lang_Math_max_D:
-         case TR::java_lang_Math_min_F:
-         case TR::java_lang_Math_min_D:
-         case TR::java_lang_Math_nextAfter_F:
-         case TR::java_lang_Math_nextAfter_D:
-         case TR::java_lang_Math_pow:
-         case TR::java_lang_Math_rint:
-         case TR::java_lang_Math_round_F:
-         case TR::java_lang_Math_round_D:
-         case TR::java_lang_Math_scalb_F:
-         case TR::java_lang_Math_scalb_D:
-         case TR::java_lang_Math_sin:
-         case TR::java_lang_Math_sinh:
-         case TR::java_lang_Math_sqrt:
-         case TR::java_lang_Math_tan:
-         case TR::java_lang_Math_tanh:
-         case TR::java_lang_StrictMath_acos:
-         case TR::java_lang_StrictMath_asin:
-         case TR::java_lang_StrictMath_atan:
-         case TR::java_lang_StrictMath_atan2:
-         case TR::java_lang_StrictMath_cbrt:
-         case TR::java_lang_StrictMath_ceil:
-         case TR::java_lang_StrictMath_copySign_F:
-         case TR::java_lang_StrictMath_copySign_D:
-         case TR::java_lang_StrictMath_cos:
-         case TR::java_lang_StrictMath_cosh:
-         case TR::java_lang_StrictMath_exp:
-         case TR::java_lang_StrictMath_expm1:
-         case TR::java_lang_StrictMath_floor:
-         case TR::java_lang_StrictMath_hypot:
-         case TR::java_lang_StrictMath_IEEEremainder:
-         case TR::java_lang_StrictMath_log:
-         case TR::java_lang_StrictMath_log10:
-         case TR::java_lang_StrictMath_log1p:
-         case TR::java_lang_StrictMath_max_F:
-         case TR::java_lang_StrictMath_max_D:
-         case TR::java_lang_StrictMath_min_F:
-         case TR::java_lang_StrictMath_min_D:
-         case TR::java_lang_StrictMath_nextAfter_F:
-         case TR::java_lang_StrictMath_nextAfter_D:
-         case TR::java_lang_StrictMath_pow:
-         case TR::java_lang_StrictMath_rint:
-         case TR::java_lang_StrictMath_round_F:
-         case TR::java_lang_StrictMath_round_D:
-         case TR::java_lang_StrictMath_scalb_F:
-         case TR::java_lang_StrictMath_scalb_D:
-         case TR::java_lang_StrictMath_sin:
-         case TR::java_lang_StrictMath_sinh:
-         case TR::java_lang_StrictMath_sqrt:
-         case TR::java_lang_StrictMath_tan:
-         case TR::java_lang_StrictMath_tanh:
-            setCanDirectNativeCall(true);
-            break;
-         default:
-            break;
-         }
-#endif // TR_TARGET_POWER
-      }
-   else
-#endif // J9_PROJECT_SPECIFIC
       if (_resolvedMethod->isNative())
-      {
-      if (!self()->isInterpreted() && _resolvedMethod->isJITInternalNative())
          {
-         self()->setMethodAddress(_resolvedMethod->startAddressForJITInternalNativeMethod());
-         self()->setJITInternalNative();
-         }
-      else
-         {
-         self()->setVMInternalNative();
+         if (!self()->isInterpreted() && _resolvedMethod->isJITInternalNative())
+            {
+            self()->setMethodAddress(_resolvedMethod->startAddressForJITInternalNativeMethod());
+            self()->setJITInternalNative();
+            }
+         else
+            {
+            self()->setVMInternalNative();
+            }
          }
       }
 
@@ -327,11 +226,6 @@ OMR::ResolvedMethodSymbol::getThisTempForObjectCtorIndex()
    return self()->getFirstJitTempIndex() - delta;
    }
 
-List<TR::ParameterSymbol>&
-OMR::ResolvedMethodSymbol::getLogicalParameterList(TR::Compilation *comp)
-   {
-      return self()->getParameterList();
-   }
 
 template <typename AllocatorType>
 TR::ResolvedMethodSymbol *
@@ -2034,20 +1928,6 @@ OMR::ResolvedMethodSymbol::addVariableSizeSymbol(TR::AutomaticSymbol *s)
       _variableSizeSymbolList.add(s);
    }
 
-void
-OMR::ResolvedMethodSymbol::addMethodMetaDataSymbol(TR::RegisterMappedSymbol *s)
-   {
-   TR_ASSERT(!s || s->isMethodMetaData(), "should be method metadata");
-   if (!_methodMetaDataList.find(s))
-      _methodMetaDataList.add(s);
-   }
-
-void
-OMR::ResolvedMethodSymbol::addTrivialDeadTreeBlock(TR::Block *b)
-   {
-   if (!_trivialDeadTreeBlocksList.find(b))
-      _trivialDeadTreeBlocksList.add(b);
-   }
 
 // get/setTempIndex is called from TR_ResolvedMethod::makeParameterList
 int32_t
@@ -2505,19 +2385,6 @@ OMR::ResolvedMethodSymbol::setUsesSinglePrecisionMode(bool b)
    {
    TR_ASSERT(self()->isJittedMethod(), "Should have been created as a jitted method.");
    _methodFlags.set(SinglePrecisionMode, b);
-   }
-
-bool
-OMR::ResolvedMethodSymbol::isNoTemps()
-   {
-   TR_ASSERT(self()->isJittedMethod(), "Should have been created as a jitted method.");
-   return _methodFlags.testAny(NoTempsSet);
-   }
-void
-OMR::ResolvedMethodSymbol::setNoTemps(bool b)
-   {
-   TR_ASSERT(self()->isJittedMethod(), "Should have been created as a jitted method.");
-   _methodFlags.set(NoTempsSet, b);
    }
 
 /**

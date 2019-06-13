@@ -25,7 +25,7 @@
 
 #if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
-#endif /* defined(J9ZOS390)  && !defined(OMR_EBCDIC) */
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 #include "FileUtils.hpp"
 #include "Port.hpp"

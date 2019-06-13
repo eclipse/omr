@@ -33,7 +33,6 @@
 #include <sys/stat.h>
 #if (HOST_OS == OMR_LINUX)
 #include <sys/prctl.h>
-#include <linux/prctl.h>
 #include <sys/resource.h>
 #endif
 #include <elf.h>

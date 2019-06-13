@@ -31,7 +31,7 @@
 class TR_S390Peephole
    {
 public:
-   TR_S390Peephole(TR::Compilation* comp, TR::CodeGenerator *cg);
+   TR_S390Peephole(TR::Compilation* comp);
 
 protected:
    void printInfo(const char* info)
@@ -68,7 +68,7 @@ protected:
 class TR_S390PreRAPeephole : private TR_S390Peephole
    {
 public:
-   TR_S390PreRAPeephole(TR::Compilation* comp, TR::CodeGenerator *cg);
+   TR_S390PreRAPeephole(TR::Compilation* comp);
 
    void perform();
 
@@ -92,7 +92,7 @@ private:
 class TR_S390PostRAPeephole : private TR_S390Peephole
    {
 public:
-   TR_S390PostRAPeephole(TR::Compilation* , TR::CodeGenerator *);
+   TR_S390PostRAPeephole(TR::Compilation* comp);
 
    void perform();
 

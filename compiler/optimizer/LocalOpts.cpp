@@ -2930,9 +2930,7 @@ int32_t TR_SimplifyAnds::process(TR::TreeTop *startTree, TR::TreeTop *endTree)
             else if (lastSeenAnd && noSideEffectsInBetween &&
                      andNode->getFirstChild()->getReferenceCount() == 1 &&
                      (isAndOfTwoFlags(comp(), andNode, lastRealNode, TR::ificmpeq,  TR::iand) ||
-                      isAndOfTwoFlags(comp(), andNode, lastRealNode, TR::ifiucmpeq, TR::iand) ||
-                      isAndOfTwoFlags(comp(), andNode, lastRealNode, TR::iflcmpeq,  TR::land) ||
-                      isAndOfTwoFlags(comp(), andNode, lastRealNode, TR::iflucmpeq, TR::land)))
+                      isAndOfTwoFlags(comp(), andNode, lastRealNode, TR::iflcmpeq,  TR::land)))
                {
                if (trace())
                    traceMsg(comp(), "Found two iand nodes: %p %p\n", andNode, lastRealNode);

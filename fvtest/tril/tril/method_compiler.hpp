@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,8 +43,8 @@ class MethodCompiler {
          * @param methodNode is the AST node representing the Tril method to be compiled
          */
         explicit MethodCompiler(const ASTNode* methodNode)
-            : _method{methodNode},
-              _entry_point{NULL}
+            : _method(methodNode),
+              _entry_point(NULL)
         {}
 
         virtual ~MethodCompiler() = default;
@@ -77,9 +77,11 @@ class MethodCompiler {
          */
         template <typename T>
         T getEntryPoint() {
+#if !defined(J9ZOS390)
             static_assert( std::is_pointer<T>::value &&
                            std::is_function<typename std::remove_pointer<T>::type>::value,
                           "Attempted to get entry point using a non-function-pointer type.");
+#endif
             return reinterpret_cast<T>(_entry_point);
         }
 

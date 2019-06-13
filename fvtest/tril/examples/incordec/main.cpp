@@ -41,7 +41,7 @@ int main(int argc, char const * const * const argv) {
     printTrees(stdout, trees, 0);
 
     // assume that the file contians a single method and compile it
-    Tril::DefaultCompiler incordecCompiler{trees};
+    Tril::DefaultCompiler incordecCompiler(trees);
     assert(incordecCompiler.compile() == 0);
     auto incordec = incordecCompiler.getEntryPoint<IncOrDecFunction*>();
 

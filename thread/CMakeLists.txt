@@ -136,7 +136,8 @@ endif()
 
 include(exports.cmake)
 
-target_enable_ddr(j9thr_obj "${OMR_DDR_SET}")
+target_enable_ddr(j9thr_obj)
+ddr_set_add_targets(omrddr j9thr_obj)
 
 add_library(j9thrstatic STATIC
 	$<TARGET_OBJECTS:j9thr_obj>

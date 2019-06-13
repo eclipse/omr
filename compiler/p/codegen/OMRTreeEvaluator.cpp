@@ -96,7 +96,6 @@ extern TR::Register *computeCC_compareUnsigned(TR::Node *node,
                                                bool is64BitCompare,
                                                bool needsZeroExtension,
                                                TR::CodeGenerator *cg);
-extern void generateZeroExtendInstruction(TR::Node *node, TR::Register *trgReg, TR::Register *srcReg, int32_t bitsInTarget, TR::CodeGenerator *cg);
 
 #define MAX_PPC_ARRAYCOPY_INLINE 256
 
@@ -869,41 +868,6 @@ TR::Register *OMR::Power::TreeEvaluator::cloadEvaluator(TR::Node *node, TR::Code
 
    tempMR->decNodeReferenceCounts(cg);
    return tempReg;
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::iloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::aloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::bloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::sloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::lloadEvaluator(node, cg);
    }
 
 // iiload handled by iloadEvaluator
@@ -5123,8 +5087,6 @@ TR::Register *inlineLongRotateLeft(TR::Node *node, TR::CodeGenerator *cg)
    return targetRegister;
    }
 
-
-
 TR::Register *OMR::Power::TreeEvaluator::PrefetchEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_ASSERT( node->getNumChildren() == 4, "TR::Prefetch should contain 4 child nodes");
@@ -5532,68 +5494,6 @@ TR::Register *OMR::Power::TreeEvaluator::treetopEvaluator(TR::Node *node, TR::Co
    return tempReg;
    }
 
-TR::Register *addConstantToInteger(TR::Node * node, TR::Register *trgReg, TR::Register *srcReg, int32_t value, TR::CodeGenerator *cg)
-   {
-   intParts localVal(value);
-
-   if (localVal.getValue() >= LOWER_IMMED && localVal.getValue() <= UPPER_IMMED)
-      {
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, trgReg, srcReg, localVal.getValue());
-      }
-   else
-      {
-      int32_t upperLit = localVal.getHighBits();
-      int32_t lowerLit = localVal.getLowBits();
-      if (localVal.getLowSign())
-         {
-         upperLit++;
-         lowerLit += 0xffff0000;
-         }
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, trgReg, srcReg, upperLit);
-      if (lowerLit != 0)
-         {
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, trgReg, trgReg, lowerLit);
-         }
-      }
-   return trgReg;
-   }
-
-
-TR::Register *addConstantToInteger(TR::Node * node, TR::Register *srcReg, int32_t value, TR::CodeGenerator *cg)
-   {
-   TR::Register *trgReg = cg->allocateRegister();
-
-   return addConstantToInteger(node, trgReg, srcReg, value, cg);
-   }
-
-
-TR::Register *addConstantToLong(TR::Node *node, TR::Register *srcReg,
-                                int64_t value, TR::Register *trgReg, TR::CodeGenerator *cg)
-   {
-   if (!trgReg)
-      trgReg = cg->allocateRegister();
-
-   if ((int16_t)value == value)
-      {
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, trgReg, srcReg, value);
-      }
-   // NOTE: the following only works if the second add's immediate is not sign extended
-   else if (((int32_t)value == value) && ((value & 0x8000) == 0))
-      {
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, trgReg, srcReg, value >> 16);
-      if (value & 0xffff)
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, trgReg, trgReg, value);
-      }
-   else
-      {
-      TR::Register *tempReg = cg->allocateRegister();
-      loadConstant(cg, node, value, tempReg);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, trgReg, srcReg, tempReg);
-      cg->stopUsingRegister(tempReg);
-      }
-
-   return trgReg;
-   }
 
 TR::Register *OMR::Power::TreeEvaluator::exceptionRangeFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {

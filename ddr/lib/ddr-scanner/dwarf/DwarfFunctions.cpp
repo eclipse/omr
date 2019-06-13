@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -173,6 +173,18 @@ dwarf_hasattr(Dwarf_Die die, Dwarf_Half attr, Dwarf_Bool *returned_bool, Dwarf_E
 		}
 	}
 	return ret;
+}
+
+int
+dwarf_formblock(Dwarf_Attribute attr, Dwarf_Block **returned_block, Dwarf_Error *error)
+{
+	/* No attributes are generated with block forms on OSX. */
+	if ((NULL == attr) || (NULL == returned_block)) {
+		setError(error, DW_DLE_IA);
+	} else {
+		setError(error, DW_DLE_ATTR_FORM_BAD);
+	}
+	return DW_DLV_ERROR;
 }
 
 int

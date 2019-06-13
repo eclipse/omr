@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,7 @@
 
 %{
     #include "ast.h"
-    #include "tril.scanner.h"
     #include <stdio.h>
-
-    void yyerror(char *);
-    int yylex(void);
-    void set_input_string(const char* in);
-    void end_lexical_scan(void);
 
     static ASTNode* trees;
 %}
@@ -126,6 +120,7 @@ valueList:
             appendSiblingValue($1, $3);
             $$ = $1;
         }
+    ;
 
 value:
     INTEGER
@@ -151,19 +146,25 @@ value:
 
 %%
 
-void yyerror(char *s) {
-    fprintf(stderr, "line %d: %s\n", yylineno, s);
-}
-
 ASTNode* parseFile(FILE* in) {
-    yyin = in;
+    set_input_file(in);
     yyparse();
     return trees;
 }
 
 ASTNode* parseString(const char* in) {
-    set_input_string(in);
-    yyparse();
-    end_lexical_scan();
+    FILE* pf = tmpfile();
+    if (pf != NULL) {
+        if(fputs(in, pf) >= 0) {
+            fflush(pf);
+            fseek(pf, 0, SEEK_SET);
+            parseFile(pf);
+        } else {
+	    fprintf(stderr, "Tril parser error: Could not write to temporary file \n");
+	}
+    } else {
+	    fprintf(stderr, "Tril parser error: Could not create temporary file for writing \n");
+	}
+    fclose(pf);
     return trees;
 }

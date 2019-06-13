@@ -424,7 +424,8 @@ OMR::Z::CodeGenerator::CodeGenerator()
      _previouslyAssignedTo(self()->comp()->allocator("LocalRA")),
      _firstTimeLiveOOLRegisterList(NULL),
      _methodBegin(NULL),
-     _methodEnd(NULL)
+     _methodEnd(NULL),
+     _afterRA(false)
    {
    TR::Compilation *comp = self()->comp();
    _cgFlags = 0;
@@ -2038,14 +2039,14 @@ OMR::Z::CodeGenerator::deleteInst(TR::Instruction* old)
 void
 OMR::Z::CodeGenerator::doPreRAPeephole()
    {
-   TR_S390PreRAPeephole ph(self()->comp(), self());
+   TR_S390PreRAPeephole ph(self()->comp());
    ph.perform();
    }
 
 void
 OMR::Z::CodeGenerator::doPostRAPeephole()
    {
-   TR_S390PostRAPeephole ph(self()->comp(), self());
+   TR_S390PostRAPeephole ph(self()->comp());
    ph.perform();
    }
 
@@ -4419,19 +4420,6 @@ OMR::Z::CodeGenerator::dumpPostGPRegisterAssignment(TR::Instruction * instructio
    }
 #endif
 
-bool
-OMR::Z::CodeGenerator::constLoadNeedsLiteralFromPool(TR::Node *node)
-   {
-   if (node->isClassUnloadingConst() || node->getType().isIntegral() || node->getType().isAddress())
-      {
-      return false;
-      }
-   else
-      {
-      return true;  // Floats/Doubles require literal pool
-      }
-   }
-
 void
 OMR::Z::CodeGenerator::setGlobalStaticBaseRegisterOnFlag()
    {
@@ -4498,23 +4486,6 @@ OMR::Z::CodeGenerator::supportsOnDemandLiteralPool()
       }
    }
 
-/**
- * Check if BNDS check should use a CLFI
- */
-bool
-OMR::Z::CodeGenerator::bndsChkNeedsLiteralFromPool(TR::Node *node)
-   {
-   int64_t value=getIntegralValue(node);
-
-   if (value <= GE_MAX_IMMEDIATE_VAL && value >= GE_MIN_IMMEDIATE_VAL)
-      {
-      return false;
-      }
-   else
-      {
-      return true;
-      }
-   }
 TR::Register *
 OMR::Z::CodeGenerator::evaluateLengthMinusOneForMemoryOps(TR::Node *node, bool clobberEvaluate, bool &lenMinusOne)
    {

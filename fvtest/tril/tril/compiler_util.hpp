@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ static TR::DataTypes getTRDataTypes(const std::string& name) {
    else if (name == "VectorDouble") return TR::VectorDouble;
    else if (name == "NoType") return TR::NoType;
    else {
-      throw std::runtime_error{static_cast<const std::string&>(std::string{"Unknown type name: "}.append(name))};
+      throw std::runtime_error(static_cast<const std::string&>(std::string("Unknown type name: ").append(name)));
    }
 }
 

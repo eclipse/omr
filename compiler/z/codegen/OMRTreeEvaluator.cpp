@@ -850,13 +850,9 @@ generateS390ImmOp(TR::CodeGenerator * cg,  TR::InstOpCode::Mnemonic memOp, TR::N
                else
                   {
                   // testing register pressure
-                  if (!comp->getJittedMethodSymbol()->isNoTemps())
-                     {
-                     if (!targetRegister)
-                        targetRegister = sourceRegister;
-                     break;
-                     }
-                  constReg = cg->allocateRegister();
+                  if (!targetRegister)
+                     targetRegister = sourceRegister;
+                  break;
                   }
 
                if (cond)
@@ -3865,8 +3861,8 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
           newBranchOpCond = convertComparisonBranchConditionToTestUnderMaskBranchCondition(constNode, fBranchOpCond);
           }
    else if (constNode &&
-         (node->getOpCodeValue()==TR::iflcmpeq || node->getOpCodeValue()==TR::iflucmpeq ||
-          node->getOpCodeValue()==TR::iflcmpne || node->getOpCodeValue()==TR::iflucmpne) &&
+         (node->getOpCodeValue()==TR::iflcmpeq ||
+          node->getOpCodeValue()==TR::iflcmpne) &&
          constNode->getLongInt() == 0 &&
          nonConstNode->getOpCodeValue()==TR::land &&
          nonConstNode->getReferenceCount() == 1 && nonConstNode->getRegister()==NULL &&
@@ -3894,7 +3890,7 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
       else
          generateRIInstruction(cg, TR::InstOpCode::TMHH, node, tempReg, (nonConstNode->getSecondChild()->getLongInt()&0xFFFF000000000000)>>48);
 
-      if (node->getOpCodeValue()==TR::iflcmpne || node->getOpCodeValue()==TR::iflucmpne)
+      if (node->getOpCodeValue()==TR::iflcmpne)
          {
          newBranchOpCond = TR::InstOpCode::COND_MASK7;
          }
@@ -3913,8 +3909,8 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
       cg->decReferenceCount(secondChild);
       }
    else if (constNode &&
-         (node->getOpCodeValue()==TR::ificmpeq || node->getOpCodeValue()==TR::ifiucmpeq ||
-          node->getOpCodeValue()==TR::ificmpne || node->getOpCodeValue()==TR::ifiucmpne) &&
+         (node->getOpCodeValue()==TR::ificmpeq ||
+          node->getOpCodeValue()==TR::ificmpne) &&
          constNode->getInt() == 0 &&
          nonConstNode->getOpCodeValue()==TR::iand &&
          nonConstNode->getReferenceCount() == 1 && nonConstNode->getRegister()==NULL &&
@@ -3935,7 +3931,7 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
       else
           generateRIInstruction(cg, TR::InstOpCode::TMLH, node, tempReg, (nonConstNode->getSecondChild()->getInt()&0xFFFF0000)>>16);
 
-      if (node->getOpCodeValue()==TR::ificmpne || node->getOpCodeValue()==TR::ifiucmpne)
+      if (node->getOpCodeValue()==TR::ificmpne)
          {
          newBranchOpCond = TR::InstOpCode::COND_MASK7;
          }
@@ -5862,12 +5858,6 @@ OMR::Z::TreeEvaluator::aloadEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    }
 
 TR::Register *
-OMR::Z::TreeEvaluator::ardbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   return aloadHelper(node, cg, NULL);
-   }
-
-TR::Register *
 OMR::Z::TreeEvaluator::aiaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Register * targetRegister = cg->allocateRegister();
@@ -6315,6 +6305,78 @@ OMR::Z::TreeEvaluator::bstoreEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    tempMR->stopUsingMemRefRegister(cg);
 
    return NULL;
+   }
+
+TR::Register *
+OMR::Z::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::astoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::Z::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::astoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::Z::TreeEvaluator::fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::fstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::Z::TreeEvaluator::fwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::fstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::Z::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::dstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::Z::TreeEvaluator::dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::dstoreEvaluator(node, cg);
    }
 
 /**
@@ -12822,8 +12884,8 @@ TR::InstOpCode::S390BranchCondition getButestBranchCondition(TR::ILOpCodes opCod
    TR_ASSERT(cmpValue >= 0 && cmpValue <= 3, "Unexpected butest cc test value %d\n", cmpValue);
    switch(opCode)
          {
-         case TR::ifiucmpeq: case TR::ificmpeq: rowNum = 0; break;
-         case TR::ifiucmpne: case TR::ificmpne: rowNum = 1; break;
+         case TR::ificmpeq: rowNum = 0; break;
+         case TR::ificmpne: rowNum = 1; break;
          case TR::ifiucmpgt: rowNum = 2; break;
          case TR::ifiucmpge: rowNum = 3; break;
          case TR::ifiucmplt: rowNum = 4; break;

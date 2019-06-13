@@ -1824,7 +1824,7 @@ MM_ConcurrentGC::potentialFreeSpace(MM_EnvironmentBase *env, MM_AllocateDescript
 		MM_ScavengerStats *scavengerStats = &_extensions->scavengerStats;
 
 		/* Have we done at least 1 scavenge ? If not no statistics available so return high values */
-		if (0 == scavengerStats->_gcCount) {
+		if (!scavengerStats->isAvailable(env)) {
 			return (uintptr_t)-1;
 		}
 #if defined(OMR_GC_LARGE_OBJECT_AREA)

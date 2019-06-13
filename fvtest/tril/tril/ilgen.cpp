@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,6 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 
-#include <unordered_map>
 #include <string>
 
 #define TraceEnabled    (comp()->getOption(TR_TraceILGen))
@@ -38,15 +37,15 @@
  */
 class OpCodeTable : public TR::ILOpCode {
    public:
-      explicit OpCodeTable(TR::ILOpCodes opcode) : TR::ILOpCode{opcode} {}
-      explicit OpCodeTable(const std::string& name) : TR::ILOpCode{getOpCodeFromName(name)} {}
+      explicit OpCodeTable(TR::ILOpCodes opcode) : TR::ILOpCode(opcode) {}
+      explicit OpCodeTable(const std::string& name) : TR::ILOpCode(getOpCodeFromName(name)) {}
 
       /**
        * @brief Given an opcode name, returns the corresponding TR::OpCodes value
        */
       static TR::ILOpCodes getOpCodeFromName(const std::string& name) {
          auto opcode = _opcodeNameMap.find(name);
-         if (opcode == _opcodeNameMap.cend()) {
+         if (opcode == _opcodeNameMap.end()) {
             for (int i = TR::FirstOMROp; i< TR::NumIlOps; i++) {
                const auto p_opCode = static_cast<TR::ILOpCodes>(i);
                const auto& p = TR::ILOpCode::_opCodeProperties[p_opCode];
@@ -63,10 +62,10 @@ class OpCodeTable : public TR::ILOpCode {
       }
 
    private:
-      static std::unordered_map<std::string, TR::ILOpCodes> _opcodeNameMap;
+      static std::map<std::string, TR::ILOpCodes> _opcodeNameMap;
 };
 
-std::unordered_map<std::string, TR::ILOpCodes> OpCodeTable::_opcodeNameMap;
+std::map<std::string, TR::ILOpCodes> OpCodeTable::_opcodeNameMap;
 
 
 
@@ -119,7 +118,7 @@ TR::Node* Tril::TRLangBuilder::toTRNode(const ASTNode* const tree) {
          }
      }
 
-     auto opcode = OpCodeTable{tree->getName()};
+     auto opcode = OpCodeTable(tree->getName());
 
      TraceIL("Creating %s from ASTNode %p\n", opcode.getName(), tree);
      if (opcode.isLoadConst()) {
@@ -278,9 +277,9 @@ TR::Node* Tril::TRLangBuilder::toTRNode(const ASTNode* const tree) {
          */
         const auto argList = parseArgTypes(tree); 
 
-        auto argIlTypes = std::vector<TR::IlType*>{argList.size()};
+        auto argIlTypes = std::vector<TR::IlType*>(argList.size());
         auto output = argIlTypes.begin(); 
-        for (auto iter = argList.cbegin(); iter != argList.cend(); iter++, output++) {
+        for (auto iter = argList.begin(); iter != argList.end(); iter++, output++) {
            *output = _types.PrimitiveType(*iter); 
         }
 
@@ -290,7 +289,7 @@ TR::Node* Tril::TRLangBuilder::toTRNode(const ASTNode* const tree) {
                                                                                           "line",
                                                                                           "name",
                                                                                           argIlTypes.size(),
-                                                                                          argIlTypes.data(),
+                                                                                          &argIlTypes[0],
                                                                                           returnIlType,
                                                                                           targetAddress,
                                                                                           0);
@@ -365,7 +364,7 @@ bool Tril::TRLangBuilder::cfgFor(const ASTNode* const tree) {
        t = t->next;
    }
 
-   auto opcode = OpCodeTable{tree->getName()};
+   auto opcode = OpCodeTable(tree->getName());
 
    if (opcode.isReturn()) {
        cfg()->addEdge(_currentBlock, cfg()->getEnd());
@@ -461,7 +460,7 @@ bool Tril::TRLangBuilder::injectIL() {
                // do nothing, no fall-throught block specified
            }
            else {
-               auto destBlock = _blockMap.at(target);
+               auto destBlock = _blockMap[target];
                cfg()->addEdge(_currentBlock, _blocks[destBlock]);
                TraceIL("Added fallthrough edge from block %d to block %d \"%s\"\n", _currentBlockNumber, destBlock, target.c_str());
            }

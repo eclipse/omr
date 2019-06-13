@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,13 +52,19 @@ omrget_jobname(struct OMRPortLibrary *portLibrary, char *jobname, uintptr_t leng
 	if (tmp_jobname) {
 		memset(tmp_jobname, '\0', J9_MAX_JOBNAME);
 		_JOBNAME(tmp_jobname);  /* requires <31bit address */
+#if !defined(OMR_EBCDIC)
 		ascname = e2a_func(tmp_jobname, strlen(tmp_jobname));
+#else /* !defined(OMR_EBCDIC) */
+		ascname = tmp_jobname;
+#endif /* !defined(OMR_EBCDIC) */
 
 		if (ascname) {
 			width = strcspn(ascname, " ");
 			strncpy(jobname, ascname, width);
 			jobname[width] = '\0';
+#if !defined(OMR_EBCDIC)
 			free(ascname);
+#endif /* !defined(OMR_EBCDIC) */
 		}
 		free(tmp_jobname);
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,9 +21,7 @@
 
 #include "ddr/scanner/Scanner.hpp"
 
-#include <fstream>
-#include <iostream>
-#include <stdio.h>
+#include "ddr/ir/TextFile.hpp"
 
 static bool
 stringMatches(const char *candidate, const char *pattern)
@@ -104,7 +102,7 @@ Scanner::checkBlacklistedFile(const string &name) const
 }
 
 DDR_RC
-Scanner::loadBlacklist(const char *path)
+Scanner::loadBlacklist(OMRPortLibrary *portLibrary, const char *path)
 {
 	/* Load the blacklist file. The blacklist contains a list of types
 	 * to ignore and not add to the IR, such as system types.
@@ -112,18 +110,18 @@ Scanner::loadBlacklist(const char *path)
 	DDR_RC rc = DDR_RC_OK;
 
 	if (NULL != path) {
-		std::ifstream blackListInput(path, std::ios::in);
+		TextFile blackListInput(portLibrary);
 
-		if (!blackListInput.is_open()) {
-			ERRMSG("Could not open %s", path);
+		if (!blackListInput.openRead(path)) {
+			ERRMSG("cannot open blacklist file %s", path);
 			rc = DDR_RC_ERROR;
 		} else {
 			string line;
 
-			while (getline(blackListInput, line)) {
-				size_t end = line.find_last_not_of("\r\n");
+			while (blackListInput.readLine(line)) {
+				size_t end = line.length();
 
-				if ((string::npos == end) || (end < 5)) {
+				if (end <= 5) {
 					continue;
 				}
 
@@ -136,6 +134,7 @@ Scanner::loadBlacklist(const char *path)
 					_blacklistedTypes.insert(pattern);
 				}
 			}
+
 			blackListInput.close();
 		}
 	}

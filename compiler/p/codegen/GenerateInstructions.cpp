@@ -675,3 +675,41 @@ int estimateLikeliness(TR::CodeGenerator *cg, TR::Node *n)
       }
    return 0;
    }
+
+void generateZeroExtendInstruction(TR::Node *node,
+                                   TR::Register *trgReg,
+                                   TR::Register *srcReg,
+                                   int32_t bitsInTarget,
+                                   TR::CodeGenerator *cg)
+   {
+   TR_ASSERT((TR::Compiler->target.is64Bit() && bitsInTarget > 0 && bitsInTarget < 64) ||
+          (TR::Compiler->target.is32Bit() && bitsInTarget > 0 && bitsInTarget < 32),
+          "invalid zero extension requested");
+   int64_t mask = (uint64_t)(CONSTANT64(0xffffFFFFffffFFFF)) >> (64 - bitsInTarget);
+   generateTrg1Src1Imm2Instruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::rldicl : TR::InstOpCode::rlwinm, node, trgReg, srcReg, 0, mask);
+   }
+
+void generateSignExtendInstruction(TR::Node *node,
+                                   TR::Register *trgReg,
+                                   TR::Register *srcReg,
+                                   TR::CodeGenerator *cg)
+   {
+   int32_t operandSize = node->getOpCode().getSize();
+   TR::InstOpCode::Mnemonic signExtendOp = TR::InstOpCode::bad;
+   switch (operandSize)
+      {
+      case 0x1:
+         signExtendOp = TR::InstOpCode::extsb;
+         break;
+      case 0x2:
+         signExtendOp = TR::InstOpCode::extsh;
+         break;
+      case 0x4:
+         signExtendOp = TR::InstOpCode::extsw;
+         break;
+      default:
+         TR_ASSERT(0,"unexpected operand size %d\n",operandSize);
+         break;
+      }
+   generateTrg1Src1Instruction(cg, signExtendOp, node, trgReg, srcReg);
+   }

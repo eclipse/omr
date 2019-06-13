@@ -29,8 +29,13 @@
 #if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
 
 /* defining _GNU_SOURCE allows the use of dladdr() in dlfcn.h */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+
 #elif (HOST_OS == OMR_OSX)
+
+#endif
+
 #define _XOPEN_SOURCE
 #endif /* (HOST_OS == OMR_LINUX)  && !defined(OMRZTPF) */
 

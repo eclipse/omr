@@ -647,7 +647,7 @@ TR_ArrayLoop::checkLoopCmp(TR::Node * loopCmpNode, TR::Node * indVarStoreNode, T
    // if the comparison to leave the loop is equality, add (subtract) one to ind var
    // on exit
    if (compareOp == TR::ificmpeq || compareOp == TR::ificmpge || compareOp == TR::ificmple ||
-       compareOp == TR::ifiucmpeq || compareOp == TR::ifiucmpge || compareOp == TR::ifiucmple)
+       compareOp == TR::ifiucmpge || compareOp == TR::ifiucmple)
       {
       _addInc = true;
       }
@@ -1924,8 +1924,6 @@ TR_LoopReducer::convertIf(TR::ILOpCodes ifCmp)
          return TR::bcmpeq;
       case TR::ifscmpeq:
          return TR::scmpeq;
-      case TR::ifsucmpeq:
-         return TR::sucmpeq;
       case TR::ificmpeq:
          return TR::icmpeq;
       case TR::iflcmpeq:
@@ -1996,13 +1994,6 @@ TR_LoopReducer::generateArraycmp(TR_RegionStructure * whileLoop, TR_InductionVar
    if (!comp()->cg()->getSupportsArrayCmp())
       {
       dumpOptDetails(comp(), "arraycmp not enabled for this platform\n");
-      return false;
-      }
-
-   if (comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-       comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "arraycmp not safe to perform when NOTEMPS enabled\n");
       return false;
       }
 
@@ -2614,13 +2605,6 @@ TR_LoopReducer::generateArraytranslate(TR_RegionStructure * whileLoop, TR_Induct
    //   <termination value>
    //
    //BBEnd <load/store-char>
-
-   if (comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-       comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "arraytranslate not safe to perform when NOTEMPS enabled\n");
-      return false;
-      }
 
    if (!cg()->getSupportsArrayTranslateTRxx())
       {
@@ -3754,13 +3738,6 @@ TR_LoopReducer::generateArraytranslateAndTest(TR_RegionStructure * whileLoop, TR
 bool
 TR_LoopReducer::generateByteToCharArraycopy(TR_InductionVariable * byteIndVar, TR_InductionVariable * charIndVar, TR::Block * loopHeader)
    {
-   if (comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-       comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "arraytranslate not safe to perform when NOTEMPS enabled\n");
-      return false;
-      }
-
    if (!comp()->cg()->getSupportsReferenceArrayCopy() && !comp()->cg()->getSupportsPrimitiveArrayCopy())
       {
       dumpOptDetails(comp(), "arraycopy not enabled for this platform\n");
@@ -4001,13 +3978,6 @@ TR_LoopReducer::generateByteToCharArraycopy(TR_InductionVariable * byteIndVar, T
 bool
 TR_LoopReducer::generateCharToByteArraycopy(TR_InductionVariable * byteIndVar, TR_InductionVariable * charIndVar, TR::Block * loopHeader)
    {
-   if (comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-         comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "arraytranslate not safe to perform when NOTEMPS enabled\n");
-      return false;
-      }
-
    if (!comp()->cg()->getSupportsReferenceArrayCopy() && !comp()->cg()->getSupportsPrimitiveArrayCopy())
       {
       dumpOptDetails(comp(), "arraycopy not enabled for this platform\n");

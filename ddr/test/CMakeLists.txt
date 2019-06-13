@@ -30,8 +30,6 @@ add_executable(ddrgentest
     test.cpp
 )
 
-make_ddr_set(testset)
-target_enable_ddr(ddrgentest testset)
-
-file(GLOB_RECURSE headerfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h(pp)?")
-set_property(TARGET ddrgentest PROPERTY DDR_HEADERS ${headerfiles})
+make_ddr_set(ddr_testset)
+target_enable_ddr(ddrgentest GLOB_HEADERS_RECURSIVE)
+ddr_set_add_targets(ddr_testset ddrgentest)

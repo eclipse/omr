@@ -404,18 +404,6 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
 
    virtual TR::Register *buildIndirectDispatch(TR::Node *callNode) = 0;
 
-   // Given an offset (generally into a stack frame) of the slot used
-   // to hold a parameter, compute the offset of the data itself.
-   // (in the case of 32-bit slots, the offset will be 3 for a char,
-   // 2 for a short, 0 for an int.)
-   //
-   virtual uintptr_t calculateActualParameterOffset(uintptr_t o, TR::ParameterSymbol& p) { return o; }
-
-   // And the reverse...Once paramaters are mapped, where do I store the
-   // actual full-sized register
-   //
-   virtual uintptr_t calculateParameterRegisterOffset(uintptr_t o, TR::ParameterSymbol& p) { return o; }
-
    TR_ReturnInfo getReturnInfoFromReturnType(TR::DataType);
    };
 }

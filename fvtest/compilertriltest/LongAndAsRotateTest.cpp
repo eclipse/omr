@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,7 +127,7 @@ TEST_P(i2lLongAndAsRotateTest, SimpleTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -168,7 +168,7 @@ TEST_P(i2lLongAndAsRotateTest, iConstTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -216,7 +216,7 @@ TEST_P(i2lLongAndAsRotateTest, GreaterThanOneRefCount1)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -276,7 +276,7 @@ TEST_P(i2lLongAndAsRotateTest, GreaterThanOneRefCount2)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -308,7 +308,7 @@ TEST_P(iu2lLongAndAsRotateTest, SimpleTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -349,7 +349,7 @@ TEST_P(iu2lLongAndAsRotateTest, iConstTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -396,7 +396,7 @@ TEST_P(iu2lLongAndAsRotateTest, GreaterThanOneRefCount1)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -455,7 +455,7 @@ TEST_P(iu2lLongAndAsRotateTest, GreaterThanOneRefCount2)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 

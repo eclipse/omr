@@ -47,12 +47,11 @@ namespace TR { class SymbolReference; }
 namespace TR { class TreeTop; }
 
 // Store Sinking
-// There are two implementations: TR_TrivialSinkStores and TR_GeneralSinkStores
 
 class TR_LiveOnNotAllPaths
    {
    public:
-   
+
    static void *operator new(size_t size, TR::Allocator a)
       { return a.allocate(size); }
    static void  operator delete(void *ptr, TR::Allocator a)
@@ -67,7 +66,7 @@ class TR_LiveOnNotAllPaths
     * See "Modern C++ Design" section 4.7
     */
    virtual ~TR_LiveOnNotAllPaths() {}
-  
+
    TR_LiveOnNotAllPaths(TR::Compilation *comp, TR_Liveness *liveOnSomePaths, TR_LiveOnAllPaths *liveOnAllPaths);
 
    TR::Compilation *   comp()          { return _comp; }
@@ -192,19 +191,6 @@ class TR_MovableStore
    TR_BitVector *_needTempForCommonedLoads; // move stores with commoned load
    bool          _isLoadStatic;             // is this a store of a static load?
 
-   // enablePreciseSymbolTracking() uses the data and routines below
-   List<TR_CommonedLoad> *_commonedLoadsList;
-   int32_t _commonedLoadsCount;
-   int32_t _satisfiedCommonedLoadsCount;
-   int32_t initCommonedLoadsList(TR::Node *node, vcount_t visitCount);
-   bool satisfyCommonedLoad(TR::Node *node);
-   bool containsCommonedLoad(TR::Node *node);
-   bool containsSatisfiedAndNotKilledCommonedLoad(TR::Node *node);
-   bool containsKilledCommonedLoad(TR::Node *node);
-   TR_CommonedLoad *getCommonedLoad(TR::Node *node);
-   bool areAllCommonedLoadsSatisfied();
-   bool containsUnsatisfedLoadFromSymbol(int32_t symIdx);
-   bool killCommonedLoadFromSymbol(int32_t symIdx);
    };
 
 class TR_SideExitStorePlacement
@@ -337,9 +323,6 @@ class TR_SinkStores : public TR::Optimization
    bool usesDataFlowAnalysis()          {return _storeSinkingFlags.testAny(UsesDataFlowAnalysis);}
    void setUsesDataFlowAnalysis(bool b) {_storeSinkingFlags.set(UsesDataFlowAnalysis, b);}
 
-   bool sinkMethodMetaDataStores()          {return _storeSinkingFlags.testAny(SinkMethodMetaDataStores);}
-   void setSinkMethodMetaDataStores(bool b) {_storeSinkingFlags.set(SinkMethodMetaDataStores, b);}
-
    bool sinkStoresWithIndirectLoads()          {return _storeSinkingFlags.testAny(SinkStoresWithIndirectLoads);}
    void setSinkStoresWithIndirectLoads(bool b) {_storeSinkingFlags.set(SinkStoresWithIndirectLoads, b);}
 
@@ -350,8 +333,6 @@ class TR_SinkStores : public TR::Optimization
    void setSinkStoresWithStaticLoads(bool b) {_storeSinkingFlags.set(SinkStoresWithStaticLoads, b);}
 
    TR::RegisterMappedSymbol *getSinkableSymbol(TR::Node *node);
-
-   bool enablePreciseSymbolTracking();
 
    private:
    virtual bool storeIsSinkingCandidate(TR::Block *block,
@@ -454,12 +435,6 @@ class TR_SinkStores : public TR::Optimization
                                                       TR::Node *store,
                                                       List<TR_MovableStore> &potentiallyMovableStores);
 
-   void searchAndMarkFirstUses(TR::Node *node,
-                               TR::TreeTop *tt,
-                               TR_MovableStore *movableStore,
-                               TR::Block *currentBlock,
-                               TR_BitVector *firstRefsOfCommonedSymbolsForThisStore);
-
    // Data needed to sink stores that have indirect loads underneath
    TR_HashTab                       *_indirectLoadAnchorMap;
    TR_HashTab                       *_firstUseOfLoadMap;
@@ -475,7 +450,7 @@ class TR_SinkStores : public TR::Optimization
    enum
       {
       UsesDataFlowAnalysis                     = 0x0001,
-      SinkMethodMetaDataStores                 = 0x0002,
+      // AVAILABLE                             = 0x0002,
       SinkStoresWithIndirectLoads              = 0x0004,
       ExceptionFlagIsSticky                    = 0x0008,
       SinkStoresWithStaticLoads                = 0x0010,
@@ -514,42 +489,6 @@ class TR_GeneralSinkStores : public TR_SinkStores
                                         vcount_t &treeVisitCount,
                                         vcount_t &highVisitCount);
    virtual bool sinkStorePlacement(TR_MovableStore *store, bool nextStoreWasMoved);
-   };
-
-class TR_TrivialSinkStores : public TR_SinkStores
-   {
-   public:
-   // performs store sinking without using dataflow analysis by pushing stores as far
-   // down fall through path as possible and replicating on side exits
-   //
-   TR_TrivialSinkStores(TR::OptimizationManager *manager);
-   static TR::Optimization *create(TR::OptimizationManager *manager)
-      {
-      return new (manager->allocator()) TR_TrivialSinkStores(manager);
-      }
-
-   virtual int32_t perform();
-   virtual const char * optDetailString() const throw();
-
-   private:
-   TR::TreeTop *genSideExitTree(TR::TreeTop *store, TR::Block *exitBlock, bool isFirstGen);
-   virtual bool storeIsSinkingCandidate(TR::Block *block,
-                                        TR::Node *node,
-                                        int32_t symIdx,
-                                        bool sinkIndirectLoads,
-                                        uint32_t &indirectLoadCount,
-                                        int32_t &depth,
-                                        bool &isLoadStatic,
-                                        vcount_t &treeVisitCount,
-                                        vcount_t &highVisitCount);
-   virtual bool storeCanMoveThroughBlock(TR_BitVector *blockKilledSet, TR_BitVector *blockUsedSet, int32_t symIdx);
-   virtual bool sinkStorePlacement(TR_MovableStore *store, bool nextStoreWasMoved);
-   bool passesAnchoringTest(TR_MovableStore *store, bool storeChildIsAnchored, bool nextStoreWasMoved);
-
-   TR::TreeTop *duplicateTreeForSideExit(TR::TreeTop *tree);
-   TR::Node    *duplicateNodeForSideExit(TR::Node *node);
-
-   TR_HashTab * _nodesClonedForSideExitDuplication;
    };
 
 // current call store with commoned load with be moved with temp because current

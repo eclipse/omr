@@ -30,6 +30,7 @@ add_library(omr_ddr_ir
 	Modifiers.cpp
 	NamespaceUDT.cpp
 	Symbol_IR.cpp
+	TextFile.cpp
 	Type.cpp
 	TypedefUDT.cpp
 	UDT.cpp

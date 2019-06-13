@@ -86,6 +86,12 @@ if(OMR_HOST_OS MATCHES "linux|osx")
 endif()
 if(OMR_HOST_OS STREQUAL "zos")
 	target_link_libraries(omrsig PRIVATE j9a2e)
+
+	add_custom_command(TARGET omrsig
+		POST_BUILD
+		COMMAND cp -f libomrsig.x ${CMAKE_BINARY_DIR}/libomrsig.x
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
 endif()
 #TODO ensure we are linking in the same way as source makefile:
 #MODULE_STATIC_LIBS += omrutil
@@ -104,4 +110,5 @@ install(
 	LIBRARY DESTINATION ${OMR_INSTALL_LIB_DIR}/
 )
 
-target_enable_ddr(omrsig "${OMR_DDR_SET}")
+target_enable_ddr(omrsig)
+ddr_set_add_targets(omrddr omrsig)

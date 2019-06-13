@@ -160,7 +160,8 @@ class VirtualMachineRegister : public TR::VirtualMachineState
     */
    virtual void Adjust(TR::IlBuilder *b, TR::IlValue *amount)
       {
-      TR::IlValue *off=b->Mul(amount,
+      TR::IlValue *off=b->Mul(
+                       b->    ConvertTo(_integerTypeForAdjustments, amount),
                        b->    ConstInteger(_integerTypeForAdjustments, _adjustByStep));
       adjust(b, off);
       }
@@ -172,7 +173,7 @@ class VirtualMachineRegister : public TR::VirtualMachineState
     * Adjust() is really a convenience function for the common operation of adding a value to the register. More
     * complicated operations (e.g. multiplying the value) can be built using Load() and Store() if needed.
     */
-   virtual void Adjust(TR::IlBuilder *b, int64_t amount)
+   virtual void Adjust(TR::IlBuilder *b, size_t amount)
       {
       adjust(b, b->ConstInteger(_integerTypeForAdjustments, amount * _adjustByStep));
       }

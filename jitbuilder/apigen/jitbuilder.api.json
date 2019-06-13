@@ -2220,7 +2220,7 @@
                 , "return": "none"
                 , "parms": [
                     {"name":"b","type":"IlBuilder"},
-                    {"name":"amount","type":"int64"}
+                    {"name":"amount","type":"unsignedInteger"}
                     ]
                 },
                 { "name": "Load"

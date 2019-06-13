@@ -385,6 +385,15 @@ j9nls_lookup_message(struct OMRPortLibrary *portLibrary, uintptr_t flags, uint32
 	omrthread_monitor_enter(nls->monitor);
 
 	if (!nls->catalog) {
+		/* Don't load the catalog if VM is running in an
+		 * english locale and there is a default message
+		 */
+		if (NULL != default_string) {
+			if (0 == strcmp(nls->language, "en")) {
+				message = default_string;
+				goto done;
+			}
+		}
 		open_catalog(portLibrary);
 	}
 
@@ -395,7 +404,7 @@ j9nls_lookup_message(struct OMRPortLibrary *portLibrary, uintptr_t flags, uint32
 			message = J9NLS_ERROR_MESSAGE(J9NLS_PORT_NLS_FAILURE, "NLS Failure\n");
 		}
 	}
-
+done:
 	omrthread_monitor_exit(nls->monitor);
 	return message;
 }

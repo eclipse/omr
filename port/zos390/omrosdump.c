@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -259,10 +259,14 @@ tdump_wrapper(struct OMRPortLibrary *portLibrary, char *filename, char *dsnName)
 	/* the filename must be entirely uppercase for IEATDUMP requests */
 	convertToUpper(portLibrary, filename, strlen(filename));
 
+#if !defined(OMR_EBCDIC)
 	/* Convert filename into EBCDIC... */
 	dsnName = a2e_func(filename, strlen(filename) + 1);
 	err = tdump(portLibrary, filename, dsnName, &returnCode, &reasonCode);
 	free(dsnName);
+#else /* !defined(OMR_EBCDIC) */
+	err = tdump(portLibrary, filename, filename, &returnCode, &reasonCode);
+#endif /* !defined(OMR_EBCDIC) */
 
 	if (0 == err) {
 		retVal = returnCode;
@@ -272,10 +276,14 @@ tdump_wrapper(struct OMRPortLibrary *portLibrary, char *filename, char *dsnName)
 			if (filenameSpecified) {
 				portLibrary->nls_printf(portLibrary, J9NLS_WARNING | J9NLS_STDERR, J9NLS_PORT_IEATDUMP_NAME_TOO_LONG);
 				filename[0] = '\0';
+#if !defined(OMR_EBCDIC)
 				/* Convert filename into EBCDIC... */
 				dsnName = a2e_func(filename, strlen(filename) + 1);
 				retVal = tdump_wrapper(portLibrary, filename, dsnName);
 				free(dsnName);
+#else /* !defined(OMR_EBCDIC) */
+				retVal = tdump_wrapper(portLibrary, filename, filename);
+#endif /* !defined(OMR_EBCDIC) */
 			}
 		} else if (0x8 == returnCode && 0x26 == reasonCode) {
 			/* Couldn't allocate data set (disk full) */

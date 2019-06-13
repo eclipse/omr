@@ -53,13 +53,13 @@
    TR::TreeEvaluator::bloadEvaluator,                                  // TR::bloadi
    TR::TreeEvaluator::sloadEvaluator,                                  // TR::sloadi
    TR::TreeEvaluator::lloadEvaluator,                                  // TR::lloadi
-   TR::TreeEvaluator::irdbarEvaluator,                                 // TR::irdbari
-   TR::TreeEvaluator::frdbarEvaluator,                                 // TR::frdbari
-   TR::TreeEvaluator::drdbarEvaluator,                                 // TR::drdbari
-   TR::TreeEvaluator::ardbarEvaluator,                                 // TR::ardbari
-   TR::TreeEvaluator::brdbarEvaluator,                                 // TR::brdbari
-   TR::TreeEvaluator::srdbarEvaluator,                                 // TR::srdbari
-   TR::TreeEvaluator::lrdbarEvaluator,                                 // TR::lrdbari
+   TR::TreeEvaluator::irdbariEvaluator,                                // TR::irdbari
+   TR::TreeEvaluator::frdbariEvaluator,                                // TR::frdbari
+   TR::TreeEvaluator::drdbariEvaluator,                                // TR::drdbari
+   TR::TreeEvaluator::ardbariEvaluator,                                // TR::ardbari
+   TR::TreeEvaluator::brdbariEvaluator,                                // TR::brdbari
+   TR::TreeEvaluator::srdbariEvaluator,                                // TR::srdbari
+   TR::TreeEvaluator::lrdbariEvaluator,                                // TR::lrdbari
    TR::TreeEvaluator::istoreEvaluator,                                 // TR::istore
    TR::TreeEvaluator::lstoreEvaluator,                                 // TR::lstore
    TR::TreeEvaluator::floatingPointStoreEvaluator,                     // TR::fstore
@@ -81,13 +81,13 @@
    TR::TreeEvaluator::bstoreEvaluator,                                 // TR::bstorei
    TR::TreeEvaluator::sstoreEvaluator,                                 // TR::sstorei
    TR::TreeEvaluator::istoreEvaluator,                                 // TR::istorei
-   TR::TreeEvaluator::lwrtbarEvaluator,                                // TR::lwrtbari
-   TR::TreeEvaluator::fwrtbarEvaluator,                                // TR::fwrtbari
-   TR::TreeEvaluator::dwrtbarEvaluator,                                // TR::dwrtbari
-   TR::TreeEvaluator::awrtbarEvaluator,                                // TR::awrtbari
-   TR::TreeEvaluator::bwrtbarEvaluator,                                // TR::bwrtbari
-   TR::TreeEvaluator::swrtbarEvaluator,                                // TR::swrtbari
-   TR::TreeEvaluator::iwrtbarEvaluator,                                // TR::iwrtbari
+   TR::TreeEvaluator::lwrtbariEvaluator,                               // TR::lwrtbari
+   TR::TreeEvaluator::fwrtbariEvaluator,                               // TR::fwrtbari
+   TR::TreeEvaluator::dwrtbariEvaluator,                               // TR::dwrtbari
+   TR::TreeEvaluator::awrtbariEvaluator,                               // TR::awrtbari
+   TR::TreeEvaluator::bwrtbariEvaluator,                               // TR::bwrtbari
+   TR::TreeEvaluator::swrtbariEvaluator,                               // TR::swrtbari
+   TR::TreeEvaluator::iwrtbariEvaluator,                               // TR::iwrtbari
    TR::TreeEvaluator::gotoEvaluator,                                   // TR::Goto
    TR::TreeEvaluator::integerReturnEvaluator,                          // TR::ireturn
    TR::TreeEvaluator::integerPairReturnEvaluator,                      // TR::lreturn
