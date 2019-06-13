@@ -67,7 +67,6 @@ class OMR_EXTENSIBLE RegisterPair : public TR::Register
 
    virtual TR::Register     *getRegister();
    virtual TR::RegisterPair *getRegisterPair();
-   virtual int32_t            FlattenRegisterPairs(TR_Queue<TR::Register> * Pairs);
 
 
    private:

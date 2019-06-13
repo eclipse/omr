@@ -95,25 +95,3 @@ OMR::RegisterPair::getRegisterPair()
    return REGPAIR_THIS;
    }
 
-int32_t
-OMR::RegisterPair::FlattenRegisterPairs(TR_Queue<TR::Register> * Pairs)
-   {
-    //Empty Queue
-     while(Pairs->dequeue());
-
-    int32_t regCount = 0;
-    TR::Register * firstPair = REGPAIR_THIS;
-    Pairs->enqueue(firstPair);
-    regCount++;
-
-      while(Pairs->peek()->getRegisterPair() != NULL){
-         TR::Register * pair  = Pairs->dequeue();
-         regCount--;
-         Pairs->enqueue(pair->getHighOrder());
-         regCount++;
-         Pairs->enqueue(pair->getLowOrder());
-         regCount++;
-      }
-
-    return regCount;
-   }
