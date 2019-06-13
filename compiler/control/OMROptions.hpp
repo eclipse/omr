@@ -1050,13 +1050,6 @@ enum TR_CompilationOptions
    TR_TraceLRAResults                   = 0x00000800,
    // Available                         = 0x00001000,
 
-   // Register ITF tracing option word
-   //
-   TR_TraceRegisterITFBasic             = TR_TraceGRABasic,
-   // Avaialble                         = 0x00008000,
-   TR_TraceRegisterITFBuild             = 0x00010000,
-   // Available                         = 0x00020000,
-   TR_TraceRegisterITFColour            = 0x00040000,
 
    // Register Spill Costs Analysis tracing option word
    //
@@ -1526,7 +1519,6 @@ public:
    bool      getRegisterAssignmentTraceOption(uint32_t mask) {return (_raTrace & mask) != 0;}
    bool      getTraceRAOption(uint32_t mask);
    bool      getTraceLRA(uint32_t mask) { return (_traceLRA & mask) != 0; }
-   bool      getTraceRegisterITF(uint32_t mask) { return (_traceRegisterITF & mask) != 0; }
    bool      getTraceSpillCosts(uint32_t mask) { return (_traceSpillCosts & mask) != 0; }
    bool      getTraceSimplifier(uint32_t mask) { return (_traceSimplifier & mask) != 0; }
    bool      getDebugEnableFlag(uint32_t mask) { return (_debugEnableFlags & mask) != 0; }
@@ -2329,7 +2321,6 @@ protected:
    int32_t                     _addressToEnumerate;   // Addresses enumeration option flags
    int32_t                     _raTrace;              // Register assigner trace flags
    int32_t                     _traceLRA;             // Live Register Analysis trace flags
-   int32_t                     _traceRegisterITF;     // Register ITF trace flags
    int32_t                     _traceILDeadCode;      // Instruction Level Dead Code trace flags
    int32_t                     _traceSpillCosts;      // Register Spill Costs trace flags
    int32_t                     _traceSimplifier;      // Simplifier trace flags

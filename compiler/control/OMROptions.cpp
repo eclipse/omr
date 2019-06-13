@@ -1226,10 +1226,6 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"traceRedundantGotoElimination",    "L\ttrace redundant goto elimination",             TR::Options::traceOptimization, redundantGotoElimination, 0, "P"},
    {"traceRedundantMonitorElimination", "L\ttrace redundant monitor elimination",          TR::Options::traceOptimization, redundantMonitorElimination, 0, "P"},
    {"traceRegDepCopyRemoval",           "L\ttrace register dependency copy removal", TR::Options::traceOptimization, regDepCopyRemoval, 0, "P"},
-   {"traceRegisterITF",                 "L\ttrace register interference graph (basic)",
-        TR::Options::setBitsFromStringSet, offsetof(OMR::Options, _traceRegisterITF), TR_TraceRegisterITFBasic, "F"},
-   {"traceRegisterITF=",                "L{regex}\tlist of additional register interference graph build options: basic, listing, results, build, details, live, colourability",
-        TR::Options::setBitsFromStringSet, offsetof(OMR::Options, _traceRegisterITF), 0, "P"},
    {"traceRegisterPressureDetails",     "L\tinclude extra register pressure annotations in register pressure simulation and tree evaluation traces", SET_OPTION_BIT(TR_TraceRegisterPressureDetails), "P" },
    {"traceRegisterState",               "L\ttrace bit vector denoting assigned registers after register allocation", SET_OPTION_BIT(TR_TraceRegisterState), "P"},
    {"traceRelocatableDataCG",           "L\ttrace relocation data when generating relocatable code", SET_OPTION_BIT(TR_TraceRelocatableDataCG), "P"},
@@ -4630,10 +4626,6 @@ OMR::Options::TR_OptionStringToBit OMR::Options::_optionStringToBitMapping[] = {
 // Live Register Analysis named trace Options
 { "results", TR_TraceLRAResults },
 
-// Register Interference Graph named trace Options
-{ "basic", TR_TraceRegisterITFBasic},
-{ "build", TR_TraceRegisterITFBuild },
-{ "colour", TR_TraceRegisterITFColour },
 
 // Register Spill Costs named trace Options
 { "basic", TR_TraceSpillCostsBasic},
