@@ -689,8 +689,7 @@
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::iusubb
    TR::TreeEvaluator::lsubEvaluator,                    // TR::lusubb
    TR::TreeEvaluator::cmpsetEvaluator,                  // TR::icmpset
-   TR::TreeEvaluator::cmpsetEvaluator,                  // TR::lcmpset
-   TR::TreeEvaluator::badILOpEvaluator,                    // TR::bztestnset
+   TR::TreeEvaluator::cmpsetEvaluator,                  // TR::lcmpset   
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::ibatomicor
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::isatomicor
    TR::TreeEvaluator::badILOpEvaluator,                    // TR::iiatomicor

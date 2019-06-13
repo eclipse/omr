@@ -832,7 +832,6 @@
 
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::icmpset
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::lcmpset
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::btestnset
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::ibatomicor
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::isatomicor
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::iiatomicor

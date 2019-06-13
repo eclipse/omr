@@ -711,7 +711,6 @@ public:
 	static TR::Register *lusubbEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *icmpsetEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *lcmpsetEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-	static TR::Register *bztestnsetEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *ibatomicorEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *isatomicorEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 	static TR::Register *iiatomicorEvaluator(TR::Node *node, TR::CodeGenerator *cg);

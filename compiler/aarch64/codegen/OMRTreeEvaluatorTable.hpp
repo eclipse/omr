@@ -683,7 +683,6 @@
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::lusubbEvaluator ,	// TR::lusubb			// Subtract two longs with borrow
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::icmpsetEvaluator ,	// TR::icmpset			// icmpset(pointer;c;r): compare *pointer with c; if it matches; replace with r.  Returns 0 on match; 1 otherwise
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::lcmpsetEvaluator ,	// TR::lcmpset			// the operation is done atomically - return type is int for both [il]cmpset
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::bztestnsetEvaluator ,	// TR::bztestnset		// bztestnset(pointer;c): atomically sets *pointer to c and returns the original value of *p (represents Test And Set on Z) the atomic ops.. atomically update the symref.  first child is address; second child is the RHS interestingly; these ops act like loads and stores at the same time
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::ibatomicorEvaluator ,	// TR::ibatomicor 
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::isatomicorEvaluator ,	// TR::isatomicor 
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::iiatomicorEvaluator ,	// TR::iiatomicor 

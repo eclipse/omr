@@ -307,8 +307,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *SIMDgetvelemEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *icmpsetEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *bztestnsetEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-
+   
    // VM dependent routines
    static TR::Register *VMmergenewEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static bool VMinlineCallEvaluator(TR::Node *node, bool isIndirect, TR::CodeGenerator *cg);
