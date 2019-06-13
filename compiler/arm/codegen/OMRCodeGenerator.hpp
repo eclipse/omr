@@ -149,7 +149,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR::RealRegister *getMethodMetaDataRegister()                       {return _methodMetaDataRegister;}
    TR::RealRegister *setMethodMetaDataRegister(TR::RealRegister *r) {return (_methodMetaDataRegister = r);}
 
-   void buildRegisterMapForInstruction(TR_GCStackMap *map);
    void apply24BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol *);
    void apply8BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol *);
 

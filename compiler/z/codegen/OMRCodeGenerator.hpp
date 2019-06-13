@@ -382,9 +382,6 @@ public:
    TR::RealRegister *getMethodMetaDataRealRegister();
    TR::RealRegister *getLitPoolRealRegister();
 
-
-   void buildRegisterMapForInstruction(TR_GCStackMap *map);
-
    // BCDCHK node
    TR::Node * _currentCheckNode;
    void setCurrentCheckNodeBeingEvaluated(TR::Node * n) { _currentCheckNode = n; }

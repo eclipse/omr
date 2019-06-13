@@ -199,6 +199,7 @@ OMR::CodeGenerator::CodeGenerator() :
      _codeCache(0),
      _committedToCodeCache(false),
      _codeCacheSwitched(false),
+     _dummyTempStorageRefNode(NULL),
      _blockRegisterPressureCache(NULL),
      _simulatedNodeStates(NULL),
      _availableSpillTemps(getTypedAllocator<TR::SymbolReference*>(TR::comp()->allocator())),
@@ -3217,4 +3218,46 @@ OMR::CodeGenerator::switchCodeCacheTo(TR::CodeCache *newCodeCache)
       newCodeCache->getCCPreLoadedCodeAddress(TR_numCCPreLoadedCode, self());
       }
 
+   }
+
+void
+OMR::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap * map)
+    { 
+#if (HOST_ARCH != ARCH_ARM)
+   TR_InternalPointerMap * internalPtrMap = NULL; 
+   TR::GCStackAtlas *atlas = self()->getStackAtlas(); 
+#endif
+   //
+   // Build the register map
+   //      
+   for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i)
+      {
+      TR::RealRegister * realReg = self()->machine()->getRealRegister((TR::RealRegister::RegNum) i);
+      if (realReg->getHasBeenAssignedInMethod())
+         {
+         TR::Register * virtReg = realReg->getAssignedRegister();
+         if (virtReg)
+            {
+            if (virtReg->containsInternalPointer())
+               {
+               if (!internalPtrMap) 
+                  {
+                  internalPtrMap = new (self()->trHeapMemory()) TR_InternalPointerMap(self()->trMemory());
+                  }
+#if (HOST_ARCH != ARCH_POWER)
+               internalPtrMap->addInternalPointerPair(virtReg->getPinningArrayPointer(), i);
+#else
+	       internalPtrMap->addInternalPointerPair(virtReg->getPinningArrayPointer(), 31 - (i-1));
+#endif
+               atlas->addPinningArrayPtrForInternalPtrReg(virtReg->getPinningArrayPointer());
+               }
+            else if (virtReg->containsCollectedReference())
+               {
+               map->setRegisterBits(self()->registerBitMask(i));
+               }
+            }
+         }
+      }
+
+   map->setInternalPointerMap(internalPtrMap);
    }

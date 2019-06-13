@@ -350,37 +350,6 @@ static uint32_t registerBitMask(int32_t reg)
    return 1 << (reg-1);
    }
 
-void OMR::ARM64::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap *map)
-   {
-   TR_InternalPointerMap * internalPtrMap = NULL;
-   TR::GCStackAtlas *atlas = self()->getStackAtlas();
-   //
-   // Build the register map
-   //
-   for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i)
-      {
-      TR::RealRegister * reg = self()->machine()->getRealRegister((TR::RealRegister::RegNum)i);
-      if (reg->getHasBeenAssignedInMethod())
-         {
-         TR::Register *virtReg = reg->getAssignedRegister();
-         if (virtReg)
-            {
-            if (virtReg->containsInternalPointer())
-               {
-               if (!internalPtrMap)
-                  internalPtrMap = new (self()->trHeapMemory()) TR_InternalPointerMap(self()->trMemory());
-               internalPtrMap->addInternalPointerPair(virtReg->getPinningArrayPointer(), i);
-               atlas->addPinningArrayPtrForInternalPtrReg(virtReg->getPinningArrayPointer());
-               }
-            else if (virtReg->containsCollectedReference())
-               map->setRegisterBits(registerBitMask(i));
-            }
-         }
-      }
-
-   map->setInternalPointerMap(internalPtrMap);
-   }
-
 TR_GlobalRegisterNumber OMR::ARM64::CodeGenerator::pickRegister(TR_RegisterCandidate *regCan,
                                                           TR::Block **barr,
                                                           TR_BitVector &availRegs,

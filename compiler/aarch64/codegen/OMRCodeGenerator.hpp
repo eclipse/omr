@@ -277,12 +277,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
      */
     int64_t getSmallestPosConstThatMustBeMaterialized();
 
-   /**
-    * @brief Builds register map
-    * @param[in] map : GC stack map
-    */
-   void buildRegisterMapForInstruction(TR_GCStackMap *map);
-
    TR_GlobalRegisterNumber _gprLinkageGlobalRegisterNumbers[TR::RealRegister::NumRegisters]; // could be smaller
    TR_GlobalRegisterNumber _fprLinkageGlobalRegisterNumbers[TR::RealRegister::NumRegisters]; // could be smaller
 

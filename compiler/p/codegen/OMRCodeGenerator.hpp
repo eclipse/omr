@@ -236,8 +236,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    TR_PPCScratchRegisterManager* generateScratchRegisterManager(int32_t capacity = 32);
 
-   void buildRegisterMapForInstruction(TR_GCStackMap *map);
-
    int32_t getPreferredLoopUnrollFactor();
 
    bool canTransformUnsafeCopyToArrayCopy() { return true; }

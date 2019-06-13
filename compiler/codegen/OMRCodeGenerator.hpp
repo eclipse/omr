@@ -308,6 +308,12 @@ class OMR_EXTENSIBLE CodeGenerator
    void beginInstructionSelection() {}
    void endInstructionSelection() {}
 
+   /**
+    * @brief Builds register map
+    * @param[in] map : GC stack map
+    */
+   void buildRegisterMapForInstruction(TR_GCStackMap *map);
+
    bool use64BitRegsOn32Bit();
 
 

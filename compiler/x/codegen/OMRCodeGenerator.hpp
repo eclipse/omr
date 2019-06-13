@@ -338,8 +338,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    bool allowGlobalRegisterAcrossBranch(TR_RegisterCandidate *, TR::Node *);
 
-   void buildRegisterMapForInstruction(TR_GCStackMap *map);
-
    bool isReturnInstruction(TR::Instruction *instr);
    bool isBranchInstruction(TR::Instruction *instr);
 
