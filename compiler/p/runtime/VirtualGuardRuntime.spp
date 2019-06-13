@@ -30,7 +30,7 @@
 	.globl	FUNC_LABEL(_patchVirtualGuard)
 	.type	FUNC_LABEL(_patchVirtualGuard), @function
 
-#elif defined(LINUX)
+#elif (HOST_OS == OMR_LINUX)
 	.globl	_patchVirtualGuard
 #endif
 

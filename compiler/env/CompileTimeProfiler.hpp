@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#if defined(LINUX) && !defined(OMRZTPF)
+#if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
 
 #include <sys/wait.h>
 #include <sys/types.h>

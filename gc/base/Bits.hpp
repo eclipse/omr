@@ -120,14 +120,14 @@ public:
 #endif /* !defined(OMR_ENV_DATA64) */
 	}
 
-#if defined(OMR_OS_WINDOWS) && !defined(OMR_ENV_DATA64)
+#if (HOST_OS == OMR_WINDOWS) && !defined(OMR_ENV_DATA64)
 	/**
 	 * Return the number of bits set to 0 before the first bit set to one starting at the lowest
 	 * significant bit.
 	 * @note If the input is 0, the result is undefined.
 	 * @return Number of non-zero bits starting at the lowest significant bit.
 	 */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/* Implicit return in eax, not seen by compiler.  Disable compile warning C4035: no return value */
 #pragma warning(disable:4035)
 	MMINLINE static uintptr_t leadingZeroes(uintptr_t input)
@@ -137,7 +137,7 @@ public:
 		}
 	}
 #pragma warning(default:4035) /* re-enable warning */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	/**
 	 * Return the number of bits set to 0 before the first bit set to one starting at the highest
@@ -145,7 +145,7 @@ public:
 	 * @note If the input is 0, the result is undefined.
 	 * @return Number of non-zero bits starting at the highest significant bit.
 	 */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/* Implicit return in eax, not seen by compiler.  Disable compile warning C4035: no return value */
 #pragma warning(disable:4035)
 	MMINLINE static uintptr_t trailingZeroes(uintptr_t input)
@@ -157,9 +157,9 @@ public:
 		}
 	}
 #pragma warning(default:4035) /* re-enable warning */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
-#elif defined(LINUX) && defined(J9HAMMER)
+#elif (HOST_OS == OMR_LINUX) && defined(J9HAMMER)
 	/**
 	 * Return the number of bits set to 0 before the first bit set to one starting at the lowest
 	 * significant bit.
@@ -191,7 +191,7 @@ public:
 		return result;
 	}
 
-#else /* defined(LINUX) && defined(J9HAMMER) */
+#else /* (HOST_OS == OMR_LINUX) && defined(J9HAMMER) */
 
 
 	/**
@@ -246,7 +246,7 @@ public:
 
 		return J9BITS_BITS_IN_SLOT - 1 - result;
 	}
-#endif /* defined(OMR_OS_WINDOWS) && !defined(OMR_ENV_DATA64) */
+#endif /* (HOST_OS == OMR_WINDOWS) && !defined(OMR_ENV_DATA64) */
 };
 
 #endif /*BITS_HPP_*/

@@ -110,11 +110,11 @@ TEST(RASTraceTest, TraceAgent)
 #endif /* TEST_TRACEAGENT */
 
 	/* Load sampleSubscriber agent */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	agent = omr_agent_create(&testVM.omrVM, "sampleSubscriber=NUL");
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	agent = omr_agent_create(&testVM.omrVM, "sampleSubscriber=/dev/null");
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	ASSERT_FALSE(NULL == agent) << "testAgent: createAgent() sampleSubscriber failed";
 
 	OMRTEST_ASSERT_ERROR_NONE(omr_agent_openLibrary(agent));

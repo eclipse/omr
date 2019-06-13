@@ -140,11 +140,11 @@ waitForTestChildThread(OMR_TI const *ti, OMR_VM *testVM, omrthread_t childThead,
 	 * Sleep for 0.2 sec to avoid unloading the agent library before the child thread has completed.
 	 * For more detail, please see JAZZ103 74016
 	 */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	Sleep(200);
 #else
 	usleep(200000);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	return childRc;
 }

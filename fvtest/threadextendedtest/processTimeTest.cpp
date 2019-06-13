@@ -37,11 +37,11 @@ systemTimeCpuBurn(void)
 	FILE * tempFile = NULL;
 
 	for (j = 0; j < 100; j++) {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 		tempFile = fopen("nul", "w");
 #else
 		tempFile = fopen("/dev/null", "w");
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 		fwrite("garbage", 1, sizeof("garbage"), tempFile);
 		fclose(tempFile);
 	}

@@ -110,7 +110,7 @@
  */
 #if defined(AIXPPC) || defined(LINUXPPC)
 #define CACHE_LINE_SIZE 128
-#elif defined(J9ZOS390) || (defined(LINUX) && defined(S390))
+#elif defined(J9ZOS390) || ((HOST_OS == OMR_LINUX) && defined(S390))
 #define CACHE_LINE_SIZE 256
 #else
 #define CACHE_LINE_SIZE 64

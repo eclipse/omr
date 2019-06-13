@@ -2655,7 +2655,7 @@ OMR::Options::jitPreProcess()
    #endif
 
    #if defined(TR_TARGET_32BIT) && defined(PROD_WITH_ASSUMES)
-      #if defined(LINUX)
+      #if (HOST_OS == OMR_LINUX)
          #if defined(S390)
             _userSpaceVirtualMemoryMB = 2048; // 2 GB = 2048 MB
          #else
@@ -2663,8 +2663,8 @@ OMR::Options::jitPreProcess()
          #endif //#if defined(S390)
       #elif defined(J9ZOS390)
          _userSpaceVirtualMemoryMB = -1; // Compute userspace dynamically on z/OS
-      #endif //#if defined(LINUX)
-   #elif !defined(OMR_OS_WINDOWS)
+      #endif //#if (HOST_OS == OMR_LINUX)
+   #elif !(HOST_OS == OMR_WINDOWS)
       _userSpaceVirtualMemoryMB = 0; // Disabled for 64 bit or non-windows production
    #endif //#if defined(TR_TARGET_32BIT) && defined(PROD_WITH_ASSUMES)
 

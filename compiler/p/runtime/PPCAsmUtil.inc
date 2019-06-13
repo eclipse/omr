@@ -79,7 +79,7 @@
 
 	.globl FUNC_LABEL(jitPPCDataCacheBlockZero)
 	.type  FUNC_LABEL(jitPPCDataCacheBlockZero),@function
-#elif defined(LINUX)
+#elif (HOST_OS == OMR_LINUX)
 	.globl _tr_try_lock
 	.globl _tr_unlock
 	.globl jitPPCDataCacheBlockZero

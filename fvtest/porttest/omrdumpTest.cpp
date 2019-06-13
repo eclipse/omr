@@ -40,11 +40,11 @@
 
 #include <signal.h>
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* for getcwd() */
 #include <direct.h>
 #define getcwd _getcwd
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "testHelpers.hpp"
 #include "omrport.h"

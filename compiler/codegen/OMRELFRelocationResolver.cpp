@@ -22,7 +22,7 @@
 #include "codegen/OMRELFRelocationResolver.hpp"
 #include "infra/Assert.hpp"
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 
 uint32_t
 OMR::ELFRelocationResolver::resolveRelocationType(const TR::StaticRelocation &relocation)
@@ -31,4 +31,4 @@ OMR::ELFRelocationResolver::resolveRelocationType(const TR::StaticRelocation &re
    return static_cast<uint32_t>(-1);
    }
 
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */

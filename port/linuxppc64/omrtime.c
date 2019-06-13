@@ -27,9 +27,9 @@
  */
 
 /* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 #define _GNU_SOURCE
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #include <stdio.h>
 #include <time.h>

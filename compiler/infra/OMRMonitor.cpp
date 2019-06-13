@@ -66,12 +66,12 @@ bool
 OMR::Monitor::init(char *name)
    {
    _name = name;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
    MUTEX_INIT(_monitor);
 #else
    bool rc = MUTEX_INIT(_monitor);
    TR_ASSERT(rc == true, "error initializing monitor\n");
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
    return true;
    }
 
@@ -84,36 +84,36 @@ OMR::Monitor::destroy(TR::Monitor *monitor)
 void
 OMR::Monitor::destroy()
    {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
    MUTEX_DESTROY(_monitor);
 #else
    int32_t rc = MUTEX_DESTROY(_monitor);
    TR_ASSERT(rc == 0, "error destroying monitor\n");
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
    }
 
 void
 OMR::Monitor::enter()
    {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
    MUTEX_ENTER(_monitor);
 #else
    int32_t rc = MUTEX_ENTER(_monitor);
    TR_ASSERT(rc == 0, "error locking monitor\n");
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
    }
 
 int32_t
 OMR::Monitor::exit()
    {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
    MUTEX_EXIT(_monitor);
    return 0;
 #else
    int32_t rc = MUTEX_EXIT(_monitor);
    TR_ASSERT(rc == 0, "error unlocking monitor\n");
    return rc;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
    }
 
 char const *

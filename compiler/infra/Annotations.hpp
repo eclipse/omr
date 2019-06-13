@@ -81,12 +81,12 @@
 // OMR_LIKELY and OMR_UNLIKELY
 // TODO: check if the definition of these macros is too broad,
 //       __builtin_expect() may not have any effect on xlC
-#if defined(TR_HOST_X86) && defined(OMR_OS_WINDOWS)
+#if defined(TR_HOST_X86) && (HOST_OS == OMR_WINDOWS)
    #define OMR_LIKELY(expr) (expr)
    #define OMR_UNLIKELY(expr) (expr)
 #else
    #define OMR_LIKELY(expr)   __builtin_expect((expr), 1)
    #define OMR_UNLIKELY(expr) __builtin_expect((expr), 0)
-#endif /* defined(TR_HOST_X86) && defined(OMR_OS_WINDOWS) */
+#endif /* defined(TR_HOST_X86) && (HOST_OS == OMR_WINDOWS) */
 
 #endif
