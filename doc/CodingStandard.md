@@ -1550,9 +1550,9 @@ TODO: in the future, we would like to have OMR_OS_xxx flags for operating system
 
 Correct
 ```c
-#if defined(LINUX) && !defined(OMRZTPF)
+#if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
 
-#if defined(OMR_OS_WINDOWS) && defined(OMR_ENV_DATA64)
+#if (HOST_OS == OMR_WINDOWS) && defined(OMR_ENV_DATA64)
 
 #if defined( _AMD64_)
 ```

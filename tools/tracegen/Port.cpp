@@ -20,29 +20,29 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(LINUX) && !defined(OMRZTPF)
+#if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
 #include <sys/vfs.h>
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 #include <sys/param.h>
 #include <sys/mount.h>
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 #include <string.h>
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <direct.h>
 #define J9FILE_UNC_EXTENDED_LENGTH_PREFIX (L"\\\\?\\")
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 #include <sys/types.h>
 #if !defined(OMRZTPF)
 #include <sys/statvfs.h>
 #endif
 #include <dirent.h>
-#endif /* defined(OMR_OS_WINDOWS)*/
+#endif /* (HOST_OS == OMR_WINDOWS)*/
 
 #include "Port.hpp"
 
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 RCType
 Port::omrfile_findfirst(const char *path, char **resultbuf, intptr_t *handle)
 {
@@ -499,7 +499,7 @@ cleanup:
 
 	return resolved_path;
 }
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 
 FILE *
 Port::fopen(const char *path, const char *mode)
@@ -640,11 +640,11 @@ RCType
 Port::omrfile_stat(const char *path, unsigned int flags, struct J9FileStat *buf)
 {
 	struct stat statbuf;
-#if (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX)
+#if ((HOST_OS == OMR_LINUX) && !defined(OMRZTPF)) || (HOST_OS == OMR_OSX)
 	struct statfs statfsbuf;
 #elif defined(AIXPPC)
 	struct statvfs statvfsbuf;
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 	memset(buf, 0, sizeof(*buf));
 
@@ -680,7 +680,7 @@ Port::omrfile_stat(const char *path, unsigned int flags, struct J9FileStat *buf)
 	buf->ownerUid = statbuf.st_uid;
 	buf->ownerGid = statbuf.st_gid;
 
-#if (defined(LINUX) && !defined(J9ZTPF)) || defined(OSX)
+#if ((HOST_OS == OMR_LINUX) && !defined(J9ZTPF)) || (HOST_OS == OMR_OSX)
 	if (statfs(path, &statfsbuf)) {
 		return RC_FAILED;
 	}
@@ -705,10 +705,10 @@ Port::omrfile_stat(const char *path, unsigned int flags, struct J9FileStat *buf)
 	} else {
 		buf->isFixed = 1;
 	}
-#else /* defined(LINUX) || defined(OSX) */
+#else /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 	/* Assume we have a fixed file unless the platform can be more specific */
 	buf->isFixed = 1;
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 	return RC_OK;
 }
@@ -723,16 +723,16 @@ Port::omrfile_realpath(const char *path)
 	}
 	return result;
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 int
 Port::strncasecmp(const char *s1, const char *s2, size_t n)
 {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	return ::_strnicmp(s1, s2, n);
 #elif defined(J9ZOS390)
 	return ::strncasecmp(s1, s2, (int) n);
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	return ::strncasecmp(s1, s2, n);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 }

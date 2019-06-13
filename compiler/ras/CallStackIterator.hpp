@@ -65,7 +65,7 @@ private:
 
 typedef TR_PPCCallStackIterator TR_CallStackIteratorImpl;
 
-#elif defined(LINUX)
+#elif (HOST_OS == OMR_LINUX)
 
 class TR_LinuxCallStackIterator : public TR_CallStackIterator
    {
@@ -164,7 +164,7 @@ private:
 
 typedef TR_MvsCallStackIterator TR_CallStackIteratorImpl;
 
-#elif defined(OMR_OS_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT)
+#elif (HOST_OS == OMR_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT)
 
 class TR_WinCallStackIterator : public TR_CallStackIterator
    {
@@ -188,7 +188,7 @@ public:
 
 typedef TR_WinCallStackIterator TR_CallStackIteratorImpl;
 
-#elif !(defined(OMR_OS_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT))
+#elif !((HOST_OS == OMR_WINDOWS) && defined(TR_HOST_X86) && defined(TR_HOST_32BIT))
 
 typedef TR_CallStackIterator TR_CallStackIteratorImpl;
 

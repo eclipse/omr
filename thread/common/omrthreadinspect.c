@@ -31,16 +31,16 @@
  * The APIs in this file are only used for inspecting threads -- not for modifying them
  */
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 /* Allowing the use of pthread_attr_getstack in omrthread_get_stack_range */
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 #include <features.h>
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 #include <pthread.h>
 #define _XOPEN_SOURCE
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 #include "threaddef.h"
 #include "omrthreadinspect.h"
@@ -300,7 +300,7 @@ uintptr_t
 omrthread_get_stack_range(omrthread_t thread, void **stackStart, void **stackEnd)
 {
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 	pthread_attr_t attr;
 	OSTHREAD osTid = thread->handle;
 	uintptr_t rc = 0;
@@ -338,7 +338,7 @@ omrthread_get_stack_range(omrthread_t thread, void **stackStart, void **stackEnd
 	/* On Linux, native stack grows from high to low memory */
 	*stackEnd = (void *)((uintptr_t)*stackStart + stackSize);
 	return J9THREAD_SUCCESS;
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 	OSTHREAD osTid = thread->handle;
 	size_t stackSize = 0;
 
@@ -346,9 +346,9 @@ omrthread_get_stack_range(omrthread_t thread, void **stackStart, void **stackEnd
 	stackSize = pthread_get_stacksize_np(osTid);
 	*stackEnd = (void *)((uintptr_t)*stackStart + stackSize);
 	return J9THREAD_SUCCESS;
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 	return J9THREAD_ERR_UNSUPPORTED_PLAT;
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 }
 
 #if (defined(OMR_THR_JLM))

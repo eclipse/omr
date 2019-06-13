@@ -176,7 +176,7 @@ TR_PatchNOPedGuardSiteOnClassPreInitialize *TR_PatchNOPedGuardSiteOnClassPreInit
 #endif
 
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 /* Hack - to satisfy the runtime linker we need a definition of the following functions.
    Should never be called.  This code can be removed when we permit the JIT to be linked
    against libstdc++ on Linux.

@@ -299,14 +299,14 @@ omrmmap_capabilities(struct OMRPortLibrary *portLibrary)
 			| OMRPORT_MMAP_CAPABILITY_READ
 			| OMRPORT_MMAP_CAPABILITY_PROTECT
 			/* If JSE platforms include WRITE and MSYNC - ZOS included, but currently has own omrmmap.c */
-#if ((defined(LINUX) && defined(J9X86)) \
+#if (((HOST_OS == OMR_LINUX) && defined(J9X86)) \
   || (defined(LINUXPPC)) \
-  || (defined(LINUX) && defined(S390)) \
-  || (defined(LINUX) && defined(J9HAMMER)) \
-  || (defined(LINUX) && defined(ARM)) \
-  || (defined(LINUX) && defined(AARCH64)) \
+  || ((HOST_OS == OMR_LINUX) && defined(S390)) \
+  || ((HOST_OS == OMR_LINUX) && defined(J9HAMMER)) \
+  || ((HOST_OS == OMR_LINUX) && defined(ARM)) \
+  || ((HOST_OS == OMR_LINUX) && defined(AARCH64)) \
   || (defined(AIXPPC)) \
-  || (defined(OSX)))
+  || ((HOST_OS == OMR_OSX)))
 			| OMRPORT_MMAP_CAPABILITY_WRITE
 			| OMRPORT_MMAP_CAPABILITY_MSYNC
 #endif
@@ -344,7 +344,7 @@ omrmmap_dont_need(struct OMRPortLibrary *portLibrary, const void *startAddress, 
 
 			Trc_PRT_mmap_dont_need_oscall(roundedStart, roundedLength);
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 			if (-1 == madvise((void *)roundedStart, roundedLength, MADV_DONTNEED)) {
 				Trc_PRT_mmap_dont_need_madvise_failed((void *)roundedStart, roundedLength, errno);
 			}

@@ -449,7 +449,7 @@ raiseSEGV(OMRPortLibrary *portLibrary, void *arg)
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 	const char *testName = (const char *)arg;
 
-#if defined(OMR_OS_WINDOWS) || defined (J9ZOS390)
+#if (HOST_OS == OMR_WINDOWS) || defined (J9ZOS390)
 	/*
 	 * - Windows structured exception handling doesn't interact with raise().
 	 * - z/OS doesn't provide a value for the psw1 (PC) register when you use raise()
@@ -459,7 +459,7 @@ raiseSEGV(OMRPortLibrary *portLibrary, void *arg)
 	*ptr = -1;
 #else
 	raise(SIGSEGV);
-#endif /* defined(OMR_OS_WINDOWS) || defined (J9ZOS390) */
+#endif /* (HOST_OS == OMR_WINDOWS) || defined (J9ZOS390) */
 
 	outputErrorMessage(PORTTEST_ERROR_ARGS, "unexpectedly continued execution");
 

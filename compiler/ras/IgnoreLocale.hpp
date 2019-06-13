@@ -34,7 +34,7 @@ int strnicmp_ignore_locale(const char *s1, const char *s2, size_t n);
 #include <strings.h>
    #define STRICMP strcasecmp
    #define STRNICMP strncasecmp
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
    #define STRICMP _stricmp
    #define STRNICMP _strnicmp
 #elif PILOT

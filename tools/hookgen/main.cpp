@@ -26,19 +26,19 @@
 #if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
 #endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <windows.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "HookGen.hpp"
 
 /* On all platforms operate on UTF-8 encoding */
 int
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 translated_main(int argc, char **argv, char **envp)
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 main(int argc, char **argv, char **envp)
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 {
 	RCType rc = RC_OK;
 #if defined(J9ZOS390) && !defined(OMR_EBCDIC)
@@ -65,7 +65,7 @@ main(int argc, char **argv, char **envp)
 }
 
 /* Convert Windows wide character encoding to UTF-8 */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 int
 wmain(int argc, wchar_t **argv, wchar_t **envp)
 {
@@ -129,4 +129,4 @@ wmain(int argc, wchar_t **argv, wchar_t **envp)
 
 	return rc;
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */

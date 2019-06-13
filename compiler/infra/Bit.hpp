@@ -30,11 +30,11 @@
 #include "il/DataTypes.hpp"
 #include "infra/Assert.hpp"
 
-#if defined(TR_TARGET_X86) && defined(OMR_OS_WINDOWS)
+#if defined(TR_TARGET_X86) && (HOST_OS == OMR_WINDOWS)
    #define abs64 _abs64
 #else
    #define abs64 labs
-#endif /* defined(TR_TARGET_X86) && defined(OMR_OS_WINDOWS) */
+#endif /* defined(TR_TARGET_X86) && (HOST_OS == OMR_WINDOWS) */
 
 // For getting at different parts of a 32 bit integer
 class intParts  {
@@ -405,7 +405,7 @@ static inline bool isPowerOf2(int64_t input)
    return (input & -input) == input;
    }
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 // On OSX, intptrj_t isn't int32_t nor int64_t
 
 static inline int32_t leadingZeroes (intptrj_t input)

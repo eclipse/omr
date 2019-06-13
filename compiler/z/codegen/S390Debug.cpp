@@ -2002,7 +2002,7 @@ static void intToString(int num, char *str, int len=10, bool padWithZeros=false)
    unsigned char c[16];
    int i=0,j=0,n=0;
 
-   #if !defined(LINUX) && !defined(TR_HOST_X86)
+   #if !(HOST_OS == OMR_LINUX) && !defined(TR_HOST_X86)
    __cvd(num, (char *)packedDecValue);
    __unpk(c, len-1, packedDecValue, 7 );
    c[len-1] = c[len-1] | 0xf0;
@@ -2028,7 +2028,7 @@ static void intToHex(uint32_t num, char *str, int len)
            0xC3, 0xC4, 0xC5, 0xC6
                      };
 
-   #if !defined(LINUX) && !defined(TR_HOST_X86)
+   #if !(HOST_OS == OMR_LINUX) && !defined(TR_HOST_X86)
    memcpy(temp, &num, 4);
    __unpk((unsigned char *)str, len, temp, 4);
    __tr((unsigned char *)str, ebcdic_translate-240, len);

@@ -27,13 +27,13 @@
 #include "gtest/gtest.h"
 #include "OMRTestEnv.hpp"
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #undef BYTE
 #include "windows.h"
 #define PATH_MAX MAXPATHLEN
 #else
 #include <dlfcn.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 int main(int argc, char **argv)
    {

@@ -30,14 +30,14 @@
 
 #include "omrintrospect_common.h"
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 /*
  * CMVC 194846.
  * NOTE: When we use pthread_sigmask on other platforms, we can remove this macro.
  */
 #define sigprocmask pthread_sigmask
 
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 typedef ucontext_t thread_context;
 

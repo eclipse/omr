@@ -147,7 +147,7 @@
 		inline void __nop() { __asm__ volatile ("nop"); }
 		inline void __yield() { __asm__ volatile ("or 27,27,27"); }
 #endif
-#elif defined(LINUX) && (defined(S390) || defined(S39064))
+#elif (HOST_OS == OMR_LINUX) && (defined(S390) || defined(S39064))
 		/*
 		 * nop instruction requires operand https://bugzilla.redhat.com/show_bug.cgi?id=506417
 		 */

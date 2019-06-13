@@ -28,9 +28,9 @@
  */
 
 #include "omrcfg.h"
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 #include "omrcgroup.h"
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 #include "omrport.h"
 #if defined(OMR_ENV_DATA64)
 #include "omrportpriv.h"
@@ -70,7 +70,7 @@ typedef struct OMRPortPlatformGlobals {
 	uintptr_t vmem_pageSize[OMRPORT_VMEM_PAGESIZE_COUNT]; /** <0 terminated array of supported page sizes */
 	uintptr_t vmem_pageFlags[OMRPORT_VMEM_PAGESIZE_COUNT]; /** <0 terminated array of flags describing type of the supported page sizes */
 	BOOLEAN isRunningInContainer;	
-#if defined(LINUX) && defined(S390)
+#if (HOST_OS == OMR_LINUX) && defined(S390)
 	int64_t last_clock_delta_update;  /** hw clock microsecond timestamp of last clock delta adjustment */
 	int64_t software_msec_clock_delta; /** signed difference between hw and sw clocks in milliseconds */
 #endif
@@ -84,12 +84,12 @@ typedef struct OMRPortPlatformGlobals {
 #if defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL)
 	int32_t introspect_threadSuspendSignal;
 #endif /* defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL) */
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 	uint64_t cgroupSubsystemsAvailable; /**< cgroup subsystems available for port library to use; it is valid only when cgroupEntryList is non-null */
 	uint64_t cgroupSubsystemsEnabled; /**< cgroup subsystems enabled in port library; it is valid only when cgroupEntryList is non-null */
 	OMRCgroupEntry *cgroupEntryList; /**< head of the circular linked list, each element contains information about cgroup of the process for a subsystem */
 	BOOLEAN syscallNotAllowed; /**< Assigned True if the mempolicy syscall is failed due to security opts (Can be seen in case of docker) */
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 } OMRPortPlatformGlobals;
 
 
@@ -111,7 +111,7 @@ typedef struct OMRPortPlatformGlobals {
 #define PPG_vmem_pageSize (portLibrary->portGlobals->platformGlobals.vmem_pageSize)
 #define PPG_vmem_pageFlags (portLibrary->portGlobals->platformGlobals.vmem_pageFlags)
 #define PPG_isRunningInContainer (portLibrary->portGlobals->platformGlobals.isRunningInContainer)
-#if defined(LINUX) && defined(S390)
+#if (HOST_OS == OMR_LINUX) && defined(S390)
 #define PPG_last_clock_delta_update  (portLibrary->portGlobals->platformGlobals.last_clock_delta_update)
 #define PPG_software_msec_clock_delta (portLibrary->portGlobals->platformGlobals.software_msec_clock_delta)
 #endif
@@ -130,13 +130,13 @@ typedef struct OMRPortPlatformGlobals {
 #define PPG_introspect_threadSuspendSignal (portLibrary->portGlobals->platformGlobals.introspect_threadSuspendSignal)
 #endif
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 /* Note that PPG_cgroupSubsystemsAvailable and PPG_cgroupSubsystemsEnabled are valid only if PPG_cgroupEntryList is not NULL */
 #define PPG_cgroupSubsystemsAvailable (portLibrary->portGlobals->platformGlobals.cgroupSubsystemsAvailable)
 #define PPG_cgroupSubsystemsEnabled (portLibrary->portGlobals->platformGlobals.cgroupSubsystemsEnabled)
 #define PPG_cgroupEntryList (portLibrary->portGlobals->platformGlobals.cgroupEntryList)
 #define PPG_numaSyscallNotAllowed (portLibrary->portGlobals->platformGlobals.syscallNotAllowed)
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #endif /* omrportpg_h */
 

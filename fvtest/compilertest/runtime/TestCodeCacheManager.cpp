@@ -18,7 +18,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <windows.h>
 #else
 #include <sys/mman.h>
@@ -61,7 +61,7 @@ TestCompiler::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
    if (segmentSize < config.codeCachePadKB() << 10)
       codeCacheSizeToAllocate = config.codeCachePadKB() << 10;
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
    auto memorySlab = reinterpret_cast<uint8_t *>(
          VirtualAlloc(NULL,
             codeCacheSizeToAllocate,
@@ -84,7 +84,7 @@ TestCompiler::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
 void
 TestCompiler::CodeCacheManager::freeCodeCacheSegment(TR::CodeCacheMemorySegment * memSegment)
    {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
    VirtualFree(memSegment->_base, 0, MEM_RELEASE); // second arg must be zero when calling with MEM_RELEASE
 #else
    munmap(memSegment->_base, memSegment->_top - memSegment->_base + sizeof(TR::CodeCacheMemorySegment));

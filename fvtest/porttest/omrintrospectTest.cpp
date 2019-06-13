@@ -29,9 +29,9 @@
  */
 
 #include "omrport.h"
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 #include <signal.h>
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 #include "testHelpers.hpp"
 
 /**

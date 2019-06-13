@@ -252,7 +252,7 @@ testTraceAgentGetMemorySize(OMR_VMThread *vmThread, OMR_TI const *ti)
 	omr_error_t rc = OMR_ERROR_NONE;
 	omr_error_t testRc = OMR_ERROR_NONE;
 	uint64_t memorySize = 0;
-#if defined(LINUX) || defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 	if (OMR_ERROR_NONE == testRc) {
 		rc = OMRTEST_PRINT_ERROR(ti->GetFreePhysicalMemorySize(vmThread, &memorySize));
 		if (OMR_ERROR_NONE != rc) {
@@ -262,7 +262,7 @@ testTraceAgentGetMemorySize(OMR_VMThread *vmThread, OMR_TI const *ti)
 			omrtty_printf("%s:%d Free physical memory size (in bytes): %llu, rc = %d (%s), the function call is successful !\n", __FILE__, __LINE__, memorySize, rc, omrErrorToString(rc));
 		}
 	}
-#if defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 	if (OMR_ERROR_NONE == testRc) {
 		rc = OMRTEST_PRINT_ERROR(ti->GetProcessVirtualMemorySize(vmThread, &memorySize));
 		if (OMR_ERROR_NONE != rc) {
@@ -281,8 +281,8 @@ testTraceAgentGetMemorySize(OMR_VMThread *vmThread, OMR_TI const *ti)
 			omrtty_printf("%s:%d Process physical memory size (in bytes): %llu, rc = %d (%s), the function call is successful !\n", __FILE__, __LINE__, memorySize, rc, omrErrorToString(rc));
 		}
 	}
-#endif /* defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(OSX) */
-#if defined(LINUX) || defined(AIXPPC)|| defined(OMR_OS_WINDOWS)
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
+#if (HOST_OS == OMR_LINUX) || defined(AIXPPC)|| (HOST_OS == OMR_WINDOWS)
 	if (OMR_ERROR_NONE == testRc) {
 		rc = OMRTEST_PRINT_ERROR(ti->GetProcessPrivateMemorySize(vmThread, &memorySize));
 		if (OMR_ERROR_NONE != rc) {
@@ -292,8 +292,8 @@ testTraceAgentGetMemorySize(OMR_VMThread *vmThread, OMR_TI const *ti)
 			omrtty_printf("%s:%d Process private memory size (in bytes): %llu, rc = %d (%s), the function call is successful !\n", __FILE__, __LINE__, memorySize, rc, omrErrorToString(rc));
 		}
 	}
-#endif /* defined(LINUX) || defined(AIXPPC) || defined(OMR_OS_WINDOWS) */
-#endif /* defined(LINUX) || defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) */
+#endif /* (HOST_OS == OMR_LINUX) || defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 	return testRc;
 }
 
@@ -307,9 +307,9 @@ testNegativeCases(OMR_VMThread *vmThread, OMR_TI const *ti)
 	int32_t traceMetaLength = 0;
 	UtSubscription *subscriptionID = NULL;
 	uint64_t *invalidMemorySizePtr = NULL;
-#if !defined(LINUX) && !defined(OMR_OS_WINDOWS) && !defined(OSX)
+#if !(HOST_OS == OMR_LINUX) && !(HOST_OS == OMR_WINDOWS) && !(HOST_OS == OMR_OSX)
 	uint64_t memorySize = -1;
-#endif /* !defined(LINUX) && !defined(OMR_OS_WINDOWS) && !defined(OSX) */
+#endif /* !(HOST_OS == OMR_LINUX) && !(HOST_OS == OMR_WINDOWS) && !(HOST_OS == OMR_OSX) */
 
 	rc = OMRTEST_PRINT_UNEXPECTED_RC(ti->GetTraceMetadata(vmThread, NULL, &traceMetaLength), OMR_ERROR_ILLEGAL_ARGUMENT);
 	if (OMR_ERROR_ILLEGAL_ARGUMENT != rc) {
@@ -350,7 +350,7 @@ testNegativeCases(OMR_VMThread *vmThread, OMR_TI const *ti)
 	}
 
 	/* Test with invalidMemorySizePtr, OMR_ERROR_ILLEGAL_ARGUMENT is expected */
-#if defined(LINUX) || defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 	if (OMR_ERROR_NONE == testRc) {
 		rc = OMRTEST_PRINT_UNEXPECTED_RC(ti->GetFreePhysicalMemorySize(vmThread, invalidMemorySizePtr), OMR_ERROR_ILLEGAL_ARGUMENT);
 		if (OMR_ERROR_ILLEGAL_ARGUMENT != rc) {
@@ -364,7 +364,7 @@ testNegativeCases(OMR_VMThread *vmThread, OMR_TI const *ti)
 			testRc = OMR_ERROR_INTERNAL;
 		}
 	}
-#if defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 	if (OMR_ERROR_NONE == testRc) {
 		rc = OMRTEST_PRINT_UNEXPECTED_RC(ti->GetProcessVirtualMemorySize(vmThread, invalidMemorySizePtr), OMR_ERROR_ILLEGAL_ARGUMENT);
 		if (OMR_ERROR_ILLEGAL_ARGUMENT != rc) {
@@ -378,11 +378,11 @@ testNegativeCases(OMR_VMThread *vmThread, OMR_TI const *ti)
 			testRc = OMR_ERROR_INTERNAL;
 		}
 	}
-#endif /* defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(OSX) */
-#endif /* defined(LINUX) || defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 
 	/* Test GetFreePhysicalMemorySize and GetProcessPrivateMemorySize on platforms other than LINUX, AIXPPC and WIN, OMR_ERROR_NOT_AVAILABLE is expected */
-#if !defined(LINUX) && !defined(AIXPPC) && !defined(OMR_OS_WINDOWS)  && !defined(OSX)
+#if !(HOST_OS == OMR_LINUX) && !defined(AIXPPC) && !(HOST_OS == OMR_WINDOWS)  && !(HOST_OS == OMR_OSX)
 	if (OMR_ERROR_NONE == testRc) {
 		rc = OMRTEST_PRINT_UNEXPECTED_RC(ti->GetFreePhysicalMemorySize(vmThread, &memorySize), OMR_ERROR_NOT_AVAILABLE);
 		if (OMR_ERROR_NOT_AVAILABLE != rc) {
@@ -398,7 +398,7 @@ testNegativeCases(OMR_VMThread *vmThread, OMR_TI const *ti)
 	}
 
 	/* Test GetProcessVirtualMemorySize and GetProcessPhysicalMemorySize on platforms other than LINUX and WIN, OMR_ERROR_NOT_AVAILABLE is expected */
-#elif !defined(LINUX) && !defined(OMR_OS_WINDOWS) && !defined(OSX)
+#elif !(HOST_OS == OMR_LINUX) && !(HOST_OS == OMR_WINDOWS) && !(HOST_OS == OMR_OSX)
 	if (OMR_ERROR_NONE == testRc) {
 		rc = OMRTEST_PRINT_UNEXPECTED_RC(ti->GetProcessVirtualMemorySize(vmThread, &memorySize), OMR_ERROR_NOT_AVAILABLE);
 		if (OMR_ERROR_NOT_AVAILABLE != rc) {
@@ -413,7 +413,7 @@ testNegativeCases(OMR_VMThread *vmThread, OMR_TI const *ti)
 		}
 	}
 
-#endif /* !defined(LINUX) && !defined(AIXPPC) && !defined(OMR_OS_WINDOWS) && !defined(OSX) */
+#endif /* !(HOST_OS == OMR_LINUX) && !defined(AIXPPC) && !(HOST_OS == OMR_WINDOWS) && !(HOST_OS == OMR_OSX) */
 
 	return testRc;
 }

@@ -748,13 +748,13 @@ enum J9CudaGlobalState {
 uint32_t
 openDriver(OMRPortLibrary *portLibrary)
 {
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 	const char *driverLibrary = "libcuda.so";
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 	const char *driverLibrary = "libcuda.dylib";
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
 	const char *driverLibrary = "nvcuda.dll";
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 	J9CudaGlobalData *globals = &portLibrary->portGlobals->cudaGlobals;
 	int deviceCount = 0;
 	int version = 0;
@@ -978,21 +978,21 @@ const J9CudaLibraryDescriptor runtimeLibraries[] = {
 	 * This special entry must appear first for forward compatiblity. In normal
 	 * installations, it is a link to the newest version available.
 	 */
-#if defined(LINUX) && defined(OMR_ENV_DATA64)
+#if (HOST_OS == OMR_LINUX) && defined(OMR_ENV_DATA64)
 	{ 5050, "libcudart.so" },
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 	{ 5050, "libcudart.dylib" },
 #endif /* LINUX && OMR_ENV_DATA64 */
 
-#if defined(LINUX) && defined(OMR_ENV_DATA64)
+#if (HOST_OS == OMR_LINUX) && defined(OMR_ENV_DATA64)
 #   define OMRCUDA_LIBRARY_NAME(major, minor) ("libcudart.so." #major "." #minor)
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 #   define OMRCUDA_LIBRARY_NAME(major, minor) ("libcudart." #major "." #minor ".dylib")
-#elif defined(OMR_OS_WINDOWS) && defined(OMR_ENV_DATA64)
+#elif (HOST_OS == OMR_WINDOWS) && defined(OMR_ENV_DATA64)
 #   define OMRCUDA_LIBRARY_NAME(major, minor) ("cudart64_" #major #minor ".dll")
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
 #   define OMRCUDA_LIBRARY_NAME(major, minor) ("cudart32_" #major #minor ".dll")
-#endif /* defined(LINUX) && defined(OMR_ENV_DATA64) */
+#endif /* (HOST_OS == OMR_LINUX) && defined(OMR_ENV_DATA64) */
 
 #define OMRCUDA_LIBRARY_ENTRY(major, minor) { ((major) * 1000) + ((minor) * 10), OMRCUDA_LIBRARY_NAME(major, minor) }
 

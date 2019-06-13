@@ -64,9 +64,9 @@
 
 #define allocNameSize 64 /**< @internal buffer size for name function */
 
-#if defined(LINUX) || defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(J9ZOS390) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || defined(J9ZOS390) || (HOST_OS == OMR_OSX)
 #define ENABLE_RESERVE_MEMORY_EX_TESTS
-#endif /* defined(LINUX) || defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(J9ZOS390) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || defined(J9ZOS390) || (HOST_OS == OMR_OSX) */
 
 #if defined(ENABLE_RESERVE_MEMORY_EX_TESTS)
 static int omrvmem_testReserveMemoryEx_impl(struct OMRPortLibrary *, const char *, BOOLEAN, BOOLEAN, BOOLEAN, BOOLEAN, BOOLEAN);
@@ -1523,11 +1523,11 @@ omrvmem_testReserveMemoryEx_StandardAndQuickMode(struct OMRPortLibrary *portLibr
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 	int rc = omrvmem_testReserveMemoryEx_impl(OMRPORTLIB, testName, topDown, FALSE, strictAddress, strictPageSize, use2To32G);
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	if (TEST_PASS == rc) {
 		rc |= omrvmem_testReserveMemoryEx_impl(OMRPORTLIB, testName, topDown, TRUE, strictAddress, strictPageSize, use2To32G);
 	}
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 	return rc;
 }
 
@@ -1585,15 +1585,15 @@ omrvmem_testReserveMemoryEx_impl(struct OMRPortLibrary *portLibrary, const char 
 				params[j].endAddress = (void *)(SIXTY_FOUR_GB - 1);
 			} else {
 				params[j].startAddress = (void *)(pageSizes[i] * 2);
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 				params[j].endAddress = (void *)(pageSizes[i] * 100);
-#elif defined(OMR_OS_WINDOWS) && defined(OMR_ENV_DATA64)
+#elif (HOST_OS == OMR_WINDOWS) && defined(OMR_ENV_DATA64)
 				params[j].endAddress = (void *)0x7FFFFFFFFFF;
 #elif defined(OMR_ENV_DATA64)
 				params[j].endAddress = (void *)0xffffffffffffffff;
 #else /* defined(OMR_ENV_DATA64) */
 				params[j].endAddress = (void *)TWO_GIG_BAR;
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 			}
 			params[j].byteAmount = pageSizes[i];
 			params[j].mode |= OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE | OMRPORT_VMEM_MEMORY_MODE_COMMIT;
@@ -1782,11 +1782,11 @@ memoryIsAvailable(struct OMRPortLibrary *portLibrary, BOOLEAN strictAddress)
 		for (j = 0; j < NUM_SEGMENTS; j++) {
 			omrvmem_vmem_params_init(&params[j]);
 			params[j].startAddress = (void *)(pageSizes[i] * 2);
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 			params[j].endAddress = (void *)(pageSizes[i] * 100);
-#elif defined(OMR_OS_WINDOWS) && defined(OMR_ENV_DATA64)
+#elif (HOST_OS == OMR_WINDOWS) && defined(OMR_ENV_DATA64)
 			params[j].endAddress = (void *) 0x7FFFFFFFFFF;
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 			params[j].byteAmount = pageSizes[i];
 			params[j].mode |= OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE | OMRPORT_VMEM_MEMORY_MODE_COMMIT;
 			params[j].pageSize = pageSizes[i];
@@ -2388,7 +2388,7 @@ TEST(PortVmemTest, vmem_test_reserveExecutableMemory)
 			function();
 			portTestEnv->log("Dynamically created function returned successfully\n");
 
-#elif defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(J9ZOS390) || defined(OSX)
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_WINDOWS) || defined(J9ZOS390) || (HOST_OS == OMR_OSX)
 			size_t length;
 
 #if defined(J9ZOS39064)
@@ -2638,7 +2638,7 @@ verifyFindValidPageSizeOutput(struct OMRPortLibrary *portLibrary,
 	}
 }
 
-#if (defined(LINUX) && !defined(LINUXPPC)) || defined(OMR_OS_WINDOWS) || defined(OSX)
+#if ((HOST_OS == OMR_LINUX) && !defined(LINUXPPC)) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 
 static int
 omrvmem_testFindValidPageSize_impl(struct OMRPortLibrary *portLibrary, const char *testName)
@@ -2750,11 +2750,11 @@ TEST(PortVmemTest, vmem_testFindValidPageSize)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 	portTestEnv->changeIndent(1);
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 #define OMRPORT_VMEM_PAGESIZE_COUNT 5	/* This should be same as defined in port/unix_include/j9portpg.h */
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
 #define OMRPORT_VMEM_PAGESIZE_COUNT 3	/* This should be same as defined in port/win32_include/j9portpg.h */
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 	uintptr_t *pageSizes = NULL;
 	uintptr_t *pageFlags = NULL;
@@ -4176,14 +4176,14 @@ TEST(PortVmemTest, vmem_testGetProcessMemorySize)
 	EXPECT_TRUE(result < 0) << "OMRPORT_VMEM_PROCESS_VIRTUAL did not fail";
 	EXPECT_EQ(0u, size) << "value updated when query invalid";
 #else
-#if !defined(OSX)
+#if !(HOST_OS == OMR_OSX)
 	result = omrvmem_get_process_memory_size(OMRPORT_VMEM_PROCESS_PRIVATE, &size);
 	EXPECT_EQ(0, result) << "OMRPORT_VMEM_PROCESS_PRIVATE failed";
 	EXPECT_TRUE(size > 0) << "OMRPORT_VMEM_PROCESS_PRIVATE returned 0";
 	portTestEnv->log("OMRPORT_VMEM_PROCESS_PRIVATE = %lu.\n", size);
-#endif /* !defined(OSX) */
+#endif /* !(HOST_OS == OMR_OSX) */
 
-#if defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 	result = omrvmem_get_process_memory_size(OMRPORT_VMEM_PROCESS_PHYSICAL, &size);
 	EXPECT_EQ(0, result) << "OMRPORT_VMEM_PROCESS_PHYSICAL failed";
 	EXPECT_TRUE(size > 0) << "OMRPORT_VMEM_PROCESS_PHYSICAL returned 0";
@@ -4202,7 +4202,7 @@ TEST(PortVmemTest, vmem_testGetProcessMemorySize)
 	result = omrvmem_get_process_memory_size(OMRPORT_VMEM_PROCESS_VIRTUAL, &size);
 	EXPECT_TRUE(result < 0) << "OMRPORT_VMEM_PROCESS_VIRTUAL did not fail";
 	EXPECT_EQ(0u, size) << "value updated when query invalid";
-#endif /* defined(LINUX) || defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 #endif /* defined(J9ZOS390) */
 	size = 0;
 	result = omrvmem_get_process_memory_size(OMRPORT_VMEM_PROCESS_EnsureWideEnum, &size);

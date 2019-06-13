@@ -31,7 +31,7 @@
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 #include <sys/prctl.h>
 #include <linux/prctl.h>
 #include <sys/resource.h>
@@ -372,7 +372,7 @@ deriveCoreFileName(struct OMRPortLibrary *portLibrary, char *corePatterFormat, B
 				/* literal '%' */
 				charsPrinted = portLibrary->str_printf(portLibrary, outCursor, bytesLeft, "%%");
 				break;
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 			case 'c':
 				{
 					struct rlimit limit = {0};
@@ -448,7 +448,7 @@ deriveCoreFileName(struct OMRPortLibrary *portLibrary, char *corePatterFormat, B
 					return -1;
 				}
 			case 'e':
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 #ifndef PR_GET_NAME
 #define PR_GET_NAME 16
 #endif

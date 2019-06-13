@@ -26,10 +26,10 @@
  * @brief process introspection support
  */
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 /* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
 #define _GNU_SOURCE
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #include <pthread.h>
 #include <ucontext.h>
@@ -44,7 +44,7 @@
 #include <time.h>
 #include <fcntl.h>
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 #include <dirent.h>
 #include <dlfcn.h>
 #include <sys/utsname.h>
@@ -842,7 +842,7 @@ upcall_handler(int signal, siginfo_t *siginfo, void *context_arg)
  * @param data - the platform specific data, ignored on everything but AIX
  * @return number of threads in the process
  */
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 static int
 count_threads(struct PlatformWalkData *data)
 {
@@ -1483,7 +1483,7 @@ setup_native_thread(J9ThreadWalkState *state, thread_context *sigContext, int he
 static uintptr_t
 sigqueue_is_reliable(void)
 {
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 	struct utsname sysinfo;
 	uintptr_t release_major = 0;
 	uintptr_t release_minor = 0;
@@ -1503,7 +1503,7 @@ sigqueue_is_reliable(void)
 #else
 	/* Other platforms can use sem_timedwait_r. */
 	return 1;
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 }
 
 /*

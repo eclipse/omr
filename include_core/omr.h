@@ -509,7 +509,7 @@ omr_error_t OMR_Glue_FreeLanguageThread(void *languageThread);
  */
 omr_error_t OMR_Glue_LinkLanguageThreadToOMRThread(void *languageThread, OMR_VMThread *omrVMThread);
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /**
  * @brief Get a platform-dependent token that can be used to locate the VM directory.
  *
@@ -527,7 +527,7 @@ omr_error_t OMR_Glue_LinkLanguageThreadToOMRThread(void *languageThread, OMR_VMT
  * @return an OMR error code
  */
 omr_error_t OMR_Glue_GetVMDirectoryToken(void **token);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 char *OMR_Glue_GetThreadNameForUnamedThread(OMR_VMThread *vmThread);
 

@@ -24,7 +24,7 @@
 
 #include "env/ProcessorInfo.hpp"
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <intrin.h>
 #define cpuid(CPUInfo, EAXValue)             __cpuid(CPUInfo, EAXValue)
 #define cpuidex(CPUInfo, EAXValue, ECXValue) __cpuidex(CPUInfo, EAXValue, ECXValue)
@@ -39,7 +39,7 @@ inline unsigned long long _xgetbv(unsigned int ecx)
    __asm__ __volatile__("xgetbv" : "=a"(eax), "=d"(edx) : "c"(ecx));
    return ((unsigned long long)edx << 32) | eax;
    }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 char* feGetEnv(const char*);
 inline bool jitGetCPUID(TR_X86CPUIDBuffer* pBuffer)
@@ -91,20 +91,20 @@ inline bool jitGetCPUID(TR_X86CPUIDBuffer* pBuffer)
 
 inline bool AtomicCompareAndSwap(volatile uint32_t* ptr, uint32_t old_val, uint32_t new_val)
    {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
    return old_val == (uint32_t)_InterlockedCompareExchange((volatile long*)ptr, (long)new_val, (long)old_val);
 #else
    return __sync_bool_compare_and_swap(ptr, old_val, new_val);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
    }
 
 inline bool AtomicCompareAndSwap(volatile uint16_t* ptr, uint16_t old_val, uint16_t new_val)
    {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
    return old_val == (uint16_t)_InterlockedCompareExchange16((volatile short*)ptr, (short)new_val, (short)old_val);
 #else
    return __sync_bool_compare_and_swap(ptr, old_val, new_val);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
    }
 
 inline void patchingFence16(void* addr)

@@ -28,9 +28,9 @@
  * correctly when it is located in a library.
  */
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <windows.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 #include <stdlib.h>
 #include <string.h>
 
@@ -39,11 +39,11 @@
 #endif /* defined(J9ZOS390) */
 
 /* Define a macro for the name of the main function that takes char args */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #define CHARMAIN translated_main
 #else
 #define CHARMAIN main
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 extern "C" int omr_main_entry(int argc, char **argv, char **envp);
 
@@ -64,7 +64,7 @@ CHARMAIN(int argc, char **argv, char **envp)
 	return omr_main_entry(argc, argv, envp);
 }
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 int
 wmain(int argc, wchar_t **argv, wchar_t **envp)
 {
@@ -127,4 +127,4 @@ wmain(int argc, wchar_t **argv, wchar_t **envp)
 
 	return rc;
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */

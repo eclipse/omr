@@ -30,9 +30,9 @@
  */
 #include <string.h>
 #include <stdio.h>
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <windows.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "testHelpers.hpp"
 #include "omrport.h"
@@ -42,7 +42,7 @@
  *
  * Call omrtty_daemonize, then call omrtty_printf/omrtty_vprintf. If we crash or print anything, then the test has failed.
  */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 TEST(PortTtyTest, tty_daemonize_test)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
@@ -90,4 +90,4 @@ TEST(PortTtyTest, tty_daemonize_test)
 
 	reportTestExit(OMRPORTLIB, testName);
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */

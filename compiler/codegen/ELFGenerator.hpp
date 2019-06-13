@@ -22,7 +22,7 @@
 #ifndef ELFGENERATOR_HPP
 #define ELFGENERATOR_HPP
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 
 #include <elf.h>
 #include <string>

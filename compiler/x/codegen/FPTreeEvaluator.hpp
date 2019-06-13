@@ -32,7 +32,7 @@
 
 // Binary representation of double 1.0
 //
-#if !defined(_LONG_LONG) && !defined(LINUX)
+#if !defined(_LONG_LONG) && !(HOST_OS == OMR_LINUX)
 #define IEEE_DOUBLE_1_0          0x3ff0000000000000L
 #define IEEE_DOUBLE_NEGATIVE_0_0 0x8000000000000000L
 #else
