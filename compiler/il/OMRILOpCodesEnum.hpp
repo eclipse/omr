@@ -791,7 +791,6 @@
    getstack, // returns current value of SP
    dealloca, // resets value of SP
 
-   idoz,     // difference or zero
 
    dcos,       // cos of double, returning double
    dsin,       // sin of double, returning double

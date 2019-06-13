@@ -3547,38 +3547,3 @@ TR::Register *OMR::Power::TreeEvaluator::lxfrsEvaluator(TR::Node *node, TR::Code
    cg->decReferenceCount(secondChild);
    return trgReg;
    }
-
-TR::Register *OMR::Power::TreeEvaluator::idozEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-{
-
-   TR::Node * firstChild  = node->getFirstChild();
-   TR::Node * secondChild = node->getSecondChild();
-   TR::Register *src1Reg  = cg->evaluate(firstChild);  // a
-   TR::Register *src2Reg = cg->evaluate(secondChild);  // b
-
-   TR::Register *tmp1Reg = cg->allocateRegister();
-   TR::Register *tmp2Reg = cg->allocateRegister();
-
-   // Flip the sign bit: tmp1 = 2^31 + a; tmp2 = 2^31 + b
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::xoris, node, tmp1Reg, src1Reg, 0x8000);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::xoris, node, tmp2Reg, src2Reg, 0x8000);
-
-   // tmp1Reg = a - b
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::subfc, node, tmp1Reg, tmp2Reg, tmp1Reg);
-
-   // tmp2Reg = -1 if a <= b
-   //           0  if a >  b
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::subfe, node, tmp2Reg, tmp1Reg, tmp1Reg);
-
-   TR::Register  *trgReg = cg->allocateRegister();
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::andc, node, trgReg, tmp1Reg, tmp2Reg);
-
-   cg->stopUsingRegister(tmp1Reg);
-   cg->stopUsingRegister(tmp2Reg);
-
-   node->setRegister(trgReg);
-   cg->decReferenceCount(firstChild);
-   cg->decReferenceCount(secondChild);
-
-   return trgReg;
-}

@@ -2994,7 +2994,6 @@ int32_t childTypes[] =
    TR::NoType,                     // TR::getstack
    TR::Address,                    // TR::dealloca
 
-   TR::Int32,                     // TR::idoz
 
    TR::Double,                     // TR::dcos
    TR::Double,                     // TR::dsin

@@ -761,7 +761,6 @@
    TR::TreeEvaluator::unImpOpEvaluator,    // TR::getstack
    TR::TreeEvaluator::unImpOpEvaluator,    // TR::dealloca
 
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::idoz
 
    TR::TreeEvaluator::libmFuncEvaluator,    // TR::dcos
    TR::TreeEvaluator::libmFuncEvaluator,    // TR::dsin

@@ -717,7 +717,6 @@
    TR::TreeEvaluator::dsqrtEvaluator,                   // TR::dsqrt
    TR::TreeEvaluator::getstackEvaluator,                // TR::getstack
    TR::TreeEvaluator::deallocaEvaluator,                // TR::dealloca
-   TR::TreeEvaluator::idozEvaluator,                    // TR::idoz
    TR::TreeEvaluator::libmFuncEvaluator,                // TR::dcos
    TR::TreeEvaluator::libmFuncEvaluator,                // TR::dsin
    TR::TreeEvaluator::libmFuncEvaluator,                // TR::dtan

@@ -11134,22 +11134,6 @@
    },
 
    {
-   /* .opcode               = */ TR::idoz,
-   /* .name                 = */ "idoz",
-   /* .properties1          = */ 0,
-   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE,
-   /* .properties3          = */ 0,
-   /* .properties4          = */ 0,
-   /* .dataType             = */ TR::Int32,
-   /* .typeProperties       = */ ILTypeProp::Size_4 | ILTypeProp::Integer,
-   /* .childProperties      = */ ILChildProp::Unspecified,
-   /* .swapChildrenOpCode   = */ TR::BadILOp,
-   /* .reverseBranchOpCode  = */ TR::BadILOp,
-   /* .booleanCompareOpCode = */ TR::BadILOp,
-   /* .ifCompareOpCode      = */ TR::BadILOp,
-   },
-
-   {
    /* .opcode               = */ TR::dcos,
    /* .name                 = */ "dcos",
    /* .properties1          = */ ILProp1::Call | ILProp1::HasSymbolRef,

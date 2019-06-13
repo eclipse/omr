@@ -711,7 +711,6 @@
    TR::TreeEvaluator::fpSqrtEvaluator,                                 // TR::dsqrt
    TR::TreeEvaluator::unImpOpEvaluator,                                // TR::getstack
    TR::TreeEvaluator::unImpOpEvaluator,                                // TR::dealloca
-   TR::TreeEvaluator::unImpOpEvaluator,                                // TR::idoz
    TR::TreeEvaluator::unImpOpEvaluator,                                // TR::dcos
    TR::TreeEvaluator::unImpOpEvaluator,                                // TR::dsin
    TR::TreeEvaluator::unImpOpEvaluator,                                // TR::dtan
