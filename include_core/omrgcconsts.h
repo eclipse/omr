@@ -203,7 +203,7 @@ struct ModronLnrlOptions {
 #if defined(DEBUG)
 #define MMINLINE
 #else /* DEBUG */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #define MMINLINE __forceinline
 #elif (__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)
 #define MMINLINE inline __attribute((always_inline))
@@ -212,7 +212,7 @@ struct ModronLnrlOptions {
 #endif /* OMR_OS_WINDOWS */
 #endif /* DEBUG */
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #define MMINLINE_DEBUG __forceinline
 #elif ((__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
 #define MMINLINE_DEBUG inline __attribute((always_inline))
@@ -503,7 +503,7 @@ typedef enum {
 /* Because SLES zLinux/31 never allocates mmap()ed memory below the 1GB line unless you ask it to, we
  * always request that the heap is allocated low in the address range. This leaves the space above
  * 2GB free for other mmap() allocations (e.g. pthread stacks).*/
-#if defined(S390) && defined(LINUX) && !defined(OMR_ENV_DATA64)
+#if defined(S390) && (HOST_OS == OMR_LINUX) && !defined(OMR_ENV_DATA64)
 #define PREFERRED_HEAP_BASE 0x10000000
 #else
 #define PREFERRED_HEAP_BASE 0x0

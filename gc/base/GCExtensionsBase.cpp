@@ -136,9 +136,9 @@ MM_GCExtensionsBase::initialize(MM_EnvironmentBase* env)
 
 #if defined(AIXPPC)
 	requestedPageSize = SIXTY_FOUR_KB; /* Use 64K pages for AIX-32 and AIX-64 */
-#elif ((defined(LINUX) || defined(OSX)) && (defined(J9X86) || defined(J9HAMMER)))
+#elif (((HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)) && (defined(J9X86) || defined(J9HAMMER)))
 	requestedPageSize = TWO_MB; /* Use 2M pages for Linux/OSX x86-64 */
-#elif (defined(LINUX) && defined(S390))
+#elif ((HOST_OS == OMR_LINUX) && defined(S390))
 	requestedPageSize = ONE_MB; /* Use 1M pages for zLinux-31 and zLinux-64 */
 #elif defined(J9ZOS390)
 	requestedPageSize = ONE_MB; /* Use 1M PAGEABLE for ZOS-31 and ZOS-64 */

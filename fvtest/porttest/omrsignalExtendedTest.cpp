@@ -29,10 +29,10 @@
  *
  */
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 #include <signal.h>
 #include <pthread.h>
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 #include <errno.h>
 #include <string.h>
@@ -42,7 +42,7 @@
 #include "omrthread.h"
 #include "testHelpers.hpp"
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 typedef enum SignalEvent {
 	INVALID,
 	READY,
@@ -560,4 +560,4 @@ cleanup:
 	portTestEnv->changeIndent(-1);
 	reportTestExit(OMRPORTLIB, testName);
 }
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */

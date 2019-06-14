@@ -24,7 +24,7 @@
 
 #pragma once
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 
 #ifndef OMR_ELF_RELOCATION_RESOLVER_CONNECTOR
 #define OMR_ELF_RELOCATION_RESOLVER_CONNECTOR
@@ -60,6 +60,6 @@ private:
 
 }
 
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #endif // OMR_ELF_RELOCATION_RESOLVER_HPP

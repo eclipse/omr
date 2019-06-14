@@ -27,9 +27,9 @@
 #include "ddr/std/unordered_map.hpp"
 #include <map>
 
-#if defined(OSX) || defined(AIXPPC)
+#if (HOST_OS == OMR_OSX) || defined(AIXPPC)
 #include "ddr/scanner/dwarf/DwarfFunctions.hpp"
-#else /* defined(OSX) || defined(AIXPPC) */
+#else /* (HOST_OS == OMR_OSX) || defined(AIXPPC) */
 
 #if defined(HAVE_DWARF_H)
 #include <dwarf.h>
@@ -47,7 +47,7 @@
 #error "Need libdwarf.h or libdwarf/libdwarf.h"
 #endif /* defined(HAVE_LIBDWARF_H) */
 
-#endif /* defined(OSX) || defined(AIXPPX) */
+#endif /* (HOST_OS == OMR_OSX) || defined(AIXPPX) */
 
 #include "ddr/ir/ClassUDT.hpp"
 #include "ddr/ir/EnumUDT.hpp"

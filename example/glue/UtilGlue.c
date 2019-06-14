@@ -25,7 +25,7 @@
  * it can be used without requiring all the dependencies of LanguageVMGlue.
  * (Since LanguageVMGlue interacts with OMR_VM initialization, it prereqs all GC/RAS/OMR core modules.)
  */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 omr_error_t
 OMR_Glue_GetVMDirectoryToken(void **token)
 {
@@ -33,7 +33,7 @@ OMR_Glue_GetVMDirectoryToken(void **token)
 	*token = NULL;
 	return OMR_ERROR_NONE;
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 /**
  * Provides the thread name to be used when no name is given.

@@ -137,7 +137,7 @@
    .globl    FUNC_LABEL(__leArrayCopy)
    .type     FUNC_LABEL(__leArrayCopy),@function
 
-#elif defined(LINUX)
+#elif (HOST_OS == OMR_LINUX)
    .globl    __arrayCopy
    .globl    __wordArrayCopy
    .globl    __halfWordArrayCopy
@@ -517,7 +517,7 @@ __forwardHalfWordArrayCopy:
 #elif defined(LINUXPPC64)
    .align   5
 FUNC_LABEL(__arrayCopy_dp):
-#elif defined(LINUX)
+#elif (HOST_OS == OMR_LINUX)
    .align   5
 __arrayCopy_dp:
 #else
@@ -577,7 +577,7 @@ __arrayCopy_dp:
    stfd  fp8, 0(r9)
    addi  r9, r9, 8
    bc BO_IF, CR0_LT, .L.tableDispatch
-#if defined(AIXPPC) || defined(LINUX) || defined(LINUXPPC64)
+#if defined(AIXPPC) || (HOST_OS == OMR_LINUX) || defined(LINUXPPC64)
    .align   5     ! force 32-byte I-cache sector alignment here
 #endif
 .L.qWordAligned_dp:
@@ -756,7 +756,7 @@ __arrayCopy_dp:
    stfd  fp8, -8(r9)
    addi  r9, r9, -8
    bc BO_IF, CR0_LT, .L.reverseTableDispatch
-#if defined(AIXPPC) || defined(LINUX) || defined(LINUXPPC64)
+#if defined(AIXPPC) || (HOST_OS == OMR_LINUX) || defined(LINUXPPC64)
    .align   5     ! force 32-byte I-cache sector alignment here
 #endif
 .L.reverseQWordAligned_dp:
@@ -2634,7 +2634,7 @@ __leArrayCopy:
 
 #if defined(AIXPPC)
    .csect    ArrayCopy_DATA{RW}
-#elif defined(LINUX)
+#elif (HOST_OS == OMR_LINUX)
    .data
 #elif defined (LINUXPPC64)
    .section ".data"

@@ -36,12 +36,12 @@
 #include "cs2/listof.h"
 #include "cs2/hashtab.h"
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <time.h>
 #include "windows_api.h"
 #else
 #include <sys/time.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 
 #ifdef CS2_ALLOCINFO
@@ -81,7 +81,7 @@ class AIXTimer {
 };
 
 typedef AIXTimer PlatformTimer;
-#elif defined(LINUX) || defined(OSX) || (defined (__MVS__) && defined (_XOPEN_SOURCE_EXTENDED))
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) || (defined (__MVS__) && defined (_XOPEN_SOURCE_EXTENDED))
 /**
  * \brief Linux-specific timer class.
  *
@@ -110,7 +110,7 @@ private:
 };
 
 typedef BSDTimer PlatformTimer;
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
 /**
  * \brief Windows-specific timer class.
  *

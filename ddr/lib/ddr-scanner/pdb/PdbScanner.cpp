@@ -24,9 +24,9 @@
 #include <algorithm>
 #include <assert.h>
 #include <comdef.h>
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 #include <inttypes.h>
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 #include <stdio.h>
 
 #include "ddr/std/sstream.hpp"

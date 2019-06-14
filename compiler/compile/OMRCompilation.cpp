@@ -909,7 +909,7 @@ OMR::Compilation::isJProfilingCompilation()
    return false;
    }
 
-#if defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OMR_OS_WINDOWS)
+#if defined(AIXPPC) || (HOST_OS == OMR_LINUX) || defined(J9ZOS390) || (HOST_OS == OMR_WINDOWS)
 static void stopBeforeCompile()
    {
    static int first = 1;
@@ -920,7 +920,7 @@ static void stopBeforeCompile()
       first = 0;
       }
    }
-#endif /* defined(AIXPPC) || defined(LINUX) || defined(J9ZOS390) || defined(OMR_OS_WINDOWS) */
+#endif /* defined(AIXPPC) || (HOST_OS == OMR_LINUX) || defined(J9ZOS390) || (HOST_OS == OMR_WINDOWS) */
 
 static int32_t strHash(const char *str)
    {
@@ -976,7 +976,7 @@ int32_t OMR::Compilation::compile()
       self()->getDebug()->setupDebugger((void *) *((long*)&(stopBeforeCompile)));
       stopBeforeCompile();
       }
-#elif defined(LINUX) || defined(J9ZOS390) || defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_LINUX) || defined(J9ZOS390) || (HOST_OS == OMR_WINDOWS)
    if (self()->getOption(TR_DebugBeforeCompile))
       {
 #if defined(LINUXPPC64)
@@ -1242,12 +1242,12 @@ int32_t OMR::Compilation::compile()
       self()->getDebug()->setupDebugger((void *)jitTojitStart, self()->cg()->getCodeEnd(), false);
 #endif /* defined(AIXPPC) */
       }
-#elif defined(LINUX) || defined(J9ZOS390) || defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_LINUX) || defined(J9ZOS390) || (HOST_OS == OMR_WINDOWS)
    if (self()->getOption(TR_DebugOnEntry))
       {
       self()->getDebug()->setupDebugger(self()->cg()->getCodeStart(),self()->cg()->getCodeEnd(),false);
       }
-#endif /* defined(LINUX) || defined(J9ZOS390) || defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_LINUX) || defined(J9ZOS390) || (HOST_OS == OMR_WINDOWS) */
 
    return COMPILATION_SUCCEEDED;
    }

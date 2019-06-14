@@ -39,7 +39,7 @@
 #include "omrportpg.h"
 #endif
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
@@ -94,7 +94,7 @@ omrcpu_startup(struct OMRPortLibrary *portLibrary)
 
 #if (__IBMC__ || __IBMCPP__)
 	dcbz((void *) &buf[512]);
-#elif defined(LINUX) || defined(OSX)
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	__asm__(
 		"dcbz 0, %0"
 		: /* no outputs */
@@ -155,7 +155,7 @@ omrcpu_flush_icache(struct OMRPortLibrary *portLibrary, void *memoryPointer, uin
 
 #if (__IBMC__ || __IBMCPP__)
 		dcbst(addr);
-#elif defined(LINUX) || defined(OSX)
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 		__asm__(
 			"dcbst 0,%0"
 			: /* no outputs */
@@ -165,7 +165,7 @@ omrcpu_flush_icache(struct OMRPortLibrary *portLibrary, void *memoryPointer, uin
 
 #if (__IBMC__ || __IBMCPP__)
 	sync();
-#elif defined(LINUX) || defined(OSX)
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	__asm__("sync");
 #endif
 
@@ -174,7 +174,7 @@ omrcpu_flush_icache(struct OMRPortLibrary *portLibrary, void *memoryPointer, uin
 
 #if (__IBMC__ || __IBMCPP__)
 		icbi(addr);
-#elif defined(LINUX) || defined(OSX)
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 		__asm__(
 			"icbi 0,%0"
 			: /* no outputs */
@@ -185,7 +185,7 @@ omrcpu_flush_icache(struct OMRPortLibrary *portLibrary, void *memoryPointer, uin
 #if (__IBMC__ || __IBMCPP__)
 	sync();
 	isync();
-#elif defined(LINUX) || defined(OSX)
+#elif (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	__asm__("sync");
 	__asm__("isync");
 #endif
@@ -214,7 +214,7 @@ omrcpu_get_cache_line_size(struct OMRPortLibrary *portLibrary, int32_t *lineSize
 			*lineSize = (int32_t) result;
 			rc = 0;
 		}
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 	}
 	return rc;
 }

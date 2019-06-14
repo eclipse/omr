@@ -21,25 +21,25 @@
  *******************************************************************************/
  
 #include <signal.h>
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /* windows.h defined UDATA.  Ignore its definition */
 #define UDATA UDATA_win32_
 #include <windows.h>
 #undef UDATA	/* this is safe because our UDATA is a typedef, not a macro */
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 #include <pthread.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "AtomicSupport.hpp"
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include "omrsig.h"
 
 struct sigaction {
 	sighandler_t sa_handler;
 };
 
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 
 /* For now, only WIN32 is known to not support POSIX signals. Non-WIN32
  * systems which do not have POSIX signals are also supported.
@@ -59,7 +59,7 @@ typedef void (*sigaction_t)(int sig, siginfo_t *siginfo, void *uc);
 #define SECONDARY_FLAGS_WHITELIST (SA_ONSTACK | SA_NOCLDSTOP | SA_NOCLDWAIT)
 #endif /* defined(J9ZOS390) */
 
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 struct OMR_SigData {
 	struct sigaction primaryAction;
@@ -76,7 +76,7 @@ struct OMR_SigData {
 #endif /* defined(J9ZOS390) */
 
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 
 #define LockMask
 #define SIGLOCK(sigMutex) \
@@ -110,7 +110,7 @@ struct OMR_SigData {
 #error "Unrecognized MSVC_RUNTIME_DLL."
 #endif /* (_MSC_VER >= 1200) */
 #endif /* !defined(MSVC_RUINTIME_DLL) */
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 
 #define LockMask sigset_t *previousMask
 #define SIGLOCK(sigMutex) \
@@ -119,7 +119,7 @@ struct OMR_SigData {
 #define SIGUNLOCK(sigMutex) \
 	sigMutex.unlock(&previousMask);
 
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 class SigMutex
 {
@@ -134,12 +134,12 @@ public:
 
 	void lock(LockMask)
 	{
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 		/* Receiving a signal while a thread is holding a lock would cause deadlock. */
 		sigset_t mask;
 		sigfillset(&mask);
 		pthread_sigmask(SIG_BLOCK, &mask, previousMask);
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 		uintptr_t oldLocked = 0;
 		do {
 			oldLocked = locked;
@@ -152,8 +152,8 @@ public:
 		VM_AtomicSupport::readWriteBarrier();
 		locked = 0;
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 		pthread_sigmask(SIG_SETMASK, previousMask, NULL);
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 	}
 };

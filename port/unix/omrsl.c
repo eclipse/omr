@@ -26,15 +26,18 @@
  * @brief shared library
  */
 
-#if defined(LINUX) && !defined(OMRZTPF)
+#if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
 
 /* defining _GNU_SOURCE allows the use of dladdr() in dlfcn.h */
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+
+#elif (HOST_OS == OMR_OSX)
+
 #endif
-#elif defined(OSX)
+
 #define _XOPEN_SOURCE
-#endif /* defined(LINUX)  && !defined(OMRZTPF) */
+#endif /* (HOST_OS == OMR_LINUX)  && !defined(OMRZTPF) */
 
 /*
  *	Standard unix shared libraries
@@ -53,11 +56,11 @@
 /* Start copy from omrfiletext.c */
 /* __STDC_ISO_10646__ indicates that the platform wchar_t encoding is Unicode */
 /* but older versions of libc fail to set the flag, even though they are Unicode */
-#if defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX)
+#if defined(__STDC_ISO_10646__) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 #define J9VM_USE_MBTOWC
-#else /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) */
+#else /* defined(__STDC_ISO_10646__) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 #include "omriconvhelpers.h"
-#endif /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) */
+#endif /* defined(__STDC_ISO_10646__) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 
 #if defined(J9VM_USE_MBTOWC) || defined(J9VM_USE_ICONV)
@@ -75,11 +78,11 @@
 #include "omrport.h"
 #include "portnls.h"
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 #define PLATFORM_DLL_EXTENSION ".dylib"
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 #define PLATFORM_DLL_EXTENSION ".so"
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 #if (defined(J9VM_USE_MBTOWC)) /* priv. proto (autogen) */
 
@@ -162,7 +165,7 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 	/* dlopen(2) called with NULL filename opens a handle to current executable. */
 	handle = dlopen(openExec ? NULL : openName, lazyOrNow);
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	if ((NULL == handle) && !openExec) {
 		/* last ditch, try dir port lib DLL is in */
 		char portLibDir[MAX_STRING_LENGTH];
@@ -197,7 +200,7 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 			}
 		}
 	}
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 	if (NULL == handle) {
 		getDLError(portLibrary, errBuf, sizeof(errBuf));

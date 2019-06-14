@@ -26,7 +26,7 @@
 #include "omrcomp.h"
 #include "omrutilbase.h"
 
-#if defined(LINUX) && defined(OMR_ARCH_ARM)
+#if (HOST_OS == OMR_LINUX) && defined(OMR_ARCH_ARM)
 #include <time.h>
 #endif
 
@@ -77,11 +77,11 @@ getTimebase(void)
 #endif /* OMR_ENV_DATA64 */
 #endif /* GCC 4.8 */
 
-#elif defined(LINUX) && defined(S390)
+#elif (HOST_OS == OMR_LINUX) && defined(S390)
 	asm("stck %0" : "=m" (tsc));
 #elif defined(J9ZOS390)
 	__stck(&tsc);
-#elif defined(LINUX) && defined(OMR_ARCH_ARM)
+#elif (HOST_OS == OMR_LINUX) && defined(OMR_ARCH_ARM)
 	/* For now, use the system nano clock */
 #define J9TIME_NANOSECONDS_PER_SECOND	J9CONST_U64(1000000000)
 	struct timespec ts;

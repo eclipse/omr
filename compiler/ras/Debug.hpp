@@ -613,7 +613,7 @@ public:
 
 #if defined(AIXPPC)
    virtual void setupDebugger(void *);
-#elif defined(LINUX) || defined(J9ZOS390) || defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_LINUX) || defined(J9ZOS390) || (HOST_OS == OMR_WINDOWS)
    virtual void setupDebugger(void *, void *, bool);
 #endif /* defined(AIXPPC) */
 

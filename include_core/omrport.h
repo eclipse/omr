@@ -32,7 +32,7 @@
 /* NOTE:  omrportlib.h include is at the bottom of this file until its dependencies on this file can be relaxed */
 
 /* fix for linux s390 32bit stdint vs unistd.h definition of intptr_t (see CMVC 73850) */
-#if defined(LINUX) && defined(S390)
+#if (HOST_OS == OMR_LINUX) && defined(S390)
 #include <stdint.h>
 #endif
 
@@ -50,9 +50,9 @@
 #include "omrgcconsts.h"
 #endif /* defined(OMRZTPF) */
 
-#if (defined(LINUX) || defined(RS6000) || defined (OSX))
+#if ((HOST_OS == OMR_LINUX) || defined(RS6000) || defined (OSX))
 #include <unistd.h>
-#endif /* (defined(LINUX) || defined(RS6000) || defined (OSX)) */
+#endif /* ((HOST_OS == OMR_LINUX) || defined(RS6000) || defined (OSX)) */
 
 #if defined(J9ZOS390)
 #define PORT_ABEND_CODE	0xDED
@@ -268,9 +268,9 @@
 #endif /* defined(S390) || defined(J9ZOS390) */
 /** @} */
 
-#if defined(LINUX) && !defined(OMRZTPF)
+#if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
 #define OMR_CONFIGURABLE_SUSPEND_SIGNAL
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 /**
  * @name Time Unit Conversion
@@ -398,7 +398,7 @@ typedef enum J9VMemMemoryQuery {
 	OMRPORT_VMEM_PROCESS_EnsureWideEnum = 0x1000000
 } J9VMemMemoryQuery;
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 
 typedef struct OMRCgroupEntry {
 	int32_t hierarchyId; /**< cgroup hierarch ID*/
@@ -408,7 +408,7 @@ typedef struct OMRCgroupEntry {
 	struct OMRCgroupEntry *next; /**< pointer to next OMRCgroupEntry*/
 } OMRCgroupEntry;
 
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 typedef struct OMRCgroupMetricElement {
 	const char *units;
@@ -480,7 +480,7 @@ typedef struct J9MemTag {
 #endif
 } J9MemTag;
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 /**
  * @name Linux OS Dump Eyecatcher
  *
@@ -492,7 +492,7 @@ typedef struct J9MemTag {
 #else
 #define J9OSDUMP_SIZE	(128 * 1024)
 #endif
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 /* omrfile_chown takes unsigned arguments for user/group IDs, but uses -1 to indicate that group/user id are not to be changed */
 #define OMRPORT_FILE_IGNORE_ID UDATA_MAX
@@ -939,12 +939,12 @@ typedef struct J9ProcessorInfos {
  * Use J9STR_CODE_PLATFORM_OMR_INTERNAL to when processing the output of these calls.  Otherwise, use J9STR_CODE_PLATFORM_RAW.
  */
 #define J9STR_CODE_PLATFORM_OMR_INTERNAL J9STR_CODE_LATIN1
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
 /*
  * Most system calls on Windows use the "wide" versions which return UTF-16, which OMR then converts to UTF-8.
  */
 #define J9STR_CODE_PLATFORM_OMR_INTERNAL J9STR_CODE_UTF8
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 /* on other platforms the internal encoding is the actual operating system encoding */
 #define J9STR_CODE_PLATFORM_OMR_INTERNAL J9STR_CODE_PLATFORM_RAW
 #endif /* defined(J9ZOS390) */
@@ -990,12 +990,12 @@ typedef struct J9MmapHandle {
 #include "omrcuda.h"
 #endif /* OMR_OPT_CUDA */
 
-#if !defined(OMR_OS_WINDOWS)
-#if defined(OSX)
+#if !(HOST_OS == OMR_WINDOWS)
+#if (HOST_OS == OMR_OSX)
 #define _XOPEN_SOURCE
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 #include <ucontext.h>
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 #undef _XOPEN_SOURCE
 #endif /* OSX */
 #endif /* !OMR_OS_WINDOWS */
@@ -1021,7 +1021,7 @@ typedef struct J9PlatformThread {
 	uintptr_t stack_base;
 	uintptr_t stack_end;
 	uintptr_t priority;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	void *context;
 #elif defined(J9ZOS390)
 	/* This should really be 'struct __mcontext*' however DDR cannot parse the zos system header
@@ -1033,7 +1033,7 @@ typedef struct J9PlatformThread {
 	ucontext_t *context;
 #endif
 	struct J9PlatformStackFrame *callstack;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	void *sigmask;
 #else /* OMR_OS_WINDOWS */
 	sigset_t *sigmask;

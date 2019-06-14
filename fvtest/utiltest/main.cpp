@@ -36,7 +36,7 @@ main(int argc, char **argv, char **envp)
 
 TEST(UtilTest, detectVMDirectory)
 {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	void *token = NULL;
 	ASSERT_EQ(OMR_ERROR_NONE, OMR_Glue_GetVMDirectoryToken(&token));
 
@@ -52,5 +52,5 @@ TEST(UtilTest, detectVMDirectory)
 		_snwprintf(pathEnd, length, L"\\abc");
 		wprintf(L"Mangled VM Directory: '%s'\n", path);
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 }

@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <windows.h>
 #else
 #include <sys/mman.h>
@@ -39,6 +39,7 @@ namespace TR
 // We should be relying on the port library to allocate memory, but this connection
 // has not yet been made, so as a quick workaround for platforms like OS X <= 10.9,
 // where MAP_ANONYMOUS is not defined, is to map MAP_ANON to MAP_ANONYMOUS ourselves
+
 #if defined(__APPLE__)
    #if !defined(MAP_ANONYMOUS)
       #define NO_MAP_ANONYMOUS
@@ -59,7 +60,7 @@ FEBase<Derived>::allocateRelocationData(TR::Compilation* comp, uint32_t size)
    if (size == 0) return 0;
    TR_ASSERT(size >= 2048, "allocateRelocationData should be used for whole-sale memory allocation only");
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
    return reinterpret_cast<uint8_t *>(
          VirtualAlloc(NULL,
             size,

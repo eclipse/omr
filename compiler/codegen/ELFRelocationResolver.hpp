@@ -24,7 +24,7 @@
 
 #pragma once
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 
 #include "codegen/OMRELFRelocationResolver.hpp"
 
@@ -39,6 +39,6 @@ class OMR_EXTENSIBLE ELFRelocationResolver : public ::OMR::ELFRelocationResolver
 
 }
 
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #endif

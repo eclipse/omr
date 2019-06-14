@@ -34,10 +34,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <direct.h>
 #include <windows.h> /* for MAX_PATH */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "testHelpers.hpp"
 #include "testProcessHelpers.hpp"
@@ -1029,7 +1029,7 @@ TEST_F(PortFileTest2, file_test8)
 	fd = FILE_OPEN_FUNCTION(OMRPORTLIB, fileName, EsOpenWrite | EsOpenAppend, 0666);
 
 	prevFilePtr = omrfile_seek(fd, 0, EsSeekCur);
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/* Windows sets the file pointer to the end of file as soon as it is opened in append mode. */
 	if (5 != prevFilePtr) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "File pointer location is wrong after opening the file. Expected = 5, Got = %lld", prevFilePtr);
@@ -1039,7 +1039,7 @@ TEST_F(PortFileTest2, file_test8)
 	if (0 != prevFilePtr) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "File pointer location is wrong after opening the file. Expected = 0, Got = %lld", prevFilePtr);
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	if (-1 == fd) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "%s() returned %d expected valid file handle\n", FILE_OPEN_FUNCTION_NAME, -1);
@@ -3262,7 +3262,7 @@ omrfile_test25_child_1(OMRPortLibrary *portLibrary)
 
 	SleepFor(1);
 
-#if defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 	unlockRc = FILE_UNLOCK_BYTES_FUNCTION(OMRPORTLIB, fd, offset, length);
 
 	if (0 != unlockRc) {
@@ -3272,7 +3272,7 @@ omrfile_test25_child_1(OMRPortLibrary *portLibrary)
 		goto exit;
 	}
 	portTestEnv->log("Child 1: Released read lock on bytes %lld for %lld\n", offset, length);
-#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 
 
 	lockRc = FILE_LOCK_BYTES_FUNCTION(OMRPORTLIB, fd, OMRPORT_FILE_WRITE_LOCK | OMRPORT_FILE_WAIT_FOR_LOCK, (offset + 2), length);
@@ -3285,7 +3285,7 @@ omrfile_test25_child_1(OMRPortLibrary *portLibrary)
 	}
 	portTestEnv->log("Child 1: Got write lock on bytes %lld for %lld\n", (offset + 2), length);
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	unlockRc = FILE_UNLOCK_BYTES_FUNCTION(OMRPORTLIB, fd, offset, (length - 2));
 
 	if (0 != unlockRc) {
@@ -3295,7 +3295,7 @@ omrfile_test25_child_1(OMRPortLibrary *portLibrary)
 		goto exit;
 	}
 	portTestEnv->log("Child 1: Released read lock on bytes %lld for %lld\n", offset, (length - 2));
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 	unlockRc = FILE_UNLOCK_BYTES_FUNCTION(OMRPORTLIB, fd, (offset + 2), length);
 
@@ -3445,10 +3445,10 @@ TEST_F(PortFileTest2, file_test27)
 	const char *localFilename = "omrfile_test27.tst";
 	intptr_t fd1, fd2;
 	int32_t expectedMode;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	const int32_t allWrite = 0222;
 	const int32_t allRead = 0444;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	const int32_t ownerWritable = 0200;
 	const int32_t ownerReadable = 0400;
 	int32_t m;
@@ -3473,12 +3473,12 @@ TEST_F(PortFileTest2, file_test27)
 			if (0 != (testModes[m] & J9S_ISGID)) {
 				continue; /* sgid not support on some versions of AIX */
 			}
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 			if (0 != (testModes[m] & (J9S_ISUID | J9S_ISGID))) {
 				continue; /* sgid/suid sometimes ignored on OSX */
 			}
 #endif /* defined(AIXPPC) || defined(J9ZOS390) */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 			if (allWrite == (testModes[m] & allWrite)) {
 				expectedMode = allRead + allWrite;
 			} else {
@@ -3486,7 +3486,7 @@ TEST_F(PortFileTest2, file_test27)
 			}
 #else
 			expectedMode = testModes[m];
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 			rc = omrfile_chmod(localFilename, testModes[m]);
 			if (expectedMode != rc) {
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_chmod() returned %d expected %d\n", rc, expectedMode);
@@ -3542,10 +3542,10 @@ TEST_F(PortFileTest2, file_test28)
 	const char *testName = APPEND_ASYNC(omrfile_test28);
 	const char *localDirectoryName = "omrfile_test28_dir";
 	int32_t expectedMode;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	const int32_t allWrite = 0222;
 	const int32_t allRead = 0444;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	int32_t m;
 	int32_t rc;
 #define nModes 22
@@ -3564,12 +3564,12 @@ TEST_F(PortFileTest2, file_test28)
 			if (0 != (testModes[m] & J9S_ISGID)) {
 				continue; /* sgid not support on some versions of AIX */
 			}
-#elif defined(OSX)
+#elif (HOST_OS == OMR_OSX)
 			if (0 != (testModes[m] & (J9S_ISUID | J9S_ISGID))) {
 				continue; /* sgid/suid sometimes ignored on OSX */
 			}
 #endif /* defined(AIXPPC) || defined(J9ZOS390) */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 			if (allWrite == (testModes[m] & allWrite)) {
 				expectedMode = allRead + allWrite;
 			} else {
@@ -3577,7 +3577,7 @@ TEST_F(PortFileTest2, file_test28)
 			}
 #else
 			expectedMode = testModes[m];
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 			rc = omrfile_chmod(localDirectoryName, testModes[m]);
 			if (expectedMode != rc) {
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_chmod() returned %d expected %d\n", rc, expectedMode);
@@ -3602,13 +3602,13 @@ TEST_F(PortFileTest2, file_test29)
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 	const char *testName = APPEND_ASYNC(omrfile_test29);
 	const char *testFile = "omrfile_test29_file";
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	uintptr_t gid, uid;
 	intptr_t rc;
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 	reportTestEntry(OMRPORTLIB, testName);
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 	omrfile_unlink(testFile);
 	(void)omrfile_create_file(OMRPORTLIB, testFile, 0, testName);
 	gid = omrsysinfo_get_egid();
@@ -3626,7 +3626,7 @@ TEST_F(PortFileTest2, file_test29)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_chown() to root succeeded, should have failed\n");
 	}
 	omrfile_unlink(testFile);
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 	reportTestExit(OMRPORTLIB, testName);
 }
@@ -3795,10 +3795,10 @@ TEST_F(PortFileTest2, file_test32)
 		goto done;
 	}
 	FILE_CLOSE_FUNCTION(OMRPORTLIB, fd);
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/*The mode param is ignored by omrfile_open, so omrfile_chmod() is called*/
 	omrfile_chmod(localFilename, 0666);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	omrfile_stat(localFilename, 0, &stat);
 
 	if (stat.perm.isUserWriteable != 1) {
@@ -3807,7 +3807,7 @@ TEST_F(PortFileTest2, file_test32)
 	if (stat.perm.isUserReadable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.isUserReadable != 1'\n");
 	}
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (stat.perm.isGroupWriteable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.isGroupWriteable != 1'\n");
 	}
@@ -3822,7 +3822,7 @@ TEST_F(PortFileTest2, file_test32)
 	}
 #else
 	/*umask vary so we can't test 'isGroupWriteable', 'isGroupReadable', 'isOtherWriteable', or 'isOtherReadable'*/
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	omrfile_unlink(localFilename);
 
@@ -3838,10 +3838,10 @@ TEST_F(PortFileTest2, file_test32)
 		goto done;
 	}
 	FILE_CLOSE_FUNCTION(OMRPORTLIB, fd);
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/*The mode param is ignored by omrfile_open, so omrfile_chmod() is called*/
 	omrfile_chmod(localFilename, 0444);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	omrfile_stat(localFilename, 0, &stat);
 
 	if (stat.perm.isUserWriteable != 0) {
@@ -3850,7 +3850,7 @@ TEST_F(PortFileTest2, file_test32)
 	if (stat.perm.isUserReadable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.isUserReadable != 1'\n");
 	}
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (stat.perm.isGroupWriteable != 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.isGroupWriteable != 0'\n");
 	}
@@ -3865,7 +3865,7 @@ TEST_F(PortFileTest2, file_test32)
 	}
 #else
 	/*umask vary so we can't test 'isGroupWriteable', 'isGroupReadable', 'isOtherWriteable', or 'isOtherReadable'*/
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	omrfile_unlink(localFilename);
 
@@ -3880,16 +3880,16 @@ TEST_F(PortFileTest2, file_test32)
 		goto done;
 	}
 	FILE_CLOSE_FUNCTION(OMRPORTLIB, fd);
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/*The mode param is ignored by omrfile_open, so omrfile_chmod() is called*/
 	omrfile_chmod(localFilename, 0222);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	omrfile_stat(localFilename, 0, &stat);
 
 	if (stat.perm.isUserWriteable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.isUserWriteable != 1'\n");
 	}
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/*On windows if a file is write-able, then it is also read-able*/
 	if (stat.perm.isUserReadable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.isUserReadable != 1'\n");
@@ -3898,9 +3898,9 @@ TEST_F(PortFileTest2, file_test32)
 	if (stat.perm.isUserReadable != 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.isUserReadable != 0'\n");
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (stat.perm.isGroupWriteable != 1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrfile_stat() error 'stat.isGroupWriteable != 1'\n");
 	}
@@ -3917,7 +3917,7 @@ TEST_F(PortFileTest2, file_test32)
 	}
 #else
 	/*umask vary so we can't test 'isGroupWriteable', 'isGroupReadable', 'isOtherWriteable', or 'isOtherReadable'*/
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 
 done:
@@ -3962,7 +3962,7 @@ const char *testName = APPEND_ASYNC(omrfile_test33: test UTF - 8 encoding);
 	reportTestExit(OMRPORTLIB, testName);
 }
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 /**
  * Test a very long file name
  *
@@ -4098,7 +4098,7 @@ exit:
 
 	reportTestExit(OMRPORTLIB, testName);
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 
 /**
@@ -4110,7 +4110,7 @@ exit:
  *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 int
 omrfile_test34(struct OMRPortLibrary *portLibrary)
 {
@@ -4139,9 +4139,9 @@ omrfile_test34(struct OMRPortLibrary *portLibrary)
 		goto exit;
 	}
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	sync();
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 	rc = omrfile_stat_filesystem(fileName, 0, &buf_before);
 	if (0 != rc) {
 		portTestEnv->log(LEVEL_ERROR, "first omrfile_stat_filesystem() returned %d, expected %d\n", rc, 0);
@@ -4173,9 +4173,9 @@ omrfile_test34(struct OMRPortLibrary *portLibrary)
 	omrfile_printf(fd, "%s", stringToWrite);
 	omrfile_sync(fd); /* flush data written to disk */
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	sync();
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 	rc = omrfile_stat_filesystem(fileName, 0, &buf_after);
 	if (0 != rc) {
 		portTestEnv->log(LEVEL_ERROR, "second omrfile_stat_filesystem() returned %d, expected %d\n", rc, 0);
@@ -4250,7 +4250,7 @@ const char *testName = APPEND_ASYNC(omrfile_test34_multiple_tries: _test_omrfile
 exit:
 	return reportTestExit(OMRPORTLIB, testName);
 }
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 /**
  * Test omrfile_test35
@@ -4365,7 +4365,7 @@ TEST_F(PortFileTest2, file_test36)
 	reportTestExit(OMRPORTLIB, testName);
 }
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 /**
  * Verify port file system.
  *
@@ -4716,7 +4716,7 @@ const char *testName = APPEND_ASYNC(omrfile_test39: test file permission bits us
 	portTestEnv->changeIndent(-1);
 	reportTestExit(OMRPORTLIB, testName);
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 
 

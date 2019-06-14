@@ -21,9 +21,9 @@
  *******************************************************************************/
 
 /* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
-#if defined(LINUX) && !defined(OMRZTPF)
+#if (HOST_OS == OMR_LINUX) && !defined(OMRZTPF)
 #define _GNU_SOURCE
-#endif /* defined(LINUX) && !defined(OMRZTPF) */
+#endif /* (HOST_OS == OMR_LINUX) && !defined(OMRZTPF) */
 #if defined(OMRZTPF)
 #include <tpf/c_cinfc.h>   /* for access to cinfc */
 #include <tpf/c_pi1dt.h>   /* for access to machine type. */

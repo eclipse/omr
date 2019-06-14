@@ -32,7 +32,7 @@
 #include <vector>
 #include <errno.h>
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 #include <sys/fcntl.h>
 #endif /* OSX */
 

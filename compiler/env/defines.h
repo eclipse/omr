@@ -22,17 +22,17 @@
 #ifndef OMR_DEFINES_H
 #define OMR_DEFINES_H
 
-/* 
+/*
    This is the first file that the OMR code should be including.
    The idea is the define a standard set of C macros based on the
    system configuration. This is the only file (hopefully) needs to
    use system specific macros (e.g. __linux__).
-   
+
    In addition, if there are system-configuration specific feature
    test macros that you want to define, this is probably the file you
    want to define them in. You should also provide documentation of
    what your macro does. As an example see SUPPORTS_THREAD_LOCAL
-   
+
    Note that this file is included is asm code as well. Apart from C
    pre-processor macros, it shouldn't contain anything else.
 */
@@ -98,7 +98,7 @@
 #  define HOST_OS OMR_LINUX
 #elif defined(_AIX)
 #  define HOST_OS OMR_AIX
-#elif defined(OMR_OS_WINDOWS)
+#elif (HOST_OS == OMR_WINDOWS)
 #  define HOST_OS OMR_WINDOWS
 #elif defined(__MVS__)
 #  define HOST_OS OMR_ZOS
@@ -158,7 +158,7 @@
 #  error "defines.h: unknown compiler"
 #endif
 
-/* FIXME: we need to deprecate TR_HOST_* macros and replace them with 
+/* FIXME: we need to deprecate TR_HOST_* macros and replace them with
    code of the form: #if (HOST_ARCH == ARCH_X86) */
 #if (HOST_ARCH == ARCH_X86)
 #  define TR_HOST_X86    1

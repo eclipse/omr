@@ -27,10 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <direct.h>
-#endif /* defined(OMR_OS_WINDOWS) */
-#if !defined(OMR_OS_WINDOWS)
+#endif /* (HOST_OS == OMR_WINDOWS) */
+#if !(HOST_OS == OMR_WINDOWS)
 #include <grp.h>
 #include <errno.h>
 #if defined(J9ZOS390)
@@ -40,7 +40,7 @@
 #include <stdint.h> /* For INT64_MAX. */
 #endif /* defined(J9ZOS390) */
 #include <sys/resource.h> /* For RLIM_INFINITY */
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 #if defined(J9ZOS390)
 #define _UNIX03_SOURCE
@@ -49,13 +49,13 @@
 
 #include "testHelpers.hpp"
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #define J9DIRECTORY_SEPARATOR_CHARACTER '\\'
 #define J9FILE_EXTENSION ".exe"
 #define J9FILE_EXTENSION_LENGTH (sizeof(J9FILE_EXTENSION) - 1)
 #else
 #define J9DIRECTORY_SEPARATOR_CHARACTER '/'
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 /* Under the standard compiler configuration, INT64_MAX is
  * not available; instead, LONGLONG_MAX is defined by xLC.
@@ -104,7 +104,7 @@ validate_executable_name(const char *expected, const char *found)
 	/* On Windows, disregard comparing the extension, should this be dropped on the command
 	 * line (API always returns executable name including the extension (.exe).
 	 */
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/* Check whether argv0 ends with the extension ".exe".  If not, we need to reduce
 	 * the number of characters to compare (against the executable name found by API).
 	 */
@@ -113,7 +113,7 @@ validate_executable_name(const char *expected, const char *found)
 				J9FILE_EXTENSION_LENGTH) != 0) {
 		length -= J9FILE_EXTENSION_LENGTH;
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	if (length == expected_length) {
 		if (strncmp(found_base_path, expected_base_path, length) == 0) {
 			return TRUE;
@@ -132,12 +132,12 @@ TEST(PortSysinfoTest, sysinfo_test0)
 
 	reportTestEntry(OMRPORTLIB, testName);
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/* Remove extra "./" from the front of executable name. */
 	if (0 == strncmp(argv0, "./", 2)) {
 		argv0 = &argv0[2];
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	rc = omrsysinfo_get_executable_name(NULL, &executable_name);
 	if (-1 == rc) {
@@ -336,7 +336,7 @@ TEST(PortSysinfoTest, sysinfo_get_OS_type_test)
 		portTestEnv->log(msg);
 	}
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (NULL == strstr(osName, "Windows")) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_get_OS_version does not contain \"Windows\".\n", 0, 1);
 		reportTestExit(OMRPORTLIB, testName);
@@ -350,7 +350,7 @@ TEST(PortSysinfoTest, sysinfo_get_OS_type_test)
 		reportTestExit(OMRPORTLIB, testName);
 		return;
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	reportTestExit(OMRPORTLIB, testName);
 }
 
@@ -615,7 +615,7 @@ done:
 
 
 /* sysinfo_set_limit and sysinfo_get_limit tests will not work on windows */
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 #if !(defined(AIXPPC) || defined(J9ZOS390))
 /**
  *
@@ -1179,7 +1179,7 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_get_limit_FILE_DESCRIPTORS)
 	}
 	reportTestExit(OMRPORTLIB, testName);
 }
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 /* Since the processor and memory usage port library APIs are not available on zOS (neither
  * 31-bit not 64-bit) yet, so we exclude these tests from running on zOS. When the zOS
@@ -1213,31 +1213,31 @@ TEST(PortSysinfoTest, sysinfo_testMemoryInfo)
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.availPhysical)
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.totalSwap)
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.availSwap)
-#if defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.totalVirtual)
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.availVirtual)
-#else /* defined(OMR_OS_WINDOWS) || defined(OSX) */
+#else /* (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 			/* We do not check totalVirtual since it may be set to some value or -1, depending
 			 * on whether there is a limit set for this or not on the box.
 			 */
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.availVirtual)
-#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
-#if defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX)
+#endif /* (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
+#if defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 			/* Size of the file buffer area is not available on Windows, AIX and OSX. Therefore,
 			 * it must be set to OMRPORT_MEMINFO_NOT_AVAILABLE.
 			 */
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.buffered)
-#else /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX) */
+#else /* defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 			/* On platforms where buffer area is defined, OMRPORT_MEMINFO_NOT_AVAILABLE is
 			 * surely a failure!
 			 */
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.buffered)
-#endif /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 #if defined (OSX)
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE != memInfo.cached)
 #else /* defined (OSX) */
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.cached)
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 		) {
 
 			/* Fail pltest if one of these memory usage parameters were found inconsistent. */
@@ -1249,13 +1249,13 @@ TEST(PortSysinfoTest, sysinfo_testMemoryInfo)
 		/* Validate the statistics that we obtained. */
 		if ((memInfo.totalPhysical > 0) &&
 			(memInfo.availPhysical <= memInfo.totalPhysical) &&
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 			/* Again, it does not make sense to do checks and comparisons on Virtual Memory
 			 * on places other than Windows.
 			 */
 			(memInfo.totalVirtual > 0) &&
 			(memInfo.availVirtual <= memInfo.totalVirtual) &&
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 			(memInfo.availSwap <= memInfo.totalSwap) &&
 			(memInfo.timestamp > 0)) {
 
@@ -1263,10 +1263,10 @@ TEST(PortSysinfoTest, sysinfo_testMemoryInfo)
 			portTestEnv->log("Retrieved memory usage statistics.\n");
 			portTestEnv->log("Total physical memory: %llu bytes.\n", memInfo.totalPhysical);
 			portTestEnv->log("Available physical memory: %llu bytes.\n", memInfo.availPhysical);
-#if defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 			portTestEnv->log("Total virtual memory: %llu bytes.\n", memInfo.totalVirtual);
 			portTestEnv->log("Available virtual memory: %llu bytes.\n", memInfo.availVirtual);
-#else /* defined(OMR_OS_WINDOWS) || defined(OSX) */
+#else /* (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 			/* This may or may not be available depending on whether a limit is set. Print out if this
 			 * is available or else, call this parameter "undefined".
 			 */
@@ -1277,19 +1277,19 @@ TEST(PortSysinfoTest, sysinfo_testMemoryInfo)
 			}
 			/* Leave Available Virtual memory parameter as it is on non-Windows Platforms. */
 			portTestEnv->log("Available virtual memory: <undefined>.\n");
-#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 			portTestEnv->log("Total swap memory: %llu bytes.\n", memInfo.totalSwap);
 			portTestEnv->log("Swap memory free: %llu bytes.\n", memInfo.availSwap);
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 			portTestEnv->log("Cache memory: <undefined>.\n");
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 			portTestEnv->log("Cache memory: %llu bytes.\n", memInfo.cached);
-#endif /* defined(OSX) */
-#if defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined (OSX)
+#endif /* (HOST_OS == OMR_OSX) */
+#if defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || defined (OSX)
 			portTestEnv->log("Buffers memory: <undefined>.\n");
-#else /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined (OSX) */
+#else /* defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || defined (OSX) */
 			portTestEnv->log("Buffers memory: %llu bytes.\n", memInfo.buffered);
-#endif /* defined(AIXPPC) || defined(OMR_OS_WINDOWS) || defined (OSX) */
+#endif /* defined(AIXPPC) || (HOST_OS == OMR_WINDOWS) || defined (OSX) */
 			portTestEnv->log("Timestamp: %llu.\n", memInfo.timestamp);
 		} else {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "Invalid memory usage statistics retrieved.\n");
@@ -1421,11 +1421,11 @@ TEST(PortSysinfoTest, sysinfo_testProcessorInfo)
 	portTestEnv->log("User time:   %lld.\n", currInfo.procInfoArray[0].userTime);
 	portTestEnv->log("System time: %lld.\n", currInfo.procInfoArray[0].systemTime);
 	portTestEnv->log("Idle time:   %lld.\n", currInfo.procInfoArray[0].idleTime);
-#if defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 	portTestEnv->log("Wait time:   <undefined>.\n");
 #else /* Non-windows/OSX platforms */
 	portTestEnv->log("tWait time:   %lld.\n", currInfo.procInfoArray[0].waitTime);
-#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 	portTestEnv->log("Busy time:   %lld.\n", currInfo.procInfoArray[0].busyTime);
 	portTestEnv->changeIndent(-1);
 
@@ -1439,12 +1439,12 @@ TEST(PortSysinfoTest, sysinfo_testProcessorInfo)
 			if ((OMRPORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].userTime) &&
 				(OMRPORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].systemTime) &&
 				(OMRPORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].idleTime) &&
-#if defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 				/* Windows and OSX do not have the notion of Wait times. */
 				(OMRPORT_PROCINFO_NOT_AVAILABLE == currInfo.procInfoArray[cntr].waitTime) &&
 #else /* Non-windows/OSX platforms */
 				(OMRPORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].waitTime) &&
-#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 				(OMRPORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].busyTime)) {
 
 				/* Print out processor times in each mode for each CPU that is online. */
@@ -1453,11 +1453,11 @@ TEST(PortSysinfoTest, sysinfo_testProcessorInfo)
 				portTestEnv->log("User time:   %lld.\n", currInfo.procInfoArray[cntr].userTime);
 				portTestEnv->log("System time: %lld.\n", currInfo.procInfoArray[cntr].systemTime);
 				portTestEnv->log("Idle time:   %lld.\n", currInfo.procInfoArray[cntr].idleTime);
-#if defined(OMR_OS_WINDOWS) || defined(OSX)
+#if (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX)
 				portTestEnv->log("Wait time:   <undefined>.\n");
 #else /* Non-windows/OSX platforms */
 				portTestEnv->log("Wait time:   %lld.\n", currInfo.procInfoArray[cntr].waitTime);
-#endif /* defined(OMR_OS_WINDOWS) || defined(OSX) */
+#endif /* (HOST_OS == OMR_WINDOWS) || (HOST_OS == OMR_OSX) */
 				portTestEnv->log("Busy time:   %lld.\n", currInfo.procInfoArray[cntr].busyTime);
 				portTestEnv->changeIndent(-1);
 			} else {
@@ -1716,7 +1716,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_tmp3)
 	const char *data = "Hello World!";
 	intptr_t tmpFile = 0;
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	wchar_t *origEnv = NULL;
 	const unsigned char utf8[]       = {0x63, 0x3A, 0x5C, 0xD0, 0xB6, 0xD0, 0xB0, 0xD0, 0xB1, 0xD0, 0xB0, 0x5C, 0x00};
 	const unsigned char utf8_file[]  = {0x63, 0x3A, 0x5C, 0xD0, 0xB6, 0xD0, 0xB0, 0xD0, 0xB1, 0xD0, 0xB0, 0x5C, 0x74, 0x65, 0x73, 0x74, 0x2E, 0x74, 0x78, 0x74, 0x00};
@@ -1727,7 +1727,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_tmp3)
 	origEnv = (wchar_t *)omrmem_allocate_memory(EsMaxPath, OMRMEM_CATEGORY_PORT_LIBRARY);
 	wcscpy(origEnv, _wgetenv(L"TMP"));
 	rc = _wputenv_s(L"TMP", unicode);
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	char *origEnv = NULL;
 	const char *utf8 = "/tmp/test/";
 	const char *utf8_file = "/tmp/test/test.txt";
@@ -1756,7 +1756,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_tmp3)
 	rc = setenv("TMPDIR", (const char *)utf8, 1);
 #endif /* defined(J9ZOS390) */
 
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	if (0 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "error to update environment variable rc: %d\n", rc);
@@ -1806,20 +1806,20 @@ TEST(PortSysinfoTest, sysinfo_test_get_tmp3)
 	}
 
 	if (NULL != origEnv) {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 		_wputenv_s(L"TMP", origEnv);
-#elif defined(J9ZOS390) /* defined(OMR_OS_WINDOWS) */
+#elif defined(J9ZOS390) /* (HOST_OS == OMR_WINDOWS) */
 		setenv(envVarInEbcdic, origEnvInEbcdic, 1);
 #else /* defined(J9ZOS390) */
 		setenv("TMPDIR", origEnv, 1);
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 		omrmem_free_memory(origEnv);
 	} else {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 		_wputenv_s(L"TMP", L"");
-#elif !defined(J9ZOS390) /* defined(OMR_OS_WINDOWS) */
+#elif !defined(J9ZOS390) /* (HOST_OS == OMR_WINDOWS) */
 		unsetenv("TMPDIR");
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	}
 
 #if defined(J9ZOS390)
@@ -1840,7 +1840,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_tmp3)
 	reportTestExit(OMRPORTLIB, testName);
 }
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 /*
  * Test omrsysinfo_get_tmp when ignoreEnvVariable is FALSE/TRUE
  * Expected result size of buffer required
@@ -1948,7 +1948,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_tmp4)
 
 	reportTestExit(OMRPORTLIB, testName);
 }
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 /*
  * Test omrsysinfo_get_cwd when the buffer size == 0, then allocate required ammount of bites and try again.
@@ -2022,7 +2022,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 	char *buffer = NULL;
 	char *orig_cwd = NULL;
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/* c:\U+6211 U+7684 U+7236 U+4EB2 U+662F U+6536 U+68D2 U+5B50 U+7684 */
 	const wchar_t unicode[] = {0x0063, 0x003A, 0x005C, 0x6211, 0x7684, 0x7236, 0x4EB2, 0x662F, 0x6536, 0x68D2, 0x5B50, 0x7684, 0x005C, 0x00};
 	const unsigned char utf8[]       = {0x63, 0x3A, 0x5C, 0xE6, 0x88, 0x91, 0xE7, 0x9A, 0x84, 0xE7, 0x88, 0xB6, 0xE4, 0xBA, 0xB2, 0xE6, 0x98, 0xAF, 0xE6, 0x94, 0xB6, 0xE6, 0xA3, 0x92, 0xE5, 0xAD, 0x90, 0xE7, 0x9A, 0x84, 0x5C, 0x00};
@@ -2041,12 +2041,12 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "error failed to change current directory rc: %d\n", rc);
 	}
 #else
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	/* On OSX, /tmp is a symbolic link to /private/tmp. For the cwd to match after chdir, use /private/tmp. */
 	const char *utf8 = "/private/tmp/omrsysinfo_test_get_cwd3/";
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 	const char *utf8 = "/tmp/omrsysinfo_test_get_cwd3/";
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 	reportTestEntry(OMRPORTLIB, testName);
 
@@ -2069,7 +2069,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 	} else {
 		portTestEnv->log("cd %s\n", utf8);
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	buffer = (char *)omrmem_allocate_memory(EsMaxPath, OMRMEM_CATEGORY_PORT_LIBRARY);
 	rc = omrsysinfo_get_cwd(buffer, EsMaxPath);
@@ -2085,16 +2085,16 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "invalid directory rc: %d\n", rc);
 	}
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	_chdir(orig_cwd); /* we need to exit current directory before deleting it*/
 #elif defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	atoe_chdir(orig_cwd);
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	rc = chdir(orig_cwd);
 	if (-1 == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "error: failed to change to directory %s, errno: %d\n", (const char *)orig_cwd, errno);
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	rc = omrfile_unlinkdir((const char *)utf8);
 	if (-1 == rc) {
@@ -2106,7 +2106,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 	reportTestExit(OMRPORTLIB, testName);
 }
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 /**
  * Test omrsysinfo_get_groups.
  */
@@ -2167,7 +2167,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_groups)
 	reportTestExit(OMRPORTLIB, testName);
 }
 
-#if defined(LINUX) || defined(AIXPPC)
+#if (HOST_OS == OMR_LINUX) || defined(AIXPPC)
 /**
  * Test omrsysinfo_test_get_open_file_count.
  * Available only on Linux and AIX.
@@ -2236,8 +2236,8 @@ TEST(PortSysinfoTest, sysinfo_test_get_open_file_count)
 	reportTestExit(OMRPORTLIB, testName);
 	return;
 }
-#endif /* defined(LINUX) || defined(AIXPPC) */
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_LINUX) || defined(AIXPPC) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 /**
  * Test omrsysinfo_test_get_os_description.
@@ -2277,7 +2277,7 @@ TEST(PortSysinfoTest, sysinfo_test_os_kernel_info)
 
 	rc = omrsysinfo_os_kernel_info(&kernelInfo);
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 	/* Throw an error if failure happens on Linux */
 	if (FALSE == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS,
@@ -2290,13 +2290,13 @@ TEST(PortSysinfoTest, sysinfo_test_os_kernel_info)
 			goto exit;
 		}
 	}
-#else /* defined(LINUX) */
+#else /* (HOST_OS == OMR_LINUX) */
 	if (TRUE == rc) {
 		/* Throw an error if omrsysinfo_os_kernel_info passes on an unsupported platform */
 		outputErrorMessage(PORTTEST_ERROR_ARGS,	"omrsysinfo_os_kernel_info passed on an unsupported platform\n");
 		goto exit;
 	}
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 exit:
 	reportTestExit(OMRPORTLIB, testName);
@@ -2318,7 +2318,7 @@ TEST(PortSysinfoTest, sysinfo_cgroup_get_memlimit)
 
 	rc = omrsysinfo_cgroup_get_memlimit(&cgroupMemLimit);
 
-#if !defined(LINUX)
+#if !(HOST_OS == OMR_LINUX)
 	if (OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_cgroup_get_memlimit returned %d, expected %d on platform that does not support cgroups\n", rc, OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM);
 	}

@@ -32,11 +32,11 @@
 #include "Port.hpp"
 
 int
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 translated_main(int argc, char **argv, char **envp)
 #else
 main(int argc, char **argv, char **envp)
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 {
 	RCType rc = RC_OK;
 #if defined(J9ZOS390) && !defined(OMR_EBCDIC)
@@ -62,7 +62,7 @@ main(int argc, char **argv, char **envp)
 	return (RC_OK == rc) ? 0 : -1;
 }
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 int
 wmain(int argc, wchar_t **argv, wchar_t **envp)
 {
@@ -125,4 +125,4 @@ wmain(int argc, wchar_t **argv, wchar_t **envp)
 
 	return rc;
 }
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */

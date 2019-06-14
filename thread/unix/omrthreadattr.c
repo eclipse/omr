@@ -28,9 +28,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <limits.h>	/* for PTHREAD_STACK_MIN */
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 #include <unistd.h> /* required for the _SC_PAGESIZE  constant */
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 #include "omrcfg.h"
 #include "omrcomp.h"
 #include "omrthread.h"
@@ -356,7 +356,7 @@ setSchedpolicy(pthread_attr_t *pattr, omrthread_schedpolicy_t policy)
 	intptr_t pret = 0;
 
 	if (J9THREAD_SCHEDPOLICY_INHERIT == policy) {
-#if defined(AIXPPC) || defined(LINUX) || defined(OSX)
+#if defined(AIXPPC) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 		/*
 		 * Non-root users are frequently not allowed to create threads
 		 * using SCHED_RR or SCHED_FIFO.
@@ -374,7 +374,7 @@ setSchedpolicy(pthread_attr_t *pattr, omrthread_schedpolicy_t policy)
 		if (pret != 0) {
 			return J9THREAD_ERR_INVALID_VALUE;
 		}
-#endif /* defined(AIXPPC) || defined(LINUX) || defined(OSX) */
+#endif /* defined(AIXPPC) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 		pret = DEBUG_SYSCALL(pthread_attr_setinheritsched(pattr, PTHREAD_INHERIT_SCHED));
 		if (pret != 0) {
 			return J9THREAD_ERR_INVALID_VALUE;
@@ -463,7 +463,7 @@ setStacksize(pthread_attr_t *pattr, uintptr_t stacksize)
 	/* stacksize may be adjusted to satisfy platform-specific quirks */
 
 #if !defined(OMRZTPF)
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	/* Linux allocates 2MB if you ask for a stack smaller than STACK_MIN */
 	{
 		long pageSafeMinimumStack = 2 * sysconf(_SC_PAGESIZE);
@@ -475,7 +475,7 @@ setStacksize(pthread_attr_t *pattr, uintptr_t stacksize)
 			stacksize = pageSafeMinimumStack;
 		}
 	}
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 	if (DEBUG_SYSCALL(pthread_attr_setstacksize(pattr, stacksize)) != 0) {
 		return J9THREAD_ERR_INVALID_VALUE;

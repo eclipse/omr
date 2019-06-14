@@ -20,7 +20,7 @@
  *******************************************************************************/
 #include "codegen/ELFGenerator.hpp"
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 
 #include <stdio.h>
 #include <string.h>

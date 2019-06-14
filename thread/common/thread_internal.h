@@ -237,14 +237,14 @@ omrthread_get_mapped_priority(omrthread_prio_t omrthreadPriority);
 
 /* ------------- priority.c ------------ */
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 /**
  * @brief
  * @return intptr_t
  */
 intptr_t
 initialize_priority_map(void);
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 /**
  * @brief

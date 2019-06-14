@@ -32,7 +32,7 @@ TR_RuntimeHelperTable runtimeHelpers;
 #else
  #if defined(LINUXPPC64)
   #define JIT_HELPER(x) extern "C" void *x
- #elif defined(LINUX)
+ #elif (HOST_OS == OMR_LINUX)
   #define JIT_HELPER(x) extern "C" void x()
  #else
   #define JIT_HELPER(x) extern "C" x()

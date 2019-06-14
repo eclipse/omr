@@ -38,11 +38,11 @@
 
 /* __STDC_ISO_10646__ indicates that the platform wchar_t encoding is Unicode */
 /* but older versions of libc fail to set the flag, even though they are Unicode */
-#if (defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX)) && !defined(OMRZTPF)
+#if (defined(__STDC_ISO_10646__) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)) && !defined(OMRZTPF)
 #define J9VM_USE_WCTOMB
-#else /* (defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX)) && !defined(OMRZTPF) */
+#else /* (defined(__STDC_ISO_10646__) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)) && !defined(OMRZTPF) */
 #include "omriconvhelpers.h"
-#endif /* (defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX)) && !defined(OMRZTPF) */
+#endif /* (defined(__STDC_ISO_10646__) || (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)) && !defined(OMRZTPF) */
 
 /* Some older platforms (Netwinder) don't declare CODESET */
 #ifndef CODESET

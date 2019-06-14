@@ -107,11 +107,11 @@ TEST(PortSlTest, sl_testOpenPathLengths)
 	const char *testName = "omrsl_testOpenPathLengths";
 	uintptr_t handle = 0;
 	uintptr_t rc = 0;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	const char *fakeName = "\\temp";
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	const char *fakeName = "/temp";
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	size_t fakeNameLength = strlen(fakeName);
 	char sharedLibName[2*EsMaxPath] = "temp";
 	size_t pathLength = strlen(sharedLibName);
@@ -123,21 +123,21 @@ TEST(PortSlTest, sl_testOpenPathLengths)
 	 * AIX - "lib.so", "lib.a" and ".srvpgm" are added to the input path consecutively
 	 */
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	const char *extension = ".dll";
-#elif defined(AIXPPC) /* defined(OMR_OS_WINDOWS) */
+#elif defined(AIXPPC) /* (HOST_OS == OMR_WINDOWS) */
 #if defined(J9OS_I5)
 	const char *extension = ".srvpgm";
 #else /* defined(J9OS_I5) */
 	const char *extension = "lib.so";
 #endif /* defined(J9OS_I5) */
 #else /* defined(AIXPPC) */
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	const char *extension = "lib.dylib";
-#else /* defined(OSX) */
+#else /* (HOST_OS == OMR_OSX) */
 	const char *extension = "lib.so";
-#endif /* defined(OSX) */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_OSX) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	size_t extensionLength = strlen(extension);
 

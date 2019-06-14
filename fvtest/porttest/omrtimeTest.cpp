@@ -38,9 +38,9 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #include <windows.h>
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #include "testHelpers.hpp"
 #include "omrport.h"
@@ -526,7 +526,7 @@ TEST(PortTimeTest, time_nano_time_direction)
 
 	reportTestEntry(OMRPORTLIB, testName);
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/**
 	 * On Windows, if QueryPerformanceCounter is used on a multiprocessor computer,
 	 * time might be different accross CPUs. Therefore skip this test and only
@@ -539,7 +539,7 @@ TEST(PortTimeTest, time_nano_time_direction)
 			reportTestExit(OMRPORTLIB, testName);
 		}
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	if (0 == omrthread_attach_ex(&self, J9THREAD_ATTR_DEFAULT)) {
 		/* success in starting up thread library and attaching */

@@ -64,7 +64,7 @@ typedef int8_t					I_8;
 
 #if defined(MVS)
 typedef int32_t					BOOLEAN;
-#elif defined(LINUX) || defined(RS6000) || defined(J9ZOS390) || defined(OSX) || defined(OMRZTPF) /* MVS */
+#elif (HOST_OS == OMR_LINUX) || defined(RS6000) || defined(J9ZOS390) || (HOST_OS == OMR_OSX) || defined(OMRZTPF) /* MVS */
 typedef uint32_t					BOOLEAN;
 #else /* MVS */
 /* Don't typedef BOOLEAN since it's already defined on Windows */
@@ -109,7 +109,7 @@ EXE_EXTENSION_CHAR: the executable has a delimiter that we want to stop at as pa
 */
 
 /* Linux ANSI compiler (gcc) and OSX (clang). */
-#if defined(LINUX) || defined (OSX)
+#if (HOST_OS == OMR_LINUX) || defined (OSX)
 
 /* NOTE: Linux supports different processors -- do not assume 386 */
 
@@ -172,7 +172,7 @@ typedef double SYS_FLOAT;
 
 #define HAS_BUILTIN_EXPECT
 
-#endif /* defined(LINUX) || defined (OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || defined (OSX) */
 
 /* MVS compiler */
 #ifdef MVS
@@ -250,7 +250,7 @@ typedef double SYS_FLOAT;
 #define HAS_BUILTIN_EXPECT
 #endif /* RS6000 */
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 typedef double 					SYS_FLOAT;
 
 #define NO_LVALUE_CASTING
@@ -289,7 +289,7 @@ typedef double 					SYS_FLOAT;
 /* Only for use on static functions */
 #define VMINLINE_ALWAYS __forceinline
 #endif /* __GNUC__ */
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 #if defined(J9ZOS390)
 typedef double				SYS_FLOAT;

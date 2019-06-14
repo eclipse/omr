@@ -224,7 +224,7 @@ omrmem_advise_and_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPo
 	Trc_PRT_mem_omrmem_advise_and_free_memory_Entry(memoryPointer);
 
 	if (memoryPointer != NULL) {
-#if (defined(LINUX) || defined (AIXPPC) || defined(J9ZOS390) || defined(OSX))
+#if ((HOST_OS == OMR_LINUX) || defined (AIXPPC) || defined(J9ZOS390) || (HOST_OS == OMR_OSX))
 
 		J9MemTag *headerTag = NULL;
 		headerTag = omrmem_get_header_tag(memoryPointer);
@@ -237,7 +237,7 @@ omrmem_advise_and_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPo
 		} else {
 			memorySize = 0;
 		}
-#endif /* (defined(LINUX) || defined (AIXPPC) || defined(J9ZOS390) || defined(OSX)) */
+#endif /* ((HOST_OS == OMR_LINUX) || defined (AIXPPC) || defined(J9ZOS390) || (HOST_OS == OMR_OSX)) */
 		memoryPointer = unwrapBlockAndCheckTags(portLibrary, memoryPointer);
 		adviseAndFreeFunction(portLibrary, memoryPointer, memorySize);
 	}

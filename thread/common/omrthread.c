@@ -96,9 +96,9 @@ static uintptr_t monitor_on_notify_all_wait_list(omrthread_t self, omrthread_mon
 static void monitor_notify_all_migration(omrthread_monitor_t monitor);
 
 static intptr_t failedToSetAttr(intptr_t rc);
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 static intptr_t copyAttr(omrthread_attr_t *attrTo, const omrthread_attr_t *attrFrom);
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 static intptr_t fixupThreadAccounting(omrthread_t thread, uintptr_t type);
 static void storeExitCpuUsage(omrthread_t thread);
@@ -166,9 +166,9 @@ omrthread_t global_lock_owner = UNOWNED;
 #define J9THR_WAIT_INTERRUPTED(flags) (((flags) & J9THREAD_FLAG_INTERRUPTED) != 0)
 #define J9THR_WAIT_PRI_INTERRUPTED(flags) (((flags) & (J9THREAD_FLAG_PRIORITY_INTERRUPTED | J9THREAD_FLAG_ABORTED)) != 0)
 
-#if defined(OMR_OS_WINDOWS) || !defined(OMR_NOTIFY_POLICY_CONTROL)
+#if (HOST_OS == OMR_WINDOWS) || !defined(OMR_NOTIFY_POLICY_CONTROL)
 #define NOTIFY_WRAPPER(thread) OMROSCOND_NOTIFY_ALL((thread)->condition);
-#else /* defined(OMR_OS_WINDOWS) || !defined(OMR_NOTIFY_POLICY_CONTROL) */
+#else /* (HOST_OS == OMR_WINDOWS) || !defined(OMR_NOTIFY_POLICY_CONTROL) */
 #define NOTIFY_WRAPPER(thread) \
 	do { \
 		if (OMR_ARE_ALL_BITS_SET((thread)->library->flags, J9THREAD_LIB_FLAG_NOTIFY_POLICY_BROADCAST)) { \
@@ -177,13 +177,13 @@ omrthread_t global_lock_owner = UNOWNED;
 			OMROSCOND_NOTIFY((thread)->condition); \
 		} \
 	} while (0)
-#endif /* defined(OMR_OS_WINDOWS) || !defined(OMR_NOTIFY_POLICY_CONTROL) */
+#endif /* (HOST_OS == OMR_WINDOWS) || !defined(OMR_NOTIFY_POLICY_CONTROL) */
 
 /*
  * Thread Library
  */
 
-#if !defined(OMR_OS_WINDOWS)
+#if !(HOST_OS == OMR_WINDOWS)
 
 /**
  * pthread TLS key destructor for self_ptr
@@ -216,7 +216,7 @@ self_key_destructor(void *current_omr_thread)
 
 #undef OMR_MAX_KEY_DELETION_ATTEMPTS
 
-#endif /* !defined(OMR_OS_WINDOWS) */
+#endif /* !(HOST_OS == OMR_WINDOWS) */
 
 /**
  * Initialize a J9 threading library.
@@ -240,9 +240,9 @@ omrthread_init(omrthread_library_t lib)
 	lib->spinlock = 0;
 	lib->threadCount = 0;
 	lib->globals = NULL;
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	lib->stack_usage = 0;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	lib->flags = 0;
 
 	omrthread_mem_init(lib);
@@ -254,11 +254,11 @@ omrthread_init(omrthread_library_t lib)
 #error "CALLER_LAST_INDEX must be <= MAX_CALLER_INDEX"
 #endif
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (TLS_ALLOC(lib->self_ptr))
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 	if (TLS_ALLOC_WITH_DESTRUCTOR(lib->self_ptr, self_key_destructor))
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 	{
 		goto init_cleanup1;
 	}
@@ -314,19 +314,19 @@ omrthread_init(omrthread_library_t lib)
 	lib->gc_lock_tracing = NULL;
 #endif
 
-#if	defined(OMR_OS_WINDOWS)
+#if	(HOST_OS == OMR_WINDOWS)
 	lib->flags |= J9THREAD_LIB_FLAG_DESTROY_MUTEX_ON_MONITOR_FREE;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	if (omrthread_attr_init(&lib->systemThreadAttr) != J9THREAD_SUCCESS) {
 		goto init_cleanup10;
 	}
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	if (KERN_SUCCESS != host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &lib->clockService)) {
 		goto init_cleanup11;
 	}
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 #if defined(OMR_PORT_NUMA_SUPPORT)
 	/* Load the numa library from the dll */
@@ -337,11 +337,11 @@ omrthread_init(omrthread_library_t lib)
 	lib->initStatus = 1;
 	return;
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 /* Unused cleanup label for future error handling. */
 /* init_cleanup12:		mach_port_deallocate(mach_task_self(), lib->clockService); */
 init_cleanup11:		omrthread_attr_destroy(&lib->systemThreadAttr);
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 init_cleanup10:		pool_kill(lib->global_pool);
 init_cleanup9:		pool_kill(lib->thread_pool);
 init_cleanup8:		OMROSMUTEX_DESTROY(lib->resourceUsageMutex);
@@ -429,7 +429,7 @@ omrthread_lib_control(const char *key, uintptr_t value)
 		}
 	}
 
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	if (0 == strcmp(J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING, key)) {
 		if ((J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING_DISABLED == value)
 		 || (J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING_ENABLED == value)
@@ -468,7 +468,7 @@ omrthread_lib_control(const char *key, uintptr_t value)
 			}
 		}
 	}
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 
 	return rc;
 }
@@ -476,12 +476,12 @@ omrthread_lib_control(const char *key, uintptr_t value)
 BOOLEAN
 omrthread_lib_use_realtime_scheduling(void)
 {
-#if defined(LINUX) || defined(OSX)
+#if (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX)
 	omrthread_library_t lib = GLOBAL_DATA(default_library);
 	return OMR_ARE_ALL_BITS_SET(lib->flags, J9THREAD_LIB_FLAG_REALTIME_SCHEDULING_ENABLED);
-#else /* defined(LINUX) || defined(OSX) */
+#else /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 	return FALSE;
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* (HOST_OS == OMR_LINUX) || (HOST_OS == OMR_OSX) */
 }
 
 /**
@@ -709,9 +709,9 @@ omrthread_shutdown(void)
 #if defined(OMR_THR_FORK_SUPPORT)
 	pool_kill(lib->rwmutexPool);
 #endif /* defined(OMR_THR_FORK_SUPPORT) */
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 	mach_port_deallocate(mach_task_self(), lib->clockService);
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 }
 
 
@@ -860,9 +860,9 @@ postForkResetThreads(omrthread_t self)
 			OMROSCOND_INIT(threadIterator->condition);
 			OMROSMUTEX_INIT(threadIterator->mutex);
 			threadIterator->tid = omrthread_get_ras_tid();
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 #error "The implementation of postForkResetThreads() is not complete in WIN32."
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 			threadIterator->handle = THREAD_SELF();
 		} else {
 			omrthread_tls_finalizeNoLock(threadIterator);
@@ -1227,11 +1227,11 @@ omrthread_attach_ex(omrthread_t *handle, omrthread_attr_t *attr)
 		goto cleanup2;
 	}
 
-#if defined(OMR_OS_WINDOWS) && !defined(BREW)
+#if (HOST_OS == OMR_WINDOWS) && !defined(BREW)
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &thread->handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
 #else
 	thread->handle = THREAD_SELF();
-#endif /* defined(OMR_OS_WINDOWS) && !defined(BREW) */
+#endif /* (HOST_OS == OMR_WINDOWS) && !defined(BREW) */
 
 	initialize_thread_priority(thread);
 
@@ -1529,11 +1529,11 @@ thread_wrapper(WRAPPER_ARG arg)
 
 	TLS_SET(lib->self_ptr, thread);
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	if (lib->stack_usage) {
 		paint_stack(thread);
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 
 	if (thread->flags & J9THREAD_FLAG_CANCELED) {
@@ -1595,7 +1595,7 @@ thread_wrapper(WRAPPER_ARG arg)
 
 	threadEnableCpuMonitor(thread);
 
-#if defined(LINUX)  && !defined(OMRZTPF)
+#if (HOST_OS == OMR_LINUX)  && !defined(OMRZTPF)
 	/* Workaround for NPTL bug on Linux. See omrthread_exit() */
 	{
 		jmp_buf jumpBuffer;
@@ -1610,10 +1610,10 @@ thread_wrapper(WRAPPER_ARG arg)
 		}
 		thread->jumpBuffer = NULL;
 	}
-#else /* defined(LINUX) && !defined(OMRZTPF) */
+#else /* (HOST_OS == OMR_LINUX) && !defined(OMRZTPF) */
 	thread->entrypoint(thread->entryarg);
 	/* omrthread_exit not called */
-#endif /* defined(LINUX) && !defined(OMRZTPF) */
+#endif /* (HOST_OS == OMR_LINUX) && !defined(OMRZTPF) */
 
 	threadInternalExit(globalAlreadyLocked);
 	/* UNREACHABLE */
@@ -1717,7 +1717,7 @@ omrthread_exit(omrthread_monitor_t monitor)
 		}
 	}
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 	/* NPTL calls __pthread_unwind() from pthread_exit(). That walks the stack.
 	 * We can't allow that to happen, since our caller might have already been
 	 * unloaded. Walking the calling frame could cause a crash. Instead, we
@@ -1728,7 +1728,7 @@ omrthread_exit(omrthread_monitor_t monitor)
 	if (self->jumpBuffer) {
 		longjmp(*(jmp_buf *)self->jumpBuffer, 1);
 	}
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 	threadInternalExit(GLOBAL_IS_LOCKED);
 
@@ -1766,7 +1766,7 @@ threadCreate(omrthread_t *handle, const omrthread_attr_t *attr, uintptr_t suspen
 
 	/* create a default attr if none was supplied */
 	if (NULL != attr) {
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 		/* OSX threads ignore policy inheritance. Create a new attr and do inheritance manually as needed. */
 		if (J9THREAD_SCHEDPOLICY_INHERIT == (*attr)->schedpolicy) {
 			if (J9THREAD_SUCCESS != copyAttr(&tempAttr, attr)) {
@@ -1775,7 +1775,7 @@ threadCreate(omrthread_t *handle, const omrthread_attr_t *attr, uintptr_t suspen
 			}
 			tempAttrAllocated = TRUE;
 		} else
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 		{
 			tempAttr = *attr;
 		}
@@ -1800,12 +1800,12 @@ threadCreate(omrthread_t *handle, const omrthread_attr_t *attr, uintptr_t suspen
 
 	if (self && (J9THREAD_SCHEDPOLICY_INHERIT == tempAttr->schedpolicy)) {
 		thread->priority = self->priority;
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 		if (J9THREAD_SUCCESS != omrthread_attr_set_priority(&tempAttr, self->priority)) {
 			retVal = J9THREAD_ERR_INVALID_SCHEDPOLICY;
 			goto cleanup1;
 		}
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 	} else {
 		thread->priority = tempAttr->priority;
 	}
@@ -1838,9 +1838,9 @@ threadCreate(omrthread_t *handle, const omrthread_attr_t *attr, uintptr_t suspen
 	/* Ignore errors, the thead cpu monitor should not cause thread creation failure */
 	omrthread_set_category(thread, tempAttr->category, J9THREAD_TYPE_SET_CREATE);
 
-#if defined(LINUX)
+#if (HOST_OS == OMR_LINUX)
 	thread->jumpBuffer = NULL;
-#endif /* defined(LINUX) */
+#endif /* (HOST_OS == OMR_LINUX) */
 
 #if defined(OMR_PORT_NUMA_SUPPORT)
 	memset(&(thread->numaAffinity), 0x0, sizeof(thread->numaAffinity));
@@ -1872,7 +1872,7 @@ threadCreateDone:
 	return retVal;
 }
 
-#if defined(OSX)
+#if (HOST_OS == OMR_OSX)
 static intptr_t
 copyAttr(omrthread_attr_t *attrTo, const omrthread_attr_t *attrFrom)
 {
@@ -1933,7 +1933,7 @@ destroyAttr:
 copyAttrDone:
 	return rc;
 }
-#endif /* defined(OSX) */
+#endif /* (HOST_OS == OMR_OSX) */
 
 /**
  * Allocate a omrthread_t from the omrthread_t pool.
@@ -2001,13 +2001,13 @@ threadAllocate(omrthread_library_t lib, int globalIsLocked)
 static intptr_t
 threadDestroy(omrthread_t thread, int globalAlreadyLocked)
 {
-#if defined(OMR_OS_WINDOWS) || defined(THREAD_ASSERTS)
+#if (HOST_OS == OMR_WINDOWS) || defined(THREAD_ASSERTS)
 	omrthread_library_t lib;
 
 	ASSERT(thread);
 	lib = thread->library;
 	ASSERT(lib);
-#endif /* defined(OMR_OS_WINDOWS) || defined(THREAD_ASSERTS) */
+#endif /* (HOST_OS == OMR_WINDOWS) || defined(THREAD_ASSERTS) */
 
 	THREAD_LOCK(thread, CALLER_DESTROY);
 	if ((thread->flags & J9THREAD_FLAG_DEAD) == 0) {
@@ -2024,7 +2024,7 @@ threadDestroy(omrthread_t thread, int globalAlreadyLocked)
 	omrthread_dump_trace(thread);
 #endif
 
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	/* Acquire the global monitor mutex (if needed) while performing handle closing and freeing. */
 	if (!globalAlreadyLocked) {
 		GLOBAL_LOCK_SIMPLE(lib);
@@ -2041,14 +2041,14 @@ threadDestroy(omrthread_t thread, int globalAlreadyLocked)
 		GLOBAL_UNLOCK_SIMPLE(lib);
 	}
 
-#else /* defined(OMR_OS_WINDOWS) */
+#else /* (HOST_OS == OMR_WINDOWS) */
 
 	/* On z/OS, we cannot call GLOBAL_LOCK_SIMPLE(lib) before calling threadFree(), since this leads to
 	 * seg faults in the JVM. See PR 82332: [zOS S390] 80 VM_Extended.TestJvmCpuMonitorMXBeanLocal : crash
 	 */
 	threadFree(thread, globalAlreadyLocked);
 
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 
 	return 0;
 }
@@ -3235,7 +3235,7 @@ omrthread_unpark(omrthread_t thread)
 uintptr_t
 omrthread_current_stack_free(void)
 {
-#if defined(OMR_OS_WINDOWS)
+#if (HOST_OS == OMR_WINDOWS)
 	MEMORY_BASIC_INFORMATION memInfo;
 	SYSTEM_INFO sysInfo;
 	uintptr_t stackFree;
@@ -3251,7 +3251,7 @@ omrthread_current_stack_free(void)
 	return (stackFree < guardPageSize) ? 0 : stackFree - guardPageSize;
 #else
 	return 0;
-#endif /* defined(OMR_OS_WINDOWS) */
+#endif /* (HOST_OS == OMR_WINDOWS) */
 }
 
 
