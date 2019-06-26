@@ -68,7 +68,7 @@ if(OMR_HOST_OS STREQUAL "zos")
 		list(APPEND OBJECTS
 			omrget_large_pages_supported.s
 			omrget_large_2gb_pages_supported.s
-			omrvmem_support_above_bar.s
+			omriarv64.mc
 			omrvmem_support_below_bar_64.s
 			omript_ttoken64.s
 		)

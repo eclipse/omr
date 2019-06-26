@@ -57,7 +57,7 @@ ifeq (zos,$(OMR_HOST_OS))
     # 64-bit only
     OBJECTS += omrget_large_pages_supported
     OBJECTS += omrget_large_2gb_pages_supported
-    OBJECTS += omrvmem_support_above_bar
+    OBJECTS += omriarv64 
     OBJECTS += omrvmem_support_below_bar_64
     OBJECTS += omript_ttoken64
   else

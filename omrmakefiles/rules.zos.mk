@@ -137,7 +137,7 @@ ifeq (1,$(OMR_ENV_DATA64))
 endif
 %$(OBJEXT): %.mc
 	cp $< $*.c
-	xlc $(MCFLAGS) -qmetal -qlongname -S -o $*.s $*.c > $*.asmlist
+	xlc $(MCFLAGS) -I$(top_srcdir)/port/zos390/ -qmetal -qlongname -S -o $*.s $*.c > $*.asmlist
 	rm -f $*.c
 	as -mgoff -I CBC.SCCNSAM $*.s
 	rm -f $*.s
