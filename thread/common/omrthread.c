@@ -1232,6 +1232,14 @@ omrthread_attach_ex(omrthread_t *handle, omrthread_attr_t *attr)
 		goto cleanup2;
 	}
 
+#if defined(OMR_THR_MCS_LOCKS)
+	thread->mcsNodes = allocate_mcs_nodes(lib);
+	if (NULL == thread->mcsNodes) {
+		retVal = J9THREAD_ERR_CANT_ALLOC_MCS_NODES;
+		goto cleanup3;
+	}
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 #if defined(OMR_OS_WINDOWS) && !defined(BREW)
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &thread->handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
 #else
@@ -1285,7 +1293,10 @@ omrthread_attach_ex(omrthread_t *handle, omrthread_attr_t *attr)
 	}
 	return J9THREAD_SUCCESS;
 
-/* failure points */
+/* Failure points. */
+#if defined(OMR_THR_MCS_LOCKS)
+cleanup3:	OMROSMUTEX_DESTROY(thread->mutex);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 cleanup2:	OMROSCOND_DESTROY(thread->condition);
 cleanup1:	threadFree(thread, GLOBAL_NOT_LOCKED);
 cleanup0:	return retVal;
@@ -1825,6 +1836,7 @@ threadCreate(omrthread_t *handle, const omrthread_attr_t *attr, uintptr_t suspen
 		retVal = J9THREAD_ERR_CANT_INIT_CONDITION;
 		goto cleanup1;
 	}
+
 	if (!OMROSMUTEX_INIT(thread->mutex)) {
 		retVal = J9THREAD_ERR_CANT_INIT_MUTEX;
 		goto cleanup2;
@@ -1851,6 +1863,14 @@ threadCreate(omrthread_t *handle, const omrthread_attr_t *attr, uintptr_t suspen
 	memset(&(thread->numaAffinity), 0x0, sizeof(thread->numaAffinity));
 #endif /* OMR_PORT_NUMA_SUPPORT */
 
+#if defined(OMR_THR_MCS_LOCKS)
+	thread->mcsNodes = allocate_mcs_nodes(lib);
+	if (NULL == thread->mcsNodes) {
+		retVal = J9THREAD_ERR_CANT_ALLOC_MCS_NODES;
+		goto cleanup3;
+	}
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 	retVal = osthread_create(self, &(thread->handle), tempAttr, thread_wrapper, (WRAPPER_ARG)thread);
 	if (retVal != J9THREAD_SUCCESS) {
 		goto cleanup4;
@@ -1862,9 +1882,13 @@ threadCreate(omrthread_t *handle, const omrthread_attr_t *attr, uintptr_t suspen
 	}
 	return J9THREAD_SUCCESS;
 
-	/* Cleanup points */
-cleanup4:
-	OMROSMUTEX_DESTROY(thread->mutex);
+/* Cleanup points. */
+#if defined(OMR_THR_MCS_LOCKS)
+cleanup4:	free_mcs_nodes(lib, thread->mcsNodes);
+cleanup3:	OMROSMUTEX_DESTROY(thread->mutex);
+#else /* defined(OMR_THR_MCS_LOCKS) */
+cleanup4:	OMROSMUTEX_DESTROY(thread->mutex);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 cleanup2:	OMROSCOND_DESTROY(thread->condition);
 cleanup1:	threadFree(thread, globalIsLocked);
 cleanup0:	if (handle) *handle = NULL;
@@ -2024,6 +2048,10 @@ threadDestroy(omrthread_t thread, int globalAlreadyLocked)
 	OMROSCOND_DESTROY(thread->condition);
 
 	OMROSMUTEX_DESTROY(thread->mutex);
+
+#if defined(OMR_THR_MCS_LOCKS)
+	free_mcs_nodes(thread->library, thread->mcsNodes);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 #ifdef OMR_THR_TRACING
 	omrthread_dump_trace(thread);

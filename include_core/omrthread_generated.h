@@ -342,6 +342,10 @@ typedef struct J9AbstractThread {
 #define J9THREAD_ERR_INVALID_ATTACH_ATTR			24
 #define J9THREAD_ERR_CANT_ALLOC_ATTACH_ATTR			25
 
+#if defined(OMR_THR_MCS_LOCKS)
+#define J9THREAD_ERR_CANT_ALLOC_MCS_NODES			26  /* Error initializing J9Thread->mcsNodes. */
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 /* Bit flag indicating that os_errno is set. This flag must not interfere with the sign bit. */
 #define J9THREAD_ERR_OS_ERRNO_SET  0x40000000
 #define J9THREAD_INVALID_OS_ERRNO  -1
