@@ -548,9 +548,9 @@ dumpNumaInfo() {
 }
 #endif
 
-
 uintptr_t
-omrthread_numa_get_current_node(){
+omrthread_numa_get_current_node()
+{
     unsigned node = 0;
 #if OMR_PORT_NUMA_SUPPORT
     if (0 == syscall(SYS_getcpu, NULL, &node, NULL)) {
