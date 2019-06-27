@@ -115,6 +115,11 @@ static void postForkResetMonitors(omrthread_t self);
 static void postForkResetRWMutexes(omrthread_t self);
 #endif /* defined(OMR_THR_FORK_SUPPORT) */
 
+#if defined(OMR_THR_MCS_LOCKS)
+static omrthread_mcs_nodes_t allocate_mcs_nodes(omrthread_library_t lib);
+static void free_mcs_nodes(omrthread_library_t lib, omrthread_mcs_nodes_t mcsNodes);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 #ifdef THREAD_ASSERTS
 /**
  * Helper variable for asserts.
@@ -5221,6 +5226,51 @@ omrthread_monitor_dump_trace(omrthread_monitor_t monitor)
 
 #endif /* OMR_THR_TRACING */
 
+#if defined(OMR_THR_MCS_LOCKS)
+/**
+ * Create and initialize an OMRThreadMCSNodes structure.
+ *
+ * @param[in] lib pointer to the OMR thread library.
+ *
+ * @return pointer to the new OMRThreadMCSNodes structure on success, or NULL on failure.
+ */
+static omrthread_mcs_nodes_t
+allocate_mcs_nodes(omrthread_library_t lib)
+{
+	omrthread_mcs_nodes_t mcsNodes = (omrthread_mcs_nodes_t)omrthread_allocate_memory(lib, sizeof(OMRThreadMCSNodes), OMRMEM_CATEGORY_THREADS);
+	if (NULL == mcsNodes) {
+		return NULL;
+	}
+
+	memset(mcsNodes, 0, sizeof(OMRThreadMCSNodes));
+
+	mcsNodes->pool = pool_new(
+			sizeof(OMRThreadMCSNode), OMRTHREAD_MIN_MCS_NODES, OMRTHREAD_MCS_NODE_ALIGNMENT, 0, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_THREADS,
+			omrthread_mallocWrapper, omrthread_freeWrapper, lib);
+
+	if (NULL == mcsNodes->pool) {
+		omrthread_free_memory(lib, mcsNodes);
+		return NULL;
+	}
+
+	return mcsNodes;
+}
+
+/**
+ * Free the memory associated to an OMRThreadMCSNodes structure.
+ *
+ * @param[in] lib pointer to the OMR thread library.
+ * @param[in] mcsNodes pointer to the OMRThreadMCSNodes structure.
+ *
+ * @return void.
+ */
+static void
+free_mcs_nodes(omrthread_library_t lib, omrthread_mcs_nodes_t mcsNodes)
+{
+	pool_kill(mcsNodes->pool);
+	omrthread_free_memory(lib, mcsNodes);
+}
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 #if (defined(OMR_THR_TRACING))
 /**
