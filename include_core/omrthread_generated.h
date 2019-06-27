@@ -84,6 +84,47 @@ typedef struct J9ThreadCustomSpinOptions {
 } J9ThreadCustomSpinOptions;
 #endif /* OMR_THR_CUSTOM_SPIN_OPTIONS */
 
+#if defined(OMR_THR_MCS_LOCKS)
+/* OMRThreadMCSNodes: contains a set of MCS nodes for the thread
+ * - stackHead: pointer to the head of the stack
+ * - pool: J9Pool of MCS nodes,
+ *         cache aligned -> OMRTHREAD_MCS_NODE_ALIGNMENT
+ *         minimum number of elements -> OMRTHREAD_MIN_MCS_NODES
+ *
+ * A thread can enter multiple critical sections in a chained manner:
+ *     monitor1->enter() {
+ *         critical_section1() {
+ *             monitor2->enter() {
+ *                 critical_section2() {
+ *
+ * The stack (LIFO) records the MCS node <-> monitor mapping for a thread.
+ *
+ * The pool provides MCS nodes to a thread if it acquires multiple monitors
+ * one after the other.
+ */
+typedef struct OMRThreadMCSNodes {
+	omrthread_mcs_node_t stackHead;
+	struct J9Pool *pool;
+} OMRThreadMCSNodes;
+
+/* OMRThreadMCSNode: MCS node
+ * - stackNext: pointer to the next MCS node in the stack (thread property)
+ * - queueNext: pointer to the next MCS node in the queue (lock property)
+ * - blocked: 1 - lock unowned, 0 - lock owned
+ */
+typedef struct OMRThreadMCSNode {
+	omrthread_mcs_node_t volatile stackNext;
+	omrthread_mcs_node_t volatile queueNext;
+	volatile uintptr_t blocked;
+} OMRThreadMCSNode;
+
+/* Cache align MCS nodes in the pool (OMRThreadMCSNodes->pool). */
+#define OMRTHREAD_MCS_NODE_ALIGNMENT 64
+
+/* Initialize pool (OMRThreadMCSNodes->pool) with minimum 10 MCS nodes */
+#define OMRTHREAD_MIN_MCS_NODES 10
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 typedef struct J9ThreadTracing {
 #if defined(OMR_THR_JLM_HOLD_TIMES)
 	uintptr_t pause_count;
