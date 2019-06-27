@@ -160,10 +160,18 @@ typedef struct J9ThreadTracing {
     uintptr_t lockedmonitorcount; \
     omrthread_os_errno_t os_errno;
 
+#if defined(OMR_THR_MCS_LOCKS)
+#define J9_ABSTRACT_THREAD_FIELDS_4 \
+	omrthread_mcs_nodes_t mcsNodes;
+#else /* defined(OMR_THR_MCS_LOCKS) */
+#define J9_ABSTRACT_THREAD_FIELDS_4
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 #define J9_ABSTRACT_THREAD_FIELDS \
 	J9_ABSTRACT_THREAD_FIELDS_1 \
 	J9_ABSTRACT_THREAD_FIELDS_2 \
-	J9_ABSTRACT_THREAD_FIELDS_3
+	J9_ABSTRACT_THREAD_FIELDS_3 \
+	J9_ABSTRACT_THREAD_FIELDS_4
 
 typedef struct J9ThreadMonitorTracing {
 	char *monitor_name;
