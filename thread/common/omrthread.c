@@ -3554,6 +3554,10 @@ monitor_free(omrthread_library_t lib, omrthread_monitor_t monitor)
 		monitor->flags = J9THREAD_MONITOR_MUTEX_UNINITIALIZED;
 	}
 
+#if defined(OMR_THR_MCS_LOCKS)
+	monitor->queueTail = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 	lib->monitor_pool->next_free = monitor;
 }
 
@@ -3593,6 +3597,10 @@ monitor_free_nolock(omrthread_library_t lib, omrthread_t thread, omrthread_monit
 			monitor->flags = J9THREAD_MONITOR_MUTEX_UNINITIALIZED;
 		}
 	}
+
+#if defined(OMR_THR_MCS_LOCKS)
+	monitor->queueTail = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 	if (0 == thread->destroyed_monitor_head) {
 		thread->destroyed_monitor_tail = monitor;
@@ -3675,6 +3683,10 @@ monitor_init(omrthread_monitor_t monitor, uintptr_t flags, omrthread_library_t l
 			monitor->name = (char *)name;
 		}
 	}
+
+#if defined(OMR_THR_MCS_LOCKS)
+ 	monitor->queueTail = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 	return 0;
 }
