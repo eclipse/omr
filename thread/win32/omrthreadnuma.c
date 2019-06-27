@@ -150,14 +150,15 @@ omrthread_numa_get_node_affinity(omrthread_t thread, uintptr_t *numaNodes, uintp
 }
 
 uintptr_t
-omrthread_numa_get_current_node(){
+omrthread_numa_get_current_node()
+{
 	USHORT node = 0;
 
 	PROCESSOR_NUMBER processorNumber;
 	GetCurrentProcessorNumberEx(&processorNumber);
 	if (GetNumaProcessorNodeEx(&processorNumber, &node)) {
 		node += 1;
-	}  else {
+	} else {
 		node = 0;
 	}
 	return node;
