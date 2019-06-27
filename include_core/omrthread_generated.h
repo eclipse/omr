@@ -239,6 +239,13 @@ typedef struct J9ThreadMonitorTracing {
 #define J9_ABSTRACT_MONITOR_FIELDS_7
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) && defined(OMR_THR_THREE_TIER_LOCKING) */
 
+#if defined(OMR_THR_MCS_LOCKS)
+#define J9_ABSTRACT_MONITOR_FIELDS_8 \
+	omrthread_mcs_node_t queueTail;
+#else /* defined(OMR_THR_MCS_LOCKS) */
+#define J9_ABSTRACT_MONITOR_FIELDS_8
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 #define J9_ABSTRACT_MONITOR_FIELDS \
 	J9_ABSTRACT_MONITOR_FIELDS_1 \
 	J9_ABSTRACT_MONITOR_FIELDS_2 \
@@ -246,8 +253,8 @@ typedef struct J9ThreadMonitorTracing {
 	J9_ABSTRACT_MONITOR_FIELDS_4 \
 	J9_ABSTRACT_MONITOR_FIELDS_5 \
 	J9_ABSTRACT_MONITOR_FIELDS_6 \
-	J9_ABSTRACT_MONITOR_FIELDS_7
-
+	J9_ABSTRACT_MONITOR_FIELDS_7 \
+	J9_ABSTRACT_MONITOR_FIELDS_8
 
 /*
  * @ddr_namespace: map_to_type=J9ThreadAbstractMonitor
