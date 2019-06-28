@@ -3282,7 +3282,7 @@ omrthread_current_stack_free(void)
 
 	guardPageSize = 3 * (uintptr_t)sysInfo.dwPageSize;
 	return (stackFree < guardPageSize) ? 0 : stackFree - guardPageSize;
-#else
+#else /* defined(OMR_OS_WINDOWS) */
 	return 0;
 #endif /* defined(OMR_OS_WINDOWS) */
 }
@@ -3337,9 +3337,9 @@ omrthread_monitor_destroy(omrthread_monitor_t monitor)
 
 	GLOBAL_LOCK(self, CALLER_MONITOR_DESTROY);
 
-#ifdef OMR_THR_TRACING
+#if defined(OMR_THR_TRACING)
 	omrthread_monitor_dump_trace(monitor);
-#endif
+#endif /* defined(OMR_THR_TRACING) */
 
 	if (monitor->owner || monitor_maximum_wait_number(monitor)) {
 		/* This monitor is in use! It was probably abandoned when a thread was cancelled.
@@ -3379,9 +3379,9 @@ omrthread_monitor_destroy_nolock(omrthread_t self, omrthread_monitor_t monitor)
 	ASSERT(self);
 	ASSERT(monitor);
 
-#ifdef OMR_THR_TRACING
+#if defined(OMR_THR_TRACING)
 	omrthread_monitor_dump_trace(monitor);
-#endif
+#endif /* defined(OMR_THR_TRACING) */
 
 	if (monitor->owner || monitor_maximum_wait_number(monitor)) {
 		/* This monitor is in use! It was probably abandoned when a thread was cancelled.
@@ -3507,7 +3507,7 @@ monitor_allocate(omrthread_t self, intptr_t policy, intptr_t policyData)
 			jlm_monitor_clear(lib, newMonitor);
 		}
 	}
-#endif
+#endif /* defined(OMR_THR_JLM) */
 
 	GLOBAL_UNLOCK(self);
 
@@ -3531,9 +3531,9 @@ monitor_free(omrthread_library_t lib, omrthread_monitor_t monitor)
 	ASSERT(lib->monitor_pool);
 	ASSERT(monitor);
 
-#ifdef OMR_THR_JLM
+#if defined(OMR_THR_JLM)
 	jlm_monitor_free(lib, monitor);
-#endif
+#endif /* defined(OMR_THR_JLM) */
 
 	monitor->owner = (omrthread_t)lib->monitor_pool->next_free;
 	monitor->count = FREE_TAG;
@@ -3629,19 +3629,19 @@ monitor_init(omrthread_monitor_t monitor, uintptr_t flags, omrthread_library_t l
 	monitor->owner = NULL;
 	monitor->waiting = NULL;
 	monitor->flags = flags;
-#if (defined(OMR_THR_ADAPTIVE_SPIN))
+#if defined(OMR_THR_ADAPTIVE_SPIN)
 	/* Default to no sampling. */
 	monitor->flags |= J9THREAD_MONITOR_STOP_SAMPLING;
-#endif
+#endif /* defined(OMR_THR_ADAPTIVE_SPIN) */
 	monitor->userData = 0;
 	monitor->name = NULL;
 	monitor->pinCount = 0;
 
 #if defined(OMR_THR_CUSTOM_SPIN_OPTIONS)
 	monitor->customSpinOptions = NULL;
-#endif /* OMR_THR_CUSTOM_SPIN_OPTIONS */
+#endif /* defined(OMR_THR_CUSTOM_SPIN_OPTIONS) */
 
-#ifdef OMR_THR_THREE_TIER_LOCKING
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 	monitor->blocking = NULL;
 	monitor->spinlockState = J9THREAD_MONITOR_SPINLOCK_UNOWNED;
 
@@ -3664,8 +3664,7 @@ monitor_init(omrthread_monitor_t monitor, uintptr_t flags, omrthread_library_t l
 	ASSERT(monitor->spinCount1 != 0);
 	ASSERT(monitor->spinCount2 != 0);
 	ASSERT(monitor->spinCount3 != 0);
-
-#endif
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
 	if (name) {
 		if (monitor->flags & J9THREAD_MONITOR_NAME_COPY) {
@@ -3747,11 +3746,11 @@ omrthread_monitor_enter(omrthread_monitor_t monitor)
 		return 0;
 	}
 
-#ifdef OMR_THR_THREE_TIER_LOCKING
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 	return monitor_enter_three_tier(self, monitor, DONT_SET_ABORTABLE);
-#else
+#else /* defined(OMR_THR_THREE_TIER_LOCKING) */
 	return monitor_enter(self, monitor);
-#endif
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 }
 
 
@@ -3785,11 +3784,11 @@ omrthread_monitor_enter_using_threadId(omrthread_monitor_t monitor, omrthread_t 
 		return 0;
 	}
 
-#ifdef OMR_THR_THREE_TIER_LOCKING
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 	return monitor_enter_three_tier(threadId, monitor, DONT_SET_ABORTABLE);
-#else
+#else /* defined(OMR_THR_THREE_TIER_LOCKING) */
 	return monitor_enter(threadId, monitor);
-#endif
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 }
 
 /**
@@ -3820,11 +3819,11 @@ omrthread_monitor_enter_abortable_using_threadId(omrthread_monitor_t monitor, om
 		return 0;
 	}
 
-#ifdef OMR_THR_THREE_TIER_LOCKING
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 	return monitor_enter_three_tier(threadId, monitor, SET_ABORTABLE);
-#else
+#else /* defined(OMR_THR_THREE_TIER_LOCKING) */
 	return monitor_enter(threadId, monitor);
-#endif
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 }
 
 
@@ -3879,7 +3878,7 @@ monitor_enter(omrthread_t self, omrthread_monitor_t monitor)
 
 
 
-#if (defined(OMR_THR_THREE_TIER_LOCKING))
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 /**
  * Enter a three-tier monitor.
  *
@@ -4002,10 +4001,10 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 
 	return 0;
 }
-#endif /* OMR_THR_THREE_TIER_LOCKING */
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
 
-#if (defined(OMR_THR_THREE_TIER_LOCKING))
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 /**
  * Notify all threads blocked on the monitor's mutex, waiting
  * to be told that it's ok to try again to get the spinlock.
@@ -4041,7 +4040,7 @@ unblock_spinlock_threads(omrthread_t self, omrthread_monitor_t monitor)
 	}
 }
 
-#endif /* OMR_THR_THREE_TIER_LOCKING */
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
 
 
