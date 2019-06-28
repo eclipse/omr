@@ -3307,7 +3307,7 @@ omrthread_current_stack_free(void)
 intptr_t
 omrthread_monitor_init_with_name(omrthread_monitor_t *handle, uintptr_t flags, const char *name)
 {
-	intptr_t rc;
+	intptr_t rc = 0;
 
 	rc = monitor_alloc_and_init(handle, flags, J9THREAD_LOCKING_DEFAULT, J9THREAD_LOCKING_NO_DATA, name);
 	return rc;
@@ -3540,8 +3540,8 @@ monitor_free(omrthread_library_t lib, omrthread_monitor_t monitor)
 	monitor->userData = 0;
 
 	/* CMVC 112926 Delete the name if we copied it */
-	if (monitor->flags & J9THREAD_MONITOR_NAME_COPY) {
-		if (monitor->name) {
+	if (OMR_ARE_ANY_BITS_SET(monitor->flags, J9THREAD_MONITOR_NAME_COPY)) {
+		if (NULL != monitor->name) {
 			omrthread_free_memory(lib, monitor->name);
 		}
 		monitor->name = NULL;
@@ -3549,7 +3549,7 @@ monitor_free(omrthread_library_t lib, omrthread_monitor_t monitor)
 	}
 
 	/* CMVC 144063 J9VM is "leaking" handles */
-	if ((monitor->flags & J9THREAD_MONITOR_MUTEX_UNINITIALIZED) == 0) {
+	if (OMR_ARE_NO_BITS_SET(monitor->flags, J9THREAD_MONITOR_MUTEX_UNINITIALIZED)) {
 		OMROSMUTEX_DESTROY(monitor->mutex);
 		monitor->flags = J9THREAD_MONITOR_MUTEX_UNINITIALIZED;
 	}
@@ -3582,7 +3582,7 @@ monitor_free_nolock(omrthread_library_t lib, omrthread_t thread, omrthread_monit
 	monitor->userData = 0;
 
 	/* CMVC 112926 Delete the name if we copied it */
-	if (monitor->flags & J9THREAD_MONITOR_NAME_COPY) {
+	if (OMR_ARE_ANY_BITS_SET(monitor->flags, J9THREAD_MONITOR_NAME_COPY)) {
 		if (monitor->name) {
 			omrthread_free_memory(lib, monitor->name);
 		}
@@ -3591,8 +3591,8 @@ monitor_free_nolock(omrthread_library_t lib, omrthread_t thread, omrthread_monit
 	}
 
 	/* CMVC 144063 J9VM is "leaking" handles */
-	if (lib->flags & J9THREAD_LIB_FLAG_DESTROY_MUTEX_ON_MONITOR_FREE) {
-		if ((monitor->flags & J9THREAD_MONITOR_MUTEX_UNINITIALIZED) == 0) {
+	if (OMR_ARE_ANY_BITS_SET(lib->flags, J9THREAD_LIB_FLAG_DESTROY_MUTEX_ON_MONITOR_FREE)) {
+		if (OMR_ARE_NO_BITS_SET(monitor->flags, J9THREAD_MONITOR_MUTEX_UNINITIALIZED)) {
 			OMROSMUTEX_DESTROY(monitor->mutex);
 			monitor->flags = J9THREAD_MONITOR_MUTEX_UNINITIALIZED;
 		}
@@ -3648,7 +3648,7 @@ monitor_init(omrthread_monitor_t monitor, uintptr_t flags, omrthread_library_t l
 	/* check if we should spin on system monitors that are backing a Object monitor
 	 * the default is now that we do not spin.
 	 */
-	if ((J9THREAD_MONITOR_OBJECT != (flags & J9THREAD_MONITOR_OBJECT))
+	if (!OMR_ARE_ALL_BITS_SET(flags, J9THREAD_MONITOR_OBJECT)
 		|| OMR_ARE_ALL_BITS_SET(lib->flags, J9THREAD_LIB_FLAG_SECONDARY_SPIN_OBJECT_MONITORS_ENABLED)
 	) {
 		monitor->flags |= J9THREAD_MONITOR_TRY_ENTER_SPIN;
@@ -3666,8 +3666,8 @@ monitor_init(omrthread_monitor_t monitor, uintptr_t flags, omrthread_library_t l
 	ASSERT(monitor->spinCount3 != 0);
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
-	if (name) {
-		if (monitor->flags & J9THREAD_MONITOR_NAME_COPY) {
+	if (NULL != name) {
+		if (OMR_ARE_ANY_BITS_SET(monitor->flags, J9THREAD_MONITOR_NAME_COPY)) {
 			uintptr_t length = strlen(name);
 
 			/* Allow names that are empty strings because, for example,
@@ -3693,7 +3693,7 @@ monitor_init(omrthread_monitor_t monitor, uintptr_t flags, omrthread_library_t l
 static intptr_t
 monitor_alloc_and_init(omrthread_monitor_t *handle, uintptr_t flags, intptr_t policy, intptr_t policyData, const char *name)
 {
-	omrthread_monitor_t monitor;
+	omrthread_monitor_t monitor = NULL;
 	omrthread_t self = MACRO_SELF();
 
 	ASSERT(self);
