@@ -1964,6 +1964,7 @@ class ARM64Trg1MemInstruction : public ARM64Trg1Instruction
                             TR::MemoryReference *mr, TR::CodeGenerator *cg)
       : ARM64Trg1Instruction(op, node, treg, cg), _memoryReference(mr)
       {
+      mr->incRegisterTotalUseCounts(cg);
       }
 
    /*
@@ -2084,6 +2085,7 @@ class ARM64MemInstruction : public TR::Instruction
                         TR::MemoryReference *mr, TR::CodeGenerator *cg)
       : TR::Instruction(op, node, cg), _memoryReference(mr)
       {
+      mr->incRegisterTotalUseCounts(cg);
       }
 
    /*
@@ -2100,6 +2102,7 @@ class ARM64MemInstruction : public TR::Instruction
                         TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
       : TR::Instruction(op, node, precedingInstruction, cg), _memoryReference(mr)
       {
+      mr->incRegisterTotalUseCounts(cg);
       }
 
    /**
@@ -2174,7 +2177,6 @@ class ARM64MemSrc1Instruction : public ARM64MemInstruction
       : ARM64MemInstruction(op, node, mr, cg), _source1Register(sreg)
       {
       useRegister(sreg);
-      mr->incRegisterTotalUseCounts(cg);
       }
 
    /*
@@ -2193,6 +2195,7 @@ class ARM64MemSrc1Instruction : public ARM64MemInstruction
                             TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
       : ARM64MemInstruction(op, node, mr, precedingInstruction, cg), _source1Register(sreg)
       {
+      useRegister(sreg);
       }
 
    /**
