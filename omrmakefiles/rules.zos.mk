@@ -132,6 +132,9 @@ ifeq (1,$(DO_LINK))
 endif
 
 # compilation for metal-C files.
+# MCASM_INCLUDES enables project specific metal C asm include paths
+MCASM_INCLUDES+=-I$(top_srcdir)/../port/zos390/macros/
+
 ifeq (1,$(OMR_ENV_DATA64))
   MCFLAGS=-q64
 endif
