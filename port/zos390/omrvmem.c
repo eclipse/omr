@@ -166,27 +166,21 @@ get_ipt_ttoken(struct OMRPortLibrary *portLibrary,
 	return;
 }
 
-/* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_1M_fixed_pages,OS_NOSTACK)
 void *omrallocate_1M_fixed_pages(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char *ttkn, void* startAddress);
 
-/* omrvmem_support_above_bar.s */
 #pragma linkage(omrfree_memory_above_bar,OS_NOSTACK)
 int omrfree_memory_above_bar(void *address, const char *ttkn);
 
-/* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_4K_pages_above_bar,OS_NOSTACK)
 void *omrallocate_4K_pages_above_bar(int numMBSegments, const char *ttkn, void* startAddress);
 
-/* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_4K_pages_in_userExtendedPrivateArea,OS_NOSTACK)
 void * omrallocate_4K_pages_in_userExtendedPrivateArea(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char * ttkn, void* startAddress);
 
-/* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_1M_pageable_pages_above_bar,OS_NOSTACK)
 void *omrallocate_1M_pageable_pages_above_bar(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char *ttkn,void* startAddress);
 
-/* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_2G_pages,OS_NOSTACK)
 void *omrallocate_2G_pages(int num2GBUnits, int userExtendedPrivateAreaMemoryType, const char *ttkn, void* startAddress);
 

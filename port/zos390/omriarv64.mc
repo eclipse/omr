@@ -20,35 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/*
- * This file is used to generate the HLASM corresponding to the C calls
- * that use the IARV64 macro in omrvmem.c
- *
- * This file is compiled manually using the METAL-C compiler that was
- * introduced in z/OS V1R9. The generated output (omriarv64.s) is then
- * inserted into omrvmem_support_above_bar.s which is compiled by our makefiles.
- *
- * omrvmem_support_above_bar.s indicates where to put the contents of omriarv64.s.
- * Search for:
- * 		Insert contents of omriarv64.s below
- *
- * *******
- * NOTE!!!!! You must strip the line numbers from any pragma statements!
- * *******
- *
- * It should be obvious, however, just to be clear be sure to omit the
- * first two lines from omriarv64.s which will look something like:
- *
- *          TITLE '5694A01 V1.9 z/OS XL C
- *                     ./omriarv64.c'
- *
- * To compile:
- *  xlc -S -qmetal -Wc,lp64 -qlongname omriarv64.c
- *
- * z/OS V1R9 z/OS V1R9.0 Metal C Programming Guide and Reference:
- * 		http://publibz.boulder.ibm.com/epubs/pdf/ccrug100.pdf
- */
-
 #include "omriarv64.h"
 
 #pragma prolog(omrallocate_1M_fixed_pages,"MYPROLOG")
