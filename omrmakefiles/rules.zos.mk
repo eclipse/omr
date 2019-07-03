@@ -139,7 +139,7 @@ endif
 	cp $< $*.c
 	xlc $(MCFLAGS) -I$(top_srcdir)/port/zos390/ -qmetal -qlongname -S -o $*.s $*.c > $*.asmlist
 	rm -f $*.c
-	as -mgoff -I CBC.SCCNSAM $*.s
+	as -mgoff $(MCASM_INCLUDES) -I CBC.SCCNSAM $*.s
 	rm -f $*.s
 
 # compilation for .s files
