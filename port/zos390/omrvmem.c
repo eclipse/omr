@@ -51,6 +51,7 @@
 #define LP_DEBUG_PRINTF3(format, v1, v2, v3)				omrtty_printf(portLibrary, format, v1, v2, v3);
 #define LP_DEBUG_PRINTF4(format, v1, v2, v3, v4)			omrtty_printf(portLibrary, format, v1, v2, v3, v4);
 #define LP_DEBUG_PRINTF5(format, v1, v2, v3, v4, v5)		omrtty_printf(portLibrary, format, v1, v2, v3, v4, v5);
+#define LP_DEBUG_PRINTF6(format, v1, v2, v3, v4, v5, v6)	omrtty_printf(portLibrary, format, v1, v2, v3, v4, v5, v6);
 #else
 #define LP_DEBUG_PRINTF(format)
 #define LP_DEBUG_PRINTF1(format, v1)
@@ -58,6 +59,7 @@
 #define LP_DEBUG_PRINTF3(format, v1, v2, v3)
 #define LP_DEBUG_PRINTF4(format, v1, v2, v3, v4)
 #define LP_DEBUG_PRINTF5(format, v1, v2, v3, v4, v5)
+#define LP_DEBUG_PRINTF6(format, v1, v2, v3, v4, v5, v6)
 #endif /* LP_DEBUG */
 
 /* See MVS Data Areas, Volume 1 (ABEP - DALT) for flag definitions */
@@ -553,8 +555,8 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 
 	Trc_PRT_vmem_reservePagesAboveBar_Entry(byteAmount, pageSize, pageFlags, options, userExtendedPrivateAreaMemoryType);
 
-	LP_DEBUG_PRINTF5("\t reservePagesAboveBar byteAmount=0x%zx, pageSize=x%zx, pageFlags=0x%zx, useStrictPageSize=0x%x, userExtendedPrivateAreaMemoryType=0x%x\n", \
-					byteAmount, pageSize, pageFlags, useStrictPageSize, userExtendedPrivateAreaMemoryType);
+	LP_DEBUG_PRINTF6("\t reservePagesAboveBar startAddress=0x%zx, byteAmount=0x%zx, pageSize=x%zx, pageFlags=0x%zx, useStrictPageSize=0x%x, userExtendedPrivateAreaMemoryType=0x%x\n", \
+					startAddress, byteAmount, pageSize, pageFlags, useStrictPageSize, userExtendedPrivateAreaMemoryType);
 
 	/* determine number of 1MB segments required */
 	numSegments = ((byteAmount + ONE_M - 1) & (~(ONE_M - 1))) / ONE_M;
@@ -944,6 +946,7 @@ omrvmem_reserve_memory_ex(struct OMRPortLibrary *portLibrary, struct J9PortVmemI
 
 	Assert_PRT_true(params.startAddress <= params.endAddress);
 	ASSERT_VALUE_IS_PAGE_SIZE_ALIGNED(params.byteAmount, params.pageSize);
+	ASSERT_VALUE_IS_PAGE_SIZE_ALIGNED(params.startAddress, params.pageSize);
 
 #if defined(OMR_ENV_DATA64)
 	/* Invalid input */
