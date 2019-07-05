@@ -481,11 +481,64 @@ OMR::ARM64::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	}
 
 TR::Register *
+evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool needsResolve, TR::CodeGenerator *cg)
+   {
+   // NOTE:
+   // If in the future no code is generated for the null check, just evaluate the
+   // child and decrement its use count UNLESS the child is a pass-through node
+   // in which case some kind of explicit test or indirect load must be generated
+   // to force the null check at this point.
+
+   TR::Node *firstChild = node->getFirstChild();
+   TR::ILOpCode &opCode = firstChild->getOpCode();
+   TR::Node *reference = NULL;
+   TR::Compilation *comp = cg->comp();
+
+   reference = node->getNullCheckReference();
+
+   // TODO - If a resolve check is needed as well, the resolve must be done
+   // before the null check, so that exceptions are handled in the correct
+   // order.
+   //
+   ///// if (needsResolve)
+   /////    {
+   /////    ...
+   /////    }
+
+   reference->setIsNonNull(true);
+
+   /*
+    * If the first child is a load with a ref count of 1, just decrement the reference count on the child.
+    * If the first child does not have a register, it means it was never evaluated.
+    * As a result, the grandchild (the variable reference) needs to be decremented as well.
+    *
+    * In other cases, evaluate the child node.
+    *
+    * Under compressedpointers, the first child will have a refCount of at least 2 (the other under an anchor node).
+    */
+   if (opCode.isLoad() && firstChild->getReferenceCount()==1 &&
+       !firstChild->getSymbolReference()->isUnresolved())
+      {
+      cg->decReferenceCount(firstChild);
+      if (firstChild->getRegister() == NULL)
+         {
+         cg->decReferenceCount(reference);
+         }
+      }
+   else
+      {
+      cg->evaluate(firstChild);
+      cg->decReferenceCount(firstChild);
+      }
+
+   return NULL;
+   }
+
+TR::Register *
 OMR::ARM64::TreeEvaluator::NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::NULLCHKEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   return evaluateNULLCHKWithPossibleResolve(node, false, cg);
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)

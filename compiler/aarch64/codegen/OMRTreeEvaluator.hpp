@@ -50,6 +50,14 @@ namespace TR { class CodeGenerator; }
 TR::Register *genericReturnEvaluator(TR::Node *node, TR::RealRegister::RegNum rnum, TR_RegisterKinds rk, TR_ReturnInfo i, TR::CodeGenerator *cg);
 
 /**
+ * @brief Helper function for Null/Resolve CHK Evaluators
+ * @param[in] node : node
+ * @param[in] needsResolve : if node needs resoloution
+ * @param[in] cg : CodeGenerator
+ */
+TR::Register *evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool needsResolve, TR::CodeGenerator *cg);
+
+/**
  * @brief Helper function for xloadEvaluators
  * @param[in] node : node
  * @param[in] op : instruction for load
