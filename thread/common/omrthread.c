@@ -4080,6 +4080,9 @@ intptr_t
 omrthread_monitor_try_enter_using_threadId(omrthread_monitor_t monitor, omrthread_t threadId)
 {
 	intptr_t lockAcquired = -1;
+#if defined(OMR_THR_MCS_LOCKS)
+	omrthread_mcs_node_t mcsNode = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 	ASSERT(threadId != 0);
 	ASSERT(threadId == MACRO_SELF());
 	ASSERT(monitor);
@@ -4093,12 +4096,21 @@ omrthread_monitor_try_enter_using_threadId(omrthread_monitor_t monitor, omrthrea
 		return 0;
 	}
 #if defined(OMR_THR_THREE_TIER_LOCKING)
+#if defined(OMR_THR_MCS_LOCKS)
+	mcsNode = omrthread_mcs_node_allocate(threadId);
+	if (J9THREAD_MONITOR_TRY_ENTER_SPIN == (monitor->flags & J9THREAD_MONITOR_TRY_ENTER_SPIN)) {
+		lockAcquired = omrthread_mcs_lock(threadId, monitor, mcsNode);
+	} else {
+		lockAcquired = omrthread_mcs_trylock(threadId, monitor, mcsNode);
+	}
+#else /* defined(OMR_THR_MCS_LOCKS) */
 	if (J9THREAD_MONITOR_TRY_ENTER_SPIN == (monitor->flags & J9THREAD_MONITOR_TRY_ENTER_SPIN)) {
 		lockAcquired = omrthread_spinlock_acquire(threadId, monitor);
 	} else {
 		lockAcquired = omrthread_spinlock_acquire_no_spin(threadId, monitor);
 	}
-#else
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+#else /* defined(OMR_THR_THREE_TIER_LOCKING) */
 	lockAcquired = MONITOR_TRY_LOCK(monitor);
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
@@ -4115,6 +4127,11 @@ omrthread_monitor_try_enter_using_threadId(omrthread_monitor_t monitor, omrthrea
 
 		return 0;
 	}
+
+#if defined(OMR_THR_MCS_LOCKS)
+	/* Failed to acquire the MCS lock. Return the MCS node to the pool. */
+	omrthread_mcs_node_free(threadId, mcsNode);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 	return -1;
 }
