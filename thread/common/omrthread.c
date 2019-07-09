@@ -4776,7 +4776,15 @@ monitor_wait_three_tier(omrthread_t self, omrthread_monitor_t monitor,
 	monitor->owner = NULL;
 	monitor->count = 0;
 
+#if defined(OMR_THR_MCS_LOCKS)
+	omrthread_mcs_unlock(self, monitor);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 	MONITOR_LOCK(monitor, CALLER_MONITOR_WAIT);
+#if defined(OMR_THR_MCS_LOCKS)
+	if (0 == monitor->spinThreads) {
+		unblock_spinlock_threads(self, monitor);
+	}
+#else /* defined(OMR_THR_MCS_LOCKS) */
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
 	omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_UNOWNED);
 	if (0 == monitor->spinThreads) {
@@ -4787,6 +4795,7 @@ monitor_wait_three_tier(omrthread_t self, omrthread_monitor_t monitor,
 		unblock_spinlock_threads(self, monitor);
 	}
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 	self->lockedmonitorcount--;
 
 	threadEnqueue(&monitor->waiting, self);
