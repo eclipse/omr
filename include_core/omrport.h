@@ -1074,6 +1074,7 @@ typedef struct OMROSDesc {
 
 /* zOS features */
 #define OMRPORT_ZOS_FEATURE_RMODE64 31 /* RMODE64. */
+#define OMRPORT_ZOS_FEATURE_MEMORY_ALLOC_HINT 30 /* MEMORY_ALLOC_HINT by IARV64. */
 
 typedef struct OMROSKernelInfo {
 	uint32_t kernelVersion;
@@ -1538,8 +1539,6 @@ typedef struct OMRPortLibrary {
 	int32_t (*sysinfo_get_open_file_count)(struct OMRPortLibrary *portLibrary, uint64_t *count) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_get_os_description "omrsysinfo_get_os_description"*/
 	intptr_t  ( *sysinfo_get_os_description)(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc) ;
-	/** see @ref omrsysinfo.c::omrsysinfo_get_memory_allocation_hint_supported "omrsysinfo_get_memory_allocation_hint_supported"*/
-	BOOLEAN  ( *sysinfo_get_memory_allocation_hint_supported)(struct OMRPortLibrary *portLibrary) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_os_has_feature "omrsysinfo_os_has_feature"*/
 	BOOLEAN  ( *sysinfo_os_has_feature)(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc, uint32_t feature) ;
 	/** see @ref omrsysinfo.c::omrsysinfo_os_kernel_info "omrsysinfo_os_kernel_info"*/
@@ -2021,7 +2020,6 @@ extern J9_CFUNC int32_t omrport_getVersion(struct OMRPortLibrary *portLibrary);
 #define omrsysinfo_get_tmp(param1,param2,param3) privateOmrPortLibrary->sysinfo_get_tmp(privateOmrPortLibrary, (param1), (param2), (param3))
 #define omrsysinfo_get_open_file_count(param1) privateOmrPortLibrary->sysinfo_get_open_file_count(privateOmrPortLibrary, (param1))
 #define omrsysinfo_get_os_description(param1) privateOmrPortLibrary->sysinfo_get_os_description(privateOmrPortLibrary, (param1))
-#define omrsysinfo_get_memory_allocation_hint_supported() privateOmrPortLibrary->sysinfo_get_memory_allocation_hint_supported(privateOmrPortLibrary)
 #define omrsysinfo_os_has_feature(param1,param2) privateOmrPortLibrary->sysinfo_os_has_feature(privateOmrPortLibrary, (param1), (param2))
 #define omrsysinfo_os_kernel_info(param1) privateOmrPortLibrary->sysinfo_os_kernel_info(privateOmrPortLibrary, (param1))
 #define omrsysinfo_cgroup_is_system_available() privateOmrPortLibrary->sysinfo_cgroup_is_system_available(privateOmrPortLibrary)

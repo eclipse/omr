@@ -3748,6 +3748,11 @@ getZOSDescription(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc)
 	if (OMR_ARE_ANY_BITS_SET(cvtoslvl6, 0x10)) {
 		setOSFeature(desc, OMRPORT_ZOS_FEATURE_RMODE64);
 	}
+	
+    J9RCE *__ptr32 rcep = cvtp->cvtrcep;
+	if ((rcep->rceFlags[1] & RCE_FLAGS2_INORIGIN_BIT) != 0) {
+		setOSFeature(desc, OMRPORT_ZOS_FEATURE_MEMORY_ALLOC_HINT);
+	}
 #endif /* defined(OMR_ENV_DATA64) */
 
 	return rc;
@@ -3770,18 +3775,6 @@ omrsysinfo_get_os_description(struct OMRPortLibrary *portLibrary, struct OMROSDe
 
 	Trc_PRT_sysinfo_get_os_description_Exit(rc);
 	return rc;
-}
-
-BOOLEAN
-omrsysinfo_get_memory_allocation_hint_supported(struct OMRPortLibrary *portLibrary)
-{
-#if defined(J9ZOS39064)
-	return retrieveZOSIARV64InOriginSupported(portLibrary);
-#elif defined(J9ZOS390)
-	return FALSE;
-#else
-	return TRUE;
-#endif
 }
 
 BOOLEAN

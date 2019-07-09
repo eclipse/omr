@@ -26,7 +26,6 @@
 #include "omrport.h"
 
 #define J9BYTES_PER_PAGE            4096		/* Size of main storage frame/virtual storage page/auxiliary storage slot */
-#define RCE_FLAGS2_INORIGIN_BIT     0x04
 
 #if defined(__cplusplus)
 extern "C" {
@@ -53,9 +52,6 @@ retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *
  */
 int32_t
 retrieveZOSProcessorStats(struct OMRPortLibrary *portLibrary, struct J9ProcessorInfos *procInfo);
-
-BOOLEAN
-retrieveZOSIARV64InOriginSupported(struct OMRPortLibrary *portLibrary);
 
 #if defined(__cplusplus)
 } /* extern "C" */

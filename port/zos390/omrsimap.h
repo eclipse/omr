@@ -115,6 +115,8 @@ typedef _Packed struct J9ASMVT {
 	/**< Ignore rest of the ASMVT */
 } J9ASMVT;
 
+#define RCE_FLAGS2_INORIGIN_BIT     0x04
+
 /**
  * RSM Control & Enumeration Area (RCE)
  * It contains system wide counts and control information used by Real Storage Manager (RSM).
