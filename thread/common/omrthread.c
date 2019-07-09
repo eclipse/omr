@@ -3889,7 +3889,9 @@ static intptr_t
 monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN isAbortable)
 {
 	int blockedCount = 0;
-
+#if defined(OMR_THR_MCS_LOCKS)
+	omrthread_mcs_node_t mcsNode = omrthread_mcs_node_allocate(self);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 	ASSERT(self);
 	ASSERT(monitor);
 	ASSERT(monitor->spinCount1 != 0);
@@ -3899,8 +3901,12 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 	ASSERT(FREE_TAG != monitor->count);
 
 	while (1) {
-
-		if (omrthread_spinlock_acquire(self, monitor) == 0) {
+#if defined(OMR_THR_MCS_LOCKS)
+		if (0 == omrthread_mcs_lock(self, monitor, mcsNode))
+#else /* defined(OMR_THR_MCS_LOCKS) */
+		if (0 == omrthread_spinlock_acquire(self, monitor))
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+		{
 			monitor->owner = self;
 			monitor->count = 1;
 			ASSERT(monitor->spinlockState != J9THREAD_MONITOR_SPINLOCK_UNOWNED);
@@ -3909,6 +3915,8 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 
 		MONITOR_LOCK(monitor, CALLER_MONITOR_ENTER_THREE_TIER1);
 
+#if !defined(OMR_THR_MCS_LOCKS)
+		/* For MCS locks, J9THREAD_MONITOR_SPINLOCK_EXCEEDED is unused. */
 		if (J9THREAD_MONITOR_SPINLOCK_UNOWNED == omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_EXCEEDED)) {
 			MONITOR_UNLOCK(monitor);
 			monitor->owner = self;
@@ -3916,6 +3924,7 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 			ASSERT(monitor->spinlockState != J9THREAD_MONITOR_SPINLOCK_UNOWNED);
 			break;
 		}
+#endif /* !defined(OMR_THR_MCS_LOCKS) */
 
 		blockedCount++;
 
@@ -3959,6 +3968,9 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 				self->monitor = 0;
 				THREAD_UNLOCK(self);
 				MONITOR_UNLOCK(monitor);
+#if defined(OMR_THR_MCS_LOCKS)
+				omrthread_mcs_node_free(self, mcsNode);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 				return J9THREAD_INTERRUPTED_MONITOR_ENTER;
 			}
 			THREAD_UNLOCK(self);
