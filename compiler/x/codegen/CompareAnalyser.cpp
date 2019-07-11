@@ -143,15 +143,21 @@ void TR_X86CompareAnalyser::integerCompareAnalyser(
       tempMR->decNodeReferenceCounts(cg());
       }
 
-   if (realFirstChild)
-      cg()->recursivelyDecReferenceCount(realFirstChild);
-   else
-      cg()->decReferenceCount(firstChild);
-
-   if (realSecondChild)
-      cg()->recursivelyDecReferenceCount(realSecondChild);
-   else
-      cg()->decReferenceCount(secondChild);
+   if (realFirstChild) {
+       if (!getCmpMem1Reg2())
+	 cg()->recursivelyDecReferenceCount(realFirstChild);
+       else
+	 cg()->decReferenceCount(realFirstChild);
+   } else
+	cg()->decReferenceCount(firstChild);
+   
+   if (realSecondChild) {
+	if(!getCmpReg1Mem2())
+	  cg()->recursivelyDecReferenceCount(realSecondChild);
+	else
+	  cg()->decReferenceCount(realSecondChild);
+   } else
+	cg()->decReferenceCount(secondChild);
    }
 
 
