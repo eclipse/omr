@@ -2066,7 +2066,7 @@ OMR::Node::isThisPointer()
  *        pairFirstChild
  *        pairSecondChild
  *
- * and the opcodes for highOp/adjunctOp are lumulh/lmul, luaddh/luadd, or lusubh/lusub.
+ * and the opcodes for highOp/adjunctOp are lumulh/lmul.
  */
 bool
 OMR::Node::isDualHigh()
@@ -2074,9 +2074,7 @@ OMR::Node::isDualHigh()
    if ((self()->getNumChildren() == 3) && self()->getChild(2))
       {
       TR::ILOpCodes pairOpValue = self()->getChild(2)->getOpCodeValue();
-      if (((self()->getOpCodeValue() == TR::lumulh) && (pairOpValue == TR::lmul))
-          || ((self()->getOpCodeValue() == TR::luaddh) && (pairOpValue == TR::luadd))
-          || ((self()->getOpCodeValue() == TR::lusubh) && (pairOpValue == TR::lusub)))
+      if ((self()->getOpCodeValue() == TR::lumulh) && (pairOpValue == TR::lmul))
          return true;
       }
    return false;
@@ -2095,22 +2093,13 @@ OMR::Node::isDualHigh()
  *          pairFirstChild
  *          pairSecondChild
  *
- * and the opcodes for highOp/adjunctOp are luaddc/luadd, or lusubb/lusub.
+ * and the opcodes for highOp/adjunctOp are. (All the opcode pairs have been deprecated)
  */
 bool
 OMR::Node::isTernaryHigh()
    {
-   if (((self()->getOpCodeValue() == TR::luaddc) || (self()->getOpCodeValue() == TR::lusubb))
-       && (self()->getNumChildren() == 3) && self()->getChild(2)
-       && (self()->getChild(2)->getNumChildren() == 1) && self()->getChild(2)->getFirstChild())
-      {
-      TR::ILOpCodes ccOpValue = self()->getChild(2)->getOpCodeValue();
-      TR::ILOpCodes pairOpValue = self()->getChild(2)->getFirstChild()->getOpCodeValue();
-      if ((ccOpValue == TR::computeCC) &&
-          (((self()->getOpCodeValue() == TR::luaddc) && (pairOpValue == TR::luadd))
-           || ((self()->getOpCodeValue() == TR::lusubb) && (pairOpValue == TR::lusub))))
-         return true;
-      }
+   //This function always returns false after removing deprecated unsigned IL opcodes
+   //TODO (#2657): could fold this function as false
    return false;
    }
 
@@ -2392,7 +2381,7 @@ OMR::Node::isNotCollected()
  *
  * \note
  *    This query currently only works on opcodes that can have a pinning array pointer,
- *    i.e. aiadd, aiuadd, aladd, aluadd. Suppport for other opcodes can be added if necessary.
+ *    i.e. aiadd, aladd. Suppport for other opcodes can be added if necessary.
  */
 bool
 OMR::Node::computeIsInternalPointer()
@@ -8155,13 +8144,13 @@ OMR::Node::printCanSkipZeroInitialization()
 bool
 OMR::Node::isAdjunct()
    {
-   return (self()->getOpCodeValue() == TR::lmul || self()->getOpCodeValue() == TR::luadd || self()->getOpCodeValue() == TR::lusub) && _flags.testAny(adjunct);
+   return (self()->getOpCodeValue() == TR::lmul) && _flags.testAny(adjunct);
    }
 
 void
 OMR::Node::setIsAdjunct(bool v)
    {
-   TR_ASSERT(self()->getOpCodeValue() == TR::lmul || self()->getOpCodeValue() == TR::luadd || self()->getOpCodeValue() == TR::lusub, "Opcode must be lmul, lusub, or luadd");
+   TR_ASSERT(self()->getOpCodeValue() == TR::lmul , "Opcode must be lmul");
    _flags.set(adjunct, v);
    }
 

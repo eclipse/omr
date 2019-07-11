@@ -3895,8 +3895,8 @@ TR_GeneralLoopUnroller::countNodesAndSubscripts(TR::Node *node, int32_t &numNode
    if (node->getOpCodeValue() != TR::treetop)
       numNodes++;
 
-   if (node->getOpCodeValue() == TR::aiadd || node->getOpCodeValue() == TR::aiuadd ||
-       node->getOpCodeValue() == TR::aladd || node->getOpCodeValue() == TR::aluadd)
+   if (node->getOpCodeValue() == TR::aiadd ||
+       node->getOpCodeValue() == TR::aladd)
       {
       // TODO: make this more intelligent -- check if the subscript indexes
       // an induction variable

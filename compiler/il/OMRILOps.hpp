@@ -279,9 +279,7 @@ public:
    bool hasPinningArrayPointer()
       {
       return (getOpCodeValue() == TR::aiadd)  ||
-             (getOpCodeValue() == TR::aladd)  ||
-             (getOpCodeValue() == TR::aiuadd) ||
-             (getOpCodeValue() == TR::aluadd);
+             (getOpCodeValue() == TR::aladd);
       }
 
    bool isLongCompare() const
@@ -356,20 +354,14 @@ public:
              getOpCodeValue() == TR::iflucmpgt ||
              getOpCodeValue() == TR::iadd      ||
              getOpCodeValue() == TR::ladd      ||
-             getOpCodeValue() == TR::iuadd     ||
              getOpCodeValue() == TR::iuaddc    ||
              getOpCodeValue() == TR::aiadd     ||
-             getOpCodeValue() == TR::aiuadd    ||
-             getOpCodeValue() == TR::luadd     ||
              getOpCodeValue() == TR::luaddc    ||
              getOpCodeValue() == TR::aladd     ||
-             getOpCodeValue() == TR::aluadd    ||
              getOpCodeValue() == TR::isub      ||
              getOpCodeValue() == TR::lsub      ||
-             getOpCodeValue() == TR::iusub     ||
              getOpCodeValue() == TR::iusubb    ||
              getOpCodeValue() == TR::asub      ||
-             getOpCodeValue() == TR::lusub     ||
              getOpCodeValue() == TR::lusubb;
       }
 
@@ -702,11 +694,7 @@ public:
       {
       switch(type)
          {
-         case TR::Int8:     return TR::buadd;
-         case TR::Int16:    return TR::cadd;
-         case TR::Int32:    return TR::iuadd;
-         case TR::Int64:    return TR::luadd;
-	 case TR::Address:  return (is64Bit) ? TR::aladd : TR::aiadd;
+	      case TR::Address:  return (is64Bit) ? TR::aladd : TR::aiadd;
          default: TR_ASSERT(0, "no add opcode for this datatype");
          }
       return TR::BadILOp;
@@ -735,14 +723,9 @@ public:
 
    static TR::ILOpCodes unsignedSubtractOpCode(TR::DataType type)
       {
-      switch(type)
-         {
-         case TR::Int8:    return TR::busub;
-         case TR::Int16:   return TR::csub;
-         case TR::Int32:   return TR::iusub;
-         case TR::Int64:   return TR::lusub;
-         default: TR_ASSERT(0, "no unsigned sub opcode for this datatype");
-         }
+      //All unsigned sub opcode for this datatype should be deprecated
+      //TODO (#2657): Remove this function
+      TR_ASSERT(0, "no unsigned sub opcode for this datatype");
       return TR::BadILOp;
       }
 
@@ -921,15 +904,12 @@ public:
       switch (longOp)
          {
          case TR::ladd:   return TR::iadd;
-         case TR::luadd:  return TR::iuadd;
          case TR::lsub:   return TR::isub;
-         case TR::lusub:  return TR::iusub;
          case TR::lmul:   return TR::imul;
          case TR::ldiv:   return TR::idiv;
          case TR::lrem:   return TR::irem;
          case TR::labs:   return TR::iabs;
          case TR::lneg:   return TR::ineg;
-         case TR::luneg:  return TR::iuneg;
          case TR::lshr:   return TR::ishr;
          case TR::lushr:  return TR::iushr;
          case TR::lshl:   return TR::ishl;
@@ -1299,7 +1279,6 @@ public:
          case TR::dstorei:
             return TR::vstorei;
          case TR::badd:
-         case TR::cadd:
          case TR::sadd:
          case TR::iadd:
          case TR::ladd:
@@ -1307,7 +1286,6 @@ public:
          case TR::dadd:
             return TR::vadd;
          case TR::bsub:
-         case TR::csub:
          case TR::ssub:
          case TR::isub:
          case TR::lsub:
@@ -1452,24 +1430,16 @@ template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<   float>() { ret
 template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<  double>() { return TR::dconst; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<   void*>() { return TR::aconst; }
 
-template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode< uint8_t>() { return TR::buadd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<  int8_t>() { return TR::badd; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<uint16_t>() { return TR::cadd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode< int16_t>() { return TR::sadd; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<uint32_t>() { return TR::iuadd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode< int32_t>() { return TR::iadd; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<uint64_t>() { return TR::luadd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode< int64_t>() { return TR::ladd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<   float>() { return TR::fadd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<  double>() { return TR::dadd; }
 
-template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode< uint8_t>() { return TR::busub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<  int8_t>() { return TR::bsub; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<uint16_t>() { return TR::csub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode< int16_t>() { return TR::ssub; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<uint32_t>() { return TR::iusub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode< int32_t>() { return TR::isub; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<uint64_t>() { return TR::lusub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode< int64_t>() { return TR::lsub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<   float>() { return TR::fsub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<  double>() { return TR::dsub; }
@@ -1485,9 +1455,7 @@ template <> inline TR::ILOpCodes OMR::ILOpCode::getMulOpCode<  double>() { retur
 
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<  int8_t>() { return TR::bneg; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode< int16_t>() { return TR::sneg; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<uint32_t>() { return TR::iuneg; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode< int32_t>() { return TR::ineg; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<uint64_t>() { return TR::luneg; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode< int64_t>() { return TR::lneg; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<   float>() { return TR::fneg; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<  double>() { return TR::dneg; }

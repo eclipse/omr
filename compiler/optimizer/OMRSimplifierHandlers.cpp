@@ -1623,8 +1623,6 @@ static bool reduceLongOp(TR::Node * node, TR::Block * block, TR::Simplifier * s,
       case TR::land: newOp = TR::iand; break;
       case TR::lor:  newOp = TR::ior;  break;
       case TR::lxor: newOp = TR::ixor; break;
-      case TR::luadd: newOp = TR::iuadd; isUnsigned = true; break;
-      case TR::lusub: newOp = TR::iusub; isUnsigned = true; break;
       case TR::lushr:
          isUnsigned = true;
       case TR::lshr:
@@ -1679,20 +1677,19 @@ static bool reduceLongOp(TR::Node * node, TR::Block * block, TR::Simplifier * s,
             }
       break;
       case TR::lneg:
-      case TR::luneg:
          {
          if (!performTransformation(s->comp(), "%sReducing long operation in node [" POINTER_PRINTF_FORMAT "] to an int operation\n", s->optDetailString(), node))
             return false;
          if (newConversionOp == TR::BadILOp)
             {
-            TR::Node::recreate(node, isUnsigned ? TR::iuneg : TR::ineg);
+            TR::Node::recreate(node, TR::ineg);
             TR::Node::recreate(firstChild, TR::l2i);
             }
          else
             {
             TR::Node * temp = TR::Node::create(TR::l2i, 1, firstChild->getFirstChild());
             firstChild->getFirstChild()->decReferenceCount();
-            TR::Node::recreate(firstChild, isUnsigned ? TR::iuneg : TR::ineg);
+            TR::Node::recreate(firstChild, TR::ineg);
             firstChild->setAndIncChild(0, temp);
             TR::Node::recreate(node, newConversionOp);
             }

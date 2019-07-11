@@ -70,7 +70,7 @@ static TR::Register *addConstantToInteger(TR::Node *node, TR::Register *srcReg, 
    return trgReg;
    }
 
-// Also handles TR::aiadd, TR::iuadd, aiuadd
+// Also handles TR::aiadd
 TR::Register *OMR::ARM::TreeEvaluator::iaddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Register *src1Reg = NULL;
@@ -93,7 +93,7 @@ TR::Register *OMR::ARM::TreeEvaluator::iaddEvaluator(TR::Node *node, TR::CodeGen
       generateTrg1Src2Instruction(cg, ARMOp_add, node, trgReg, src1Reg, src2Reg);
       }
 
-   if ((node->getOpCodeValue() == TR::aiadd || node->getOpCodeValue() == TR::aiuadd) &&
+   if (node->getOpCodeValue() == TR::aiadd &&
        node->isInternalPointer())
       {
       if (node->getPinningArrayPointer())
