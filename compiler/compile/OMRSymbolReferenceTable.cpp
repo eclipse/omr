@@ -610,32 +610,6 @@ OMR::SymbolReferenceTable::findOrCreateArrayTranslateAndTestSymbol()
    return element(arrayTranslateAndTestSymbol);
    }
 
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreatelong2StringSymbol()
-   {
-   if (!element(long2StringSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(long2StringSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), long2StringSymbol, sym);
-      }
-   return element(long2StringSymbol);
-   }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreatebitOpMemSymbol()
-   {
-   if (!element(bitOpMemSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(bitOpMemSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), bitOpMemSymbol, sym);
-      }
-   return element(bitOpMemSymbol);
-   }
 
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateSinglePrecisionSQRTSymbol()
@@ -662,20 +636,6 @@ OMR::SymbolReferenceTable::findOrCreateArrayCmpSymbol()
       }
    return element(arrayCmpSymbol);
    }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateCurrentTimeMaxPrecisionSymbol()
-   {
-   if (!element(currentTimeMaxPrecisionSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(currentTimeMaxPrecisionSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), currentTimeMaxPrecisionSymbol, sym);
-      }
-   return element(currentTimeMaxPrecisionSymbol);
-   }
-
 
 
 TR::SymbolReference *
