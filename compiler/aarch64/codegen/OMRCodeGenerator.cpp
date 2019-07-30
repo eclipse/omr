@@ -67,6 +67,8 @@ OMR::ARM64::CodeGenerator::CodeGenerator() :
    _numberBytesReadInaccessible = 0;
    _numberBytesWriteInaccessible = 0;
 
+   self()->setSupportsDivCheck();
+
    if (TR::Compiler->vm.hasResumableTrapHandler(self()->comp()))
       self()->setHasResumableTrapHandler();
 
