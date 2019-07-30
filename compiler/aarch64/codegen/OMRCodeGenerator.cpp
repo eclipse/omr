@@ -62,6 +62,9 @@ OMR::ARM64::CodeGenerator::CodeGenerator() :
    self()->setLastGlobalGPR(TR::Machine::getLastGlobalGPRRegisterNumber());
    self()->setLastGlobalFPR(TR::Machine::getLastGlobalFPRRegisterNumber());
 
+   self()->setSupportsGlRegDeps();
+   self()->setSupportsGlRegDepOnFirstBlock();
+
    self()->getLinkage()->initARM64RealRegisterLinkage();
 
    _numberBytesReadInaccessible = 0;
