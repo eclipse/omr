@@ -24,6 +24,7 @@
 #include "omrformatconsts.h"
 
 #include <cmath>
+#include <limits>
 
 #if defined(J9ZOS390)
 namespace std
@@ -432,10 +433,60 @@ float fdiv(float l, float r) {
     return l/r;
 }
 
+bool isnan(float x) {
+    return x != x; // NANs never compare equal
+}
+
+bool isinf(float x) {
+    return std::abs(x) == std::numeric_limits<float>::infinity();
+}
+
+float frem_copysign(float x, float y) {
+    // technically not completely correct because -0.0 == +0.0
+    // also doesn't handle NaN's correctly because NaN == NaN is always false
+    return (std::abs(y) == y ? +1.0f : -1.0f)*x;
+}
+
+float frem_round(float x) {
+    float n = std::ceil(x);
+    if ((n - x > 0.5f) || (n - x == 0.5f && std::fmod(n, 2.0f) != 0.0f)) {
+        n = std::floor(x);
+    }
+    return n;
+}
+
+float frem(float x, float y) {
+    if (isnan(x) || isnan(y)) {
+        return std::numeric_limits<float>::quiet_NaN();
+    }
+    else if (std::abs(y) == 0.0f || isinf(x)) {
+        return std::numeric_limits<float>::signaling_NaN();
+    }
+    else if (isinf(y)) {
+        return x;
+    }
+
+    float rem = x - frem_round(x / y) * y;
+
+    if (std::abs(rem) == 0.0f) {
+        rem = frem_copysign(rem, x);
+    }
+
+    return rem;
+}
+
 class FloatArithmetic : public TRTest::BinaryOpTest<float> {};
 
 TEST_P(FloatArithmetic, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
+
+    std::string arch = omrsysinfo_get_CPU_architecture();
+    SKIP_IF(param.opcode == "frem" && (OMRPORT_ARCH_HAMMER == arch), MissingImplementation)
+        << "The x86-64 codegen does not yet support frem.";
+    SKIP_IF(param.opcode == "frem" && (OMRPORT_ARCH_PPC64LE == arch), MissingImplementation)
+        << "The PPC-64_LE codegen does not yet support frem.";
+    SKIP_IF(param.opcode == "frem" && (OMRPORT_ARCH_S390X == arch), MissingImplementation)
+        << "The S390X codegen does not yet support frem.";
 
     char inputTrees[1024] = {0};
     std::snprintf(inputTrees, sizeof(inputTrees),
@@ -469,6 +520,14 @@ TEST_P(FloatArithmetic, UsingConst) {
 
 TEST_P(FloatArithmetic, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
+
+    std::string arch = omrsysinfo_get_CPU_architecture();
+    SKIP_IF(param.opcode == "frem" && (OMRPORT_ARCH_HAMMER == arch), MissingImplementation)
+        << "The x86-64 codegen does not yet support frem.";
+    SKIP_IF(param.opcode == "frem" && (OMRPORT_ARCH_PPC64LE == arch), MissingImplementation)
+        << "the PPC-64_LE codegen does not yet support frem.";
+    SKIP_IF(param.opcode == "frem" && (OMRPORT_ARCH_S390X == arch), MissingImplementation)
+        << "The S390X codegen does not yet support frem.";
 
     char inputTrees[1024] = {0};
     std::snprintf(inputTrees, sizeof(inputTrees),
@@ -505,7 +564,8 @@ INSTANTIATE_TEST_CASE_P(ArithmeticTest, FloatArithmetic, ::testing::Combine(
         std::make_tuple<const char*, float (*)(float, float)>("fadd", static_cast<float (*)(float, float)>(fadd)),
         std::make_tuple<const char*, float (*)(float, float)>("fsub", static_cast<float (*)(float, float)>(fsub)),
         std::make_tuple<const char*, float (*)(float, float)>("fmul", static_cast<float (*)(float, float)>(fmul)),
-        std::make_tuple<const char*, float (*)(float, float)>("fdiv", static_cast<float (*)(float, float)>(fdiv))
+        std::make_tuple<const char*, float (*)(float, float)>("fdiv", static_cast<float (*)(float, float)>(fdiv)),
+        std::make_tuple<const char*, float (*)(float, float)>("frem", static_cast<float (*)(float, float)>(frem))
     )));
 
 double dadd(double l, double r) {
