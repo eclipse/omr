@@ -27,8 +27,18 @@
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/TreeEvaluator.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
+#include "env/CompilerEnv.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+
+static void lookupScheme1(TR::CodeGenerator *cg, TR::Node *node, bool unbalanced);
+static void lookupScheme2(TR::CodeGenerator *cg, TR::Node *node, bool unbalanced);
+static void lookupScheme3(TR::CodeGenerator *cg, TR::Node *node, bool unbalanced);
+static bool isGlDepsUnBalanced(TR::CodeGenerator *cg, TR::Node *node);
+static void switchDispatch(TR::CodeGenerator *cg, TR::Node *node);
 
 TR::Register *
 genericReturnEvaluator(TR::Node *node, TR::RealRegister::RegNum rnum, TR_RegisterKinds rk, TR_ReturnInfo i,  TR::CodeGenerator *cg)
@@ -471,6 +481,331 @@ OMR::ARM64::TreeEvaluator::lookupEvaluator(TR::Node *node, TR::CodeGenerator *cg
    // Only temporary (#3963 implements this)
    cg->comp()->failCompilation<TR::AssertionFailure>("lookupEvaluator");
    return NULL;
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::lookupEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+	{
+	switchDispatch(cg, node);
+   cg->decReferenceCount(node->getFirstChild());
+   return NULL;
+	}
+
+static void mapGlRegDeps(TR::Node *node, TR_BitVector *vector)
+   {
+   for (int i = 0; i < node->getNumChildren(); i++)
+      vector->set(node->getChild(i)->getGlobalRegisterNumber());
+   }
+
+static bool isGlDepsUnBalanced(TR::CodeGenerator *cg, TR::Node *node)
+   {
+   int32_t  numChildren = node->getNumChildren();
+   TR::Node *defaultNode = node->getSecondChild();
+   TR::Node *defaultDeps = defaultNode->getNumChildren() > 0 ? defaultNode->getFirstChild() : NULL;
+   int32_t  numDefDeps  = defaultDeps ? defaultDeps->getNumChildren() : 0;
+   int32_t i;
+
+   // Return true if the number of dependencies on any of the non-default
+   // cases does not agree with the number of those on the default case;
+   // otherwise return false if there are no dependencies to consider.
+   for (i = 2; i < numChildren; i++)
+      {
+      TR::Node *caseNode = node->getChild(i);
+      TR::Node *caseDeps = caseNode->getNumChildren() > 0 ? caseNode->getFirstChild() : NULL;
+      if ((!caseDeps && 0 != numDefDeps) 
+            || (caseDeps && numDefDeps != caseDeps->getNumChildren()))
+         break;
+      }
+   if (i != numChildren)
+      {
+      return true;
+      }
+   if (numDefDeps == 0)
+      {
+      return false;
+      }
+
+   // The cases all have the same number (!= 0) of dependencies; see if
+   // they all describe the same set of global registers. Return true
+   // if they do not; otherwise return false.
+   TR_BitVector defDepMap, caseDepMap;
+
+   defDepMap.init(cg->getNumberOfGlobalRegisters(), cg->trMemory());
+   caseDepMap.init(cg->getNumberOfGlobalRegisters(), cg->trMemory());
+   mapGlRegDeps(defaultDeps, &defDepMap);
+
+   for (i = 2; i < numChildren; i++)
+      {
+      TR::Node *caseDeps = node->getChild(i)->getFirstChild();
+      caseDepMap.empty();
+      mapGlRegDeps(caseDeps, &caseDepMap);
+      if (!(defDepMap == caseDepMap))
+         return true;
+      }
+
+   return false;
+   }
+
+// Note: When the checks and/or lookupScheme implementations are changed with regards to number of used registers (or dependency),
+// the matching GlDepRegs free checks in OMRCodeGenerator.cpp#getMaximumNumberOfGPRsAllowedAcrossEdge(..) must be updated to synch.
+static void switchDispatch(TR::CodeGenerator *cg, TR::Node *node)
+   {
+   int32_t    total = node->getNumChildren();
+   int32_t    i;
+   bool       unbalanced;
+
+   unbalanced = isGlDepsUnBalanced(cg, node);
+   if (!unbalanced)
+      {
+      for (i = 2; i < total; i++)
+         {
+         if (node->getChild(i)->getNumChildren() > 0)
+            {
+            TR::Node *caseDepsNode = node->getChild(i)->getFirstChild();
+            if (caseDepsNode != NULL)
+               cg->evaluate(caseDepsNode);
+            }
+         }
+      }
+
+   if (total <= 15)
+      {
+      for (i = 2; i < total && constantIsImm9(node->getChild(i)->getCaseConstant()); i++)
+         ;
+      if (i == total)
+         {
+         lookupScheme1(cg, node, unbalanced);
+         return;
+         }
+      }
+
+   // The children are in ascending order already.
+   if (total <= 9)
+      {
+      int32_t preInt = node->getChild(2)->getCaseConstant();
+      for (i = 3; i < total; i++)
+         {
+         int32_t diff = node->getChild(i)->getCaseConstant() - preInt;
+         preInt += diff;
+         if (diff < 0 || !constantIsImm9(diff))
+            break;
+         }
+      if (i >= total)
+         {
+         lookupScheme2(cg, node, unbalanced);
+         return;
+         }
+      }
+#if 0
+#else
+   lookupScheme3(cg, node, unbalanced);
+#endif
+   }
+
+// Note: When the checks and/or lookupScheme implementations are changed with regards to number of used registers (or dependency),
+// the matching GlDepRegs free checks in OMRCodeGenerator.cpp#getMaximumNumberOfGPRsAllowedAcrossEdge(..) must be updated to synch.
+// Called by switchDispatch().
+static void lookupScheme1(TR::CodeGenerator *cg, TR::Node *node, bool unbalanced)
+   {
+   TR::Register *selectorReg = cg->evaluate(node->getFirstChild());
+   TR::Register *cndRegister = cg->allocateRegister();
+   TR::Node     *defaultNode = node->getSecondChild();
+   TR::Node     *defDepsNode = defaultNode->getNumChildren() > 0 ? defaultNode->getFirstChild() : NULL;
+
+   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
+   TR::addDependency(conditions, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   TR::RegisterDependencyConditions *defaultDeps = conditions;
+   if (defDepsNode && !unbalanced)
+      {
+      cg->evaluate(defDepsNode);
+      defaultDeps = defaultDeps->clone(cg, generateRegisterDependencyConditions(cg, defDepsNode, 0));
+      }
+
+   for (int i = 2; i < node->getNumChildren(); i++)
+      {
+      TR::Node        *caseNode        = node->getChild(i);
+      TR::LabelSymbol *caseTargetLabel = caseNode->getBranchDestination()->getNode()->getLabel();
+
+      // we don't need to check if the constant is immed;
+      // it was checked in the caller
+      int32_t value = caseNode->getCaseConstant();
+      constantIsImm9(value);
+      generateCompareImmInstruction(cg, node, selectorReg, value);
+
+      if (unbalanced)
+         {
+         TR::RegisterDependencyConditions *caseDeps = conditions;
+         if (caseNode->getNumChildren() > 0)
+            {
+            TR::Node *caseDepsNode = caseNode->getFirstChild();
+            cg->evaluate(caseDepsNode);
+            caseDeps = caseDeps->clone(cg, generateRegisterDependencyConditions(cg, caseDepsNode, 0));
+            }
+         generateConditionalBranchInstruction(cg, TR::InstOpCode:: b_cond, node, caseTargetLabel, TR::CC_EQ, caseDeps);
+         }
+      else
+         {
+         generateConditionalBranchInstruction(cg, TR::InstOpCode:: b_cond, node, caseTargetLabel, TR::CC_EQ);
+         }
+      }
+
+   TR::LabelSymbol *defaultTargetLabel = defaultNode->getBranchDestination()->getNode()->getLabel();
+
+   if (defDepsNode && unbalanced)
+      {
+      cg->evaluate(defDepsNode);
+      defaultDeps = defaultDeps->clone(cg, generateRegisterDependencyConditions(cg, defDepsNode, 0));
+      }
+
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, defaultTargetLabel, defaultDeps);
+   cg->stopUsingRegister(cndRegister);
+   }
+
+// Note: When the checks and/or lookupScheme implementations are changed with regards to number of used registers (or dependency),
+// the matching GlDepRegs free checks in OMRCodeGenerator.cpp#getMaximumNumberOfGPRsAllowedAcrossEdge(..) must be updated to synch.
+// Called by switchDispatch().
+static void lookupScheme2(TR::CodeGenerator *cg, TR::Node *node, bool unbalanced)
+   {
+   int32_t      numChildren  = node->getNumChildren();
+   TR::Register *selectorReg  = cg->evaluate(node->getFirstChild());
+   TR::Register *caseConstReg = cg->allocateRegister();
+   TR::Node     *defaultNode  = node->getSecondChild();
+   TR::Node     *defDepsNode  = defaultNode->getNumChildren() > 0 ? defaultNode->getFirstChild() : NULL;
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+   TR::addDependency(deps, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, caseConstReg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   TR::RegisterDependencyConditions *defaultDeps = deps;
+   if (defDepsNode && !unbalanced)
+      {
+      cg->evaluate(defDepsNode);
+      defaultDeps = defaultDeps->clone(cg, generateRegisterDependencyConditions(cg, defDepsNode, 0));
+      }
+
+   int32_t preInt = node->getChild(2)->getCaseConstant();
+   loadConstant32(cg, node, preInt, caseConstReg);
+   for (int i = 2; i < numChildren; i++)
+      {
+      TR::Node        *caseNode        = node->getChild(i);
+      TR::LabelSymbol *caseTargetLabel = caseNode->getBranchDestination()->getNode()->getLabel();
+      generateCompareInstruction(cg, node, selectorReg, caseConstReg);
+      if (unbalanced)
+         {
+         TR::RegisterDependencyConditions *caseDeps = deps;
+         if (0 < caseNode->getNumChildren())
+            {
+            cg->evaluate(caseNode->getFirstChild());
+            caseDeps = caseDeps->clone(cg, generateRegisterDependencyConditions(cg, caseNode->getFirstChild(), 0));
+            }
+         generateConditionalBranchInstruction(cg, TR::InstOpCode:: b_cond, node, caseTargetLabel, TR::CC_EQ, caseDeps);
+         }
+      else
+         {
+         generateConditionalBranchInstruction(cg, TR::InstOpCode:: b_cond, node, caseTargetLabel, TR::CC_EQ);
+         }
+
+      if (i < numChildren - 1)
+         {
+         int32_t diff = node->getChild(i + 1)->getCaseConstant() - preInt;
+         preInt += diff;
+         constantIsImm9(diff);
+         generateCompareImmInstruction(cg, node, caseConstReg, diff);
+         }
+      }
+
+   TR::LabelSymbol *defaultTargetLabel = defaultNode->getBranchDestination()->getNode()->getLabel();
+
+   if (0 < defaultNode->getNumChildren() && unbalanced)
+      {
+      cg->evaluate(defDepsNode);
+      defaultDeps = defaultDeps->clone(cg, generateRegisterDependencyConditions(cg, defDepsNode, 0));
+      }
+
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, defaultTargetLabel, defaultDeps);
+
+   cg->stopUsingRegister(caseConstReg);
+   }
+
+// Note: When the checks and/or lookupScheme implementations are changed with regards to number of used registers (or dependency),
+// the matching GlDepRegs free checks in OMRCodeGenerator.cpp#getMaximumNumberOfGPRsAllowedAcrossEdge(..) must be updated to synch.
+// Called by switchDispatch().
+static void lookupScheme3(TR::CodeGenerator *cg, TR::Node *node, bool unbalanced)
+   {
+   int32_t  total = node->getNumChildren();
+   int32_t  numberOfEntries = total - 2;
+   int32_t *dataTable = (int32_t *)cg->allocateCodeMemory(numberOfEntries * sizeof(int32_t), cg->getCurrentEvaluationBlock()->isCold());
+   int32_t  address = (intptr_t)dataTable;
+   TR::Register *selector = cg->evaluate(node->getFirstChild());
+   TR::Register *addrRegister = cg->allocateRegister();
+   TR::Register *dataRegister = cg->allocateRegister();
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
+   TR::Node *defaultNode = node->getSecondChild();
+   TR::Node *defDepsNode = defaultNode->getNumChildren() > 0 ? defaultNode->getFirstChild() : 0;
+
+   TR::addDependency(deps, dataRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, addrRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, selector, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   TR::RegisterDependencyConditions *defaultDeps = deps;
+   if (defDepsNode && !unbalanced)
+      {
+      cg->evaluate(defDepsNode);
+      defaultDeps = defaultDeps->clone(cg, generateRegisterDependencyConditions(cg, defDepsNode, 0));
+      }
+
+   if (!cg->comp()->getOption(TR_AOT))
+      {
+      loadConstant32(cg, node, address, addrRegister);
+      }
+   else
+      {
+      loadConstant64(cg, node, address, addrRegister);
+      }
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, dataRegister, new (cg->trHeapMemory()) TR::MemoryReference(addrRegister, 0, cg));
+
+   for (int32_t i = 2; i < total; i++)
+      {
+      TR::Node        *caseNode        = node->getChild(i);
+      TR::LabelSymbol *caseTargetLabel = caseNode->getBranchDestination()->getNode()->getLabel();
+
+      generateCompareInstruction(cg, node, selector, dataRegister);
+
+      if (unbalanced)
+         {
+         TR::RegisterDependencyConditions *caseDeps = deps;
+         if (0 < caseNode->getNumChildren())
+            {
+            TR::Node *caseDepsNode = caseNode->getFirstChild();
+            cg->evaluate(caseDepsNode);
+            caseDeps = caseDeps->clone(cg, generateRegisterDependencyConditions(cg, caseDepsNode, 0));
+            }
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, caseTargetLabel, TR::CC_EQ, caseDeps);
+         }
+      else
+         {
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, caseTargetLabel, TR::CC_EQ);
+         }
+      dataTable[i-2] = node->getChild(i)->getCaseConstant();
+      if (i < total - 1)
+         {
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, dataRegister, new (cg->trHeapMemory()) TR::MemoryReference(addrRegister, 0, cg));
+         }
+      }
+
+   TR::LabelSymbol *defaultTargetLabel = defaultNode->getBranchDestination()->getNode()->getLabel();
+
+   if (defDepsNode && unbalanced)
+      {
+      cg->evaluate(defDepsNode);
+      defaultDeps = defaultDeps->clone(cg, generateRegisterDependencyConditions(cg, defDepsNode, 0));
+      }
+
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, defaultTargetLabel, defaultDeps);
+
+   cg->stopUsingRegister(dataRegister);
+   cg->stopUsingRegister(addrRegister);
    }
 
 TR::Register *
