@@ -3946,6 +3946,9 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 				self->monitor = 0;
 				THREAD_UNLOCK(self);
 				MONITOR_UNLOCK(monitor);
+#if defined(OMR_THR_MCS_LOCKS)
+				omrthread_mcs_node_free(self, mcsNode);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 				return J9THREAD_INTERRUPTED_MONITOR_ENTER;
 			}
 		}
