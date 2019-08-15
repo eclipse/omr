@@ -5124,15 +5124,19 @@ monitor_notify_three_tier(omrthread_t self, omrthread_monitor_t monitor, int not
 	MONITOR_LOCK(monitor, CALLER_NOTIFY_ONE_OR_ALL);
 	queue = monitor->waiting;
 	if (queue) {
+#if defined(OMR_THR_MCS_LOCKS)
 #if defined(THREAD_ASSERTS)
-		intptr_t state;
-
-		state = omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_EXCEEDED);
+		ASSERT(monitor->spinlockState == J9THREAD_MONITOR_SPINLOCK_OWNED);
+#endif /* defined(THREAD_ASSERTS) */
+#else /* defined(OMR_THR_MCS_LOCKS) */
+#if defined(THREAD_ASSERTS)
+		intptr_t state = omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_EXCEEDED);
 		ASSERT((state == J9THREAD_MONITOR_SPINLOCK_OWNED)
 			|| (state == J9THREAD_MONITOR_SPINLOCK_EXCEEDED));
-#else
+#else /* defined(THREAD_ASSERTS) */
 		omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_EXCEEDED);
-#endif
+#endif /* defined(THREAD_ASSERTS) */
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 		if (notifyall) {
 			/* set all the thread flags */
 			do {
