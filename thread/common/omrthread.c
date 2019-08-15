@@ -934,15 +934,22 @@ postForkResetMonitors(omrthread_t self)
 					entry->pinCount = 0;
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 					entry->spinlockState = J9THREAD_MONITOR_SPINLOCK_UNOWNED;
+#if defined(OMR_THR_MCS_LOCKS)
+					entry->queueTail = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
 					entry->spinThreads = 0;
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 				} else {
 #if defined(OMR_THR_THREE_TIER_LOCKING)
+#if defined(OMR_THR_MCS_LOCKS)
+					entry->spinlockState = J9THREAD_MONITOR_SPINLOCK_OWNED;
+#else /* defined(OMR_THR_MCS_LOCKS) */
 					if (J9THREAD_MONITOR_SPINLOCK_EXCEEDED == entry->spinlockState) {
 						entry->spinlockState = J9THREAD_MONITOR_SPINLOCK_OWNED;
 					}
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 				}
 
