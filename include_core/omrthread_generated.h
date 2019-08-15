@@ -113,6 +113,7 @@ typedef struct OMRThreadMCSNodes {
  * - blocked: 1 - lock unowned, 0 - lock owned
  */
 typedef struct OMRThreadMCSNode {
+	omrthread_monitor_t monitor;
 	omrthread_mcs_node_t volatile stackNext;
 	omrthread_mcs_node_t volatile queueNext;
 	volatile uintptr_t blocked;
