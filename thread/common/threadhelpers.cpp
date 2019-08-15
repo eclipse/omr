@@ -208,7 +208,10 @@ omrthread_spinlock_swapState(omrthread_monitor_t monitor, uintptr_t newState)
 intptr_t
 omrthread_mcs_lock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_node_t mcsNode)
 {
+#if defined(THREAD_ASSERTS)
 	ASSERT(mcsNode != NULL);
+#endif /* defined(THREAD_ASSERTS) */
+
 	intptr_t result = -1;
 
 	/* Initialize the MCS node. */
@@ -294,7 +297,9 @@ exit:
 intptr_t
 omrthread_mcs_trylock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_node_t mcsNode)
 {
+#if defined(THREAD_ASSERTS)
 	ASSERT(mcsNode != NULL);
+#endif /* defined(THREAD_ASSERTS) */
 
 	intptr_t result = -1;
 	uintptr_t oldState = 0;
@@ -350,8 +355,10 @@ omrthread_mcs_unlock(omrthread_t self, omrthread_monitor_t monitor)
 		}
 	}
 
-	Assert_THR_true(mcsNode != NULL);
-	Assert_THR_true(mcsNode->monitor == monitor);
+#if defined(THREAD_ASSERTS)
+	ASSERT(mcsNode != NULL);
+	ASSERT(mcsNode->monitor == monitor);
+#endif /* defined(THREAD_ASSERTS) */
 
 	/* Get the successor of the mcsNode. */
 	omrthread_mcs_node_t successor = (omrthread_mcs_node_t)VM_AtomicSupport::add((volatile uintptr_t *)&mcsNode->queueNext, (uintptr_t)0);
@@ -419,7 +426,9 @@ omrthread_mcs_node_allocate(omrthread_t self)
 void
 omrthread_mcs_node_free(omrthread_t self, omrthread_mcs_node_t mcsNode)
 {
+#if defined(THREAD_ASSERTS)
 	ASSERT(mcsNode != NULL);
+#endif /* defined(THREAD_ASSERTS) */
 	pool_removeElement(self->mcsNodes->pool, mcsNode);
 }
 #endif /* defined(OMR_THR_MCS_LOCKS) */
