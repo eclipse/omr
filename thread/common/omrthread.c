@@ -4117,11 +4117,7 @@ omrthread_monitor_try_enter_using_threadId(omrthread_monitor_t monitor, omrthrea
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 #if defined(OMR_THR_MCS_LOCKS)
 	mcsNode = omrthread_mcs_node_allocate(threadId);
-	if (J9THREAD_MONITOR_TRY_ENTER_SPIN == (monitor->flags & J9THREAD_MONITOR_TRY_ENTER_SPIN)) {
-		lockAcquired = omrthread_mcs_lock(threadId, monitor, mcsNode);
-	} else {
-		lockAcquired = omrthread_mcs_trylock(threadId, monitor, mcsNode);
-	}
+	lockAcquired = omrthread_mcs_trylock(threadId, monitor, mcsNode);
 #else /* defined(OMR_THR_MCS_LOCKS) */
 	if (J9THREAD_MONITOR_TRY_ENTER_SPIN == (monitor->flags & J9THREAD_MONITOR_TRY_ENTER_SPIN)) {
 		lockAcquired = omrthread_spinlock_acquire(threadId, monitor);
