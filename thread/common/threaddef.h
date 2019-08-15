@@ -100,7 +100,7 @@ uintptr_t omrthread_spinlock_swapState(omrthread_monitor_t monitor, uintptr_t ne
 
 #if defined(OMR_THR_MCS_LOCKS)
 intptr_t
-omrthread_mcs_lock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_node_t mcsNode);
+omrthread_mcs_lock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_node_t mcsNode, BOOLEAN retry);
 
 intptr_t
 omrthread_mcs_trylock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_node_t mcsNode);

@@ -3909,7 +3909,7 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 
 	while (1) {
 #if defined(OMR_THR_MCS_LOCKS)
-		if (0 == omrthread_mcs_lock(self, monitor, mcsNode))
+		if (0 == omrthread_mcs_lock(self, monitor, mcsNode, (blockedCount != 0)))
 #else /* defined(OMR_THR_MCS_LOCKS) */
 		if (0 == omrthread_spinlock_acquire(self, monitor))
 #endif /* defined(OMR_THR_MCS_LOCKS) */
