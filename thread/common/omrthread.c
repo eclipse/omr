@@ -4034,22 +4034,22 @@ static void
 unblock_spinlock_threads(omrthread_t self, omrthread_monitor_t monitor)
 {
 	omrthread_t queue, next;
-#if defined(OMR_THR_SPIN_WAKE_CONTROL)
+#if defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS)
 	uintptr_t i = 0;
-#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
+#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS) */
 
 	ASSERT(self);
-#if defined(OMR_THR_SPIN_WAKE_CONTROL)
+#if defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS)
 	i = self->library->maxWakeThreads;
-#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
+#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS) */
 	ASSERT(monitor);
 
 	next = monitor->blocking;
-#if defined(OMR_THR_SPIN_WAKE_CONTROL)
+#if defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS)
 	for (; (NULL != next) && (i > 0); i--)
-#else /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
+#else /* defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS) */
 	while (NULL != next)
-#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
+#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS) */
 	{
 		queue = next;
 		next = queue->next;
