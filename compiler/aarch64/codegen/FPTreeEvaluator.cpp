@@ -241,10 +241,28 @@ OMR::ARM64::TreeEvaluator::ddivEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::fremEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::fremEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+	
+   TR::Register *a = cg->allocateSinglePrecisionRegister();
+   TR::Register *b = cg->allocateSinglePrecisionRegister();
+   TR::Register *c = cg->allocateSinglePrecisionRegister();
+	
+   a = cg->evaluate(firstChild);
+   b = cg->evaluate(secondChild);
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::fdivs, node, c, a, b);
+   /* Round using IEEE round to nearest, tied to even */ 
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::frintns, node, c, c);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::fmuls, node, c, b, c);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::fsubs, node, c, a, c);
+
+   firstChild->decReferenceCount();
+   secondChild->decReferenceCount();
+   node->setRegister(c);
+   return c;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::dremEvaluator(TR::Node *node, TR::CodeGenerator *cg)

@@ -424,21 +424,6 @@
 		rev16x,                                                 	/* 0x5AC00400	REV16     	 */
 		rev32,                                                  	/* 0xDAC00800	REV32     	 */
 /* VFP instructions */
-	/* Floating-Point Conversion */
-		fmov_stow,                                              	/* 0x1E260000	FMOV      	 */
-		fmov_wtos,                                              	/* 0x1E270000	FMOV      	 */
-		fmov_dtox,                                              	/* 0x9E660000	FMOV      	 */
-		fmov_xtod,                                              	/* 0x9E670000	FMOV      	 */
-		fcvt_stod,                                              	/* 0x1E22C000	FCVT      	 */
-		fcvt_dtos,                                              	/* 0x1E624000	FCVT      	 */
-		fcvtzs_stow,                                            	/* 0x1E380000	FCVTZS    	 */
-		fcvtzs_dtow,                                            	/* 0x1E780000	FCVTZS    	 */
-		fcvtzs_stox,                                            	/* 0x9E380000	FCVTZS    	 */
-		fcvtzs_dtox,                                            	/* 0x9E780000	FCVTZS    	 */
-		scvtf_wtos,                                             	/* 0x1E220000	SCVTF     	 */
-		scvtf_wtod,                                             	/* 0x1E620000	SCVTF     	 */
-		scvtf_xtos,                                             	/* 0x9E220000	SCVTF     	 */
-		scvtf_xtod,                                             	/* 0x9E620000	SCVTF     	 */
 	/* Floating-Point Immediate */
 		fmovimms,                                               	/* 0x1E201000	FMOV      	 */
 		fmovimmd,                                               	/* 0x1E601000	FMOV      	 */
@@ -447,13 +432,75 @@
 		fcmps_zero,                                             	/* 0x1E202008	FCMP      	 */
 		fcmpd,                                                  	/* 0x1E602000	FCMP      	 */
 		fcmpd_zero,                                             	/* 0x1E602008	FCMP      	 */
-	/* Floating-Point Data-processing (1 source) */
+	/* Floating-point data-processing (1 source) */
 		fmovs,                                                  	/* 0x1E204000	FMOV      	 */
-		fmovd,                                                  	/* 0x1E604000	FMOV      	 */
 		fabss,                                                  	/* 0x1E20C000	FABS      	 */
-		fabsd,                                                  	/* 0x1E60C000	FABS      	 */
 		fnegs,                                                  	/* 0x1E214000	FNEG      	 */
+		fcvt_stod,                                              	/* 0x1E22C000	FCVT      	 */
+		fcvt_stoh,                                              	/* 0x1E23C000	FCVT      	 */
+		frintns,                                                	/* 0x1E244000	FRINTN    	 */
+		fmovd,                                                  	/* 0x1E604000	FMOV      	 */
+		fabsd,                                                  	/* 0x1E60C000	FABS      	 */
 		fnegd,                                                  	/* 0x1E614000	FNEG      	 */
+		fcvt_dtos,                                              	/* 0x1E624000	FCVT      	 */
+		fcvt_dtoh,                                              	/* 0x1E63C000	FCVT      	 */
+		fcvt_htos,                                              	/* 0x1EE24000	FCVT      	 */
+		fcvt_htod,                                              	/* 0x1EE2C000	FCVT      	 */
+	/* Floating-point<->integer conversions */
+		fcvtns_stow,                                            	/* 0x1E200000	FCVTNS    	 */
+		fcvtnu_stow,                                            	/* 0x1E210000	FCVTNU    	 */
+		scvtf_wtos,                                             	/* 0x1E220000	SCVTF     	 */
+		ucvtf_wtos,                                             	/* 0x1E230000	UCVTF     	 */
+		fcvtas_stow,                                            	/* 0x1E240000	FCVTAS    	 */
+		fcvtau_stow,                                            	/* 0x1E250000	FCVTAU    	 */
+		fmov_stow,                                              	/* 0x1E260000	FMOV      	 */
+		fmov_wtos,                                              	/* 0x1E270000	FMOV      	 */
+		fcvtps_stow,                                            	/* 0x1E280000	FCVTPS    	 */
+		fcvtpu_stow,                                            	/* 0x1E290000	FCVTPU    	 */
+		fcvtms_stow,                                            	/* 0x1E300000	FCVTMS    	 */
+		fcvtmu_stow,                                            	/* 0x1E310000	FCVTMU    	 */
+		fcvtzs_stow,                                            	/* 0x1E380000	FCVTZS    	 */
+		fcvtzu_stow,                                            	/* 0x1E390000	FCVTZU    	 */
+		fcvtns_dtow,                                            	/* 0x1E600000	FCVTNS    	 */
+		fcvtnu_dtow,                                            	/* 0x1E610000	FCVTNU    	 */
+		scvtf_wtod,                                             	/* 0x1E620000	SCVTF     	 */
+		ucvtf_dtow,                                             	/* 0x1E630000	UCVTF     	 */
+		fcvtas_dtow,                                            	/* 0x1E640000	FCVTAS    	 */
+		fcvtau_dtow,                                            	/* 0x1E650000	FCVTAU    	 */
+		fcvtps_dtow,                                            	/* 0x1E680000	FCVTPS    	 */
+		fcvtpu_dtow,                                            	/* 0x1E690000	FCVTPU    	 */
+		fcvtms_dtow,                                            	/* 0x1E700000	FCVTMS    	 */
+		fcvtmu_dtow,                                            	/* 0x1E710000	FCVTMU    	 */
+		fcvtzs_dtow,                                            	/* 0x1E780000	FCVTZS    	 */
+		fcvtzu_dtow,                                            	/* 0x1E790000	FCVTZU    	 */
+		fcvtns_stox,                                            	/* 0x9E200000	FCVTNS    	 */
+		fcvtnu_stox,                                            	/* 0x9E210000	FCVTNU    	 */
+		scvtf_xtos,                                             	/* 0x9E220000	SCVTF     	 */
+		ucvtf_xtos,                                             	/* 0x9E230000	UCVTF     	 */
+		fcvtas_stox,                                            	/* 0x9E240000	FCVTAS    	 */
+		fcvtau_stox,                                            	/* 0x9E250000	FCVTAU    	 */
+		fcvtps_stox,                                            	/* 0x9E280000	FCVTPS    	 */
+		fcvtpu_stox,                                            	/* 0x9E290000	FCVTPU    	 */
+		fcvtms_stox,                                            	/* 0x9E300000	FCVTMS    	 */
+		fcvtmu_stox,                                            	/* 0x9E310000	FCVTMU    	 */
+		fcvtzs_stox,                                            	/* 0x9E380000	FCVTZS    	 */
+		fcvtzu_stox,                                            	/* 0x9E390000	FCVTZU    	 */
+		fcvtns_dtox,                                            	/* 0x9E600000	FCVTNS    	 */
+		fcvtnu_dtox,                                            	/* 0x9E610000	FCVTNU    	 */
+		scvtf_xtod,                                             	/* 0x9E620000	SCVTF     	 */
+		ucvtf_xtod,                                             	/* 0x9E630000	UCVTF     	 */
+		fcvtas_dtox,                                            	/* 0x9E640000	FCVTAS    	 */
+		fcvtau_dtox,                                            	/* 0x9E650000	FCVTAU    	 */
+		fmov_dtox,                                              	/* 0x9E660000	FMOV      	 */
+		fmov_xtod,                                              	/* 0x9E670000	FMOV      	 */
+		fcvtps_dtox,                                            	/* 0x9E680000	FCVTPS    	 */
+		fcvtpu_dtox,                                            	/* 0x9E690000	FCVTPU    	 */
+		fcvtms_dtox,                                            	/* 0x9E700000	FCVTMS    	 */
+		fcvtmu_dtox,                                            	/* 0x9E710000	FCVTMU    	 */
+		fcvtzs_dtox,                                            	/* 0x9E780000	FCVTZS    	 */
+		fcvtzu_dtox,                                            	/* 0x9E790000	FCVTZU    	 */
+		fmov_qhtox,                                             	/* 0x9EAE0000	FMOV      	 */
+		fmov_xtoqh,                                             	/* 0x9EAF0000	FMOV      	 */
 	/* Floating-Point Data-processing (2 source) */
 		fadds,                                                  	/* 0x1E202800	FADD      	 */
 		faddd,                                                  	/* 0x1E602800	FADD      	 */
