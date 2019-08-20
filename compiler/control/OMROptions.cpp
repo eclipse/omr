@@ -1997,6 +1997,12 @@ OMR::Options::jitLatePostProcess(TR::OptionSet *optionSet, void * jitConfig)
    self()->setOption(TR_EnableOSROnGuardFailure, false);
 #endif
 
+#if defined(TR_HOST_ARM64)
+   // HCR is not available for AArch64 yet
+   // OpenJ9 issue #6775 tracks the work to enable.
+   self()->setOption(TR_EnableHCR, false);
+#endif
+
 #ifndef J9_PROJECT_SPECIFIC
    self()->setOption(TR_DisableNextGenHCR);
 #endif
