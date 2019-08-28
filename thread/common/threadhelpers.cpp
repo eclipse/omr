@@ -222,6 +222,7 @@ omrthread_mcs_lock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_
 		/* Initialize the MCS node. */
 		mcsNode->queueNext = NULL;
 		mcsNode->monitor = NULL;
+		mcsNode->thread = self;
 
 		/* Install the mcsNode at the tail of the MCS lock queue (monitor->queueTail). */
 		predecessor = (omrthread_mcs_node_t)VM_AtomicSupport::lockExchange(
@@ -314,6 +315,7 @@ omrthread_mcs_trylock(omrthread_t self, omrthread_monitor_t monitor, omrthread_m
 	mcsNode->queueNext = NULL;
 	mcsNode->blocked = 0;
 	mcsNode->monitor = NULL;
+	mcsNode->thread = self;
 
 	/* If the monitor->queueTail pointer is NULL (no-one is waiting to acquire the lock), then it is
 	 * swapped with the mcsNode pointer, and the lock is acquired. */
@@ -364,6 +366,7 @@ omrthread_mcs_unlock(omrthread_t self, omrthread_monitor_t monitor)
 #if defined(THREAD_ASSERTS)
 	ASSERT(mcsNode != NULL);
 	ASSERT(mcsNode->monitor == monitor);
+	ASSERT(mcsNode->thread == self);
 #endif /* defined(THREAD_ASSERTS) */
 
 	/* Get the successor of the mcsNode. */
@@ -400,6 +403,7 @@ lockReleased:
 	/* Clear the fields of the mcsNode. */
 	mcsNode->stackNext = NULL;
 	mcsNode->queueNext = NULL;
+	mcsNode->thread = NULL;
 
 	/* Return the MCS node to the thread's MCS node pool since it is no longer used. */
 	omrthread_mcs_node_free(self, mcsNode);
