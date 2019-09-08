@@ -111,6 +111,7 @@
 #include "optimizer/GlobalRegisterAllocator.hpp"
 #include "optimizer/RecognizedCallTransformer.hpp"
 #include "optimizer/SwitchAnalyzer.hpp"
+#include "optimizer/OWL.hpp"
 #include "env/RegionProfiler.hpp"
 
 #if defined (_MSC_VER) && _MSC_VER < 1900
@@ -586,6 +587,7 @@ static const OptimizationStrategy omrWarmStrategyOpts[] =
    { localCSE                             },
    { localDeadStoreElimination            },
    { globalDeadStoreGroup                 },
+   { OWL                                  },
    { endOpts },
    };
 
@@ -872,6 +874,8 @@ OMR::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *metho
       new (comp->allocator()) TR::OptimizationManager(self(), TR::RecognizedCallTransformer::create, OMR::recognizedCallTransformer);
    _opts[OMR::switchAnalyzer] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR::SwitchAnalyzer::create, OMR::switchAnalyzer);
+   _opts[OMR::OWL] =
+   new (comp->allocator()) TR::OptimizationManager(self(), TR_OWL::create, OMR::OWL);
 
    // NOTE: Please add new OMR optimizations here!
 
