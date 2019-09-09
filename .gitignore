@@ -179,6 +179,12 @@ x64/
 # CLion
 .idea/
 
+# CCLS (language server)
+.ccls-cache/
+
+# Autocompletion (e.g. for vim)
+compile_commands.json
+
 # Test Output
 core
 core.*
