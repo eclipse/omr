@@ -1765,3 +1765,31 @@ omrsysinfo_cgroup_subsystem_iterator_destroy(struct OMRPortLibrary *portLibrary,
 	return;
 }
 
+omrsysinfo_get_cpu_affinity(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset)
+{
+        return;
+}
+
+void
+omrsysinfo_free_cpu_set(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset)
+{
+        return;
+}
+
+void
+omrsysinfo_add_cpuset(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset, int32_t cpu)
+{
+        return;
+}
+
+int32_t
+omrsysinfo_isset_cpuset(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset, int32_t cpu)
+{
+        return;
+}
+
+int32_t
+omrsysinfo_get_cpu_count(struct OMRPortLibrary *portLibrary, struct OMRCpuSet *cpuset)
+{
+        return OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
+}

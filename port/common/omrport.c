@@ -279,6 +279,11 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrsysinfo_cgroup_subsystem_iterator_metricKey, /* sysinfo_cgroup_subsystem_iterator_metricKey */
 	omrsysinfo_cgroup_subsystem_iterator_next, /* sysinfo_cgroup_subsystem_iterator_next */
 	omrsysinfo_cgroup_subsystem_iterator_destroy, /* sysinfo_cgroup_subsystem_iterator_destroy */
+	omrsysinfo_get_cpu_affinity, /* sysinfo_get_cpu_affinity */
+	omrsysinfo_free_cpu_set, /* sysinfo_free_cpu_set */
+	omrsysinfo_add_cpuset, /* sysinfo_add_cpuset */
+	omrsysinfo_isset_cpuset, /* sysinfo_isset_cpuset */
+	omrsysinfo_get_cpu_count, /* sysinfo_get_cpu_count */
 	omrport_init_library, /* port_init_library */
 	omrport_startup_library, /* port_startup_library */
 	omrport_create_library, /* port_create_library */
