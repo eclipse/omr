@@ -399,12 +399,6 @@ lockReleased:
 		prevMcsNode->stackNext = mcsNode->stackNext;
 	}
 
-	/* Clear the fields of the mcsNode. */
-	mcsNode->stackNext = NULL;
-	mcsNode->queueNext = NULL;
-	mcsNode->thread = NULL;
-	mcsNode->blocked = 0;
-
 	/* Return the MCS node to the thread's MCS node pool since it is no longer used. */
 	omrthread_mcs_node_free(self, mcsNode);
 }
@@ -439,6 +433,13 @@ omrthread_mcs_node_free(omrthread_t self, omrthread_mcs_node_t mcsNode)
 #if defined(THREAD_ASSERTS)
 	ASSERT(mcsNode != NULL);
 #endif /* defined(THREAD_ASSERTS) */
+
+	/* Clear the fields of the mcsNode. */
+	mcsNode->stackNext = NULL;
+	mcsNode->queueNext = NULL;
+	mcsNode->thread = NULL;
+	mcsNode->blocked = 0;
+
 	pool_removeElement(self->mcsNodes->pool, mcsNode);
 }
 #endif /* defined(OMR_THR_MCS_LOCKS) */
