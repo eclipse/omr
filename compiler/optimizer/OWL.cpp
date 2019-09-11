@@ -9,7 +9,8 @@
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimizer.hpp"
-//#include "launch.h"
+#include "launch.h"
+#include "JNIClient.hpp"
 
 
 TR_OWL::TR_OWL(TR::OptimizationManager *manager)
@@ -29,21 +30,41 @@ static void processTree(TR::Node *root, TR::NodeChecklist &visited) {
     for (int32_t i = 0; i < root->getNumChildren(); ++i) {
         processTree(root->getChild(i), visited);
     }
-    printf("%s\n",root->getOpCode().getName());
+    //printf("%s\n",root->getOpCode().getName());
 }
 
 int32_t TR_OWL::perform(){
-    printf("Hello world!\n");
 
-    //start jvm
-//    char *walaHome = getenv("WALA_HOME");
+
+
+
+
+    TR_JNIClient *jniClient = TR_JNIClient::getInstance();
+    jclass cls = jniClient->getClass("com/ibm/wala/shrikeBT/ConstantInstruction");
+//    jclass cls = env->FindClass( "com/ibm/wala/shrikeBT/ConstantInstruction");
+//    if (cls == NULL) {
+//        printf("Failed to find ConstantInstruction class");
+//        return 1;
+//    }
+//
+//    jmethodID mid = env->GetStaticMethodID(cls, "make", "(I)Lcom/ibm/wala/shrikeBT/ConstantInstruction;");
+//    if (mid == NULL) {
+//        printf("Failed to find make function");
+//        return 1;
+//    }
+//    jmethodID mid2 = env->GetMethodID(cls, "toString", "()Ljava/lang/String;");
+//    if (mid2 == NULL) {
+//        printf("Failed to find toString function");
+//        return 1;
+//    }
 //
 //
+//    printf("Successfully to find class and find method!!!!===========\n");
 //
-//    char classpath[1024];
-//
-//    sprintf(classpath, "%s/com.ibm.wala.util/target/classes:%s/com.ibm.wala.shrike/target/classes:%s/com.ibm.wala.core/target/classes:%s/com.ibm.wala.cast/target/classes", walaHome, walaHome, walaHome, walaHome);
-//    JNIEnv *java_env = launch_jvm(classpath);
+//    jobject res = env->CallStaticObjectMethod(cls,mid,1);
+//    jstring stringObj =(jstring)(env->CallObjectMethod(res,mid2));
+//    const char* string = env->GetStringUTFChars(stringObj,0);
+//    printf("string %s\n",string);
 
 
     TR::NodeChecklist visited(comp()); // visited nodes
