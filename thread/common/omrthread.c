@@ -3961,11 +3961,21 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 		self->monitor = monitor;
 		THREAD_UNLOCK(self);
 
+#if defined(OMR_THR_MCS_LOCKS)
+		if (0 != mcsNode->blocked) {
+			threadEnqueue(&monitor->blocking, self);
+			OMROSCOND_WAIT(self->condition, monitor->mutex);
+				break;
+			OMROSCOND_WAIT_LOOP();
+			threadDequeue(&monitor->blocking, self);
+		}
+#else /* defined(OMR_THR_MCS_LOCKS) */
 		threadEnqueue(&monitor->blocking, self);
 		OMROSCOND_WAIT(self->condition, monitor->mutex);
-			break;
+		        break;
 		OMROSCOND_WAIT_LOOP();
 		threadDequeue(&monitor->blocking, self);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 		/*
 		 * Check for abort upon waking.
@@ -4250,8 +4260,8 @@ monitor_exit(omrthread_t self, omrthread_monitor_t monitor)
 
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 #if defined(OMR_THR_MCS_LOCKS)
-		omrthread_mcs_unlock(self, monitor);
 		MONITOR_LOCK(monitor, CALLER_MONITOR_EXIT1);
+		omrthread_mcs_unlock(self, monitor);
 		if (0 == monitor->spinThreads) {
 			unblock_spinlock_threads(self, monitor);
 		}
@@ -4515,11 +4525,9 @@ monitor_wait_original(omrthread_t self, omrthread_monitor_t monitor,
 	monitor->count = 0;
 
 #if defined(OMR_THR_THREE_TIER_LOCKING)
-#if defined(OMR_THR_MCS_LOCKS)
-	omrthread_mcs_unlock(self, monitor);
-#endif /* defined(OMR_THR_MCS_LOCKS) */
 	MONITOR_LOCK(monitor, CALLER_MONITOR_WAIT);
 #if defined(OMR_THR_MCS_LOCKS)
+	omrthread_mcs_unlock(self, monitor);
 	if (0 == monitor->spinThreads) {
 		unblock_spinlock_threads(self, monitor);
 	}
@@ -4782,11 +4790,9 @@ monitor_wait_three_tier(omrthread_t self, omrthread_monitor_t monitor,
 	monitor->owner = NULL;
 	monitor->count = 0;
 
-#if defined(OMR_THR_MCS_LOCKS)
-	omrthread_mcs_unlock(self, monitor);
-#endif /* defined(OMR_THR_MCS_LOCKS) */
 	MONITOR_LOCK(monitor, CALLER_MONITOR_WAIT);
 #if defined(OMR_THR_MCS_LOCKS)
+	omrthread_mcs_unlock(self, monitor);
 	if (0 == monitor->spinThreads) {
 		unblock_spinlock_threads(self, monitor);
 	}
