@@ -89,11 +89,12 @@ static struct {
  * Access to these variables must be protected by the registerHandlerMonitor.
  *
  * syncSignalsWithHandlers represents if handlers are registered with synchronous
- * signals, and asyncSignalsWithHandlers represents if handlers are registered with
- * asynchronous signals.
+ * signals, and asyncSignalsWithHandlers[Set1|Set2] represents if handlers are
+ * registered with asynchronous signals.
  */
 static uint32_t syncSignalsWithHandlers;
-static uint32_t asyncSignalsWithHandlers;
+static uint32_t asyncSignalsWithHandlersSet1;
+static uint32_t asyncSignalsWithHandlersSet2;
 
 /* Records the (port library defined) signals for which a master handler is
  * registered. A master handler can be either masterSynchSignalHandler or
@@ -103,12 +104,13 @@ static uint32_t asyncSignalsWithHandlers;
  * must be protected by the registerHandlerMonitor.
  *
  * syncSignalsWithMasterHandlers represents if the synchronous master handler is
- * registered with synchronous signals, and asyncSignalsWithMasterHandlers
+ * registered with synchronous signals, and asyncSignalsWithMasterHandlers[Set1|Set2]
  * represents if the asynchronous master handler is registered with asynchronous
  * signals.
  */
 static uint32_t syncSignalsWithMasterHandlers;
-static uint32_t asyncSignalsWithMasterHandlers;
+static uint32_t asyncSignalsWithMasterHandlersSet1;
+static uint32_t asyncSignalsWithMasterHandlersSet2;
 
 #if defined(OMR_PORT_ASYNC_HANDLER)
 static uint32_t shutDownASynchReporter;
@@ -242,6 +244,48 @@ static struct {
 #if defined(SIGABND)
 	, {OMRPORT_SIG_FLAG_SIGABEND, SIGABND}
 #endif /* defined(SIGABND) */
+#if defined(SIGPWR)
+	, {OMRPORT_SIG_FLAG_SIGPWR, SIGPWR}
+#endif /* defined(SIGPWR) */
+#if defined(SIGSTKFLT)
+	, {OMRPORT_SIG_FLAG_SIGSTKFLT, SIGSTKFLT}
+#endif /* defined(SIGSTKFLT) */
+#if defined(SIGCPUFAIL)
+	, {OMRPORT_SIG_FLAG_SIGCPUFAIL, SIGCPUFAIL}
+#endif /* defined(SIGCPUFAIL) */
+#if defined(SIGDANGER)
+	, {OMRPORT_SIG_FLAG_SIGDANGER, SIGDANGER}
+#endif /* defined(SIGDANGER) */
+#if defined(SIGEMT)
+	, {OMRPORT_SIG_FLAG_SIGEMT, SIGEMT}
+#endif /* defined(SIGEMT) */
+#if defined(SIGGRANT)
+	, {OMRPORT_SIG_FLAG_SIGGRANT, SIGGRANT}
+#endif /* defined(SIGGRANT) */
+#if defined(SIGLOST)
+	, {OMRPORT_SIG_FLAG_SIGLOST, SIGLOST}
+#endif /* defined(SIGLOST) */
+#if defined(SIGMIGRATE)
+	, {OMRPORT_SIG_FLAG_SIGMIGRATE, SIGMIGRATE}
+#endif /* defined(SIGMIGRATE) */
+#if defined(SIGMSG)
+	, {OMRPORT_SIG_FLAG_SIGMSG, SIGMSG}
+#endif /* defined(SIGMSG) */
+#if defined(SIGPRE)
+	, {OMRPORT_SIG_FLAG_SIGPRE, SIGPRE}
+#endif /* defined(SIGPRE) */
+#if defined(SIGRETRACT)
+	, {OMRPORT_SIG_FLAG_SIGRETRACT, SIGRETRACT}
+#endif /* defined(SIGRETRACT) */
+#if defined(SIGSAK)
+	, {OMRPORT_SIG_FLAG_SIGSAK, SIGSAK}
+#endif /* defined(SIGSAK) */
+#if defined(SIGSOUND)
+	, {OMRPORT_SIG_FLAG_SIGSOUND, SIGSOUND}
+#endif /* defined(SIGSOUND) */
+#if defined(SIGCLD)
+	, {OMRPORT_SIG_FLAG_SIGCHLD, SIGCLD}
+#endif /* defined(SIGCLD) */
 };
 
 static omrthread_t asynchSignalReporterThread = NULL;
@@ -380,7 +424,7 @@ omrsig_protect(struct OMRPortLibrary *portLibrary, omrsig_protected_fn fn, void 
 		uint32_t rc = 0;
 		/* Acquire the registerHandlerMonitor and install the handler via registerMasterHandlers. */
 		omrthread_monitor_enter(registerHandlerMonitor);
-		rc = registerMasterHandlers(portLibrary, flags, OMRPORT_SIG_FLAG_SIGALLSYNC, NULL);
+		rc = registerMasterHandlers(portLibrary, flags, OMRPORT_SIG_FLAG_IS_SYNC, NULL);
 		omrthread_monitor_exit(registerHandlerMonitor);
 
 		if (0 != rc) {
@@ -448,13 +492,13 @@ omrsig_set_async_signal_handler(struct OMRPortLibrary *portLibrary, omrsig_handl
 	if (OMR_ARE_ANY_BITS_SET(signalOptionsGlobal, OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS)) {
 		/* -Xrs was set, we can't protect against any signals, do not install any handlers except SIGXFSZ */
 		if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_SIGXFSZ) && OMR_ARE_ANY_BITS_SET(signalOptionsGlobal, OMRPORT_SIG_OPTIONS_SIGXFSZ)) {
-			rc = registerMasterHandlers(portLibrary, OMRPORT_SIG_FLAG_SIGXFSZ, OMRPORT_SIG_FLAG_SIGALLASYNC, NULL);
+			rc = registerMasterHandlers(portLibrary, OMRPORT_SIG_FLAG_SIGXFSZ, OMRPORT_SIG_FLAG_IS_ASYNC1 | OMRPORT_SIG_FLAG_IS_ASYNC2, NULL);
 		} else {
 			Trc_PRT_signal_omrsig_set_async_signal_handler_will_not_set_handler_due_to_Xrs(handler, handler_arg, flags);
 			rc = OMRPORT_SIG_ERROR;
 		}
 	} else {
-		rc = registerMasterHandlers(portLibrary, flags, OMRPORT_SIG_FLAG_SIGALLASYNC, NULL);
+		rc = registerMasterHandlers(portLibrary, flags, OMRPORT_SIG_FLAG_IS_ASYNC1 | OMRPORT_SIG_FLAG_IS_ASYNC2, NULL);
 	}
 	omrthread_monitor_exit(registerHandlerMonitor);
 
@@ -549,13 +593,13 @@ omrsig_set_single_async_signal_handler(struct OMRPortLibrary *portLibrary, omrsi
 	if (OMR_ARE_ANY_BITS_SET(signalOptionsGlobal, OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS)) {
 		/* -Xrs was set, we can't protect against any signals, do not install any handlers except SIGXFSZ*/
 		if (OMR_ARE_ALL_BITS_SET(portlibSignalFlag, OMRPORT_SIG_FLAG_SIGXFSZ) && OMR_ARE_ANY_BITS_SET(signalOptionsGlobal, OMRPORT_SIG_OPTIONS_SIGXFSZ)) {
-			rc = registerMasterHandlers(portLibrary, OMRPORT_SIG_FLAG_SIGXFSZ, OMRPORT_SIG_FLAG_SIGALLASYNC, oldOSHandler);
+			rc = registerMasterHandlers(portLibrary, OMRPORT_SIG_FLAG_SIGXFSZ, OMRPORT_SIG_FLAG_IS_ASYNC1 | OMRPORT_SIG_FLAG_IS_ASYNC2, oldOSHandler);
 		} else {
 			Trc_PRT_signal_omrsig_set_single_async_signal_handler_will_not_set_handler_due_to_Xrs(handler, handler_arg, portlibSignalFlag);
 			rc = OMRPORT_SIG_ERROR;
 		}
 	} else {
-		rc = registerMasterHandlers(portLibrary, portlibSignalFlag, OMRPORT_SIG_FLAG_SIGALLASYNC, oldOSHandler);
+		rc = registerMasterHandlers(portLibrary, portlibSignalFlag, OMRPORT_SIG_FLAG_IS_ASYNC1 | OMRPORT_SIG_FLAG_IS_ASYNC2, oldOSHandler);
 	}
 
 	omrthread_monitor_exit(registerHandlerMonitor);
@@ -1297,7 +1341,7 @@ registerSignalHandlerWithOS(OMRPortLibrary *portLibrary, uint32_t portLibrarySig
 	 * Therefore, all the asynchronous signals are masked for the masterASyncHandler. The signal(s) are queued
 	 * and delivered to the masterASyncHandler once the handler returns. No signals are lost.
 	 */
-	if (OMR_ARE_ALL_BITS_SET(OMRPORT_SIG_FLAG_SIGALLASYNC, portLibrarySignalNo)) {
+	if (OMR_ARE_ANY_BITS_SET(portLibrarySignalNo, OMRPORT_SIG_FLAG_IS_ASYNC1 | OMRPORT_SIG_FLAG_IS_ASYNC2)) {
 		if (0 != addAsyncSignalsToSet(&newAction.sa_mask)) {
 			return OMRPORT_SIG_ERROR;
 		}
@@ -1306,7 +1350,7 @@ registerSignalHandlerWithOS(OMRPortLibrary *portLibrary, uint32_t portLibrarySig
 
 #if defined(AIXPPC)
 	/* Do the following while installing a handler for an asynchronous signal block SIGTRAP. */
-	if (OMR_ARE_ALL_BITS_SET(OMRPORT_SIG_FLAG_SIGALLASYNC, portLibrarySignalNo)) {
+	if (OMR_ARE_ANY_BITS_SET(portLibrarySignalNo, OMRPORT_SIG_FLAG_IS_ASYNC1 | OMRPORT_SIG_FLAG_IS_ASYNC2)) {
 		if (sigaddset(&newAction.sa_mask, SIGTRAP)) {
 			return OMRPORT_SIG_ERROR;
 		}
@@ -1454,7 +1498,7 @@ addAsyncSignalsToSet(sigset_t *ss)
 
 	/* Iterate through all the known signals. */
 	for (i = 0; i < sizeof(signalMap) / sizeof(signalMap[0]); i++) {
-		if (OMR_ARE_ALL_BITS_SET(OMRPORT_SIG_FLAG_SIGALLASYNC, signalMap[i].portLibSignalNo)) {
+		if (OMR_ARE_ANY_BITS_SET(signalMap[i].portLibSignalNo, OMRPORT_SIG_FLAG_IS_ASYNC1 | OMRPORT_SIG_FLAG_IS_ASYNC2)) {
 			/* Add the current signal to the signal set. */
 			if (sigaddset(ss, signalMap[i].unixSignalNo)) {
 				return -1;
@@ -1474,8 +1518,8 @@ addAsyncSignalsToSet(sigset_t *ss)
  * Calls to this function must be synchronized using registerHandlerMonitor.
  *
  * @param[in] flags the flags that we want signals for
- * @param[in] allowedSubsetOfFlags must be one of OMRPORT_SIG_FLAG_SIGALLSYNC, or
- *            OMRPORT_SIG_FLAG_SIGALLASYNC
+ * @param[in] allowedSubsetOfFlags must be one of OMRPORT_SIG_FLAG_IS_SYNC,
+ *            OMRPORT_SIG_FLAG_IS_ASYNC1 or OMRPORT_SIG_FLAG_IS_ASYNC2
  * @param[out] oldOSHandler points to the old signal handler function
  *
  * @return	0 upon success; OMRPORT_SIG_ERROR otherwise.
@@ -1488,23 +1532,23 @@ registerMasterHandlers(OMRPortLibrary *portLibrary, uint32_t flags, uint32_t all
 	/* Bitwise-OR with OMRPORT_SIG_FLAG_CONTROL_BITS_MASK is performed in order to
 	 * preserve the control bits when storing flags in flagsSignalsOnly.
 	 */
-	uint32_t signalFlags = (flags & allowedSubsetOfFlags) & ~OMRPORT_SIG_FLAG_CONTROL_BITS_MASK;
+	uint32_t signalFlags = flags & ~OMRPORT_SIG_FLAG_CONTROL_BITS_MASK;
 	unix_sigaction handler = NULL;
 	uint32_t signalType = OMRPORT_SIG_FLAG_IS_SYNC;
 	uint32_t signalsWithMasterHandlersLocal = syncSignalsWithMasterHandlers;
-	uint32_t allowedSignalType = 0;
 
-	if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC)) {
-		signalType = OMRPORT_SIG_FLAG_IS_ASYNC;
-		signalsWithMasterHandlersLocal = asyncSignalsWithMasterHandlers;
+	if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC1)) {
+		signalType = OMRPORT_SIG_FLAG_IS_ASYNC1;
+		signalsWithMasterHandlersLocal = asyncSignalsWithMasterHandlersSet1;
+	} else if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC2)) {
+		signalType = OMRPORT_SIG_FLAG_IS_ASYNC2;
+		signalsWithMasterHandlersLocal = asyncSignalsWithMasterHandlersSet2;
 	}
 
-	if (OMRPORT_SIG_FLAG_SIGALLSYNC == allowedSubsetOfFlags) {
+	if (OMR_ARE_ANY_BITS_SET(allowedSubsetOfFlags, OMRPORT_SIG_FLAG_IS_SYNC)) {
 		handler = masterSynchSignalHandler;
-		allowedSignalType = OMRPORT_SIG_FLAG_IS_SYNC;
-	} else if (OMRPORT_SIG_FLAG_SIGALLASYNC == allowedSubsetOfFlags) {
+	} else if (OMR_ARE_ANY_BITS_SET(allowedSubsetOfFlags, OMRPORT_SIG_FLAG_IS_ASYNC1 | OMRPORT_SIG_FLAG_IS_ASYNC2)) {
 		handler = masterASynchSignalHandler;
-		allowedSignalType = OMRPORT_SIG_FLAG_IS_ASYNC;
 	} else {
 		return OMRPORT_SIG_ERROR;
 	}
@@ -1512,7 +1556,7 @@ registerMasterHandlers(OMRPortLibrary *portLibrary, uint32_t flags, uint32_t all
 	/* Only register handlers if signal bits are set in signalFlags, and flags
 	 * and allowedSubsetOfFlags have the same signal type.
 	 */
-	if (signalType == allowedSignalType) {
+	if (OMR_ARE_ANY_BITS_SET(allowedSubsetOfFlags, signalType)) {
 		while (0 != signalFlags) {
 			/* Get the rightmost 1 bit in signalFlags. */
 			uint32_t portSignalFlag = signalFlags & -signalFlags;
@@ -1692,7 +1736,7 @@ omrsig_set_options(struct OMRPortLibrary *portLibrary, uint32_t options)
 		uint32_t anyHandlersInstalled = 0;
 
 		omrthread_monitor_enter(registerHandlerMonitor);
-		if ((0 != syncSignalsWithHandlers) || (0 != asyncSignalsWithHandlers)) {
+		if ((0 != syncSignalsWithHandlers) || (0 != asyncSignalsWithHandlersSet1) || (0 != asyncSignalsWithHandlersSet2)) {
 			anyHandlersInstalled = 1;
 		}
 		omrthread_monitor_exit(registerHandlerMonitor);
@@ -1914,8 +1958,8 @@ exit:
 
 /**
  * Set the port library signal flags in either syncSignalsWithHandlers or
- * asyncSignalsWithHandlers depending on whether the input is a set of
- * synchronous or asynchronous signals.
+ * asyncSignalsWithHandlers[Set1|Set2] depending on whether the input is a
+ * set of synchronous or asynchronous signals.
  *
  * @param[in] flags the port library signal flags
  *
@@ -1926,15 +1970,17 @@ setBitMaskSignalsWithHandlers(uint32_t flags)
 {
 	if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_SYNC)) {
 		syncSignalsWithHandlers |= flags;
-	} else {
-		asyncSignalsWithHandlers |= flags;
+	} else if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC1)) {
+		asyncSignalsWithHandlersSet1 |= flags;
+	} else if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC2)) {
+		asyncSignalsWithHandlersSet2 |= flags;
 	}
 }
 
 /**
  * Unset the port library signal flags in either syncSignalsWithHandlers or
- * asyncSignalsWithHandlers depending on whether the input is a set of
- * synchronous or asynchronous signals.
+ * asyncSignalsWithHandlers[Set1|Set2] depending on whether the input is a
+ * set of synchronous or asynchronous signals.
  *
  * @param[in] flags the port library signal flags
  *
@@ -1949,15 +1995,17 @@ unsetBitMaskSignalsWithHandlers(uint32_t flags)
 	 */
 	if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_SYNC)) {
 		syncSignalsWithHandlers &= ~(flags & ~OMRPORT_SIG_FLAG_CONTROL_BITS_MASK);
-	} else {
-		asyncSignalsWithHandlers &= ~(flags & ~OMRPORT_SIG_FLAG_CONTROL_BITS_MASK);
+	} else if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC1)) {
+		asyncSignalsWithHandlersSet1 &= ~(flags & ~OMRPORT_SIG_FLAG_CONTROL_BITS_MASK);
+	} else if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC2)) {
+		asyncSignalsWithHandlersSet2 &= ~(flags & ~OMRPORT_SIG_FLAG_CONTROL_BITS_MASK);
 	}
 }
 
 /**
  * Set the port library signal flags in either syncSignalsWithMasterHandlers or
- * asyncSignalsWithMasterHandlers depending on whether the input is a set of
- * synchronous or asynchronous signals.
+ * asyncSignalsWithMasterHandlers[Set1|Set2] depending on whether the input is a
+ * set of synchronous or asynchronous signals.
  *
  * @param[in] flags the port library signal flags
  *
@@ -1968,15 +2016,17 @@ setBitMaskSignalsWithMasterHandlers(uint32_t flags)
 {
 	if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_SYNC)) {
 		syncSignalsWithMasterHandlers |= flags;
-	} else {
-		asyncSignalsWithMasterHandlers |= flags;
+	} else if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC1)) {
+		asyncSignalsWithMasterHandlersSet1 |= flags;
+	} else if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC2)) {
+		asyncSignalsWithMasterHandlersSet2 |= flags;
 	}
 }
 
 /**
  * Unset the port library signal flags in either syncSignalsWithMasterHandlers or
- * asyncSignalsWithMasterHandlers depending on whether the input is a set of
- * synchronous or asynchronous signals.
+ * asyncSignalsWithMasterHandlers[Set1|Set2] depending on whether the input is a
+ * set of synchronous or asynchronous signals.
  *
  * @param[in] flags the port library signal flags
  *
@@ -1991,8 +2041,10 @@ unsetBitMaskSignalsWithMasterHandlers(uint32_t flags)
 	 */
 	if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_SYNC)) {
 		syncSignalsWithMasterHandlers &= ~(flags & ~OMRPORT_SIG_FLAG_CONTROL_BITS_MASK);
-	} else {
-		asyncSignalsWithMasterHandlers &= ~(flags & ~OMRPORT_SIG_FLAG_CONTROL_BITS_MASK);
+	} else if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC1)) {
+		asyncSignalsWithMasterHandlersSet1 &= ~(flags & ~OMRPORT_SIG_FLAG_CONTROL_BITS_MASK);
+	} else if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC2)) {
+		asyncSignalsWithMasterHandlersSet2 &= ~(flags & ~OMRPORT_SIG_FLAG_CONTROL_BITS_MASK);
 	}
 }
 
@@ -2015,8 +2067,7 @@ checkForAmbiguousSignalFlags(uint32_t flags, const char *functionName)
 	BOOLEAN rc = FALSE;
 
 	if ((0 != flags)
-		&& ((OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_SYNC) && OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC))
-			|| (OMR_ARE_NO_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_SYNC) && OMR_ARE_NO_BITS_SET(flags, OMRPORT_SIG_FLAG_IS_ASYNC)))
+		&& !OMR_IS_ONLY_ONE_BIT_SET(flags & (OMRPORT_SIG_FLAG_IS_SYNC | OMRPORT_SIG_FLAG_IS_ASYNC1 | OMRPORT_SIG_FLAG_IS_ASYNC2))
 	) {
 		rc = TRUE;
 		/* The tracepoint below is an exit and exception tracepoint. The calling function
