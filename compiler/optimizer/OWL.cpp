@@ -11,7 +11,7 @@
 #include "optimizer/Optimizer.hpp"
 #include "launch.h"
 #include "JNIClient.hpp"
-
+#include <iostream>
 
 TR_OWL::TR_OWL(TR::OptimizationManager *manager)
         : TR::Optimization(manager)
@@ -40,32 +40,32 @@ int32_t TR_OWL::perform(){
 
 
     TR_JNIClient *jniClient = TR_JNIClient::getInstance();
-    jclass cls = jniClient->getClass("com/ibm/wala/shrikeBT/ConstantInstruction");
-//    jclass cls = env->FindClass( "com/ibm/wala/shrikeBT/ConstantInstruction");
-//    if (cls == NULL) {
-//        printf("Failed to find ConstantInstruction class");
-//        return 1;
-//    }
-//
-//    jmethodID mid = env->GetStaticMethodID(cls, "make", "(I)Lcom/ibm/wala/shrikeBT/ConstantInstruction;");
-//    if (mid == NULL) {
-//        printf("Failed to find make function");
-//        return 1;
-//    }
-//    jmethodID mid2 = env->GetMethodID(cls, "toString", "()Ljava/lang/String;");
-//    if (mid2 == NULL) {
-//        printf("Failed to find toString function");
-//        return 1;
-//    }
-//
-//
-//    printf("Successfully to find class and find method!!!!===========\n");
-//
-//    jobject res = env->CallStaticObjectMethod(cls,mid,1);
-//    jstring stringObj =(jstring)(env->CallObjectMethod(res,mid2));
-//    const char* string = env->GetStringUTFChars(stringObj,0);
-//    printf("string %s\n",string);
+    jobject obj;
+    MethodConfig methodConfig1 ={
+            "com/ibm/wala/shrikeBT/ConstantInstruction",
+            "make",
+            "(F)Lcom/ibm/wala/shrikeBT/ConstantInstruction;"
+    };
+    jniClient->callStaticMethod(methodConfig1,&obj,1,3.14f);
 
+    char *str;
+    MethodConfig methodConfig2={
+            "com/ibm/wala/shrikeBT/ConstantInstruction",
+            "toString",
+            "()Ljava/lang/String;"
+    };
+    jniClient->callMethod(methodConfig2,obj,&str,0);
+    std::cout << str << std::endl;
+
+    short opcode;
+    MethodConfig methodConfig3 ={
+            "com/ibm/wala/shrikeBT/ConstantInstruction",
+            "getOpcode",
+            "()S"
+    };
+
+    jniClient->callMethod(methodConfig3,obj,&opcode,0);
+    std::cout << "opcode "<< opcode <<std::endl;
 
     TR::NodeChecklist visited(comp()); // visited nodes
 
