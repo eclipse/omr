@@ -469,6 +469,72 @@ class SymbolReferenceTable
    TR::SymbolReference * createTemporary(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::DataType, bool isInternalPointer = false, size_t size = 0);
    TR::SymbolReference * findStaticSymbol(TR_ResolvedMethod * owningMethod, int32_t cpIndex, TR::DataType);
 
+   /** \brief
+    *     Returns a symbol reference for an entity in the source program.
+    *
+    *     Symrefs returned by this function correspond to entities that
+    *     appear in the source program. When a symref is created, it is cached
+    *     so that subsequent invocations will return the cached symref
+    *     instead of creating a new one for the same entity. Once created,
+    *     a symref can be returned by both findOrCreateShadowSymbol
+    *     and findOrFabricateShadowSymbol.
+    * 
+    *  \param owningMethodSymbol
+    *     The method that owns the field for which a symbol reference needs to be created.
+    *  \param cpIndex
+    *     Constant pool index.
+    *  \param isStore
+    *     Specifies whether the shadow is generated from a store.
+    *  \return
+    *     Returns a symbol reference created for the field.
+    */
+   TR::SymbolReference * findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore);
+   
+   /** \brief
+    *     Returns a symbol reference for an entity not present in the
+    *     source program.
+    *
+    *     Symrefs returned by this function do not directly correspond to
+    *     any entities that appear in the source program. Instead, they
+    *     represent entities the compiler "fabricates." When a symref is
+    *     fabricated, it is cached so that subsequent invocations will return
+    *     the cached symref instead of fabricating a new one. Once fabricated,
+    *     a symref can be returned by both findOrCreateShadowSymbol
+    *     and findOrFabricateShadowSymbol.
+    *
+    *     In some cases, because fabricated symrefs do not correspond to
+    *     any entities in the source program, the compiler can assume that
+    *     these new symrefs do not alias any symrefs that do come from the
+    *     source program.  Hence it can be useful to circumvent some of the
+    *     conservative aliasing that is normally applied to new symrefs.
+    *     Specifically, aliasing GenericIntShadows may not be needed for
+    *     such symrefs. Hence, this function provides the `suppressGenericIntShadowAliasing`
+    *     parameter to suppress aliasing of  GenericIntShadow when 
+    *     so desired.
+    *
+    *  \param containingClass
+    *     The class that contains the field.
+    *  \param type
+    *     The data type of the field.
+    *  \param offset
+    *     The offset of the field.
+    *  \param isVolatile
+    *     Specifies whether the field is volatile.
+    *  \param isPrivate
+    *     Specifies whether the field is private.
+    *  \param isFinal
+    *     Specifies whether the field is final.
+    *  \param suppressGenericIntShadowAliasing
+    *     Specifies whether generic int shadow aliasing is suppressed.
+    *  \param name
+    *     The name of the field.
+    *  \param signature
+    *     The signature of the field.
+    *  \return
+    *     Returns a symbol reference fabricated for the field.
+    */
+   TR::SymbolReference * findOrFabricateShadowSymbol(TR_OpaqueClassBlock *containingClass, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, bool suppressGenericIntShadowAliasing, const char * name, const char * signature);
+
    // --------------------------------------------------------------------------
    // OMR
    // --------------------------------------------------------------------------

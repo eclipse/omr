@@ -1641,6 +1641,19 @@ OMR::SymbolReferenceTable::findOrCreateAutoSymbolImpl(TR::ResolvedMethodSymbol *
    return symRef;
    }
 
+TR::SymbolReference *
+findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore)
+   {
+      TR_UNIMPLEMENTED();
+      return NULL;
+   }
+
+TR::SymbolReference *
+findOrFabricateShadowSymbol(TR_OpaqueClassBlock *containingClass, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, bool suppressGenericIntShadowAliasing, const char * name, const char * signature)
+   {
+      TR_UNIMPLEMENTED();
+      return NULL;
+   }
 
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findAvailableAuto(TR::DataType type, bool behavesLikeTemp, bool isAdjunct)
