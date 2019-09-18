@@ -111,6 +111,11 @@ elseif(OMR_ARCH_S390)
 		PRIVATE
 			tests/S390OpCodesTest.cpp
 	)
+elseif(OMR_ARCH_AARCH64)
+	target_sources(compilertest
+		PRIVATE
+			tests/ARM64OpCodesTest.cpp
+	)
 endif()
 
 target_link_libraries(compilertest
