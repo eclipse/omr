@@ -45,7 +45,11 @@ const char *utf16 = "01200"; /* z/OS does not accept "UTF-16" */
 #elif defined(OSX) /* defined(J9ZOS390) */
 const char *utf16 = "UTF-16LE";
 #else /* defined(J9ZOS390) */
-const char *utf16 = "UTF-16";
+#if defined(OMR_ENV_LITTLE_ENDIAN)
+const char *utf16 = "UTF-16LE";
+#else
+const char *utf16 = "UTF-16BE";
+#endif /* defined(OMR_ENV_LITTLE_ENDIAN) */
 #endif /* defined(J9ZOS390) */
 const char *ebcdic = "IBM-1047";
 #if defined(J9ZOS390)
