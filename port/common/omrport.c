@@ -299,6 +299,23 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrmem_categories_decrement_counters, /* mem_categories_decrement_counters */
 	omrheap_query_size, /* heap_query_size */
 	omrheap_grow, /* heap_grow*/
+	omrsock_getaddrinfo_create_hints, /* sock_getaddrinfo_create_hints */
+	omrsock_getaddrinfo, /* sock_getaddrinfo */
+	omrsock_getaddrinfo_length, /* sock_getaddrinfo_length */
+	omrsock_getaddrinfo_family, /* sock_getaddrinfo_family */
+	omrsock_getaddrinfo_socktype, /* sock_getaddrinfo_socktype */
+	omrsock_getaddrinfo_protocol, /* sock_getaddrinfo_protocol */
+	omrsock_freeaddrinfo, /* sock_freeaddrinfo */
+	omrsock_socket, /* sock_socket */
+	omrsock_bind, /* sock_bind */
+	omrsock_listen, /* sock_listen */
+	omrsock_connect, /* sock_connect */
+	omrsock_accept, /* sock_accept */
+	omrsock_send, /* sock_send */
+	omrsock_sendto, /* sock_sendto */
+	omrsock_recv, /* sock_recv */
+	omrsock_recvfrom, /* sock_recvfrom */
+	omrsock_close, /* sock_close */
 #if defined(OMR_OPT_CUDA)
 	NULL, /* cuda_configData */
 	omrcuda_startup, /* cuda_startup */
