@@ -104,5 +104,6 @@ compiler_library(optimizer
 	${CMAKE_CURRENT_LIST_DIR}/TrivialDeadBlockRemover.cpp
 	${CMAKE_CURRENT_LIST_DIR}/FEInliner.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWL.cpp
-	${CMAKE_CURRENT_LIST_DIR}/JNIClient.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OWLJNIClient.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OWLMapper.cpp
 )

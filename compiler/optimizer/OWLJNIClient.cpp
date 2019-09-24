@@ -2,16 +2,16 @@
 // Created by Cijie Xia on 2019-09-10.
 //
 
-#include "JNIClient.hpp"
+#include "OWLJNIClient.hpp"
 #include <cstdlib>
 #include <iostream>
 #include <string.h>
 
 /* ================= private ================= */
-TR_JNIClient* TR_JNIClient::_instance = NULL;
-JNIEnv * TR_JNIClient::_env = NULL;
+TR_OWLJNIClient* TR_OWLJNIClient::_instance = NULL;
+JNIEnv * TR_OWLJNIClient::_env = NULL;
 
-TR_JNIClient::TR_JNIClient() {
+TR_OWLJNIClient::TR_OWLJNIClient() {
     //start jvm
     char *walaHome = std::getenv("WALA_HOME");
     char classpath[1024];
@@ -20,9 +20,9 @@ TR_JNIClient::TR_JNIClient() {
     std::cout << "Successfully launch JVM!" << std::endl;
 }
 
+TR_OWLJNIClient::~TR_OWLJNIClient() {}
 
-
-jclass TR_JNIClient::_getClass(const char *className) {
+jclass TR_OWLJNIClient::_getClass(const char *className) {
     jclass cls = _env->FindClass(className);
     if (_env->ExceptionCheck()){
         std::cout<< "Fail to find class "<< className << std::endl;
@@ -31,7 +31,7 @@ jclass TR_JNIClient::_getClass(const char *className) {
     return cls;
 }
 
-jmethodID TR_JNIClient::_getMethodID(bool isStaticMethod, jclass cls, const char *methodName, const char *methodSig) {
+jmethodID TR_OWLJNIClient::_getMethodID(bool isStaticMethod, jclass cls, const char *methodName, const char *methodSig) {
     jmethodID mid;
     if (isStaticMethod){
         mid = _env->GetStaticMethodID(cls,methodName,methodSig);
@@ -47,18 +47,58 @@ jmethodID TR_JNIClient::_getMethodID(bool isStaticMethod, jclass cls, const char
     return mid;
 }
 
+jfieldID TR_OWLJNIClient::_getFieldId(bool isStaticField, jclass cls, const char *fieldName, const char *fieldSig) {
+    jfieldID fid;
+    if (isStaticField){
+        fid = _env->GetStaticFieldID(cls, fieldName, fieldSig);
+    }
+    else{
+        fid = _env->GetFieldID(cls, fieldName, fieldSig);
+    }
+
+    if (_env->ExceptionCheck()) {
+        std::cout<< "Fail to find field "<< fieldName << std::endl;
+        exit(1);
+    }
+    return fid;
+}
+
 /* ================= public ======================= */
-TR_JNIClient* TR_JNIClient::getInstance() {
+TR_OWLJNIClient* TR_OWLJNIClient::getInstance() {
     if (!_instance){
-        _instance = new TR_JNIClient;
+        _instance = new TR_OWLJNIClient;
     }
     return _instance;
 }
 
-/* static methods */
+jstring TR_OWLJNIClient::constructString(char *str) {
+    return _env->NewStringUTF(str);
+}
+
+jobject TR_OWLJNIClient::constructIntObject(int i){
+    jclass cls = _getClass("java/lang/Integer");
+    jmethodID mid = _getMethodID(false, cls, "<init>", "(I)V");
+    jobject intObject = _env->NewObject(cls, mid, i);
+    return intObject;
+}
+
+/* Field */
+
+void TR_OWLJNIClient::getField(FieldConfig fieldConfig, jobject obj, jobject *res) {
+    jclass cls = _getClass(fieldConfig.className);
+    jfieldID fid = _getFieldId(fieldConfig.isStatic, cls, fieldConfig.fieldName, fieldConfig.fieldSig);
+    if (fieldConfig.isStatic){
+        *res = _env->GetStaticObjectField(cls,fid);
+    }
+    else{
+        *res = _env->GetObjectField(obj,fid);
+    }
+}
+
+/* static */
 
 //Void
-void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, int argNum, ...) {
+void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, int argNum, ...) {
 
     va_list args;
     va_start(args,argNum);
@@ -69,7 +109,7 @@ void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, int argNum, ...) 
 }
 
 // Object
-void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, jobject *res, int argNum, ...) {
+void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, jobject *res, int argNum, ...) {
 
     va_list args;
     va_start(args,argNum);
@@ -80,7 +120,7 @@ void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, jobject *res, int
 }
 
 // int
-void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, int *res, int argNum, ...) {
+void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, int *res, int argNum, ...) {
 
     va_list args;
     va_start(args,argNum);
@@ -91,7 +131,7 @@ void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, int *res, int arg
 }
 
 // long
-void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, long *res, int argNum, ...) {
+void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, long *res, int argNum, ...) {
 
     va_list args;
     va_start(args,argNum);
@@ -102,7 +142,7 @@ void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, long *res, int ar
 }
 
 // short
-void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, short *res, int argNum, ...) {
+void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, short *res, int argNum, ...) {
 
     va_list args;
     va_start(args,argNum);
@@ -113,7 +153,7 @@ void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, short *res, int a
 }
 
 // float
-void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, float *res, int argNum, ...) {
+void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, float *res, int argNum, ...) {
 
     va_list args;
     va_start(args,argNum);
@@ -124,7 +164,7 @@ void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, float *res, int a
 }
 
 // double
-void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, double *res, int argNum, ...) {
+void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, double *res, int argNum, ...) {
 
     va_list args;
     va_start(args,argNum);
@@ -135,7 +175,7 @@ void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, double *res, int 
 }
 
 // char
-void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, char *res, int argNum, ...) {
+void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, char *res, int argNum, ...) {
 
     va_list args;
     va_start(args,argNum);
@@ -146,7 +186,7 @@ void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, char *res, int ar
 }
 
 // char* (string)
-void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, char **res, int argNum, ...) {
+void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, char **res, int argNum, ...) {
 
     va_list args;
     va_start(args,argNum);
@@ -160,7 +200,7 @@ void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, char **res, int a
 }
 
 // bool
-void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, bool *res, int argNum, ...) {
+void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, bool *res, int argNum, ...) {
 
     va_list args;
     va_start(args,argNum);
@@ -171,10 +211,10 @@ void TR_JNIClient::callStaticMethod(MethodConfig methodConfig, bool *res, int ar
 }
 
 
-/* non-static methods */
+/* non-static */
 
 //void
-void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, int argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -185,7 +225,7 @@ void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, int argNum
 }
 
 //object
-void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject* res, int argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject* res, int argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -196,7 +236,7 @@ void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject* r
 }
 
 //int
-void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, int* res, int argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int* res, int argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -207,7 +247,7 @@ void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, int* res, 
 }
 
 //long
-void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, long* res, int argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, long* res, int argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -218,7 +258,7 @@ void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, long* res,
 }
 
 //short
-void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, short* res, int argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, short* res, int argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -229,7 +269,7 @@ void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, short* res
 }
 
 //float
-void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* res, int argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* res, int argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -240,7 +280,7 @@ void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* res
 }
 
 //double
-void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, double* res, int argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, double* res, int argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -251,7 +291,7 @@ void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, double* re
 }
 
 //char
-void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* res, int argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* res, int argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -262,7 +302,7 @@ void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* res,
 }
 
 //bool
-void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* res, int argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* res, int argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -273,7 +313,7 @@ void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* res,
 }
 
 // char* (string)
-void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, char **res, int argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char **res, int argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -287,4 +327,4 @@ void TR_JNIClient::callMethod(MethodConfig methodConfig, jobject obj, char **res
 
 }
 
-TR_JNIClient::~TR_JNIClient() {}
+
