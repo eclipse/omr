@@ -107,6 +107,7 @@ static const OptimizationStrategy JBcoldStrategyOpts[] =
 static const OptimizationStrategy JBwarmStrategyOpts[] =
    {
    { OMR::deadTreesElimination                                                     },
+   { OMR::OWL                                                                      },
    { OMR::inlining                                                                 },
    { OMR::treeSimplification                                                       },
    { OMR::localCSE                                                                 },
@@ -140,7 +141,7 @@ static const OptimizationStrategy JBwarmStrategyOpts[] =
    { OMR::deadTreesElimination,                      OMR::IfEnabled                }, // remove dead anchors created by check/store removal
    { OMR::deadTreesElimination,                      OMR::IfEnabled                }, // remove dead RegStores produced by previous deadTrees pass
    { OMR::regDepCopyRemoval                                                        },
-   { OMR::OWL                                                                      },
+
    { OMR::endOpts                                                                  },
    };
 

@@ -3,8 +3,8 @@
 // An high-level abstraction of Java Native Interface
 //
 
-#ifndef omr_jniclient_h
-#define omr_jniclient_h
+#ifndef omr_owljniclient_h
+#define omr_owljniclient_h
 
 #include "launch.h"
 
@@ -14,19 +14,33 @@ struct MethodConfig {
     char* methodSig;
 };
 
-// singleton pattern
-class TR_JNIClient
+struct FieldConfig {
+    bool isStatic;
+    char* className;
+    char* fieldName;
+    char* fieldSig;
+};
+
+// singleton
+class TR_OWLJNIClient
 {
 private:
-    TR_JNIClient();
+    TR_OWLJNIClient();
     static JNIEnv *_env;
-    static TR_JNIClient *_instance;
+    static TR_OWLJNIClient *_instance;
     jclass _getClass(const char* className);
     jmethodID _getMethodID(bool isStaticMethod, jclass cls, const char* methodName, const char* methodSig);
+    jfieldID _getFieldId(bool isStaticField, jclass cls, const char* fieldName, const char* fieldSig);
 
 public:
-    ~TR_JNIClient();
-    static TR_JNIClient *getInstance();
+    ~TR_OWLJNIClient();
+    static TR_OWLJNIClient *getInstance();
+
+    jstring constructString(char* str);
+    jobject constructIntObject(int i);
+
+    /* Field */
+    void getField(FieldConfig fieldConfig, jobject obj, jobject*res);
 
     /*static*/
     void callStaticMethod(MethodConfig methodConfig,              int argNum, ...);
@@ -53,4 +67,4 @@ public:
     void callMethod(MethodConfig methodConfig, jobject obj, char** res, int argNum, ...);
 
 };
-#endif //omr_jniclient_h
+#endif //omr_OWLJNIClient_h
