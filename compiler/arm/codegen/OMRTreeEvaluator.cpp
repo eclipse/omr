@@ -1044,7 +1044,7 @@ TR::Register *OMR::ARM::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::C
 
    asynccheckHelper = node->getSymbolReference();
    gcPoint = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)asynccheckHelper->getMethodAddress(), NULL, asynccheckHelper, NULL, NULL, ARMConditionCodeEQ);
-   gcPoint->ARMNeedsGCMap(0xFFFFFFFF);
+   gcPoint->ARMNeedsGCMap(0xFFFFFFFF, cg->comp());
    cg->machine()->setLinkRegisterKilled(true);
 
    firstChild->decReferenceCount();

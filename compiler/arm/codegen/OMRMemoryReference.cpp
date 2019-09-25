@@ -828,7 +828,7 @@ void OMR::ARM::MemoryReference::assignRegisters(TR::Instruction *currentInstruct
       }
    if (self()->getUnresolvedSnippet() != NULL)
       {
-      currentInstruction->ARMNeedsGCMap(0xFFFFFFFF);
+      currentInstruction->ARMNeedsGCMap(0xFFFFFFFF, cg->comp());
       }
    }
 

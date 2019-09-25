@@ -1486,7 +1486,7 @@ static TR::Register *evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool nee
 
       TR::SymbolReference *NULLCHKException = node->getSymbolReference();
       TR::Instruction *instr1 = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)NULLCHKException->getMethodAddress(), NULL, NULLCHKException, NULL, NULL, ARMConditionCodeEQ);
-      instr1->ARMNeedsGCMap(0xFFFFFFFF);
+      instr1->ARMNeedsGCMap(0xFFFFFFFF, cg);
       cg->machine()->setLinkRegisterKilled(true);
       }
 
@@ -1635,7 +1635,7 @@ TR::Register *OMR::ARM::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeG
       generateSrc2Instruction(cg, ARMOp_tst, node, srcReg, srcReg);
       TR::SymbolReference *arithmeticException = node->getSymbolReference();
       TR::Instruction *instr1 = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)arithmeticException->getMethodAddress(), NULL, arithmeticException, NULL, NULL, ARMConditionCodeEQ);
-      instr1->ARMNeedsGCMap(0xFFFFFFFF);
+      instr1->ARMNeedsGCMap(0xFFFFFFFF, cg);
       cg->machine()->setLinkRegisterKilled(true);
       }
    cg->evaluate(node->getFirstChild());
@@ -1650,7 +1650,7 @@ TR::Register *OMR::ARM::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeG
 
    TR::SymbolReference *BNDCHKException = node->getSymbolReference();
    instr1 = compareIntsForOrder(ARMConditionCodeLS, node, cg, BNDCHKException);
-   instr1->ARMNeedsGCMap(0xFFFFFFFF);
+   instr1->ARMNeedsGCMap(0xFFFFFFFF, cg);
 
    return NULL;
    }
@@ -1702,7 +1702,7 @@ TR::Register *OMR::ARM::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, 
 
    if (instr)
       {
-      instr->ARMNeedsGCMap(0xFFFFFFFF);
+      instr->ARMNeedsGCMap(0xFFFFFFFF, cg);
       }
 
    return NULL;
@@ -1720,7 +1720,7 @@ static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register 
    TR::addDependency(deps, srcReg, TR::RealRegister::gr1, TR_GPR, cg);
 
    TR::Instruction *gcPoint = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)arrayStoreChkHelper->getMethodAddress(), deps, arrayStoreChkHelper);
-   gcPoint->ARMNeedsGCMap(0xFFFFFFFF);
+   gcPoint->ARMNeedsGCMap(0xFFFFFFFF, cg);
 
    cg->machine()->setLinkRegisterKilled(true);
    }

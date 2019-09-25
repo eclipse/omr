@@ -96,7 +96,7 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
    int32_t  getBlockIndex()            { return _blockIndex; }
    void     setBlockIndex(int32_t i)   { _blockIndex = i; }
 
-   void ARMNeedsGCMap(uint32_t mask);
+   void ARMNeedsGCMap(uint32_t mask, TR::CodeGenerator *cg);
 
    TR_ARMConditionCode getConditionCode()                          {return _conditionCode;}
    TR_ARMConditionCode setConditionCode(TR_ARMConditionCode conds) {return (_conditionCode = conds);}

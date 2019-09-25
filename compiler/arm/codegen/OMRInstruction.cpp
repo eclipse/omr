@@ -140,9 +140,9 @@ OMR::ARM::Instruction::remove()
    self()->getNext()->setPrev(self()->getPrev());
    }
 
-void OMR::ARM::Instruction::ARMNeedsGCMap(uint32_t mask)
+void OMR::ARM::Instruction::ARMNeedsGCMap(uint32_t mask, TR::CodeGenerator *cg)
    {
-   if (TR::comp()->useRegisterMaps())
+   if (cg->comp()->useRegisterMaps())
       self()->setNeedsGCMap(mask);
    }
 
