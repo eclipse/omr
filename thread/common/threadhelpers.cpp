@@ -346,11 +346,13 @@ omrthread_mcs_trylock(omrthread_t self, omrthread_monitor_t monitor, omrthread_m
  * @param[in] self the current omrthread_t
  * @param[in] monitor the monitor to be released
  *
- * @return void
+ * @return the next thread which will acquire the lock
  */
-void
+omrthread_t
 omrthread_mcs_unlock(omrthread_t self, omrthread_monitor_t monitor)
 {
+	omrthread_t nextThread = NULL;
+
 	omrthread_mcs_node_t mcsNode = self->mcsNodes->stackHead;
 	omrthread_mcs_node_t prevMcsNode = mcsNode;
 	while (mcsNode->monitor != monitor) {
@@ -391,6 +393,7 @@ omrthread_mcs_unlock(omrthread_t self, omrthread_monitor_t monitor)
         /* Allow the successor to acquire the lock by resetting its blocked field. */
         mcsNode->queueNext->blocked = 0;
 
+	nextThread = mcsNode->queueNext->thread;
 lockReleased:
 	/* Pop the mcsNode from the thread's MCS node stack. */
 	if (mcsNode == self->mcsNodes->stackHead) {
@@ -401,6 +404,8 @@ lockReleased:
 
 	/* Return the MCS node to the thread's MCS node pool since it is no longer used. */
 	omrthread_mcs_node_free(self, mcsNode);
+
+	return nextThread;
 }
 
 /**

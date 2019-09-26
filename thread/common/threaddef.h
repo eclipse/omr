@@ -105,7 +105,7 @@ omrthread_mcs_lock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_
 intptr_t
 omrthread_mcs_trylock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_node_t mcsNode);
 
-void
+omrthread_t
 omrthread_mcs_unlock(omrthread_t self, omrthread_monitor_t monitor);
 
 omrthread_mcs_node_t
