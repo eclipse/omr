@@ -16948,6 +16948,7 @@ TR::Node *imaxminSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
 
    int32_t i = 0;
    int32_t num_children = node->getNumChildren();
+   TR_ASSERT(num_children == 2, "Expected 2 children only");
    int32_t min = 0, max = 0;
    uint32_t umin = 0, umax = 0;
    bool is_all_const = true;
@@ -17035,6 +17036,7 @@ TR::Node *lmaxminSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
    bool is_all_const = true;
    int32_t numNonConst = 0;
    int32_t num_children = node->getNumChildren();
+   TR_ASSERT(num_children == 2, "Expected 2 children only");
    int64_t min = 0, max = 0;
    uint64_t umin = 0, umax = 0;
    bool is_signed = node->getOpCodeValue() == TR::lmax || node->getOpCodeValue() == TR::lmin;
@@ -17114,6 +17116,7 @@ TR::Node *fmaxminSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
 
    int32_t i;
    int32_t num_children = node->getNumChildren();
+   TR_ASSERT(num_children == 2, "Expected 2 children only");
    bool has_const = false;
    bool is_all_const = true;
    int32_t numNonConst = 0;
@@ -17178,6 +17181,7 @@ TR::Node *dmaxminSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
 
    int32_t i;
    int32_t num_children = node->getNumChildren();
+   TR_ASSERT(num_children == 2, "Expected 2 children only");
    double min, max;
    uint64_t mini, maxi;
    bool has_const = false;

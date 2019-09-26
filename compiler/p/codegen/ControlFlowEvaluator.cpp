@@ -3974,6 +3974,7 @@ static TR::Register *generateMaxMin(TR::Node *node, TR::CodeGenerator *cg, bool 
       }
 
    int n = node->getNumChildren();
+   TR_ASSERT(n == 2, "Expected 2 children only");
    for (int i = 1; i < n; i++)
       {
       TR::Node *child = node->getChild(i);

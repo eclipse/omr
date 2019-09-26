@@ -1812,6 +1812,7 @@ static TR::Register *generateMaxMin(TR::Node *node, TR::CodeGenerator *cg, bool 
 
    TR_ARMConditionCode cond = max ? (isUnsigned ? ARMConditionCodeHI : ARMConditionCodeGT) : (isUnsigned ? ARMConditionCodeLS : ARMConditionCodeLT);
    int n = node->getNumChildren();
+   TR_ASSERT(n == 2, "Expected 2 children only");
    int i = 1;
    for ( ; i < n; i++)
       {
