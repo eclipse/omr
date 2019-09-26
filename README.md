@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2018 IBM Corp. and others
+Copyright (c) 2016, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -137,7 +137,7 @@ How Do I Interact With the Community?
 The community typically uses this list for project announcements and administrative
 discussions amongst committers.  Questions are welcome here as well.
 
-* Join the Eclipse OMR community [Slack workspace](https://join.slack.com/t/eclipse-omr/shared_invite/enQtMzg2ODIwODc4MTAyLTk4ZjJjNTZlZmMyMGRmYTczOTkzMGJiNTQ4NTA3YTA1NGU4MmJjNWI4NTBjOGNkNmNjMWQ3MmFmYjA4OGZjZjM).  You can join channels
+* Join the Eclipse OMR community [Slack workspace](https://join.slack.com/t/eclipse-omr/shared_invite/enQtMzg2ODIwODc4MTAyLWFiMzZkNmNhODc5OTM0MjgwZDdjNzg5YTg5NzM0ZmEzNTIyMGViMjk1YjYwNzczYjYwODc4YTM5MDk0NjIxMjg).  You can join channels
 that interest you, ask questions, and receive answers from subject matter experts.
 
 * Ask a question or start a discussion via a [GitHub issue](https://github.com/eclipse/omr/issues).
