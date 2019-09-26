@@ -74,7 +74,9 @@ static intptr_t monitor_notify_original(omrthread_t self, omrthread_monitor_t mo
 
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 static intptr_t init_spinCounts(omrthread_library_t lib);
+#if !defined(OMR_THR_MCS_LOCKS)
 static void unblock_spinlock_threads(omrthread_t self, omrthread_monitor_t monitor);
+#endif /* !defined(OMR_THR_MCS_LOCKS) */
 #endif /* OMR_THR_THREE_TIER_LOCKING */
 
 static intptr_t init_threadParam(char *name, uintptr_t *pDefault);
@@ -4032,7 +4034,7 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
 
-#if defined(OMR_THR_THREE_TIER_LOCKING)
+#if defined(OMR_THR_THREE_TIER_LOCKING) && !defined(OMR_THR_MCS_LOCKS)
 /**
  * Notify all threads blocked on the monitor's mutex, waiting
  * to be told that it's ok to try again to get the spinlock.
@@ -4044,22 +4046,22 @@ static void
 unblock_spinlock_threads(omrthread_t self, omrthread_monitor_t monitor)
 {
 	omrthread_t queue, next;
-#if defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS)
+#if defined(OMR_THR_SPIN_WAKE_CONTROL)
 	uintptr_t i = 0;
-#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS) */
+#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
 
 	ASSERT(self);
-#if defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS)
+#if defined(OMR_THR_SPIN_WAKE_CONTROL)
 	i = self->library->maxWakeThreads;
-#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS) */
+#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
 	ASSERT(monitor);
 
 	next = monitor->blocking;
-#if defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS)
+#if defined(OMR_THR_SPIN_WAKE_CONTROL)
 	for (; (NULL != next) && (i > 0); i--)
-#else /* defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS) */
+#else /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
 	while (NULL != next)
-#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) && !defined(OMR_THR_MCS_LOCKS) */
+#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
 	{
 		queue = next;
 		next = queue->next;
@@ -4068,7 +4070,7 @@ unblock_spinlock_threads(omrthread_t self, omrthread_monitor_t monitor)
 	}
 }
 
-#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) && !defined(OMR_THR_MCS_LOCKS) */
 
 
 
@@ -4241,6 +4243,10 @@ omrthread_monitor_exit_using_threadId(omrthread_monitor_t monitor, omrthread_t t
 static intptr_t
 monitor_exit(omrthread_t self, omrthread_monitor_t monitor)
 {
+#if defined(OMR_THR_MCS_LOCKS)
+	omrthread_t nextThread = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 	ASSERT(monitor);
 	ASSERT(self);
 	ASSERT(0 == self->monitor);
@@ -4261,9 +4267,9 @@ monitor_exit(omrthread_t self, omrthread_monitor_t monitor)
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 #if defined(OMR_THR_MCS_LOCKS)
 		MONITOR_LOCK(monitor, CALLER_MONITOR_EXIT1);
-		omrthread_mcs_unlock(self, monitor);
-		if (0 == monitor->spinThreads) {
-			unblock_spinlock_threads(self, monitor);
+		nextThread = omrthread_mcs_unlock(self, monitor);
+		if (NULL != nextThread) {
+			NOTIFY_WRAPPER(nextThread);
 		}
 		MONITOR_UNLOCK(monitor);
 #else /* defined(OMR_THR_MCS_LOCKS) */
@@ -4461,6 +4467,9 @@ monitor_wait_original(omrthread_t self, omrthread_monitor_t monitor,
 	uintptr_t intrMask = 0;
 	uintptr_t intrFlags = 0;
 	uintptr_t timedOut = 0;
+#if defined(OMR_THR_MCS_LOCKS)
+        omrthread_t nextThread = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 	ASSERT(monitor);
 	ASSERT(FREE_TAG != monitor->count);
@@ -4527,9 +4536,9 @@ monitor_wait_original(omrthread_t self, omrthread_monitor_t monitor,
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 	MONITOR_LOCK(monitor, CALLER_MONITOR_WAIT);
 #if defined(OMR_THR_MCS_LOCKS)
-	omrthread_mcs_unlock(self, monitor);
-	if (0 == monitor->spinThreads) {
-		unblock_spinlock_threads(self, monitor);
+	nextThread = omrthread_mcs_unlock(self, monitor);
+	if (NULL != nextThread) {
+		NOTIFY_WRAPPER(nextThread);
 	}
 #else /* defined(OMR_THR_MCS_LOCKS) */
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
@@ -4719,6 +4728,9 @@ monitor_wait_three_tier(omrthread_t self, omrthread_monitor_t monitor,
 	uintptr_t intrMask = 0;
 	uintptr_t intrFlags = 0;
 	uintptr_t timedOut = 0;
+#if defined(OMR_THR_MCS_LOCKS)
+        omrthread_t nextThread = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 	ASSERT(monitor);
 	ASSERT(FREE_TAG != monitor->count);
@@ -4792,9 +4804,9 @@ monitor_wait_three_tier(omrthread_t self, omrthread_monitor_t monitor,
 
 	MONITOR_LOCK(monitor, CALLER_MONITOR_WAIT);
 #if defined(OMR_THR_MCS_LOCKS)
-	omrthread_mcs_unlock(self, monitor);
-	if (0 == monitor->spinThreads) {
-		unblock_spinlock_threads(self, monitor);
+	nextThread = omrthread_mcs_unlock(self, monitor);
+	if (NULL != nextThread) {
+		NOTIFY_WRAPPER(nextThread);
 	}
 #else /* defined(OMR_THR_MCS_LOCKS) */
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
