@@ -224,9 +224,6 @@ public:
                                       uint32_t info) {_registerMap.maskRegistersWithInfoBits(mask, info);}
    void     setInfoBits(uint32_t info) {_registerMap.setInfoBits(info);}
 
-   uint32_t getRegisterSaveDescription()              {return _registerMap.getRegisterSaveDescription();}
-   void     setRegisterSaveDescription(uint32_t bits) {_registerMap.setRegisterSaveDescription(bits);}
-
    void setBit(int32_t bitNumber)   { _mapBits[bitNumber >> 3] |= 1 << (bitNumber & 7); }
    bool isSet(int32_t bitNumber)    { return (_mapBits[bitNumber >> 3] & (1 << (bitNumber & 7))) != 0; }
    void resetBit(int32_t bitNumber) { _mapBits[bitNumber >> 3] &= ~(1 << (bitNumber & 7)); }
