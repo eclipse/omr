@@ -310,8 +310,8 @@ TR::ARMImmSymInstruction::ARMImmSymInstruction(TR::Instruction                  
 
 void TR::ARMLabelInstruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
    {
-   TR::Compilation *comp = TR::comp();
-   TR::Machine  *machine        = cg()->machine();
+   TR::Compilation *comp           = cg()->comp();
+   TR::Machine     *machine        = cg()->machine();
    TR::Register    *target1Virtual = getTarget1Register();
    TR::Register    *source1Virtual = getSource1Register();
 
