@@ -4,8 +4,8 @@
 
 #include "OWLJNIClient.hpp"
 #include <cstdlib>
-#include <iostream>
 #include <string.h>
+#include <stdio.h>
 
 /* ================= private ================= */
 TR_OWLJNIClient* TR_OWLJNIClient::_instance = NULL;
@@ -17,7 +17,7 @@ TR_OWLJNIClient::TR_OWLJNIClient() {
     char classpath[1024];
     sprintf(classpath, "%s/com.ibm.wala.util/target/classes:%s/com.ibm.wala.shrike/target/classes:%s/com.ibm.wala.core/target/classes:%s/com.ibm.wala.cast/target/classes", walaHome, walaHome, walaHome, walaHome);
     _env = launch_jvm(classpath);
-    std::cout << "Successfully launch JVM!" << std::endl;
+    printf("=============Successfully launch JVM!=============\n");
 }
 
 TR_OWLJNIClient::~TR_OWLJNIClient() {}
@@ -25,7 +25,7 @@ TR_OWLJNIClient::~TR_OWLJNIClient() {}
 jclass TR_OWLJNIClient::_getClass(const char *className) {
     jclass cls = _env->FindClass(className);
     if (_env->ExceptionCheck()){
-        std::cout<< "Fail to find class "<< className << std::endl;
+        printf("Fail to find class %s\n",className);
         exit(1);
     }
     return cls;
@@ -41,7 +41,7 @@ jmethodID TR_OWLJNIClient::_getMethodID(bool isStaticMethod, jclass cls, const c
     }
 
     if (_env->ExceptionCheck()){
-        std::cout<< "Fail to find method "<< methodName << std::endl;
+        printf("Fail to find method %s\n",methodName);
         exit(1);
     }
     return mid;
@@ -57,13 +57,13 @@ jfieldID TR_OWLJNIClient::_getFieldId(bool isStaticField, jclass cls, const char
     }
 
     if (_env->ExceptionCheck()) {
-        std::cout<< "Fail to find field "<< fieldName << std::endl;
+        printf("Fail to find field %s\n",fieldName);
         exit(1);
     }
     return fid;
 }
 
-/* ================= public ======================= */
+/*** public ***/
 TR_OWLJNIClient* TR_OWLJNIClient::getInstance() {
     if (!_instance){
         _instance = new TR_OWLJNIClient;
@@ -75,11 +75,39 @@ jstring TR_OWLJNIClient::constructString(char *str) {
     return _env->NewStringUTF(str);
 }
 
-jobject TR_OWLJNIClient::constructIntObject(int i){
+jobject TR_OWLJNIClient::constructIntegerObject(int i){
     jclass cls = _getClass("java/lang/Integer");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(I)V");
-    jobject intObject = _env->NewObject(cls, mid, i);
-    return intObject;
+    jobject integerObject = _env->NewObject(cls, mid, i);
+    return integerObject;
+}
+
+jobject TR_OWLJNIClient::constructFloatObject(float i){
+    jclass cls = _getClass("java/lang/Float");
+    jmethodID mid = _getMethodID(false, cls, "<init>", "(F)V");
+    jobject floatObject = _env->NewObject(cls, mid, i);
+    return floatObject;
+}
+
+jobject TR_OWLJNIClient::constructDoubleObject(double i){
+    jclass cls = _getClass("java/lang/Double");
+    jmethodID mid = _getMethodID(false, cls, "<init>", "(D)V");
+    jobject doubleObject = _env->NewObject(cls, mid, i);
+    return doubleObject;
+}
+
+jobject TR_OWLJNIClient::constructShortObject(short i) {
+    jclass cls = _getClass("java/lang/Short");
+    jmethodID mid = _getMethodID(false, cls, "<init>", "(S)V");
+    jobject shortObject = _env->NewObject(cls, mid, i);
+    return shortObject;
+}
+
+jobject TR_OWLJNIClient::constructLongObject(long i) {
+    jclass cls = _getClass("java/lang/Long");
+    jmethodID mid = _getMethodID(false, cls, "<init>", "(J)V");
+    jobject longObject = _env->NewObject(cls,mid,i);
+    return longObject;
 }
 
 /* Field */
@@ -95,134 +123,6 @@ void TR_OWLJNIClient::getField(FieldConfig fieldConfig, jobject obj, jobject *re
     }
 }
 
-/* static */
-
-//Void
-void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, int argNum, ...) {
-
-    va_list args;
-    va_start(args,argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(true, cls, methodConfig.methodName, methodConfig.methodSig);
-    _env->CallStaticVoidMethodV(cls,mid,args);
-    va_end(args);
-}
-
-// Object
-void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, jobject *res, int argNum, ...) {
-
-    va_list args;
-    va_start(args,argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(true, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallStaticObjectMethodV(cls,mid,args);
-    va_end(args);
-}
-
-// int
-void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, int *res, int argNum, ...) {
-
-    va_list args;
-    va_start(args,argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(true, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallStaticIntMethodV(cls,mid,args);
-    va_end(args);
-}
-
-// long
-void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, long *res, int argNum, ...) {
-
-    va_list args;
-    va_start(args,argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(true, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallStaticLongMethodV(cls,mid,args);
-    va_end(args);
-}
-
-// short
-void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, short *res, int argNum, ...) {
-
-    va_list args;
-    va_start(args,argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(true, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallStaticShortMethodV(cls,mid,args);
-    va_end(args);
-}
-
-// float
-void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, float *res, int argNum, ...) {
-
-    va_list args;
-    va_start(args,argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(true, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallStaticFloatMethodV(cls,mid,args);
-    va_end(args);
-}
-
-// double
-void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, double *res, int argNum, ...) {
-
-    va_list args;
-    va_start(args,argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(true, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallStaticDoubleMethodV(cls,mid,args);
-    va_end(args);
-}
-
-// char
-void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, char *res, int argNum, ...) {
-
-    va_list args;
-    va_start(args,argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(true, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallStaticCharMethodV(cls,mid,args);
-    va_end(args);
-}
-
-// char* (string)
-void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, char **res, int argNum, ...) {
-
-    va_list args;
-    va_start(args,argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(true, cls, methodConfig.methodName, methodConfig.methodSig);
-    jstring out = (jstring)(_env->CallStaticObjectMethodV(cls,mid,args));
-    va_end(args);
-    char temp[1024];
-    sprintf(temp,_env->GetStringUTFChars(out,0));
-    *res = temp;
-}
-
-// bool
-void TR_OWLJNIClient::callStaticMethod(MethodConfig methodConfig, bool *res, int argNum, ...) {
-
-    va_list args;
-    va_start(args,argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(true, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallStaticBooleanMethodV(cls,mid,args);
-    va_end(args);
-}
-
-
-/* non-static */
-
-//void
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int argNum, ...) {
-
-    va_list args;
-    va_start(args, argNum);
-    jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(false, cls, methodConfig.methodName, methodConfig.methodSig);
-    _env->CallVoidMethodV(obj,mid,args);
-    va_end(args);
-}
 
 //object
 void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject* res, int argNum, ...) {
@@ -230,8 +130,13 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(false, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallObjectMethodV(obj,mid,args);
+    jmethodID mid = _getMethodID(methodConfig.className, cls, methodConfig.methodName, methodConfig.methodSig);
+    if (methodConfig.isStatic){
+        *res = _env->CallStaticObjectMethodV(cls, mid, args);
+    }
+    else{
+        *res = _env->CallObjectMethodV(obj,mid,args);
+    }
     va_end(args);
 }
 
@@ -241,9 +146,15 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int* re
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(false, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallIntMethodV(obj,mid,args);
+    jmethodID mid = _getMethodID(methodConfig.isStatic, cls, methodConfig.methodName, methodConfig.methodSig);
+    if (methodConfig.isStatic){
+        *res = _env->CallStaticIntMethodV(cls,mid,args);
+    }
+    else{
+        *res = _env->CallIntMethodV(obj,mid,args);
+    }
     va_end(args);
+
 }
 
 //long
@@ -252,8 +163,14 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, long* r
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(false, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallLongMethodV(obj,mid,args);
+    jmethodID mid = _getMethodID(methodConfig.isStatic, cls, methodConfig.methodName, methodConfig.methodSig);
+    if (methodConfig.isStatic){
+        *res = _env->CallStaticLongMethodV(cls, mid, args);
+    }
+    else{
+        *res = _env->CallLongMethodV(obj,mid,args);
+    }
+
     va_end(args);
 }
 
@@ -263,8 +180,14 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, short* 
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(false, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallShortMethodV(obj,mid,args);
+    jmethodID mid = _getMethodID(methodConfig.isStatic, cls, methodConfig.methodName, methodConfig.methodSig);
+    if (methodConfig.isStatic){
+        *res = _env->CallStaticShortMethodV(cls, mid, args);
+    }
+    else{
+        *res = _env->CallShortMethodV(obj,mid,args);
+    }
+
     va_end(args);
 }
 
@@ -274,8 +197,14 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* 
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(false, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallFloatMethodV(obj,mid,args);
+    jmethodID mid = _getMethodID(methodConfig.isStatic, cls, methodConfig.methodName, methodConfig.methodSig);
+    if (methodConfig.isStatic) {
+        *res = _env->CallStaticFloatMethodV(cls,mid,args);
+    }
+    else{
+        *res = _env->CallFloatMethodV(obj,mid,args);
+    }
+
     va_end(args);
 }
 
@@ -285,8 +214,13 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, double*
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(false, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallDoubleMethodV(obj,mid,args);
+    jmethodID mid = _getMethodID(methodConfig.isStatic, cls, methodConfig.methodName, methodConfig.methodSig);
+    if (methodConfig.isStatic){
+        *res = _env->CallStaticDoubleMethodV(cls, mid, args);
+    }
+    else{
+        *res = _env->CallDoubleMethodV(obj,mid,args);
+    }
     va_end(args);
 }
 
@@ -296,8 +230,14 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* r
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(false, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallCharMethodV(obj,mid,args);
+    jmethodID mid = _getMethodID(methodConfig.isStatic, cls, methodConfig.methodName, methodConfig.methodSig);
+    if (methodConfig.isStatic){
+        *res = _env->CallStaticCharMethodV(cls,mid,args);
+    }
+    else{
+        *res = _env->CallCharMethodV(obj,mid,args);
+    }
+
     va_end(args);
 }
 
@@ -307,8 +247,14 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* r
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(false, cls, methodConfig.methodName, methodConfig.methodSig);
-    *res = _env->CallBooleanMethodV(obj,mid,args);
+    jmethodID mid = _getMethodID(methodConfig.isStatic, cls, methodConfig.methodName, methodConfig.methodSig);
+    if (methodConfig.isStatic){
+        *res = _env->CallStaticBooleanMethodV(cls,mid,args);
+    }
+    else{
+        *res = _env->CallBooleanMethodV(obj,mid,args);
+    }
+
     va_end(args);
 }
 
@@ -318,12 +264,18 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char **
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(false, cls, methodConfig.methodName, methodConfig.methodSig);
-    jstring out = (jstring)(_env->CallObjectMethodV(obj,mid,args));
+    jmethodID mid = _getMethodID(methodConfig.isStatic, cls, methodConfig.methodName, methodConfig.methodSig);
+    jstring out;
+    if (methodConfig.isStatic){
+        out  = (jstring)(_env->CallStaticObjectMethodV(cls,mid,args));
+    }
+    else{
+        out = (jstring)(_env->CallObjectMethodV(obj,mid,args));
+    }
     va_end(args);
-    char temp[1024];
-    sprintf(temp,_env->GetStringUTFChars(out,0));
-    *res = temp;
+    const char *str = _env->GetStringUTFChars(out,0);
+    sprintf(*res,str);
+    _env->ReleaseStringUTFChars(out,0);
 
 }
 

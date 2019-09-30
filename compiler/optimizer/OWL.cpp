@@ -27,7 +27,7 @@ int32_t TR_OWL::perform(){
 
     TR_OWLJNIClient *jniClient = TR_OWLJNIClient::getInstance();
     TR_OWLMapper *mapper = new TR_OWLMapper();
-    mapper->perform(comp());
+    mapper->map(comp());
 
 }
 
