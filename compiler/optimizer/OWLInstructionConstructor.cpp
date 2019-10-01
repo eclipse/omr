@@ -2,9 +2,10 @@
 // Created by Cijie Xia on 2019-09-29.
 //
 
+#include <stdlib.h>
+#include <string.h>
 #include "OWLInstructionConstructor.hpp"
 #include "OWLJNIConfig.hpp"
-#include <stdlib.h>
 
 TR_OWLInstructionConstructor::TR_OWLInstructionConstructor() {
     _jniClient = TR_OWLJNIClient::getInstance();
@@ -21,27 +22,15 @@ TR_OWLInstructionConstructor::~TR_OWLInstructionConstructor() {
 char * TR_OWLInstructionConstructor::getInstructionString(jobject instructionObj, Instruction ins) {
     MethodConfig methodConfig;
     switch(ins){
-        case CONST:
-            methodConfig = ConstantInstructionToStringConfig;
-            break;
-        case BINARY_OP:
-            methodConfig = BinaryOpInstructionToStringConfig;
-            break;
-        case LOAD:
-            methodConfig = LoadInstructionToStringConfig;
-            break;
-        case STORE:
-            methodConfig = StoreInstructionToStringConfig;
-            break;
-        case RETURN:
-            methodConfig = ReturnInstructionToStringConfig;
-            break;
-        case GOTO:
-            methodConfig = GotoInstructionToStringConfig;
-            break;
-        default:
-            perror("Error: Instruction enum not found!\n");
-            break;
+        case CONST: methodConfig = ConstantInstructionToStringConfig; break;
+        case BINARY_OP: methodConfig = BinaryOpInstructionToStringConfig; break;
+        case LOAD: methodConfig = LoadInstructionToStringConfig; break;
+        case STORE: methodConfig = StoreInstructionToStringConfig; break;
+        case RETURN: methodConfig = ReturnInstructionToStringConfig; break;
+        case GOTO: methodConfig = GotoInstructionToStringConfig; break;
+        case CONDITIONAL_BRANCH: methodConfig = ConstantInstructionToStringConfig; break;
+        case COMPARISON: methodConfig = ComparisonInstructionToStringConfig; break;
+        default: perror("Error: Instruction enum not found!\n"); exit(1); break;
     }
 
     char *instructionString = (char*)malloc(1024);
@@ -57,53 +46,49 @@ char * TR_OWLInstructionConstructor::getInstructionString(jobject instructionObj
 }
 
 jobject TR_OWLInstructionConstructor::Integer(int i) {
-    return _jniClient->constructIntegerObject(i);
+    return _jniClient->constructObject(i);
 }
 
 jobject TR_OWLInstructionConstructor::Float(float f) {
-    return _jniClient->constructFloatObject(f);
+    return _jniClient->constructObject(f);
 }
 
 jobject TR_OWLInstructionConstructor::Double(double d) {
-    return _jniClient->constructDoubleObject(d);
+    return _jniClient->constructObject(d);
 }
 
 jobject TR_OWLInstructionConstructor::Short(short s) {
-    return _jniClient->constructShortObject(s);
+    return _jniClient->constructObject(s);
 }
 
 jobject TR_OWLInstructionConstructor::Long(long l) {
-    return _jniClient->constructLongObject(l);
+    return _jniClient->constructObject(l);
 }
 
 jobject TR_OWLInstructionConstructor::Operator(Op op) {
 
     jobject opr;
     switch (op){
-        case ADD:
-            _jniClient->getField(AddOperatorConfig,NULL,&opr);
-            break;
-        case SUB:
-            _jniClient->getField(SubOperatorConfig,NULL,&opr);
-            break;
-        case MUL:
-            _jniClient->getField(MulOperatorConfig,NULL,&opr);
-            break;
-        case DIV:
-            _jniClient->getField(DivOperatorConfig,NULL,&opr);
-            break;
-        case REM:
-            _jniClient->getField(RemOperatorConfig,NULL,&opr);
-            break;
-        case AND:
-            _jniClient->getField(AndOperatorConfig,NULL,&opr);
-            break;
-        case OR:
-            _jniClient->getField(OrOperatorConfig,NULL,&opr);
-            break;
-        case XOR:
-            _jniClient->getField(XorOperatorConfig,NULL,&opr);
-            break;
+        case ADD: _jniClient->getField(ADD_OperatorConfig,NULL,&opr); break;
+        case SUB: _jniClient->getField(SUB_OperatorConfig,NULL,&opr); break;
+        case MUL: _jniClient->getField(MUL_OperatorConfig,NULL,&opr); break;
+        case DIV: _jniClient->getField(DIV_OperatorConfig,NULL,&opr); break;
+        case REM: _jniClient->getField(REM_OperatorConfig,NULL,&opr); break;
+        case AND: _jniClient->getField(AND_OperatorConfig,NULL,&opr); break;
+        case OR: _jniClient->getField(OR_OperatorConfig,NULL,&opr); break;
+        case XOR: _jniClient->getField(XOR_OperatorConfig,NULL,&opr); break;
+
+        case EQ: _jniClient->getField(EQ_OperatorConfig,NULL,&opr); break;
+        case NE: _jniClient->getField(NE_OperatorConfig,NULL,&opr); break;
+        case LT: _jniClient->getField(LT_OperatorConfig,NULL,&opr); break;
+        case GE: _jniClient->getField(GE_OperatorConfig,NULL,&opr); break;
+        case GT: _jniClient->getField(GT_OperatorConfig,NULL,&opr); break;
+        case LE: _jniClient->getField(LE_OperatorConfig,NULL,&opr); break;
+
+        case CMP: _jniClient->getField(CMP_OperatorConfig,NULL,&opr); break;
+        case CMPL: _jniClient->getField(CMPL_OperatorConfig,NULL,&opr); break;
+        case CMPG: _jniClient->getField(CMPG_OperatorConfig,NULL,&opr); break;
+
         default:
             perror("Error: Operator not found!\n");
             exit(1);
@@ -118,60 +103,69 @@ jobject TR_OWLInstructionConstructor::ConstantInstruction(char *type, jobject va
     jobject constantInstructionObject;
 
     _jniClient->callMethod
-            (
-                    ConstantInstructionConfig,
-                    NULL,
-                    &constantInstructionObject,
-                    2,
-                    _jniClient->constructString(type),
-                    value
-            );
+    (
+            ConstantInstructionConfig,
+            NULL,
+            &constantInstructionObject,
+            2,
+            _jniClient->constructString(type),
+            value
+    );
     return constantInstructionObject;
 }
 
-jobject TR_OWLInstructionConstructor::StoreInstruction(char *type) {
+jobject TR_OWLInstructionConstructor::StoreInstruction(char *type, int referenceNumber) {
     jobject storeInstructionObject;
 
+    localVariableTable[referenceNumber] = _index;
+
     _jniClient->callMethod
-            (
-                    StoreInstructionConfig,
-                    NULL,
-                    &storeInstructionObject,
-                    2,
-                    _jniClient->constructString(type),
-                    _index
-            );
+    (
+            StoreInstructionConfig,
+            NULL,
+            &storeInstructionObject,
+            2,
+            _jniClient->constructString(type),
+            _index
+    );
+
+    if (strcmp(TYPE_double,type) == 0 || strcmp(TYPE_long,type) == 0){
+        _index += 2;
+    }
+    else{
+        _index += 1;
+    }
 
     return storeInstructionObject;
 }
 
-jobject TR_OWLInstructionConstructor::LoadInstruction(char *type) {
+jobject TR_OWLInstructionConstructor::LoadInstruction(char *type, int referenceNumber) {
     jobject loadInstructionObject;
 
     _jniClient->callMethod
-            (
-                    LoadInstructionConfig,
-                    NULL,
-                    &loadInstructionObject,
-                    2,
-                    _jniClient->constructString(type),
-                    _index
-            );
+    (
+            LoadInstructionConfig,
+            NULL,
+            &loadInstructionObject,
+            2,
+            _jniClient->constructString(type),
+            localVariableTable[referenceNumber]
+    );
     return loadInstructionObject;
 }
 
-jobject TR_OWLInstructionConstructor::BinaryOpInstruction(char* type, jobject op) {
+jobject TR_OWLInstructionConstructor::BinaryOpInstruction(char* type, Op op) {
     jobject binaryOpInstruction;
 
     _jniClient->callMethod
-            (
-                    BinaryOpInstructionConfig,
-                    NULL,
-                    &binaryOpInstruction,
-                    2,
-                    _jniClient->constructString(type),
-                    op
-            );
+    (
+            BinaryOpInstructionConfig,
+            NULL,
+            &binaryOpInstruction,
+            2,
+            _jniClient->constructString(type),
+            Operator(op)
+    );
     return binaryOpInstruction;
 }
 
@@ -179,13 +173,13 @@ jobject TR_OWLInstructionConstructor::ReturnInstruction(char* type) {
     jobject returnInstruction;
 
     _jniClient->callMethod
-            (
-                    ReturnInstructionConfig,
-                    NULL,
-                    &returnInstruction,
-                    1,
-                    _jniClient->constructString(type)
-            );
+    (
+            ReturnInstructionConfig,
+            NULL,
+            &returnInstruction,
+            1,
+            _jniClient->constructString(type)
+    );
 
     return returnInstruction;
 }
@@ -203,4 +197,38 @@ jobject TR_OWLInstructionConstructor::GotoInstruction(int label) {
     );
 
     return gotoInstruction;
+}
+
+jobject TR_OWLInstructionConstructor::ConditionalBranchInstruction(char *type, Op op, int label) {
+    jobject conditionalBranchInstruction;
+
+    _jniClient->callMethod
+    (
+        ConditionalBranchInstructionConfig,
+        NULL,
+        &conditionalBranchInstruction,
+        3,
+        _jniClient->constructString(type),
+        Operator(op),
+        label
+    );
+
+    return conditionalBranchInstruction;
+}
+
+jobject TR_OWLInstructionConstructor::ComparisonInstruction(char *type, Op op) {
+    jobject comparisonInstruction;
+
+    _jniClient->callMethod
+    (
+        ComparisonInstructionConfig,
+        NULL,
+        &comparisonInstruction,
+        2,
+        _jniClient->constructString(type),
+        Operator(op)
+
+    );
+
+    return comparisonInstruction;
 }

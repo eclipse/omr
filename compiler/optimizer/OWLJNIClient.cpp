@@ -2,10 +2,10 @@
 // Created by Cijie Xia on 2019-09-10.
 //
 
-#include "OWLJNIClient.hpp"
 #include <cstdlib>
 #include <string.h>
 #include <stdio.h>
+#include "optimizer/OWLJNIClient.hpp"
 
 /* ================= private ================= */
 TR_OWLJNIClient* TR_OWLJNIClient::_instance = NULL;
@@ -75,35 +75,35 @@ jstring TR_OWLJNIClient::constructString(char *str) {
     return _env->NewStringUTF(str);
 }
 
-jobject TR_OWLJNIClient::constructIntegerObject(int i){
+jobject TR_OWLJNIClient::constructObject(int i){
     jclass cls = _getClass("java/lang/Integer");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(I)V");
     jobject integerObject = _env->NewObject(cls, mid, i);
     return integerObject;
 }
 
-jobject TR_OWLJNIClient::constructFloatObject(float i){
+jobject TR_OWLJNIClient::constructObject(float i){
     jclass cls = _getClass("java/lang/Float");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(F)V");
     jobject floatObject = _env->NewObject(cls, mid, i);
     return floatObject;
 }
 
-jobject TR_OWLJNIClient::constructDoubleObject(double i){
+jobject TR_OWLJNIClient::constructObject(double i){
     jclass cls = _getClass("java/lang/Double");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(D)V");
     jobject doubleObject = _env->NewObject(cls, mid, i);
     return doubleObject;
 }
 
-jobject TR_OWLJNIClient::constructShortObject(short i) {
+jobject TR_OWLJNIClient::constructObject(short i) {
     jclass cls = _getClass("java/lang/Short");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(S)V");
     jobject shortObject = _env->NewObject(cls, mid, i);
     return shortObject;
 }
 
-jobject TR_OWLJNIClient::constructLongObject(long i) {
+jobject TR_OWLJNIClient::constructObject(long i) {
     jclass cls = _getClass("java/lang/Long");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(J)V");
     jobject longObject = _env->NewObject(cls,mid,i);
@@ -137,6 +137,12 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject
     else{
         *res = _env->CallObjectMethodV(obj,mid,args);
     }
+
+    if (_env->ExceptionCheck()) {
+        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        exit(1);
+    }
+
     va_end(args);
 }
 
@@ -153,6 +159,12 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int* re
     else{
         *res = _env->CallIntMethodV(obj,mid,args);
     }
+
+    if (_env->ExceptionCheck()) {
+        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        exit(1);
+    }
+
     va_end(args);
 
 }
@@ -169,6 +181,11 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, long* r
     }
     else{
         *res = _env->CallLongMethodV(obj,mid,args);
+    }
+
+    if (_env->ExceptionCheck()) {
+        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        exit(1);
     }
 
     va_end(args);
@@ -188,6 +205,11 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, short* 
         *res = _env->CallShortMethodV(obj,mid,args);
     }
 
+    if (_env->ExceptionCheck()) {
+        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        exit(1);
+    }
+
     va_end(args);
 }
 
@@ -203,6 +225,11 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* 
     }
     else{
         *res = _env->CallFloatMethodV(obj,mid,args);
+    }
+
+    if (_env->ExceptionCheck()) {
+        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        exit(1);
     }
 
     va_end(args);
@@ -221,6 +248,12 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, double*
     else{
         *res = _env->CallDoubleMethodV(obj,mid,args);
     }
+
+    if (_env->ExceptionCheck()) {
+        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        exit(1);
+    }
+
     va_end(args);
 }
 
@@ -236,6 +269,11 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* r
     }
     else{
         *res = _env->CallCharMethodV(obj,mid,args);
+    }
+
+    if (_env->ExceptionCheck()) {
+        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        exit(1);
     }
 
     va_end(args);
@@ -255,6 +293,11 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* r
         *res = _env->CallBooleanMethodV(obj,mid,args);
     }
 
+    if (_env->ExceptionCheck()) {
+        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        exit(1);
+    }
+
     va_end(args);
 }
 
@@ -272,6 +315,12 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char **
     else{
         out = (jstring)(_env->CallObjectMethodV(obj,mid,args));
     }
+
+    if (_env->ExceptionCheck()) {
+        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        exit(1);
+    }
+
     va_end(args);
     const char *str = _env->GetStringUTFChars(out,0);
     sprintf(*res,str);
