@@ -24,7 +24,8 @@ private:
     jobject _mapReturnInstruction(TR::Node* node);
     jobject _mapBinaryOpInstruction(TR::Node* node, Op op);
     jobject _mapGotoInstruction(TR::Node* node);
-
+    jobject _mapConditionalBranchInstruction(TR::Node* node);
+    jobject _mapComparisonInstruction(TR::Node* node);
 
 public:
     TR_OWLMapper();

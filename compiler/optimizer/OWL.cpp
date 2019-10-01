@@ -10,9 +10,7 @@
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimizer.hpp"
-#include "launch.h"
-#include "OWLJNIClient.hpp"
-#include "OWLMapper.hpp"
+#include "optimizer/OWLMapper.hpp"
 
 TR_OWL::TR_OWL(TR::OptimizationManager *manager)
         : TR::Optimization(manager)
@@ -25,10 +23,9 @@ TR::Optimization *TR_OWL::create(TR::OptimizationManager *manager)
 
 int32_t TR_OWL::perform(){
 
-    TR_OWLJNIClient *jniClient = TR_OWLJNIClient::getInstance();
     TR_OWLMapper *mapper = new TR_OWLMapper();
     mapper->map(comp());
-
+    delete mapper;
 }
 
 const char *

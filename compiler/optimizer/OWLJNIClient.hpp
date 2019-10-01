@@ -38,11 +38,12 @@ public:
     static TR_OWLJNIClient *getInstance();
 
     jstring constructString(char* str);
-    jobject constructIntegerObject(int i);
-    jobject constructFloatObject(float i);
-    jobject constructDoubleObject(double i);
-    jobject constructShortObject(short i);
-    jobject constructLongObject(long i);
+
+    jobject constructObject(int i);
+    jobject constructObject(float i);
+    jobject constructObject(double i);
+    jobject constructObject(short i);
+    jobject constructObject(long i);
 
     /* Field */
     void getField(FieldConfig fieldConfig, jobject obj, jobject*res);

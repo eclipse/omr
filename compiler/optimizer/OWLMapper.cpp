@@ -2,10 +2,11 @@
 // Created by Cijie Xia on 2019-09-23.
 //
 
-#include "OWLMapper.hpp"
-#include "OWLJNIConfig.hpp"
 #include "string.h"
 #include <stdlib.h>
+#include "OWLMapper.hpp"
+#include "OWLJNIConfig.hpp"
+
 
 TR_OWLMapper::TR_OWLMapper() {
     _con = new TR_OWLInstructionConstructor();
@@ -107,27 +108,31 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
         _logInstruction(str);
         free(str);
     }
+    else if (opCode.isBooleanCompare() && opCode.isBranch()){ // conditional branch instruction
+        instructionObj = _mapConditionalBranchInstruction(node);
+        char* str = _con->getInstructionString(instructionObj, CONDITIONAL_BRANCH);
+        _logInstruction(str);
+        free(str);
+    }
+
+    else if (opCode.isBooleanCompare()){ // comparison instruction
+        instructionObj = _mapComparisonInstruction(node);
+        char* str = _con->getInstructionString(instructionObj, COMPARISON);
+        _logInstruction(str);
+        free(str);
+    }
 
     printf("\n");
 
 }
 
 char* TR_OWLMapper::_getType(TR::ILOpCode opCode) {
-    if (opCode.isInt()){
-        return TYPE_int;
-    }
-    else if (opCode.isShort()){
-        return TYPE_short;
-    }
-    else if (opCode.isLong()){
-        return TYPE_long;
-    }
-    else if (opCode.isFloat()){
-        return TYPE_float;
-    }
-    else if (opCode.isDouble()){
-        return TYPE_double;
-    }
+
+    if (opCode.isInt()) return TYPE_int;
+    else if (opCode.isShort()) return TYPE_short;
+    else if (opCode.isLong()) return TYPE_long;
+    else if (opCode.isFloat()) return TYPE_float;
+    else if (opCode.isDouble()) return TYPE_double;
 
     perror("No type matched!\n");
     exit(1);
@@ -159,7 +164,7 @@ jobject TR_OWLMapper::_mapStoreInstruction(TR::Node *node) {
     jobject storeInstruction;
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
-    storeInstruction = _con->StoreInstruction(type);
+    storeInstruction = _con->StoreInstruction(type,node->getSymbolReference()->getReferenceNumber());
     return storeInstruction;
 }
 
@@ -167,7 +172,7 @@ jobject TR_OWLMapper::_mapLoadInstruction(TR::Node *node) {
     jobject loadInstruction;
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
-    loadInstruction = _con->LoadInstruction(type);
+    loadInstruction = _con->LoadInstruction(type, node->getSymbolReference()->getReferenceNumber());
     return loadInstruction;
 }
 
@@ -183,7 +188,7 @@ jobject TR_OWLMapper::_mapBinaryOpInstruction(TR::Node *node, Op op) {
     jobject binaryOpInstruction;
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
-    binaryOpInstruction = _con->BinaryOpInstruction(type, _con->Operator(op));
+    binaryOpInstruction = _con->BinaryOpInstruction(type, op);
     return binaryOpInstruction;
 }
 
@@ -191,6 +196,38 @@ jobject TR_OWLMapper::_mapGotoInstruction(TR::Node *node) {
     jobject gotoInstruction;
     gotoInstruction = _con->GotoInstruction(node->getBranchDestination()->getNode()->getGlobalIndex());
     return gotoInstruction;
+}
+
+jobject TR_OWLMapper::_mapConditionalBranchInstruction(TR::Node *node) {
+    jobject conditionalBranchInstruction;
+
+    TR::ILOpCodes opCodeValue = node->getOpCodeValue();
+    Op op;
+
+    if (TR::ILOpCode::isStrictlyLessThanCmp(opCodeValue)) op = LT;
+    else if (TR::ILOpCode::isStrictlyGreaterThanCmp(opCodeValue)) op = GT;
+    else if (TR::ILOpCode::isLessCmp(opCodeValue)) op = LE;
+    else if (TR::ILOpCode::isGreaterCmp(opCodeValue)) op = GE;
+    else if (TR::ILOpCode::isEqualCmp(opCodeValue)) op = EQ;
+    else op = NE;
+
+    TR::ILOpCode childOpCode = node->getFirstChild()->getOpCode();
+    char* type = _getType(childOpCode);
+
+    conditionalBranchInstruction = _con->ConditionalBranchInstruction(type,op,node->getBranchDestination()->getNode()->getGlobalIndex());
+
+    return conditionalBranchInstruction;
+}
+
+jobject TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
+    jobject comparisonInstruction;
+    TR::ILOpCode opCode = node->getOpCode();
+    char* type = _getType(opCode);
+    if (strcmp(type,TYPE_int) == 0 || strcmp(type,TYPE_short) == 0){
+        type = TYPE_long;
+    }
+    comparisonInstruction = _con->ComparisonInstruction(type, CMP);
+    return comparisonInstruction;
 }
 
 

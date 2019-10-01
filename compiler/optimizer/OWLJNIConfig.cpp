@@ -102,37 +102,65 @@ const MethodConfig GotoInstructionToStringConfig = {
         "()Ljava/lang/String;"
 };
 
+const MethodConfig ConditionalBranchInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/ConditionalBranchInstruction",
+        "make",
+        "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;I)Lcom/ibm/wala/shrikeBT/ConditionalBranchInstruction;"
+};
+
+const MethodConfig ConditionalBranchInstructionToStringConfig = {
+        false,
+        "com/ibm/wala/shrikeBT/ConditionalBranchInstruction",
+        "toString",
+        "()Ljava/lang/String;"
+};
+
+const MethodConfig ComparisonInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/ComparisonInstruction",
+        "make",
+        "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;)Lcom/ibm/wala/shrikeBT/ComparisonInstruction;"
+};
+
+const MethodConfig ComparisonInstructionToStringConfig = {
+        false,
+        "com/ibm/wala/shrikeBT/ComparisonInstruction",
+        "toString",
+        "()Ljava/lang/String;"
+};
+
 /***** Field Config ******/
 
-const FieldConfig AddOperatorConfig = {
+const FieldConfig ADD_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "ADD",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig SubOperatorConfig = {
+const FieldConfig SUB_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "SUB",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig MulOperatorConfig = {
+const FieldConfig MUL_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "MUL",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig DivOperatorConfig = {
+const FieldConfig DIV_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "DIV",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig RemOperatorConfig = {
+const FieldConfig REM_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "REM",
@@ -140,24 +168,86 @@ const FieldConfig RemOperatorConfig = {
 };
 
 
-const FieldConfig AndOperatorConfig = {
+const FieldConfig AND_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "AND",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig OrOperatorConfig = {
+const FieldConfig OR_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "OR",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig XorOperatorConfig = {
+const FieldConfig XOR_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "XOR",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
+const FieldConfig EQ_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
+        "EQ",
+        "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
+};
+
+const FieldConfig NE_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
+        "NE",
+        "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
+};
+
+const FieldConfig LT_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
+        "LT",
+        "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
+};
+
+const FieldConfig GE_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
+        "GE",
+        "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
+};
+
+const FieldConfig GT_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
+        "GT",
+        "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
+};
+
+const FieldConfig LE_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
+        "LE",
+        "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
+};
+
+const FieldConfig CMP_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IComparisonInstruction$Operator",
+        "CMP",
+        "Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;"
+};
+
+const FieldConfig CMPL_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IComparisonInstruction$Operator",
+        "CMPL",
+        "Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;"
+};
+
+const FieldConfig CMPG_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IComparisonInstruction$Operator",
+        "CMPG",
+        "Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;"
+};
