@@ -58,7 +58,7 @@ static void loadRelocatableConstant(TR::Node *node,
 
    if (symbol->isStartPC())
       {
-      TR_UNIMPLEMENTED();
+      loadAddressConstant(cg, node, addr, reg, NULL, false, TR_AbsoluteMethodAddress);
       return;
       }
 
