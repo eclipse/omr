@@ -6,6 +6,7 @@
 #ifndef omr_owljniclient_h
 #define omr_owljniclient_h
 
+#include <stdint.h>
 #include "launch.h"
 
 struct MethodConfig {
@@ -39,24 +40,24 @@ public:
 
     jstring constructString(char* str);
 
-    jobject constructObject(int i);
+    jobject constructObject(int32_t i);
     jobject constructObject(float i);
     jobject constructObject(double i);
-    jobject constructObject(short i);
-    jobject constructObject(long i);
+    jobject constructObject(int16_t i);
+    jobject constructObject(int64_t i);
 
     /* Field */
     void getField(FieldConfig fieldConfig, jobject obj, jobject*res);
 
-    void callMethod(MethodConfig methodConfig, jobject obj, jobject* res, int argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, int* res, int argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, long* res, int argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, short* res, int argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, float* res, int argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, double* res, int argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, char* res, int argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, bool* res, int argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, char** res, int argNum, ...);
+    void callMethod(MethodConfig methodConfig, jobject obj, jobject* res, uint16_t argNum, ...);
+    void callMethod(MethodConfig methodConfig, jobject obj, int32_t* res, uint16_t argNum, ...);
+    void callMethod(MethodConfig methodConfig, jobject obj, int64_t* res, uint16_t argNum, ...);
+    void callMethod(MethodConfig methodConfig, jobject obj, int16_t* res, uint16_t argNum, ...);
+    void callMethod(MethodConfig methodConfig, jobject obj, float* res, uint16_t argNum, ...);
+    void callMethod(MethodConfig methodConfig, jobject obj, double* res, uint16_t argNum, ...);
+    void callMethod(MethodConfig methodConfig, jobject obj, char* res, uint16_t argNum, ...);
+    void callMethod(MethodConfig methodConfig, jobject obj, bool* res, uint16_t argNum, ...);
+    void callMethod(MethodConfig methodConfig, jobject obj, char** res, uint16_t argNum, ...);
 
 };
 #endif //omr_OWLJNIClient_h
