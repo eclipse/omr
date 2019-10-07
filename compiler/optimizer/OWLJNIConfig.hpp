@@ -36,6 +36,10 @@ extern const MethodConfig ConditionalBranchInstructionConfig;
 extern const MethodConfig ConditionalBranchInstructionToStringConfig;
 extern const MethodConfig ComparisonInstructionConfig;
 extern const MethodConfig ComparisonInstructionToStringConfig;
+extern const MethodConfig ConversionInstructionConfig;
+extern const MethodConfig ConversionInstructionToStringConfig;
+extern const MethodConfig UnaryOpInstructionConfig;
+extern const MethodConfig UnaryOpInstructionToStringConfig;
 
 
 /***** Field Config ******/

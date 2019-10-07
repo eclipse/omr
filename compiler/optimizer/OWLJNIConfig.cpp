@@ -130,6 +130,34 @@ const MethodConfig ComparisonInstructionToStringConfig = {
         "()Ljava/lang/String;"
 };
 
+const MethodConfig ConversionInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/ConversionInstruction",
+        "make",
+        "(Ljava/lang/String;Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ConversionInstruction;"
+};
+
+const MethodConfig ConversionInstructionToStringConfig = {
+        false,
+        "com/ibm/wala/shrikeBT/ConversionInstruction",
+        "toString",
+        "()Ljava/lang/String;"
+};
+
+const MethodConfig UnaryOpInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/UnaryOpInstruction",
+        "make",
+        "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/UnaryOpInstruction;"
+};
+
+const MethodConfig UnaryOpInstructionToStringConfig = {
+        false,
+        "com/ibm/wala/shrikeBT/UnaryOpInstruction",
+        "toString",
+        "()Ljava/lang/String;"
+};
+
 /***** Field Config ******/
 
 const FieldConfig ADD_OperatorConfig = {
