@@ -139,9 +139,8 @@ static inline TR::Instruction *generateWiderCompare(TR::Node *node, TR::Register
    return generateRegImmInstruction(CMP4RegImm4, node, targetReg, value, cg);
    }
 
-bool isConditionCodeSetForCompareToZero(TR::Node *node, bool justTestZeroFlag)
-   {
-   TR::Compilation *comp = TR::comp();
+bool isConditionCodeSetForCompareToZero(TR::Node *node, bool justTestZeroFlag, TR::CodeGenerator *cg) {
+   
    // Disable.  Need to re-think how we handle overflow cases.
    //
    static char *disableNoTestEFlags = feGetEnv("TR_disableNoTestEFlags");
@@ -177,7 +176,7 @@ bool isConditionCodeSetForCompareToZero(TR::Node *node, bool justTestZeroFlag)
    //
    TR::Instruction     *prevInstr;
    TR::X86RegInstruction  *prevRegInstr;
-   for (prevInstr = comp->cg()->getAppendInstruction();
+   for (prevInstr = cg->getAppendInstruction();
         prevInstr;
         prevInstr = prevInstr->getPrev())
       {
@@ -783,7 +782,7 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
                   // use of the conditions codes that it produces
                   cg->evaluate(firstChild);
                   }
-               if (isConditionCodeSetForCompareToZero(firstChild, true))
+               if (isConditionCodeSetForCompareToZero(firstChild, true, cg))
                   {
                   // Nothing to do because previous instruction already set the
                   // condition code for the first child's register
@@ -832,7 +831,7 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
                   else
                      {
                      TR::Register *firstChildReg = cg->evaluate(firstChild);
-                     if (isConditionCodeSetForCompareToZero(firstChild, true))
+                     if (isConditionCodeSetForCompareToZero(firstChild, true, cg))
                         {
                         // Nothing to do because the evaluation of firstChild set the
                         // condition codes for us
@@ -1033,7 +1032,7 @@ void OMR::X86::TreeEvaluator::compareIntegersForOrder(
       // condition codes for the first child's register, then we can omit the compare
       // instruction here.
       //
-      if (constValue != 0 || !isConditionCodeSetForCompareToZero(firstChild, false))
+      if (constValue != 0 || !isConditionCodeSetForCompareToZero(firstChild, false, cg))
          {
          // If the first child is a memory reference, is not already in a register,
          // and is only used here, do an in-memory comparison.
