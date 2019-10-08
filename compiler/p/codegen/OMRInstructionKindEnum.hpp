@@ -32,7 +32,6 @@
       IsDepImm,
          IsDepImmSym,
    IsLabel,
-      IsAlignedLabel,
       IsDepLabel,
          IsVirtualGuardNOP,
       IsConditionalBranch,

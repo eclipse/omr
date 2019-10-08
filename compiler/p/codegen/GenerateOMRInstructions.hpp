@@ -152,14 +152,6 @@ TR::Instruction *generateLabelInstruction(
                    TR::LabelSymbol *sym,
                    TR::Instruction *preced = 0);
 
-TR::Instruction *generateAlignedLabelInstruction(
-                   TR::CodeGenerator *cg,
-                   TR::InstOpCode::Mnemonic op,
-                   TR::Node * n,
-                   TR::LabelSymbol *sym,
-                   int32_t alignment,
-                   TR::Instruction *preced = 0);
-
 TR::Instruction *generateDepLabelInstruction(
                    TR::CodeGenerator      *cg,
                    TR::InstOpCode::Mnemonic                       op,

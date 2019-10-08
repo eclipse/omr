@@ -294,14 +294,6 @@ TR::Instruction *generateLabelInstruction(TR::CodeGenerator *cg, TR::InstOpCode:
    return new (cg->trHeapMemory()) TR::PPCLabelInstruction(op, n, sym, cg);
    }
 
-TR::Instruction *generateAlignedLabelInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
-   TR::LabelSymbol *sym, int32_t alignment, TR::Instruction *preced)
-   {
-   if (preced)
-      return new (cg->trHeapMemory()) TR::PPCAlignedLabelInstruction(op, n, sym, alignment, preced, cg);
-   return new (cg->trHeapMemory()) TR::PPCAlignedLabelInstruction(op, n, sym, alignment, cg);
-   }
-
 TR::Instruction *generateDepLabelInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
    TR::LabelSymbol *sym, TR::RegisterDependencyConditions *cond, TR::Instruction *preced)
    {

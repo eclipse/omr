@@ -128,7 +128,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * instr)
          print(pOutFile, (TR::PPCDepImmSymInstruction *)instr);
          break;
       case OMR::Instruction::IsLabel:
-      case OMR::Instruction::IsAlignedLabel:
          print(pOutFile, (TR::PPCLabelInstruction *)instr);
          break;
       case OMR::Instruction::IsDepLabel:
@@ -926,7 +925,6 @@ TR::Instruction* TR_Debug::getOutlinedTargetIfAny(TR::Instruction *instr)
    switch (instr->getKind())
       {
       case TR::Instruction::IsLabel:
-      case TR::Instruction::IsAlignedLabel:
       case TR::Instruction::IsDepLabel:
       case TR::Instruction::IsVirtualGuardNOP:
       case TR::Instruction::IsConditionalBranch:

@@ -401,35 +401,6 @@ class PPCLabelInstruction : public TR::Instruction
    virtual void assignRegisters(TR_RegisterKinds kindToBeAssigned);
    };
 
-class PPCAlignedLabelInstruction : public PPCLabelInstruction
-   {
-   int32_t _alignment;
-   bool _flipAlignmentDecision;
-
-   public:
-
-   PPCAlignedLabelInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::LabelSymbol *sym, int32_t align, TR::CodeGenerator *codeGen)
-      : PPCLabelInstruction(op, n, sym, codeGen), _alignment(align), _flipAlignmentDecision(false)
-      {}
-
-   PPCAlignedLabelInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::LabelSymbol *sym, int32_t align,
-                                 TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCLabelInstruction(op, n, sym, precedingInstruction, codeGen), _alignment(align), _flipAlignmentDecision(false)
-      {}
-
-   virtual Kind getKind() { return IsAlignedLabel; }
-
-   int32_t getAlignment() { return  _alignment;}
-   int32_t setAlignment(int32_t a) { return  (_alignment=a);}
-
-   bool getFlipAlignmentDecision() { return  _flipAlignmentDecision;}
-   bool setFlipAlignmentDecision(bool d) { return  (_flipAlignmentDecision=d);}
-
-   virtual uint8_t *generateBinaryEncoding();
-
-   virtual int32_t estimateBinaryLength(int32_t currentEstimate);
-   };
-
 class PPCDepLabelInstruction : public PPCLabelInstruction
    {
    TR::RegisterDependencyConditions *_conditions;

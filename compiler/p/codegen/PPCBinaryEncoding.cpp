@@ -206,44 +206,6 @@ static bool reversedConditionalBranchOpCode(TR::InstOpCode::Mnemonic op, TR::Ins
       }
    }
 
-uint8_t *TR::PPCAlignedLabelInstruction::generateBinaryEncoding()
-   {
-   uint8_t        *instructionStart = cg()->getBinaryBufferCursor();
-   TR::LabelSymbol *label            = getLabelSymbol();
-   uint8_t        *cursor           = instructionStart;
-   int32_t        alignment         = getAlignment();
-   int32_t        paddingNOPsNeeded = 0;
-
-   if ((alignment-1) & (intptr_t)cursor)
-      {
-      paddingNOPsNeeded = (alignment - ((alignment-1) & (intptr_t)cursor))/(PPC_INSTRUCTION_LENGTH);
-      }
-
-   if ((paddingNOPsNeeded > 0) ^ getFlipAlignmentDecision())
-      {
-      for (int32_t i = 0; i < paddingNOPsNeeded; i++)
-         {
-         TR::InstOpCode opCode(TR::InstOpCode::nop);
-         opCode.copyBinaryToBuffer(cursor);
-         cursor += PPC_INSTRUCTION_LENGTH;
-         }
-      }
-
-   label->setCodeLocation(cursor); // point past any NOPs to the following instruction
-   setBinaryLength(cursor - instructionStart);
-   cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - getBinaryLength());
-   setBinaryEncoding(instructionStart);
-   return cursor;
-   }
-
-int32_t TR::PPCAlignedLabelInstruction::estimateBinaryLength(int32_t currentEstimate)
-   {
-   TR_ASSERT((getAlignment() % PPC_INSTRUCTION_LENGTH) == 0, "label alignment must be a multiple of the instruction length, alignment = %d", getAlignment());
-   TR_ASSERT(getOpCodeValue() == TR::InstOpCode::label, "AlignedLabel only supported for TR::InstOpCode::Label opcodes");
-   setEstimatedBinaryLength(getAlignment() - PPC_INSTRUCTION_LENGTH);
-   return currentEstimate + getEstimatedBinaryLength();
-   }
-
 uint8_t *TR::PPCConditionalBranchInstruction::generateBinaryEncoding()
    {
    uint8_t        *instructionStart = cg()->getBinaryBufferCursor();
