@@ -44,7 +44,7 @@ MODULE_INCLUDES += vlhgc
 endif
 
 ifeq (linux,$(OMR_HOST_OS))
-  ifeq (x86,$(OMR_HOST_ARCH))
+  ifneq (,$(filter x86 riscv,$(OMR_HOST_ARCH)))
     MODULE_CFLAGS += -funroll-loops
     MODULE_CXXFLAGS += -funroll-loops
   endif

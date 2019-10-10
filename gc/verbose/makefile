@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2016 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@ OBJECTS += $(patsubst %.c,%$(OBJEXT),$(wildcard *.c))
 MODULE_INCLUDES += ../base ../structs ../stats ../include ../verbose/handler_standard $(OMRGLUE_INCLUDES)
 
 ifeq (linux,$(OMR_HOST_OS))
-  ifeq (x86,$(OMR_HOST_ARCH))
+  ifneq (,$(filter x86 riscv,$(OMR_HOST_ARCH)))
     MODULE_CFLAGS += -funroll-loops
     MODULE_CXXFLAGS += -funroll-loops
   endif
