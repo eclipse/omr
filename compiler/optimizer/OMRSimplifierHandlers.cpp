@@ -16345,7 +16345,7 @@ TR::Node *nullchkSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
       }
    simplifyChildren(node, block, s);
 
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = s->comp();
    if (node->getFirstChild()->getNumChildren() == 0)
       {
       dumpOptDetails(s->comp(), "%sRemoving nullchk with no grandchildren in node [%s]\n", s->optDetailString(), node->getName(s->getDebug()));
