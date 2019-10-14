@@ -192,10 +192,10 @@ void
 OMR::VirtualMachineOperandArray::init()
    {
    int32_t numBytes = _numberOfElements * sizeof(TR::IlValue *);
-   _values = (TR::IlValue **) TR::comp()->trMemory()->allocateHeapMemory(numBytes);
+   TR::Compilation *comp = TR::comp();
+   _values = (TR::IlValue **) comp->trMemory()->allocateHeapMemory(numBytes);
    memset(_values, 0, numBytes);
 
-   TR::Compilation *comp = TR::comp();
    // Create a temp for the OperandArray base
    TR::SymbolReference *symRef = comp->getSymRefTab()->createTemporary(_mb->methodSymbol(), _mb->typeDictionary()->PointerTo(_elementType)->getPrimitiveType());
    symRef->getSymbol()->setNotCollected();
