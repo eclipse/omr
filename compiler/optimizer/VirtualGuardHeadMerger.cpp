@@ -263,7 +263,6 @@ static bool safeToMoveGuard(TR::Block *destination, TR::TreeTop *guardCandidate,
 
 static void moveBlockAfterDest(TR::CFG *cfg, TR::Block *toMove, TR::Block *dest)
    {
-   TR::Compilation *comp = TR::comp();
    // Step1 splice out toMove
    TR::Block *toMovePrev = toMove->getPrevBlock();
    TR::Block *toMoveSucc = toMove->getNextBlock();
