@@ -6,26 +6,44 @@
 #define OMR_OWLMAPPER_HPP
 
 #include <unordered_map>
+#include <vector>
 #include "il/OMRNode_inlines.hpp"
 #include "compile/Compilation.hpp"
-#include "OWLInstructionConstructor.hpp"
+#include "optimizer/OWLInstructionConstructor.hpp"
+
+/*** indicates how the offset of branch instruction should be adjusted ***/
+enum BranchTargetLabelAdjustType {
+    NO_ADJUST, // no need to adjust the branch target
+    TABLE_MAP, // get the target label from the omr index to wala offset mapping table
+    ADD_2,// label target = current offset added by 2
+    ADD_3,
+};
+
+struct InstructionInfo {
+    /*** if false, this indicates it can be an OMR treetop, BBStart, BBEnd or an eliminated OMR instruction ***/
+    bool is_WALA_instruction;
+    uint32_t OMR_GlobalIndex;
+    uint32_t WALA_offset; // set to 0 initially and let the adjust function assign the correct offset
+    BranchTargetLabelAdjustType branchTargetLabelAdjustType;
+    WALA_InstructionFieldsUnion instructionFieldsUnion;
+    WALA_Instruction instruction;
+};
 
 
 class TR_OWLMapper
 {
 private:
-    uint32_t _offset; // only used for building index-offset map table
-    int32_t _offsetAdjust;
+
     TR_OWLInstructionConstructor* _con;
 
-    std::unordered_map<uint32_t, uint32_t> _OMR_IndexToWALA_OffsetMap;
+    std::vector<InstructionInfo> _instructionInfoList; 
 
-    void _buildOMR_IndexToWALA_MappingTable(TR::Node *root,TR::NodeChecklist &visited); // build the index to offset table
     void _processTree(TR::Node *root,TR::NodeChecklist &visited ); // traverse the tree
-    void _logInstruction(const char* instruction, uint32_t offset);
+    void _adjustOffset();
+    void _logAllMappedInstructions(); 
 
-    uint32_t _getWALAOffset(TR::Node *node, int16_t adjustAmount );
-
+    void _logSingleInstruction(jobject instructionObj, WALA_Instruction instruction, uint32_t offset);
+    
     void _instructionRouter(TR::Node *node);
 
     char* _getType(TR::ILOpCode opCode);
@@ -34,12 +52,12 @@ private:
     void _mapStoreInstruction(TR::Node* node);
     void _mapLoadInstruction(TR::Node* node);
     void _mapReturnInstruction(TR::Node* node);
-    void _mapBinaryOpInstruction(TR::Node* node);
-    void _mapUnaryOpInstruction(TR::Node* node);
+    void _mapArithmeticInstruction(TR::Node* node);
     void _mapGotoInstruction(TR::Node* node);
     void _mapConditionalBranchInstruction(TR::Node* node);
     void _mapComparisonInstruction(TR::Node* node);
     void _mapConversionInstruction(TR::Node* node);
+    void _mapInvokeInstruction(TR::Node* node);
 
 public:
     TR_OWLMapper();

@@ -2,7 +2,7 @@
 // Created by Cijie Xia on 2019-09-29.
 //
 
-#include "OWLJNIConfig.hpp"
+#include "optimizer/OWLJNIConfig.hpp"
 
 /*** Types ***/
 char* const TYPE_short = "S";
@@ -14,6 +14,7 @@ char* const TYPE_char = "C";
 char* const TYPE_byte = "B";
 char* const TYPE_void = "V";
 char* const TYPE_boolean = "Z";
+char* const TYPE_Object = "Ljava/lang/Object;";
 
 
 /***** Method Config ******/
@@ -158,6 +159,20 @@ const MethodConfig UnaryOpInstructionToStringConfig = {
         "()Ljava/lang/String;"
 };
 
+const MethodConfig InvokeInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/InvokeInstruction",
+        "make",
+        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;)Lcom/ibm/wala/shrikeBT/InvokeInstruction;"
+};
+
+const MethodConfig InvokeInstructionToStringConfig = {
+        false,
+        "com/ibm/wala/shrikeBT/InvokeInstruction",
+        "toString",
+        "()Ljava/lang/String;"
+};
+
 /***** Field Config ******/
 
 const FieldConfig ADD_OperatorConfig = {
@@ -278,4 +293,32 @@ const FieldConfig CMPG_OperatorConfig = {
         "com/ibm/wala/shrikeBT/IComparisonInstruction$Operator",
         "CMPG",
         "Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;"
+};
+
+const FieldConfig VIRTUAL_DispatchConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch",
+        "VIRTUAL",
+        "Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;"
+};
+
+const FieldConfig SPECIAL_DispatchConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch",
+        "SPECIAL",
+        "Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;"
+};
+
+const FieldConfig INTERFACE_DispatchConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch",
+        "INTERFACE",
+        "Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;"
+};
+
+const FieldConfig STATIC_DispatchConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch",
+        "STATIC",
+        "Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;"
 };

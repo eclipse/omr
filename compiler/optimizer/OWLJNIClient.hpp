@@ -35,9 +35,9 @@ private:
     jfieldID _getFieldId(bool isStaticField, jclass cls, const char* fieldName, const char* fieldSig);
 
 public:
-    ~TR_OWLJNIClient();
+    
     static TR_OWLJNIClient *getInstance();
-
+    static void destroyInstance();
     jstring constructString(char* str);
 
     jobject constructObject(int32_t i);

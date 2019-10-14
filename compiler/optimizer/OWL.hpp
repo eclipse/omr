@@ -6,11 +6,15 @@
 #define OMR_OWL_H
 
 #include "optimizer/Optimization.hpp"
+#include "optimizer/OWLMapper.hpp"
 
 class TR_OWL: public TR::Optimization
 {
+private:
+    TR_OWLMapper *_mapper;
 public:
     TR_OWL(TR::OptimizationManager *manager);
+    ~TR_OWL();
     static TR::Optimization *create(TR::OptimizationManager *manager);
 
     virtual int32_t perform();
