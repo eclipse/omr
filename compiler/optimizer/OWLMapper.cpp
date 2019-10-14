@@ -5,13 +5,34 @@
 #include <string.h>
 #include <stdlib.h>
 #include "il/ILHelpers.hpp"
-#include "OWLMapper.hpp"
-#include "OWLJNIConfig.hpp"
+#include "optimizer/OWLMapper.hpp"
+#include "optimizer/OWLJNIConfig.hpp"
 
+
+
+/****** public ******/
+
+void TR_OWLMapper::map(TR::Compilation* compilation) {
+
+    TR::NodeChecklist instructionMappingVisited(compilation); // visited nodes for mapping the instruction
+
+    printf("++++ process the tree ++++\n");
+    for (TR::TreeTop *tt = compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
+        TR::Node *node = tt->getNode();
+        _processTree(node, instructionMappingVisited);
+        //printf("==================\n");
+    }
+    printf("++++ adjust the branch target label ++++\n");
+
+    _adjustOffset();
+
+    printf("++++ log WALA instructions ++++\n");
+
+    _logAllMappedInstructions();
+}
 
 TR_OWLMapper::TR_OWLMapper() {
-    _offset = 0; // only used for building index-offset map table
-    _offsetAdjust = 0;
+
     _con = new TR_OWLInstructionConstructor();
 }
 
@@ -19,23 +40,7 @@ TR_OWLMapper::~TR_OWLMapper() {
     delete _con;
 }
 
-void TR_OWLMapper::_buildOMR_IndexToWALA_MappingTable(TR::Node *root, TR::NodeChecklist &visited) {
-    if (visited.contains(root))
-        return;
-
-    visited.add(root);
-
-    for (uint32_t i = 0; i < root->getNumChildren(); ++i) {
-        _buildOMR_IndexToWALA_MappingTable(root->getChild(i), visited);
-    }
-
-    _OMR_IndexToWALA_OffsetMap[root->getGlobalIndex()] = _offset;
-    if (root->getOpCodeValue() != TR::BBStart && root->getOpCodeValue() != TR::BBEnd){
-        _offset++;
-    }
-
-}
-
+/****** private ******/
 void TR_OWLMapper::_processTree(TR::Node *root, TR::NodeChecklist &visited) {
     if (visited.contains(root))
         return;
@@ -49,64 +54,225 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::NodeChecklist &visited) {
     _instructionRouter(root);
 }
 
-void TR_OWLMapper::_logInstruction(const char *instruction, uint32_t offset) {
-    printf("%d: %s\n",offset, instruction);
+void TR_OWLMapper::_adjustOffset() {
+    /**** build OMR index to WALA offset table ****/
+    std::unordered_map<uint32_t,uint32_t> OMR_indexTo_WALA_offsetTable;
+    uint32_t offset = 0;
+    for (uint32_t i = 0 ; i < _instructionInfoList.size(); i ++) {
+
+        InstructionInfo instrInfo = _instructionInfoList[i];
+        bool is_WALA_instruction = instrInfo.is_WALA_instruction;
+
+        OMR_indexTo_WALA_offsetTable[instrInfo.OMR_GlobalIndex] = offset;
+        if (is_WALA_instruction) {
+            offset ++;
+        }
+    }
+    
+    offset = 0;
+    /**** Adjust branch target label and instruction offsets ****/
+    for (uint32_t i = 0 ; i < _instructionInfoList.size(); i ++) {
+        InstructionInfo* instrInfo = &_instructionInfoList[i];
+        bool is_WALA_instruction = instrInfo->is_WALA_instruction;
+        WALA_Instruction instruction = instrInfo->instruction;
+        
+        if (is_WALA_instruction) {
+            BranchTargetLabelAdjustType adjustType = instrInfo->branchTargetLabelAdjustType;
+            WALA_InstructionFieldsUnion *fieldsUnion = &instrInfo->instructionFieldsUnion;
+            uint32_t label;
+            if (instruction == GOTO) {
+
+                GotoInstructionFields *gotoFields = &fieldsUnion->gotoInstructionFields;
+
+                switch (adjustType)
+                {
+                    case TABLE_MAP:
+                        label = OMR_indexTo_WALA_offsetTable[gotoFields->label]; 
+                        break;
+                    case ADD_2:
+                        label = offset + 2;
+                        break;
+                    case ADD_3:
+                        label = offset + 3;
+                        break;
+                    default:
+                        perror("No adjust type matched!\n");
+                        exit(1);
+                }
+
+                gotoFields->label = label;
+               
+            }
+            else if (instruction == CONDITIONAL_BRANCH) {
+                ConditionalBranchInstructionFields *condiFields = &fieldsUnion->conditionalBranchInstructionFields;
+                switch (adjustType)
+                {
+                    case TABLE_MAP:
+                        label = OMR_indexTo_WALA_offsetTable[condiFields->label]; 
+                        break;
+                    case ADD_2:
+                        label = offset + 2;
+                        break;
+                    case ADD_3:
+                        label = offset + 3;
+                        break;
+                    default:
+                        perror("No adjust type matched!\n");
+                        exit(1);
+                }
+
+                condiFields->label = label;
+            }
+            
+            instrInfo->WALA_offset = offset;
+            offset ++;
+        }
+    }
 
 }
 
-uint32_t TR_OWLMapper::_getWALAOffset(TR::Node *node, int16_t adjustAmount) {
-    uint32_t offset = _OMR_IndexToWALA_OffsetMap[node->getGlobalIndex()] + _offsetAdjust;
-    _offsetAdjust += adjustAmount;
-    return offset;
+void TR_OWLMapper::_logAllMappedInstructions() {
+
+    for (uint32_t i = 0 ; i < _instructionInfoList.size(); i ++ ) {
+        
+        InstructionInfo instrInfo = _instructionInfoList[i];
+        bool is_WALA_instruciton = instrInfo.is_WALA_instruction;
+        if (is_WALA_instruciton){
+
+            WALA_Instruction instruction = instrInfo.instruction;
+            WALA_InstructionFieldsUnion instrUnion = instrInfo.instructionFieldsUnion;
+            uint32_t offset = instrInfo.WALA_offset;
+
+            jobject instructionObj;
+
+            switch(instruction){
+                case CONSTANT: {
+                    ConstantInstructionFields constFields = instrUnion.constantInstructionFields;
+                    instructionObj = _con->ConstantInstruction(constFields.type, constFields.value);
+                    break;
+                }
+                case STORE: {
+                    StoreInstructionFields storeFields = instrUnion.storeInstructionFields;
+                    instructionObj = _con->StoreInstruction(storeFields.type, storeFields.symbolReference);
+                    break;
+                }
+                case LOAD: {
+                     LoadInstructionFields loadFields = instrUnion.loadInstructionFields;
+                    instructionObj = _con->LoadInstruction(loadFields.type,loadFields.symbolReference);
+                    break;
+                }
+                case BINARY_OP: {
+                    BinaryOpInstructionFields binaryFields = instrUnion.binaryOpInstructionFields;
+                    instructionObj = _con->BinaryOpInstruction(binaryFields.type,binaryFields.op);
+                    break;
+                }
+                case UNARY_OP: {
+                    UnaryOpInstructionFields unaryFields = instrUnion.unaryOpInstructionFields;
+                    instructionObj = _con->UnaryOpInstruction(unaryFields.type);
+                    break;
+                }
+                case RETURN: {
+                    ReturnInstructionFields returnFields = instrUnion.returnInstructionFields;
+                    instructionObj = _con->ReturnInstruction(returnFields.type);
+                    break;
+                }
+                case GOTO: {
+                    GotoInstructionFields gotoFields = instrUnion.gotoInstructionFields;
+                    instructionObj = _con->GotoInstruction(gotoFields.label);
+                    break;
+                }
+                case CONDITIONAL_BRANCH: {
+                    ConditionalBranchInstructionFields condiFields = instrUnion.conditionalBranchInstructionFields;
+                    instructionObj = _con->ConditionalBranchInstruction(condiFields.type,condiFields.op,condiFields.label);
+                    break;
+                }
+                case COMPARISON: {
+                    ComparisonInstructionFields compaFields = instrUnion.comparisonInstructionFields;
+                    instructionObj = _con->ComparisonInstruction(compaFields.type,compaFields.op);
+                    break;
+                }
+                case CONVERSION: {
+                    ConversionInstructionFields conversionFields = instrUnion.conversionInstructionFields;
+                    instructionObj = _con->ConversionInstruction(conversionFields.fromType,conversionFields.toType);
+                    break;
+                }
+                case INVOKE: {
+                    InvokeInstructionFields invokeFields = instrUnion.invokeInstructionFields;
+                    instructionObj = _con->InvokeInstruction(invokeFields.type,invokeFields.className,invokeFields.methodName,invokeFields.disp);
+                    break;
+                }
+                    
+                default:
+                    perror("No instruction matched inside logging instructions function!\n");
+                    exit(1);
+                    
+            }
+
+            _logSingleInstruction(instructionObj,instruction,offset);
+        }
+        
+    }
 }
+
+void TR_OWLMapper::_logSingleInstruction(jobject instructionObj, WALA_Instruction instruction, uint32_t offset) {
+    char* str = _con->getInstructionString(instructionObj, instruction);
+    printf("%d: %s\n",offset, str);
+    free(str);
+}
+
 
 /****** instruction router, starting point ********/
 void TR_OWLMapper::_instructionRouter(TR::Node *node) {
+    TR::ILOpCodes opCodeValue = node->getOpCodeValue();
 
-    if (node->getOpCodeValue() == TR::BBStart || node->getOpCodeValue() == TR::BBEnd){
+    /*** deal with the nodes that are tree top or BBStart, BBEnd ***/
+    if ( opCodeValue == TR::treetop || opCodeValue == TR::BBStart || opCodeValue == TR::BBEnd){
+        InstructionInfo instructionInfo;
+        instructionInfo.is_WALA_instruction = false;
+        instructionInfo.OMR_GlobalIndex = node->getGlobalIndex();
+        _instructionInfoList.push_back(instructionInfo);
         return;
     }
 
-    //printf("%s ",node->getOpCode().getName());
+    printf("%d: %s\n ", node->getGlobalIndex(),node->getOpCode().getName());
+    // printf("%u| ",node->getByteCodeIndex());
 
-    TR::ILOpCode opCode = node->getOpCode();
+     TR::ILOpCode opCode = node->getOpCode();
 
-    if (opCode.isLoadConst()) { //constant instruction
-        _mapConstantInstruction(node);
-    }
-    else if (opCode.isStore()) { // store instruction
-        _mapStoreInstruction(node);
-    }
-    else if (opCode.isLoad()) { // load instruction
-        _mapLoadInstruction(node);
-    }
-    else if (opCode.isReturn()) { // return instruction
-        _mapReturnInstruction(node);
-    }
-    else if (opCode.isArithmetic()){ // arithmetic (binary op) instructions
-        _mapBinaryOpInstruction(node);
-    }
-    else if (opCode.isGoto()){ // goto instruction
-        _mapGotoInstruction(node);
-    }
-    else if (opCode.isBooleanCompare() && opCode.isBranch()){ // conditional branch instruction
-        _mapConditionalBranchInstruction(node);
-    }
-    else if (opCode.isConversion()) { // conversion Instruction
-        _mapConversionInstruction(node);
-    }
-    else if (opCode.isBooleanCompare()){ // comparison instruction
-        _mapComparisonInstruction(node);
-    }
-    else if (opCode.isNeg()) { // unary (Neg) Instruction
-        _mapUnaryOpInstruction(node);
-    }
-    else{ // for those have not been mapped
-        printf("XXXXX");
-        _logInstruction(node->getOpCode().getName(), _getWALAOffset(node,0));
-    }
-
-
+     if (opCode.isLoadConst()) { //constant instruction
+         _mapConstantInstruction(node);
+     }
+     else if (opCode.isStore()) { // store instruction
+         _mapStoreInstruction(node);
+     }
+     else if (opCode.isLoad()) { // load instruction
+         _mapLoadInstruction(node);
+     }
+     else if (opCode.isReturn()) { // return instruction
+         _mapReturnInstruction(node);
+     }
+     else if (opCode.isArithmetic()){ // arithmetic instructions
+         _mapArithmeticInstruction(node);
+     }
+     else if (opCode.isGoto()){ // goto instruction
+         _mapGotoInstruction(node);
+     }
+     else if (opCode.isBooleanCompare() && opCode.isBranch()){ // conditional branch instruction
+         _mapConditionalBranchInstruction(node);
+     }
+     else if (opCode.isConversion()) { // conversion Instruction
+         _mapConversionInstruction(node);
+     }
+     else if (opCode.isBooleanCompare()){ // comparison instruction
+         _mapComparisonInstruction(node);
+     }
+     else if (opCode.isCall()) { // function call
+        _mapInvokeInstruction(node);
+     }
+     else{ // for those have not been mapped
+         printf("XXXXX");
+         //_logInstruction(node->getOpCode().getName(), 0);
+     }
 
 }
 
@@ -118,124 +284,201 @@ char* TR_OWLMapper::_getType(TR::ILOpCode opCode) {
     else if (opCode.isFloat()) return TYPE_float;
     else if (opCode.isDouble()) return TYPE_double;
     else if (opCode.isByte()) return TYPE_int; // no byte for Java Bytecode
+    else if (opCode.isIntegerOrAddress()) return TYPE_Object;
 
     perror("No type matched!\n");
     exit(1);
 }
 
 void TR_OWLMapper::_mapConstantInstruction(TR::Node *node) {
-    jobject constantInstruction;
+
+    ConstantInstructionFields constFields;
+
     TR::ILOpCode opCode = node->getOpCode();
     if (opCode.isInt()){
-        constantInstruction = _con->ConstantInstruction(TYPE_int, _con->Integer(node->getInt()));
+        constFields = {TYPE_int, _con->Integer(node->getInt())};
     }
     else if (opCode.isFloat()){
-        constantInstruction = _con->ConstantInstruction(TYPE_float, _con->Float(node->getFloat()));
+        constFields = {TYPE_float, _con->Float(node->getFloat())};
     }
     else if (opCode.isDouble()){
-        constantInstruction = _con->ConstantInstruction(TYPE_double, _con->Double(node->getDouble()));
+        constFields = {TYPE_double, _con->Double(node->getDouble())};
     }
     else if (opCode.isShort()){
-        constantInstruction = _con->ConstantInstruction(TYPE_int, _con->Integer(node->getShortInt()));
+        constFields = {TYPE_int, _con->Integer(node->getShortInt())};
     }
     else if (opCode.isLong()){
-        constantInstruction = _con->ConstantInstruction(TYPE_long, _con->Long(node->getLongInt()));
+        constFields = {TYPE_long, _con->Long(node->getLongInt())};
     }
     else if (opCode.isByte()){
-        constantInstruction = _con->ConstantInstruction(TYPE_int, _con->Integer(node->getByte()));
+        constFields = {TYPE_int, _con->Integer(node->getByte())};
     }
     else{
         perror("No Constant type matched!\n");
-        exit(0);
+        exit(1);
     }
 
-    char * str = _con->getInstructionString(constantInstruction,CONSTANT);
-    _logInstruction(str,_getWALAOffset(node,0));
-    free(str);
+    WALA_InstructionFieldsUnion instrUnion;
+    instrUnion.constantInstructionFields = constFields;
+    InstructionInfo instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        NO_ADJUST,
+        instrUnion,
+        CONSTANT
+    };
+
+    _instructionInfoList.push_back(instrInfo);
 
 }
 
 void TR_OWLMapper::_mapStoreInstruction(TR::Node *node) {
-    jobject storeInstruction;
+  
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
-    storeInstruction = _con->StoreInstruction(type,node->getSymbolReference());
-    char * str = _con->getInstructionString(storeInstruction,STORE);
-    _logInstruction(str, _getWALAOffset(node,0));
-    free(str);
+
+    StoreInstructionFields storeFields = {type,node->getSymbolReference()};
+    WALA_InstructionFieldsUnion instrUnion;
+    instrUnion.storeInstructionFields = storeFields;
+    InstructionInfo instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        NO_ADJUST,
+        instrUnion,
+        STORE
+    };
+
+    _instructionInfoList.push_back(instrInfo);
+
 }
 
 void TR_OWLMapper::_mapLoadInstruction(TR::Node *node) {
-    jobject loadInstruction;
+
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
-    loadInstruction = _con->LoadInstruction(type, node->getSymbolReference());
-    char *str = _con->getInstructionString(loadInstruction,LOAD);
-    _logInstruction(str,_getWALAOffset(node,0));
-    free(str);
+    LoadInstructionFields loadFields = {type, node->getSymbolReference()};
+
+    WALA_InstructionFieldsUnion instrUnion;
+    instrUnion.loadInstructionFields = loadFields;
+
+    InstructionInfo instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        NO_ADJUST,
+        instrUnion,
+        LOAD
+    };
+
+    _instructionInfoList.push_back(instrInfo);
 }
 
 void TR_OWLMapper::_mapReturnInstruction(TR::Node *node) {
-    jobject returnInstruction;
+    
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
-    returnInstruction = _con->ReturnInstruction(type);
-    char* str = _con->getInstructionString(returnInstruction,RETURN);
-    _logInstruction(str,_getWALAOffset(node,0));
-    free(str);
+    
+    ReturnInstructionFields returnFields = {type};
+
+    WALA_InstructionFieldsUnion instrUnion;
+    instrUnion.returnInstructionFields = returnFields;
+
+    InstructionInfo instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        NO_ADJUST,
+        instrUnion,
+        RETURN
+    };
+
+    _instructionInfoList.push_back(instrInfo);
 }
 
-void TR_OWLMapper::_mapBinaryOpInstruction(TR::Node *node) {
-    jobject binaryOpInstruction;
+void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
 
     TR::ILOpCode opCode = node->getOpCode();
+    char* type = _getType(opCode);
+    WALA_Operator op;
+    
+    InstructionInfo instrInfo;
 
-    Op op;
-    if (opCode.isAdd()) op = ADD;
-    else if (opCode.isSub()) op = SUB;
-    else if (opCode.isMul()) op = MUL;
-    else if (opCode.isDiv()) op = DIV;
-    else if (opCode.isRem()) op = REM;
-    else {
-        perror("No binary operator matched!\n");
-        exit(1);
+    /**** Unary op ****/
+    if (opCode.isNeg()){
+
+        UnaryOpInstructionFields unaryFields = {type};
+        WALA_InstructionFieldsUnion instrUnion;
+        instrUnion.unaryOpInstructionFields = unaryFields;
+
+        instrInfo = {
+            true,
+            node->getGlobalIndex(),
+            0,
+            NO_ADJUST,
+            instrUnion,
+            UNARY_OP
+        };
+
+    }
+    /**** Binary op ****/
+    else{
+        if (opCode.isAdd()) op = ADD;
+        else if (opCode.isSub()) op = SUB;
+        else if (opCode.isMul()) op = MUL;
+        else if (opCode.isDiv()) op = DIV;
+        else if (opCode.isRem()) op = REM;
+        else if (opCode.isAnd()) op = AND;
+        else if (opCode.isOr()) op = OR;
+        else if (opCode.isXor()) op = XOR;
+        else{
+            perror("No arithmetic operator matched!\n");
+            exit(1);
+        }
+        BinaryOpInstructionFields binaryFields = {type,op};
+        WALA_InstructionFieldsUnion instrUnion;
+        instrUnion.binaryOpInstructionFields = binaryFields;
+
+        instrInfo = {
+            true,
+            node->getGlobalIndex(),
+            0,
+            NO_ADJUST,
+            instrUnion,
+            BINARY_OP
+        };
+
     }
 
-    char* type = _getType(opCode);
+    _instructionInfoList.push_back(instrInfo);
 
-    binaryOpInstruction = _con->BinaryOpInstruction(type, op);
-    char* str = _con->getInstructionString(binaryOpInstruction,BINARY_OP);
-    _logInstruction(str,_getWALAOffset(node,0));
-    free(str);
-}
-
-void TR_OWLMapper::_mapUnaryOpInstruction(TR::Node *node) {
-    jobject unaryOpInstruction;
-
-    TR::ILOpCode opCode = node->getOpCode();
-
-    char *type = _getType(opCode);
-
-    unaryOpInstruction = _con->UnaryOpInstruction(type);
-    char *str = _con->getInstructionString(unaryOpInstruction,UNARY_OP);
-    _logInstruction(str,_getWALAOffset(node,0));
-    free(str);
 }
 
 void TR_OWLMapper::_mapGotoInstruction(TR::Node *node) {
-    jobject gotoInstruction;
+    
     uint32_t index = node->getBranchDestination()->getNode()->getGlobalIndex();
-    gotoInstruction = _con->GotoInstruction(_OMR_IndexToWALA_OffsetMap[index] + _offsetAdjust);
-    char* str = _con->getInstructionString(gotoInstruction,GOTO);
-    _logInstruction(str,_getWALAOffset(node,0));
-    free(str);
+
+    GotoInstructionFields gotoFields = {index};
+    WALA_InstructionFieldsUnion instrUnion;
+    instrUnion.gotoInstructionFields = gotoFields;
+
+    InstructionInfo instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        TABLE_MAP,
+        instrUnion,
+        GOTO
+    };
+
+    _instructionInfoList.push_back(instrInfo);
 }
 
 void TR_OWLMapper::_mapConditionalBranchInstruction(TR::Node *node) {
-    jobject conditionalBranchInstruction;
 
     TR::ILOpCodes opCodeValue = node->getOpCodeValue();
-    Op op;
+    WALA_Operator op;
 
     if (TR::ILOpCode::isStrictlyLessThanCmp(opCodeValue)) op = LT;
     else if (TR::ILOpCode::isStrictlyGreaterThanCmp(opCodeValue)) op = GT;
@@ -247,17 +490,28 @@ void TR_OWLMapper::_mapConditionalBranchInstruction(TR::Node *node) {
     TR::ILOpCode childOpCode = node->getFirstChild()->getOpCode();
     char* type = _getType(childOpCode);
     uint32_t index = node->getBranchDestination()->getNode()->getGlobalIndex();
-    conditionalBranchInstruction = _con->ConditionalBranchInstruction(type, op, _OMR_IndexToWALA_OffsetMap[index] + _offsetAdjust);
 
-    char* str = _con->getInstructionString(conditionalBranchInstruction,CONDITIONAL_BRANCH);
-    _logInstruction(str,_getWALAOffset(node,0));
-    free(str);
+    ConditionalBranchInstructionFields condiFields = {type,op,index};
+
+    WALA_InstructionFieldsUnion instrUnion;
+    instrUnion.conditionalBranchInstructionFields = condiFields;
+
+    InstructionInfo instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        TABLE_MAP,
+        instrUnion,
+        CONDITIONAL_BRANCH
+    };
+    
+    _instructionInfoList.push_back(instrInfo);
 }
 
 /***
- * Since WALA comparison instruction does not have a set of operators like OMR
+ * Since WALA comparison instruction does not have a full set of operators like OMR
  * We use conditional branch and create two const int 1 and const int 2
- * goto constant 1 if the condition is true
+ * goto const int 1 if the condition is true, otherwise goto const int 2
  */
 
 void TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
@@ -267,8 +521,7 @@ void TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
     char* type = _getType(opCode);
 
     TR_ComparisonTypes cmpType = TR::ILOpCode::getCompareType(opCodeValue);
-    Op op;
-
+    WALA_Operator op;
 
     if (!opCode.isCompareForEquality() && !opCode.isCompareTrueIfEqual() && opCode.isCompareTrueIfGreater() ){ //GT
         op = GT;
@@ -294,35 +547,65 @@ void TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
     }
 
     uint32_t index = node->getGlobalIndex();
-    char* str = NULL;
-    jobject conditionalBranchInstruction = _con->ConditionalBranchInstruction(type,op,_OMR_IndexToWALA_OffsetMap[index] + _offsetAdjust + 3);
-    jobject constant0Instruction = _con->ConstantInstruction(TYPE_int, _con->Integer(0));
-    jobject constant1Instruction = _con->ConstantInstruction(TYPE_int, _con->Integer(1));
-    jobject gotoInstruction = _con->GotoInstruction(_OMR_IndexToWALA_OffsetMap[index] + _offsetAdjust + 4);
 
-    str = _con->getInstructionString(conditionalBranchInstruction,CONDITIONAL_BRANCH);
+    ConditionalBranchInstructionFields condiFields = {type,op,index};
+    ConstantInstructionFields const0Fields = {TYPE_int, _con->Integer(0)};
+    GotoInstructionFields gotoFields = {index};
+    ConstantInstructionFields const1Fields = {TYPE_int, _con->Integer(1)};
 
-    _logInstruction(str,_getWALAOffset(node,1));
-    free(str);
+    WALA_InstructionFieldsUnion instrUnion;
+    InstructionInfo instrInfo;
+    instrUnion.conditionalBranchInstructionFields = condiFields;
+    instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        ADD_3,
+        instrUnion,
+        CONDITIONAL_BRANCH
+    };
 
-    str = _con->getInstructionString(constant0Instruction,CONSTANT);
+    _instructionInfoList.push_back(instrInfo);
 
-    _logInstruction(str,_getWALAOffset(node,1));
-    free(str);
+    instrUnion.constantInstructionFields = const0Fields;
+    instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        NO_ADJUST,
+        instrUnion,
+        CONSTANT
+    };
 
-    str = _con->getInstructionString(gotoInstruction,GOTO);
+    _instructionInfoList.push_back(instrInfo);
 
-    _logInstruction(str, _getWALAOffset(node,1));
-    free(str);
+    instrUnion.gotoInstructionFields = gotoFields;
+    instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        ADD_2,
+        instrUnion,
+        GOTO
+    };
 
-    str = _con->getInstructionString(constant1Instruction,CONSTANT);
+    _instructionInfoList.push_back(instrInfo);
 
-    _logInstruction(str, _getWALAOffset(node,0));
-    free(str);
+    instrUnion.constantInstructionFields = const1Fields;
+    instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        NO_ADJUST,
+        instrUnion,
+        CONSTANT
+    };
+
+    _instructionInfoList.push_back(instrInfo);
+    
 }
 
 void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
-    jobject conversionInstruction;
 
     char* fromType = NULL;
     char* toType = NULL;
@@ -330,20 +613,29 @@ void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
     TR::ILOpCodes opCodeValue = node->getOpCode().getOpCodeValue();
     switch(opCodeValue) {
         case TR::i2l:
+        case TR::iu2l:
         case TR::b2l:
+        case TR::bu2l:
         case TR::s2l:
+        case TR::su2l:
             fromType = TYPE_int;
             toType = TYPE_long;
             break;
         case TR::i2f:
+        case TR::iu2f:
         case TR::b2f:
+        case TR::bu2f:
         case TR::s2f:
+        case TR::su2f:
             fromType = TYPE_int;
             toType = TYPE_float;
             break;
         case TR::i2d:
+        case TR::iu2d:
         case TR::b2d:
+        case TR::bu2d:
         case TR::s2d:
+        case TR::su2d:
             fromType = TYPE_int;
             toType = TYPE_double;
             break;
@@ -354,10 +646,12 @@ void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
             toType = TYPE_int;
             break;
         case TR::l2f:
+        case TR::lu2f:
             fromType = TYPE_long;
             toType = TYPE_float;
             break;
         case TR::l2d:
+        case TR::lu2d:
             fromType = TYPE_long;
             toType = TYPE_double;
             break;
@@ -390,7 +684,9 @@ void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
             toType = TYPE_float;
             break;
         case TR::b2i:
+        case TR::bu2i:
         case TR::s2i:
+        case TR::su2i:
         case TR::i2b:
         case TR::i2s:
         case TR::s2b:
@@ -398,39 +694,54 @@ void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
             // no conversion needed. Since all byte and short have already been converted into int by the OWLMapper
             break;
         default:
-            perror("No type conversion matched!");
+            perror("No type conversion matched!\n");
             exit(1);
     }
 
-    if (fromType && toType){
-        conversionInstruction = _con->ConversionInstruction(fromType, toType);
-        char *str = _con->getInstructionString(conversionInstruction,CONVERSION);
-        _logInstruction(str,_getWALAOffset(node,0));
-        free(str);
-    }
-//    else{
-//        _getWALAOffset(node, -1);
-//    }
+    InstructionInfo instrInfo;
 
+    if (fromType && toType){
+        ConversionInstructionFields conversionFields = {fromType,toType};
+        WALA_InstructionFieldsUnion instrUnion;
+        instrUnion.conversionInstructionFields = conversionFields;
+        instrInfo = {
+            true,
+            node->getGlobalIndex(),
+            0,
+            NO_ADJUST,
+            instrUnion,
+            CONVERSION
+        };
+
+        
+    }
+    else{ //for those unecessary conversion instructions. They still need to occupy a slot in the instruciton list for the offset adjustment
+        
+        instrInfo.is_WALA_instruction = false;
+        instrInfo.OMR_GlobalIndex = node->getGlobalIndex();
+    }
+
+    _instructionInfoList.push_back(instrInfo);
 }
 
-/****** public ******/
+void TR_OWLMapper::_mapInvokeInstruction(TR::Node *node) {
 
-void TR_OWLMapper::map(TR::Compilation* compilation) {
+    TR::ILOpCode opCode = node->getOpCode();
+    char* type = _getType(opCode);
 
-    TR::NodeChecklist OMR_IndexToWALA_OffsetMappingVisited(compilation); //visited nodes for building OMR global index to WALA offset table
+    InvokeInstructionFields invokeFields = {type, "null", "null", STATIC};
+    
+    WALA_InstructionFieldsUnion instrUnion;
+    instrUnion.invokeInstructionFields = invokeFields;
 
-    for (TR::TreeTop *tt = compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
-        TR::Node *node = tt->getNode();
+    InstructionInfo instrInfo = {
+        true,
+        node->getGlobalIndex(),
+        0,
+        NO_ADJUST,
+        instrUnion,
+        INVOKE
+    };
 
-        _buildOMR_IndexToWALA_MappingTable(node, OMR_IndexToWALA_OffsetMappingVisited);
-    }
-
-    TR::NodeChecklist instructionMappingVisited(compilation); // visited nodes for mapping the instruction
-
-    for (TR::TreeTop *tt = compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
-        TR::Node *node = tt->getNode();
-
-        _processTree(node, instructionMappingVisited);
-    }
+    _instructionInfoList.push_back(instrInfo);
 }

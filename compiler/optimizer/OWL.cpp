@@ -10,22 +10,27 @@
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimizer.hpp"
-#include "optimizer/OWLMapper.hpp"
+
 
 TR_OWL::TR_OWL(TR::OptimizationManager *manager)
         : TR::Optimization(manager)
-{   }
+{  
+    _mapper = new TR_OWLMapper();
+}
+
+TR_OWL::~TR_OWL()
+{
+    delete _mapper;
+}
 
 TR::Optimization *TR_OWL::create(TR::OptimizationManager *manager)
 {
     return new (manager->allocator()) TR_OWL(manager);
 }
 
-int32_t TR_OWL::perform(){
-
-    TR_OWLMapper *mapper = new TR_OWLMapper();
-    mapper->map(comp());
-    delete mapper;
+int32_t TR_OWL::perform()
+{   
+    _mapper->map(comp());
 }
 
 const char *

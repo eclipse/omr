@@ -5,7 +5,7 @@
 #ifndef OMR_OWLMETHODCONFIG_HPP
 #define OMR_OWLMETHODCONFIG_HPP
 
-#include "OWLJNIClient.hpp"
+#include "optimizer/OWLJNIClient.hpp"
 
 /* Types */
 extern char* const TYPE_short;
@@ -17,6 +17,7 @@ extern char* const TYPE_char;
 extern char* const TYPE_byte;
 extern char* const TYPE_void;
 extern char* const TYPE_boolean;
+extern char* const TYPE_Object;
 
 /***** Method Config ******/
 
@@ -40,7 +41,8 @@ extern const MethodConfig ConversionInstructionConfig;
 extern const MethodConfig ConversionInstructionToStringConfig;
 extern const MethodConfig UnaryOpInstructionConfig;
 extern const MethodConfig UnaryOpInstructionToStringConfig;
-
+extern const MethodConfig InvokeInstructionConfig;
+extern const MethodConfig InvokeInstructionToStringConfig;
 
 /***** Field Config ******/
 
@@ -63,5 +65,11 @@ extern const FieldConfig LE_OperatorConfig;
 extern const FieldConfig CMP_OperatorConfig;
 extern const FieldConfig CMPL_OperatorConfig;
 extern const FieldConfig CMPG_OperatorConfig;
+
+extern const FieldConfig VIRTUAL_DispatchConfig;
+extern const FieldConfig SPECIAL_DispatchConfig;
+extern const FieldConfig INTERFACE_DispatchConfig;
+extern const FieldConfig STATIC_DispatchConfig;
+
 
 #endif //OMR_OWLMETHODCONFIG_HPP

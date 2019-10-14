@@ -20,8 +20,6 @@ TR_OWLJNIClient::TR_OWLJNIClient() {
     printf("=============Successfully launch JVM!=============\n");
 }
 
-TR_OWLJNIClient::~TR_OWLJNIClient() {}
-
 jclass TR_OWLJNIClient::_getClass(const char *className) {
     jclass cls = _env->FindClass(className);
     if (_env->ExceptionCheck()){
@@ -70,6 +68,8 @@ TR_OWLJNIClient* TR_OWLJNIClient::getInstance() {
     }
     return _instance;
 }
+
+void TR_OWLJNIClient::destroyInstance() {}
 
 jstring TR_OWLJNIClient::constructString(char *str) {
     return _env->NewStringUTF(str);

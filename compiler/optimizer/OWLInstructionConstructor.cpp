@@ -4,22 +4,23 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "OWLInstructionConstructor.hpp"
-#include "OWLJNIConfig.hpp"
+#include "optimizer/OWLInstructionConstructor.hpp"
+#include "optimizer/OWLJNIConfig.hpp"
 
 TR_OWLInstructionConstructor::TR_OWLInstructionConstructor() {
     _jniClient = TR_OWLJNIClient::getInstance();
     _index = 0;
 }
 
-TR_OWLInstructionConstructor::~TR_OWLInstructionConstructor() {
-    delete _jniClient;
+TR_OWLInstructionConstructor::~TR_OWLInstructionConstructor() {\
+    /*** TODO: destructor of JNIClient has not been implemented yet ***/
+    TR_OWLJNIClient::destroyInstance();
 }
 
 /*** Helper methods ***/
 
 /*** WARNING: It is user's responsibility to free the memory whoever uses this method ***/
-char * TR_OWLInstructionConstructor::getInstructionString(jobject instructionObj, Instruction ins) {
+char * TR_OWLInstructionConstructor::getInstructionString(jobject instructionObj, WALA_Instruction ins) {
     MethodConfig methodConfig;
     switch(ins){
         case CONSTANT: methodConfig = ConstantInstructionToStringConfig; break;
@@ -32,6 +33,7 @@ char * TR_OWLInstructionConstructor::getInstructionString(jobject instructionObj
         case CONDITIONAL_BRANCH: methodConfig = ConstantInstructionToStringConfig; break;
         case COMPARISON: methodConfig = ComparisonInstructionToStringConfig; break;
         case CONVERSION: methodConfig = ConversionInstructionToStringConfig; break;
+        case INVOKE: methodConfig = InvokeInstructionToStringConfig; break;
 
         default: perror("Error: Instruction enum not found!\n"); exit(1); break;
     }
@@ -68,7 +70,7 @@ jobject TR_OWLInstructionConstructor::Long(int64_t l) {
     return _jniClient->constructObject(l);
 }
 
-jobject TR_OWLInstructionConstructor::Operator(Op op) {
+jobject TR_OWLInstructionConstructor::Operator(WALA_Operator op) {
 
     jobject opr;
     switch (op){
@@ -95,10 +97,24 @@ jobject TR_OWLInstructionConstructor::Operator(Op op) {
         default:
             perror("Error: Operator not found!\n");
             exit(1);
-            break;
     }
 
     return opr;
+}
+
+jobject TR_OWLInstructionConstructor::Dispatch(WALA_Dispatch disp) {
+    jobject dis;
+    switch(disp) {
+        case VIRTUAL: _jniClient->getField(VIRTUAL_DispatchConfig,NULL,&dis); break;
+        case SPECIAL: _jniClient->getField(SPECIAL_DispatchConfig,NULL,&dis); break;
+        case INTERFACE: _jniClient->getField(INTERFACE_DispatchConfig,NULL,&dis); break;
+        case STATIC: _jniClient->getField(STATIC_DispatchConfig,NULL,&dis); break;
+        default:
+        perror("Error not dispatch found!\n");
+        exit(1);
+    }
+
+    return dis;
 }
 
 /*** WALA Instruction Constructors ***/
@@ -167,7 +183,7 @@ jobject TR_OWLInstructionConstructor::LoadInstruction(char *type, TR::SymbolRefe
     return loadInstructionObject;
 }
 
-jobject TR_OWLInstructionConstructor::BinaryOpInstruction(char* type, Op op) {
+jobject TR_OWLInstructionConstructor::BinaryOpInstruction(char* type, WALA_Operator op) {
     jobject binaryOpInstruction;
 
     _jniClient->callMethod
@@ -212,7 +228,7 @@ jobject TR_OWLInstructionConstructor::GotoInstruction(uint32_t label) {
     return gotoInstruction;
 }
 
-jobject TR_OWLInstructionConstructor::ConditionalBranchInstruction(char *type, Op op, uint32_t label) {
+jobject TR_OWLInstructionConstructor::ConditionalBranchInstruction(char *type, WALA_Operator op, uint32_t label) {
     jobject conditionalBranchInstruction;
 
     _jniClient->callMethod
@@ -229,7 +245,7 @@ jobject TR_OWLInstructionConstructor::ConditionalBranchInstruction(char *type, O
     return conditionalBranchInstruction;
 }
 
-jobject TR_OWLInstructionConstructor::ComparisonInstruction(char *type, Op op) {
+jobject TR_OWLInstructionConstructor::ComparisonInstruction(char *type, WALA_Operator op) {
     jobject comparisonInstruction;
 
     _jniClient->callMethod
@@ -277,4 +293,22 @@ jobject TR_OWLInstructionConstructor::UnaryOpInstruction(char *type) {
     );
 
     return unaryOpInstruction;
+}
+
+jobject TR_OWLInstructionConstructor::InvokeInstruction(char* type, char* className, char* methodName, WALA_Dispatch disp) {
+    jobject invokeInstruction;
+
+    _jniClient->callMethod
+    (
+        InvokeInstructionConfig,
+        NULL,
+        &invokeInstruction,
+        4,
+        _jniClient->constructString(type),
+        _jniClient->constructString(className),
+        _jniClient->constructString(methodName),
+        Dispatch(disp)
+    );
+
+    return invokeInstruction;
 }
