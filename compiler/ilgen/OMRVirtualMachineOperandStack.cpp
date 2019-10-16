@@ -241,10 +241,10 @@ void
 OMR::VirtualMachineOperandStack::init()
    {
    int32_t numBytes = _stackMax * sizeof(TR::IlValue *);
-   _stack = (TR::IlValue **) TR::comp()->trMemory()->allocateHeapMemory(numBytes);
+   TR::Compilation *comp = TR::comp();
+   _stack = (TR::IlValue **) comp->trMemory()->allocateHeapMemory(numBytes);
    memset(_stack, 0, numBytes);
 
-   TR::Compilation *comp = TR::comp();
    // Create a temp for the OperandStack base
    TR::SymbolReference *symRef = comp->getSymRefTab()->createTemporary(_mb->methodSymbol(), _mb->typeDictionary()->PointerTo(_elementType)->getPrimitiveType());
    symRef->getSymbol()->setNotCollected();

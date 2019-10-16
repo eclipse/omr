@@ -3647,7 +3647,7 @@ TR::Register *OMR::Power::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::
 
    gcPoint = TR::TreeEvaluator::generateNullTestInstructions(cg, trgReg, node);
 
-   gcPoint->PPCNeedsGCMap(0xFFFFFFFF);
+   gcPoint->PPCNeedsGCMap(0xFFFFFFFF, cg);
 
    TR::Node *n = NULL;
    if (comp->useCompressedPointers() &&
