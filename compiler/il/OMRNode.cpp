@@ -1235,7 +1235,7 @@ OMR::Node::createOSRFearPointHelperCall(TR::Node* originatingByteCodeNode)
    TR_ASSERT(!comp->isPeekingMethod(), "Can not generate the helper call during peeking");
    TR_ASSERT(comp->supportsInduceOSR(), "Can not create the helper without OSR support");
 
-   TR::Node* callNode = TR::Node::createWithSymRef(originatingByteCodeNode, TR::call, 0, TR::comp()->getSymRefTab()->findOrCreateOSRFearPointHelperSymbolRef());
+   TR::Node* callNode = TR::Node::createWithSymRef(originatingByteCodeNode, TR::call, 0, comp->getSymRefTab()->findOrCreateOSRFearPointHelperSymbolRef());
    return callNode;
    }
 
@@ -3467,7 +3467,6 @@ OMR::Node::reverseBranch(TR::TreeTop * newDest)
 void
 OMR::Node::devirtualizeCall(TR::TreeTop *treeTop)
    {
-   TR::Compilation *comp = TR::comp();
    TR_ASSERT(self()->getOpCode().isCall(), "assertion failure");
    TR::ResolvedMethodSymbol *methodSymbol = self()->getSymbol()->castToResolvedMethodSymbol();
 
@@ -3495,7 +3494,6 @@ OMR::Node::devirtualizeCall(TR::TreeTop *treeTop)
 bool
 OMR::Node::nodeMightKillCondCode()
    {
-   TR::Compilation *comp = TR::comp();
 #ifdef TR_HOST_S390
    TR::ILOpCode& opcode = self()->getOpCode();
 
@@ -3744,7 +3742,6 @@ OMR::Node::skipConversions()
 TR::Node *
 OMR::Node::createLongIfNeeded()
    {
-   TR::Compilation * comp = TR::comp();
    bool usingAladd = TR::Compiler->target.is64Bit();
    TR::Node *retNode = NULL;
 
@@ -7155,7 +7152,6 @@ OMR::Node::isUseBranchOnCount()
 void
 OMR::Node::setIsUseBranchOnCount(bool v)
    {
-   TR::Compilation *comp = TR::comp();
    TR_ASSERT(self()->getOpCode().canUseBranchOnCount(), "assertion failure");
    _flags.set(nodeUsedForBranchOnCount, v);
    }
@@ -8236,7 +8232,6 @@ OMR::Node::printEscapesInColdBlock()
 bool
 OMR::Node::cannotTrackLocalStringUses()
    {
-   TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::loadaddr, "Opcode must be loadaddr (flag shared on PLX)");
    return _flags.testAny(cantTrackLocalStringUses);
    }
