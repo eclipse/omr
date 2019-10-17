@@ -142,7 +142,7 @@ TR_S390BinaryAnalyser::genericAnalyser(TR::Node * root,
 
    if (getEvalChild1())
       {
-      firstRegister = cg_()->evaluate(firstChild);
+      firstRegister = cg_->evaluate(firstChild);
       }
 
    if (getEvalChild2())
@@ -223,11 +223,11 @@ TR_S390BinaryAnalyser::genericAnalyser(TR::Node * root,
 
             if (instructionFormat == RXE_FORMAT)
                {
-               generateRXEInstruction(cg_, root, thirdReg, tempMR, 0);
+               generateRXEInstruction(cg_, memToRegOpCode, root, thirdReg, tempMR, 0);
                }
             else
                {
-               generateRXInstruction(cg_, root, thirdReg, tempMR);
+               generateRXInstruction(cg_, memToRegOpCode, root, thirdReg, tempMR);
                }
 
             tempMR->stopUsingMemRefRegister(cg_);

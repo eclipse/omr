@@ -1117,12 +1117,13 @@ OMR::CodeGenerator::TR_RegisterPressureState::updateRegisterPressure(TR::Symbol 
    {
    TR::DataType dt = TR::NoType;
 
-   TR::CodeGenerator *cg = TR::comp()->cg();
+   TR::Compilation *comp = TR::comp();
+   TR::CodeGenerator *cg = comp->cg();
 
    if (symbol->getType().isAggregate())
       {
       dt = cg->getDataTypeFromSymbolMap(symbol);
-      traceMsg(TR::comp(), "\nxxx2, rcSymbol %p is aggregate but found better dt = %s\n",symbol,dt.toString());
+      traceMsg(comp, "\nxxx2, rcSymbol %p is aggregate but found better dt = %s\n",symbol,dt.toString());
       }
 
    if (dt == TR::NoType)
@@ -1131,8 +1132,6 @@ OMR::CodeGenerator::TR_RegisterPressureState::updateRegisterPressure(TR::Symbol 
    _gprPressure += cg->gprCount(TR::DataType(dt),symbol->getSize());
    _fprPressure += cg->fprCount(TR::DataType(dt));
    _vrfPressure += cg->vrfCount(TR::DataType(dt));
-
-
    }
 
 

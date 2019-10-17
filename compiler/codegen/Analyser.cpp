@@ -55,7 +55,7 @@ void TR_Analyser::setInputs(TR::Node     *firstChild,
    // The VFT pointer can be low-tagged, so generally we can't operate on it
    // directly in memory.
    //
-   TR::SymbolReference *vftPointerSymRef = comp->getSymRefTab()->element(TR::SymbolReferenceTable::vftSymbol);
+   TR::SymbolReference *vftPointerSymRef = TR::comp()->getSymRefTab()->element(TR::SymbolReferenceTable::vftSymbol);
 
    if (  firstChild->getOpCode().isMemoryReference()
       && firstChild->getSymbolReference() != vftPointerSymRef
