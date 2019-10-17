@@ -542,7 +542,7 @@ OMR::TreeEvaluator::compressedRefsEvaluator(TR::Node *node, TR::CodeGenerator *c
 TR::Register *
 OMR::TreeEvaluator::computeCCEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Compilation *comp= cg->comp();
+   TR::Compilation *comp = cg->comp();
    TR::Node *child = node->getFirstChild();
 
    if (child->getRegister())
@@ -599,7 +599,7 @@ bool OMR::TreeEvaluator::nodeIsIArithmeticOverflowCheck(TR::Node *node, TR_Arith
 
 bool OMR::TreeEvaluator::nodeIsIAddOverflowCheck(TR::Node *node, TR_ArithmeticOverflowCheckNodes *u)
    {
-   TR::Compilation *comp= TR::comp();
+   TR::Compilation *comp = TR::comp();
    if (comp->getOption(TR_DisableTreePatternMatching))
       return false;
 
@@ -625,7 +625,7 @@ bool OMR::TreeEvaluator::nodeIsIAddOverflowCheck(TR::Node *node, TR_ArithmeticOv
 
 bool OMR::TreeEvaluator::nodeIsISubOverflowCheck(TR::Node *node, TR_ArithmeticOverflowCheckNodes *u)
    {
-   TR::Compilation *comp= TR::comp();
+   TR::Compilation *comp = TR::comp();
    if (comp->getOption(TR_DisableTreePatternMatching))
       return false;
 
@@ -656,7 +656,7 @@ bool OMR::TreeEvaluator::nodeIsLArithmeticOverflowCheck(TR::Node *node, TR_Arith
 
 bool OMR::TreeEvaluator::nodeIsLAddOverflowCheck(TR::Node *node, TR_ArithmeticOverflowCheckNodes *u)
    {
-   TR::Compilation *comp= TR::comp();
+   TR::Compilation *comp = TR::comp();
    if (comp->getOption(TR_DisableTreePatternMatching))
       return false;
 
@@ -682,7 +682,7 @@ bool OMR::TreeEvaluator::nodeIsLAddOverflowCheck(TR::Node *node, TR_ArithmeticOv
 
 bool OMR::TreeEvaluator::nodeIsLSubOverflowCheck(TR::Node *node, TR_ArithmeticOverflowCheckNodes *u)
    {
-   TR::Compilation *comp= TR::comp();
+   TR::Compilation *comp = TR::comp();
    if (comp->getOption(TR_DisableTreePatternMatching))
       return false;
 
@@ -712,7 +712,7 @@ bool OMR::TreeEvaluator::nodeIsLSubOverflowCheck(TR::Node *node, TR_ArithmeticOv
 //
 void OMR::TreeEvaluator::evaluateNodesWithFutureUses(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Compilation *comp= cg->comp();
+   TR::Compilation *comp = cg->comp();
    if (node->getRegister() != NULL)
       {
       // Node has already been evaluated outside this tree.
