@@ -42,13 +42,13 @@ public:
       _flags(0),
       _maxSpillDepth(-1)
        {
-       _symRef = new (TR::comp()->trHeapMemory()) TR::SymbolReference(symRefTab);
+       _symRef = new (symRefTab->comp()->trHeapMemory()) TR::SymbolReference(symRefTab);
        }
    TR_BackingStore(TR::SymbolReferenceTable *symRefTab, TR::Symbol *s, int32_t o) :
       _flags(0),
       _maxSpillDepth(-1)
        {
-       _symRef = new (TR::comp()->trHeapMemory()) TR::SymbolReference(symRefTab,s,o);
+       _symRef = new (symRefTab->comp()->trHeapMemory()) TR::SymbolReference(symRefTab,s,o);
        }
    TR_BackingStore(TR::SymbolReference *symRef) :
       _symRef(symRef),
