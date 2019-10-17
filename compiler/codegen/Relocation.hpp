@@ -80,7 +80,7 @@ struct RelocationDebugInfo
    {
    /** the file name of the code that generated the associated RR*/
    const char* file;
-   /** the line number in the file file that created the associated RR*/
+   /** the line number in the file that created the associated RR*/
    uintptr_t line;
    /** the node in the IL that triggered the creation of the associated RR */
    TR::Node* node;
