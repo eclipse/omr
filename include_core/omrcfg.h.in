@@ -267,4 +267,10 @@
 #define OMR_USE_ZOS_SEMAPHORES
 #endif
 
+/**
+ * This flag enables the usage of the MCS (queue-based) locks instead of the TATAS
+ * (Test & Test & Set) locks in the thread library.
+ */
+#undef OMR_THR_MCS_LOCKS
+
 #endif /* !defined(OMRCFG_H_) */

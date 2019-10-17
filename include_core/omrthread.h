@@ -48,6 +48,11 @@ typedef struct J9Thread *omrthread_t;
 typedef struct J9ThreadMonitor *omrthread_monitor_t;
 typedef struct J9Semaphore *j9sem_t;
 
+#if defined(OMR_THR_MCS_LOCKS)
+typedef struct OMRThreadMCSNodes *omrthread_mcs_nodes_t;
+typedef struct OMRThreadMCSNode *omrthread_mcs_node_t;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 #include "omrthread_generated.h"
 
 #define J9THREAD_PRIORITY_MIN  0

@@ -665,6 +665,7 @@ OMRTHREAD_LIB_UNIX
 OMRTHREAD_LIB_ZOS
 OMRTHREAD_LIB_WIN32
 OMRTHREAD_LIB_AIX
+OMR_THR_MCS_LOCKS
 OMRPORT_OMRSIG_SUPPORT
 OMR_PORT_ZOS_CEEHDLRSUPPORT
 OMR_PORT_ALLOCATE_TOP_DOWN
@@ -890,6 +891,7 @@ enable_OMR_OPT_CUDA
 enable_OMR_PORT_ALLOCATE_TOP_DOWN
 enable_OMR_PORT_ZOS_CEEHDLRSUPPORT
 enable_OMRPORT_OMRSIG_SUPPORT
+enable_OMR_THR_MCS_LOCKS
 enable_OMRTHREAD_LIB_AIX
 enable_OMRTHREAD_LIB_WIN32
 enable_OMRTHREAD_LIB_ZOS
@@ -1681,6 +1683,8 @@ Optional Features:
   --enable-OMR_PORT_ZOS_CEEHDLRSUPPORT
 
   --enable-OMRPORT_OMRSIG_SUPPORT
+
+  --enable-OMR_THR_MCS_LOCKS
 
   --enable-OMRTHREAD_LIB_AIX
 
@@ -6983,6 +6987,25 @@ else
 fi
 else
   OMRPORT_OMRSIG_SUPPORT=0
+
+
+fi
+
+
+# Check whether --enable-OMR_THR_MCS_LOCKS was given.
+if test "${enable_OMR_THR_MCS_LOCKS+set}" = set; then :
+  enableval=$enable_OMR_THR_MCS_LOCKS; if test "x${enableval}" = xyes; then :
+  OMR_THR_MCS_LOCKS=1
+
+   $as_echo "#define OMR_THR_MCS_LOCKS 1" >>confdefs.h
+
+else
+  OMR_THR_MCS_LOCKS=0
+
+
+fi
+else
+  OMR_THR_MCS_LOCKS=0
 
 
 fi

@@ -439,6 +439,75 @@ public:
 	}
 
 	/**
+	 * Store the unsigned 32-bit value at the memory location as an atomic operation, and
+	 * return the old 32-bit value stored at the memory location.
+	 *
+	 * @param address The memory location to be updated
+	 * @param newValue The new value to be stored at memory address
+	 *
+	 * @return the value at memory location <b>address</b> BEFORE the store was attempted
+	 */
+	VMINLINE static uint32_t
+	lockExchangeU32(volatile uint32_t *address, uint32_t newValue)
+	{
+#if defined(ATOMIC_SUPPORT_STUB)
+		return 0;
+#else /* defined(ATOMIC_SUPPORT_STUB) */
+#if defined(__GNUC__)
+		/* Assume GCC >= 4.2 */
+		__sync_synchronize();
+		return __sync_lock_test_and_set(address, newValue);
+#else /* defined(__GNUC__) */
+#error "lockExchangeU32(): unsupported platform!"
+#endif /* defined(__GNUC__) */
+#endif /* defined(ATOMIC_SUPPORT_STUB) */
+	}
+
+	/**
+	 * Store the unsigned 64-bit value at the memory location as an atomic operation, and
+	 * return the old 64-bit value stored at the memory location.
+	 *
+	 * @param address The memory location to be updated
+	 * @param newValue The new value to be stored at memory address
+	 *
+	 * @return the value at memory location <b>address</b> BEFORE the store was attempted
+	 */
+	VMINLINE static uint64_t
+	lockExchangeU64(volatile uint64_t *address, uint64_t newValue)
+	{
+#if defined(ATOMIC_SUPPORT_STUB)
+		return 0;
+#else /* defined(ATOMIC_SUPPORT_STUB) */
+#if defined(__GNUC__)
+		/* Assume GCC >= 4.2 */
+		__sync_synchronize();
+		return __sync_lock_test_and_set(address, newValue);
+#else /* defined(__GNUC__) */
+#error "lockExchangeU64(): unsupported platform!"
+#endif /* defined(__GNUC__) */
+#endif /* defined(ATOMIC_SUPPORT_STUB) */
+	}
+
+	/**
+	 * Store the value at the memory location as an atomic operation, and return the old
+	 * value stored at the memory location.
+	 *
+	 * @param address The memory location to be updated
+	 * @param newValue The new value to be stored at memory address
+	 *
+	 * @return the value at memory location <b>address</b> BEFORE the store was attempted
+	 */
+	VMINLINE static uintptr_t
+	lockExchange(volatile uintptr_t * address, uintptr_t newValue)
+	{
+#if defined(OMR_ENV_DATA64)
+		return (uintptr_t)lockExchangeU64((volatile uint64_t *)address, (uint64_t)newValue);
+#else /* defined(OMR_ENV_DATA64) */
+		return (uintptr_t)lockExchangeU32((volatile uint32_t *)address, (uint32_t)newValue);
+#endif /* defined(OMR_ENV_DATA64) */
+	}
+
+	/**
 	 * Add a number to the value at a specific memory location as an atomic operation.
 	 * Adds the value <b>addend</b> to the value stored at memory location pointed
 	 * to by <b>address</b>.
