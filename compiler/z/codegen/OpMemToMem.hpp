@@ -68,9 +68,9 @@ class MemToMemMacroOp
          _srcRegTemp = NULL;
          _dstRegTemp = NULL;
          _litReg = NULL;
-         TR::Compilation *comp = TR::comp();
+         TR::CodeGenerator *cg_cursor = cursor->cg();
 
-         if(cursorBefore == NULL) cursorBefore = comp->cg()->getAppendInstruction();
+         if(cursorBefore == NULL) cursorBefore = cg_cursor->getAppendInstruction();
          _cursor = generateLoop();
          _cursor = generateRemainder();
 
