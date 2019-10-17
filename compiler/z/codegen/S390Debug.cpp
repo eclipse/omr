@@ -111,7 +111,7 @@ TR_Debug::printPrefix(TR::FILE *pOutFile, TR::Instruction * instr)
          else
             {
             if (instr->getNode() && instr->getNode()->getOpCodeValue() != TR::BBStart && instr->getRegisterOperand(1))
-               trfprintf(pOutFile, "#%d (%s)", instr->getMemoryReference()->getSymbolReference()->getReferenceNumber(),instr->getRegisterOperand(1)->getRegisterName(TR::comp()));
+               trfprintf(pOutFile, "#%d (%s)", instr->getMemoryReference()->getSymbolReference()->getReferenceNumber(),instr->getRegisterOperand(1)->getRegisterName(_comp));
             else
                trfprintf(pOutFile, "#%d           ", instr->getMemoryReference()->getSymbolReference()->getReferenceNumber());
 
@@ -121,7 +121,7 @@ TR_Debug::printPrefix(TR::FILE *pOutFile, TR::Instruction * instr)
                                                    ((TR::S390SS1Instruction *)(instr))->getMemoryReference2() :
                                                    ((TR::S390SS2Instruction *)(instr))->getMemoryReference2();
                if (memRef && memRef->getSymbolReference() && instr->getNode()->getOpCodeValue() != TR::BBStart && instr->getRegisterOperand(0))
-                  trfprintf(pOutFile, ", #%d (%s)", memRef->getSymbolReference()->getReferenceNumber(), instr->getRegisterOperand(0)->getRegisterName(TR::comp()));
+                  trfprintf(pOutFile, ", #%d (%s)", memRef->getSymbolReference()->getReferenceNumber(), instr->getRegisterOperand(0)->getRegisterName(_comp));
                else if (memRef && memRef->getSymbolReference())
                   trfprintf(pOutFile, ", #%d  ", memRef->getSymbolReference()->getReferenceNumber());
                else
