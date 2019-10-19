@@ -43,6 +43,10 @@ extern const MethodConfig UnaryOpInstructionConfig;
 extern const MethodConfig UnaryOpInstructionToStringConfig;
 extern const MethodConfig InvokeInstructionConfig;
 extern const MethodConfig InvokeInstructionToStringConfig;
+extern const MethodConfig SwapInstructionConfig;
+extern const MethodConfig SwapInstructionToStringConfig;
+extern const MethodConfig PopInstructionConfig;
+extern const MethodConfig PopInstructionToStringConfig;
 
 /***** Field Config ******/
 
