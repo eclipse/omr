@@ -38,6 +38,7 @@ public:
     
     static TR_OWLJNIClient *getInstance();
     static void destroyInstance();
+    
     jstring constructString(char* str);
 
     jobject constructObject(int32_t i);

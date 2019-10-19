@@ -107,5 +107,6 @@ compiler_library(optimizer
 	${CMAKE_CURRENT_LIST_DIR}/OWLJNIClient.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWLMapper.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWLJNIConfig.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OWLInstructionConstructor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OWLShrikeBTConstructor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OWLLogger.cpp
 )

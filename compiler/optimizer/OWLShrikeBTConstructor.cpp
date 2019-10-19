@@ -4,73 +4,42 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "optimizer/OWLInstructionConstructor.hpp"
+#include "optimizer/OWLShrikeBTConstructor.hpp"
 #include "optimizer/OWLJNIConfig.hpp"
 
-TR_OWLInstructionConstructor::TR_OWLInstructionConstructor() {
+TR_OWLShrikeBTConstructor::TR_OWLShrikeBTConstructor() {
     _jniClient = TR_OWLJNIClient::getInstance();
     _index = 0;
 }
 
-TR_OWLInstructionConstructor::~TR_OWLInstructionConstructor() {\
+TR_OWLShrikeBTConstructor::~TR_OWLShrikeBTConstructor() {\
     /*** TODO: destructor of JNIClient has not been implemented yet ***/
     TR_OWLJNIClient::destroyInstance();
 }
 
 /*** Helper methods ***/
 
-/*** WARNING: It is user's responsibility to free the memory whoever uses this method ***/
-char * TR_OWLInstructionConstructor::getInstructionString(jobject instructionObj, WALA_Instruction ins) {
-    MethodConfig methodConfig;
-    switch(ins){
-        case CONSTANT: methodConfig = ConstantInstructionToStringConfig; break;
-        case BINARY_OP: methodConfig = BinaryOpInstructionToStringConfig; break;
-        case UNARY_OP: methodConfig = UnaryOpInstructionToStringConfig; break;
-        case LOAD: methodConfig = LoadInstructionToStringConfig; break;
-        case STORE: methodConfig = StoreInstructionToStringConfig; break;
-        case RETURN: methodConfig = ReturnInstructionToStringConfig; break;
-        case GOTO: methodConfig = GotoInstructionToStringConfig; break;
-        case CONDITIONAL_BRANCH: methodConfig = ConstantInstructionToStringConfig; break;
-        case COMPARISON: methodConfig = ComparisonInstructionToStringConfig; break;
-        case CONVERSION: methodConfig = ConversionInstructionToStringConfig; break;
-        case INVOKE: methodConfig = InvokeInstructionToStringConfig; break;
-
-        default: perror("Error: Instruction enum not found!\n"); exit(1); break;
-    }
-
-    char *instructionString = (char*)malloc(1024);
-
-    _jniClient->callMethod
-            (
-                    methodConfig,
-                    instructionObj,
-                    &instructionString,
-                    0
-            );
-    return instructionString;
-}
-
-jobject TR_OWLInstructionConstructor::Integer(int32_t i) {
+jobject TR_OWLShrikeBTConstructor::Integer(int32_t i) {
     return _jniClient->constructObject(i);
 }
 
-jobject TR_OWLInstructionConstructor::Float(float f) {
+jobject TR_OWLShrikeBTConstructor::Float(float f) {
     return _jniClient->constructObject(f);
 }
 
-jobject TR_OWLInstructionConstructor::Double(double d) {
+jobject TR_OWLShrikeBTConstructor::Double(double d) {
     return _jniClient->constructObject(d);
 }
 
-jobject TR_OWLInstructionConstructor::Short(int16_t s) {
+jobject TR_OWLShrikeBTConstructor::Short(int16_t s) {
     return _jniClient->constructObject(s);
 }
 
-jobject TR_OWLInstructionConstructor::Long(int64_t l) {
+jobject TR_OWLShrikeBTConstructor::Long(int64_t l) {
     return _jniClient->constructObject(l);
 }
 
-jobject TR_OWLInstructionConstructor::Operator(WALA_Operator op) {
+jobject TR_OWLShrikeBTConstructor::Operator(ShrikeBTOperator op) {
 
     jobject opr;
     switch (op){
@@ -102,7 +71,7 @@ jobject TR_OWLInstructionConstructor::Operator(WALA_Operator op) {
     return opr;
 }
 
-jobject TR_OWLInstructionConstructor::Dispatch(WALA_Dispatch disp) {
+jobject TR_OWLShrikeBTConstructor::Dispatch(ShrikeBTDispatch disp) {
     jobject dis;
     switch(disp) {
         case VIRTUAL: _jniClient->getField(VIRTUAL_DispatchConfig,NULL,&dis); break;
@@ -117,46 +86,47 @@ jobject TR_OWLInstructionConstructor::Dispatch(WALA_Dispatch disp) {
     return dis;
 }
 
-/*** WALA Instruction Constructors ***/
-jobject TR_OWLInstructionConstructor::ConstantInstruction(char *type, jobject value) {
+/*** ShrikeBT Instruction Constructors ***/
+jobject TR_OWLShrikeBTConstructor::ConstantInstruction(char *type, jobject value) {
     jobject constantInstructionObject;
 
     _jniClient->callMethod
     (
-            ConstantInstructionConfig,
-            NULL,
-            &constantInstructionObject,
-            2,
-            _jniClient->constructString(type),
-            value
+        ConstantInstructionConfig,
+        NULL,
+        &constantInstructionObject,
+        2,
+        _jniClient->constructString(type),
+        value
     );
     return constantInstructionObject;
 }
 
-jobject TR_OWLInstructionConstructor::StoreInstruction(char *type, TR::SymbolReference * symbolReference) {
+jobject TR_OWLShrikeBTConstructor::StoreInstruction(char *type, TR::SymbolReference * symbolReference) {
     jobject storeInstructionObject;
 
-    std::unordered_map<TR::SymbolReference * ,uint32_t >::const_iterator it = localVariableTable.find(symbolReference);
+    std::unordered_map<TR::SymbolReference * ,uint32_t >::const_iterator it = _localVarTableBySymRef.find(symbolReference);
 
     int i = _index;
 
-    if (it != localVariableTable.end()) {
-        i = localVariableTable[symbolReference];
+    // if the local var table has the symbol ref
+    if (it != _localVarTableBySymRef.end()) {
+        i = _localVarTableBySymRef[symbolReference];
     }
 
     _jniClient->callMethod
     (
-            StoreInstructionConfig,
-            NULL,
-            &storeInstructionObject,
-            2,
-            _jniClient->constructString(type),
-            i
+        StoreInstructionConfig,
+        NULL,
+        &storeInstructionObject,
+        2,
+        _jniClient->constructString(type),
+        i
     );
 
-    if (it == localVariableTable.end()) {
+    if (it == _localVarTableBySymRef.end()) {
 
-        localVariableTable[symbolReference] = _index;
+        _localVarTableBySymRef[symbolReference] = _index;
 
         if (strcmp(TYPE_double,type) == 0 || strcmp(TYPE_long,type) == 0){
             _index += 2;
@@ -169,51 +139,103 @@ jobject TR_OWLInstructionConstructor::StoreInstruction(char *type, TR::SymbolRef
     return storeInstructionObject;
 }
 
-jobject TR_OWLInstructionConstructor::LoadInstruction(char *type, TR::SymbolReference * symbolReference) {
+/*** Implicit Store ***/
+jobject TR_OWLShrikeBTConstructor::ImplicitStoreInstruction(char* type, uint32_t omrGlobalIndex) {
+    jobject storeInstructionObject;
+
+    std::unordered_map<uint32_t ,uint32_t >::const_iterator it = _localVarTableByOmrIndex.find(omrGlobalIndex);
+
+    int i = _index;
+
+    if (it != _localVarTableByOmrIndex.end()) {
+        i = _localVarTableByOmrIndex[omrGlobalIndex];
+    }
+
+    _jniClient->callMethod
+    (
+        StoreInstructionConfig,
+        NULL,
+        &storeInstructionObject,
+        2,
+        _jniClient->constructString(type),
+        i
+    );
+
+    if (it == _localVarTableByOmrIndex.end()) {
+
+        _localVarTableByOmrIndex[omrGlobalIndex] = _index;
+
+        if (strcmp(TYPE_double,type) == 0 || strcmp(TYPE_long,type) == 0){
+            _index += 2;
+        }
+        else{
+            _index += 1;
+        }
+    }
+
+    return storeInstructionObject;
+}
+
+jobject TR_OWLShrikeBTConstructor::LoadInstruction(char *type, TR::SymbolReference * symbolReference) {
     jobject loadInstructionObject;
     _jniClient->callMethod
     (
-            LoadInstructionConfig,
-            NULL,
-            &loadInstructionObject,
-            2,
-            _jniClient->constructString(type),
-            localVariableTable[symbolReference]
+        LoadInstructionConfig,
+        NULL,
+        &loadInstructionObject,
+        2,
+        _jniClient->constructString(type),
+        _localVarTableBySymRef[symbolReference]
     );
     return loadInstructionObject;
 }
 
-jobject TR_OWLInstructionConstructor::BinaryOpInstruction(char* type, WALA_Operator op) {
+/*** Implicit load ***/
+jobject TR_OWLShrikeBTConstructor::ImplicitLoadInstruction(char*type, uint32_t omrGlobalIndex) {
+    jobject loadInstructionObject;
+    _jniClient->callMethod
+    (
+        LoadInstructionConfig,
+        NULL,
+        &loadInstructionObject,
+        2,
+        _jniClient->constructString(type),
+        _localVarTableByOmrIndex[omrGlobalIndex]
+    );
+    return loadInstructionObject;
+}
+
+jobject TR_OWLShrikeBTConstructor::BinaryOpInstruction(char* type, ShrikeBTOperator op) {
     jobject binaryOpInstruction;
 
     _jniClient->callMethod
     (
-            BinaryOpInstructionConfig,
-            NULL,
-            &binaryOpInstruction,
-            2,
-            _jniClient->constructString(type),
-            Operator(op)
+        BinaryOpInstructionConfig,
+        NULL,
+        &binaryOpInstruction,
+        2,
+        _jniClient->constructString(type),
+        Operator(op)
     );
     return binaryOpInstruction;
 }
 
-jobject TR_OWLInstructionConstructor::ReturnInstruction(char* type) {
+jobject TR_OWLShrikeBTConstructor::ReturnInstruction(char* type) {
     jobject returnInstruction;
 
     _jniClient->callMethod
     (
-            ReturnInstructionConfig,
-            NULL,
-            &returnInstruction,
-            1,
-            _jniClient->constructString(type)
+        ReturnInstructionConfig,
+        NULL,
+        &returnInstruction,
+        1,
+        _jniClient->constructString(type)
     );
 
     return returnInstruction;
 }
 
-jobject TR_OWLInstructionConstructor::GotoInstruction(uint32_t label) {
+jobject TR_OWLShrikeBTConstructor::GotoInstruction(uint32_t label) {
     jobject gotoInstruction;
 
     _jniClient->callMethod
@@ -228,7 +250,7 @@ jobject TR_OWLInstructionConstructor::GotoInstruction(uint32_t label) {
     return gotoInstruction;
 }
 
-jobject TR_OWLInstructionConstructor::ConditionalBranchInstruction(char *type, WALA_Operator op, uint32_t label) {
+jobject TR_OWLShrikeBTConstructor::ConditionalBranchInstruction(char *type, ShrikeBTOperator op, uint32_t label) {
     jobject conditionalBranchInstruction;
 
     _jniClient->callMethod
@@ -245,7 +267,7 @@ jobject TR_OWLInstructionConstructor::ConditionalBranchInstruction(char *type, W
     return conditionalBranchInstruction;
 }
 
-jobject TR_OWLInstructionConstructor::ComparisonInstruction(char *type, WALA_Operator op) {
+jobject TR_OWLShrikeBTConstructor::ComparisonInstruction(char *type, ShrikeBTOperator op) {
     jobject comparisonInstruction;
 
     _jniClient->callMethod
@@ -262,8 +284,7 @@ jobject TR_OWLInstructionConstructor::ComparisonInstruction(char *type, WALA_Ope
     return comparisonInstruction;
 }
 
-
-jobject TR_OWLInstructionConstructor::ConversionInstruction(char *fromType, char *toType) {
+jobject TR_OWLShrikeBTConstructor::ConversionInstruction(char *fromType, char *toType) {
     jobject conversionInstruction;
 
     _jniClient->callMethod
@@ -280,7 +301,7 @@ jobject TR_OWLInstructionConstructor::ConversionInstruction(char *fromType, char
 }
 
 
-jobject TR_OWLInstructionConstructor::UnaryOpInstruction(char *type) {
+jobject TR_OWLShrikeBTConstructor::UnaryOpInstruction(char *type) {
     jobject unaryOpInstruction;
 
     _jniClient->callMethod
@@ -295,7 +316,7 @@ jobject TR_OWLInstructionConstructor::UnaryOpInstruction(char *type) {
     return unaryOpInstruction;
 }
 
-jobject TR_OWLInstructionConstructor::InvokeInstruction(char* type, char* className, char* methodName, WALA_Dispatch disp) {
+jobject TR_OWLShrikeBTConstructor::InvokeInstruction(char* type, char* className, char* methodName, ShrikeBTDispatch disp) {
     jobject invokeInstruction;
 
     _jniClient->callMethod
@@ -311,4 +332,33 @@ jobject TR_OWLInstructionConstructor::InvokeInstruction(char* type, char* classN
     );
 
     return invokeInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::SwapInstruction() {
+    jobject swapInstruction;
+
+    _jniClient->callMethod
+    (
+        SwapInstructionConfig,
+        NULL,
+        &swapInstruction,
+        0
+    );
+
+    return swapInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::PopInstruction(uint16_t size) {
+    jobject popInstruction;
+
+    _jniClient->callMethod
+    (
+        PopInstructionConfig,
+        NULL,
+        &popInstruction,
+        1,
+        size
+    );
+
+    return popInstruction;
 }

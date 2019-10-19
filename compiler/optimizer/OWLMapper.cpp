@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <tuple>
 #include "il/ILHelpers.hpp"
 #include "optimizer/OWLMapper.hpp"
 #include "optimizer/OWLJNIConfig.hpp"
@@ -12,212 +13,233 @@
 
 /****** public ******/
 
-void TR_OWLMapper::map(TR::Compilation* compilation) {
-
-    TR::NodeChecklist instructionMappingVisited(compilation); // visited nodes for mapping the instruction
-
-    printf("++++ process the tree ++++\n");
-    for (TR::TreeTop *tt = compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
-        TR::Node *node = tt->getNode();
-        _processTree(node, instructionMappingVisited);
-        //printf("==================\n");
-    }
-    printf("++++ adjust the branch target label ++++\n");
-
-    _adjustOffset();
-
-    printf("++++ log WALA instructions ++++\n");
-
-    _logAllMappedInstructions();
-}
-
 TR_OWLMapper::TR_OWLMapper() {
 
-    _con = new TR_OWLInstructionConstructor();
+    _con = new TR_OWLShrikeBTConstructor();
+    _logger = new TR_OWLLogger();
 }
 
 TR_OWLMapper::~TR_OWLMapper() {
     delete _con;
+    delete _logger;
+}
+
+void TR_OWLMapper::map(TR::Compilation* compilation) {
+
+    TR::NodeChecklist instructionMappingVisited(compilation); // visited nodes for mapping the instruction
+
+    printf("======= OMR Instructions ========\n");
+
+    for (TR::TreeTop *tt = compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
+        TR::Node *node = tt->getNode();
+        _processTree(node, instructionMappingVisited);
+    }
+
+    _adjustOffset();
+
+    printf("======= ShrikeBT Instructions ========\n");
+
+    _constructShrikeBTInstructionObjects();
 }
 
 /****** private ******/
-void TR_OWLMapper::_processTree(TR::Node *root, TR::NodeChecklist &visited) {
-    if (visited.contains(root))
-        return;
 
+void TR_OWLMapper::_processTree(TR::Node *root, TR::NodeChecklist &visited) {
+    if (visited.contains(root)){ // indicates this node has already been evaluated => load the value from local var table
+        _createImplicitLoad(root);
+        return;
+    }
+    
     visited.add(root);
 
-    for (uint32_t i = 0; i < root->getNumChildren(); ++i) {
-        _processTree(root->getChild(i), visited);
+    if (root->getOpCode().isTernary()){ // deal with ternary expression. Evaluate last two children first
+
+        _processTree(root->getChild(1),visited);
+        _processTree(root->getChild(2),visited);
+        _processTree(root->getChild(0),visited);
+        
+    }
+    else{
+        for (uint32_t i = 0; i < root->getNumChildren(); ++i) {
+            _processTree(root->getChild(i), visited);
+        }
     }
 
     _instructionRouter(root);
+    
 }
 
 void TR_OWLMapper::_adjustOffset() {
-    /**** build OMR index to WALA offset table ****/
-    std::unordered_map<uint32_t,uint32_t> OMR_indexTo_WALA_offsetTable;
+    /**** build OMR index to shrikeBT offset table ****/
+    std::unordered_map<uint32_t,uint32_t> offsetMappingTable;
     uint32_t offset = 0;
-    for (uint32_t i = 0 ; i < _instructionInfoList.size(); i ++) {
+    for (uint32_t i = 0 ; i < _instructionMetaList.size(); i ++) {
 
-        InstructionInfo instrInfo = _instructionInfoList[i];
-        bool is_WALA_instruction = instrInfo.is_WALA_instruction;
+        InstructionMeta instrMeta = _instructionMetaList[i];
 
-        OMR_indexTo_WALA_offsetTable[instrInfo.OMR_GlobalIndex] = offset;
-        if (is_WALA_instruction) {
+        bool isShrikeBTInstruction = instrMeta.isShrikeBTInstruction;
+
+        offsetMappingTable[instrMeta.omrGlobalIndex] = offset;
+        if (isShrikeBTInstruction) {
             offset ++;
         }
     }
     
     offset = 0;
     /**** Adjust branch target label and instruction offsets ****/
-    for (uint32_t i = 0 ; i < _instructionInfoList.size(); i ++) {
-        InstructionInfo* instrInfo = &_instructionInfoList[i];
-        bool is_WALA_instruction = instrInfo->is_WALA_instruction;
-        WALA_Instruction instruction = instrInfo->instruction;
+    for (uint32_t i = 0 ; i < _instructionMetaList.size(); i ++) {
+        InstructionMeta* instrMeta = &_instructionMetaList[i];
+        bool isShrikeBTInstruction= instrMeta->isShrikeBTInstruction;
+        ShrikeBTInstruction instruction = instrMeta->instruction;
         
-        if (is_WALA_instruction) {
-            BranchTargetLabelAdjustType adjustType = instrInfo->branchTargetLabelAdjustType;
-            WALA_InstructionFieldsUnion *fieldsUnion = &instrInfo->instructionFieldsUnion;
+        if (isShrikeBTInstruction) {
+            BranchTargetLabelAdjustType adjustType = instrMeta->branchTargetLabelAdjustType;
+            ShrikeBTInstructionFieldsUnion *fieldsUnion = &instrMeta->instructionFieldsUnion;
             uint32_t label;
+
             if (instruction == GOTO) {
 
                 GotoInstructionFields *gotoFields = &fieldsUnion->gotoInstructionFields;
 
-                switch (adjustType)
-                {
-                    case TABLE_MAP:
-                        label = OMR_indexTo_WALA_offsetTable[gotoFields->label]; 
-                        break;
-                    case ADD_2:
-                        label = offset + 2;
-                        break;
-                    case ADD_3:
-                        label = offset + 3;
-                        break;
-                    default:
-                        perror("No adjust type matched!\n");
-                        exit(1);
+                if (adjustType == TABLE_MAP) {
+                    label = offsetMappingTable[gotoFields->label];
+                }
+                else if (adjustType == BY_VALUE) {
+                    label = offset + instrMeta->branchTargetLabelAdjustAmount;
                 }
 
                 gotoFields->label = label;
                
             }
             else if (instruction == CONDITIONAL_BRANCH) {
+
                 ConditionalBranchInstructionFields *condiFields = &fieldsUnion->conditionalBranchInstructionFields;
-                switch (adjustType)
-                {
-                    case TABLE_MAP:
-                        label = OMR_indexTo_WALA_offsetTable[condiFields->label]; 
-                        break;
-                    case ADD_2:
-                        label = offset + 2;
-                        break;
-                    case ADD_3:
-                        label = offset + 3;
-                        break;
-                    default:
-                        perror("No adjust type matched!\n");
-                        exit(1);
+
+                if (adjustType == TABLE_MAP) {
+                    label = offsetMappingTable[condiFields->label];
+                }
+                else if (adjustType == BY_VALUE) {
+                    label = offset + instrMeta->branchTargetLabelAdjustAmount;
                 }
 
                 condiFields->label = label;
+
             }
             
-            instrInfo->WALA_offset = offset;
+            instrMeta->shrikeBTOffset = offset;
             offset ++;
         }
     }
 
 }
 
-void TR_OWLMapper::_logAllMappedInstructions() {
+void TR_OWLMapper::_constructShrikeBTInstructionObjects() {
 
-    for (uint32_t i = 0 ; i < _instructionInfoList.size(); i ++ ) {
+    std::vector<MappedInstructionObject> mappedInstructionObjectList;
+
+    for (uint32_t i = 0 ; i < _instructionMetaList.size(); i ++ ) {
         
-        InstructionInfo instrInfo = _instructionInfoList[i];
-        bool is_WALA_instruciton = instrInfo.is_WALA_instruction;
-        if (is_WALA_instruciton){
+        InstructionMeta instrMeta = _instructionMetaList[i];
+        bool isShrikeBTInstruction = instrMeta.isShrikeBTInstruction;
+        if (isShrikeBTInstruction){
 
-            WALA_Instruction instruction = instrInfo.instruction;
-            WALA_InstructionFieldsUnion instrUnion = instrInfo.instructionFieldsUnion;
-            uint32_t offset = instrInfo.WALA_offset;
+            ShrikeBTInstruction instruction = instrMeta.instruction;
+            ShrikeBTInstructionFieldsUnion instrUnion = instrMeta.instructionFieldsUnion;
+            uint32_t offset = instrMeta.shrikeBTOffset;
 
-            jobject instructionObj;
+            jobject instructionObject;
 
             switch(instruction){
                 case CONSTANT: {
                     ConstantInstructionFields constFields = instrUnion.constantInstructionFields;
-                    instructionObj = _con->ConstantInstruction(constFields.type, constFields.value);
+                    instructionObject = _con->ConstantInstruction(constFields.type, constFields.value);
                     break;
                 }
                 case STORE: {
                     StoreInstructionFields storeFields = instrUnion.storeInstructionFields;
-                    instructionObj = _con->StoreInstruction(storeFields.type, storeFields.symbolReference);
+                    instructionObject = _con->StoreInstruction(storeFields.type, storeFields.symbolReference);
+                    break;
+                }
+                case IMPLICIT_STORE: {
+                    ImplicitStoreInstructionFields impStoreFields = instrUnion.implicitStoreInstructionFields;
+                    instructionObject = _con->ImplicitStoreInstruction(impStoreFields.type, impStoreFields.omrGlobalIndex);
                     break;
                 }
                 case LOAD: {
-                     LoadInstructionFields loadFields = instrUnion.loadInstructionFields;
-                    instructionObj = _con->LoadInstruction(loadFields.type,loadFields.symbolReference);
+                    LoadInstructionFields loadFields = instrUnion.loadInstructionFields;
+                    instructionObject = _con->LoadInstruction(loadFields.type,loadFields.symbolReference);
+                    break;
+                }
+                case IMPLICIT_LOAD: {
+                    ImplicitLoadInstructionFields impLoadFields = instrUnion.implicitLoadInstructionFields;
+                    instructionObject = _con->ImplicitLoadInstruction(impLoadFields.type, impLoadFields.omrGloablIndex);
                     break;
                 }
                 case BINARY_OP: {
                     BinaryOpInstructionFields binaryFields = instrUnion.binaryOpInstructionFields;
-                    instructionObj = _con->BinaryOpInstruction(binaryFields.type,binaryFields.op);
+                    instructionObject = _con->BinaryOpInstruction(binaryFields.type,binaryFields.op);
                     break;
                 }
                 case UNARY_OP: {
                     UnaryOpInstructionFields unaryFields = instrUnion.unaryOpInstructionFields;
-                    instructionObj = _con->UnaryOpInstruction(unaryFields.type);
+                    instructionObject = _con->UnaryOpInstruction(unaryFields.type);
                     break;
                 }
                 case RETURN: {
                     ReturnInstructionFields returnFields = instrUnion.returnInstructionFields;
-                    instructionObj = _con->ReturnInstruction(returnFields.type);
+                    instructionObject = _con->ReturnInstruction(returnFields.type);
                     break;
                 }
                 case GOTO: {
                     GotoInstructionFields gotoFields = instrUnion.gotoInstructionFields;
-                    instructionObj = _con->GotoInstruction(gotoFields.label);
+                    instructionObject = _con->GotoInstruction(gotoFields.label);
                     break;
                 }
                 case CONDITIONAL_BRANCH: {
                     ConditionalBranchInstructionFields condiFields = instrUnion.conditionalBranchInstructionFields;
-                    instructionObj = _con->ConditionalBranchInstruction(condiFields.type,condiFields.op,condiFields.label);
+                    instructionObject = _con->ConditionalBranchInstruction(condiFields.type,condiFields.op,condiFields.label);
                     break;
                 }
                 case COMPARISON: {
                     ComparisonInstructionFields compaFields = instrUnion.comparisonInstructionFields;
-                    instructionObj = _con->ComparisonInstruction(compaFields.type,compaFields.op);
+                    instructionObject = _con->ComparisonInstruction(compaFields.type,compaFields.op);
                     break;
                 }
                 case CONVERSION: {
                     ConversionInstructionFields conversionFields = instrUnion.conversionInstructionFields;
-                    instructionObj = _con->ConversionInstruction(conversionFields.fromType,conversionFields.toType);
+                    instructionObject = _con->ConversionInstruction(conversionFields.fromType,conversionFields.toType);
                     break;
                 }
                 case INVOKE: {
                     InvokeInstructionFields invokeFields = instrUnion.invokeInstructionFields;
-                    instructionObj = _con->InvokeInstruction(invokeFields.type,invokeFields.className,invokeFields.methodName,invokeFields.disp);
+                    instructionObject = _con->InvokeInstruction(invokeFields.type,invokeFields.className,invokeFields.methodName,invokeFields.disp);
                     break;
                 }
-                    
+                case SWAP:{
+                    SwapInstructionFields swapFields = instrUnion.swapInstructionFields;
+                    instructionObject = _con->SwapInstruction();
+                    break;
+                }
+                case POP: {
+                    PopInstructionFields popFields = instrUnion.popInstructionFields;
+                    instructionObject = _con->PopInstruction(popFields.size);
+                    break;
+                }
                 default:
-                    perror("No instruction matched inside logging instructions function!\n");
+                    perror("No instruction matched inside construct instruction object function!\n");
                     exit(1);
                     
             }
 
-            _logSingleInstruction(instructionObj,instruction,offset);
+            MappedInstructionObject mappedInstructionObject = {instruction, instructionObject, offset};
+            mappedInstructionObjectList.push_back(mappedInstructionObject);
         }
         
     }
-}
 
-void TR_OWLMapper::_logSingleInstruction(jobject instructionObj, WALA_Instruction instruction, uint32_t offset) {
-    char* str = _con->getInstructionString(instructionObj, instruction);
-    printf("%d: %s\n",offset, str);
-    free(str);
+    /*** log all mapped instruction to STDOUT ***/
+    _logger->logAllMappedInstructions(mappedInstructionObjectList);
+
 }
 
 
@@ -227,52 +249,53 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
 
     /*** deal with the nodes that are tree top or BBStart, BBEnd ***/
     if ( opCodeValue == TR::treetop || opCodeValue == TR::BBStart || opCodeValue == TR::BBEnd){
-        InstructionInfo instructionInfo;
-        instructionInfo.is_WALA_instruction = false;
-        instructionInfo.OMR_GlobalIndex = node->getGlobalIndex();
-        _instructionInfoList.push_back(instructionInfo);
+        ShrikeBTInstructionFieldsUnion instrUnion;
+        // need to take a place in instruction meta list
+        _createInstructionMeta(false, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, NOT_INSTRUCTION );
         return;
     }
 
-    printf("%d: %s\n ", node->getGlobalIndex(),node->getOpCode().getName());
-    // printf("%u| ",node->getByteCodeIndex());
+    printf("%d: %s | ref count: %u\n", node->getGlobalIndex(),node->getOpCode().getName(),node->getReferenceCount());
 
-     TR::ILOpCode opCode = node->getOpCode();
+    TR::ILOpCode opCode = node->getOpCode();
 
-     if (opCode.isLoadConst()) { //constant instruction
+    if (opCode.isLoadConst()) { //constant instruction
          _mapConstantInstruction(node);
-     }
-     else if (opCode.isStore()) { // store instruction
-         _mapStoreInstruction(node);
-     }
-     else if (opCode.isLoad()) { // load instruction
-         _mapLoadInstruction(node);
-     }
-     else if (opCode.isReturn()) { // return instruction
-         _mapReturnInstruction(node);
-     }
-     else if (opCode.isArithmetic()){ // arithmetic instructions
-         _mapArithmeticInstruction(node);
-     }
-     else if (opCode.isGoto()){ // goto instruction
-         _mapGotoInstruction(node);
-     }
-     else if (opCode.isBooleanCompare() && opCode.isBranch()){ // conditional branch instruction
-         _mapConditionalBranchInstruction(node);
-     }
-     else if (opCode.isConversion()) { // conversion Instruction
-         _mapConversionInstruction(node);
-     }
-     else if (opCode.isBooleanCompare()){ // comparison instruction
-         _mapComparisonInstruction(node);
-     }
-     else if (opCode.isCall()) { // function call
+    }
+    else if (opCode.isStore()) { // store instruction
+        _mapStoreInstruction(node);
+    }
+    else if (opCode.isLoad()) { // load instruction
+        _mapLoadInstruction(node);
+    }
+    else if (opCode.isReturn()) { // return instruction
+        _mapReturnInstruction(node);
+    }
+    else if (opCode.isArithmetic()){ // arithmetic instructions
+        _mapArithmeticInstruction(node);
+    }
+    else if (opCode.isGoto()){ // goto instruction
+        _mapGotoInstruction(node);
+    }
+    else if (opCode.isBooleanCompare() && opCode.isBranch()){ // conditional branch instruction
+        _mapConditionalBranchInstruction(node);
+    }
+    else if (opCode.isConversion()) { // conversion Instruction
+        _mapConversionInstruction(node);
+    }
+    else if (opCode.isBooleanCompare()){ // comparison instruction
+        _mapComparisonInstruction(node);
+    }
+    else if (opCode.isCall()) { // function call
         _mapInvokeInstruction(node);
-     }
-     else{ // for those have not been mapped
-         printf("XXXXX");
-         //_logInstruction(node->getOpCode().getName(), 0);
-     }
+    }
+    else if (opCode.isTernary()) { // ternary instruction
+        _mapTernaryInstruction(node);
+    }
+
+    if (node->getReferenceCount() > 1) {
+        _createImplicitStoreAndLoad(node);
+    }
 
 }
 
@@ -288,6 +311,55 @@ char* TR_OWLMapper::_getType(TR::ILOpCode opCode) {
 
     perror("No type matched!\n");
     exit(1);
+}
+
+void TR_OWLMapper::_createImplicitStoreAndLoad(TR::Node *node) {
+
+    char* type = _getType(node->getOpCode());
+    uint32_t omrGlobalIndex = node->getGlobalIndex();
+    ImplicitStoreInstructionFields impStoreFields = {type,omrGlobalIndex};
+    ImplicitLoadInstructionFields impLoadFields = {type,omrGlobalIndex};
+
+
+    ShrikeBTInstructionFieldsUnion insUnion;
+    insUnion.implicitStoreInstructionFields = impStoreFields;
+
+    _createInstructionMeta(true, omrGlobalIndex,0, NO_ADJUST, 0, insUnion, IMPLICIT_STORE);
+
+    insUnion.implicitLoadInstructionFields = impLoadFields;
+
+    _createInstructionMeta(true, omrGlobalIndex,0, NO_ADJUST, 0, insUnion, IMPLICIT_LOAD);
+    
+}
+
+void TR_OWLMapper::_createImplicitLoad(TR::Node* node) {
+    char* type = _getType(node->getOpCode());
+    uint32_t omrGlobalIndex = node->getGlobalIndex();
+    ImplicitLoadInstructionFields impLoadFields = {type, omrGlobalIndex};
+
+    ShrikeBTInstructionFieldsUnion insUnion;
+    insUnion.implicitLoadInstructionFields = impLoadFields;
+    
+    _createInstructionMeta(true, omrGlobalIndex, 0, NO_ADJUST, 0, insUnion, IMPLICIT_LOAD);
+
+}
+
+void TR_OWLMapper::_createInstructionMeta(bool isShrikeBTInstruction, uint32_t omrGlobalIndex, uint32_t shrikeBTOffset, 
+    BranchTargetLabelAdjustType branchTargetLabelAdjustType,int32_t branchTargetLabelAdjustAmount, 
+    ShrikeBTInstructionFieldsUnion instructionFieldsUnion, ShrikeBTInstruction instruction ) 
+{
+
+    InstructionMeta insMeta = {
+        isShrikeBTInstruction,
+        omrGlobalIndex,
+        shrikeBTOffset,
+        branchTargetLabelAdjustType,
+        branchTargetLabelAdjustAmount,
+        instructionFieldsUnion,
+        instruction
+    };
+
+    _instructionMetaList.push_back(insMeta);
 }
 
 void TR_OWLMapper::_mapConstantInstruction(TR::Node *node) {
@@ -318,19 +390,11 @@ void TR_OWLMapper::_mapConstantInstruction(TR::Node *node) {
         exit(1);
     }
 
-    WALA_InstructionFieldsUnion instrUnion;
+    ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.constantInstructionFields = constFields;
-    InstructionInfo instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        NO_ADJUST,
-        instrUnion,
-        CONSTANT
-    };
 
-    _instructionInfoList.push_back(instrInfo);
-
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, CONSTANT);
+   
 }
 
 void TR_OWLMapper::_mapStoreInstruction(TR::Node *node) {
@@ -339,18 +403,10 @@ void TR_OWLMapper::_mapStoreInstruction(TR::Node *node) {
     char* type = _getType(opCode);
 
     StoreInstructionFields storeFields = {type,node->getSymbolReference()};
-    WALA_InstructionFieldsUnion instrUnion;
+    ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.storeInstructionFields = storeFields;
-    InstructionInfo instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        NO_ADJUST,
-        instrUnion,
-        STORE
-    };
 
-    _instructionInfoList.push_back(instrInfo);
+    _createInstructionMeta(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion, STORE);
 
 }
 
@@ -360,19 +416,11 @@ void TR_OWLMapper::_mapLoadInstruction(TR::Node *node) {
     char* type = _getType(opCode);
     LoadInstructionFields loadFields = {type, node->getSymbolReference()};
 
-    WALA_InstructionFieldsUnion instrUnion;
+    ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.loadInstructionFields = loadFields;
 
-    InstructionInfo instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        NO_ADJUST,
-        instrUnion,
-        LOAD
-    };
+    _createInstructionMeta(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion, LOAD);
 
-    _instructionInfoList.push_back(instrInfo);
 }
 
 void TR_OWLMapper::_mapReturnInstruction(TR::Node *node) {
@@ -382,44 +430,28 @@ void TR_OWLMapper::_mapReturnInstruction(TR::Node *node) {
     
     ReturnInstructionFields returnFields = {type};
 
-    WALA_InstructionFieldsUnion instrUnion;
+    ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.returnInstructionFields = returnFields;
 
-    InstructionInfo instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        NO_ADJUST,
-        instrUnion,
-        RETURN
-    };
-
-    _instructionInfoList.push_back(instrInfo);
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, RETURN);
+   
 }
 
 void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
 
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
-    WALA_Operator op;
+    ShrikeBTOperator op;
     
-    InstructionInfo instrInfo;
+    InstructionMeta instrMeta;
 
     /**** Unary op ****/
     if (opCode.isNeg()){
 
         UnaryOpInstructionFields unaryFields = {type};
-        WALA_InstructionFieldsUnion instrUnion;
+        ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.unaryOpInstructionFields = unaryFields;
-
-        instrInfo = {
-            true,
-            node->getGlobalIndex(),
-            0,
-            NO_ADJUST,
-            instrUnion,
-            UNARY_OP
-        };
+        _createInstructionMeta(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, UNARY_OP);
 
     }
     /**** Binary op ****/
@@ -437,22 +469,12 @@ void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
             exit(1);
         }
         BinaryOpInstructionFields binaryFields = {type,op};
-        WALA_InstructionFieldsUnion instrUnion;
+        ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.binaryOpInstructionFields = binaryFields;
 
-        instrInfo = {
-            true,
-            node->getGlobalIndex(),
-            0,
-            NO_ADJUST,
-            instrUnion,
-            BINARY_OP
-        };
-
+        _createInstructionMeta(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, BINARY_OP);
+    
     }
-
-    _instructionInfoList.push_back(instrInfo);
-
 }
 
 void TR_OWLMapper::_mapGotoInstruction(TR::Node *node) {
@@ -460,25 +482,17 @@ void TR_OWLMapper::_mapGotoInstruction(TR::Node *node) {
     uint32_t index = node->getBranchDestination()->getNode()->getGlobalIndex();
 
     GotoInstructionFields gotoFields = {index};
-    WALA_InstructionFieldsUnion instrUnion;
+    ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.gotoInstructionFields = gotoFields;
 
-    InstructionInfo instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        TABLE_MAP,
-        instrUnion,
-        GOTO
-    };
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, TABLE_MAP, 0, instrUnion, GOTO);
 
-    _instructionInfoList.push_back(instrInfo);
 }
 
 void TR_OWLMapper::_mapConditionalBranchInstruction(TR::Node *node) {
 
     TR::ILOpCodes opCodeValue = node->getOpCodeValue();
-    WALA_Operator op;
+    ShrikeBTOperator op;
 
     if (TR::ILOpCode::isStrictlyLessThanCmp(opCodeValue)) op = LT;
     else if (TR::ILOpCode::isStrictlyGreaterThanCmp(opCodeValue)) op = GT;
@@ -493,25 +507,16 @@ void TR_OWLMapper::_mapConditionalBranchInstruction(TR::Node *node) {
 
     ConditionalBranchInstructionFields condiFields = {type,op,index};
 
-    WALA_InstructionFieldsUnion instrUnion;
+    ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.conditionalBranchInstructionFields = condiFields;
 
-    InstructionInfo instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        TABLE_MAP,
-        instrUnion,
-        CONDITIONAL_BRANCH
-    };
-    
-    _instructionInfoList.push_back(instrInfo);
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, TABLE_MAP, 0, instrUnion, CONDITIONAL_BRANCH);
+
 }
 
 /***
  * Since WALA comparison instruction does not have a full set of operators like OMR
- * We use conditional branch and create two const int 1 and const int 2
- * goto const int 1 if the condition is true, otherwise goto const int 2
+ * Comparison instruction will be mapped as conditional branch instruction 
  */
 
 void TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
@@ -521,7 +526,7 @@ void TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
     char* type = _getType(opCode);
 
     TR_ComparisonTypes cmpType = TR::ILOpCode::getCompareType(opCodeValue);
-    WALA_Operator op;
+    ShrikeBTOperator op;
 
     if (!opCode.isCompareForEquality() && !opCode.isCompareTrueIfEqual() && opCode.isCompareTrueIfGreater() ){ //GT
         op = GT;
@@ -546,63 +551,25 @@ void TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
         exit(1);
     }
 
-    uint32_t index = node->getGlobalIndex();
-
-    ConditionalBranchInstructionFields condiFields = {type,op,index};
+    ConditionalBranchInstructionFields condiFields = {type,op,0};
     ConstantInstructionFields const0Fields = {TYPE_int, _con->Integer(0)};
-    GotoInstructionFields gotoFields = {index};
+    GotoInstructionFields gotoFields = {0};
     ConstantInstructionFields const1Fields = {TYPE_int, _con->Integer(1)};
 
-    WALA_InstructionFieldsUnion instrUnion;
-    InstructionInfo instrInfo;
-    instrUnion.conditionalBranchInstructionFields = condiFields;
-    instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        ADD_3,
-        instrUnion,
-        CONDITIONAL_BRANCH
-    };
+    ShrikeBTInstructionFieldsUnion instrUnion;
 
-    _instructionInfoList.push_back(instrInfo);
+    instrUnion.conditionalBranchInstructionFields = condiFields;
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, BY_VALUE, 3, instrUnion, CONDITIONAL_BRANCH);
 
     instrUnion.constantInstructionFields = const0Fields;
-    instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        NO_ADJUST,
-        instrUnion,
-        CONSTANT
-    };
-
-    _instructionInfoList.push_back(instrInfo);
-
+    _createInstructionMeta(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,CONSTANT);
+  
     instrUnion.gotoInstructionFields = gotoFields;
-    instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        ADD_2,
-        instrUnion,
-        GOTO
-    };
-
-    _instructionInfoList.push_back(instrInfo);
-
+    _createInstructionMeta(true,node->getGlobalIndex(),0,BY_VALUE,2,instrUnion,GOTO);
+   
     instrUnion.constantInstructionFields = const1Fields;
-    instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        NO_ADJUST,
-        instrUnion,
-        CONSTANT
-    };
-
-    _instructionInfoList.push_back(instrInfo);
-    
+    _createInstructionMeta(true,node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,CONSTANT);
+  
 }
 
 void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
@@ -698,30 +665,18 @@ void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
             exit(1);
     }
 
-    InstructionInfo instrInfo;
-
     if (fromType && toType){
         ConversionInstructionFields conversionFields = {fromType,toType};
-        WALA_InstructionFieldsUnion instrUnion;
+        ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.conversionInstructionFields = conversionFields;
-        instrInfo = {
-            true,
-            node->getGlobalIndex(),
-            0,
-            NO_ADJUST,
-            instrUnion,
-            CONVERSION
-        };
-
+        _createInstructionMeta(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,CONVERSION);
         
     }
     else{ //for those unecessary conversion instructions. They still need to occupy a slot in the instruciton list for the offset adjustment
-        
-        instrInfo.is_WALA_instruction = false;
-        instrInfo.OMR_GlobalIndex = node->getGlobalIndex();
+        ShrikeBTInstructionFieldsUnion instrUnion;
+        _createInstructionMeta(false, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion, NOT_INSTRUCTION);
     }
 
-    _instructionInfoList.push_back(instrInfo);
 }
 
 void TR_OWLMapper::_mapInvokeInstruction(TR::Node *node) {
@@ -729,19 +684,54 @@ void TR_OWLMapper::_mapInvokeInstruction(TR::Node *node) {
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
 
-    InvokeInstructionFields invokeFields = {type, "null", "null", STATIC};
+    TR::Method * method = node->getSymbolReference()->getSymbol()->getMethodSymbol()->getMethod();
+    char * className = method->classNameChars();
+    char * methodName = method->nameChars();
+
+    InvokeInstructionFields invokeFields = {type, className, methodName, STATIC};
     
-    WALA_InstructionFieldsUnion instrUnion;
+    ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.invokeInstructionFields = invokeFields;
 
-    InstructionInfo instrInfo = {
-        true,
-        node->getGlobalIndex(),
-        0,
-        NO_ADJUST,
-        instrUnion,
-        INVOKE
-    };
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, INVOKE);
 
-    _instructionInfoList.push_back(instrInfo);
+}
+
+/**
+ * A ternary expression will be expanded into 
+ * const 0
+ * conditional branch (Not equal)
+ * swap, 
+ * pop, 
+ * goto, 
+ * pop
+ * */
+void TR_OWLMapper::_mapTernaryInstruction(TR::Node *node) {
+    ConstantInstructionFields const0Fields = {TYPE_int, _con->Integer(0)};
+    ConditionalBranchInstructionFields condiFields = {TYPE_int, NE, 0};
+    SwapInstructionFields swapFields = {};
+    PopInstructionFields popFields = {1};
+    GotoInstructionFields gotoFields = {0};
+    // pop fields, use previous one
+
+    ShrikeBTInstructionFieldsUnion instrUnion;
+
+    instrUnion.constantInstructionFields = const0Fields;
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, NO_ADJUST,0,instrUnion, CONSTANT);
+
+    instrUnion.conditionalBranchInstructionFields = condiFields;
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, BY_VALUE, 4, instrUnion, CONDITIONAL_BRANCH);
+
+    instrUnion.swapInstructionFields = swapFields;
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SWAP);
+
+    instrUnion.popInstructionFields = popFields;
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, POP);
+
+    instrUnion.gotoInstructionFields = gotoFields;
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, BY_VALUE, 2, instrUnion, GOTO );
+
+    instrUnion.popInstructionFields = popFields;
+    _createInstructionMeta(true, node->getGlobalIndex(), 0, NO_ADJUST,0, instrUnion, POP);
+
 }

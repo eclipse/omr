@@ -173,6 +173,34 @@ const MethodConfig InvokeInstructionToStringConfig = {
         "()Ljava/lang/String;"
 };
 
+const MethodConfig SwapInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/SwapInstruction",
+        "make",
+        "()Lcom/ibm/wala/shrikeBT/SwapInstruction;"
+};
+
+const MethodConfig SwapInstructionToStringConfig = {
+        false,
+        "com/ibm/wala/shrikeBT/SwapInstruction",
+        "toString",
+        "()Ljava/lang/String;"
+};
+
+const MethodConfig PopInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/PopInstruction",
+        "make",
+        "(I)Lcom/ibm/wala/shrikeBT/PopInstruction;"
+};
+
+const MethodConfig PopInstructionToStringConfig = {
+        false,
+        "com/ibm/wala/shrikeBT/PopInstruction",
+        "toString",
+        "()Ljava/lang/String;"
+};
+
 /***** Field Config ******/
 
 const FieldConfig ADD_OperatorConfig = {

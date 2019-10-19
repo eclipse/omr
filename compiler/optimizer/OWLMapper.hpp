@@ -9,44 +9,39 @@
 #include <vector>
 #include "il/OMRNode_inlines.hpp"
 #include "compile/Compilation.hpp"
-#include "optimizer/OWLInstructionConstructor.hpp"
-
-/*** indicates how the offset of branch instruction should be adjusted ***/
-enum BranchTargetLabelAdjustType {
-    NO_ADJUST, // no need to adjust the branch target
-    TABLE_MAP, // get the target label from the omr index to wala offset mapping table
-    ADD_2,// label target = current offset added by 2
-    ADD_3,
-};
-
-struct InstructionInfo {
-    /*** if false, this indicates it can be an OMR treetop, BBStart, BBEnd or an eliminated OMR instruction ***/
-    bool is_WALA_instruction;
-    uint32_t OMR_GlobalIndex;
-    uint32_t WALA_offset; // set to 0 initially and let the adjust function assign the correct offset
-    BranchTargetLabelAdjustType branchTargetLabelAdjustType;
-    WALA_InstructionFieldsUnion instructionFieldsUnion;
-    WALA_Instruction instruction;
-};
+#include "optimizer/OWLMapperTypes.hpp"
+#include "optimizer/OWLLogger.hpp"
+#include "optimizer/OWLShrikeBTConstructor.hpp"
 
 
 class TR_OWLMapper
 {
 private:
 
-    TR_OWLInstructionConstructor* _con;
+    TR_OWLShrikeBTConstructor* _con;
+    TR_OWLLogger* _logger;
 
-    std::vector<InstructionInfo> _instructionInfoList; 
+    std::vector<InstructionMeta> _instructionMetaList; 
 
     void _processTree(TR::Node *root,TR::NodeChecklist &visited ); // traverse the tree
     void _adjustOffset();
-    void _logAllMappedInstructions(); 
 
-    void _logSingleInstruction(jobject instructionObj, WALA_Instruction instruction, uint32_t offset);
-    
     void _instructionRouter(TR::Node *node);
 
     char* _getType(TR::ILOpCode opCode);
+
+    /*** create instruction meta and push it into instruction meta list ***/
+    void _createInstructionMeta(
+        bool isShrikeBTInstruction, 
+        uint32_t omrGlobalIndex, 
+        uint32_t shrikeBTOffset, 
+        BranchTargetLabelAdjustType branchTargetLabelAdjustType, 
+        int32_t branchTargetLabelAdjustAmount,
+        ShrikeBTInstructionFieldsUnion instructionFieldsUnion, 
+        ShrikeBTInstruction instruction );
+    
+    void _createImplicitStoreAndLoad(TR::Node *node);
+    void _createImplicitLoad(TR::Node *node);
 
     void _mapConstantInstruction(TR::Node *node);
     void _mapStoreInstruction(TR::Node* node);
@@ -58,6 +53,9 @@ private:
     void _mapComparisonInstruction(TR::Node* node);
     void _mapConversionInstruction(TR::Node* node);
     void _mapInvokeInstruction(TR::Node* node);
+    void _mapTernaryInstruction(TR::Node* node);
+
+    void _constructShrikeBTInstructionObjects();
 
 public:
     TR_OWLMapper();
@@ -65,4 +63,4 @@ public:
     void map(TR::Compilation *compilation);
 
 };
-#endif //OMR_OWLWALAMAPPER_HPP
+#endif 
