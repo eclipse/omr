@@ -499,6 +499,7 @@ public:
 	};
 
 	HeapInitializationSplitHeapSection splitHeapSection; /**< Split Heap section to be requested */
+	bool enableScanConstantPoolObjectInScavenge; /**<  set true if need to scan ConstantPool Objects during Scavenge, the default is false (set true if Java 11 and above) */
 #endif /* OMR_GC_MODRON_SCAVENGER */
 #endif /* OMR_GC_MODRON_SCAVENGER || OMR_GC_VLHGC */
 	double globalMaximumContraction; /**< maximum percentage of committed global heap which can contract in one GC cycle (set through -Xgc:globalMaximumContraction=) */
@@ -1545,6 +1546,7 @@ public:
 		, enableSplitHeap(false)
 		, aliasInhibitingThresholdPercentage(0.20)
 		, splitHeapSection(HEAP_INITIALIZATION_SPLIT_HEAP_UNKNOWN)
+		, enableScanConstantPoolObjectInScavenge(false)
 #endif /* OMR_GC_MODRON_SCAVENGER */
 		, globalMaximumContraction(0.05) /* by default, contract must be at most 5% of the committed heap */
 		, globalMinimumContraction(0.01) /* by default, contract must be at least 1% of the committed heap */
