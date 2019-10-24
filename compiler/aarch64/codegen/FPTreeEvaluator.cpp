@@ -239,19 +239,59 @@ OMR::ARM64::TreeEvaluator::ddivEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return doublePrecisionEvaluator(node, TR::InstOpCode::fdivd, cg);
    }
 
+static TR::Register *
+commonFpRemEvaluator(TR::Node *node, bool isDouble, TR::CodeGenerator *cg)
+   {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *srcReg1 = cg->evaluate(firstChild);
+   TR::Register *srcReg2 = cg->evaluate(secondChild);
+
+   TR::Register *trgReg;
+   TR::InstOpCode::Mnemonic divOp;
+   TR::InstOpCode::Mnemonic rintOp; /* round to integer */
+   TR::InstOpCode::Mnemonic mulOp;
+   TR::InstOpCode::Mnemonic subOp;
+
+   if (isDouble)
+      {
+      trgReg = cg->allocateRegister(TR_FPR);
+      divOp = TR::InstOpCode::fdivd;
+      rintOp = TR::InstOpCode::frintzd;
+      mulOp = TR::InstOpCode::fmuld;
+      subOp = TR::InstOpCode::fsubd;
+      }
+   else
+      {
+      trgReg = cg->allocateSinglePrecisionRegister();
+      divOp = TR::InstOpCode::fdivs;
+      rintOp = TR::InstOpCode::frintzs;
+      mulOp = TR::InstOpCode::fmuls;
+      subOp = TR::InstOpCode::fsubs;
+      }
+
+   generateTrg1Src2Instruction(cg, divOp, node, trgReg, srcReg1, srcReg2);
+   generateTrg1Src1Instruction(cg, rintOp, node, trgReg, trgReg);
+   generateTrg1Src2Instruction(cg, mulOp, node, trgReg, trgReg, srcReg2);
+   generateTrg1Src2Instruction(cg, subOp, node, trgReg, srcReg1, trgReg);
+
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   node->setRegister(trgReg);
+   return trgReg;
+   }
+
 TR::Register *
 OMR::ARM64::TreeEvaluator::fremEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::fremEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   return commonFpRemEvaluator(node, false, cg);
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::dremEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::dremEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   return commonFpRemEvaluator(node, true, cg);
+   }
 
 static TR::Register *
 commonFpUnaryEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, bool isDouble, TR::CodeGenerator *cg)

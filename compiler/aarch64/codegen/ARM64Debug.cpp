@@ -474,6 +474,8 @@ static const char *opCodeToNameMap[] =
    "fabsd",
    "fnegs",
    "fnegd",
+   "frintzs",
+   "frintzd",
    "fadds",
    "faddd",
    "fsubs",
