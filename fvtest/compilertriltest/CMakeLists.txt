@@ -48,9 +48,9 @@ add_executable(comptest
 	CompareTest.cpp
 	TypeConversionTest.cpp
 	TernaryTest.cpp
-	# Following test crashes at present because
+	# Following test fails at present because
 	# it requires optimizer callsAsUses flags enabled
-	#LocalPassByRefTest.cpp
+	LocalPassByRefTest.cpp
 )
 
 target_link_libraries(comptest
