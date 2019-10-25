@@ -318,7 +318,21 @@ TR::Node* Tril::TRLangBuilder::toTRNode(const ASTNode* const tree) {
      }
      else {
         TraceIL("  unrecognized opcode; using default creation mechanism\n", "");
-        node = TR::Node::create(opcode.getOpCodeValue(), childCount);
+        if (tree->getArgByName("parm") != NULL) {
+             auto arg = tree->getArgByName("parm")->getValue()->get<int32_t>();
+             TraceIL("parameter %d\n", arg);
+             auto symref = symRefTab()->findOrCreateAutoSymbol(_methodSymbol, arg, opcode.getType() );
+             node = TR::Node::createWithSymRef(opcode.getOpCodeValue(), childCount, symref);
+         }
+         else if (tree->getArgByName("temp") != NULL) {
+             const auto symName = tree->getArgByName("temp")->getValue()->getString();
+             TraceIL("temporary %s\n", symName);
+             auto symref = _symRefMap[symName];
+             node = TR::Node::createWithSymRef(opcode.getOpCodeValue(), childCount, symref);
+         }
+         else {
+             node = TR::Node::create(opcode.getOpCodeValue(), childCount);
+         }
      }
      node->setFlags(parseFlags(tree));
 
