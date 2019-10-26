@@ -131,13 +131,6 @@ extern "C"
 bool
 initializeNJJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t numHelpers, char *options)
    {
-    // Force enable tree verifier
-    std::string optionsWithVerifier = options;
-    if(optionsWithVerifier == "-Xjit")
-        optionsWithVerifier += ":paranoidOptCheck";
-    else
-        optionsWithVerifier += ",paranoidOptCheck";
-
    // Create a bootstrap raw allocator.
    //
    TR::RawAllocator rawAllocator;
@@ -161,7 +154,7 @@ initializeNJJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t num
 
    initializeAllHelpers(jitConfig, helperIDs, helperAddresses, numHelpers);
 
-   if (commonJitInit(fe, const_cast<char *>(optionsWithVerifier.c_str())) < 0)
+   if (commonJitInit(fe, options) < 0)
       return false;
 
    initializeCodeCache(fe.codeCacheManager());
