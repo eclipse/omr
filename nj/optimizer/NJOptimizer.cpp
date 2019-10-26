@@ -28,7 +28,7 @@
 #include "compile/Method.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 
 #include "optimizer/Optimization.hpp"
 #include "optimizer/OptimizationManager.hpp"
@@ -167,8 +167,6 @@ Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymb
    : OMR::Optimizer(comp, methodSymbol, isIlGen, strategy, VNType)
    {
    // Initialize individual optimizations
-   _opts[OMR::trivialStoreSinking] =
-      new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialSinkStores::create, OMR::trivialStoreSinking);
    _opts[OMR::trivialDeadBlockRemover] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialDeadBlockRemover::create, OMR::trivialDeadBlockRemover);
    _opts[OMR::deadTreesElimination] =

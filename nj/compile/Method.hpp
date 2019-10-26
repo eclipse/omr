@@ -30,7 +30,7 @@
 
 #include <string.h>
 
-#include "compile/OMRMethod.hpp"
+#include "compiler/compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 
 namespace TR { class IlGeneratorMethodDetails; }
@@ -42,11 +42,11 @@ namespace TR { class FrontEnd; }
 
 namespace NJCompiler {
 
-class Method : public TR_Method {
+class Method : public TR::Method {
 public:
   TR_ALLOC(TR_Memory::Method);
 
-  Method() : TR_Method(TR_Method::Test) {}
+  Method() : TR::Method(TR::Method::Test) {}
 
   // FIXME: need to provide real code for this group
   virtual uint16_t classNameLength() { return strlen(classNameChars()); }
@@ -121,7 +121,7 @@ public:
       computeSignatureChars();
       }
 
-   virtual TR_Method           * convertToMethod()                          { return this; }
+   virtual TR::Method           * convertToMethod()                          { return this; }
 
    virtual const char          * signature(TR_Memory *, TR_AllocationKind);
    virtual const char          * externalName(TR_Memory *, TR_AllocationKind);

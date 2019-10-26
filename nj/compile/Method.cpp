@@ -24,7 +24,7 @@
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "ilgen/NJIlGenerator.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 

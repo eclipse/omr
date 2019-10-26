@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <string>
 #include <stdio.h>
 #include "codegen/CodeGenerator.hpp"
 #include "compile/CompilationTypes.hpp"
@@ -124,19 +123,6 @@ initializeCodeCache(TR::CodeCacheManager & codeCacheManager)
 |___|_| |_|\__\___|_|  |_|  \__,_|\___\___|
 
 */
-
-
-
-// An application is intended to load the JIT as a shared library, then call:
-//     initializeNJJit() providing addresses of required helpers (all others will be NULL)
-//     compileMethod() as many times as needed to create compiled code
-//         resolved method passed in must have an IlGenerator responsible for 
-//         injecting the IL for the compilation
-//     shuwdownNJJit() when the test is complete
-//
-
-
-
 
 // helperIDs is an array of helper id corresponding to the addresses passed in "helpers"
 // helpers is an array of pointers to helpers that compiled code for tests needs to reference

@@ -54,6 +54,8 @@ class Optimizer : public OMR::OptimizerConnector
    Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
          const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0);
 
+   virtual bool getCallsAsUses() { return true; }
+
    private:
    TR::Optimizer *self();
    };

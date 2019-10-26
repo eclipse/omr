@@ -970,6 +970,15 @@ JIT_NodeRef JIT_ZeroValue(JIT_ILInjectorRef ilinjector, JIT_Type type) {
   return wrap_node(n);
 }
 
+/* See https://github.com/eclipse/omr/issues/3206 */
+static TR::ILOpCodes correct_fcmpne(TR::ILOpCodes opCode) {
+  if (TR::iffcmpne == opCode)
+    return TR::iffcmpneu;
+  else if (TR::ifdcmpne == opCode)
+    return TR::ifdcmpneu;
+  else
+    return opCode;
+}
 JIT_NodeRef JIT_IfNotZeroValue(JIT_ILInjectorRef ilinjector, JIT_NodeRef value,
                                JIT_BlockRef blockOnNonZero) {
   JIT_NodeRef zeroValue = JIT_ZeroValue(ilinjector, JIT_GetNodeType(value));
@@ -979,9 +988,9 @@ JIT_NodeRef JIT_IfNotZeroValue(JIT_ILInjectorRef ilinjector, JIT_NodeRef value,
   auto targetBlock = unwrap_block(blockOnNonZero);
   if (!zeroValue)
     return NULL;
-  TR::Node *ifNode =
-      TR::Node::createif(TR::ILOpCode::ifcmpneOpCode(v->getDataType()), v, zv,
-                         targetBlock->getEntry());
+  TR::Node* ifNode
+    = TR::Node::createif(correct_fcmpne(TR::ILOpCode::ifcmpneOpCode(v->getDataType())), 
+                         v, zv, targetBlock->getEntry());
   injector->genTreeTop(ifNode);
   injector->cfg()->addEdge(injector->getCurrentBlock(), targetBlock);
   return wrap_node(ifNode);
