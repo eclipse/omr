@@ -28,6 +28,8 @@ char * TR_OWLLogger::getInstructionString(jobject instructionObj, ShrikeBTInstru
         case INVOKE: methodConfig = InvokeInstructionToStringConfig; break;
         case SWAP: methodConfig = SwapInstructionToStringConfig; break;
         case POP: methodConfig = PopInstructionToStringConfig; break;
+        case ARRAY_STORE: methodConfig = ArrayStoreInstructionToStringConfig; break;
+        case ARRAY_LOAD: methodConfig = ArrayLoadInstructionToStringConfig; break;
 
         default: perror("Error: Instruction enum not found!\n"); exit(1); break;
     }
@@ -55,6 +57,13 @@ void TR_OWLLogger::logAllMappedInstructions(std::vector<MappedInstructionObject>
     for (uint32_t i = 0 ; i < mappedInstructionObjectList.size(); i ++) {
         MappedInstructionObject mappedInstructionObject = mappedInstructionObjectList[i];
         logSingleInstruction(mappedInstructionObject.instructionObject, mappedInstructionObject.instruction, mappedInstructionObject.offset );
+        if (i+3 < mappedInstructionObjectList.size() && mappedInstructionObjectList[i+3].instruction == ARRAY_STORE){
+            printf("#Array Reference\n");
+        }
+
+        if (i+2 < mappedInstructionObjectList.size() && mappedInstructionObjectList[i+2].instruction == ARRAY_LOAD) {
+            printf("#Array Reference\n");
+        }
     }
     
 }

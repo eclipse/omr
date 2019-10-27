@@ -47,6 +47,10 @@ extern const MethodConfig SwapInstructionConfig;
 extern const MethodConfig SwapInstructionToStringConfig;
 extern const MethodConfig PopInstructionConfig;
 extern const MethodConfig PopInstructionToStringConfig;
+extern const MethodConfig ArrayStoreInstructionConfig;
+extern const MethodConfig ArrayStoreInstructionToStringConfig;
+extern const MethodConfig ArrayLoadInstructionConfig;
+extern const MethodConfig ArrayLoadInstructionToStringConfig;
 
 /***** Field Config ******/
 

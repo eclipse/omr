@@ -44,16 +44,18 @@ private:
     void _createImplicitLoad(TR::Node *node);
 
     void _mapConstantInstruction(TR::Node *node);
-    void _mapStoreInstruction(TR::Node* node);
-    void _mapLoadInstruction(TR::Node* node);
+    void _mapDirectStoreInstruction(TR::Node* node);
+    void _mapDirectLoadInstruction(TR::Node* node);
     void _mapReturnInstruction(TR::Node* node);
     void _mapArithmeticInstruction(TR::Node* node);
     void _mapGotoInstruction(TR::Node* node);
     void _mapConditionalBranchInstruction(TR::Node* node);
     void _mapComparisonInstruction(TR::Node* node);
     void _mapConversionInstruction(TR::Node* node);
-    void _mapInvokeInstruction(TR::Node* node);
+    void _mapCallInstruction(TR::Node* node);
     void _mapTernaryInstruction(TR::Node* node);
+    void _mapIndirectStoreInstruction(TR::Node *node);
+    void _mapIndirectLoadInstruction(TR::Node *node);
 
     void _constructShrikeBTInstructionObjects();
 

@@ -59,6 +59,28 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::NodeChecklist &visited) {
         _processTree(root->getChild(0),visited);
         
     }
+    else if (root->getOpCode().isStoreIndirect()) {
+        
+        // if (root->getChild(0)->getChild(0)->getChild(1)->getNumChildren() == 0) { //struct
+        //     //_processTree(root->getChild(0)->getChild(0)->getChild(0),visited); // reference
+        //     _processTree(root->getChild(0)->getChild(0)->getChild(1),visited);
+        // }
+        // else { // array
+        //     //_processTree(root->getChild(0)->getChild(0)->getChild(0),visited); // reference
+        //     _processTree(root->getChild(0)->getChild(0)->getChild(1)->getChild(0), visited);
+        // }
+        // //the value of indirect store
+        // _processTree(root->getChild(1),visited);
+    }
+    else if (root->getOpCode().isLoadIndirect()) {
+        
+        if (root->getChild(0)->getChild(0)->getChild(1)->getNumChildren() == 0) { //struct
+            _processTree(root->getChild(0)->getChild(0)->getChild(1),visited);
+        }
+        else { // array
+            _processTree(root->getChild(0)->getChild(0)->getChild(1)->getChild(0), visited);
+        }
+    }
     else{
         for (uint32_t i = 0; i < root->getNumChildren(); ++i) {
             _processTree(root->getChild(i), visited);
@@ -225,6 +247,16 @@ void TR_OWLMapper::_constructShrikeBTInstructionObjects() {
                     instructionObject = _con->PopInstruction(popFields.size);
                     break;
                 }
+                case ARRAY_STORE: {
+                    ArrayStoreInstructionFields arrayStoreFields = instrUnion.arrayStoreInstructionFields;
+                    instructionObject = _con->ArrayStoreInstruction(arrayStoreFields.type);
+                    break;
+                }
+                case ARRAY_LOAD: {
+                    ArrayLoadInstructionFields arrayLoadFields = instrUnion.arrayLoadInstructionFields;
+                    instructionObject = _con->ArrayLoadInstruction(arrayLoadFields.type);
+                    break;
+                }
                 default:
                     perror("No instruction matched inside construct instruction object function!\n");
                     exit(1);
@@ -262,14 +294,23 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     if (opCode.isLoadConst()) { //constant instruction
          _mapConstantInstruction(node);
     }
-    else if (opCode.isStore()) { // store instruction
-        _mapStoreInstruction(node);
+    else if (opCode.isStoreDirect()) { // store instruction
+        _mapDirectStoreInstruction(node);
     }
-    else if (opCode.isLoad()) { // load instruction
-        _mapLoadInstruction(node);
+    else if (opCode.isStoreIndirect()) { //storei
+        _mapIndirectStoreInstruction(node);
+    }
+    else if (opCode.isLoadDirect()) { // load instruction
+        _mapDirectLoadInstruction(node);
+    }
+    else if (opCode.isLoadIndirect()) { //loadi
+        _mapIndirectLoadInstruction(node);
     }
     else if (opCode.isReturn()) { // return instruction
         _mapReturnInstruction(node);
+    }
+    else if (opCode.isArrayRef()) {
+        printf("&&& %s\n", opCode.getName());
     }
     else if (opCode.isArithmetic()){ // arithmetic instructions
         _mapArithmeticInstruction(node);
@@ -287,11 +328,12 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
         _mapComparisonInstruction(node);
     }
     else if (opCode.isCall()) { // function call
-        _mapInvokeInstruction(node);
+        _mapCallInstruction(node);
     }
     else if (opCode.isTernary()) { // ternary instruction
         _mapTernaryInstruction(node);
     }
+    else if (opCode.isLoadAddr()) {} //loadaddr
 
     if (node->getReferenceCount() > 1) {
         _createImplicitStoreAndLoad(node);
@@ -397,7 +439,7 @@ void TR_OWLMapper::_mapConstantInstruction(TR::Node *node) {
    
 }
 
-void TR_OWLMapper::_mapStoreInstruction(TR::Node *node) {
+void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
   
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
@@ -410,7 +452,7 @@ void TR_OWLMapper::_mapStoreInstruction(TR::Node *node) {
 
 }
 
-void TR_OWLMapper::_mapLoadInstruction(TR::Node *node) {
+void TR_OWLMapper::_mapDirectLoadInstruction(TR::Node *node) {
 
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
@@ -679,7 +721,7 @@ void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
 
 }
 
-void TR_OWLMapper::_mapInvokeInstruction(TR::Node *node) {
+void TR_OWLMapper::_mapCallInstruction(TR::Node *node) {
 
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
@@ -733,5 +775,27 @@ void TR_OWLMapper::_mapTernaryInstruction(TR::Node *node) {
 
     instrUnion.popInstructionFields = popFields;
     _createInstructionMeta(true, node->getGlobalIndex(), 0, NO_ADJUST,0, instrUnion, POP);
+
+}
+
+void TR_OWLMapper::_mapIndirectStoreInstruction(TR::Node *node) {
+    char* type = _getType(node->getOpCode());
+    ArrayStoreInstructionFields arrayStoreFields = {type};
+
+    ShrikeBTInstructionFieldsUnion instrUnion;
+    instrUnion.arrayStoreInstructionFields = arrayStoreFields;
+
+    _createInstructionMeta(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,ARRAY_STORE);
+
+}
+
+void TR_OWLMapper::_mapIndirectLoadInstruction(TR::Node *node) {
+    char* type = _getType(node->getOpCode());
+    ArrayLoadInstructionFields arrayLoadFields = {type};
+
+    ShrikeBTInstructionFieldsUnion instrUnion;
+    instrUnion.arrayLoadInstructionFields = arrayLoadFields;
+
+    _createInstructionMeta(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,ARRAY_LOAD);
 
 }
