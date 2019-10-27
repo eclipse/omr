@@ -201,6 +201,36 @@ const MethodConfig PopInstructionToStringConfig = {
         "()Ljava/lang/String;"
 };
 
+const MethodConfig ArrayStoreInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/ArrayStoreInstruction",
+        "make",
+        "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ArrayStoreInstruction;"
+};
+
+const MethodConfig ArrayStoreInstructionToStringConfig = {
+        false,
+        "com/ibm/wala/shrikeBT/ArrayStoreInstruction",
+        "toString",
+        "()Ljava/lang/String;"
+};
+
+const MethodConfig ArrayLoadInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/ArrayLoadInstruction",
+        "make",
+        "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ArrayLoadInstruction;"
+};
+
+const MethodConfig ArrayLoadInstructionToStringConfig = {
+        false,
+        "com/ibm/wala/shrikeBT/ArrayLoadInstruction",
+        "toString",
+        "()Ljava/lang/String;"
+};
+
+
+
 /***** Field Config ******/
 
 const FieldConfig ADD_OperatorConfig = {

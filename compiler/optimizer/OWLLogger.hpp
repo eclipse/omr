@@ -4,6 +4,7 @@
 #include <vector>
 #include "optimizer/OWLJNIClient.hpp"
 #include "optimizer/OWLShrikeBTConstructor.hpp"
+#include "optimizer/OWLMapperTypes.hpp"
 
 
 class TR_OWLLogger

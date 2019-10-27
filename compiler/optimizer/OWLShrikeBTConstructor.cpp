@@ -362,3 +362,33 @@ jobject TR_OWLShrikeBTConstructor::PopInstruction(uint16_t size) {
 
     return popInstruction;
 }
+
+jobject TR_OWLShrikeBTConstructor::ArrayStoreInstruction(char* type) {
+    jobject arrayStoreInstruction;
+
+    _jniClient->callMethod
+    (
+        ArrayStoreInstructionConfig,
+        NULL,
+        &arrayStoreInstruction,
+        1,
+        _jniClient->constructString(type)
+    );
+
+    return arrayStoreInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::ArrayLoadInstruction(char* type) {
+    jobject arrayLoadInstruction;
+
+    _jniClient->callMethod
+    (
+        ArrayLoadInstructionConfig,
+        NULL,
+        &arrayLoadInstruction,
+        1,
+        _jniClient->constructString(type)
+    );
+
+    return arrayLoadInstruction;
+}
