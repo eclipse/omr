@@ -1,0 +1,254 @@
+/*******************************************************************************
+ * Copyright (c) 2021, 2021 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at http://eclipse.org/legal/epl-2.0
+ * or the Apache License, Version 2.0 which accompanies this distribution
+ * and is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the
+ * Eclipse Public License, v. 2.0 are satisfied: GNU General Public License,
+ * version 2 with the GNU Classpath Exception [1] and GNU General Public
+ * License, version 2 with the OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+
+	.file	"ARM64ArrayCopy.s"
+
+	.global	__arrayCopy
+
+	.text
+	.align	2
+
+// Copy array elements
+//
+// in:    x0 - length in bytes
+//        x1 - src addr
+//        x2 - dst addr
+// trash: x3, x4
+
+__arrayCopy:
+	cbz	x0, finished		// return if no bytes to copy
+	subs	x3, x2, x1
+	beq	finished		// return if srcAddr == dstAddr
+	cmp	x0, x3
+	bhi	backwardArrayCopy	// byteLength > dstAddr - srcAddr, must do backward array copy
+
+	tst	x2, #1
+	beq	fwDstAlign2		// dstAddr is 2-byte aligned
+	ldrb	w3, [x1], #1
+	sub	x0, x0, #1
+	strb	w3, [x2], #1
+fwDstAlign2:
+	cmp	x0, #2
+	blt	fwByteCopy		// less than 2 bytes remaining
+	tst	x1, #1
+	bne	fwByteCopyLoop		// srcAddr is not 2-byte aligned
+	tst	x2, #2
+	beq	fwDstAlign4		// dstAddr is 4-byte aligned
+	ldrh	w3, [x1], #2
+	sub	x0, x0, #2
+	strh	w3, [x2], #2
+fwDstAlign4:
+	cmp	x0, #4
+	blt	fwHalfWordCopy		// less than 4 bytes remaining
+	tst	x1, #2
+	bne	fwHalfWordCopyLoop	// srcAddr is not 4-byte aligned
+	tst	x2, #4
+	beq	fwDstAlign8		// dstAddr is 8-byte aligned
+	ldr	w3, [x1], #4
+	sub	x0, x0, #4
+	str	w3, [x2], #4
+fwDstAlign8:
+	cmp	x0, #8
+	blt	fwWordCopy		// less than 8 bytes remaining
+	tst	x1, #4
+	bne	fwWordCopyLoop		// srcAddr is not 8-byte aligned
+	tst	x2, #8
+	beq	fwDstAlign16		// dstAddr is 16-byte aligned
+	ldr	x3, [x1], #8
+	sub	x0, x0, #8
+	str	x3, [x2], #8
+fwDstAlign16:
+	tst	x1, #8
+	bne	fwDoubleWordCopyLoop	// srcAddr is not 16-byte aligned
+fwQuadWordCopyLoop:
+	// Both srcAddr and dstAddr are 16-byte aligned
+	cmp	x0, #16
+	blt	fwDoubleWordCopy	// less than 16 bytes remaining
+	ldp	x3, x4, [x1], #16
+	sub	x0, x0, #16
+	stp	x3, x4, [x2], #16
+	b	fwQuadWordCopyLoop
+fwDoubleWordCopyLoop:
+	// Both srcAddr and dstAddr are 8-byte aligned
+	cmp	x0, #8
+	blt	fwWordCopy		// less than 8 bytes remaining
+	ldr	x3, [x1], #8
+	sub	x0, x0, #8
+	str	x3, [x2], #8
+	b	fwDoubleWordCopyLoop
+fwWordCopyLoop:
+	// Both srcAddr and dstAddr are 4-byte aligned
+	cmp	x0, #4
+	blt	fwHalfWordCopy
+	ldr	w3, [x1], #4		// less than 4 bytes remaining
+	sub	x0, x0, #4
+	str	w3, [x2], #4
+	b	fwWordCopyLoop
+fwHalfWordCopyLoop:
+	// Both srcAddr and dstAddr are 2-byte aligned
+	cmp	x0, #2
+	blt	fwByteCopy		// less than 2 bytes remaining
+	ldrh	w3, [x1], #2
+	sub	x0, x0, #2
+	strh	w3, [x2], #2
+	b	fwHalfWordCopyLoop
+fwByteCopyLoop:
+	cbz	x0, finished
+	ldrb	w3, [x1], #1
+	sub	x0, x0, #1
+	strb	w3, [x2], #1
+	b	fwByteCopyLoop
+fwDoubleWordCopy:
+	// Both srcAddr and dstAddr are 8-byte aligned
+	cmp	x0, #8
+	blt	fwWordCopy
+	ldr	x3, [x1], #8
+	sub	x0, x0, #8
+	str	x3, [x2], #8
+fwWordCopy:
+	// Both srcAddr and dstAddr are 4-byte aligned
+	cmp	x0, #4
+	blt	fwHalfWordCopy
+	ldr	w3, [x1], #4
+	sub	x0, x0, #4
+	str	w3, [x2], #4
+fwHalfWordCopy:
+	// Both srcAddr and dstAddr are 2-byte aligned
+	cmp	x0, #2
+	blt	fwByteCopy
+	ldrh	w3, [x1], #2
+	sub	x0, x0, #2
+	strh	w3, [x2], #2
+fwByteCopy:
+	cbz	x0, finished
+	ldrb	w3, [x1], #1
+	sub	x0, x0, #1
+	strb	w3, [x2], #1
+finished:
+	ret
+
+backwardArrayCopy:
+	add	x1, x1, x0
+	add	x2, x2, x0
+
+	tst	x2, #1
+	beq	bwDstAlign2		// dstAddr is 2-byte aligned
+	ldrb	w3, [x1, #-1]!
+	sub	x0, x0, #1
+	strb	w3, [x2, #-1]!
+bwDstAlign2:
+	cmp	x0, #2
+	blt	bwByteCopy		// less than 2 bytes remaining
+	tst	x1, #1
+	bne	bwByteCopyLoop		// srcAddr is not 2-byte aligned
+	tst	x2, #2
+	beq	bwDstAlign4		// dstAddr is 4-byte aligned
+	ldrh	w3, [x1, #-2]!
+	sub	x0, x0, #2
+	strh	w3, [x2, #-2]!
+bwDstAlign4:
+	cmp	x0, #4
+	blt	bwHalfWordCopy		// less than 4 bytes remaining
+	tst	x1, #2
+	bne	bwHalfWordCopyLoop	// srcAddr is not 4-byte aligned
+	tst	x2, #4
+	beq	bwDstAlign8		// dstAddr is 8-byte aligned
+	ldr	w3, [x1, #-4]!
+	sub	x0, x0, #4
+	str	w3, [x2, #-4]!
+bwDstAlign8:
+	cmp	x0, #8
+	blt	bwWordCopy		// less than 8 bytes remaining
+	tst	x1, #4
+	bne	bwWordCopyLoop		// srcAddr is not 8-byte aligned
+	tst	x2, #8
+	beq	bwDstAlign16		// dstAddr is 16-byte aligned
+	ldr	x3, [x1, #-8]!
+	sub	x0, x0, #8
+	str	x3, [x2, #-8]!
+bwDstAlign16:
+	tst	x1, #8
+	bne	bwDoubleWordCopyLoop	// srcAddr is not 16-byte aligned
+bwQuadWordCopyLoop:
+	// Both srcAddr and dstAddr are 16-byte aligned
+	cmp	x0, #16
+	blt	bwDoubleWordCopy	// less than 16 bytes remaining
+	ldp	x3, x4, [x1, #-16]!
+	sub	x0, x0, #16
+	stp	x3, x4, [x2, #-16]!
+	b	bwQuadWordCopyLoop
+bwDoubleWordCopyLoop:
+	// Both srcAddr and dstAddr are 8-byte aligned
+	cmp	x0, #8
+	blt	bwWordCopy		// less than 8 bytes remaining
+	ldr	x3, [x1, #-8]!
+	sub	x0, x0, #8
+	str	x3, [x2, #-8]!
+	b	bwDoubleWordCopyLoop
+bwWordCopyLoop:
+	// Both srcAddr and dstAddr are 4-byte aligned
+	cmp	x0, #4
+	blt	bwHalfWordCopy
+	ldr	w3, [x1, #-4]!		// less than 4 bytes remaining
+	sub	x0, x0, #4
+	str	w3, [x2, #-4]!
+	b	bwWordCopyLoop
+bwHalfWordCopyLoop:
+	// Both srcAddr and dstAddr are 2-byte aligned
+	cmp	x0, #2
+	blt	bwByteCopy		// less than 2 bytes remaining
+	ldrh	w3, [x1, #-2]!
+	sub	x0, x0, #2
+	strh	w3, [x2, #-2]!
+	b	bwHalfWordCopyLoop
+bwByteCopyLoop:
+	cbz	x0, finished
+	ldrb	w3, [x1, #-1]!
+	sub	x0, x0, #1
+	strb	w3, [x2, #-1]!
+	b	bwByteCopyLoop
+bwDoubleWordCopy:
+	// Both srcAddr and dstAddr are 8-byte aligned
+	cmp	x0, #8
+	blt	bwWordCopy
+	ldr	x3, [x1, #-8]!
+	sub	x0, x0, #8
+	str	x3, [x2, #-8]!
+bwWordCopy:
+	// Both srcAddr and dstAddr are 4-byte aligned
+	cmp	x0, #4
+	blt	bwHalfWordCopy
+	ldr	w3, [x1, #-4]!
+	sub	x0, x0, #4
+	str	w3, [x2, #-4]!
+bwHalfWordCopy:
+	// Both srcAddr and dstAddr are 2-byte aligned
+	cmp	x0, #2
+	blt	bwByteCopy
+	ldrh	w3, [x1, #-2]!
+	sub	x0, x0, #2
+	strh	w3, [x2, #-2]!
+bwByteCopy:
+	cbz	x0, finished
+	ldrb	w3, [x1, #-1]!
+	sub	x0, x0, #1
+	strb	w3, [x2, #-1]!
+	ret

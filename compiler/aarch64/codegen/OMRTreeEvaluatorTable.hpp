@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -612,7 +612,7 @@
 #define _ArrayStoreCHKEvaluator TR::TreeEvaluator::unImpOpEvaluator 
 #define _ArrayCHKEvaluator TR::TreeEvaluator::unImpOpEvaluator 
 #define _RetEvaluator TR::TreeEvaluator::unImpOpEvaluator 
-#define _arraycopyEvaluator TR::TreeEvaluator::unImpOpEvaluator 
+#define _arraycopyEvaluator TR::TreeEvaluator::arraycopyEvaluator 
 #define _arraysetEvaluator TR::TreeEvaluator::unImpOpEvaluator 
 #define _arraytranslateEvaluator TR::TreeEvaluator::unImpOpEvaluator 
 #define _arraytranslateAndTestEvaluator TR::TreeEvaluator::unImpOpEvaluator 

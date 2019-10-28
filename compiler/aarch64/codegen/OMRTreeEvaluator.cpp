@@ -22,6 +22,7 @@
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/ARM64ShiftCode.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
@@ -639,10 +640,38 @@ OMR::ARM64::TreeEvaluator::arraycmpEvaluator(TR::Node *node, TR::CodeGenerator *
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::arraycopyEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   TR_ASSERT(node->getNumChildren() == 3, "Supports 3-child arraycopy only");
+   // child 0 ------  Source byte address;
+   // child 1 ------  Destination byte address;
+   // child 2 ------  Copy length in byte;
+   TR::Node *srcAddrNode = node->getChild(0);
+   TR::Register *srcAddrReg = cg->evaluate(srcAddrNode);
+   TR::Node *dstAddrNode = node->getChild(1);
+   TR::Register *dstAddrReg = cg->evaluate(dstAddrNode);
+   TR::Node *lengthNode = node->getChild(2);
+   TR::Register *lengthReg = cg->evaluate(lengthNode);
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(5, 5, cg->trMemory());
+   TR::addDependency(deps, lengthReg, TR::RealRegister::x0, TR_GPR, cg);
+   TR::addDependency(deps, srcAddrReg, TR::RealRegister::x1, TR_GPR, cg);
+   TR::addDependency(deps, dstAddrReg, TR::RealRegister::x2, TR_GPR, cg);
+   TR::addDependency(deps, NULL, TR::RealRegister::x3, TR_GPR, cg); // destroyed in the helper
+   TR::addDependency(deps, NULL, TR::RealRegister::x4, TR_GPR, cg); // destroyed in the helper
+
+   TR::SymbolReference *arrayCopyHelper = cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64arrayCopy, false, false, false);
+
+   generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
+                             (uintptr_t)arrayCopyHelper->getMethodAddress(),
+                             deps, arrayCopyHelper, NULL);
+
+   cg->decReferenceCount(srcAddrNode);
+   cg->decReferenceCount(dstAddrNode);
+   cg->decReferenceCount(lengthNode);
+   cg->machine()->setLinkRegisterKilled(true);
+
+   return NULL;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)

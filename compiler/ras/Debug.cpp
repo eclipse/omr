@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4212,6 +4212,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_ARM64revertToInterpreterGlue:                     return "_revertToInterpreterGlue";
          case TR_ARM64doubleRemainder:                             return "doubleRemainder";
          case TR_ARM64floatRemainder:                              return "floatRemainder";
+         case TR_ARM64arrayCopy:                                   return "__arrayCopy";
          }
       }
 #endif
