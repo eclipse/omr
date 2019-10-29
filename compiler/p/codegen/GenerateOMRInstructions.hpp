@@ -66,6 +66,12 @@ TR::Instruction *generateInstruction(
                    TR::Node               *n,
                    TR::Instruction        *preced = 0);
 
+TR::Instruction *generateAlignmentNopInstruction(
+                   TR::CodeGenerator *cg,
+                   TR::Node *n,
+                   uint32_t alignment,
+                   TR::Instruction *preced = 0);
+
 TR::Instruction *generateImmInstruction(
                    TR::CodeGenerator      *cg,
                    TR::InstOpCode::Mnemonic          op,

@@ -25,6 +25,7 @@
  */
 
    IsNotExtended,
+   IsAlignmentNop,
    IsImm,
       IsSrc1,
    IsImm2,

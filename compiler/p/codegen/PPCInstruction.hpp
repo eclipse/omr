@@ -57,6 +57,37 @@ namespace TR { class SymbolReference; }
 namespace TR
 {
 
+class PPCAlignmentNopInstruction : public TR::Instruction
+   {
+   uint32_t _alignment;
+
+public:
+   PPCAlignmentNopInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t alignment, TR::CodeGenerator *codeGen)
+      : TR::Instruction(op, n, codeGen)
+      {
+      setAlignment(alignment);
+      }
+
+   PPCAlignmentNopInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t alignment, TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
+      : TR::Instruction(op, n, precedingInstruction, codeGen)
+      {
+      setAlignment(alignment);
+      }
+
+   virtual Kind getKind() { return IsAlignmentNop; }
+
+   uint32_t getAlignment() { return _alignment; }
+   void setAlignment(uint32_t alignment)
+      {
+      TR_ASSERT_FATAL((alignment % PPC_INSTRUCTION_LENGTH) == 0, "Alignment must be a multiple of the nop instruction length");
+      _alignment = alignment != 0 ? alignment : PPC_INSTRUCTION_LENGTH;
+      }
+
+   virtual uint8_t *generateBinaryEncoding();
+   virtual int32_t estimateBinaryLength(int32_t currentEstimate);
+   virtual uint8_t getBinaryLengthLowerBound();
+   };
+
 class PPCImmInstruction : public TR::Instruction
    {
    uint32_t _sourceImmediate;

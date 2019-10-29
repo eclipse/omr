@@ -96,6 +96,64 @@ OMR::Power::Instruction::estimateBinaryLength(int32_t currentEstimate)
       }
    }
 
+uint8_t *TR::PPCAlignmentNopInstruction::generateBinaryEncoding()
+   {
+   bool trace = cg()->comp()->getOption(TR_TraceCG);
+   uint32_t currentMisalign = reinterpret_cast<uintptr_t>(cg()->getBinaryBufferCursor()) % _alignment;
+
+   if (currentMisalign)
+      {
+      uint32_t nopsToAdd = (_alignment - currentMisalign) / PPC_INSTRUCTION_LENGTH;
+
+      // For performance reasons, the last nop added might be different than the others, e.g. on P6
+      // and above a group-ending nop is typically used. Since we add nops in reverse order, we add
+      // this special nop first. All other padding instructions will be regular nops.
+      TR::Instruction *lastNop = generateInstruction(cg(), getOpCodeValue(), getNode(), self());
+      lastNop->setEstimatedBinaryLength(PPC_INSTRUCTION_LENGTH);
+
+      if (trace)
+         traceMsg(cg()->comp(), "Expanding alignment nop %p into %u instructions: [ %p ", self(), nopsToAdd, lastNop);
+
+      for (uint32_t i = 1; i < nopsToAdd; i++)
+         {
+         TR::Instruction *nop = generateInstruction(cg(), TR::InstOpCode::nop, getNode(), self());
+         nop->setEstimatedBinaryLength(PPC_INSTRUCTION_LENGTH);
+
+         if (trace)
+            traceMsg(cg()->comp(), "%p ", nop);
+         }
+
+      if (trace)
+         traceMsg(cg()->comp(), "]\n");
+      }
+   else
+      {
+      if (trace)
+         traceMsg(cg()->comp(), "Eliminating alignment nop %p, since the next instruction is already aligned\n", self());
+      }
+
+   cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - currentMisalign);
+
+   // When the trace log prints the list of instructions after binary encoding, we don't want this
+   // instruction to show up any more. Removing it from the linked list of instructions does this
+   // without affecting this instruction's next pointer, so the binary encoding loop can continue
+   // and encode the actual nops we emitted as if nothing happened.
+   self()->remove();
+
+   return cg()->getBinaryBufferCursor();
+   }
+
+int32_t TR::PPCAlignmentNopInstruction::estimateBinaryLength(int32_t currentEstimate)
+   {
+   self()->setEstimatedBinaryLength(_alignment - PPC_INSTRUCTION_LENGTH);
+   return currentEstimate + self()->getEstimatedBinaryLength();
+   }
+
+uint8_t TR::PPCAlignmentNopInstruction::getBinaryLengthLowerBound()
+   {
+   return 0;
+   }
+
 uint8_t *TR::PPCLabelInstruction::generateBinaryEncoding()
    {
    uint8_t        *instructionStart = cg()->getBinaryBufferCursor();

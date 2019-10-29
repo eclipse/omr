@@ -109,6 +109,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * instr)
 
    switch (instr->getKind())
       {
+      case OMR::Instruction::IsAlignmentNop:
+         print(pOutFile, (TR::PPCAlignmentNopInstruction *)instr);
+         break;
       case OMR::Instruction::IsImm:
          print(pOutFile, (TR::PPCImmInstruction *)instr);
          break;
@@ -220,6 +223,14 @@ TR_Debug::printPrefix(TR::FILE *pOutFile, TR::Instruction * instr)
       }
    else
       trfprintf(pOutFile, "0 \t");
+   }
+
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::PPCAlignmentNopInstruction * instr)
+   {
+   printPrefix(pOutFile, instr);
+   trfprintf(pOutFile, "%s\t; Align to %u bytes", getOpCodeName(&instr->getOpCode()), instr->getAlignment());
+   trfflush(pOutFile);
    }
 
 void

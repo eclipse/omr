@@ -206,6 +206,15 @@ TR::Instruction *generateInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnem
    return new (cg->trHeapMemory()) TR::Instruction(op, n, cg);
    }
 
+TR::Instruction *generateAlignmentNopInstruction(TR::CodeGenerator *cg, TR::Node * n, uint32_t alignment, TR::Instruction *preced)
+   {
+   auto op = TR::Compiler->target.cpu.id() >= TR_PPCp6 ? TR::InstOpCode::genop : TR::InstOpCode::nop;
+
+   if (preced)
+      return new (cg->trHeapMemory()) TR::PPCAlignmentNopInstruction(op, n, alignment, preced, cg);
+   return new (cg->trHeapMemory()) TR::PPCAlignmentNopInstruction(op, n, alignment, cg);
+   }
+
 TR::Instruction *generateImmInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t imm,
                                        TR::Instruction *preced)
    {

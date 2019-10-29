@@ -169,6 +169,7 @@ namespace TR { class X86ForceRecompilationSnippet; }
 namespace TR { class X86RecompilationSnippet; }
 #endif
 
+namespace TR { class PPCAlignmentNopInstruction;         }
 namespace TR { class PPCDepInstruction;                  }
 namespace TR { class PPCLabelInstruction;                }
 namespace TR { class PPCDepLabelInstruction;             }
@@ -863,6 +864,7 @@ public:
 #ifdef TR_TARGET_POWER
    void printPrefix(TR::FILE *, TR::Instruction *);
 
+   void print(TR::FILE *, TR::PPCAlignmentNopInstruction *);
    void print(TR::FILE *, TR::PPCDepInstruction *);
    void print(TR::FILE *, TR::PPCLabelInstruction *);
    void print(TR::FILE *, TR::PPCDepLabelInstruction *);
