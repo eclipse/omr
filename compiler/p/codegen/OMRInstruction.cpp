@@ -160,28 +160,6 @@ OMR::Power::Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
    }
 
 bool
-OMR::Power::Instruction::isNopCandidate()
-   {
-   return (self()->getNode() != NULL
-        && self()->getNode()->getOpCodeValue() == TR::BBStart
-        && self()->getNode()->getBlock() != NULL
-        && self()->getNode()->getBlock()->firstBlockInLoop()
-        && !self()->getNode()->getBlock()->isCold());
-   }
-
-int
-OMR::Power::Instruction::MAX_LOOP_ALIGN_NOPS()
-   {
-   static int LOCAL_MAX_LOOP_ALIGN_NOPS = -1;
-   if (LOCAL_MAX_LOOP_ALIGN_NOPS == -1)
-      {
-      static char *TR_LoopAlignNops = feGetEnv("TR_LoopAlignNops");
-      LOCAL_MAX_LOOP_ALIGN_NOPS = (TR_LoopAlignNops == NULL ? 7 : atoi(TR_LoopAlignNops));
-      }
-   return LOCAL_MAX_LOOP_ALIGN_NOPS;
-   }
-
-bool
 OMR::Power::Instruction::isBeginBlock()
    {
    return self()->getPrev()->getOpCodeValue() == TR::InstOpCode::label;

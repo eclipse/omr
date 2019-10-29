@@ -1757,37 +1757,6 @@ void OMR::Power::CodeGenerator::doBinaryEncoding()
 
    while (data.cursorInstruction)
       {
-      if(data.cursorInstruction->isLabel())
-         {
-         if ((data.cursorInstruction)->isNopCandidate())
-            {
-            TR::Instruction *nop;
-            uintptrj_t uselessFetched = ((uintptrj_t)self()->getBinaryBufferCursor()/4)%8;
-
-            if (uselessFetched >= 8 - data.cursorInstruction->MAX_LOOP_ALIGN_NOPS())
-               {
-               if (TR::Compiler->target.cpu.id() >= TR_PPCp6)
-                  {
-                  nop = self()->generateNop(data.cursorInstruction->getNode(), data.cursorInstruction->getPrev(), TR_NOPEndGroup); // handles P6, P7
-                  nop->setNext(data.cursorInstruction);
-                  data.cursorInstruction = nop;
-                  uselessFetched++;
-                  }
-               for (; uselessFetched < 8; uselessFetched++)
-                  {
-                  nop = self()->generateNop(data.cursorInstruction->getNode(), data.cursorInstruction->getPrev(), TR_NOPStandard);
-                  nop->setNext(data.cursorInstruction);
-                  data.cursorInstruction = nop;
-                  }
-               skipLabel = true;
-               }
-            }
-         else
-            {
-            skipLabel = false;
-            }
-         }
-
       self()->setBinaryBufferCursor(data.cursorInstruction->generateBinaryEncoding());
 
       self()->addToAtlas(data.cursorInstruction);

@@ -186,14 +186,6 @@ uint8_t *TR::PPCLabelInstruction::generateBinaryEncoding()
 
 int32_t TR::PPCLabelInstruction::estimateBinaryLength(int32_t currentEstimate)
    {
-   int8_t loopAlignBytes = 0;
-   static int count=0;
-
-   if (isNopCandidate())
-      {
-	loopAlignBytes = MAX_LOOP_ALIGN_NOPS()*PPC_INSTRUCTION_LENGTH;
-      }
-
    if (getOpCode().isBranchOp())
       {
       setEstimatedBinaryLength(PPC_INSTRUCTION_LENGTH);
@@ -201,9 +193,9 @@ int32_t TR::PPCLabelInstruction::estimateBinaryLength(int32_t currentEstimate)
    else
       {
       setEstimatedBinaryLength(0);
-      getLabelSymbol()->setEstimatedCodeLocation(currentEstimate + loopAlignBytes);
+      getLabelSymbol()->setEstimatedCodeLocation(currentEstimate);
       }
-   return currentEstimate + getEstimatedBinaryLength() + loopAlignBytes;
+   return currentEstimate + getEstimatedBinaryLength();
    }
 static bool reversedConditionalBranchOpCode(TR::InstOpCode::Mnemonic op, TR::InstOpCode::Mnemonic *rop)
    {

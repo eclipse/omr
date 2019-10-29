@@ -162,11 +162,6 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
 
    virtual bool dependencyRefsRegister(TR::Register *reg);
 
-   virtual bool isNopCandidate();
-
-   //This function stores a env. variable and returns it upon call.
-   virtual int MAX_LOOP_ALIGN_NOPS();
-
    virtual TR::PPCDepImmInstruction *getPPCDepImmInstruction();
 
    virtual TR::PPCConditionalBranchInstruction *getPPCConditionalBranchInstruction();
