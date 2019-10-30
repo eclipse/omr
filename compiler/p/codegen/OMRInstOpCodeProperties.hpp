@@ -5797,7 +5797,7 @@
 
    {
    /* .mnemonic    = */ OMR::InstOpCode::genop,
-   /* .name        = */ "nop",
+   /* .name        = */ "genop",
    /* .description =    "Group Ending NoOp (ori)", */
    /* .opcode      = */ 0x60000000,
    /* .format      = */ UNKNOWN_FORMAT,
