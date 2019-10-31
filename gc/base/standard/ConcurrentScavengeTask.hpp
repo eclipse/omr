@@ -35,7 +35,6 @@ class MM_ConcurrentScavengeTask : public MM_ParallelScavengeTask
 {
 	/* Data Members */
 private:
-	uintptr_t const _bytesToScan;	/**< The number of bytes that this must scan before it will stop trying to do more work */
 	volatile uintptr_t _bytesScanned;	/**< The number of bytes scanned by this */
 protected:
 public:
@@ -69,10 +68,8 @@ public:
 			MM_Dispatcher *dispatcher,
 			MM_Scavenger *scavenger,
 			ConcurrentAction action,
-			uintptr_t bytesToScan,
 			MM_CycleState *cycleState) :
 		MM_ParallelScavengeTask(env, dispatcher, scavenger, cycleState)
-		, _bytesToScan(bytesToScan)
 		, _bytesScanned(0)
 		, _action(action)
 	{
