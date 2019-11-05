@@ -1067,7 +1067,7 @@ TR::Register *OMR::ARM::Linkage::buildARMLinkageDirectDispatch(TR::Node *callNod
       TR_ASSERT(false, "Attempting to handle Java in non-Java project");
 #endif
       }
-   gcPoint->ARMNeedsGCMap(pp.getPreservedRegisterMapForGC());
+   gcPoint->ARMNeedsGCMap(pp.getPreservedRegisterMapForGC(), codeGen->comp());
    self()->machine()->setLinkRegisterKilled(true);
    codeGen->setHasCall();
    TR::DataType resType = callNode->getType();

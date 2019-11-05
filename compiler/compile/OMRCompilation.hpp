@@ -147,7 +147,7 @@ enum ProfilingMode
    // the dll.
    //
    #if defined(_MSC_VER)
-      #define diagnostic( msg, ...) (TR::comp()->diagnosticImpl(msg, __VA_ARGS__))
+      #define diagnostic(msg, ...) (TR::comp()->diagnosticImpl(msg, __VA_ARGS__))
    #else // XLC or GCC
       #define diagnostic(msg, ...) (TR::comp()->diagnosticImpl(msg, ##__VA_ARGS__))
    #endif

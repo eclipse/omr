@@ -84,9 +84,9 @@ OMR::Power::Instruction::isCall()
 
 
 void
-OMR::Power::Instruction::PPCNeedsGCMap(uint32_t mask)
+OMR::Power::Instruction::PPCNeedsGCMap(uint32_t mask, TR::CodeGenerator *cg)
    {
-   if (TR::comp()->useRegisterMaps())
+   if (cg->comp()->useRegisterMaps())
       self()->setNeedsGCMap(mask);
    }
 

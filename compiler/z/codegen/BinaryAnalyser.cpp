@@ -53,7 +53,8 @@ void
 TR_S390BinaryAnalyser::remapInputs(TR::Node * firstChild, TR::Register * firstRegister,
                                     TR::Node * secondChild, TR::Register * secondRegister)
    {
-   if (!cg()->useClobberEvaluate())
+   TR::CodeGenerator * cg_ = cg();
+   if (!cg_->useClobberEvaluate())
       {
       if (firstRegister)
          {
@@ -65,7 +66,7 @@ TR_S390BinaryAnalyser::remapInputs(TR::Node * firstChild, TR::Register * firstRe
          }
 
       // firstRegister is always assumed
-      if (cg()->canClobberNodesRegister(firstChild))
+      if (cg_->canClobberNodesRegister(firstChild))
          {
          setClob1();
          }
@@ -77,7 +78,7 @@ TR_S390BinaryAnalyser::remapInputs(TR::Node * firstChild, TR::Register * firstRe
       // don't touch secondChild memory refs
       if (!getMem2())
          {
-         if (cg()->canClobberNodesRegister(secondChild))
+         if (cg_->canClobberNodesRegister(secondChild))
             {
             setClob2();
             }
@@ -101,7 +102,8 @@ TR_S390BinaryAnalyser::genericAnalyser(TR::Node * root,
    secondChild = root->getSecondChild();
    TR::Register * firstRegister = firstChild->getRegister();
    TR::Register * secondRegister = secondChild->getRegister();
-   TR::Compilation *comp = TR::comp();
+   TR::CodeGenerator * cg_ = cg();
+   TR::Compilation *comp = cg_->comp();
 
    setInputs(firstChild, firstRegister, secondChild, secondRegister, false, false, comp, false, false);
 
@@ -140,12 +142,12 @@ TR_S390BinaryAnalyser::genericAnalyser(TR::Node * root,
 
    if (getEvalChild1())
       {
-      firstRegister = cg()->evaluate(firstChild);
+      firstRegister = cg_->evaluate(firstChild);
       }
 
    if (getEvalChild2())
       {
-      secondRegister = cg()->evaluate(secondChild);
+      secondRegister = cg_->evaluate(secondChild);
       }
 
    remapInputs(firstChild, firstRegister, secondChild, secondRegister);
@@ -159,7 +161,7 @@ TR_S390BinaryAnalyser::genericAnalyser(TR::Node * root,
          case TR_RegisterKinds::TR_GPR:
          case TR_RegisterKinds::TR_FPR:
             {
-            thirdReg = cg()->allocateRegister(firstRegister->getKind());
+            thirdReg = cg_->allocateRegister(firstRegister->getKind());
             break;
             }
 
@@ -178,22 +180,22 @@ TR_S390BinaryAnalyser::genericAnalyser(TR::Node * root,
             {
             if (regToRegOpCode == TR::InstOpCode::SR)
                {
-               generateRRRInstruction(cg(), TR::InstOpCode::SRK, root, thirdReg, firstRegister, secondRegister);
+               generateRRRInstruction(cg_, TR::InstOpCode::SRK, root, thirdReg, firstRegister, secondRegister);
                done = true;
                }
             else if (regToRegOpCode == TR::InstOpCode::SLR)
                {
-               generateRRRInstruction(cg(), TR::InstOpCode::SLRK, root, thirdReg, firstRegister, secondRegister);
+               generateRRRInstruction(cg_, TR::InstOpCode::SLRK, root, thirdReg, firstRegister, secondRegister);
                done = true;
                }
             else if (regToRegOpCode == TR::InstOpCode::SGR)
                {
-               generateRRRInstruction(cg(), TR::InstOpCode::SGRK, root, thirdReg, firstRegister, secondRegister);
+               generateRRRInstruction(cg_, TR::InstOpCode::SGRK, root, thirdReg, firstRegister, secondRegister);
                done = true;
                }
             else if (regToRegOpCode == TR::InstOpCode::SLGR)
                {
-               generateRRRInstruction(cg(), TR::InstOpCode::SLGRK, root, thirdReg, firstRegister, secondRegister);
+               generateRRRInstruction(cg_, TR::InstOpCode::SLGRK, root, thirdReg, firstRegister, secondRegister);
                done = true;
                }
             }
@@ -201,37 +203,37 @@ TR_S390BinaryAnalyser::genericAnalyser(TR::Node * root,
 
       if (!done)
          {
-         generateRRInstruction(cg(), copyOpCode, root, thirdReg, firstRegister);
+         generateRRInstruction(cg_, copyOpCode, root, thirdReg, firstRegister);
          if (getBinaryReg3Reg2() || (secondRegister != NULL))
             {
-            generateRRInstruction(cg(), regToRegOpCode, root, thirdReg, secondRegister);
+            generateRRInstruction(cg_, regToRegOpCode, root, thirdReg, secondRegister);
             }
          else
             {
             TR::Node* loadBaseAddr = is16BitMemory2Operand ? secondChild->getFirstChild() : secondChild;
-            TR::MemoryReference * tempMR = generateS390MemoryReference(loadBaseAddr, cg());
+            TR::MemoryReference * tempMR = generateS390MemoryReference(loadBaseAddr, cg_);
 
             //floating-point arithmatics don't have RXY format instructions, so no long displacement
             if (secondChild->getOpCode().isFloatingPoint())
                {
-               tempMR->enforce4KDisplacementLimit(secondChild, cg(), NULL);
+               tempMR->enforce4KDisplacementLimit(secondChild, cg_, NULL);
                }
 
             auto instructionFormat = TR::InstOpCode(memToRegOpCode).getInstructionFormat();
 
             if (instructionFormat == RXE_FORMAT)
                {
-               generateRXEInstruction(cg(), memToRegOpCode, root, thirdReg, tempMR, 0);
+               generateRXEInstruction(cg_, memToRegOpCode, root, thirdReg, tempMR, 0);
                }
             else
                {
-               generateRXInstruction(cg(), memToRegOpCode, root, thirdReg, tempMR);
+               generateRXInstruction(cg_, memToRegOpCode, root, thirdReg, tempMR);
                }
 
-            tempMR->stopUsingMemRefRegister(cg());
+            tempMR->stopUsingMemRefRegister(cg_);
             if (is16BitMemory2Operand)
                {
-               cg()->decReferenceCount(secondChild->getFirstChild());
+               cg_->decReferenceCount(secondChild->getFirstChild());
                }
             }
          }
@@ -240,39 +242,39 @@ TR_S390BinaryAnalyser::genericAnalyser(TR::Node * root,
       }
    else if (getBinaryReg1Reg2())
       {
-      generateRRInstruction(cg(), regToRegOpCode, root, firstRegister, secondRegister);
+      generateRRInstruction(cg_, regToRegOpCode, root, firstRegister, secondRegister);
       root->setRegister(firstRegister);
       }
    else // assert getBinaryReg1Mem2() == true
       {
       TR_ASSERT(  !getInvalid(), "TR_S390BinaryAnalyser::invalid case\n");
 
-      TR::MemoryReference * tempMR = generateS390MemoryReference(is16BitMemory2Operand ? secondChild->getFirstChild() : secondChild, cg());
+      TR::MemoryReference * tempMR = generateS390MemoryReference(is16BitMemory2Operand ? secondChild->getFirstChild() : secondChild, cg_);
       //floating-point arithmatics don't have RXY format instructions, so no long displacement
       if (secondChild->getOpCode().isFloatingPoint())
          {
-         tempMR->enforce4KDisplacementLimit(secondChild, cg(), NULL);
+         tempMR->enforce4KDisplacementLimit(secondChild, cg_, NULL);
          }
 
       auto instructionFormat = TR::InstOpCode(memToRegOpCode).getInstructionFormat();
 
       if (instructionFormat == RXE_FORMAT)
          {
-         generateRXEInstruction(cg(), memToRegOpCode, root, firstRegister, tempMR, 0);
+         generateRXEInstruction(cg_, memToRegOpCode, root, firstRegister, tempMR, 0);
          }
       else
          {
-         generateRXInstruction(cg(), memToRegOpCode, root, firstRegister, tempMR);
+         generateRXInstruction(cg_, memToRegOpCode, root, firstRegister, tempMR);
          }
 
-      tempMR->stopUsingMemRefRegister(cg());
+      tempMR->stopUsingMemRefRegister(cg_);
       if (is16BitMemory2Operand)
-         cg()->decReferenceCount(secondChild->getFirstChild());
+         cg_->decReferenceCount(secondChild->getFirstChild());
       root->setRegister(firstRegister);
       }
 
-   cg()->decReferenceCount(firstChild);
-   cg()->decReferenceCount(secondChild);
+   cg_->decReferenceCount(firstChild);
+   cg_->decReferenceCount(secondChild);
 
    return;
    }
@@ -287,7 +289,8 @@ TR_S390BinaryAnalyser::longSubtractAnalyser(TR::Node * root)
    bool setsOrReadsCC = NEED_CC(root) || (root->getOpCodeValue() == TR::lusubb);
    TR::InstOpCode::Mnemonic regToRegOpCode;
    TR::InstOpCode::Mnemonic memToRegOpCode;
-   TR::Compilation *comp = TR::comp();
+   TR::CodeGenerator * cg_ = cg();
+   TR::Compilation *comp = cg_->comp();
 
    if (!setsOrReadsCC)
       {
@@ -324,18 +327,18 @@ TR_S390BinaryAnalyser::longSubtractAnalyser(TR::Node * root)
 
    if (getEvalChild1())
       {
-      firstRegister = cg()->evaluate(firstChild);
+      firstRegister = cg_->evaluate(firstChild);
       }
 
    if (getEvalChild2())
       {
-      secondRegister = cg()->evaluate(secondChild);
+      secondRegister = cg_->evaluate(secondChild);
       }
 
    remapInputs(firstChild, firstRegister, secondChild, secondRegister);
 
    if ((root->getOpCodeValue() == TR::lusubb) &&
-       TR_S390ComputeCC::setCarryBorrow(root->getChild(2), false, cg()))
+       TR_S390ComputeCC::setCarryBorrow(root->getChild(2), false, cg_))
       {
       // Use SLBGR rather than SLGR/SGR or use SLBR rather than SLR
       regToRegOpCode = TR::InstOpCode::SLBGR;
@@ -344,25 +347,25 @@ TR_S390BinaryAnalyser::longSubtractAnalyser(TR::Node * root)
 
    if (getCopyReg1())
       {
-      TR::Register * thirdReg = cg()->allocateRegister();
+      TR::Register * thirdReg = cg_->allocateRegister();
 
       root->setRegister(thirdReg);
-      generateRRInstruction(cg(), TR::InstOpCode::LGR, root, thirdReg, firstRegister);
+      generateRRInstruction(cg_, TR::InstOpCode::LGR, root, thirdReg, firstRegister);
       if (getBinaryReg3Reg2())
          {
-         generateRRInstruction(cg(), regToRegOpCode, root, thirdReg, secondRegister);
+         generateRRInstruction(cg_, regToRegOpCode, root, thirdReg, secondRegister);
          }
       else // assert getBinaryReg3Mem2() == true
          {
-         TR::MemoryReference * longMR = generateS390MemoryReference(secondChild, cg());
+         TR::MemoryReference * longMR = generateS390MemoryReference(secondChild, cg_);
 
-         generateRXInstruction(cg(), memToRegOpCode, root, thirdReg, longMR);
-         longMR->stopUsingMemRefRegister(cg());
+         generateRXInstruction(cg_, memToRegOpCode, root, thirdReg, longMR);
+         longMR->stopUsingMemRefRegister(cg_);
          }
       }
    else if (getBinaryReg1Reg2())
       {
-      generateRRInstruction(cg(), regToRegOpCode, root, firstRegister, secondRegister);
+      generateRRInstruction(cg_, regToRegOpCode, root, firstRegister, secondRegister);
 
       root->setRegister(firstRegister);
       }
@@ -371,21 +374,21 @@ TR_S390BinaryAnalyser::longSubtractAnalyser(TR::Node * root)
       TR_ASSERT(  !getInvalid(), "TR_S390BinaryAnalyser::invalid case\n");
 
       TR::Node* baseAddrNode = is16BitMemory2Operand ? secondChild->getFirstChild() : secondChild;
-      TR::MemoryReference * longMR = generateS390MemoryReference(baseAddrNode, cg());
+      TR::MemoryReference * longMR = generateS390MemoryReference(baseAddrNode, cg_);
 
-      generateRXInstruction(cg(), memToRegOpCode, root, firstRegister, longMR);
+      generateRXInstruction(cg_, memToRegOpCode, root, firstRegister, longMR);
 
-      longMR->stopUsingMemRefRegister(cg());
+      longMR->stopUsingMemRefRegister(cg_);
       root->setRegister(firstRegister);
 
       if(is16BitMemory2Operand)
          {
-         cg()->decReferenceCount(secondChild->getFirstChild());
+         cg_->decReferenceCount(secondChild->getFirstChild());
          }
       }
 
-   cg()->decReferenceCount(firstChild);
-   cg()->decReferenceCount(secondChild);
+   cg_->decReferenceCount(firstChild);
+   cg_->decReferenceCount(secondChild);
 
    return;
    }

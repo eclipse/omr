@@ -185,7 +185,7 @@ OMR::SymbolReference::getUseonlyAliasesBV(TR::SymbolReferenceTable * symRefTab)
       case TR::Symbol::IsResolvedMethod:
          {
          TR::ResolvedMethodSymbol * resolvedMethodSymbol = _symbol->castToResolvedMethodSymbol();
-         if (!TR::comp()->getOption(TR_EnableHCR))
+         if (!symRefTab->comp()->getOption(TR_EnableHCR))
             {
             switch (resolvedMethodSymbol->getRecognizedMethod())
                {
@@ -904,7 +904,7 @@ OMR::SymbolReference::setSharedStaticAliases(TR_BitVector * aliases, TR::SymbolR
 TR_BitVector *
 addVeryRefinedCallAliasSets(TR::ResolvedMethodSymbol * methodSymbol, TR_BitVector * aliases, List<void> * methodsPeeked)
    {
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = methodSymbol->comp();
 
    void * methodId = methodSymbol->getResolvedMethod()->getPersistentIdentifier();
    if (methodsPeeked->find(methodId))

@@ -36,8 +36,8 @@
 namespace TR { class Node; }
 
 TR::X86DataSnippet::X86DataSnippet(TR::CodeGenerator *cg, TR::Node * n, void *c, size_t size)
-   : TR::Snippet(cg, n, TR::LabelSymbol::create(cg->trHeapMemory(),cg), false),
-     _data(size, 0, getTypedAllocator<uint8_t>(TR::comp()->allocator())),
+   : TR::Snippet(cg, n, TR::LabelSymbol::create(cg->trHeapMemory(), cg), false),
+     _data(size, 0, getTypedAllocator<uint8_t>(cg->comp()->allocator())),
      _isClassAddress(false)
    {
    if (c)
@@ -50,44 +50,45 @@ TR::X86DataSnippet::X86DataSnippet(TR::CodeGenerator *cg, TR::Node * n, void *c,
 void
 TR::X86DataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
    {
+   TR::CodeGenerator * cg_ = cg();
    // add dummy class unload/redefinition assumption.
    if (_isClassAddress)
       {
-      bool needRelocation = TR::Compiler->cls.classUnloadAssumptionNeedsRelocation(cg()->comp());
-      if (needRelocation && !cg()->comp()->compileRelocatableCode())
+      bool needRelocation = TR::Compiler->cls.classUnloadAssumptionNeedsRelocation(cg_->comp());
+      if (needRelocation && !cg_->comp()->compileRelocatableCode())
          {
-         cg()->addExternalRelocation(new (TR::comp()->trHeapMemory())
-                                  TR::ExternalRelocation(cursor, NULL, TR_ClassUnloadAssumption, cg()),
+         cg_->addExternalRelocation(new (cg_->comp()->trHeapMemory())
+                                  TR::ExternalRelocation(cursor, NULL, TR_ClassUnloadAssumption, cg_),
                                   __FILE__, __LINE__, self()->getNode());
          }
 
       if (TR::Compiler->target.is64Bit())
          {
          if (!needRelocation)
-            cg()->jitAddPicToPatchOnClassUnload((void*)-1, (void *) cursor);
-         if (cg()->wantToPatchClassPointer(NULL, cursor)) // unresolved
+            cg_->jitAddPicToPatchOnClassUnload((void*)-1, (void *) cursor);
+         if (cg_->wantToPatchClassPointer(NULL, cursor)) // unresolved
             {
-            cg()->jitAddPicToPatchOnClassRedefinition(((void *) -1), (void *) cursor, true);
+            cg_->jitAddPicToPatchOnClassRedefinition(((void *) -1), (void *) cursor, true);
             }
          }
       else
          {
          if (!needRelocation)
-            cg()->jitAdd32BitPicToPatchOnClassUnload((void*)-1, (void *) cursor);
-         if (cg()->wantToPatchClassPointer(NULL, cursor)) // unresolved
+            cg_->jitAdd32BitPicToPatchOnClassUnload((void*)-1, (void *) cursor);
+         if (cg_->wantToPatchClassPointer(NULL, cursor)) // unresolved
             {
-            cg()->jitAdd32BitPicToPatchOnClassRedefinition(((void *) -1), (void *) cursor, true);
+            cg_->jitAdd32BitPicToPatchOnClassRedefinition(((void *) -1), (void *) cursor, true);
             }
          }
 
       TR_OpaqueClassBlock *clazz = getData<TR_OpaqueClassBlock *>();
-      if (clazz && cg()->comp()->compileRelocatableCode() && cg()->comp()->getOption(TR_UseSymbolValidationManager))
+      if (clazz && cg_->comp()->compileRelocatableCode() && cg_->comp()->getOption(TR_UseSymbolValidationManager))
          {
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+         cg_->addExternalRelocation(new (cg_->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                (uint8_t *)clazz,
                                                                (uint8_t *)TR::SymbolType::typeClass,
                                                                TR_SymbolFromManager,
-                                                               cg()),  __FILE__, __LINE__, getNode());
+                                                               cg_),  __FILE__, __LINE__, getNode());
          }
       }
    }

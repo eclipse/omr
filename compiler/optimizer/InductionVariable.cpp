@@ -4069,7 +4069,7 @@ static void assertStructureDoesNotMentionOriginals(
 
    if (structure->asBlock() != NULL)
       {
-      TR::NodeChecklist visited(TR::comp());
+      TR::NodeChecklist visited(structure->comp());
       TR::Block *b = structure->asBlock()->getBlock();
       TR::TreeTop *end = b->getExit();
       for (TR::TreeTop *tt = b->getEntry(); tt != end; tt = tt->getNextTreeTop())
@@ -4120,7 +4120,7 @@ static bool isLoopRelativelyFrequent(TR_Structure *loop, TR::Block *preheader)
 
    if (loopFreq < minFreq)
       {
-      dumpOptDetails(TR::comp(),
+      dumpOptDetails(loop->comp(),
          "[Sign-Extn] skip loop %d due to frequency %d < %d\n",
          loop->getNumber(),
          loopFreq,
@@ -4135,7 +4135,7 @@ static bool isLoopRelativelyFrequent(TR_Structure *loop, TR::Block *preheader)
    float estimatedAverageIters = float(loopFreq) / float(entryFreq);
    if (estimatedAverageIters < minIters)
       {
-      dumpOptDetails(TR::comp(),
+      dumpOptDetails(loop->comp(),
          "[Sign-Extn] skip loop %d due to estimated average iterations %f < %f\n",
          loop->getNumber(),
          estimatedAverageIters,

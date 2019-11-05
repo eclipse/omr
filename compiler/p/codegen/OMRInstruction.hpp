@@ -146,7 +146,7 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
    int32_t  getBlockIndex()            { return _blockIndex; }
    void     setBlockIndex(int32_t i)   { _blockIndex = i; }
 
-   void    PPCNeedsGCMap(uint32_t mask);
+   void     PPCNeedsGCMap(uint32_t mask, TR::CodeGenerator *cg);
 
    virtual TR::Register *getMemoryDataRegister();
 

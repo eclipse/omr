@@ -1681,7 +1681,7 @@ OMR::Block::createConditionalSideExitBeforeTree(TR::TreeTop *tree,
                                               bool markCold)
 
    {
-   auto comp = TR::comp();
+   TR::Compilation *comp = cfg->comp();
 
    TR::Block *remainderBlock = self()->splitBlockAndAddConditional(tree, compareTree, cfg, true);
 
@@ -1779,18 +1779,20 @@ OMR::Block::createConditionalBlocksBeforeTree(TR::TreeTop * tree,
                                             bool changeBlockExtensions,
                                             bool markCold)
    {
-   auto comp = TR::comp();
+   TR::Compilation *comp = cfg->comp();
 
    cfg->setStructure(0);
 
-   TR::Block * remainderBlock = self()->split(tree, cfg, true);
+   TR::Block *remainderBlock = self()->split(tree, cfg, true);
    if (changeBlockExtensions)
+      {
       remainderBlock->setIsExtensionOfPreviousBlock(false); // not an extension since has 2 predecessors
+      }
 
    self()->append(compareTree);
 
    // remove the original tree from the remainderBlock
-   TR::Node * node = tree->getNode();
+   TR::Node *node = tree->getNode();
    node->removeAllChildren();
    tree->getPrevTreeTop()->join(tree->getNextTreeTop());
 
@@ -1824,7 +1826,9 @@ OMR::Block::createConditionalBlocksBeforeTree(TR::TreeTop * tree,
       ifBlock->getExit()->join(nextTree);
       }
    else
+      {
       cfg->findLastTreeTop()->join(ifBlock->getEntry());
+      }
 
 
    ifBlock->append(ifTree);
@@ -1847,7 +1851,9 @@ OMR::Block::createConditionalBlocksBeforeTree(TR::TreeTop * tree,
       elseBlock->getExit()->join(remainderBlock->getEntry());
 
       if (changeBlockExtensions)
+         {
          elseBlock->setIsExtensionOfPreviousBlock(true);       // fall-through block is an extension
+         }
 
       cfg->addNode(elseBlock);
       cfg->addEdge(TR::CFGEdge::createEdge(self(),  elseBlock, comp->trMemory()));
@@ -2495,10 +2501,12 @@ OMR::Block::verifyOSRInduceBlock(TR::Compilation *comp)
 void
 OMR::Block::setIsExtensionOfPreviousBlock(bool b)
    {
+   TR::Optimizer * optimizer = TR::comp()->getOptimizer();
+
    _flags.set(_isExtensionOfPreviousBlock, b);
-   if (!b && TR::comp()->getOptimizer())
+   if (!b && optimizer)
       {
-      TR::comp()->getOptimizer()->setCachedExtendedBBInfoValid(false);
+      optimizer->setCachedExtendedBBInfoValid(false);
       }
    }
 

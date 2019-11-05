@@ -548,7 +548,7 @@ TR::IteratedExternalRelocation::IteratedExternalRelocation(uint8_t *target, TR_E
         _full(false),
         _kind(k)
       {
-      AOTcgDiag0(TR::comp(), "TR::IteratedExternalRelocation::IteratedExternalRelocation\n");
+      AOTcgDiag0(codeGen->comp(), "TR::IteratedExternalRelocation::IteratedExternalRelocation\n");
       }
 
 TR::IteratedExternalRelocation::IteratedExternalRelocation(uint8_t *target, uint8_t *target2, TR_ExternalRelocationTargetKind k, flags8_t modifier, TR::CodeGenerator *codeGen)
@@ -564,12 +564,12 @@ TR::IteratedExternalRelocation::IteratedExternalRelocation(uint8_t *target, uint
         _full(false),
         _kind(k)
       {
-      AOTcgDiag0(TR::comp(), "TR::IteratedExternalRelocation::IteratedExternalRelocation\n");
+      AOTcgDiag0(codeGen->comp(), "TR::IteratedExternalRelocation::IteratedExternalRelocation\n");
       }
 
 void TR::IteratedExternalRelocation::initializeRelocation(TR::CodeGenerator *codeGen)
    {
-   AOTcgDiag0(TR::comp(), "TR::IteratedExternalRelocation::initializeRelocation\n");
+   AOTcgDiag0(codeGen->comp(), "TR::IteratedExternalRelocation::initializeRelocation\n");
    _relocationDataCursor = codeGen->getAheadOfTimeCompile()->initializeAOTRelocationHeader(this);
    }
 

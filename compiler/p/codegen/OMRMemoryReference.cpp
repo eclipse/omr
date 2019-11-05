@@ -975,7 +975,7 @@ void OMR::Power::MemoryReference::assignRegisters(TR::Instruction *currentInstru
 
    if (self()->getUnresolvedSnippet() != NULL)
       {
-      currentInstruction->PPCNeedsGCMap(0xFFFFFFFF);
+      currentInstruction->PPCNeedsGCMap(0xFFFFFFFF, cg);
       }
    }
 
