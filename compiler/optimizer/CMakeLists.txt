@@ -108,5 +108,8 @@ compiler_library(optimizer
 	${CMAKE_CURRENT_LIST_DIR}/OWLMapper.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWLJNIConfig.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWLShrikeBTConstructor.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OWLLogger.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OWLTypes.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OWLSerializer.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OWLDeserializer.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OWLAnalyser.cpp
 )

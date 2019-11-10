@@ -8,17 +8,7 @@
 #include "optimizer/OWLJNIClient.hpp"
 
 /* ================= private ================= */
-TR_OWLJNIClient* TR_OWLJNIClient::_instance = NULL;
-JNIEnv * TR_OWLJNIClient::_env = NULL;
 
-TR_OWLJNIClient::TR_OWLJNIClient() {
-    //start jvm
-    char *walaHome = std::getenv("WALA_HOME");
-    char classpath[1024];
-    sprintf(classpath, "%s/com.ibm.wala.util/target/classes:%s/com.ibm.wala.shrike/target/classes:%s/com.ibm.wala.core/target/classes:%s/com.ibm.wala.cast/target/classes", walaHome, walaHome, walaHome, walaHome);
-    _env = launch_jvm(classpath);
-    printf("=============Successfully launch JVM!=============\n");
-}
 
 jclass TR_OWLJNIClient::_getClass(const char *className) {
     jclass cls = _env->FindClass(className);
@@ -62,14 +52,36 @@ jfieldID TR_OWLJNIClient::_getFieldId(bool isStaticField, jclass cls, const char
 }
 
 /*** public ***/
-TR_OWLJNIClient* TR_OWLJNIClient::getInstance() {
-    if (!_instance){
-        _instance = new TR_OWLJNIClient;
+
+/**
+ * Check if JVM can start
+ * */
+bool TR_OWLJNIClient::startJVM(){
+    JavaVMInitArgs vm_args; 
+    JavaVMOption* options = new JavaVMOption[1];   // JVM invocation options
+    char classpath[1024];
+    char *walaHome = std::getenv("WALA_HOME");
+    sprintf(classpath, "-Djava.class.path=%s/com.ibm.wala.util/build/classes/java/main:%s/com.ibm.wala.shrike/build/classes/java/main:%s/com.ibm.wala.core/build/classes/java/main:%s/com.ibm.wala.cast/build/classes/java/main", walaHome, walaHome, walaHome, walaHome);
+    options[0].optionString = classpath;   // where to find java .class
+    vm_args.version = JNI_VERSION_1_8;             // minimum Java version
+    vm_args.nOptions = 1;                          // number of options
+    vm_args.options = options;
+    vm_args.ignoreUnrecognized = false;     // invalid options make the JVM init fail 
+    jint rc = JNI_CreateJavaVM(&_jvm, (void**)&_env, &vm_args);  
+    delete[] options;
+    if (rc == JNI_OK){
+        printf("=============Successfully launch JVM!=============\n");
+        return true;
     }
-    return _instance;
+    return false;
 }
 
-void TR_OWLJNIClient::destroyInstance() {}
+TR_OWLJNIClient::TR_OWLJNIClient() {
+}
+
+TR_OWLJNIClient::~TR_OWLJNIClient() {
+    _jvm->DestroyJavaVM();
+}
 
 jstring TR_OWLJNIClient::constructString(char *str) {
     return _env->NewStringUTF(str);
@@ -110,6 +122,22 @@ jobject TR_OWLJNIClient::constructObject(int64_t i) {
     return longObject;
 }
 
+jobjectArray TR_OWLJNIClient::constructObjectArray(const char* className, std::vector<jobject> objects) {
+    jclass cls = _getClass(className);
+    uint64_t size = objects.size();
+    jobjectArray array = _env->NewObjectArray(size, cls, NULL);
+    if (_env->ExceptionCheck()) {
+        printf("Fail to create object array\n");
+        exit(1);
+    }
+
+    for (uint64_t i = 0; i < size; i++) {
+        _env->SetObjectArrayElement(array, i, objects[i]);
+    }
+
+    return array;
+}
+
 /* Field */
 
 void TR_OWLJNIClient::getField(FieldConfig fieldConfig, jobject obj, jobject *res) {
@@ -123,9 +151,28 @@ void TR_OWLJNIClient::getField(FieldConfig fieldConfig, jobject obj, jobject *re
     }
 }
 
+//void
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj,               int32_t argNum, ...){
+    va_list args;
+    va_start(args, argNum);
+    jclass cls = _getClass(methodConfig.className);
+    jmethodID mid = _getMethodID(methodConfig.className, cls, methodConfig.methodName, methodConfig.methodSig);
+    if (methodConfig.isStatic){
+        _env->CallStaticVoidMethodV(cls, mid, args);
+    }
+    else{
+        _env->CallVoidMethodV(obj,mid,args);
+    }
+    if (_env->ExceptionCheck()) {
+        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        exit(1);
+    }
+
+    va_end(args);
+}
 
 //object
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject* res, uint16_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -147,7 +194,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject
 }
 
 //int
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int32_t* res, uint16_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int32_t* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -170,7 +217,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int32_t
 }
 
 //long
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int64_t* res, uint16_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int64_t* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -192,7 +239,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int64_t
 }
 
 //short
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int16_t* res, uint16_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int16_t* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -214,7 +261,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int16_t
 }
 
 //float
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* res, uint16_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -236,7 +283,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* 
 }
 
 //double
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, double* res, uint16_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, double* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -258,7 +305,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, double*
 }
 
 //char
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* res, uint16_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -280,7 +327,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* r
 }
 
 //bool
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* res, uint16_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -302,7 +349,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* r
 }
 
 // char* (string)
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char **res, uint16_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char **res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);

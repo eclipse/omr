@@ -3,18 +3,148 @@
 //
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include "optimizer/OWLShrikeBTConstructor.hpp"
 #include "optimizer/OWLJNIConfig.hpp"
 
-TR_OWLShrikeBTConstructor::TR_OWLShrikeBTConstructor() {
-    _jniClient = TR_OWLJNIClient::getInstance();
+TR_OWLShrikeBTConstructor::TR_OWLShrikeBTConstructor(TR_OWLJNIClient* jniClient) {
+    _jniClient = jniClient;
     _index = 0;
 }
 
-TR_OWLShrikeBTConstructor::~TR_OWLShrikeBTConstructor() {\
-    /*** TODO: destructor of JNIClient has not been implemented yet ***/
-    TR_OWLJNIClient::destroyInstance();
+TR_OWLShrikeBTConstructor::~TR_OWLShrikeBTConstructor() {}
+
+std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(std::vector<OWLInstruction> owlInstructions) {
+
+    std::vector<jobject> shrikeBTInstructions;
+
+    for (uint32_t i = 0 ; i < owlInstructions.size(); i ++ ) {
+        
+        OWLInstruction owlInstruction = owlInstructions[i];
+        bool isShrikeBTInstruction = owlInstruction.isShrikeBTInstruction;
+        if (isShrikeBTInstruction){
+
+            ShrikeBTInstruction instruction = owlInstruction.instruction;
+            ShrikeBTInstructionFieldsUnion instrUnion = owlInstruction.instructionFieldsUnion;
+            uint32_t offset = owlInstruction.shrikeBTOffset;
+
+            jobject instructionObject;
+
+            switch(instruction){
+                case CONSTANT: {
+                    ConstantInstructionFields constFields = instrUnion.constantInstructionFields;
+                    jobject value;
+                    char* type = constFields.type;
+                    if (!strcmp(TYPE_int, type)){
+                        value = Integer(constFields.value.i);
+                    }
+                    else if (!strcmp(TYPE_long, type)){
+                        value = Long(constFields.value.l);
+                    }
+                    else if (!strcmp(TYPE_double, type)){
+                        value = Double(constFields.value.d);
+                    }
+                    else if (!strcmp(TYPE_float, type)) {
+                        value = Float(constFields.value.f);
+                    }
+                    else{
+                        perror("NO type match in constructing const instruction object!\n");
+                        exit(1);
+                    }
+
+                    instructionObject = ConstantInstruction(type, value);
+                    break;
+                }
+                case STORE: {
+                    StoreInstructionFields storeFields = instrUnion.storeInstructionFields;
+                    instructionObject = StoreInstruction(storeFields.type, storeFields.referenceNumber);
+                    break;
+                }
+                case IMPLICIT_STORE: {
+                    ImplicitStoreInstructionFields impStoreFields = instrUnion.implicitStoreInstructionFields;
+                    instructionObject = ImplicitStoreInstruction(impStoreFields.type, impStoreFields.omrGlobalIndex);
+                    break;
+                }
+                case LOAD: {
+                    LoadInstructionFields loadFields = instrUnion.loadInstructionFields;
+                    instructionObject = LoadInstruction(loadFields.type,loadFields.referenceNumber);
+                    break;
+                }
+                case IMPLICIT_LOAD: {
+                    ImplicitLoadInstructionFields impLoadFields = instrUnion.implicitLoadInstructionFields;
+                    instructionObject = ImplicitLoadInstruction(impLoadFields.type, impLoadFields.omrGloablIndex);
+                    break;
+                }
+                case BINARY_OP: {
+                    BinaryOpInstructionFields binaryFields = instrUnion.binaryOpInstructionFields;
+                    instructionObject = BinaryOpInstruction(binaryFields.type,binaryFields.op);
+                    break;
+                }
+                case UNARY_OP: {
+                    UnaryOpInstructionFields unaryFields = instrUnion.unaryOpInstructionFields;
+                    instructionObject = UnaryOpInstruction(unaryFields.type);
+                    break;
+                }
+                case RETURN: {
+                    ReturnInstructionFields returnFields = instrUnion.returnInstructionFields;
+                    instructionObject = ReturnInstruction(returnFields.type);
+                    break;
+                }
+                case GOTO: {
+                    GotoInstructionFields gotoFields = instrUnion.gotoInstructionFields;
+                    instructionObject = GotoInstruction(gotoFields.label);
+                    break;
+                }
+                case CONDITIONAL_BRANCH: {
+                    ConditionalBranchInstructionFields condiFields = instrUnion.conditionalBranchInstructionFields;
+                    instructionObject = ConditionalBranchInstruction(condiFields.type,condiFields.op,condiFields.label);
+                    break;
+                }
+                case COMPARISON: {
+                    ComparisonInstructionFields compaFields = instrUnion.comparisonInstructionFields;
+                    instructionObject = ComparisonInstruction(compaFields.type,compaFields.op);
+                    break;
+                }
+                case CONVERSION: {
+                    ConversionInstructionFields conversionFields = instrUnion.conversionInstructionFields;
+                    instructionObject = ConversionInstruction(conversionFields.fromType,conversionFields.toType);
+                    break;
+                }
+                case INVOKE: {
+                    InvokeInstructionFields invokeFields = instrUnion.invokeInstructionFields;
+                    instructionObject = InvokeInstruction(invokeFields.type,invokeFields.className,invokeFields.methodName,invokeFields.disp);
+                    break;
+                }
+                case SWAP:{
+                    SwapInstructionFields swapFields = instrUnion.swapInstructionFields;
+                    instructionObject = SwapInstruction();
+                    break;
+                }
+                case POP: {
+                    PopInstructionFields popFields = instrUnion.popInstructionFields;
+                    instructionObject = PopInstruction(popFields.size);
+                    break;
+                }
+                case ARRAY_STORE: {
+                    ArrayStoreInstructionFields arrayStoreFields = instrUnion.arrayStoreInstructionFields;
+                    instructionObject = ArrayStoreInstruction(arrayStoreFields.type);
+                    break;
+                }
+                case ARRAY_LOAD: {
+                    ArrayLoadInstructionFields arrayLoadFields = instrUnion.arrayLoadInstructionFields;
+                    instructionObject = ArrayLoadInstruction(arrayLoadFields.type);
+                    break;
+                }
+                default:
+                    perror("No instruction matched inside construct instruction object function!\n");
+                    exit(1);
+            }
+            
+            shrikeBTInstructions.push_back(instructionObject);
+        }
+    }
+    return shrikeBTInstructions;
 }
 
 /*** Helper methods ***/
@@ -102,16 +232,16 @@ jobject TR_OWLShrikeBTConstructor::ConstantInstruction(char *type, jobject value
     return constantInstructionObject;
 }
 
-jobject TR_OWLShrikeBTConstructor::StoreInstruction(char *type, TR::SymbolReference * symbolReference) {
+jobject TR_OWLShrikeBTConstructor::StoreInstruction(char *type, int32_t referenceNumber) {
     jobject storeInstructionObject;
 
-    std::unordered_map<TR::SymbolReference * ,uint32_t >::const_iterator it = _localVarTableBySymRef.find(symbolReference);
+    std::unordered_map<int32_t ,uint32_t >::const_iterator it = _localVarTableBySymRef.find(referenceNumber);
 
     int i = _index;
 
     // if the local var table has the symbol ref
     if (it != _localVarTableBySymRef.end()) {
-        i = _localVarTableBySymRef[symbolReference];
+        i = _localVarTableBySymRef[referenceNumber];
     }
 
     _jniClient->callMethod
@@ -126,7 +256,7 @@ jobject TR_OWLShrikeBTConstructor::StoreInstruction(char *type, TR::SymbolRefere
 
     if (it == _localVarTableBySymRef.end()) {
 
-        _localVarTableBySymRef[symbolReference] = _index;
+        _localVarTableBySymRef[referenceNumber] = _index;
 
         if (strcmp(TYPE_double,type) == 0 || strcmp(TYPE_long,type) == 0){
             _index += 2;
@@ -176,7 +306,7 @@ jobject TR_OWLShrikeBTConstructor::ImplicitStoreInstruction(char* type, uint32_t
     return storeInstructionObject;
 }
 
-jobject TR_OWLShrikeBTConstructor::LoadInstruction(char *type, TR::SymbolReference * symbolReference) {
+jobject TR_OWLShrikeBTConstructor::LoadInstruction(char *type, int32_t referenceNumber) {
     jobject loadInstructionObject;
     _jniClient->callMethod
     (
@@ -185,7 +315,7 @@ jobject TR_OWLShrikeBTConstructor::LoadInstruction(char *type, TR::SymbolReferen
         &loadInstructionObject,
         2,
         _jniClient->constructString(type),
-        _localVarTableBySymRef[symbolReference]
+        _localVarTableBySymRef[referenceNumber]
     );
     return loadInstructionObject;
 }

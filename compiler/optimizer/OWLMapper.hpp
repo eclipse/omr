@@ -7,10 +7,10 @@
 
 #include <unordered_map>
 #include <vector>
-#include "il/OMRNode_inlines.hpp"
+#include "il/Node.hpp"
 #include "compile/Compilation.hpp"
-#include "optimizer/OWLMapperTypes.hpp"
-#include "optimizer/OWLLogger.hpp"
+#include "il/Node_inlines.hpp"
+#include "optimizer/OWLTypes.hpp"
 #include "optimizer/OWLShrikeBTConstructor.hpp"
 
 
@@ -18,10 +18,7 @@ class TR_OWLMapper
 {
 private:
 
-    TR_OWLShrikeBTConstructor* _con;
-    TR_OWLLogger* _logger;
-
-    std::vector<InstructionMeta> _instructionMetaList; 
+    std::vector<OWLInstruction> _owlInstructionList; 
 
     void _processTree(TR::Node *root,TR::NodeChecklist &visited ); // traverse the tree
     void _adjustOffset();
@@ -30,8 +27,8 @@ private:
 
     char* _getType(TR::ILOpCode opCode);
 
-    /*** create instruction meta and push it into instruction meta list ***/
-    void _createInstructionMeta(
+    /*** create OWL instruction and push it into OWL instruction list ***/
+    void _createOWLInstruction(
         bool isShrikeBTInstruction, 
         uint32_t omrGlobalIndex, 
         uint32_t shrikeBTOffset, 
@@ -57,12 +54,7 @@ private:
     void _mapIndirectStoreInstruction(TR::Node *node);
     void _mapIndirectLoadInstruction(TR::Node *node);
 
-    void _constructShrikeBTInstructionObjects();
-
 public:
-    TR_OWLMapper();
-    ~TR_OWLMapper();
-    void map(TR::Compilation *compilation);
-
+    std::vector<OWLInstruction> map(TR::Compilation *compilation);
 };
 #endif 

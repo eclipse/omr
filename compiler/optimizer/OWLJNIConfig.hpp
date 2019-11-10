@@ -6,51 +6,42 @@
 #define OMR_OWLMETHODCONFIG_HPP
 
 #include "optimizer/OWLJNIClient.hpp"
-
-/* Types */
-extern char* const TYPE_short;
-extern char* const TYPE_long;
-extern char* const TYPE_int;
-extern char* const TYPE_float;
-extern char* const TYPE_double;
-extern char* const TYPE_char;
-extern char* const TYPE_byte;
-extern char* const TYPE_void;
-extern char* const TYPE_boolean;
-extern char* const TYPE_Object;
+/***** class Names *******/
+extern const char* InstructionClassName;
 
 /***** Method Config ******/
 
 extern const MethodConfig ConstantInstructionConfig;
-extern const MethodConfig ConstantInstructionToStringConfig;
+
 extern const MethodConfig StoreInstructionConfig;
-extern const MethodConfig StoreInstructionToStringConfig;
+
 extern const MethodConfig LoadInstructionConfig;
-extern const MethodConfig LoadInstructionToStringConfig;
+
 extern const MethodConfig BinaryOpInstructionConfig;
-extern const MethodConfig BinaryOpInstructionToStringConfig;
+
 extern const MethodConfig ReturnInstructionConfig;
-extern const MethodConfig ReturnInstructionToStringConfig;
+
 extern const MethodConfig GotoInstructionConfig;
-extern const MethodConfig GotoInstructionToStringConfig;
+
 extern const MethodConfig ConditionalBranchInstructionConfig;
-extern const MethodConfig ConditionalBranchInstructionToStringConfig;
+
 extern const MethodConfig ComparisonInstructionConfig;
-extern const MethodConfig ComparisonInstructionToStringConfig;
+
 extern const MethodConfig ConversionInstructionConfig;
-extern const MethodConfig ConversionInstructionToStringConfig;
+
 extern const MethodConfig UnaryOpInstructionConfig;
-extern const MethodConfig UnaryOpInstructionToStringConfig;
+
 extern const MethodConfig InvokeInstructionConfig;
-extern const MethodConfig InvokeInstructionToStringConfig;
+
 extern const MethodConfig SwapInstructionConfig;
-extern const MethodConfig SwapInstructionToStringConfig;
+
 extern const MethodConfig PopInstructionConfig;
-extern const MethodConfig PopInstructionToStringConfig;
+
 extern const MethodConfig ArrayStoreInstructionConfig;
-extern const MethodConfig ArrayStoreInstructionToStringConfig;
+
 extern const MethodConfig ArrayLoadInstructionConfig;
-extern const MethodConfig ArrayLoadInstructionToStringConfig;
+
+extern const MethodConfig PrinterConfig;
 
 /***** Field Config ******/
 

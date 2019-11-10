@@ -4,18 +4,9 @@
 
 #include "optimizer/OWLJNIConfig.hpp"
 
-/*** Types ***/
-char* const TYPE_short = "S";
-char* const TYPE_long = "J";
-char* const TYPE_int = "I";
-char* const TYPE_float = "F";
-char* const TYPE_double = "D";
-char* const TYPE_char = "C";
-char* const TYPE_byte = "B";
-char* const TYPE_void = "V";
-char* const TYPE_boolean = "Z";
-char* const TYPE_Object = "Ljava/lang/Object;";
 
+/**** Class Names *****/
+const char* InstructionClassName = "com/ibm/wala/shrikeBT/Instruction";
 
 /***** Method Config ******/
 
@@ -26,25 +17,11 @@ const MethodConfig ConstantInstructionConfig = {
     "(Ljava/lang/String;Ljava/lang/Object;)Lcom/ibm/wala/shrikeBT/ConstantInstruction;"
 };
 
-const MethodConfig ConstantInstructionToStringConfig = {
-    false,
-    "com/ibm/wala/shrikeBT/ConstantInstruction",
-    "toString",
-    "()Ljava/lang/String;"
-};
-
 const MethodConfig StoreInstructionConfig = {
     true,
     "com/ibm/wala/shrikeBT/StoreInstruction",
     "make",
     "(Ljava/lang/String;I)Lcom/ibm/wala/shrikeBT/StoreInstruction;"
-};
-
-const MethodConfig StoreInstructionToStringConfig = {
-    false,
-    "com/ibm/wala/shrikeBT/StoreInstruction",
-    "toString",
-    "()Ljava/lang/String;"
 };
 
 const MethodConfig LoadInstructionConfig = {
@@ -54,25 +31,11 @@ const MethodConfig LoadInstructionConfig = {
     "(Ljava/lang/String;I)Lcom/ibm/wala/shrikeBT/LoadInstruction;"
 };
 
-const MethodConfig LoadInstructionToStringConfig = {
-    false,
-    "com/ibm/wala/shrikeBT/LoadInstruction",
-    "toString",
-    "()Ljava/lang/String;"
-};
-
 const MethodConfig BinaryOpInstructionConfig = {
     true,
     "com/ibm/wala/shrikeBT/BinaryOpInstruction",
     "make",
     "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;)Lcom/ibm/wala/shrikeBT/BinaryOpInstruction;"
-};
-
-const MethodConfig BinaryOpInstructionToStringConfig = {
-    false,
-    "com/ibm/wala/shrikeBT/BinaryOpInstruction",
-    "toString",
-    "()Ljava/lang/String;"
 };
 
 const MethodConfig ReturnInstructionConfig = {
@@ -82,25 +45,11 @@ const MethodConfig ReturnInstructionConfig = {
     "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ReturnInstruction;"
 };
 
-const MethodConfig ReturnInstructionToStringConfig = {
-    false,
-    "com/ibm/wala/shrikeBT/ReturnInstruction",
-    "toString",
-    "()Ljava/lang/String;"
-};
-
 const MethodConfig GotoInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/GotoInstruction",
         "make",
         "(I)Lcom/ibm/wala/shrikeBT/GotoInstruction;"
-};
-
-const MethodConfig GotoInstructionToStringConfig = {
-        false,
-        "com/ibm/wala/shrikeBT/GotoInstruction",
-        "toString",
-        "()Ljava/lang/String;"
 };
 
 const MethodConfig ConditionalBranchInstructionConfig = {
@@ -110,25 +59,11 @@ const MethodConfig ConditionalBranchInstructionConfig = {
         "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;I)Lcom/ibm/wala/shrikeBT/ConditionalBranchInstruction;"
 };
 
-const MethodConfig ConditionalBranchInstructionToStringConfig = {
-        false,
-        "com/ibm/wala/shrikeBT/ConditionalBranchInstruction",
-        "toString",
-        "()Ljava/lang/String;"
-};
-
 const MethodConfig ComparisonInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/ComparisonInstruction",
         "make",
         "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;)Lcom/ibm/wala/shrikeBT/ComparisonInstruction;"
-};
-
-const MethodConfig ComparisonInstructionToStringConfig = {
-        false,
-        "com/ibm/wala/shrikeBT/ComparisonInstruction",
-        "toString",
-        "()Ljava/lang/String;"
 };
 
 const MethodConfig ConversionInstructionConfig = {
@@ -138,25 +73,11 @@ const MethodConfig ConversionInstructionConfig = {
         "(Ljava/lang/String;Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ConversionInstruction;"
 };
 
-const MethodConfig ConversionInstructionToStringConfig = {
-        false,
-        "com/ibm/wala/shrikeBT/ConversionInstruction",
-        "toString",
-        "()Ljava/lang/String;"
-};
-
 const MethodConfig UnaryOpInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/UnaryOpInstruction",
         "make",
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/UnaryOpInstruction;"
-};
-
-const MethodConfig UnaryOpInstructionToStringConfig = {
-        false,
-        "com/ibm/wala/shrikeBT/UnaryOpInstruction",
-        "toString",
-        "()Ljava/lang/String;"
 };
 
 const MethodConfig InvokeInstructionConfig = {
@@ -166,25 +87,11 @@ const MethodConfig InvokeInstructionConfig = {
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;)Lcom/ibm/wala/shrikeBT/InvokeInstruction;"
 };
 
-const MethodConfig InvokeInstructionToStringConfig = {
-        false,
-        "com/ibm/wala/shrikeBT/InvokeInstruction",
-        "toString",
-        "()Ljava/lang/String;"
-};
-
 const MethodConfig SwapInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/SwapInstruction",
         "make",
         "()Lcom/ibm/wala/shrikeBT/SwapInstruction;"
-};
-
-const MethodConfig SwapInstructionToStringConfig = {
-        false,
-        "com/ibm/wala/shrikeBT/SwapInstruction",
-        "toString",
-        "()Ljava/lang/String;"
 };
 
 const MethodConfig PopInstructionConfig = {
@@ -194,25 +101,11 @@ const MethodConfig PopInstructionConfig = {
         "(I)Lcom/ibm/wala/shrikeBT/PopInstruction;"
 };
 
-const MethodConfig PopInstructionToStringConfig = {
-        false,
-        "com/ibm/wala/shrikeBT/PopInstruction",
-        "toString",
-        "()Ljava/lang/String;"
-};
-
 const MethodConfig ArrayStoreInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/ArrayStoreInstruction",
         "make",
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ArrayStoreInstruction;"
-};
-
-const MethodConfig ArrayStoreInstructionToStringConfig = {
-        false,
-        "com/ibm/wala/shrikeBT/ArrayStoreInstruction",
-        "toString",
-        "()Ljava/lang/String;"
 };
 
 const MethodConfig ArrayLoadInstructionConfig = {
@@ -222,14 +115,12 @@ const MethodConfig ArrayLoadInstructionConfig = {
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ArrayLoadInstruction;"
 };
 
-const MethodConfig ArrayLoadInstructionToStringConfig = {
-        false,
-        "com/ibm/wala/shrikeBT/ArrayLoadInstruction",
-        "toString",
-        "()Ljava/lang/String;"
+const MethodConfig PrinterConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/Printer",
+        "print",
+        "([Lcom/ibm/wala/shrikeBT/Instruction;)V"
 };
-
-
 
 /***** Field Config ******/
 
