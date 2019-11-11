@@ -15,7 +15,7 @@
 #include "optimizer/OWLShrikeBTConstructor.hpp"
 #include "optimizer/OWLSerializer.hpp"
 #include "optimizer/OWLDeserializer.hpp"
-#include "optimizer/OWLAnalyser.hpp";
+#include "optimizer/OWLAnalyser.hpp"
 
 TR_OWL::TR_OWL(TR::OptimizationManager *manager)
         : TR::Optimization(manager)
