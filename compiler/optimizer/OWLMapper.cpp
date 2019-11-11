@@ -14,9 +14,14 @@
 
 std::vector<OWLInstruction> TR_OWLMapper::map(TR::Compilation* compilation) {
 
+    TR::NodeChecklist logVisited(compilation); // visisted nodes for logging OMR IL
     TR::NodeChecklist instructionMappingVisited(compilation); // visited nodes for mapping the instruction
 
     // printf("======= OMR Instructions ========\n");
+    for (TR::TreeTop *tt = compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
+        TR::Node *node = tt->getNode();
+        _logOMRIL(node, logVisited);
+    }
 
     for (TR::TreeTop *tt = compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
         TR::Node *node = tt->getNode();
@@ -29,6 +34,24 @@ std::vector<OWLInstruction> TR_OWLMapper::map(TR::Compilation* compilation) {
 }
 
 /****** private ******/
+
+void TR_OWLMapper::_logOMRIL(TR::Node *root, TR::NodeChecklist &visited) {
+    if (visited.contains(root)){
+        return;
+    }
+
+    visited.add(root);
+
+    for (uint32_t i = 0; i < root->getNumChildren(); ++i) {
+        _logOMRIL(root->getChild(i), visited);
+    }
+
+    TR::ILOpCodes opCodeValue = root->getOpCodeValue();
+    if ( opCodeValue == TR::treetop || opCodeValue == TR::BBStart || opCodeValue == TR::BBEnd){
+        return;
+    }
+    printf("%d: %s | ref count: %u\n", root->getGlobalIndex(),root->getOpCode().getName(),root->getReferenceCount());
+}
 
 void TR_OWLMapper::_processTree(TR::Node *root, TR::NodeChecklist &visited) {
     if (visited.contains(root)){ // indicates this node has already been evaluated => load the value from local var table
@@ -153,7 +176,8 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
         return;
     }
 
-    printf("%d: %s | ref count: %u\n", node->getGlobalIndex(),node->getOpCode().getName(),node->getReferenceCount());
+    printf("--- %d: %s | ref count: %u\n", node->getGlobalIndex(),node->getOpCode().getName(),node->getReferenceCount());
+
 
     TR::ILOpCode opCode = node->getOpCode();
 

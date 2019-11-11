@@ -24,24 +24,31 @@ struct FieldConfig {
     char* fieldSig;
 };
 
-// singleton
+/***
+ * JNIClient uses singleton pattern.
+ * Since only one JVM can be started in a process.
+ * Even if JVM is destroyed, the JVM cannot be started again after a previous JVM was started.
+ **/
 class TR_OWLJNIClient
 {
 private:
 
-    JNIEnv *_env;
-    JavaVM *_jvm;
-    bool _isJvmRunning;
+    static JNIEnv *_env;
+    static JavaVM *_jvm;
+    static TR_OWLJNIClient * _instance;
+
+    TR_OWLJNIClient();
+    static bool _isJvmRunning;
     jclass _getClass(const char* className);
     jmethodID _getMethodID(bool isStaticMethod, jclass cls, const char* methodName, const char* methodSig);
     jfieldID _getFieldId(bool isStaticField, jclass cls, const char* fieldName, const char* fieldSig);
 
 public:
     
-    TR_OWLJNIClient();
-    ~TR_OWLJNIClient();
+    static TR_OWLJNIClient* getInstance();
+    static void destroyInstance();
 
-    bool startJVM();
+    static bool startJVM();
     
     jstring constructString(char* str);
 

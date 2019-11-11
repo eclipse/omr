@@ -34,9 +34,10 @@ int32_t TR_OWL::perform()
     std::vector<OWLInstruction>  owlInstructions = mapper->map(comp());
     delete mapper;
 
-    TR_OWLJNIClient *jniClient = new TR_OWLJNIClient();
+
     //Test if JVM can be started
-    if (jniClient->startJVM()){
+    if (TR_OWLJNIClient::startJVM()){
+        TR_OWLJNIClient* jniClient = TR_OWLJNIClient::getInstance();
 
         TR_OWLShrikeBTConstructor *constructor = new TR_OWLShrikeBTConstructor(jniClient);
         std::vector<jobject> shrikeBTInstructions = constructor->constructShrikeBTInstructions(owlInstructions);
@@ -52,8 +53,6 @@ int32_t TR_OWL::perform()
         serializer->serialize(owlInstructions);
         delete serializer;
     }
-
-    delete jniClient;
     
 }
 

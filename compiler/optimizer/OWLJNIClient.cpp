@@ -9,6 +9,12 @@
 
 /* ================= private ================= */
 
+TR_OWLJNIClient* TR_OWLJNIClient::_instance = NULL;
+bool TR_OWLJNIClient::_isJvmRunning = false;
+JNIEnv* TR_OWLJNIClient::_env = NULL;
+JavaVM* TR_OWLJNIClient::_jvm = NULL;
+
+TR_OWLJNIClient::TR_OWLJNIClient() {}
 
 jclass TR_OWLJNIClient::_getClass(const char *className) {
     jclass cls = _env->FindClass(className);
@@ -51,41 +57,55 @@ jfieldID TR_OWLJNIClient::_getFieldId(bool isStaticField, jclass cls, const char
     return fid;
 }
 
+
 /*** public ***/
 
 /**
- * Check if JVM can start
+ * Start JVM.
+ * Return false if JVM fails to start
  * */
 bool TR_OWLJNIClient::startJVM(){
-    JavaVMInitArgs vm_args; 
-    JavaVMOption* options = new JavaVMOption[1];   // JVM invocation options
-    char classpath[1024];
-    char *walaHome = std::getenv("WALA_HOME");
-    sprintf(classpath, "-Djava.class.path=%s/com.ibm.wala.util/build/classes/java/main:%s/com.ibm.wala.shrike/build/classes/java/main:%s/com.ibm.wala.core/build/classes/java/main:%s/com.ibm.wala.cast/build/classes/java/main", walaHome, walaHome, walaHome, walaHome);
-    options[0].optionString = classpath;   // where to find java .class
-    vm_args.version = JNI_VERSION_1_8;             // minimum Java version
-    vm_args.nOptions = 1;                          // number of options
-    vm_args.options = options;
-    vm_args.ignoreUnrecognized = false;     // invalid options make the JVM init fail 
-    jint rc = JNI_CreateJavaVM(&_jvm, (void**)&_env, &vm_args);  
-    delete[] options;
-    if (rc == JNI_OK){
-        printf("=============Successfully launch JVM!=============\n");
-        _isJvmRunning = true;
-        return true;
+    if (!_isJvmRunning) {
+        JavaVMInitArgs vm_args; 
+        JavaVMOption* options = new JavaVMOption[1];   // JVM invocation options
+        char classpath[1024];
+        char *walaHome = std::getenv("WALA_HOME");
+        sprintf(classpath, "-Djava.class.path=%s/com.ibm.wala.util/build/classes/java/main:%s/com.ibm.wala.shrike/build/classes/java/main:%s/com.ibm.wala.core/build/classes/java/main:%s/com.ibm.wala.cast/build/classes/java/main", walaHome, walaHome, walaHome, walaHome);
+        options[0].optionString = classpath;   // where to find java .class
+        vm_args.version = JNI_VERSION_1_8;             // minimum Java version
+        vm_args.nOptions = 1;                          // number of options
+        vm_args.options = options;
+        vm_args.ignoreUnrecognized = false;     // invalid options make the JVM init fail 
+        jint rc = JNI_CreateJavaVM(&_jvm, (void**)&_env, &vm_args);  
+        delete[] options;
+        if (rc == JNI_OK){
+            printf("=============Successfully launch JVM!=============\n");
+            _isJvmRunning = true;
+            return true;
+        }
+        return false;
     }
-    return false;
+
+    return true;
 }
 
-TR_OWLJNIClient::TR_OWLJNIClient() {
-    _isJvmRunning = false;
+TR_OWLJNIClient* TR_OWLJNIClient::getInstance() {
+    if (!_instance){
+        _instance = new TR_OWLJNIClient();
+        return _instance;
+    }
+    return _instance;
 }
 
-TR_OWLJNIClient::~TR_OWLJNIClient() {
+
+void TR_OWLJNIClient::destroyInstance() {
     if (_isJvmRunning){
         _jvm->DestroyJavaVM();
     }
-
+    
+    if (_instance){
+        delete _instance;
+    }
 }
 
 jstring TR_OWLJNIClient::constructString(char *str) {

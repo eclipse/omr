@@ -21,6 +21,7 @@ private:
     std::vector<OWLInstruction> _owlInstructionList; 
 
     void _processTree(TR::Node *root,TR::NodeChecklist &visited ); // traverse the tree
+    void _logOMRIL(TR::Node *root, TR::NodeChecklist &visited); // log the OMR IL
     void _adjustOffset();
 
     void _instructionRouter(TR::Node *node);
