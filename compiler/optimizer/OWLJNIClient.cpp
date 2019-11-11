@@ -11,6 +11,7 @@
 
 TR_OWLJNIClient* TR_OWLJNIClient::_instance = NULL;
 bool TR_OWLJNIClient::_isJvmRunning = false;
+bool TR_OWLJNIClient::_isJvmDestroyed = false;
 JNIEnv* TR_OWLJNIClient::_env = NULL;
 JavaVM* TR_OWLJNIClient::_jvm = NULL;
 
@@ -19,7 +20,7 @@ TR_OWLJNIClient::TR_OWLJNIClient() {}
 jclass TR_OWLJNIClient::_getClass(const char *className) {
     jclass cls = _env->FindClass(className);
     if (_env->ExceptionCheck()){
-        printf("Fail to find class %s\n",className);
+        printf("Error: Fail to find class %s\n",className);
         exit(1);
     }
     return cls;
@@ -35,7 +36,7 @@ jmethodID TR_OWLJNIClient::_getMethodID(bool isStaticMethod, jclass cls, const c
     }
 
     if (_env->ExceptionCheck()){
-        printf("Fail to find method %s\n",methodName);
+        printf("Error: Fail to find method %s\n",methodName);
         exit(1);
     }
     return mid;
@@ -51,7 +52,7 @@ jfieldID TR_OWLJNIClient::_getFieldId(bool isStaticField, jclass cls, const char
     }
 
     if (_env->ExceptionCheck()) {
-        printf("Fail to find field %s\n",fieldName);
+        printf("Error: Fail to find field %s\n",fieldName);
         exit(1);
     }
     return fid;
@@ -65,6 +66,11 @@ jfieldID TR_OWLJNIClient::_getFieldId(bool isStaticField, jclass cls, const char
  * Return false if JVM fails to start
  * */
 bool TR_OWLJNIClient::startJVM(){
+    if (_isJvmDestroyed){
+        printf("Error: JVM cannot be started after having been destroyed!\n");
+        exit(1);
+    }
+
     if (!_isJvmRunning) {
         JavaVMInitArgs vm_args; 
         JavaVMOption* options = new JavaVMOption[1];   // JVM invocation options
@@ -79,7 +85,7 @@ bool TR_OWLJNIClient::startJVM(){
         jint rc = JNI_CreateJavaVM(&_jvm, (void**)&_env, &vm_args);  
         delete[] options;
         if (rc == JNI_OK){
-            printf("=============Successfully launch JVM!=============\n");
+            printf("===========Successfully start JVM!=============\n");
             _isJvmRunning = true;
             return true;
         }
@@ -89,22 +95,43 @@ bool TR_OWLJNIClient::startJVM(){
     return true;
 }
 
+void TR_OWLJNIClient::destroyJVM() {
+    if (_isJvmDestroyed){
+        return;
+    }
+
+    if (_isJvmRunning){
+        printf("========Successfully destroy JVM!=======\n");
+        _jvm->DestroyJavaVM();
+        _isJvmRunning = false;
+        _isJvmDestroyed = true;
+    }
+}
+
 TR_OWLJNIClient* TR_OWLJNIClient::getInstance() {
+    if (_isJvmDestroyed) {
+        printf("Error: JVM has been destroyed and cannot get the instance of JNIClient\n");
+        exit(1);
+    }
+
+    if (!_isJvmRunning){
+        printf("Error: Should call startJVM first before getting the instance of JNIClient\n");
+        exit(1);
+    }
+
     if (!_instance){
         _instance = new TR_OWLJNIClient();
-        return _instance;
     }
+
     return _instance;
 }
 
 
 void TR_OWLJNIClient::destroyInstance() {
-    if (_isJvmRunning){
-        _jvm->DestroyJavaVM();
-    }
-    
+
     if (_instance){
         delete _instance;
+        _instance = NULL;
     }
 }
 
@@ -152,7 +179,7 @@ jobjectArray TR_OWLJNIClient::constructObjectArray(const char* className, std::v
     uint64_t size = objects.size();
     jobjectArray array = _env->NewObjectArray(size, cls, NULL);
     if (_env->ExceptionCheck()) {
-        printf("Fail to create object array\n");
+        printf("Error: Fail to create object array\n");
         exit(1);
     }
 
@@ -189,7 +216,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj,        
         _env->CallVoidMethodV(obj,mid,args);
     }
     if (_env->ExceptionCheck()) {
-        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
         exit(1);
     }
 
@@ -211,7 +238,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject
     }
 
     if (_env->ExceptionCheck()) {
-        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
         exit(1);
     }
 
@@ -233,7 +260,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int32_t
     }
 
     if (_env->ExceptionCheck()) {
-        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
         exit(1);
     }
 
@@ -256,7 +283,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int64_t
     }
 
     if (_env->ExceptionCheck()) {
-        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
         exit(1);
     }
 
@@ -278,7 +305,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int16_t
     }
 
     if (_env->ExceptionCheck()) {
-        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
         exit(1);
     }
 
@@ -300,7 +327,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* 
     }
 
     if (_env->ExceptionCheck()) {
-        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
         exit(1);
     }
 
@@ -322,7 +349,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, double*
     }
 
     if (_env->ExceptionCheck()) {
-        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
         exit(1);
     }
 
@@ -344,7 +371,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* r
     }
 
     if (_env->ExceptionCheck()) {
-        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
         exit(1);
     }
 
@@ -366,7 +393,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* r
     }
 
     if (_env->ExceptionCheck()) {
-        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
         exit(1);
     }
 
@@ -389,7 +416,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char **
     }
 
     if (_env->ExceptionCheck()) {
-        printf("Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
         exit(1);
     }
 

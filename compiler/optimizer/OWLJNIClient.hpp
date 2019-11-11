@@ -39,6 +39,7 @@ private:
 
     TR_OWLJNIClient();
     static bool _isJvmRunning;
+    static bool _isJvmDestroyed;
     jclass _getClass(const char* className);
     jmethodID _getMethodID(bool isStaticMethod, jclass cls, const char* methodName, const char* methodSig);
     jfieldID _getFieldId(bool isStaticField, jclass cls, const char* fieldName, const char* fieldSig);
@@ -49,6 +50,7 @@ public:
     static void destroyInstance();
 
     static bool startJVM();
+    static void destroyJVM();
     
     jstring constructString(char* str);
 
