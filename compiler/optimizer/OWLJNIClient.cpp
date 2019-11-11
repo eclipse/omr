@@ -71,16 +71,21 @@ bool TR_OWLJNIClient::startJVM(){
     delete[] options;
     if (rc == JNI_OK){
         printf("=============Successfully launch JVM!=============\n");
+        _isJvmRunning = true;
         return true;
     }
     return false;
 }
 
 TR_OWLJNIClient::TR_OWLJNIClient() {
+    _isJvmRunning = false;
 }
 
 TR_OWLJNIClient::~TR_OWLJNIClient() {
-    _jvm->DestroyJavaVM();
+    if (_isJvmRunning){
+        _jvm->DestroyJavaVM();
+    }
+
 }
 
 jstring TR_OWLJNIClient::constructString(char *str) {

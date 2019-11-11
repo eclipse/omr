@@ -5,6 +5,11 @@
 #include <vector>
 #include "optimizer/OWLTypes.hpp"
 
-void serialize(std::vector<OWLInstruction> owlInstructions);
+class TR_OWLSerializer
+{
+public:
+    void serialize(std::vector<OWLInstruction> owlInstructions);
+};
+
 
 #endif

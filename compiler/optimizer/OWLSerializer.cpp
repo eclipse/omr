@@ -1,9 +1,9 @@
 #include "optimizer/OWLSerializer.hpp"
 
-void serialize(std::vector<OWLInstruction> owlInstructions) {
+void TR_OWLSerializer::serialize(std::vector<OWLInstruction> owlInstructions) {
     uint64_t length = owlInstructions.size();
 
-    FILE *file = fopen("/Users/jackxia/Project/IBM/openj9-openjdk-jdk13/OWL.log","wb");
+    FILE *file = fopen("/Users/jackxia/Project/IBM/openj9-openjdk-jdk13/OWL/OWL.log","wb");
     if (file == NULL) {
         perror("Error in opening OWL.log file\n");
         exit(1);
@@ -24,5 +24,5 @@ void serialize(std::vector<OWLInstruction> owlInstructions) {
     }
 
     fclose(file);
-    printf("=== Finish serialing ===\n");
+    printf("=== Finish serializing to OWL.log ===\n");
 }

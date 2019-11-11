@@ -1,8 +1,8 @@
 #include "optimizer/OWLDeserializer.hpp"
 
-std::vector<OWLInstruction> deserialize(){
+std::vector<OWLInstruction> TR_OWLDeserializer::deserialize(){
     FILE *file; 
-    file = fopen("/Users/jackxia/Project/IBM/openj9-openjdk-jdk13/OWL.log","rb");
+    file = fopen("/Users/jackxia/Project/IBM/openj9-openjdk-jdk13/OWL/OWL.log","rb");
     if (file == NULL) {
         perror("Error in opening OWL.log when deserializing\n");
         exit(1);

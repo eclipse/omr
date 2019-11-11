@@ -31,6 +31,7 @@ private:
 
     JNIEnv *_env;
     JavaVM *_jvm;
+    bool _isJvmRunning;
     jclass _getClass(const char* className);
     jmethodID _getMethodID(bool isStaticMethod, jclass cls, const char* methodName, const char* methodSig);
     jfieldID _getFieldId(bool isStaticField, jclass cls, const char* fieldName, const char* fieldSig);

@@ -45,12 +45,12 @@ int32_t TR_OWL::perform()
         TR_OWLAnalyser *analyser = new TR_OWLAnalyser(jniClient);
         analyser->analyse(shrikeBTInstructions);
         delete analyser;
-
-
     }
     else { // serialize OWL instructions to files
-        printf("===Serialize OWL Instruction to file===\n");
-        serialize(owlInstructions);
+        printf("===JVM cannot be started. Serialize OWL Instruction to file===\n");
+        TR_OWLSerializer *serializer = new TR_OWLSerializer();
+        serializer->serialize(owlInstructions);
+        delete serializer;
     }
 
     delete jniClient;

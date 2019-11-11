@@ -200,7 +200,6 @@ typedef struct OWLInstruction {
     bool isShrikeBTInstruction; //if false, this indicates it can be an OMR treetop, BBStart, BBEnd or an eliminated OMR instruction
     uint32_t omrGlobalIndex;
 
-    /***Optional***/
     uint32_t shrikeBTOffset; // should be set to 0 initially and let the adjust function assign the correct offset
     BranchTargetLabelAdjustType branchTargetLabelAdjustType;
     int32_t branchTargetLabelAdjustAmount; // should be set to 0 if not using BY_VALUE adjust type

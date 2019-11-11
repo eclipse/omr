@@ -5,7 +5,10 @@
 #include <stdio.h>
 #include <vector>
 
-std::vector<OWLInstruction> deserialize();
-
+class TR_OWLDeserializer
+{
+public:
+    std::vector<OWLInstruction> deserialize();
+};
 
 #endif
