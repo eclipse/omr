@@ -136,6 +136,11 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     instructionObject = ArrayLoadInstruction(arrayLoadFields.type);
                     break;
                 }
+                case NEW: {
+                    NewInstructionFields newInstructionFields = instrUnion.newInstructionFields;
+                    instructionObject = NewInstruction(newInstructionFields.type, newInstructionFields.arrayBoundsCount);
+                    break;
+                }
                 default:
                     perror("No instruction matched inside construct instruction object function!\n");
                     exit(1);
@@ -521,4 +526,20 @@ jobject TR_OWLShrikeBTConstructor::ArrayLoadInstruction(char* type) {
     );
 
     return arrayLoadInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::NewInstruction(char* type, int32_t arrayBoundsCount){
+    jobject newInstruction;
+
+    _jniClient->callMethod
+    (
+        NewInstructionConfig,
+        NULL,
+        &newInstruction,
+        2,
+        _jniClient->constructString(type),
+        arrayBoundsCount
+    );
+
+    return newInstruction;
 }

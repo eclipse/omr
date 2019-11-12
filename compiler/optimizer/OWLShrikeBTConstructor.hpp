@@ -51,6 +51,7 @@ public:
     jobject PopInstruction(uint16_t size);
     jobject ArrayStoreInstruction(char* type);
     jobject ArrayLoadInstruction(char* type);
+    jobject NewInstruction(char* type, int32_t arrayBoundsCount);
 
 };
 #endif 

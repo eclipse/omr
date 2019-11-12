@@ -20,7 +20,7 @@ private:
 
     std::vector<OWLInstruction> _owlInstructionList; 
 
-    void _processTree(TR::Node *root,TR::NodeChecklist &visited ); // traverse the tree
+    void _processTree(TR::Node *root, TR::Node *parent, TR::NodeChecklist &visited ); // traverse the tree
     void _logOMRIL(TR::Node *root, TR::NodeChecklist &visited); // log the OMR IL
     void _adjustOffset();
 
@@ -38,7 +38,7 @@ private:
         ShrikeBTInstructionFieldsUnion instructionFieldsUnion, 
         ShrikeBTInstruction instruction );
     
-    void _createImplicitStoreAndLoad(TR::Node *node);
+    void _createImplicitStore(TR::Node *node);
     void _createImplicitLoad(TR::Node *node);
 
     void _mapConstantInstruction(TR::Node *node);
@@ -54,6 +54,7 @@ private:
     void _mapTernaryInstruction(TR::Node* node);
     void _mapIndirectStoreInstruction(TR::Node *node);
     void _mapIndirectLoadInstruction(TR::Node *node);
+    void _mapNewInstruction(TR::Node *node);
 
 public:
     std::vector<OWLInstruction> map(TR::Compilation *compilation);

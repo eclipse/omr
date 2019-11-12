@@ -115,6 +115,13 @@ const MethodConfig ArrayLoadInstructionConfig = {
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ArrayLoadInstruction;"
 };
 
+const MethodConfig NewInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/NewInstruction",
+        "make",
+        "(Ljava/lang/String;I)Lcom/ibm/wala/shrikeBT/NewInstruction;"
+};
+
 const MethodConfig PrinterConfig = {
         true,
         "com/ibm/wala/shrikeBT/Printer",

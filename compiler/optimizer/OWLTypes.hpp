@@ -36,7 +36,8 @@ typedef enum ShrikeBTInstruction{
     SWAP,
     POP,
     ARRAY_STORE,
-    ARRAY_LOAD
+    ARRAY_LOAD,
+    NEW,
 
 } ShrikeBTInstruction;
 
@@ -145,7 +146,7 @@ typedef struct UnaryOpInstructionFields {
 } UnaryOpInstructionFields;
 
 typedef struct InvokeInstructionFields {
-    char type[BUFFER_SIZE];
+    char type[LARGE_BUFFER_SIZE];
     char className[LARGE_BUFFER_SIZE]; 
     char methodName[LARGE_BUFFER_SIZE];
     ShrikeBTDispatch disp;
@@ -165,6 +166,11 @@ typedef struct ArrayLoadInstructionFields {
     char type[BUFFER_SIZE];
 } ArrayLoadInstructionFields;
 
+typedef struct NewInstructionFields {
+    char type[LARGE_BUFFER_SIZE];
+    int32_t arrayBoundsCount;
+} NewInstructionFields;
+
 typedef union ShrikeBTInstructionFieldsUnion {
     ConstantInstructionFields constantInstructionFields;
     StoreInstructionFields storeInstructionFields;
@@ -183,6 +189,7 @@ typedef union ShrikeBTInstructionFieldsUnion {
     PopInstructionFields popInstructionFields;
     ArrayStoreInstructionFields arrayStoreInstructionFields;
     ArrayLoadInstructionFields arrayLoadInstructionFields;
+    NewInstructionFields newInstructionFields;
 } ShrikeBTInstructionFieldsUnion;
 
 

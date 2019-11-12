@@ -41,7 +41,10 @@ extern const MethodConfig ArrayStoreInstructionConfig;
 
 extern const MethodConfig ArrayLoadInstructionConfig;
 
+extern const MethodConfig NewInstructionConfig;
+
 extern const MethodConfig PrinterConfig;
+
 
 /***** Field Config ******/
 
