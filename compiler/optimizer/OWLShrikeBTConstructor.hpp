@@ -48,10 +48,13 @@ public:
     jobject UnaryOpInstruction(char* type);
     jobject InvokeInstruction(char* type, char* className, char* methodName, ShrikeBTDispatch disp);
     jobject SwapInstruction();
-    jobject PopInstruction(uint16_t size);
+    jobject PopInstruction(uint16_t size); // 1 or 2
+    jobject DupInstruction(uint16_t delta); // delta 0 => dup, delta 1 => dup_x1
     jobject ArrayStoreInstruction(char* type);
     jobject ArrayLoadInstruction(char* type);
     jobject NewInstruction(char* type, int32_t arrayBoundsCount);
+    jobject PutInstruction(char* type, char* className, char* fieldName, bool isStatic);
+    // jobject GetInstruction(chat* type, char* className, char* fieldName, bool isStatic);
 
 };
 #endif 

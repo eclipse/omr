@@ -126,6 +126,11 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     instructionObject = PopInstruction(popFields.size);
                     break;
                 }
+                case DUP: {
+                    DupInstructionFields dupFields = instrUnion.dupInstructionFields;
+                    instructionObject = DupInstruction(dupFields.delta);
+                    break;
+                }
                 case ARRAY_STORE: {
                     ArrayStoreInstructionFields arrayStoreFields = instrUnion.arrayStoreInstructionFields;
                     instructionObject = ArrayStoreInstruction(arrayStoreFields.type);
@@ -141,6 +146,12 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     instructionObject = NewInstruction(newInstructionFields.type, newInstructionFields.arrayBoundsCount);
                     break;
                 }
+                case PUT:{
+                    PutInstructionFields putInstructionFields = instrUnion.putInstructionFields;
+                    instructionObject = PutInstruction(putInstructionFields.type,putInstructionFields.className, putInstructionFields.fieldName, putInstructionFields.isStatic);
+                    break;
+                }
+
                 default:
                     perror("No instruction matched inside construct instruction object function!\n");
                     exit(1);
@@ -542,4 +553,37 @@ jobject TR_OWLShrikeBTConstructor::NewInstruction(char* type, int32_t arrayBound
     );
 
     return newInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::PutInstruction(char* type, char* className, char* fieldName, bool isStatic){
+    jobject putInstruction;
+
+    _jniClient->callMethod
+    (
+        PutInstructionConfig,
+        NULL,
+        &putInstruction,
+        4,
+        _jniClient->constructString(type),
+        _jniClient->constructString(className),
+        _jniClient->constructString(fieldName),
+        isStatic ? JNI_TRUE : JNI_FALSE
+    );
+    
+    return putInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::DupInstruction(uint16_t delta){
+    jobject dupInstruction;
+
+    _jniClient->callMethod
+    (
+        DupInstructionConfig,
+        NULL,
+        &dupInstruction,
+        1,
+        delta
+    );
+
+    return dupInstruction;
 }

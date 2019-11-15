@@ -43,6 +43,12 @@ extern const MethodConfig ArrayLoadInstructionConfig;
 
 extern const MethodConfig NewInstructionConfig;
 
+extern const MethodConfig PutInstructionConfig;
+
+extern const MethodConfig GetInstructionConfig;
+
+extern const MethodConfig DupInstructionConfig;
+
 extern const MethodConfig PrinterConfig;
 
 

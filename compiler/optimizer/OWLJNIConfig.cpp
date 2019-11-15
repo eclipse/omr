@@ -122,6 +122,27 @@ const MethodConfig NewInstructionConfig = {
         "(Ljava/lang/String;I)Lcom/ibm/wala/shrikeBT/NewInstruction;"
 };
 
+const MethodConfig PutInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/PutInstruction",
+        "make",
+        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/ibm/wala/shrikeBT/PutInstruction;"
+};
+
+const MethodConfig GetInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/PutInstruction",
+        "make",
+        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/ibm/wala/shrikeBT/GetInstruction;"
+};
+
+const MethodConfig DupInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/DupInstruction",
+        "make",
+        "(I)Lcom/ibm/wala/shrikeBT/DupInstruction;"
+};
+
 const MethodConfig PrinterConfig = {
         true,
         "com/ibm/wala/shrikeBT/Printer",

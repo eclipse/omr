@@ -47,6 +47,7 @@ void TR_OWLMapper::_logOMRIL(TR::Node *root, TR::NodeChecklist &visited) {
         _logOMRIL(root->getChild(i), visited);
     }
     printf("%d: %s | ref count: %u\n", root->getGlobalIndex(),root->getOpCode().getName(),root->getReferenceCount());
+    printf("is Call: %d\n",root->getOpCode().isCall());
     TR::ILOpCodes opCodeValue = root->getOpCodeValue();
     if ( opCodeValue == TR::treetop || opCodeValue == TR::BBStart || opCodeValue == TR::BBEnd){
         return;
@@ -54,41 +55,63 @@ void TR_OWLMapper::_logOMRIL(TR::Node *root, TR::NodeChecklist &visited) {
  
 }
 
+/**
+ * STEP 1: preprocessing the tree
+ * STEP 2: map the current node
+ * STEP 3: post-processing the tree
+ * */
 void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeChecklist &visited) {
+
+    /*** 1. Preprocessing ***/
     if (visited.contains(root)){ // indicates this node has already been evaluated => load the value from local var table
+
+        // If the current node is NEW and its parent is a constructor, we do not create a local load since a DUP has already been created.
+        if (root->getOpCode().isNew() && parent->getOpCode().isCall() && parent->getSymbolReference()->getSymbol()->getMethodSymbol()->getMethod()->isConstructor()){ 
+            return;
+        }
         _createImplicitLoad(root);
         return;
     }
-    
+
     visited.add(root);
 
     if (root->getOpCode().isTernary()){ // deal with ternary expression. Evaluate last two children first
 
-        _processTree(root->getChild(1), parent, visited);
-        _processTree(root->getChild(2), parent, visited);
-        _processTree(root->getChild(0), parent, visited);
+        _processTree(root->getChild(1), root, visited);
+        _processTree(root->getChild(2), root, visited);
+        _processTree(root->getChild(0), root, visited);
         
     }
-    else{
+    else{ 
         for (uint32_t i = 0; i < root->getNumChildren(); ++i) {
-            _processTree(root->getChild(i), parent, visited);
+            _processTree(root->getChild(i), root, visited);
         }
     }
 
-    _instructionRouter(root);
+    /*** 2. processing the current node ***/
+
+    _instructionRouter(root); // route to corresponding mapping
+
+    /*** 3. post-processsing ***/
+
+    if (root->getOpCode().isNew()) { //if it is NEW instruction, create DUP instead of local store
+        _createDupInstruction(root, 0);
+        return;
+    }
 
     // for those node reference count > 1, create implicit load or store 
-    if (parent == NULL) {
+    if (parent == NULL) { // if this node has no parent, just create an implicit store. 
         if (root->getReferenceCount() > 1){
             _createImplicitStore(root);
         }
     }
     else {
         TR::ILOpCodes parentOpCodeValue = parent->getOpCodeValue();
-        if (root->getReferenceCount() > 1 && (parentOpCodeValue == TR::treetop || parentOpCodeValue == parentOpCodeValue == TR::BBStart) ) {
+
+        if (root->getReferenceCount() > 1 && (parentOpCodeValue == TR::treetop || parentOpCodeValue == TR::BBStart) ) {
             _createImplicitStore(root);
         }
-        else{
+        else if (root->getReferenceCount()> 1){
             _createImplicitStore(root);
             _createImplicitLoad(root);
         }
@@ -182,11 +205,14 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     else if (opCode.isStoreDirect()) { // store instruction
         _mapDirectStoreInstruction(node);
     }
-    else if (opCode.isStoreIndirect()) { //storei
-        _mapIndirectStoreInstruction(node);
-    }
     else if (opCode.isLoadDirect()) { // load instruction
         _mapDirectLoadInstruction(node);
+    }
+    else if (opCode.isStoreIndirect() && node->getSymbolReference()->getSymbol()->isArrayShadowSymbol()) { // object put
+        _mapPutInstruction(node);
+    }
+    else if (opCode.isStoreIndirect()) { //storei
+        _mapIndirectStoreInstruction(node);
     }
     else if (opCode.isLoadIndirect()) { //loadi
         _mapIndirectLoadInstruction(node);
@@ -219,6 +245,7 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
         _mapTernaryInstruction(node);
     }
     else if (opCode.isLoadAddr()) {} //loadaddr
+    else if (opCode.isNullCheck()) {} //NULL CHECK
     else if (opCode.isNew()){
         _mapNewInstruction(node);
     }
@@ -242,6 +269,7 @@ char* TR_OWLMapper::_getType(TR::ILOpCode opCode) {
 void TR_OWLMapper::_createImplicitStore(TR::Node *node) {
 
     char* type = _getType(node->getOpCode());
+
     uint32_t omrGlobalIndex = node->getGlobalIndex();
     
     ImplicitStoreInstructionFields impStoreFields;
@@ -266,6 +294,15 @@ void TR_OWLMapper::_createImplicitLoad(TR::Node* node) {
     insUnion.implicitLoadInstructionFields = impLoadFields;
     
     _createOWLInstruction(true, omrGlobalIndex, 0, NO_ADJUST, 0, insUnion, IMPLICIT_LOAD);
+}
+
+void TR_OWLMapper::_createDupInstruction(TR::Node *node, uint16_t delta) {
+    DupInstructionFields dupFields = {delta};
+
+    ShrikeBTInstructionFieldsUnion instrUnion;
+    instrUnion.dupInstructionFields = dupFields;
+
+    _createOWLInstruction(true,node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, DUP);
 }
 
 /**
@@ -632,22 +669,26 @@ void TR_OWLMapper::_mapCallInstruction(TR::Node *node) {
     InvokeInstructionFields invokeFields;
 
     if (method->isConstructor()){ // if the call is constructor
-        TR::Node *loadAddr = node->getChild(0)->getChild(0);
+        TR::Node *newNode = node->getChild(0);
+        TR::Node *loadAddr = newNode->getChild(0);
  
         int32_t len;
         strcpy(invokeFields.type, type);
         strcpy(invokeFields.className, loadAddr->getSymbolReference()->getTypeSignature(len));
         strcpy(invokeFields.methodName, methodName);
         invokeFields.disp = SPECIAL;
+
+        ShrikeBTInstructionFieldsUnion instrUnion;
+        instrUnion.invokeInstructionFields = invokeFields;
+
+        _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, INVOKE); // constructor invoke 
+
+        _createImplicitStore(newNode); // store the object ref to local var table
     }
     else{
 
     }
 
-    ShrikeBTInstructionFieldsUnion instrUnion;
-    instrUnion.invokeInstructionFields = invokeFields;
-
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, INVOKE);
 
 }
 
@@ -736,4 +777,18 @@ void TR_OWLMapper::_mapNewInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.newInstructionFields = newFields;
     _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,NEW); 
+}
+
+void TR_OWLMapper::_mapPutInstruction(TR::Node *node) {
+    char* type = _getType(node->getOpCode());
+
+    PutInstructionFields putFields;
+    strcpy(putFields.type, type);
+    strcpy(putFields.className, "ABC");
+    strcpy(putFields.fieldName, "123");
+    putFields.isStatic = false;
+
+    ShrikeBTInstructionFieldsUnion instrUnion;
+    instrUnion.putInstructionFields = putFields;
+    _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion,PUT);
 }

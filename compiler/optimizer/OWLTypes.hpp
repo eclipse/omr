@@ -38,6 +38,9 @@ typedef enum ShrikeBTInstruction{
     ARRAY_STORE,
     ARRAY_LOAD,
     NEW,
+    PUT,
+    GET,
+    DUP
 
 } ShrikeBTInstruction;
 
@@ -158,6 +161,9 @@ typedef struct PopInstructionFields {
     uint16_t size; // can only be 1 or 2. Other sizes will cause exception in shrikeBT
 } PopInstructionFields;
 
+typedef struct DupInstructionFields {
+    uint16_t delta;
+} DupInstructionFields;
 typedef struct ArrayStoreInstructionFields {
     char type[BUFFER_SIZE];
 } ArrayStoreInstructionFields;
@@ -170,6 +176,20 @@ typedef struct NewInstructionFields {
     char type[LARGE_BUFFER_SIZE];
     int32_t arrayBoundsCount;
 } NewInstructionFields;
+
+typedef struct PutInstructionFields {
+    char type[BUFFER_SIZE];
+    char className[LARGE_BUFFER_SIZE];
+    char fieldName[LARGE_BUFFER_SIZE];
+    bool isStatic;
+} PutInstructionFields;
+
+typedef struct GetInstrucrtionFields {
+    char type[BUFFER_SIZE];
+    char className[LARGE_BUFFER_SIZE];
+    char fieldName[LARGE_BUFFER_SIZE];
+    bool isStatic;
+} GetInstrucrtionFields;
 
 typedef union ShrikeBTInstructionFieldsUnion {
     ConstantInstructionFields constantInstructionFields;
@@ -187,9 +207,12 @@ typedef union ShrikeBTInstructionFieldsUnion {
     InvokeInstructionFields invokeInstructionFields;
     SwapInstructionFields swapInstructionFields;
     PopInstructionFields popInstructionFields;
+    DupInstructionFields dupInstructionFields;
     ArrayStoreInstructionFields arrayStoreInstructionFields;
     ArrayLoadInstructionFields arrayLoadInstructionFields;
     NewInstructionFields newInstructionFields;
+    PutInstructionFields putInstructionFields;
+    GetInstrucrtionFields getInstrucrtionFields;
 } ShrikeBTInstructionFieldsUnion;
 
 

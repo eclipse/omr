@@ -40,6 +40,7 @@ private:
     
     void _createImplicitStore(TR::Node *node);
     void _createImplicitLoad(TR::Node *node);
+    void _createDupInstruction(TR::Node *node, uint16_t delta);
 
     void _mapConstantInstruction(TR::Node *node);
     void _mapDirectStoreInstruction(TR::Node* node);
@@ -55,6 +56,7 @@ private:
     void _mapIndirectStoreInstruction(TR::Node *node);
     void _mapIndirectLoadInstruction(TR::Node *node);
     void _mapNewInstruction(TR::Node *node);
+    void _mapPutInstruction(TR::Node *node);
 
 public:
     std::vector<OWLInstruction> map(TR::Compilation *compilation);
