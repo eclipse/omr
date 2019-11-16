@@ -10,6 +10,7 @@
 #include "il/Node.hpp"
 #include "compile/Compilation.hpp"
 #include "il/Node_inlines.hpp"
+#include "ras/Debug.hpp"
 #include "optimizer/OWLTypes.hpp"
 #include "optimizer/OWLShrikeBTConstructor.hpp"
 
@@ -17,6 +18,9 @@
 class TR_OWLMapper
 {
 private:
+
+    TR_Debug* _debug;
+    TR::Compilation* _compilation;
 
     std::vector<OWLInstruction> _owlInstructionList; 
 
@@ -59,6 +63,7 @@ private:
     void _mapPutInstruction(TR::Node *node);
 
 public:
-    std::vector<OWLInstruction> map(TR::Compilation *compilation);
+    TR_OWLMapper(TR::Compilation* compilation);
+    std::vector<OWLInstruction> map();
 };
 #endif 

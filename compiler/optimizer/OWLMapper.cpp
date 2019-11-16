@@ -10,21 +10,24 @@
 #include "optimizer/OWLJNIConfig.hpp"
 
 
-
 /****** public ******/
+TR_OWLMapper::TR_OWLMapper(TR::Compilation* compilation) {
+    _compilation = compilation;
+    _debug = compilation->getDebug();
+}
 
-std::vector<OWLInstruction> TR_OWLMapper::map(TR::Compilation* compilation) {
+std::vector<OWLInstruction> TR_OWLMapper::map() {
 
-    TR::NodeChecklist logVisited(compilation); // visisted nodes for logging OMR IL
-    TR::NodeChecklist instructionMappingVisited(compilation); // visited nodes for mapping the instruction
+    TR::NodeChecklist logVisited(_compilation); // visisted nodes for logging OMR IL
+    TR::NodeChecklist instructionMappingVisited(_compilation); // visited nodes for mapping the instruction
 
     // printf("======= OMR Instructions ========\n");
-    for (TR::TreeTop *tt = compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
+    for (TR::TreeTop *tt = _compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
         TR::Node *node = tt->getNode();
         _logOMRIL(node, logVisited);
     }
 
-    for (TR::TreeTop *tt = compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
+    for (TR::TreeTop *tt = _compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
         TR::Node *node = tt->getNode();
         _processTree(node, NULL, instructionMappingVisited);
     }
@@ -47,7 +50,7 @@ void TR_OWLMapper::_logOMRIL(TR::Node *root, TR::NodeChecklist &visited) {
         _logOMRIL(root->getChild(i), visited);
     }
     printf("%d: %s | ref count: %u\n", root->getGlobalIndex(),root->getOpCode().getName(),root->getReferenceCount());
-    printf("is Call: %d\n",root->getOpCode().isCall());
+
     TR::ILOpCodes opCodeValue = root->getOpCodeValue();
     if ( opCodeValue == TR::treetop || opCodeValue == TR::BBStart || opCodeValue == TR::BBEnd){
         return;
@@ -69,6 +72,13 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         if (root->getOpCode().isNew() && parent->getOpCode().isCall() && parent->getSymbolReference()->getSymbol()->getMethodSymbol()->getMethod()->isConstructor()){ 
             return;
         }
+        if (root->getOpCode().isNew()) {
+            return;
+        }
+        // if (root->getOpCode().isLoadIndirect() && root->getSymbolReference()->getSymbol()->isRegularShadow()){ //do not create implicit load for GET 
+        //     return;
+        // }
+
         _createImplicitLoad(root);
         return;
     }
@@ -90,9 +100,13 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
 
     /*** 2. processing the current node ***/
 
-    _instructionRouter(root); // route to corresponding mapping
+    _instructionRouter(root); // routed to corresponding mapping
 
     /*** 3. post-processsing ***/
+
+    // if (root->getOpCode().isLoadIndirect() && root->getSymbolReference()->getSymbol()->isRegularShadow()){ // do not create implicit load or store for GET instruction
+    //     return;
+    // }
 
     if (root->getOpCode().isNew()) { //if it is NEW instruction, create DUP instead of local store
         _createDupInstruction(root, 0);
@@ -108,7 +122,7 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
     else {
         TR::ILOpCodes parentOpCodeValue = parent->getOpCodeValue();
 
-        if (root->getReferenceCount() > 1 && (parentOpCodeValue == TR::treetop || parentOpCodeValue == TR::BBStart) ) {
+        if (root->getReferenceCount() > 1 && (parentOpCodeValue == TR::treetop || parentOpCodeValue == TR::BBStart || parentOpCodeValue == TR::NULLCHK) ) {
             _createImplicitStore(root);
         }
         else if (root->getReferenceCount()> 1){
@@ -196,7 +210,6 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
 
     printf("--- %d: %s | ref count: %u\n", node->getGlobalIndex(),node->getOpCode().getName(),node->getReferenceCount());
 
-
     TR::ILOpCode opCode = node->getOpCode();
 
     if (opCode.isLoadConst()) { //constant instruction
@@ -207,9 +220,6 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     }
     else if (opCode.isLoadDirect()) { // load instruction
         _mapDirectLoadInstruction(node);
-    }
-    else if (opCode.isStoreIndirect() && node->getSymbolReference()->getSymbol()->isArrayShadowSymbol()) { // object put
-        _mapPutInstruction(node);
     }
     else if (opCode.isStoreIndirect()) { //storei
         _mapIndirectStoreInstruction(node);
@@ -683,7 +693,7 @@ void TR_OWLMapper::_mapCallInstruction(TR::Node *node) {
 
         _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, INVOKE); // constructor invoke 
 
-        _createImplicitStore(newNode); // store the object ref to local var table
+       // _createImplicitStore(newNode); // store the object ref to local var table
     }
     else{
 
@@ -741,26 +751,85 @@ void TR_OWLMapper::_mapTernaryInstruction(TR::Node *node) {
 
 void TR_OWLMapper::_mapIndirectStoreInstruction(TR::Node *node) {
     char* type = _getType(node->getOpCode());
+    TR::SymbolReference* symRef = node->getSymbolReference();
 
-    ArrayStoreInstructionFields arrayStoreFields;
-    strcpy(arrayStoreFields.type, type);
+    if (symRef->getSymbol()->isRegularShadow()){ // object fields
+        char shadowName[LARGE_BUFFER_SIZE];
+        strcpy(shadowName, _debug->getShadowName(symRef));
+        
+        PutInstructionFields putFields;
 
-    ShrikeBTInstructionFieldsUnion instrUnion;
-    instrUnion.arrayStoreInstructionFields = arrayStoreFields;
+        //tokenize the shadow name for class type and field name
+        char* clsNameToken = strtok(shadowName,".");
+        strcpy(putFields.className,"L");
+        strcat(putFields.className, clsNameToken);
+        strcat(putFields.className,";");
 
-    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,ARRAY_STORE);
+        char* restToken = strtok(NULL,".");
+        char* fldNameToken = strtok(restToken," ");
+
+        strcpy(putFields.fieldName,fldNameToken);
+
+        strcpy(putFields.type, type);
+        putFields.isStatic = false;
+
+        ShrikeBTInstructionFieldsUnion instrUnion;
+        instrUnion.putInstructionFields = putFields;
+
+        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,PUT);
+    }
+    else{
+        printf("Wrong!\n");
+    }
+    // ArrayStoreInstructionFields arrayStoreFields;
+    // strcpy(arrayStoreFields.type, type);
+
+    // ShrikeBTInstructionFieldsUnion instrUnion;
+    // instrUnion.arrayStoreInstructionFields = arrayStoreFields;
+
+    // _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,ARRAY_STORE);
 }
 
 void TR_OWLMapper::_mapIndirectLoadInstruction(TR::Node *node) {
     char* type = _getType(node->getOpCode());
+    TR::SymbolReference* symRef = node->getSymbolReference();
+    
+    if (symRef->getSymbol()->isRegularShadow()){ // object fields
+        char shadowName[LARGE_BUFFER_SIZE];
+        strcpy(shadowName, _debug->getShadowName(symRef));
+        
+        GetInstructionFields getFields;
 
-    ArrayLoadInstructionFields arrayLoadFields;
-    strcpy(arrayLoadFields.type, type);
+        //tokenize the shadow name for class type and field name
+        char* clsNameToken = strtok(shadowName,".");
+        strcpy(getFields.className,"L");
+        strcat(getFields.className, clsNameToken);
+        strcat(getFields.className,";");
 
-    ShrikeBTInstructionFieldsUnion instrUnion;
-    instrUnion.arrayLoadInstructionFields = arrayLoadFields;
+        char* restToken = strtok(NULL,".");
+        char* fldNameToken = strtok(restToken," ");
 
-    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,ARRAY_LOAD);
+        strcpy(getFields.fieldName,fldNameToken);
+
+        strcpy(getFields.type, type);
+        getFields.isStatic = false;
+
+        ShrikeBTInstructionFieldsUnion instrUnion;
+        instrUnion.getInstructionFields = getFields;
+
+        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,GET);
+    }
+    else{
+        printf("Wrong!\n");
+    }
+
+    // ArrayLoadInstructionFields arrayLoadFields;
+    // strcpy(arrayLoadFields.type, type);
+
+    // ShrikeBTInstructionFieldsUnion instrUnion;
+    // instrUnion.arrayLoadInstructionFields = arrayLoadFields;
+
+    // _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,ARRAY_LOAD);
 }
 
 void TR_OWLMapper::_mapNewInstruction(TR::Node *node) {

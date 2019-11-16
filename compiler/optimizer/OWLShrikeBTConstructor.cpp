@@ -147,8 +147,13 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     break;
                 }
                 case PUT:{
-                    PutInstructionFields putInstructionFields = instrUnion.putInstructionFields;
-                    instructionObject = PutInstruction(putInstructionFields.type,putInstructionFields.className, putInstructionFields.fieldName, putInstructionFields.isStatic);
+                    PutInstructionFields putFields = instrUnion.putInstructionFields;
+                    instructionObject = PutInstruction(putFields.type,putFields.className, putFields.fieldName, putFields.isStatic);
+                    break;
+                }
+                case GET:{
+                    GetInstructionFields getFields = instrUnion.getInstructionFields;
+                    instructionObject = GetInstruction(getFields.type, getFields.className, getFields.fieldName, getFields.isStatic);
                     break;
                 }
 
@@ -571,6 +576,24 @@ jobject TR_OWLShrikeBTConstructor::PutInstruction(char* type, char* className, c
     );
     
     return putInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::GetInstruction(char* type, char* className, char* fieldName, bool isStatic) {
+    jobject getInstruction;
+
+    _jniClient->callMethod
+    (
+        GetInstructionConfig,
+        NULL,
+        &getInstruction,
+        4,
+        _jniClient->constructString(type),
+        _jniClient->constructString(className),
+        _jniClient->constructString(fieldName),
+        isStatic ? JNI_TRUE : JNI_FALSE
+    );
+
+    return getInstruction;
 }
 
 jobject TR_OWLShrikeBTConstructor::DupInstruction(uint16_t delta){

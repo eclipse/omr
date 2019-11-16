@@ -131,7 +131,7 @@ const MethodConfig PutInstructionConfig = {
 
 const MethodConfig GetInstructionConfig = {
         true,
-        "com/ibm/wala/shrikeBT/PutInstruction",
+        "com/ibm/wala/shrikeBT/GetInstruction",
         "make",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/ibm/wala/shrikeBT/GetInstruction;"
 };

@@ -184,12 +184,12 @@ typedef struct PutInstructionFields {
     bool isStatic;
 } PutInstructionFields;
 
-typedef struct GetInstrucrtionFields {
+typedef struct GetInstructionFields {
     char type[BUFFER_SIZE];
     char className[LARGE_BUFFER_SIZE];
     char fieldName[LARGE_BUFFER_SIZE];
     bool isStatic;
-} GetInstrucrtionFields;
+} GetInstructionFields;
 
 typedef union ShrikeBTInstructionFieldsUnion {
     ConstantInstructionFields constantInstructionFields;
@@ -212,7 +212,7 @@ typedef union ShrikeBTInstructionFieldsUnion {
     ArrayLoadInstructionFields arrayLoadInstructionFields;
     NewInstructionFields newInstructionFields;
     PutInstructionFields putInstructionFields;
-    GetInstrucrtionFields getInstrucrtionFields;
+    GetInstructionFields getInstructionFields;
 } ShrikeBTInstructionFieldsUnion;
 
 
