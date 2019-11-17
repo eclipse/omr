@@ -96,7 +96,7 @@ typedef struct StoreInstructionFields {
  * For those nodes whose reference count > 1
  * store the value into local variable table
  * value will be used later by other nodes
- **/
+ */
 typedef struct ImplicitStoreInstructionFields {
     char type[BUFFER_SIZE];
     uint32_t omrGlobalIndex;
@@ -109,7 +109,7 @@ typedef struct LoadInstructionFields {
 
 /**
  * Load the value stored by implicit store from local variable table
- * */
+ */
 typedef struct ImplicitLoadInstructionFields {
     char type[BUFFER_SIZE];
     uint32_t omrGloablIndex;

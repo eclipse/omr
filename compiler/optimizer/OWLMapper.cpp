@@ -5,7 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "il/ILHelpers.hpp"
-#include "il/StaticSymbol.hpp"
+#include "il/MethodSymbol.hpp"
+#include "compile/Method.hpp"
 #include "optimizer/OWLMapper.hpp"
 #include "optimizer/OWLJNIConfig.hpp"
 
@@ -92,6 +93,11 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         _processTree(root->getChild(0), root, visited);
         
     }
+    else if (root->getOpCode().isCallIndirect()) { // for call indirect, skip the load reference indirect. 
+        root->getChild(1)->setReferenceCount(root->getChild(1)->getReferenceCount() - 1); // decrement the reference count of aload by one
+        _processTree(root->getChild(1), root, visited); // only evalute aload 
+    }
+
     else{ 
         for (uint32_t i = 0; i < root->getNumChildren(); ++i) {
             _processTree(root->getChild(i), root, visited);
@@ -103,10 +109,6 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
     _instructionRouter(root); // routed to corresponding mapping
 
     /*** 3. post-processsing ***/
-
-    // if (root->getOpCode().isLoadIndirect() && root->getSymbolReference()->getSymbol()->isRegularShadow()){ // do not create implicit load or store for GET instruction
-    //     return;
-    // }
 
     if (root->getOpCode().isNew()) { //if it is NEW instruction, create DUP instead of local store
         _createDupInstruction(root, 0);
@@ -196,7 +198,6 @@ void TR_OWLMapper::_adjustOffset() {
 
 }
 
-/****** instruction router, starting point ********/
 void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     TR::ILOpCodes opCodeValue = node->getOpCodeValue();
 
@@ -248,8 +249,11 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     else if (opCode.isBooleanCompare()){ // comparison instruction
         _mapComparisonInstruction(node);
     }
-    else if (opCode.isCall()) { // function call
-        _mapCallInstruction(node);
+    else if (opCode.isCallDirect()) { // direct call
+        _mapDirectCallInstruction(node);
+    }
+    else if (opCode.isCallIndirect()) { // indirect call
+        _mapIndirectCallInstruction(node);
     }
     else if (opCode.isTernary()) { // ternary instruction
         _mapTernaryInstruction(node);
@@ -378,30 +382,90 @@ void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
 
-    StoreInstructionFields storeFields;
+    TR::SymbolReference* symRef = node->getSymbolReference();
+    TR::Symbol* symbol = symRef->getSymbol();
 
-    strcpy(storeFields.type, type);
-    storeFields.referenceNumber = node->getSymbolReference()->getReferenceNumber();
+    if (symbol->isAuto()) { //local var
+        StoreInstructionFields storeFields;
 
-    ShrikeBTInstructionFieldsUnion instrUnion;
-    instrUnion.storeInstructionFields = storeFields;
+        strcpy(storeFields.type, type);
+        storeFields.referenceNumber = symRef->getReferenceNumber();
 
-    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion, STORE);
+        ShrikeBTInstructionFieldsUnion instrUnion;
+        instrUnion.storeInstructionFields = storeFields;
+
+        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion, STORE);
+    }
+    else if (symbol->isStatic()) { // static (PUT)
+
+        PutInstructionFields putFields;
+
+        char staticName[LARGE_BUFFER_SIZE];
+        strcpy(staticName, _debug->getStaticName(symRef));
+
+        char* clsNameToken = strtok(staticName,".");
+        strcpy(putFields.className,"L");
+        strcat(putFields.className, clsNameToken);
+        strcat(putFields.className,";");
+
+        char* restToken = strtok(NULL,".");
+        char* fldNameToken = strtok(restToken," ");
+
+        strcpy(putFields.fieldName,fldNameToken);
+        strcpy(putFields.type, type);
+
+        putFields.isStatic = true;
+
+        ShrikeBTInstructionFieldsUnion instrUnion = instrUnion;
+        instrUnion.putInstructionFields = putFields;
+
+        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,PUT);
+    }
+   
 }
 
 void TR_OWLMapper::_mapDirectLoadInstruction(TR::Node *node) {
-
     TR::ILOpCode opCode = node->getOpCode();
     char* type = _getType(opCode);
 
-    LoadInstructionFields loadFields;
-    strcpy(loadFields.type, type);
-    loadFields.referenceNumber = node->getSymbolReference()->getReferenceNumber();
+    TR::SymbolReference* symRef = node->getSymbolReference();
+    TR::Symbol* symbol = symRef->getSymbol();
 
-    ShrikeBTInstructionFieldsUnion instrUnion;
-    instrUnion.loadInstructionFields = loadFields;
+    if (symbol->isAuto()) { //local var
+        LoadInstructionFields loadFields;
+        strcpy(loadFields.type, type);
+        loadFields.referenceNumber = symRef->getReferenceNumber();
 
-    _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion, LOAD);
+        ShrikeBTInstructionFieldsUnion instrUnion;
+        instrUnion.loadInstructionFields = loadFields;
+
+        _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion, LOAD);
+    }
+    else if (symbol->isStatic()) { // static (GET)
+        GetInstructionFields getFields;
+
+        char staticName[LARGE_BUFFER_SIZE];
+        strcpy(staticName, _debug->getStaticName(symRef));
+
+        char* clsNameToken = strtok(staticName,".");
+        strcpy(getFields.className,"L");
+        strcat(getFields.className, clsNameToken);
+        strcat(getFields.className,";");
+
+        char* restToken = strtok(NULL,".");
+        char* fldNameToken = strtok(restToken," ");
+
+        strcpy(getFields.fieldName,fldNameToken);
+        strcpy(getFields.type, type);
+
+        getFields.isStatic = true;
+
+        ShrikeBTInstructionFieldsUnion instrUnion;
+        instrUnion.getInstructionFields = getFields;
+
+        _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, GET);
+    }
+
 }
 
 void TR_OWLMapper::_mapReturnInstruction(TR::Node *node) {
@@ -494,8 +558,8 @@ void TR_OWLMapper::_mapConditionalBranchInstruction(TR::Node *node) {
     _createOWLInstruction(true, node->getGlobalIndex(), 0, TABLE_MAP, 0, instrUnion, CONDITIONAL_BRANCH);
 }
 
-/***
- * Since WALA comparison instruction does not have a full set of operators like OMR
+/**
+ * Since Java Byte Code does not have a full set of operators like OMR
  * Comparison instruction will be mapped as conditional branch instruction 
  */
 void TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
@@ -668,9 +732,12 @@ void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
 
 }
 
-void TR_OWLMapper::_mapCallInstruction(TR::Node *node) {
+void TR_OWLMapper::_mapDirectCallInstruction(TR::Node *node) {
+    
+    TR::MethodSymbol *methodSymbol = node->getSymbolReference()->getSymbol()->getMethodSymbol();
+    TR::Method * method = methodSymbol->getMethod();
 
-    TR::Method * method = node->getSymbolReference()->getSymbol()->getMethodSymbol()->getMethod();
+    TR::MethodSymbol::Kinds methodKind = methodSymbol->getMethodKind();
 
     char* className = method->classNameChars();
     char* methodName = method->nameChars();
@@ -688,18 +755,44 @@ void TR_OWLMapper::_mapCallInstruction(TR::Node *node) {
         strcpy(invokeFields.methodName, methodName);
         invokeFields.disp = SPECIAL;
 
-        ShrikeBTInstructionFieldsUnion instrUnion;
-        instrUnion.invokeInstructionFields = invokeFields;
-
-        _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, INVOKE); // constructor invoke 
-
-       // _createImplicitStore(newNode); // store the object ref to local var table
     }
-    else{
-
+    else if (methodKind == methodSymbol->Static) { // static method call
+        strcpy(invokeFields.type, type);
+        strcpy(invokeFields.className, className);
+        strcpy(invokeFields.methodName, methodName);
+        invokeFields.disp = STATIC;
     }
 
+    ShrikeBTInstructionFieldsUnion instrUnion;
+    instrUnion.invokeInstructionFields = invokeFields;
 
+    _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, INVOKE); 
+}
+
+void TR_OWLMapper::_mapIndirectCallInstruction(TR::Node* node) {
+
+    TR::MethodSymbol *methodSymbol = node->getSymbolReference()->getSymbol()->getMethodSymbol();
+    TR::Method * method = methodSymbol->getMethod();
+
+    TR::MethodSymbol::Kinds methodKind = methodSymbol->getMethodKind();
+
+    char* className = method->classNameChars();
+    char* methodName = method->nameChars();
+    char* type = method->signatureChars();
+
+    InvokeInstructionFields invokeFields;
+
+    if (methodKind == methodSymbol->Virtual) {
+        strcpy(invokeFields.type, type);
+        strcpy(invokeFields.className, className);
+        strcpy(invokeFields.methodName, methodName);
+        invokeFields.disp = VIRTUAL;
+    }
+
+    ShrikeBTInstructionFieldsUnion instrUnion;
+    instrUnion.invokeInstructionFields = invokeFields;
+
+    _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, INVOKE); 
 }
 
 /**
@@ -710,7 +803,7 @@ void TR_OWLMapper::_mapCallInstruction(TR::Node *node) {
  * pop, 
  * goto, 
  * pop
- * */
+ */
 void TR_OWLMapper::_mapTernaryInstruction(TR::Node *node) {
     ConstantInstructionFields const0Fields;
     strcpy(const0Fields.type, TYPE_int);
@@ -846,18 +939,4 @@ void TR_OWLMapper::_mapNewInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.newInstructionFields = newFields;
     _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,NEW); 
-}
-
-void TR_OWLMapper::_mapPutInstruction(TR::Node *node) {
-    char* type = _getType(node->getOpCode());
-
-    PutInstructionFields putFields;
-    strcpy(putFields.type, type);
-    strcpy(putFields.className, "ABC");
-    strcpy(putFields.fieldName, "123");
-    putFields.isStatic = false;
-
-    ShrikeBTInstructionFieldsUnion instrUnion;
-    instrUnion.putInstructionFields = putFields;
-    _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion,PUT);
 }

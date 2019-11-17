@@ -55,12 +55,13 @@ private:
     void _mapConditionalBranchInstruction(TR::Node* node);
     void _mapComparisonInstruction(TR::Node* node);
     void _mapConversionInstruction(TR::Node* node);
-    void _mapCallInstruction(TR::Node* node);
+    void _mapDirectCallInstruction(TR::Node* node);
+    void _mapIndirectCallInstruction(TR::Node* node);
     void _mapTernaryInstruction(TR::Node* node);
     void _mapIndirectStoreInstruction(TR::Node *node);
     void _mapIndirectLoadInstruction(TR::Node *node);
     void _mapNewInstruction(TR::Node *node);
-    void _mapPutInstruction(TR::Node *node);
+
 
 public:
     TR_OWLMapper(TR::Compilation* compilation);
