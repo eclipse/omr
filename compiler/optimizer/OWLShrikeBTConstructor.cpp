@@ -156,7 +156,15 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     instructionObject = GetInstruction(getFields.type, getFields.className, getFields.fieldName, getFields.isStatic);
                     break;
                 }
-
+                case INSTANCE_OF:{
+                    InstanceofInstructionFields instanceofFields = instrUnion.instanceofInstructionFields;
+                    instructionObject = InstanceofInstruction(instanceofFields.type);
+                    break;
+                }
+                case ARRAY_LENGTH:{
+                    instructionObject = ArrayLengthInstruction();
+                    break;
+                }
                 default:
                     perror("No instruction matched inside construct instruction object function!\n");
                     exit(1);
@@ -596,7 +604,7 @@ jobject TR_OWLShrikeBTConstructor::GetInstruction(char* type, char* className, c
     return getInstruction;
 }
 
-jobject TR_OWLShrikeBTConstructor::DupInstruction(uint16_t delta){
+jobject TR_OWLShrikeBTConstructor::DupInstruction(uint16_t delta) {
     jobject dupInstruction;
 
     _jniClient->callMethod
@@ -609,4 +617,34 @@ jobject TR_OWLShrikeBTConstructor::DupInstruction(uint16_t delta){
     );
 
     return dupInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::InstanceofInstruction(char *type) {
+    jobject instanceofInstruction;
+    
+    _jniClient->callMethod
+    (
+        InstanceofInstructionConfig,
+        NULL,
+        &instanceofInstruction,
+        1,
+        _jniClient->constructString(type)
+
+    );
+
+    return instanceofInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::ArrayLengthInstruction() {
+    jobject arrayLengthInstruction;
+
+    _jniClient->callMethod
+    (
+        ArrayLengthInstructionConfig,
+        NULL,
+        &arrayLengthInstruction,
+        0
+    );
+
+    return arrayLengthInstruction;
 }

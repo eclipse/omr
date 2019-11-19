@@ -143,6 +143,20 @@ const MethodConfig DupInstructionConfig = {
         "(I)Lcom/ibm/wala/shrikeBT/DupInstruction;"
 };
 
+const MethodConfig InstanceofInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/InstanceofInstruction",
+        "make",
+        "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/InstanceofInstruction;"
+};
+
+const MethodConfig ArrayLengthInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/ArrayLengthInstruction",
+        "make",
+        "()Lcom/ibm/wala/shrikeBT/ArrayLengthInstruction;"
+};
+
 const MethodConfig PrinterConfig = {
         true,
         "com/ibm/wala/shrikeBT/Printer",

@@ -40,7 +40,9 @@ typedef enum ShrikeBTInstruction{
     NEW,
     PUT,
     GET,
-    DUP
+    DUP,
+    INSTANCE_OF,
+    ARRAY_LENGTH
 
 } ShrikeBTInstruction;
 
@@ -191,6 +193,11 @@ typedef struct GetInstructionFields {
     bool isStatic;
 } GetInstructionFields;
 
+typedef struct InstanceofInstructionFields {
+    char type[LARGE_BUFFER_SIZE];
+} InstanceofInstructionFields;
+
+typedef struct ArrayLengthInstructionFields {} ArrayLengthInstructionFields;
 typedef union ShrikeBTInstructionFieldsUnion {
     ConstantInstructionFields constantInstructionFields;
     StoreInstructionFields storeInstructionFields;
@@ -213,6 +220,8 @@ typedef union ShrikeBTInstructionFieldsUnion {
     NewInstructionFields newInstructionFields;
     PutInstructionFields putInstructionFields;
     GetInstructionFields getInstructionFields;
+    InstanceofInstructionFields instanceofInstructionFields;
+    ArrayLengthInstructionFields arrayLengthInstructionFields;
 } ShrikeBTInstructionFieldsUnion;
 
 

@@ -42,9 +42,11 @@ private:
         ShrikeBTInstructionFieldsUnion instructionFieldsUnion, 
         ShrikeBTInstruction instruction );
     
-    void _createImplicitStore(TR::Node *node);
-    void _createImplicitLoad(TR::Node *node);
-    void _createDupInstruction(TR::Node *node, uint16_t delta);
+    void _createImplicitStore(TR::Node* node);
+    void _createImplicitLoad(TR::Node* node);
+    void _createDupInstruction(TR::Node* node, uint16_t delta);
+    void _createPopInstruction(TR::Node* node, uint16_t size);
+    void _createSwapInstruction(TR::Node* node);
 
     void _mapConstantInstruction(TR::Node *node);
     void _mapDirectStoreInstruction(TR::Node* node);
@@ -61,6 +63,8 @@ private:
     void _mapIndirectStoreInstruction(TR::Node *node);
     void _mapIndirectLoadInstruction(TR::Node *node);
     void _mapNewInstruction(TR::Node *node);
+    void _mapInstanceofInstruction(TR::Node *node);
+    void _mapArrayLengthInstruction(TR::Node *node);
 
 
 public:

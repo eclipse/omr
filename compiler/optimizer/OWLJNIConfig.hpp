@@ -49,7 +49,13 @@ extern const MethodConfig GetInstructionConfig;
 
 extern const MethodConfig DupInstructionConfig;
 
+extern const MethodConfig InstanceofInstructionConfig;
+
+extern const MethodConfig ArrayLengthInstructionConfig;
+
 extern const MethodConfig PrinterConfig;
+
+
 
 
 /***** Field Config ******/

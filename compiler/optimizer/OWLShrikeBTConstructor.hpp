@@ -55,6 +55,8 @@ public:
     jobject NewInstruction(char* type, int32_t arrayBoundsCount);
     jobject PutInstruction(char* type, char* className, char* fieldName, bool isStatic);
     jobject GetInstruction(char* type, char* className, char* fieldName, bool isStatic);
+    jobject InstanceofInstruction(char* type);
+    jobject ArrayLengthInstruction();
 
 };
 #endif 
