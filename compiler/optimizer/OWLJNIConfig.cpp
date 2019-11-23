@@ -10,154 +10,161 @@ const char* InstructionClassName = "com/ibm/wala/shrikeBT/Instruction";
 
 /***** Method Config ******/
 
-const MethodConfig ConstantInstructionConfig = {
+const JNIMethodConfig ConstantInstructionConfig = {
     true,
     "com/ibm/wala/shrikeBT/ConstantInstruction",
     "make",
     "(Ljava/lang/String;Ljava/lang/Object;)Lcom/ibm/wala/shrikeBT/ConstantInstruction;"
 };
 
-const MethodConfig StoreInstructionConfig = {
+const JNIMethodConfig StoreInstructionConfig = {
     true,
     "com/ibm/wala/shrikeBT/StoreInstruction",
     "make",
     "(Ljava/lang/String;I)Lcom/ibm/wala/shrikeBT/StoreInstruction;"
 };
 
-const MethodConfig LoadInstructionConfig = {
+const JNIMethodConfig LoadInstructionConfig = {
     true,
     "com/ibm/wala/shrikeBT/LoadInstruction",
     "make",
     "(Ljava/lang/String;I)Lcom/ibm/wala/shrikeBT/LoadInstruction;"
 };
 
-const MethodConfig BinaryOpInstructionConfig = {
+const JNIMethodConfig BinaryOpInstructionConfig = {
     true,
     "com/ibm/wala/shrikeBT/BinaryOpInstruction",
     "make",
     "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;)Lcom/ibm/wala/shrikeBT/BinaryOpInstruction;"
 };
 
-const MethodConfig ReturnInstructionConfig = {
+const JNIMethodConfig ReturnInstructionConfig = {
     true,
     "com/ibm/wala/shrikeBT/ReturnInstruction",
     "make",
     "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ReturnInstruction;"
 };
 
-const MethodConfig GotoInstructionConfig = {
+const JNIMethodConfig GotoInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/GotoInstruction",
         "make",
         "(I)Lcom/ibm/wala/shrikeBT/GotoInstruction;"
 };
 
-const MethodConfig ConditionalBranchInstructionConfig = {
+const JNIMethodConfig ConditionalBranchInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/ConditionalBranchInstruction",
         "make",
         "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;I)Lcom/ibm/wala/shrikeBT/ConditionalBranchInstruction;"
 };
 
-const MethodConfig ComparisonInstructionConfig = {
+const JNIMethodConfig ComparisonInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/ComparisonInstruction",
         "make",
         "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;)Lcom/ibm/wala/shrikeBT/ComparisonInstruction;"
 };
 
-const MethodConfig ConversionInstructionConfig = {
+const JNIMethodConfig ConversionInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/ConversionInstruction",
         "make",
         "(Ljava/lang/String;Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ConversionInstruction;"
 };
 
-const MethodConfig UnaryOpInstructionConfig = {
+const JNIMethodConfig UnaryOpInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/UnaryOpInstruction",
         "make",
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/UnaryOpInstruction;"
 };
 
-const MethodConfig InvokeInstructionConfig = {
+const JNIMethodConfig InvokeInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/InvokeInstruction",
         "make",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;)Lcom/ibm/wala/shrikeBT/InvokeInstruction;"
 };
 
-const MethodConfig SwapInstructionConfig = {
+const JNIMethodConfig SwapInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/SwapInstruction",
         "make",
         "()Lcom/ibm/wala/shrikeBT/SwapInstruction;"
 };
 
-const MethodConfig PopInstructionConfig = {
+const JNIMethodConfig PopInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/PopInstruction",
         "make",
         "(I)Lcom/ibm/wala/shrikeBT/PopInstruction;"
 };
 
-const MethodConfig ArrayStoreInstructionConfig = {
+const JNIMethodConfig ArrayStoreInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/ArrayStoreInstruction",
         "make",
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ArrayStoreInstruction;"
 };
 
-const MethodConfig ArrayLoadInstructionConfig = {
+const JNIMethodConfig ArrayLoadInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/ArrayLoadInstruction",
         "make",
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ArrayLoadInstruction;"
 };
 
-const MethodConfig NewInstructionConfig = {
+const JNIMethodConfig NewInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/NewInstruction",
         "make",
         "(Ljava/lang/String;I)Lcom/ibm/wala/shrikeBT/NewInstruction;"
 };
 
-const MethodConfig PutInstructionConfig = {
+const JNIMethodConfig PutInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/PutInstruction",
         "make",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/ibm/wala/shrikeBT/PutInstruction;"
 };
 
-const MethodConfig GetInstructionConfig = {
+const JNIMethodConfig GetInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/GetInstruction",
         "make",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/ibm/wala/shrikeBT/GetInstruction;"
 };
 
-const MethodConfig DupInstructionConfig = {
+const JNIMethodConfig DupInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/DupInstruction",
         "make",
         "(I)Lcom/ibm/wala/shrikeBT/DupInstruction;"
 };
 
-const MethodConfig InstanceofInstructionConfig = {
+const JNIMethodConfig InstanceofInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/InstanceofInstruction",
         "make",
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/InstanceofInstruction;"
 };
 
-const MethodConfig ArrayLengthInstructionConfig = {
+const JNIMethodConfig ArrayLengthInstructionConfig = {
         true,
         "com/ibm/wala/shrikeBT/ArrayLengthInstruction",
         "make",
         "()Lcom/ibm/wala/shrikeBT/ArrayLengthInstruction;"
 };
 
-const MethodConfig PrinterConfig = {
+const JNIMethodConfig ShiftInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/ShiftInstruction",
+        "make",
+        "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IShiftInstruction$Operator;)Lcom/ibm/wala/shrikeBT/ShiftInstruction;"
+};
+
+const JNIMethodConfig PrinterConfig = {
         true,
         "com/ibm/wala/shrikeBT/Printer",
         "print",
@@ -166,35 +173,35 @@ const MethodConfig PrinterConfig = {
 
 /***** Field Config ******/
 
-const FieldConfig ADD_OperatorConfig = {
+const JNIFieldConfig ADD_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "ADD",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig SUB_OperatorConfig = {
+const JNIFieldConfig SUB_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "SUB",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig MUL_OperatorConfig = {
+const JNIFieldConfig MUL_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "MUL",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig DIV_OperatorConfig = {
+const JNIFieldConfig DIV_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "DIV",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig REM_OperatorConfig = {
+const JNIFieldConfig REM_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "REM",
@@ -202,112 +209,133 @@ const FieldConfig REM_OperatorConfig = {
 };
 
 
-const FieldConfig AND_OperatorConfig = {
+const JNIFieldConfig AND_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "AND",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig OR_OperatorConfig = {
+const JNIFieldConfig OR_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "OR",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig XOR_OperatorConfig = {
+const JNIFieldConfig XOR_OperatorConfig = {
     true,
     "com/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator",
     "XOR",
     "Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;"
 };
 
-const FieldConfig EQ_OperatorConfig = {
+const JNIFieldConfig EQ_OperatorConfig = {
         true,
         "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
         "EQ",
         "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
 };
 
-const FieldConfig NE_OperatorConfig = {
+const JNIFieldConfig NE_OperatorConfig = {
         true,
         "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
         "NE",
         "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
 };
 
-const FieldConfig LT_OperatorConfig = {
+const JNIFieldConfig LT_OperatorConfig = {
         true,
         "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
         "LT",
         "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
 };
 
-const FieldConfig GE_OperatorConfig = {
+const JNIFieldConfig GE_OperatorConfig = {
         true,
         "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
         "GE",
         "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
 };
 
-const FieldConfig GT_OperatorConfig = {
+const JNIFieldConfig GT_OperatorConfig = {
         true,
         "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
         "GT",
         "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
 };
 
-const FieldConfig LE_OperatorConfig = {
+const JNIFieldConfig LE_OperatorConfig = {
         true,
         "com/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator",
         "LE",
         "Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;"
 };
 
-const FieldConfig CMP_OperatorConfig = {
+const JNIFieldConfig CMP_OperatorConfig = {
         true,
         "com/ibm/wala/shrikeBT/IComparisonInstruction$Operator",
         "CMP",
         "Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;"
 };
 
-const FieldConfig CMPL_OperatorConfig = {
+const JNIFieldConfig CMPL_OperatorConfig = {
         true,
         "com/ibm/wala/shrikeBT/IComparisonInstruction$Operator",
         "CMPL",
         "Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;"
 };
 
-const FieldConfig CMPG_OperatorConfig = {
+const JNIFieldConfig CMPG_OperatorConfig = {
         true,
         "com/ibm/wala/shrikeBT/IComparisonInstruction$Operator",
         "CMPG",
         "Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;"
 };
 
-const FieldConfig VIRTUAL_DispatchConfig = {
+const JNIFieldConfig SHL_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IShiftInstruction$Operator",
+        "SHL",
+        "Lcom/ibm/wala/shrikeBT/IShiftInstruction$Operator;"
+};
+
+const JNIFieldConfig SHR_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IShiftInstruction$Operator",
+        "SHR",
+        "Lcom/ibm/wala/shrikeBT/IShiftInstruction$Operator;"
+};
+
+const JNIFieldConfig USHR_OperatorConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/IShiftInstruction$Operator",
+        "USHR",
+        "Lcom/ibm/wala/shrikeBT/IShiftInstruction$Operator;"
+};
+
+const JNIFieldConfig VIRTUAL_DispatchConfig = {
         true,
         "com/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch",
         "VIRTUAL",
         "Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;"
 };
 
-const FieldConfig SPECIAL_DispatchConfig = {
+const JNIFieldConfig SPECIAL_DispatchConfig = {
         true,
         "com/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch",
         "SPECIAL",
         "Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;"
 };
 
-const FieldConfig INTERFACE_DispatchConfig = {
+const JNIFieldConfig INTERFACE_DispatchConfig = {
         true,
         "com/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch",
         "INTERFACE",
         "Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;"
 };
 
-const FieldConfig STATIC_DispatchConfig = {
+const JNIFieldConfig STATIC_DispatchConfig = {
         true,
         "com/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch",
         "STATIC",

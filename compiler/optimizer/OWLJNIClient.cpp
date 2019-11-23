@@ -192,7 +192,7 @@ jobjectArray TR_OWLJNIClient::constructObjectArray(const char* className, std::v
 
 /* Field */
 
-void TR_OWLJNIClient::getField(FieldConfig fieldConfig, jobject obj, jobject *res) {
+void TR_OWLJNIClient::getField(JNIFieldConfig fieldConfig, jobject obj, jobject *res) {
     jclass cls = _getClass(fieldConfig.className);
     jfieldID fid = _getFieldId(fieldConfig.isStatic, cls, fieldConfig.fieldName, fieldConfig.fieldSig);
     if (fieldConfig.isStatic){
@@ -204,7 +204,7 @@ void TR_OWLJNIClient::getField(FieldConfig fieldConfig, jobject obj, jobject *re
 }
 
 //void
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj,               int32_t argNum, ...){
+void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj,               int32_t argNum, ...){
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
@@ -224,7 +224,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj,        
 }
 
 //object
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject* res, int32_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, jobject* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -246,7 +246,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, jobject
 }
 
 //int
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int32_t* res, int32_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int32_t* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -269,7 +269,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int32_t
 }
 
 //long
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int64_t* res, int32_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int64_t* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -291,7 +291,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int64_t
 }
 
 //short
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int16_t* res, int32_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int16_t* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -313,7 +313,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, int16_t
 }
 
 //float
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* res, int32_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, float* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -335,7 +335,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, float* 
 }
 
 //double
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, double* res, int32_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, double* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -357,7 +357,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, double*
 }
 
 //char
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* res, int32_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, char* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -379,7 +379,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char* r
 }
 
 //bool
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* res, int32_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, bool* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -401,7 +401,7 @@ void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, bool* r
 }
 
 // char* (string)
-void TR_OWLJNIClient::callMethod(MethodConfig methodConfig, jobject obj, char **res, int32_t argNum, ...) {
+void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, char **res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);

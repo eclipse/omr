@@ -42,7 +42,8 @@ typedef enum ShrikeBTInstruction{
     GET,
     DUP,
     INSTANCE_OF,
-    ARRAY_LENGTH
+    ARRAY_LENGTH,
+    SHIFT_ //name conflict with macro SHIFT
 
 } ShrikeBTInstruction;
 
@@ -68,7 +69,12 @@ typedef enum ShrikeBTOperator {
     //comparison op
     CMP,
     CMPL,
-    CMPG
+    CMPG,
+    //shift op
+    SHL,
+    SHR,
+    USHR
+
 } ShrikeBTOperator;
 
 typedef enum ShrikeBTDispatch{
@@ -78,6 +84,9 @@ typedef enum ShrikeBTDispatch{
     STATIC 
 } ShrikeBTDispatch;
 
+typedef struct MethodInfo {
+    char methodSignature[LARGE_BUFFER_SIZE];
+} MethodInfo;
 
 typedef struct ConstantInstructionFields {
     char type[BUFFER_SIZE];
@@ -197,6 +206,11 @@ typedef struct InstanceofInstructionFields {
     char type[LARGE_BUFFER_SIZE];
 } InstanceofInstructionFields;
 
+typedef struct ShiftInstructionFields {
+    char type[BUFFER_SIZE];
+    ShrikeBTOperator op;
+} ShiftInstructionFields;
+
 typedef struct ArrayLengthInstructionFields {} ArrayLengthInstructionFields;
 typedef union ShrikeBTInstructionFieldsUnion {
     ConstantInstructionFields constantInstructionFields;
@@ -222,6 +236,7 @@ typedef union ShrikeBTInstructionFieldsUnion {
     GetInstructionFields getInstructionFields;
     InstanceofInstructionFields instanceofInstructionFields;
     ArrayLengthInstructionFields arrayLengthInstructionFields;
+    ShiftInstructionFields shiftInstructionFields;
 } ShrikeBTInstructionFieldsUnion;
 
 

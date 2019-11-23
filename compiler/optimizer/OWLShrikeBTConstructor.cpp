@@ -165,6 +165,11 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     instructionObject = ArrayLengthInstruction();
                     break;
                 }
+                case SHIFT_:{
+                    ShiftInstructionFields shiftFields = instrUnion.shiftInstructionFields;
+                    instructionObject = ShiftInstruction(shiftFields.type, shiftFields.op);
+                    break;
+                }
                 default:
                     perror("No instruction matched inside construct instruction object function!\n");
                     exit(1);
@@ -221,6 +226,10 @@ jobject TR_OWLShrikeBTConstructor::Operator(ShrikeBTOperator op) {
         case CMP: _jniClient->getField(CMP_OperatorConfig,NULL,&opr); break;
         case CMPL: _jniClient->getField(CMPL_OperatorConfig,NULL,&opr); break;
         case CMPG: _jniClient->getField(CMPG_OperatorConfig,NULL,&opr); break;
+
+        case SHL: _jniClient->getField(SHL_OperatorConfig,NULL,&opr); break;
+        case SHR: _jniClient->getField(SHR_OperatorConfig,NULL,&opr); break;
+        case USHR: _jniClient->getField(USHR_OperatorConfig,NULL,&opr); break;
 
         default:
             perror("Error: Operator not found!\n");
@@ -647,4 +656,20 @@ jobject TR_OWLShrikeBTConstructor::ArrayLengthInstruction() {
     );
 
     return arrayLengthInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::ShiftInstruction(char* type, ShrikeBTOperator op) {
+    jobject shiftOperator;
+
+    _jniClient->callMethod
+    (
+        ShiftInstructionConfig,
+        NULL,
+        &shiftOperator,
+        2,
+        _jniClient->constructString(type), 
+        Operator(op)
+    );
+
+    return shiftOperator;
 }

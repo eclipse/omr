@@ -7,8 +7,14 @@
 
 class TR_OWLDeserializer
 {
+private:
+    std::vector<OWLInstruction> _owlInstructionList;
+    MethodInfo _methodInfo;
+    void _deserialize();
 public:
-    std::vector<OWLInstruction> deserialize();
+    TR_OWLDeserializer();
+    std::vector<OWLInstruction> getOWLInstructionList();
+    MethodInfo getMethodInfo();
 };
 
 #endif

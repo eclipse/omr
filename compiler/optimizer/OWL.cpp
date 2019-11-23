@@ -3,6 +3,7 @@
 //
 #include <vector>
 #include <stdio.h>
+#include<string.h>
 #include "optimizer/OWL.hpp"
 #include "il/OMRNode_inlines.hpp"
 #include "optimizer/Optimization.hpp"
@@ -30,10 +31,14 @@ TR::Optimization *TR_OWL::create(TR::OptimizationManager *manager)
 
 int32_t TR_OWL::perform()
 {   
-    TR_OWLMapper *mapper = new TR_OWLMapper();
-    std::vector<OWLInstruction>  owlInstructions = mapper->map(comp());
+    TR_OWLMapper *mapper = new TR_OWLMapper(comp());
+    printf("=== Start mapping ===\n");
+    std::vector<OWLInstruction>  owlInstructions = mapper->map();
     delete mapper;
+    printf("==== Finish mapping ====\n");
 
+    MethodInfo methodInfo;
+    strcpy(methodInfo.methodSignature,comp()->signature());
 
     //Test if JVM can be started
     if (TR_OWLJNIClient::startJVM()){
@@ -50,7 +55,7 @@ int32_t TR_OWL::perform()
     else { // serialize OWL instructions to files
         printf("===JVM cannot be started. Serialize OWL Instruction to file===\n");
         TR_OWLSerializer *serializer = new TR_OWLSerializer();
-        serializer->serialize(owlInstructions);
+        serializer->serialize(methodInfo, owlInstructions);
         delete serializer;
     }
     

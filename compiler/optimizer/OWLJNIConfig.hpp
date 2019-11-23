@@ -11,79 +11,87 @@ extern const char* InstructionClassName;
 
 /***** Method Config ******/
 
-extern const MethodConfig ConstantInstructionConfig;
+extern const JNIMethodConfig ConstantInstructionConfig;
 
-extern const MethodConfig StoreInstructionConfig;
+extern const JNIMethodConfig StoreInstructionConfig;
 
-extern const MethodConfig LoadInstructionConfig;
+extern const JNIMethodConfig LoadInstructionConfig;
 
-extern const MethodConfig BinaryOpInstructionConfig;
+extern const JNIMethodConfig BinaryOpInstructionConfig;
 
-extern const MethodConfig ReturnInstructionConfig;
+extern const JNIMethodConfig ReturnInstructionConfig;
 
-extern const MethodConfig GotoInstructionConfig;
+extern const JNIMethodConfig GotoInstructionConfig;
 
-extern const MethodConfig ConditionalBranchInstructionConfig;
+extern const JNIMethodConfig ConditionalBranchInstructionConfig;
 
-extern const MethodConfig ComparisonInstructionConfig;
+extern const JNIMethodConfig ComparisonInstructionConfig;
 
-extern const MethodConfig ConversionInstructionConfig;
+extern const JNIMethodConfig ConversionInstructionConfig;
 
-extern const MethodConfig UnaryOpInstructionConfig;
+extern const JNIMethodConfig UnaryOpInstructionConfig;
 
-extern const MethodConfig InvokeInstructionConfig;
+extern const JNIMethodConfig InvokeInstructionConfig;
 
-extern const MethodConfig SwapInstructionConfig;
+extern const JNIMethodConfig SwapInstructionConfig;
 
-extern const MethodConfig PopInstructionConfig;
+extern const JNIMethodConfig PopInstructionConfig;
 
-extern const MethodConfig ArrayStoreInstructionConfig;
+extern const JNIMethodConfig ArrayStoreInstructionConfig;
 
-extern const MethodConfig ArrayLoadInstructionConfig;
+extern const JNIMethodConfig ArrayLoadInstructionConfig;
 
-extern const MethodConfig NewInstructionConfig;
+extern const JNIMethodConfig NewInstructionConfig;
 
-extern const MethodConfig PutInstructionConfig;
+extern const JNIMethodConfig PutInstructionConfig;
 
-extern const MethodConfig GetInstructionConfig;
+extern const JNIMethodConfig GetInstructionConfig;
 
-extern const MethodConfig DupInstructionConfig;
+extern const JNIMethodConfig DupInstructionConfig;
 
-extern const MethodConfig InstanceofInstructionConfig;
+extern const JNIMethodConfig InstanceofInstructionConfig;
 
-extern const MethodConfig ArrayLengthInstructionConfig;
+extern const JNIMethodConfig ArrayLengthInstructionConfig;
 
-extern const MethodConfig PrinterConfig;
+extern const JNIMethodConfig ShiftInstructionConfig;
+
+extern const JNIMethodConfig PrinterConfig;
 
 
 
 
 /***** Field Config ******/
 
-extern const FieldConfig ADD_OperatorConfig;
-extern const FieldConfig SUB_OperatorConfig;
-extern const FieldConfig MUL_OperatorConfig;
-extern const FieldConfig DIV_OperatorConfig;
-extern const FieldConfig REM_OperatorConfig;
-extern const FieldConfig AND_OperatorConfig;
-extern const FieldConfig OR_OperatorConfig;
-extern const FieldConfig XOR_OperatorConfig;
+extern const JNIFieldConfig ADD_OperatorConfig;
+extern const JNIFieldConfig SUB_OperatorConfig;
+extern const JNIFieldConfig MUL_OperatorConfig;
+extern const JNIFieldConfig DIV_OperatorConfig;
+extern const JNIFieldConfig REM_OperatorConfig;
+extern const JNIFieldConfig AND_OperatorConfig;
+extern const JNIFieldConfig OR_OperatorConfig;
+extern const JNIFieldConfig XOR_OperatorConfig;
 
-extern const FieldConfig EQ_OperatorConfig;
-extern const FieldConfig NE_OperatorConfig;
-extern const FieldConfig LT_OperatorConfig;
-extern const FieldConfig GE_OperatorConfig;
-extern const FieldConfig GT_OperatorConfig;
-extern const FieldConfig LE_OperatorConfig;
+extern const JNIFieldConfig EQ_OperatorConfig;
+extern const JNIFieldConfig NE_OperatorConfig;
+extern const JNIFieldConfig LT_OperatorConfig;
+extern const JNIFieldConfig GE_OperatorConfig;
+extern const JNIFieldConfig GT_OperatorConfig;
+extern const JNIFieldConfig LE_OperatorConfig;
 
-extern const FieldConfig CMP_OperatorConfig;
-extern const FieldConfig CMPL_OperatorConfig;
-extern const FieldConfig CMPG_OperatorConfig;
+extern const JNIFieldConfig CMP_OperatorConfig;
+extern const JNIFieldConfig CMPL_OperatorConfig;
+extern const JNIFieldConfig CMPG_OperatorConfig;
 
-extern const FieldConfig VIRTUAL_DispatchConfig;
-extern const FieldConfig SPECIAL_DispatchConfig;
-extern const FieldConfig INTERFACE_DispatchConfig;
-extern const FieldConfig STATIC_DispatchConfig;
+extern const JNIFieldConfig SHL_OperatorConfig;
+extern const JNIFieldConfig SHR_OperatorConfig;
+extern const JNIFieldConfig USHR_OperatorConfig;
+
+extern const JNIFieldConfig VIRTUAL_DispatchConfig;
+extern const JNIFieldConfig SPECIAL_DispatchConfig;
+extern const JNIFieldConfig INTERFACE_DispatchConfig;
+extern const JNIFieldConfig STATIC_DispatchConfig;
+
+
 
 
 #endif //OMR_OWLMETHODCONFIG_HPP

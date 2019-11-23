@@ -136,8 +136,9 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
     }
     else {
         TR::ILOpCodes parentOpCodeValue = parent->getOpCodeValue();
+        TR::ILOpCode parentOpCode = parent->getOpCode();
 
-        if (root->getReferenceCount() > 1 && (parentOpCodeValue == TR::treetop || parentOpCodeValue == TR::BBStart || parentOpCodeValue == TR::NULLCHK) ) {
+        if (root->getReferenceCount() > 1 && (parentOpCodeValue == TR::treetop || parentOpCodeValue == TR::BBStart || parentOpCode.isCheck()) ) {
             _createImplicitStore(root);
         }
         else if (root->getReferenceCount()> 1){
@@ -529,6 +530,19 @@ void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.unaryOpInstructionFields = unaryFields;
         _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, UNARY_OP);
+    }
+    /*** Shift ***/
+    else if (opCode.isShift()) {
+        ShiftInstructionFields shiftFields;
+        strcpy(shiftFields.type, type);
+
+        if (opCode.isLeftShift()) shiftFields.op = SHL;
+        else if (opCode.isRightShift() && !opCode.isShiftLogical()) shiftFields.op = SHR;
+        else shiftFields.op = USHR;
+
+        ShrikeBTInstructionFieldsUnion instrUnion;
+        instrUnion.shiftInstructionFields = shiftFields;
+        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHIFT_);
     }
     /**** Binary op ****/
     else{

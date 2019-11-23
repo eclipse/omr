@@ -10,14 +10,14 @@
 #include <vector>
 #include "jni.h"
 
-struct MethodConfig {
+struct JNIMethodConfig {
     bool isStatic;
     char* className;
     char* methodName;
     char* methodSig;
 };
 
-struct FieldConfig {
+struct JNIFieldConfig {
     bool isStatic;
     char* className;
     char* fieldName;
@@ -63,18 +63,18 @@ public:
     jobjectArray constructObjectArray(const char* className, std::vector<jobject> objects);
 
     /* Field */
-    void getField(FieldConfig fieldConfig, jobject obj, jobject*res);
+    void getField(JNIFieldConfig fieldConfig, jobject obj, jobject*res);
 
-    void callMethod(MethodConfig methodConfig, jobject obj,               int32_t argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, jobject* res, int32_t argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, int32_t* res, int32_t argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, int64_t* res, int32_t argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, int16_t* res, int32_t argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, float* res, int32_t argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, double* res, int32_t argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, char* res, int32_t argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, bool* res, int32_t argNum, ...);
-    void callMethod(MethodConfig methodConfig, jobject obj, char** res, int32_t argNum, ...);
+    void callMethod(JNIMethodConfig methodConfig, jobject obj,               int32_t argNum, ...);
+    void callMethod(JNIMethodConfig methodConfig, jobject obj, jobject* res, int32_t argNum, ...);
+    void callMethod(JNIMethodConfig methodConfig, jobject obj, int32_t* res, int32_t argNum, ...);
+    void callMethod(JNIMethodConfig methodConfig, jobject obj, int64_t* res, int32_t argNum, ...);
+    void callMethod(JNIMethodConfig methodConfig, jobject obj, int16_t* res, int32_t argNum, ...);
+    void callMethod(JNIMethodConfig methodConfig, jobject obj, float* res, int32_t argNum, ...);
+    void callMethod(JNIMethodConfig methodConfig, jobject obj, double* res, int32_t argNum, ...);
+    void callMethod(JNIMethodConfig methodConfig, jobject obj, char* res, int32_t argNum, ...);
+    void callMethod(JNIMethodConfig methodConfig, jobject obj, bool* res, int32_t argNum, ...);
+    void callMethod(JNIMethodConfig methodConfig, jobject obj, char** res, int32_t argNum, ...);
 
 };
 #endif //omr_OWLJNIClient_h

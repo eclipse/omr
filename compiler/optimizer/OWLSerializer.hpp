@@ -8,7 +8,7 @@
 class TR_OWLSerializer
 {
 public:
-    void serialize(std::vector<OWLInstruction> owlInstructions);
+    void serialize(MethodInfo methodInfo, std::vector<OWLInstruction> owlInstructions);
 };
 
 
