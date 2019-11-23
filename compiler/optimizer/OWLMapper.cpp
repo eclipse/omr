@@ -841,6 +841,9 @@ void TR_OWLMapper::_mapIndirectCallInstruction(TR::Node* node) {
     else if (methodKind == methodSymbol->Static) {
         invokeFields.disp = STATIC;
     }
+    else if (methodKind == methodSymbol->Interface) {
+        invokeFields.disp = INTERFACE;
+    }
 
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.invokeInstructionFields = invokeFields;

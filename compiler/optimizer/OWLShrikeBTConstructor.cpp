@@ -247,7 +247,7 @@ jobject TR_OWLShrikeBTConstructor::Dispatch(ShrikeBTDispatch disp) {
         case INTERFACE: _jniClient->getField(INTERFACE_DispatchConfig,NULL,&dis); break;
         case STATIC: _jniClient->getField(STATIC_DispatchConfig,NULL,&dis); break;
         default:
-        perror("Error not dispatch found!\n");
+        perror("Error no dispatch found!\n");
         exit(1);
     }
 
