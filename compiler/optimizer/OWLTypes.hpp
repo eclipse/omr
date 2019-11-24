@@ -23,9 +23,7 @@ typedef enum ShrikeBTInstruction
 
     SHRIKE_BT_CONSTANT,
     SHRIKE_BT_STORE,
-    IMPLICIT_STORE, // shrikeBT does not really have this instruction. Should be constructed as SHRIKE_BT_STORE in the end
     SHRIKE_BT_LOAD,
-    IMPLICIT_LOAD, // shrikeBT does not really have this instruction. Should be constructed as SHRIKE_BT_LOAD in the end
     SHRIKE_BT_BINARY_OP,
     SHRIKE_BT_UNARY_OP,
     SHRIKE_BT_RETURN,
@@ -44,7 +42,7 @@ typedef enum ShrikeBTInstruction
     SHRIKE_BT_DUP,
     SHRIKE_BT_INSTANCE_OF,
     SHRIKE_BT_ARRAY_LENGTH,
-    SHRIKE_BT_SHIFT, //name conflict with macro SHIFT
+    SHRIKE_BT_SHIFT, 
     SHRIKE_BT_SWITCH
 
 } ShrikeBTInstruction;
@@ -117,34 +115,15 @@ typedef struct ConstantInstructionFields
 typedef struct StoreInstructionFields
 {
     char type[BUFFER_SIZE];
-    int32_t referenceNumber;
+    uint32_t index;
 } StoreInstructionFields;
-
-/**
- * For those nodes whose reference count > 1
- * store the value into local variable table
- * value will be used later by other nodes
- */
-typedef struct ImplicitStoreInstructionFields
-{
-    char type[BUFFER_SIZE];
-    uint32_t omrGlobalIndex;
-} ImplicitStoreInstructionFields;
 
 typedef struct LoadInstructionFields
 {
     char type[BUFFER_SIZE];
-    int32_t referenceNumber;
+    uint32_t index;
 } LoadInstructionFields;
 
-/**
- * Load the value stored by implicit store from local variable table
- */
-typedef struct ImplicitLoadInstructionFields
-{
-    char type[BUFFER_SIZE];
-    uint32_t omrGloablIndex;
-} ImplicitLoadInstructionFields;
 
 typedef struct BinaryOpInstructionFields
 {
@@ -264,9 +243,7 @@ typedef struct ArrayLengthInstructionFields
 typedef union ShrikeBTInstructionFieldsUnion {
     ConstantInstructionFields constantInstructionFields;
     StoreInstructionFields storeInstructionFields;
-    ImplicitStoreInstructionFields implicitStoreInstructionFields;
     LoadInstructionFields loadInstructionFields;
-    ImplicitLoadInstructionFields implicitLoadInstructionFields;
     BinaryOpInstructionFields binaryOpInstructionFields;
     ReturnInstructionFields returnInstructionFields;
     GotoInstructionFields gotoInstructionFields;

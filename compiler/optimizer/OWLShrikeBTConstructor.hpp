@@ -14,9 +14,6 @@ class TR_OWLShrikeBTConstructor
 {
 private:
     TR_OWLJNIClient *_jniClient;
-    uint32_t _index;
-    std::unordered_map<int32_t, uint32_t> _localVarTableBySymRef;
-    std::unordered_map<uint32_t, uint32_t> _localVarTableByOmrIndex;
 
 public:
     TR_OWLShrikeBTConstructor(TR_OWLJNIClient* jniClient);
@@ -39,9 +36,9 @@ public:
 
     /*** ShirkeBT Instruction Constructors ***/
     jobject ConstantInstruction(char* type, jobject value);
-    jobject StoreInstruction(char* type, int32_t referenceNumber);
+    jobject StoreInstruction(char* type, uint32_t index);
     jobject ImplicitStoreInstruction(char* type, uint32_t omrGlobalIndex); // implicit store
-    jobject LoadInstruction(char* type, int32_t referenceNumber);
+    jobject LoadInstruction(char* type, uint32_t index);
     jobject ImplicitLoadInstruction(char* type, uint32_t omrGloablIndex); // implicit load
     jobject BinaryOpInstruction(char* type, ShrikeBTBinaryOperator op);
     jobject ReturnInstruction(char* type);

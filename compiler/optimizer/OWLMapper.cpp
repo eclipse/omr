@@ -9,12 +9,74 @@
 #include "compile/Method.hpp"
 #include "optimizer/OWLMapper.hpp"
 #include "optimizer/OWLJNIConfig.hpp"
+TR_OWLLocalVariableTable::TR_OWLLocalVariableTable() {
+    _index = 0;
+}
+
+void TR_OWLLocalVariableTable::_increaseIndex(char* type) {
+    if (strcmp(TYPE_double,type) == 0 || strcmp(TYPE_long,type) == 0){
+        _index += 2;
+    }
+    else{
+        _index += 1;
+    }
+}
+
+uint32_t TR_OWLLocalVariableTable::store(int32_t referenceNumber, char* type) {
+    std::unordered_map<int32_t ,uint32_t >::const_iterator it = _localVarTableBySymRef.find(referenceNumber);
+
+    uint32_t i = _index;
+
+    // if the local var table has already stored this variable
+    if (it != _localVarTableBySymRef.end()) {
+        i = _localVarTableBySymRef[referenceNumber];
+    }
+
+    if (it == _localVarTableBySymRef.end()) {
+
+        _localVarTableBySymRef[referenceNumber] = _index;
+        _increaseIndex(type);
+    }
+
+    return i;
+}
+
+uint32_t TR_OWLLocalVariableTable::load(int32_t referenceNumber) {
+    return _localVarTableBySymRef[referenceNumber];
+}
+
+uint32_t TR_OWLLocalVariableTable::implicitStore(uint32_t omrGlobalIndex, char* type) {
+    std::unordered_map<uint32_t ,uint32_t >::const_iterator it = _localVarTableByOmrIndex.find(omrGlobalIndex);
+
+    uint32_t i = _index;
+
+    if (it != _localVarTableByOmrIndex.end()) {
+        i = _localVarTableByOmrIndex[omrGlobalIndex];
+    }
+
+    if (it == _localVarTableByOmrIndex.end()) {
+
+        _localVarTableByOmrIndex[omrGlobalIndex] = _index;
+        _increaseIndex(type); 
+    }
+
+    return i;
+}
+
+uint32_t TR_OWLLocalVariableTable::implicitLoad(uint32_t omrGlobalIndex) {
+    return _localVarTableByOmrIndex[omrGlobalIndex];
+}
 
 
 /****** public ******/
 TR_OWLMapper::TR_OWLMapper(TR::Compilation* compilation) {
     _compilation = compilation;
     _debug = compilation->getDebug();
+    _localVarTable = new TR_OWLLocalVariableTable();
+}
+
+TR_OWLMapper::~TR_OWLMapper() {
+    delete _localVarTable;
 }
 
 std::vector<OWLInstruction> TR_OWLMapper::map() {
@@ -330,28 +392,32 @@ void TR_OWLMapper::_createImplicitStore(TR::Node *node) {
 
     uint32_t omrGlobalIndex = node->getGlobalIndex();
     
-    ImplicitStoreInstructionFields impStoreFields;
-    strcpy(impStoreFields.type, type);
-    impStoreFields.omrGlobalIndex = omrGlobalIndex;
+    uint32_t index = _localVarTable->implicitStore(omrGlobalIndex,type);
+
+    StoreInstructionFields storeFields;
+    strcpy(storeFields.type, type);
+    storeFields.index = index;
 
     ShrikeBTInstructionFieldsUnion insUnion;
 
-    insUnion.implicitStoreInstructionFields = impStoreFields;
-    _createOWLInstruction(true, omrGlobalIndex,0, NO_ADJUST, 0, insUnion, IMPLICIT_STORE);
+    insUnion.storeInstructionFields = storeFields;
+    _createOWLInstruction(true, omrGlobalIndex,0, NO_ADJUST, 0, insUnion, SHRIKE_BT_STORE);
 }
 
 void TR_OWLMapper::_createImplicitLoad(TR::Node* node) {
     char* type = _getType(node->getOpCode());
     uint32_t omrGlobalIndex = node->getGlobalIndex();
     
-    ImplicitLoadInstructionFields impLoadFields;
-    strcpy(impLoadFields.type, type);
-    impLoadFields.omrGloablIndex = omrGlobalIndex;
+    uint32_t index = _localVarTable->implicitLoad(omrGlobalIndex);
+
+    LoadInstructionFields loadFields;
+    strcpy(loadFields.type, type);
+    loadFields.index = index;
 
     ShrikeBTInstructionFieldsUnion insUnion;
-    insUnion.implicitLoadInstructionFields = impLoadFields;
+    insUnion.loadInstructionFields = loadFields;
     
-    _createOWLInstruction(true, omrGlobalIndex, 0, NO_ADJUST, 0, insUnion, IMPLICIT_LOAD);
+    _createOWLInstruction(true, omrGlobalIndex, 0, NO_ADJUST, 0, insUnion, SHRIKE_BT_LOAD);
 }
 
 void TR_OWLMapper::_createDupInstruction(TR::Node *node, uint16_t delta) {
@@ -449,8 +515,10 @@ void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
     if (symbol->isAuto()) { //local var
         StoreInstructionFields storeFields;
 
+        uint32_t index = _localVarTable->store(symRef->getReferenceNumber(), type);
+
         strcpy(storeFields.type, type);
-        storeFields.referenceNumber = symRef->getReferenceNumber();
+        storeFields.index = index;
 
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.storeInstructionFields = storeFields;
@@ -495,7 +563,9 @@ void TR_OWLMapper::_mapDirectLoadInstruction(TR::Node *node) {
     if (symbol->isAuto()) { //local var
         LoadInstructionFields loadFields;
         strcpy(loadFields.type, type);
-        loadFields.referenceNumber = symRef->getReferenceNumber();
+
+        uint32_t index = _localVarTable->load(symRef->getReferenceNumber());
+        loadFields.index = index;
 
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.loadInstructionFields = loadFields;

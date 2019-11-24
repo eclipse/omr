@@ -14,6 +14,24 @@
 #include "optimizer/OWLTypes.hpp"
 #include "optimizer/OWLShrikeBTConstructor.hpp"
 
+/**
+ * Simulating java byte code local variable table 
+ */
+class TR_OWLLocalVariableTable
+{
+private:
+    uint32_t _index; 
+    std::unordered_map<int32_t, uint32_t> _localVarTableBySymRef;
+    std::unordered_map<uint32_t, uint32_t> _localVarTableByOmrIndex;
+    void _increaseIndex(char* type);
+public:
+    TR_OWLLocalVariableTable();
+    uint32_t store(int32_t referenceNumber, char* type);
+    uint32_t implicitStore(uint32_t omrGlobalIndex, char* type);
+    uint32_t load(int32_t referenceNumber);
+    uint32_t implicitLoad(uint32_t omrGlobalIndex);
+
+};
 
 class TR_OWLMapper
 {
@@ -21,7 +39,7 @@ private:
 
     TR_Debug* _debug;
     TR::Compilation* _compilation;
-
+    TR_OWLLocalVariableTable* _localVarTable;
     std::vector<OWLInstruction> _owlInstructionList; 
 
     void _processTree(TR::Node *root, TR::Node *parent, TR::NodeChecklist &visited ); // traverse the tree
@@ -70,6 +88,7 @@ private:
 
 public:
     TR_OWLMapper(TR::Compilation* compilation);
+    ~TR_OWLMapper();
     std::vector<OWLInstruction> map();
 };
 #endif 

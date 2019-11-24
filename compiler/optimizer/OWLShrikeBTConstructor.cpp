@@ -10,7 +10,6 @@
 
 TR_OWLShrikeBTConstructor::TR_OWLShrikeBTConstructor(TR_OWLJNIClient* jniClient) {
     _jniClient = jniClient;
-    _index = 0;
 }
 
 TR_OWLShrikeBTConstructor::~TR_OWLShrikeBTConstructor() {}
@@ -27,7 +26,6 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
 
             ShrikeBTInstruction instruction = owlInstruction.instruction;
             ShrikeBTInstructionFieldsUnion instrUnion = owlInstruction.instructionFieldsUnion;
-            uint32_t offset = owlInstruction.shrikeBTOffset;
 
             jobject instructionObject;
 
@@ -58,22 +56,12 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                 }
                 case SHRIKE_BT_STORE: {
                     StoreInstructionFields storeFields = instrUnion.storeInstructionFields;
-                    instructionObject = StoreInstruction(storeFields.type, storeFields.referenceNumber);
-                    break;
-                }
-                case IMPLICIT_STORE: {
-                    ImplicitStoreInstructionFields impStoreFields = instrUnion.implicitStoreInstructionFields;
-                    instructionObject = ImplicitStoreInstruction(impStoreFields.type, impStoreFields.omrGlobalIndex);
+                    instructionObject = StoreInstruction(storeFields.type, storeFields.index);
                     break;
                 }
                 case SHRIKE_BT_LOAD: {
                     LoadInstructionFields loadFields = instrUnion.loadInstructionFields;
-                    instructionObject = LoadInstruction(loadFields.type,loadFields.referenceNumber);
-                    break;
-                }
-                case IMPLICIT_LOAD: {
-                    ImplicitLoadInstructionFields impLoadFields = instrUnion.implicitLoadInstructionFields;
-                    instructionObject = ImplicitLoadInstruction(impLoadFields.type, impLoadFields.omrGloablIndex);
+                    instructionObject = LoadInstruction(loadFields.type,loadFields.index);
                     break;
                 }
                 case SHRIKE_BT_BINARY_OP: {
@@ -312,17 +300,8 @@ jobject TR_OWLShrikeBTConstructor::ConstantInstruction(char *type, jobject value
     return constantInstructionObject;
 }
 
-jobject TR_OWLShrikeBTConstructor::StoreInstruction(char *type, int32_t referenceNumber) {
+jobject TR_OWLShrikeBTConstructor::StoreInstruction(char *type, uint32_t index) {
     jobject storeInstructionObject;
-
-    std::unordered_map<int32_t ,uint32_t >::const_iterator it = _localVarTableBySymRef.find(referenceNumber);
-
-    int i = _index;
-
-    // if the local var table has the symbol ref
-    if (it != _localVarTableBySymRef.end()) {
-        i = _localVarTableBySymRef[referenceNumber];
-    }
 
     _jniClient->callMethod
     (
@@ -331,62 +310,14 @@ jobject TR_OWLShrikeBTConstructor::StoreInstruction(char *type, int32_t referenc
         &storeInstructionObject,
         2,
         _jniClient->constructString(type),
-        i
+        index
     );
-
-    if (it == _localVarTableBySymRef.end()) {
-
-        _localVarTableBySymRef[referenceNumber] = _index;
-
-        if (strcmp(TYPE_double,type) == 0 || strcmp(TYPE_long,type) == 0){
-            _index += 2;
-        }
-        else{
-            _index += 1;
-        }
-    }
 
     return storeInstructionObject;
 }
 
-/*** Implicit Store ***/
-jobject TR_OWLShrikeBTConstructor::ImplicitStoreInstruction(char* type, uint32_t omrGlobalIndex) {
-    jobject storeInstructionObject;
 
-    std::unordered_map<uint32_t ,uint32_t >::const_iterator it = _localVarTableByOmrIndex.find(omrGlobalIndex);
-
-    int i = _index;
-
-    if (it != _localVarTableByOmrIndex.end()) {
-        i = _localVarTableByOmrIndex[omrGlobalIndex];
-    }
-
-    _jniClient->callMethod
-    (
-        StoreInstructionConfig,
-        NULL,
-        &storeInstructionObject,
-        2,
-        _jniClient->constructString(type),
-        i
-    );
-
-    if (it == _localVarTableByOmrIndex.end()) {
-
-        _localVarTableByOmrIndex[omrGlobalIndex] = _index;
-
-        if (strcmp(TYPE_double,type) == 0 || strcmp(TYPE_long,type) == 0){
-            _index += 2;
-        }
-        else{
-            _index += 1;
-        }
-    }
-
-    return storeInstructionObject;
-}
-
-jobject TR_OWLShrikeBTConstructor::LoadInstruction(char *type, int32_t referenceNumber) {
+jobject TR_OWLShrikeBTConstructor::LoadInstruction(char *type, uint32_t index) {
     jobject loadInstructionObject;
     _jniClient->callMethod
     (
@@ -395,22 +326,7 @@ jobject TR_OWLShrikeBTConstructor::LoadInstruction(char *type, int32_t reference
         &loadInstructionObject,
         2,
         _jniClient->constructString(type),
-        _localVarTableBySymRef[referenceNumber]
-    );
-    return loadInstructionObject;
-}
-
-/*** Implicit load ***/
-jobject TR_OWLShrikeBTConstructor::ImplicitLoadInstruction(char*type, uint32_t omrGlobalIndex) {
-    jobject loadInstructionObject;
-    _jniClient->callMethod
-    (
-        LoadInstructionConfig,
-        NULL,
-        &loadInstructionObject,
-        2,
-        _jniClient->constructString(type),
-        _localVarTableByOmrIndex[omrGlobalIndex]
+        index
     );
     return loadInstructionObject;
 }
