@@ -65,6 +65,7 @@ private:
     void _mapNewInstruction(TR::Node *node);
     void _mapInstanceofInstruction(TR::Node *node);
     void _mapArrayLengthInstruction(TR::Node *node);
+    void _mapSwitchInstruction(TR::Node *node);
 
 
 public:

@@ -190,6 +190,13 @@ jobjectArray TR_OWLJNIClient::constructObjectArray(const char* className, std::v
     return array;
 }
 
+jintArray TR_OWLJNIClient::constructIntArray(int* array, int length) {
+    jintArray jarray = _env->NewIntArray(length);
+
+    _env->SetIntArrayRegion(jarray,0,length,array);
+    return jarray;
+}
+
 /* Field */
 
 void TR_OWLJNIClient::getField(JNIFieldConfig fieldConfig, jobject obj, jobject *res) {

@@ -164,6 +164,13 @@ const JNIMethodConfig ShiftInstructionConfig = {
         "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IShiftInstruction$Operator;)Lcom/ibm/wala/shrikeBT/ShiftInstruction;"
 };
 
+const JNIMethodConfig SwitchInstructionConfig = {
+        true,
+        "com/ibm/wala/shrikeBT/SwitchInstruction",
+        "make",
+        "([II)Lcom/ibm/wala/shrikeBT/SwitchInstruction;"
+};
+
 const JNIMethodConfig PrinterConfig = {
         true,
         "com/ibm/wala/shrikeBT/Printer",

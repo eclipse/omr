@@ -73,9 +73,14 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
     if (visited.contains(root) && !opCode.isLoadDirect() ){ // indicates this node has already been evaluated => load the value from local var table
 
         if (opCode.isNew()) {
+            if (parent && !parent->getOpCode().isStoreDirect()){
+                _createDupInstruction(root, 0);
+            }
             return;
         }
+
         _createImplicitLoad(root);
+        
         return;
     }
 
@@ -94,17 +99,26 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
     else if (opCodeValue == TR::newarray) { // skip the second child of new array (it indicates the type)
         _processTree(root->getChild(0), root, visited);
     }
-    else if (opCode.isStoreIndirect() && symRef->getSymbol()->isArrayShadowSymbol()) { // if array store, only evaluate the node contains the corresponding index and the value to be stored
-        _processTree(root->getChild(0)->getChild(0), root, visited);
-        _processTree(root->getChild(0)->getChild(1)->getChild(0)->getChild(0)->getChild(0), root, visited);
-        _processTree(root->getChild(1), root, visited);
+    else if ( !opCode.isWrtBar() && opCode.isStoreIndirect() && symRef->getSymbol()->isArrayShadowSymbol()) { // if array store, only evaluate the node contains the corresponding index and the value to be stored
+        _processTree(root->getChild(0)->getChild(0), root, visited); // ref
+        _processTree(root->getChild(0)->getChild(1)->getChild(0)->getChild(0)->getChild(0), root, visited); //index
+        _processTree(root->getChild(1), root, visited); //value
     }
     else if (opCode.isLoadIndirect() && symRef->getSymbol()->isArrayShadowSymbol()) {
         _processTree(root->getChild(0)->getChild(0), root, visited);
         _processTree(root->getChild(0)->getChild(1)->getChild(0)->getChild(0)->getChild(0), root, visited);
     }
-    else if (opCode.isBndCheck() ) { // if boundary check, do nothing
-
+    else if (opCode.isSwitch()){
+        _processTree(root->getChild(0), root, visited);
+    }
+    else if (opCode.isWrtBar() && symRef->getSymbol()->isArrayShadowSymbol() ){
+        return;
+    }
+    else if (opCode.isBndCheck() ) { // skip TR::BNDCheck
+        return;
+    }
+    else if (opCode.isAnchor()) { // skip TR::compressedRefs
+        return;
     }
     else { 
         for (uint32_t i = 0; i < root->getNumChildren(); ++i) {
@@ -117,14 +131,11 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
     _instructionRouter(root); // routed to corresponding mapping
 
     /*** 3. post-processsing ***/
-    if (opCode.isLoadDirect()){
+    if (opCode.isLoadDirect()){ // no need to create implicit load or store for a load instruction
         return;
     }
 
-    if (opCode.isNew()) { 
-        if (opCodeValue == TR::New) {//if it is NEW instruction, create DUP instead of local store
-            _createDupInstruction(root, 0);
-        }
+    if (opCode.isNew()) {  // if it is new instruction, do not create implicit load or store, dup should be created later
         return;
     }
 
@@ -135,10 +146,8 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         }
     }
     else {
-        TR::ILOpCodes parentOpCodeValue = parent->getOpCodeValue();
-        TR::ILOpCode parentOpCode = parent->getOpCode();
 
-        if (root->getReferenceCount() > 1 && (parentOpCodeValue == TR::treetop || parentOpCodeValue == TR::BBStart || parentOpCode.isCheck()) ) {
+        if (root->getReferenceCount() > 1 && (parent->getOpCodeValue() == TR::treetop || parent->getOpCodeValue() == TR::BBStart || parent->getOpCode().isCheck()) ) {
             _createImplicitStore(root);
         }
         else if (root->getReferenceCount()> 1){
@@ -173,12 +182,12 @@ void TR_OWLMapper::_adjustOffset() {
         
         if (isShrikeBTInstruction) {
             BranchTargetLabelAdjustType adjustType = owlInstr->branchTargetLabelAdjustType;
-            ShrikeBTInstructionFieldsUnion *fieldsUnion = &owlInstr->instructionFieldsUnion;
+            ShrikeBTInstructionFieldsUnion *instrUnion = &owlInstr->instructionFieldsUnion;
             uint32_t label;
 
             if (instruction == GOTO) {
 
-                GotoInstructionFields *gotoFields = &fieldsUnion->gotoInstructionFields;
+                GotoInstructionFields *gotoFields = &instrUnion->gotoInstructionFields;
 
                 if (adjustType == TABLE_MAP) {
                     label = offsetMappingTable[gotoFields->label];
@@ -192,7 +201,7 @@ void TR_OWLMapper::_adjustOffset() {
             }
             else if (instruction == CONDITIONAL_BRANCH) {
 
-                ConditionalBranchInstructionFields *condiFields = &fieldsUnion->conditionalBranchInstructionFields;
+                ConditionalBranchInstructionFields *condiFields = &instrUnion->conditionalBranchInstructionFields;
 
                 if (adjustType == TABLE_MAP) {
                     label = offsetMappingTable[condiFields->label];
@@ -202,7 +211,19 @@ void TR_OWLMapper::_adjustOffset() {
                 }
 
                 condiFields->label = label;
+            }
+            else if (instruction == SWITCH) {
+                
+                SwitchInstructionFields *switchFields = &instrUnion->switchInstructionFields;
 
+                if (adjustType == TABLE_MAP) {
+                    switchFields->defaultLabel = offsetMappingTable[switchFields->defaultLabel];
+
+                    for (uint32_t i = 1; i < switchFields->length; i += 2) {
+                        switchFields->casesAndLabels[i] = offsetMappingTable[switchFields->casesAndLabels[i]];
+                    }
+
+                }
             }
             
             owlInstr->shrikeBTOffset = offset;
@@ -282,6 +303,9 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     }
     else if (opCode.isArrayLength()) { //array length
         _mapArrayLengthInstruction(node);
+    }
+    else if (opCode.isSwitch()){
+        _mapSwitchInstruction(node);
     }
 
 }
@@ -479,11 +503,12 @@ void TR_OWLMapper::_mapDirectLoadInstruction(TR::Node *node) {
         _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion, LOAD);
     }
     else if (symbol->isStatic()) { // static (GET)
+        printf("Static\n");
         GetInstructionFields getFields;
 
         char staticName[LARGE_BUFFER_SIZE];
         strcpy(staticName, _debug->getStaticName(symRef));
-
+        printf("%s\n",staticName);
         char* clsNameToken = strtok(staticName,".");
         strcpy(getFields.className,"L");
         strcat(getFields.className, clsNameToken);
@@ -1033,4 +1058,25 @@ void TR_OWLMapper::_mapArrayLengthInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.arrayLengthInstructionFields = arrayLenFields;
     _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,ARRAY_LENGTH);
+}
+
+void TR_OWLMapper::_mapSwitchInstruction(TR::Node *node) {
+    SwitchInstructionFields switchFields;
+
+    uint16_t childrenNum = node->getNumChildren();
+    uint32_t j = 0;
+
+    for (uint16_t i = 2; i < childrenNum; i ++) {
+        TR::Node *caseNode = node->getChild(i);
+        switchFields.casesAndLabels[j++] = caseNode->getCaseConstant();
+        switchFields.casesAndLabels[j++] = caseNode->getBranchDestination()->getNode()->getGlobalIndex();
+    }
+
+    switchFields.length = (childrenNum - 2)*2;
+    switchFields.defaultLabel = node->getChild(1)->getBranchDestination()->getNode()->getGlobalIndex();
+    
+    ShrikeBTInstructionFieldsUnion instrUnion;
+    instrUnion.switchInstructionFields = switchFields;
+
+    _createOWLInstruction(true,node->getGlobalIndex(),0,TABLE_MAP,0,instrUnion,SWITCH);
 }

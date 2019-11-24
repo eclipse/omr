@@ -57,7 +57,8 @@ public:
     jobject GetInstruction(char* type, char* className, char* fieldName, bool isStatic);
     jobject InstanceofInstruction(char* type);
     jobject ArrayLengthInstruction();
-    jobject ShiftInstruction(char* tyoe, ShrikeBTOperator op);
+    jobject ShiftInstruction(char* type, ShrikeBTOperator op);
+    jobject SwitchInstruction(int* casesAndLabels, int length, int defaultLabel);
 
 };
 #endif 

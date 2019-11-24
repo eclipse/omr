@@ -61,6 +61,7 @@ public:
     jobject constructObject(int64_t i);
 
     jobjectArray constructObjectArray(const char* className, std::vector<jobject> objects);
+    jintArray constructIntArray(int* array, int length);
 
     /* Field */
     void getField(JNIFieldConfig fieldConfig, jobject obj, jobject*res);

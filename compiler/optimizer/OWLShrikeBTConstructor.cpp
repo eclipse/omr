@@ -170,6 +170,11 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     instructionObject = ShiftInstruction(shiftFields.type, shiftFields.op);
                     break;
                 }
+                case SWITCH:{
+                    SwitchInstructionFields switchFields = instrUnion.switchInstructionFields;
+                    instructionObject = SwitchInstruction(switchFields.casesAndLabels, switchFields.length, switchFields.defaultLabel);
+                    break;
+                }
                 default:
                     perror("No instruction matched inside construct instruction object function!\n");
                     exit(1);
@@ -672,4 +677,20 @@ jobject TR_OWLShrikeBTConstructor::ShiftInstruction(char* type, ShrikeBTOperator
     );
 
     return shiftOperator;
+}
+
+jobject TR_OWLShrikeBTConstructor::SwitchInstruction(int* casesAndLabels, int length, int defaultLabel) {
+    jobject switchInstruction;
+
+    _jniClient->callMethod
+    (
+        SwitchInstructionConfig,
+        NULL,
+        &switchInstruction,
+        2,
+        _jniClient->constructIntArray(casesAndLabels, length),
+        defaultLabel
+    );
+
+    return switchInstruction;
 }

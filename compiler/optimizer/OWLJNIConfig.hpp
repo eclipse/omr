@@ -55,6 +55,8 @@ extern const JNIMethodConfig ArrayLengthInstructionConfig;
 
 extern const JNIMethodConfig ShiftInstructionConfig;
 
+extern const JNIMethodConfig SwitchInstructionConfig;
+
 extern const JNIMethodConfig PrinterConfig;
 
 
