@@ -32,7 +32,7 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
             jobject instructionObject;
 
             switch(instruction){
-                case CONSTANT: {
+                case SHRIKE_BT_CONSTANT: {
                     ConstantInstructionFields constFields = instrUnion.constantInstructionFields;
                     jobject value;
                     char* type = constFields.type;
@@ -56,7 +56,7 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     instructionObject = ConstantInstruction(type, value);
                     break;
                 }
-                case STORE: {
+                case SHRIKE_BT_STORE: {
                     StoreInstructionFields storeFields = instrUnion.storeInstructionFields;
                     instructionObject = StoreInstruction(storeFields.type, storeFields.referenceNumber);
                     break;
@@ -66,7 +66,7 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     instructionObject = ImplicitStoreInstruction(impStoreFields.type, impStoreFields.omrGlobalIndex);
                     break;
                 }
-                case LOAD: {
+                case SHRIKE_BT_LOAD: {
                     LoadInstructionFields loadFields = instrUnion.loadInstructionFields;
                     instructionObject = LoadInstruction(loadFields.type,loadFields.referenceNumber);
                     break;
@@ -76,101 +76,101 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     instructionObject = ImplicitLoadInstruction(impLoadFields.type, impLoadFields.omrGloablIndex);
                     break;
                 }
-                case BINARY_OP: {
+                case SHRIKE_BT_BINARY_OP: {
                     BinaryOpInstructionFields binaryFields = instrUnion.binaryOpInstructionFields;
                     instructionObject = BinaryOpInstruction(binaryFields.type,binaryFields.op);
                     break;
                 }
-                case UNARY_OP: {
+                case SHRIKE_BT_UNARY_OP: {
                     UnaryOpInstructionFields unaryFields = instrUnion.unaryOpInstructionFields;
                     instructionObject = UnaryOpInstruction(unaryFields.type);
                     break;
                 }
-                case RETURN: {
+                case SHRIKE_BT_RETURN: {
                     ReturnInstructionFields returnFields = instrUnion.returnInstructionFields;
                     instructionObject = ReturnInstruction(returnFields.type);
                     break;
                 }
-                case GOTO: {
+                case SHRIKE_BT_GOTO: {
                     GotoInstructionFields gotoFields = instrUnion.gotoInstructionFields;
                     instructionObject = GotoInstruction(gotoFields.label);
                     break;
                 }
-                case CONDITIONAL_BRANCH: {
+                case SHRIKE_BT_CONDITIONAL_BRANCH: {
                     ConditionalBranchInstructionFields condiFields = instrUnion.conditionalBranchInstructionFields;
                     instructionObject = ConditionalBranchInstruction(condiFields.type,condiFields.op,condiFields.label);
                     break;
                 }
-                case COMPARISON: {
+                case SHRIKE_BT_COMPARISON: {
                     ComparisonInstructionFields compaFields = instrUnion.comparisonInstructionFields;
                     instructionObject = ComparisonInstruction(compaFields.type,compaFields.op);
                     break;
                 }
-                case CONVERSION: {
+                case SHRIKE_BT_CONVERSION: {
                     ConversionInstructionFields conversionFields = instrUnion.conversionInstructionFields;
                     instructionObject = ConversionInstruction(conversionFields.fromType,conversionFields.toType);
                     break;
                 }
-                case INVOKE: {
+                case SHRIKE_BT_INVOKE: {
                     InvokeInstructionFields invokeFields = instrUnion.invokeInstructionFields;
                     instructionObject = InvokeInstruction(invokeFields.type,invokeFields.className,invokeFields.methodName,invokeFields.disp);
                     break;
                 }
-                case SWAP:{
+                case SHRIKE_BT_SWAP:{
                     SwapInstructionFields swapFields = instrUnion.swapInstructionFields;
                     instructionObject = SwapInstruction();
                     break;
                 }
-                case POP: {
+                case SHRIKE_BT_POP: {
                     PopInstructionFields popFields = instrUnion.popInstructionFields;
                     instructionObject = PopInstruction(popFields.size);
                     break;
                 }
-                case DUP: {
+                case SHRIKE_BT_DUP: {
                     DupInstructionFields dupFields = instrUnion.dupInstructionFields;
                     instructionObject = DupInstruction(dupFields.delta);
                     break;
                 }
-                case ARRAY_STORE: {
+                case SHRIKE_BT_ARRAY_STORE: {
                     ArrayStoreInstructionFields arrayStoreFields = instrUnion.arrayStoreInstructionFields;
                     instructionObject = ArrayStoreInstruction(arrayStoreFields.type);
                     break;
                 }
-                case ARRAY_LOAD: {
+                case SHRIKE_BT_ARRAY_LOAD: {
                     ArrayLoadInstructionFields arrayLoadFields = instrUnion.arrayLoadInstructionFields;
                     instructionObject = ArrayLoadInstruction(arrayLoadFields.type);
                     break;
                 }
-                case NEW: {
+                case SHRIKE_BT_ARRAY_NEW: {
                     NewInstructionFields newInstructionFields = instrUnion.newInstructionFields;
                     instructionObject = NewInstruction(newInstructionFields.type, newInstructionFields.arrayBoundsCount);
                     break;
                 }
-                case PUT:{
+                case SHRIKE_BT_PUT:{
                     PutInstructionFields putFields = instrUnion.putInstructionFields;
                     instructionObject = PutInstruction(putFields.type,putFields.className, putFields.fieldName, putFields.isStatic);
                     break;
                 }
-                case GET:{
+                case SHRIKE_BT_GET:{
                     GetInstructionFields getFields = instrUnion.getInstructionFields;
                     instructionObject = GetInstruction(getFields.type, getFields.className, getFields.fieldName, getFields.isStatic);
                     break;
                 }
-                case INSTANCE_OF:{
+                case SHRIKE_BT_INSTANCE_OF:{
                     InstanceofInstructionFields instanceofFields = instrUnion.instanceofInstructionFields;
                     instructionObject = InstanceofInstruction(instanceofFields.type);
                     break;
                 }
-                case ARRAY_LENGTH:{
+                case SHRIKE_BT_ARRAY_LENGTH:{
                     instructionObject = ArrayLengthInstruction();
                     break;
                 }
-                case SHIFT_:{
+                case SHRIKE_BT_SHIFT:{
                     ShiftInstructionFields shiftFields = instrUnion.shiftInstructionFields;
                     instructionObject = ShiftInstruction(shiftFields.type, shiftFields.op);
                     break;
                 }
-                case SWITCH:{
+                case SHRIKE_BT_SWITCH:{
                     SwitchInstructionFields switchFields = instrUnion.switchInstructionFields;
                     instructionObject = SwitchInstruction(switchFields.casesAndLabels, switchFields.length, switchFields.defaultLabel);
                     break;
@@ -208,7 +208,7 @@ jobject TR_OWLShrikeBTConstructor::Long(int64_t l) {
     return _jniClient->constructObject(l);
 }
 
-jobject TR_OWLShrikeBTConstructor::Operator(ShrikeBTOperator op) {
+jobject TR_OWLShrikeBTConstructor::BinaryOperator(ShrikeBTBinaryOperator op) {
 
     jobject opr;
     switch (op){
@@ -221,6 +221,19 @@ jobject TR_OWLShrikeBTConstructor::Operator(ShrikeBTOperator op) {
         case OR: _jniClient->getField(OR_OperatorConfig,NULL,&opr); break;
         case XOR: _jniClient->getField(XOR_OperatorConfig,NULL,&opr); break;
 
+        default:
+            perror("Error: Binary Operator not found!\n");
+            exit(1);
+    }
+
+    return opr;
+}
+
+jobject TR_OWLShrikeBTConstructor::ConditionalBranchOperator(ShrikeBTConditionalBranchOperator op) {
+
+    jobject opr;
+    switch (op){
+
         case EQ: _jniClient->getField(EQ_OperatorConfig,NULL,&opr); break;
         case NE: _jniClient->getField(NE_OperatorConfig,NULL,&opr); break;
         case LT: _jniClient->getField(LT_OperatorConfig,NULL,&opr); break;
@@ -228,16 +241,40 @@ jobject TR_OWLShrikeBTConstructor::Operator(ShrikeBTOperator op) {
         case GT: _jniClient->getField(GT_OperatorConfig,NULL,&opr); break;
         case LE: _jniClient->getField(LE_OperatorConfig,NULL,&opr); break;
 
+        default:
+            perror("Error: Conditional Branch Operator not found!\n");
+            exit(1);
+    }
+
+    return opr;
+}
+
+jobject TR_OWLShrikeBTConstructor::ComparisonOperator(ShrikeBTComparisonOperator op) {
+    jobject opr;
+    switch (op){
+
         case CMP: _jniClient->getField(CMP_OperatorConfig,NULL,&opr); break;
         case CMPL: _jniClient->getField(CMPL_OperatorConfig,NULL,&opr); break;
         case CMPG: _jniClient->getField(CMPG_OperatorConfig,NULL,&opr); break;
 
+        default:
+            perror("Error: Comparison Operator not found!\n");
+            exit(1);
+    }
+
+    return opr;
+}
+
+jobject TR_OWLShrikeBTConstructor::ShiftOperator(ShrikeBTShiftOperator op) {
+    jobject opr;
+    switch (op){
+   
         case SHL: _jniClient->getField(SHL_OperatorConfig,NULL,&opr); break;
         case SHR: _jniClient->getField(SHR_OperatorConfig,NULL,&opr); break;
         case USHR: _jniClient->getField(USHR_OperatorConfig,NULL,&opr); break;
 
         default:
-            perror("Error: Operator not found!\n");
+            perror("Error: Shift Operator not found!\n");
             exit(1);
     }
 
@@ -378,7 +415,7 @@ jobject TR_OWLShrikeBTConstructor::ImplicitLoadInstruction(char*type, uint32_t o
     return loadInstructionObject;
 }
 
-jobject TR_OWLShrikeBTConstructor::BinaryOpInstruction(char* type, ShrikeBTOperator op) {
+jobject TR_OWLShrikeBTConstructor::BinaryOpInstruction(char* type, ShrikeBTBinaryOperator op) {
     jobject binaryOpInstruction;
 
     _jniClient->callMethod
@@ -388,7 +425,7 @@ jobject TR_OWLShrikeBTConstructor::BinaryOpInstruction(char* type, ShrikeBTOpera
         &binaryOpInstruction,
         2,
         _jniClient->constructString(type),
-        Operator(op)
+        BinaryOperator(op)
     );
     return binaryOpInstruction;
 }
@@ -423,7 +460,7 @@ jobject TR_OWLShrikeBTConstructor::GotoInstruction(uint32_t label) {
     return gotoInstruction;
 }
 
-jobject TR_OWLShrikeBTConstructor::ConditionalBranchInstruction(char *type, ShrikeBTOperator op, uint32_t label) {
+jobject TR_OWLShrikeBTConstructor::ConditionalBranchInstruction(char *type, ShrikeBTConditionalBranchOperator op, uint32_t label) {
     jobject conditionalBranchInstruction;
 
     _jniClient->callMethod
@@ -433,14 +470,14 @@ jobject TR_OWLShrikeBTConstructor::ConditionalBranchInstruction(char *type, Shri
         &conditionalBranchInstruction,
         3,
         _jniClient->constructString(type),
-        Operator(op),
+        ConditionalBranchOperator(op),
         label
     );
 
     return conditionalBranchInstruction;
 }
 
-jobject TR_OWLShrikeBTConstructor::ComparisonInstruction(char *type, ShrikeBTOperator op) {
+jobject TR_OWLShrikeBTConstructor::ComparisonInstruction(char *type, ShrikeBTComparisonOperator op) {
     jobject comparisonInstruction;
 
     _jniClient->callMethod
@@ -450,7 +487,7 @@ jobject TR_OWLShrikeBTConstructor::ComparisonInstruction(char *type, ShrikeBTOpe
         &comparisonInstruction,
         2,
         _jniClient->constructString(type),
-        Operator(op)
+        ComparisonOperator(op)
 
     );
 
@@ -663,7 +700,7 @@ jobject TR_OWLShrikeBTConstructor::ArrayLengthInstruction() {
     return arrayLengthInstruction;
 }
 
-jobject TR_OWLShrikeBTConstructor::ShiftInstruction(char* type, ShrikeBTOperator op) {
+jobject TR_OWLShrikeBTConstructor::ShiftInstruction(char* type, ShrikeBTShiftOperator op) {
     jobject shiftOperator;
 
     _jniClient->callMethod
@@ -673,7 +710,7 @@ jobject TR_OWLShrikeBTConstructor::ShiftInstruction(char* type, ShrikeBTOperator
         &shiftOperator,
         2,
         _jniClient->constructString(type), 
-        Operator(op)
+        ShiftOperator(op)
     );
 
     return shiftOperator;

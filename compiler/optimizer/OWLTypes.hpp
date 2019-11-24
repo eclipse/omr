@@ -21,37 +21,36 @@ typedef enum ShrikeBTInstruction
 {
     NOT_INSTRUCTION, // indicates this is not a shrikeBT instruction
 
-    CONSTANT,
-    STORE,
-    IMPLICIT_STORE, // shrikeBT does not really have this instruction. Should be constructed as STORE in the end
-    LOAD,
-    IMPLICIT_LOAD, // shrikeBT does not really have this instruction. Should be constructed as LOAD in the end
-    BINARY_OP,
-    UNARY_OP,
-    RETURN,
-    GOTO,
-    CONDITIONAL_BRANCH,
-    COMPARISON,
-    CONVERSION,
-    INVOKE,
-    SWAP,
-    POP,
-    ARRAY_STORE,
-    ARRAY_LOAD,
-    NEW,
-    PUT,
-    GET,
-    DUP,
-    INSTANCE_OF,
-    ARRAY_LENGTH,
-    SHIFT_, //name conflict with macro SHIFT
-    SWITCH
+    SHRIKE_BT_CONSTANT,
+    SHRIKE_BT_STORE,
+    IMPLICIT_STORE, // shrikeBT does not really have this instruction. Should be constructed as SHRIKE_BT_STORE in the end
+    SHRIKE_BT_LOAD,
+    IMPLICIT_LOAD, // shrikeBT does not really have this instruction. Should be constructed as SHRIKE_BT_LOAD in the end
+    SHRIKE_BT_BINARY_OP,
+    SHRIKE_BT_UNARY_OP,
+    SHRIKE_BT_RETURN,
+    SHRIKE_BT_GOTO,
+    SHRIKE_BT_CONDITIONAL_BRANCH,
+    SHRIKE_BT_COMPARISON,
+    SHRIKE_BT_CONVERSION,
+    SHRIKE_BT_INVOKE,
+    SHRIKE_BT_SWAP,
+    SHRIKE_BT_POP,
+    SHRIKE_BT_ARRAY_STORE,
+    SHRIKE_BT_ARRAY_LOAD,
+    SHRIKE_BT_ARRAY_NEW,
+    SHRIKE_BT_PUT,
+    SHRIKE_BT_GET,
+    SHRIKE_BT_DUP,
+    SHRIKE_BT_INSTANCE_OF,
+    SHRIKE_BT_ARRAY_LENGTH,
+    SHRIKE_BT_SHIFT, //name conflict with macro SHIFT
+    SHRIKE_BT_SWITCH
 
 } ShrikeBTInstruction;
 
-typedef enum ShrikeBTOperator
+typedef enum ShrikeBTBinaryOperator
 {
-    //binary op
     ADD,
     SUB,
     MUL,
@@ -59,26 +58,37 @@ typedef enum ShrikeBTOperator
     REM,
     AND,
     OR,
-    XOR,
-    //unary op
-    NEG,
-    //conditional branch op
+    XOR
+} ShrikeBTBinaryOperator;
+
+typedef enum ShrikeBTUnaryOperator
+{
+    NEG
+} ShrikeBTUnaryOperator;
+
+typedef enum ShrikeBTConditionalBranchOperator
+{
     EQ,
     NE,
     LT,
     GE,
     GT,
-    LE,
-    //comparison op
+    LE
+} ShrikeBTConditionalBranchOperator;
+
+typedef enum ShrikeBTComparisonOperator
+{
     CMP,
     CMPL,
-    CMPG,
-    //shift op
+    CMPG
+} ShrikeBTComparisonOperator;
+
+typedef enum ShrikeBTShiftOperator
+{
     SHL,
     SHR,
     USHR
-
-} ShrikeBTOperator;
+} ShrikeBTShiftOperator;
 
 typedef enum ShrikeBTDispatch
 {
@@ -139,7 +149,7 @@ typedef struct ImplicitLoadInstructionFields
 typedef struct BinaryOpInstructionFields
 {
     char type[BUFFER_SIZE];
-    ShrikeBTOperator op;
+    ShrikeBTBinaryOperator op;
 } BinaryOpInstructionFields;
 
 typedef struct ReturnInstructionFields
@@ -155,14 +165,14 @@ typedef struct GotoInstructionFields
 typedef struct ConditionalBranchInstructionFields
 {
     char type[BUFFER_SIZE];
-    ShrikeBTOperator op;
+    ShrikeBTConditionalBranchOperator op;
     uint32_t label;
 } ConditionalBranchInstructionFields;
 
 typedef struct ComparisonInstructionFields
 {
     char type[BUFFER_SIZE];
-    ShrikeBTOperator op;
+    ShrikeBTComparisonOperator op;
 } ComparisonInstructionFields;
 
 typedef struct ConversionInstructionFields
@@ -237,7 +247,7 @@ typedef struct InstanceofInstructionFields
 typedef struct ShiftInstructionFields
 {
     char type[BUFFER_SIZE];
-    ShrikeBTOperator op;
+    ShrikeBTShiftOperator op;
 } ShiftInstructionFields;
 
 typedef struct SwitchInstructionFields

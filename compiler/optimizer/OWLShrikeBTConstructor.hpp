@@ -30,7 +30,11 @@ public:
     jobject Double(double d);
     jobject Long(int64_t l);
     jobject Short(int16_t s);
-    jobject Operator(ShrikeBTOperator op);
+    jobject BinaryOperator(ShrikeBTBinaryOperator op);
+    jobject ConditionalBranchOperator(ShrikeBTConditionalBranchOperator op);
+    jobject ComparisonOperator(ShrikeBTComparisonOperator op);
+    jobject ShiftOperator(ShrikeBTShiftOperator op);
+
     jobject Dispatch(ShrikeBTDispatch disp);
 
     /*** ShirkeBT Instruction Constructors ***/
@@ -39,11 +43,11 @@ public:
     jobject ImplicitStoreInstruction(char* type, uint32_t omrGlobalIndex); // implicit store
     jobject LoadInstruction(char* type, int32_t referenceNumber);
     jobject ImplicitLoadInstruction(char* type, uint32_t omrGloablIndex); // implicit load
-    jobject BinaryOpInstruction(char* type, ShrikeBTOperator op);
+    jobject BinaryOpInstruction(char* type, ShrikeBTBinaryOperator op);
     jobject ReturnInstruction(char* type);
     jobject GotoInstruction(uint32_t label);
-    jobject ConditionalBranchInstruction(char* type, ShrikeBTOperator op, uint32_t label);
-    jobject ComparisonInstruction(char* type, ShrikeBTOperator op);
+    jobject ConditionalBranchInstruction(char* type, ShrikeBTConditionalBranchOperator op, uint32_t label);
+    jobject ComparisonInstruction(char* type, ShrikeBTComparisonOperator op);
     jobject ConversionInstruction(char* fromType, char* toType);
     jobject UnaryOpInstruction(char* type);
     jobject InvokeInstruction(char* type, char* className, char* methodName, ShrikeBTDispatch disp);
@@ -57,7 +61,7 @@ public:
     jobject GetInstruction(char* type, char* className, char* fieldName, bool isStatic);
     jobject InstanceofInstruction(char* type);
     jobject ArrayLengthInstruction();
-    jobject ShiftInstruction(char* type, ShrikeBTOperator op);
+    jobject ShiftInstruction(char* type, ShrikeBTShiftOperator op);
     jobject SwitchInstruction(int* casesAndLabels, int length, int defaultLabel);
 
 };
