@@ -7,6 +7,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <stack>
 #include "il/Node.hpp"
 #include "compile/Compilation.hpp"
 #include "il/Node_inlines.hpp"
@@ -21,16 +22,48 @@ class TR_OWLLocalVariableTable
 {
 private:
     uint32_t _index; 
-    std::unordered_map<int32_t, uint32_t> _localVarTableBySymRef;
-    std::unordered_map<uint32_t, uint32_t> _localVarTableByOmrIndex;
+    std::unordered_map<TR::SymbolReference*, uint32_t> _localVarTableBySymRef;
+    std::unordered_map<TR::Node*, uint32_t> _localVarTableByNode;
     void _increaseIndex(char* type);
 public:
     TR_OWLLocalVariableTable();
-    uint32_t store(int32_t referenceNumber, char* type);
-    uint32_t implicitStore(uint32_t omrGlobalIndex, char* type);
-    uint32_t load(int32_t referenceNumber);
-    uint32_t implicitLoad(uint32_t omrGlobalIndex);
+    uint32_t store(TR::SymbolReference* symRef, char* type);
+    uint32_t implicitStore(TR::Node* node, char* type);
+    uint32_t load(TR::SymbolReference* symRef);
+    uint32_t implicitLoad(TR::Node* node);
+    bool contain(TR::Node* node);
+    bool contain(TR::SymbolReference* symRef);
 
+};
+
+/**
+ * Simulating java byte code operand stack
+ */
+class TR_OWLOperandStack
+{
+private:
+    std::stack<TR::Node*> _stack;
+public:
+    void push(TR::Node* node);
+    void pop();
+    void dup();
+    void swap();
+    TR::Node* top();
+    bool isEmpty();
+    uint32_t size();
+};
+
+/**
+ * Track the reference count of each node
+ */
+class TR_OWLReferenceCountTable
+{
+private:
+    std::unordered_map<TR::Node*, uint32_t> _table;
+public:
+    void add(TR::Node* node, uint32_t remainingReferenceCount);
+    void refer(TR::Node* node);
+    bool noMoreReference(TR::Node* node);
 };
 
 class TR_OWLMapper
@@ -40,6 +73,9 @@ private:
     TR_Debug* _debug;
     TR::Compilation* _compilation;
     TR_OWLLocalVariableTable* _localVarTable;
+    TR_OWLOperandStack* _operandStack;
+    TR_OWLReferenceCountTable* _referenceCountTable;
+
     std::vector<OWLInstruction> _owlInstructionList; 
 
     void _processTree(TR::Node *root, TR::Node *parent, TR::NodeChecklist &visited ); // traverse the tree
@@ -84,6 +120,7 @@ private:
     void _mapInstanceofInstruction(TR::Node *node);
     void _mapArrayLengthInstruction(TR::Node *node);
     void _mapSwitchInstruction(TR::Node *node);
+    void _mapWriteBarrierInstruction(TR::Node *node);
 
 
 public:

@@ -9,6 +9,8 @@
 #include "compile/Method.hpp"
 #include "optimizer/OWLMapper.hpp"
 #include "optimizer/OWLJNIConfig.hpp"
+
+/***** Local Var table *******/
 TR_OWLLocalVariableTable::TR_OWLLocalVariableTable() {
     _index = 0;
 }
@@ -22,61 +24,159 @@ void TR_OWLLocalVariableTable::_increaseIndex(char* type) {
     }
 }
 
-uint32_t TR_OWLLocalVariableTable::store(int32_t referenceNumber, char* type) {
-    std::unordered_map<int32_t ,uint32_t >::const_iterator it = _localVarTableBySymRef.find(referenceNumber);
+uint32_t TR_OWLLocalVariableTable::store(TR::SymbolReference* symRef, char* type) {
+    std::unordered_map<TR::SymbolReference*, uint32_t >::const_iterator it = _localVarTableBySymRef.find(symRef);
 
     uint32_t i = _index;
 
     // if the local var table has already stored this variable
-    if (it != _localVarTableBySymRef.end()) {
-        i = _localVarTableBySymRef[referenceNumber];
+    if (contain(symRef)) {
+        i = _localVarTableBySymRef[symRef];
     }
-
-    if (it == _localVarTableBySymRef.end()) {
-
-        _localVarTableBySymRef[referenceNumber] = _index;
+    else {
+        _localVarTableBySymRef[symRef] = _index;
         _increaseIndex(type);
     }
 
     return i;
 }
 
-uint32_t TR_OWLLocalVariableTable::load(int32_t referenceNumber) {
-    return _localVarTableBySymRef[referenceNumber];
+uint32_t TR_OWLLocalVariableTable::load(TR::SymbolReference* symRef) {
+    return _localVarTableBySymRef[symRef];
 }
 
-uint32_t TR_OWLLocalVariableTable::implicitStore(uint32_t omrGlobalIndex, char* type) {
-    std::unordered_map<uint32_t ,uint32_t >::const_iterator it = _localVarTableByOmrIndex.find(omrGlobalIndex);
-
+uint32_t TR_OWLLocalVariableTable::implicitStore(TR::Node* node, char* type) {
     uint32_t i = _index;
 
-    if (it != _localVarTableByOmrIndex.end()) {
-        i = _localVarTableByOmrIndex[omrGlobalIndex];
+    if (contain(node)) {
+        i = _localVarTableByNode[node];
     }
-
-    if (it == _localVarTableByOmrIndex.end()) {
-
-        _localVarTableByOmrIndex[omrGlobalIndex] = _index;
+    else {
+        _localVarTableByNode[node] = _index;
         _increaseIndex(type); 
     }
 
     return i;
 }
 
-uint32_t TR_OWLLocalVariableTable::implicitLoad(uint32_t omrGlobalIndex) {
-    return _localVarTableByOmrIndex[omrGlobalIndex];
+uint32_t TR_OWLLocalVariableTable::implicitLoad(TR::Node* node) {
+    return _localVarTableByNode[node];
+}
+
+bool TR_OWLLocalVariableTable::contain(TR::Node* node) {
+    std::unordered_map<TR::Node* ,uint32_t >::const_iterator it = _localVarTableByNode.find(node);
+    return it != _localVarTableByNode.end();
+}
+
+bool TR_OWLLocalVariableTable::contain(TR::SymbolReference* symRef) {
+    std::unordered_map<TR::SymbolReference*, uint32_t >::const_iterator it = _localVarTableBySymRef.find(symRef);
+    return it != _localVarTableBySymRef.end();
+}
+/**********  Operand stack *********************/
+
+void TR_OWLOperandStack::push(TR::Node* node) {
+    printf("PUSH %s\n",node->getOpCode().getName());
+    _stack.push(node);
+}
+
+void TR_OWLOperandStack::pop() {
+    if (isEmpty()){
+        printf("Error: pop when operand stack is empty!\n");
+        exit(1);
+    }
+    printf("POP %s\n",_stack.top()->getOpCode().getName());
+    _stack.pop();
+}
+
+TR::Node* TR_OWLOperandStack::top() {
+    if (isEmpty()){
+        printf("Error: top when operand stack is empty!\n");
+        exit(1);
+    }
+    return _stack.top();
+}
+
+void TR_OWLOperandStack::dup(){
+    if (isEmpty()){
+        printf("Error: dup when operand stack is empty!\n");
+        exit(1);
+    }
+    printf("DUP %s\n",_stack.top()->getOpCode().getName());
+
+    _stack.push(_stack.top());
+}
+
+void TR_OWLOperandStack::swap() {
+    if (_stack.size() < 2){
+        printf("Error: cannot perform swap on operand stack! elements number < 2\n");
+        exit(1);
+    }
+    TR::Node* node1 = _stack.top();
+    _stack.pop();
+    TR::Node* node2 = _stack.top();
+    _stack.pop();
+    _stack.push(node1);
+    _stack.push(node2);
+}
+
+bool TR_OWLOperandStack::isEmpty(){
+    return _stack.size() == 0;
+}
+
+uint32_t TR_OWLOperandStack::size(){
+    return _stack.size();
 }
 
 
-/****** public ******/
+/***** Reference Count table *****/
+void TR_OWLReferenceCountTable::add(TR::Node* node, uint32_t remainingReferenceCount) {
+    std::unordered_map<TR::Node*, uint32_t>::const_iterator it = _table.find(node);
+    if (it != _table.end()){
+        printf("Error: node already exits in reference count table!\n");
+        exit(1);
+    }
+
+    _table[node] = remainingReferenceCount;
+}
+
+void TR_OWLReferenceCountTable::refer(TR::Node* node) {
+    std::unordered_map<TR::Node*, uint32_t>::const_iterator it = _table.find(node);
+    if (it == _table.end()){
+        printf("Error: node does not exit in reference count table!\n");
+        exit(1);
+    }
+
+    if (_table[node] == 0) {
+        printf("Error: reference count is 0 in reference count table. Cannot be referred!\n");
+    }
+
+    _table[node] = _table[node] - 1;
+}
+
+bool TR_OWLReferenceCountTable::noMoreReference(TR::Node* node) {
+    std::unordered_map<TR::Node*, uint32_t>::const_iterator it = _table.find(node);
+    if (it == _table.end()){
+        printf("Error: node does not exit in reference count table!\n");
+        exit(1);
+    }
+
+    return _table[node] == 0;
+}
+
+/****** Mapper ******/
 TR_OWLMapper::TR_OWLMapper(TR::Compilation* compilation) {
     _compilation = compilation;
     _debug = compilation->getDebug();
+
     _localVarTable = new TR_OWLLocalVariableTable();
+    _operandStack = new TR_OWLOperandStack();
+    _referenceCountTable = new TR_OWLReferenceCountTable();
 }
 
 TR_OWLMapper::~TR_OWLMapper() {
     delete _localVarTable;
+    delete _operandStack;
+    delete _referenceCountTable;
 }
 
 std::vector<OWLInstruction> TR_OWLMapper::map() {
@@ -96,6 +196,11 @@ std::vector<OWLInstruction> TR_OWLMapper::map() {
     }
 
     _adjustOffset();
+
+    //check is there is any operand remains on operand stack
+    if (!_operandStack->isEmpty()){
+        printf("Warning: Operand stack is not empty! %d left on stack\n", _operandStack->size());
+    }
 
     return _owlInstructionList;
 }
@@ -121,7 +226,7 @@ void TR_OWLMapper::_logOMRIL(TR::Node *root, TR::NodeChecklist &visited) {
 }
 
 /**
- * STEP 1: preprocessing the tree
+ * STEP 1: pre-processing the tree
  * STEP 2: map the current node
  * STEP 3: post-processing the tree
  * */
@@ -131,19 +236,31 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
     TR::ILOpCodes opCodeValue = root->getOpCodeValue();
     TR::SymbolReference *symRef = root->getSymbolReference();
 
-    /*** 1. Preprocessing ***/
-    if (visited.contains(root) && !opCode.isLoadDirect() ){ // indicates this node has already been evaluated => load the value from local var table
+    /*** 1. Pre-processing ***/
 
-        if (opCode.isNew()) {
-            if (parent && !parent->getOpCode().isStoreDirect()){
-                _createDupInstruction(root, 0);
-            }
+    if (visited.contains(root)){ // indicates this node has already been evaluated => load the value from local var table
+
+        //refer to the node
+        _referenceCountTable->refer(root);
+
+        if (opCode.isWrtBar()){
             return;
         }
 
-        _createImplicitLoad(root);
-        
+        if (!_localVarTable->contain(root) && !_referenceCountTable->noMoreReference(root)) { // if we cannot find it in local var table and this node still needs to be referenced later, create DUP
+            _createDupInstruction(root, 0);
+        }
+
+        if (_localVarTable->contain(root)){
+            _createImplicitLoad(root);
+        }
         return;
+
+    }
+
+    //add an entry to reference count table
+    if (root->getReferenceCount() >= 1){
+        _referenceCountTable->add(root, root->getReferenceCount()-1);
     }
 
     visited.add(root);
@@ -156,31 +273,34 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         
     }
     else if (opCode.isCallIndirect()) { // for call indirect, skip the load reference indirect. 
-        _processTree(root->getChild(1), root, visited); // only evaluate aload 
+        _processTree(root->getChild(0)->getChild(0), root, visited); // only evaluate aload 
+        _referenceCountTable->refer(root->getChild(1)); 
     }
     else if (opCodeValue == TR::newarray) { // skip the second child of new array (it indicates the type)
         _processTree(root->getChild(0), root, visited);
     }
-    else if ( !opCode.isWrtBar() && opCode.isStoreIndirect() && symRef->getSymbol()->isArrayShadowSymbol()) { // if array store, only evaluate the node contains the corresponding index and the value to be stored
+    else if (opCodeValue == TR::multianewarray) {
+        for (uint32_t i = 1; i < root->getNumChildren()-1; ++i) {
+            _processTree(root->getChild(i), root, visited);
+        }
+    }
+    else if ( !opCode.isWrtBar() && opCode.isStoreIndirect() && symRef->getSymbol()->isArrayShadowSymbol()) { // array store for primitive types
         _processTree(root->getChild(0)->getChild(0), root, visited); // ref
         _processTree(root->getChild(0)->getChild(1)->getChild(0)->getChild(0)->getChild(0), root, visited); //index
         _processTree(root->getChild(1), root, visited); //value
     }
-    else if (opCode.isLoadIndirect() && symRef->getSymbol()->isArrayShadowSymbol()) {
+    else if (opCode.isLoadIndirect() && symRef->getSymbol()->isArrayShadowSymbol()) { //array load for primitive types
         _processTree(root->getChild(0)->getChild(0), root, visited);
         _processTree(root->getChild(0)->getChild(1)->getChild(0)->getChild(0)->getChild(0), root, visited);
     }
     else if (opCode.isSwitch()){
         _processTree(root->getChild(0), root, visited);
     }
-    else if (opCode.isWrtBar() && symRef->getSymbol()->isArrayShadowSymbol() ){
-        return;
-    }
-    else if (opCode.isBndCheck() ) { // skip TR::BNDCheck
-        return;
-    }
-    else if (opCode.isAnchor()) { // skip TR::compressedRefs
-        return;
+    else if (opCode.isWrtBar() && symRef->getSymbol()->isArrayShadowSymbol() ){ //array store for reference types
+        _referenceCountTable->refer(root->getChild(0)->getChild(0));
+        _processTree(root->getChild(2),root, visited); // ref
+        _processTree(root->getChild(0)->getChild(1)->getChild(0)->getChild(0)->getChild(0), root, visited); //index
+        _processTree(root->getChild(1), root, visited); //value
     }
     else { 
         for (uint32_t i = 0; i < root->getNumChildren(); ++i) {
@@ -193,28 +313,45 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
     _instructionRouter(root); // routed to corresponding mapping
 
     /*** 3. post-processsing ***/
-    if (opCode.isLoadDirect()){ // no need to create implicit load or store for a load instruction
-        return;
+
+    //check the integrity of operand stack
+    if (parent == NULL) {
+        while (!_operandStack->isEmpty()){
+            
+            TR::Node *top = _operandStack->top();
+            printf("Check stack %s\n",top->getOpCode().getName());
+            if (_referenceCountTable->noMoreReference(top)){ // the top element of the stack will not be referenced anymore, pop it.
+                _createPopInstruction(root,1);
+            }
+            else{
+                break;
+            }
+        }
+
     }
 
     if (opCode.isNew()) {  // if it is new instruction, do not create implicit load or store, dup should be created later
         return;
     }
 
-    // for those node reference count > 1, create implicit load or store 
-    if (parent == NULL) { // if this node has no parent, just create an implicit store. 
-        if (root->getReferenceCount() > 1){
-            _createImplicitStore(root);
-        }
+    if (opCode.isWrtBar()) {
+        return;
     }
-    else {
 
-        if (root->getReferenceCount() > 1 && (parent->getOpCodeValue() == TR::treetop || parent->getOpCodeValue() == TR::BBStart || parent->getOpCode().isCheck()) ) {
+
+    // for those node reference count > 1, create implicit load or store 
+    if (root->getReferenceCount() > 1) {
+        if (parent == NULL){
             _createImplicitStore(root);
         }
-        else if (root->getReferenceCount()> 1){
-            _createImplicitStore(root);
-            _createImplicitLoad(root);
+        else{
+            if (parent->getOpCodeValue() == TR::treetop || parent->getOpCodeValue() == TR::BBStart || parent->getOpCode().isNullCheck()){
+                _createImplicitStore(root);
+            }
+            else{
+                _createImplicitStore(root);
+                _createImplicitLoad(root);
+            }
         }
     }
 }
@@ -357,6 +494,13 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     }
     else if (opCode.isLoadAddr()) {} //loadaddr
     else if (opCode.isNullCheck()) {} //NULL CHECK
+    else if (opCode.isBndCheck()) {
+        _createPopInstruction(node,1);
+        _createPopInstruction(node,1);
+    }
+    else if (opCode.isAnchor()){
+        _createPopInstruction(node,1);
+    }
     else if (opCode.isNew()){ // new object, new array or new multidimensional array
         _mapNewInstruction(node);
     }
@@ -368,6 +512,9 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     }
     else if (opCode.isSwitch()){
         _mapSwitchInstruction(node);
+    }
+    else if (opCode.isWrtBar()) {
+        _mapWriteBarrierInstruction(node);
     }
 
 }
@@ -392,7 +539,7 @@ void TR_OWLMapper::_createImplicitStore(TR::Node *node) {
 
     uint32_t omrGlobalIndex = node->getGlobalIndex();
     
-    uint32_t index = _localVarTable->implicitStore(omrGlobalIndex,type);
+    uint32_t index = _localVarTable->implicitStore(node,type);
 
     StoreInstructionFields storeFields;
     strcpy(storeFields.type, type);
@@ -402,13 +549,14 @@ void TR_OWLMapper::_createImplicitStore(TR::Node *node) {
 
     insUnion.storeInstructionFields = storeFields;
     _createOWLInstruction(true, omrGlobalIndex,0, NO_ADJUST, 0, insUnion, SHRIKE_BT_STORE);
+    _operandStack->pop();
 }
 
 void TR_OWLMapper::_createImplicitLoad(TR::Node* node) {
     char* type = _getType(node->getOpCode());
     uint32_t omrGlobalIndex = node->getGlobalIndex();
     
-    uint32_t index = _localVarTable->implicitLoad(omrGlobalIndex);
+    uint32_t index = _localVarTable->implicitLoad(node);
 
     LoadInstructionFields loadFields;
     strcpy(loadFields.type, type);
@@ -418,6 +566,7 @@ void TR_OWLMapper::_createImplicitLoad(TR::Node* node) {
     insUnion.loadInstructionFields = loadFields;
     
     _createOWLInstruction(true, omrGlobalIndex, 0, NO_ADJUST, 0, insUnion, SHRIKE_BT_LOAD);
+    _operandStack->push(node);
 }
 
 void TR_OWLMapper::_createDupInstruction(TR::Node *node, uint16_t delta) {
@@ -427,6 +576,7 @@ void TR_OWLMapper::_createDupInstruction(TR::Node *node, uint16_t delta) {
     instrUnion.dupInstructionFields = dupFields;
 
     _createOWLInstruction(true,node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_DUP);
+    _operandStack->dup();
 }
 
 void TR_OWLMapper::_createPopInstruction(TR::Node* node, uint16_t size) {
@@ -436,6 +586,8 @@ void TR_OWLMapper::_createPopInstruction(TR::Node* node, uint16_t size) {
 
     instrUnion.popInstructionFields = popFields;
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_POP);
+
+    _operandStack->pop();
 }
 
 void TR_OWLMapper::_createSwapInstruction(TR::Node* node) {
@@ -445,6 +597,7 @@ void TR_OWLMapper::_createSwapInstruction(TR::Node* node) {
 
     instrUnion.swapInstructionFields = swapFields;
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_SWAP);
+    _operandStack->swap();
 }
 
 /**
@@ -503,6 +656,7 @@ void TR_OWLMapper::_mapConstantInstruction(TR::Node *node) {
     instrUnion.constantInstructionFields = constFields;
 
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_CONSTANT);
+    _operandStack->push(node);
 }
 
 void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
@@ -515,7 +669,7 @@ void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
     if (symbol->isAuto()) { //local var
         StoreInstructionFields storeFields;
 
-        uint32_t index = _localVarTable->store(symRef->getReferenceNumber(), type);
+        uint32_t index = _localVarTable->store(symRef, type);
 
         strcpy(storeFields.type, type);
         storeFields.index = index;
@@ -524,6 +678,8 @@ void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
         instrUnion.storeInstructionFields = storeFields;
 
         _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion, SHRIKE_BT_STORE);
+
+        _operandStack->pop();
     }
     else if (symbol->isStatic()) { // static (SHRIKE_BT_PUT)
 
@@ -564,21 +720,20 @@ void TR_OWLMapper::_mapDirectLoadInstruction(TR::Node *node) {
         LoadInstructionFields loadFields;
         strcpy(loadFields.type, type);
 
-        uint32_t index = _localVarTable->load(symRef->getReferenceNumber());
+        uint32_t index = _localVarTable->load(symRef);
         loadFields.index = index;
 
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.loadInstructionFields = loadFields;
 
         _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion, SHRIKE_BT_LOAD);
+        _operandStack->push(node);
     }
     else if (symbol->isStatic()) { // static (SHRIKE_BT_GET)
-        printf("Static\n");
         GetInstructionFields getFields;
 
         char staticName[LARGE_BUFFER_SIZE];
         strcpy(staticName, _debug->getStaticName(symRef));
-        printf("%s\n",staticName);
         char* clsNameToken = strtok(staticName,".");
         strcpy(getFields.className,"L");
         strcat(getFields.className, clsNameToken);
@@ -611,6 +766,7 @@ void TR_OWLMapper::_mapReturnInstruction(TR::Node *node) {
     instrUnion.returnInstructionFields = returnFields;
 
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_RETURN);
+    _operandStack->pop();
 }
 
 void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
@@ -625,6 +781,8 @@ void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.unaryOpInstructionFields = unaryFields;
         _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_UNARY_OP);
+        _operandStack->pop();
+        _operandStack->push(node);
     }
     /*** Shift ***/
     else if (opCode.isShift()) {
@@ -640,6 +798,9 @@ void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.shiftInstructionFields = shiftFields;
         _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_SHIFT);
+        _operandStack->pop();
+        _operandStack->pop();
+        _operandStack->push(node);
     }
     /**** Binary op ****/
     else{
@@ -665,6 +826,9 @@ void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
         instrUnion.binaryOpInstructionFields = binaryFields;
 
         _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_BINARY_OP);
+        _operandStack->pop();
+        _operandStack->pop();
+        _operandStack->push(node);
     }
 }
 
@@ -703,6 +867,8 @@ void TR_OWLMapper::_mapConditionalBranchInstruction(TR::Node *node) {
     instrUnion.conditionalBranchInstructionFields = condiFields;
 
     _createOWLInstruction(true, node->getGlobalIndex(), 0, TABLE_MAP, 0, instrUnion, SHRIKE_BT_CONDITIONAL_BRANCH);
+    _operandStack->pop();
+    _operandStack->pop();
 }
 
 /**
@@ -759,15 +925,19 @@ void TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
 
     instrUnion.conditionalBranchInstructionFields = condiFields;
     _createOWLInstruction(true, node->getGlobalIndex(), 0, BY_VALUE, 3, instrUnion, SHRIKE_BT_CONDITIONAL_BRANCH);
+    _operandStack->pop();
+    _operandStack->pop();
 
     instrUnion.constantInstructionFields = const0Fields;
     _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_CONSTANT);
+    _operandStack->push(node);
   
     instrUnion.gotoInstructionFields = gotoFields;
     _createOWLInstruction(true,node->getGlobalIndex(),0,BY_VALUE,2,instrUnion,SHRIKE_BT_GOTO);
    
     instrUnion.constantInstructionFields = const1Fields;
     _createOWLInstruction(true,node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_CONSTANT);
+    _operandStack->push(node);
 }
 
 void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
@@ -870,6 +1040,8 @@ void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.conversionInstructionFields = conversionFields;
         _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_CONVERSION);
+        _operandStack->pop();
+        _operandStack->push(node);
         
     }
     else{ //for those unecessary conversion instructions. They still need to occupy a slot in the instruciton list for the offset adjustment
@@ -902,18 +1074,28 @@ void TR_OWLMapper::_mapDirectCallInstruction(TR::Node *node) {
         strcpy(invokeFields.methodName, methodName);
         invokeFields.disp = SPECIAL;
 
+        for (int32_t i = 0 ; i < node->getNumArguments() ; i ++){
+            _operandStack->pop();
+        }
     }
     else if (methodKind == methodSymbol->Static) { // static method call
         strcpy(invokeFields.type, type);
         strcpy(invokeFields.className, className);
         strcpy(invokeFields.methodName, methodName);
         invokeFields.disp = STATIC;
+
+        for (int32_t i = 0 ; i < node->getNumArguments() ; i ++){
+            _operandStack->pop();
+        }
     }
 
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.invokeInstructionFields = invokeFields;
 
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_INVOKE); 
+    if (strcmp(TYPE_void, _getType(node->getOpCode())) != 0) {
+        _operandStack->push(node);
+    }
 }
 
 void TR_OWLMapper::_mapIndirectCallInstruction(TR::Node* node) {
@@ -933,19 +1115,36 @@ void TR_OWLMapper::_mapIndirectCallInstruction(TR::Node* node) {
     strcpy(invokeFields.methodName, methodName);
 
     if (methodKind == methodSymbol->Virtual) {
+
         invokeFields.disp = VIRTUAL;
+
+        for (int32_t i = 0 ; i < node->getNumArguments() ; i ++){
+            _operandStack->pop();
+        }
     }
     else if (methodKind == methodSymbol->Static) {
         invokeFields.disp = STATIC;
+
+        for (int32_t i = 0 ; i < node->getNumArguments() ; i ++){
+            _operandStack->pop();
+        }
     }
     else if (methodKind == methodSymbol->Interface) {
         invokeFields.disp = INTERFACE;
+
+        for (int32_t i = 0 ; i < node->getNumArguments() ; i ++){
+            _operandStack->pop();
+        }
     }
 
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.invokeInstructionFields = invokeFields;
 
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_INVOKE); 
+
+    if (strcmp(TYPE_void, _getType(node->getOpCode())) != 0) {
+        _operandStack->push(node);
+    }
 }
 
 /**
@@ -973,18 +1172,23 @@ void TR_OWLMapper::_mapTernaryInstruction(TR::Node *node) {
 
     instrUnion.constantInstructionFields = const0Fields;
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST,0,instrUnion, SHRIKE_BT_CONSTANT);
+    _operandStack->push(node);
 
     instrUnion.conditionalBranchInstructionFields = condiFields;
     _createOWLInstruction(true, node->getGlobalIndex(), 0, BY_VALUE, 4, instrUnion, SHRIKE_BT_CONDITIONAL_BRANCH);
+    _operandStack->pop();
 
     _createSwapInstruction(node);
+    _operandStack->swap();
 
     _createPopInstruction(node,1);
+    _operandStack->pop();
 
     instrUnion.gotoInstructionFields = gotoFields;
     _createOWLInstruction(true, node->getGlobalIndex(), 0, BY_VALUE, 2, instrUnion, SHRIKE_BT_GOTO );
 
    _createPopInstruction(node,1);
+   _operandStack->pop();
 }
 
 void TR_OWLMapper::_mapIndirectStoreInstruction(TR::Node *node) {
@@ -1016,6 +1220,7 @@ void TR_OWLMapper::_mapIndirectStoreInstruction(TR::Node *node) {
         instrUnion.putInstructionFields = putFields;
 
         _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_PUT);
+        _operandStack->pop();
     }
     else { // array
         ArrayStoreInstructionFields arrayStoreFields;
@@ -1025,6 +1230,9 @@ void TR_OWLMapper::_mapIndirectStoreInstruction(TR::Node *node) {
         instrUnion.arrayStoreInstructionFields = arrayStoreFields;
 
         _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_STORE);
+        _operandStack->pop();
+        _operandStack->pop();
+        _operandStack->pop();
     }
     
 }
@@ -1057,6 +1265,8 @@ void TR_OWLMapper::_mapIndirectLoadInstruction(TR::Node *node) {
         instrUnion.getInstructionFields = getFields;
 
         _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_GET);
+        _operandStack->pop();
+        _operandStack->push(node);
     }
     else{ //array
         ArrayLoadInstructionFields arrayLoadFields;
@@ -1066,6 +1276,9 @@ void TR_OWLMapper::_mapIndirectLoadInstruction(TR::Node *node) {
         instrUnion.arrayLoadInstructionFields = arrayLoadFields;
 
         _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_LOAD);
+        _operandStack->pop();
+        _operandStack->pop();
+        _operandStack->push(node);
     }
 
 }
@@ -1090,6 +1303,7 @@ void TR_OWLMapper::_mapNewInstruction(TR::Node *node) {
         strcpy(newFields.type, "[");
         strcat(newFields.type, type);
         newFields.arrayBoundsCount = 1;
+        _operandStack->pop();
     }
     else if (opCodeValue == TR::anewarray ) { // new reference array
         int32_t len;
@@ -1099,14 +1313,25 @@ void TR_OWLMapper::_mapNewInstruction(TR::Node *node) {
         strcpy(newFields.type, "[");
         strcat(newFields.type, type);
         newFields.arrayBoundsCount = 1;
+        _operandStack->pop();
     }
     else if (opCodeValue == TR::multianewarray) { // new multidimentianal array
+        TR::Node* loadAddr = node->getLastChild();
+        int32_t len;
+        const char* type = loadAddr->getSymbolReference()->getTypeSignature(len);
+        strcpy(newFields.type, type);
+        newFields.arrayBoundsCount = node->getFirstChild()->getInt();
+        for (int32_t i = 0 ; i < node->getNumArguments()-2; i ++){
+            _operandStack->pop();
+        }
 
     }
 
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.newInstructionFields = newFields;
     _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_NEW); 
+
+    _operandStack->push(node);
 }
 
 void TR_OWLMapper::_mapInstanceofInstruction(TR::Node *node) {
@@ -1122,6 +1347,7 @@ void TR_OWLMapper::_mapInstanceofInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.instanceofInstructionFields = instanceofFields;
     _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_INSTANCE_OF);
+    _operandStack->pop();
 }
 
 void TR_OWLMapper::_mapArrayLengthInstruction(TR::Node *node) {
@@ -1130,6 +1356,8 @@ void TR_OWLMapper::_mapArrayLengthInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.arrayLengthInstructionFields = arrayLenFields;
     _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_LENGTH);
+    _operandStack->pop();
+    _operandStack->push(node);
 }
 
 void TR_OWLMapper::_mapSwitchInstruction(TR::Node *node) {
@@ -1151,4 +1379,19 @@ void TR_OWLMapper::_mapSwitchInstruction(TR::Node *node) {
     instrUnion.switchInstructionFields = switchFields;
 
     _createOWLInstruction(true,node->getGlobalIndex(),0,TABLE_MAP,0,instrUnion,SHRIKE_BT_SWITCH);
+    _operandStack->pop();
+}
+
+void TR_OWLMapper::_mapWriteBarrierInstruction(TR::Node* node) {
+    char *type = _getType(node->getOpCode());
+    ArrayStoreInstructionFields arrayStoreFields;
+    strcpy(arrayStoreFields.type, type);
+
+    ShrikeBTInstructionFieldsUnion instrUnion;
+    instrUnion.arrayStoreInstructionFields = arrayStoreFields;
+
+    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_STORE);
+    _operandStack->pop();
+    _operandStack->pop();
+    _operandStack->pop();
 }
