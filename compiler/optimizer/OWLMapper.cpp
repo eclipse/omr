@@ -705,6 +705,7 @@ void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
         instrUnion.putInstructionFields = putFields;
 
         _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_PUT);
+        _operandStack->pop();
     }
    
 }
@@ -1220,6 +1221,7 @@ void TR_OWLMapper::_mapIndirectStoreInstruction(TR::Node *node) {
         instrUnion.putInstructionFields = putFields;
 
         _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_PUT);
+        _operandStack->pop();
         _operandStack->pop();
     }
     else { // array
