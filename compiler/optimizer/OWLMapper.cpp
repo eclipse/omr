@@ -751,6 +751,7 @@ void TR_OWLMapper::_mapDirectLoadInstruction(TR::Node *node) {
     TR::Symbol* symbol = symRef->getSymbol();
 
     if (symbol->isAuto()) { //local var
+
         LoadInstructionFields loadFields;
         strcpy(loadFields.type, type);
 
@@ -763,7 +764,12 @@ void TR_OWLMapper::_mapDirectLoadInstruction(TR::Node *node) {
         _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion, SHRIKE_BT_LOAD);
         _operandStack->push(node);
     }
+    else if (symbol->isConstString() ) { //skip string for now
+        
+        _operandStack->push(node);
+    }
     else if (symbol->isStatic()) { // static (SHRIKE_BT_GET)
+
         GetInstructionFields getFields;
 
         char staticName[LARGE_BUFFER_SIZE];
