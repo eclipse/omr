@@ -36,9 +36,9 @@ public:
 
 };
 
-/**
- * Simulating java byte code operand stack
- */
+// /**
+//  * Simulating java byte code operand stack
+//  */
 class TR_OWLOperandStack
 {
 private:
@@ -59,15 +59,15 @@ public:
 /**
  * Track the reference count of each node
  */
-class TR_OWLReferenceCountTable
-{
-private:
-    std::unordered_map<TR::Node*, uint32_t> _table;
-public:
-    void add(TR::Node* node, uint32_t remainingReferenceCount); // add an entry to the table: <Node>:<Remaining Reference Count>
-    void refer(TR::Node* node); // decrease the corresponding of a given node by 1. This method should be called every time we visit the node
-    bool noMoreReference(TR::Node* node); // whether the node won't be refered any more in the future. 
-};
+// class TR_OWLReferenceCountTable
+// {
+// private:
+//     std::unordered_map<TR::Node*, uint32_t> _table;
+// public:
+//     void add(TR::Node* node, uint32_t remainingReferenceCount); // add an entry to the table: <Node>:<Remaining Reference Count>
+//     void refer(TR::Node* node); // decrease the corresponding of a given node by 1. This method should be called every time we visit the node
+//     bool noMoreReference(TR::Node* node); // whether the node won't be refered any more in the future. 
+// };
 
 class TR_OWLMapper
 {
@@ -77,7 +77,7 @@ private:
     TR::Compilation* _compilation;
     TR_OWLLocalVariableTable* _localVarTable;
     TR_OWLOperandStack* _operandStack;
-    TR_OWLReferenceCountTable* _referenceCountTable;
+    // TR_OWLReferenceCountTable* _referenceCountTable;
 
     std::vector<OWLInstruction> _owlInstructionList; 
 

@@ -151,40 +151,40 @@ uint32_t TR_OWLOperandStack::getOperandNum(TR::Node* node) {
 }
 
 
-/***** Reference Count table *****/
-void TR_OWLReferenceCountTable::add(TR::Node* node, uint32_t remainingReferenceCount) {
-    std::unordered_map<TR::Node*, uint32_t>::const_iterator it = _table.find(node);
-    if (it != _table.end()){
-        printf("Error: node already exits in reference count table!\n");
-        exit(1);
-    }
+// /***** Reference Count table *****/
+// void TR_OWLReferenceCountTable::add(TR::Node* node, uint32_t remainingReferenceCount) {
+//     std::unordered_map<TR::Node*, uint32_t>::const_iterator it = _table.find(node);
+//     if (it != _table.end()){
+//         printf("Error: node already exits in reference count table!\n");
+//         exit(1);
+//     }
 
-    _table[node] = remainingReferenceCount;
-}
+//     _table[node] = remainingReferenceCount;
+// }
 
-void TR_OWLReferenceCountTable::refer(TR::Node* node) {
-    std::unordered_map<TR::Node*, uint32_t>::const_iterator it = _table.find(node);
-    if (it == _table.end()){
-        printf("Error: node does not exit in reference count table!\n");
-        exit(1);
-    }
+// void TR_OWLReferenceCountTable::refer(TR::Node* node) {
+//     std::unordered_map<TR::Node*, uint32_t>::const_iterator it = _table.find(node);
+//     if (it == _table.end()){
+//         printf("Error: node does not exit in reference count table!\n");
+//         exit(1);
+//     }
 
-    if (_table[node] == 0) {
-        printf("Error: reference count is 0 in reference count table. Cannot be referred!\n");
-    }
+//     if (_table[node] == 0) {
+//         printf("Error: reference count is 0 in reference count table. Cannot be referred!\n");
+//     }
 
-    _table[node] = _table[node] - 1;
-}
+//     _table[node] = _table[node] - 1;
+// }
 
-bool TR_OWLReferenceCountTable::noMoreReference(TR::Node* node) {
-    std::unordered_map<TR::Node*, uint32_t>::const_iterator it = _table.find(node);
-    if (it == _table.end()){
-        printf("Error: node does not exit in reference count table!\n");
-        exit(1);
-    }
+// bool TR_OWLReferenceCountTable::noMoreReference(TR::Node* node) {
+//     std::unordered_map<TR::Node*, uint32_t>::const_iterator it = _table.find(node);
+//     if (it == _table.end()){
+//         printf("Error: node does not exit in reference count table!\n");
+//         exit(1);
+//     }
 
-    return _table[node] == 0;
-}
+//     return _table[node] == 0;
+// }
 
 /****** Mapper ******/
 TR_OWLMapper::TR_OWLMapper(TR::Compilation* compilation) {
@@ -193,13 +193,13 @@ TR_OWLMapper::TR_OWLMapper(TR::Compilation* compilation) {
 
     _localVarTable = new TR_OWLLocalVariableTable();
     _operandStack = new TR_OWLOperandStack();
-    _referenceCountTable = new TR_OWLReferenceCountTable();
+    // _referenceCountTable = new TR_OWLReferenceCountTable();
 }
 
 TR_OWLMapper::~TR_OWLMapper() {
     delete _localVarTable;
     delete _operandStack;
-    delete _referenceCountTable;
+    // delete _referenceCountTable;
 }
 
 std::vector<OWLInstruction> TR_OWLMapper::map() {
@@ -264,27 +264,28 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
     if (visited.contains(root)){ // indicates this node has already been evaluated => load the value from local var table
 
         //refer to the node
-        _referenceCountTable->refer(root);
+        // _referenceCountTable->refer(root);
 
-        if (opCode.isWrtBar()){
-            return;
-        }
+        // if (opCode.isWrtBar()){
+        //     return;
+        // }
 
-        if (!_localVarTable->contain(root) && !_referenceCountTable->noMoreReference(root) && _operandStack->getOperandNum(root) == 1) { // if we cannot find it in local var table, only one its operand is left on stack and this node still needs to be referenced later, create DUP
-            _createDupInstruction(root, 0);
-        }
+        // if (!_localVarTable->contain(root) && !_referenceCountTable->noMoreReference(root) && _operandStack->getOperandNum(root) == 1) { // if we cannot find it in local var table, only one its operand is left on stack and this node still needs to be referenced later, create DUP
+        //     _createDupInstruction(root, 0);
+        // }
 
         if (_localVarTable->contain(root)){
             _createImplicitLoad(root);
         }
+        
         return;
 
     }
 
-    //add an entry to reference count table
-    if (root->getReferenceCount() >= 1){
-        _referenceCountTable->add(root, root->getReferenceCount()-1);
-    }
+    // //add an entry to reference count table
+    // if (root->getReferenceCount() >= 1){
+    //     _referenceCountTable->add(root, root->getReferenceCount()-1);
+    // }
 
     visited.add(root);
 
@@ -295,11 +296,11 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         _processTree(root->getChild(0), root, visited);
         
     }
-    // else if (opCode.isCallIndirect()) {
-    //     root->getChild(0)->getChild(0)->setReferenceCount(root->getChild(0)->getChild(0)->getReferenceCount() -1 ); // skip the first aload
-    //     _processTree(root->getChild(0)->getChild(0), root, visited);  // only evaluate second aload 
+    else if (opCode.isCallIndirect()) {
+        // skip the first aload
+        _processTree(root->getChild(0)->getChild(0), root, visited);  // only evaluate second aload 
 
-    // }
+    }
     else if (opCodeValue == TR::newarray) { // skip the second child of new array (it indicates the type)
         _processTree(root->getChild(0), root, visited);
     }
@@ -321,7 +322,7 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         _processTree(root->getChild(0), root, visited);
     }
     else if (opCode.isWrtBar() && symRef->getSymbol()->isArrayShadowSymbol() ){ //array store for reference types
-        _referenceCountTable->refer(root->getChild(0)->getChild(0));
+        // _referenceCountTable->refer(root->getChild(0)->getChild(0));
         _processTree(root->getChild(2),root, visited); // ref
         _processTree(root->getChild(0)->getChild(1)->getChild(0)->getChild(0)->getChild(0), root, visited); //index
         _processTree(root->getChild(1), root, visited); //value
@@ -338,21 +339,21 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
 
     /*** 3. post-processsing ***/
 
-    //check the integrity of operand stack
-    if (parent == NULL) {
-        while (!_operandStack->isEmpty()){
+    // //check the integrity of operand stack
+    // if (parent == NULL) {
+    //     while (!_operandStack->isEmpty()){
             
-            TR::Node *top = _operandStack->top();
-            printf("Check stack %s: %d\n",top->getOpCode().getName(), top->getGlobalIndex());
-            if (_referenceCountTable->noMoreReference(top)){ // the top element of the stack will not be referenced anymore, pop it.
-                _createPopInstruction(root,1);
-            }
-            else{
-                break;
-            }
-        }
+    //         TR::Node *top = _operandStack->top();
+    //         printf("Check stack %s: %d\n",top->getOpCode().getName(), top->getGlobalIndex());
+    //         if (_referenceCountTable->noMoreReference(top)){ // the top element of the stack will not be referenced anymore, pop it.
+    //             _createPopInstruction(root,1);
+    //         }
+    //         else{
+    //             break;
+    //         }
+    //     }
 
-    }
+    // }
 
     if (opCodeValue == TR::New) {  // if it is new instruction, do not create implicit load or store, create dup for New Object
         _createDupInstruction(root , 0);
@@ -370,7 +371,8 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
             _createImplicitStore(root);
         }
         else{
-            if (parent->getOpCodeValue() == TR::treetop || parent->getOpCodeValue() == TR::BBStart || parent->getOpCode().isNullCheck()){
+            // only need to create implicit store
+            if (parent->getOpCodeValue() == TR::treetop || parent->getOpCodeValue() == TR::BBStart || parent->getOpCodeValue() == TR::NULLCHK || parent->getOpCodeValue() == TR::compressedRefs){
                 _createImplicitStore(root);
             }
             else{
@@ -1134,11 +1136,21 @@ void TR_OWLMapper::_mapDirectCallInstruction(TR::Node *node) {
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_INVOKE); 
     if (strcmp(TYPE_void, _getType(node->getOpCode())) != 0) {
         _operandStack->push(node);
+        if (node->getReferenceCount() < 2){
+             _createPopInstruction(node,1); // pop the value return by the call
+        }
     }
 
-    if (method->isConstructor() && !_referenceCountTable->noMoreReference(node->getChild(0))){ //if constructor and new will be refered later
-        _createImplicitStore(node->getChild(0)); // create implicit store for new after constructor has been invoked!
+    if (method->isConstructor()){ //if constructor 
+        if (node->getChild(0)->getReferenceCount() > 2){
+            _createImplicitStore(node->getChild(0)); // create implicit store for new after constructor has been invoked!
+        }
+        else{
+            _createPopInstruction(node,1); //pop the ref from stack
+        }
+        
     }
+
 }
 
 void TR_OWLMapper::_mapIndirectCallInstruction(TR::Node* node) {
@@ -1187,7 +1199,12 @@ void TR_OWLMapper::_mapIndirectCallInstruction(TR::Node* node) {
 
     if (strcmp(TYPE_void, _getType(node->getOpCode())) != 0) {
         _operandStack->push(node);
+
+        if (node->getReferenceCount() < 2) {
+            _createPopInstruction(node,1);
+        }
     }
+
 }
 
 /**
