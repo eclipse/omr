@@ -14,6 +14,7 @@ extern char *const TYPE_double;
 extern char *const TYPE_char;
 extern char *const TYPE_byte;
 extern char *const TYPE_void;
+extern char *const TYPE_null;
 extern char *const TYPE_boolean;
 extern char *const TYPE_Object;
 

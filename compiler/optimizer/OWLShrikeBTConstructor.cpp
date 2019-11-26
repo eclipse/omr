@@ -46,6 +46,9 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     else if (!strcmp(TYPE_float, type)) {
                         value = Float(constFields.value.f);
                     }
+                    else if (!strcmp(TYPE_null, type)) { // const null
+                        value = nullptr; 
+                    }
                     else{
                         perror("NO type match in constructing const instruction object!\n");
                         exit(1);

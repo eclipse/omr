@@ -559,7 +559,7 @@ char* TR_OWLMapper::_getType(TR::ILOpCode opCode) {
     else if (opCode.isByte()) return TYPE_int; // no byte for Java Bytecode
     else if (opCode.isIntegerOrAddress()) return TYPE_Object;
     else if (opCode.isVoid()) return TYPE_void;
-    perror("No type matched!\n");
+    printf("No type matched!\n");
     exit(1);
 }
 
@@ -677,8 +677,11 @@ void TR_OWLMapper::_mapConstantInstruction(TR::Node *node) {
     else if (opCode.isByte()){
         constFields.value.i = node->getByte();
     }
+    else if (node->getSymbolReference() == NULL){ // aconst null
+        strcpy(constFields.type, TYPE_null); 
+    }
     else{
-        perror("No Constant type matched!\n");
+        printf("No Constant type matched!\n");
         exit(1);
     }
 
@@ -846,7 +849,7 @@ void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
         else if (opCode.isOr()) op = OR;
         else if (opCode.isXor()) op = XOR;
         else{
-            perror("No arithmetic operator matched!\n");
+            printf("No arithmetic operator matched!\n");
             exit(1);
         }
         BinaryOpInstructionFields binaryFields;
@@ -933,7 +936,7 @@ void TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
         op = NE;
     }
     else{
-        perror("No cmp type matched!\n");
+        printf("No cmp type matched!\n");
         exit(1);
     }
 
@@ -1060,7 +1063,7 @@ void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
             // no conversion needed. Since all byte and short have already been converted into int by the OWLMapper
             break;
         default:
-            perror("No type conversion matched!\n");
+            printf("No type conversion matched!\n");
             exit(1);
     }
 
