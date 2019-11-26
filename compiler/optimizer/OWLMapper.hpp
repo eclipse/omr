@@ -43,14 +43,17 @@ class TR_OWLOperandStack
 {
 private:
     std::stack<TR::Node*> _stack;
+    std::unordered_map<TR::Node*, uint32_t> _numOnStackTable; //keep track of the number of operands created by each node on stack <Node> : <# on stack>
 public:
-    void push(TR::Node* node);
-    void pop();
-    void dup();
-    void swap();
-    TR::Node* top();
-    bool isEmpty();
-    uint32_t size();
+    void push(TR::Node* node); // push an operand to stack
+    void pop(); // pop the top of the stack
+    void dup(); // dup the top operand on stack
+    void swap(); // swap the first two operands on stack
+    TR::Node* top(); // peek the top operand on stack
+    bool isEmpty(); // if the stack is empty
+    uint32_t size(); // size of the stack
+    uint32_t getOperandNum(TR::Node* node); // get the number of operands created by the given node on stack
+    bool contain(TR::Node* node); // if the stack contains the operand created by a given node
 };
 
 /**
@@ -61,9 +64,9 @@ class TR_OWLReferenceCountTable
 private:
     std::unordered_map<TR::Node*, uint32_t> _table;
 public:
-    void add(TR::Node* node, uint32_t remainingReferenceCount);
-    void refer(TR::Node* node);
-    bool noMoreReference(TR::Node* node);
+    void add(TR::Node* node, uint32_t remainingReferenceCount); // add an entry to the table: <Node>:<Remaining Reference Count>
+    void refer(TR::Node* node); // decrease the corresponding of a given node by 1. This method should be called every time we visit the node
+    bool noMoreReference(TR::Node* node); // whether the node won't be refered any more in the future. 
 };
 
 class TR_OWLMapper

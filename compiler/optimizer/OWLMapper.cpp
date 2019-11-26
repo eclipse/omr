@@ -72,11 +72,25 @@ bool TR_OWLLocalVariableTable::contain(TR::SymbolReference* symRef) {
     std::unordered_map<TR::SymbolReference*, uint32_t >::const_iterator it = _localVarTableBySymRef.find(symRef);
     return it != _localVarTableBySymRef.end();
 }
+
 /**********  Operand stack *********************/
+bool TR_OWLOperandStack::contain(TR::Node* node) {
+    std::unordered_map<TR::Node*, uint32_t >::const_iterator it = _numOnStackTable.find(node);
+    return it != _numOnStackTable.end();
+}
 
 void TR_OWLOperandStack::push(TR::Node* node) {
-    printf("PUSH %s\n",node->getOpCode().getName());
+    printf("PUSH %s: %d\n",node->getOpCode().getName(), node->getGlobalIndex());
+
+    if (!contain(node)) {
+        _numOnStackTable[node] = 1;
+    }
+    else{
+        _numOnStackTable[node] += 1;
+    }
+
     _stack.push(node);
+
 }
 
 void TR_OWLOperandStack::pop() {
@@ -84,7 +98,8 @@ void TR_OWLOperandStack::pop() {
         printf("Error: pop when operand stack is empty!\n");
         exit(1);
     }
-    printf("POP %s\n",_stack.top()->getOpCode().getName());
+    printf("POP %s: %d\n",_stack.top()->getOpCode().getName(), _stack.top()->getGlobalIndex());
+    _numOnStackTable[_stack.top()] -= 1;
     _stack.pop();
 }
 
@@ -101,8 +116,8 @@ void TR_OWLOperandStack::dup(){
         printf("Error: dup when operand stack is empty!\n");
         exit(1);
     }
-    printf("DUP %s\n",_stack.top()->getOpCode().getName());
-
+    printf("DUP %s: %d\n",_stack.top()->getOpCode().getName(),_stack.top()->getGlobalIndex());
+    _numOnStackTable[_stack.top()] += 1;
     _stack.push(_stack.top());
 }
 
@@ -125,6 +140,14 @@ bool TR_OWLOperandStack::isEmpty(){
 
 uint32_t TR_OWLOperandStack::size(){
     return _stack.size();
+}
+
+uint32_t TR_OWLOperandStack::getOperandNum(TR::Node* node) {
+    if (!contain(node)) {
+        printf("Error: node not on operand stack!\n");
+        exit(1);
+    }
+    return _numOnStackTable[node];
 }
 
 
@@ -247,7 +270,7 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
             return;
         }
 
-        if (!_localVarTable->contain(root) && !_referenceCountTable->noMoreReference(root)) { // if we cannot find it in local var table and this node still needs to be referenced later, create DUP
+        if (!_localVarTable->contain(root) && !_referenceCountTable->noMoreReference(root) && _operandStack->getOperandNum(root) == 1) { // if we cannot find it in local var table, only one is left on stack and this node still needs to be referenced later, create DUP
             _createDupInstruction(root, 0);
         }
 
@@ -272,10 +295,11 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         _processTree(root->getChild(0), root, visited);
         
     }
-    else if (opCode.isCallIndirect()) { // for call indirect, skip the load reference indirect. 
-        _processTree(root->getChild(0)->getChild(0), root, visited); // only evaluate aload 
-        _referenceCountTable->refer(root->getChild(1)); 
-    }
+    // else if (opCode.isCallIndirect()) {
+    //     root->getChild(0)->getChild(0)->setReferenceCount(root->getChild(0)->getChild(0)->getReferenceCount() -1 ); // skip the first aload
+    //     _processTree(root->getChild(0)->getChild(0), root, visited);  // only evaluate second aload 
+
+    // }
     else if (opCodeValue == TR::newarray) { // skip the second child of new array (it indicates the type)
         _processTree(root->getChild(0), root, visited);
     }
@@ -319,7 +343,7 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         while (!_operandStack->isEmpty()){
             
             TR::Node *top = _operandStack->top();
-            printf("Check stack %s\n",top->getOpCode().getName());
+            printf("Check stack %s: %d\n",top->getOpCode().getName(), top->getGlobalIndex());
             if (_referenceCountTable->noMoreReference(top)){ // the top element of the stack will not be referenced anymore, pop it.
                 _createPopInstruction(root,1);
             }
@@ -330,7 +354,10 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
 
     }
 
-    if (opCode.isNew()) {  // if it is new instruction, do not create implicit load or store, dup should be created later
+    if (opCode.isNew()) {  // if it is new instruction, do not create implicit load or store, create dup for New Object
+        if (opCodeValue == TR::New) {
+            _createDupInstruction(root , 0);
+        }
         return;
     }
 
@@ -459,6 +486,9 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     else if (opCode.isStoreIndirect()) { //storei
         _mapIndirectStoreInstruction(node);
     }
+    else if (opCode.isLoadIndirect() && (node->getSymbolReference()->getReferenceNumber() - _compilation->getSymRefTab()->getNumHelperSymbols() == TR::SymbolReferenceTable::vftSymbol)) { // loadi <vtf-symbol>
+        _createPopInstruction(node, 1);
+    }
     else if (opCode.isLoadIndirect()) { //loadi
         _mapIndirectLoadInstruction(node);
     }
@@ -494,11 +524,11 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     }
     else if (opCode.isLoadAddr()) {} //loadaddr
     else if (opCode.isNullCheck()) {} //NULL CHECK
-    else if (opCode.isBndCheck()) {
+    else if (opCode.isBndCheck()) { // BNDCHK, create two pop
         _createPopInstruction(node,1);
         _createPopInstruction(node,1);
     }
-    else if (opCode.isAnchor()){
+    else if (opCode.isAnchor()) { // compressedRef, create one pop
         _createPopInstruction(node,1);
     }
     else if (opCode.isNew()){ // new object, new array or new multidimensional array
