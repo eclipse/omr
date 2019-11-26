@@ -270,7 +270,7 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
             return;
         }
 
-        if (!_localVarTable->contain(root) && !_referenceCountTable->noMoreReference(root) && _operandStack->getOperandNum(root) == 1) { // if we cannot find it in local var table, only one is left on stack and this node still needs to be referenced later, create DUP
+        if (!_localVarTable->contain(root) && !_referenceCountTable->noMoreReference(root) && _operandStack->getOperandNum(root) == 1) { // if we cannot find it in local var table, only one its operand is left on stack and this node still needs to be referenced later, create DUP
             _createDupInstruction(root, 0);
         }
 
@@ -313,7 +313,7 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         _processTree(root->getChild(0)->getChild(1)->getChild(0)->getChild(0)->getChild(0), root, visited); //index
         _processTree(root->getChild(1), root, visited); //value
     }
-    else if (opCode.isLoadIndirect() && symRef->getSymbol()->isArrayShadowSymbol()) { //array load for primitive types
+    else if (opCode.isLoadIndirect() && symRef->getSymbol()->isArrayShadowSymbol()) { //array load 
         _processTree(root->getChild(0)->getChild(0), root, visited);
         _processTree(root->getChild(0)->getChild(1)->getChild(0)->getChild(0)->getChild(0), root, visited);
     }
@@ -354,10 +354,8 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
 
     }
 
-    if (opCode.isNew()) {  // if it is new instruction, do not create implicit load or store, create dup for New Object
-        if (opCodeValue == TR::New) {
-            _createDupInstruction(root , 0);
-        }
+    if (opCodeValue == TR::New) {  // if it is new instruction, do not create implicit load or store, create dup for New Object
+        _createDupInstruction(root , 0);
         return;
     }
 
@@ -1117,6 +1115,7 @@ void TR_OWLMapper::_mapDirectCallInstruction(TR::Node *node) {
         for (int32_t i = 0 ; i < node->getNumArguments() ; i ++){
             _operandStack->pop();
         }
+
     }
     else if (methodKind == methodSymbol->Static) { // static method call
         strcpy(invokeFields.type, type);
@@ -1135,6 +1134,10 @@ void TR_OWLMapper::_mapDirectCallInstruction(TR::Node *node) {
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_INVOKE); 
     if (strcmp(TYPE_void, _getType(node->getOpCode())) != 0) {
         _operandStack->push(node);
+    }
+
+    if (method->isConstructor() && !_referenceCountTable->noMoreReference(node->getChild(0))){ //if constructor and new will be refered later
+        _createImplicitStore(node->getChild(0)); // create implicit store for new after constructor has been invoked!
     }
 }
 
