@@ -723,7 +723,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR::list<TR::Register*>               _liveDiscardableRegisters;
    TR::list<TR::Register*>               _dependentDiscardableRegisters;
    TR::list<TR::ClobberingInstruction*>  _clobberingInstructions;
-   std::list<TR::ClobberingInstruction*, TR::typed_allocator<TR::ClobberingInstruction*, TR::Allocator> >::iterator _clobIterator;
+   std::list<TR::ClobberingInstruction*, TR::typed_allocator<TR::ClobberingInstruction*, TR::Allocator &> >::iterator _clobIterator;
    TR::list<TR_OutlinedInstructions*>    _outlinedInstructionsList;
 
    RegisterAssignmentDirection     _assignmentDirection;

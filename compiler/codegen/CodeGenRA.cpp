@@ -890,7 +890,7 @@ OMR::CodeGenerator::processReference(TR::Node *reference, TR::Node *parent, TR::
    }
 
 void
-OMR::CodeGenerator::spillLiveReferencesToTemps(TR::TreeTop *insertionTree, std::list<TR::SymbolReference*, TR::typed_allocator<TR::SymbolReference*, TR::Allocator> >::iterator firstAvailableSpillTemp)
+OMR::CodeGenerator::spillLiveReferencesToTemps(TR::TreeTop *insertionTree, std::list<TR::SymbolReference*, TR::typed_allocator<TR::SymbolReference*, TR::Allocator &> >::iterator firstAvailableSpillTemp)
    {
    if (debug("traceSpill") && !_liveReferenceList.empty())
       diagnostic("Spill at GC safe node [%p]\n",insertionTree->getNextTreeTop()->getNode());

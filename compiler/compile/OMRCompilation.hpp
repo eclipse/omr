@@ -414,7 +414,7 @@ public:
 
    bool allocateAtThisOptLevel();
 
-   TR::Allocator allocator(const char *name = NULL) { return TR::Allocator(_allocator); }
+   TR::Allocator & allocator(const char *name = NULL) { return _allocator; }
 
    TR_ArenaAllocator  *arenaAllocator() { return &_arenaAllocator; }
    void setAllocatorName(const char *name) { _allocatorName = name; }
@@ -730,7 +730,7 @@ public:
    void setIlVerifier(TR::IlVerifier *ilVerifier) { _ilVerifier = ilVerifier; }
 
    typedef std::pair<const void * const, TR::DebugCounterBase *> DebugCounterEntry;
-   typedef TR::typed_allocator<DebugCounterEntry, TR::Allocator> DebugCounterMapAllocator;
+   typedef TR::typed_allocator<DebugCounterEntry, TR::Allocator &> DebugCounterMapAllocator;
    typedef std::map<const void *, TR::DebugCounterBase *, std::less<const void *>, DebugCounterMapAllocator> DebugCounterMap;
 
    /**
@@ -1137,12 +1137,12 @@ protected:
       AssumptionFlagMask                = 0x0005F00,
       };
 
-   TR::ThreadLocalAllocator _allocator;
+   TR::Region &_allocator;
    TR::ResolvedMethodSymbol *_methodSymbol;
 
 private:
    TR_ResolvedMethod                 *_method; // must be declared before _flowGraph
-   TR_ArenaAllocator                 _arenaAllocator;
+   TR_ArenaAllocator                 &_arenaAllocator;
    const char *                      _allocatorName;
    TR::Region                        _aliasRegion;
 

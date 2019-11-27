@@ -90,6 +90,15 @@ Region::allocate(size_t const size, void *hint)
    return _currentSegment.get().allocate(roundedSize);
    }
 
+void *
+Region::reallocate(size_t newsize, void *pointer, size_t size)
+{
+   void * npointer = allocate(newsize);
+   memcpy(npointer, pointer, newsize < size ? newsize : size);
+   deallocate(pointer, size);
+   return npointer;
+}
+
 void
 Region::deallocate(void * allocation, size_t) throw()
    {

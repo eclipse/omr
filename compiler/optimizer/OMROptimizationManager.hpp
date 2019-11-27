@@ -62,9 +62,9 @@ class OMR_EXTENSIBLE OptimizationManager
    {
    public:
 
-   static void *operator new(size_t size, TR::Allocator a)
+   static void *operator new(size_t size, TR::Allocator &a)
       { return a.allocate(size); }
-   static void  operator delete(void *ptr, TR::Allocator a)
+   static void  operator delete(void *ptr, TR::Allocator &a)
       {
       // If there is an exception thrown during construction, the compilation
       // will be aborted, and all memory associated with that compilation will get freed.
@@ -94,7 +94,7 @@ class OMR_EXTENSIBLE OptimizationManager
    TR_HeapMemory             trHeapMemory();
    TR_PersistentMemory *     trPersistentMemory();
 
-   TR::Allocator             allocator();
+   TR::Allocator &            allocator();
 
    OptimizationFactory       factory()                       { return _factory; }
    OMR::Optimizations        id()                            { return _id; }

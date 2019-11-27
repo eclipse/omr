@@ -133,7 +133,7 @@ class TR_LocalAnalysisInfo
          memset(chunk, 0, sizeof(Chunk));
          return chunk;
          }
-      TR::Allocator _allocator;
+      TR::Allocator &_allocator;
       int32_t _numBuckets;
       Chunk **_buckets;
       };

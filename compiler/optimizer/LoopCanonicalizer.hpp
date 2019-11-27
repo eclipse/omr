@@ -141,7 +141,7 @@ class TR_LoopTransformer : public TR::Optimization
  private:
    struct updateInfo_tables {
      TR::BitVector seenLoads, seenMultipleLoads, seenStores, seenMultipleStores, currentlyWrittenOnce, currentlyReadOnce;
-     updateInfo_tables(TR::Allocator a) : seenLoads(a), seenMultipleLoads(a),
+     updateInfo_tables(TR::Allocator &a) : seenLoads(a), seenMultipleLoads(a),
                                                seenStores(a), seenMultipleStores(a),
                                                currentlyWrittenOnce(a), currentlyReadOnce(a) {}
    };

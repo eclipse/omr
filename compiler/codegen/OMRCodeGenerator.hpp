@@ -425,7 +425,7 @@ class OMR_EXTENSIBLE CodeGenerator
    void findAndFixCommonedReferences();
    void findCommonedReferences(TR::Node*node, TR::TreeTop *treeTop);
    void processReference(TR::Node*reference, TR::Node*parent, TR::TreeTop *treeTop);
-   void spillLiveReferencesToTemps(TR::TreeTop *insertionTree, std::list<TR::SymbolReference*, TR::typed_allocator<TR::SymbolReference*, TR::Allocator> >::iterator firstAvailableSpillTemp);
+   void spillLiveReferencesToTemps(TR::TreeTop *insertionTree, std::list<TR::SymbolReference*, TR::typed_allocator<TR::SymbolReference*, TR::Allocator &> >::iterator firstAvailableSpillTemp);
    void needSpillTemp(TR_LiveReference * cursor, TR::Node*parent, TR::TreeTop *treeTop);
 
    void expandInstructions() {}

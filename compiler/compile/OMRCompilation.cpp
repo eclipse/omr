@@ -46,7 +46,6 @@
 #include "control/OptimizationPlan.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/allocator.h"
 #include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
 #include "env/CompileTimeProfiler.hpp"
@@ -219,9 +218,9 @@ OMR::Compilation::Compilation(
    _debug(0),
    _knownObjectTable(NULL),
    _omrVMThread(omrVMThread),
-   _allocator(TRCS2MemoryAllocator(m)),
+   _allocator(heapMemoryRegion),
    _method(compilee),
-   _arenaAllocator(TR::Allocator(self()->allocator("Arena"))),
+   _arenaAllocator(heapMemoryRegion),
    _aliasRegion(heapMemoryRegion),
    _allocatorName(NULL),
    _ilGenerator(0),

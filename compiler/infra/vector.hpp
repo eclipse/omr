@@ -30,7 +30,7 @@
 
 namespace TR {
 
-template <typename T, class Alloc = TR::Allocator>
+template <typename T, class Alloc = TR::Allocator &>
 class vector : public std::vector<T, typed_allocator<T, Alloc> >
    {
 public:

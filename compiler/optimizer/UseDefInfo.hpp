@@ -65,9 +65,9 @@ class TR_UseDefInfo
    TR::Region _region;
    public:
 
-   static void *operator new(size_t size, TR::Allocator a)
+   static void *operator new(size_t size, TR::Allocator &a)
       { return a.allocate(size); }
-   static void  operator delete(void *ptr, TR::Allocator a)
+   static void  operator delete(void *ptr, TR::Allocator &a)
       {
       // If there is an exception thrown during construction, the compilation
       // will be aborted, and all memory associated with that compilation will get freed.
@@ -96,7 +96,7 @@ class TR_UseDefInfo
    class AuxiliaryData
       {
       private:
-         AuxiliaryData(int32_t numSymRefs, ncount_t nodeCount, TR::Region &region, TR::Allocator allocator) :
+         AuxiliaryData(int32_t numSymRefs, ncount_t nodeCount, TR::Region &region, TR::Allocator &allocator) :
              _region(region),
              _onceReadSymbols(numSymRefs, static_cast<TR_BitVector*>(NULL), _region),
              _onceWrittenSymbols(numSymRefs, static_cast<TR_BitVector*>(NULL), _region),
@@ -197,7 +197,7 @@ class TR_UseDefInfo
    bool trace()       {return _trace;}
 
    public:
-   TR::Allocator allocator() { return comp()->allocator(); }
+   TR::Allocator & allocator() { return comp()->allocator(); }
    bool infoIsValid() {return _isUseDefInfoValid;}
    TR::Node *getNode(int32_t index);
    TR::TreeTop *getTreeTop(int32_t index);

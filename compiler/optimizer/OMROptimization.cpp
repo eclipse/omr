@@ -27,7 +27,6 @@
 #include "codegen/CodeGenerator.hpp"
 #include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
-#include "cs2/allocator.h"
 #include "env/IO.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
@@ -111,7 +110,7 @@ OMR::Optimization::trPersistentMemory()
    return self()->comp()->trPersistentMemory();
    }
 
-TR::Allocator
+TR::Allocator &
 OMR::Optimization::allocator()
    {
    return self()->comp()->allocator();

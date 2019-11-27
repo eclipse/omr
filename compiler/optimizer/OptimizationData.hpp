@@ -32,7 +32,7 @@ class OptimizationData
 	{
 	public:
 
-	static void *operator new(size_t size, TR::Allocator a)
+	static void *operator new(size_t size, TR::Allocator &a)
            { return a.allocate(size); }
         static void  operator delete(void *ptr, size_t size)
            { ((OptimizationData*)ptr)->allocator().deallocate(ptr, size); } /* t->allocator() must return the same allocator as used for new */
@@ -45,7 +45,7 @@ class OptimizationData
         OptimizationData(TR::Compilation *comp) : _comp(comp) {}
 
 	TR::Compilation *comp() { return _comp; }
-	TR::Allocator allocator() { return comp()->allocator(); }
+	TR::Allocator & allocator() { return comp()->allocator(); }
 
 	private:
 	TR::Compilation *_comp;

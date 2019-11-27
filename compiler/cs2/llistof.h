@@ -31,7 +31,6 @@
 #define IN_CS2_LLISTOF_H
 
 #include "cs2/cs2.h"
-#include "cs2/allocator.h"
 
 #ifdef CS2_ALLOCINFO
 #define allocate(x) allocate(x, __FILE__, __LINE__)

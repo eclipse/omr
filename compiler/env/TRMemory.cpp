@@ -416,8 +416,7 @@ namespace TR
    void GlobalSingletonAllocator::createInstance()
       {
       TR_ASSERT(::trPersistentMemory != NULL, "Attempting to use GlobalAllocator too early. It cannot be used until TR_PersistentMemory has been initialized.");
-      static CS2PersistentAllocator persistentAllocator(::trPersistentMemory);
-      static GlobalBaseAllocator globalBaseAllocator(persistentAllocator);
+      static GlobalBaseAllocator globalBaseAllocator(::trPersistentMemory);
       static GlobalSingletonAllocator globalSingletonAllocator(globalBaseAllocator);
       }
 

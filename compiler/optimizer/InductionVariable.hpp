@@ -189,7 +189,7 @@ class TR_LoopStrider : public TR_LoopTransformer
 
    // Maps are keyed by a node's global index, because a node's address could
    // be reused after its reference count decreases to zero.
-   typedef TR::typed_allocator<std::pair<ncount_t const, SignExtEntry>, TR::Allocator> SignExtMemoAllocator;
+   typedef TR::typed_allocator<std::pair<ncount_t const, SignExtEntry>, TR::Allocator &> SignExtMemoAllocator;
    typedef std::map<ncount_t, SignExtEntry, std::less<ncount_t>, SignExtMemoAllocator> SignExtMemo;
 
    void morphExpressionsLinearInInductionVariable(TR_Structure *, vcount_t);
@@ -478,7 +478,7 @@ class TR_InductionVariableAnalysis : public TR::Optimization
 
    private:
 
-   typedef TR::typed_allocator< TR::CFGEdge *, TR::Allocator > WorkQueueAllocator;
+   typedef TR::typed_allocator< TR::CFGEdge *, TR::Allocator &> WorkQueueAllocator;
    typedef std::deque< TR::CFGEdge *, WorkQueueAllocator > WorkQueue;
 
    class DeltaInfo

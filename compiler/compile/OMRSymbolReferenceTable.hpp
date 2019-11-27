@@ -769,7 +769,7 @@ class SymbolReferenceTable
    SymrefsByOwningMethodAndString      _methodsBySignature;
 
    // Aliasmap is keyed by a symbol reference's reference number
-   typedef TR::typed_allocator<std::pair<int32_t const, TR_BitVector * >, TR::Allocator> AliasMapAllocator;
+   typedef TR::typed_allocator<std::pair<int32_t const, TR_BitVector * >, TR::Allocator &> AliasMapAllocator;
    typedef std::map<int32_t, TR_BitVector *, std::less<int32_t>, AliasMapAllocator> AliasMap;
    AliasMap                            *_sharedAliasMap;
 
@@ -777,7 +777,7 @@ class SymbolReferenceTable
    // improved/refined symbol reference to the reference number of the original
    // unimproved/unrefined symbol reference, which is suitable for code motion
    // in case the improvement was due to a flow-sensitive analysis.
-   typedef TR::typed_allocator<std::pair<const int32_t, int32_t>, TR::Allocator> OriginalUnimprovedMapAlloc;
+   typedef TR::typed_allocator<std::pair<const int32_t, int32_t>, TR::Allocator &> OriginalUnimprovedMapAlloc;
    typedef std::map<int32_t, int32_t, std::less<int32_t>, OriginalUnimprovedMapAlloc> OriginalUnimprovedMap;
    OriginalUnimprovedMap               _originalUnimprovedSymRefs;
 

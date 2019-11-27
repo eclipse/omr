@@ -122,8 +122,8 @@ class RegDepCopyRemoval : public TR::Optimization
 
    const TR_GlobalRegisterNumber _regBegin;
    const TR_GlobalRegisterNumber _regEnd;
-   std::vector<RegDepInfo, TR::typed_allocator<RegDepInfo, TR::Allocator> > _regDepInfoTable;
-   std::vector<NodeChoice, TR::typed_allocator<NodeChoice, TR::Allocator> > _nodeChoiceTable;
+   std::vector<RegDepInfo, TR::typed_allocator<RegDepInfo, TR::Allocator &> > _regDepInfoTable;
+   std::vector<NodeChoice, TR::typed_allocator<NodeChoice, TR::Allocator &> > _nodeChoiceTable;
    TR::TreeTop *_treetop;
    TR::Node *_regDeps;
    };

@@ -29,7 +29,7 @@
 #include "env/TRMemory.hpp"
 namespace TR
    {
-   template <class T, class Alloc = TR::Allocator> class list : public std::list<T, TR::typed_allocator<T, Alloc> >
+   template <class T, class Alloc = TR::Allocator &> class list : public std::list<T, TR::typed_allocator<T, Alloc> >
       {
       public:
       list(TR::typed_allocator<T, Alloc> ta) :

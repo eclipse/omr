@@ -26,7 +26,6 @@
 /*                                                                         */
 /***************************************************************************/
 
-#include "cs2/allocator.h"
 #ifndef CS2_HASHTAB_H
 #define CS2_HASHTAB_H
 

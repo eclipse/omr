@@ -39,9 +39,9 @@ class TR_ValueNumberInfo
 
    public:
   
-   static void *operator new(size_t size, TR::Allocator a)
+   static void *operator new(size_t size, TR::Allocator &a)
       { return a.allocate(size); }
-   static void  operator delete(void *ptr, TR::Allocator a)
+   static void  operator delete(void *ptr, TR::Allocator &a)
       {
       // If there is an exception thrown during construction, the compilation
       // will be aborted, and all memory associated with that compilation will get freed.
@@ -62,7 +62,7 @@ class TR_ValueNumberInfo
    TR::Optimizer *optimizer() { return _optimizer; }
 
    //Public Interface
-   TR::Allocator allocator() { return comp()->allocator(); }
+   TR::Allocator & allocator() { return comp()->allocator(); }
    TR_Memory *    trMemory()      { return comp()->trMemory(); }
    TR_StackMemory trStackMemory() { return trMemory(); }
    TR_HeapMemory  trHeapMemory()  { return trMemory(); }

@@ -32,7 +32,6 @@
 
 #include <stdio.h>
 
-#include "cs2/allocator.h"
 #include "cs2/listof.h"
 #include "cs2/hashtab.h"
 

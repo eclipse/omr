@@ -319,9 +319,9 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
    class RegisterArray
       {
       public:
-         TR::Allocator allocator() { return TR::comp()->allocator(); }
+         TR::Allocator & allocator() { return TR::comp()->allocator(); }
 
-         static void *operator new(size_t size, TR::Allocator a)
+         static void *operator new(size_t size, TR::Allocator &a)
             { return a.allocate(size); }
          static void  operator delete(void *ptr, size_t size)
             { ((RegisterArray*)ptr)->allocator().deallocate(ptr, size); } /* t->allocator() must return the same allocator as used for new */
@@ -369,7 +369,7 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
       {
       public:
 
-         static void *operator new(size_t size, TR::Allocator a)
+         static void *operator new(size_t size, TR::Allocator &a)
             { return a.allocate(size); }
          static void  operator delete(void *ptr, size_t size)
             { ((RegisterBitVector*)ptr)->allocator().deallocate(ptr, size); } /* t->allocator() must return the same allocator as used for new */
@@ -379,7 +379,7 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
           */
          virtual ~RegisterBitVector() {}
 
-         TR::Allocator allocator() { return TR::comp()->allocator(); }
+         TR::Allocator & allocator() { return TR::comp()->allocator(); }
 
       private:
          CS2::ASparseBitVector< TR::Allocator > _impl;

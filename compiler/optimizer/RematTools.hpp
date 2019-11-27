@@ -31,9 +31,9 @@
 
 class RematSafetyInformation
    {
-   std::vector<TR::SparseBitVector, TR::typed_allocator<TR::SparseBitVector, TR::Allocator> > dependentSymRefs;
-   std::vector<TR::TreeTop *, TR::typed_allocator<TR::TreeTop * , TR::Allocator> > argumentTreeTops;
-   std::vector<TR::TreeTop *, TR::typed_allocator<TR::TreeTop * , TR::Allocator> > rematTreeTops;
+   std::vector<TR::SparseBitVector, TR::typed_allocator<TR::SparseBitVector, TR::Allocator &> > dependentSymRefs;
+   std::vector<TR::TreeTop *, TR::typed_allocator<TR::TreeTop * , TR::Allocator &> > argumentTreeTops;
+   std::vector<TR::TreeTop *, TR::typed_allocator<TR::TreeTop * , TR::Allocator &> > rematTreeTops;
    TR::Compilation *comp;
    public:
    RematSafetyInformation(TR::Compilation *comp) :

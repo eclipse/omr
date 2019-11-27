@@ -30,7 +30,7 @@
 
 namespace TR {
 
-template <typename T, class Alloc = TR::Allocator>
+template <typename T, class Alloc = TR::Allocator &>
 class deque : public std::deque<T, typed_allocator<T, Alloc> >
    {
 public:

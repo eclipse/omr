@@ -31,9 +31,9 @@ namespace TR
 class OptimizationUtil
    {
    public:
-   static void *operator new(size_t size, TR::Allocator a)
+   static void *operator new(size_t size, TR::Allocator &a)
       { return a.allocate(size); }
-   static void  operator delete(void *ptr, TR::Allocator a)
+   static void  operator delete(void *ptr, TR::Allocator &a)
       {
       // If there is an exception thrown during construction, the compilation
       // will be aborted, and all memory associated with that compilation will get freed.
@@ -50,7 +50,7 @@ class OptimizationUtil
 
    TR::Compilation *comp() { return _comp; }
    TR_FrontEnd *fe() { return _comp->fe(); }
-   TR::Allocator allocator() { return comp()->allocator(); }
+   TR::Allocator & allocator() { return comp()->allocator(); }
    TR_Memory * trMemory() { return comp()->trMemory(); }
 
    private:

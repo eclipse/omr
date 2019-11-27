@@ -31,7 +31,6 @@
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/allocator.h"
 #include "cs2/bitvectr.h"
 #include "cs2/hashtab.h"
 #include "cs2/sparsrbit.h"
@@ -1711,7 +1710,7 @@ void TR_UseDefInfo::insertData(TR::Block *block, TR::Node *node,TR::Node *parent
          aux._defsForSymbol[j]->set(k);
          aux._expandedAtoms[k] = std::make_pair(node, treeTop);
          }
-      TR::GlobalSparseBitVector *mustKill = NULL;
+
       TR::Symbol *callSym = NULL;
       TR::Method *callMethod = NULL;
 

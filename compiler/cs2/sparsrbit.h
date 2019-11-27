@@ -23,7 +23,6 @@
 #define CS2_SPARSRBIT_H
 
 #include "cs2/cs2.h"
-#include "cs2/allocator.h"
 #include "cs2/bitmanip.h"
 #include "cs2/bitvectr.h"
 

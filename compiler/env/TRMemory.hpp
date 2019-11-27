@@ -59,7 +59,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "cs2/allocator.h"
 #include "cs2/bitvectr.h"
 #include "cs2/sparsrbit.h"
 #include "cs2/timer.h"
@@ -844,168 +843,16 @@ public:
       }
    };
 
-template <TR_AllocationKind kind, uint32_t minbits, uint32_t maxbits = sizeof(void *)*4>
-class TRMemoryAllocator {
-  TR_Memory *memory;
-  bool  scavenge;
-  void *(freelist[maxbits - minbits]);
-  size_t stats_largeAlloc;
-  size_t statsArray[maxbits - minbits];
-
-  static uint32_t bucket(size_t size) {
-    uint32_t i=minbits;
-
-    while (i<maxbits && bucketsize(i) < size) i+=1;
-    return i;
-  }
-
-  static size_t bucketsize(uint32_t b) {
-    return size_t(1)<<b;
-  }
-
-public:
-  TRMemoryAllocator(const TRMemoryAllocator<kind,minbits,maxbits> &a) : memory(a.memory), stats_largeAlloc(0), scavenge(a.scavenge) {
-    memset(&freelist, 0, sizeof(freelist));
-    memset(&statsArray, 0, sizeof(freelist));
-  }
-
-  TRMemoryAllocator<kind,minbits,maxbits> &operator= (const TRMemoryAllocator &a) {
-    stats_largeAlloc = 0;
-    scavenge = a.scavenge;
-    memset(&freelist, 0, sizeof(freelist));
-    memset(&statsArray, 0, sizeof(freelist));
-  }
-
-  TRMemoryAllocator(TR_Memory *m) : memory(m), stats_largeAlloc(0), scavenge(true) {
-    memset(&freelist, 0, sizeof(freelist));
-    memset(&statsArray, 0, sizeof(freelist));
-
-  }
-
-  template <uint32_t mi, uint32_t ma>
-  TRMemoryAllocator(const TRMemoryAllocator<kind, mi, ma> &a) : memory(a.memory),
-            stats_largeAlloc(0), scavenge(true) {
-    memset(&freelist, 0, sizeof(freelist));
-    memset(&statsArray, 0, sizeof(freelist));
-  }
-
-  static TRMemoryAllocator &instance()
-     {
-     TR_ASSERT(0, "no default constructor for TRMemoryAllocator");
-     TRMemoryAllocator *instance = NULL;
-     return *instance;
-     }
-
-  void set_scavange()   { scavenge=true; }
-  void unset_scavange() { scavenge=false;}
-
-  void *allocate(size_t size, const char *name=NULL, int ignore=0) {
-    uint32_t b = bucket(size);
-
-    if (b>=maxbits) {
-      stats_largeAlloc += size;
-      return  memory->allocateMemory(size, kind, TR_Memory::CS2);
-    }
-
-    if (freelist[b-minbits]) {
-      void *ret = freelist[b-minbits];
-      memcpy(&freelist[b-minbits],freelist[b-minbits], sizeof(void *));
-
-      return ret;
-    }
-
-    // See if we have segments in the freelists of the larger segments.
-    // Get a free segment from the fist available larger size and
-    // add it to the freelist of the current bucket.
-
-    if (scavenge) {
-      for (uint32_t i=b+1; i < maxbits; i++) {
-        uint32_t chunksize=0; uint32_t elements=0;
-        if (freelist[i-minbits]) {
-          chunksize = bucketsize(i);
-          elements = (1 << (i-b)); // (2^i / 2^b)
-
-          // remove this segment from its freelist
-          char *freechunk = (char *) freelist[i-minbits];
-          memcpy(&freelist[i-minbits],freelist[i-minbits], sizeof(void *));
-
-          // set the link on the last element to NULL
-          memset(freechunk+bucketsize(b)*(elements-1), 0, sizeof(void *));
-
-          // Set the head of the new freelist
-          freelist[b-minbits] = freechunk+bucketsize(b);
-
-          // Now link up remaining elements to form the freelist
-          for (int i=elements-2; i > 0; i--) {
-            void *target = freechunk+bucketsize(b)*i;
-            void *source = freechunk+(bucketsize(b)*(i+1));
-            memcpy(target, &source, sizeof(void *));
-          }
-
-          return ((void *)freechunk);
-        }
-      }
-    }
-
-    statsArray[b-minbits] += bucketsize(b);
-    return memory->allocateMemory(bucketsize(b), kind, TR_Memory::CS2);
-  }
-
-  void deallocate(void *pointer, size_t size, const char *name=NULL, int ignore=0) {
-    uint32_t b = bucket(size);
-
-    if (b<maxbits) {
-      memcpy(pointer,&freelist[b-minbits], sizeof(void *));
-      freelist[b-minbits]=pointer;
-    }
-  }
-
-  void *reallocate(size_t newsize, void *ptr, size_t size, const char *name=NULL, int ignore=0) {
-    uint32_t b1 = bucket(newsize);
-    uint32_t b2 = bucket(size);
-
-    if (b1==b2 && b1!=maxbits) return ptr;
-
-    void *ret = allocate(newsize, name);
-    memcpy(ret, ptr, size<newsize?size:newsize);
-    deallocate(ptr, size, name);
-    return ret;
-  }
-
-  template <class ostr, class allocator> ostr& stats(ostr &o, allocator &a) {
-    o << "TRMemoryAllocator stats:\n";
-    for (int i=minbits; i < maxbits; i++) {
-      if (statsArray[i-minbits]) {
-        int32_t sz=0;
-        void *p = freelist[i-minbits];
-        while (p) {
-          sz += bucketsize(i);
-          p = *(void **)p;
-        }
-        o <<  "bucket[" << i-minbits << "] (" << bucketsize(i) << ") : allocated = "
-          << statsArray[i-minbits] <<  " bytes, freelist size = " << sz << "\n" ;
-      }
-    }
-
-    return o;
-  }
-};
-
-typedef TRMemoryAllocator<heapAlloc, 12, 28> TRCS2MemoryAllocator;
-
 namespace TR
    {
-   typedef CS2::heap_allocator< 65536, 12, TRCS2MemoryAllocator > ThreadLocalAllocator;
-   typedef CS2::shared_allocator < ThreadLocalAllocator > Allocator;
+   typedef Region Allocator;
 
-   typedef TRPersistentMemoryAllocator CS2PersistentAllocator;
-
-   typedef CS2::stat_allocator    < CS2PersistentAllocator > GlobalBaseAllocator;
+   typedef TRPersistentMemoryAllocator GlobalBaseAllocator;
 
    class GlobalSingletonAllocator: public GlobalBaseAllocator
       {
    public:
-      static GlobalSingletonAllocator &instance()
+      static GlobalSingletonAllocator & instance()
          {
          if (_instance == NULL)
             createInstance();
@@ -1024,11 +871,9 @@ namespace TR
       static GlobalSingletonAllocator *_instance;
       };
 
-   typedef CS2::shared_allocator < GlobalSingletonAllocator > GlobalAllocator;
-
-   static GlobalAllocator globalAllocator(const char *name = NULL)
+   static GlobalSingletonAllocator & globalAllocator(const char *name = NULL)
       {
-      return GlobalAllocator(GlobalSingletonAllocator::instance());
+      return GlobalSingletonAllocator::instance();
       }
 
    /*
@@ -1036,9 +881,6 @@ namespace TR
     */
    typedef CS2::ASparseBitVector<TR::Allocator> SparseBitVector;
    typedef CS2::ABitVector<TR::Allocator>       BitVector;
-
-   typedef CS2::ASparseBitVector<TR::GlobalAllocator> GlobalSparseBitVector;
-   typedef CS2::ABitVector<TR::GlobalAllocator>       GlobalBitVector;
 
    class AllocatedMemoryMeter
       {
@@ -1230,7 +1072,8 @@ namespace TR
    typedef CS2::LexicalBlockProfiler<MemoryMeter, Allocator>  LexicalMemProfiler;
    typedef CS2::PhaseMeasuringSummary<MemoryMeter, Allocator> PhaseMemSummary;
    }
-typedef CS2::arena_allocator  <65536, TR::Allocator> TR_ArenaAllocator;
+
+typedef TR::Region TR_ArenaAllocator;
 
 /*
  * Added the following static function to
@@ -1245,10 +1088,9 @@ static inline TR::typed_allocator<T, Alloc> getTypedAllocator(Alloc al)
 }
 
 template <typename T>
-static inline TR::typed_allocator<T, TR::Allocator> getTypedAllocator(TR::Allocator al)
+static inline TR::typed_allocator<T, TR::Allocator &> getTypedAllocator(TR::Allocator &al)
 {
-	TR::typed_allocator<T, TR::Allocator> ta(al);
-	return ta;
+   TR::typed_allocator<T, TR::Allocator &> ta(al);
+   return ta;
 }
-
 #endif

@@ -105,9 +105,9 @@ class TR_DataFlowAnalysis
    {
    public:
 
-   static void *operator new(size_t size, TR::Allocator a)
+   static void *operator new(size_t size, TR::Allocator &a)
       { return a.allocate(size); }
-   static void  operator delete(void *ptr, TR::Allocator a)
+   static void  operator delete(void *ptr, TR::Allocator &a)
       {
       // If there is an exception thrown during construction, the compilation
       // will be aborted, and all memory associated with that compilation will get freed.
@@ -143,7 +143,7 @@ class TR_DataFlowAnalysis
    TR_HeapMemory             trHeapMemory()                  { return _comp->trHeapMemory(); }
    TR_PersistentMemory *     trPersistentMemory()            { return _comp->trPersistentMemory(); }
 
-   TR::Allocator             allocator()                     { return _comp->allocator(); }
+   TR::Allocator &           allocator()                     { return _comp->allocator(); }
 
    bool                      trace()                         { return _trace; }
    void                      setTrace(bool t = true)         { _trace = t; }
