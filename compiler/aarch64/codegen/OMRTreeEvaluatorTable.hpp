@@ -532,7 +532,7 @@
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::vlRegStoreEvaluator ,	// TR::vlRegStore	// Store vector global register
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::vfRegStoreEvaluator ,	// TR::vfRegStore	// Store vector global register
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::vdRegStoreEvaluator ,	// TR::vdRegStore	// Store vector global register
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::iuconstEvaluator ,	// TR::iuconst		// load unsigned integer constant (32-but unsigned)
+    TR::TreeEvaluator::iuconstEvaluator ,	// TR::iuconst		// load unsigned integer constant (32-but unsigned)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::luconstEvaluator ,	// TR::luconst		// load unsigned long integer constant (64-bit unsigned)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::buconstEvaluator ,	// TR::buconst		// load unsigned byte integer constant (8-bit unsigned)
     TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:ARM64: Enable when Implemented: TR::TreeEvaluator::iuloadEvaluator ,	// TR::iuload		// load unsigned integer

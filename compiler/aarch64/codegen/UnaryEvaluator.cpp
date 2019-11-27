@@ -68,6 +68,13 @@ TR::Register *OMR::ARM64::TreeEvaluator::lconstEvaluator(TR::Node *node, TR::Cod
    return node->setRegister(tempReg);
    }
 
+TR::Register *OMR::ARM64::TreeEvaluator::iuconstEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // Only temporary
+   cg->comp()->failCompilation<TR::AssertionFailure>("iuconstEvaluator");
+   return NULL;
+   }
+
 TR::Register *OMR::ARM64::TreeEvaluator::inegEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *firstChild = node->getFirstChild();
