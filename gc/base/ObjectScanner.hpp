@@ -104,31 +104,6 @@ protected:
 	{
 		_typeId = __FUNCTION__;
 	}
-	
-	/**
-	 * Set up the scanner. Subclasses should provide a non-virtual implementation
-	 * to build next slot map and call it from their constructor or just after
-	 * their constructor. This will obviate the need to make an initial call to
-	 * the virtual getNextSlotMap() function and, in most cases, avoid the need
-	 * to call getNextSlotMap() entirely.
-	 *
-	 * If all of the object reference fields are mapped in the initial slot map,
-	 * the sublcass implementation should call setNoMoreSlots() to indicate that
-	 * the getNextSlotMap() method should not be called to refresh the slot map.
-	 *
-	 * This non-virtual base class implementation should be called directly from
-	 * the sublcass implementation, eg
-	 *
-	 *    MM_ObjectScanner::initialize(env);
-	 *
-	 * @param[in] env Current environment
-	 * @see getNextSlotMap()
-	 * @see putNextSlotMapBit()
-	 */
-	MMINLINE void
-	initialize(MM_EnvironmentBase *env)
-	{
-	}
 
 	/**
 	 * Helper function can be used to rebuild bit map of reference fields in

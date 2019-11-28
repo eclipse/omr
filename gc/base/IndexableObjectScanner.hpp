@@ -73,22 +73,14 @@ protected:
 		, _elementSize(elementSize)
 	{
 		_typeId = __FUNCTION__;
-		if ((endPtr - scanPtr) <= _bitsPerScanMap) {
-			setNoMoreSlots();
-		}
-	}
 
-	/**
-	 * Set up the scanner.
-	 * @param[in] env current environment (per thread)
-	 */
-	MMINLINE void
-	initialize(MM_EnvironmentBase *env)
-	{
 		Assert_MM_true(_basePtr <= _scanPtr);
 		Assert_MM_true(_scanPtr <= _endPtr);
 		Assert_MM_true(_endPtr <= _limitPtr);
-		GC_ObjectScanner::initialize(env);
+
+		if ((endPtr - scanPtr) <= _bitsPerScanMap) {
+			setNoMoreSlots();
+		}
 	}
 
 public:

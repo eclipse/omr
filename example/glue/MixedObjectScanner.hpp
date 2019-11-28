@@ -30,8 +30,8 @@ class GC_MixedObjectScanner : public GC_ObjectScanner
 {
 	/* Data Members */
 private:
-	fomrobject_t * const _endPtr;	/**< end scan pointer */
-	fomrobject_t *_mapPtr;			/**< pointer to first slot in current scan segment */
+	fomrobject_t * const _endPtr; /**< end scan pointer */
+	fomrobject_t *_mapPtr;        /**< pointer to first slot in current scan segment */
 
 protected:
 
@@ -52,16 +52,6 @@ protected:
 		, _mapPtr(_scanPtr)
 	{
 		_typeId = __FUNCTION__;
-	}
-
-	/**
-	 * Subclasses must call this method to set up the instance description bits and description pointer.
-	 * @param[in] env The scanning thread environment
-	 */
-	MMINLINE void
-	initialize(MM_EnvironmentBase *env)
-	{
-		GC_ObjectScanner::initialize(env);
 
 		intptr_t slotCount = _endPtr - _scanPtr;
 
@@ -91,9 +81,7 @@ public:
 	{
 		GC_MixedObjectScanner *objectScanner = NULL;
 		if (NULL != allocSpace) {
-			new(allocSpace) GC_MixedObjectScanner(env, objectPtr, flags);
-			objectScanner = (GC_MixedObjectScanner *)allocSpace;
-			objectScanner->initialize(env);
+			objectScanner = new(allocSpace) GC_MixedObjectScanner(env, objectPtr, flags);
 		}
 		return objectScanner;
 	}
