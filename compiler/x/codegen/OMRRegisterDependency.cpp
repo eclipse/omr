@@ -77,7 +77,7 @@ static void generateRegcopyDebugCounter(TR::CodeGenerator *cg, const char *categ
 OMR::X86::RegisterDependencyConditions::RegisterDependencyConditions(
       TR::Node *node,
       TR::CodeGenerator *cg,
-      TR_X86RegisterDependencyIndex additionalRegDeps,
+      uint32_t additionalRegDeps,
       List<TR::Register> *popRegisters)
    :_numPreConditions(-1),_numPostConditions(-1),
     _addCursorForPre(0),_addCursorForPost(0)
@@ -85,7 +85,7 @@ OMR::X86::RegisterDependencyConditions::RegisterDependencyConditions(
    TR::Register      *copyReg = NULL;
    TR::Register      *highCopyReg = NULL;
    List<TR::Register> registers(cg->trMemory());
-   TR_X86RegisterDependencyIndex          numFPGlobalRegs = 0,
+   uint32_t          numFPGlobalRegs = 0,
                      totalNumFPGlobalRegs = 0;
    int32_t           i;
    TR::Machine *machine = cg->machine();
@@ -398,9 +398,9 @@ OMR::X86::RegisterDependencyConditions::RegisterDependencyConditions(
    }
 
 
-TR_X86RegisterDependencyIndex OMR::X86::RegisterDependencyConditions::unionDependencies(
+uint32_t OMR::X86::RegisterDependencyConditions::unionDependencies(
    TR_X86RegisterDependencyGroup *deps,
-   TR_X86RegisterDependencyIndex  cursor,
+   uint32_t  cursor,
    TR::Register                  *vr,
    TR::RealRegister::RegNum       rr,
    TR::CodeGenerator             *cg,
@@ -433,7 +433,7 @@ TR_X86RegisterDependencyIndex OMR::X86::RegisterDependencyConditions::unionDepen
          return cursor;
          }
 
-      for (TR_X86RegisterDependencyIndex candidate = 0; candidate < cursor; candidate++)
+      for (uint32_t candidate = 0; candidate < cursor; candidate++)
          {
          TR::RegisterDependency  *dep = deps->getRegisterDependency(candidate);
          if (dep->getRegister() == vr)
@@ -480,9 +480,9 @@ void OMR::X86::RegisterDependencyConditions::unionNoRegPostCondition(TR::Registe
    }
 
 
-TR_X86RegisterDependencyIndex OMR::X86::RegisterDependencyConditions::unionRealDependencies(
+uint32_t OMR::X86::RegisterDependencyConditions::unionRealDependencies(
    TR_X86RegisterDependencyGroup *deps,
-   TR_X86RegisterDependencyIndex  cursor,
+   uint32_t  cursor,
    TR::Register                  *vr,
    TR::RealRegister::RegNum       rr,
    TR::CodeGenerator             *cg,
@@ -529,7 +529,7 @@ TR_X86RegisterDependencyIndex OMR::X86::RegisterDependencyConditions::unionRealD
    }
 
 
-TR::RegisterDependencyConditions  *OMR::X86::RegisterDependencyConditions::clone(TR::CodeGenerator *cg, TR_X86RegisterDependencyIndex additionalRegDeps)
+TR::RegisterDependencyConditions  *OMR::X86::RegisterDependencyConditions::clone(TR::CodeGenerator *cg, uint32_t additionalRegDeps)
    {
    TR::RegisterDependencyConditions  *other =
       new (cg->trHeapMemory()) TR::RegisterDependencyConditions(_numPreConditions  + additionalRegDeps,
@@ -652,10 +652,10 @@ void OMR::X86::RegisterDependencyConditions::useRegisters(TR::Instruction *instr
    }
 
 
-void TR_X86RegisterDependencyGroup::blockRealDependencyRegisters(TR_X86RegisterDependencyIndex numberOfRegisters, TR::CodeGenerator *cg)
+void TR_X86RegisterDependencyGroup::blockRealDependencyRegisters(uint32_t numberOfRegisters, TR::CodeGenerator *cg)
    {
    TR::Machine *machine = cg->machine();
-   for (TR_X86RegisterDependencyIndex i = 0; i < numberOfRegisters; i++)
+   for (uint32_t i = 0; i < numberOfRegisters; i++)
       {
       if (_dependencies[i].getRealRegister() != TR::RealRegister::NoReg)
          {
@@ -665,10 +665,10 @@ void TR_X86RegisterDependencyGroup::blockRealDependencyRegisters(TR_X86RegisterD
    }
 
 
-void TR_X86RegisterDependencyGroup::unblockRealDependencyRegisters(TR_X86RegisterDependencyIndex numberOfRegisters, TR::CodeGenerator *cg)
+void TR_X86RegisterDependencyGroup::unblockRealDependencyRegisters(uint32_t numberOfRegisters, TR::CodeGenerator *cg)
    {
    TR::Machine *machine = cg->machine();
-   for (TR_X86RegisterDependencyIndex i = 0; i < numberOfRegisters; i++)
+   for (uint32_t i = 0; i < numberOfRegisters; i++)
       {
       if (_dependencies[i].getRealRegister() != TR::RealRegister::NoReg)
          {
@@ -680,7 +680,7 @@ void TR_X86RegisterDependencyGroup::unblockRealDependencyRegisters(TR_X86Registe
 
 void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstruction,
                                                     TR_RegisterKinds  kindsToBeAssigned,
-                                                    TR_X86RegisterDependencyIndex          numberOfRegisters,
+                                                    uint32_t          numberOfRegisters,
                                                     TR::CodeGenerator *cg)
    {
    TR::Register             *virtReg              = NULL;
@@ -1056,7 +1056,7 @@ void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
 
 
 void TR_X86RegisterDependencyGroup::setDependencyInfo(
-   TR_X86RegisterDependencyIndex  index,
+   uint32_t  index,
    TR::Register                  *vr,
    TR::RealRegister::RegNum       rr,
    TR::CodeGenerator             *cg,
@@ -1146,7 +1146,7 @@ TR::RealRegister *OMR::X86::RegisterDependencyConditions::getRealRegisterFromVir
 
 void TR_X86RegisterDependencyGroup::assignFPRegisters(TR::Instruction   *prevInstruction,
                                                        TR_RegisterKinds  kindsToBeAssigned,
-                                                       TR_X86RegisterDependencyIndex          numberOfRegisters,
+                                                       uint32_t          numberOfRegisters,
                                                        TR::CodeGenerator *cg)
    {
 
@@ -1363,7 +1363,7 @@ void TR_X86RegisterDependencyGroup::assignFPRegisters(TR::Instruction   *prevIns
 //
 void TR_X86RegisterDependencyGroup::orderGlobalRegsOnFPStack(TR::Instruction    *cursor,
                                                               TR_RegisterKinds   kindsToBeAssigned,
-                                                              TR_X86RegisterDependencyIndex          numberOfRegisters,
+                                                              uint32_t          numberOfRegisters,
                                                               List<TR::Register> *poppedRegisters,
                                                               TR::CodeGenerator  *cg)
    {
@@ -1546,8 +1546,8 @@ uint32_t OMR::X86::RegisterDependencyConditions::numReferencedGPRegisters(TR::Co
 ////////////////////////////////////////////////////////////////////////////////
 
 TR::RegisterDependencyConditions  *
-generateRegisterDependencyConditions(TR_X86RegisterDependencyIndex numPreConds,
-                                     TR_X86RegisterDependencyIndex numPostConds,
+generateRegisterDependencyConditions(uint32_t numPreConds,
+                                     uint32_t numPostConds,
                                      TR::CodeGenerator * cg)
    {
    return new (cg->trHeapMemory()) TR::RegisterDependencyConditions(numPreConds, numPostConds, cg->trMemory());
@@ -1556,7 +1556,7 @@ generateRegisterDependencyConditions(TR_X86RegisterDependencyIndex numPreConds,
 TR::RegisterDependencyConditions  *
 generateRegisterDependencyConditions(TR::Node           *node,
                                      TR::CodeGenerator  *cg,
-                                     TR_X86RegisterDependencyIndex           additionalRegDeps,
+                                     uint32_t           additionalRegDeps,
                                      List<TR::Register> *popRegisters)
    {
    return new (cg->trHeapMemory()) TR::RegisterDependencyConditions(node, cg, additionalRegDeps, popRegisters);

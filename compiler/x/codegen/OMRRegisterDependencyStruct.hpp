@@ -40,21 +40,6 @@ namespace OMR { typedef OMR::X86::RegisterDependencyExt RegisterDependency; }
 
 #define GlobalRegisterFPDependency    0x04
 
-class TR_X86RegisterDependencyIndex
-   {
-   int32_t _index;
-
-   public:
-
-   TR_X86RegisterDependencyIndex(int32_t index):_index(index){}
-
-   operator int32_t() const { return _index; }
-   TR_X86RegisterDependencyIndex operator++()    { ++_index; return *this; }
-   TR_X86RegisterDependencyIndex operator--()    { --_index; return *this; }
-   TR_X86RegisterDependencyIndex operator++(int) { int32_t oldIndex = _index; _index++; return oldIndex; }
-   TR_X86RegisterDependencyIndex operator--(int) { int32_t oldIndex = _index; _index--; return oldIndex; }
-
-   };
 
 namespace OMR
 {
