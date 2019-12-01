@@ -77,17 +77,17 @@ public:
     /* Field */
     void getField(JNIFieldConfig fieldConfig, jobject obj, jobject*res);
 
-    /* invoke methods*/
-    void callMethod(JNIMethodConfig methodConfig, jobject obj,               int32_t argNum, ...);
-    void callMethod(JNIMethodConfig methodConfig, jobject obj, jobject* res, int32_t argNum, ...);
-    void callMethod(JNIMethodConfig methodConfig, jobject obj, int32_t* res, int32_t argNum, ...);
-    void callMethod(JNIMethodConfig methodConfig, jobject obj, int64_t* res, int32_t argNum, ...);
-    void callMethod(JNIMethodConfig methodConfig, jobject obj, int16_t* res, int32_t argNum, ...);
-    void callMethod(JNIMethodConfig methodConfig, jobject obj, float* res, int32_t argNum, ...);
-    void callMethod(JNIMethodConfig methodConfig, jobject obj, double* res, int32_t argNum, ...);
-    void callMethod(JNIMethodConfig methodConfig, jobject obj, char* res, int32_t argNum, ...);
-    void callMethod(JNIMethodConfig methodConfig, jobject obj, bool* res, int32_t argNum, ...);
-    void callMethod(JNIMethodConfig methodConfig, jobject obj, char** res, int32_t argNum, ...);
+    /* invoke methods true-> invoke successful. false-> fail to invoke. Exception may generate*/
+    bool callMethod(JNIMethodConfig methodConfig, jobject obj,               int32_t argNum, ...);
+    bool callMethod(JNIMethodConfig methodConfig, jobject obj, jobject* res, int32_t argNum, ...);
+    bool callMethod(JNIMethodConfig methodConfig, jobject obj, int32_t* res, int32_t argNum, ...);
+    bool callMethod(JNIMethodConfig methodConfig, jobject obj, int64_t* res, int32_t argNum, ...);
+    bool callMethod(JNIMethodConfig methodConfig, jobject obj, int16_t* res, int32_t argNum, ...);
+    bool callMethod(JNIMethodConfig methodConfig, jobject obj, float* res, int32_t argNum, ...);
+    bool callMethod(JNIMethodConfig methodConfig, jobject obj, double* res, int32_t argNum, ...);
+    bool callMethod(JNIMethodConfig methodConfig, jobject obj, char* res, int32_t argNum, ...);
+    bool callMethod(JNIMethodConfig methodConfig, jobject obj, bool* res, int32_t argNum, ...);
+    bool callMethod(JNIMethodConfig methodConfig, jobject obj, char** res, int32_t argNum, ...);
 
 };
 #endif //omr_OWLJNIClient_h

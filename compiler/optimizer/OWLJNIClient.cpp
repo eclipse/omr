@@ -228,7 +228,7 @@ jobject TR_OWLJNIClient::newObject(JNIConstructorConfig constructorConfig, int32
 }
 
 //void
-void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj,               int32_t argNum, ...){
+bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj,               int32_t argNum, ...){
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
@@ -239,16 +239,18 @@ void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj,     
     else{
         _env->CallVoidMethodV(obj,mid,args);
     }
+    va_end(args);
+
     if (_env->ExceptionCheck()) {
         printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
-        exit(1);
+        return false;
     }
+    return true;
 
-    va_end(args);
 }
 
 //object
-void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, jobject* res, int32_t argNum, ...) {
+bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, jobject* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -261,16 +263,18 @@ void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, jobj
         *res = _env->CallObjectMethodV(obj,mid,args);
     }
 
+    va_end(args);
+
     if (_env->ExceptionCheck()) {
         printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
-        exit(1);
+        return false;
     }
-
-    va_end(args);
+    return true;
+    
 }
 
 //int
-void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int32_t* res, int32_t argNum, ...) {
+bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int32_t* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -283,17 +287,17 @@ void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int3
         *res = _env->CallIntMethodV(obj,mid,args);
     }
 
-    if (_env->ExceptionCheck()) {
-        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
-        exit(1);
-    }
-
     va_end(args);
 
+    if (_env->ExceptionCheck()) {
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        return false;
+    }
+    return true;
 }
 
 //long
-void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int64_t* res, int32_t argNum, ...) {
+bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int64_t* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -306,16 +310,18 @@ void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int6
         *res = _env->CallLongMethodV(obj,mid,args);
     }
 
+    va_end(args);
+
     if (_env->ExceptionCheck()) {
         printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
-        exit(1);
+        return false;
     }
 
-    va_end(args);
+    return true;
 }
 
 //short
-void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int16_t* res, int32_t argNum, ...) {
+bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int16_t* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -328,16 +334,18 @@ void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, int1
         *res = _env->CallShortMethodV(obj,mid,args);
     }
 
+    va_end(args);
+
     if (_env->ExceptionCheck()) {
         printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
-        exit(1);
+        return false;
     }
 
-    va_end(args);
+    return true;
 }
 
 //float
-void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, float* res, int32_t argNum, ...) {
+bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, float* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -350,16 +358,18 @@ void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, floa
         *res = _env->CallFloatMethodV(obj,mid,args);
     }
 
+    va_end(args);
+
     if (_env->ExceptionCheck()) {
         printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
-        exit(1);
+        return false;
     }
 
-    va_end(args);
+    return true;
 }
 
 //double
-void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, double* res, int32_t argNum, ...) {
+bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, double* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -372,16 +382,17 @@ void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, doub
         *res = _env->CallDoubleMethodV(obj,mid,args);
     }
 
+    va_end(args);
+
     if (_env->ExceptionCheck()) {
         printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
-        exit(1);
+        return false;
     }
-
-    va_end(args);
+    return true;
 }
 
 //char
-void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, char* res, int32_t argNum, ...) {
+bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, char* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -394,16 +405,18 @@ void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, char
         *res = _env->CallCharMethodV(obj,mid,args);
     }
 
+    va_end(args);
+
     if (_env->ExceptionCheck()) {
         printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
-        exit(1);
+        return false;
     }
 
-    va_end(args);
+    return true;
 }
 
 //bool
-void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, bool* res, int32_t argNum, ...) {
+bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, bool* res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -416,16 +429,17 @@ void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, bool
         *res = _env->CallBooleanMethodV(obj,mid,args);
     }
 
+    va_end(args);
+
     if (_env->ExceptionCheck()) {
         printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
-        exit(1);
+        return false;
     }
-
-    va_end(args);
+    return true;
 }
 
 // char* (string)
-void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, char **res, int32_t argNum, ...) {
+bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, char **res, int32_t argNum, ...) {
 
     va_list args;
     va_start(args, argNum);
@@ -439,16 +453,20 @@ void TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, char
         out = (jstring)(_env->CallObjectMethodV(obj,mid,args));
     }
 
-    if (_env->ExceptionCheck()) {
-        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
-        exit(1);
-    }
-
     va_end(args);
+
+
+
+    
     const char *str = _env->GetStringUTFChars(out,0);
     sprintf(*res,str);
     _env->ReleaseStringUTFChars(out,0);
 
+    if (_env->ExceptionCheck()) {
+        printf("Error: Fail to call Method %s in %s\n",methodConfig.methodName, methodConfig.className);
+        return false;
+    }
+    return true;
 }
 
 
