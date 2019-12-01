@@ -175,9 +175,9 @@ jobject TR_OWLJNIClient::newLong(int64_t i) {
     return longObject;
 }
 
-jobjectArray TR_OWLJNIClient::constructObjectArray(const char* className, std::vector<jobject> objects) {
+jobjectArray TR_OWLJNIClient::newObjectArray(const char* className, jobject* objects, uint64_t size) {
     jclass cls = _getClass(className);
-    uint64_t size = objects.size();
+
     jobjectArray array = _env->NewObjectArray(size, cls, NULL);
     if (_env->ExceptionCheck()) {
         printf("Error: Fail to create object array\n");
@@ -191,7 +191,16 @@ jobjectArray TR_OWLJNIClient::constructObjectArray(const char* className, std::v
     return array;
 }
 
-jintArray TR_OWLJNIClient::constructIntArray(int* array, int length) {
+jobjectArray TR_OWLJNIClient::newMultidimentionalObjectArray(jobjectArray* innerArray, uint64_t size) {
+    jobjectArray outerArray = _env->NewObjectArray(size, _env->GetObjectClass(innerArray[0]),NULL );
+    for (uint64_t i = 0 ; i < size; i ++) {
+        _env->SetObjectArrayElement(outerArray, i, innerArray[i]);
+    }
+
+    return outerArray;
+}
+
+jintArray TR_OWLJNIClient::newIntegerArray(int* array, int length) {
     jintArray jarray = _env->NewIntArray(length);
 
     _env->SetIntArrayRegion(jarray,0,length,array);
@@ -232,7 +241,7 @@ bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj,     
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(methodConfig.className, cls, methodConfig.methodName, methodConfig.methodSig);
+    jmethodID mid = _getMethodID(methodConfig.isStatic, cls, methodConfig.methodName, methodConfig.methodSig);
     if (methodConfig.isStatic){
         _env->CallStaticVoidMethodV(cls, mid, args);
     }
@@ -255,7 +264,7 @@ bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, jobj
     va_list args;
     va_start(args, argNum);
     jclass cls = _getClass(methodConfig.className);
-    jmethodID mid = _getMethodID(methodConfig.className, cls, methodConfig.methodName, methodConfig.methodSig);
+    jmethodID mid = _getMethodID(methodConfig.isStatic, cls, methodConfig.methodName, methodConfig.methodSig);
     if (methodConfig.isStatic){
         *res = _env->CallStaticObjectMethodV(cls, mid, args);
     }

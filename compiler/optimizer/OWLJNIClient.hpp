@@ -68,8 +68,10 @@ public:
     jobject newShort(int16_t i);
     jobject newLong(int64_t i);
 
-    jobjectArray constructObjectArray(const char* className, std::vector<jobject> objects);
-    jintArray constructIntArray(int* array, int length);
+    jobjectArray newObjectArray(const char* className, jobject* objects, uint64_t size);
+    jobjectArray newMultidimentionalObjectArray(jobjectArray* innerArray, uint64_t size);
+
+    jintArray newIntegerArray(int* array, int length);
 
     /* new object */
     jobject newObject(JNIConstructorConfig, int32_t argNum, ...);
