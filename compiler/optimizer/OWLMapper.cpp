@@ -65,9 +65,18 @@ uint32_t TR_OWLLocalVariableTable::implicitLoad(TR::Node* node) {
     return _localVarTableByNode[node];
 }
 
-void TR_OWLLocalVariableTable::storeParameter(TR::ParameterSymbol* parmSym, char* type) {
-     _localVarTableByParmSym[parmSym] = _index;
-     _increaseIndex(type);
+uint32_t TR_OWLLocalVariableTable::storeParameter(TR::ParameterSymbol* parmSym, char* type) {
+    u_int32_t i = _index;
+
+    if (contain(parmSym)) {
+        i = _localVarTableByParmSym[parmSym];
+    }
+    else {
+        _localVarTableByParmSym[parmSym] = _index;
+        _increaseIndex(type);
+    }
+
+    return i;
 }
 
 uint32_t TR_OWLLocalVariableTable::loadParameter(TR::ParameterSymbol* parmSym) {
@@ -607,6 +616,20 @@ void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
         _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion, SHRIKE_BT_STORE);
 
     }
+    else if (symbol->isConstString()) { // skip string for now
+
+    }
+    else if (symbol->isParm()) { //parameter
+        StoreInstructionFields storeFields;
+        strcpy(storeFields.type, type);
+        
+        uint32_t index = _localVarTable->storeParameter(symbol->getParmSymbol(), type);
+        storeFields.index = index;
+
+        ShrikeBTInstructionFieldsUnion instrUnion;
+        instrUnion.storeInstructionFields = storeFields;
+        _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion, SHRIKE_BT_STORE);
+    }
     else if (symbol->isStatic()) { // static (SHRIKE_BT_PUT)
 
         PutInstructionFields putFields;
@@ -999,6 +1022,7 @@ void TR_OWLMapper::_mapDirectCallInstruction(TR::Node *node) {
  
         int32_t len;
         strcpy(invokeFields.className, loadAddr->getSymbolReference()->getTypeSignature(len));
+        invokeFields.className[len] = '\0';
 
         invokeFields.disp = SPECIAL;
     }
@@ -1048,8 +1072,13 @@ void TR_OWLMapper::_mapIndirectCallInstruction(TR::Node* node) {
 
     InvokeInstructionFields invokeFields;
     strncpy(invokeFields.type, signature, signatureLength);
+    invokeFields.type[signatureLength] = '\0';
+    
     strncpy(invokeFields.className, className, classNameLength);
+    invokeFields.className[classNameLength] = '\0';
+
     strncpy(invokeFields.methodName, methodName, methodNameLength);
+    invokeFields.methodName[methodNameLength] = '\0';
 
     if (methodKind == methodSymbol->Virtual) {
 

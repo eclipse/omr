@@ -8,6 +8,7 @@
 #include "optimizer/OWLJNIClient.hpp"
 /***** class Names *******/
 extern const char* InstructionClassName;
+extern const char* ExceptionHandlerClassName;
 
 /***** Method Config ******/
 
@@ -60,12 +61,12 @@ extern const JNIMethodConfig SwitchInstruction_make_Config;
 extern const JNIMethodConfig CheckCastInstruction_make_Config;
 
 extern const JNIMethodConfig Printer_print_Config;
-extern const JNIMethodConfig Verify_Config;
 
-extern const JNIConstructorConfig Printer;
+extern const JNIMethodConfig Verifier_verify_Config;
+
+/*** Constructor Config ***/
+
 extern const JNIConstructorConfig Verifier;
-
-
 
 /***** Field Config ******/
 

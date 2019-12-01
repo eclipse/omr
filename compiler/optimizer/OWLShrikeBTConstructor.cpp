@@ -649,7 +649,7 @@ jobject TR_OWLShrikeBTConstructor::SwitchInstruction(int* casesAndLabels, int le
         NULL,
         &switchInstruction,
         2,
-        _jniClient->constructIntArray(casesAndLabels, length),
+        _jniClient->newIntegerArray(casesAndLabels, length),
         defaultLabel
     );
 

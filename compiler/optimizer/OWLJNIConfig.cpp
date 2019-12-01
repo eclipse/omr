@@ -7,6 +7,7 @@
 
 /**** Class Names *****/
 const char* InstructionClassName = "com/ibm/wala/shrikeBT/Instruction";
+const char* ExceptionHandlerClassName = "com/ibm/wala/shrikeBT/ExceptionHandler";
 
 /***** Method Config ******/
 
@@ -178,10 +179,6 @@ const JNIMethodConfig CheckCastInstruction_make_Config = {
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/CheckCastInstruction;"
 };
 
-const JNIMethodConfig Verifier_init_Config = {
-
-};
-
 const JNIMethodConfig Printer_print_Config = {
         true,
         "com/ibm/wala/shrikeBT/Printer",
@@ -189,19 +186,15 @@ const JNIMethodConfig Printer_print_Config = {
         "([Lcom/ibm/wala/shrikeBT/Instruction;)V"
 };
 
-const JNIMethodConfig Verify_Config =  {
-        true,
-        "com/ibm/wala/shrikeBT/analysis/VerifierHelper",
+const JNIMethodConfig Verifier_verify_Config = {
+        false,
+        "com/ibm/wala/shrikeBT/analysis/Verifier",
         "verify",
-        "([Lcom/ibm/wala/shrikeBT/Instruction;)V"
-};
-
-
-/***** Constructor Config *****/
-const JNIConstructorConfig Printer = {
-        "com/ibm/wala/shrikeBT/Printer",
         "()V"
 };
+
+/***** Constructor Config *****/
+
 
 const JNIConstructorConfig Verifier = {
         "com/ibm/wala/shrikeBT/analysis/Verifier",

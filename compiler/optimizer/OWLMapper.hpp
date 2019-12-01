@@ -32,7 +32,7 @@ public:
     uint32_t implicitStore(TR::Node* node, char* type);
     uint32_t load(TR::SymbolReference* symRef);
     uint32_t implicitLoad(TR::Node* node);
-    void storeParameter(TR::ParameterSymbol* parmSym, char* type);
+    uint32_t storeParameter(TR::ParameterSymbol* parmSym, char* type);
     uint32_t loadParameter(TR::ParameterSymbol* parmSym);
     bool contain(TR::Node* node);
     bool contain(TR::SymbolReference* symRef);
