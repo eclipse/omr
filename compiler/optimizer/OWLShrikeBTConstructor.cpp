@@ -166,6 +166,11 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
                     instructionObject = SwitchInstruction(switchFields.casesAndLabels, switchFields.length, switchFields.defaultLabel);
                     break;
                 }
+                case SHRIKE_BT_CHECK_CAST: {
+                    CheckCastInstructionFields checkCastFields = instrUnion.checkCastInstructionFields;
+                    instructionObject = CheckCastInstruction(checkCastFields.type);
+                    break;
+                }
                 default:
                     perror("No instruction matched inside construct instruction object function!\n");
                     exit(1);
@@ -180,23 +185,23 @@ std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(st
 /*** Helper methods ***/
 
 jobject TR_OWLShrikeBTConstructor::Integer(int32_t i) {
-    return _jniClient->constructObject(i);
+    return _jniClient->newInteger(i);
 }
 
 jobject TR_OWLShrikeBTConstructor::Float(float f) {
-    return _jniClient->constructObject(f);
+    return _jniClient->newFloat(f);
 }
 
 jobject TR_OWLShrikeBTConstructor::Double(double d) {
-    return _jniClient->constructObject(d);
+    return _jniClient->newDouble(d);
 }
 
 jobject TR_OWLShrikeBTConstructor::Short(int16_t s) {
-    return _jniClient->constructObject(s);
+    return _jniClient->newShort(s);
 }
 
 jobject TR_OWLShrikeBTConstructor::Long(int64_t l) {
-    return _jniClient->constructObject(l);
+    return _jniClient->newLong(l);
 }
 
 jobject TR_OWLShrikeBTConstructor::BinaryOperator(ShrikeBTBinaryOperator op) {
@@ -293,11 +298,11 @@ jobject TR_OWLShrikeBTConstructor::ConstantInstruction(char *type, jobject value
 
     _jniClient->callMethod
     (
-        ConstantInstructionConfig,
+        ConstantInstruction_make_Config,
         NULL,
         &constantInstructionObject,
         2,
-        _jniClient->constructString(type),
+        _jniClient->newString(type),
         value
     );
     return constantInstructionObject;
@@ -308,11 +313,11 @@ jobject TR_OWLShrikeBTConstructor::StoreInstruction(char *type, uint32_t index) 
 
     _jniClient->callMethod
     (
-        StoreInstructionConfig,
+        StoreInstruction_make_Config,
         NULL,
         &storeInstructionObject,
         2,
-        _jniClient->constructString(type),
+        _jniClient->newString(type),
         index
     );
 
@@ -324,11 +329,11 @@ jobject TR_OWLShrikeBTConstructor::LoadInstruction(char *type, uint32_t index) {
     jobject loadInstructionObject;
     _jniClient->callMethod
     (
-        LoadInstructionConfig,
+        LoadInstruction_make_Config,
         NULL,
         &loadInstructionObject,
         2,
-        _jniClient->constructString(type),
+        _jniClient->newString(type),
         index
     );
     return loadInstructionObject;
@@ -339,11 +344,11 @@ jobject TR_OWLShrikeBTConstructor::BinaryOpInstruction(char* type, ShrikeBTBinar
 
     _jniClient->callMethod
     (
-        BinaryOpInstructionConfig,
+        BinaryOpInstruction_make_Config,
         NULL,
         &binaryOpInstruction,
         2,
-        _jniClient->constructString(type),
+        _jniClient->newString(type),
         BinaryOperator(op)
     );
     return binaryOpInstruction;
@@ -354,11 +359,11 @@ jobject TR_OWLShrikeBTConstructor::ReturnInstruction(char* type) {
 
     _jniClient->callMethod
     (
-        ReturnInstructionConfig,
+        ReturnInstruction_make_Config,
         NULL,
         &returnInstruction,
         1,
-        _jniClient->constructString(type)
+        _jniClient->newString(type)
     );
 
     return returnInstruction;
@@ -369,7 +374,7 @@ jobject TR_OWLShrikeBTConstructor::GotoInstruction(uint32_t label) {
 
     _jniClient->callMethod
     (
-        GotoInstructionConfig,
+        GotoInstruction_make_Config,
         NULL,
         &gotoInstruction,
         1,
@@ -384,11 +389,11 @@ jobject TR_OWLShrikeBTConstructor::ConditionalBranchInstruction(char *type, Shri
 
     _jniClient->callMethod
     (
-        ConditionalBranchInstructionConfig,
+        ConditionalBranchInstruction_make_Config,
         NULL,
         &conditionalBranchInstruction,
         3,
-        _jniClient->constructString(type),
+        _jniClient->newString(type),
         ConditionalBranchOperator(op),
         label
     );
@@ -401,11 +406,11 @@ jobject TR_OWLShrikeBTConstructor::ComparisonInstruction(char *type, ShrikeBTCom
 
     _jniClient->callMethod
     (
-        ComparisonInstructionConfig,
+        ComparisonInstruction_make_Config,
         NULL,
         &comparisonInstruction,
         2,
-        _jniClient->constructString(type),
+        _jniClient->newString(type),
         ComparisonOperator(op)
 
     );
@@ -418,12 +423,12 @@ jobject TR_OWLShrikeBTConstructor::ConversionInstruction(char *fromType, char *t
 
     _jniClient->callMethod
     (
-        ConversionInstructionConfig,
+        ConversionInstruction_make_Config,
         NULL,
         &conversionInstruction,
         2,
-        _jniClient->constructString(fromType),
-        _jniClient->constructString(toType)
+        _jniClient->newString(fromType),
+        _jniClient->newString(toType)
     );
 
     return conversionInstruction;
@@ -435,11 +440,11 @@ jobject TR_OWLShrikeBTConstructor::UnaryOpInstruction(char *type) {
 
     _jniClient->callMethod
     (
-        UnaryOpInstructionConfig,
+        UnaryOpInstruction_make_Config,
         NULL,
         &unaryOpInstruction,
         1,
-        _jniClient->constructString(type)
+        _jniClient->newString(type)
     );
 
     return unaryOpInstruction;
@@ -450,13 +455,13 @@ jobject TR_OWLShrikeBTConstructor::InvokeInstruction(char* type, char* className
 
     _jniClient->callMethod
     (
-        InvokeInstructionConfig,
+        InvokeInstruction_make_Config,
         NULL,
         &invokeInstruction,
         4,
-        _jniClient->constructString(type),
-        _jniClient->constructString(className),
-        _jniClient->constructString(methodName),
+        _jniClient->newString(type),
+        _jniClient->newString(className),
+        _jniClient->newString(methodName),
         Dispatch(disp)
     );
 
@@ -468,7 +473,7 @@ jobject TR_OWLShrikeBTConstructor::SwapInstruction() {
 
     _jniClient->callMethod
     (
-        SwapInstructionConfig,
+        SwapInstruction_make_Config,
         NULL,
         &swapInstruction,
         0
@@ -482,7 +487,7 @@ jobject TR_OWLShrikeBTConstructor::PopInstruction(uint16_t size) {
 
     _jniClient->callMethod
     (
-        PopInstructionConfig,
+        PopInstruction_make_Config,
         NULL,
         &popInstruction,
         1,
@@ -497,11 +502,11 @@ jobject TR_OWLShrikeBTConstructor::ArrayStoreInstruction(char* type) {
 
     _jniClient->callMethod
     (
-        ArrayStoreInstructionConfig,
+        ArrayStoreInstruction_make_Config,
         NULL,
         &arrayStoreInstruction,
         1,
-        _jniClient->constructString(type)
+        _jniClient->newString(type)
     );
 
     return arrayStoreInstruction;
@@ -512,11 +517,11 @@ jobject TR_OWLShrikeBTConstructor::ArrayLoadInstruction(char* type) {
 
     _jniClient->callMethod
     (
-        ArrayLoadInstructionConfig,
+        ArrayLoadInstruction_make_Config,
         NULL,
         &arrayLoadInstruction,
         1,
-        _jniClient->constructString(type)
+        _jniClient->newString(type)
     );
 
     return arrayLoadInstruction;
@@ -527,11 +532,11 @@ jobject TR_OWLShrikeBTConstructor::NewInstruction(char* type, int32_t arrayBound
 
     _jniClient->callMethod
     (
-        NewInstructionConfig,
+        NewInstruction_make_Config,
         NULL,
         &newInstruction,
         2,
-        _jniClient->constructString(type),
+        _jniClient->newString(type),
         arrayBoundsCount
     );
 
@@ -543,13 +548,13 @@ jobject TR_OWLShrikeBTConstructor::PutInstruction(char* type, char* className, c
 
     _jniClient->callMethod
     (
-        PutInstructionConfig,
+        PutInstruction_make_Config,
         NULL,
         &putInstruction,
         4,
-        _jniClient->constructString(type),
-        _jniClient->constructString(className),
-        _jniClient->constructString(fieldName),
+        _jniClient->newString(type),
+        _jniClient->newString(className),
+        _jniClient->newString(fieldName),
         isStatic ? JNI_TRUE : JNI_FALSE
     );
     
@@ -561,13 +566,13 @@ jobject TR_OWLShrikeBTConstructor::GetInstruction(char* type, char* className, c
 
     _jniClient->callMethod
     (
-        GetInstructionConfig,
+        GetInstruction_make_Config,
         NULL,
         &getInstruction,
         4,
-        _jniClient->constructString(type),
-        _jniClient->constructString(className),
-        _jniClient->constructString(fieldName),
+        _jniClient->newString(type),
+        _jniClient->newString(className),
+        _jniClient->newString(fieldName),
         isStatic ? JNI_TRUE : JNI_FALSE
     );
 
@@ -579,7 +584,7 @@ jobject TR_OWLShrikeBTConstructor::DupInstruction(uint16_t delta) {
 
     _jniClient->callMethod
     (
-        DupInstructionConfig,
+        DupInstruction_make_Config,
         NULL,
         &dupInstruction,
         1,
@@ -594,11 +599,11 @@ jobject TR_OWLShrikeBTConstructor::InstanceofInstruction(char *type) {
     
     _jniClient->callMethod
     (
-        InstanceofInstructionConfig,
+        InstanceofInstruction_make_Config,
         NULL,
         &instanceofInstruction,
         1,
-        _jniClient->constructString(type)
+        _jniClient->newString(type)
 
     );
 
@@ -610,7 +615,7 @@ jobject TR_OWLShrikeBTConstructor::ArrayLengthInstruction() {
 
     _jniClient->callMethod
     (
-        ArrayLengthInstructionConfig,
+        ArrayLengthInstruction_make_Config,
         NULL,
         &arrayLengthInstruction,
         0
@@ -624,11 +629,11 @@ jobject TR_OWLShrikeBTConstructor::ShiftInstruction(char* type, ShrikeBTShiftOpe
 
     _jniClient->callMethod
     (
-        ShiftInstructionConfig,
+        ShiftInstruction_make_Config,
         NULL,
         &shiftOperator,
         2,
-        _jniClient->constructString(type), 
+        _jniClient->newString(type), 
         ShiftOperator(op)
     );
 
@@ -640,7 +645,7 @@ jobject TR_OWLShrikeBTConstructor::SwitchInstruction(int* casesAndLabels, int le
 
     _jniClient->callMethod
     (
-        SwitchInstructionConfig,
+        SwitchInstruction_make_Config,
         NULL,
         &switchInstruction,
         2,
@@ -649,4 +654,19 @@ jobject TR_OWLShrikeBTConstructor::SwitchInstruction(int* casesAndLabels, int le
     );
 
     return switchInstruction;
+}
+
+jobject TR_OWLShrikeBTConstructor::CheckCastInstruction(char* type) {
+    jobject checkCastInstruction;
+
+    _jniClient->callMethod
+    (
+        CheckCastInstruction_make_Config,
+        NULL,
+        &checkCastInstruction,
+        1,
+        _jniClient->newString(type)
+    );
+
+    return checkCastInstruction;
 }

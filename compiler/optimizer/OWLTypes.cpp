@@ -12,3 +12,4 @@ char* const TYPE_void = "V";
 char* const TYPE_null = "L;";
 char* const TYPE_boolean = "Z";
 char* const TYPE_Object = "Ljava/lang/Object;";
+char* const TYPE_String = "Ljava/lang/String;";

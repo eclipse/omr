@@ -10,19 +10,26 @@
 #include <vector>
 #include "jni.h"
 
-struct JNIMethodConfig {
+typedef struct JNIMethodConfig {
     bool isStatic;
     char* className;
     char* methodName;
     char* methodSig;
-};
+} JNIMethodConfig;
 
-struct JNIFieldConfig {
+typedef struct JNIFieldConfig {
     bool isStatic;
     char* className;
     char* fieldName;
     char* fieldSig;
-};
+} JNIFieldConfig;
+
+typedef struct JNIConstructorConfig {
+    char* className;
+    char* constructorSig; 
+} JNIConstructorConfig;
+
+
 
 /***
  * JNIClient uses singleton pattern.
@@ -38,6 +45,7 @@ private:
     static TR_OWLJNIClient * _instance;
 
     TR_OWLJNIClient();
+    ~TR_OWLJNIClient();
     static bool _isJvmRunning;
     static bool _isJvmDestroyed;
     jclass _getClass(const char* className);
@@ -52,20 +60,24 @@ public:
     static bool startJVM();
     static void destroyJVM();
     
-    jstring constructString(char* str);
+    jstring newString(char* str);
 
-    jobject constructObject(int32_t i);
-    jobject constructObject(float i);
-    jobject constructObject(double i);
-    jobject constructObject(int16_t i);
-    jobject constructObject(int64_t i);
+    jobject newInteger(int32_t i);
+    jobject newFloat(float i);
+    jobject newDouble(double i);
+    jobject newShort(int16_t i);
+    jobject newLong(int64_t i);
 
     jobjectArray constructObjectArray(const char* className, std::vector<jobject> objects);
     jintArray constructIntArray(int* array, int length);
 
+    /* new object */
+    jobject newObject(JNIConstructorConfig, int32_t argNum, ...);
+
     /* Field */
     void getField(JNIFieldConfig fieldConfig, jobject obj, jobject*res);
 
+    /* invoke methods*/
     void callMethod(JNIMethodConfig methodConfig, jobject obj,               int32_t argNum, ...);
     void callMethod(JNIMethodConfig methodConfig, jobject obj, jobject* res, int32_t argNum, ...);
     void callMethod(JNIMethodConfig methodConfig, jobject obj, int32_t* res, int32_t argNum, ...);

@@ -16,6 +16,7 @@ JNIEnv* TR_OWLJNIClient::_env = NULL;
 JavaVM* TR_OWLJNIClient::_jvm = NULL;
 
 TR_OWLJNIClient::TR_OWLJNIClient() {}
+TR_OWLJNIClient::~TR_OWLJNIClient() {}
 
 jclass TR_OWLJNIClient::_getClass(const char *className) {
     jclass cls = _env->FindClass(className);
@@ -135,39 +136,39 @@ void TR_OWLJNIClient::destroyInstance() {
     }
 }
 
-jstring TR_OWLJNIClient::constructString(char *str) {
+jstring TR_OWLJNIClient::newString(char *str) {
     return _env->NewStringUTF(str);
 }
 
-jobject TR_OWLJNIClient::constructObject(int32_t i){
+jobject TR_OWLJNIClient::newInteger(int32_t i){
     jclass cls = _getClass("java/lang/Integer");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(I)V");
     jobject integerObject = _env->NewObject(cls, mid, i);
     return integerObject;
 }
 
-jobject TR_OWLJNIClient::constructObject(float i){
+jobject TR_OWLJNIClient::newFloat(float i){
     jclass cls = _getClass("java/lang/Float");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(F)V");
     jobject floatObject = _env->NewObject(cls, mid, i);
     return floatObject;
 }
 
-jobject TR_OWLJNIClient::constructObject(double i){
+jobject TR_OWLJNIClient::newDouble(double i){
     jclass cls = _getClass("java/lang/Double");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(D)V");
     jobject doubleObject = _env->NewObject(cls, mid, i);
     return doubleObject;
 }
 
-jobject TR_OWLJNIClient::constructObject(int16_t i) {
+jobject TR_OWLJNIClient::newShort(int16_t i) {
     jclass cls = _getClass("java/lang/Short");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(S)V");
     jobject shortObject = _env->NewObject(cls, mid, i);
     return shortObject;
 }
 
-jobject TR_OWLJNIClient::constructObject(int64_t i) {
+jobject TR_OWLJNIClient::newLong(int64_t i) {
     jclass cls = _getClass("java/lang/Long");
     jmethodID mid = _getMethodID(false, cls, "<init>", "(J)V");
     jobject longObject = _env->NewObject(cls,mid,i);
@@ -208,6 +209,22 @@ void TR_OWLJNIClient::getField(JNIFieldConfig fieldConfig, jobject obj, jobject 
     else{
         *res = _env->GetObjectField(obj,fid);
     }
+}
+
+/*new object */
+jobject TR_OWLJNIClient::newObject(JNIConstructorConfig constructorConfig, int32_t argNum, ...) {
+    va_list args;
+    va_start(args, argNum);
+    jclass cls = _getClass(constructorConfig.className);
+    jmethodID mid = _getMethodID(false, cls, "<init>", constructorConfig.constructorSig);
+    jobject obj = _env->NewObjectV(cls,mid, args);
+    if (_env->ExceptionCheck()) {
+        printf("Error: Fail to call constructor of Class %s\n", constructorConfig.className);
+        exit(1);
+    }
+    va_end(args);
+
+    return obj;
 }
 
 //void

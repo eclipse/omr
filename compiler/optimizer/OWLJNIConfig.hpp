@@ -11,54 +11,59 @@ extern const char* InstructionClassName;
 
 /***** Method Config ******/
 
-extern const JNIMethodConfig ConstantInstructionConfig;
+extern const JNIMethodConfig ConstantInstruction_make_Config;
 
-extern const JNIMethodConfig StoreInstructionConfig;
+extern const JNIMethodConfig StoreInstruction_make_Config;
 
-extern const JNIMethodConfig LoadInstructionConfig;
+extern const JNIMethodConfig LoadInstruction_make_Config;
 
-extern const JNIMethodConfig BinaryOpInstructionConfig;
+extern const JNIMethodConfig BinaryOpInstruction_make_Config;
 
-extern const JNIMethodConfig ReturnInstructionConfig;
+extern const JNIMethodConfig ReturnInstruction_make_Config;
 
-extern const JNIMethodConfig GotoInstructionConfig;
+extern const JNIMethodConfig GotoInstruction_make_Config;
 
-extern const JNIMethodConfig ConditionalBranchInstructionConfig;
+extern const JNIMethodConfig ConditionalBranchInstruction_make_Config;
 
-extern const JNIMethodConfig ComparisonInstructionConfig;
+extern const JNIMethodConfig ComparisonInstruction_make_Config;
 
-extern const JNIMethodConfig ConversionInstructionConfig;
+extern const JNIMethodConfig ConversionInstruction_make_Config;
 
-extern const JNIMethodConfig UnaryOpInstructionConfig;
+extern const JNIMethodConfig UnaryOpInstruction_make_Config;
 
-extern const JNIMethodConfig InvokeInstructionConfig;
+extern const JNIMethodConfig InvokeInstruction_make_Config;
 
-extern const JNIMethodConfig SwapInstructionConfig;
+extern const JNIMethodConfig SwapInstruction_make_Config;
 
-extern const JNIMethodConfig PopInstructionConfig;
+extern const JNIMethodConfig PopInstruction_make_Config;
 
-extern const JNIMethodConfig ArrayStoreInstructionConfig;
+extern const JNIMethodConfig ArrayStoreInstruction_make_Config;
 
-extern const JNIMethodConfig ArrayLoadInstructionConfig;
+extern const JNIMethodConfig ArrayLoadInstruction_make_Config;
 
-extern const JNIMethodConfig NewInstructionConfig;
+extern const JNIMethodConfig NewInstruction_make_Config;
 
-extern const JNIMethodConfig PutInstructionConfig;
+extern const JNIMethodConfig PutInstruction_make_Config;
 
-extern const JNIMethodConfig GetInstructionConfig;
+extern const JNIMethodConfig GetInstruction_make_Config;
 
-extern const JNIMethodConfig DupInstructionConfig;
+extern const JNIMethodConfig DupInstruction_make_Config;
 
-extern const JNIMethodConfig InstanceofInstructionConfig;
+extern const JNIMethodConfig InstanceofInstruction_make_Config;
 
-extern const JNIMethodConfig ArrayLengthInstructionConfig;
+extern const JNIMethodConfig ArrayLengthInstruction_make_Config;
 
-extern const JNIMethodConfig ShiftInstructionConfig;
+extern const JNIMethodConfig ShiftInstruction_make_Config;
 
-extern const JNIMethodConfig SwitchInstructionConfig;
+extern const JNIMethodConfig SwitchInstruction_make_Config;
 
-extern const JNIMethodConfig PrinterConfig;
+extern const JNIMethodConfig CheckCastInstruction_make_Config;
 
+extern const JNIMethodConfig Printer_print_Config;
+extern const JNIMethodConfig Verify_Config;
+
+extern const JNIConstructorConfig Printer;
+extern const JNIConstructorConfig Verifier;
 
 
 

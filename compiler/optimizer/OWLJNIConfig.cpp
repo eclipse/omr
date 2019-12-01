@@ -10,172 +10,202 @@ const char* InstructionClassName = "com/ibm/wala/shrikeBT/Instruction";
 
 /***** Method Config ******/
 
-const JNIMethodConfig ConstantInstructionConfig = {
+const JNIMethodConfig ConstantInstruction_make_Config = {
     true,
     "com/ibm/wala/shrikeBT/ConstantInstruction",
     "make",
     "(Ljava/lang/String;Ljava/lang/Object;)Lcom/ibm/wala/shrikeBT/ConstantInstruction;"
 };
 
-const JNIMethodConfig StoreInstructionConfig = {
+const JNIMethodConfig StoreInstruction_make_Config = {
     true,
     "com/ibm/wala/shrikeBT/StoreInstruction",
     "make",
     "(Ljava/lang/String;I)Lcom/ibm/wala/shrikeBT/StoreInstruction;"
 };
 
-const JNIMethodConfig LoadInstructionConfig = {
+const JNIMethodConfig LoadInstruction_make_Config = {
     true,
     "com/ibm/wala/shrikeBT/LoadInstruction",
     "make",
     "(Ljava/lang/String;I)Lcom/ibm/wala/shrikeBT/LoadInstruction;"
 };
 
-const JNIMethodConfig BinaryOpInstructionConfig = {
+const JNIMethodConfig BinaryOpInstruction_make_Config = {
     true,
     "com/ibm/wala/shrikeBT/BinaryOpInstruction",
     "make",
     "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IBinaryOpInstruction$Operator;)Lcom/ibm/wala/shrikeBT/BinaryOpInstruction;"
 };
 
-const JNIMethodConfig ReturnInstructionConfig = {
+const JNIMethodConfig ReturnInstruction_make_Config = {
     true,
     "com/ibm/wala/shrikeBT/ReturnInstruction",
     "make",
     "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ReturnInstruction;"
 };
 
-const JNIMethodConfig GotoInstructionConfig = {
+const JNIMethodConfig GotoInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/GotoInstruction",
         "make",
         "(I)Lcom/ibm/wala/shrikeBT/GotoInstruction;"
 };
 
-const JNIMethodConfig ConditionalBranchInstructionConfig = {
+const JNIMethodConfig ConditionalBranchInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/ConditionalBranchInstruction",
         "make",
         "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IConditionalBranchInstruction$Operator;I)Lcom/ibm/wala/shrikeBT/ConditionalBranchInstruction;"
 };
 
-const JNIMethodConfig ComparisonInstructionConfig = {
+const JNIMethodConfig ComparisonInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/ComparisonInstruction",
         "make",
         "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IComparisonInstruction$Operator;)Lcom/ibm/wala/shrikeBT/ComparisonInstruction;"
 };
 
-const JNIMethodConfig ConversionInstructionConfig = {
+const JNIMethodConfig ConversionInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/ConversionInstruction",
         "make",
         "(Ljava/lang/String;Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ConversionInstruction;"
 };
 
-const JNIMethodConfig UnaryOpInstructionConfig = {
+const JNIMethodConfig UnaryOpInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/UnaryOpInstruction",
         "make",
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/UnaryOpInstruction;"
 };
 
-const JNIMethodConfig InvokeInstructionConfig = {
+const JNIMethodConfig InvokeInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/InvokeInstruction",
         "make",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IInvokeInstruction$Dispatch;)Lcom/ibm/wala/shrikeBT/InvokeInstruction;"
 };
 
-const JNIMethodConfig SwapInstructionConfig = {
+const JNIMethodConfig SwapInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/SwapInstruction",
         "make",
         "()Lcom/ibm/wala/shrikeBT/SwapInstruction;"
 };
 
-const JNIMethodConfig PopInstructionConfig = {
+const JNIMethodConfig PopInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/PopInstruction",
         "make",
         "(I)Lcom/ibm/wala/shrikeBT/PopInstruction;"
 };
 
-const JNIMethodConfig ArrayStoreInstructionConfig = {
+const JNIMethodConfig ArrayStoreInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/ArrayStoreInstruction",
         "make",
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ArrayStoreInstruction;"
 };
 
-const JNIMethodConfig ArrayLoadInstructionConfig = {
+const JNIMethodConfig ArrayLoadInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/ArrayLoadInstruction",
         "make",
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/ArrayLoadInstruction;"
 };
 
-const JNIMethodConfig NewInstructionConfig = {
+const JNIMethodConfig NewInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/NewInstruction",
         "make",
         "(Ljava/lang/String;I)Lcom/ibm/wala/shrikeBT/NewInstruction;"
 };
 
-const JNIMethodConfig PutInstructionConfig = {
+const JNIMethodConfig PutInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/PutInstruction",
         "make",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/ibm/wala/shrikeBT/PutInstruction;"
 };
 
-const JNIMethodConfig GetInstructionConfig = {
+const JNIMethodConfig GetInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/GetInstruction",
         "make",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/ibm/wala/shrikeBT/GetInstruction;"
 };
 
-const JNIMethodConfig DupInstructionConfig = {
+const JNIMethodConfig DupInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/DupInstruction",
         "make",
         "(I)Lcom/ibm/wala/shrikeBT/DupInstruction;"
 };
 
-const JNIMethodConfig InstanceofInstructionConfig = {
+const JNIMethodConfig InstanceofInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/InstanceofInstruction",
         "make",
         "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/InstanceofInstruction;"
 };
 
-const JNIMethodConfig ArrayLengthInstructionConfig = {
+const JNIMethodConfig ArrayLengthInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/ArrayLengthInstruction",
         "make",
         "()Lcom/ibm/wala/shrikeBT/ArrayLengthInstruction;"
 };
 
-const JNIMethodConfig ShiftInstructionConfig = {
+const JNIMethodConfig ShiftInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/ShiftInstruction",
         "make",
         "(Ljava/lang/String;Lcom/ibm/wala/shrikeBT/IShiftInstruction$Operator;)Lcom/ibm/wala/shrikeBT/ShiftInstruction;"
 };
 
-const JNIMethodConfig SwitchInstructionConfig = {
+const JNIMethodConfig SwitchInstruction_make_Config = {
         true,
         "com/ibm/wala/shrikeBT/SwitchInstruction",
         "make",
         "([II)Lcom/ibm/wala/shrikeBT/SwitchInstruction;"
 };
 
-const JNIMethodConfig PrinterConfig = {
+const JNIMethodConfig CheckCastInstruction_make_Config = {
+        true,
+        "com/ibm/wala/shrikeBT/CheckCastInstruction",
+        "make",
+        "(Ljava/lang/String;)Lcom/ibm/wala/shrikeBT/CheckCastInstruction;"
+};
+
+const JNIMethodConfig Verifier_init_Config = {
+
+};
+
+const JNIMethodConfig Printer_print_Config = {
         true,
         "com/ibm/wala/shrikeBT/Printer",
         "print",
         "([Lcom/ibm/wala/shrikeBT/Instruction;)V"
+};
+
+const JNIMethodConfig Verify_Config =  {
+        true,
+        "com/ibm/wala/shrikeBT/analysis/VerifierHelper",
+        "verify",
+        "([Lcom/ibm/wala/shrikeBT/Instruction;)V"
+};
+
+
+/***** Constructor Config *****/
+const JNIConstructorConfig Printer = {
+        "com/ibm/wala/shrikeBT/Printer",
+        "()V"
+};
+
+const JNIConstructorConfig Verifier = {
+        "com/ibm/wala/shrikeBT/analysis/Verifier",
+        "(ZZLjava/lang/String;Ljava/lang/String;[Lcom/ibm/wala/shrikeBT/IInstruction;[[Lcom/ibm/wala/shrikeBT/ExceptionHandler;[I[[Ljava/lang/String;)V"
 };
 
 /***** Field Config ******/

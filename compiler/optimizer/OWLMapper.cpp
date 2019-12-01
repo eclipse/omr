@@ -133,7 +133,7 @@ void TR_OWLMapper::_logOMRIL(TR::Node *root, TR::NodeChecklist &visited) {
     for (uint32_t i = 0; i < root->getNumChildren(); ++i) {
         _logOMRIL(root->getChild(i), visited);
     }
-    printf("%d: %s | ref count: %u | has no dataType: %d\n ", root->getGlobalIndex(),root->getOpCode().getName(),root->getReferenceCount(),root->getOpCode().hasNoDataType());
+    printf("%d: %s | ref count: %u\n ", root->getGlobalIndex(),root->getOpCode().getName(),root->getReferenceCount());
 
     TR::ILOpCodes opCodeValue = root->getOpCodeValue();
     if ( opCodeValue == TR::treetop || opCodeValue == TR::BBStart || opCodeValue == TR::BBEnd){
@@ -150,7 +150,6 @@ void TR_OWLMapper::_storeParameters() {
    
     for (p = paramIterator.getFirst(); p != NULL; p = paramIterator.getNext()) {
         _localVarTable->storeParameter(p, _getType(p->getDataType()));
-        printf("store parm\n");
     }
 }
 
@@ -186,8 +185,13 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         
     }
     else if (opCode.isCheckCast()) {
-        printf("CHECK CAST: %d\n",opCode.isCheck());
         _processTree(root->getChild(0),root,visited); //only evaluate the first aload
+    }
+    else if (opCode.isBndCheck()) { // skip BNDcheck
+
+    }
+    else if (opCodeValue == TR::compressedRefs) { // skip compressedRefs
+
     }
     else if (opCode.isCallIndirect()) {
         // skip the first aload
@@ -226,10 +230,12 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
     }
 
     /*** 2. processing the current node ***/
+
     _instructionRouter(root); // routed to corresponding mapping
+
     /*** 3. post-processsing ***/
 
-    if (opCodeValue == TR::New) {  // if it is new instruction, do not create implicit load or store, create dup for New Object
+    if (opCodeValue == TR::New) {  // if it is new instruction, do not create implicit load or store, create dup for New Object. Implicit store will be created by constructor after it is invoked
         _createDupInstruction(root , 0);
         return;
     }   
@@ -259,6 +265,28 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
             }
         }
     }
+
+    // post-processing for call direct and indirect instructions
+    if (opCode.isCall()) {
+
+        // for constructors, create implicit store if the reference count of NEW is > 2, otherwise, create POP since the object ref won't be referred anymore
+        if (opCode.isCallDirect() && root->getSymbolReference()->getSymbol()->getMethodSymbol()->getMethod()->isConstructor()){
+            if (root->getChild(0)->getReferenceCount() > 2){
+                _createImplicitStore(root->getChild(0)); // create implicit store for new after constructor has been invoked!
+            }
+            else{
+                _createPopInstruction(root,1); //pop the ref from stack
+            }
+        }
+
+        //for method calls, if the return type is not void and its referece count is 1. Create POP instruction. 
+        if (strcmp(TYPE_void, _getType(opCode.getDataType())) != 0 && root->getReferenceCount() < 2) {
+            _createPopInstruction(root, 1);
+        }
+        
+    }
+
+    
 }
 
 void TR_OWLMapper::_adjustOffset() {
@@ -364,9 +392,6 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     else if (opCode.isStoreIndirect()) { //storei
         _mapIndirectStoreInstruction(node);
     }
-    else if (opCode.isLoadIndirect() && (node->getSymbolReference()->getReferenceNumber() - _compilation->getSymRefTab()->getNumHelperSymbols() == TR::SymbolReferenceTable::vftSymbol)) { // loadi <vtf-symbol>
-        _createPopInstruction(node, 1);
-    }
     else if (opCode.isLoadIndirect()) { //loadi
         _mapIndirectLoadInstruction(node);
     }
@@ -400,10 +425,6 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     }
     else if (opCode.isLoadAddr()) {} //loadaddr
     else if (opCode.isNullCheck()) {} //NULL CHECK
-    else if (opCode.isBndCheck()) { // BNDCHK, create two pop
-        _createPopInstruction(node,1);
-        _createPopInstruction(node,1);
-    }
     else if (opCode.isAnchor()) { // compressedRef, create one pop
         _createPopInstruction(node,1);
     }
@@ -421,6 +442,9 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     }
     else if (opCode.isWrtBar()) {
         _mapWriteBarrierInstruction(node);
+    }
+    else if (opCode.isCheckCast()) {
+        _mapCheckCastInstruction(node);
     }
 
 }
@@ -959,8 +983,13 @@ void TR_OWLMapper::_mapDirectCallInstruction(TR::Node *node) {
     TR::MethodSymbol::Kinds methodKind = methodSymbol->getMethodKind();
 
     char* className = method->classNameChars();
+    uint16_t classNameLength = method->classNameLength();
+
     char* methodName = method->nameChars();
-    char* type = method->signatureChars();
+    uint16_t methodNameLength = method->nameLength();
+
+    char* signature = method->signatureChars();
+    uint16_t signatureLength = method->signatureLength();
 
     InvokeInstructionFields invokeFields;
 
@@ -969,40 +998,35 @@ void TR_OWLMapper::_mapDirectCallInstruction(TR::Node *node) {
         TR::Node *loadAddr = newNode->getChild(0);
  
         int32_t len;
-        strcpy(invokeFields.type, type);
         strcpy(invokeFields.className, loadAddr->getSymbolReference()->getTypeSignature(len));
-        strcpy(invokeFields.methodName, methodName);
+
         invokeFields.disp = SPECIAL;
-
-
     }
     else if (methodKind == methodSymbol->Static) { // static method call
-        strcpy(invokeFields.type, type);
-        strcpy(invokeFields.className, className);
-        strcpy(invokeFields.methodName, methodName);
+        strncpy(invokeFields.className, className, classNameLength);
+        invokeFields.className[classNameLength] = '\0';
+
         invokeFields.disp = STATIC;
     }
+    else if (methodKind == methodSymbol->Virtual) {
+        strncpy(invokeFields.className, className, classNameLength);
+        invokeFields.className[classNameLength] = '\0';
+
+        invokeFields.disp = VIRTUAL;
+    }
+
+    strncpy(invokeFields.methodName, methodName, methodNameLength);
+    invokeFields.methodName[methodNameLength] = '\0';
+
+    strncpy(invokeFields.type, signature,signatureLength );
+    invokeFields.type[signatureLength] = '\0';
+
+
 
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.invokeInstructionFields = invokeFields;
 
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_INVOKE); 
-    if (strcmp(TYPE_void, _getType(node->getOpCode().getDataType())) != 0) {
-
-        if (node->getReferenceCount() < 2){
-             _createPopInstruction(node,1); // pop the value return by the call
-        }
-    }
-
-    if (method->isConstructor()){ //if constructor 
-        if (node->getChild(0)->getReferenceCount() > 2){
-            _createImplicitStore(node->getChild(0)); // create implicit store for new after constructor has been invoked!
-        }
-        else{
-            _createPopInstruction(node,1); //pop the ref from stack
-        }
-        
-    }
 
 }
 
@@ -1014,13 +1038,18 @@ void TR_OWLMapper::_mapIndirectCallInstruction(TR::Node* node) {
     TR::MethodSymbol::Kinds methodKind = methodSymbol->getMethodKind();
 
     char* className = method->classNameChars();
+    uint16_t classNameLength = method->classNameLength();
+
     char* methodName = method->nameChars();
-    char* type = method->signatureChars();
+    uint16_t methodNameLength = method->nameLength();
+
+    char* signature = method->signatureChars();
+    uint16_t signatureLength = method->signatureLength();
 
     InvokeInstructionFields invokeFields;
-    strcpy(invokeFields.type, type);
-    strcpy(invokeFields.className, className);
-    strcpy(invokeFields.methodName, methodName);
+    strncpy(invokeFields.type, signature, signatureLength);
+    strncpy(invokeFields.className, className, classNameLength);
+    strncpy(invokeFields.methodName, methodName, methodNameLength);
 
     if (methodKind == methodSymbol->Virtual) {
 
@@ -1039,13 +1068,6 @@ void TR_OWLMapper::_mapIndirectCallInstruction(TR::Node* node) {
     instrUnion.invokeInstructionFields = invokeFields;
 
     _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_INVOKE); 
-
-    if (strcmp(TYPE_void, _getType(node->getOpCode().getDataType())) != 0) {
-
-        if (node->getReferenceCount() < 2) {
-            _createPopInstruction(node,1);
-        }
-    }
 
 }
 
@@ -1269,4 +1291,17 @@ void TR_OWLMapper::_mapWriteBarrierInstruction(TR::Node* node) {
     instrUnion.arrayStoreInstructionFields = arrayStoreFields;
 
     _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_STORE);
+}
+
+void TR_OWLMapper::_mapCheckCastInstruction(TR::Node* node) {
+    TR::Node *loadAddr = node->getChild(1);
+    int len;
+    
+    CheckCastInstructionFields checkCastFields;
+    strcpy(checkCastFields.type, loadAddr->getSymbolReference()->getTypeSignature(len));
+
+    ShrikeBTInstructionFieldsUnion instrUnion;
+    instrUnion.checkCastInstructionFields = checkCastFields;
+
+    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion, SHRIKE_BT_CHECK_CAST);
 }

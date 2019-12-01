@@ -95,6 +95,7 @@ private:
     void _mapArrayLengthInstruction(TR::Node *node);
     void _mapSwitchInstruction(TR::Node *node);
     void _mapWriteBarrierInstruction(TR::Node *node);
+    void _mapCheckCastInstruction(TR::Node* node);
 
 
 public:

@@ -17,6 +17,7 @@ extern char *const TYPE_void;
 extern char *const TYPE_null;
 extern char *const TYPE_boolean;
 extern char *const TYPE_Object;
+extern char *const TYPE_String;
 
 typedef enum ShrikeBTInstruction
 {
@@ -44,7 +45,8 @@ typedef enum ShrikeBTInstruction
     SHRIKE_BT_INSTANCE_OF,
     SHRIKE_BT_ARRAY_LENGTH,
     SHRIKE_BT_SHIFT, 
-    SHRIKE_BT_SWITCH
+    SHRIKE_BT_SWITCH,
+    SHRIKE_BT_CHECK_CAST
 
 } ShrikeBTInstruction;
 
@@ -98,8 +100,9 @@ typedef enum ShrikeBTDispatch
 } ShrikeBTDispatch;
 
 typedef struct MethodInfo
-{
-    char methodSignature[LARGE_BUFFER_SIZE];
+{   char className[LARGE_BUFFER_SIZE];
+    char methodName[LARGE_BUFFER_SIZE];
+    char signature[LARGE_BUFFER_SIZE];
 } MethodInfo;
 
 typedef struct ConstantInstructionFields
@@ -241,6 +244,11 @@ typedef struct ArrayLengthInstructionFields
 {
 } ArrayLengthInstructionFields;
 
+typedef struct CheckCastInstructionFields
+{
+    char type[LARGE_BUFFER_SIZE];
+} CheckCastInstructionFields;
+
 typedef union ShrikeBTInstructionFieldsUnion {
     ConstantInstructionFields constantInstructionFields;
     StoreInstructionFields storeInstructionFields;
@@ -265,6 +273,7 @@ typedef union ShrikeBTInstructionFieldsUnion {
     ArrayLengthInstructionFields arrayLengthInstructionFields;
     ShiftInstructionFields shiftInstructionFields;
     SwitchInstructionFields switchInstructionFields;
+    CheckCastInstructionFields checkCastInstructionFields;
 } ShrikeBTInstructionFieldsUnion;
 
 /*** indicates how the offset of branch instruction should be adjusted ***/

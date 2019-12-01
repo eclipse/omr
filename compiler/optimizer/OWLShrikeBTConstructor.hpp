@@ -60,6 +60,7 @@ public:
     jobject ArrayLengthInstruction();
     jobject ShiftInstruction(char* type, ShrikeBTShiftOperator op);
     jobject SwitchInstruction(int* casesAndLabels, int length, int defaultLabel);
+    jobject CheckCastInstruction(char* type);
 
 };
 #endif 
