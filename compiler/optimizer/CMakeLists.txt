@@ -112,4 +112,5 @@ compiler_library(optimizer
 	${CMAKE_CURRENT_LIST_DIR}/OWLSerializer.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWLDeserializer.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWLAnalyser.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OWLVerifier.cpp
 )
