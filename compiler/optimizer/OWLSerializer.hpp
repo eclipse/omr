@@ -8,7 +8,7 @@
 class TR_OWLSerializer
 {
 public:
-    void serialize(MethodInfo methodInfo, std::vector<OWLInstruction> owlInstructions);
+    void serialize(char* filePath, MethodInfo methodInfo, TranslationUnit* translationUnits, uint64_t size);
 };
 
 

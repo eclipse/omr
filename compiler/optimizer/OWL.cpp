@@ -36,7 +36,7 @@ int32_t TR_OWL::perform()
     
     TR_OWLMapper *mapper = new TR_OWLMapper(comp());
     printf("=== Start mapping ===\n");
-    std::vector<OWLInstruction>  owlInstructions = mapper->map();
+    std::vector<TranslationUnit>  translationUnits = mapper->map();
     delete mapper;
     printf("==== Finish mapping ====\n");
 
@@ -64,21 +64,23 @@ int32_t TR_OWL::perform()
         TR_OWLJNIClient* jniClient = TR_OWLJNIClient::getInstance();
 
         TR_OWLShrikeBTConstructor *constructor = new TR_OWLShrikeBTConstructor(jniClient);
-        std::vector<jobject> shrikeBTInstructions = constructor->constructShrikeBTInstructions(owlInstructions);
+        std::vector<jobject> shrikeBTInstructions = constructor->constructShrikeBTInstructions(translationUnits);
         
 
         TR_OWLVerifier *verifier = new TR_OWLVerifier(jniClient);
         TR_OWLAnalyser *analyser = new TR_OWLAnalyser(jniClient);
 
+        // verify if shrikeBT instruction generated are valid
         bool status = verifier->verify(&shrikeBTInstructions[0],shrikeBTInstructions.size(), false, true, methodInfo.className, methodInfo.signature);
         if (!status) {
             printf("Fail to verify shrikeBT Instructions\n");
         }
         else {
-            printf("Successful to verify shrikeBT Instructions\n")
+            printf("Successful to verify shrikeBT Instructions\n");
         }
 
-        analyser->analyse(shrikeBTInstructions);
+        // perform the analysis
+        analyser->analyse(&shrikeBTInstructions[0], shrikeBTInstructions.size());
 
         delete verifier;
         delete analyser;
@@ -87,7 +89,8 @@ int32_t TR_OWL::perform()
     else { // serialize OWL instructions to files
         printf("===JVM cannot be started. Serialize OWL Instruction to file===\n");
         TR_OWLSerializer *serializer = new TR_OWLSerializer();
-        serializer->serialize(methodInfo, owlInstructions);
+        char* filePath = "/Users/jackxia/Project/IBM/openj9-openjdk-jdk13/OWL/OWL.log";
+        serializer->serialize(filePath, methodInfo, &translationUnits[0], translationUnits.size());
         delete serializer;
     }
     

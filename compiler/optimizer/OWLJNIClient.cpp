@@ -464,9 +464,6 @@ bool TR_OWLJNIClient::callMethod(JNIMethodConfig methodConfig, jobject obj, char
 
     va_end(args);
 
-
-
-    
     const char *str = _env->GetStringUTFChars(out,0);
     sprintf(*res,str);
     _env->ReleaseStringUTFChars(out,0);

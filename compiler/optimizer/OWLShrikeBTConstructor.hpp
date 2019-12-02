@@ -19,7 +19,7 @@ public:
     TR_OWLShrikeBTConstructor(TR_OWLJNIClient* jniClient);
     ~TR_OWLShrikeBTConstructor();
 
-    std::vector<jobject> constructShrikeBTInstructions(std::vector<OWLInstruction> owlInstructions);
+    std::vector<jobject> constructShrikeBTInstructions(std::vector<TranslationUnit> translationUnits);
 
     /*** helper methods ***/
     jobject Integer(int32_t i);

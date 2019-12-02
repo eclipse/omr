@@ -109,7 +109,7 @@ TR_OWLMapper::~TR_OWLMapper() {
     delete _localVarTable;
 }
 
-std::vector<OWLInstruction> TR_OWLMapper::map() {
+std::vector<TranslationUnit> TR_OWLMapper::map() {
 
     TR::NodeChecklist logVisited(_compilation); // visisted nodes for logging OMR IL
     TR::NodeChecklist instructionMappingVisited(_compilation); // visited nodes for mapping the instruction
@@ -128,7 +128,7 @@ std::vector<OWLInstruction> TR_OWLMapper::map() {
 
     _adjustOffset();
 
-    return _owlInstructionList;
+    return _translationUnits;
 }
 
 /****** private ******/
@@ -197,9 +197,6 @@ void TR_OWLMapper::_processTree(TR::Node *root, TR::Node *parent, TR::NodeCheckl
         _processTree(root->getChild(0),root,visited); //only evaluate the first aload
     }
     else if (opCode.isBndCheck()) { // skip BNDcheck
-
-    }
-    else if (opCodeValue == TR::compressedRefs) { // skip compressedRefs
 
     }
     else if (opCode.isCallIndirect()) {
@@ -302,13 +299,13 @@ void TR_OWLMapper::_adjustOffset() {
     /**** build OMR index to shrikeBT offset table ****/
     std::unordered_map<uint32_t,uint32_t> offsetMappingTable;
     uint32_t offset = 0;
-    for (uint32_t i = 0 ; i < _owlInstructionList.size(); i ++) {
+    for (uint32_t i = 0 ; i < _translationUnits.size(); i ++) {
 
-        OWLInstruction owlInstr = _owlInstructionList[i];
+        TranslationUnit translationUnit = _translationUnits[i];
 
-        bool isShrikeBTInstruction = owlInstr.isShrikeBTInstruction;
+        bool isShrikeBTInstruction = translationUnit.instruction != NOT_SHRIKE_BT_INSTRUCTION;
 
-        offsetMappingTable[owlInstr.omrGlobalIndex] = offset;
+        offsetMappingTable[translationUnit.omrGlobalIndex] = offset;
         if (isShrikeBTInstruction) {
             offset ++;
         }
@@ -316,14 +313,14 @@ void TR_OWLMapper::_adjustOffset() {
     
     offset = 0;
     /**** Adjust branch target label and instruction offsets ****/
-    for (uint32_t i = 0 ; i < _owlInstructionList.size(); i ++) {
-        OWLInstruction* owlInstr = &_owlInstructionList[i];
-        bool isShrikeBTInstruction= owlInstr->isShrikeBTInstruction;
-        ShrikeBTInstruction instruction = owlInstr->instruction;
+    for (uint32_t i = 0 ; i < _translationUnits.size(); i ++) {
+        TranslationUnit* translationUnit = &_translationUnits[i];
+        bool isShrikeBTInstruction= translationUnit->instruction != NOT_SHRIKE_BT_INSTRUCTION;
+        ShrikeBTInstruction instruction = translationUnit->instruction;
         
         if (isShrikeBTInstruction) {
-            BranchTargetLabelAdjustType adjustType = owlInstr->branchTargetLabelAdjustType;
-            ShrikeBTInstructionFieldsUnion *instrUnion = &owlInstr->instructionFieldsUnion;
+            BranchTargetLabelAdjustType adjustType = translationUnit->branchTargetLabelAdjustType;
+            ShrikeBTInstructionFieldsUnion *instrUnion = &translationUnit->instructionFieldsUnion;
             uint32_t label;
 
             if (instruction == SHRIKE_BT_GOTO) {
@@ -334,7 +331,7 @@ void TR_OWLMapper::_adjustOffset() {
                     label = offsetMappingTable[gotoFields->label];
                 }
                 else if (adjustType == BY_VALUE) {
-                    label = offset + owlInstr->branchTargetLabelAdjustAmount;
+                    label = offset + translationUnit->branchTargetLabelAdjustAmount;
                 }
 
                 gotoFields->label = label;
@@ -348,7 +345,7 @@ void TR_OWLMapper::_adjustOffset() {
                     label = offsetMappingTable[condiFields->label];
                 }
                 else if (adjustType == BY_VALUE) {
-                    label = offset + owlInstr->branchTargetLabelAdjustAmount;
+                    label = offset + translationUnit->branchTargetLabelAdjustAmount;
                 }
 
                 condiFields->label = label;
@@ -367,7 +364,7 @@ void TR_OWLMapper::_adjustOffset() {
                 }
             }
             
-            owlInstr->shrikeBTOffset = offset;
+            translationUnit->shrikeBTOffset = offset;
             offset ++;
         }
     }
@@ -381,7 +378,7 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
     if ( opCodeValue == TR::treetop || opCodeValue == TR::BBStart || opCodeValue == TR::BBEnd){
         ShrikeBTInstructionFieldsUnion instrUnion;
         // need to take a place in instruction list
-        _createOWLInstruction(false, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, NOT_INSTRUCTION );
+        _pushTranslationUnit(NOT_SHRIKE_BT_INSTRUCTION, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion );
         return;
     }
 
@@ -488,7 +485,7 @@ void TR_OWLMapper::_createImplicitStore(TR::Node *node) {
 
     insUnion.storeInstructionFields = storeFields;
 
-    _createOWLInstruction(true, omrGlobalIndex,0, NO_ADJUST, 0, insUnion, SHRIKE_BT_STORE);
+    _pushTranslationUnit(SHRIKE_BT_STORE, omrGlobalIndex,0, NO_ADJUST, 0, insUnion);
 }
 
 void TR_OWLMapper::_createImplicitLoad(TR::Node* node) {
@@ -504,7 +501,7 @@ void TR_OWLMapper::_createImplicitLoad(TR::Node* node) {
     ShrikeBTInstructionFieldsUnion insUnion;
     insUnion.loadInstructionFields = loadFields;
     
-    _createOWLInstruction(true, omrGlobalIndex, 0, NO_ADJUST, 0, insUnion, SHRIKE_BT_LOAD);
+    _pushTranslationUnit(SHRIKE_BT_LOAD, omrGlobalIndex, 0, NO_ADJUST, 0, insUnion);
 }
 
 void TR_OWLMapper::_createDupInstruction(TR::Node *node, uint16_t delta) {
@@ -513,7 +510,7 @@ void TR_OWLMapper::_createDupInstruction(TR::Node *node, uint16_t delta) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.dupInstructionFields = dupFields;
 
-    _createOWLInstruction(true,node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_DUP);
+    _pushTranslationUnit(SHRIKE_BT_DUP, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion);
 }
 
 void TR_OWLMapper::_createPopInstruction(TR::Node* node, uint16_t size) {
@@ -522,7 +519,7 @@ void TR_OWLMapper::_createPopInstruction(TR::Node* node, uint16_t size) {
     ShrikeBTInstructionFieldsUnion instrUnion;
 
     instrUnion.popInstructionFields = popFields;
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_POP);
+    _pushTranslationUnit(SHRIKE_BT_POP, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion);
 }
 
 void TR_OWLMapper::_createSwapInstruction(TR::Node* node) {
@@ -531,28 +528,27 @@ void TR_OWLMapper::_createSwapInstruction(TR::Node* node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
 
     instrUnion.swapInstructionFields = swapFields;
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_SWAP);
+    _pushTranslationUnit(SHRIKE_BT_SWAP, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion);
 }
 
 /**
- * Push an owl instruction into owl instruction list
+ * Push a translation unit into translation unit vector
  * */
-void TR_OWLMapper::_createOWLInstruction(bool isShrikeBTInstruction, uint32_t omrGlobalIndex, uint32_t shrikeBTOffset, 
+void TR_OWLMapper::_pushTranslationUnit(ShrikeBTInstruction instruction , uint32_t omrGlobalIndex, uint32_t shrikeBTOffset, 
     BranchTargetLabelAdjustType branchTargetLabelAdjustType,int32_t branchTargetLabelAdjustAmount, 
-    ShrikeBTInstructionFieldsUnion instructionFieldsUnion, ShrikeBTInstruction instruction ) 
+    ShrikeBTInstructionFieldsUnion instructionFieldsUnion) 
 {
 
-    OWLInstruction owlInstr = {
-        isShrikeBTInstruction,
+    TranslationUnit translationUnit = {
+        instruction,
         omrGlobalIndex,
         shrikeBTOffset,
         branchTargetLabelAdjustType,
         branchTargetLabelAdjustAmount,
         instructionFieldsUnion,
-        instruction
     };
 
-    _owlInstructionList.push_back(owlInstr);
+    _translationUnits.push_back(translationUnit);
 }
 
 void TR_OWLMapper::_mapConstantInstruction(TR::Node *node) {
@@ -592,7 +588,7 @@ void TR_OWLMapper::_mapConstantInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.constantInstructionFields = constFields;
 
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_CONSTANT);
+    _pushTranslationUnit(SHRIKE_BT_CONSTANT, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion);
 }
 
 void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
@@ -613,7 +609,7 @@ void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.storeInstructionFields = storeFields;
 
-        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion, SHRIKE_BT_STORE);
+        _pushTranslationUnit(SHRIKE_BT_STORE, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
 
     }
     else if (symbol->isConstString()) { // skip string for now
@@ -628,7 +624,7 @@ void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
 
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.storeInstructionFields = storeFields;
-        _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion, SHRIKE_BT_STORE);
+        _pushTranslationUnit(SHRIKE_BT_STORE, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion);
     }
     else if (symbol->isStatic()) { // static (SHRIKE_BT_PUT)
 
@@ -653,7 +649,7 @@ void TR_OWLMapper::_mapDirectStoreInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.putInstructionFields = putFields;
 
-        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_PUT);
+        _pushTranslationUnit(SHRIKE_BT_PUT, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
     }
    
 }
@@ -676,7 +672,7 @@ void TR_OWLMapper::_mapDirectLoadInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.loadInstructionFields = loadFields;
 
-        _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion, SHRIKE_BT_LOAD);
+        _pushTranslationUnit(SHRIKE_BT_LOAD, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion);
     }
     else if (symbol->isConstString() ) { //skip string for now
         
@@ -690,7 +686,7 @@ void TR_OWLMapper::_mapDirectLoadInstruction(TR::Node *node) {
 
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.loadInstructionFields = loadFields;
-        _createOWLInstruction(true, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion, SHRIKE_BT_LOAD);
+        _pushTranslationUnit(SHRIKE_BT_LOAD, node->getGlobalIndex(),0, NO_ADJUST,0,instrUnion);
     }
     else if (symbol->isStatic()) { // static (SHRIKE_BT_GET)
 
@@ -714,7 +710,7 @@ void TR_OWLMapper::_mapDirectLoadInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.getInstructionFields = getFields;
 
-        _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_GET);
+        _pushTranslationUnit(SHRIKE_BT_GET, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion);
     }
 
 }
@@ -729,7 +725,7 @@ void TR_OWLMapper::_mapReturnInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.returnInstructionFields = returnFields;
 
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_RETURN);
+    _pushTranslationUnit(SHRIKE_BT_RETURN, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion);
 }
 
 void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
@@ -743,7 +739,7 @@ void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
 
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.unaryOpInstructionFields = unaryFields;
-        _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_UNARY_OP);
+        _pushTranslationUnit(SHRIKE_BT_UNARY_OP, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion);
     }
     /*** Shift ***/
     else if (opCode.isShift()) {
@@ -758,7 +754,7 @@ void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
         shiftFields.op = op;
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.shiftInstructionFields = shiftFields;
-        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_SHIFT);
+        _pushTranslationUnit(SHRIKE_BT_SHIFT, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
     }
     /**** Binary op ****/
     else{
@@ -783,7 +779,7 @@ void TR_OWLMapper::_mapArithmeticInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.binaryOpInstructionFields = binaryFields;
 
-        _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_BINARY_OP);
+        _pushTranslationUnit(SHRIKE_BT_BINARY_OP, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion);
     }
 }
 
@@ -795,7 +791,7 @@ void TR_OWLMapper::_mapGotoInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.gotoInstructionFields = gotoFields;
 
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, TABLE_MAP, 0, instrUnion, SHRIKE_BT_GOTO);
+    _pushTranslationUnit(SHRIKE_BT_GOTO, node->getGlobalIndex(), 0, TABLE_MAP, 0, instrUnion);
 }
 
 void TR_OWLMapper::_mapConditionalBranchInstruction(TR::Node *node) {
@@ -821,7 +817,7 @@ void TR_OWLMapper::_mapConditionalBranchInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.conditionalBranchInstructionFields = condiFields;
 
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, TABLE_MAP, 0, instrUnion, SHRIKE_BT_CONDITIONAL_BRANCH);
+    _pushTranslationUnit(SHRIKE_BT_CONDITIONAL_BRANCH, node->getGlobalIndex(), 0, TABLE_MAP, 0, instrUnion);
 }
 
 /**
@@ -877,16 +873,16 @@ void TR_OWLMapper::_mapComparisonInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
 
     instrUnion.conditionalBranchInstructionFields = condiFields;
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, BY_VALUE, 3, instrUnion, SHRIKE_BT_CONDITIONAL_BRANCH);
+    _pushTranslationUnit(SHRIKE_BT_CONDITIONAL_BRANCH, node->getGlobalIndex(), 0, BY_VALUE, 3, instrUnion);
 
     instrUnion.constantInstructionFields = const0Fields;
-    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_CONSTANT);
+    _pushTranslationUnit(SHRIKE_BT_CONSTANT, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
   
     instrUnion.gotoInstructionFields = gotoFields;
-    _createOWLInstruction(true,node->getGlobalIndex(),0,BY_VALUE,2,instrUnion,SHRIKE_BT_GOTO);
+    _pushTranslationUnit(SHRIKE_BT_GOTO,node->getGlobalIndex(),0,BY_VALUE,2,instrUnion);
    
     instrUnion.constantInstructionFields = const1Fields;
-    _createOWLInstruction(true,node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_CONSTANT);
+    _pushTranslationUnit(SHRIKE_BT_CONSTANT,node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
 }
 
 void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
@@ -988,12 +984,8 @@ void TR_OWLMapper::_mapConversionInstruction(TR::Node *node) {
         strcpy(conversionFields.toType, toType);
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.conversionInstructionFields = conversionFields;
-        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_CONVERSION);
+        _pushTranslationUnit(SHRIKE_BT_CONVERSION, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
         
-    }
-    else{ //for those unecessary conversion instructions. They still need to occupy a slot in the instruciton list for the offset adjustment
-        ShrikeBTInstructionFieldsUnion instrUnion;
-        _createOWLInstruction(false, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion, NOT_INSTRUCTION);
     }
 
 }
@@ -1050,7 +1042,7 @@ void TR_OWLMapper::_mapDirectCallInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.invokeInstructionFields = invokeFields;
 
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_INVOKE); 
+    _pushTranslationUnit(SHRIKE_BT_INVOKE, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion); 
 
 }
 
@@ -1096,7 +1088,7 @@ void TR_OWLMapper::_mapIndirectCallInstruction(TR::Node* node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.invokeInstructionFields = invokeFields;
 
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion, SHRIKE_BT_INVOKE); 
+    _pushTranslationUnit(SHRIKE_BT_INVOKE, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion); 
 
 }
 
@@ -1124,17 +1116,17 @@ void TR_OWLMapper::_mapTernaryInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
 
     instrUnion.constantInstructionFields = const0Fields;
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, NO_ADJUST,0,instrUnion, SHRIKE_BT_CONSTANT);
+    _pushTranslationUnit(SHRIKE_BT_CONSTANT, node->getGlobalIndex(), 0, NO_ADJUST,0,instrUnion);
 
     instrUnion.conditionalBranchInstructionFields = condiFields;
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, BY_VALUE, 4, instrUnion, SHRIKE_BT_CONDITIONAL_BRANCH);
+    _pushTranslationUnit(SHRIKE_BT_CONDITIONAL_BRANCH, node->getGlobalIndex(), 0, BY_VALUE, 4, instrUnion);
 
     _createSwapInstruction(node);
 
     _createPopInstruction(node,1);
 
     instrUnion.gotoInstructionFields = gotoFields;
-    _createOWLInstruction(true, node->getGlobalIndex(), 0, BY_VALUE, 2, instrUnion, SHRIKE_BT_GOTO );
+    _pushTranslationUnit(SHRIKE_BT_GOTO, node->getGlobalIndex(), 0, BY_VALUE, 2, instrUnion );
 
    _createPopInstruction(node,1);
 }
@@ -1167,7 +1159,7 @@ void TR_OWLMapper::_mapIndirectStoreInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.putInstructionFields = putFields;
 
-        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_PUT);
+        _pushTranslationUnit(SHRIKE_BT_PUT, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
     }
     else { // array
         ArrayStoreInstructionFields arrayStoreFields;
@@ -1176,7 +1168,7 @@ void TR_OWLMapper::_mapIndirectStoreInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.arrayStoreInstructionFields = arrayStoreFields;
 
-        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_STORE);
+        _pushTranslationUnit(SHRIKE_BT_ARRAY_STORE, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
     }
     
 }
@@ -1208,7 +1200,7 @@ void TR_OWLMapper::_mapIndirectLoadInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.getInstructionFields = getFields;
 
-        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_GET);
+        _pushTranslationUnit(SHRIKE_BT_GET, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
     }
     else{ //array
         ArrayLoadInstructionFields arrayLoadFields;
@@ -1217,7 +1209,7 @@ void TR_OWLMapper::_mapIndirectLoadInstruction(TR::Node *node) {
         ShrikeBTInstructionFieldsUnion instrUnion;
         instrUnion.arrayLoadInstructionFields = arrayLoadFields;
 
-        _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_LOAD);
+        _pushTranslationUnit(SHRIKE_BT_ARRAY_LOAD, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
     }
 
 }
@@ -1263,7 +1255,7 @@ void TR_OWLMapper::_mapNewInstruction(TR::Node *node) {
 
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.newInstructionFields = newFields;
-    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_NEW); 
+    _pushTranslationUnit(SHRIKE_BT_ARRAY_NEW, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion); 
 
 }
 
@@ -1279,7 +1271,7 @@ void TR_OWLMapper::_mapInstanceofInstruction(TR::Node *node) {
     
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.instanceofInstructionFields = instanceofFields;
-    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_INSTANCE_OF);
+    _pushTranslationUnit(SHRIKE_BT_INSTANCE_OF, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
 }
 
 void TR_OWLMapper::_mapArrayLengthInstruction(TR::Node *node) {
@@ -1287,7 +1279,7 @@ void TR_OWLMapper::_mapArrayLengthInstruction(TR::Node *node) {
 
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.arrayLengthInstructionFields = arrayLenFields;
-    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_LENGTH);
+    _pushTranslationUnit(SHRIKE_BT_ARRAY_LENGTH, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
 }
 
 void TR_OWLMapper::_mapSwitchInstruction(TR::Node *node) {
@@ -1308,7 +1300,7 @@ void TR_OWLMapper::_mapSwitchInstruction(TR::Node *node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.switchInstructionFields = switchFields;
 
-    _createOWLInstruction(true,node->getGlobalIndex(),0,TABLE_MAP,0,instrUnion,SHRIKE_BT_SWITCH);
+    _pushTranslationUnit(SHRIKE_BT_SWITCH,node->getGlobalIndex(),0,TABLE_MAP,0,instrUnion);
 }
 
 void TR_OWLMapper::_mapWriteBarrierInstruction(TR::Node* node) {
@@ -1319,7 +1311,7 @@ void TR_OWLMapper::_mapWriteBarrierInstruction(TR::Node* node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.arrayStoreInstructionFields = arrayStoreFields;
 
-    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion,SHRIKE_BT_ARRAY_STORE);
+    _pushTranslationUnit(SHRIKE_BT_ARRAY_STORE, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
 }
 
 void TR_OWLMapper::_mapCheckCastInstruction(TR::Node* node) {
@@ -1332,5 +1324,5 @@ void TR_OWLMapper::_mapCheckCastInstruction(TR::Node* node) {
     ShrikeBTInstructionFieldsUnion instrUnion;
     instrUnion.checkCastInstructionFields = checkCastFields;
 
-    _createOWLInstruction(true, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion, SHRIKE_BT_CHECK_CAST);
+    _pushTranslationUnit(SHRIKE_BT_CHECK_CAST, node->getGlobalIndex(),0,NO_ADJUST,0,instrUnion);
 }

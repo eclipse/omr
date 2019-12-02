@@ -10,8 +10,7 @@
 
 class TR_OWL: public TR::Optimization
 {
-private:
-    TR_OWLMapper *_mapper;
+
 public:
     TR_OWL(TR::OptimizationManager *manager);
     static TR::Optimization *create(TR::OptimizationManager *manager);

@@ -8,12 +8,12 @@
 class TR_OWLDeserializer
 {
 private:
-    std::vector<OWLInstruction> _owlInstructionList;
+    std::vector<TranslationUnit> _translationsUnits;
     MethodInfo _methodInfo;
-    void _deserialize();
+    
 public:
-    TR_OWLDeserializer();
-    std::vector<OWLInstruction> getOWLInstructionList();
+    void deserialize(char* filePath);
+    std::vector<TranslationUnit> getTranslationUnits();
     MethodInfo getMethodInfo();
 };
 

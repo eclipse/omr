@@ -14,18 +14,19 @@ TR_OWLShrikeBTConstructor::TR_OWLShrikeBTConstructor(TR_OWLJNIClient* jniClient)
 
 TR_OWLShrikeBTConstructor::~TR_OWLShrikeBTConstructor() {}
 
-std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(std::vector<OWLInstruction> owlInstructions) {
+std::vector<jobject> TR_OWLShrikeBTConstructor::constructShrikeBTInstructions(std::vector<TranslationUnit> translationUnits) {
 
     std::vector<jobject> shrikeBTInstructions;
 
-    for (uint32_t i = 0 ; i < owlInstructions.size(); i ++ ) {
+    for (uint32_t i = 0 ; i < translationUnits.size(); i ++ ) {
         
-        OWLInstruction owlInstruction = owlInstructions[i];
-        bool isShrikeBTInstruction = owlInstruction.isShrikeBTInstruction;
+        TranslationUnit translationUnit = translationUnits[i];
+        bool isShrikeBTInstruction = translationUnit.instruction != NOT_SHRIKE_BT_INSTRUCTION;
+
         if (isShrikeBTInstruction){
 
-            ShrikeBTInstruction instruction = owlInstruction.instruction;
-            ShrikeBTInstructionFieldsUnion instrUnion = owlInstruction.instructionFieldsUnion;
+            ShrikeBTInstruction instruction = translationUnit.instruction;
+            ShrikeBTInstructionFieldsUnion instrUnion = translationUnit.instructionFieldsUnion;
 
             jobject instructionObject;
 

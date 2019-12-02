@@ -11,7 +11,7 @@ private:
     TR_OWLJNIClient *_jniClient;
 public:
     TR_OWLAnalyser(TR_OWLJNIClient *jniClient);
-    void analyse(std::vector<jobject> instructions);
+    void analyse(jobject* instructions, uint64_t size);
 };
 
 #endif

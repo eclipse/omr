@@ -40,7 +40,11 @@ public:
 
 };
 
-
+/**
+ * This Class performs the OMR IL to ShirkeBT instruction translation
+ * The product of this class: a vector of Translation Unit objects that contain all the necessary data in order to construct shrikeBT instruction objects
+ * OWLShrikeBTConstructor class takes the output of the map() method. 
+ */
 class TR_OWLMapper
 {
 private:
@@ -49,26 +53,27 @@ private:
     TR::Compilation* _compilation;
     TR_OWLLocalVariableTable* _localVarTable;
 
-    std::vector<OWLInstruction> _owlInstructionList; 
+    std::vector<TranslationUnit> _translationUnits; 
 
-    void _processTree(TR::Node *root, TR::Node *parent, TR::NodeChecklist &visited ); // traverse the tree
+    void _processTree(TR::Node *root, TR::Node *parent, TR::NodeChecklist &visited ); // traverse the IL tree
     void _logOMRIL(TR::Node *root, TR::NodeChecklist &visited); // log the OMR IL
-    void _storeParameters(); //store method parameters into local variable table
-    void _adjustOffset();
+    void _storeParameters(); //store the method parameters into local variable table
+    void _adjustOffset(); // adjust the branch target of branch instructions
 
-    void _instructionRouter(TR::Node *node);
+    void _instructionRouter(TR::Node *node); // route the Tree node to the corresponding mapping function
 
-    char* _getType(TR::DataType dataType);
+    char* _getType(TR::DataType dataType); // get the Java Byte code type 
 
     /*** create OWL instruction and push it into OWL instruction list ***/
-    void _createOWLInstruction(
-        bool isShrikeBTInstruction, 
+    void _pushTranslationUnit
+    (
+        ShrikeBTInstruction instruction,
         uint32_t omrGlobalIndex, 
         uint32_t shrikeBTOffset, 
         BranchTargetLabelAdjustType branchTargetLabelAdjustType, 
         int32_t branchTargetLabelAdjustAmount,
-        ShrikeBTInstructionFieldsUnion instructionFieldsUnion, 
-        ShrikeBTInstruction instruction );
+        ShrikeBTInstructionFieldsUnion instructionFieldsUnion
+    );
     
     void _createImplicitStore(TR::Node* node);
     void _createImplicitLoad(TR::Node* node);
@@ -101,6 +106,6 @@ private:
 public:
     TR_OWLMapper(TR::Compilation* compilation);
     ~TR_OWLMapper();
-    std::vector<OWLInstruction> map();
+    std::vector<TranslationUnit> map();
 };
 #endif 
