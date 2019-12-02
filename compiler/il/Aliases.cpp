@@ -580,8 +580,18 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
             return aliases;
             }
 #endif
-
-         return symRefTab->aliasBuilder.methodAliases(self());
+         if (!symRefTab->aliasBuilder.addressTakenAutos().isEmpty())
+            {
+               TR_BitVector * aliases = new (aliasRegion) TR_BitVector(bvInitialSize, aliasRegion, growability);
+               *aliases |= symRefTab->aliasBuilder.addressTakenAutos();
+               TR_BitVector *methodAliases = symRefTab->aliasBuilder.methodAliases(self());
+               *aliases |= *methodAliases;
+               return aliases;
+            }
+         else 
+            {
+               return symRefTab->aliasBuilder.methodAliases(self());
+            }
          }
       case TR::Symbol::IsShadow:
          {
