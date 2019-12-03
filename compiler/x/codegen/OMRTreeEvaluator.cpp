@@ -3230,7 +3230,7 @@ TR::Register *OMR::X86::TreeEvaluator::generateLEAForLoadAddr(TR::Node *node,
 
    //memRef maybe not directly generated from symRef, for example symRef plus second child in analyzeLea
    // So we need also check if it is an internal pointer when allocate regsiter
-   if (symRef->getSymbol()->isLocalObject() && !isInternalPointer)
+   if (symRef->getSymbol()->isCollectedReference() && !isInternalPointer)
       targetRegister = cg->allocateCollectedReferenceRegister();
    else
       targetRegister = cg->allocateRegister();

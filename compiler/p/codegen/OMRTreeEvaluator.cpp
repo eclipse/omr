@@ -5480,7 +5480,7 @@ TR::Register *OMR::Power::TreeEvaluator::loadaddrEvaluator(TR::Node *node, TR::C
 
    if (mref->getUnresolvedSnippet() != NULL)
       {
-      resultReg = sym->isLocalObject() ?  cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+      resultReg = sym->isCollectedReference() ?  cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
       if (mref->useIndexedForm())
          {
          generateTrg1MemInstruction(cg, TR::InstOpCode::add, node, resultReg, mref);
@@ -5494,7 +5494,7 @@ TR::Register *OMR::Power::TreeEvaluator::loadaddrEvaluator(TR::Node *node, TR::C
       {
       if (mref->useIndexedForm())
          {
-         resultReg = sym->isLocalObject() ?  cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+         resultReg = sym->isCollectedReference() ?  cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
          generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, resultReg, mref->getBaseRegister(), mref->getIndexRegister());
          }
       else
@@ -5502,7 +5502,7 @@ TR::Register *OMR::Power::TreeEvaluator::loadaddrEvaluator(TR::Node *node, TR::C
          int32_t  offset = mref->getOffset(*comp);
          if (mref->hasDelayedOffset() || offset!=0 || comp->getOption(TR_AOT))
             {
-            resultReg = sym->isLocalObject() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+            resultReg = sym->isCollectedReference() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
             if (mref->hasDelayedOffset())
                {
                generateTrg1MemInstruction(cg, TR::InstOpCode::addi2, node, resultReg, mref);

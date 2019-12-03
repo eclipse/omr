@@ -6471,7 +6471,7 @@ OMR::Z::TreeEvaluator::checkAndAllocateReferenceRegister(TR::Node * node,
       {
       dynLitPoolLoad = true;
 
-      if (symbol->isLocalObject())
+      if (symbol->isCollectedReference())
          {
          tempReg = cg->allocateCollectedReferenceRegister();
          }
@@ -9507,7 +9507,7 @@ OMR::Z::TreeEvaluator::loadaddrEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR::SymbolReference * symRef = node->getSymbolReference();
    TR::Compilation *comp = cg->comp();
 
-   if (symRef->getSymbol()->isLocalObject())
+   if (symRef->getSymbol()->isCollectedReference())
       {
       targetRegister = cg->allocateCollectedReferenceRegister();
       }
