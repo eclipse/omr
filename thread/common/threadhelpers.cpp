@@ -219,11 +219,6 @@ omrthread_mcs_lock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_
 	intptr_t result = -1;
 	omrthread_mcs_node_t predecessor = NULL;
 
-#if defined(OMR_THR_SPIN_WAKE_CONTROL)
-	BOOLEAN spinning = FALSE;
-	omrthread_library_t const lib = self->library;
-#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
-
 	if (!retry) {
 		/* Initialize the MCS node. */
 		mcsNode->queueNext = NULL;
@@ -247,32 +242,14 @@ omrthread_mcs_lock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_
 			VM_AtomicSupport::writeBarrier();
 		}
 
-		uintptr_t spinCount3Init = monitor->spinCount3;
-		uintptr_t spinCount2Init = monitor->spinCount2;
-		uintptr_t spinCount1Init = monitor->spinCount1;
-
-#if defined(OMR_THR_SPIN_WAKE_CONTROL)
-		spinning = TRUE;
-		if (OMRTHREAD_IGNORE_SPIN_THREAD_BOUND != lib->maxSpinThreads) {
-			if (monitor->spinThreads < lib->maxSpinThreads) {
-				VM_AtomicSupport::add(&monitor->spinThreads, 1);
-			} else {
-				spinCount1Init = 1;
-				spinCount2Init = 1;
-				spinCount3Init = 1;
-				spinning = FALSE;
-			}
-		}
-#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
-
 		/* Three-tier busy-wait loop checks if the mcsNode->blocked value is reset by the thread
 		 * that owns the predecessor node. A similar three-tier busy-wait loop is also used in
 		 * omrthread_spinlock_acquire, where the loop has a compare-and-swap operation.
 		 * TODO: Optimize the MCS lock's three-tier busy-wait loop to account for the absent
 		 * compare-and-swap operation; this corresponds to an increase in spin parameters.
 		 */
-		for (uintptr_t spinCount3 = spinCount3Init; spinCount3 > 0; spinCount3--) {
-			for (uintptr_t spinCount2 = spinCount2Init; spinCount2 > 0; spinCount2--) {
+		for (uintptr_t spinCount3 = monitor->spinCount3; spinCount3 > 0; spinCount3--) {
+			for (uintptr_t spinCount2 = monitor->spinCount2; spinCount2 > 0; spinCount2--) {
 				/* Check if the thread can acquire the lock. */
 				if (OMRTHREAD_MCS_THREAD_ACQUIRE == mcsNode->blocked) {
 					goto lockAcquired;
@@ -283,7 +260,7 @@ omrthread_mcs_lock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_
 				}
 				VM_AtomicSupport::yieldCPU();
 				/* Begin tight loop. */
-				for (uintptr_t spinCount1 = spinCount1Init; spinCount1 > 0; spinCount1--) {
+				for (uintptr_t spinCount1 = monitor->spinCount1; spinCount1 > 0; spinCount1--) {
 					VM_AtomicSupport::nop();
 				} /* End tight loop. */
 			}
@@ -314,11 +291,6 @@ lockAcquired:
 	}
 
 exit:
-#if defined(OMR_THR_SPIN_WAKE_CONTROL)
-	if (spinning && (OMRTHREAD_IGNORE_SPIN_THREAD_BOUND != lib->maxSpinThreads)) {
-		VM_AtomicSupport::subtract(&monitor->spinThreads, 1);
-	}
-#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
 	return result;
 }
 
@@ -469,15 +441,17 @@ omrthread_mcs_node_allocate(omrthread_t self)
 void
 omrthread_mcs_node_free(omrthread_t self, omrthread_mcs_node_t mcsNode)
 {
-	if (NULL != mcsNode) {
-		/* Clear the fields of the mcsNode. */
-		mcsNode->stackNext = NULL;
-		mcsNode->queueNext = NULL;
-		mcsNode->thread = NULL;
-		mcsNode->blocked = OMRTHREAD_MCS_THREAD_BLOCKED;
+#if defined(THREAD_ASSERTS)
+	ASSERT(mcsNode != NULL);
+#endif /* defined(THREAD_ASSERTS) */
 
-		pool_removeElement(self->mcsNodes->pool, mcsNode);
-	}
+	/* Clear the fields of the mcsNode. */
+	mcsNode->stackNext = NULL;
+	mcsNode->queueNext = NULL;
+	mcsNode->thread = NULL;
+	mcsNode->blocked = OMRTHREAD_MCS_THREAD_BLOCKED;
+
+	pool_removeElement(self->mcsNodes->pool, mcsNode);
 }
 #endif /* defined(OMR_THR_MCS_LOCKS) */
 
