@@ -99,7 +99,7 @@ omrsysinfo_get_processor_description(struct OMRPortLibrary *portLibrary, OMRProc
 	
 	if (NULL != desc) {
 		memset(desc, 0, sizeof(OMRProcessorDesc));
-		rc = getX86Description(portLibrary, desc);
+		rc = OMRgetX86Description(portLibrary, desc);
 	}
 	
 	Trc_PRT_sysinfo_get_processor_description_Exit(rc);

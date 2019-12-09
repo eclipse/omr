@@ -601,7 +601,7 @@ omrsysinfo_get_processor_description(struct OMRPortLibrary *portLibrary, OMRProc
 		memset(desc, 0, sizeof(OMRProcessorDesc));
 
 #if (defined(J9X86) || defined(J9HAMMER))
-		rc = getX86Description(portLibrary, desc);
+		rc = OMRgetX86Description(portLibrary, desc);
 #elif defined(LINUXPPC)
 		rc = getLinuxPPCDescription(portLibrary, desc);
 #elif defined(AIXPPC)

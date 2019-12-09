@@ -77,7 +77,7 @@
  * @return 0 on success, -1 on failure
  */
 intptr_t
-getX86Description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
+OMRgetX86Description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
 {
 	uint32_t CPUInfo[4] = {0};
 	char vendor[12];
@@ -87,13 +87,13 @@ getX86Description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
 	desc->processor = OMR_PROCESSOR_X86_UNKNOWN;
 
 	/* vendor */
-	getX86CPUID(CPUID_VENDOR_INFO, CPUInfo);
+	OMRgetX86CPUID(CPUID_VENDOR_INFO, CPUInfo);
 	memcpy(vendor + 0, &CPUInfo[1], sizeof(uint32_t));
 	memcpy(vendor + 4, &CPUInfo[3], sizeof(uint32_t));
 	memcpy(vendor + 8, &CPUInfo[2], sizeof(uint32_t));
 
 	/* family and model */
-	getX86CPUID(CPUID_FAMILY_INFO, CPUInfo);
+	OMRgetX86CPUID(CPUID_FAMILY_INFO, CPUInfo);
 	processorSignature = CPUInfo[0];
 	familyCode = (processorSignature & CPUID_SIGNATURE_FAMILY) >> CPUID_SIGNATURE_FAMILY_SHIFT;
 	if (0 == strncmp(vendor, CPUID_VENDOR_INTEL, CPUID_VENDOR_LENGTH)) {
@@ -183,7 +183,7 @@ getX86Description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
  */
 
 void
-getX86CPUID(uint32_t leaf, uint32_t *cpuInfo)
+OMRgetX86CPUID(uint32_t leaf, uint32_t *cpuInfo)
 {
 	cpuInfo[0] = leaf;
 

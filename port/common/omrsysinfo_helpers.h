@@ -31,9 +31,9 @@
 #include "omrport.h"
 
 extern void
-getX86CPUID(uint32_t leaf, uint32_t *cpuInfo);
+OMRgetX86CPUID(uint32_t leaf, uint32_t *cpuInfo);
 
 extern intptr_t
-getX86Description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc);
+OMRgetX86Description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc);
 
 #endif /* SYSINFOHELPERS_H_ */
