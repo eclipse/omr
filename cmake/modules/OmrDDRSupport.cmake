@@ -40,7 +40,7 @@ set(OMR_SEPARATE_DEBUG_INFO OFF CACHE BOOL "Maintain debug info in a separate fi
 function(make_ddr_set set_name)
 	# if DDR is not enabled, just skip
 	# Also skip if we are on windows since it is unsupported at the moment
-	if((OMR_HOST_OS STREQUAL "win") OR (NOT OMR_DDR))
+	if(NOT OMR_DDR)
 		return()
 	endif()
 	set(DDR_TARGET_NAME "${set_name}")
@@ -73,7 +73,7 @@ function(make_ddr_set set_name)
 endfunction(make_ddr_set)
 
 function(ddr_set_add_targets ddr_set)
-	if((OMR_HOST_OS STREQUAL "win") OR (NOT OMR_DDR))
+	if(NOT OMR_DDR)
 		return()
 	endif()
 
@@ -93,7 +93,7 @@ function(ddr_set_add_targets ddr_set)
 endfunction(ddr_set_add_targets)
 
 function(target_enable_ddr tgt)
-	if((OMR_HOST_OS STREQUAL "win") OR (NOT OMR_DDR))
+	if(NOT OMR_DDR)
 		return()
 	endif()
 

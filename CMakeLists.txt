@@ -142,7 +142,7 @@ configure_file(include_core/omrversionstrings.cmake.h.in omrversionstrings.h)
 ### Set up DDR configuration
 ###
 include(OmrDDRSupport)
-if(OMR_DDR AND NOT OMR_OS_WINDOWS)
+if(OMR_DDR)
 	make_ddr_set(omrddr)
 	ddr_add_headers(omrddr
 		${omr_BINARY_DIR}/omrcfg.h
