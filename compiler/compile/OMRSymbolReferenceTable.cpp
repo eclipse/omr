@@ -787,6 +787,18 @@ OMR::SymbolReferenceTable::findOrCreateNewObjectNoZeroInitSymbolRef(TR::Resolved
    }
 
 TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateNewValueSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_newValue, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateNewValueNoZeroInitSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_newValueNoZeroInit, true, true, true);
+   }
+
+TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateNewArraySymbolRef(TR::ResolvedMethodSymbol *)
    {
    return findOrCreateRuntimeHelper(TR_newArray, true, true, true);

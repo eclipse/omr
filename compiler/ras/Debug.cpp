@@ -3689,6 +3689,8 @@ TR_Debug::getRuntimeHelperName(int32_t index)
 
          case TR_newObject:                 return "jitNewObject";
          case TR_newObjectNoZeroInit:       return "jitNewObjectNoZeroInit";
+         case TR_newValue:                 return "jitNewObject";
+         case TR_newValueNoZeroInit:       return "jitNewObjectNoZeroInit";
          case TR_newArray:                  return "jitNewArray";
          case TR_newArrayNoZeroInit:        return "jitNewArrayNoZeroInit";
          case TR_aNewArray:                 return "jitANewArray";

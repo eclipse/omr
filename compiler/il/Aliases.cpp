@@ -183,6 +183,8 @@ OMR::SymbolReference::getUseonlyAliasesBV(TR::SymbolReferenceTable * symRefTab)
             case TR_transactionExit:
             case TR_newObject:
             case TR_newObjectNoZeroInit:
+            case TR_newValue:
+            case TR_newValueNoZeroInit:
             case TR_newArray:
             case TR_multiANewArray:
             default:
@@ -366,6 +368,8 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
             case TR_writeBarrierClassStoreRealTimeGC:
             case TR_writeBarrierStoreRealTimeGC:
             case TR_aNewArray:
+            case TR_newValue:
+            case TR_newValueNoZeroInit:
             case TR_newObject:
             case TR_newObjectNoZeroInit:
             case TR_newArray:
