@@ -85,6 +85,12 @@ typedef struct OMRMemCategorySet {
 #define OMRMEM_CATEGORY_CUDA 0x80000010
 #endif /* OMR_OPT_CUDA */
 
+/* From OpenJ9's j9memcategories.h. I don't know why *_CLASSES is used to
+ * initialize the sharedCacheAPI attribute.
+ */
+#define OMRMEM_CATEGORY_CLASSES 2
+#define OMRMEM_CATEGORY_CLASSES_SHC_CACHE 3
+
 /* Helper macro to convert the category codes to indices starting from 0 */
 #define OMRMEM_LANGUAGE_CATEGORY_LIMIT 0x7FFFFFFF
 #define OMRMEM_OMR_CATEGORY_INDEX_FROM_CODE(code) (((uint32_t)0x7FFFFFFF) & (code))

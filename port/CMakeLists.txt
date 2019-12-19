@@ -169,6 +169,8 @@ list(APPEND OBJECTS
 	omrmemcategories.c
 	omrport.c
 	omrmmap.c
+        omrargscan.c
+        omrshchelp.c
 	j9nls.c
 	j9nlshelpers.c
 	omrosbacktrace.c
@@ -360,10 +362,18 @@ else()
 	target_include_directories(omrport_obj PRIVATE unix unix_include)
 endif()
 
-list(APPEND VPATH common include)
-target_include_directories(omrport_obj PRIVATE common include)
+list(APPEND VPATH common include sysvipc)
+target_include_directories(omrport_obj PRIVATE common include include_core
+  sysvipc)
 
 #TODO need to set some flags and etc see line 300
+
+list(APPEND OBJECTS
+  omrSysvIPCWrappers.c
+  omrsharedhelper.c
+  omrshsem.c
+  omrshmem.c
+  omrshsem_deprecated.c)
 
 omr_find_files(resolvedPaths
 	PATHS ${VPATH}

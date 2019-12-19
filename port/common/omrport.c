@@ -256,6 +256,50 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrmmap_protect, /* mmap_protect */
 	omrmmap_get_region_granularity, /* mmap_get_region_granularity */
 	omrmmap_dont_need, /* mmap_dont_need */
+	omrshsem_params_init, /* shsem_paramemeters_init */
+	omrshsem_startup, /* shsem_startup */
+	omrshsem_shutdown, /* shsem_shutdown */
+	omrshsem_open, /* shsem_open */
+	omrshsem_post, /* shsem_post */
+	omrshsem_wait, /* shsem_wait */
+	omrshsem_getVal, /* shsem_getVal */
+	omrshsem_setVal, /* shsem_setVal */
+	omrshsem_close, /* shsem_close */
+	omrshsem_destroy, /* shsem_destroy */
+	omrshsem_deprecated_startup, /* shsem_deprecated_startup */
+	omrshsem_deprecated_shutdown, /* shsem_deprecated_shutdown */
+	omrshsem_deprecated_open, /* shsem_deprecated_open */
+	omrshsem_deprecated_openDeprecated, /* shsem_deprecated_openDeprecated */
+	omrshsem_deprecated_post, /* shsem_deprecated_post */
+	omrshsem_deprecated_wait, /* shsem_deprecated_wait */
+	omrshsem_deprecated_getVal, /* shsem_deprecated_getVal */
+	omrshsem_deprecated_setVal, /* shsem_deprecated_setVal */
+	omrshsem_deprecated_handle_stat, /* shsem_deprecated_handle_stat */
+	omrshsem_deprecated_close, /* shsem_deprecated_close */
+	omrshsem_deprecated_destroy, /* shsem_deprecated_destroy */
+	omrshsem_deprecated_destroyDeprecated, /* shsem_deprecated_destroyDeprecated */
+	omrshsem_deprecated_getid, /* shsem_deprecated_getid */
+	omrshmem_startup, /* shmem_startup */
+	omrshmem_shutdown, /* shmem_shutdown */
+	omrshmem_open, /*shmem_open*/
+	omrshmem_openDeprecated, /*shmem_openDeprecated*/
+	omrshmem_attach, /*shmem_attach*/
+	omrshmem_detach, /*shmem_detach*/
+	omrshmem_close, /*shmem_close*/
+	omrshmem_destroy, /*shmem_destroy */
+	omrshmem_destroyDeprecated, /* shmem_destroyDeprecated */
+	omrshmem_findfirst, /*shmem_findfirst*/
+	omrshmem_findnext, /* shmem_findnext*/
+	omrshmem_findclose, /* shmem_findclose*/
+	omrshmem_stat, /* shmem_stat */
+	omrshmem_statDeprecated, /* shmem_statDeprecated */
+	omrshmem_handle_stat, /* shmem_handle_stat */
+	omrshmem_getDir, /* shmem_getDir */
+	omrshmem_createDir, /* shmem_createDir */
+	omrshmem_getFilepath, /* shmem_getFilepath */
+	omrshmem_protect, /* shmem_protect */
+	omrshmem_get_region_granularity, /* shmem_get_region_granularity */
+	omrshmem_getid, /* shmem_getid */
 	omrsysinfo_get_limit, /* sysinfo_get_limit */
 	omrsysinfo_set_limit, /* sysinfo_set_limit */
 	omrsysinfo_get_number_CPUs_by_type, /* sysinfo_get_number_CPUs_by_type */

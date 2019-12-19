@@ -996,6 +996,444 @@ TraceExit=Trc_PRT_filestream_fileno_Exit Group=j9filestrean Overhead=1 Level=5 N
 TraceException=Trc_PRT_filestream_fileno_invalidArgs Group=omrfilestream Overhead=1 Level=5 NoEnv Template="omrfilestream_fileno Invalid arguments. fileStream = %p"
 TraceException=Trc_PRT_filestream_fileno_failed Group=omrfilestream Overhead=1 Level=5 NoEnv Template="omrfilestream_fileno Failed. fileStream = %p, errorCode = %d"
 
+// omrshmem trace points
+TraceEntry=Trc_PRT_shmem_createFile_Entry Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createFile: Entry"
+TraceExit=Trc_PRT_shmem_createFile_Exit1 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createFile: base file already exists!"
+TraceExit=Trc_PRT_shmem_createFile_Exit2 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createFile: base file creation error: errno = %s"
+TraceExit=Trc_PRT_shmem_createFile_Exit Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createFile: Normal Exit"
+
+TraceEntry=Trc_PRT_shmem_createSharedMemory_Entry Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: Entry"
+TraceEvent=Trc_PRT_shmem_createSharedMemory_ftok Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: ftok on file %s, proj id = %d"
+TraceExit=Trc_PRT_shmem_createSharedMemory_Exit1 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: control file already exists, back to top"
+TraceExit=Trc_PRT_shmem_createSharedMemory_Exit2 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: control file create error"
+TraceExit=Trc_PRT_shmem_createSharedMemory_Exit3 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: ftok on control file error: file could be removed, back to top"
+TraceExit=Trc_PRT_shmem_createSharedMemory_Exit4 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: control file ftok error"
+TraceEvent=Trc_PRT_shmem_createSharedMemory_shmget Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: shmget with ftok key = %d, size = %d"
+TraceEvent=Trc_PRT_shmem_createSharedMemory_shmget_Event1 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: projid %d is used, try next one"
+TraceExit=Trc_PRT_shmem_createSharedMemory_Exit5 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: shmget error: max projid (%d) tried"
+TraceExit=Trc_PRT_shmem_createSharedMemory_Exit6 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: shmget error: OS error errno = %d errno2 = %d"
+TraceEvent=Trc_PRT_shmem_createSharedMemory_Event1 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: shmget is successful! shmid = %d"
+TraceExit=Trc_PRT_shmem_createSharedMemory_Exit7 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: writeControlFile failed"
+TraceExit=Trc_PRT_shmem_createSharedMemory_Exit8 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: shmHandle failed"
+TraceExit=Trc_PRT_shmem_createSharedMemory_Exit Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: successful"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_attach_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_attach entered handle=%p"
+TraceExit=Trc_PRT_shmem_omrshmem_attach_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_attach exit normally, region=%p"
+TraceExit=Trc_PRT_shmem_omrshmem_attach_Exit1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_attach exit: handle is NULL"
+TraceExit=Trc_PRT_shmem_omrshmem_attach_Exit2 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_attach exit: cannot attach to region, portable error=%d"
+TraceDebug=Trc_PRT_shmem_omrshmem_attach_Debug1 Group=omrshmem Overhead=1 Level=6 NoEnv Template="omrshmem_attach: shmid = %x"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_close_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_close entered handle=%p"
+TraceExit=Trc_PRT_shmem_omrshmem_close_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_close exit"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_destroy_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_destroy entered handle=%p"
+TraceExit=Trc_PRT_shmem_omrshmem_destroy_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_destroy exit normally"
+TraceExit=Trc_PRT_shmem_omrshmem_destroy_Exit1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_destroy failed: shmctl/unlink failed"
+TraceDebug=Trc_PRT_shmem_omrshmem_destroy_Debug1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_destroy unlink %s: rc=%d, errno=%d"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_detach_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_detach entered handle=%p"
+TraceExit=Trc_PRT_shmem_omrshmem_detach_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_detach exit normally"
+TraceExit=Trc_PRT_shmem_omrshmem_detach_Exit1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_detach failed: shmdt failed"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_findclose_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findclose entered, findhandle=%p"
+TraceExit=Trc_PRT_shmem_omrshmem_findclose_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findclose exit"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_findfirst_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findfirst entered"
+TraceExit=Trc_PRT_shmem_omrshmem_findfirst_Exit1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findfirst exit - findfirst returns failed"
+TraceExit=Trc_PRT_shmem_omrshmem_findfirst_Exit2 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findfirst exit - cannot find any shared memory"
+TraceExit=Trc_PRT_shmem_omrshmem_findfirst_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findfirst exit - return success"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_findnext_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findnext entered findHandle=%p"
+TraceExit=Trc_PRT_shmem_omrshmem_findnext_Exit1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findfirst exit - findnext returns failed"
+TraceExit=Trc_PRT_shmem_omrshmem_findnext_Exit2 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findfirst exit - cannot find any shared memory"
+TraceExit=Trc_PRT_shmem_omrshmem_findnext_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findfirst exit - return success"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_open_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open entered, rootName = %s, size = %d, permission = %d"
+TraceEvent=Trc_PRT_shmem_omrshmem_open_Event1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open shared memory file %s not exist, creating"
+TraceEvent=Trc_PRT_shmem_omrshmem_open_Event2 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open shared memory file %s exist, opening"
+TraceEvent=Trc_PRT_shmem_omrshmem_open_Event3 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open retrying, count=%d"
+TraceExit=Trc_PRT_shmem_omrshmem_open_Exit1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open failure"
+TraceExit=Trc_PRT_shmem_omrshmem_open_Exit2 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open failure, as we have retried too many times"
+TraceExit=Trc_PRT_shmem_omrshmem_open_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open returns success, rc=%d, handle=%p"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_stat_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat entered, name = %s"
+TraceExit=Trc_PRT_shmem_omrshmem_stat_Exit1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat exit - controlFile %s is a directory not a file"
+TraceExit=Trc_PRT_shmem_omrshmem_stat_Exit2 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat exit - contents of controlFile %s is corrupted"
+TraceExit=Trc_PRT_shmem_omrshmem_stat_Exit3 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat exit shmctl fails, portable error=%d"
+TraceExit=Trc_PRT_shmem_omrshmem_stat_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat exit - return success"
+
+// shared Trace points
+TraceEntry=Trc_PRT_shared_changeDirectoryPermission_Entry Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper change shared directory permission entered dir = %s, perms = %x"
+TraceExit=Trc_PRT_shared_changeDirectoryPermission_Exit Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper change shared directory permission successful exit"
+TraceExit=Trc_PRT_shared_changeDirectoryPermission_Exit1 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper change shared directory permission failed, errno=%d"
+
+TraceEntry=Trc_PRT_shared_createDirectory_Entry Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper createDirectory %s"
+TraceExit=Trc_PRT_shared_createDirectory_Exit Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper createDirectory successful"
+TraceExit=Trc_PRT_shared_createDirectory_Exit1 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper createDirectory already exists"
+TraceExit=Trc_PRT_shared_createDirectory_Exit2 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper createDirectory successfully created including parent dirs"
+TraceExit=Trc_PRT_shared_createDirectory_Exit3 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper createDirectory unable to create %s"
+TraceEvent=Trc_PRT_shared_createDirectory_Event1 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper createDirectory dir %s created"
+TraceEvent=Trc_PRT_shared_createDirectory_Event2 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper createDirectory dir %s already exists"
+
+TraceExit=Trc_PRT_shared_ensureDirectory_Exit3 Group=omrshared Obsolete Overhead=1 Level=1 NoEnv Template="omrsharedhelper ensureDirectory file_attr reported isDir, but changeDirectoryPermission reported does not exist, errno=%d"
+TraceExit=Trc_PRT_shared_ensureDirectory_Exit4 Group=omrshared Obsolete Overhead=1 Level=1 NoEnv Template="omrsharedhelper ensureDirectory file_attr reported isDir, changeDirectoryPermission attempted updated, errno=%d"
+TraceExit=Trc_PRT_shared_ensureDirectory_Exit5 Group=omrshared Obsolete Overhead=1 Level=1 NoEnv Template="omrsharedhelper ensureDirectory dir created, but changeDirectoryPermission reported does not exist, errno=%d"
+TraceExit=Trc_PRT_shared_ensureDirectory_Exit6 Group=omrshared Obsolete Overhead=1 Level=1 NoEnv Template="omrsharedhelper ensureDirectory dir created, changeDirectoryPermission attempted updated, errno=%d"
+TraceExit=Trc_PRT_shared_changeDirectoryPermission_Exit2 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper change shared directory permission failed, file does not exist or non-dir in path, errno=%d"
+TraceDebug=Trc_PRT_shsem_omrshsem_destroy_Debug2 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_destroy semctl failed to remove id %d, portable error=%d"
+
+TraceExit=Trc_PRT_shsem_omrshsem_close_ExitNullHandle Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_close exiting due to NULL handle"
+
+TraceExit=Trc_PRT_shsem_omrshsem_destroy_ExitNullHandle Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_destroy exiting with SUCCESS due to NULL handle"
+
+TraceEntry=Trc_PRT_shsem_createsemHandle_Entry Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem createsemHandle entering with basefile=%s, semid=%d, nsems=%d"
+TraceExit=Trc_PRT_shsem_createsemHandle_ExitMallocError Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem createsemHandle exiting due to malloc failure"
+TraceExit=Trc_PRT_shsem_createsemHandle_Exit Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem createsemHandle exiting with handle %p"
+
+TraceEvent=Trc_PRT_shmem_createFile_Event1 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem createFile: About to call chown on %s with group %d"
+TraceEvent=Trc_PRT_shmem_createFile_Event2 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem createFile: After call to chown, rc = %d, errno = %d"
+TraceEvent=Trc_PRT_shsem_createbaseFile_Event1 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem createbaseFile: About to call chown on %s with group %d"
+TraceEvent=Trc_PRT_shsem_createbaseFile_Event2 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem createbaseFile: After call to chown, rc = %d, errno = %d"
+
+TraceEntry=Trc_PRT_shsem_checkMarker_Entry Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem checkMarker entering with handle=%p and semsetsize=%d"
+TraceExit=Trc_PRT_shsem_checkMarker_ExitNullHandle Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem checkMarker exiting because handle is NULL"
+TraceExit=Trc_PRT_shsem_checkMarker_ExitSemctlFail Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem checkMarker exiting because call to semctl failed, errno = %d"
+TraceExit=Trc_PRT_shsem_checkMarker_Exit Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem checkMarker exiting... rc from semctl=%d so returning %d"
+
+TraceExit=Trc_PRT_shared_createDir_Exit7 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper ensureDirectory file_attr reported isDir, directory exists and cacheDirPerm is not present"
+
+TraceExit=Trc_PRT_shared_changeDirectoryPermission_Exit3 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper change shared directory permission file stat failed, file does not exist or non-dir in path, errno=%d"
+TraceExit=Trc_PRT_shared_changeDirectoryPermission_Exit4 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper change shared directory permission file stat failed, errno=%d"
+
+TraceEntry=Trc_PRT_shared_cleanSharedMemorySegments_entry Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Entered"
+TraceExit=Trc_PRT_shared_cleanSharedMemorySegments_exit Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Exiting"
+TraceExit=Trc_PRT_shared_cleanSharedMemorySegments_popenFailed Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: popen failed, errno = %d"
+TraceExit=Trc_PRT_shared_cleanSharedMemorySegments_eofDuringHeaderReads Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: End of file reached while reading header lines, errno = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_lineSkipped Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Skipped line %s"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_lineRead Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Read line %s"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_ipcsField Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Extracted field %d as %s"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_endOfExtraction Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: End of field extraction"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_ownerMatch Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Memory  owner matched (%s), shmid = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_eyecatcherMatched Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Region attached and eyecatcher matches"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_deleteFailed Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Attempted delete of shared memory failed, errno = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_deleted Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Delete of shared memory successful"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_attachFailed Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Attach failed, errno = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_detachFailed Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Detach failed, errno = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_eyecatcherMismatched Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Mismatch with sharedmemory eyecatcher"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_noFieldsOrUseridMismatch Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Fields missing or userid mismatch, userid = %s, shmid = %s"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_pipeFailed Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Pipe create failed, errno = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_spawnFailed Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Spawn failed, errno = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_spawnSuccess Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Spawn successful, child pid = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_fdopenFailed Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: fdopen failed, errno = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_waitpidFailed Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: waitpid failed, errno = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_waitpidSuccess Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Child process exited normally, exit code = %d"
+TraceEvent=Trc_PRT_shared_cleanSharedMemorySegments_childFailed Group=omrshared Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: Child process ended abnormally, status = %x"
+
+TraceEntry=Trc_PRT_shared_ControlFileFDWithWriteLock_EnterWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="ControlFileFDWithWriteLock (%s)"
+TraceEvent=Trc_PRT_shared_ControlFileFDWithWriteLock_Message Group=omrshared Overhead=1 Level=1 NoEnv Template="ControlFileFDWithWriteLock (%s)"
+TraceExit=Trc_PRT_shared_ControlFileFDWithWriteLock_ExitWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="ControlFileFDWithWriteLock (%s)"
+TraceEntry=Trc_PRT_shared_ControlFileFDUnLock_EnterWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="ControlFileFDUnLock (%s)"
+TraceExit=Trc_PRT_shared_ControlFileFDUnLock_ExitWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="ControlFileFDUnLock (%s)"
+
+// omrshsem Trace points
+TraceEntry=Trc_PRT_shsem_omrshsem_open_Entry Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open entered, semname = %s, setSize = %d, permission = %d"
+TraceDebug=Trc_PRT_shsem_omrshsem_open_Debug1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open: baseFile=%s"
+
+// New tracepoints for omrshsem_open and supporting functions
+TraceEvent=Trc_PRT_shsem_omrshsem_open_ensureBaseFile_FailedObsolete Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open() could not create or open semaphore file '%s'."
+TraceEvent=Trc_PRT_shsem_omrshsem_open_getInfoStruct_FailedObsolete Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open() could not create (or open) shared memory in call to getInfoStruct()."
+TraceEvent=Trc_PRT_shsem_omrshsem_open_createsemHandle_FailedObsolete Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open() could not create shared memory handle in call to createsemHandle()."
+TraceEntry=Trc_PRT_shsem_getInfoStruct_Entry Group=omrsock Overhead=1 Level=3 NoEnv Template="getInfoStruct() enter"
+TraceExit=Trc_PRT_shsem_getInfoStruct_Exit Group=omrsock Overhead=1 Level=3 NoEnv Template="getInfoStruct() exit"
+TraceEvent=Trc_PRT_shsem_omrshsem_stat_ftok_Failed Group=omrshared Overhead=1 Level=1 NoEnv Template="getInfoStruct() ftok failed with portable error=%d."
+TraceEvent=Trc_PRT_shsem_omrshsem_stat_semget_Failed Group=omrshared Overhead=1 Level=1 NoEnv Template="getInfoStruct() semget failed with portable error=%d."
+TraceEvent=Trc_PRT_shsem_getInfoStruct_shared_sem_opened Group=omrshared Overhead=1 Level=1 NoEnv Template="getInfoStruct() shared semaphore opened with semget()."
+TraceEvent=Trc_PRT_shsem_getInfoStruct_shared_sem_created Group=omrshared Overhead=1 Level=1 NoEnv Template="getInfoStruct() shared semaphore created with semget()."
+
+TraceEntry=Trc_PRT_shsem_omrshsem_post_Entry1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_post handle=%p, semset = %d, flag = %d, semid=%d"
+TraceEntry=Trc_PRT_shsem_omrshsem_wait_Entry1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_wait handle=%p, semset = %d flag = %d, semid=%d"
+TraceEntry=Trc_PRT_shsem_omrshsem_getVal_Entry1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_getVal handle=%p, semset = %d, semid=%d"
+TraceEntry=Trc_PRT_shsem_omrshsem_setVal_Entry1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_setVal handle=%p, semset = %d value = %d, semid=%d"
+TraceEntry=Trc_PRT_shsem_omrshsem_deprecated_handle_stat_Entry1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_deprecated_handle_stat entered, handle=%p, semid=%d"
+TraceEntry=Trc_PRT_shsem_omrshsem_close_Entry1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_close entered handle=%p, semid=%d"
+TraceEntry=Trc_PRT_shsem_omrshsem_destroy_Entry1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_destroy entered handle=%p, semid=%d"
+TraceEntry=Trc_PRT_shsem_deprecated_destroyDeprecated_Entry Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_deprecated_destroyDeprecated entered, handle=%p, semid=%d"
+
+TraceEntry=Trc_PRT_shsem_omrshsem_close_Entry Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_close entered handle=%p"
+TraceExit=Trc_PRT_shsem_omrshsem_close_Exit Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_close exit"
+
+TraceEntry=Trc_PRT_shsem_omrshsem_destroy_Entry Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_destroy entered handle=%p"
+TraceExit=Trc_PRT_shsem_omrshsem_destroy_Exit Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_destroy exit normally"
+TraceExit=Trc_PRT_shsem_omrshsem_destroy_Exit1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_destroy failed: shmctl/unlink failed"
+TraceDebug=Trc_PRT_shsem_omrshsem_destroy_Debug1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_destroy unlink %s: rc=%d, portable error=%d"
+
+TraceEntry=Trc_PRT_shsem_omrshsem_getVal_Entry Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_getVal handle=%p, semset = %d"
+TraceExit=Trc_PRT_shsem_omrshsem_getVal_Exit1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_getVal failure: handle invalid"
+TraceExit=Trc_PRT_shsem_omrshsem_getVal_Exit2 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_getVal failure: semset invalid"
+TraceExit=Trc_PRT_shsem_omrshsem_getVal_Exit3 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_getVal failure: semctl failed, rc = %d, portable error = %d"
+TraceExit=Trc_PRT_shsem_omrshsem_getVal_Exit Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_getVal returns %d"
+
+TraceEntry=Trc_PRT_shsem_omrshsem_post_Entry Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_post handle=%p, semset = %d, flag = %d"
+TraceExit=Trc_PRT_shsem_omrshsem_post_Exit1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_post failure: handle invalid"
+TraceExit=Trc_PRT_shsem_omrshsem_post_Exit2 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_post failure: semset invalid"
+TraceExit=Trc_PRT_shsem_omrshsem_post_Exit3 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_post failure: semop failed, rc = %d, portable error = %d"
+TraceExit=Trc_PRT_shsem_omrshsem_post_Exit Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_post returns %d"
+
+TraceEntry=Trc_PRT_shsem_omrshsem_setVal_Entry Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_setVal handle=%p, semset = %d value = %d"
+TraceExit=Trc_PRT_shsem_omrshsem_setVal_Exit1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_setVal failure: handle invalid"
+TraceExit=Trc_PRT_shsem_omrshsem_setVal_Exit2 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_setVal failure: semset invalid"
+TraceExit=Trc_PRT_shsem_omrshsem_setVal_Exit3 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_setVal failure: semop failed, rc = %d, portable error = %d"
+TraceExit=Trc_PRT_shsem_omrshsem_setVal_Exit Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_setVal returns %d"
+
+TraceEntry=Trc_PRT_shsem_omrshsem_wait_Entry Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_wait handle=%p, semset = %d flag = %d"
+TraceExit=Trc_PRT_shsem_omrshsem_wait_Exit1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_wait failure: handle invalid"
+TraceExit=Trc_PRT_shsem_omrshsem_wait_Exit2 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_wait failure: semset invalid"
+TraceExit=Trc_PRT_shsem_omrshsem_wait_Exit3 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_wait failure: semop failed, rc = %d, portable error = %d"
+TraceExit=Trc_PRT_shsem_omrshsem_wait_Exit Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_wait returns %d"
+
+TraceEvent=Trc_PRT_shmem_omrshmem_ensureDirectory_path Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem: directory to store memory mapped file = %s"
+
+TraceExit=Trc_PRT_shmem_omrshmem_open_ExitZeroSize Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open exiting because requested shared memory size is 0 bytes"
+TraceExit=Trc_PRT_shsem_omrshsem_open_ExitZeroSetSize Obsolete Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open exiting because requested semaphore set size is 0"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_openDeprecated_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_openDeprecated entered."
+TraceExit=Trc_PRT_shmem_omrshmem_openDeprecated_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_openDeprecated exit: <%s>"
+
+TraceEvent=Trc_PRT_shsem_omrshsem_openDeprecated_Message Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshsem_openDeprecated : <%s>"
+TraceEntry=Trc_PRT_shmem_omrshmem_openDeprecated_Message Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_openDeprecated : <%s>"
+TraceEntry=Trc_PRT_shmem_omrshmem_statDeprecated_Message Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_statDeprecated exit: <%s>"
+
+TraceEvent=Trc_PRT_shsem_omrshsem_openDeprecated_semgetFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshsem_openDeprecated : Error : semget failed for key %p, with portable errno %d, and error message %s"
+TraceEvent=Trc_PRT_shsem_omrshsem_openDeprecated_semctlFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshsem_openDeprecated : Error : semctl failed for semid %d, with portable errno %d, and error message %s"
+TraceEvent=Trc_PRT_shmem_omrshmem_openDeprecated_shmgetFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_openDeprecated : Error : shmget failed for key %p, with portable errno %d, and error message %s"
+TraceEvent=Trc_PRT_shmem_omrshmem_openDeprecated_shmctlFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_openDeprecated : Error : shmctl failed for semid %d, with portable errno %d, and error message %s"
+
+TraceEvent=Trc_PRT_shsem_omrshsem_openDeprecated_semgetEINVAL Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshsem_openDeprecated : Error : semget failed with EINVAL for key %p. The control file exists but SysV IPC object has been removed."
+TraceEvent=Trc_PRT_shsem_omrshsem_openDeprecated_semctlEINVAL Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshsem_openDeprecated : Error : semctl failed with EINVAL for semid %d. The control file exists but SysV IPC object has been removed."
+TraceEvent=Trc_PRT_shmem_omrshmem_openDeprecated_shmgetEINVAL Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_openDeprecated : Error : semget failed with EINVAL for key %p. The control file exists but SysV IPC object has been removed."
+TraceEvent=Trc_PRT_shmem_omrshmem_openDeprecated_shmctlEINVAL Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_openDeprecated : Error : shmctl failed with EINVAL for shmid %d. The control file exists but SysV IPC object has been removed."
+
+TraceException=Trc_PRT_shsem_omrshsem_openDeprecated_BadCacheType Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshsem_openDeprecated : Error: cacheFileType=%u is not valid."
+TraceException=Trc_PRT_shmem_omrshmem_openDeprecated_BadCacheType Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshsem_openDeprecated : Error: cacheFileType=%u is not valid."
+TraceException=Trc_PRT_shmem_omrshmem_statDeprecated_BadCacheType Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_statDeprecated : Error: cacheFileType=%u is not valid."
+TraceException=Trc_PRT_omrshmem_destroyDeprecated_BadCacheType Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_destroyDeprecated : Error: cacheFileType=%u is not valid."
+TraceException=Trc_PRT_shsem_deprecated_destroyDeprecated_BadCacheType Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_deprecated_destroyDeprecated : Error: cacheFileType=%u is not valid."
+TraceException=Trc_PRT_shsem_omrshsem_destroy_BadMajorModlevel Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_destroy : bad control file major modlevel GET_MOD_MAJOR_LEVEL(controlinfo.modlevel) != OMRSH_MOD_MAJOR_LEVEL (controlinfo.modlevel=%u, OMRSH_MOD_MAJOR_LEVEL=%u)"
+TraceException=Trc_PRT_shmem_omrshmem_destroy_BadMajorModlevel Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_destroy : bad control file major modlevel GET_MOD_MAJOR_LEVEL(controlinfo.modlevel) != OMRSH_MOD_MAJOR_LEVEL (controlinfo.modlevel=%u, OMRSH_MOD_MAJOR_LEVEL=%u)"
+
+TraceEntry=Trc_PRT_shsem_omrshsem_openDeprecated_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshsem_openDeprecated entered."
+TraceExit=Trc_PRT_shsem_omrshsem_openDeprecated_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshsem_openDeprecated exit: <%s>"
+
+TraceExit=Trc_PRT_shmem_omrshmem_stat_ExitNullCacheDirName Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_stat returning -1 as CacheDirName is NULL"
+TraceExit=Trc_PRT_shmem_omrshmem_statDeprecated_ExitNullCacheDirName Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_statDeprecated returning -1 as CacheDirName is NULL"
+
+TraceExit=Trc_PRT_shmem_omrshmem_open_ExitNullCacheDirName Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_open returning OMRPORT_ERROR_SHMEM_OPFAILED as CacheDirName is NULL"
+TraceExit=Trc_PRT_shmem_omrshmem_openDeprecated_ExitNullCacheDirName Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_openDeprecated returning OMRPORT_ERROR_SHMEM_OPFAILED as CacheDirName is NULL"
+
+TraceExit=Trc_PRT_shmem_omrshmem_deprecated_open_ExitNullCacheDirName Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_deprecated_open returning -1 as CacheDirName is NULL"
+TraceExit=Trc_PRT_shmem_omrshmem_deprecated_openDeprecated_ExitNullCacheDirName Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_deprecated_openDeprecated returning -1 as CacheDirName is NULL"
+
+TraceExit=Trc_PRT_shmem_omrshmem_protect_ExitNullCacheDirName Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_protect returning -1 as CacheDirName is NULL"
+TraceExit=Trc_PRT_shmem_omrshmem_destroy_ExitNullCacheDirName Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_destroy returning -1 as CacheDirName is NULL"
+TraceExit=Trc_PRT_shmem_omrshmem_getFilepath_ExitNullCacheDirName Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_getFilepath returning -1 as CacheDirName is NULL"
+
+TraceEvent=Trc_PRT_shmem_omrshmem_open_Msg Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_open (%s)"
+TraceExit=Trc_PRT_shmem_omrshmem_open_ExitWithMsg Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_open exit (%s)"
+TraceEntry=Trc_PRT_shmem_omrshmem_createSharedMemory_EnterWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory (%s)"
+TraceEvent=Trc_PRT_shmem_omrshmem_createSharedMemory_Msg Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory (%s)"
+TraceExit=Trc_PRT_shmem_omrshmem_createSharedMemory_ExitWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: (%s)"
+TraceEntry=Trc_PRT_shmem_omrshmem_openSharedMemory_EnterWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem openSharedMemory (%s)"
+TraceEvent=Trc_PRT_shmem_omrshmem_openSharedMemory_Msg Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem openSharedMemory (%s)"
+TraceExit=Trc_PRT_shmem_omrshmem_openSharedMemory_ExitWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem openSharedMemory (%s)"
+
+TraceEntry=Trc_PRT_omrshmem_createDir_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_createDir: Entering"
+TraceExit=Trc_PRT_omrshmem_createDir_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_createDir: Exiting"
+TraceExit=Trc_PRT_omrshmem_createDir_ExitFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_createDir: Exiting, can't create the directory"
+TraceExit=Trc_PRT_omrshmem_createDir_ExitFailedFile Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_createDir: Exiting, the cacheDirName is a file, not a directory"
+TraceExit=Trc_PRT_shared_createDir_Exit3 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper ensureDirectory file_attr reported isDir, but changeDirectoryPermission reported does not exist, errno=%d"
+TraceExit=Trc_PRT_shared_createDir_Exit4 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper ensureDirectory file_attr reported isDir, changeDirectoryPermission attempted updated, errno=%d"
+TraceExit=Trc_PRT_shared_createDir_Exit5 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper ensureDirectory dir created, but changeDirectoryPermission reported does not exist, errno=%d"
+TraceExit=Trc_PRT_shared_createDir_Exit6 Group=omrshared Overhead=1 Level=1 NoEnv Template="omrsharedhelper ensureDirectory dir created, changeDirectoryPermission attempted updated, errno=%d"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_statDeprecated_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_statDeprecated entered."
+TraceExit=Trc_PRT_shmem_omrshmem_statDeprecated_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_statDeprecated exit: <%s>"
+TraceEvent=Trc_PRT_shsem_verifyControlDirectory_isDir Obsolete Group=omrshsem Overhead=1 Level=3 NoEnv Template="omrshsem verifyControlDirectory: controlFileDir %s exists and is a directory"
+TraceEvent=Trc_PRT_shsem_verifyControlDirectory_isFile Obsolete Group=omrshsem Overhead=1 Level=3 NoEnv Template="omrshsem verifyControlDirectory: controlFileDir %s exists and but is a file"
+TraceEvent=Trc_PRT_shsem_verifyControlDirectory_nonExistent Obsolete Group=omrshsem Overhead=1 Level=3 NoEnv Template="omrshsem verifyControlDirectory: controlFileDir %s does not exist"
+TraceEvent=Trc_PRT_shsem_verifyControlDirectory_nullPath Obsolete Group=omrshsem Overhead=1 Level=3 NoEnv Template="omrshsem verifyControlDirectory: controlFileDir variable is null"
+
+TraceExit=Trc_PRT_shmem_omrshmem_open_CreateAndAttachFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open Error: Created shared memory, but could not attach."
+TraceExit=Trc_PRT_shmem_omrshmem_open_OpenAndAttachFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open Error: Opened shared memory, but could not attach."
+TraceExit=Trc_PRT_shmem_omrshmem_open_Attached Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_open Attached to shared memory."
+
+TraceEntry=Trc_PRT_shmem_omrshmem_close_Entry1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_close entered handle=%p, shmid=%d"
+TraceEntry=Trc_PRT_shmem_omrshmem_attach_Entry1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_attach entered handle=%p, shmid=%d"
+TraceEntry=Trc_PRT_shmem_omrshmem_destroy_Entry1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_destroy entered handle=%p, shmid=%d"
+TraceEntry=Trc_PRT_shmem_destroyDeprecated_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_destroyDeprecated entered handle=%p, shmid=%d"
+TraceEntry=Trc_PRT_shmem_omrshmem_detach_Entry1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_detach entered handle=%p, shmid=%d"
+TraceEntry=Trc_PRT_shmem_omrshmem_handle_stat_Entry1 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_handle_stat entered, handle=%p, shmid=%d"
+
+TraceEvent=Trc_PRT_shmem_omrshmem_destroy_Msg Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_destroy (%s)"
+TraceEvent=Trc_PRT_shsem_omrshsem_destroy_Msg  Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_destroy (%s)"
+TraceEntry=Trc_PRT_shsem_deprecated_destroyDeprecated_EnterWithMessage Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_deprecated_destroyDeprecated (%s)"
+TraceEvent=Trc_PRT_shsem_deprecated_destroyDeprecated_Message Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_deprecated_destroyDeprecated (%s)"
+TraceExit=Trc_PRT_shsem_deprecated_destroyDeprecated_ExitWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_deprecated_destroyDeprecated (%s)"
+
+TraceEntry=Trc_PRT_shmem_destroyDeprecated_EnterWithMessage Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_destroyDeprecated (%s)"
+TraceEvent=Trc_PRT_shmem_destroyDeprecated_Message Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_destroyDeprecated (%s)"
+TraceExit=Trc_PRT_shmem_destroyDeprecated_ExitWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_destroyDeprecated (%s)"
+
+TraceEvent=Trc_PRT_shmem_omrshmem_findfirst_file Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findfirst: Found file %s"
+
+TraceEvent=Trc_PRT_shmem_omrshmem_findnext_file Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findnext: Found file %s"
+TraceExit=Trc_PRT_shmem_omrshmem_stat_ExitWithMsg Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat exit (%s)"
+TraceEvent=Trc_PRT_shmem_omrshmem_stat_Msg Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat  (%s)"
+
+TraceExit=Trc_PRT_shsem_omrshsem_open_ExitZeroSetsize Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open exiting with FAILED due to file_attr results on basefile and setsize==0"
+TraceExit=Trc_PRT_shsem_omrshsem_open_ExitCreatesemFail Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open exiting with FAILED as createsemHandle failed"
+TraceExit=Trc_PRT_shsem_omrshsem_open_ExitTimeout Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open exiting with FAILED as timeout waiting for mutex"
+
+TraceEntry=Trc_PRT_shmem_omrshmem_handle_stat_Entry Obsolete Group=omrshmem Overhead=1 Level=3 NoEnv Template="omrshmem_handle_stat entered, handle=%p"
+TraceException=Trc_PRT_shmem_omrshmem_handle_stat_ErrorNullHandle Group=omrshmem Overhead=1 Level=2 NoEnv Template="omrshmem_handle_stat exiting due to NULL handle"
+TraceException=Trc_PRT_shmem_omrshmem_handle_stat_ErrorNullBuffer Group=omrshmem Overhead=1 Level=2 NoEnv Template="omrshmem_handle_stat exiting due to NULL buffer"
+TraceException=Trc_PRT_shmem_omrshmem_handle_stat_ErrorGetShmStatsFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_handle_stat getShmStats failed for shmid %zu"
+TraceExit=Trc_PRT_shmem_omrshmem_handle_stat_Exit Group=omrshmem Overhead=1 Level=3 NoEnv Template="omrshmem_handle_stat returns %zd"
+
+TraceException=Trc_PRT_shmem_getShmStats_shmctlFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="getShmStats : Error : shmctl failed for shmid %d, with portable errno %d, and error message %s"
+
+TraceEntry=Trc_PRT_shmem_createshmHandle_Entry Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem createshmHandle entering with controlFile=%s and shmid=%d"
+TraceExit=Trc_PRT_shmem_createshmHandle_ExitMallocFail Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem createshmHandle exiting due to malloc failure"
+TraceExit=Trc_PRT_shmem_createshmHandle_Exit Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem createshmHandle exiting with handle %p"
+
+TraceEntry=Trc_PRT_shmem_findError_shmat_Entry Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmat entering with errorCode=%d errorCode2=%d"
+TraceExit=Trc_PRT_shmem_findError_shmat_Exit1 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmat returning OMRPORT_ERROR_SHMEM_NOPERMISSION"
+TraceExit=Trc_PRT_shmem_findError_shmat_Exit2 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmat returning OMRPORT_ERROR_SHMEM_ALREADY_EXIST"
+TraceExit=Trc_PRT_shmem_findError_shmat_Exit3 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmat returning OMRPORT_ERROR_SHMEM_NOSPACE"
+TraceExit=Trc_PRT_shmem_findError_shmat_Exit4 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmat returning OMRPORT_ERROR_SHMEM_INVALID_INPUT"
+TraceExit=Trc_PRT_shmem_findError_shmat_Exit5 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmat returning OMRPORT_ERROR_SHMEM_ATTACH_FAILED"
+
+TraceEntry=Trc_PRT_shmem_findError_shmctl_Entry Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmctl entering with errorCode=%d errorCode2=%d"
+TraceExit=Trc_PRT_shmem_findError_shmctl_Exit1 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmctl returning OMRPORT_ERROR_SHMEM_NOPERMISSION"
+TraceExit=Trc_PRT_shmem_findError_shmctl_Exit2 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmctl returning OMRPORT_ERROR_SHMEM_OPFAILED"
+
+TraceEntry=Trc_PRT_shmem_findError_shmget_Entry Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmget entering with errorCode=%d errorCode2=%d"
+TraceExit=Trc_PRT_shmem_findError_shmget_Exit1 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmget returning OMRPORT_ERROR_SHMEM_NOPERMISSION"
+TraceExit=Trc_PRT_shmem_findError_shmget_Exit2 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmget returning OMRPORT_ERROR_SHMEM_ALREADY_EXIST"
+TraceExit=Trc_PRT_shmem_findError_shmget_Exit3 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmget returning OMRPORT_ERROR_SHMEM_TOOBIG"
+TraceExit=Trc_PRT_shmem_findError_shmget_Exit4 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmget returning OMRPORT_ERROR_SHMEM_NOSPACE"
+TraceExit=Trc_PRT_shmem_findError_shmget_Exit5 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem findError_shmget returning OMRPORT_ERROR_SHMEM_OPFAILED"
+
+TraceEntry=Trc_PRT_shmem_getNameFromControlFileName_Entry Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem getNameFromControlFileName entering with name=%s and bufsize=%d"
+TraceExit=Trc_PRT_shmem_getNameFromControlFileName_ExitNullName Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem getNameFromControlFileName returning because of NULL name"
+TraceExit=Trc_PRT_shmem_getNameFromControlFileName_Exit Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem getNameFromControlFileName exiting with buffer=%s"
+
+TraceEntry=Trc_PRT_shmem_isControlFileName_Entry Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem isControlFileName entering with buffer=%s"
+TraceExit=Trc_PRT_shmem_isControlFileName_Exit1 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem isControlFileName returning with true"
+TraceExit=Trc_PRT_shmem_isControlFileName_Exit0 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem isControlFileName returning with false"
+
+TraceEntry=Trc_PRT_omrshmem_getDir_Entry Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_getDir: Entering"
+TraceExit=Trc_PRT_omrshmem_getDir_Exit Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_getDir: Exiting with buffer=%s"
+TraceExit=Trc_PRT_omrshmem_getDir_ExitFailedOverflow Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_getDir: Exiting, the string is longer than bufLength"
+TraceExit=Trc_PRT_omrshmem_getDir_ExitNoMemory Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_getDir: Exiting, mem_allocate_memory failed"
+
+TraceExit=Trc_PRT_shmem_omrshmem_stat_ExitNullStat Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_stat returning -1 as statbuf is NULL"
+
+TraceExit=Trc_PRT_shsem_omrshsem_open_ensureBaseFile_Failed  Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open() could not create or open semaphore file '%s'."
+TraceExit=Trc_PRT_shsem_omrshsem_open_getInfoStruct_Failed Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open() could not create (or open) shared memory in call to getInfoStruct()."
+TraceExit=Trc_PRT_shsem_omrshsem_open_createsemHandle_Failed Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open() could not create shared memory handle in call to createsemHandle()."
+TraceExit=Trc_PRT_shsem_omrshsem_open_ExitWithRC Overhead=1 Level=1 NoEnv Template="omrshsem_open() exiting with rc = %d."
+TraceExit=Trc_PRT_shsem_omrshsem_open_globalMutexOpenFailed Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open: Mutex open failed, last error = %u, returning failure"
+TraceExit=Trc_PRT_shsem_omrshsem_open_globalMutexCreateFailed Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open: Mutex create failed, last error = %u, returning failure"
+TraceExit=Trc_PRT_shsem_omrshsem_open_nullSemaphoreFullName Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open: exiting (semaphoreFullName == NULL)"
+TraceExit=Trc_PRT_shsem_omrshsem_open_nullSemaphoreHandle Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open: exiting (shsem_handle == NULL)"
+TraceExit=Trc_PRT_shsem_omrshsem_open_waitglobalmutexfailed Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open WaitForSingleObject for global mutex failed, rc = %d, windows last error = %d"
+TraceExit=Trc_PRT_shsem_omrshsem_open_waitglobalmutextimeout Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open WaitForSingleObject for global mutex timed out, rc = %d, windows last error = %d"
+TraceExit=Trc_PRT_shsem_omrshsem_close_NullHandle Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_close: *handle == NULL"
+TraceExit=Trc_PRT_shsem_omrshsem_destroy_NullHandle Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_destroy: *handle == NULL"
+TraceExit=Trc_PRT_shmem_omrshmem_destroy_NullMappedFile Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_destroy: sharedMemoryMappedFile == NULL"
+TraceExit=Trc_PRT_shmem_omrshmem_findfirst_Exit0 Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findfirst: ensureSharedMemoryDirectory() != OMRSH_SUCCESS"
+TraceExit=Trc_PRT_shmem_omrshmem_stat_statbufIsNull Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat: statbuf == NULL"
+TraceExit=Trc_PRT_shmem_omrshmem_stat_ensureSharedMemoryDirectoryFail Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat: ensureSharedMemoryDirectory() != OMRSH_SUCCESS"
+TraceExit=Trc_PRT_shmem_omrshmem_stat_getModifiedSharedMemoryPathandFileNameFail Obsolete Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat: modifiedSharedMemoryFile == NULL"
+TraceExit=Trc_PRT_shmem_omrshmem_stat_unicodePathNull Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_stat: unicodePath == NULL"
+TraceExit=Trc_PRT_shmem_createMappedFile_modifiedSharedMemoryFileNameNull Group=omrshared Overhead=1 Level=1 NoEnv Template="createMappedFile: shareMemoryFileName == NULL"
+
+TraceException=Trc_PRT_shmem_omrshmem_createSharedMemory_MsgWithError Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory (%s=%d)"
+TraceExit-Exception=Trc_PRT_shmem_omrshmem_createSharedMemory_ExitWithMessageAndError Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem createSharedMemory: (%s=%d)"
+TraceException=Trc_PRT_shmem_omrshmem_openSharedMemory_MsgWithError Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem openSharedMemory (%s=%d)"
+
+TraceEvent=Trc_PRT_shmem_omrshmem_createSharedMemory_storageKey Group=omrshmem Overhead=1 Level=1 NoEnv Template="Trc_PRT_shmem_omrshmem_createSharedMemory_storageKey: Shared classes cache was created in storage protection key = %zu"
+TraceEvent=Trc_PRT_shmem_omrshmem_openSharedMemory_storageKey Group=omrshmem Overhead=1 Level=1 NoEnv Template="Trc_PRT_shmem_omrshmem_openSharedMemory_storageKey: Shared classes cache was created in storage protection key = %zu and the current key = %zu"
+TraceEvent=Trc_PRT_shmem_omrshmem_protect Group=omrshmem Overhead=1 Level=1 NoEnv Template="Trc_PRT_shmem_omrshmem_protect_Entry: Enabling memory protect address=%p length=%d"
+
+TraceExit=Trc_PRT_shsem_omrshsem_deprecated_open_ExitNullCacheDirName Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_deprecated_open returning -1 as CacheDirName is NULL"
+TraceExit=Trc_PRT_shsem_omrshsem_deprecated_openDeprecated_ExitNullCacheDirName Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_deprecated_openDeprecated returning -1 as CacheDirName is NULL"
+
+TraceEvent=Trc_PRT_shsem_omrshsem_open_Msg Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open (%s)"
+TraceExit=Trc_PRT_shsem_omrshsem_open_ExitWithMsg Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem_open exit (%s)"
+TraceEntry=Trc_PRT_shsem_omrshsem_createsemaphore_EnterWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem createSemaphore (%s)"
+TraceEvent=Trc_PRT_shsem_omrshsem_createsemaphore_Msg Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem createSemaphore (%s)"
+TraceExit=Trc_PRT_shsem_omrshsem_createsemaphore_ExitWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem createSemaphore: (%s)"
+TraceEntry=Trc_PRT_shsem_omrshsem_opensemaphore_EnterWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem openSemaphore (%s)"
+TraceEvent=Trc_PRT_shsem_omrshsem_opensemaphore_Msg Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem openSemaphore (%s)"
+TraceExit=Trc_PRT_shsem_omrshsem_opensemaphore_ExitWithMessage Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem openSemaphore (%s)"
+
+TraceException=Trc_PRT_shsem_omrshsem_createsemaphore_MsgWithError Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem createSemaphore (%s=%d)"
+TraceExit-Exception=Trc_PRT_shsem_omrshsem_createsemaphore_ExitWithMessageAndError Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem createSemaphore: (%s=%d)"
+TraceException=Trc_PRT_shsem_omrshsem_opensemaphore_MsgWithError Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshsem openSemaphore (%s=%d)"
+
+TraceEntry=Trc_PRT_shsem_omrshsem_deprecated_handle_stat_Entry Obsolete Group=omrshsem Overhead=1 Level=3 NoEnv Template="omrshsem_deprecated_handle_stat entered, handle=%p"
+TraceException=Trc_PRT_shsem_omrshsem_deprecated_handle_stat_ErrorNullHandle Group=omrshsem Overhead=1 Level=2 NoEnv Template="omrshsem_deprecated_handle_stat exiting due to NULL handle"
+TraceException=Trc_PRT_shsem_omrshsem_deprecated_handle_stat_ErrorNullBuffer Group=omrshsem Overhead=1 Level=2 NoEnv Template="omrshsem_deprecated_handle_stat exiting due to NULL buffer"
+TraceException=Trc_PRT_shsem_omrshsem_deprecated_handle_stat_semctlFailed Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_deprecated_handle_stat : Error : semctl failed for semid %zu, with portable errno %d, and error message %s"
+TraceExit=Trc_PRT_shsem_omrshsem_deprecated_handle_stat_Exit Group=omrshsem Overhead=1 Level=3 NoEnv Template="omrshsem_deprecated_handle_stat returns %zd"
+
+TraceException=Trc_PRT_omrshmem_getDir_tryHomeDirFailed_homeDirTooLong Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_getDir: The length of the environment variable HOME is %zu, it should be greater than 0 and less than %zu"
+TraceException=Trc_PRT_omrshmem_getDir_tryHomeDirFailed_getEnvHomeFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_getDir: omrsysinfo_get_env() failed to get environment variable HOME"
+TraceException=Trc_PRT_omrshmem_getDir_tryHomeDirFailed_pw_dirDirTooLong Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_getDir: The length of the home directory is %zu, it should be greater than 0 and less than %zu"
+TraceException=Trc_PRT_omrshmem_getDir_tryHomeDirFailed_getpwuidFailed Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_getDir: getpwuid() returns NULL"
+TraceException=Trc_PRT_omrshmem_getDir_tryHomeDirFailed_homeOnNFS Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_getDir: User's home directory %s is on a network file system"
+TraceException=Trc_PRT_omrshmem_getDir_tryHomeDirFailed_cannotStat Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_getDir: omrfile_stat() failed on the user's home directory %s"
+
+TraceEntry=Trc_PRT_shmem_ensureBaseFile_Entry Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem ensureBaseFile entering with filename %s"
+TraceExit=Trc_PRT_shmem_ensureBaseFile_ExitExists Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem ensureBaseFile exiting because file exists"
+TraceExit=Trc_PRT_shmem_ensureBaseFile_ExitError Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem ensureBaseFile exiting because of an error in file_open (portable error=%d)"
+TraceExit=Trc_PRT_shmem_ensureBaseFile_Exit Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem ensureBaseFile exiting - created file successfully"
+TraceEvent=Trc_PRT_shmem_ensureBaseFile_Event1 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem ensureBaseFile: About to call chown on %s with group %d"
+TraceEvent=Trc_PRT_shmem_ensureBaseFile_Event2 Obsolete Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem ensureBaseFile: After call to chown, rc = %d, errno = %d"
+TraceExit=Trc_PRT_shmem_omrshmem_stat_shmget_failed_Exit Obsolete Overhead=1 Level=1 NoEnv Template="omrshmem omrshmem_stat() call to shmget() failed with errno = %d"
+
+TraceExit=Trc_PRT_shmem_ensureBaseFile_ExitMustExist Obsolete Overhead=1 Level=1 NoEnv Template="omrshmem ensureBaseFile() in readonly mode the file '%s' must exist."
+
+TraceEvent=Trc_PRT_shsem_omrshsem_open_Event1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open sempahore file %s exists, opening"
+TraceEvent=Trc_PRT_shsem_omrshsem_open_Event2 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open semaphore file %s does not exist, creating"
+TraceEvent=Trc_PRT_shsem_omrshsem_open_Event3 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open retrying, count=%d"
+TraceExit=Trc_PRT_shsem_omrshsem_open_Exit1 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open failure"
+TraceExit=Trc_PRT_shsem_omrshsem_open_Exit2 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open failure, as we have retried too many times"
+TraceExit=Trc_PRT_shsem_omrshsem_open_Exit Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open returns success, rc=%d, handle=%p"
+
+// added to mirror GA 2.3
+TraceEntry=Trc_PRT_shmem_omrshmem_setctrl_Entry Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_set_controlfile_dir: Entering with controlFileDir=%s, PPG_shmem_controlDir=%p"
+TraceExit=Trc_PRT_shmem_omrshmem_setctrl_Exit Group=omrshared Overhead=1 Level=1 NoEnv Template="omrshmem_set_controlfile_dir: Exiting"
+TraceExit=Trc_PRT_shsem_omrshsem_open_Exit4 Group=omrshsem Overhead=1 Level=1 NoEnv Template="omrshsem_open failure as we failed to get controlDir"
+TraceExit=Trc_PRT_shmem_omrshmem_findfirst_Exit3 Group=omrshmem Overhead=1 Level=1 NoEnv Template="omrshmem_findfirst exit as we failed to get controlDir"
+
+TraceEvent=Trc_PRT_shsem_checkControlFileDate_statfailed Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem checkControlFileDate: could not stat control file: %s"
+TraceEvent=Trc_PRT_shsem_checkControlFileDate_semctlfailed Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem checkControlFileDate: could not semctl System V shared semaphore id: %d"
+TraceEvent=Trc_PRT_shsem_checkControlFileDate_isstale Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem checkControlFileDate: System V shared semaphore id %d is stale relative to its control file %s"
+
+TraceEntry=Trc_PRT_shsem_createbaseFile_Entry Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createbaseFile entering with filename %s"
+TraceExit=Trc_PRT_shsem_createbaseFile_ExitExists Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createbaseFile exiting because file exists"
+TraceExit=Trc_PRT_shsem_createbaseFile_ExitError Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createbaseFile exiting because of an error in file_open (errorno=%d)"
+TraceExit=Trc_PRT_shsem_createbaseFile_Exit Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createbaseFile exiting - created file successfully"
+
+// sysvipc
+TraceException=Trc_PRT_sysvipc_semctlWrapper_Failed NoEnv Overhead=1 Level=1 Template="semctlWrapper failed with platform error code=%d"
+
+TraceException=Trc_PRT_sysvipc_shmctlWrapper_Failed NoEnv Overhead=1 Level=1 Template="shmctlWrapper failed with platform error code=%d"
+TraceException=Trc_PRT_sysinfo_unrecognized_Windows_version Obsolete NoEnv Overhead=1 Level=1 Template="omrsysinfo_get_OS_type unrecognized Windows version: type=%d version=%d.%d"
+
+
 TraceEvent=Trc_PRT_vmem_omrvmem_free_memory_using_moservices Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory using moservices userAddress=%p byteAmount=%zu allocator=%zu"
 TraceEntry=Trc_PRT_vmem_reserve_using_moservices_entry Group=mem Overhead=1 Level=5 NoEnv Template="reserve_memory_with_moservices pageSize=%zu byteAmount=%u"
 TraceException=Trc_PRT_vmem_reserve_memory_using_moservices_invalid_page_size Group=mem Overhead=1 Level=3 NoEnv Template="omrvmem_reserve_memory invalid page pageSize=%zu"

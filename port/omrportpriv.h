@@ -390,6 +390,102 @@ omrmmap_get_region_granularity(struct OMRPortLibrary *portLibrary, void *address
 extern J9_CFUNC void
 omrmmap_dont_need(struct OMRPortLibrary *portLibrary, const void *startAddress, size_t length);
 
+
+/* J9SourceJ9SharedMemory*/
+extern J9_CFUNC int32_t
+omrshmem_startup (struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC int32_t
+omrshmem_findnext (struct OMRPortLibrary *portLibrary, uintptr_t findhandle, char *resultbuf);
+extern J9_CFUNC intptr_t
+omrshmem_detach (struct OMRPortLibrary *portLibrary, struct omrshmem_handle **handle);
+extern J9_CFUNC void
+omrshmem_findclose (struct OMRPortLibrary *portLibrary, uintptr_t findhandle);
+extern J9_CFUNC void
+omrshmem_close (struct OMRPortLibrary *portLibrary, struct omrshmem_handle **handle);
+extern J9_CFUNC void*
+omrshmem_attach (struct OMRPortLibrary *portLibrary, struct omrshmem_handle* handle, uint32_t category);
+extern J9_CFUNC uintptr_t
+omrshmem_findfirst (struct OMRPortLibrary *portLibrary, char *cacheDirName, char *resultbuf);
+extern J9_CFUNC void
+omrshmem_shutdown (struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC uintptr_t
+omrshmem_stat (struct OMRPortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, const char* name, struct OMRPortShmemStatistic* statbuf);
+extern J9_CFUNC uintptr_t
+omrshmem_statDeprecated (struct OMRPortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, const char* name, struct OMRPortShmemStatistic* statbuf, uintptr_t cacheFileType);
+extern J9_CFUNC intptr_t
+omrshmem_handle_stat(struct OMRPortLibrary *portLibrary, struct omrshmem_handle *handle, struct OMRPortShmemStatistic *statbuf);
+extern J9_CFUNC intptr_t
+omrshmem_destroy (struct OMRPortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, struct omrshmem_handle **handle);
+extern J9_CFUNC intptr_t
+omrshmem_destroyDeprecated (struct OMRPortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, struct omrshmem_handle **handle, uintptr_t cacheFileType);
+extern J9_CFUNC intptr_t
+omrshmem_open  (struct OMRPortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, struct omrshmem_handle **handle, const char* rootname, uintptr_t size, uint32_t perm, uint32_t category, uintptr_t flags, OMRControlFileStatus *controlFileStatus);
+extern J9_CFUNC intptr_t
+omrshmem_openDeprecated  (struct OMRPortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, struct omrshmem_handle **handle, const char* rootname, uint32_t perm, uintptr_t cacheFileType, uint32_t category);
+extern J9_CFUNC intptr_t
+omrshmem_getDir (struct OMRPortLibrary *portLibrary, const char* ctrlDirName, uint32_t flags, char* buffer, uintptr_t length);
+extern J9_CFUNC intptr_t
+omrshmem_createDir (struct OMRPortLibrary *portLibrary, char* cacheDirName, uintptr_t cacheDirPerm, BOOLEAN cleanMemorySegments);
+extern J9_CFUNC intptr_t
+omrshmem_getFilepath (struct OMRPortLibrary *portLibrary, char* cacheDirName, char* buffer, uintptr_t length, const char* cachename);
+extern J9_CFUNC intptr_t
+omrshmem_protect(struct OMRPortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, void *address, uintptr_t length, uintptr_t flags);
+extern J9_CFUNC uintptr_t
+omrshmem_get_region_granularity(struct OMRPortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, void *address);
+extern J9_CFUNC int32_t
+omrshmem_getid (struct OMRPortLibrary *portLibrary, struct omrshmem_handle* handle);
+
+/* J9SourceJ9SharedSemaphore*/
+extern J9_CFUNC int32_t
+omrshsem_startup (struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC void
+omrshsem_close  (struct OMRPortLibrary *portLibrary, struct omrshsem_handle **handle);
+extern J9_CFUNC intptr_t
+omrshsem_post (struct OMRPortLibrary *portLibrary, struct omrshsem_handle* handle, uintptr_t semset, uintptr_t flag);
+extern J9_CFUNC void
+omrshsem_shutdown (struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC int32_t
+omrshsem_params_init (struct OMRPortLibrary *portLibrary, struct OMRPortShSemParameters *params);
+extern J9_CFUNC intptr_t
+omrshsem_destroy  (struct OMRPortLibrary *portLibrary, struct omrshsem_handle **handle);
+extern J9_CFUNC intptr_t
+omrshsem_setVal (struct OMRPortLibrary *portLibrary, struct omrshsem_handle* handle, uintptr_t semset, intptr_t value);
+extern J9_CFUNC intptr_t
+omrshsem_open  (struct OMRPortLibrary *portLibrary, struct omrshsem_handle **handle, const struct OMRPortShSemParameters *params);
+extern J9_CFUNC intptr_t
+omrshsem_getVal (struct OMRPortLibrary *portLibrary, struct omrshsem_handle* handle, uintptr_t semset);
+extern J9_CFUNC intptr_t
+omrshsem_wait (struct OMRPortLibrary *portLibrary, struct omrshsem_handle* handle, uintptr_t semset, uintptr_t flag);
+
+/* Deprecated */
+extern J9_CFUNC int32_t
+omrshsem_deprecated_startup (struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC void
+omrshsem_deprecated_close  (struct OMRPortLibrary *portLibrary, struct omrshsem_handle **handle);
+extern J9_CFUNC intptr_t
+omrshsem_deprecated_post (struct OMRPortLibrary *portLibrary, struct omrshsem_handle* handle, uintptr_t semset, uintptr_t flag);
+extern J9_CFUNC void
+omrshsem_deprecated_shutdown (struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC intptr_t
+omrshsem_deprecated_destroy  (struct OMRPortLibrary *portLibrary, struct omrshsem_handle **handle);
+extern J9_CFUNC intptr_t
+omrshsem_deprecated_destroyDeprecated (struct OMRPortLibrary *portLibrary, struct omrshsem_handle **handle, uintptr_t cacheFileType);
+extern J9_CFUNC intptr_t
+omrshsem_deprecated_setVal (struct OMRPortLibrary *portLibrary, struct omrshsem_handle* handle, uintptr_t semset, intptr_t value);
+extern J9_CFUNC intptr_t
+omrshsem_deprecated_handle_stat(struct OMRPortLibrary *portLibrary, struct omrshsem_handle *handle, struct OMRPortShsemStatistic *statbuf);
+extern J9_CFUNC intptr_t
+omrshsem_deprecated_open  (struct OMRPortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, struct omrshsem_handle** handle, const char* semname, int setSize, int permission, uintptr_t flags, OMRControlFileStatus *controlFileStatus);
+
+extern J9_CFUNC intptr_t
+omrshsem_deprecated_openDeprecated  (struct OMRPortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, struct omrshsem_handle** handle, const char* semname, uintptr_t cacheFileType);
+extern J9_CFUNC int32_t
+omrshsem_deprecated_getid (struct OMRPortLibrary *portLibrary, struct omrshsem_handle* handle);
+extern J9_CFUNC intptr_t
+omrshsem_deprecated_getVal (struct OMRPortLibrary *portLibrary, struct omrshsem_handle* handle, uintptr_t semset);
+extern J9_CFUNC intptr_t
+omrshsem_deprecated_wait (struct OMRPortLibrary *portLibrary, struct omrshsem_handle* handle, uintptr_t semset, uintptr_t flag);
+
 /* J9SourceJ9NLS*/
 extern J9_CFUNC const char *
 j9nls_get_language(struct OMRPortLibrary *portLibrary);
