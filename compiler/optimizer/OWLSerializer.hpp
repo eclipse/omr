@@ -2,6 +2,7 @@
 #define OWL_SERIALIZER_HPP
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <vector>
 #include "optimizer/OWLTypes.hpp"
 

@@ -9,7 +9,6 @@
 #include "il/ParameterSymbol.hpp"
 #include "compile/Method.hpp"
 #include "optimizer/OWLMapper.hpp"
-#include "optimizer/OWLJNIConfig.hpp"
 #include "infra/List.hpp"
 
 /***** Local Var table *******/
@@ -111,15 +110,9 @@ TR_OWLMapper::~TR_OWLMapper() {
 
 std::vector<TranslationUnit> TR_OWLMapper::map() {
 
-    TR::NodeChecklist logVisited(_compilation); // visisted nodes for logging OMR IL
     TR::NodeChecklist instructionMappingVisited(_compilation); // visited nodes for mapping the instruction
 
     _storeParameters();
-
-    for (TR::TreeTop *tt = _compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
-        TR::Node *node = tt->getNode();
-        _logOMRIL(node, logVisited);
-    }
 
     for (TR::TreeTop *tt = _compilation->getStartTree(); tt ; tt = tt->getNextTreeTop()){
         TR::Node *node = tt->getNode();
@@ -381,8 +374,6 @@ void TR_OWLMapper::_instructionRouter(TR::Node *node) {
         _pushTranslationUnit(NOT_SHRIKE_BT_INSTRUCTION, node->getGlobalIndex(), 0, NO_ADJUST, 0, instrUnion );
         return;
     }
-
-    printf("--- %d: %s | ref count: %u\n", node->getGlobalIndex(),node->getOpCode().getName(),node->getReferenceCount());
 
     TR::ILOpCode opCode = node->getOpCode();
 

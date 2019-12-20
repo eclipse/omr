@@ -13,7 +13,6 @@
 #include "il/Node_inlines.hpp"
 #include "ras/Debug.hpp"
 #include "optimizer/OWLTypes.hpp"
-#include "optimizer/OWLShrikeBTConstructor.hpp"
 
 /**
  * Simulating java byte code local variable table 

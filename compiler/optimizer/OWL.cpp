@@ -12,12 +12,8 @@
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/OWLTypes.hpp"
-#include "optimizer/OWLJNIClient.hpp"
-#include "optimizer/OWLShrikeBTConstructor.hpp"
 #include "optimizer/OWLSerializer.hpp"
-#include "optimizer/OWLDeserializer.hpp"
-#include "optimizer/OWLAnalyser.hpp"
-#include "optimizer/OWLVerifier.hpp"
+
 
 TR_OWL::TR_OWL(TR::OptimizationManager *manager)
         : TR::Optimization(manager)
@@ -35,11 +31,9 @@ int32_t TR_OWL::perform()
 
     
     TR_OWLMapper *mapper = new TR_OWLMapper(comp());
-    printf("=== Start mapping ===\n");
+
     std::vector<TranslationUnit>  translationUnits = mapper->map();
     delete mapper;
-    printf("==== Finish mapping ====\n");
-
 
     //save the current method info
     MethodInfo methodInfo;
@@ -59,41 +53,11 @@ int32_t TR_OWL::perform()
     strncpy(methodInfo.signature, signature, signatureLength);
     methodInfo.signature[signatureLength] = '\0';
 
-    //Test if JVM can be started
-    if (TR_OWLJNIClient::startJVM()){ // run the analysis directly
-        TR_OWLJNIClient* jniClient = TR_OWLJNIClient::getInstance();
-
-        TR_OWLShrikeBTConstructor *constructor = new TR_OWLShrikeBTConstructor(jniClient);
-        std::vector<jobject> shrikeBTInstructions = constructor->constructShrikeBTInstructions(translationUnits);
-        
-
-        TR_OWLVerifier *verifier = new TR_OWLVerifier(jniClient);
-        TR_OWLAnalyser *analyser = new TR_OWLAnalyser(jniClient);
-
-        // verify if shrikeBT instruction generated are valid
-        bool status = verifier->verify(&shrikeBTInstructions[0],shrikeBTInstructions.size(), false, true, methodInfo.className, methodInfo.signature);
-        if (!status) {
-            printf("Fail to verify shrikeBT Instructions\n");
-        }
-        else {
-            printf("Successful to verify shrikeBT Instructions\n");
-        }
-
-        // perform the analysis
-        analyser->analyse(&shrikeBTInstructions[0], shrikeBTInstructions.size());
-
-        delete verifier;
-        delete analyser;
-        delete constructor;
-    }
-    else { // serialize OWL instructions to files
-        printf("===JVM cannot be started. Serialize OWL Instruction to file===\n");
-        TR_OWLSerializer *serializer = new TR_OWLSerializer();
-        char* filePath = "/Users/jackxia/Project/IBM/openj9-openjdk-jdk13/OWL/OWL.log";
-        serializer->serialize(filePath, methodInfo, &translationUnits[0], translationUnits.size());
-        delete serializer;
-    }
-    
+    TR_OWLSerializer *serializer = new TR_OWLSerializer();
+    char* filePath = "/home/jackxia/Project/IBM/openj9-openjdk-jdk13/OWL/OWL.log";
+    serializer->serialize(filePath, methodInfo, &translationUnits[0], translationUnits.size());
+    delete serializer;
+       
 }
 
 const char *

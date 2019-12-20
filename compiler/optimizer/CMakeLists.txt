@@ -104,13 +104,8 @@ compiler_library(optimizer
 	${CMAKE_CURRENT_LIST_DIR}/TrivialDeadBlockRemover.cpp
 	${CMAKE_CURRENT_LIST_DIR}/FEInliner.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWL.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OWLJNIClient.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWLMapper.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OWLJNIConfig.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OWLShrikeBTConstructor.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWLTypes.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OWLSerializer.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OWLDeserializer.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OWLAnalyser.cpp
-	${CMAKE_CURRENT_LIST_DIR}/OWLVerifier.cpp
+
 )
