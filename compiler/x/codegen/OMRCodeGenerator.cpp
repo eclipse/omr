@@ -2415,26 +2415,6 @@ TR::RealRegister::RegNum OMR::X86::CodeGenerator::pickNOPRegister(TR::Instructio
 //
 #define NUM_BIG_BAD_TEMP_REGS (2)
 
-// TODO: Don't duplicate this function all over the place.  Find a good header for it.
-inline bool getNodeIs64Bit(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return cg->comp()->target().is64Bit() && node->getSize() > 4;
-   }
-
-// TODO: Don't duplicate this function all over the place.  Find a good header for it.
-inline intptrj_t integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (getNodeIs64Bit(node, cg))
-      {
-      return node->getLongInt();
-      }
-   else
-      {
-      TR_ASSERT(node->getSize() <= 4, "For efficiency on IA32, only call integerConstNodeValue for 32-bit constants");
-      return node->getInt();
-      }
-   }
-
 bool OMR::X86::CodeGenerator::nodeIsFoldableMemOperand(TR::Node *node, TR::Node *parent, TR_RegisterPressureState *state)
    {
    TR_SimulatedNodeState &nodeState = self()->simulatedNodeState(node, state);
@@ -2585,7 +2565,7 @@ void OMR::X86::CodeGenerator::simulateNodeEvaluation(TR::Node * node, TR_Registe
       bool usesMul = true;
       if (secondChild->getOpCode().isLoadConst() &&
          (self()->comp()->target().is64Bit() || !nodeType.isInt64()) &&
-         populationCount(integerConstNodeValue(secondChild, self())) <= 2)
+         populationCount(TR::TreeEvaluator::integerConstNodeValue(secondChild, self())) <= 2)
          {
          // Will probably use shifts/adds/etc instead of multiply
          //

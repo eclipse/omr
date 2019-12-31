@@ -29,6 +29,7 @@
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RegisterConstants.hpp"
+#include "codegen/TreeEvaluator.hpp"
 #include "compile/Compilation.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -40,18 +41,12 @@
 
 namespace TR { class Register; }
 
-// This is duplicated from TR::TreeEvaluator
-inline bool getNodeIs64Bit(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return cg->comp()->target().is64Bit() && node->getSize() > 4;
-   }
-
 // tempRegArray is an array of temporary registers
 // decomposeIntegerMultiplier needs to update this array if it allocates new temporary registers inside
 TR::Register *TR_X86IntegerMultiplyDecomposer::decomposeIntegerMultiplier(int32_t &tempRegArraySize, TR::Register **tempRegArray)
    {
    TR::Compilation* comp = _cg->comp();
-   bool nodeIs64Bit = getNodeIs64Bit(_node, _cg);
+   bool nodeIs64Bit = TR::TreeEvaluator::getNodeIs64Bit(_node, _cg);
    int64_t absMultiplier = _multiplier;
    if (_multiplier < 0)
       {
@@ -314,7 +309,7 @@ TR::Register *TR_X86IntegerMultiplyDecomposer::generateDecompositionInstructions
                         int32_t index, int32_t &tempRegArraySize, TR::Register **tempRegArray)
    {
    const integerMultiplyComposition& composition = _integerMultiplySolutions[index];
-   bool nodeIs64Bit = getNodeIs64Bit(_node, _cg);
+   bool nodeIs64Bit = TR::TreeEvaluator::getNodeIs64Bit(_node, _cg);
    // initialize and allocate registers to be used by the composition
    // source register is defined to be ordinal register 0
    TR::Register *registerMap[MAX_NUM_REGISTERS];

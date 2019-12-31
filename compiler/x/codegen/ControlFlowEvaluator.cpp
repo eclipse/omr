@@ -81,47 +81,6 @@ class TR_OpaqueMethodBlock;
 
 static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg);
 
-// The following functions are simple enough to inline, and are called often
-// enough that we want to take advantage of inlining.  However, it is used
-// across multiple translation units, preventing us from just using 'inline'
-// TODO: Put in own header file shared by the various TreeEvaluator.cpp
-// (but not TreeEvaluator.hpp, too many files include this).
-
-// Right now, this function is duplicated in TreeEval, ControlFlowEval, Binary &UnaryEval.
-inline bool getNodeIs64Bit(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return cg->comp()->target().is64Bit() && node->getSize() > 4;
-   }
-
-// Right now, this is duplicated in ControlFlowEval, BinaryEval and TreeEval.
-inline intptrj_t integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (getNodeIs64Bit(node, cg))
-      {
-      return node->getLongInt();
-      }
-   else
-      {
-      TR_ASSERT(node->getSize() <= 4, "For efficiency on IA32, only call integerConstNodeValue for 32-bit constants");
-      return node->getInt();
-      }
-   }
-// Right now, this is duplicated in ControlFlowEval, BinaryEval and TreeEval.
-inline bool constNodeValueIs32BitSigned(TR::Node *node, intptrj_t *value, TR::CodeGenerator *cg)
-   {
-   *value = integerConstNodeValue(node, cg);
-   if (cg->comp()->target().is64Bit())
-      {
-      return IS_32BIT_SIGNED(*value);
-      }
-   else
-      {
-      TR_ASSERT(IS_32BIT_SIGNED(*value), "assertion failure");
-      return true;
-      }
-   }
-
-
 static inline TR::Instruction *generateWiderCompare(TR::Node *node, TR::Register *targetReg,
                                                    intptrj_t value,
                                                    TR::CodeGenerator *cg)
