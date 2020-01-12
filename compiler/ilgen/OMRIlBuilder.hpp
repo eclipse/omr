@@ -204,6 +204,16 @@ public:
 
    //char *getName();
 
+   /**
+    * @brief bytecode index for this builder object
+    */
+   int32_t bcIndex() { return _bcIndex; }
+   TR::IlBuilder * setBCIndex(int32_t bcIndex);
+   virtual int32_t currentByteCodeIndex() { return _bcIndex; } // override from IlGenerator
+
+   /* @brief after calling this, all IL nodes created will have this object's _bcIndex */
+   void SetCurrentIlGenerator();
+
    void print(const char *title, bool recurse=false);
    void printBlock(TR::Block *block);
 
@@ -724,6 +734,8 @@ protected:
     * @brief returns true if this IlBuilder object is a handler for an exception edge
     */
    bool                          _isHandler;
+
+   int32_t                       _bcIndex;
 
    virtual bool buildIL()
       {

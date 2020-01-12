@@ -207,6 +207,25 @@ OMR::IlBuilder::printBlock(TR::Block *block)
    comp()->getDebug()->print(comp()->getOutFile(), tt);
    }
 
+TR::IlBuilder *
+OMR::IlBuilder::setBCIndex(int32_t bcIndex)
+   {
+   _bcIndex = bcIndex;
+   return static_cast<TR::IlBuilder *>(this);
+   }
+/**
+ * Call this function before calling services on this builder so they will
+ * mark their IL nodes as having this builder's _bcIndex (very handy when
+ * looking at compiler logs and ultimate used to track program locations).
+ * Note: *all* generated nodes will be marked with this builder's _bcIndex until another
+ *       builder's SetCurrentIlGenerator() is called.
+ */
+void
+OMR::IlBuilder::SetCurrentIlGenerator()
+   {
+   comp()->setCurrentIlGenerator((TR_IlGenerator *)this);
+   }
+
 TR::SymbolReference *
 OMR::IlBuilder::lookupSymbol(const char *name)
    {
@@ -427,7 +446,10 @@ OMR::IlBuilder::connectTrees()
 
       // also add exit block to blocks array and add an edge from last block to EXIT if the builder comes back (i.e. doesn't return or branch off somewhere)
       if (comesBack())
+         {
+         TraceIL("[ %p ] Adding edge from last block [entry %p node %p] to EXIT block [entry %p node %p]\n", blocks[currentBlock-1]->getEntry()->getNode(), blocks[currentBlock-1], _exitBlock->getEntry()->getNode(), _exitBlock);
          cfg()->addEdge(blocks[currentBlock-1], getExit());
+         }
 
       blocks[currentBlock++] = _exitBlock;
       TraceIL("[ %p ] exit block %d is %p (%p -> %p)\n", this, _exitBlock->getNumber(), _exitBlock->getEntry(), _exitBlock->getExit());
