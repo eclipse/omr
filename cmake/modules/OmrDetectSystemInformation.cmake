@@ -67,6 +67,30 @@ macro(omr_find_semaphore_implementation)
 	endif()
 endmacro()
 
+# find statfs
+macro(omr_find_statfs)
+	check_include_file("sys/vfs.h" HAS_SYS_VFS_H)
+	check_include_file("sys/mount.h" HAS_SYS_MOUNT_H)
+	check_include_file("sys/param.h" HAS_SYS_PARAM_H)
+	check_include_file("sys/statvfs.h" HAS_SYS_STATVFS_H)
+	set(_statfs_search_headers)
+	if(HAS_SYS_VFS_H)
+		list(APPEND _statfs_search_headers "sys/vfs.h")
+	endif()
+	if(HAS_SYS_PARAM_H)
+		list(APPEND _statfs_search_headers "sys/param.h")
+	endif()
+	if(HAS_SYS_MOUNT_H)
+		list(APPEND _statfs_search_headers "sys/mount.h")
+	endif()
+
+	check_symbol_exists(statfs "${_statfs_search_headers}" HAS_STATFS)
+	check_symbol_exists(statvfs "sys/statvfs.h" HAS_STATVFS)
+	message(STATUS "|\\---/|")
+	message(STATUS "| o_o |")
+	message(STATUS " \\_^_/")
+endmacro()
+
 # Translate from CMake's view of the system to the OMR view of the system.
 # Exports a number of variables indicicating platform, os, endianness, etc.
 # - OMR_ARCH_{AARCH64,X86,ARM,S390} # TODO: Add POWER
@@ -205,6 +229,7 @@ macro(omr_detect_system_information)
 	message(STATUS "OMR: The target data size is ${OMR_ENV_TARGET_DATASIZE}")
 
 	omr_find_semaphore_implementation()
+	omr_find_statfs()
 
 	# Check if we are a multi config generator
 	# CMake 3.10 adds GENERATOR_IS_MULTI_CONFIG property
