@@ -302,8 +302,7 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine
    TR_GlobalRegisterNumber getLastGlobalFPRRegisterNumber()
       {return _numGlobalGPRs + _numGlobalFPRs - 1;}
 
-   TR::RegisterDependencyConditions  *createDepCondForLiveGPRs();
-   TR::RegisterDependencyConditions  *createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::list<TR::Register*> *spilledRegisterList = NULL);
+   TR::RegisterDependencyConditions  *createDepCondForLiveGPRs(TR::list<TR::Register*> *spilledRegisterList = NULL);
 
 #if defined(DEBUG)
    void printGPRegisterStatus(TR_FrontEnd *, TR::RealRegister **registerFile, TR::FILE *pOutFile);

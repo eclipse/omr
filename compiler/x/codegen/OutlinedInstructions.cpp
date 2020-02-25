@@ -245,8 +245,10 @@ void TR_OutlinedInstructions::assignRegisters(TR_RegisterKinds kindsToBeAssigned
    // current real register associations.  This is necessary to get the register assigner
    // back into its original state before the helper stream was processed.
    //
-   TR::RegisterDependencyConditions *liveRealRegDeps = _cg->machine()->createDepCondForLiveGPRs();
+   TR::RegisterDependencyConditions *liveRealRegDeps = _cg->machine()->createDepCondForLiveGPRs(_cg->getSpilledRegisterList());
    _firstInstruction->setDependencyConditions(liveRealRegDeps);
+   traceMsg(_cg->comp(), "\nblocking spill for OutlinedInstructions _firstInstruction %p\n", _firstInstruction);
+   _cg->lockFreeSpillList();
 
    // TODO:AMD64: Fix excessive register assignment exchanges in outlined instruction dispatch.
 
@@ -266,6 +268,7 @@ void TR_OutlinedInstructions::assignRegisters(TR_RegisterKinds kindsToBeAssigned
 
    // Returning to mainline, reset this counter
    _cg->setInternalControlFlowSafeNestingDepth(0);
+   _cg->unlockFreeSpillList();
 
    setHasBeenRegisterAssigned(true);
    }

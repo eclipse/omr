@@ -737,8 +737,6 @@ void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
       //
       if (dependentRegNum == TR::RealRegister::SpilledReg)
          {
-         if (cg->getUseNonLinearRegisterAssigner())
-            {
             if (virtReg->getAssignedRegister())
                {
                TR_ASSERT(virtReg->getBackingStorage(), "should have a backing store for spilled reg virtuals");
@@ -778,7 +776,6 @@ void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
                {
                cg->getSpilledRegisterList()->push_front(virtReg);
                }
-            }
          }
       }
 
@@ -1036,8 +1033,6 @@ void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
          }
       }
 
-   if (cg->getUseNonLinearRegisterAssigner())
-      {
       for (i=0; i<numberOfRegisters; i++)
          {
          virtReg = _dependencies[i].getRegister();
@@ -1050,8 +1045,6 @@ void TR_X86RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
             virtReg->decFutureUseCount();
             }
          }
-      }
-
    }
 
 

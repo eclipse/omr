@@ -457,7 +457,7 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
    TR_ASSERT_FATAL(!containsCollectedReference || (dataSize == TR::Compiler->om.sizeofReferenceAddress()), "assertion failure");
 
    if (self()->getTraceRAOption(TR_TraceRASpillTemps))
-      traceMsg(self()->comp(), "\nallocateSpill(%d, %s, %s)", dataSize, containsCollectedReference? "collected":"uncollected", offset? "offset":"NULL");
+      traceMsg(self()->comp(), "\nallocateSpill(%d, %s, %s)\n", dataSize, containsCollectedReference? "collected":"uncollected", offset? "offset":"NULL");
 
    if (offset && self()->comp()->getOption(TR_DisableHalfSlotSpills))
       {

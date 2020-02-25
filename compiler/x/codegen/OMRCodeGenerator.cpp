@@ -1449,12 +1449,9 @@ void OMR::X86::CodeGenerator::doBackwardsRegisterAssignment(
    bool dumpPostGP = (debug("dumpGPRA") || debug("dumpGPRA1")) && comp->getOutFile() != NULL;
 #endif
 
-   if (self()->getUseNonLinearRegisterAssigner())
+   if (!self()->getSpilledRegisterList())
       {
-      if (!self()->getSpilledRegisterList())
-         {
-         self()->setSpilledRegisterList(new (self()->trHeapMemory()) TR::list<TR::Register*>(getTypedAllocator<TR::Register*>(comp->allocator())));
-         }
+      self()->setSpilledRegisterList(new (self()->trHeapMemory()) TR::list<TR::Register*>(getTypedAllocator<TR::Register*>(comp->allocator())));
       }
 
    if (self()->getDebug())

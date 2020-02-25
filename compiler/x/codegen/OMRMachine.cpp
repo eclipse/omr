@@ -903,16 +903,13 @@ TR::RealRegister *OMR::X86::Machine::freeBestGPRegister(TR::Instruction         
             }
          }
 
-      if (self()->cg()->getUseNonLinearRegisterAssigner())
-         {
-         TR_ASSERT(bestRegister, "did not find bestRegister");
-         TR_ASSERT(self()->cg()->getSpilledRegisterList(), "no spilled reg list allocated");
+      TR_ASSERT(bestRegister, "did not find bestRegister");
+      TR_ASSERT(self()->cg()->getSpilledRegisterList(), "no spilled reg list allocated");
 
-         if (self()->getDebug())
-            self()->cg()->traceRegisterAssignment("adding %s to the spilledRegisterList)\n", self()->getDebug()->getName(bestRegister));
+      if (self()->getDebug())
+         self()->cg()->traceRegisterAssignment("adding %s to the spilledRegisterList)\n", self()->getDebug()->getName(bestRegister));
 
-         self()->cg()->getSpilledRegisterList()->push_front(bestRegister);
-         }
+      self()->cg()->getSpilledRegisterList()->push_front(bestRegister);
 
       TR::MemoryReference *tempMR = generateX86MemoryReference(location->getSymbolReference(), offset, self()->cg());
       bestRegister->setBackingStorage(location);
@@ -987,11 +984,6 @@ TR::RealRegister *OMR::X86::Machine::reverseGPRSpillState(TR::Instruction     *c
          }
 
       self()->cg()->removeBetterSpillPlacementCandidate(targetRegister);
-      }
-
-   if (self()->cg()->getUseNonLinearRegisterAssigner())
-      {
-      self()->cg()->getSpilledRegisterList()->remove(spilledRegister);
       }
 
    self()->cg()->getSpilledIntRegisters().remove(spilledRegister);
@@ -1730,7 +1722,7 @@ OMR::X86::Machine::cloneRegisterFile(TR::RealRegister **registerFile, TR_Allocat
    }
 
 
-TR::RegisterDependencyConditions * OMR::X86::Machine::createDepCondForLiveGPRs()
+TR::RegisterDependencyConditions * OMR::X86::Machine::createDepCondForLiveGPRs(TR::list<TR::Register*> *spilledRegisterList)
    {
    int32_t i, c=0;
 
@@ -1746,6 +1738,7 @@ TR::RegisterDependencyConditions * OMR::X86::Machine::createDepCondForLiveGPRs()
          c++;
       }
 
+   c += spilledRegisterList ? spilledRegisterList->size() : 0;
    TR::RegisterDependencyConditions *deps = NULL;
 
    if (c)
@@ -1778,72 +1771,18 @@ TR::RegisterDependencyConditions * OMR::X86::Machine::createDepCondForLiveGPRs()
 
       }
 
-   return deps;
-   }
-
-// if calledForDeps == false then this is being called to generate conditions for use in regAssocs
-TR::RegisterDependencyConditions * OMR::X86::Machine::createCondForLiveAndSpilledGPRs(bool calledForDeps, TR::list<TR::Register*> *spilledRegisterList)
-   {
-   int32_t i, c=0;
-
-   // Calculate number of register dependencies required.  This step is not really necessary, but
-   // it is space conscious.
-   //
-   int32_t endReg = TR::RealRegister::LastAssignableGPR;
-   TR_LiveRegisters *liveFPRs = self()->cg()->getLiveRegisters(TR_FPR);
-   TR_LiveRegisters *liveVRFs = self()->cg()->getLiveRegisters(TR_VRF);
-   if ((liveFPRs && liveFPRs->getNumberOfLiveRegisters() > 0) || (liveVRFs && liveVRFs->getNumberOfLiveRegisters() > 0))
-      endReg = TR::RealRegister::LastXMMR;
-   for (i = TR::RealRegister::FirstGPR; i <= endReg; i = ((i==TR::RealRegister::LastAssignableGPR) ? TR::RealRegister::FirstXMMR : i+1))
+   if (spilledRegisterList)
       {
-      TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
-      TR_ASSERT(realReg->getState() == TR::RealRegister::Assigned ||
-              realReg->getState() == TR::RealRegister::Free ||
-              realReg->getState() == TR::RealRegister::Locked,
-              "cannot handle realReg state %d, (block state is %d)\n",realReg->getState(),TR::RealRegister::Blocked);
-      if (realReg->getState() == TR::RealRegister::Assigned)
-         c++;
-      }
-
-   c += spilledRegisterList ? spilledRegisterList->size() : 0;
-
-   TR::RegisterDependencyConditions *deps = NULL;
-
-   if (c)
-      {
-      deps = generateRegisterDependencyConditions(0, c, self()->cg());
-      for (i = TR::RealRegister::FirstGPR; i <= endReg; i = ((i==TR::RealRegister::LastAssignableGPR) ? TR::RealRegister::FirstXMMR : i+1))
+      for (auto li = spilledRegisterList->begin(); li != spilledRegisterList->end(); ++li)
          {
-         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
-         if (realReg->getState() == TR::RealRegister::Assigned)
-            {
-            TR::Register *virtReg = realReg->getAssignedRegister();
-            TR_ASSERT(!spilledRegisterList || !(std::find(spilledRegisterList->begin(), spilledRegisterList->end(), virtReg) != spilledRegisterList->end())
-            		,"a register should not be in both an assigned state and in the spilled list\n");
-            deps->addPostCondition(virtReg, realReg->getRegisterNumber(), self()->cg());
-            if (calledForDeps)
-               {
-               virtReg->incTotalUseCount();
-               virtReg->incFutureUseCount();
-               virtReg->setAssignedRegister(NULL);
-               realReg->setAssignedRegister(NULL);
-               realReg->setState(TR::RealRegister::Free);
-               }
-            }
-         }
-
-      if (spilledRegisterList)
-         {
-         for (auto i = spilledRegisterList->begin(); i != spilledRegisterList->end(); ++i)
-         {
-            deps->addPostCondition(*i, TR::RealRegister::SpilledReg, self()->cg());
-         }
+         (*li)->incTotalUseCount();
+         (*li)->incFutureUseCount(); // why do we need to incFutureUseCount ???
+         TR::Register* virtReg = *li;
+         deps->addPostCondition(virtReg, TR::RealRegister::SpilledReg, self()->cg());
          }
       }
-
    return deps;
    }
-
 
 // Shares many similarities with 'cloneRegisterFile'.  Consider merging.
 //
