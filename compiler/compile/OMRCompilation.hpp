@@ -36,7 +36,6 @@ namespace OMR { typedef OMR::Compilation CompilationConnector; }
  * \brief Header for OMR::Compilation, root of the Compilation extensible class hierarchy.
  */
 
-
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>

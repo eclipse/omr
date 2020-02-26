@@ -42,6 +42,8 @@ set(OMR_OMRSIG ON CACHE BOOL "Enable the OMR signal compatibility library")
 set(OMR_THREAD ON CACHE BOOL "Enable thread library")
 
 set(OMR_COMPILER OFF CACHE BOOL "Enable the Compiler")
+set(OMR_COMPILER_NEW_OPTIONS OFF CACHE BOOL "Use new options framework that is currently a WIP")
+set(OMR_COMPILER_NEW_OPTIONS_DEBUG OFF CACHE BOOL "Compare results of querying old vs new options")
 set(OMR_JITBUILDER OFF CACHE BOOL "Enable building JitBuilder")
 set(OMR_TEST_COMPILER OFF CACHE BOOL "Enable building the test compiler")
 
@@ -58,6 +60,19 @@ if(NOT OMR_COMPILER)
 	endif()
 	if(OMR_TEST_COMPILER)
 		message(FATAL_ERROR "OMR_TEST_COMPILER is enabled but OMR_COMPILER is not enabled")
+	endif()
+	if(OMR_COMPILER_NEW_OPTIONS)
+		message(FATAL_ERROR "OMR_COMPILER_NEW_OPTIONS is enabled but OMR_COMPILER is not enabled")
+	endif()
+	if(OMR_COMPILER_NEW_OPTIONS_DEBUG)
+		message(FATAL_ERROR "OMR_COMPILER_NEW_OPTIONS_DEBUG is enabled but OMR_COMPILER is not enabled")
+	endif()
+endif()
+
+## OMR_COMPILER_NEW_OPTIONS is required for OMR_COMPILER_NEW_OPTIONS_DEBUG
+if(OMR_COMPILER_NEW_OPTIONS_DEBUG)
+	if(NOT OMR_COMPILER_NEW_OPTIONS)
+		message(FATAL_ERROR "OMR_COMPILER_NEW_OPTIONS_DEBUG is enabled but OMR_COMPILER_NEW_OPTIONS is disabled")
 	endif()
 endif()
 

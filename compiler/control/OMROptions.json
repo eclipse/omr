@@ -1,0 +1,5788 @@
+[{
+    "name": "x86UseMFENCE",
+    "category": "M",
+    "desc": "Enable to use mfence to handle volatile store",
+    "option-member": "TR_X86UseMFENCE",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "verifyReferenceCounts",
+    "category": "I",
+    "desc": "verify the sanity of object reference counts before manipulation",
+    "option-member": "TR_VerifyReferenceCounts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useStrictStartupHints",
+    "category": "M",
+    "desc": "Startup hints from application obeyed strictly",
+    "option-member": "TR_UseStrictStartupHints",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useOldIProfilerDeactivationLogic",
+    "category": "M",
+    "desc": "Use Old Iprofiler Deactivation Logic",
+    "option-member": "TR_UseOldIProfilerDeactivationLogic",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useLowerMethodCounts",
+    "category": "M",
+    "desc": "use the original initial counts for methods",
+    "option-member": "TR_UseLowerMethodCounts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useILValidator",
+    "category": "O",
+    "desc": "use the new ILValidator to check IL instead of the old TreeVerifier",
+    "option-member": "TR_UseILValidator",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useIdleTime",
+    "category": "M",
+    "desc": "use cpu idle time to compile more aggressively",
+    "option-member": "TR_UseIdleTime",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useHigherMethodCountsAfterStartup",
+    "category": "M",
+    "desc": "use the default high counts for methods after startup in AOT mode",
+    "option-member": "TR_UseHigherMethodCountsAfterStartup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useHigherCountsForNonSCCMethods",
+    "category": "M",
+    "desc": "use the default high counts for methods belonging to classes not in SCC",
+    "option-member": "TR_UseHigherCountsForNonSCCMethods",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useGlueIfMethodTrampolinesAreNotNeeded",
+    "category": "O",
+    "desc": "Safety measure; return to the old behaviour of always going through the glue",
+    "option-member": "TR_UseGlueIfMethodTrampolinesAreNotNeeded",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "turnOffSelectiveNoOptServerIfNoStartupHint",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_TurnOffSelectiveNoOptServerIfNoStartupHint",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceTrees",
+    "category": "L",
+    "desc": "dump trees after each compilation phase",
+    "option-member": "TR_TraceTrees",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceTreePatternMatching",
+    "category": "L",
+    "desc": "trace the functioning of the TR_Pattern framework",
+    "option-member": "TR_TraceTreePatternMatching",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceTempUsageMore",
+    "category": "L",
+    "desc": "trace usage of temps, showing each temp used",
+    "option-member": "TR_TraceTempUsageMore",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceTempUsage",
+    "category": "L",
+    "desc": "trace number of temps used",
+    "option-member": "TR_TraceTempUsage",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceScalarizeSSOps",
+    "category": "L",
+    "desc": "trace scalarization of array/SS ops",
+    "option-member": "TR_TraceScalarizeSSOps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceReloCG",
+    "category": "L",
+    "desc": "trace relocation data details with generation info when generating relocatable code",
+    "option-member": "TR_TraceReloCG",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceRelocatableDataDetailsRT",
+    "category": "L",
+    "desc": "trace relocation data details when relocating relocatable code",
+    "option-member": "TR_TraceRelocatableDataDetailsRT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceRelocatableDataDetailsCG",
+    "category": "L",
+    "desc": "trace relocation data details when generating relocatable code",
+    "option-member": "TR_TraceRelocatableDataDetailsCG",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceRelocatableDataCG",
+    "category": "L",
+    "desc": "trace relocation data when generating relocatable code",
+    "option-member": "TR_TraceRelocatableDataCG",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceRegisterState",
+    "category": "L",
+    "desc": "trace bit vector denoting assigned registers after register allocation",
+    "option-member": "TR_TraceRegisterState",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceReachability",
+    "category": "L",
+    "desc": "trace all analyses based on the reachability engine",
+    "option-member": "TR_TraceReachability",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceOSR",
+    "category": "L",
+    "desc": "trace OSR",
+    "option-member": "TR_TraceOSR",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceOpts",
+    "category": "L",
+    "desc": "dump each optimization name",
+    "option-member": "TR_TraceOpts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceMethodIndex",
+    "category": "L",
+    "desc": "report every method symbol that gets created and consumes a methodIndex",
+    "option-member": "TR_TraceMethodIndex",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceMarkingOfHotFields",
+    "category": "M",
+    "desc": "trace marking of Hot Fields",
+    "option-member": "TR_TraceMarkingOfHotFields",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceLookahead",
+    "category": "O",
+    "desc": "trace class lookahead",
+    "option-member": "TR_TraceLookahead",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableFullSpeedDebug",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_FullSpeedDebug",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name": "traceLastOpt",
+    "category": "L",
+    "desc": "extra tracing for the opt corresponding to lastOptIndex; usually used with traceFull",
+    "option-member": "TR_TraceLastOpt",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceLabelTargetNOPs",
+    "category": "L",
+    "desc": "trace inserting of NOPs before label targets",
+    "option-member": "TR_TraceLabelTargetNOPs",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceILWalk",
+    "category": "L",
+    "desc": "synonym for traceILWalks",
+    "option-member": "TR_TraceILWalks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "tracePartialInlining",
+    "category": "L",
+    "desc": "trace partial inlining heuristics",
+    "option-member": "TR_TracePartialInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceILValidator",
+    "category": "L",
+    "desc": "trace validation over intermediate language constructs",
+    "option-member": "TR_TraceILValidator",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceExitExtraction",
+    "category": "L",
+    "desc": "trace extraction of structure nodes that unconditionally exit to outer regions",
+    "option-member": "TR_TraceExitExtraction",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceRegisterPressureDetails",
+    "category": "L",
+    "desc": "include extra register pressure annotations in register pressure simulation and tree evaluation traces",
+    "option-member": "TR_TraceRegisterPressureDetails",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceDominators",
+    "category": "L",
+    "desc": "trace dominators and post-dominators",
+    "option-member": "TR_TraceDominators",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceCodeGen",
+    "category": "L",
+    "desc": "dump output of code generation passes",
+    "option-member": "TR_TraceCG",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceBBVA",
+    "category": "L",
+    "desc": "trace backward bit vector analysis",
+    "option-member": "TR_TraceBBVA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceAliases",
+    "category": "L",
+    "desc": "trace alias set generation",
+    "option-member": "TR_TraceAliases",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceAddAndRemoveEdge",
+    "category": "L",
+    "desc": "trace edge addition and removal",
+    "option-member": "TR_TraceAddAndRemoveEdge",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "timingCumulative",
+    "category": "M",
+    "desc": "time cumulative phases (ILgen,Optimizer,codegen)",
+    "option-member": "TR_CummTiming",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "timing",
+    "category": "M",
+    "desc": "time individual phases and optimizations",
+    "option-member": "TR_Timing",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useOldHCRGuardAOTRelocations",
+    "category": "I",
+    "desc": "create apparently ineffective AOT relocations for HCR guards",
+    "option-member": "TR_UseOldHCRGuardAOTRelocations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "suspendCompThreadsEarly",
+    "category": "M",
+    "desc": "Suspend compilation threads when QWeight drops under a threshold",
+    "option-member": "TR_SuspendEarly",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "suffixLogs",
+    "category": "O",
+    "desc": "add the date/time/pid suffix to the file name of the logs",
+    "option-member": "TR_EnablePIDExtension",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "subtractMethodCountsWhenIprofilerIsOff",
+    "category": "C",
+    "desc": "Subtract method counts instead of dividing when Iprofiler is off",
+    "option-member": "TR_SubtractMethodCountsWhenIprofilerIsOff",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "subtractLoopyMethodCounts",
+    "category": "C",
+    "desc": "Subtract loopy method counts instead of dividing",
+    "option-member": "TR_SubtractLoopyMethodCounts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "softFailOnAssume",
+    "category": "M",
+    "desc": "fail the compilation quietly and use the interpreter if an assume fails",
+    "option-member": "TR_SoftFailOnAssume",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "rtGCMapCheck",
+    "category": "D",
+    "desc": "Enable runtime GC Map checking at every async check.",
+    "option-member": "TR_RTGCMapCheck",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "restrictInlinerDuringStartup",
+    "category": "O",
+    "desc": "restrict trivial inliner during startup",
+    "option-member": "TR_RestrictInlinerDuringStartup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "reservingLocks",
+    "category": "O",
+    "desc": "enable reserving locks for hot methods on classes that can be reserved",
+    "option-member": "TR_ReservingLocks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "randomGen",
+    "category": "D",
+    "desc": "Deprecated; same as randomize",
+    "option-member": "TR_Randomize",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "quickProfile",
+    "category": "O",
+    "desc": "make online-profile-gathering quick (and less precise)",
+    "option-member": "TR_QuickProfile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useSamplingJProfilingForDLT",
+    "category": "M",
+    "desc": "Heuristic. Use samplingJProfiling for DLT methods",
+    "option-member": "TR_UseSamplingJProfilingForDLT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "profileMemoryRegions",
+    "category": "I",
+    "desc": "enable the collection of scratch memory profiling data",
+    "option-member": "TR_ProfileMemoryRegions",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "pseudoRandomVerbose",
+    "category": "O",
+    "desc": "write info at non determinism points to vlog ",
+    "option-member": "TR_VerbosePseudoRandom",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "profileCompileTime",
+    "category": "I",
+    "desc": "generate a perf report for a specific compilation",
+    "option-member": "TR_CompileTimeProfiler",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "privatizeOverlaps",
+    "category": "O",
+    "desc": "if BCD storageRefs are going to overlap then do the move through a temp",
+    "option-member": "TR_PrivatizeOverlaps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "printErrorInfoOnCompFailure",
+    "category": "O",
+    "desc": "Print compilation error info to stderr",
+    "option-member": "TR_PrintErrorInfoOnCompFailure",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "prepareForOSREvenIfThatDoesNothing",
+    "category": "O",
+    "desc": "emit the call to prepareForOSR even if there is no slot sharing",
+    "option-member": "TR_EnablePrepareForOSREvenIfThatDoesNothing",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "poisonDeadSlots",
+    "category": "O",
+    "desc": "paints all dead slots with deadf00d",
+    "option-member": "TR_PoisonDeadSlots",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "performLookaheadAtWarmCold",
+    "category": "O",
+    "desc": "allow lookahead to be performed at cold and warm",
+    "option-member": "TR_PerformLookaheadAtWarmCold",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "paranoidOptCheck",
+    "category": "O",
+    "desc": "check the trees and cfgs after every optimization phase",
+    "option-member": "TR_EnableParanoidOptCheck",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "optDetails",
+    "category": "L",
+    "desc": "log all optimizer transformations",
+    "option-member": "TR_TraceOptDetails",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "oldDataCacheImplementation",
+    "category": "I",
+    "desc": "revert to old data cache implementation.",
+    "option-member": "TR_OldDataCacheImplementation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "noServer",
+    "category": "D",
+    "desc": "Disable compilation strategy for large scale applications (e.g. WebSphere)",
+    "option-member": "TR_NoOptServer",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "noregmap",
+    "category": "C",
+    "desc": "generate GC maps without register maps",
+    "option-member": "TR_RegisterMaps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "noload",
+    "category": "M",
+    "desc": "do not load AOT code from the shared cache (-Xaot option)",
+    "option-member": "TR_NoLoadAOT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "mimicInterpreterFrameShape",
+    "category": "O",
+    "desc": "Make sure all locals are laid out in the stack frame just as they would be for the interpreter",
+    "option-member": "TR_MimicInterpreterFrameShape",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "memUsage",
+    "category": "D",
+    "desc": "gather lexical memory profiling statistics of all memory types: stack, heap and persistent",
+    "option-member": "TR_LexicalMemProfiler",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "maskAddresses",
+    "category": "D",
+    "desc": "remove addresses from trace file",
+    "option-member": "TR_MaskAddresses",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "inlinerFanInUseCalculatedSize",
+    "category": "O",
+    "desc": "Use calculated size for fanin method size threshold",
+    "option-member": "TR_InlinerFanInUseCalculatedSize",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "inlineNativeOnly",
+    "category": "O",
+    "desc": "inliner only inline native methods and do not inline other Java methods",
+    "option-member": "TR_InlineNativeOnly",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "inhibitRIBufferProcessingDuringDeepSteady",
+    "category": "R",
+    "desc": "Inhibit RI during DeepSteady state",
+    "option-member": "TR_InhibitRIBufferProcessingDuringDeepSteady",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "ignoreIEEE",
+    "category": "O",
+    "desc": "allow non-IEEE compliant optimizations",
+    "option-member": "TR_IgnoreIEEERestrictions",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "ignoreAssert",
+    "category": "O",
+    "desc": "Ignore any failing assertions",
+    "option-member": "TR_IgnoreAssert",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "forceVSSStackCompaction",
+    "category": "O",
+    "desc": "Always compact VariableSizeSymbols on the stack",
+    "option-member": "TR_ForceVSSStackCompaction",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "forceLoadAOT",
+    "category": "M",
+    "desc": "Force loading of relocatable code outside of class load phase from the shared cache",
+    "option-member": "TR_ForceLoadAOT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "forceIEEEDivideByZeroException",
+    "category": "O",
+    "desc": "Force IEEE divide by zero exception bit on when performing DFP division",
+    "option-member": "TR_ForceIEEEDivideByZeroException",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useSamplingJProfilingForAllFirstTimeComps",
+    "category": "M",
+    "desc": "Heuristic",
+    "option-member": "TR_UseSamplingJProfilingForAllFirstTimeComps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "forceBCDInit",
+    "category": "O",
+    "desc": "Force Binary Coded Decimal (BCD) loads to be initialized by forcing the field to a temporary",
+    "option-member": "TR_ForceBCDInit",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "floatMAF",
+    "category": "O",
+    "desc": "Enable fused multiply add (FMA) operations.",
+    "option-member": "TR_FloatMAF",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "failRecompile",
+    "category": "I",
+    "desc": "fail the compile whenever recompiling a method",
+    "option-member": "TR_FailRecompile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "failPreXRecompile",
+    "category": "I",
+    "desc": "fail prexistance based recompilatoins",
+    "option-member": "TR_FailPreXRecompile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "extractExitsByInvalidatingStructure",
+    "category": "O",
+    "desc": "Instead of running exit extraction normally, detect nodes that would be extracted, and invalidate structure if there are any",
+    "option-member": "TR_ExtractExitsByInvalidatingStructure",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "generateCompleteInlineRanges",
+    "category": "O",
+    "desc": "generate meta data ranges for each change in inliner depth",
+    "option-member": "TR_GenerateCompleteInlineRanges",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "estimateRegisterPressure",
+    "category": "O",
+    "desc": "deprecated; equivalent to enableRegisterPressureSimulation",
+    "option-member": "TR_DisableRegisterPressureSimulation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "enableZEpilogue",
+    "category": "O",
+    "desc": "enable 64-bit 390 load-multiple breakdown.",
+    "option-member": "TR_Enable39064Epilogue",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableYieldVMAccess",
+    "category": "O",
+    "desc": "enable yielding of VM access when GC is waiting",
+    "option-member": "TR_EnableYieldVMAccess",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableVirtualPersistentMemory",
+    "category": "M",
+    "desc": "enable persistent memory to be allocated using virtual memory allocators",
+    "option-member": "TR_EnableVirtualPersistentMemory",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useRIOnlyForLargeQSZ",
+    "category": "M",
+    "desc": "Use RI only when the compilation queue size grows too large",
+    "option-member": "TR_UseRIOnlyForLargeQSZ",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableValueTracing",
+    "category": "O",
+    "desc": "enable runtime value tracing (experimental)",
+    "option-member": "TR_EnableValueTracing",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableUpgradingAllColdCompilations",
+    "category": "O",
+    "desc": "try to upgrade to warm all cold compilations",
+    "option-member": "TR_EnableUpgradingAllColdCompilations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableTraps",
+    "category": "C",
+    "desc": "enable trap instructions",
+    "option-member": "TR_DisableTraps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "enableThisLiveRangeExtension",
+    "category": "R",
+    "desc": "enable this live range extesion to the end of the method",
+    "option-member": "TR_EnableThisLiveRangeExtension",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableTailCallOpt",
+    "category": "R",
+    "desc": "enable tall call optimization in peephole",
+    "option-member": "TR_EnableTailCallOpt",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableSnapshotBlockOpts",
+    "category": "O",
+    "desc": "enable block ordering/redirecting optimizations in the presences of snapshot nodes",
+    "option-member": "TR_EnableSnapshotBlockOpts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceVPConstraints",
+    "category": "L",
+    "desc": "trace the execution of value propagation merging and intersecting",
+    "option-member": "TR_TraceVPConstraints",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableSIMDLibrary",
+    "category": "M",
+    "desc": "Enable recognized methods for SIMD library",
+    "option-member": "TR_EnableSIMDLibrary",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableSharedCacheTiming",
+    "category": "M",
+    "desc": "enable timing stats for accessing the shared cache",
+    "option-member": "TR_EnableSharedCacheTiming",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableSymbolValidationManager",
+    "category": "M",
+    "desc": "Enable Symbol Validation Manager for Relocatable Compile Validations",
+    "option-member": "TR_EnableSymbolValidationManager",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableSequentialLoadStoreWarm",
+    "category": "O",
+    "desc": "enable sequential store/load opt at warm level",
+    "option-member": "TR_EnableSequentialLoadStoreWarm",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableSelfTuningScratchMemoryUsageInTrMemory",
+    "category": "O",
+    "desc": "Enable self tuning scratch memory usage",
+    "option-member": "TR_EnableSelfTuningScratchMemoryUsageInTrMemory",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "oldJVMPI",
+    "category": "D",
+    "desc": "old way of determining which jit options to use with JVMPI",
+    "option-member": "TR_OldJVMPI",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableSelfTuningScratchMemoryUsageBeforeCompile",
+    "category": "O",
+    "desc": "Enable self tuning scratch memory usage",
+    "option-member": "TR_EnableSelfTuningScratchMemoryUsageBeforeCompile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableSelectiveEnterExitHooks",
+    "category": "O",
+    "desc": "add method-specific test to JVMTI method enter and exit hooks",
+    "option-member": "TR_EnableSelectiveEnterExitHooks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableScratchMemoryDebugging",
+    "category": "I",
+    "desc": "Use the debug segment provider for allocating region memory segments.",
+    "option-member": "TR_EnableScratchMemoryDebugging",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableSequentialLoadStoreCold",
+    "category": "O",
+    "desc": "enable sequential store/load opt at cold level",
+    "option-member": "TR_EnableSequentialLoadStoreCold",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableScorchInterpBlkFreqProfiling",
+    "category": "R",
+    "desc": "enable profiling blocks in the jit",
+    "option-member": "TR_EnableScorchInterpBlockFrequencyProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableRIEMIT",
+    "category": "O",
+    "desc": "Allows the z Codegen to emit RIEMIT instructions",
+    "option-member": "TR_EnableRIEMIT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableRelocatableELFGeneration",
+    "category": "I",
+    "desc": "enable the generation of object files use for static linking",
+    "option-member": "TR_EmitRelocatableELFFile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableRecompilationPushing",
+    "category": "O",
+    "desc": "enable pushing methods to be recompiled",
+    "option-member": "TR_EnableRecompilationPushing",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableRangeSplittingGRA",
+    "category": "O",
+    "desc": "enable GRA splitting of live ranges to reduce register pressure   ",
+    "option-member": "TR_EnableRangeSplittingGRA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableParanoidRefCountChecks",
+    "category": "O",
+    "desc": "enable extra reference count verification",
+    "option-member": "TR_EnableParanoidRefCountChecks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableOutlinedNew",
+    "category": "O",
+    "desc": "do object allocation logic with a fast jit helper",
+    "option-member": "TR_EnableOutlinedNew",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableOSRSharedSlots",
+    "category": "O",
+    "desc": "enable support for shared slots in OSR",
+    "option-member": "TR_DisableOSRSharedSlots",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "traceRelocatableDataRT",
+    "category": "L",
+    "desc": "trace relocation data when relocating relocatable code",
+    "option-member": "TR_TraceRelocatableDataRT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableOSROnGuardFailure",
+    "category": "O",
+    "desc": "perform a decompile using on-stack replacement every time a virtual guard fails",
+    "option-member": "TR_EnableOSROnGuardFailure",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableOnsiteCacheForSuperClassTest",
+    "category": "O",
+    "desc": "enable onsite cache for super class test",
+    "option-member": "TR_EnableOnsiteCacheForSuperClassTest",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableNodeGC",
+    "category": "M",
+    "desc": "enable node recycling",
+    "option-member": "TR_EnableNodeGC",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableNewX86PrefetchTLH",
+    "category": "O",
+    "desc": "enable new X86 TLH prefetch algorithm",
+    "option-member": "TR_EnableNewX86PrefetchTLH",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableNewCheckCastInstanceOf",
+    "category": "O",
+    "desc": "enable new Checkcast/InstanceOf evaluator",
+    "option-member": "TR_EnableNewCheckCastInstanceOf",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableMutableCallSiteGuards",
+    "category": "O",
+    "desc": "enable virgual guards for calls to java.lang.invoke.MutableCallSite.getTarget().invokeExact(...) (including invokedynamic)",
+    "option-member": "TR_DisableMutableCallSiteGuards",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "enableRampupImprovements",
+    "category": "M",
+    "desc": "Enable various changes that improve rampup",
+    "option-member": "TR_EnableRampupImprovements",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableMHCustomizationLogicCalls",
+    "category": "C",
+    "desc": "insert calls to MethodHandle.doCustomizationLogic for handle invocations outside of thunks",
+    "option-member": "TR_EnableMHCustomizationLogicCalls",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableMetadataReclamation",
+    "category": "I",
+    "desc": "enable J9JITExceptionTable reclamation",
+    "option-member": "TR_DisableMetadataReclamation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "enableMetadataBytecodePCToIAMap",
+    "category": "O",
+    "desc": "enable bytecode pc to IA map in the metadata",
+    "option-member": "TR_EnableMetadataBytecodePCToIAMap",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableLowerCompilationLimitsDecisionMaking",
+    "category": "O",
+    "desc": "enable the piece of code that lowers compilation limits when low on virtual memory (on Linux and z/OS)",
+    "option-member": "TR_EnableLowerCompilationLimitsDecisionMaking",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "inlineVeryLargeCompiledMethods",
+    "category": "O",
+    "desc": "Allow inlining of very large compiled methods",
+    "option-member": "TR_InlineVeryLargeCompiledMethods",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableLoopEntryAlignment",
+    "category": "O",
+    "desc": "enable loop Entry alignment",
+    "option-member": "TR_EnableLoopEntryAlignment",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceSEL",
+    "category": "L",
+    "desc": "trace sign extension load",
+    "option-member": "TR_TraceSEL",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableArrayStoreCheckOpts",
+    "category": "O",
+    "desc": "disable array store check optimizations",
+    "option-member": "TR_DisableArrayStoreCheckOpts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableNoServerDuringStartup",
+    "category": "M",
+    "desc": "Do not use NoServer during startup",
+    "option-member": "TR_DisableNoServerDuringStartup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableRegisterPressureSimulation",
+    "category": "O",
+    "desc": "walk the trees to estimate register pressure during global register allocation",
+    "option-member": "TR_DisableRegisterPressureSimulation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableAOTResolutionPeeking",
+    "category": "O",
+    "desc": "do not use resolved state at AOT compile time for performance decisions",
+    "option-member": "TR_DisablePeekAOTResolutions",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAOTBytesCompression",
+    "category": "O",
+    "desc": "disable compressing AOT bytes",
+    "option-member":"TR_DisableAOTBytesCompression",
+    "type" : "bool",
+    "default" : "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDynamicRIBufferProcessing",
+    "category": "O",
+    "desc": "prevent disabling buffer processing",
+    "option-member": "TR_DisableDynamicRIBufferProcessing",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableStringBuilderTransformer",
+    "category": "O",
+    "desc": "enable transforming StringBuilder constructor to preallocate a buffer for String concatenation operations",
+    "option-member": "TR_DisableStringBuilderTransformer",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableLocalVPSkipLowFreqBlock",
+    "category": "O",
+    "desc": "Skip processing of low frequency blocks in localVP",
+    "option-member": "TR_EnableLocalVPSkipLowFreqBlock",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableOSR",
+    "category": "O",
+    "desc": "enable on-stack replacement",
+    "option-member": "TR_EnableOSR",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableLabelTargetNOPs",
+    "category": "O",
+    "desc": "enable inserting NOPs before label targets",
+    "option-member": "TR_EnableLabelTargetNOPs",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableJProfiling",
+    "category": "O",
+    "desc": "enable JProfiling",
+    "option-member": "TR_EnableJProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableJITHelpershashCodeImpl",
+    "category": "O",
+    "desc": "enable java version of object hashCode()",
+    "option-member": "TR_EnableJITHelpershashCodeImpl",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "randomSeedSignatureHash",
+    "category": "R",
+    "desc": "Set random seed value based on a hash of the method's signature, in order to get varying seeds while maintaining reproducibility",
+    "option-member": "TR_RandomSeedSignatureHash",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableInterfaceCallCachingSingleDynamicSlot",
+    "category": "O",
+    "desc": "enable interfaceCall caching with one slot storing J9MethodPtr   ",
+    "option-member": "TR_enableInterfaceCallCachingSingleDynamicSlot",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMultiLeafArrayCopy",
+    "category": "O",
+    "desc": "disable multi-leaf arraycopy for real-time",
+    "option-member": "TR_DisableMultiLeafArrayCopy",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableInliningOfUnsafeForArraylets",
+    "category": "O",
+    "desc": "enable inlining of Unsafe calls when arraylets are enabled",
+    "option-member": "TR_EnableInliningOfUnsafeForArraylets",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableInlineProfilingStats",
+    "category": "O",
+    "desc": "enable stats about profile based inlining",
+    "option-member": "TR_VerboseInlineProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontJitIfSlotsSharedByRefAndNonRef",
+    "category": "O",
+    "desc": "fail the compilation (in FSD mode) if a slot needs to be shared between an address and a nonaddress.",
+    "option-member": "TR_DontJitIfSlotsSharedByRefAndNonRef",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableHalfSlotSpills",
+    "category": "O",
+    "desc": "enable sharing of a single 8-byte spill temp for two 4-byte values",
+    "option-member": "TR_DisableHalfSlotSpills",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableShareableMethodHandleThunks",
+    "category": "R",
+    "desc": "disable creation of shareable invokeExact thunks for MethodHandles",
+    "option-member": "TR_DisableShareableMethodHandleThunks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "earlyLPQ",
+    "category": "M",
+    "desc": "Allow compilations from low priority queue to happen early, during startup",
+    "option-member": "TR_EarlyLPQ",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableFSDGRA",
+    "category": "O",
+    "desc": "enable basic GRA in FSD mode",
+    "option-member": "TR_FSDGRA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableEDO",
+    "category": "O",
+    "desc": "disable exception directed optimizations",
+    "option-member": "TR_DisableEDO",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAutoSIMD",
+    "category": "M",
+    "desc": "disable automatic vectorization of loops",
+    "option-member": "TR_DisableAutoSIMD",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableAOTRelocationTiming",
+    "category": "M",
+    "desc": "enable timing stats for relocating AOT methods",
+    "option-member": "TR_EnableAOTRelocationTiming",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableFastScorchingRecompilation",
+    "category": "R",
+    "desc": "try to recompile at scorching sooner",
+    "option-member": "TR_EnableFastScorchingRecompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableLoopVersionerCountAllocFences",
+    "category": "O",
+    "desc": "allow loop versioner to count allocation fence nodes on PPC toward a profiled guard's block total",
+    "option-member": "TR_EnableLoopVersionerCountAllocationFences",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableEarlyCompilationDuringIdleCpu",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_EnableEarlyCompilationDuringIdleCpu",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableDupRetTree",
+    "category": "O",
+    "desc": "Enable duplicate return tree",
+    "option-member": "TR_EnableDupRetTree",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAOTInstanceOfInlining",
+    "category": "O",
+    "desc": "disable AOT instance of inlining",
+    "option-member": "TR_DisableAOTInstanceOfInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAOTAtCheapWarm",
+    "category": "O",
+    "desc":"disable AOT with cheap warm opt level",
+    "option-member": "TR_DisableAotAtCheapWarm",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name":"enableJITaaSHeuristics",
+    "category": "M",
+    "desc": "todo",
+    "option-member":"TR_EnableJITaaSHeuristics",
+    "type": "bool",
+    "default" : "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableDualTLH",
+    "category": "D",
+    "desc": "Enable use of non-zero initialized TLH. TR_EnableBatchClear must be set too.",
+    "option-member": "TR_DisableDualTLH",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "enableDowngradeOnHugeQSZ",
+    "category": "M",
+    "desc": "downgrade first time compilations when the compilation queue is huge (1000+ entries)",
+    "option-member": "TR_EnableDowngradeOnHugeQSZ",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "experimentalClassLoadPhase",
+    "category": "O",
+    "desc": "enable the experimental class load phase algorithm",
+    "option-member": "TR_ExperimentalClassLoadPhase",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableCompilationYieldStats",
+    "category": "M",
+    "desc": "enable statistics on time between 2 consecutive yield points",
+    "option-member": "TR_EnableCompYieldStats",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableHardwareProfileIndirectDispatch",
+    "category": "O",
+    "desc": "enable hardware profile indirect dispatch profiling",
+    "option-member": "TR_EnableHardwareProfileIndirectDispatch",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableCompilationSpreading",
+    "category": "C",
+    "desc": "enable adding spreading invocations to methods before compiling",
+    "option-member": "TR_EnableCompilationSpreading",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableIPA",
+    "category": "O",
+    "desc": "disable inter procedural analysis.",
+    "option-member": "TR_DisableIPA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableBranchPreload",
+    "category": "O",
+    "desc": "enable return branch preload for each method (for func testing)",
+    "option-member": "TR_EnableBranchPreload",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMarkingOfHotFields",
+    "category": "O",
+    "desc": "disable marking of Hot Fields",
+    "option-member": "TR_DisableMarkingOfHotFields",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableAOTStats",
+    "category": "O",
+    "desc": "enable AOT statistics",
+    "option-member": "TR_EnableAOTStats",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableAOTMethodExit",
+    "category": "O",
+    "desc": "enable AOT method exit",
+    "option-member": "TR_EnableAOTMethodExit",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useSamplingJProfilingForInterpSampledMethods",
+    "category": "M",
+    "desc": "Heuristic. Use samplingJProfiling for methods sampled by interpreter",
+    "option-member": "TR_UseSamplingJProfilingForInterpSampledMethods",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableTrivialDeadBlockRemoval",
+    "category": "O",
+    "desc": "disable trivial dead block removal ",
+    "option-member": "TR_DisableTrivialDeadBlockRemover",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "EnableAnnotations",
+    "category": "O",
+    "desc": "enable annotation support",
+    "option-member": "TR_EnableAnnotations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableRampupImprovements",
+    "category": "M",
+    "desc": "Disable various changes that improve rampup",
+    "option-member": "TR_DisableRampupImprovements",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableAOTInlineSystemMethod",
+    "category": "O",
+    "desc": "enable AOT inline methods from system classes",
+    "option-member": "TR_EnableAOTInlineSystemMethod",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableClearCodeCacheFullFlag",
+    "category": "I",
+    "desc": "disable the re-enabling of full code cache when a method body is freed.",
+    "option-member": "TR_DisableClearCodeCacheFullFlag",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableAggressiveLiveness",
+    "category": "I",
+    "desc": "enable globalLiveVariablesForGC below warm",
+    "option-member": "TR_EnableAggressiveLiveness",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMetadataReclamation",
+    "category": "I",
+    "desc": "disable J9JITExceptionTable reclamation",
+    "option-member": "TR_DisableMetadataReclamation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disablePRBE",
+    "category": "O",
+    "desc": "disable partial redundancy branch elimination",
+    "option-member": "TR_DisablePRBE",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dynamicThreadPriority",
+    "category": "M",
+    "desc": "enable dynamic changing of compilation thread priority",
+    "option-member": "TR_DynamicThreadPriority",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dumpIprofilerMethodNamesAndCounts",
+    "category": "O",
+    "desc": "Debug Printing of Method Names and Persisted Counts.",
+    "option-member": "TR_DumpPersistedIProfilerMethodNamesAndCounts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dumpInitialMethodNamesAndCounts",
+    "category": "O",
+    "desc": "Debug Printing of Method Names and Initial Counts.",
+    "option-member": "TR_DumpInitialMethodNamesAndCounts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceLiveMonitorMetadata",
+    "category": "L",
+    "desc": "trace live monitor metadata",
+    "option-member": "TR_TraceLiveMonitorMetadata",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dumpFinalMethodNamesAndCounts",
+    "category": "O",
+    "desc": "Printing of Method Names and Final Counts",
+    "option-member": "TR_DumpFinalMethodNamesAndCounts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontUseRIOnlyForLargeQSZ",
+    "category": "M",
+    "desc": "Use RI regardless of the compilation queue size",
+    "option-member": "TR_UseRIOnlyForLargeQSZ",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "dontUsePersistentIprofiler",
+    "category": "M",
+    "desc": "don't use iprofiler data stored int he shared cache, even if it is available",
+    "option-member": "TR_DoNotUsePersistentIprofiler",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "concurrentLPQ",
+    "category": "M",
+    "desc": "Compilations from low priority queue can go in parallel with compilations from main queue",
+    "option-member": "TR_ConcurrentLPQ",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableDataCacheStatistics",
+    "category": "I",
+    "desc": "enable the collection and display of data cache related statistics.",
+    "option-member": "TR_EnableDataCacheStatistics",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontUseIdleTime",
+    "category": "M",
+    "desc": "Do not use cpu idle time to compile more aggressively",
+    "option-member": "TR_UseIdleTime",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "dontUseHigherCountsForNonSCCMethods",
+    "category": "M",
+    "desc": "Do not use the default high counts for methods belonging to classes not in SCC",
+    "option-member": "TR_UseHigherCountsForNonSCCMethods",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "dontTurnOffSelectiveNoOptServerIfNoStartupHint",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_TurnOffSelectiveNoOptServerIfNoStartupHint",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "reserveAllLocks",
+    "category": "O",
+    "desc": "enable reserving locks for all classes and methods (DEBUG Only)",
+    "option-member": "TR_ReserveAllLocks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontSuspendCompThreadsEarly",
+    "category": "M",
+    "desc": "Do not suspend compilation threads when QWeight drops under a threshold",
+    "option-member": "TR_SuspendEarly",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "dontRIUpgradeAOTWarmMethods",
+    "category": "M",
+    "desc": "don't RI upgrade AOT warm methods",
+    "option-member": "TR_DontRIUpgradeAOTWarmMethods",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontIncreaseCountsForNonBootstrapMethods",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_IncreaseCountsForNonBootstrapMethods",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "breakOnWriteBarrierSnippet",
+    "category": "D",
+    "desc": "insert breakpoint instruction at beginning of write barrier snippet",
+    "option-member": "BreakOnWriteBarrierSnippet",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontDowngradeToColdDuringGracePeriod",
+    "category": "M",
+    "desc": "don't downgrade first time compilations from warm to cold during grace period (first second of run)",
+    "option-member": "TR_DontDowgradeToColdDuringGracePeriod",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "perfTool",
+    "category": "M",
+    "desc": "enable PerfTool",
+    "option-member": "TR_PerfTool",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontDowngradeToCold",
+    "category": "M",
+    "desc": "don't downgrade first time compilations from warm to cold",
+    "option-member": "TR_DontDowngradeToCold",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableReducedPriorityForCustomMethodHandleThunks",
+    "category": "R",
+    "desc": "compile custom MethodHandle invoke exact thunks at the same priority as normal java methods",
+    "option-member": "TR_DisableReducedPriorityForCustomMethodHandleThunks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontActivateCompThreadWhenHighPriReqIsBlocked",
+    "category": "M",
+    "desc": "do not activate another compilation thread when high priority request is blocked",
+    "option-member": "TR_ActivateCompThreadWhenHighPriReqIsBlocked",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableZNext",
+    "category": "O",
+    "desc": "disable zNext support",
+    "option-member": "TR_DisableZNext",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableJProfilingInProfilingCompilations",
+    "category": "O",
+    "desc": "use jprofiling instrumentation in profiling compilations",
+    "option-member": "TR_EnableJProfilingInProfilingCompilations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableCompilationThreadThrottlingDuringStartup",
+    "category": "M",
+    "desc": "enable compilation thread throttling during startup",
+    "option-member": "TR_EnableCompThreadThrottlingDuringStartup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZHelix",
+    "category": "O",
+    "desc": "[Deprecated] alias for disableZEC12",
+    "option-member": "TR_DisableZEC12",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZealousCodegenOpts",
+    "category": "O",
+    "desc": "disable use of zealous codegen optimizations.",
+    "option-member": "TR_DisableZealousCodegenOpts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableProfiledDevirtualization",
+    "category": "O",
+    "desc": "enable devirtualization based on interpreter profiling",
+    "option-member": "TR_enableProfiledDevirtualization",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableWrtBarSrcObjCheck",
+    "category": "O",
+    "desc": "disable to not check srcObj location for wrtBar in gc",
+    "option-member": "TR_DisableWrtBarSrcObjCheck",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZArraySetUnroll",
+    "category": "O",
+    "desc": "disable arraySet unrolling on 390.",
+    "option-member": "TR_DisableZArraySetUnroll",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "supportSwitchToInterpeter",
+    "category": "C",
+    "desc": "Generate code to allow each method to switch to the interpreter",
+    "option-member": "TR_SupportSwitchToInterpreter",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZ196",
+    "category": "O",
+    "desc": "disable z196 support",
+    "option-member": "TR_DisableZ196",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableFastHotRecompilation",
+    "category": "R",
+    "desc": "try to recompile at hot sooner",
+    "option-member": "TR_EnableFastHotRecompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZ14",
+    "category": "O",
+    "desc": "disable z14 support",
+    "option-member": "TR_DisableZ14",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZ13LoadAndMask",
+    "category": "O",
+    "desc": "disable load-and-mask instruction generation on z13",
+    "option-member": "TR_DisableZ13LoadAndMask",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableTOCForConsts",
+    "category": "O",
+    "desc": "disable use of the TOC for constants and floats materialization",
+    "option-member": "TR_DisableTOCForConsts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZ10",
+    "category": "O",
+    "desc": "disable z10 support",
+    "option-member": "TR_DisableZ10",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceILWalks",
+    "category": "L",
+    "desc": "trace iteration over intermediate language constructs",
+    "option-member": "TR_TraceILWalks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableWriteBarriersRangeCheck",
+    "category": "O",
+    "desc": "disable adding range check to write barriers",
+    "option-member": "TR_DisableWriteBarriersRangeCheck",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useVmTotalCpuTimeAsAbstractTime",
+    "category": "M",
+    "desc": "Use VmTotalCpuTime as abstractTime",
+    "option-member": "TR_UseVmTotalCpuTimeAsAbstractTime",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableTraps",
+    "category": "C",
+    "desc": "disable trap instructions",
+    "option-member": "TR_DisableTraps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableVSSStackCompaction",
+    "category": "O",
+    "desc": "disable VariableSizeSymbol stack compaction",
+    "option-member": "TR_DisableVSSStackCompaction",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableColdCheapTacticalGRA",
+    "category": "O",
+    "desc": "enable cold cheap tactical GRA",
+    "option-member": "TR_EnableColdCheapTacticalGRA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "noJitUntilMain",
+    "category": "D",
+    "desc": "don't jit methods until main has been called",
+    "option-member": "TR_noJitUntilMain",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableCFGEdgeCounters",
+    "category": "O",
+    "desc": "enable CFG edge counters to keep track of taken and non taken branches in compiled code",
+    "option-member": "TR_EnableCFGEdgeCounters",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInlineIsInstance",
+    "category": "O",
+    "desc": "disable isInstance   inline fast helper",
+    "option-member": "TR_DisableInlineIsInstance",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableVirtualScratchMemory",
+    "category": "M",
+    "desc": "disable scratch memory to be allocated using virtual memory allocators",
+    "option-member": "TR_EnableVirtualScratchMemory",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableTM",
+    "category": "O",
+    "desc": "disable transactional memory support",
+    "option-member": "TR_DisableTM",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableVirtualInlining",
+    "category": "O",
+    "desc": "disable inlining of virtual methods",
+    "option-member": "TR_DisableVirtualInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceLiveness",
+    "category": "L",
+    "desc": "trace liveness analysis",
+    "option-member": "TR_TraceLiveness",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "terseRegisterPressureTrace",
+    "category": "L",
+    "desc": "include only summary info about register pressure tracing when traceGRA is enabled",
+    "option-member": "TR_TerseRegisterPressureTrace",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableAllocationOfScratchBTL",
+    "category": "M",
+    "desc": "Allow the allocation scratch memory below the line (zOS 31-bit)",
+    "option-member": "TR_DontAllocateScratchBTL",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "profile",
+    "category": "O",
+    "desc": "compile a profiling method body",
+    "option-member": "TR_Profile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "DisableVirtualGuardNOPingString",
+    "category": "O",
+    "desc": "disable virtual guard NOPing",
+    "option-member": "TR_DisableVirtualGuardNOPing",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableVectorBCD",
+    "category": "O",
+    "desc": "disable vector instructions for DAA BCD intrinsics ",
+    "option-member": "TR_DisableVectorBCD",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableUseRIOnlyForLargeQSZ",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_UseRIOnlyForLargeQSZ",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableUpgradingColdCompilations",
+    "category": "R",
+    "desc": "disable upgrading to warm those methods compiled at cold due to classLoadPhase",
+    "option-member": "TR_DisableUpgradingColdCompilations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLoopEntryAlignment",
+    "category": "O",
+    "desc": "disable loop Entry alignment",
+    "option-member": "TR_DisableLoopEntryAlignment",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableCodeCacheConsolidation",
+    "category": "M",
+    "desc": "enable code cache consolidation",
+    "option-member": "TR_EnableCodeCacheConsolidation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableUpgradeBootstrapAtWarm",
+    "category": "R",
+    "desc": "Recompile bootstrap AOT methods at warm instead of cold",
+    "option-member": "TR_UpgradeBootstrapAtWarm",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableUpdateJITBytesSize",
+    "category": "M",
+    "desc": "Don't send VM size of IProfiler Entires and Hints that could have been persisted if the SCC wasn't full",
+    "option-member": "TR_DisableUpdateJITBytesSize",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableUpdateAOTBytesSize",
+    "category": "M",
+    "desc": "Don't send VM size of bodies that could have been AOT'd if the SCC wasn't full",
+    "option-member": "TR_DisableUpdateAOTBytesSize",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableUncountedUnrolls",
+    "category": "O",
+    "desc": "disable GLU from unrolling uncoutned loops ",
+    "option-member": "TR_DisableUncountedUnrolls",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableNewAllocationProfiling",
+    "category": "O",
+    "desc": "enable profiling of new allocations",
+    "option-member": "TR_EnableNewAllocationProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSIMDArrayCopy",
+    "category": "O",
+    "desc": "Disable vectorized array copying using SIMD instruction",
+    "option-member": "TR_DisableSIMDArrayCopy",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableTarokInlineArrayletAllocation",
+    "category": "O",
+    "desc": "disable Tarok inline Arraylet Allocation in genHeapAlloc",
+    "option-member": "TR_DisableTarokInlineArrayletAllocation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSyncMethodInlining",
+    "category": "O",
+    "desc": "disable inlining of synchronized methods",
+    "option-member": "TR_DisableSyncMethodInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableJITHelpersoptimizedClone",
+    "category": "O",
+    "desc": "enable java version of object clone()",
+    "option-member": "TR_EnableJITHelpersoptimizedClone",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "omitFramePointer",
+    "category": "I",
+    "desc": "do not dedicate a frame pointer register for X86 system linkage.",
+    "option-member": "TR_OmitFramePointer",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSynchronizedFieldLoad",
+    "category": "O",
+    "desc": "Disable the use of hardware optimized synchronized field load intrinsics",
+    "option-member": "TR_DisableSynchronizedFieldLoad",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSuffixLogs",
+    "category": "O",
+    "desc": "do not add the date/time/pid suffix to the file name of the logs",
+    "option-member": "TR_EnablePIDExtension",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "DisableAllocationInliningString",
+    "category": "O",
+    "desc": "disable ANewArray    inline fast helper",
+    "option-member": "TR_DisableAllocationInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableStripMining",
+    "category": "O",
+    "desc": "disable loop strip mining",
+    "option-member": "TR_DisableStripMining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableEnhancedClobberEval",
+    "category": "O",
+    "desc": "disable passthrough clobber eval",
+    "option-member": "TR_DisableEnhancedClobberEval",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "testOption2",
+    "category": "testCategory2",
+    "desc": "this is just a test option.",
+    "option-member": "TR_TestOption2",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableStringPeepholes",
+    "category": "O",
+    "desc": "disable stringPeepholes",
+    "option-member": "TR_DisableStringPeepholes",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableRegisterPressureEstimation",
+    "category": "O",
+    "desc": "deprecated; same as enableRegisterPressureSimulation",
+    "option-member": "TR_DisableRegisterPressureSimulation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableIncrementalCCR",
+    "category": "O",
+    "desc": "disable incremental ccr",
+    "option-member": "TR_DisableIncrementalCCR",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSIMDUTF16LEEncoder",
+    "category": "M",
+    "desc": "disable inlining of SIMD UTF16 Little Endian encoder",
+    "option-member": "TR_DisableSIMDUTF16LEEncoder",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableExecutableELFGeneration",
+    "category": "I",
+    "desc": "enable the generation of executable ELF files",
+    "option-member": "TR_EmitExecutableELFFile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLinkageRegisterAllocation",
+    "category": "O",
+    "desc": "don't turn parm loads into RegLoads in first basic block",
+    "option-member": "TR_DisableLinkageRegisterAllocation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSIMDStringHashCode",
+    "category": "O",
+    "desc": "disable vectorized java/lang/String.hashCode implementation",
+    "option-member": "TR_DisableSIMDStringHashCode",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSIMDDoubleMaxMin",
+    "category": "O",
+    "desc": "disable SIMD instructions for double max min",
+    "option-member": "TR_DisableSIMDDoubleMaxMin",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableExpensiveOptsAtWarm",
+    "category": "O",
+    "desc": "enable store sinking and OSR at warm and below",
+    "option-member": "TR_EnableExpensiveOptsAtWarm",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAOTCheckCastInlining",
+    "category": "O",
+    "desc": "disable AOT check cast inlining",
+    "option-member": "TR_DisableAOTCheckCastInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableGuardedStaticFinalFieldFolding",
+    "category": "O",
+    "desc": "disable static final field folding guarded by OSR guards",
+    "option-member": "TR_DisableGuardedStaticFinalFieldFolding",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSelectiveNoServer",
+    "category": "D",
+    "desc": "Disable turning on noServer selectively",
+    "option-member": "TR_DisableSelectiveNoOptServer",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "keepBCDWidening",
+    "category": "O",
+    "desc": "stress testing option -- do not remove widening BCD operations",
+    "option-member": "TR_KeepBCDWidening",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableRMODE64",
+    "category": "O",
+    "desc": "Disable residence mode of compiled bodies on z/OS to reside above the 2-gigabyte bar",
+    "option-member": "TR_EnableRMODE64",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableRefinedBCDClobberEval",
+    "category": "O",
+    "desc": "disable trying to minimize the number of BCD clobber evaluate copies ",
+    "option-member": "TR_DisableRefinedBCDClobberEval",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableRefinedAliases",
+    "category": "O",
+    "desc": "disable collecting side-effect summaries from compilations to improve aliasing info in subsequent compilations",
+    "option-member": "TR_DisableRefinedAliases",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "paintAllocatedFrameSlotsFauxObject",
+    "category": "C",
+    "desc": "paint all slots allocated in method prologue with faux object pointer",
+    "option-member": "TR_PaintAllocatedFrameSlotsFauxObject",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableUTF16BEEncoder",
+    "category": "M",
+    "desc": "disable inlining of UTF16 Big Endian encoder",
+    "option-member": "TR_DisableUTF16BEEncoder",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableRecognizedMethods",
+    "category": "O",
+    "desc": "disable recognized methods",
+    "option-member": "TR_DisableRecognizedMethods",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMHCustomizationLogicCalls",
+    "category": "C",
+    "desc": "do not insert calls to MethodHandle.doCustomizationLogic for handle invocations outside of thunks",
+    "option-member": "TR_EnableMHCustomizationLogicCalls",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableRecompDueToInlinedMethodRedefinition",
+    "category": "O",
+    "desc": "disable recompilation for method body with patched HCR guard",
+    "option-member": "TR_DisableRecompDueToInlinedMethodRedefinition",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontUseFastStackwalk",
+    "category": "I",
+    "desc": "Do not use accelerated stackwalking algorithm",
+    "option-member": "TR_DoNotUseFastStackwalk",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "hcrPatchClassPointers",
+    "category": "I",
+    "desc": "create runtime assumptions for patching pointers to classes, even though they are now updated in-place",
+    "option-member": "TR_HCRPatchClassPointers",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableReadMonitors",
+    "category": "O",
+    "desc": "disable read monitors",
+    "option-member": "TR_DisableReadMonitors",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableTraceRegDeps",
+    "category": "O",
+    "desc": "disable printing of register dependancies for each instruction in trace file",
+    "option-member": "TR_DisableTraceRegDeps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableHardwareProfileRecompilation",
+    "category": "O",
+    "desc": "enable hardware profile recompilation",
+    "option-member": "TR_EnableHardwareProfileRecompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableProfilingDataReclamation",
+    "category": "O",
+    "desc": "disable reclamation for profiling data",
+    "option-member": "TR_DisableProfilingDataReclamation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableGRACostBenefitModel",
+    "category": "O",
+    "desc": "enable GRA cost/benefit model",
+    "option-member": "TR_EnableGRACostBenefitModel",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableCopyingTROTInduction1Idioms",
+    "category": "O",
+    "desc": "enable CopyingTROTInduction1 idiom patterns",
+    "option-member": "TR_EnableCopyingTROTInduction1Idioms",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useSymbolValidationManager",
+    "category": "M",
+    "desc": "Use Symbol Validation Manager for Relocatable Compile Validations",
+    "option-member": "TR_UseSymbolValidationManager",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableProfiledMethodInlining",
+    "category": "O",
+    "desc": "disable inlining based on profiled methods",
+    "option-member": "TR_DisableProfiledMethodInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableBranchOnCount",
+    "category": "O",
+    "desc": "disable branch on count instructions for s390",
+    "option-member": "TR_DisableBranchOnCount",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disablePreexistenceDuringGracePeriod",
+    "category": "O",
+    "desc": "disable preexistence during CLP grace period",
+    "option-member": "TR_DisablePrexistenceDuringGracePeriod",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZEC12",
+    "category": "O",
+    "desc": "disable zEC12 support",
+    "option-member": "TR_DisableZEC12",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSamplingJProfiling",
+    "category": "O",
+    "desc": "Disable profiling in the jitted code",
+    "option-member": "TR_DisableSamplingJProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disablePartialInlining",
+    "category": "O",
+    "desc": "disable  partial Inlining ",
+    "option-member": "TR_DisablePartialInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disablePackedDecimalIntrinsics",
+    "category": "O",
+    "desc": "Disables packed decimal function optimizations and avoid generating exception triggering packed decimal instructions on z/Architecture.",
+    "option-member": "TR_DisablePackedDecimalIntrinsics",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableOSRLocalRemat",
+    "category": "O",
+    "desc": "disable use of remat when inserting guards for on-stack replacement",
+    "option-member": "TR_DisableOSRLocalRemat",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableReassociation",
+    "category": "O",
+    "desc": "apply reassociation rules in Simplifier",
+    "option-member": "TR_EnableReassociation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableVectorRegGRA",
+    "category": "O",
+    "desc": "disable global register allocation for vector regs",
+    "option-member": "TR_DisableVectorRegGRA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceValueNumbers",
+    "category": "L",
+    "desc": "trace value number info",
+    "option-member": "TR_TraceValueNumbers",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "immediateCountingRecompilation",
+    "category": "D",
+    "desc": "Recompile GCR methods as soon as possible",
+    "option-member": "TR_ImmediateCountingRecompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableOSRLiveRangeAnalysis",
+    "category": "O",
+    "desc": "disable live range analysis for on-stack replacement",
+    "option-member": "TR_DisableOSRLiveRangeAnalysis",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableOSR",
+    "category": "O",
+    "desc": "disable support for on-stack replacement",
+    "option-member": "TR_DisableOSR",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableApplicationThreadYield",
+    "category": "O",
+    "desc": "insert yield points in application threads",
+    "option-member": "TR_EnableAppThreadYield",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableRXusage",
+    "category": "O",
+    "desc": "disable increased usage of RX instructions",
+    "option-member": "TR_DisableRXusage",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableConservativeInlining",
+    "category": "O",
+    "desc": "Do not be conservative with inlining",
+    "option-member": "TR_DisableConservativeInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableArraySetOpts",
+    "category": "O",
+    "desc": "disable array set optimiations",
+    "option-member": "TR_DisableArraySetOpts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableOnDemandLiteralPoolRegister",
+    "category": "O",
+    "desc": "disable on demand literal pool register",
+    "option-member": "TR_DisableOnDemandLiteralPoolRegister",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableNoVMAccess",
+    "category": "O",
+    "desc": "disable compilation without holding VM access",
+    "option-member": "TR_DisableNoVMAccess",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "unleashStaticFieldFolding",
+    "category": "O",
+    "desc": "bypass the class white-list, and allow static final fields to be folded aggressively",
+    "option-member": "TR_RestrictStaticFieldFolding",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableNopBreakpointGuard",
+    "category": "O",
+    "desc": "disable nop of breakpoint guards",
+    "option-member": "TR_DisableNopBreakpointGuard",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableDeterministicOrientedCompilation",
+    "category": "O",
+    "desc": "enable deteministic oriented compilation",
+    "option-member": "TR_EnableDeterministicOrientedCompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "breakOnWriteBarrier",
+    "category": "D",
+    "desc": "insert breakpoint instruction ahead of inline write barrier",
+    "option-member": "TR_BreakOnWriteBarrier",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableNonvirtualInlining",
+    "category": "O",
+    "desc": "disable inlining of non virtual methods",
+    "option-member": "TR_DisableNonvirtualInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableNewStoreHint",
+    "category": "O",
+    "desc": "disable re-initializing BCD nodes to a new store hint when one is available",
+    "option-member": "TR_DisableNewStoreHint",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableNewMethodOverride",
+    "category": "O",
+    "desc": "disable replacement for jitUpdateInlineAttribute",
+    "option-member": "TR_DisableNewMethodOverride",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableOSRCallSiteRemat",
+    "category": "O",
+    "desc": "disable use of the call stack remat table in on-stack replacement",
+    "option-member": "TR_DisableOSRCallSiteRemat",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "unresolvedSymbolsAreNotColdAtCold",
+    "category": "R",
+    "desc": "Mark unresolved symbols as cold blocks at cold or lower",
+    "option-member": "TR_UnresolvedAreNotColdAtCold",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceILGen",
+    "category": "L",
+    "desc": "trace IL generator",
+    "option-member": "TR_TraceILGen",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInlineWriteBarriersRT",
+    "category": "O",
+    "desc": "disable write barrier inline fast helper for real-time",
+    "option-member": "TR_DisableInlineWriteBarriersRT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableNewBVA",
+    "category": "O",
+    "desc": "disable structure based bit vector analysis",
+    "option-member": "TR_DisableNewBVA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableTreePatternMatching",
+    "category": "O",
+    "desc": "Enable opts that use the TR_Pattern framework",
+    "option-member": "TR_DisableTreePatternMatching",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableMutableCallSiteGuards",
+    "category": "O",
+    "desc": "disable virtual guards for calls to java.lang.invoke.MutableCallSite.getTarget().invokeExact(...) (including invokedynamic)",
+    "option-member": "TR_DisableMutableCallSiteGuards",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "fullInliningUnderOSRDebug",
+    "category": "O",
+    "desc": "Do full inlining under OSR based debug (new FSD)",
+    "option-member": "TR_FullInlineUnderOSRDebug",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableFpreductionAnnotation",
+    "category": "O",
+    "desc": "enable fpreduction annotation",
+    "option-member": "TR_EnableFpreductionAnnotation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMethodIsCold",
+    "category": "O",
+    "desc": "do not use heuristics to determine whether whole methods are cold based on how many times they have been interpreted",
+    "option-member": "TR_DisableMethodIsCold",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMethodHandleInvokeOpts",
+    "category": "O",
+    "desc": "do not perform any special optimizations on calls to MethodHandle.invoke",
+    "option-member": "TR_DisableMethodHandleInvokeOpts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInliningDuringVPAtWarm",
+    "category": "O",
+    "desc": "disable inlining during VP for warm bodies",
+    "option-member": "TR_DisableInliningDuringVPAtWarm",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableBlockVersioner",
+    "category": "O",
+    "desc": "disable block versioner",
+    "option-member": "TR_DisableBlockVersioner",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableVpicForResolvedVirtualCalls",
+    "category": "O",
+    "desc": "enable PIC for resolved virtual calls",
+    "option-member": "TR_EnableVPICForResolvedVirtualCalls",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableForcedEXInlining",
+    "category": "O",
+    "desc": "disable forced EX inlining",
+    "option-member": "TR_DisableForcedEXInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMergeStackMaps",
+    "category": "O",
+    "desc": "disable stack map merging",
+    "option-member": "TR_DisableMergeStackMaps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableBCDArithChildOrdering",
+    "category": "O",
+    "desc": "stress testing option -- do not reorder children of BCD arithmetic nodes",
+    "option-member": "TR_DisableBCDArithChildOrdering",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMergeNew",
+    "category": "O",
+    "desc": "disable merge new",
+    "option-member": "TR_DisableMergeNew",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMCSBypass",
+    "category": "O",
+    "desc": "disable allocating JNI global references to skip some levels of indirection when accessing a MutableCallSite's target MethodHandle in jitted code",
+    "option-member": "TR_DisableMCSBypass",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAsyncCompilation",
+    "category": "M",
+    "desc": "disable asynchronous compilation",
+    "option-member": "TR_DisableAsyncCompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMccFreeBlockRecycling",
+    "category": "O",
+    "desc": "do not reuse code cache freed blocks",
+    "option-member": "TR_DisableFreeCodeCacheBlockRecycling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceBVA",
+    "category": "L",
+    "desc": "trace bit vector analysis",
+    "option-member": "TR_TraceBVA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHardwareProfilingThread",
+    "category": "O",
+    "desc": "do not create a separate thread for hardware profiling",
+    "option-member": "TR_DisableHWProfilerThread",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLookahead",
+    "category": "O",
+    "desc": "disable class lookahead",
+    "option-member": "TR_DisableLookahead",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableVerification",
+    "category": "O",
+    "desc": "disable verification of internal data structures between passes",
+    "option-member": "TR_DisableVerification",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDirectToJNIInline",
+    "category": "O",
+    "desc": "disable direct calls to JNI methods from jitted methods (but still create thunks)",
+    "option-member": "TR_DisableDirectToJNIInline",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLocalVPSkipLowFreqBlock",
+    "category": "O",
+    "desc": "Do not skip processing of low frequency blocks in localVP",
+    "option-member": "TR_EnableLocalVPSkipLowFreqBlock",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "debugInliner",
+    "category": "O",
+    "desc": "trace statements to debug the Inliner",
+    "option-member": "TR_DebugInliner",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "noRecompile",
+    "category": "D",
+    "desc": "do not recompile even when counts allow it",
+    "option-member": "TR_NoRecompile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "firstLevelProfiling",
+    "category": "O",
+    "desc": "Profile first time compilations",
+    "option-member": "TR_FirstLevelProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "compile",
+    "category": "D",
+    "desc": "Compile these methods immediately. Primarily for use with Compiler.command",
+    "option-member": "TR_CompileBit",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMaxMinOptimization",
+    "category": "O",
+    "desc": "disable max and min optimizations",
+    "option-member": "TR_DisableMaxMinOptimization",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLiveRangeSplitter",
+    "category": "O",
+    "desc": "disable live range splitter",
+    "option-member": "TR_DisableLiveRangeSplitter",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableNextGenHCR",
+    "category": "O",
+    "desc": "disable HCR implemented with on-stack replacement",
+    "option-member": "TR_DisableNextGenHCR",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableMonitorCacheLookup",
+    "category": "O",
+    "desc": "enable  monitor cache lookup under lock nursery ",
+    "option-member": "TR_EnableMonitorCacheLookup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLastITableCache",
+    "category": "C",
+    "desc": "disable using class lastITable cache for interface dispatches",
+    "option-member": "TR_DisableLastITableCache",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceCG",
+    "category": "L",
+    "desc": "dump output of code generation passes",
+    "option-member": "TR_TraceCG",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "forceFieldWatch",
+    "category": "M",
+    "desc": "Force JIT to pretend that field watch is activated",
+    "option-member": "TR_EnableFieldWatch",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableJITaaSDoLocalCompilesForRemoteCompiles",
+    "category": "M",
+    "desc": "todo",
+    "option-member":"TR_EnableJITaaSDoLocalCompilesForRemoteCompiles",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name": "disableDirectMemoryOps",
+    "category": "O",
+    "desc": "disable generation of direct memory instructions",
+    "option-member": "TR_DisableDirectMemoryOps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "restrictStaticFieldFolding",
+    "category": "O",
+    "desc": "restrict instance field folding",
+    "option-member": "TR_RestrictStaticFieldFolding",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enablePerfAsserts",
+    "category": "O",
+    "desc": "enable asserts for serious performance problems found during compilation",
+    "option-member": "TR_EnablePerfAsserts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMethodHandleThunks",
+    "category": "D",
+    "desc": "do not produce jitted bodies to accelerate JSR292 MethodHandle invocation",
+    "option-member": "TR_DisableMethodHandleThunks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableJProfilingThread",
+    "category": "O",
+    "desc": "disable separate thread for JProfiling",
+    "option-member": "TR_DisableJProfilerThread",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableEBBCCInfo",
+    "category": "C",
+    "desc": "enable tracking CCInfo in Extended Basic Block scope",
+    "option-member": "TR_EnableEBBCCInfo",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableStoreSinking",
+    "category": "O",
+    "desc": "disable store sinking",
+    "option-member": "TR_DisableStoreSinking",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "debugBeforeCompile",
+    "category": "D",
+    "desc": "invoke the debugger when method compilation begins",
+    "option-member": "TR_DebugBeforeCompile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceVFPSubstitution",
+    "category": "L",
+    "desc": "trace replacement of virtual frame pointer with actual register in memrefs",
+    "option-member": "TR_TraceVFPSubstitution",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableIterativeSA",
+    "category": "O",
+    "desc": "revert back to a recursive version of Structural Analysis",
+    "option-member": "TR_DisableIterativeSA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useSamplingJProfilingForLPQ",
+    "category": "M",
+    "desc": "Heuristic. Use samplingJProfiling for methods from low priority queue",
+    "option-member": "TR_UseSamplingJProfilingForLPQ",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSharedCacheHints",
+    "category": "R",
+    "desc": "disable storing and loading hints from shared cache",
+    "option-member": "TR_DisableSharedCacheHints",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInvariantCodeMotion",
+    "category": "O",
+    "desc": "disable invariant code motion.",
+    "option-member": "TR_DisableInvariantCodeMotion",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableUpgrades",
+    "category": "O",
+    "desc": "Prevent Jit Sampling from upgrading cold compilations",
+    "option-member": "TR_DisableUpgrades",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInterpreterSampling",
+    "category": "O",
+    "desc": "disable sampling of interpreted methods",
+    "option-member": "TR_DisableInterpreterSampling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceBC",
+    "category": "L",
+    "desc": "dump bytecodes",
+    "option-member": "TR_TraceBC",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInterpreterProfilingThread",
+    "category": "O",
+    "desc": "do not create a separate thread for interpreter profiling",
+    "option-member": "TR_DisableIProfilerThread",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableProfiling",
+    "category": "O",
+    "desc": "disable profiling",
+    "option-member": "TR_DisableProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useOptLevelAdjustment",
+    "category": "M",
+    "desc": "Enable decreasing the opt level based on load",
+    "option-member": "TR_UseOptLevelAdjustment",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInterpreterProfiling",
+    "category": "O",
+    "desc": "disable Interpreter Profiling hooks   ",
+    "option-member": "TR_DisableInterpreterProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInternalPointers",
+    "category": "O",
+    "desc": "disable internal pointer creation",
+    "option-member": "TR_DisableInternalPointers",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableNewX86VolatileSupport",
+    "category": "O",
+    "desc": "disable new X86 Volatile Support",
+    "option-member": "TR_DisableNewX86VolatileSupport",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSIMDUTF16BEEncoder",
+    "category": "M",
+    "desc": "disable inlining of SIMD UTF16 Big Endian encoder",
+    "option-member": "TR_DisableSIMDUTF16BEEncoder",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLocalCSEVolatileCommoning",
+    "category": "O",
+    "desc": "disable local common subexpression elimination volatile commoning",
+    "option-member": "TR_DisableLocalCSEVolatileCommoning",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableJCLInline",
+    "category": "O",
+    "desc": "enable JCL Integer and Long methods inlining",
+    "option-member": "TR_EnableJCLInline",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableTlhPrefetch",
+    "category": "O",
+    "desc": "disable software prefetch on allocation",
+    "option-member": "TR_DisableTLHPrefetch",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "debugRedundantMonitorElimination",
+    "category": "O",
+    "desc": "trace statements to debug Monitor Elimination",
+    "option-member": "TR_DebugRedundantMonitorElimination",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDelayRelocationForAOTCompilations",
+    "category": "M",
+    "desc": "Do not relocate code for AOT compilations right away",
+    "option-member": "TR_DisableDelayRelocationForAOTCompilations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInterfaceInlining",
+    "category": "O",
+    "desc": "disable merge new",
+    "option-member": "TR_DisableInterfaceInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInterfaceCallCaching",
+    "category": "O",
+    "desc": "disable interfaceCall caching   ",
+    "option-member": "TR_disableInterfaceCallCaching",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "upgradeBootstrapAtWarm",
+    "category": "R",
+    "desc": "Recompile bootstrap AOT methods at warm instead of cold",
+    "option-member": "TR_UpgradeBootstrapAtWarm",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "firstRun",
+    "category": "O",
+    "desc": "Tell the compiler this is the first run (for count setting and persistence).",
+    "option-member": "TR_FirstRun",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableAggressiveLoopVersioning",
+    "category": "O",
+    "desc": "Options and thresholds that result in loop versioning occurring in more cases",
+    "option-member": "TR_EnableAggressiveLoopVersioning",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableRegisterPressureSimulation",
+    "category": "O",
+    "desc": "don't walk the trees to estimate register pressure during global register allocation",
+    "option-member": "TR_DisableRegisterPressureSimulation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "iprofilerPerformTimestampCheck",
+    "category": "O",
+    "desc": "Interpreter Profiling will perform some validity checks based on timestamps",
+    "option-member": "TR_IProfilerPerformTimestampCheck",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableOutlinedNew",
+    "category": "O",
+    "desc": "do object allocation logic inline instead of using a fast jit helper",
+    "option-member": "TR_DisableOutlinedNew",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "aot",
+    "category": "O",
+    "desc": "ahead-of-time compilation",
+    "option-member": "TR_AOT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "noIProfilerDuringStartupPhase",
+    "category": "R",
+    "desc": "turn off iprofiler during first startup phase",
+    "option-member": "TR_NoIProfilerDuringStartupPhase",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHardwareProfilerDataCollection",
+    "category": "O",
+    "desc": "disable the collection of hardware profiler information while maintaining the framework",
+    "option-member": "TR_DisableHWProfilerDataCollection",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "DisableInliningOfNativesString",
+    "category": "O",
+    "desc": "disable inlining of natives",
+    "option-member": "TR_DisableInliningOfNatives",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "breakOnEntry",
+    "category": "D",
+    "desc": "insert entry breakpoint instruction in generated code",
+    "option-member": "TR_EntryBreakPoints",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAOTColdCheapTacticalGRA",
+    "category": "O",
+    "desc": "disable AOT cold cheap tactical GRA",
+    "option-member": "TR_DisableAOTColdCheapTacticalGRA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "orderCompiles",
+    "category": "C",
+    "desc": "compile methods in limitfile order",
+    "option-member": "TR_OrderCompiles",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInlinerFanIn",
+    "category": "O",
+    "desc": "disable fan in as a consideration for inlining",
+    "option-member": "TR_DisableInlinerFanIn",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useLowPriorityQueueDuringCLP",
+    "category": "O",
+    "desc": "place cold compilations due to classLoadPhase in the low priority queue to be compiled later",
+    "option-member": "TR_UseLowPriorityQueueDuringCLP",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "breakOnNew",
+    "category": "D",
+    "desc": "break before an inlined object allocation",
+    "option-member": "TR_BreakOnNew",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMonitorCoarsening",
+    "category": "O",
+    "desc": "disable monitor coarsening",
+    "option-member": "TR_DisableMonitorCoarsening",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDAATrailingZeros",
+    "category": "O",
+    "desc": "disable DAA trailing zero in byte array acceleration",
+    "option-member": "TR_DisableDAATrailingZero",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "DisableInlineMonExitString",
+    "category": "O",
+    "desc": "disable MonExit      inline fast helper",
+    "option-member": "TR_DisableInlineMonExit",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "DisableInlineMonEntString",
+    "category": "O",
+    "desc": "disable MonEnt       inline fast helper",
+    "option-member": "TR_DisableInlineMonEnt",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSymbolValidationManager",
+    "category": "M",
+    "desc": "Enable Symbol Validation Manager for Relocatable Compile Validations",
+    "option-member": "TR_EnableSymbolValidationManager",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "stressTrampolines",
+    "category": "O",
+    "desc": "enables trampolines to always be used for method and helper calls",
+    "option-member": "TR_StressTrampolines",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLiveMonitorMetadata",
+    "category": "O",
+    "desc": "disable the creation of live monitor metadata",
+    "option-member": "TR_DisableLiveMonitorMetadata",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableIprofilerDataPersistence",
+    "category": "M",
+    "desc": "disable storage of iprofile information in the shared cache",
+    "option-member": "TR_DisablePersistIProfile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCodeCacheConsolidation",
+    "category": "M",
+    "desc": "disable code cache consolidation",
+    "option-member": "TR_EnableCodeCacheConsolidation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "DisableInlineInstanceOfString",
+    "category": "O",
+    "desc": "disable InstanceOf   inline fast helper",
+    "option-member": "TR_DisableInlineInstanceOf",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableIprofilerChanges",
+    "category": "O",
+    "desc": "enable iprofiler changes",
+    "option-member": "TR_EnableIprofilerChanges",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "conservativeCompilation",
+    "category": "O",
+    "desc": "more conservative decisions regarding compilations",
+    "option-member": "TR_ConservativeCompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "DisableInlineIfInstanceOfString",
+    "category": "O",
+    "desc": "disable IfInstanceOf inline fast helper",
+    "option-member": "TR_DisableInlineIfInstanceOf",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDememoization",
+    "category": "O",
+    "desc": "always call memoizing getters (like Integer.valueOf) rather than having Escape Analysis turn them into noncontiguous stack allocations",
+    "option-member": "TR_DisableDememoization",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZImplicitNullChecks",
+    "category": "O",
+    "desc": "disable implicit null checks on 390",
+    "option-member": "TR_DisableZImplicitNullChecks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "forceAOT",
+    "category": "M",
+    "desc": "Force compilations to be done in AOT mode",
+    "option-member": "TR_ForceAOT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInlineCheckIfFinalizeObject",
+    "category": "M",
+    "desc": "disable CheckIfFinalizeObject inline helper",
+    "option-member": "TR_DisableInlineCheckIfFinalizeObject",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceUseDefs",
+    "category": "L",
+    "desc": "trace use def info",
+    "option-member": "TR_TraceUseDefs",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "noResumableTrapHandler",
+    "category": "C",
+    "desc": "do not generate traps for exception detections",
+    "option-member": "TR_NoResumableTrapHandler",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSupportForCpuSpentInCompilation",
+    "category": "M",
+    "desc": "do not provide CPU spent in compilation",
+    "option-member": "TR_DisableSupportForCpuSpentInCompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDualTLH",
+    "category": "D",
+    "desc": "Disable use of non-zero initialized TLH",
+    "option-member": "TR_DisableDualTLH",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableNewInliningInfrastructure",
+    "category": "O",
+    "desc": "disable new inlining infrastructure ",
+    "option-member": "TR_DisableNewInliningInfrastructure",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHPRUpgrade",
+    "category": "O",
+    "desc": "disable upgrading 31-bit instructions to use High Word registers on z196 or newer",
+    "option-member": "TR_DisableHPRUpgrade",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableThunkTupleJ2I",
+    "category": "D",
+    "desc": "do not replace initialInvokeExactThunk with J2I thunk / helper address in ThunkTuple",
+    "option-member": "TR_DisableThunkTupleJ2I",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceStructuralAnalysis",
+    "category": "L",
+    "desc": "trace structural analysis",
+    "option-member": "TR_TraceSA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHierarchyInlining",
+    "category": "O",
+    "desc": "disable inlining of overridden methods not overridden in subclass of the type of this pointer",
+    "option-member": "TR_DisableHierarchyInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHeapAllocOOL",
+    "category": "O",
+    "desc": "disable heap alloc OOL and replace with heap alloc snippet",
+    "option-member": "TR_DisableHeapAllocOOL",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInlinerArgsPropagation",
+    "category": "O",
+    "desc": "enable argument propagation in inliner",
+    "option-member": "TR_DisableInlinerArgsPropagation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableBranchPreload",
+    "category": "O",
+    "desc": "disable return branch preload",
+    "option-member": "TR_DisableBranchPreload",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "alwaysSafeFatalAssert",
+    "category": "I",
+    "desc": "Always issue a safe fatal assertion for testing purposes",
+    "option-member": "TR_AlwaysSafeFatal",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLoopReplicatorColdSideEntryCheck",
+    "category": "I",
+    "desc": "disable cold side-entry check for replicating loops containing hot inner loops",
+    "option-member": "TR_DisableLoopReplicatorColdSideEntryCheck",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAllocationOfScratchBTL",
+    "category": "M",
+    "desc": "Refuse to allocate scratch memory below the line (zOS 31-bit)",
+    "option-member": "TR_DontAllocateScratchBTL",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHighWordRA",
+    "category": "O",
+    "desc": "disable High Word register allocations on z196 or newer",
+    "option-member": "TR_DisableHighWordRA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHardwareProfileRecompilation",
+    "category": "O",
+    "desc": "disable hardware profile recompilation",
+    "option-member": "TR_EnableHardwareProfileRecompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "enableRMODE64",
+    "category": "O",
+    "desc": "Enable residence mode of compiled bodies on z/OS to reside above the 2-gigabyte bar",
+    "option-member": "TR_EnableRMODE64",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableEarlyCompilationDuringIdleCpu",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_EnableEarlyCompilationDuringIdleCpu",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableHalfSlotSpills",
+    "category": "O",
+    "desc": "disable sharing of a single 8-byte spill temp for two 4-byte values",
+    "option-member": "TR_DisableHalfSlotSpills",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableJProfiling",
+    "category": "O",
+    "desc": "disable JProfiling",
+    "option-member": "TR_EnableJProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableHardwareProfilerReducedWarm",
+    "category": "O",
+    "desc": "disable hardware profiler reduced warm recompilation",
+    "option-member": "TR_DisableHardwareProfilerReducedWarm",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableGuardedCountingRecompilations",
+    "category": "O",
+    "desc": "deprecated.  Same as disableGuardedCountingRecompilation",
+    "option-member": "TR_DisableGuardedCountingRecompilations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "scalarizeSSOps",
+    "category": "O",
+    "desc": "support o-type optimization via scalarization of storega to storage operations",
+    "option-member": "TR_ScalarizeSSOps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableKnownObjectTable",
+    "category": "O",
+    "desc": "disable support for including heap object info in symbol references",
+    "option-member": "TR_DisableKnownObjectTable",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "crashDuringCompile",
+    "category": "M",
+    "desc": "force a crash during compilation",
+    "option-member": "TR_CrashDuringCompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCheapWarmOpts",
+    "category": "O",
+    "desc": "enable cheap warm optimizations",
+    "option-member": "TR_DisableCheapWarmOpts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDLTrecompilationPrevention",
+    "category": "M",
+    "desc": "disable the prevention of DLT bogus recompilations",
+    "option-member": "TR_DisableDLTrecompilationPrevention",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMarshallingIntrinsics",
+    "category": "O",
+    "desc": "Disable packed decimal to binary marshalling and un-marshalling optimization. They will not be inlined.",
+    "option-member": "TR_DisableMarshallingIntrinsics",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableGuardedCountingRecompilation",
+    "category": "O",
+    "desc": "disable GCR.  If you don't know what that is, I don't have room to explain it here.",
+    "option-member": "TR_DisableGuardedCountingRecompilations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableFPE",
+    "category": "C",
+    "desc": "disable FPE",
+    "option-member": "TR_DisableFPE",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLeafRoutineDetection",
+    "category": "O",
+    "desc": "disable lleaf routine detection on zlinux",
+    "option-member": "TR_DisableLeafRoutineDetection",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableTailRecursion",
+    "category": "O",
+    "desc": "disable tail recursion",
+    "option-member": "TR_DisableTailRecursion",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "DisableFastStringIndexOfString",
+    "category": "O",
+    "desc": "disable fast String.indexOf",
+    "option-member": "TR_DisableFastStringIndexOf",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceNonLinearRA",
+    "category": "L",
+    "desc": "trace non-linear RA",
+    "option-member": "TR_TraceNonLinearRegisterAssigner",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableScorchingSampleThresholdScalingBasedOnNumProc",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_DisableScorchingSampleThresholdScalingBasedOnNumProc",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableJVMPILineNumbers",
+    "category": "M",
+    "desc": "enable output of line numbers via JVMPI",
+    "option-member": "TR_EnableJVMPILineNumbers",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceNodeFlags",
+    "category": "L",
+    "desc": "trace setting/resetting of node flags",
+    "option-member": "TR_TraceNodeFlags",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "randomize",
+    "category": "D",
+    "desc": "Randomize certain decisions and thresholds to improve test coverage",
+    "option-member": "TR_Randomize",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableEmptyPreHeaderCheck",
+    "category": "O",
+    "desc": "disable Empty pre-header check in loop canonicalization",
+    "option-member": "TR_DisableEmptyPreHeaderCheck",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableFPCodeGen",
+    "category": "O",
+    "desc": "disable floating point code generation",
+    "option-member": "TR_DisableFPCodeGen",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHardwareProfilerDuringStartup",
+    "category": "O",
+    "desc": "disable hardware profiler during startup",
+    "option-member": "TR_DisableHardwareProfilerDuringStartup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMultiTargetInlining",
+    "category": "O",
+    "desc": "disable multi-target inlining",
+    "option-member": "TR_DisableMultiTargetInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableIntegerCompareSimplification",
+    "category": "O",
+    "desc": "disable byte/short/int/long compare simplification  ",
+    "option-member": "TR_DisableIntegerCompareSimplification",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableJavaEightStartupHeuristics",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_DisableJava8StartupHeuristics",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDowngradeToColdOnVMPhaseStartup",
+    "category": "M",
+    "desc": "disable downgrading optLevel to cold during STARTUP VM phase",
+    "option-member": "TR_DisableDowngradeToColdOnVMPhaseStartup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDynamicLoopTransfer",
+    "category": "O",
+    "desc": "disable dynamic loop transfer",
+    "option-member": "TR_DisableDynamicLoopTransfer",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableDynamicRIBufferProcessing",
+    "category": "O",
+    "desc": "enable disabling buffer processing",
+    "option-member": "TR_DisableDynamicRIBufferProcessing",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableSIMDArrayTranslate",
+    "category": "O",
+    "desc": "disable SIMD instructions for array translate",
+    "option-member": "TR_DisableSIMDArrayTranslate",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDumpFlowGraph",
+    "category": "L",
+    "desc": "Disable dumping of the flow graph into trace file",
+    "option-member": "TR_DisableDumpFlowGraph",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableNewBlockOrdering",
+    "category": "O",
+    "desc": "disable new block ordering, instead use basic block extension",
+    "option-member": "TR_DisableNewBlockOrdering",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableIntrinsics",
+    "category": "O",
+    "desc": "disable inlining of packed decimal intrinsic functions",
+    "option-member": "TR_DisableIntrinsics",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "activateCompThreadWhenHighPriReqIsBlocked",
+    "category": "M",
+    "desc": "activate another compilation thread when high priority request is blocked",
+    "option-member": "TR_ActivateCompThreadWhenHighPriReqIsBlocked",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDoubleWordStackAlignment",
+    "category": "O",
+    "desc": "disable double word java stack alignement on z",
+    "option-member": "TR_DisableDoubleWordStackAlignment",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "forceNonSMP",
+    "category": "D",
+    "desc": "force UniP code generation.",
+    "option-member": "TR_ForceNonSMP",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSwitchAwayFromProfilingForHotAndVeryhot",
+    "category": "O",
+    "desc": "disable switch away from profiling for hot and veryhot",
+    "option-member": "TR_DisableSwitchAwayFromProfilingForHotAndVeryhot",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "breakOnCompile",
+    "category": "D",
+    "desc": "deprecated; equivalent to breakBeforeCompile",
+    "option-member": "TR_BreakBeforeCompile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCompilationThread",
+    "category": "M",
+    "desc": "disable compilation on a separate thread",
+    "option-member": "TR_DisableCompilationThread",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDirectToJNI",
+    "category": "O",
+    "desc": "disable all JNI linkage dispatch sequences including thunks",
+    "option-member": "TR_DisableDirectToJNI",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "waitOnCompilationQueue",
+    "category": "M",
+    "desc": "Perform synchronous wait until compilation queue empty. Primarily for use with Compiler.command",
+    "option-member": "TR_WaitBit",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "lowerCountsForAotCold",
+    "category": "M",
+    "desc": "Lower counts for cold aot runs",
+    "option-member": "TR_LowerCountsForAotCold",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableFastDLTOnLongRunningInterpreter",
+    "category": "O",
+    "desc": "disable Fast DLT on long-running interpreter",
+    "option-member": "TR_DisableFastDLTOnLongRunningInterpreter",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableLargeCodePages",
+    "category": "C",
+    "desc": "enable large code pages",
+    "option-member": "TR_EnableLargeCodePages",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableGuardedCountingRecompilation",
+    "category": "O",
+    "desc": "enable GCR.  If you don't know what that is, I don't have room to explain it here.",
+    "option-member": "TR_DisableGuardedCountingRecompilations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableFastAssumptionReclamation",
+    "category": "O",
+    "desc": "disable fast assumption reclamation",
+    "option-member": "TR_DisableFastAssumptionReclamation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableCheapWarmOpts",
+    "category": "O",
+    "desc": "enable cheap warm optimizations",
+    "option-member": "TR_DisableCheapWarmOpts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableDirectStaticAccessOnZ",
+    "category": "O",
+    "desc": "support relative load instructions for c and c++",
+    "option-member": "TR_DisableDirectStaticAccessOnZ",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableHCR",
+    "category": "O",
+    "desc": "enable hot code replacement",
+    "option-member": "TR_EnableHCR",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableExitExtraction",
+    "category": "O",
+    "desc": "disable extraction of structure nodes that unconditionally exit to outer regions",
+    "option-member": "TR_DisableExitExtraction",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableRefArraycopyRT",
+    "category": "O",
+    "desc": "disable reference arraycopy for real-time gc",
+    "option-member": "TR_DisableRefArraycopyRT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "jitAllAtMain",
+    "category": "D",
+    "desc": "jit all loaded methods when main is called",
+    "option-member": "TR_jitAllAtMain",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "alwaysFatalAssert",
+    "category": "I",
+    "desc": "Always execute fatal assertion for testing purposes",
+    "option-member": "TR_AlwaysFatalAssert",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDecimalFormatPeephole",
+    "category": "O",
+    "desc": "disable optimizing DecimalFormat.format(BigDecimal.doubleValue())",
+    "option-member": "TR_DisableDecimalFormatPeephole",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCallConstUncommoning",
+    "category": "O",
+    "desc": "disable uncommon call constant node phase",
+    "option-member": "TR_DisableCallConstUncommoning",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableUpgradesByJitSamplingWhenHWProfilingEnabled",
+    "category": "O",
+    "desc": "Allow Jit Sampling to upgrade cold compilations when HW Profiling is on",
+    "option-member": "TR_EnableJitSamplingUpgradesDuringHWProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCPUUtilization",
+    "category": "M",
+    "desc": "disable tracking of cpu utilization",
+    "option-member": "TR_DisableCPUUtilization",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceVIP",
+    "category": "L",
+    "desc": "trace variable initializer propagation (constant propagation of read-only variables)",
+    "option-member": "TR_TraceVIP",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceBlockFrequencyGeneration",
+    "category": "L",
+    "desc": "trace block frequency generation",
+    "option-member": "TR_TraceBFGeneration",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableVariablePrecisionDAA",
+    "category": "O",
+    "desc": "disable variable precision DAA optimizations",
+    "option-member": "TR_DisableVariablePrecisionDAA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableConverterReducer",
+    "category": "O",
+    "desc": "disable reuducing converters methods to intrinisic arrayTranslate",
+    "option-member": "TR_DisableConverterReducer",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "debugOnEntry",
+    "category": "D",
+    "desc": "invoke the debugger at the entry of a method",
+    "option-member": "TR_DebugOnEntry",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "regmap",
+    "category": "C",
+    "desc": "generate GC maps with register maps",
+    "option-member": "TR_RegisterMaps",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "iprofilerVerbose",
+    "category": "O",
+    "desc": "Enable Interpreter Profiling output messages",
+    "option-member": "TR_VerboseInterpreterProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCodeCacheSnippets",
+    "category": "O",
+    "desc": "disable code cache snippets (e.g. allocation prefetch snippet) ",
+    "option-member": "TR_DisableCodeCacheSnippets",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "DisableAnnotations",
+    "category": "O",
+    "desc": "disable annotation support",
+    "option-member": "TR_EnableAnnotations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableCheckcastAndProfiledGuardCoalescer",
+    "category": "O",
+    "desc": "disable checkcast and profiled guard  coalescion optimization ",
+    "option-member": "TR_DisableCheckcastAndProfiledGuardCoalescer",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAESInHardware",
+    "category": "O",
+    "desc": "do not use native AES instructions",
+    "option-member": "TR_DisableAESInHardware",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableGLUColdRedirection",
+    "category": "O",
+    "desc": "disable general loop unroller redirection of cold edges to loop header",
+    "option-member": "TR_DisableGLUColdRedirection",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableRefinedAliases",
+    "category": "O",
+    "desc": "enable collecting side-effect summaries from compilations to improve aliasing info in subsequent compilations",
+    "option-member": "TR_DisableRefinedAliases",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "enableRATPurging",
+    "category": "O",
+    "desc": "purge the RAT table of assumptions after X registered assumptions",
+    "option-member": "TR_EnableRATPurging",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCHOpts",
+    "category": "O",
+    "desc": "disable CHTable based optimizations",
+    "option-member": "TR_DisableCHOpts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "strictFPCompares",
+    "category": "C",
+    "desc": "assume strictFP semantics for floating point compares only",
+    "option-member": "TR_StrictFPCompares",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableGlobalStaticBaseRegister",
+    "category": "O",
+    "desc": "disable global static base register ",
+    "option-member": "TR_DisableGlobalStaticBaseRegister",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disablePostProfileCompPriorityBoost",
+    "category": "M",
+    "desc": "disable boosting the priority of post profiling compilations",
+    "option-member": "TR_DisablePostProfileCompPriorityBoost",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableGCRPatching",
+    "category": "R",
+    "desc": "disable patching of the GCR guard",
+    "option-member": "TR_EnableGCRPatching",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "breakBeforeCompile",
+    "category": "D",
+    "desc": "raise trap when method compilation begins",
+    "option-member": "TR_BreakBeforeCompile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableConservativeColdInlining",
+    "category": "O",
+    "desc": "Do not be conservative with inlining at cold",
+    "option-member": "TR_DisableConservativeColdInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCodeCacheReclamation",
+    "category": "I",
+    "desc": "disable the freeing of compilations.",
+    "option-member": "TR_DisableCodeCacheReclamation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableBDLLVersioning",
+    "category": "O",
+    "desc": "disable BigDecimal long lookaside versioning",
+    "option-member": "TR_DisableBDLLVersioning",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDataCacheReclamation",
+    "category": "I",
+    "desc": "disable the reaping of data caches when they are no longer needed.",
+    "option-member": "TR_DisableDataCacheReclamation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableMaskVFTPointers",
+    "category": "O",
+    "desc": "disable masking of VFT Pointers",
+    "option-member": "TR_DisableMaskVFTPointers",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "DisableInlineCheckCastString",
+    "category": "O",
+    "desc": "disable CheckCast    inline fast helper",
+    "option-member": "TR_DisableInlineCheckCast",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZ13",
+    "category": "O",
+    "desc": "disable z13 support",
+    "option-member": "TR_DisableZ13",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableBCDOppTracing",
+    "category": "O",
+    "desc": "disable tracing of various BCD perf opportunities",
+    "option-member": "TR_DisableBCDOppTracing",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "nostore",
+    "category": "M",
+    "desc": "do not store AOT code into shared cache (-Xaot option)",
+    "option-member": "TR_NoStoreAOT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontUseHigherMethodCountsAfterStartup",
+    "category": "M",
+    "desc": "Do not use the default high counts for methods after startup in AOT mode",
+    "option-member": "TR_UseHigherMethodCountsAfterStartup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableValueProfiling",
+    "category": "O",
+    "desc": "disable value profiling",
+    "option-member": "TR_DisableValueProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAsyncCheckVersioning",
+    "category": "O",
+    "desc": "disable versioning of loops wrt async checks",
+    "option-member": "TR_DisableAsyncCheckVersioning",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableArch11PackedToDFP",
+    "category": "O",
+    "desc": "disable arch(11) packed to DFP conversion instructions",
+    "option-member": "TR_DisableArch11PackedToDFP",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "forceUsePreexistence",
+    "category": "D",
+    "desc": "Pretend methods are using pre-existence. RAS feature.",
+    "option-member": "TR_ForceUsePreexistence",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "DisableNewInstanceImplOptString",
+    "category": "O",
+    "desc": "disable newInstanceImpl opt",
+    "option-member": "TR_DisableNewInstanceImplOpt",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZ13LoadImmediateOnCond",
+    "category": "O",
+    "desc": "disable load halfword immediate on condition instruction generation on z13",
+    "option-member": "TR_DisableZ13LoadImmediateOnCond",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontVaryInlinerAggressivenessWithTime",
+    "category": "M",
+    "desc": "Do not vary inliner aggressiveness with abstract time",
+    "option-member": "TR_VaryInlinerAggressivenessWithTime",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableSIMD",
+    "category": "O",
+    "desc": "disable SIMD exploitation and infrastructure on platforms supporting vector register and instructions",
+    "option-member": "TR_DisableSIMD",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableIprofilerDataCollection",
+    "category": "M",
+    "desc": "disables the collection of iprofiler information while maintaining the framework",
+    "option-member": "TR_DisableIProfilerDataCollection",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSeparateInitFromAlloc",
+    "category": "O",
+    "desc": "disable separating init from alloc",
+    "option-member": "TR_DisableSeparateInitFromAlloc",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableDynamicSamplingWindow",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_DisableDynamicSamplingWindow",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableCustomMethodHandleThunks",
+    "category": "R",
+    "desc": "disable creation of custom invokeExact thunks for MethodHandles",
+    "option-member": "TR_DisableCustomMethodHandleThunks",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDynamicSamplingWindow",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_DisableDynamicSamplingWindow",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableAOTCacheReclamation",
+    "category": "O",
+    "desc": "enable AOT reclamation of code and data cache on AOT relocation failures",
+    "option-member": "TR_EnableAOTCacheReclamation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableArraySetStoreElimination",
+    "category": "O",
+    "desc": "disable arrayset store elimination",
+    "option-member": "TR_DisableArraysetStoreElimination",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableInliningDuringVPAtWarm",
+    "category": "O",
+    "desc": "enable inlining during VP for warm bodies",
+    "option-member": "TR_DisableInliningDuringVPAtWarm",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "varyInlinerAggressivenessWithTime",
+    "category": "M",
+    "desc": "Vary inliner aggressiveness with abstract time",
+    "option-member": "TR_VaryInlinerAggressivenessWithTime",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "breakAfterCompile",
+    "category": "D",
+    "desc": "raise trap when method compilation ends",
+    "option-member": "TR_BreakAfterCompile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableUseDefForShadows",
+    "category": "I",
+    "desc": "temporary, disables usedef for shadows.",
+    "option-member": "TR_DisableUseDefForShadows",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableProfiledInlining",
+    "category": "O",
+    "desc": "disable inlining based on profiled this values",
+    "option-member": "TR_DisableProfiledInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableOOL",
+    "category": "O",
+    "desc": "disable out of line instruction selection",
+    "option-member": "TR_DisableOOL",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "tlhPrefetch",
+    "category": "D",
+    "desc": "enable software prefetch on allocation ",
+    "option-member": "TR_TLHPrefetch",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "testOption1",
+    "category": "testCategory1",
+    "desc": "this option is just a test option.",
+    "option-member": "TR_TestOption1",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableGuardedCallArgumentRemat",
+    "category": "O",
+    "desc": "don't rematerialize a guarded virtual call's arguments on the cold path; instead, leave the expressions on the mainline path",
+    "option-member": "TR_DisableGuardedCallArgumentRemat",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceTrivialDeadTreeRemoval",
+    "category": "L",
+    "desc": "trace trivial dead tree removal",
+    "option-member": "TR_TraceTrivialDeadTreeRemoval",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "paintDataCacheOnFree",
+    "category": "I",
+    "desc": "paint data cache allocations that are being returned to the pool",
+    "option-member": "TR_PaintDataCacheOnFree",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontAddHWPDataToIProfiler",
+    "category": "O",
+    "desc": "Dont add HW Data to IProfiler",
+    "option-member": "TR_DontAddHWPDataToIProfiler",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dltMostOnce",
+    "category": "O",
+    "desc": "prevent DLT compilation of a method at more than one bytecode index.",
+    "option-member": "TR_DLTMostOnce",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontRestrictInlinerDuringStartup",
+    "category": "O",
+    "desc": "do not restrict trivial inliner during startup",
+    "option-member": "TR_RestrictInlinerDuringStartup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableTLE",
+    "category": "O",
+    "desc": "disable transactional lock elision",
+    "option-member": "TR_DisableTLE",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableHardwareProfilerDuringStartup",
+    "category": "O",
+    "desc": "enable hardware profiler during startup",
+    "option-member": "TR_DisableHardwareProfilerDuringStartup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableAbstractInlining",
+    "category": "O",
+    "desc": "disable inlining of abstract methods with a single implementor",
+    "option-member": "TR_DisableAbstractInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "dontDowngradeWhenRIIsTemporarilyOff",
+    "category": "M",
+    "desc": "",
+    "option-member": "TR_DontDowngradeWhenRIIsTemporarilyOff",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCrackedEdit",
+    "category": "O",
+    "desc": "disable cracking of edit/edit-and-mark",
+    "option-member": "TR_DisableCrackedEditOptimization",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "acceptHugeMethods",
+    "category": "O",
+    "desc": "allow processing of really large methods",
+    "option-member": "TR_ProcessHugeMethods",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAggressiveRecompilations",
+    "category": "R",
+    "desc": "recompilation to higher opt levels is not anymore twice as probable",
+    "option-member": "TR_DisableAggressiveRecompilations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "aotSecondRunDetection",
+    "category": "M",
+    "desc": "perform second run detection for AOT",
+    "option-member": "TR_NoAotSecondRunDetection",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "checkStructureDuringExitExtraction",
+    "category": "D",
+    "desc": "Check structure after each step of exit extraction",
+    "option-member": "TR_CheckStructureDuringExitExtraction",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "printAbsoluteTimestampInVerboseLog",
+    "category": "O",
+    "desc": "Print Absolute Timestamp in vlog",
+    "option-member": "TR_PrintAbsoluteTimestampInVerboseLog",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHWAcceleratedStringCaseConv",
+    "category": "O",
+    "desc": "disable SIMD case conversion for toUpperCase and toLowerCase in Java",
+    "option-member": "TR_DisableSIMDStringCaseConv",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableThrowToGoto",
+    "category": "O",
+    "desc": "disable throw to goto",
+    "option-member": "TR_DisableThrowToGoto",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "noJitDuringBootstrap",
+    "category": "D",
+    "desc": "don't jit methods during bootstrap",
+    "option-member": "TR_noJitDuringBootstrap",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCompilationAfterDLT",
+    "category": "O",
+    "desc": "disable queueing of normal compilation for method that has been DLT compiled.",
+    "option-member": "TR_DisableCompilationAfterDLT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAOTInstanceFieldResolution",
+    "category": "O",
+    "desc": "disable AOT instance field resolution",
+    "option-member": "TR_DisableAOTInstanceFieldResolution",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSIMDArrayCompare",
+    "category": "O",
+    "desc": "Disable vectorized array comparison using SIMD instruction",
+    "option-member": "TR_DisableSIMDArrayCompare",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableSeparateInitFromAlloc",
+    "category": "O",
+    "desc": "enable separating init from alloc",
+    "option-member": "TR_DisableSeparateInitFromAlloc",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableAdaptiveDumbInliner",
+    "category": "O",
+    "desc": "disable adaptive dumbInliner strategy",
+    "option-member": "TR_DisableAdaptiveDumbInliner",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "assumeStrictFP",
+    "category": "C",
+    "desc": "always assume strictFP semantics",
+    "option-member": "TR_StrictFP",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceKnownObjectGraph",
+    "category": "L",
+    "desc": "trace the relationships between objects in the known-object table",
+    "option-member": "TR_TraceKnownObjectGraph",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAOTWarmRunThroughputImprovement",
+    "category": "O",
+    "desc": "disable change iprofiler entry choosing heuristic to improve aot warm run throughput",
+    "option-member": "TR_DisableAOTWarmRunThroughputImprovement",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "paintAllocatedFrameSlotsDead",
+    "category": "C",
+    "desc": "paint all slots allocated in method prologue with deadf00d",
+    "option-member": "TR_PaintAllocatedFrameSlotsDead",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "assumeStartupPhaseUntilToldNotTo",
+    "category": "M",
+    "desc": "Use compiler.Command(endOfStartup) to exit startup phase",
+    "option-member": "TR_AssumeStartupPhaseUntilToldNotTo",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "deferReferenceManipulations",
+    "category": "I",
+    "desc": "defer object reference manipulations to the host runtime.",
+    "option-member": "TR_DeferReferenceManipulations",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "continueAfterILValidationError",
+    "category": "O",
+    "desc": "Do not abort compilation upon encountering an ILValidation failure.",
+    "option-member": "TR_ContinueAfterILValidationError",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "reduceCountsForMethodsCompiledDuringStartup",
+    "category": "M",
+    "desc": "Needs SCC compilation hints",
+    "option-member": "TR_ReduceCountsForMethodsCompiledDuringStartup",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAOTStaticField",
+    "category": "O",
+    "desc": "disable AOT static field inlining",
+    "option-member": "TR_DisableAOTStaticField",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableArrayCopyOpts",
+    "category": "O",
+    "desc": "disable array copy optimiations",
+    "option-member": "TR_DisableArrayCopyOpts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "aotOnlyFromBootstrap",
+    "category": "O",
+    "desc": "ahead-of-time compilation allowed only for methods from bootstrap classes",
+    "option-member": "TR_AOTCompileOnlyFromBootstrap",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "x86HLE",
+    "category": "C",
+    "desc": "Enable haswell hardware lock elision",
+    "option-member": "TR_X86HLE",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableVMCSProfiling",
+    "category": "O",
+    "desc": "disable VM data for virtual call sites",
+    "option-member": "TR_DisableVMCSProfiling",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "mccSanityCheck",
+    "category": "M",
+    "desc": "Enable multi-code-cache sanity checking. High overhead",
+    "option-member": "TR_CodeCacheSanityCheck",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableBasicBlockPeepHole",
+    "category": "O",
+    "desc": "disable basic blocks peepHole",
+    "option-member": "TR_DisableBasicBlockPeepHole",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableOSRSharedSlots",
+    "category": "O",
+    "desc": "disable support for shared slots in on-stack replacement",
+    "option-member": "TR_DisableOSRSharedSlots",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "breakOnBBStart",
+    "category": "D",
+    "desc": "raise trap on BBStarts of method",
+    "option-member": "TR_BreakBBStart",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceUnsafeInlining",
+    "category": "L",
+    "desc": "trace unsafe inlining",
+    "option-member": "TR_TraceUnsafeInlining",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableBitOpcode",
+    "category": "O",
+    "desc": "disable converting calling bit operation java method to bitOpcode",
+    "option-member": "TR_DisableBitOpcode",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableUnsafe",
+    "category": "O",
+    "desc": "disable code to inline Unsafe natives",
+    "option-member": "TR_DisableUnsafe",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "checkGRA",
+    "category": "D",
+    "desc": "Preserve stores that would otherwise be removed by GRA, and then verify that the stored value matches the global register",
+    "option-member": "TR_CheckGRA",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceFull",
+    "category": "L",
+    "desc": "turn on all trace options",
+    "option-member": "TR_TraceAll",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "breakOnJ2IThunk",
+    "category": "D",
+    "desc": "break before executing a jit-to-interpreter thunk",
+    "option-member": "TR_BreakOnJ2IThunk",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "assignEveryGlobalRegister",
+    "category": "I",
+    "desc": "never refuse to assign any possible register for GRA in spite of the resulting potential spills",
+    "option-member": "TR_AssignEveryGlobalRegister",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableConservativeHotRecompForServerMode",
+    "category": "R",
+    "desc": "Do not be more conservative in server mode",
+    "option-member": "TR_DisableConservativeHotRecompilationForServerMode",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableMultipleGCRPeriods",
+    "category": "M",
+    "desc": "allow JIT to get in and out of GCR",
+    "option-member": "TR_EnableMultipleGCRPeriods",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableGRACostBenefitModel",
+    "category": "O",
+    "desc": "disable GRA cost/benefit model",
+    "option-member": "TR_EnableGRACostBenefitModel",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "disableLockReservation",
+    "category": "O",
+    "desc": "disable lock reservation",
+    "option-member": "TR_DisableLockResevation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableCompareAndBranchInstruction",
+    "category": "O",
+    "desc": "disable compareAndBranch instruction",
+    "option-member": "TR_DisableCompareAndBranchInstruction",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "randomSeedRaw",
+    "category": "R",
+    "desc": "Uses the supplied random seed as-is; see also randomSeedSignatureHash",
+    "option-member": "TR_RandomSeedSignatureHash",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setFalse",
+    "subsettable": "no"
+},{
+    "name": "inhibitRecompilation",
+    "category": "R",
+    "desc": "Inhibit (but don't disable) recompilation. For diagnostic only.",
+    "option-member": "TR_InhibitRecompilation",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableGCRPatching",
+    "category": "R",
+    "desc": "enable patching of the GCR guard",
+    "option-member": "TR_EnableGCRPatching",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "useHigherMethodCounts",
+    "category": "M",
+    "desc": "use the default high counts for methods even for AOT",
+    "option-member": "TR_UseHigherMethodCounts",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableLastRetrialLogging",
+    "category": "O",
+    "desc": "enable fullTrace logging for last compilation attempt. Needs to have a log defined on the command line",
+    "option-member": "TR_EnableLastCompilationRetrialLogging",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "traceOptTrees",
+    "category": "L",
+    "desc": "dump trees after each optimization",
+    "option-member": "TR_TraceOptTrees",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableLoopTransfer",
+    "category": "O",
+    "desc": "disable the loop transfer part of loop versioner",
+    "option-member": "TR_DisableLoopTransfer",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "tracePREForSubNodeReplacement",
+    "category": "L",
+    "desc": "trace partial redundancy elimination focussed on optimal subnode replacement",
+    "option-member": "TR_TracePREForOptimalSubNodeReplacement",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableZonedToDFPReduction",
+    "category": "O",
+    "desc": "disable strength reduction of zoned decimal arithmetic to DFP arithmetic",
+    "option-member": "TR_DisableZonedToDFPReduction",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableStoreOnCondition",
+    "category": "O",
+    "desc": "disable store on condition (STOC) code gen",
+    "option-member": "TR_DisableStoreOnCondition",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHPRSpill",
+    "category": "O",
+    "desc": "disable spilling 31-bit values into High Word registers on z196 or newer",
+    "option-member": "TR_DisableHPRSpill",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "enableAOTMethodEnter",
+    "category": "O",
+    "desc": "enable AOT method enter",
+    "option-member": "TR_EnableAOTMethodEnter",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "countWriteBarriersRT",
+    "category": "D",
+    "desc": "count how many fast and slow RT write barriers occur per thread",
+    "option-member": "TR_CountWriteBarriersRT",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "noAotSecondRunDetection",
+    "category": "M",
+    "desc": "do not do second run detection for AOT",
+    "option-member": "TR_NoAotSecondRunDetection",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableDeadStoreBailOut",
+    "category": "O",
+    "desc": "disable bail out of dead store",
+    "option-member": "TR_DisableDeadStoreBailOut",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "debugOnCompile",
+    "category": "D",
+    "desc": "deprecated; equivalent to debugBeforeCompile",
+    "option-member": "TR_DebugBeforeCompile",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableHardwareProfilerReducedWarmUpgrades",
+    "category": "O",
+    "desc": "disable hardware profiler reduced warm recompilation Upgrades",
+    "option-member": "TR_DisableHardwareProfilerReducedWarmUpgrades",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableInlineEXTarget",
+    "category": "O",
+    "desc": "disable inlining of EX target for arraycopy and arraycmp",
+    "option-member": "TR_DisableInlineEXTarget",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableSmartPlacementOfCodeCaches",
+    "category": "O",
+    "desc": "disable placement of code caches in memory so they are near each other and the DLLs",
+    "option-member": "TR_DisableSmartPlacementOfCodeCaches",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "staticDebugCounters",
+    "category": "D",
+    "desc": "Enable static versions of all enabled dynamic debug counters (unless staticDebugCounters={regex} is specified)",
+    "option-member": "TR_StaticDebugCountersRequested",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name": "disableAOTResolveDiffCLMethods",
+    "category": "O",
+    "desc": "do not resolve AOT methods from different class loaders",
+    "option-member": "TR_DisableAOTResolveDiffCLMethods",
+    "type": "bool",
+    "default": "false",
+    "processing-fn": "setTrue",
+    "subsettable": "no"
+},{
+    "name":"reportMethodEnter",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_ReportMethodEnter",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"reportMethodExit",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_ReportMethodExit",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"createPCMaps",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_CreatePCMaps",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"optimizeForSpace",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_OptimizeForSpace",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"TraceInfo",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_TraceInfo",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"CountOptTransformations",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_CountOptTransformations",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"EnableCompilationThread",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_EnableCompilationThread",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"HWProfileDeleteEmptyBlocks",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_HWProfileDeleteEmptyBlocks",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"DisableMonitorOpts",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_DisableMonitorOpts",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"DisableDFP",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_DisableDFP",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"DisableCallGraphInlining",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_DisableCallGraphInlining",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"DisableSSOpts",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_DisableSSOpts",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"DisableHysteresis",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_DisableHysteresis",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"EnableLargePages",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_EnableLargePages",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"VerboseOptTransformations",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_VerboseOptTransformations",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"AggressiveOpts",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_AggressiveOpts",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"NoClassGC",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_NoClassGC",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"Server",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_Server",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"AllowVPRangeNarrowingBasedOnDeclaredType",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_AllowVPRangeNarrowingBasedOnDeclaredType",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"TrustAllInterfaceTypeInfo",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_TrustAllInterfaceTypeInfo",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"HWProfilerDisableAOT",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_HWProfilerDisableAOT",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"HWProfilerDisableRIOverPrivateLinkage",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_HWProfilerDisableRIOverPrivateLinkage",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+},{
+    "name":"IncreaseCountsForMethodsCompiledOutsideStartup",
+    "category":"M",
+    "desc":"todo",
+    "option-member": "TR_IncreaseCountsForMethodsCompiledOutsideStartup",
+    "type":"bool",
+    "default":"false",
+    "processing-fn":"setTrue",
+    "subsettable":"no"
+}]

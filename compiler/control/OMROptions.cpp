@@ -47,6 +47,10 @@
 #include "ras/Debug.hpp"
 #include "ras/IgnoreLocale.hpp"
 
+#if defined(NEW_OPTIONS)
+#include "control/OptionsBuilder.hpp"
+#endif
+
 #if !defined(J9_PROJECT_SPECIFIC)
 #include "env/JitConfig.hpp"
 #endif
@@ -1080,6 +1084,8 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
         TR::Options::set32BitNumeric,offsetof(OMR::Options,_test390LitPoolBuffer), 0, "F%d"},
    {"test390StackBufferSize=", "L\tInsert buffer in stack to force testing of large stack sizes",
         TR::Options::set32BitNumeric,offsetof(OMR::Options,_test390StackBuffer), 0, "F%d"},
+   {"testOption1", "M\ttest stuff for new options", SET_OPTION_BIT(TR_TestOption1), "F" },
+   {"testOption2", "M\ttest stuff for new options", SET_OPTION_BIT(TR_TestOption2), "F" },
    {"timing", "M\ttime individual phases and optimizations", SET_OPTION_BIT(TR_Timing), "F" },
    {"timingCumulative", "M\ttime cumulative phases (ILgen,Optimizer,codegen)", SET_OPTION_BIT(TR_CummTiming), "F" },
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER)
@@ -1800,12 +1806,23 @@ OMR::Options::Options(
 
    TR::Options *masterOptions;
    if (optionSet)
+      {
       masterOptions = optionSet->getOptions();
+   #if defined(NEW_OPTIONS)
+      if (!masterOptions->getNewOptions())
+         masterOptions->setNewOptions(optionSet->getNewOptions());
+   #endif
+      }
    else if (isAOT)
       masterOptions = _aotCmdLineOptions;
    else
       masterOptions = _jitCmdLineOptions;
    *this = *masterOptions;
+#if defined(NEW_OPTIONS)
+   TR::CompilerOptions * newOptions = new (trMemory, heapAlloc) TR::CompilerOptions();
+   *newOptions = *(masterOptions->getNewOptions());
+   self()->setNewOptions(newOptions);
+#endif
 
    // At this point this object contains the log for compThreadId==0
    // If this is a different compilation thread we need to find the right log
@@ -2371,6 +2388,13 @@ OMR::Options::processOptionsJIT(char *jitOptions, void *feBase, TR_FrontEnd *fe)
    if (_jitCmdLineOptions)
       memset(_jitCmdLineOptions, 0, sizeof(TR::Options));
 
+#if defined(NEW_OPTIONS)
+      TR::CompilerOptions * newOptions = new (PERSISTENT_NEW) TR::CompilerOptions();
+      TR::OptionsBuilder::processCmdLineOptions(newOptions, jitOptions);
+      TR::OptionsBuilder::processEnvOptions(newOptions);
+      _jitCmdLineOptions->setNewOptions(newOptions);
+#endif
+
    _feBase = feBase;
    _fe     = fe;
 
@@ -2417,6 +2441,12 @@ OMR::Options::processOptionsAOT(char *aotOptions, void *feBase, TR_FrontEnd *fe)
 
    if (_aotCmdLineOptions)
       {
+#if defined(NEW_OPTIONS)
+      TR::CompilerOptions * newOptions = new (PERSISTENT_NEW) TR::CompilerOptions();
+      TR::OptionsBuilder::processCmdLineOptions(newOptions, aotOptions);
+      TR::OptionsBuilder::processEnvOptions(newOptions, /* isAOT */ true);
+      _aotCmdLineOptions->setNewOptions(newOptions);
+#endif
 
       if (!(_aotCmdLineOptions->fePreProcess(feBase)))
          {
@@ -2991,11 +3021,19 @@ OMR::Options::findOptionSet(int32_t index, int32_t lineNum, const char *methodSi
       if (index && optionSet->getIndex() == index)
          {
          // Matched on option set index
+#if defined(NEW_OPTIONS)
+         if (!optionSet->getNewOptions())
+            optionSet->setNewOptions(TR::CompilerOptionsManager::getOptions(0,index));
+#endif
          break;
          }
       else if (lineNum && optionSet->getStart() <= lineNum && optionSet->getEnd() >= lineNum)
          {
          // Matched on limtfile line range
+#if defined(NEW_OPTIONS)
+         if (!optionSet->getNewOptions())
+            optionSet->setNewOptions(TR::CompilerOptionsManager::getOptions(lineNum));
+#endif
          break;
          }
       else if (optionSet->getMethodRegex())
@@ -3006,21 +3044,80 @@ OMR::Options::findOptionSet(int32_t index, int32_t lineNum, const char *methodSi
             // also required
             //
             if (!optionSet->getOptLevelRegex())
+               {
+#if defined(NEW_OPTIONS)
+               if (!optionSet->getNewOptions())
+                  optionSet->setNewOptions(TR::CompilerOptionsManager::getOptions(methodSignature));
+#endif
                break;
+               }
             if (TR::SimpleRegex::matchIgnoringLocale(optionSet->getOptLevelRegex(), TR::Compilation::getHotnessName(hotnessLevel)))
+               {
+#if defined(NEW_OPTIONS)
+               if (!optionSet->getNewOptions())
+                  optionSet->setNewOptions(TR::CompilerOptionsManager::getOptions(methodSignature, TR::Compilation::getHotnessName(hotnessLevel)));
+#endif
                break;
+               }
             char hotnessLevelString[2];
             hotnessLevelString[0] = hotnessLevel + '0';
             hotnessLevelString[1] = 0;
             if (TR::SimpleRegex::matchIgnoringLocale(optionSet->getOptLevelRegex(), hotnessLevelString))
+               {
+#if defined(NEW_OPTIONS)
+               if (!optionSet->getNewOptions())
+                  optionSet->setNewOptions(TR::CompilerOptionsManager::getOptions(methodSignature, hotnessLevelString));
+#endif
                break;
+               }
             }
          }
       }
-
+#if defined(NEW_OPTIONS)
+   if (optionSet){
+      if (!optionSet->getNewOptions()){
+         TR_ASSERT(0, "Failed to obtain new options in option set\n");
+      }
+   }
+#endif
    return optionSet;
    }
+#if defined(NEW_OPTIONS)
+bool OMR::Options::getAnyOption(uint32_t mask){
+   bool TR::CompilerOptions::* memberPtr = TR::CompilerOptionsManager::getMemberPtrFromOldEnum(mask);
+#if defined(NEW_OPTIONS_DEBUG)
+   bool newOption = _newOptions->*(memberPtr);
+   bool option = ((_options[mask & TR_OWM] & (mask & ~TR_OWM)) != 0);
+   if (newOption != option){
+      fprintf(stderr, "option not same for %s:",TR::CompilerOptionsManager::getOptionNameFromOldEnum(mask));
+      if (newOption) fprintf(stderr, "new Options report true\n");
+      else fprintf(stderr, "new options report false\n");
+      return option;
+   }
+   return newOption;
+#else
+   return _newOptions->*(memberPtr);
+#endif
+}
 
+void OMR::Options::setOption(uint32_t mask, bool b)
+{
+      bool TR::CompilerOptions::* memberPtr = TR::CompilerOptionsManager::getMemberPtrFromOldEnum(mask);
+      if (b){
+         _newOptions->*(memberPtr) = true;
+#if defined(NEW_OPTIONS_DEBUG)
+         _options[mask & TR_OWM] |= (mask & ~TR_OWM);
+#endif
+         }
+      else
+      {
+         _newOptions->*(memberPtr) = false;
+#if defined(NEW_OPTIONS_DEBUG)
+         _options[mask & TR_OWM] &= ~(mask & ~TR_OWM);
+#endif
+      }
+}
+#endif
 
 void OMR::Options::setOptionInAllOptionSets(uint32_t mask, bool b)
    {

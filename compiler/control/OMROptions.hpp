@@ -48,6 +48,9 @@ namespace OMR { typedef OMR::Options OptionsConnector; }
 #include "infra/Assert.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "ras/DebugCounter.hpp"
+#if defined(NEW_OPTIONS)
+#include "control/CompilerOptionsManager.hpp"
+#endif
 
 namespace TR { class CFGNode; }
 
@@ -821,8 +824,8 @@ enum TR_CompilationOptions
    // Available                                       = 0x00000100 + 25,
    TR_TraceTempUsage                                  = 0x00000200 + 25,
    TR_TraceTempUsageMore                              = 0x00000400 + 25,
-   // Available                                       = 0x00000800 + 25,
-   // Available                                       = 0x00001000 + 25,
+   TR_TestOption1                                     = 0x00000800 + 25, // used only in the new option processing framework
+   TR_TestOption2                                     = 0x00001000 + 25, // used only in the new option processing framework
    TR_TracePREForOptimalSubNodeReplacement            = 0x00002000 + 25,
    // Available                                       = 0x00008000 + 25,
    TR_PerfTool                                        = 0x00010000 + 25,
@@ -942,7 +945,7 @@ enum TR_CompilationOptions
    TR_IncreaseCountsForNonBootstrapMethods            = 0x00080000 + 29,
    TR_ReduceCountsForMethodsCompiledDuringStartup     = 0x00100000 + 29,
    TR_IncreaseCountsForMethodsCompiledOutsideStartup  = 0x00200000 + 29,
-   // Available                                       = 0x00400000 + 29,
+   TR_UseRIOnlyForLargeQSZ                            = 0x00400000 + 29,
    TR_UseGlueIfMethodTrampolinesAreNotNeeded          = 0x00800000 + 29,
    TR_EnableFpreductionAnnotation                     = 0x01000000 + 29,
    TR_ExtractExitsByInvalidatingStructure             = 0x02000000 + 29,
@@ -950,7 +953,6 @@ enum TR_CompilationOptions
    TR_InhibitRIBufferProcessingDuringDeepSteady       = 0x08000000 + 29,
    TR_DontDowngradeWhenRIIsTemporarilyOff             = 0x10000000 + 29,
    TR_DontRIUpgradeAOTWarmMethods                     = 0x20000000 + 29,
-   TR_UseRIOnlyForLargeQSZ                            = 0x20000000 + 29,
    TR_EnableAggressiveLiveness                        = 0x40000000 + 29,
    TR_DisableGuardedStaticFinalFieldFolding           = 0x80000000 + 29,
 
@@ -1493,8 +1495,11 @@ public:
    static bool     hasSomeLogFile()      {return _hasLogFile;}
    static void     suppressLogFileBecauseDebugObjectNotCreated(bool b = true) {_suppressLogFileBecauseDebugObjectNotCreated = b;}
    static bool     requiresDebugObject();
-
+#if defined(NEW_OPTIONS)
+   bool getAnyOption(uint32_t mask);
+#else
    bool      getAnyOption(uint32_t mask)       {return (_options[mask & TR_OWM] & (mask & ~TR_OWM)) != 0;}
+#endif
    bool      getAllOptions(uint32_t mask)      {return (_options[mask & TR_OWM] & (mask & ~TR_OWM)) == mask;}
    bool      getOption(uint32_t mask);
 
@@ -1660,6 +1665,9 @@ public:
    int32_t getInlinerVeryLargeCompiledMethodThreshold() const {return _inlinerVeryLargeCompiledMethodThreshold;}
    int32_t getInlinerVeryLargeCompiledMethodFaninThreshold() const {return _inlinerVeryLargeCompiledMethodFaninThreshold;}
 
+#if defined(NEW_OPTIONS)
+   void setOption(uint32_t mask, bool b = true);
+#else
    void setOption(uint32_t mask, bool b = true)
       {
       if (b)
@@ -1667,6 +1675,7 @@ public:
       else
          _options[mask & TR_OWM] &= ~(mask & ~TR_OWM);
       }
+#endif
    static void setOptionInAllOptionSets(uint32_t mask, bool b = true);
    void setFixedOptLevel(int32_t level);
    void setTarget();
@@ -1678,6 +1687,11 @@ public:
    void setLocalAggressiveAOT();
    void setInlinerOptionsForAggressiveAOT();
    void setConservativeDefaultBehavior();
+
+#if defined(NEW_OPTIONS)
+   void setNewOptions(TR::CompilerOptions * options) { _newOptions = options;}
+   TR::CompilerOptions* getNewOptions(){ return _newOptions;}
+#endif
 
    static bool getCountsAreProvidedByUser() { return _countsAreProvidedByUser; } // set very late in setCounts()
    static TR_YesNoMaybe startupTimeMatters() { return _startupTimeMatters; } // set very late in setCounts()
@@ -2219,6 +2233,10 @@ protected:
    // Option flag words
    //
    uint32_t                    _options[TR_OWM+1];
+#if defined(NEW_OPTIONS)
+   // New boolean options
+   TR::CompilerOptions*       _newOptions;
+#endif
 
    // Logging and debugging options
    //

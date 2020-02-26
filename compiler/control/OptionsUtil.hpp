@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,9 @@ namespace TR
 
 struct OptionTable;
 class Options;
+#if defined(NEW_OPTIONS)
+class CompilerOptions;
+#endif
 
 
 // Shape of an option processing method
@@ -148,7 +151,12 @@ public:
 
    OptionSet(char *s) { init(s); }
 
-   void init(char *s) { _optionString = s; _next = 0; _methodRegex = 0; _optLevelRegex = 0; _start=0; _end=0; }
+   void init(char *s) {
+      _optionString = s; _next = 0; _methodRegex = 0; _optLevelRegex = 0; _start=0; _end=0;
+   #if defined(NEW_OPTIONS)
+      _newOptions = 0;
+   #endif
+   }
 
    OptionSet *getNext() {return _next;}
 
@@ -160,6 +168,9 @@ public:
    char *getOptionString() {return _optionString;}
    int32_t getStart() {return _start;}
    int32_t getEnd() {return  _end;}
+#if defined(NEW_OPTIONS)
+   TR::CompilerOptions * getNewOptions(){ return _newOptions;}
+#endif
 
    void setNext(OptionSet *n) {_next = n;}
    void setOptions(TR::Options *o) {_options = o;}
@@ -168,9 +179,14 @@ public:
    void setOptLevelRegex(TR::SimpleRegex *r) {_optLevelRegex = r;}
    void setStart(int32_t n) {_start=n;}
    void setEnd(int32_t n) {_end=n;}
+#if defined(NEW_OPTIONS)
+   void setNewOptions(TR::CompilerOptions * o) { _newOptions = o;}
+#endif
 
 private:
-
+#if defined(NEW_OPTIONS)
+   TR::CompilerOptions *_newOptions;
+#endif
    OptionSet *_next;
    TR::SimpleRegex *_methodRegex;
    TR::SimpleRegex *_optLevelRegex;

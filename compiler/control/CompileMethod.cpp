@@ -59,6 +59,10 @@
 #include "omrformatconsts.h"
 #include "runtime/CodeCacheManager.hpp"
 
+#if defined(NEW_OPTIONS)
+#include "control/CompilerOptionsManager.hpp"
+#endif
+
 #if defined (_MSC_VER) && _MSC_VER < 1900
 #define snprintf _snprintf
 #endif
@@ -140,6 +144,17 @@ int32_t commonJitInit(OMR::FrontEnd &fe, char *cmdLineOptions)
 
    if (init_options(jitConfig, cmdLineOptions) < 0)
       return -1;
+
+#if defined(NEW_OPTIONS_DEBUG)
+   // Just a sanity check to see if new options have been initialized
+   TR::CompilerOptions * compOpts = TR::Options::getCmdLineOptions()->getNewOptions();
+   if (compOpts->TR_TestOption1){
+      printf("\nTest Option1 set\n\n");
+   }
+   else {
+      printf ("\nTest Option1 not set\n\n");
+   }
+#endif
 
    // This doesn't make sense for non-Power platforms!
    //

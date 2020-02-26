@@ -335,6 +335,15 @@ function(create_omr_compiler_library)
 	# from function to function without having to use lots of temps.
 	set(${COMPILER_NAME}_ROOT    ${abs_root}               CACHE INTERNAL "Root for compiler ${COMPILER_NAME}")
 	set(${COMPILER_NAME}_DEFINES ${COMPILER_DEFINES}       CACHE INTERNAL "Defines for compiler ${COMPILER_NAME}")
+
+	if(OMR_COMPILER_NEW_OPTIONS)
+		list(APPEND ${COMPILER_NAME}_DEFINES NEW_OPTIONS)
+	endif()
+
+	if(OMR_COMPILER_NEW_OPTIONS_DEBUG)
+		list(APPEND ${COMPILER_NAME}_DEFINES NEW_OPTIONS_DEBUG)
+	endif()
+
 	set(${COMPILER_NAME}_INCLUDES
 		${${COMPILER_NAME}_ROOT}/${TR_TARGET_ARCH}/${TR_TARGET_SUBARCH}
 		${${COMPILER_NAME}_ROOT}/${TR_TARGET_ARCH}
@@ -346,6 +355,12 @@ function(create_omr_compiler_library)
 		${COMPILER_INCLUDES}
 		CACHE INTERNAL "Include header list for ${COMPILER}"
 	)
+
+	if(OMR_COMPILER_NEW_OPTIONS)
+		list(APPEND ${COMPILER_NAME}_INCLUDES ${CMAKE_BINARY_DIR}/compiler)
+	endif()
+
+	message("${COMPILER_NAME}_ROOT = ${${COMPILER_NAME}_ROOT}")
 
 	# Generate a build name file.
 	set(BUILD_NAME_FILE "${CMAKE_BINARY_DIR}/${COMPILER_NAME}Name.cpp")
@@ -361,6 +376,9 @@ function(create_omr_compiler_library)
 		${BUILD_NAME_FILE}
 		${COMPILER_OBJECTS}
 	)
+	if(OMR_COMPILER_NEW_OPTIONS)
+		add_dependencies(${COMPILER_NAME} generate-options)
+	endif()
 
 	target_link_libraries(${COMPILER_NAME}
 		PUBLIC
