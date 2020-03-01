@@ -3141,73 +3141,43 @@ omrsysinfo_get_hostname(struct OMRPortLibrary *portLibrary, char *buffer, size_t
 	return 0;
 }
 
+
+/* Limits are unsupported on z/TPF */
+#if defined(OMRZTPF)
+uint32_t
+omrsysinfo_get_limit(struct OMRPortLibrary* portLibrary, uint32_t resourceID, uint64_t* limit)
+{
+	int rc = OMRPORT_LIMIT_UNKNOWN;
+
+	Trc_PRT_sysinfo_get_limit_Entered(resourceID);
+	*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
+	Trc_PRT_sysinfo_get_limit_Exit(rc);
+	return rc;
+}
+
+uint32_t
+omrsysinfo_set_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, uint64_t limit)
+{
+	int rc = OMRPORT_LIMIT_UNKNOWN;
+
+	Trc_PRT_sysinfo_set_limit_Entered(resourceID, limit);
+	Trc_PRT_sysinfo_set_limit_Exit(rc);
+	return rc;
+}
+
+#else
+
 uint32_t
 omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, uint64_t *limit)
 {
-	uint32_t hardLimitRequested = OMRPORT_LIMIT_HARD == (resourceID & OMRPORT_LIMIT_HARD);
 	uint32_t resourceRequested = resourceID & ~OMRPORT_LIMIT_HARD;
 	uint32_t rc = OMRPORT_LIMIT_UNKNOWN;
-	struct rlimit lim = {0, 0};
-	uint32_t resource = 0;
 
 	Trc_PRT_sysinfo_get_limit_Entered(resourceID);
 
-	if (OMRPORT_RESOURCE_ADDRESS_SPACE == resourceRequested) {
-#if !defined(OMRZTPF)
-		resource = RLIMIT_AS;
-#else /* !defined(OMRZTPF) */
-		/* z/TPF does not have virtual address support */
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		Trc_PRT_sysinfo_get_limit_Exit(rc);
-		return rc;
-#endif /* !defined(OMRZTPF) */
-	} else if (OMRPORT_RESOURCE_CORE_FILE == resourceRequested) {
-#if !defined(OMRZTPF)
-		resource = RLIMIT_CORE;
-#else /* !defined(OMRZTPF) */
-		/* z/TPF does not have virtual address support */
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		Trc_PRT_sysinfo_get_limit_Exit(rc);
-		return rc;
-#endif /* !defined(OMRZTPF) */
-	} else if (OMRPORT_RESOURCE_DATA == resourceRequested) {
-#if !defined(OMRZTPF)
-		resource = RLIMIT_DATA;
-#else /* !defined(OMRZTPF) */
-		/* Not implemented for z/TPF */
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		Trc_PRT_sysinfo_get_limit_Exit(rc);
-		return rc;
-#endif /* !defined(OMRZTPF) */
-	}
-
-	switch (resourceRequested) {
-	case OMRPORT_RESOURCE_SHARED_MEMORY:
+	if (OMRPORT_RESOURCE_SHARED_MEMORY == resourceRequested) {
 		rc = getLimitSharedMemory(portLibrary, limit);
-		break;
-	case OMRPORT_RESOURCE_ADDRESS_SPACE:
-		/* FALLTHROUGH */
-	case OMRPORT_RESOURCE_CORE_FILE:
-		/* FALLTHROUGH */
-	case OMRPORT_RESOURCE_DATA: {
-#if !defined(OMRZTPF)
-	if (0 == getrlimit(resource, &lim)) {
-		*limit = (uint64_t)(hardLimitRequested ? lim.rlim_max : lim.rlim_cur);
-		if (RLIM_INFINITY == *limit) {
-			rc = OMRPORT_LIMIT_UNLIMITED;
-		} else {
-			rc = OMRPORT_LIMIT_LIMITED;
-		}
-	} else {
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-		Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
-		rc = OMRPORT_LIMIT_UNKNOWN;
-	}
-#endif /* !defined(OMRZTPF) */
-	}
-	break;
-	case OMRPORT_RESOURCE_CORE_FLAGS: {
+	} else if (OMRPORT_RESOURCE_CORE_FLAGS == resourceRequested) {
 #if defined(AIXPPC)
 		struct vario myvar;
 
@@ -3230,17 +3200,34 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
 		rc = OMRPORT_LIMIT_UNKNOWN;
 #endif
-	}
-	break;
-	/* Get the limit on maximum number of files that may be opened in any
-	 * process, in the current configuration of the operating system.  This
-	 * must match "ulimit -n".
-	 */
-	case OMRPORT_RESOURCE_FILE_DESCRIPTORS: {
-#if defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(J9ZOS390)
-		/* getrlimit(2) is a POSIX routine. */
-		if (0 == getrlimit(RLIMIT_NOFILE, &lim)) {
-			*limit = (uint64_t) (hardLimitRequested ? lim.rlim_max : lim.rlim_cur);
+	} else {
+		/* Other resources are handled through getrlimit() */
+		uint32_t hardLimitRequested = OMRPORT_LIMIT_HARD == (resourceID & OMRPORT_LIMIT_HARD);
+		struct rlimit lim = { 0, 0 };
+		uint32_t resource = 0;
+
+		switch (resourceRequested) {
+		case OMRPORT_RESOURCE_ADDRESS_SPACE:
+			resource = RLIMIT_AS;
+			break;
+		case OMRPORT_RESOURCE_CORE_FILE:
+			resource = RLIMIT_CORE;
+			break;
+		case OMRPORT_RESOURCE_DATA:
+			resource = RLIMIT_DATA;
+			break;
+		case OMRPORT_RESOURCE_FILE_DESCRIPTORS:
+			resource = RLIMIT_NOFILE;
+			break;
+		default:
+			Trc_PRT_sysinfo_getLimit_unrecognised_resourceID(resourceID);
+			*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
+			rc = OMRPORT_LIMIT_UNKNOWN;
+			goto exit;
+		}
+
+		if (0 == getrlimit(resource, &lim)) {
+			*limit = (uint64_t)(hardLimitRequested ? lim.rlim_max : lim.rlim_cur);
 			if (RLIM_INFINITY == *limit) {
 				rc = OMRPORT_LIMIT_UNLIMITED;
 			} else {
@@ -3252,19 +3239,10 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 			Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
 			rc = OMRPORT_LIMIT_UNKNOWN;
 		}
-#else /* defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(J9ZOS390) */
-		/* unsupported on other platforms (just in case). */
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		rc = OMRPORT_LIMIT_UNKNOWN;
-#endif /* defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(J9ZOS390) */
-	}
-	break;
-	default:
-		Trc_PRT_sysinfo_getLimit_unrecognised_resourceID(resourceID);
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		rc = OMRPORT_LIMIT_UNKNOWN;
 	}
 
+
+exit:
 	Trc_PRT_sysinfo_get_limit_Exit(rc);
 	return rc;
 }
@@ -3272,116 +3250,86 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 uint32_t
 omrsysinfo_set_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, uint64_t limit)
 {
-	uint32_t hardLimitRequested = OMRPORT_LIMIT_HARD == (resourceID & OMRPORT_LIMIT_HARD);
 	uint32_t resourceRequested = resourceID & ~OMRPORT_LIMIT_HARD;
-	struct rlimit lim = {0, 0};
 	uint32_t rc = 0;
-	uint32_t resource = 0;
 
 	Trc_PRT_sysinfo_set_limit_Entered(resourceID, limit);
 
-	switch (resourceRequested) {
-	case OMRPORT_RESOURCE_FILE_DESCRIPTORS:
-		resource = RLIMIT_NOFILE;
-		break;
-	case OMRPORT_RESOURCE_ADDRESS_SPACE:
-#if !defined(OMRZTPF)
-		resource = RLIMIT_AS;
-#else /* !defined(OMRZTPF) */
-		/* z/TPF does not have virtual address support */
-		rc = -1;
-#endif /* !defined(OMRZTPF) */
-		break;
-	case OMRPORT_RESOURCE_CORE_FILE:
-#if !defined(OMRZTPF)
-		resource = RLIMIT_CORE;
-#else /* !defined(OMRZTPF) */
-		rc = OMRPORT_LIMIT_UNKNOWN;
-#endif /* !defined(OMRZTPF) */
-		break;
-	case OMRPORT_RESOURCE_DATA:
-#if !defined(OMRZTPF)
-		resource = RLIMIT_DATA;
-#else /* !defined(OMRZTPF) */
-		rc = OMRPORT_LIMIT_UNKNOWN;
-#endif /* !defined(OMRZTPF) */
-	default:
-		break;
-	}
-
-	if (0 == rc) {
-		switch (resourceRequested) {
-		case OMRPORT_RESOURCE_FILE_DESCRIPTORS:
-			/* FALLTHROUGH */
-		case OMRPORT_RESOURCE_ADDRESS_SPACE:
-			/* FALLTHROUGH */
-		case OMRPORT_RESOURCE_CORE_FILE:
-			/* FALLTHROUGH */
-		case OMRPORT_RESOURCE_DATA: {
-#if !defined(OMRZTPF)
-			rc = getrlimit(resource, &lim);
-			if (-1 == rc) {
-				portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-				Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
-				break;
-			}
-
-			if (hardLimitRequested) {
-				lim.rlim_max = limit;
-			} else {
-#if defined(OSX)
-				/* MacOS doesn't allow the soft file limit to be unlimited */
-				if ((OMRPORT_RESOURCE_FILE_DESCRIPTORS == resourceRequested)
-						&& (RLIM_INFINITY == limit)) {
-					int32_t maxFiles = 0;
-					size_t resultSize = sizeof(maxFiles);
-					int name[] = {CTL_KERN, KERN_MAXFILESPERPROC};
-					rc = sysctl(name, 2, &maxFiles, &resultSize, NULL, 0);
-					if (-1 == rc) {
-						portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-						Trc_PRT_sysinfo_setrlimit_error(resource, limit, findError(errno));
-					} else {
-						limit = maxFiles;
-					}
-				}
-#endif
-				lim.rlim_cur = limit;
-			}
-
-			rc = setrlimit(resource, &lim);
-			if (-1 == rc) {
-				portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-				Trc_PRT_sysinfo_setrlimit_error(resource, limit, findError(errno));
-			}
-#else /* !defined(OMRZTPF) */
-			rc = OMRPORT_LIMIT_UNKNOWN;
-#endif /* !defined(OMRZTPF) */
-			break;
-		}
-
-		case OMRPORT_RESOURCE_CORE_FLAGS: {
+	if (OMRPORT_RESOURCE_CORE_FLAGS == resourceRequested) {
 #if defined(AIXPPC)
-			struct vario myvar;
+		struct vario myvar;
 
-			myvar.v.v_fullcore.value = limit;
-			rc = sys_parm(SYSP_SET, SYSP_V_FULLCORE, &myvar);
-			if (-1 == rc) {
-				portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-				Trc_PRT_sysinfo_sysparm_error(errno);
-			}
-#else
-			/* unsupported so return error */
-			rc = OMRPORT_LIMIT_UNKNOWN;
-#endif
-			break;
+		myvar.v.v_fullcore.value = limit;
+		rc = sys_parm(SYSP_SET, SYSP_V_FULLCORE, &myvar);
+		if (-1 == rc) {
+			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+			Trc_PRT_sysinfo_sysparm_error(errno);
 		}
+#else
+		/* unsupported so return error */
+		rc = OMRPORT_LIMIT_UNKNOWN;
+#endif
+	} else {
+		struct rlimit lim = { 0, 0 };
+		uint32_t resource = 0;
+		uint32_t hardLimitRequested = OMRPORT_LIMIT_HARD == (resourceID & OMRPORT_LIMIT_HARD);
 
+		switch (resourceRequested) {
+		case OMRPORT_RESOURCE_ADDRESS_SPACE:
+			resource = RLIMIT_AS;
+			break;
+		case OMRPORT_RESOURCE_CORE_FILE:
+			resource = RLIMIT_CORE;
+			break;
+		case OMRPORT_RESOURCE_DATA:
+			resource = RLIMIT_DATA;
+			break;
+		case OMRPORT_RESOURCE_FILE_DESCRIPTORS:
+			resource = RLIMIT_NOFILE;
+			break;
 		default:
 			Trc_PRT_sysinfo_setLimit_unrecognised_resourceID(resourceID);
 			rc = OMRPORT_LIMIT_UNKNOWN;
+			goto exit;
+		}
+
+		rc = getrlimit(resource, &lim);
+		if (-1 == rc) {
+			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+			Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
+			goto exit;
+		}
+
+		if (hardLimitRequested) {
+			lim.rlim_max = limit;
+		} else {
+#if defined(OSX)
+			/* MacOS doesn't allow the soft file limit to be unlimited */
+			if ((OMRPORT_RESOURCE_FILE_DESCRIPTORS == resourceRequested)
+				&& (RLIM_INFINITY == limit)) {
+				int32_t maxFiles = 0;
+				size_t resultSize = sizeof(maxFiles);
+				int name[] = { CTL_KERN, KERN_MAXFILESPERPROC };
+				rc = sysctl(name, 2, &maxFiles, &resultSize, NULL, 0);
+				if (-1 == rc) {
+					portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+					Trc_PRT_sysinfo_setrlimit_error(resource, limit, findError(errno));
+				}
+				else {
+					limit = maxFiles;
+				}
+			}
+#endif
+			lim.rlim_cur = limit;
+		}
+		rc = setrlimit(resource, &lim);
+		if (-1 == rc) {
+			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+			Trc_PRT_sysinfo_setrlimit_error(resource, limit, findError(errno));
 		}
 	}
 
+exit:
 	Trc_PRT_sysinfo_set_limit_Exit(rc);
 	return rc;
 }
@@ -3389,7 +3337,7 @@ omrsysinfo_set_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 static uint32_t
 getLimitSharedMemory(struct OMRPortLibrary *portLibrary, uint64_t *limit)
 {
-#if defined(LINUX) && !defined(OMRZTPF)
+#if defined(LINUX)
 	int fd = 0;
 	int64_t shmmax = -1;
 	int bytesRead = 0;
@@ -3429,12 +3377,13 @@ errorReturn:
 	Trc_PRT_sysinfo_getLimitSharedMemory_ErrorExit(OMRPORT_LIMIT_UNKNOWN, OMRPORT_LIMIT_UNKNOWN_VALUE);
 	*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
 	return OMRPORT_LIMIT_UNKNOWN;
-#else /* defined(LINUX) && !defined(OMRZTPF) */
+#else /* defined(LINUX) */
 	Trc_PRT_sysinfo_getLimitSharedMemory_notImplemented(OMRPORT_LIMIT_UNKNOWN);
 	*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
 	return OMRPORT_LIMIT_UNKNOWN;
-#endif /* defined(LINUX) && !defined(OMRZTPF) */
+#endif /* defined(LINUX) */
 }
+#endif /* defined(OMRZTPF) */
 
 intptr_t
 omrsysinfo_get_load_average(struct OMRPortLibrary *portLibrary, struct J9PortSysInfoLoadData *loadAverageData)
