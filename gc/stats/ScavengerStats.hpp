@@ -95,7 +95,9 @@ public:
 	uintptr_t _totalDeepStructures; /**<  The number of deep structures that are scanned with priority (number of deepScanOutline function calls) */
 	uintptr_t _totalObjsDeepScanned; /**< The total number of deep structure objects that are special treated (number of copyAndForward with priority)*/
 	uintptr_t _depthDeepestStructure; /**< Length of longest deep structure that is special treated */
-	uintptr_t _copyScanUpdates;
+	uintptr_t _copyScanUpdates; /** The number of times the thread attempts to do a copy/scan ratio update (minor update) */ 
+	uint64_t _intervalStartTime; /** Timestamp taken when the thread progresses from complete scan to the next phase */
+	uint64_t _aggregatedIntervalSpan; /** Total amount of time the thread spends outside of completeScan phase */
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
 	/* Average (weighted) number of bytes free after a collection and
@@ -186,8 +188,14 @@ public:
 	{
 		_syncStallCount += 1;
 		_syncStallTime += (endTime - startTime);
-	}
 	
+		if (_intervalStartTime != 0) {
+			_aggregatedIntervalSpan += (endTime - _intervalStartTime);
+		}
+	
+		_intervalStartTime = endTime;
+	}
+
 	/**
 	 * Get the total stall time
 	 * @return the time in hi-res ticks
@@ -196,6 +204,11 @@ public:
 	getStallTime()
 	{
 		return _workStallTime + _completeStallTime + _syncStallTime;
+	}
+			
+	MMINLINE void
+	intervalStart(uint64_t intervalStartTime) {
+		_intervalStartTime = intervalStartTime;
 	}
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 

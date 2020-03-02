@@ -65,6 +65,8 @@ MM_ScavengerStats::MM_ScavengerStats()
 	,_totalObjsDeepScanned(0)
 	,_depthDeepestStructure(0)
 	,_copyScanUpdates(0)
+	,_intervalStartTime(0)
+	,_aggregatedIntervalSpan(0)
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 	,_avgInitialFree(0)
 	,_avgTenureBytes(0)
@@ -171,6 +173,8 @@ MM_ScavengerStats::clear(bool firstIncrement)
 	_totalObjsDeepScanned = 0;
 	_depthDeepestStructure = 0;
 	_copyScanUpdates = 0;
+	_intervalStartTime = 0;
+	_aggregatedIntervalSpan = 0;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 	/* NOTE: _startTime and _endTime are also not cleared
 	 * as they are recorded before/after all stat clearing/gathering.

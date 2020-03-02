@@ -446,6 +446,11 @@ MM_Scavenger::workerSetupForGC(MM_EnvironmentStandard *env)
 {
 	clearThreadGCStats(env, true);
 
+#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+	env->_scavengerStats.intervalStart(omrtime_hires_clock());
+#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
+
 	/* Clear local language-specific stats */
 	_delegate.workerSetupForGC_clearEnvironmentLangStats(env);
 
@@ -689,6 +694,7 @@ MM_Scavenger::mergeGCStatsBase(MM_EnvironmentBase *env, MM_ScavengerStats *final
 	finalGCStats->_totalObjsDeepScanned += scavStats->_totalObjsDeepScanned;
 	finalGCStats->_depthDeepestStructure = scavStats->_depthDeepestStructure;
 	finalGCStats->_copyScanUpdates += scavStats->_copyScanUpdates;
+	finalGCStats->_aggregatedIntervalSpan += scavStats->_aggregatedIntervalSpan;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
 	finalGCStats->_flipDiscardBytes += scavStats->_flipDiscardBytes;
@@ -2016,6 +2022,11 @@ MM_Scavenger::getNextScanCache(MM_EnvironmentStandard *env)
 		if(!doneFlag) {
 			_waitingCount -= 1;
 		}
+#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
+		else {
+			env->_scavengerStats.intervalStart(omrtime_hires_clock());
+		}
+#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
 		omrthread_monitor_exit(_scanCacheMonitor);
 	}
