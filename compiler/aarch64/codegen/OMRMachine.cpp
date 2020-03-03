@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@
 #include "codegen/Machine.hpp"
 #include "codegen/Machine_inlines.hpp"
 #include "codegen/RealRegister.hpp"
+#include "compile/Compilation.hpp"
 #include "infra/Assert.hpp"
 
 OMR::ARM64::Machine::Machine(TR::CodeGenerator *cg) :
@@ -1216,3 +1217,120 @@ uint32_t OMR::ARM64::Machine::_globalRegisterNumberToRealRegisterMap[] =
    TR::RealRegister::v1,
    TR::RealRegister::v0
    };
+
+// if cleanRegState == false then this is being called to generate conditions for use in regAssocs
+TR::RegisterDependencyConditions*
+OMR::ARM64::Machine::createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::list<TR::Register*> *spilledRegisterList)
+   {
+   // Calculate number of register dependencies required.  This step is not really necessary, but
+   // it is space conscious.
+   //
+   int32_t c = 0;
+   int32_t endReg = TR::RealRegister::LastFPR; // As the real registers order between VR and CR are exchanged, LastCCR will cover all VRFs
+
+   for (int32_t i = TR::RealRegister::FirstGPR; i <= endReg; i++)
+      {
+      TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
+      TR_ASSERT(realReg->getState() == TR::RealRegister::Assigned ||
+              realReg->getState() == TR::RealRegister::Free ||
+              realReg->getState() == TR::RealRegister::Locked,
+              "cannot handle realReg state %d, (block state is %d)\n",realReg->getState(),TR::RealRegister::Blocked);
+      if (realReg->getState() == TR::RealRegister::Assigned)
+         c++;
+      }
+
+   c += spilledRegisterList ? spilledRegisterList->size() : 0;
+
+   TR::RegisterDependencyConditions *deps = NULL;
+
+   if (c)
+      {
+      deps = new (self()->cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, c, self()->cg()->trMemory());
+      for (int32_t j = TR::RealRegister::FirstGPR; j <= endReg; j++)
+         {
+         TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)j);
+         if (realReg->getState() == TR::RealRegister::Assigned)
+            {
+            TR::Register *virtReg = realReg->getAssignedRegister();
+            TR_ASSERT(!spilledRegisterList || !(std::find(spilledRegisterList->begin(), spilledRegisterList->end(), virtReg) != spilledRegisterList->end())
+            		,"a register should not be in both an assigned state and in the spilled list\n");
+            deps->addPostCondition(virtReg, realReg->getRegisterNumber());
+            if (cleanRegState)
+               {
+               virtReg->incTotalUseCount();
+               virtReg->incFutureUseCount();
+               if (self()->cg()->isOutOfLineColdPath())
+                  virtReg->incOutOfLineUseCount();
+               virtReg->setAssignedRegister(NULL);
+               realReg->setAssignedRegister(NULL);
+               realReg->setState(TR::RealRegister::Free);
+               }
+            }
+         }
+
+      if (spilledRegisterList)
+         {
+         for (auto i = spilledRegisterList->begin(); i != spilledRegisterList->end(); ++i)
+            deps->addPostCondition(*i, TR::RealRegister::SpilledReg);
+         }
+      }
+
+   return deps;
+   }
+
+/**
+ * \brief
+ * For every currently assigned register, frees its backing storage, if any.
+ *
+ * \details
+ * This method iterates through the physical register file and, for every register in
+ * the assigned state, insures that if the assigned virtual register has a backing
+ * storage location (a.k.a. a spill slot) that it is properly freed.
+ *
+ * Typically we will free the backing storage of a spilled register once we unspill and
+ * assign it, however we sometimes have reason to suppress this behavior for out of line
+ * register assignment (where we lock the free spill list). This routine is intended to be
+ * called once we complete out of line register assignment and can safely free the spill
+ * slot of any currently assigned register.
+ */
+void
+OMR::ARM64::Machine::disassociateUnspilledBackingStorage()
+   {
+   TR::CodeGenerator *cg = self()->cg();
+   TR::Compilation   *comp = cg->comp();
+   bool               trace = comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates);
+
+   TR_ASSERT(!cg->isOutOfLineHotPath() && !cg->isOutOfLineColdPath(), "Should only be called once register assigner is out of OOL control flow region");
+   TR_ASSERT(!cg->isFreeSpillListLocked(), "Should only be called once the free spill list is unlocked");
+
+   for (int32_t i = TR::RealRegister::FirstGPR; i < TR::RealRegister::NumRegisters - 1; i++) // Skipping SpilledReg
+      {
+      if (_registerFile[i]->getState() == TR::RealRegister::Assigned)
+         {
+         TR::Register    *virtReg = _registerFile[i]->getAssignedRegister();
+         TR_BackingStore *location = virtReg->getBackingStorage();
+
+         if (location != NULL)
+            {
+            int32_t size = 0;
+            switch (virtReg->getKind())
+               {
+               case TR_GPR:
+                  size = TR::Compiler->om.sizeofReferenceAddress();
+                  break;
+               case TR_FPR:
+                  size = 8;
+                  break;
+               default:
+                  TR_ASSERT(false, "Unsupported RegisterKind.");
+                  break;
+               }
+            if (trace)
+               traceMsg(comp, "\nDisassociating backing storage " POINTER_PRINTF_FORMAT " of size %u from assigned virtual %s\n", location, size, cg->getDebug()->getName(virtReg));
+            cg->freeSpill(location, size, 0);
+            virtReg->setBackingStorage(NULL);
+            location->setMaxSpillDepth(0);
+            }
+         }
+      }
+   }

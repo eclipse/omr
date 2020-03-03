@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@ namespace OMR { typedef OMR::ARM64::Machine MachineConnector; }
 namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
 namespace TR { class Register; }
+namespace TR { class RegisterDependencyConditions; }
 
 #define NUM_ARM64_GPR 32
 #define MAX_ARM64_GLOBAL_GPRS 27 // excluding IP0, IP1, FP, LR, and SP
@@ -144,6 +145,11 @@ public:
     * @brief Restore the register file from snapshot
     */
    void restoreRegisterStateFromSnapShot();
+
+
+   TR::RegisterDependencyConditions  *createCondForLiveAndSpilledGPRs(bool cleanRegState, TR::list<TR::Register*> *spilledRegisterList = NULL);
+
+   void disassociateUnspilledBackingStorage();
 
    /**
     * @brief Answers global register table

@@ -543,3 +543,16 @@ OMR::ARM64::CodeGenerator::generateNop(TR::Node *node, TR::Instruction *preced)
    else
       return new (self()->trHeapMemory()) TR::Instruction(TR::InstOpCode::nop, node, self());
    }
+
+TR_ARM64OutOfLineCodeSection *OMR::ARM64::CodeGenerator::findOutLinedInstructionsFromLabel(TR::LabelSymbol *label)
+   {
+   auto oiIterator = self()->getARM64OutOfLineCodeSectionList().begin();
+   while (oiIterator != self()->getARM64OutOfLineCodeSectionList().end())
+      {
+      if ((*oiIterator)->getEntryLabel() == label)
+         return *oiIterator;
+      ++oiIterator;
+      }
+
+   return NULL;
+   }

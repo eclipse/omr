@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,8 +20,53 @@
  *******************************************************************************/
 
 #include "codegen/ARM64Instruction.hpp"
+#include "codegen/ARM64OutOfLineCodeSection.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/RegisterDependency.hpp"
+
+// TR::ARM64LabelInstruction:: member functions
+
+void TR::ARM64LabelInstruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
+   {
+   TR::Compilation *comp = cg()->comp();
+   if (TR::Instruction::getDependencyConditions())
+      {
+      TR::Instruction::getDependencyConditions()->assignPostConditionRegisters(this, kindToBeAssigned, cg());
+      TR::Instruction::getDependencyConditions()->assignPreConditionRegisters(this->getPrev(), kindToBeAssigned, cg());
+      }
+
+   TR::Machine *machine = cg()->machine();
+   if (isLabel() && getLabelSymbol()->isEndOfColdInstructionStream())
+      {
+      // A label instruction coming back from OOL.
+      //
+      // This label is the end of the hot instruction stream (i.e., the fallthru path).
+      //
+      if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+         traceMsg (comp,"\nOOL: 1. Taking register state snap shot\n");
+      cg()->setIsOutOfLineHotPath(true);
+      machine->takeRegisterStateSnapShot();
+
+      // Prevent spilled registers from reclaiming their backing store if they
+      // become unspilled.  This will ensure a spilled register will receive the
+      // same backing store if it is spilled on either path of the control flow.
+      //
+      cg()->lockFreeSpillList();
+      }
+
+   if ((getOpCode().getMnemonic() == TR::InstOpCode::b) && getLabelSymbol()->isEndOfColdInstructionStream())
+      {
+      // This is the branch at the end of the cold instruction stream to the end of
+      // the hot instruction stream (or fallthru path).
+      //
+      // Start RA for OOL cold path, restore register state from snap shot
+      //
+      if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+         traceMsg (comp, "\nOOL: 1. Restoring Register state from snap shot\n");
+      cg()->setIsOutOfLineHotPath(false);
+      machine->restoreRegisterStateFromSnapShot();
+      }
+   }
 
 // TR::ARM64Trg1Instruction:: member functions
 
@@ -502,6 +547,28 @@ void TR::ARM64CompareBranchInstruction::assignRegisters(TR_RegisterKinds kindToB
       getDependencyConditions()->assignPreConditionRegisters(this->getPrev(), kindToBeAssigned, cg());
 
    setSource1Register(assignedSource1Register);
+
+   if (getLabelSymbol()->isStartOfColdInstructionStream())
+      {
+      // Switch to the outlined instruction stream and assign registers.
+      //
+      TR_ARM64OutOfLineCodeSection *oi = cg()->findOutLinedInstructionsFromLabel(getLabelSymbol());
+      TR_ASSERT(oi, "Could not find ARM64OutOfLineCodeSection stream from label.  instr=%p, label=%p\n", this, getLabelSymbol());
+      if (!oi->hasBeenRegisterAssigned())
+         oi->assignRegisters(kindToBeAssigned);
+      if (cg()->getDebug())
+            cg()->traceRegisterAssignment("OOL: Finished register assignment in OOL section\n");
+
+      // Unlock the free spill list.
+      //
+      cg()->unlockFreeSpillList();
+
+      // Disassociate backing storage that was previously reserved for a spilled virtual if
+      // virtual is no longer spilled. This occurs because the the free spill list was
+      // locked.
+      //
+      machine->disassociateUnspilledBackingStorage();
+      }
    }
 
 // TR::ARM64RegBranchInstruction:: member functions

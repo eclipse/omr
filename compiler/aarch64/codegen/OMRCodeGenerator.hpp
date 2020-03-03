@@ -370,7 +370,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    // OutOfLineCodeSection List functions
    TR::list<TR_ARM64OutOfLineCodeSection*> &getARM64OutOfLineCodeSectionList() {return _outOfLineCodeSectionList;}
-
+   TR_ARM64OutOfLineCodeSection *findOutLinedInstructionsFromLabel(TR::LabelSymbol *label);
    // We need to provide an implementation to avoid an unimplemented assert. See issue #4446.
    int32_t arrayTranslateMinimumNumberOfElements(bool isByteSource, bool isByteTarget) { return 8; }
    // We need to provide an implementation to avoid an unimplemented assert. See issue #4446.

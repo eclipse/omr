@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,12 +31,52 @@ TR_ARM64OutOfLineCodeSection::TR_ARM64OutOfLineCodeSection(TR::Node *callNode,
                             TR::CodeGenerator *cg) :
                             TR_OutOfLineCodeSection(callNode, callOp, targetReg, entryLabel, restartLabel, cg)
    {
+   if(callNode->isPreparedForDirectJNI())
+      {
+      _callNode->setPreparedForDirectJNI();
+      }
    generateARM64OutOfLineCodeSectionDispatch();
    }
 
 void TR_ARM64OutOfLineCodeSection::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   TR_UNIMPLEMENTED();
+   TR::Compilation* comp = _cg->comp();
+   if (hasBeenRegisterAssigned())
+     return;
+
+   // nested internal control flow assert:
+   _cg->setInternalControlFlowSafeNestingDepth(_cg->internalControlFlowNestingDepth());
+
+   // Create a dependency list on the first instruction in this stream that captures all current real register associations.
+   // This is necessary to get the register assigner back into its original state before the helper stream was processed.
+   _cg->incOutOfLineColdPathNestedDepth();
+
+   // This prevents the OOL entry label from resetting all register's startOfranges during RA
+   _cg->toggleIsInOOLSection();
+   TR::RegisterDependencyConditions  *liveRealRegDeps = _cg->machine()->createCondForLiveAndSpilledGPRs(true, _cg->getSpilledRegisterList());
+
+   if (liveRealRegDeps)
+      _firstInstruction->setDependencyConditions(liveRealRegDeps);
+   _cg->toggleIsInOOLSection(); // toggle it back because swapInstructionListsWithCompilation() also calls toggle...
+
+   // Register assign the helper dispatch instructions.
+   swapInstructionListsWithCompilation();
+   _cg->doRegisterAssignment(kindsToBeAssigned);
+   swapInstructionListsWithCompilation();
+
+   _cg->decOutOfLineColdPathNestedDepth();
+
+   // Returning to mainline, reset this counter
+   _cg->setInternalControlFlowSafeNestingDepth(0);
+
+   // Link in the helper stream into the mainline code.
+   // We will end up with the OOL items attached at the bottom of the instruction stream
+   TR::Instruction *appendInstruction = _cg->getAppendInstruction();
+   appendInstruction->setNext(_firstInstruction);
+   _firstInstruction->setPrev(appendInstruction);
+   _cg->setAppendInstruction(_appendInstruction);
+
+   setHasBeenRegisterAssigned(true);
    }
 
 void TR_ARM64OutOfLineCodeSection::generateARM64OutOfLineCodeSectionDispatch()
