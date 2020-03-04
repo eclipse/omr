@@ -681,6 +681,7 @@ TraceEvent=Trc_PRT_vmem_omrvmem_reserve_memory_Exit2 Group=mem Overhead=1 Level=
 TraceExit=Trc_PRT_vmem_omrvmem_reserve_memory_Exit Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_reserve_memory returns %p"
 
 TraceEntry=Trc_PRT_vmem_omrvmem_free_memory_Entry Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory userAddress=%p byteAmount=%u"
+TraceEvent=Trc_PRT_vmem_omrvmem_free_memory_UpdateLeaves Overhead=1 Level=1 Group=arraylet NoEnv Template="About to close file descriptor and free leaves. fd: %d, leafAddresses: %p, leafCount: %zu, address: %p, byteAmount: %zu"
 TraceExit=Trc_PRT_vmem_omrvmem_free_memory_Exit Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory returnCode=%d"
 
 TraceEntry=Trc_PRT_vmem_omrvmem_commit_memory_Entry Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_commit_memory address=%p byteAmount=%u"
@@ -1113,3 +1114,21 @@ TraceExit=Trc_PRT_sysinfo_processor_disable_feature_Exit Group=sysinfo Overhead=
 
 TraceEntry=Trc_PRT_sysinfo_processor_set_feature_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_set_feature: desc = %p, feature = %d, enable = %d"
 TraceExit=Trc_PRT_sysinfo_processor_set_feature_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_set_feature: returning with %zd"
+
+TraceEntry=Trc_PRT_double_map_getContiguousMem_Entry Overhead=1 Level=3 Group=arraylet NoEnv Template="omrvmem_get_contiguous_region_memory. Entered addresses: %p, addressesCount: %zu, addressSize: %zu, byteAmount: %zu, pageSize: %zu"
+TraceEvent=Trc_PRT_double_map_getContiguousMem_sharedMemoryFailure Overhead=1 Level=1 Group=arraylet NoEnv Template="Hit limit of shared memory. Requested: %zu, free shared memory: %zu"
+TraceEvent=Trc_PRT_double_map_getContiguousMem_statFailure Overhead=1 Level=1 Group=arraylet NoEnv Template="omrfile_stat_filesystem() returned %d, expected %d"
+TraceException=Trc_PRT_double_map_getContiguousMem_fdFailure Group=mem Overhead=1 Level=1 NoEnv Template="Failed to create file descriptor for double mapping"
+TraceEvent=Trc_PRT_double_map_getContiguousMem_Success Overhead=1 Level=1 Group=arraylet NoEnv Template="mmap contiguous region of memory created successfully at: %p"
+TraceEvent=Trc_PRT_double_map_getContiguousMem_Failure Overhead=1 Level=1 Group=arraylet NoEnv Template="Failed to mmap contiguous region of memory"
+TraceEvent=Trc_PRT_double_map_getContiguousMem_CheckFailure Overhead=1 Level=1 Group=arraylet NoEnv Template="Not enough shared memory to double map arraylet. Expected index: %zu, returned: %zu"
+TraceEvent=Trc_PRT_double_map_getContiguousMem_Failure2 Overhead=1 Level=1 Group=arraylet NoEnv Template="Double map failed while double mapping individual leaves."
+TraceEvent=Trc_PRT_double_map_getContiguousMem_Failure3 Overhead=1 Level=1 Group=arraylet NoEnv Template="Address returned by mmap dpes not match expected. Expected: %p, returned: %p"
+TraceEvent=Trc_PRT_double_map_getContiguousMem_Failure4 Overhead=1 Level=1 Group=arraylet NoEnv Template="Double map failed. Clean up phase."
+TraceExit=Trc_PRT_double_map_getContiguousMem_Exit Overhead=1 Level=3 Group=arraylet NoEnv Template="omrvmem_get_contiguous_region_memory. result=%d"
+
+TraceEntry=Trc_PRT_double_map_UpdateLeaves_Entry Overhead=1 Level=3 Group=arraylet NoEnv Template="updateDoubleMappedLeaves. regionSize: %zu, byteAmount=%zu"
+TraceEvent=Trc_PRT_double_map_updateLeaves_mmap_Failure Overhead=1 Level=2 Group=arraylet NoEnv Template="Failed to mmap leaves back to private"
+TraceEvent=Trc_PRT_double_map_updateLeaves_mmap_Failure2 Overhead=1 Level=2 Group=arraylet NoEnv Template="Address returned by mmap dpes not match expected. Requested: %p, returned: %p"
+TraceEvent=Trc_PRT_double_map_updateLeaves_unexpectedNullLeaves Overhead=1 Level=2 Group=arraylet NoEnv Template="Unexpected null leaves found when trying to update them"
+TraceExit=Trc_PRT_double_map_UpdateLeaves_Exit Overhead=1 Level=3 Group=arraylet NoEnv Template="updateDoubleMappedLeaves. result=%d"

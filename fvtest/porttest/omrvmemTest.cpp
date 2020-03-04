@@ -760,7 +760,7 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 #endif /* J9ZOS390 */
 		memPtr = (char *)omrvmem_reserve_memory(
 						0, HEAP_SIZE, &vmemID,
-						OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE | OMRPORT_VMEM_MEMORY_MODE_COMMIT | OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN,
+						OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE | OMRPORT_VMEM_MEMORY_MODE_COMMIT,
 						pageSize, OMRMEM_CATEGORY_PORT_LIBRARY);
 
 
@@ -830,7 +830,7 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 			/* Now create contiguous block of memory and then double map arraylet leaves. */
 			void *contiguous = omrvmem_get_contiguous_region_memory(arrayletLeaveAddrs, ARRAYLET_COUNT, arrayletLeafSize, (ARRAYLET_COUNT * arrayletLeafSize),
 										&vmemID, &newIdentifier, 
-										OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE | OMRPORT_VMEM_MEMORY_MODE_COMMIT,
+										OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE | OMRPORT_VMEM_MEMORY_MODE_COMMIT | OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN,
 										pageSize,
 										category);
 			if(contiguous == NULL) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -975,11 +975,6 @@ default_pageSize_reserve_memory(struct OMRPortLibrary *portLibrary,
 	void *result = NULL;
 	int protectionFlags = PROT_NONE;
 
-	if(mode & OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN) {
-		portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
-		return result;
-	}
-
 	Trc_PRT_vmem_default_reserve_entry(address, byteAmount);
 
 #if defined(MAP_ANONYMOUS)
@@ -1058,11 +1053,6 @@ default_pageSize_reserve_memory_32bit(struct OMRPortLibrary *portLibrary,
 	int flags = MAP_PRIVATE;
 	void *result = NULL;
 	int protectionFlags = PROT_NONE;
-
-	if(mode & OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN) {
-		portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
-		return result;
-	}
 
 	Trc_PRT_vmem_default_reserve_entry(address, byteAmount);
 

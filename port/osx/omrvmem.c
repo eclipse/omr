@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -432,11 +432,6 @@ reserveMemory(struct OMRPortLibrary *portLibrary, void *address, uintptr_t byteA
 	int flags = MAP_PRIVATE;
 	void *result = NULL;
 	int protectionFlags = PROT_NONE;
-
-	if(mode & OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN) {
-		portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
-		return result;
-	}
 
 	flags |= MAP_ANON;
 	if (0 != (OMRPORT_VMEM_MEMORY_MODE_COMMIT & mode)) {

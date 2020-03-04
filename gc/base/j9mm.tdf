@@ -915,6 +915,11 @@ TraceEvent=Trc_MM_Scavenger_percolate_concurrentMarkExhausted Overhead=1 Level=1
 TraceEvent=Trc_MM_Scavenger_percolate_preventTenureExpand Overhead=1 Level=1 Group=percolate Template="Percolating to prevent Tenure expand"
 TraceEvent=Trc_MM_Scavenger_percolate_tenureMaxFree Overhead=1 Level=1 Group=percolate Template="Percolating due to meeting Tenure max free"
 
+TraceEntry=Trc_MM_double_map_Entry Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. spine: %p, leafSize=%zu leavesCount=%zu"
+TraceEvent=Trc_MM_double_map_TraverseLeavesFailure Overhead=1 Level=1 Group=arraylet Template="Failed to retrieve leaves from spine"
+TraceEvent=Trc_MM_double_map_Failed Overhead=1 Level=1 Group=arraylet Template="Failed to double map arraylets"
+TraceExit=Trc_MM_double_map_Exit Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. result=%p"
+
 TraceAssert=Assert_MM_double_map_unreachable noEnv Overhead=1 Level=1 Assert="(false)"
 
 TraceEvent=Trc_ParallelGlobalGC_shouldCompactThisCycle Overhead=1 Level=1 Group=compact Template="Current page granularity fragmented ratio: %f  Threshold: %f"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -792,11 +792,6 @@ getMemoryInRange(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier
 #if defined(OMRVMEM_DEBUG)
 	static int count = 0;
 #endif
-
-	if(mode & OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN) {
-		portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
-		return memoryPointer;
-	}
 
 	/* check allocation direction */
 	if (0 != (vmemOptions & OMRPORT_VMEM_ALLOC_DIR_TOP_DOWN)) {
