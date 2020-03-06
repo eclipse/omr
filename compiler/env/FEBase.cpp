@@ -116,16 +116,6 @@ TR::OptionTable OMR::Options::_feOptions[] =
 
 #include "control/Recompilation.hpp"
 
-void TR_LinkageInfo::setHasBeenRecompiled()
-   {
-   }
-
-
-void TR_LinkageInfo::setHasFailedRecompilation()
-   {
-   }
-
-
 
 // S390 specific fucntion - FIXME: make this only be a problem when HOST is s390.  Also, use a better
 // name for this
