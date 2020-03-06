@@ -1786,22 +1786,8 @@ void OMR::Power::CodeGenerator::doBinaryEncoding()
 
       if (isPrivateLinkage && data.cursorInstruction==data.jitTojitStart)
          {
-         uint32_t magicWord = ((self()->getBinaryBufferCursor()-self()->getCodeStart())<<16) | static_cast<uint32_t>(self()->comp()->getReturnInfo());
-
-         *(uint32_t *)(data.preProcInstruction->getBinaryEncoding()) = magicWord;
-
-#ifdef J9_PROJECT_SPECIFIC
-         if (data.recomp!=NULL && data.recomp->couldBeCompiledAgain())
-            {
-            TR_LinkageInfo *lkInfo = TR_LinkageInfo::get(self()->getCodeStart());
-            if (data.recomp->useSampling())
-               lkInfo->setSamplingMethodBody();
-            else
-               lkInfo->setCountingMethodBody();
-            }
-#endif
-
-         toPPCImmInstruction(data.preProcInstruction)->setSourceImmediate(*(uint32_t *)(data.preProcInstruction->getBinaryEncoding()));
+         uint32_t linkageInfoWord = self()->initializeLinkageInfo(data.preProcInstruction->getBinaryEncoding());
+         toPPCImmInstruction(data.preProcInstruction)->setSourceImmediate(linkageInfoWord);
          }
 
       self()->getLinkage()->performPostBinaryEncoding();

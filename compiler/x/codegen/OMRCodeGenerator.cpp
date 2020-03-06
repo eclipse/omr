@@ -1921,19 +1921,9 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
          // A hack to set the linkage info word
          //
          TR_ASSERT(_returnTypeInfoInstruction->getOpCodeValue() == DDImm4, "assertion failure");
-         uint32_t magicWord = ((self()->getBinaryBufferCursor()-self()->getCodeStart())<<16) | static_cast<uint32_t>(self()->comp()->getReturnInfo());
-         uint32_t recompFlag = 0;
-         TR::Recompilation * recomp = self()->comp()->getRecompilationInfo();
 
-#ifdef J9_PROJECT_SPECIFIC
-         if (recomp !=NULL && recomp->couldBeCompiledAgain())
-            {
-            recompFlag = (recomp->useSampling())?METHOD_SAMPLING_RECOMPILATION:METHOD_COUNTING_RECOMPILATION;
-            }
-#endif
-         magicWord |= recompFlag;
-         _returnTypeInfoInstruction->setSourceImmediate(magicWord);
-         *(uint32_t*)(_returnTypeInfoInstruction->getBinaryEncoding()) = magicWord;
+         uint32_t linkageInfoWord = self()->initializeLinkageInfo(_returnTypeInfoInstruction->getBinaryEncoding());
+         _returnTypeInfoInstruction->setSourceImmediate(linkageInfoWord);
          }
 
       self()->addToAtlas(cursorInstruction);
