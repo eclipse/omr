@@ -1233,7 +1233,7 @@ uint8_t* TR::X86ImmSymInstruction::generateOperand(uint8_t* cursor)
             uint8_t *start = cg()->getCodeStart();
             if (comp->target().is64Bit())
                {
-               start += TR_LinkageInfo::get(start)->getReservedWord();
+               start += cg()->getJitEntryOffset();
                TR_ASSERT_FATAL(comp->target().cpu.isTargetWithinRIPRange((intptrj_t)start, nextInstructionAddress),
                                "Method start must be within RIP range");
                cg()->fe()->reserveTrampolineIfNecessary(comp, getSymbolReference(), true);
