@@ -1217,6 +1217,14 @@ class OMR_EXTENSIBLE CodeGenerator
     */
    uint32_t initializeLinkageInfo(void *linkageInfo) { return 0; }
 
+   /**
+    * \brief getJitEntryOffset
+    *
+    * Because there is no interpreter entry point in OMR, the JIT Entry point is the same as the Code Start.
+    * Therefore, return 0 for the JIT Entry Offset.
+    */
+   uint32_t getJitEntryOffset() { return 0; }
+
    int32_t internalControlFlowNestingDepth() {return _internalControlFlowNestingDepth;}
    int32_t internalControlFlowSafeNestingDepth() { return _internalControlFlowSafeNestingDepth; }
    void incInternalControlFlowNestingDepth() {_internalControlFlowNestingDepth++;}
