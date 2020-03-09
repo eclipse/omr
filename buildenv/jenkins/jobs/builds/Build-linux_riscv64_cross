@@ -40,6 +40,7 @@ pipeline {
                                     -DOMR_OMRSIG=OFF \
                                     -DOMR_GC=OFF \
                                     -DOMR_FVTEST=OFF \
+                                    -DOMR_GC_FULL_POINTERS=ON \
                                     .."""
 
 
