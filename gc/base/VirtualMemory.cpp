@@ -163,11 +163,14 @@ MM_VirtualMemory::reserveMemory(J9PortVmemParams* params)
 
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
 void*
-MM_VirtualMemory::doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
+MM_VirtualMemory::doubleMapArraylet(MM_EnvironmentBase *env, uintptr_t* arrayletLeaves, UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
 {
 	OMRPORT_ACCESS_FROM_OMRVM(_extensions->getOmrVM());
 	struct J9PortVmemIdentifier *oldIdentifier = &_identifier;
 	uintptr_t mode = OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE | OMRPORT_VMEM_MEMORY_MODE_COMMIT;
+#if defined(WINDOWS) || defined(WIN32)
+	mode |= OMRPORT_VMEM_MEMORY_MODE_CONTIGUOUS_MEM;
+#endif /* defined(WINDOWS) || defined(WIN32) */
 
 	return omrvmem_get_contiguous_region_memory(arrayletLeaves, arrayletLeafCount, arrayletLeafSize, byteAmount, oldIdentifier, newIdentifier, mode, pageSize, omrmem_get_category(OMRMEM_CATEGORY_MM));
 }

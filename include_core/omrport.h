@@ -228,6 +228,9 @@
 #define OMRPORT_VMEM_MEMORY_MODE_COMMIT 0x00000008
 #define OMRPORT_VMEM_MEMORY_MODE_VIRTUAL 0x00000010
 #define OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN 0x000000200
+#if defined(WIN32) || defined(WINDOWS)
+#define OMRPORT_VMEM_MEMORY_MODE_CONTIGUOUS_MEM 0x000000400
+#endif /* defined(WIN32) || defined(WINDOWS) */
 #define OMRPORT_VMEM_ALLOCATE_TOP_DOWN 0x00000020
 #define OMRPORT_VMEM_ALLOCATE_PERSIST 0x00000040
 #define OMRPORT_VMEM_NO_AFFINITY 0x00000080
@@ -1060,7 +1063,11 @@ typedef struct J9PortVmemIdentifier {
 	uintptr_t pageFlags;
 	uintptr_t mode;
 	uintptr_t allocator;
+#if defined(LINUX)
 	int fd;
+#elif (defined(WINDOWS) || defined(WIN32))
+	void *fd;
+#endif /* (defined(WINDOWS) || defined(WIN32)) */
 	OMRMemCategory *category;
 } J9PortVmemIdentifier;
 
@@ -1855,7 +1862,7 @@ typedef struct OMRPortLibrary {
 	/** see @ref omrvmem.c::omrvmem_reserve_memory_ex "omrvmem_reserve_memory_ex"*/
 	void *(*vmem_reserve_memory_ex)(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier, struct J9PortVmemParams *params) ;
 	/** see @ref omrvmem.c::omrvmem_get_contiguous_region_memory "omrvmem_get_contiguous_region_memory"*/
-	void *(*vmem_get_contiguous_region_memory)(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category);
+	void *(*vmem_get_contiguous_region_memory)(struct OMRPortLibrary *portLibrary, uintptr_t* addresses, uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category);
 	/** see @ref omrvmem.c::omrvmem_get_page_size "omrvmem_get_page_size"*/
 	uintptr_t (*vmem_get_page_size)(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier) ;
 	/** see @ref omrvmem.c::omrvmem_get_page_flags "omrvmem_get_page_flags"*/

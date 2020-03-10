@@ -185,7 +185,7 @@ MM_HeapSplit::getPageFlags()
 
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
 void*
-MM_HeapSplit::doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
+MM_HeapSplit::doubleMapArraylet(MM_EnvironmentBase *env, uintptr_t* arrayletLeaves, UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
 {
 	/* Unreachable */
 	return NULL;

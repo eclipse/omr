@@ -191,7 +191,7 @@ public:
  	 * @param category
   	 */
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
-	void *doubleMapArraylet(MM_MemoryHandle* handle, MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize);
+	void *doubleMapArraylet(MM_MemoryHandle* handle, MM_EnvironmentBase *env, uintptr_t* arrayletLeaves, UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize);
 #endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 
 	/**
