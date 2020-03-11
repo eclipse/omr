@@ -638,7 +638,7 @@ verifyContiguousMem(struct OMRPortLibrary *portLibrary, const char *testName, si
 
 	/* Verify if arraylet leaves and contiguous block of memory contain expected data */
 	for(i = 0; i < ARRAYLET_COUNT; i++) {
-		char *address = (char*)addresses[i];
+		char *address = (char*)addresses[i+1];
 		char *arrayletData = contiguousMap + (i * arrayletSize);
 		size_t j = 0;
 		for(; j < arrayletSize; j++) {
@@ -669,7 +669,7 @@ verifyContiguousMem(struct OMRPortLibrary *portLibrary, const char *testName, si
 
 	/* Verify if addresses were modified with the above changes */
 	for(i = 0; i < ARRAYLET_COUNT; i++) {
-		char *address = (char*)addresses[i];
+		char *address = (char*)addresses[i+1];
 		char *arrayletData = contiguousMap + (i * arrayletSize);
 
 		/* Verify first 32 chars are * (asterisks) */
@@ -723,7 +723,7 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 	size_t arrayletLeafSize = SIXTEEN_KB; // 16KB
 	char vals[ARRAYLET_COUNT] = {'3', '5', '6', '8', '9', '0', '1', '2'};
 	size_t totalArrayletSize = 0;
-	void* arrayletLeaveAddrs[ARRAYLET_COUNT];
+	void* arrayletLeaveAddrs[ARRAYLET_COUNT + 1];
 
 	reportTestEntry(OMRPORTLIB, testName);
 
@@ -816,15 +816,11 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 
 			size_t i = 0;
 			for(; i < ARRAYLET_COUNT; i++) {
-				arrayletLeaveAddrs[i] = memPtr + arrayLetOffsets[i];
+				arrayletLeaveAddrs[i+1] = memPtr + arrayLetOffsets[i];
 				totalArrayletSize += arrayletLeafSize;
 			}
+			arrayletLeaveAddrs[0] = (void *)ARRAYLET_COUNT;
 
-			for(i = 0; i < ARRAYLET_COUNT; i++) {
-				memset(arrayletLeaveAddrs[i], vals[i%ARRAYLET_COUNT], arrayletLeafSize);
-			}
-			/* Arraylet initialization complete */
-			
 			OMRMemCategory *category = omrmem_get_category(OMRMEM_CATEGORY_PORT_LIBRARY);
 
 			/* Now create contiguous block of memory and then double map arraylet leaves. */
@@ -833,6 +829,13 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 										OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE | OMRPORT_VMEM_MEMORY_MODE_COMMIT | OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN,
 										pageSize,
 										category);
+
+			/* Leaves must be populated after double mapping */
+			for(i = 0; i < ARRAYLET_COUNT; i++) {
+				memset(arrayletLeaveAddrs[i+1], vals[i%ARRAYLET_COUNT], arrayletLeafSize);
+			}
+			/* Arraylet initialization complete */
+
 			if(contiguous == NULL) {
 				portTestEnv->log(LEVEL_ERROR, "Double mapping failed\n");
 				lastErrorMessage = (char *)omrerror_last_error_message();
