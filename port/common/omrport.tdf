@@ -681,7 +681,7 @@ TraceEvent=Trc_PRT_vmem_omrvmem_reserve_memory_Exit2 Group=mem Overhead=1 Level=
 TraceExit=Trc_PRT_vmem_omrvmem_reserve_memory_Exit Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_reserve_memory returns %p"
 
 TraceEntry=Trc_PRT_vmem_omrvmem_free_memory_Entry Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory userAddress=%p byteAmount=%u"
-TraceEvent=Trc_PRT_vmem_omrvmem_free_memory_UpdateLeaves Overhead=1 Level=1 Group=arraylet NoEnv Template="About to close file descriptor and free leaves. fd: %d, leafAddresses: %p, leafCount: %zu, address: %p, byteAmount: %zu"
+TraceEvent=Trc_PRT_vmem_omrvmem_free_memory_UpdateRegions Overhead=1 Level=1 Group=arraylet NoEnv Template="About to close file descriptor and free leaves. fd: %d, leafAddresses: %p, leafCount: %zu, address: %p, byteAmount: %zu"
 TraceExit=Trc_PRT_vmem_omrvmem_free_memory_Exit Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_free_memory returnCode=%d"
 
 TraceEntry=Trc_PRT_vmem_omrvmem_commit_memory_Entry Group=mem Overhead=1 Level=5 NoEnv Template="omrvmem_commit_memory address=%p byteAmount=%u"
@@ -1127,8 +1127,8 @@ TraceEvent=Trc_PRT_double_map_getContiguousMem_Failure3 Overhead=1 Level=1 Group
 TraceEvent=Trc_PRT_double_map_getContiguousMem_Failure4 Overhead=1 Level=1 Group=arraylet NoEnv Template="Double map failed. Clean up phase."
 TraceExit=Trc_PRT_double_map_getContiguousMem_Exit Overhead=1 Level=3 Group=arraylet NoEnv Template="omrvmem_get_contiguous_region_memory. result=%d"
 
-TraceEntry=Trc_PRT_double_map_UpdateLeaves_Entry Overhead=1 Level=3 Group=arraylet NoEnv Template="updateDoubleMappedLeaves. regionSize: %zu, byteAmount=%zu"
-TraceEvent=Trc_PRT_double_map_updateLeaves_mmap_Failure Overhead=1 Level=2 Group=arraylet NoEnv Template="Failed to mmap leaves back to private"
-TraceEvent=Trc_PRT_double_map_updateLeaves_mmap_Failure2 Overhead=1 Level=2 Group=arraylet NoEnv Template="Address returned by mmap dpes not match expected. Requested: %p, returned: %p"
-TraceEvent=Trc_PRT_double_map_updateLeaves_unexpectedNullLeaves Overhead=1 Level=2 Group=arraylet NoEnv Template="Unexpected null leaves found when trying to update them"
-TraceExit=Trc_PRT_double_map_UpdateLeaves_Exit Overhead=1 Level=3 Group=arraylet NoEnv Template="updateDoubleMappedLeaves. result=%d"
+TraceEntry=Trc_PRT_double_map_UpdateRegions_Entry Overhead=1 Level=3 Group=arraylet NoEnv Template="updateDoubleMappedRegions. regionSize: %zu, byteAmount=%zu"
+TraceEvent=Trc_PRT_double_map_UpdateRegions_mmap_Failure Overhead=1 Level=2 Group=arraylet NoEnv Template="Failed to mmap regions back to private"
+TraceEvent=Trc_PRT_double_map_UpdateRegions_mmap_Failure2 Overhead=1 Level=2 Group=arraylet NoEnv Template="Address returned by mmap did not match expected. Requested: %p, returned: %p"
+TraceEvent=Trc_PRT_double_map_UpdateRegions_unexpectedNullLeaves Overhead=1 Level=2 Group=arraylet NoEnv Template="Unexpected null regions found when trying to update them"
+TraceExit=Trc_PRT_double_map_UpdateRegions_Exit Overhead=1 Level=3 Group=arraylet NoEnv Template="updateDoubleMappedRegions. result=%d"

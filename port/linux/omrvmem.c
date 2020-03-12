@@ -72,7 +72,7 @@
 
 #define INVALID_KEY -1
 #define FILE_NAME_SIZE 64
-#define MINCORE_VEC_SIZE 1024 + 2
+#define MINCORE_VEC_SIZE 1026
 #define LEAST_SIGNIFICANT_BIT 0x1
 #define BUFFER_FIVE_PERCENT 0.05
 
@@ -142,7 +142,8 @@ static void *default_pageSize_reserve_memory(struct OMRPortLibrary *portLibrary,
 static void port_numa_interleave_memory(struct OMRPortLibrary *portLibrary, void *start, uintptr_t size);
 #endif /* OMR_PORT_NUMA_SUPPORT */
 static void update_vmemIdentifier(J9PortVmemIdentifier *identifier, void *address, void *handle, uintptr_t byteAmount, uintptr_t mode, uintptr_t pageSize, uintptr_t pageFlags, uintptr_t allocator, OMRMemCategory *category, int fd);
-static int32_t updateDoubleMappedLeaves(struct OMRPortLibrary *portLibrary, void **leafAddresses, uintptr_t byteAmount, uintptr_t leafCount);
+static int32_t updateDoubleMappedDiscontiguousRegions(struct OMRPortLibrary *portLibrary, void **regionAddresses, uintptr_t byteAmount, uintptr_t regionCount);
+static BOOLEAN checkContiguousMemory(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, uintptr_t pageSize, void *contiguousMap);
 static uintptr_t get_hugepages_info(struct OMRPortLibrary *portLibrary, vmem_hugepage_info_t *page_info);
 static uintptr_t get_transparent_hugepage_info(struct OMRPortLibrary *portLibrary);
 static int get_protectionBits(uintptr_t mode);
@@ -744,12 +745,12 @@ omrvmem_free_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr_t
 	}
 
 	if((mode & OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN) && (-1 != fd) && (-1 != ret)) {
-		void **leafAddresses = (void **)handle;
-		uintptr_t leafCount = (uintptr_t)leafAddresses[0];
-		Trc_PRT_vmem_omrvmem_free_memory_UpdateLeaves(fd, (void *)leafAddresses, leafCount, address, byteAmount);
+		void **regionAddresses = (void **)handle;
+		uintptr_t regionCount = (uintptr_t)regionAddresses[0];
+		Trc_PRT_vmem_omrvmem_free_memory_UpdateRegions(fd, (void *)regionAddresses, regionCount, address, byteAmount);
 		close(fd);
-		if (NULL != leafAddresses && leafCount != 0) {
-			ret = updateDoubleMappedLeaves(portLibrary, leafAddresses, byteAmount, leafCount);
+		if (NULL != regionAddresses && regionCount != 0) {
+			ret = updateDoubleMappedDiscontiguousRegions(portLibrary, regionAddresses, byteAmount, regionCount);
 		}
 	}
 	omrmem_categories_decrement_counters(category, byteAmount);
@@ -771,56 +772,56 @@ omrvmem_free_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr_t
  * @return true if update is successful and false otherwise
  */
 int32_t
-updateDoubleMappedLeaves(struct OMRPortLibrary *portLibrary, void **leafAddresses, uintptr_t byteAmount, uintptr_t leafCount)
+updateDoubleMappedDiscontiguousRegions(struct OMRPortLibrary *portLibrary, void **regionAddresses, uintptr_t byteAmount, uintptr_t regionCount)
 {
 	/* Since double mapping size is always a multiple of region size then we can easily extract
 	 * the size of each region. 
 	 */
-	uintptr_t arrayletLeafSize = byteAmount / leafCount;
-	Trc_PRT_double_map_UpdateLeaves_Entry(arrayletLeafSize, byteAmount);
+	uintptr_t regionSize = byteAmount / regionCount;
+	Trc_PRT_double_map_UpdateRegions_Entry(regionSize, byteAmount);
 	uintptr_t bytesRemaining = byteAmount;
 	int protectionFlags = PROT_READ | PROT_WRITE;
 	int flags = MAP_PRIVATE | MAP_FIXED | MAP_ANON;
 	int32_t ret = -1;
 
-	if (NULL != leafAddresses) {
+	if (NULL != regionAddresses) {
 		size_t i;
-		for (i = 1; i <= leafCount; i++) {
+		for (i = 1; i <= regionCount; i++) {
 			void *address = mmap(
-					leafAddresses[i],
-					arrayletLeafSize,
+					regionAddresses[i],
+					regionSize,
 					protectionFlags,
 					flags,
 					-1,
 					0);
 
 			if (address == MAP_FAILED) {
-				Trc_PRT_double_map_updateLeaves_mmap_Failure();
-				portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_VMEM_OPFAILED, "Failed to set leaf back to private.");
+				Trc_PRT_double_map_UpdateRegions_mmap_Failure();
+				portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_VMEM_OPFAILED, "Failed to set region back to private.");
 #if defined(OMRVMEM_DEBUG)
 				printf("***************************** errno: %d\n", errno);
-				printf("Failed to mmap address[%zu] at updateDoubleMappedLeaves()\n", i);
+				printf("Failed to mmap address[%zu] at updateDoubleMappedDiscontiguousRegions()\n", i);
 				fflush(stdout);
 #endif
 				break;
-			} else if (leafAddresses[i] != address) {
-				Trc_PRT_double_map_updateLeaves_mmap_Failure2(leafAddresses[i], address);
-				portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_VMEM_OPFAILED, "Failed to set leaf back to private. Address returned was different than provided");
+			} else if (regionAddresses[i] != address) {
+				Trc_PRT_double_map_UpdateRegions_mmap_Failure2(regionAddresses[i], address);
+				portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_VMEM_OPFAILED, "Failed to set region back to private. Address returned was different than provided");
 #if defined(OMRVMEM_DEBUG)
-				printf("Map failed to provide the correct address. leafAddresses[%zu] = %p != %p\n", i, leafAddresses[i], address);
+				printf("Map failed to provide the correct address. regionAddresses[%zu] = %p != %p\n", i, regionAddresses[i], address);
 				fflush(stdout);
 #endif
 				break;
 			}
-			bytesRemaining -= arrayletLeafSize;
+			bytesRemaining -= regionSize;
 		}
 		Assert_PRT_true(0 == bytesRemaining);
 		ret = 0;
 	} else {
-		Trc_PRT_double_map_updateLeaves_unexpectedNullLeaves();
+		Trc_PRT_double_map_UpdateRegions_unexpectedNullLeaves();
 	}
 
-	Trc_PRT_double_map_UpdateLeaves_Exit(ret);
+	Trc_PRT_double_map_UpdateRegions_Exit(ret);
 	return ret;
 }
 
@@ -1243,10 +1244,8 @@ omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void *a
 	byteAmount = addressesCount * addressSize;
 	BOOLEAN successfulContiguousMap = FALSE;
 	BOOLEAN shouldUnmapAddr = FALSE;
-	BOOLEAN shouldFreeMincoreVec = FALSE;
 	BOOLEAN shouldUpdateLeaves = FALSE;
 	J9FileStatFilesystem buf;
-	uintptr_t byteAmountPaged = (byteAmount / pageSize) + 2;
 
 	/* In Linux systems the default limit of shared memory is half of physical memory; therefore, we
 	 * check early for available shared memory. If there's not enough we don't even try double mapping. 
@@ -1261,13 +1260,6 @@ omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void *a
 	} else {
 		Trc_PRT_double_map_getContiguousMem_statFailure(ret, 0);
 		goto exit;
-	}
-
-	unsigned char stackVec[MINCORE_VEC_SIZE];
-	unsigned char *vec = stackVec;
-	if (byteAmountPaged > MINCORE_VEC_SIZE) {
-		vec = (unsigned char *)malloc(byteAmountPaged);
-		shouldFreeMincoreVec = TRUE;
 	}
 
 	char filename[FILE_NAME_SIZE + 1];
@@ -1315,32 +1307,20 @@ omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void *a
 		 * which case mmap() would still succeed; however, there wouldn't be avaible memory in order to double
 		 * map. System shared memory limit default equals to half of physical memory. There's also no need to,
 		 * commit memory in this case because protection flags and MAP_POPULATE already commits memory. */
-		mincore(contiguousMap, byteAmount, vec);
-		size_t i;
-		for (i = 0; i < byteAmountPaged; i++) {
-			/* For double map to be successful, index must be equal to length(vec) - 2 */
-			if (LEAST_SIGNIFICANT_BIT != (LEAST_SIGNIFICANT_BIT & vec[i])) {
-				if (i != byteAmountPaged - 2) {
-					Trc_PRT_double_map_getContiguousMem_CheckFailure((byteAmountPaged - 2), i);
-					successfulContiguousMap = FALSE;
-					portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_VMEM_OPFAILED, "Failed to verify shared memory for double mapping");
-				}
-				break;
-			}
-		}
+		successfulContiguousMap = checkContiguousMemory(portLibrary, byteAmount, pageSize, contiguousMap);
 	}
 
 	/* Perform double mapping  */
 	if(successfulContiguousMap) {
 		flags = MAP_SHARED | MAP_FIXED; // Must be shared, SIGSEGV otherwise
 #if defined(OMRVMEM_DEBUG)
-		printf("Found %zu arraylet leaves.\n", addressesCount);
+		printf("Found %zu regions.\n", addressesCount);
 		int j = 0;
 		for(j = 0; j < addressesCount; j++) {
 			printf("addresses[%d] = %p\n", j, addresses[j+1]);
 		}
 		printf("Contiguous address is: %p, fd: %d\n", contiguousMap, fd);
-		printf("About to double map arraylets. File handle got from old identifier: %d\n", fd);
+		printf("About to double map regions. File handle got from old identifier: %d\n", fd);
 		fflush(stdout);
 #endif
 		size_t i;
@@ -1387,7 +1367,7 @@ exit:
 			munmap(contiguousMap, byteAmount);
 			/* If we fail in the middle of double mapping, we must make sure regions are not shared */
 			if (shouldUpdateLeaves) {
-				updateDoubleMappedLeaves(portLibrary, addresses, byteAmount, addressesCount);
+				updateDoubleMappedDiscontiguousRegions(portLibrary, addresses, byteAmount, addressesCount);
 			}
 		}
 		if (-1 != fd) {
@@ -1396,12 +1376,61 @@ exit:
 		contiguousMap = NULL;
 		update_vmemIdentifier(newIdentifier, NULL, NULL, 0, 0, 0, 0, 0, NULL, -1);
 	}
-	if (shouldFreeMincoreVec) {
-		free((void *)vec);
-	}
 
 	Trc_PRT_double_map_getContiguousMem_Exit(contiguousMap);
 	return contiguousMap;
+}
+
+/**
+ * @internal
+ * Check if contiguous region was populated accordinly by byteAmount bytes
+ *
+ * @param OMRPortLibrary*	portLibrary	[in] The portLibrary object
+ * @param uintptr_t		byteAmount	[in] Total size to allocate for contiguous block of memory
+ * @param uintptr_t		pageSize	[in] system page size
+ * @param void*			contiguousMap	[in] Contiguous address of memory to be checked
+ *
+ * @return true if memory check succeeded, false otherwise
+ */
+BOOLEAN
+checkContiguousMemory(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, uintptr_t pageSize, void *contiguousMap)
+{
+	size_t j = 0;
+	size_t i = 0;
+	size_t bytesRemaining = byteAmount;
+	uintptr_t loopLimit = MINCORE_VEC_SIZE - 2;
+	uintptr_t blockBytes = (MINCORE_VEC_SIZE - 2) * pageSize;
+	unsigned char vec[MINCORE_VEC_SIZE];
+	BOOLEAN successfulContiguousCheck = TRUE;
+	while (0 < bytesRemaining) {
+		void *currAddress = (void *)(contiguousMap + (j * blockBytes));
+		uintptr_t mincoreBytes = (bytesRemaining < (size_t)blockBytes) ? bytesRemaining : blockBytes;
+		size_t minCoreIndex = mincoreBytes / pageSize;
+		/* We must zero out the elements that was previously set by mincore. Just zeroing the boundaries of mincore is enough */
+		if (0 != minCoreIndex) {
+			vec[minCoreIndex - 1] = 0;
+		}
+		vec[minCoreIndex] = 0;
+		mincore(currAddress, mincoreBytes, vec);
+		for (i = 0; i < loopLimit; i++) {
+			/* For double map to be successful, index must be equal to (byteAmount / pageSize) length(vec) - 2 */
+			if (LEAST_SIGNIFICANT_BIT != (LEAST_SIGNIFICANT_BIT & vec[i])) {
+				/* The index after the last byte of data must match the current index */
+				if (bytesRemaining > blockBytes || i != minCoreIndex) {
+					Trc_PRT_double_map_getContiguousMem_CheckFailure((byteAmount / pageSize), i);
+					successfulContiguousCheck = FALSE;
+					portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_VMEM_OPFAILED, "Failed to verify shared memory for double mapping");
+				}
+				/* Forces to break out of outer loop */
+				bytesRemaining = blockBytes;
+				break;
+			}
+		}
+		j++;
+		bytesRemaining -= blockBytes;
+	}
+
+	return successfulContiguousCheck;
 }
 
 /**
