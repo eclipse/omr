@@ -3061,7 +3061,11 @@ OMR::Node::getMonitorClass(TR_ResolvedMethod * vmMethod)
       return c->getClassClassPointer();
       }
 
+#ifdef OLD_MONITOR_API
    if (self()->hasMonitorClassInNode())
+#else
+   if (self()->getMonitorClassInNode() != NULL)
+#endif
        return self()->getMonitorClassInNode();
 
    if (object->getOpCode().hasSymbolReference())
@@ -3083,28 +3087,77 @@ OMR::Node::getMonitorClass(TR_ResolvedMethod * vmMethod)
    return 0;
    }
 
-TR_OpaqueClassBlock *
-OMR::Node::getMonitorClassInNode()
+void *
+OMR::Node::getMonitorInfoInNode()
    {
-   TR_ASSERT(self()->hasMonitorClassInNode(),"Node %p does not have monitor class in Node");
-   TR::Node  * classz = (self()->getOpCodeValue() != TR::tstart) ? self()->getChild(1) : self()->getChild(4);
-   return (TR_OpaqueClassBlock *)classz;
+   TR_ASSERT(self()->hasMonitorInfoInNode(),"Node %p does not have monitor info in Node");
+   TR::Node  * info = (self()->getOpCodeValue() != TR::tstart) ? self()->getChild(1) : self()->getChild(4);
+   return (void *) info;
    }
 
 void
-OMR::Node::setMonitorClassInNode(TR_OpaqueClassBlock * classz)
+OMR::Node::setMonitorInfoInNode(void * info)
    {
+   TR_ASSERT(self()->getOpCodeValue() == TR::tstart || self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit,
+            "Opcode must be monent, monexit or tstart to call setMonitorInfoInNode");
    if (self()->getOpCodeValue() == TR::tstart)
-       self()->setChild(4,(TR::Node *)classz);
+      self()->setChild(4,(TR::Node *) info);
    else
-       self()->setChild(1,(TR::Node *)classz);
-   if (classz != NULL)
-      self()->setHasMonitorClassInNode(true);
+      self()->setChild(1,(TR::Node *) info);
+   if (info != NULL)
+      self()->setHasMonitorInfoInNode(true);
    else
-      self()->setHasMonitorClassInNode(false);
+      self()->setHasMonitorInfoInNode(false);
    }
 
+TR_OpaqueClassBlock *
+OMR::Node::getMonitorClassInNode()
+   {
+#ifdef OLD_MONITOR_API
+   TR_ASSERT(self()->hasMonitorClassInNode(),"Node %p does not have monitor class in Node");
+   TR::Node  * classz = (self()->getOpCodeValue() != TR::tstart) ? self()->getChild(1) : self()->getChild(4);
+   return (TR_OpaqueClassBlock *)classz;
+#else
+   TR_ASSERT(self()->hasMonitorInfoInNode(),"Node %p does not have monitor info in Node");
+   TR_OpaqueClassBlock * info = (TR_OpaqueClassBlock *) self()->getMonitorInfoInNode();
+   return info == (TR_OpaqueClassBlock *) IDENTITY_CLASS_PLACEHOLDER ? NULL: info;
+#endif
+   }
 
+TR_YesNoMaybe
+OMR::Node::isMonitorIdentityType()
+   {
+   if (!self()->hasMonitorInfoInNode())
+      return TR_maybe;
+   if (self()->getMonitorInfoInNode() == (void *) IDENTITY_CLASS_PLACEHOLDER)
+      return TR_yes;
+   return TR::Compiler->cls.isValueTypeClass(self()->getMonitorClassInNode()) ? TR_no: TR_yes;
+   }
+
+void
+OMR::Node::setMonitorIdentityType()
+   {
+   TR_ASSERT(self()->getOpCodeValue() == TR::tstart || self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit,
+            "Opcode must be monent, monexit or tstart to call setMonitorIdentityType");
+   if (self()->hasMonitorInfoInNode())
+      return;
+   self()->setMonitorInfoInNode((void *) IDENTITY_CLASS_PLACEHOLDER);
+   self()->setHasMonitorInfoInNode(true);
+   }
+
+void
+OMR::Node::setHasMonitorInfoInNode(bool v)
+   {
+   TR_ASSERT(self()->getOpCodeValue() == TR::tstart || self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit,
+            "Opcode must be monent, monexit or tstart to call setHasMonitorInfoInNode");
+   _flags.set(monitorInfoInNode,v);
+   }
+
+bool
+OMR::Node::hasMonitorInfoInNode()
+   {
+   return _flags.testAny(monitorInfoInNode);
+   }
 
 /**
  * Given that this node is a NULLCHK or ResolveAndNULLCHK, find the reference
@@ -4490,8 +4543,17 @@ OMR::Node::setEvaluationPriority(int32_t p)
 /**
  * OptAttributes functions end
  */
-
-
+#ifdef OLD_MONITOR_API
+void *
+OMR::Node::setMonitorInfo(void *info)
+   {
+   TR_ASSERT(self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit || self()->getOpCodeValue() == TR::tstart, "assertion failure");
+   if(self()->getOpCodeValue() != TR::tstart)
+      return _unionBase._unionedWithChildren._monitorInfo.setInfo(info, self());
+   // in the case of a tstart, the extra node is child 4.
+   return _unionBase._extension.getExtensionPtr()->setElem<void *>(4, info);
+   }
+#endif
 
 /**
  * UnionBase functions
@@ -4976,26 +5038,6 @@ OMR::Node::setCaseConstant(CASECONST_TYPE c)
    }
 
 
-
-void *
-OMR::Node::getMonitorInfo()
-   {
-   TR_ASSERT(self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit || self()->getOpCodeValue() == TR::tstart, "assertion failure");
-   if(self()->getOpCodeValue() != TR::tstart)
-      return _unionBase._unionedWithChildren._monitorInfo.getInfo();
-   // in the case of a tstart, the extra node is child 4.
-   return _unionBase._extension.getExtensionPtr()->getElem<void *>(4);
-   }
-
-void *
-OMR::Node::setMonitorInfo(void *info)
-   {
-   TR_ASSERT(self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit || self()->getOpCodeValue() == TR::tstart, "assertion failure");
-   if(self()->getOpCodeValue() != TR::tstart)
-      return _unionBase._unionedWithChildren._monitorInfo.setInfo(info, self());
-   // in the case of a tstart, the extra node is child 4.
-   return _unionBase._extension.getExtensionPtr()->setElem<void *>(4, info);
-   }
 
 /**
  * UnionBase functions end
@@ -8048,8 +8090,7 @@ OMR::Node::printIsPrimitiveLockedRegion()
    return self()->chkPrimitiveLockedRegion() ? "primitiveLockedRegion " : "";
    }
 
-
-
+#ifdef OLD_MONITOR_API
 bool
 OMR::Node::hasMonitorClassInNode()
    {
@@ -8062,8 +8103,7 @@ OMR::Node::setHasMonitorClassInNode(bool v)
    TR_ASSERT(self()->getOpCodeValue() == TR::tstart || self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit,"Opcode must be monent, monexit or tstart");
    _flags.set(monitorClassInNode,v);
    }
-
-
+#endif
 
 bool
 OMR::Node::markedAllocationCanBeRemoved()

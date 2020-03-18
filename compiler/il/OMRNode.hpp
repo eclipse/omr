@@ -105,6 +105,11 @@ typedef uint16_t   vcount_t;
 #define TR_MAX_CHARS_FOR_HASH 32
 #define TR_DECIMAL_HASH 7
 
+/// to be removed when the downstream project is properly updated
+#define OLD_MONITOR_API 1
+/// used to indicate the monitor object is identity type
+#define IDENTITY_CLASS_PLACEHOLDER -1
+
 typedef enum
    {
    NoPrefetch = 0,
@@ -640,10 +645,43 @@ public:
 
    TR_YesNoMaybe          hasBeenRun();
 
-   /// Given a monenter node, return the persistent class identifer that's being synchronized
+   /*
+    * The hidden child of a monitor related node is used to store the monitor object's type information.
+    * The type information can be the following two forms:
+    *
+    * 1. The persistent class identifier is stored if the type of a monitor object is a known class.
+    *    Notice java.lang.Object identifier is only stored if it's a fixed class
+    * 2. IDENTITY_CLASS_PLACEHOLDER is stored if the exact monitor type is unknown but is of
+    *    Identity class type
+    */
+   /// Given a monenter node, return the persistent class identifier that's being synchronized
    TR_OpaqueClassBlock *  getMonitorClass(TR_ResolvedMethod *);
+   /*
+    *  \return
+    *    NULL if the concrete class of the monitor object is unknown
+    */
    TR_OpaqueClassBlock *  getMonitorClassInNode();
-   void                   setMonitorClassInNode(TR_OpaqueClassBlock *);
+   /// set the persistent class identifier on the node
+   void                   setMonitorClassInNode(TR_OpaqueClassBlock * classz) { setMonitorInfoInNode(classz); }
+
+   /*
+    * \parm info
+    *    info can be either a persistent class identifier or IDENTITY_CLASS_PLACEHOLDER
+    */
+   void                   setMonitorInfoInNode(void * info);
+   void *                 getMonitorInfoInNode();
+
+   /*
+    * \brief
+    *    whether a monitor object is of identity type
+    *
+    * \return
+    *    TR_yes The monitor object is definitely identity type
+    *    TR_no The monitor object is definitely value type
+    *    TR_maybe It is unknown whether the monitor object is identity type or value type
+    */
+   TR_YesNoMaybe          isMonitorIdentityType();
+   void                   setMonitorIdentityType();
 
    // Given that this is a NULLCHK node, find the reference that is being checked.
    TR::Node *             getNullCheckReference();
@@ -1034,10 +1072,9 @@ public:
 
    CASECONST_TYPE          getCaseConstant();
    CASECONST_TYPE          setCaseConstant(CASECONST_TYPE c);
-
-   void *                  getMonitorInfo();
+#ifdef OLD_MONITOR_API
    void *                  setMonitorInfo(void *info);
-
+#endif
    TR::ILOpCodes           getOverflowCheckOperation();
    TR::ILOpCodes           setOverflowCheckOperation(TR::ILOpCodes op);
    /**
@@ -1575,9 +1612,12 @@ public:
    void setPrimitiveLockedRegion(bool v = true);
    bool chkPrimitiveLockedRegion();
    const char * printIsPrimitiveLockedRegion();
-
+#ifdef OLD_MONITOR_API
    bool hasMonitorClassInNode();
    void setHasMonitorClassInNode(bool v);
+#endif
+   void setHasMonitorInfoInNode(bool v = true);
+   bool hasMonitorInfoInNode();
 
    // Flags used by TR::newarray and TR::anewarray
    bool markedAllocationCanBeRemoved();
@@ -2135,7 +2175,10 @@ protected:
       readMonitor                           = 0x00004000,
       localObjectMonitor                    = 0x00008000,
       primitiveLockedRegion                 = 0x00000400,
+#ifdef OLD_MONITOR_API
       monitorClassInNode                    = 0x00010000,
+#endif
+      monitorInfoInNode                     = 0x00010000,
 
       // Flags only used for isNew() opcodes
       //

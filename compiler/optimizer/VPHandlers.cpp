@@ -254,7 +254,50 @@ static bool isBoolean(TR::VPConstraint *constraint)
    return false;
    }
 
+/*
+ * \brief
+ *    if a constraint is value type
+ *
+ * \return
+ *    TR_yes the constraint is value type
+ *    TR_no the constraint is identity type
+ *    TR_maybe the constraint could be either value type or identity type
+ */
+static TR_YesNoMaybe isValue(TR::VPConstraint *constraint)
+   {
+   if (constraint == NULL)
+      return TR_maybe;
 
+   if (constraint->isNullObject())
+      return TR_no;
+
+   if (constraint->isClassObject() == TR_yes)
+      return TR_no;
+
+   TR::VPClassType *maybeUnresolvedType = constraint->getClassType();
+   if (maybeUnresolvedType == NULL)
+      return TR_maybe;
+
+   TR::VPResolvedClass *type = maybeUnresolvedType->asResolvedClass();
+   if (type == NULL)
+      return TR_maybe;
+
+   TR::Compilation *comp = TR::comp();
+   TR_OpaqueClassBlock *clazz = type->getClass();
+   if (clazz == comp->getObjectClassPointer())
+      return type->isFixedClass() ? TR_no : TR_maybe;
+
+   //Instances of classes implementing an interface may be identity objects or inline objects.
+   if (TR::Compiler->cls.isInterfaceClass(comp, clazz))
+      return TR_maybe;
+
+   if (TR::Compiler->cls.isAbstractClass(comp, clazz))
+      return TR_maybe;
+
+   // No AOT validation is necessary here, since whether a class is a value
+   // type is determined by its ROM class.
+   return TR::Compiler->cls.isValueTypeClass(clazz)? TR_yes : TR_no;
+   }
 
 static int32_t arrayElementSize(const char *signature, int32_t len, TR::Node *node, OMR::ValuePropagation *vp)
    {
@@ -3391,6 +3434,44 @@ TR::Node *constrainReturn(OMR::ValuePropagation *vp, TR::Node *node)
    return node;
    }
 
+void setMonitorClassInNodeWithConstraint(OMR::ValuePropagation *vp, TR::VPConstraint *constraint, TR::Node *node)
+   {
+   if (constraint && constraint->getClass())
+      {
+      TR_OpaqueClassBlock *clazz = constraint->getClass();
+      if (constraint->isClassObject() == TR_yes)
+         clazz = vp->fe()->getClassClassPointer(clazz);
+
+      // only set the class info for java.lang.Object when the object is java.lang.Object but not its subclass
+      if (clazz && (TR::Compiler->cls.classDepthOf(clazz) == 0) &&
+          !constraint->isFixedClass())
+         clazz = NULL;
+#ifdef OLD_MONITOR_API
+      if (node->hasMonitorClassInNode() &&
+         clazz &&
+#else
+      if (node->getMonitorClassInNode() != NULL &&
+#endif
+          node->getMonitorClassInNode() != clazz)
+         {
+         TR_YesNoMaybe answer = vp->fe()->isInstanceOf(clazz, node->getMonitorClassInNode(), true, true);
+         if (answer != TR_yes)
+            clazz = node->getMonitorClassInNode();
+         }
+#ifdef OLD_MONITOR_API
+      if ((clazz || !node->hasMonitorClassInNode()) && (performTransformation(vp->comp(), "%sSetting type on monitor enter/exit node [%p] to [%p]\n", OPT_DETAILS, node, clazz)))
+         node->setMonitorClassInNode(clazz);
+      }
+#else
+      if ((clazz || node->getMonitorClassInNode() == NULL) && (performTransformation(vp->comp(), "%sSetting type on monitor enter/exit node [%p] to [%p]\n", OPT_DETAILS, node, clazz)))
+         node->setMonitorClassInNode(clazz);
+      }
+
+   if (isValue(constraint) == TR_no)
+      node->setMonitorIdentityType();
+#endif
+   }
+
 TR::Node *constrainMonent(OMR::ValuePropagation *vp, TR::Node *node)
    {
    // After the monitor enter the child must be non-null
@@ -3403,28 +3484,7 @@ TR::Node *constrainMonent(OMR::ValuePropagation *vp, TR::Node *node)
    //
    bool isGlobal;
    TR::VPConstraint *constraint = vp->getConstraint(node->getFirstChild(), isGlobal);
-   if (constraint && constraint->getClass())
-      {
-      TR_OpaqueClassBlock *clazz = constraint->getClass();
-      if (constraint->isClassObject() == TR_yes)
-         clazz = vp->fe()->getClassClassPointer(clazz);
-
-      if (clazz && (TR::Compiler->cls.classDepthOf(clazz) == 0) &&
-          !constraint->isFixedClass())
-         clazz = NULL;
-
-      if (node->hasMonitorClassInNode() &&
-           clazz &&
-          (node->getMonitorClassInNode() != clazz))
-         {
-         TR_YesNoMaybe answer = vp->fe()->isInstanceOf(clazz, node->getMonitorClassInNode(), true, true);
-         if (answer != TR_yes)
-            clazz = node->getMonitorClassInNode();
-         }
-
-      if ((clazz || !node->hasMonitorClassInNode()) && (performTransformation(vp->comp(), "%sSetting type on MONENTER node [%p] to [%p]\n", OPT_DETAILS, node, clazz)))
-         node->setMonitorClassInNode(clazz);
-      }
+   setMonitorClassInNodeWithConstraint(vp, constraint, node);
    return node;
    }
 
@@ -3445,30 +3505,7 @@ TR::Node *constrainMonexit(OMR::ValuePropagation *vp, TR::Node *node)
    //
    bool isGlobal;
    TR::VPConstraint *constraint = vp->getConstraint(node->getFirstChild(), isGlobal);
-   if (constraint && constraint->getClass())
-      {
-      TR_OpaqueClassBlock *clazz = constraint->getClass();
-      if (constraint->isClassObject() == TR_yes)
-         clazz = vp->fe()->getClassClassPointer(clazz);
-
-      if (clazz && (TR::Compiler->cls.classDepthOf(clazz) == 0) &&
-          !constraint->isFixedClass())
-         clazz = NULL;
-
-      if ( node->hasMonitorClassInNode() &&
-           clazz &&
-          (node->getMonitorClassInNode() != clazz))
-         {
-         TR_YesNoMaybe answer = vp->fe()->isInstanceOf(clazz, node->getMonitorClassInNode(), true, true);
-         if (answer != TR_yes)
-            clazz = node->getMonitorClassInNode();
-         }
-
-      if ((clazz || !node->hasMonitorClassInNode()) &&
-          performTransformation(vp->comp(), "%sSetting type on MONEXIT  node [%p] to [%p]\n", OPT_DETAILS, node, clazz))
-         node->setMonitorClassInNode(clazz);
-      }
-
+   setMonitorClassInNodeWithConstraint(vp, constraint, node);
 
    // check for global writes and sync
    //
