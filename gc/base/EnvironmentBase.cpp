@@ -40,7 +40,6 @@
 #include "ModronAssertions.h"
 #include "OMRVMInterface.hpp"
 #include "ObjectAllocationInterface.hpp"
-#include "Scavenger.hpp"
 
 #if defined(OMR_GC_SEGREGATED_HEAP)
 #include "HeapRegionQueue.hpp"
@@ -459,7 +458,8 @@ MM_EnvironmentBase::collectorNotifyAcquireExclusiveVMAccess()
 		flushGCCaches(false);
 
 		/* Must specifically call it against Scavenger, even though the Exclusive access might have been requested to perform Concurrent Global. */
-		getExtensions()->scavenger->externalNotifyToYield(this);
+		/* Temporarily disable until ZOS linkage resolved */
+		/* getExtensions()->scavenger->externalNotifyToYield(this); */
 	}
 }
 
