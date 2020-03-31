@@ -27,8 +27,12 @@
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/RealRegister.hpp"
 #include "codegen/RegisterDependency.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterPair.hpp"
 #include "codegen/TreeEvaluator.hpp"
+#include "env/CompilerEnv.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 
@@ -504,69 +508,172 @@ OMR::ARM64::TreeEvaluator::acmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg
 	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
 	}
 
-TR::Register *
-OMR::ARM64::TreeEvaluator::lookupEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+static uint32_t sumOf2ConsecutivePowersOf2(uint32_t numberOfCases)
    {
-   int32_t numChildren = node->getNumChildren();
-   TR::Node *selectorNode = node->getFirstChild();
-   TR::Register *selectorReg = cg->evaluate(selectorNode);
-   TR::Node *defaultChild = node->getSecondChild();
-   TR::RegisterDependencyConditions *conditions;
-   TR::Register *tmpRegister = NULL;
-
-   if (!constantIsUnsignedImm12(node->getChild(2)->getCaseConstant())
-       || !constantIsUnsignedImm12(node->getChild(numChildren-1)->getCaseConstant()))
+   for (uint32_t i = 3; i < 0xc0000000; i <<= 1)
       {
-      conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-      tmpRegister = cg->allocateRegister();
-      TR::addDependency(conditions, tmpRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+      if (i == numberOfCases)
+         {
+         return ((i & (i - 1)) >> 1) + 1;
+         }
+      }
+   return 0;
+   }
+
+static void binarySearchCaseSpace(TR::CodeGenerator *cg, TR::Register *selectorReg, TR::Node *lookupNode, uint32_t lowChild, uint32_t highChild, bool &evaluateDefaultGlRegDeps)
+   {
+   uint32_t numCases = highChild - lowChild + 1;
+   uint32_t pivot;
+   if (0 == (pivot = sumOf2ConsecutivePowersOf2(numCases)))
+      {
+      pivot = lowChild + (numCases / 2) - 1;
       }
    else
       {
-      conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
+      pivot += lowChild - 1;
       }
-   TR::addDependency(conditions, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
-   for (int32_t i = 2; i < numChildren; i++)
+   if (pivot >= lowChild)
       {
-      TR::Node *child = node->getChild(i);
-      int32_t caseValue = child->getCaseConstant();
+      int32_t pivotValue = lookupNode->getChild(pivot)->getCaseConstant();
+      generateCompareImmInstruction(cg, lookupNode, selectorReg, pivotValue);
+      TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *pivotLabel = generateLabelSymbol(cg);
+      startLabel->setStartInternalControlFlow();
+      pivotLabel->setEndInternalControlFlow();
+      generateLabelInstruction(cg, TR::InstOpCode::label, lookupNode, startLabel);
 
-      if (!constantIsUnsignedImm12(caseValue))
+      // We are guaranteed that the case children are sorted.
+      // Image the Z32 number lines
+      //                [------------------------|--------------------------)                                                     signed
+      //   TR::getMinSigned<TR::Int32>()         0            TR::getMaxSigned<TR::Int32>()      TR::getMaxUnsigned<TR::Int32>()
+      //                                         [--------------------------|------------------------------------)                unsigned
+      // If all the cases of the lookup are on the same 'half' of the number lines, it doesn't matter
+      // if we use JA or JG, so lets use JG.
+      // For the signed case, we better use TR::CC_GT if the numbers straddle the 0 boundary; we already do.
+      // For the unsigned case, we better use TR::CC_CS if the numbers straddle the TR::getMaxSigned<TR::Int32>() boundary. If that's
+      // the case, the highVal will be less than (in the signed sense) than lowVal.
+      //
+      bool isUnsigned;
+      int32_t lowVal  = lookupNode->getChild(lowChild)->getCaseConstant();
+      int32_t highVal = lookupNode->getChild(highChild)->getCaseConstant();
+      if (highVal < lowVal)
          {
-         loadConstant32(cg, node, caseValue, tmpRegister);
-         generateCompareInstruction(cg, node, selectorReg, tmpRegister);
+         isUnsigned = true;
          }
       else
          {
-         generateCompareImmInstruction(cg, node, selectorReg, caseValue);
+         isUnsigned = false;
          }
 
-      TR::RegisterDependencyConditions *cond = conditions;
-      if (child->getNumChildren() > 0)
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, lookupNode, pivotLabel, isUnsigned ? TR::CC_CS : TR::CC_GT);
+
+      if (lowChild == pivot)
          {
-         // GRA
-         cg->evaluate(child->getFirstChild());
-         cond = cond->clone(cg, generateRegisterDependencyConditions(cg, child->getFirstChild(), 0));
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, lookupNode, lookupNode->getChild(lowChild)->getBranchDestination()->getNode()->getLabel(), TR::CC_EQ);
+         generateLabelInstruction(cg, TR::InstOpCode::label, lookupNode, lookupNode->getChild(1)->getBranchDestination()->getNode()->getLabel());
+         evaluateDefaultGlRegDeps = false;
          }
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, child->getBranchDestination()->getNode()->getLabel(), TR::CC_EQ, cond);
+      else
+         {
+         binarySearchCaseSpace(cg, selectorReg, lookupNode, lowChild, pivot, evaluateDefaultGlRegDeps);
+         }
+      generateLabelInstruction(cg, TR::InstOpCode::label, lookupNode, pivotLabel);
       }
-
-   // Branch to default
-   if (defaultChild->getNumChildren() > 0)
+   else
       {
-      // GRA
-      cg->evaluate(defaultChild->getFirstChild());
-      conditions = conditions->clone(cg, generateRegisterDependencyConditions(cg, defaultChild->getFirstChild(), 0));
+      TR_ASSERT(pivot == lowChild - 1 && lowChild == highChild, "unexpected pivot value in binarySearchCaseSpace");
       }
-   generateLabelInstruction(cg, TR::InstOpCode::b, node, defaultChild->getBranchDestination()->getNode()->getLabel(), conditions);
 
-   if (tmpRegister)
+   if (highChild == pivot + 1)
       {
-      cg->stopUsingRegister(tmpRegister);
+      int32_t  highValue = lookupNode->getChild(highChild)->getCaseConstant();
+      generateCompareImmInstruction(cg, lookupNode, selectorReg, highValue);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, lookupNode, lookupNode->getChild(highChild)->getBranchDestination()->getNode()->getLabel(), TR::CC_EQ);
+      generateLabelInstruction(cg, TR::InstOpCode::label, lookupNode, lookupNode->getChild(1)->getBranchDestination()->getNode()->getLabel());
+      evaluateDefaultGlRegDeps = false;
+      }
+   else
+      {
+      binarySearchCaseSpace(cg, selectorReg, lookupNode, pivot + 1, highChild, evaluateDefaultGlRegDeps);
+      }
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::lookupEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Register *selectorReg = cg->evaluate(node->getFirstChild());
+   bool evaluateDefaultGlRegDeps = true;
+   TR::RealRegister::RegNum depsRegisterIndex = TR::RealRegister::NoReg;
+   bool selectorRegInGlRegDeps = false;
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
+
+   startLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+
+   for (int i = 1; i < node->getNumChildren(); i++)
+      {
+      TR::Node *caseChild = node->getChild(i);
+      if (0 < caseChild->getNumChildren())
+         {
+         TR::Node *firstCaseChild = caseChild->getFirstChild();
+         if (firstCaseChild->getOpCodeValue() == TR::GlRegDeps)
+            {
+            for (int j = firstCaseChild->getNumChildren() - 1; j >= 0; j--)
+               {
+               TR::Node *child = firstCaseChild->getChild(j);
+               TR::Register *globalReg = NULL;
+
+               if (child->getOpCodeValue() == TR::PassThrough)
+                  {
+                  globalReg = child->getFirstChild()->getRegister();
+                  }
+               else
+                  {
+                  globalReg = child->getRegister();
+                  }
+
+               TR_GlobalRegisterNumber globalRegNum = child->getGlobalRegisterNumber();
+               TR_GlobalRegisterNumber highGlobalRegNum = child->getHighGlobalRegisterNumber();
+
+               if (globalReg->getKind() == TR_GPR
+                     && 0 > highGlobalRegNum
+                     && (globalReg == selectorReg))
+                  {
+                  depsRegisterIndex = (TR::RealRegister::RegNum) cg->getGlobalRegister(globalRegNum);
+                  selectorRegInGlRegDeps = true;
+                  }
+               else if (globalReg->getKind() == TR_GPR
+                        || globalReg->getKind() == TR_FPR)
+                  {
+                  TR::RegisterPair *globalRegPair = globalReg->getRegisterPair();
+                  TR::RealRegister::RegNum registerIndex = (TR::RealRegister::RegNum) cg->getGlobalRegister(globalRegNum);
+                  if (!deps->searchPostConditionRegister(registerIndex))
+                     {
+                     deps->addPostCondition(globalRegPair ? globalRegPair->getLowOrder() : globalReg, registerIndex);
+                     }
+                  if (0 <= highGlobalRegNum)
+                     {
+                     TR::RealRegister::RegNum highRegisterIndex = (TR::RealRegister::RegNum) cg->getGlobalRegister(highGlobalRegNum);
+                     if (!deps->searchPostConditionRegister(highRegisterIndex))
+                        {
+                        deps->addPostCondition(globalRegPair->getHighOrder(), highRegisterIndex);
+                        }
+                     }
+                  }
+               }
+            }
+         }
       }
 
-   cg->decReferenceCount(selectorNode);
+   binarySearchCaseSpace(cg, selectorReg, node, 2, node->getNumChildren() - 1, evaluateDefaultGlRegDeps);
+   cg->decReferenceCount(node->getFirstChild());
+
+   deps->addPostCondition(selectorReg, depsRegisterIndex);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
    return NULL;
    }
 
