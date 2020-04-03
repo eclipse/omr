@@ -1043,7 +1043,7 @@ OMR::X86::MemoryReference::estimateBinaryLength(TR::CodeGenerator *cg)
 uint32_t
 OMR::X86::MemoryReference::getBinaryLengthLowerBound(TR::CodeGenerator *cg)
    {
-   intptr_t displacement;
+   intptr_t displacement = 0;
    uint32_t addressTypes =
       (self()->getBaseRegister()     != NULL ? 1 : 0) |
       (self()->getIndexRegister()    != NULL ? 2 : 0) |
