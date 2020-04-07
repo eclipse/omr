@@ -145,6 +145,7 @@ class MethodBuilder : public TR::IlBuilder
                        TR::IlType     ** parmTypes);
 
    int32_t Compile(void **entry);
+   int32_t Interpret();
 
    /**
     * @brief will be called if a Call is issued to a function that has not yet been defined, provides a

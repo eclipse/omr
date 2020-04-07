@@ -26,6 +26,7 @@
 
    OPTIMIZATION_ENUM_ONLY(endOpts = 0x00) // Marks the end of a list of optimizations
 
+   OPTIMIZATION(treeInterpreter)
    OPTIMIZATION(inlining)
    OPTIMIZATION(targetedInlining)
    OPTIMIZATION(trivialInlining)

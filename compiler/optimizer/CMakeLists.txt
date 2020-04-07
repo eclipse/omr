@@ -70,6 +70,7 @@ compiler_library(optimizer
 	${CMAKE_CURRENT_LIST_DIR}/OMROptimizationManager.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRTransformUtil.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMROptimizer.cpp
+	${CMAKE_CURRENT_LIST_DIR}/Operation.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OrderBlocks.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OSRDefAnalysis.cpp
 	${CMAKE_CURRENT_LIST_DIR}/PartialRedundancy.cpp
@@ -87,6 +88,7 @@ compiler_library(optimizer
 	${CMAKE_CURRENT_LIST_DIR}/Structure.cpp
 	${CMAKE_CURRENT_LIST_DIR}/SwitchAnalyzer.cpp
 	${CMAKE_CURRENT_LIST_DIR}/TranslateTable.cpp
+	${CMAKE_CURRENT_LIST_DIR}/TreeInterpreter.cpp
 	${CMAKE_CURRENT_LIST_DIR}/UnionBitVectorAnalysis.cpp
 	${CMAKE_CURRENT_LIST_DIR}/UseDefInfo.cpp
 	${CMAKE_CURRENT_LIST_DIR}/ValueNumberInfo.cpp

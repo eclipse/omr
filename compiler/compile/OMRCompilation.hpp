@@ -798,6 +798,13 @@ public:
    bool hasClassExtendAssumptions() { return _flags.testAny(HasClassExtendAssumptions); }
 
    // ==========================================================================
+   // Interpreter
+   //
+   
+   void setInterpreterResult(int64_t result) {_interpreterResult = result;}
+   int64_t getInterpreterResult() { return _interpreterResult;}
+
+   // ==========================================================================
    // Compilation
    //
 
@@ -1178,6 +1185,7 @@ private:
    TR_ArenaAllocator                 _arenaAllocator;
    const char *                      _allocatorName;
    TR::Region                        _aliasRegion;
+   int64_t                           _interpreterResult;
 
 
    TR_IlGenerator                    *_ilGenerator;
