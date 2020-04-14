@@ -262,7 +262,8 @@ def SPECS = [
         ],
         'test' : true,
         'testArgs' : '',
-        'junitPublish' : false
+        'junitPublish' : true,
+        'junitConvert' : true
     ]
 ]
 
@@ -341,6 +342,13 @@ timestamps {
                                                 dir("${cmakeBuildDir}") {
                                                     sh "ctest -V ${SPECS[params.BUILDSPEC].testArgs}"
                                                     if (SPECS[params.BUILDSPEC].junitPublish) {
+                                                        if (SPECS[params.BUILDSPEC].junitConvert) {
+                                                            echo 'Converting test result file from ebcdic to ascii...'
+                                                            def resultFiles = sh (script: 'find . -name *results.xml', returnStdout: true).tokenize(' ')
+                                                            for (String resultFile : resultFiles) {
+                                                                sh "iconv -f ibm-1047 -t iso8859-1 ${resultFile} > ${resultFile}.ascii; rm ${resultFile}; mv ${resultFile}.ascii ${resultFile}"
+                                                            }
+                                                        }
                                                         junit '**/*results.xml'
                                                     }
                                                 }
