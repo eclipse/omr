@@ -206,7 +206,7 @@ extern pthread_condattr_t *defaultCondAttr;
 #if defined(_POSIX_PRIORITY_SCHEDULING)
 #define THREAD_YIELD() (sched_yield())
 #elif defined(J9ZOS390)
-/* zos is odd in that it needs a null param to pthread_yield*/
+/* zos is odd in that it needs a null param to pthread_yield */
 #define THREAD_YIELD() (pthread_yield(0))
 #else
 #define THREAD_YIELD() (yield())
