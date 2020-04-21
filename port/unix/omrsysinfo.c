@@ -3141,9 +3141,9 @@ omrsysinfo_get_hostname(struct OMRPortLibrary *portLibrary, char *buffer, size_t
 	return 0;
 }
 
-
 /* Limits are unsupported on z/TPF */
 #if defined(OMRZTPF)
+
 uint32_t
 omrsysinfo_get_limit(struct OMRPortLibrary* portLibrary, uint32_t resourceID, uint64_t* limit)
 {
@@ -3165,7 +3165,7 @@ omrsysinfo_set_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 	return rc;
 }
 
-#else
+#else /* defined(OMRZTPF) */
 
 uint32_t
 omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, uint64_t *limit)
@@ -3241,7 +3241,6 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 		}
 	}
 
-
 exit:
 	Trc_PRT_sysinfo_get_limit_Exit(rc);
 	return rc;
@@ -3265,10 +3264,10 @@ omrsysinfo_set_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
 			Trc_PRT_sysinfo_sysparm_error(errno);
 		}
-#else
+#else /* defined(AIXPPC) */
 		/* unsupported so return error */
 		rc = OMRPORT_LIMIT_UNKNOWN;
-#endif
+#endif /* defined(AIXPPC) */
 	} else {
 		struct rlimit lim = { 0, 0 };
 		uint32_t resource = 0;
@@ -3319,7 +3318,7 @@ omrsysinfo_set_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 					limit = maxFiles;
 				}
 			}
-#endif
+#endif /* defined(OSX) */
 			lim.rlim_cur = limit;
 		}
 		rc = setrlimit(resource, &lim);
@@ -3383,6 +3382,7 @@ errorReturn:
 	return OMRPORT_LIMIT_UNKNOWN;
 #endif /* defined(LINUX) */
 }
+
 #endif /* defined(OMRZTPF) */
 
 intptr_t
